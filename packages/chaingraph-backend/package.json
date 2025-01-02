@@ -1,0 +1,35 @@
+{
+  "name": "@badaitech/chaingraph-backend",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badaitech/chaingraph.git",
+    "directory": "./packages/chaingraph-backend"
+  },
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./trpc": "./src/trpc.ts",
+    "./procedures": "./src/procedures/index.ts",
+    "./router": "./src/router.ts"
+  },
+  "dependencies": {
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2",
+    "superjson": "^2.2.2",
+    "tslog": "^4.9.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2"
+  }
+}

@@ -1,0 +1,26 @@
+# Top-most EditorConfig file
+root = true
+
+# Matches multiple files with brace expansion notation
+[*.{js,jsx,ts,tsx}]
+
+# Set maximum line length to 100 characters
+max_line_length = 100
+
+# Indentation style: space or tab
+indent_style = space
+
+# Size of a single indentation-level
+indent_size = 2
+
+# Encoding of the files
+charset = utf-8
+
+# The line ending file format, LF or CRLF
+end_of_line = lf
+
+# Trailing whitespace is forbidden
+trim_trailing_whitespace = true
+
+# Files should end with a newline
+insert_final_newline = true

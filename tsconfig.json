@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "useDefineForClassFields": true,
+    "baseUrl": ".",  // Changed from "./src" to "."
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "paths": {
+      "@chaingraph/backend/*": ["packages/chaingraph-backend/src/*"],
+      "@chaingraph/backend": ["packages/chaingraph-backend/src"],
+      "@chaingraph/types/*": ["packages/chaingraph-types/src/*"],
+      "@chaingraph/types": ["packages/chaingraph-types/src"]
+    },
+    "resolveJsonModule": true,
+    "types": ["bun-types"],  // Added Bun types
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["packages/*/src/**/*"],
+  "exclude": ["node_modules"]
+}
