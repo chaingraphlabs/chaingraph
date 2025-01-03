@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "loglevel": "^1.9.2",
+    "tslog": "^4.9.3",
+    "zod": "^3.24.1",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
