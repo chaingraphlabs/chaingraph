@@ -14,6 +14,7 @@ export default antfu(
     react: true,
     gitignore: true,
     toml: true,
+    jsonc: true,
     formatters: {
       css: true,
       html: true,

@@ -1,0 +1,1 @@
+export { currentTime } from './time'

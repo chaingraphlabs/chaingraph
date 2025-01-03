@@ -17,6 +17,7 @@
     "types": ["bun-types"],  // Added Bun types
     "allowJs": true,
     "strict": true,
+    "strictNullChecks": true,
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
