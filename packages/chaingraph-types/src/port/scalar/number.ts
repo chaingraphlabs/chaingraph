@@ -1,185 +1,121 @@
-import type { IPort, PortConfig, PortValidation } from '..'
+import type { IPort, PortConfig, PortValidation } from '../types/port-interface'
+import type { PortValue } from '../types/port-values'
 import { Decimal } from 'decimal.js'
+import { PrimitivePortType } from '../types/port-types'
 
 /**
- * Extended validation rules for number ports
+ * Validation rules specific to number ports
  */
-export interface NumberPortValidation extends PortValidation {
-  /** Minimum value constraint */
-  min?: number | string | Decimal
-
-  /** Maximum value constraint */
-  max?: number | string | Decimal
-
-  /** Whether to allow integer values only */
+export interface NumberPortValidation extends PortValidation<PrimitivePortType.Number> {
+  min?: number | Decimal
+  max?: number | Decimal
   integer?: boolean
-
-  /** Number of decimal places allowed */
   precision?: number
-
-  /** Whether to allow negative values */
-  allowNegative?: boolean
-
-  /** Whether to allow zero value */
-  allowZero?: boolean
 }
 
 /**
- * Configuration specific to number ports
+ * Configuration for number ports
  */
-export interface NumberPortConfig extends Omit<PortConfig, 'type' | 'validation' | 'defaultValue'> {
-  type: 'number'
-  defaultValue?: number | string | Decimal
+export interface NumberPortConfig extends PortConfig<PrimitivePortType.Number> {
   validation?: NumberPortValidation
 }
 
 /**
- * Implementation of number port using Decimal.js for precise calculations
+ * Implementation of number port using Decimal.js
  */
-export class NumberPort implements IPort<Decimal> {
-  readonly config: PortConfig
-
+export class NumberPort implements IPort<PrimitivePortType.Number> {
+  readonly config: PortConfig<PrimitivePortType.Number>
   private _value: Decimal
 
   constructor(config: NumberPortConfig) {
-    // Convert NumberPortConfig to PortConfig while preserving type safety
     this.config = {
       ...config,
-      validation: config.validation as PortValidation,
-      defaultValue: config.defaultValue?.toString(), // Convert to string for safe storage
+      type: PrimitivePortType.Number,
     }
-
-    this._value = config.defaultValue
-      ? new Decimal(config.defaultValue)
-      : new Decimal(0)
+    this._value = this.toDecimal(config.defaultValue ?? 0)
   }
 
   get value(): Decimal {
     return this._value
   }
 
-  getValue(): Decimal {
+  getValue(): PortValue<PrimitivePortType.Number> {
     return this._value
   }
 
-  setValue(value: number | string | Decimal): void {
-    this._value = new Decimal(value)
+  setValue(value: PortValue<PrimitivePortType.Number>): void {
+    if (!(value instanceof Decimal)) {
+      throw new TypeError('NumberPort only accepts Decimal values')
+    }
+    this._value = value
   }
 
   async validate(): Promise<boolean> {
-    const validation = this.config.validation as NumberPortValidation | undefined
-
+    const validation = (this.config as NumberPortConfig).validation
     if (!validation) {
       return true
     }
 
-    // Run custom validator if provided
+    // Check custom validator first if exists
     if (validation.validator) {
       const isValid = await validation.validator(this._value)
       if (!isValid)
         return false
     }
 
-    const value = this._value
+    const { min, max, integer, precision } = validation
 
-    // Check if integer is required
-    if (validation.integer && !value.isInteger()) {
+    // Check integer constraint
+    if (integer && !this._value.isInteger()) {
       return false
     }
 
     // Check minimum value
-    if (validation.min !== undefined && value.lessThan(validation.min)) {
-      return false
-    }
-
-    // Check maximum value
-    if (validation.max !== undefined && value.greaterThan(validation.max)) {
-      return false
-    }
-
-    // Check precision
-    if (validation.precision !== undefined) {
-      const decimalPlaces = value.decimalPlaces()
-      if (decimalPlaces > validation.precision) {
+    if (min !== undefined) {
+      const minDecimal = this.toDecimal(min)
+      if (this._value.lessThan(minDecimal)) {
         return false
       }
     }
 
-    // Check if negative values are allowed
-    if (validation.allowNegative === false && value.isNegative()) {
-      return false
+    // Check maximum value
+    if (max !== undefined) {
+      const maxDecimal = this.toDecimal(max)
+      if (this._value.greaterThan(maxDecimal)) {
+        return false
+      }
     }
 
-    // Check if zero is allowed
-    if (validation.allowZero === false && value.isZero()) {
-      return false
+    // Check precision
+    if (precision !== undefined && precision >= 0) {
+      const decimalPlaces = this._value.decimalPlaces()
+      if (decimalPlaces > precision) {
+        return false
+      }
     }
 
     return true
   }
 
   reset(): void {
-    if (this.config.defaultValue === undefined || this.config.defaultValue === null) {
-      this._value = new Decimal(0)
-      return
-    }
-
-    // Type guard for valid Decimal input types
-    if (
-      typeof this.config.defaultValue === 'number'
-      || typeof this.config.defaultValue === 'string'
-      || this.config.defaultValue instanceof Decimal
-    ) {
-      this._value = new Decimal(this.config.defaultValue)
-    } else {
-      // If defaultValue is of invalid type, fall back to 0
-      this._value = new Decimal(0)
-    }
+    this._value = this.toDecimal(this.config.defaultValue ?? 0)
   }
 
   hasValue(): boolean {
     return !this._value.isNaN()
   }
 
-  clone(): IPort<Decimal> {
-    return new NumberPort(this.config as NumberPortConfig)
+  clone(): IPort<PrimitivePortType.Number> {
+    return new NumberPort({
+      ...this.config,
+      defaultValue: this._value,
+    })
   }
 
-  /**
-   * Helper methods for common numerical operations
-   */
-
-  add(value: number | string | Decimal): Decimal {
-    return this._value.plus(value)
-  }
-
-  subtract(value: number | string | Decimal): Decimal {
-    return this._value.minus(value)
-  }
-
-  multiply(value: number | string | Decimal): Decimal {
-    return this._value.times(value)
-  }
-
-  divide(value: number | string | Decimal): Decimal {
-    return this._value.dividedBy(value)
-  }
-
-  round(precision?: number): Decimal {
-    return precision !== undefined
-      ? this._value.toDecimalPlaces(precision)
-      : this._value.round()
-  }
-
-  abs(): Decimal {
-    return this._value.abs()
-  }
-
-  toString(): string {
-    return this._value.toString()
-  }
-
-  toNumber(): number {
-    return this._value.toNumber()
+  private toDecimal(value: number | string | Decimal): Decimal {
+    if (value instanceof Decimal) {
+      return value
+    }
+    return new Decimal(value)
   }
 }

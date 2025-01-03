@@ -1,118 +1,153 @@
-import type { PortConfig } from '@chaingraph/types'
-import type { PortValue, PortValueType } from '@chaingraph/types/port/values'
-import type { IPort } from '../interface'
+import type { IPort, PortConfig, PortType, PortValue } from '@chaingraph/types/port'
 import type { ArrayPortConfig } from './types'
+import { ComplexPortType, PortFactory } from '@chaingraph/types/port'
 import { Decimal } from 'decimal.js'
 
-export class ArrayPort<T extends PortValueType> implements IPort<PortValue<T>[]> {
-  readonly config: PortConfig
-
-  private values: PortValue<T>[] = []
-  private portCache = new Map<number, IPort<PortValue<T>>>()
-  private elementConfig: Omit<PortConfig, 'id' | 'name'>
+/**
+ * Implementation of array port
+ */
+export class ArrayPort<T extends PortType> implements IPort<ComplexPortType.Array> {
+  // Split into two properties to satisfy both the interface and maintain type safety
+  readonly config: PortConfig<ComplexPortType.Array>
+  private readonly arrayConfig: ArrayPortConfig<T>
+  private _values: Array<PortValue<T>>
 
   constructor(config: ArrayPortConfig<T>) {
+    // Create base config for IPort interface
     this.config = {
+      id: config.id,
+      name: config.name,
+      type: ComplexPortType.Array,
+    }
+
+    // Store full array config
+    this.arrayConfig = {
       ...config,
-      type: 'array',
+      type: ComplexPortType.Array,
     }
 
-    this.elementConfig = config.elementConfig
-    this.values = config.defaultValue ?? []
+    this._values = config.defaultValue ?? []
   }
 
-  get value(): PortValue<T>[] {
-    return this.values
+  get value(): Array<PortValue<T>> {
+    return [...this._values]
   }
 
-  getValue(): PortValue<T>[] {
-    return this.values
+  getValue(): Array<PortValue<T>> {
+    return [...this._values]
   }
 
-  setValue(values: PortValue<T>[]): void {
-    this.values = values
-    // Clear cache as values have changed
-    this.portCache.clear()
-  }
-
-  /**
-   * Get a port instance for an element at the specified index
-   */
-  getElementPort(index: number): IPort<PortValue<T>> {
-    if (!this.portCache.has(index)) {
-      const elementId = this.generateElementId(index)
-      const elementPort = this.createElementPort(elementId, index)
-      this.portCache.set(index, elementPort)
+  setValue(values: Array<PortValue<T>>): void {
+    if (!Array.isArray(values)) {
+      throw new TypeError('ArrayPort expects array value')
     }
-    return this.portCache.get(index)!
-  }
 
-  /**
-   * Add a new value to the array
-   */
-  push(value: PortValue<T>): void {
-    this.values.push(value)
-  }
-
-  /**
-   * Remove and return the last value from the array
-   */
-  pop(): PortValue<T> | undefined {
-    const value = this.values.pop()
-    if (value !== undefined) {
-      this.portCache.delete(this.values.length)
+    // Validate individual elements if elementConfig exists
+    if (this.arrayConfig.elementConfig) {
+      values.forEach(value => this.validateElement(value))
     }
-    return value
+
+    this._values = [...values]
   }
 
   async validate(): Promise<boolean> {
-    // Validate each value according to element type
-    for (const value of this.values) {
-      if (!this.validateValue(value)) {
+    const validation = this.arrayConfig.validation
+
+    if (!validation) {
+      return true
+    }
+
+    // Check custom validator if exists
+    if (validation.validator) {
+      const isValid = await validation.validator(this._values)
+      if (!isValid)
+        return false
+    }
+
+    // Validate each element if elementConfig exists
+    if (this.arrayConfig.elementConfig) {
+      try {
+        await Promise.all(this._values.map(value => this.validateElement(value)))
+        return true
+      } catch {
         return false
       }
     }
+
     return true
   }
 
   reset(): void {
-    this.values = (this.config.defaultValue as PortValue<T>[]) ?? []
-    this.portCache.clear()
+    this._values = this.arrayConfig.defaultValue ?? []
   }
 
   hasValue(): boolean {
-    return this.values.length > 0
+    return this._values.length > 0
   }
 
-  clone(): IPort<PortValue<T>[]> {
+  clone(): IPort<ComplexPortType.Array> {
     return new ArrayPort({
-      ...(this.config as ArrayPortConfig<T>),
-      defaultValue: [...this.values],
+      ...this.arrayConfig,
+      defaultValue: [...this._values],
     })
   }
 
-  private generateElementId(index: number): string {
-    return `${this.config.id}.${index}`
+  // Array-specific operations
+  push(value: PortValue<T>): void {
+    this.validateElement(value)
+    this._values.push(value)
   }
 
-  private createElementPort(id: string, index: number): IPort<PortValue<T>> {
-    // Implementation depends on element type
-    // This is a placeholder that needs to be implemented based on element type
-    throw new Error('Not implemented')
+  pop(): PortValue<T> | undefined {
+    return this._values.pop()
   }
 
-  private validateValue(value: unknown): boolean {
-    switch (this.elementConfig.type) {
-      case 'string':
-        return typeof value === 'string'
-      case 'number':
-        return value instanceof Decimal
-      case 'boolean':
-        return typeof value === 'boolean'
-      case 'array':
-        return Array.isArray(value)
-      default:
-        return false
+  insert(index: number, value: PortValue<T>): void {
+    this.validateElement(value)
+    this._values.splice(index, 0, value)
+  }
+
+  remove(index: number): void {
+    this._values.splice(index, 1)
+  }
+
+  get(index: number): PortValue<T> | undefined {
+    return this._values[index]
+  }
+
+  get length(): number {
+    return this._values.length
+  }
+
+  clear(): void {
+    this._values = []
+  }
+
+  private validateElement(value: PortValue<T>): void {
+    if (!this.arrayConfig.elementConfig)
+      return
+
+    // Handle primitive types validation
+    if (typeof value === 'string' || typeof value === 'boolean' || value instanceof Decimal) {
+      const tempPort = PortFactory.createPort({
+        ...this.arrayConfig.elementConfig,
+        id: `${this.arrayConfig.id}-element`,
+        type: this.arrayConfig.elementType,
+      })
+
+      tempPort.setValue(value)
+      if (!tempPort.validate()) {
+        throw new Error(`Invalid array element: ${value}`)
+      }
+      return
     }
+
+    // Handle complex types (arrays, objects)
+    if (Array.isArray(value) || typeof value === 'object') {
+      // Additional validation logic for complex types could be added here
+      return
+    }
+
+    throw new Error(`Unsupported element type: ${typeof value}`)
   }
 }

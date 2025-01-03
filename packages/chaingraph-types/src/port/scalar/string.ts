@@ -1,41 +1,33 @@
-import type { IPort, PortConfig, PortValidation } from '..'
+import type { IPort, PortConfig, PortValidation } from '@chaingraph/types/port'
+import type { PortValue } from '../types/port-values'
+import { PrimitivePortType } from '../types/port-types'
 
 /**
- * Extended validation rules for string ports
+ * String port validation options
  */
-export interface StringPortValidation extends PortValidation {
-  /** Minimum length constraint */
+export interface StringPortValidation extends PortValidation<PrimitivePortType.String> {
   minLength?: number
-
-  /** Maximum length constraint */
   maxLength?: number
-
-  /** Regular expression pattern */
-  pattern?: RegExp
 }
 
 /**
- * Configuration specific to string ports
+ * String port configuration
  */
-export interface StringPortConfig extends Omit<PortConfig, 'type' | 'validation'> {
-  type: 'string'
-  defaultValue?: string
+export interface StringPortConfig extends PortConfig<PrimitivePortType.String> {
   validation?: StringPortValidation
 }
 
 /**
- * Implementation of string port
+ * String port implementation
  */
-export class StringPort implements IPort<string> {
-  readonly config: PortConfig
-
+export class StringPort implements IPort<PrimitivePortType.String> {
+  readonly config: PortConfig<PrimitivePortType.String>
   private _value: string
 
   constructor(config: StringPortConfig) {
-    // Convert StringPortConfig to PortConfig to maintain compatibility
     this.config = {
       ...config,
-      validation: config.validation as PortValidation,
+      type: PrimitivePortType.String,
     }
     this._value = config.defaultValue ?? ''
   }
@@ -44,39 +36,38 @@ export class StringPort implements IPort<string> {
     return this._value
   }
 
-  getValue(): string {
+  getValue(): PortValue<PrimitivePortType.String> {
     return this._value
   }
 
-  setValue(value: string): void {
+  setValue(value: PortValue<PrimitivePortType.String>): void {
+    if (typeof value !== 'string') {
+      throw new TypeError(`StringPort expects string value, got ${typeof value}`)
+    }
     this._value = value
   }
 
   async validate(): Promise<boolean> {
-    const validation = this.config.validation as StringPortValidation | undefined
+    const validation = (this.config as StringPortConfig).validation
 
     if (!validation) {
       return true
     }
 
-    // Run custom validator if provided
+    // Check custom validator first if exists
     if (validation.validator) {
       const isValid = await validation.validator(this._value)
       if (!isValid)
         return false
     }
 
-    // Check length constraints
-    if (validation.minLength !== undefined && this._value.length < validation.minLength) {
+    const { minLength, maxLength } = validation
+
+    if (minLength && minLength > 0 && this._value.length < minLength) {
       return false
     }
 
-    if (validation.maxLength !== undefined && this._value.length > validation.maxLength) {
-      return false
-    }
-
-    // Check pattern
-    if (validation.pattern && !validation.pattern.test(this._value)) {
+    if (maxLength && maxLength > 0 && this._value.length > maxLength) {
       return false
     }
 
@@ -84,14 +75,17 @@ export class StringPort implements IPort<string> {
   }
 
   reset(): void {
-    this._value = (this.config.defaultValue as string) ?? ''
+    this._value = this.config.defaultValue ?? ''
   }
 
   hasValue(): boolean {
     return this._value !== ''
   }
 
-  clone(): IPort<string> {
-    return new StringPort(this.config as StringPortConfig)
+  clone(): IPort<PrimitivePortType.String> {
+    return new StringPort({
+      ...this.config,
+      defaultValue: this._value,
+    })
   }
 }

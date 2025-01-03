@@ -1,40 +1,33 @@
-import type { IPort, PortConfig, PortValidation } from '..'
+import type { IPort, PortConfig, PortValidation } from '@chaingraph/types/port'
+import type { PortValue } from '../types/port-values'
+import { PrimitivePortType } from '../types/port-types'
 
 /**
- * Extended validation rules for boolean ports
+ * Validation rules specific to boolean ports
+ * Note: Currently using base validation only,
+ * but we can extend with boolean-specific rules if needed
  */
-export interface BooleanPortValidation extends PortValidation {
-  /**
-   * Allow only specific boolean values
-   * Useful when port should accept only true or only false
-   */
-  allowedValues?: boolean[]
-}
+export interface BooleanPortValidation extends PortValidation<PrimitivePortType.Boolean> {}
 
 /**
- * Configuration specific to boolean ports
+ * Configuration for boolean ports
  */
-export interface BooleanPortConfig extends Omit<PortConfig, 'type' | 'validation' | 'defaultValue'> {
-  type: 'boolean'
-  defaultValue?: boolean
+export interface BooleanPortConfig extends PortConfig<PrimitivePortType.Boolean> {
   validation?: BooleanPortValidation
 }
 
 /**
  * Implementation of boolean port
  */
-export class BooleanPort implements IPort<boolean> {
-  readonly config: PortConfig
-
+export class BooleanPort implements IPort<PrimitivePortType.Boolean> {
+  readonly config: PortConfig<PrimitivePortType.Boolean>
   private _value: boolean
 
   constructor(config: BooleanPortConfig) {
     this.config = {
       ...config,
-      validation: config.validation as PortValidation,
-      defaultValue: config.defaultValue ?? false,
+      type: PrimitivePortType.Boolean,
     }
-
     this._value = config.defaultValue ?? false
   }
 
@@ -42,88 +35,43 @@ export class BooleanPort implements IPort<boolean> {
     return this._value
   }
 
-  getValue(): boolean {
+  getValue(): PortValue<PrimitivePortType.Boolean> {
     return this._value
   }
 
-  setValue(value: boolean): void {
+  setValue(value: PortValue<PrimitivePortType.Boolean>): void {
     if (typeof value !== 'boolean') {
-      throw new TypeError('BooleanPort only accepts boolean values')
+      throw new TypeError(`BooleanPort expects boolean value, got ${typeof value}`)
     }
     this._value = value
   }
 
   async validate(): Promise<boolean> {
-    const validation = this.config.validation as BooleanPortValidation | undefined
-
+    const validation = (this.config as BooleanPortConfig).validation
     if (!validation) {
       return true
     }
 
-    // Run custom validator if provided
+    // Check custom validator if exists
     if (validation.validator) {
-      const isValid = await validation.validator(this._value)
-      if (!isValid)
-        return false
-    }
-
-    // Check if value is in allowed values
-    if (validation.allowedValues?.length) {
-      return validation.allowedValues.includes(this._value)
+      return validation.validator(this._value)
     }
 
     return true
   }
 
   reset(): void {
-    this._value = (this.config.defaultValue as boolean) ?? false
+    this._value = this.config.defaultValue ?? false
   }
 
   hasValue(): boolean {
     return true // Boolean always has a value (true or false)
   }
 
-  clone(): IPort<boolean> {
-    return new BooleanPort(this.config as BooleanPortConfig)
-  }
-
-  /**
-   * Helper methods for boolean operations
-   */
-
-  /**
-   * Toggle the boolean value
-   */
-  toggle(): boolean {
-    this._value = !this._value
-    return this._value
-  }
-
-  /**
-   * Perform AND operation with another boolean
-   */
-  and(value: boolean): boolean {
-    return this._value && value
-  }
-
-  /**
-   * Perform OR operation with another boolean
-   */
-  or(value: boolean): boolean {
-    return this._value || value
-  }
-
-  /**
-   * Get the negation of the current value
-   */
-  not(): boolean {
-    return !this._value
-  }
-
-  /**
-   * Convert to string representation
-   */
-  toString(): string {
-    return this._value.toString()
+  clone(): IPort<PrimitivePortType.Boolean> {
+    return new BooleanPort({
+      ...this.config,
+      defaultValue: this._value,
+    })
   }
 }
