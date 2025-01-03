@@ -10,7 +10,6 @@ export type PortPrimitiveType =
   | 'string'
   | 'number'
   | 'boolean'
-  | 'null'
 
 /**
  * Complex data types supported by ports

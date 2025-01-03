@@ -1,2 +1,7 @@
+export * from './array/array'
+export * from './array/types'
+export * from './factory'
 export * from './interface'
+export * from './object'
+export * from './scalar'
 export * from './types'
