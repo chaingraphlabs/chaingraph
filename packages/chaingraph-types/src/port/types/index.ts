@@ -54,7 +54,7 @@ export type {
   PrimitiveValue,
 } from './port-values-utils'
 export {
-  createArrayConfig,
-  createNestedArrayType,
+  // createArrayConfig,
+  // createNestedArrayType,
   createPrimitiveConfig,
 } from './port-values-utils'

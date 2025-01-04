@@ -1,4 +1,4 @@
-import type { ObjectPortConfig } from './port-configs'
+import type { ObjectTypePortConfig } from './port-configs'
 import type { PortConfig } from './port-interface'
 import type { ComplexPortType, PortType, PrimitivePortType } from './port-types'
 import type {
@@ -25,7 +25,7 @@ export type ArrayOf<T extends PortType> = ArrayValue<T>
 /**
  * Helper for creating object port values
  */
-export type ObjectOf<T extends ObjectPortConfig> = ObjectValue<T>
+export type ObjectOf<T extends ObjectTypePortConfig> = ObjectValue<T>
 
 // ----------------
 // Numeric Type Helpers

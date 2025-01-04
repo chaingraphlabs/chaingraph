@@ -1,5 +1,9 @@
+import type {
+  ArrayTypePortConfig,
+  ObjectTypePortConfig,
+  ObjectTypeProperty,
+} from '@chaingraph/types/port/types/port-configs'
 import type { Decimal } from 'decimal.js'
-import type { ArrayPortConfig, ObjectPortConfig, ObjectProperty } from './port-configs'
 import type { PortConfig } from './port-interface'
 import type { ComplexPortType, PortType, PrimitivePortType } from './port-types'
 
@@ -36,10 +40,7 @@ export type RecursivePortValue =
 /**
  * Base value type mapping
  */
-export interface BaseTypeMap {
-  [PrimitivePortType.String]: string
-  [PrimitivePortType.Number]: Decimal
-  [PrimitivePortType.Boolean]: boolean
+export interface BaseTypeMap extends PrimitiveTypeMap {
   [ComplexPortType.Array]: Array<RecursivePortValue>
   [ComplexPortType.Object]: { [key: string]: RecursivePortValue }
 }
@@ -64,7 +65,7 @@ export type ArrayValue<T extends PortType> =
 /**
  * Object property value with recursive type checking
  */
-export type ObjectPropertyValue<T extends ObjectProperty> =
+export type ObjectPropertyValue<T extends ObjectTypeProperty> =
   T['type'] extends PrimitivePortType ? PrimitiveTypeMap[T['type']] :
     T['type'] extends ComplexPortType.Array ? Array<RecursivePortValue> :
       T['type'] extends ComplexPortType.Object ? { [key: string]: RecursivePortValue } :
@@ -73,7 +74,7 @@ export type ObjectPropertyValue<T extends ObjectProperty> =
 /**
  * Object value type
  */
-export type ObjectValue<T extends ObjectPortConfig> = {
+export type ObjectValue<T extends ObjectTypePortConfig> = {
   [K in keyof T['properties']]: ObjectPropertyValue<T['properties'][K]>
 }
 
@@ -85,11 +86,11 @@ export type ObjectValue<T extends ObjectPortConfig> = {
  * Type mapping for complex port values
  */
 export type ComplexPortValue<T> =
-  T extends ArrayPortConfig<infer E>
+  T extends ArrayTypePortConfig<infer E>
     ? E extends PortType
       ? ArrayValue<E>
       : never
-    : T extends ObjectPortConfig
+    : T extends ObjectTypePortConfig
       ? ObjectValue<T>
       : never
 
@@ -97,13 +98,13 @@ export type ComplexPortValue<T> =
  * Combined type for all possible port values
  */
 export type PortValue<T> =
-  T extends PortType | ArrayPortConfig<PortType> | ObjectPortConfig
+  T extends PortType | ArrayTypePortConfig<PortType> | ObjectTypePortConfig
     ? T extends PrimitivePortType ? PrimitiveTypeMap[T]
-      : T extends ArrayPortConfig<infer E>
+      : T extends ArrayTypePortConfig<infer E>
         ? E extends PortType
           ? ArrayValue<E>
           : never
-        : T extends ObjectPortConfig
+        : T extends ObjectTypePortConfig
           ? ObjectValue<T>
           : never
     : never
@@ -111,7 +112,13 @@ export type PortValue<T> =
 /**
  * Helper type for array port values
  */
-export type ArrayPortValue<T extends PortType> = Array<PortValue<T>>
+export type ArrayPortValue<T extends PortType> = PortValue<Array<T>>
+
+/**
+ * Helper for unwrapping array port values
+ */
+export type UnwrapArrayPortValue<T extends PortType> =
+    ArrayPortValue<T> extends Array<infer U> ? Array<PortValue<T>> : never
 
 /**
  * Helper for extracting the value type from a port type

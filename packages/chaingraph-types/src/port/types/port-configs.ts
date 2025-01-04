@@ -4,7 +4,7 @@ import type { ComplexPortType, PortType } from './port-types'
 /**
  * Object property configuration
  */
-export interface ObjectProperty {
+export interface ObjectTypeProperty {
   type: PortType
   config: PortConfig<PortType>
 }
@@ -12,14 +12,16 @@ export interface ObjectProperty {
 /**
  * Object port configuration
  */
-export interface ObjectPortConfig extends PortConfig<ComplexPortType.Object> {
-  properties: Record<string, ObjectProperty>
+export interface ObjectTypePortConfig {
+  type: ComplexPortType.Object
+  properties: Record<string, ObjectTypeProperty>
 }
 
 /**
  * Array port configuration
  */
-export interface ArrayPortConfig<T extends PortType> extends PortConfig<ComplexPortType.Array> {
+export interface ArrayTypePortConfig<T extends PortType> {
+  type: ComplexPortType.Array
   elementType: T
-  elementConfig?: PortConfig<T>
+  elementConfig: PortConfig<T>
 }
