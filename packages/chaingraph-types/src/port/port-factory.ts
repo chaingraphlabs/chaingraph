@@ -1,14 +1,15 @@
-import type { ObjectSchema } from './object'
 import type {
   AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
+  EnumPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
   PortConfig,
   PortFromConfig,
   StringPortConfig,
 } from './types'
+import { EnumPort } from '@chaingraph/types/port/enum/enum-port'
 import { AnyPort } from './any'
 import { ArrayPort } from './array'
 import { ObjectPort } from './object'
@@ -16,12 +17,13 @@ import { BooleanPort, NumberPort, StringPort } from './scalar'
 
 export class PortFactory {
   // Function overloads
-  static create(config: StringPortConfig): StringPort
-  static create(config: NumberPortConfig): NumberPort
-  static create(config: BooleanPortConfig): BooleanPort
-  static create<E extends PortConfig>(config: ArrayPortConfig<E>): ArrayPort<E>
-  static create<S extends ObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S>
-  static create(config: AnyPortConfig): AnyPort
+  // static create(config: StringPortConfig): StringPort
+  // static create(config: NumberPortConfig): NumberPort
+  // static create(config: BooleanPortConfig): BooleanPort
+  // static create<E extends PortConfig>(config: ArrayPortConfig<E>): ArrayPort<E>
+  // static create<S extends ObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S>
+  // static create(config: AnyPortConfig): AnyPort
+  // static create<E extends PortConfig>(config: EnumPortConfig<E>): EnumPort<E>
 
   static create<C extends PortConfig>(config: C): PortFromConfig<C> {
     switch (config.kind) {
@@ -40,8 +42,11 @@ export class PortFactory {
       case 'object':
         return new ObjectPort(config as ObjectPortConfig<any>) as PortFromConfig<C>
 
-      case 'any': // Handle 'any' kind
+      case 'any':
         return new AnyPort(config as AnyPortConfig) as PortFromConfig<C>
+
+      case 'enum':
+        return new EnumPort(config as EnumPortConfig<any>) as PortFromConfig<C>
 
       default:
         throw new Error(`Unsupported port kind: ${(config as any).kind}`)

@@ -2,6 +2,7 @@ import type {
   AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
+  EnumPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
   ObjectSchema,
@@ -31,4 +32,8 @@ export function isObjectPortConfig<S extends ObjectSchema>(config: PortConfig): 
 
 export function isAnyPortConfig(config: PortConfig): config is AnyPortConfig {
   return config.kind === 'any'
+}
+
+export function isEnumPortConfig<E extends PortConfig>(config: PortConfig): config is EnumPortConfig<E> {
+  return config.kind === 'enum'
 }

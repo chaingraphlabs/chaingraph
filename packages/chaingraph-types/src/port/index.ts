@@ -1,5 +1,6 @@
 export * from './any'
 export * from './array'
+export * from './enum'
 export * from './object'
 export * from './port-factory'
 export * from './scalar'
