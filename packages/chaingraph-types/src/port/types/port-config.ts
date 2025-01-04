@@ -1,4 +1,5 @@
 import type {
+  AnyPort,
   ArrayPort,
   BooleanPort,
   NumberPort,
@@ -8,7 +9,14 @@ import type {
   StringPort,
 } from '@chaingraph/types/port'
 
-export type PortKind = 'string' | 'number' | 'boolean' | 'array' | 'object'
+export type PortKind =
+  'string' |
+  'number' |
+  'boolean' |
+  'array' |
+  'object' |
+  'any' |
+  'enum'
 
 interface BasePortConfig<K extends PortKind> {
   id: string
@@ -68,6 +76,10 @@ export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig
   validation?: ObjectPortValidation<S>
 }
 
+export interface AnyPortConfig extends BasePortConfig<'any'> {
+  connectedPortConfig?: PortConfig | null
+}
+
 // Union type of all PortConfigs
 export type PortConfig =
   | StringPortConfig
@@ -75,6 +87,7 @@ export type PortConfig =
   | BooleanPortConfig
   | ArrayPortConfig<any>
   | ObjectPortConfig<any>
+  | AnyPortConfig
 
 export type PortFromConfig<C extends PortConfig> =
   C extends StringPortConfig ? StringPort :
@@ -82,7 +95,8 @@ export type PortFromConfig<C extends PortConfig> =
       C extends BooleanPortConfig ? BooleanPort :
         C extends ArrayPortConfig<infer E> ? ArrayPort<E> :
           C extends ObjectPortConfig<infer S> ? ObjectPort<S> :
-            never
+            C extends AnyPortConfig ? AnyPort :
+              never
 
 export type PortValueFromConfig<C extends PortConfig> =
   C extends StringPortConfig ? string :
@@ -90,4 +104,5 @@ export type PortValueFromConfig<C extends PortConfig> =
       C extends BooleanPortConfig ? boolean :
         C extends ArrayPortConfig<infer E> ? Array<PortValueFromConfig<E>> :
           C extends ObjectPortConfig<infer S> ? ObjectPortValueFromSchema<S> :
-            never
+            C extends AnyPortConfig ? any :
+              never

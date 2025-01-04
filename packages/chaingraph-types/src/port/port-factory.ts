@@ -1,5 +1,6 @@
-import type { ObjectSchema } from '@chaingraph/types/port/object'
+import type { ObjectSchema } from './object'
 import type {
+  AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
   NumberPortConfig,
@@ -7,10 +8,11 @@ import type {
   PortConfig,
   PortFromConfig,
   StringPortConfig,
-} from '@chaingraph/types/port/types'
-import { ArrayPort } from '@chaingraph/types/port/array'
-import { ObjectPort } from '@chaingraph/types/port/object'
-import { BooleanPort, NumberPort, StringPort } from '@chaingraph/types/port/scalar'
+} from './types'
+import { AnyPort } from './any'
+import { ArrayPort } from './array'
+import { ObjectPort } from './object'
+import { BooleanPort, NumberPort, StringPort } from './scalar'
 
 export class PortFactory {
   // Function overloads
@@ -19,6 +21,7 @@ export class PortFactory {
   static create(config: BooleanPortConfig): BooleanPort
   static create<E extends PortConfig>(config: ArrayPortConfig<E>): ArrayPort<E>
   static create<S extends ObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S>
+  static create(config: AnyPortConfig): AnyPort
 
   static create<C extends PortConfig>(config: C): PortFromConfig<C> {
     switch (config.kind) {
@@ -36,6 +39,9 @@ export class PortFactory {
 
       case 'object':
         return new ObjectPort(config as ObjectPortConfig<any>) as PortFromConfig<C>
+
+      case 'any': // Handle 'any' kind
+        return new AnyPort(config as AnyPortConfig) as PortFromConfig<C>
 
       default:
         throw new Error(`Unsupported port kind: ${(config as any).kind}`)

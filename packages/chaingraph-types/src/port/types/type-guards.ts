@@ -1,4 +1,5 @@
 import type {
+  AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
   NumberPortConfig,
@@ -26,4 +27,8 @@ export function isArrayPortConfig<E extends PortConfig>(config: PortConfig): con
 
 export function isObjectPortConfig<S extends ObjectSchema>(config: PortConfig): config is ObjectPortConfig<S> {
   return config.kind === 'object'
+}
+
+export function isAnyPortConfig(config: PortConfig): config is AnyPortConfig {
+  return config.kind === 'any'
 }
