@@ -1,12 +1,12 @@
 import type { IPort, PortConfig, PortValidation } from '../types/port-interface'
 import type { PortValue } from '../types/port-values'
 import { Decimal } from 'decimal.js'
-import { PrimitivePortType } from '../types/port-types'
+import { PortTypeEnum } from '../types/port-types'
 
 /**
  * Validation rules specific to number ports
  */
-export interface NumberPortValidation extends PortValidation<PrimitivePortType.Number> {
+export interface NumberPortValidation extends PortValidation<PortTypeEnum.Number> {
   min?: number | Decimal
   max?: number | Decimal
   integer?: boolean
@@ -16,21 +16,21 @@ export interface NumberPortValidation extends PortValidation<PrimitivePortType.N
 /**
  * Configuration for number ports
  */
-export interface NumberPortConfig extends PortConfig<PrimitivePortType.Number> {
+export interface NumberPortConfig extends PortConfig<PortTypeEnum.Number> {
   validation?: NumberPortValidation
 }
 
 /**
  * Implementation of number port using Decimal.js
  */
-export class NumberPort implements IPort<PrimitivePortType.Number> {
-  readonly config: PortConfig<PrimitivePortType.Number>
+export class NumberPort implements IPort<PortTypeEnum.Number> {
+  readonly config: PortConfig<PortTypeEnum.Number>
   private _value: Decimal
 
   constructor(config: NumberPortConfig) {
     this.config = {
       ...config,
-      type: PrimitivePortType.Number,
+      type: PortTypeEnum.Number,
     }
     this._value = this.toDecimal(config.defaultValue ?? 0)
   }
@@ -39,11 +39,11 @@ export class NumberPort implements IPort<PrimitivePortType.Number> {
     return this._value
   }
 
-  getValue(): PortValue<PrimitivePortType.Number> {
+  getValue(): PortValue<PortTypeEnum.Number> {
     return this._value
   }
 
-  setValue(value: PortValue<PrimitivePortType.Number>): void {
+  setValue(value: PortValue<PortTypeEnum.Number>): void {
     if (!(value instanceof Decimal)) {
       throw new TypeError('NumberPort only accepts Decimal values')
     }
@@ -105,7 +105,7 @@ export class NumberPort implements IPort<PrimitivePortType.Number> {
     return !this._value.isNaN()
   }
 
-  clone(): IPort<PrimitivePortType.Number> {
+  clone(): IPort<PortTypeEnum.Number> {
     return new NumberPort({
       ...this.config,
       defaultValue: this._value,

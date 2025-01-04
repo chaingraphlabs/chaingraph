@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PrimitivePortType } from '../../types/port-types'
+import { PortTypeEnum } from '../../types/port-types'
 import { StringPort, type StringPortConfig } from '../string'
 
 describe('stringPort', () => {
@@ -8,7 +8,7 @@ describe('stringPort', () => {
     return new StringPort({
       id: 'test-string',
       name: 'Test String',
-      type: PrimitivePortType.String,
+      type: PortTypeEnum.String,
       ...config,
     })
   }
@@ -28,7 +28,7 @@ describe('stringPort', () => {
       const config: StringPortConfig = {
         id: 'test-id',
         name: 'Test Name',
-        type: PrimitivePortType.String,
+        type: PortTypeEnum.String,
         defaultValue: 'default',
       }
       const port = new StringPort(config)

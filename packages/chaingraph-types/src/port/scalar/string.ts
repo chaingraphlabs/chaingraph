@@ -1,11 +1,11 @@
 import type { IPort, PortConfig, PortValidation } from '@chaingraph/types/port'
 import type { PortValue } from '../types/port-values'
-import { PrimitivePortType } from '../types/port-types'
+import { PortTypeEnum } from '../types/port-types'
 
 /**
  * String port validation options
  */
-export interface StringPortValidation extends PortValidation<PrimitivePortType.String> {
+export interface StringPortValidation extends PortValidation<PortTypeEnum.String> {
   minLength?: number
   maxLength?: number
 }
@@ -13,21 +13,21 @@ export interface StringPortValidation extends PortValidation<PrimitivePortType.S
 /**
  * String port configuration
  */
-export interface StringPortConfig extends PortConfig<PrimitivePortType.String> {
+export interface StringPortConfig extends PortConfig<PortTypeEnum.String> {
   validation?: StringPortValidation
 }
 
 /**
  * String port implementation
  */
-export class StringPort implements IPort<PrimitivePortType.String> {
-  readonly config: PortConfig<PrimitivePortType.String>
+export class StringPort implements IPort<PortTypeEnum.String> {
+  readonly config: PortConfig<PortTypeEnum.String>
   private _value: string
 
   constructor(config: StringPortConfig) {
     this.config = {
       ...config,
-      type: PrimitivePortType.String,
+      type: PortTypeEnum.String,
     }
     this._value = config.defaultValue ?? ''
   }
@@ -36,11 +36,11 @@ export class StringPort implements IPort<PrimitivePortType.String> {
     return this._value
   }
 
-  getValue(): PortValue<PrimitivePortType.String> {
+  getValue(): PortValue<PortTypeEnum.String> {
     return this._value
   }
 
-  setValue(value: PortValue<PrimitivePortType.String>): void {
+  setValue(value: PortValue<PortTypeEnum.String>): void {
     if (typeof value !== 'string') {
       throw new TypeError(`StringPort expects string value, got ${typeof value}`)
     }
@@ -82,7 +82,7 @@ export class StringPort implements IPort<PrimitivePortType.String> {
     return this._value !== ''
   }
 
-  clone(): IPort<PrimitivePortType.String> {
+  clone(): IPort<PortTypeEnum.String> {
     return new StringPort({
       ...this.config,
       defaultValue: this._value,

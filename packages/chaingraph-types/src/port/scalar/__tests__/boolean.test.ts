@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { PrimitivePortType } from '../../types/port-types'
+import { PortTypeEnum } from '../../types/port-types'
 import { BooleanPort, type BooleanPortConfig } from '../boolean'
 
 describe('booleanPort', () => {
   const createConfig = (partial: Partial<BooleanPortConfig> = {}): BooleanPortConfig => ({
     id: 'test-port',
     name: 'Test Port',
-    type: PrimitivePortType.Boolean,
+    type: PortTypeEnum.Boolean,
     ...partial,
   })
 

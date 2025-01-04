@@ -1,48 +1,100 @@
-import type { ArrayPortConfig } from '@chaingraph/types/port/array'
+import type { ArrayPortConfig } from './array/array'
 import type { BooleanPortConfig } from './scalar/boolean'
 import type { NumberPortConfig } from './scalar/number'
 import type { StringPortConfig } from './scalar/string'
-import type { IPort, PortConfig } from './types/port-interface'
-import type { PortType } from './types/port-types'
+import type { IPort, PortType } from './types'
 import { ArrayPort } from './array/array'
 import { BooleanPort } from './scalar/boolean'
 import { NumberPort } from './scalar/number'
 import { StringPort } from './scalar/string'
-import { ComplexPortType, PrimitivePortType } from './types/port-types'
+import { type ArrayType, PortTypeEnum } from './types/port-types'
 
 export class PortFactory {
   /**
-   * Function overloads with more specific types
+   * Create primitive ports
    */
-  static createElementPort<T extends PortType>(
-    type: T,
+  static createStringPort(config: Omit<StringPortConfig, 'type'>): StringPort {
+    return new StringPort({
+      ...config,
+      type: PortTypeEnum.String,
+    })
+  }
+
+  static createNumberPort(config: Omit<NumberPortConfig, 'type'>): NumberPort {
+    return new NumberPort({
+      ...config,
+      type: PortTypeEnum.Number,
+    })
+  }
+
+  static createBooleanPort(config: Omit<BooleanPortConfig, 'type'>): BooleanPort {
+    return new BooleanPort({
+      ...config,
+      type: PortTypeEnum.Boolean,
+    })
+  }
+
+  /**
+   * Create array port
+   */
+  static createArrayPort<T extends PortType>(
+    elementType: T,
+    config: Omit<ArrayPortConfig<T>, 'arrayType'>,
+  ): ArrayPort<T> {
+    const arrayType: ArrayType<T> = {
+      type: PortTypeEnum.Array,
+      elementType,
+    }
+
+    return new ArrayPort({
+      ...config,
+      arrayType,
+    })
+  }
+
+  /**
+   * Universal port creator with type inference
+   */
+  static create<T extends PortType>(
+    type: T extends PortTypeEnum.String ? PortTypeEnum.String :
+      T extends PortTypeEnum.Number ? PortTypeEnum.Number :
+        T extends PortTypeEnum.Boolean ? PortTypeEnum.Boolean :
+          never,
     config: Omit<
-      T extends PrimitivePortType.String ? StringPortConfig :
-        T extends PrimitivePortType.Number ? NumberPortConfig :
-          T extends PrimitivePortType.Boolean ? BooleanPortConfig :
-            T extends ComplexPortType.Array ? ArrayPortConfig<T> :
-              never,
+      T extends PortTypeEnum.String ? StringPortConfig :
+        T extends PortTypeEnum.Number ? NumberPortConfig :
+          T extends PortTypeEnum.Boolean ? BooleanPortConfig :
+            never,
       'type'
     >
   ): IPort<T>
 
-  static createElementPort<T extends PortType>(
-    type: T,
-    config: PortConfig<any>,
-  ): IPort<any> {
-    const fullConfig = { ...config, type }
+  static create<T extends PortType>(
+    type: ArrayType<T>,
+    config: Omit<ArrayPortConfig<T>, 'arrayType'>
+  ): ArrayPort<T>
 
-    switch (type) {
-      case PrimitivePortType.String:
-        return new StringPort(fullConfig)
-      case PrimitivePortType.Number:
-        return new NumberPort(fullConfig)
-      case PrimitivePortType.Boolean:
-        return new BooleanPort(fullConfig)
-      case ComplexPortType.Array:
-        return new ArrayPort(fullConfig)
-      default:
-        throw new Error(`Unsupported port type: ${type}`)
+  static create(
+    type: PortType | ArrayType<any>,
+    config: any,
+  ): IPort<any> {
+    if (typeof type === 'string') {
+      // Primitive types
+      switch (type) {
+        case PortTypeEnum.String:
+          return this.createStringPort(config)
+        case PortTypeEnum.Number:
+          return this.createNumberPort(config)
+        case PortTypeEnum.Boolean:
+          return this.createBooleanPort(config)
+        default:
+          throw new Error(`Unsupported primitive type: ${type}`)
+      }
+    } else if (type.type === PortTypeEnum.Array) {
+      // Array type
+      return this.createArrayPort(type.elementType, config)
     }
+
+    throw new Error(`Unsupported port type: ${JSON.stringify(type)}`)
   }
 }

@@ -1,6 +1,6 @@
+import { PortTypeEnum } from '@chaingraph/types/port/types/port-types'
 import { Decimal } from 'decimal.js'
 import { describe, expect, it } from 'vitest'
-import { PrimitivePortType } from '../../types/port-types'
 import { NumberPort } from '../number'
 
 describe('numberPort', () => {
@@ -9,7 +9,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
       })
 
       expect(port.value.equals(0)).toBe(true)
@@ -19,7 +19,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         defaultValue: new Decimal(42),
       })
 
@@ -32,7 +32,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
       })
 
       const newValue = new Decimal(123.45)
@@ -44,7 +44,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
       })
 
       // @ts-expect-error Testing runtime type check
@@ -57,7 +57,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         validation: {
           min: 10,
         },
@@ -74,7 +74,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         validation: {
           max: 100,
         },
@@ -91,7 +91,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         validation: {
           integer: true,
         },
@@ -108,7 +108,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         validation: {
           validator: value => value instanceof Decimal && value.modulo(2).equals(0),
         },
@@ -128,7 +128,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         defaultValue,
       })
 
@@ -143,7 +143,7 @@ describe('numberPort', () => {
       const original = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
         defaultValue: new Decimal(42),
         validation: {
           min: 0,
@@ -164,7 +164,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
       })
 
       expect(port.hasValue()).toBe(true)
@@ -174,7 +174,7 @@ describe('numberPort', () => {
       const port = new NumberPort({
         id: 'test',
         name: 'Test Port',
-        type: PrimitivePortType.Number,
+        type: PortTypeEnum.Number,
       })
 
       port.setValue(new Decimal(Number.NaN))

@@ -1,32 +1,32 @@
 import type { IPort, PortConfig, PortValidation } from '@chaingraph/types/port'
 import type { PortValue } from '../types/port-values'
-import { PrimitivePortType } from '../types/port-types'
+import { PortTypeEnum } from '../types/port-types'
 
 /**
  * Validation rules specific to boolean ports
  * Note: Currently using base validation only,
  * but we can extend with boolean-specific rules if needed
  */
-export interface BooleanPortValidation extends PortValidation<PrimitivePortType.Boolean> {}
+export interface BooleanPortValidation extends PortValidation<PortTypeEnum.Boolean> {}
 
 /**
  * Configuration for boolean ports
  */
-export interface BooleanPortConfig extends PortConfig<PrimitivePortType.Boolean> {
+export interface BooleanPortConfig extends PortConfig<PortTypeEnum.Boolean> {
   validation?: BooleanPortValidation
 }
 
 /**
  * Implementation of boolean port
  */
-export class BooleanPort implements IPort<PrimitivePortType.Boolean> {
-  readonly config: PortConfig<PrimitivePortType.Boolean>
+export class BooleanPort implements IPort<PortTypeEnum.Boolean> {
+  readonly config: PortConfig<PortTypeEnum.Boolean>
   private _value: boolean
 
   constructor(config: BooleanPortConfig) {
     this.config = {
       ...config,
-      type: PrimitivePortType.Boolean,
+      type: PortTypeEnum.Boolean,
     }
     this._value = config.defaultValue ?? false
   }
@@ -35,11 +35,11 @@ export class BooleanPort implements IPort<PrimitivePortType.Boolean> {
     return this._value
   }
 
-  getValue(): PortValue<PrimitivePortType.Boolean> {
+  getValue(): PortValue<PortTypeEnum.Boolean> {
     return this._value
   }
 
-  setValue(value: PortValue<PrimitivePortType.Boolean>): void {
+  setValue(value: PortValue<PortTypeEnum.Boolean>): void {
     if (typeof value !== 'boolean') {
       throw new TypeError(`BooleanPort expects boolean value, got ${typeof value}`)
     }
@@ -68,7 +68,7 @@ export class BooleanPort implements IPort<PrimitivePortType.Boolean> {
     return true // Boolean always has a value (true or false)
   }
 
-  clone(): IPort<PrimitivePortType.Boolean> {
+  clone(): IPort<PortTypeEnum.Boolean> {
     return new BooleanPort({
       ...this.config,
       defaultValue: this._value,

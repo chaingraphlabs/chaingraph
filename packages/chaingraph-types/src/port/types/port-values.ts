@@ -1,131 +1,97 @@
-import type {
-  ArrayTypePortConfig,
-  ObjectTypePortConfig,
-  ObjectTypeProperty,
-} from '@chaingraph/types/port/types/port-configs'
 import type { Decimal } from 'decimal.js'
-import type { PortConfig } from './port-interface'
-import type { ComplexPortType, PortType, PrimitivePortType } from './port-types'
+import type { ComplexPortType, PortType, PortTypeEnum, PrimitivePortTypeUnion } from './port-types'
 
 // ----------------
 // Primitive Types
 // ----------------
 
 /**
- * Mapping of primitive port types to their value types
+ * Mapping primitive types to their value types
  */
 export interface PrimitiveTypeMap {
-  [PrimitivePortType.String]: string
-  [PrimitivePortType.Number]: Decimal
-  [PrimitivePortType.Boolean]: boolean
+  [PortTypeEnum.String]: string
+  [PortTypeEnum.Number]: Decimal
+  [PortTypeEnum.Boolean]: boolean
 }
 
 /**
- * Type mapping for primitive port values
+ * Get value type for primitive port type
  */
-export type PrimitivePortValue<T extends PrimitivePortType> = PrimitiveTypeMap[T]
-
-// ----------------
-// Complex Types
-// ----------------
+export type PrimitivePortValue<T extends PrimitivePortTypeUnion> = PrimitiveTypeMap[T]
 
 /**
- * Recursive type for possible port values
+ * Get value type for array elements
  */
-export type RecursivePortValue =
-  | PrimitiveTypeMap[keyof PrimitiveTypeMap]
-  | Array<RecursivePortValue>
-  | { [key: string]: RecursivePortValue }
+export type ArrayElementValue<T extends PortType> =
+    T extends PrimitivePortTypeUnion ? PrimitiveTypeMap[T]
+      : T extends ComplexPortType[PortTypeEnum.Array] ? ArrayPortValue<T['elementType']>
+        : T extends ComplexPortType[PortTypeEnum.Object] ? ObjectPortValue<T['schema']['properties']>
+          : never
 
 /**
- * Base value type mapping
+ * Get value type for array port
  */
-export interface BaseTypeMap extends PrimitiveTypeMap {
-  [ComplexPortType.Array]: Array<RecursivePortValue>
-  [ComplexPortType.Object]: { [key: string]: RecursivePortValue }
+export type ArrayPortValue<T extends PortType> = Array<ArrayElementValue<T>>
+
+/**
+ * Get value type for object port
+ */
+export type ObjectPortValue<T extends Record<string, PortType>> = {
+  [K in keyof T]: PortValue<T[K]>
 }
 
-// ----------------
-// Array Values
-// ----------------
-
 /**
- * Array value type with recursive type checking
+ * Get value type for any port type
  */
-export type ArrayValue<T extends PortType> =
-  T extends PrimitivePortType ? Array<PrimitiveTypeMap[T]> :
-    T extends ComplexPortType.Array ? Array<Array<RecursivePortValue>> :
-      T extends ComplexPortType.Object ? Array<{ [key: string]: RecursivePortValue }> :
-        never
-
-// ----------------
-// Object Values
-// ----------------
-
-/**
- * Object property value with recursive type checking
- */
-export type ObjectPropertyValue<T extends ObjectTypeProperty> =
-  T['type'] extends PrimitivePortType ? PrimitiveTypeMap[T['type']] :
-    T['type'] extends ComplexPortType.Array ? Array<RecursivePortValue> :
-      T['type'] extends ComplexPortType.Object ? { [key: string]: RecursivePortValue } :
-        never
-
-/**
- * Object value type
- */
-export type ObjectValue<T extends ObjectTypePortConfig> = {
-  [K in keyof T['properties']]: ObjectPropertyValue<T['properties'][K]>
-}
-
-// ----------------
-// Type Helpers
-// ----------------
-
-/**
- * Type mapping for complex port values
- */
-export type ComplexPortValue<T> =
-  T extends ArrayTypePortConfig<infer E>
-    ? E extends PortType
-      ? ArrayValue<E>
-      : never
-    : T extends ObjectTypePortConfig
-      ? ObjectValue<T>
+export type PortValue<T extends PortType> = T extends PrimitivePortTypeUnion
+  ? PrimitiveTypeMap[T]
+  : T extends ComplexPortType[PortTypeEnum.Array]
+    ? ArrayPortValue<T['elementType']>
+    : T extends ComplexPortType[PortTypeEnum.Object]
+      ? ObjectPortValue<T['schema']['properties']>
       : never
 
 /**
- * Combined type for all possible port values
- */
-export type PortValue<T> =
-  T extends PortType | ArrayTypePortConfig<PortType> | ObjectTypePortConfig
-    ? T extends PrimitivePortType ? PrimitiveTypeMap[T]
-      : T extends ArrayTypePortConfig<infer E>
-        ? E extends PortType
-          ? ArrayValue<E>
-          : never
-        : T extends ObjectTypePortConfig
-          ? ObjectValue<T>
-          : never
-    : never
-
-/**
- * Helper type for array port values
- */
-export type ArrayPortValue<T extends PortType> = PortValue<Array<T>>
-
-/**
- * Helper for unwrapping array port values
- */
-export type UnwrapArrayPortValue<T extends PortType> =
-    ArrayPortValue<T> extends Array<infer U> ? Array<PortValue<T>> : never
-
-/**
- * Helper for extracting the value type from a port type
+ * Helper type for extracting value type from port config
  */
 export type ExtractPortValue<T extends PortType> = PortValue<T>
 
-/**
- * Helper for extracting the value type from a port config
- */
-export type ExtractConfigValue<T extends PortConfig<PortType>> = PortValue<T['type']>
+// ----------------
+// Array Helpers
+// ----------------
+
+// ----------------
+// Examples
+// ----------------
+
+// Primitive examples
+// type StringValue = PortValue<PortTypeEnum.String> // string
+// type NumberValue = PortValue<PortTypeEnum.Number> // Decimal
+// type BooleanValue = PortValue<PortTypeEnum.Boolean> // boolean
+//
+// // Example with explicit type
+// const stringArrayType = {
+//   type: PortTypeEnum.Array,
+//   elementType: PortTypeEnum.String,
+// } as const satisfies ComplexPortType[PortTypeEnum.Array]
+//
+// type StringArrayValue = PortValue<typeof stringArrayType>// string[]
+//
+// // Usage examples:
+// const numberArrayType: ArrayType<PortTypeEnum.Number> = {
+//   type: PortTypeEnum.Array,
+//   elementType: PortTypeEnum.Number,
+// } as const
+//
+// type NumberArrayValue = PortValue<typeof numberArrayType> // Should infer Decimal[]
+//
+// // Another example with helper function
+// function createArrayType<T extends PortType>(elementType: T): ArrayType<T> {
+//   return {
+//     type: PortTypeEnum.Array,
+//     elementType,
+//   } as const
+// }
+//
+// const stringArrayType2 = createArrayType(PortTypeEnum.String)
+// type StringArrayValue2 = PortValue<typeof stringArrayType2> // Should infer string[]

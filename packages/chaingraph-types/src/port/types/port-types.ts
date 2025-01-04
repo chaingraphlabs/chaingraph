@@ -1,35 +1,79 @@
 /**
- * Primitive port types
+ * Base enum for all available port types
  */
-export enum PrimitivePortType {
+export enum PortTypeEnum {
+  // Primitive types
   String = 'string',
   Number = 'number',
   Boolean = 'boolean',
-}
 
-/**
- * Complex port types for structured data
- */
-export enum ComplexPortType {
+  // Complex types
   Array = 'array',
   Object = 'object',
 }
 
 /**
- * Union of all possible port types
+ * Primitive port types derived from PortTypeEnum
  */
-export type PortType = PrimitivePortType | ComplexPortType
+export type PrimitivePortTypeUnion =
+  | PortTypeEnum.String
+  | PortTypeEnum.Number
+  | PortTypeEnum.Boolean
+
+export const PrimitivePortType = {
+  [PortTypeEnum.String]: PortTypeEnum.String,
+  [PortTypeEnum.Number]: PortTypeEnum.Number,
+  [PortTypeEnum.Boolean]: PortTypeEnum.Boolean,
+} as const
 
 /**
- * Type guard for primitive port types
+ * Object schema for structured data
  */
-export function isPrimitivePortType(type: PortType): type is PrimitivePortType {
-  return Object.values(PrimitivePortType).includes(type as PrimitivePortType)
+export interface ObjectSchema {
+  properties: Record<string, PortType>
+  required?: string[]
 }
 
 /**
- * Type guard for complex port types
+ * Complex port types for structured data
  */
-export function isComplexPortType(type: PortType): type is ComplexPortType {
-  return Object.values(ComplexPortType).includes(type as ComplexPortType)
+export interface ComplexPortType {
+  [PortTypeEnum.Array]: {
+    type: PortTypeEnum.Array
+    elementType: PortType
+  }
+  [PortTypeEnum.Object]: {
+    type: PortTypeEnum.Object
+    schema: ObjectSchema
+  }
+}
+
+/**
+ /* Helper type for creating strictly typed array configurations
+ */
+export interface ArrayType<T extends PortType> {
+  readonly type: PortTypeEnum.Array
+  readonly elementType: T
+}
+
+/**
+ * Union of all possible port types
+ */
+export type PortType =
+  | PrimitivePortTypeUnion
+  | ComplexPortType[keyof ComplexPortType]
+
+/**
+ * Type guards
+ */
+export function isPrimitivePortType(type: PortType): type is PrimitivePortTypeUnion {
+  return Object.values(PrimitivePortType).includes(type as PrimitivePortTypeUnion)
+}
+
+export function isArrayPortType(type: PortType): type is ComplexPortType[PortTypeEnum.Array] {
+  return typeof type === 'object' && 'type' in type && type.type === PortTypeEnum.Array
+}
+
+export function isObjectPortType(type: PortType): type is ComplexPortType[PortTypeEnum.Object] {
+  return typeof type === 'object' && 'type' in type && type.type === PortTypeEnum.Object
 }

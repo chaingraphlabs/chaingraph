@@ -1,43 +1,59 @@
-import type { IPort, PortConfig, PortType, PortValue } from '@chaingraph/types/port'
 import type {
-  ArrayPortValue,
-  UnwrapArrayPortValue,
-} from '@chaingraph/types/port/types/port-values'
-import type { ArrayPortConfig } from './types'
-import { ComplexPortType, PortFactory } from '@chaingraph/types/port'
+  IPort,
+  PortConfig,
+  PortType,
+  PortValue,
+} from '@chaingraph/types/port'
+import type { ArrayType } from '@chaingraph/types/port/types/port-types'
+import type { ArrayPortValue } from '@chaingraph/types/port/types/port-values'
+import { PortFactory } from '../factory'
 
-export class ArrayPort<T extends PortType> implements IPort<ComplexPortType.Array> {
-  readonly config: PortConfig<ComplexPortType.Array>
-  private values: UnwrapArrayPortValue<T> = []
+export interface ArrayPortValidation<T extends PortType> {
+  validator?: (value: ArrayPortValue<T>) => boolean | Promise<boolean>
+  errorMessage?: string
+}
+
+export interface ArrayPortConfig<T extends PortType> {
+  /** Base port configuration */
+  portConfig: Omit<PortConfig<ArrayType<T>>, 'validation'> & {
+    validation?: ArrayPortValidation<T>
+  }
+  /** Array type configuration */
+  arrayType: ArrayType<T>
+  /** Default array value */
+  defaultValue?: ArrayPortValue<T>
+}
+
+export class ArrayPort<T extends PortType> implements IPort<ArrayType<T>> {
+  readonly config: PortConfig<ArrayType<T>>
+  private values: ArrayPortValue<T>
   private portCache = new Map<number, IPort<T>>()
-  private readonly elementType: T
-  private readonly elementConfig: PortConfig<T>
+  private readonly arrayType: ArrayType<T>
 
   constructor(config: ArrayPortConfig<T>) {
-    this.config = config
-    this.elementType = config.element.type
-    this.elementConfig = config.element.config
-    this.values = (config.defaultValue ?? []) as UnwrapArrayPortValue<T>
+    this.config = config.portConfig
+    this.arrayType = config.arrayType
+    this.values = config.defaultValue ?? []
   }
 
-  get value(): ArrayPortValue<T> {
-    return this.values as ArrayPortValue<T>
+  get value(): PortValue<ArrayType<T>> {
+    return this.values as PortValue<ArrayType<T>>
   }
 
-  getValue(): ArrayPortValue<T> {
-    return this.values as ArrayPortValue<T>
+  getValue(): PortValue<ArrayType<T>> {
+    return this.values as PortValue<ArrayType<T>>
   }
 
-  setValue(value: ArrayPortValue<T>): void {
+  setValue(value: PortValue<ArrayType<T>>): void {
     if (!Array.isArray(value)) {
       throw new TypeError('ArrayPort expects array value')
     }
-    this.values = [...value] as UnwrapArrayPortValue<T>
+    this.values = [...value]
     this.clearPortCache()
   }
 
   reset(): void {
-    this.values = (this.config.defaultValue ?? []) as ArrayPortValue<T>
+    this.values = (this.config.defaultValue ?? []) as PortValue<ArrayType<T>>
     this.clearPortCache()
   }
 
@@ -45,18 +61,15 @@ export class ArrayPort<T extends PortType> implements IPort<ComplexPortType.Arra
     return this.values.length > 0
   }
 
-  clone(): IPort<ComplexPortType.Array> {
+  clone(): IPort<ArrayType<T>> {
     return new ArrayPort<T>({
-      id: this.config.id,
-      name: this.config.name,
-      type: ComplexPortType.Array,
-      defaultValue: [...this.values] as ArrayPortValue<T>,
-      validation: this.config.validation,
-      metadata: this.config.metadata,
-      element: {
-        type: this.elementType,
-        config: this.elementConfig,
+      portConfig: {
+        ...this.config,
+        type: this.arrayType,
+        validation: this.config.validation as ArrayPortValidation<T>,
       },
+      arrayType: this.arrayType,
+      defaultValue: [...this.values],
     })
   }
 
@@ -65,13 +78,14 @@ export class ArrayPort<T extends PortType> implements IPort<ComplexPortType.Arra
       return false
     }
 
-    if (this.config.validation?.validator) {
-      return this.config.validation.validator(this.values as ArrayPortValue<T>)
+    if (this.config.validation && this.isArrayPortValidation(this.config.validation)) {
+      return this.config.validation.validator?.(this.values) ?? true
     }
 
     return true
   }
 
+  // Array-specific methods
   get length(): number {
     return this.values.length
   }
@@ -103,18 +117,31 @@ export class ArrayPort<T extends PortType> implements IPort<ComplexPortType.Arra
   }
 
   private createElementPort(index: number): IPort<T> {
-    const port = PortFactory.create<T>(
-      this.elementType,
+    return PortFactory.create(
+      this.arrayType.elementType,
       {
         id: `${this.config.id}_${index}`,
         name: `${this.config.name}[${index}]`,
         defaultValue: this.values[index],
       },
     )
-    return port
   }
 
   private clearPortCache(): void {
     this.portCache.clear()
+  }
+
+  private isArrayPortValidation(
+    validation: unknown,
+  ): validation is ArrayPortValidation<T> {
+    return (
+      validation !== null
+      && typeof validation === 'object'
+      && ('validator' in validation || 'errorMessage' in validation)
+      && (
+        !('validator' in validation)
+        || typeof validation.validator === 'function'
+      )
+    )
   }
 }
