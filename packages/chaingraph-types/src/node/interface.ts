@@ -21,10 +21,10 @@ export interface INode {
   readonly status: NodeStatus
 
   /** Input ports mapped by ID */
-  readonly inputs: Map<string, IPort>
+  readonly inputs: Map<string, IPort<any>>
 
   /** Output ports mapped by ID */
-  readonly outputs: Map<string, IPort>
+  readonly outputs: Map<string, IPort<any>>
 
   /**
    * Initialize the node
@@ -65,7 +65,7 @@ export interface INode {
    * Add a port to the node
    * @param config Port configuration
    */
-  addPort: (config: PortConfig) => IPort
+  addPort: (config: PortConfig) => IPort<any>
 
   /**
    * Remove a port from the node
@@ -77,5 +77,5 @@ export interface INode {
    * Get a port by ID
    * @param portId ID of the port
    */
-  getPort: (portId: string) => IPort | undefined
+  getPort: (portId: string) => IPort<any> | undefined
 }

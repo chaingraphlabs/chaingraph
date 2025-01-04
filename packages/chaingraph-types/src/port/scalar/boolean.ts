@@ -1,77 +1,36 @@
-import type { IPort, PortConfig, PortValidation } from '@chaingraph/types/port'
-import type { PortValue } from '../types/port-values'
-import { PortTypeEnum } from '../types/port-types'
+import type { BooleanPortConfig, IPort } from '@chaingraph/types/port'
 
-/**
- * Validation rules specific to boolean ports
- * Note: Currently using base validation only,
- * but we can extend with boolean-specific rules if needed
- */
-export interface BooleanPortValidation extends PortValidation<PortTypeEnum.Boolean> {}
-
-/**
- * Configuration for boolean ports
- */
-export interface BooleanPortConfig extends PortConfig<PortTypeEnum.Boolean> {
-  validation?: BooleanPortValidation
-}
-
-/**
- * Implementation of boolean port
- */
-export class BooleanPort implements IPort<PortTypeEnum.Boolean> {
-  readonly config: PortConfig<PortTypeEnum.Boolean>
-  private _value: boolean
+export class BooleanPort implements IPort<BooleanPortConfig> {
+  readonly config: BooleanPortConfig
+  value: boolean
 
   constructor(config: BooleanPortConfig) {
-    this.config = {
-      ...config,
-      type: PortTypeEnum.Boolean,
-    }
-    this._value = config.defaultValue ?? false
+    this.config = config
+    this.value = config.defaultValue ?? false
   }
 
-  get value(): boolean {
-    return this._value
+  getValue(): boolean {
+    return this.value
   }
 
-  getValue(): PortValue<PortTypeEnum.Boolean> {
-    return this._value
-  }
-
-  setValue(value: PortValue<PortTypeEnum.Boolean>): void {
-    if (typeof value !== 'boolean') {
-      throw new TypeError(`BooleanPort expects boolean value, got ${typeof value}`)
-    }
-    this._value = value
+  setValue(value: boolean): void {
+    this.value = value
   }
 
   async validate(): Promise<boolean> {
-    const validation = (this.config as BooleanPortConfig).validation
-    if (!validation) {
-      return true
-    }
-
-    // Check custom validator if exists
-    if (validation.validator) {
-      return validation.validator(this._value)
-    }
-
+    // Implement your validation logic here
     return true
   }
 
   reset(): void {
-    this._value = this.config.defaultValue ?? false
+    this.value = this.config.defaultValue ?? false
   }
 
   hasValue(): boolean {
-    return true // Boolean always has a value (true or false)
+    return this.value !== false
   }
 
-  clone(): IPort<PortTypeEnum.Boolean> {
-    return new BooleanPort({
-      ...this.config,
-      defaultValue: this._value,
-    })
+  clone(): IPort<BooleanPortConfig> {
+    return new BooleanPort({ ...this.config, defaultValue: this.value })
   }
 }

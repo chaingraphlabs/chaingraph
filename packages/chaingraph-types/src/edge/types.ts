@@ -1,5 +1,5 @@
-import type { INode } from '../node'
-import type { IPort } from '../port'
+import type { INode } from '@chaingraph/types/node'
+import type { IPort } from '@chaingraph/types/port'
 
 /**
  * Edge status representing the current state of the connection
@@ -69,12 +69,12 @@ export interface EdgeEndpoints {
     nodeId: string
     portId: string
     node: INode
-    port: IPort
+    port: IPort<any>
   }
   target: {
     nodeId: string
     portId: string
     node: INode
-    port: IPort
+    port: IPort<any>
   }
 }

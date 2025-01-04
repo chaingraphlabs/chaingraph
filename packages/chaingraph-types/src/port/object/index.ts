@@ -1,2 +1,2 @@
-export * from './object'
-export * from './types'
+export * from './object-port'
+export * from './object-schema'
