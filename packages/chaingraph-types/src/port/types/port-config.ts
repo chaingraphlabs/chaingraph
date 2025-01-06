@@ -8,16 +8,21 @@ import type {
   ObjectSchema,
   StringPort,
 } from '@chaingraph/types/port'
+import type { MultiChannel } from '@chaingraph/types/port/channel/multi-channel'
 import type { EnumPort } from '@chaingraph/types/port/enum/enum-port'
+import type { StreamInputPort } from '@chaingraph/types/port/stream/stream-input-port'
+import type { StreamOutputPort } from '@chaingraph/types/port/stream/stream-output-port'
 
 export type PortKind =
-  'string' |
-  'number' |
-  'boolean' |
-  'array' |
-  'object' |
-  'any' |
-  'enum'
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'array'
+  | 'object'
+  | 'any'
+  | 'enum'
+  | 'stream-output'
+  | 'stream-input'
 
 interface BasePortConfig<K extends PortKind> {
   id: string
@@ -98,6 +103,16 @@ export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<'en
   validation?: EnumPortValidation<E>
 }
 
+export interface StreamOutputPortConfig<T> extends BasePortConfig<'stream-output'> {
+  kind: 'stream-output'
+  valueType: PortConfig
+}
+
+export interface StreamInputPortConfig<T> extends BasePortConfig<'stream-input'> {
+  kind: 'stream-input'
+  valueType: PortConfig
+}
+
 // Union type of all PortConfigs
 export type PortConfig =
   | StringPortConfig
@@ -107,6 +122,8 @@ export type PortConfig =
   | ObjectPortConfig<any>
   | AnyPortConfig
   | EnumPortConfig<any>
+  | StreamOutputPortConfig<any>
+  | StreamInputPortConfig<any>
 
 export type PortFromConfig<C extends PortConfig> =
   C extends StringPortConfig ? StringPort :
@@ -116,7 +133,9 @@ export type PortFromConfig<C extends PortConfig> =
           C extends ObjectPortConfig<infer S> ? ObjectPort<S> :
             C extends AnyPortConfig ? AnyPort :
               C extends EnumPortConfig<infer E> ? EnumPort<E> :
-                never
+                C extends StreamOutputPortConfig<infer T> ? StreamOutputPort<T> :
+                  C extends StreamInputPortConfig<infer T> ? StreamInputPort<T> :
+                    never
 
 export type PortValueFromConfig<C extends PortConfig> =
   C extends StringPortConfig ? string :
@@ -126,4 +145,6 @@ export type PortValueFromConfig<C extends PortConfig> =
           C extends ObjectPortConfig<infer S> ? ObjectPortValueFromSchema<S> :
             C extends AnyPortConfig ? any :
               C extends EnumPortConfig<any> ? string | null :
-                never
+                C extends StreamOutputPortConfig<infer T> ? MultiChannel<T> :
+                  C extends StreamInputPortConfig<infer T> ? MultiChannel<T> | null :
+                    never

@@ -7,24 +7,19 @@ import type {
   ObjectPortConfig,
   PortConfig,
   PortFromConfig,
+  StreamInputPortConfig,
+  StreamOutputPortConfig,
   StringPortConfig,
 } from './types'
 import { EnumPort } from '@chaingraph/types/port/enum/enum-port'
+import { StreamInputPort } from '@chaingraph/types/port/stream/stream-input-port'
+import { StreamOutputPort } from '@chaingraph/types/port/stream/stream-output-port'
 import { AnyPort } from './any'
 import { ArrayPort } from './array'
 import { ObjectPort } from './object'
 import { BooleanPort, NumberPort, StringPort } from './scalar'
 
 export class PortFactory {
-  // Function overloads
-  // static create(config: StringPortConfig): StringPort
-  // static create(config: NumberPortConfig): NumberPort
-  // static create(config: BooleanPortConfig): BooleanPort
-  // static create<E extends PortConfig>(config: ArrayPortConfig<E>): ArrayPort<E>
-  // static create<S extends ObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S>
-  // static create(config: AnyPortConfig): AnyPort
-  // static create<E extends PortConfig>(config: EnumPortConfig<E>): EnumPort<E>
-
   static create<C extends PortConfig>(config: C): PortFromConfig<C> {
     switch (config.kind) {
       case 'string':
@@ -47,6 +42,12 @@ export class PortFactory {
 
       case 'enum':
         return new EnumPort(config as EnumPortConfig<any>) as PortFromConfig<C>
+
+      case 'stream-output':
+        return new StreamOutputPort(config as StreamOutputPortConfig<any>) as PortFromConfig<C>
+
+      case 'stream-input':
+        return new StreamInputPort(config as StreamInputPortConfig<any>) as PortFromConfig<C>
 
       default:
         throw new Error(`Unsupported port kind: ${(config as any).kind}`)
