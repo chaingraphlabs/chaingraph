@@ -1,8 +1,4 @@
-import type {
-  ObjectPortConfig,
-  ObjectSchema,
-  PortConfig,
-} from '@chaingraph/types'
+import type { ObjectSchema, PortConfig } from '@chaingraph/types'
 import type { INode } from './interface'
 import {
   getOrCreateNodeMetadata,
@@ -24,13 +20,18 @@ export class PortConfigProcessor {
     }
 
     for (const [propertyKey, portConfig] of nodeMetadata.portsConfig.entries()) {
-      this.processPortConfig(portConfig, {
+      const newPortConfig = this.processPortConfig({
+        ...portConfig,
+      }, {
         node,
         nodeId,
         parentPortConfig: null,
         property: (node as any)[propertyKey],
         propertyKey,
       })
+
+      // Update the port config in the node metadata
+      nodeMetadata.portsConfig.set(propertyKey, newPortConfig)
     }
   }
 
@@ -43,17 +44,38 @@ export class PortConfigProcessor {
       property: any
       propertyKey: string
     },
-  ): void {
+  ): PortConfig {
     const { node, nodeId, parentPortConfig, propertyKey, property } = context
 
     // id
-    if (!portConfig.id) {
-      portConfig.id = propertyKey || this.generateSortableUUID()
+    // if (!portConfig.id) {
+    // portConfig.id = propertyKey || this.generateSortableUUID()
+    if (portConfig.id === undefined) {
+      if (parentPortConfig?.id) {
+        portConfig.id = `${parentPortConfig?.id}.${propertyKey}` || this.generateSortableUUID()
+        // if (!isArrayPortConfig(parentPortConfig)) {
+        // } else {
+        //   portConfig.id = `${parentPortConfig?.id}` || this.generateSortableUUID()
+        // }
+      } else {
+        portConfig.id = propertyKey || this.generateSortableUUID()
+      }
+    } else {
+      if (parentPortConfig?.id) {
+        portConfig.id = `${parentPortConfig?.id}.${portConfig.id}` || this.generateSortableUUID()
+        // if (!isArrayPortConfig(parentPortConfig)) {
+        // } else {
+        //   portConfig.id = `${portConfig.id}` || this.generateSortableUUID()
+        // }
+      } else {
+        portConfig.id = portConfig.id || this.generateSortableUUID()
+      }
     }
+    // }
 
     // name
     if (!portConfig.name) {
-      portConfig.name = portConfig.title || `${portConfig.id}_port`
+      portConfig.name = portConfig.title || portConfig.id
     }
 
     // defaultValue
@@ -65,7 +87,10 @@ export class PortConfigProcessor {
     }
 
     // parentId
-    if (!portConfig.parentId && parentPortConfig?.id) {
+    if (
+      (!portConfig.parentId && parentPortConfig?.id)
+      || (parentPortConfig?.id !== undefined && portConfig.parentId !== parentPortConfig?.id)
+    ) {
       portConfig.parentId = parentPortConfig.id
     }
 
@@ -114,82 +139,105 @@ export class PortConfigProcessor {
 
       // Now process each property in the schema
       for (const [key, nestedPortConfig] of Object.entries(portConfig.schema.properties)) {
-        this.processPortConfig(nestedPortConfig, {
-          node: property, // Move into the object instance
-          nodeId,
-          parentPortConfig: portConfig,
-          propertyKey: key,
-          property: property?.[key],
-        })
+        // Update the port config in the schema
+
+        if (isObjectPortConfig(nestedPortConfig)) {
+          portConfig.schema.properties[key] = this.processPortConfig({
+            ...nestedPortConfig,
+          }, {
+            node: property, // Move into the object instance
+            nodeId,
+            parentPortConfig: portConfig,
+            propertyKey: key,
+            property: portConfig.defaultValue?.[key],
+          })
+        } else {
+          const parentID = portConfig.id
+
+          // if (isArrayPortConfig(portConfig)) {
+          //   parentID = ''
+          // }
+
+          portConfig.schema.properties[key] = this.processPortConfig({
+            ...nestedPortConfig,
+          }, {
+            node: property, // Move into the object instance
+            nodeId,
+            parentPortConfig: {
+              ...portConfig,
+              id: parentID,
+            },
+            propertyKey: key,
+            property: property?.[key],
+          })
+        }
       }
     } else if (isArrayPortConfig(portConfig)) {
       if (!portConfig.elementConfig || !portConfig.elementConfig.kind) {
         throw new Error(`Element king type or config for array port '${propertyKey}' is not defined.`)
       }
 
-      if (typeof portConfig.elementConfig.kind === 'function') {
+      const kind = portConfig.elementConfig.kind
+      if (typeof kind === 'function') {
         // elementConfig is a class constructor
-        // const elementClass = portConfig.elementConfig.kind
-        const elementClass = (portConfig.elementConfig as any).kind
-        const elementPrototype = (elementClass as any).prototype
-
+        const elementPrototype = (kind as any).prototype
         const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
         if (!elementMetadata.portsConfig) {
           throw new Error(`No portsConfig found in element class metadata for array port '${propertyKey}'.`)
         }
 
         // Build the schema for the element
-        const schema = {
+        const elementSchema = {
           id: elementMetadata?.id,
           type: elementMetadata?.type,
           properties: {} as { [key: string]: PortConfig },
         } as ObjectSchema
 
         for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
-          schema.properties[nestedPropertyKey] = nestedPortConfig
+          elementSchema.properties[nestedPropertyKey] = nestedPortConfig
         }
 
-        const elementPortConfig: ObjectPortConfig<any> = {
+        portConfig.elementConfig = {
           kind: PortKindEnum.Object,
-          schema,
+          schema: elementSchema,
           defaultValue: (portConfig.elementConfig as any).defaultValue,
         }
 
-        // Replace elementConfig with the new ObjectPortConfig
-        portConfig.elementConfig = elementPortConfig
-
-        this.processPortConfig(portConfig.elementConfig, {
+        portConfig.elementConfig = this.processPortConfig({
+          ...portConfig.elementConfig,
+        }, {
           node,
           nodeId,
-          parentPortConfig: portConfig,
-          propertyKey: '',
+          parentPortConfig: {
+            ...portConfig,
+          },
+          propertyKey: `${portConfig.id}.element`,
           property: elementPrototype,
         })
       } else if (isPortConfig(portConfig.elementConfig)) {
-        // elementConfig is already a PortConfig (e.g., for primitive types)
-        // Ensure required fields are set on elementConfig
-        this.processPortConfig(portConfig.elementConfig, {
+        portConfig.elementConfig = this.processPortConfig({
+          ...portConfig.elementConfig,
+        }, {
           node,
           nodeId,
-          parentPortConfig: portConfig,
-          propertyKey: 'element',
+          parentPortConfig: {
+            ...portConfig,
+            // id: '',
+          },
+          propertyKey: `${portConfig.id}.element`,
           property: portConfig.elementConfig,
         })
+      } else {
+        throw new Error(`Invalid elementConfig for array port '${propertyKey}'.`)
       }
-      //
-      // if (portConfig.elementConfig) {
-      //   this.processPortConfig(portConfig.elementConfig, {
-      //     node,
-      //     nodeId,
-      //     parentPortConfig: portConfig,
-      //     propertyKey: '',
-      //   })
-      // }
     } else if (isEnumPortConfig(portConfig)) {
       // Enum port-specific processing
       if (portConfig.options && portConfig.options.length > 0) {
-        for (const option of portConfig.options) {
-          this.processPortConfig(option, {
+        for (const [key, option] of portConfig.options.entries()) {
+          // Update the option in the options array
+          portConfig.options[key] = this.processPortConfig({
+            ...option,
+          }, {
             node,
             nodeId,
             parentPortConfig: portConfig,
@@ -198,7 +246,12 @@ export class PortConfigProcessor {
           })
         }
       }
+    } else {
+      // No further processing needed
+      console.log('No further processing needed for port:', portConfig)
     }
+
+    return portConfig
   }
 
   private generateSortableUUID(): string {

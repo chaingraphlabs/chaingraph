@@ -51,16 +51,24 @@ export function isEnumPortConfig<E extends PortConfig>(config: PortConfig): conf
   return config.kind === PortKindEnum.Enum
 }
 
-export function isPortConfig(config: PortConfig): config is PortConfig {
-  return config.kind in PortKindEnum
-}
-
 export function isStreamInputPortConfig<T>(config: PortConfig): config is StreamInputPortConfig<T> {
   return config.kind === PortKindEnum.StreamInput
 }
 
 export function isStreamOutputPortConfig<T>(config: PortConfig): config is StreamInputPortConfig<T> {
   return config.kind === PortKindEnum.StreamOutput
+}
+
+export function isPortConfig(config: PortConfig): config is PortConfig {
+  return isStringPortConfig(config)
+    || isNumberPortConfig(config)
+    || isBooleanPortConfig(config)
+    || isArrayPortConfig(config)
+    || isObjectPortConfig(config)
+    || isAnyPortConfig(config)
+    || isEnumPortConfig(config)
+    || isStreamInputPortConfig(config)
+    || isStreamOutputPortConfig(config)
 }
 
 export function isStringPort(port: IPort<any>): port is StringPort {

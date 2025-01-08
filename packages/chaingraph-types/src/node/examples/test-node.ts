@@ -29,6 +29,14 @@ export class TestUserObject {
 
   @PortObject()
   address: TestUserAddress = new TestUserAddress()
+
+  @PortArray({
+    elementConfig: {
+      kind: PortKindEnum.String,
+      defaultValue: '',
+    },
+  })
+  emails: string[] = []
 }
 
 @PortObjectSchema()
@@ -71,9 +79,49 @@ export class TestNode extends BaseNode {
   @Output() @PortArray({
     elementConfig: {
       kind: PortKindEnum.String,
+      defaultValue: '',
     },
   })
   strings: string[] = ['0', '1', '2', '3']
+
+  @Output() @PortArray({
+    defaultValue: [[0, 0], [0, 0]],
+    elementConfig: {
+      id: 'y',
+      name: 'Y',
+      kind: PortKindEnum.Array,
+      defaultValue: [0, 0],
+      elementConfig: {
+        id: 'x',
+        name: 'X',
+        kind: PortKindEnum.Number,
+        defaultValue: 0,
+      },
+    },
+  })
+  numbers2d: number[][] = [[0, 0], [0, 0]]
+
+  @Output() @PortArray({
+    elementConfig: {
+      id: 'z',
+      name: 'Z',
+      kind: PortKindEnum.Array,
+      defaultValue: [],
+      elementConfig: {
+        id: 'y',
+        name: 'Y',
+        kind: PortKindEnum.Array,
+        defaultValue: [],
+        elementConfig: {
+          id: 'x',
+          name: 'X',
+          kind: PortKindEnum.Number,
+          defaultValue: 0,
+        },
+      },
+    },
+  })
+  numbers3d: number[][][] = [[[0, 1], [2, 3]], [[4, 5], [6, 7]]]
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
