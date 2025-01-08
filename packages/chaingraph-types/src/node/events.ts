@@ -1,20 +1,10 @@
-import type { NodeExecutionResult, NodeStatus } from './types'
-
-/**
- * Node event types
- */
-export type NodeEventType =
-  | 'status-change'
-  | 'port-value-change'
-  | 'execution-start'
-  | 'execution-complete'
-  | 'error'
+import type { NodeExecutionResult } from './execution'
+import type { NodeStatus } from './types'
 
 /**
  * Base node event interface
  */
 export interface NodeEvent {
-  type: NodeEventType
   nodeId: string
   timestamp: Date
 }
@@ -29,13 +19,10 @@ export interface NodeStatusChangeEvent extends NodeEvent {
 }
 
 /**
- * Port value change event
+ * Execution start event
  */
-export interface NodePortValueChangeEvent extends NodeEvent {
-  type: 'port-value-change'
-  portId: string
-  oldValue: unknown
-  newValue: unknown
+export interface NodeExecutionStartEvent extends NodeEvent {
+  type: 'execution-start'
 }
 
 /**
@@ -47,9 +34,30 @@ export interface NodeExecutionCompleteEvent extends NodeEvent {
 }
 
 /**
- * Node event union type
+ * Node error event
  */
-export type NodeEvents =
-  | NodeStatusChangeEvent
-  | NodePortValueChangeEvent
-  | NodeExecutionCompleteEvent
+export interface NodeErrorEvent extends NodeEvent {
+  type: 'error'
+  error: Error
+}
+
+/**
+ * Port value change event
+ */
+export interface NodePortValueChangeEvent extends NodeEvent {
+  type: 'port-value-change'
+  portId: string
+  oldValue: unknown
+  newValue: unknown
+}
+
+/**
+ * Node events mapped by event type
+ */
+export interface NodeEvents {
+  'status-change': NodeStatusChangeEvent
+  'execution-start': NodeExecutionStartEvent
+  'execution-complete': NodeExecutionCompleteEvent
+  'error': NodeErrorEvent
+  'port-value-change': NodePortValueChangeEvent
+}

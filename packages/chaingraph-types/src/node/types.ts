@@ -14,23 +14,25 @@ export type NodeCategory =
  */
 export type NodeStatus =
   | 'idle'
-  | 'running'
+  | 'initialized'
+  | 'ready'
+  | 'executing'
   | 'completed'
   | 'error'
-  | 'cancelled'
+  | 'disposed'
 
 /**
  * Node configuration metadata
  */
 export interface NodeMetadata {
-  /** Unique identifier for the node type */
+  /** Display name of the node */
   type: string
 
   /** Display name of the node */
   title: string
 
   /** Node category for organization */
-  category: NodeCategory
+  category: string
 
   /** Detailed description */
   description?: string
@@ -41,45 +43,14 @@ export interface NodeMetadata {
   /** Icon identifier */
   icon?: string
 
+  /** Tags for organization */
+  tags?: string[]
+
+  /** Author information */
+  author?: string
+
   /** Custom metadata */
   [key: string]: unknown
-}
-
-/**
- * Node execution context
- */
-export interface NodeExecutionContext {
-  /** Unique execution ID */
-  executionId: string
-
-  /** Timestamp when execution started */
-  startTime: Date
-
-  /** Parent flow ID if part of a flow */
-  flowId?: string
-
-  /** Additional context data */
-  metadata?: Record<string, unknown>
-}
-
-/**
- * Node execution result
- */
-export interface NodeExecutionResult {
-  /** Execution status */
-  status: NodeStatus
-
-  /** Output values by port ID */
-  outputs: Record<string, unknown>
-
-  /** Execution time in milliseconds */
-  executionTime: number
-
-  /** Error details if status is 'error' */
-  error?: Error
-
-  /** Additional result metadata */
-  metadata?: Record<string, unknown>
 }
 
 /**
@@ -95,4 +66,7 @@ export interface NodeValidationResult {
     message: string
     portId?: string
   }>
+
+  /** Additional validation metadata */
+  metadata?: Record<string, unknown>
 }

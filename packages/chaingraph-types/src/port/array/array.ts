@@ -1,4 +1,13 @@
-import type { ArrayPortConfig, IPort, PortConfig, PortValueFromConfig } from '@chaingraph/types/port'
+import type {
+  ArrayPortConfig,
+  IPort,
+  PortConfig,
+  PortFromConfig,
+  PortValueFromConfig,
+} from '@chaingraph/types/port'
+import {
+  PortFactory,
+} from '@chaingraph/types/port'
 
 export class ArrayPort<E extends PortConfig> implements IPort<ArrayPortConfig<E>> {
   readonly config: ArrayPortConfig<E>
@@ -32,5 +41,9 @@ export class ArrayPort<E extends PortConfig> implements IPort<ArrayPortConfig<E>
 
   clone(): IPort<ArrayPortConfig<E>> {
     return new ArrayPort({ ...this.config, defaultValue: this.value })
+  }
+
+  createElementPort(): PortFromConfig<E> {
+    return PortFactory.create(this.config.elementConfig)
   }
 }

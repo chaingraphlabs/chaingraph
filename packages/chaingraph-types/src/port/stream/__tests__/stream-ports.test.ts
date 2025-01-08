@@ -1,5 +1,12 @@
-import type { StreamInputPortConfig, StreamOutputPortConfig } from '../../types'
+import type {
+  StreamInputPortConfig,
+  StreamOutputPortConfig,
+} from '../../types'
 import { describe, expect, it } from 'vitest'
+import {
+  PortDirectionEnum,
+  PortKindEnum,
+} from '../../types'
 import { StreamInputPort } from '../stream-input-port'
 import { StreamOutputPort } from '../stream-output-port'
 
@@ -9,11 +16,13 @@ describe('stream Ports', () => {
     const outputConfig: StreamOutputPortConfig<string> = {
       id: 'output1',
       name: 'String Output Port',
-      kind: 'stream-output',
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Output,
       },
     }
 
@@ -21,11 +30,13 @@ describe('stream Ports', () => {
     const inputConfig: StreamInputPortConfig<string> = {
       id: 'input1',
       name: 'String Input Port',
-      kind: 'stream-input',
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Input,
       },
     }
 
@@ -65,22 +76,26 @@ describe('stream Ports', () => {
     const outputPort = new StreamOutputPort<number>({
       id: 'output1',
       name: 'Number Output Port',
-      kind: 'stream-output',
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
       valueType: {
         id: 'numberType',
         name: 'Number',
-        kind: 'number',
+        kind: PortKindEnum.Number,
+        direction: PortDirectionEnum.Output,
       },
     })
 
     const inputPort = new StreamInputPort<number>({
       id: 'input1',
       name: 'Number Input Port',
-      kind: 'stream-input',
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
       valueType: {
         id: 'numberType',
         name: 'Number',
-        kind: 'number',
+        kind: PortKindEnum.Number,
+        direction: PortDirectionEnum.Input,
       },
     })
 
@@ -116,11 +131,13 @@ describe('stream Ports', () => {
     const outputPort = new StreamOutputPort<string>({
       id: 'output1',
       name: 'String Output Port',
-      kind: 'stream-output',
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Output,
       },
     })
 
@@ -128,11 +145,13 @@ describe('stream Ports', () => {
     const inputPort1 = new StreamInputPort<string>({
       id: 'input1',
       name: 'String Input Port 1',
-      kind: 'stream-input',
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Input,
       },
     })
 
@@ -140,11 +159,13 @@ describe('stream Ports', () => {
     const inputPort2 = new StreamInputPort<string>({
       id: 'input2',
       name: 'String Input Port 2',
-      kind: 'stream-input',
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Input,
       },
     })
 
@@ -190,22 +211,26 @@ describe('stream Ports', () => {
     const outputPort = new StreamOutputPort<string>({
       id: 'output1',
       name: 'String Output Port',
-      kind: 'stream-output',
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Output,
       },
     })
 
     const inputPort = new StreamInputPort<string>({
       id: 'input1',
       name: 'String Input Port',
-      kind: 'stream-input',
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
       valueType: {
         id: 'stringType',
         name: 'String',
-        kind: 'string',
+        kind: PortKindEnum.String,
+        direction: PortDirectionEnum.Input,
       },
     })
 
@@ -247,15 +272,17 @@ describe('stream Ports', () => {
     const outputPort = new StreamOutputPort<string>({
       id: 'output1',
       name: 'String Output Port',
-      kind: 'stream-output',
-      valueType: { id: 'stringType', name: 'String', kind: 'string' },
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
+      valueType: { id: 'stringType', name: 'String', kind: PortKindEnum.String, direction: PortDirectionEnum.Output },
     })
 
     const inputPort = new StreamInputPort<string>({
       id: 'input1',
       name: 'String Input Port',
-      kind: 'stream-input',
-      valueType: { id: 'stringType', name: 'String', kind: 'string' },
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
+      valueType: { id: 'stringType', name: 'String', kind: PortKindEnum.String, direction: PortDirectionEnum.Input },
     })
 
     // Connect ports
@@ -286,8 +313,9 @@ describe('stream Ports', () => {
     const outputPort = new StreamOutputPort<number>({
       id: 'output1',
       name: 'Number Output Port',
-      kind: 'stream-output',
-      valueType: { id: 'numberType', name: 'Number', kind: 'number' },
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
+      valueType: { id: 'numberType', name: 'Number', kind: PortKindEnum.Number, direction: PortDirectionEnum.Output },
     })
 
     // Send data before subscriber joins
@@ -300,8 +328,9 @@ describe('stream Ports', () => {
     const inputPort = new StreamInputPort<number>({
       id: 'input1',
       name: 'Number Input Port',
-      kind: 'stream-input',
-      valueType: { id: 'numberType', name: 'Number', kind: 'number' },
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
+      valueType: { id: 'numberType', name: 'Number', kind: PortKindEnum.Number, direction: PortDirectionEnum.Input },
     })
 
     // Connect input port to output port's channel
@@ -337,15 +366,17 @@ describe('stream Ports', () => {
     const outputPort = new StreamOutputPort<string>({
       id: 'output1',
       name: 'String Output Port',
-      kind: 'stream-output',
-      valueType: { id: 'stringType', name: 'String', kind: 'string' },
+      kind: PortKindEnum.StreamOutput,
+      direction: PortDirectionEnum.Output,
+      valueType: { id: 'stringType', name: 'String', kind: PortKindEnum.String, direction: PortDirectionEnum.Output },
     })
 
     const inputPort = new StreamInputPort<string>({
       id: 'input1',
       name: 'String Input Port',
-      kind: 'stream-input',
-      valueType: { id: 'stringType', name: 'String', kind: 'string' },
+      kind: PortKindEnum.StreamInput,
+      direction: PortDirectionEnum.Input,
+      valueType: { id: 'stringType', name: 'String', kind: PortKindEnum.String, direction: PortDirectionEnum.Input },
     })
 
     // Connect ports
@@ -363,7 +394,7 @@ describe('stream Ports', () => {
         }
       } catch (error: any) {
         // Handle error locally
-        console.error('There was an error in the receiver:', error.message, 'but the stream will continue.')
+        // console.error('There was expected error in the receiver:', error.message, 'but the stream will continue.')
       }
     })()
 

@@ -11,17 +11,17 @@ export class ObjectPort<S extends ObjectSchema> implements IPort<ObjectPortConfi
 
   constructor(config: ObjectPortConfig<S>) {
     this.config = config
-    this.value = config.defaultValue ?? this.initializeValue()
+    this.value = config.defaultValue || {} as ObjectPortValueFromSchema<S>
   }
 
-  private initializeValue(): ObjectPortValueFromSchema<S> {
-    const value: any = {}
-    for (const key in this.config.schema.properties) {
-      const propertyConfig = this.config.schema.properties[key]
-      value[key] = propertyConfig.defaultValue
-    }
-    return value
-  }
+  // private initializeValue(): ObjectPortValueFromSchema<S> {
+  //   const value: any = {}
+  //   for (const key in this.config.schema.properties) {
+  //     const propertyConfig = this.config.schema.properties[key]
+  //     value[key] = propertyConfig.defaultValue
+  //   }
+  //   return value
+  // }
 
   getValue(): ObjectPortValueFromSchema<S> {
     return this.value
@@ -37,7 +37,7 @@ export class ObjectPort<S extends ObjectSchema> implements IPort<ObjectPortConfi
   }
 
   reset(): void {
-    this.value = this.config.defaultValue ?? this.initializeValue()
+    this.value = this.config.defaultValue || {} as ObjectPortValueFromSchema<S>
   }
 
   hasValue(): boolean {

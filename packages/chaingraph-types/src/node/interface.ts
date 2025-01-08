@@ -1,7 +1,7 @@
+import type { NodeEvents } from '@chaingraph/types/node/events'
+import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types/node/execution'
 import type { IPort, PortConfig } from '@chaingraph/types/port'
 import type {
-  NodeExecutionContext,
-  NodeExecutionResult,
   NodeMetadata,
   NodeStatus,
   NodeValidationResult,
@@ -11,20 +11,11 @@ import type {
  * Base interface for all nodes in ChainGraph
  */
 export interface INode {
-  /** Unique instance ID */
-  readonly id: string
-
-  /** Node metadata */
-  readonly metadata: NodeMetadata
-
-  /** Current execution status */
-  readonly status: NodeStatus
-
-  /** Input ports mapped by ID */
-  readonly inputs: Map<string, IPort<any>>
-
-  /** Output ports mapped by ID */
-  readonly outputs: Map<string, IPort<any>>
+  get id(): string
+  get metadata(): NodeMetadata
+  get status(): NodeStatus
+  get inputs(): Map<string, IPort<any>>
+  get outputs(): Map<string, IPort<any>>
 
   /**
    * Initialize the node
@@ -37,7 +28,7 @@ export interface INode {
    * @param context Execution context
    * @returns Execution result
    */
-  execute: (context: NodeExecutionContext) => Promise<NodeExecutionResult>
+  execute: (context: ExecutionContext) => Promise<NodeExecutionResult>
 
   /**
    * Validate the node's configuration and current state
@@ -78,4 +69,11 @@ export interface INode {
    * @param portId ID of the port
    */
   getPort: (portId: string) => IPort<any> | undefined
+
+  /**
+   * Event handling - Subscribe to node events
+   * @param event Event type
+   * @param handler Event handler function
+   */
+  on: <T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void) => void
 }

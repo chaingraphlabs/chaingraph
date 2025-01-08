@@ -13,21 +13,45 @@ import type { EnumPort } from '@chaingraph/types/port/enum/enum-port'
 import type { StreamInputPort } from '@chaingraph/types/port/stream/stream-input-port'
 import type { StreamOutputPort } from '@chaingraph/types/port/stream/stream-output-port'
 
-export type PortKind =
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'array'
-  | 'object'
-  | 'any'
-  | 'enum'
-  | 'stream-output'
-  | 'stream-input'
+export enum PortKindEnum {
+  String = 'string',
+  Number = 'number',
+  Boolean = 'boolean',
+  Array = 'array',
+  Object = 'object',
+  Any = 'any',
+  Enum = 'enum',
+  StreamOutput = 'stream-output',
+  StreamInput = 'stream-input',
+}
 
-interface BasePortConfig<K extends PortKind> {
-  id: string
-  name: string
+export type PortKind =
+  | PortKindEnum.String
+  | PortKindEnum.Number
+  | PortKindEnum.Boolean
+  | PortKindEnum.Array
+  | PortKindEnum.Object
+  | PortKindEnum.Any
+  | PortKindEnum.Enum
+  | PortKindEnum.StreamOutput
+  | PortKindEnum.StreamInput
+
+export enum PortDirectionEnum {
+  Input = 'input',
+  Output = 'output',
+}
+
+export type PortDirection = PortDirectionEnum.Input | PortDirectionEnum.Output
+
+export interface BasePortConfig<K extends PortKind> {
   kind: K
+  id?: string
+  parentId?: string
+  nodeId?: string
+  name?: string
+  title?: string
+  direction?: PortDirection
+  optional?: boolean
   defaultValue?: any // Will be specified in each specific config
   validation?: any // Will be specified in each specific config
   metadata?: Record<string, unknown>
@@ -59,57 +83,57 @@ export interface EnumPortValidation<E extends PortConfig> {
 }
 
 // Specific PortConfig interfaces
-export interface StringPortConfig extends BasePortConfig<'string'> {
-  kind: 'string'
+export interface StringPortConfig extends BasePortConfig<PortKindEnum.String> {
+  kind: PortKindEnum.String
   defaultValue?: string
   validation?: StringPortValidation
 }
 
-export interface NumberPortConfig extends BasePortConfig<'number'> {
-  kind: 'number'
+export interface NumberPortConfig extends BasePortConfig<PortKindEnum.Number> {
+  kind: PortKindEnum.Number
   defaultValue?: number
   validation?: NumberPortValidation
 }
 
-export interface BooleanPortConfig extends BasePortConfig<'boolean'> {
-  kind: 'boolean'
+export interface BooleanPortConfig extends BasePortConfig<PortKindEnum.Boolean> {
+  kind: PortKindEnum.Boolean
   defaultValue?: boolean
   validation?: BooleanPortValidation
 }
 
-export interface ArrayPortConfig<E extends PortConfig> extends BasePortConfig<'array'> {
-  kind: 'array'
+export interface ArrayPortConfig<E extends PortConfig> extends BasePortConfig<PortKindEnum.Array> {
+  kind: PortKindEnum.Array
   elementConfig: E
   defaultValue?: Array<PortValueFromConfig<E>>
   validation?: ArrayPortValidation<E>
 }
 
-export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig<'object'> {
-  kind: 'object'
+export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig<PortKindEnum.Object> {
+  kind: PortKindEnum.Object
   schema: S
   defaultValue?: ObjectPortValueFromSchema<S>
   validation?: ObjectPortValidation<S>
 }
 
-export interface AnyPortConfig extends BasePortConfig<'any'> {
-  kind: 'any'
+export interface AnyPortConfig extends BasePortConfig<PortKindEnum.Any> {
+  kind: PortKindEnum.Any
   connectedPortConfig?: PortConfig | null
 }
 
-export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<'enum'> {
-  kind: 'enum'
+export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<PortKindEnum.Enum> {
+  kind: PortKindEnum.Enum
   options: E[] // Array of options, each is a PortConfig of specific type
   defaultValue?: string // Selected option's id
   validation?: EnumPortValidation<E>
 }
 
-export interface StreamOutputPortConfig<T> extends BasePortConfig<'stream-output'> {
-  kind: 'stream-output'
+export interface StreamOutputPortConfig<T> extends BasePortConfig<PortKindEnum.StreamOutput> {
+  kind: PortKindEnum.StreamOutput
   valueType: PortConfig
 }
 
-export interface StreamInputPortConfig<T> extends BasePortConfig<'stream-input'> {
-  kind: 'stream-input'
+export interface StreamInputPortConfig<T> extends BasePortConfig<PortKindEnum.StreamInput> {
+  kind: PortKindEnum.StreamInput
   valueType: PortConfig
 }
 
@@ -147,4 +171,16 @@ export type PortValueFromConfig<C extends PortConfig> =
               C extends EnumPortConfig<any> ? string | null :
                 C extends StreamOutputPortConfig<infer T> ? MultiChannel<T> :
                   C extends StreamInputPortConfig<infer T> ? MultiChannel<T> | null :
+                    never
+
+export type PortConfigByKind<K extends PortKind> =
+  K extends PortKindEnum.String ? StringPortConfig :
+    K extends PortKindEnum.Number ? NumberPortConfig :
+      K extends PortKindEnum.Boolean ? BooleanPortConfig :
+        K extends PortKindEnum.Array ? ArrayPortConfig<any> :
+          K extends PortKindEnum.Object ? ObjectPortConfig<any> :
+            K extends PortKindEnum.Any ? AnyPortConfig :
+              K extends PortKindEnum.Enum ? EnumPortConfig<any> :
+                K extends PortKindEnum.StreamOutput ? StreamOutputPortConfig<any> :
+                  K extends PortKindEnum.StreamInput ? StreamInputPortConfig<any> :
                     never

@@ -1,6 +1,8 @@
 import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port'
 
 export interface ObjectSchema {
+  id?: string
+  type?: string
   properties: {
     [key: string]: PortConfig
   }

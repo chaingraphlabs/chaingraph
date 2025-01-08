@@ -58,7 +58,7 @@ enumPort.removeOption('blue')
 // Try to set a removed option
 try {
   enumPort.setValue('blue')
-} catch (error) {
+} catch (error: any) {
   console.error(error.message) // Output: Invalid value 'blue'. Must be one of the option IDs.
 }
 
