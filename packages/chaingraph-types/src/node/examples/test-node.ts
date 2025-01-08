@@ -72,6 +72,7 @@ export class TestNode extends BaseNode {
   @Input() @PortArray({
     elementConfig: {
       kind: PortKindEnum.Number,
+      defaultValue: 0,
     },
   })
   numbers: number[] = [0, 1, 2, 3]
@@ -87,13 +88,13 @@ export class TestNode extends BaseNode {
   @Output() @PortArray({
     defaultValue: [[0, 0], [0, 0]],
     elementConfig: {
-      id: 'y',
-      name: 'Y',
+      // id: 'y',
+      // name: 'Y',
       kind: PortKindEnum.Array,
       defaultValue: [0, 0],
       elementConfig: {
-        id: 'x',
-        name: 'X',
+        // id: 'x',
+        // name: 'X',
         kind: PortKindEnum.Number,
         defaultValue: 0,
       },
