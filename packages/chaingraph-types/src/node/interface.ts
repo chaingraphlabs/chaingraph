@@ -14,8 +14,7 @@ export interface INode {
   get id(): string
   get metadata(): NodeMetadata
   get status(): NodeStatus
-  get inputs(): Map<string, IPort<any>>
-  get outputs(): Map<string, IPort<any>>
+  get ports(): Map<string, IPort<any>>
 
   /**
    * Initialize the node

@@ -37,6 +37,17 @@ export class NodeRegistry {
   }
 
   /**
+   * Update a node class with metadata
+   * @param nodeClass Constructor
+   * @param metadata Metadata to update
+   */
+  updateNode(nodeClass: NodeConstructor, metadata: any): void {
+    const nodeMetadata = getOrCreateNodeMetadata(nodeClass)
+    Object.assign(nodeMetadata, metadata)
+    this.nodes.set(nodeMetadata.type, nodeClass)
+  }
+
+  /**
    * Create a node instance by type
    * @param type Node type identifier
    * @param args Arguments to pass to the node constructor

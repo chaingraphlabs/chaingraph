@@ -1,10 +1,12 @@
 import type { IPort, StringPortConfig } from '@chaingraph/types/port'
+import { PortBase } from '@chaingraph/types/port'
 
-export class StringPort implements IPort<StringPortConfig> {
+export class StringPort extends PortBase<StringPortConfig> {
   readonly config: StringPortConfig
   value: string
 
   constructor(config: StringPortConfig) {
+    super()
     this.config = config
     this.value = config.defaultValue ?? ''
   }

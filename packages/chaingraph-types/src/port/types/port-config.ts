@@ -50,6 +50,7 @@ export interface BasePortConfig<K extends PortKind> {
   nodeId?: string
   name?: string
   title?: string
+  description?: string
   direction?: PortDirection
   optional?: boolean
   defaultValue?: any // Will be specified in each specific config

@@ -16,6 +16,13 @@ import {
 } from '@chaingraph/types'
 import { v7 as uuidv7 } from 'uuid' // For generating UUIDs.
 
+export interface Context {
+  nodeId: string
+  parentPortConfig: PortConfig | null
+  propertyKey: string
+  propertyValue: any
+}
+
 export class PortConfigProcessor {
   /**
    * Processes all port configurations of a node, ensuring they are fully specified.
@@ -34,7 +41,6 @@ export class PortConfigProcessor {
       const processedPortConfig = this.processPortConfig(
         { ...portConfig }, // Clone to avoid mutating original
         {
-          node,
           nodeId,
           parentPortConfig: null,
           propertyKey,
@@ -55,13 +61,7 @@ export class PortConfigProcessor {
    */
   private processPortConfig(
     portConfig: PortConfig,
-    context: {
-      node: any
-      nodeId: string
-      parentPortConfig: PortConfig | null
-      propertyKey: string
-      propertyValue: any
-    },
+    context: Context,
   ): PortConfig {
     // Assign basic fields and get a new portConfig
     portConfig = this.assignBasicFields(portConfig, context)
@@ -89,13 +89,7 @@ export class PortConfigProcessor {
    */
   private assignBasicFields(
     portConfig: PortConfig,
-    context: {
-      node: any
-      nodeId: string
-      parentPortConfig: PortConfig | null
-      propertyKey: string
-      propertyValue: any
-    },
+    context: Context,
   ): PortConfig {
     const { nodeId, parentPortConfig, propertyKey, propertyValue } = context
 
@@ -168,13 +162,7 @@ export class PortConfigProcessor {
    */
   private processObjectPortConfig(
     portConfig: ObjectPortConfig<any>,
-    context: {
-      node: any
-      nodeId: string
-      parentPortConfig: PortConfig | null
-      propertyKey: string
-      propertyValue: any
-    },
+    context: Context,
   ): ObjectPortConfig<any> {
     if (!isObjectPortConfig(portConfig)) {
       throw new Error(`Invalid object port configuration for property '${context.propertyKey}'.`)
@@ -216,8 +204,7 @@ export class PortConfigProcessor {
     const processedProperties: { [key: string]: PortConfig } = {}
 
     for (const [key, nestedPortConfig] of Object.entries(newPortConfig.schema.properties)) {
-      const propertyContext = {
-        node: propertyValue, // Move into the object instance
+      const propertyContext: Context = {
         nodeId,
         parentPortConfig: newPortConfig,
         propertyKey: key,
@@ -253,16 +240,8 @@ export class PortConfigProcessor {
    */
   private processArrayPortConfig(
     portConfig: ArrayPortConfig<any>,
-    context: {
-      node: any
-      nodeId: string
-      parentPortConfig: PortConfig | null
-      propertyKey: string
-      propertyValue: any
-    },
+    context: Context,
   ): ArrayPortConfig<any> {
-    const { node } = context
-
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
 
     const elementConfig = newPortConfig.elementConfig
@@ -292,8 +271,7 @@ export class PortConfigProcessor {
       }
 
       // Replace elementConfig with the inferred ObjectPortConfig
-      // const newElementConfig: ObjectPortConfig<any> = {
-      portConfig.elementConfig = {
+      const newElementConfig: ObjectPortConfig<any> = {
         kind: PortKindEnum.Object,
         schema: elementSchema,
         defaultValue: (elementConfig as any).defaultValue, // Retain defaultValue if present
@@ -301,9 +279,8 @@ export class PortConfigProcessor {
 
       // Process the elementConfig
       const processedElementConfig = this.processPortConfig(
-        { ...elementConfig },
+        { ...newElementConfig },
         {
-          node: context.node,
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
           propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
@@ -319,7 +296,6 @@ export class PortConfigProcessor {
       const processedElementConfig = this.processPortConfig(
         { ...elementConfig },
         {
-          node: context.node,
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
           propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
@@ -347,26 +323,54 @@ export class PortConfigProcessor {
    */
   private processEnumPortConfig(
     portConfig: EnumPortConfig<any>,
-    context: {
-      node: any
-      nodeId: string
-      parentPortConfig: PortConfig | null
-      propertyKey: string
-      propertyValue: any
-    },
+    context: Context,
   ): EnumPortConfig<any> {
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
 
     if (newPortConfig.options && newPortConfig.options.length > 0) {
       const processedOptions = newPortConfig.options.map((option) => {
+        let optionConfig = option
+
+        if (typeof option.kind === 'function') {
+          // ElementConfig is a class constructor
+          const elementClass = option.kind
+          const elementPrototype = elementClass.prototype
+          const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
+
+          if (!elementMetadata.portsConfig) {
+            throw new Error(`No portsConfig found in element class metadata for array port '${context.propertyKey}'.`)
+          }
+
+          // Build the schema for the element
+          const elementSchema: ObjectSchema = {
+            id: elementMetadata?.id ? (elementMetadata.id as string) : this.generateSortableUUID(),
+            type: elementMetadata.type,
+            properties: {},
+          }
+
+          for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
+            elementSchema.properties[nestedPropertyKey] = nestedPortConfig
+          }
+
+          // Replace elementConfig with the inferred ObjectPortConfig
+          optionConfig = {
+            ...optionConfig,
+            kind: PortKindEnum.Object,
+            schema: elementSchema,
+            defaultValue: optionConfig.defaultValue, // Retain defaultValue if present
+          } as ObjectPortConfig<any>
+        }
+
         return this.processPortConfig(
-          { ...option },
+          { ...optionConfig },
           {
-            node: context.node,
             nodeId: context.nodeId,
-            parentPortConfig: newPortConfig,
-            propertyKey: option.id || this.generateSortableUUID(),
-            propertyValue: option,
+            parentPortConfig: {
+              ...newPortConfig,
+              id: '',
+            },
+            propertyKey: optionConfig.id || this.generateSortableUUID(),
+            propertyValue: optionConfig,
           },
         )
       })

@@ -5,15 +5,14 @@ import type {
   PortFromConfig,
   PortValueFromConfig,
 } from '@chaingraph/types/port'
-import {
-  PortFactory,
-} from '@chaingraph/types/port'
+import { PortBase, PortFactory } from '@chaingraph/types/port'
 
-export class ArrayPort<E extends PortConfig> implements IPort<ArrayPortConfig<E>> {
+export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>> {
   readonly config: ArrayPortConfig<E>
   value: Array<PortValueFromConfig<E>>
 
   constructor(config: ArrayPortConfig<E>) {
+    super()
     this.config = config
     this.value = config.defaultValue ?? []
   }

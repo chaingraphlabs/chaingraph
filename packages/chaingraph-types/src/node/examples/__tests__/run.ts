@@ -1,5 +1,5 @@
 import type { ExecutionContext, IPort } from '@chaingraph/types'
-import { getOrCreateNodeMetadata, isArrayPort, PortFactory } from '@chaingraph/types'
+import { getOrCreateNodeMetadata, isArrayPort, NodeRegistry, PortFactory } from '@chaingraph/types'
 import { TestNode } from '@chaingraph/types/node/examples/test-node'
 
 const nodeId = 'user-node-1'
@@ -19,6 +19,8 @@ userNode
     if (isArrayPort(ports[1])) {
       const port = ports[1]
     }
+
+    const schemas = NodeRegistry.getInstance().getObjectSchemas()
 
     const context: ExecutionContext = { executionId: 'exec-1', startTime: new Date() }
   })

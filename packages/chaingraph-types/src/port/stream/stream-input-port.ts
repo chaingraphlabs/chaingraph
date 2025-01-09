@@ -1,11 +1,13 @@
 import type { MultiChannel } from '../channel/multi-channel'
 import type { IPort, StreamInputPortConfig } from '../types'
+import { PortBase } from '../types'
 
-export class StreamInputPort<T> implements IPort<StreamInputPortConfig<T>> {
+export class StreamInputPort<T> extends PortBase<StreamInputPortConfig<T>> {
   readonly config: StreamInputPortConfig<T>
   value: MultiChannel<T> | null = null
 
   constructor(config: StreamInputPortConfig<T>) {
+    super()
     this.config = config
   }
 

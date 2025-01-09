@@ -1,10 +1,12 @@
 import type { BooleanPortConfig, IPort } from '@chaingraph/types/port'
+import { PortBase } from '@chaingraph/types/port'
 
-export class BooleanPort implements IPort<BooleanPortConfig> {
+export class BooleanPort extends PortBase<BooleanPortConfig> {
   readonly config: BooleanPortConfig
   value: boolean
 
   constructor(config: BooleanPortConfig) {
+    super()
     this.config = config
     this.value = config.defaultValue ?? false
   }

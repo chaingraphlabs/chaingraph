@@ -4,14 +4,17 @@ import type {
   PortConfig,
   PortFromConfig,
 } from '@chaingraph/types/port'
-import { PortFactory } from '@chaingraph/types/port'
+import { PortBase, PortFactory,
+} from '@chaingraph/types/port'
 
-export class EnumPort<E extends PortConfig> implements IPort<EnumPortConfig<E>> {
+export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> {
   readonly config: EnumPortConfig<E>
   value: string | null
   private readonly optionPorts: Array<PortFromConfig<E>>
 
   constructor(config: EnumPortConfig<E>) {
+    super()
+
     this.config = config
     this.value = config.defaultValue ?? null
     this.optionPorts = []

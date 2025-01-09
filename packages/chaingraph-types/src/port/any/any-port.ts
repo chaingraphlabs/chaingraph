@@ -5,16 +5,20 @@ import type {
   PortValueFromConfig,
 } from '@chaingraph/types/port'
 
-export class AnyPort implements IPort<AnyPortConfig> {
+// do not change import path! because it will brake the right import order
+import { PortBase } from '../types'
+
+export class AnyPort extends PortBase<AnyPortConfig> {
   readonly config: AnyPortConfig
   value: any
 
   constructor(config: AnyPortConfig) {
+    super()
     this.config = config
     this.value = config.defaultValue
   }
 
-  getValue(): any {
+  getValue(): PortValueFromConfig<any> {
     if (this.config.connectedPortConfig) {
       const expectedType = this.config.connectedPortConfig.kind
       return this.value as PortValueFromConfig<typeof this.config.connectedPortConfig>

@@ -2,8 +2,8 @@ import type { IPort, PortConfig } from '../port'
 import type { NodeEvents } from './events'
 import type { ExecutionContext, NodeExecutionResult } from './execution'
 import type { INode } from './interface'
-
 import type { NodeMetadata, NodeStatus, NodeValidationResult } from './types'
+
 import { EventEmitter } from 'node:events'
 import { PortFactory } from '../port/port-factory'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
@@ -14,8 +14,7 @@ export abstract class BaseNode implements INode {
   protected readonly _id: string
   protected readonly _metadata: NodeMetadata
   protected _status: NodeStatus = 'idle'
-  protected readonly _inputs: Map<string, IPort<any>> = new Map()
-  protected readonly _outputs: Map<string, IPort<any>> = new Map()
+  protected readonly _ports: Map<string, IPort<any>> = new Map()
 
   protected eventEmitter = new EventEmitter()
 
@@ -24,6 +23,10 @@ export abstract class BaseNode implements INode {
 
     // Get node metadata
     if (_metadata) {
+      if (!_metadata.type) {
+        throw new Error('Node type is required in metadata.')
+      }
+
       this._metadata = _metadata
     } else {
       const metadata = getOrCreateNodeMetadata(this)
@@ -32,7 +35,7 @@ export abstract class BaseNode implements INode {
       }
 
       if (!metadata.type) {
-        throw new Error('Node type is required in no de metadata.')
+        throw new Error('Node type is required in metadata.')
       }
 
       this._metadata = metadata
@@ -44,14 +47,6 @@ export abstract class BaseNode implements INode {
     const processor = new PortConfigProcessor()
     processor.processNodePorts(this)
 
-    // Now that PortConfigs are fully prepared, create port instances
-    // const portsConfig = this.metadata.portsConfig
-    // if (portsConfig) {
-    //   for (const [propertyKey, portConfig] of portsConfig.entries()) {
-    //     this.createPortInstance(propertyKey, portConfig)
-    //   }
-    // }
-
     this._status = 'initialized'
     this.emit('status-change', {
       nodeId: this._id,
@@ -60,22 +55,6 @@ export abstract class BaseNode implements INode {
       oldStatus: 'idle',
       newStatus: 'initialized',
     })
-  }
-
-  private createPortInstance(propertyKey: string, portConfig: PortConfig): void {
-    const port = PortFactory.create(portConfig)
-
-    // Assign to inputs or outputs based on direction
-    if (portConfig.direction === 'input') {
-      this._inputs.set(propertyKey, port)
-    } else if (portConfig.direction === 'output') {
-      this._outputs.set(propertyKey, port)
-    } else {
-      throw new Error('Port direction must be either "input" or "output".')
-    }
-
-    // Optionally, you can assign the port instance back to the node's property
-    // (this as any)[propertyKey] = port.getValue();
   }
 
   abstract execute(context: ExecutionContext): Promise<NodeExecutionResult>
@@ -104,28 +83,18 @@ export abstract class BaseNode implements INode {
   /**
    * Get the node inputs
    */
-  get inputs(): Map<string, IPort<any>> {
-    return this._inputs
-  }
-
-  /**
-   * Get the node outputs
-   */
-  get outputs(): Map<string, IPort<any>> {
-    return this._outputs
+  get ports(): Map<string, IPort<any>> {
+    return this._ports
   }
 
   async validate(): Promise<NodeValidationResult> {
-    // Validation logic
+    // TODO: Validation logic
     return { isValid: true, messages: [] }
   }
 
   async reset(): Promise<void> {
     // Reset ports
-    for (const port of this._inputs.values()) {
-      port.reset()
-    }
-    for (const port of this._outputs.values()) {
+    for (const port of this.ports.values()) {
       port.reset()
     }
     this._status = 'idle'
@@ -152,11 +121,11 @@ export abstract class BaseNode implements INode {
   }
 
   getPort(portId: string): IPort<any> | undefined {
-    return this._inputs.get(portId) || this._outputs.get(portId)
+    return this._ports.get(portId)
   }
 
   hasPort(portId: string): boolean {
-    return this._inputs.has(portId) || this._outputs.has(portId)
+    return this._ports.has(portId)
   }
 
   on<T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void): void {
@@ -169,10 +138,12 @@ export abstract class BaseNode implements INode {
 
   clone(): INode {
     // Create a new instance of the node with the same configuration
-    const clonedNode = Object.create(Object.getPrototypeOf(this), Object.getOwnPropertyDescriptors(this))
-    clonedNode.id = `${this._id}_clone` // Optionally, assign a new ID
+    // const clonedNode = Object.create(Object.getPrototypeOf(this), Object.getOwnPropertyDescriptors(this))
+    // clonedNode.id = `${this._id}_clone` // Optionally, assign a new ID
     // If there are nested objects, you might need a deep clone
-    return clonedNode
+
+    // TODO: Implement deep clone
+    return this
   }
 
   addPort(config: PortConfig): IPort<any> {
@@ -183,18 +154,12 @@ export abstract class BaseNode implements INode {
       throw new Error(`Port with ID ${config.id} already exists.`)
     }
     const port = PortFactory.create(config)
-    if (config.direction === 'input') {
-      this._inputs.set(config.id, port)
-    } else if (config.direction === 'output') {
-      this._outputs.set(config.id, port)
-    } else {
-      throw new Error('Port direction must be either "input" or "output".')
-    }
+    this._ports.set(config.id, port)
     return port
   }
 
   removePort(portId: string): void {
-    if (this._inputs.delete(portId) || this._outputs.delete(portId)) {
+    if (this._ports.delete(portId)) {
       // Port removed successfully
     } else {
       throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)

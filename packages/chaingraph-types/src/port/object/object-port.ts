@@ -4,12 +4,16 @@ import type {
   ObjectPortValueFromSchema,
   ObjectSchema,
 } from '@chaingraph/types/port'
+import {
+  PortBase,
+} from '@chaingraph/types/port'
 
-export class ObjectPort<S extends ObjectSchema> implements IPort<ObjectPortConfig<S>> {
+export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfig<S>> {
   readonly config: ObjectPortConfig<S>
   value: ObjectPortValueFromSchema<S>
 
   constructor(config: ObjectPortConfig<S>) {
+    super()
     this.config = config
     this.value = config.defaultValue || {} as ObjectPortValueFromSchema<S>
   }

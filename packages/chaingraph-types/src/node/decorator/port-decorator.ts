@@ -34,8 +34,9 @@ export function PortDecorator<K extends PortKind>(config: PortDecoratorConfig<K>
     if (!existsPortConfig) {
       const portConfig: PortConfig = {
         ...config,
-        id: config.id ?? propertyKey,
-        name: propertyKey,
+        id: config?.id ?? propertyKey,
+        name: config?.name ?? propertyKey,
+        title: config?.title ?? propertyKey,
       } as PortConfig
 
       metadata.portsConfig.set(propertyKey, {
