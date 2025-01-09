@@ -21,7 +21,6 @@ import {
   isStreamInputPortConfig,
   isStreamOutputPortConfig,
   isStringPortConfig,
-  PortKindEnum,
 } from '@chaingraph/types'
 import { v7 as uuidv7 } from 'uuid' // For generating UUIDs.
 
@@ -270,28 +269,7 @@ export class PortConfigProcessor {
       throw new Error(`Element kind or config for array port '${context.propertyKey}' is not defined.`)
     }
 
-    if (typeof elementConfig.kind === 'function') {
-      const newElementConfig = this.inferObjectPortConfigFromClass(
-        elementConfig.kind,
-        elementConfig.defaultValue,
-      )
-
-      // Process the elementConfig
-      const processedElementConfig = this.processPortConfig(
-        { ...newElementConfig },
-        {
-          nodeId: context.nodeId,
-          parentPortConfig: newPortConfig,
-          propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
-          propertyValue: Object.getPrototypeOf(elementConfig.kind),
-        },
-      )
-
-      newPortConfig = {
-        ...newPortConfig,
-        elementConfig: processedElementConfig,
-      }
-    } else if (isPortConfig(elementConfig)) {
+    if (isPortConfig(elementConfig)) {
       const processedElementConfig = this.processPortConfig(
         { ...elementConfig },
         {
@@ -328,31 +306,16 @@ export class PortConfigProcessor {
 
     if (newPortConfig.options && newPortConfig.options.length > 0) {
       const processedOptions = newPortConfig.options.map((option) => {
-        let optionConfig = option
-
-        if (typeof option.kind === 'function') {
-          const elementOptionConfig = this.inferObjectPortConfigFromClass(
-            option.kind,
-            optionConfig.defaultValue,
-          )
-
-          // Replace elementConfig with the inferred ObjectPortConfig
-          optionConfig = {
-            ...optionConfig,
-            ...elementOptionConfig,
-          } as ObjectPortConfig<any>
-        }
-
         return this.processPortConfig(
-          { ...optionConfig },
+          { ...option },
           {
             nodeId: context.nodeId,
             parentPortConfig: {
               ...newPortConfig,
               id: '',
             },
-            propertyKey: optionConfig.id || this.generateSortableUUID(),
-            propertyValue: optionConfig,
+            propertyKey: option.id || this.generateSortableUUID(),
+            propertyValue: option,
           },
         )
       })
@@ -410,19 +373,6 @@ export class PortConfigProcessor {
       throw new Error(`StreamInputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
     }
 
-    if (typeof newPortConfig.valueType.kind === 'function') {
-      const elementObjectConfig = this.inferObjectPortConfigFromClass(
-        (newPortConfig.valueType as any).kind,
-        (newPortConfig.valueType as any).defaultValue,
-      )
-
-      // Replace elementConfig with the inferred ObjectPortConfig
-      newPortConfig.valueType = {
-        ...(newPortConfig.valueType as any),
-        ...elementObjectConfig,
-      } as ObjectPortConfig<any>
-    }
-
     newPortConfig.valueType = this.processPortConfig(
       { ...newPortConfig.valueType },
       {
@@ -452,21 +402,6 @@ export class PortConfigProcessor {
       throw new Error(`StreamOutputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
     }
 
-    const valueTypeConfig = newPortConfig.valueType
-
-    if (typeof newPortConfig.valueType.kind === 'function') {
-      const elementObjectConfig = this.inferObjectPortConfigFromClass(
-        (newPortConfig.valueType as any).kind,
-        (newPortConfig.valueType as any).defaultValue,
-      )
-
-      // Replace elementConfig with the inferred ObjectPortConfig
-      newPortConfig.valueType = {
-        ...(newPortConfig.valueType as any),
-        ...elementObjectConfig,
-      } as ObjectPortConfig<any>
-    }
-
     newPortConfig.valueType = this.processPortConfig(
       { ...newPortConfig.valueType },
       {
@@ -480,41 +415,41 @@ export class PortConfigProcessor {
     return newPortConfig
   }
 
-  /**
-   * Infers an ObjectPortConfig from a given class constructor.
-   * @param classConstructor The class constructor to infer from.
-   * @param defaultValue An optional default value for the port configuration.
-   * @returns An ObjectPortConfig inferred from the class.
-   */
-  private inferObjectPortConfigFromClass(
-    classConstructor: Function,
-    defaultValue?: any,
-  ): ObjectPortConfig<any> {
-    const elementPrototype = classConstructor.prototype
-    const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
-
-    if (!elementMetadata.portsConfig) {
-      throw new Error(`No portsConfig found in class metadata for '${classConstructor.name}'.`)
-    }
-
-    // Build the schema for the element
-    const elementSchema: ObjectSchema = {
-      id: elementMetadata.id ? (elementMetadata.id as string) : this.generateSortableUUID(),
-      type: elementMetadata.type,
-      properties: {},
-    }
-
-    for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
-      elementSchema.properties[nestedPropertyKey] = nestedPortConfig
-    }
-
-    // Create and return the ObjectPortConfig
-    return {
-      kind: PortKindEnum.Object,
-      schema: elementSchema,
-      defaultValue,
-    } as ObjectPortConfig<any>
-  }
+  // /**
+  //  * Infers an ObjectPortConfig from a given class constructor.
+  //  * @param classConstructor The class constructor to infer from.
+  //  * @param defaultValue An optional default value for the port configuration.
+  //  * @returns An ObjectPortConfig inferred from the class.
+  //  */
+  // private inferObjectPortConfigFromClass(
+  //   classConstructor: Function,
+  //   defaultValue?: any,
+  // ): ObjectPortConfig<any> {
+  //   const elementPrototype = classConstructor.prototype
+  //   const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
+  //
+  //   if (!elementMetadata.portsConfig) {
+  //     throw new Error(`No portsConfig found in class metadata for '${classConstructor.name}'.`)
+  //   }
+  //
+  //   // Build the schema for the element
+  //   const elementSchema: ObjectSchema = {
+  //     id: elementMetadata.id ? (elementMetadata.id as string) : this.generateSortableUUID(),
+  //     type: elementMetadata.type,
+  //     properties: {},
+  //   }
+  //
+  //   for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
+  //     elementSchema.properties[nestedPropertyKey] = nestedPortConfig
+  //   }
+  //
+  //   // Create and return the ObjectPortConfig
+  //   return {
+  //     kind: PortKindEnum.Object,
+  //     schema: elementSchema,
+  //     defaultValue,
+  //   } as ObjectPortConfig<any>
+  // }
 
   /**
    * Generates a sortable UUID using UUID version 7.

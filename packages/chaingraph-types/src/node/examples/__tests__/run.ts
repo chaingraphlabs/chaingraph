@@ -5,6 +5,9 @@ import { TestNode } from '@chaingraph/types/node/examples/test-node'
 const nodeId = 'user-node-1'
 const userNode = new TestNode(nodeId)
 
+const meta = getOrCreateNodeMetadata(userNode)
+console.log('Node Metadata raw:', meta)
+
 userNode
   .initialize()
   .then(async () => {

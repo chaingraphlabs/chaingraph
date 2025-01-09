@@ -6,19 +6,69 @@ import {
   Input,
   Node,
   Output,
+  Port,
   PortArray,
   PortEnum,
+  PortEnumFromObject,
+  PortEnumFromTypeScriptEnum,
   PortKindEnum,
   PortNumber,
+  PortNumberEnum,
   PortObject,
   PortStreamInput,
   PortStreamOutput,
   PortString,
+  PortStringEnum,
 } from '@chaingraph/types'
+
+import {
+  PortArrayNested,
+  PortArrayNumber,
+  PortArrayObject,
+  PortStringArray,
+} from '@chaingraph/types/node/decorator/port-decorator-array'
+import {
+  DefaultValue,
+  Description,
+  Id,
+  Metadata,
+  Name,
+  Optional,
+  Required,
+  Title,
+} from '@chaingraph/types/node/decorator/port-decorator-base'
 import { PortObjectSchema } from '@chaingraph/types/node/decorator/port-object-schema-decorator'
 import { MultiChannel } from '@chaingraph/types/port/channel/multi-channel'
 import { BaseNode } from '../base-node'
 import 'reflect-metadata'
+import 'core-js'
+
+enum Direction {
+  Up = 'Up',
+  Down = 'Down',
+  Left = 'Left',
+  Right = 'Right',
+}
+
+@PortObjectSchema()
+export class UserStatus {
+  @PortString()
+  status: string
+
+  constructor(status: string) {
+    this.status = status
+  }
+}
+
+// Define the options mapping
+const userStatusOptions = {
+  active: new UserStatus('Active'),
+  inactive: new UserStatus('Inactive'),
+  pending: new UserStatus('Pending'),
+}
+
+// Create a mapping from ids to option values
+type UserStatusOptionId = keyof typeof userStatusOptions
 
 @PortObjectSchema({
   description: 'Test user address schema',
@@ -89,8 +139,37 @@ export class TestUserObject {
   description: 'Test node description',
 })
 export class TestNode extends BaseNode {
+  // Case for infer schema from field value
   @Input() @PortObject()
-  user: TestUserObject = new TestUserObject()
+  user1: TestUserObject = new TestUserObject()
+
+  // Case for infer schema from field type
+  @Input() @PortObject()
+  user2?: TestUserObject
+
+  // Case for infer schema from shema class
+  @Input() @PortObject({
+    schema: TestUserObject,
+  })
+  user3?: TestUserObject
+
+  // Case for infer schema from kind field
+  @Input() @Port({
+    kind: TestUserObject,
+  })
+  user4?: TestUserObject
+
+  // Case for infer schema from decorator default value
+  @Input() @PortObject({
+    defaultValue: new TestUserObject(),
+  })
+  user5?: TestUserObject
+
+  // Case for infer schema from decorator default value
+  @Input() @PortObject({
+    defaultValue: new TestUserAddress(),
+  })
+  address?: TestUserAddress
 
   @Input() @PortArray({
     elementConfig: {
@@ -117,10 +196,8 @@ export class TestNode extends BaseNode {
   strings: string[] = ['0', '1', '2', '3']
 
   @Output() @PortArray({
-    defaultValue: [[0, 0], [0, 0]],
     elementConfig: {
       kind: PortKindEnum.Array,
-      defaultValue: [0, 0],
       elementConfig: {
         kind: PortKindEnum.Number,
         defaultValue: 0,
@@ -227,6 +304,48 @@ export class TestNode extends BaseNode {
   })
   outputStreamBuffered = new MultiChannel<string[]>()
 
+  @Output()
+  @PortStringArray()
+  simpleArray?: string[]
+
+  @Output()
+  @PortArrayNumber()
+  numberArray?: number[]
+
+  @Output()
+  @PortArrayObject(TestUserObject)
+  simpleObjectArray?: TestUserObject[]
+
+  @Output()
+  @PortArrayNested(2, { kind: PortKindEnum.String, defaultValue: '' })
+  simple2dArray?: string[][]
+
+  @Output()
+  @PortArrayNested(3, { kind: PortKindEnum.Number, defaultValue: 0 })
+  numbers3d_2?: number[][][]
+
+  @Output()
+  @PortArrayNested(2, {
+    kind: TestUserObject,
+  })
+  user2DArray?: TestUserObject[][]
+
+  @Output()
+  @PortStringEnum(['Red', 'Green', 'Blue'])
+  colorEnum: string = 'Red' // This will hold the selected id of the option
+
+  @Output()
+  @PortNumberEnum([1, 2, 3])
+  numberEnum: string = '1' // Holds the id (string) of the selected option
+
+  @Output()
+  @PortEnumFromObject(userStatusOptions)
+  statusEnum: UserStatusOptionId = 'active'
+
+  @Output()
+  @PortEnumFromTypeScriptEnum(Direction)
+  directionEnum: Direction = Direction.Up
+
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
       status: 'completed',
@@ -235,4 +354,37 @@ export class TestNode extends BaseNode {
       outputs: new Map(),
     }
   }
+}
+
+@Node({
+  type: 'AdvancedNode',
+  title: 'Advanced Node',
+  category: 'test',
+})
+export class AdvancedNode {
+  @Input()
+  @Required()
+  @Name('Username')
+  @Description('Enter your username')
+  @PortString()
+  username: string = ''
+
+  @Input()
+  @Optional()
+  @Name('Password')
+  @Description('Enter your password')
+  @PortString()
+  password?: string
+
+  @Input()
+  @DefaultValue(0)
+  @PortNumber()
+  progress: number = 0
+
+  @Output()
+  @Id('user_status')
+  @Title('User Status')
+  @Metadata('ui:widget', 'status-indicator')
+  @PortString()
+  status: string = 'active'
 }
