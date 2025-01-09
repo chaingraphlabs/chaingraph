@@ -3,6 +3,7 @@ import type {
   ArrayPort,
   BooleanPort,
   NumberPort,
+  NumberPortValue,
   ObjectPort,
   ObjectPortValueFromSchema,
   ObjectSchema,
@@ -92,7 +93,7 @@ export interface StringPortConfig extends BasePortConfig<PortKindEnum.String> {
 
 export interface NumberPortConfig extends BasePortConfig<PortKindEnum.Number> {
   kind: PortKindEnum.Number
-  defaultValue?: number
+  defaultValue?: NumberPortValue
   validation?: NumberPortValidation
 }
 
@@ -164,7 +165,7 @@ export type PortFromConfig<C extends PortConfig> =
 
 export type PortValueFromConfig<C extends PortConfig> =
   C extends StringPortConfig ? string :
-    C extends NumberPortConfig ? number :
+    C extends NumberPortConfig ? NumberPortValue :
       C extends BooleanPortConfig ? boolean :
         C extends ArrayPortConfig<infer E> ? Array<PortValueFromConfig<E>> :
           C extends ObjectPortConfig<infer S> ? ObjectPortValueFromSchema<S> :

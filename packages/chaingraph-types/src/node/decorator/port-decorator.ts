@@ -7,18 +7,17 @@ import 'reflect-metadata'
 
 const PORT_METADATA_KEY = Symbol('port:metadata')
 
+type PortConfigWithClassKind = PortConfig | Omit<PortConfig, 'kind'> & {
+  kind: Function
+}
+
 type PartialPortConfig<K extends PortKind> = Omit<
   PortConfigByKind<K>,
-  'kind' | 'schema' | 'elementConfig'
+  'kind' | 'schema' | 'elementConfig' | 'valueType'
 > & {
   schema?: any // For ObjectPortConfig
-
-  elementConfig?:
-    PortConfig |
-    Omit<PortConfig, 'kind'> & {
-    // eslint-disable-next-line ts/no-unsafe-function-type
-      kind: Function
-    } // For ArrayPortConfig
+  elementConfig?: PortConfigWithClassKind // For ArrayPortConfig
+  valueType?: PortConfigWithClassKind // For StreamOutputPortConfig, StreamInputPortConfig
 }
 
 type PortDecoratorConfig<K extends PortKind> = PartialPortConfig<K> & { kind: K }

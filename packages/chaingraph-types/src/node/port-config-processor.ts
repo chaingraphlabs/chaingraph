@@ -1,17 +1,26 @@
 import type {
+  AnyPortConfig,
   ArrayPortConfig,
   EnumPortConfig,
   ObjectPortConfig,
   ObjectSchema,
   PortConfig,
+  StreamInputPortConfig,
+  StreamOutputPortConfig,
 } from '@chaingraph/types'
 import type { INode } from './interface'
 import {
   getOrCreateNodeMetadata,
+  isAnyPortConfig,
   isArrayPortConfig,
+  isBooleanPortConfig,
   isEnumPortConfig,
+  isNumberPortConfig,
   isObjectPortConfig,
   isPortConfig,
+  isStreamInputPortConfig,
+  isStreamOutputPortConfig,
+  isStringPortConfig,
   PortKindEnum,
 } from '@chaingraph/types'
 import { v7 as uuidv7 } from 'uuid' // For generating UUIDs.
@@ -73,9 +82,21 @@ export class PortConfigProcessor {
       portConfig = this.processArrayPortConfig(portConfig, context)
     } else if (isEnumPortConfig(portConfig)) {
       portConfig = this.processEnumPortConfig(portConfig, context)
+    } else if (isAnyPortConfig(portConfig)) {
+      portConfig = this.processAnyPortConfig(portConfig, context)
+    } else if (isStreamInputPortConfig(portConfig)) {
+      portConfig = this.processStreamInputPortConfig(portConfig, context)
+    } else if (isStreamOutputPortConfig(portConfig)) {
+      portConfig = this.processStreamOutputPortConfig(portConfig, context)
+    } else if (
+      isStringPortConfig(portConfig)
+      || isNumberPortConfig(portConfig)
+      || isBooleanPortConfig(portConfig)
+    ) {
+      // For primitive port configs, no further processing is needed
+      // All necessary fields have been assigned in 'assignBasicFields'
     } else {
-      // Primitive or unhandled port kinds
-      // No further processing needed
+      throw new Error(`PortConfigProcessor: unsupported port kind: ${(portConfig as any).kind}`)
     }
 
     return portConfig
@@ -250,32 +271,10 @@ export class PortConfigProcessor {
     }
 
     if (typeof elementConfig.kind === 'function') {
-      // ElementConfig is a class constructor
-      const elementClass = elementConfig.kind
-      const elementPrototype = elementClass.prototype
-      const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
-
-      if (!elementMetadata.portsConfig) {
-        throw new Error(`No portsConfig found in element class metadata for array port '${context.propertyKey}'.`)
-      }
-
-      // Build the schema for the element
-      const elementSchema: ObjectSchema = {
-        id: elementMetadata?.id ? (elementMetadata.id as string) : this.generateSortableUUID(),
-        type: elementMetadata.type,
-        properties: {},
-      }
-
-      for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
-        elementSchema.properties[nestedPropertyKey] = nestedPortConfig
-      }
-
-      // Replace elementConfig with the inferred ObjectPortConfig
-      const newElementConfig: ObjectPortConfig<any> = {
-        kind: PortKindEnum.Object,
-        schema: elementSchema,
-        defaultValue: (elementConfig as any).defaultValue, // Retain defaultValue if present
-      }
+      const newElementConfig = this.inferObjectPortConfigFromClass(
+        elementConfig.kind,
+        elementConfig.defaultValue,
+      )
 
       // Process the elementConfig
       const processedElementConfig = this.processPortConfig(
@@ -284,7 +283,7 @@ export class PortConfigProcessor {
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
           propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
-          propertyValue: elementPrototype,
+          propertyValue: Object.getPrototypeOf(elementConfig.kind),
         },
       )
 
@@ -332,32 +331,15 @@ export class PortConfigProcessor {
         let optionConfig = option
 
         if (typeof option.kind === 'function') {
-          // ElementConfig is a class constructor
-          const elementClass = option.kind
-          const elementPrototype = elementClass.prototype
-          const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
-
-          if (!elementMetadata.portsConfig) {
-            throw new Error(`No portsConfig found in element class metadata for array port '${context.propertyKey}'.`)
-          }
-
-          // Build the schema for the element
-          const elementSchema: ObjectSchema = {
-            id: elementMetadata?.id ? (elementMetadata.id as string) : this.generateSortableUUID(),
-            type: elementMetadata.type,
-            properties: {},
-          }
-
-          for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
-            elementSchema.properties[nestedPropertyKey] = nestedPortConfig
-          }
+          const elementOptionConfig = this.inferObjectPortConfigFromClass(
+            option.kind,
+            optionConfig.defaultValue,
+          )
 
           // Replace elementConfig with the inferred ObjectPortConfig
           optionConfig = {
             ...optionConfig,
-            kind: PortKindEnum.Object,
-            schema: elementSchema,
-            defaultValue: optionConfig.defaultValue, // Retain defaultValue if present
+            ...elementOptionConfig,
           } as ObjectPortConfig<any>
         }
 
@@ -382,6 +364,156 @@ export class PortConfigProcessor {
     }
 
     return newPortConfig
+  }
+
+  /**
+   * Processes an AnyPortConfig.
+   * @param portConfig The AnyPortConfig to process.
+   * @param context The processing context.
+   * @returns The processed AnyPortConfig.
+   */
+  private processAnyPortConfig(
+    portConfig: AnyPortConfig,
+    context: Context,
+  ): AnyPortConfig {
+    const newPortConfig = { ...portConfig }
+
+    // If connectedPortConfig is defined, process it
+    if (newPortConfig.connectedPortConfig) {
+      newPortConfig.connectedPortConfig = this.processPortConfig(
+        { ...newPortConfig.connectedPortConfig },
+        {
+          nodeId: context.nodeId,
+          parentPortConfig: newPortConfig,
+          propertyKey: 'connectedPort',
+          propertyValue: null,
+        },
+      )
+    }
+
+    return newPortConfig
+  }
+
+  /**
+   * Processes a StreamInputPortConfig.
+   * @param portConfig The StreamInputPortConfig to process.
+   * @param context The processing context.
+   * @returns The processed StreamInputPortConfig.
+   */
+  private processStreamInputPortConfig(
+    portConfig: StreamInputPortConfig<any>,
+    context: Context,
+  ): StreamInputPortConfig<any> {
+    const newPortConfig = { ...portConfig }
+
+    if (!newPortConfig.valueType) {
+      throw new Error(`StreamInputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
+    }
+
+    if (typeof newPortConfig.valueType.kind === 'function') {
+      const elementObjectConfig = this.inferObjectPortConfigFromClass(
+        (newPortConfig.valueType as any).kind,
+        (newPortConfig.valueType as any).defaultValue,
+      )
+
+      // Replace elementConfig with the inferred ObjectPortConfig
+      newPortConfig.valueType = {
+        ...(newPortConfig.valueType as any),
+        ...elementObjectConfig,
+      } as ObjectPortConfig<any>
+    }
+
+    newPortConfig.valueType = this.processPortConfig(
+      { ...newPortConfig.valueType },
+      {
+        nodeId: context.nodeId,
+        parentPortConfig: newPortConfig,
+        propertyKey: 'value',
+        propertyValue: null,
+      },
+    )
+
+    return newPortConfig
+  }
+
+  /**
+   * Processes a StreamOutputPortConfig.
+   * @param portConfig The StreamOutputPortConfig to process.
+   * @param context The processing context.
+   * @returns The processed StreamOutputPortConfig.
+   */
+  private processStreamOutputPortConfig(
+    portConfig: StreamOutputPortConfig<any>,
+    context: Context,
+  ): StreamOutputPortConfig<any> {
+    const newPortConfig = { ...portConfig }
+
+    if (!newPortConfig.valueType) {
+      throw new Error(`StreamOutputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
+    }
+
+    const valueTypeConfig = newPortConfig.valueType
+
+    if (typeof newPortConfig.valueType.kind === 'function') {
+      const elementObjectConfig = this.inferObjectPortConfigFromClass(
+        (newPortConfig.valueType as any).kind,
+        (newPortConfig.valueType as any).defaultValue,
+      )
+
+      // Replace elementConfig with the inferred ObjectPortConfig
+      newPortConfig.valueType = {
+        ...(newPortConfig.valueType as any),
+        ...elementObjectConfig,
+      } as ObjectPortConfig<any>
+    }
+
+    newPortConfig.valueType = this.processPortConfig(
+      { ...newPortConfig.valueType },
+      {
+        nodeId: context.nodeId,
+        parentPortConfig: newPortConfig,
+        propertyKey: 'value',
+        propertyValue: null,
+      },
+    )
+
+    return newPortConfig
+  }
+
+  /**
+   * Infers an ObjectPortConfig from a given class constructor.
+   * @param classConstructor The class constructor to infer from.
+   * @param defaultValue An optional default value for the port configuration.
+   * @returns An ObjectPortConfig inferred from the class.
+   */
+  private inferObjectPortConfigFromClass(
+    classConstructor: Function,
+    defaultValue?: any,
+  ): ObjectPortConfig<any> {
+    const elementPrototype = classConstructor.prototype
+    const elementMetadata = getOrCreateNodeMetadata(elementPrototype)
+
+    if (!elementMetadata.portsConfig) {
+      throw new Error(`No portsConfig found in class metadata for '${classConstructor.name}'.`)
+    }
+
+    // Build the schema for the element
+    const elementSchema: ObjectSchema = {
+      id: elementMetadata.id ? (elementMetadata.id as string) : this.generateSortableUUID(),
+      type: elementMetadata.type,
+      properties: {},
+    }
+
+    for (const [nestedPropertyKey, nestedPortConfig] of elementMetadata.portsConfig.entries()) {
+      elementSchema.properties[nestedPropertyKey] = nestedPortConfig
+    }
+
+    // Create and return the ObjectPortConfig
+    return {
+      kind: PortKindEnum.Object,
+      schema: elementSchema,
+      defaultValue,
+    } as ObjectPortConfig<any>
   }
 
   /**

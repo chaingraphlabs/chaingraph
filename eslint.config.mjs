@@ -29,6 +29,7 @@ export default antfu(
       'ts/explicit-function-return-type': 'off',
       'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
       'unused-imports/no-unused-vars': 'off',
+      'ts/no-unsafe-function-type': 'off',
     },
   },
 )

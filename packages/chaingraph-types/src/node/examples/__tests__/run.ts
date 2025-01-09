@@ -23,4 +23,7 @@ userNode
     const schemas = NodeRegistry.getInstance().getObjectSchemas()
 
     const context: ExecutionContext = { executionId: 'exec-1', startTime: new Date() }
+
+    const userNodeJson = JSON.stringify(userNode, null, 2)
+    console.log(userNodeJson)
   })

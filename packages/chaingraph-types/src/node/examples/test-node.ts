@@ -11,9 +11,12 @@ import {
   PortKindEnum,
   PortNumber,
   PortObject,
+  PortStreamInput,
+  PortStreamOutput,
   PortString,
 } from '@chaingraph/types'
 import { PortObjectSchema } from '@chaingraph/types/node/decorator/port-object-schema-decorator'
+import { MultiChannel } from '@chaingraph/types/port/channel/multi-channel'
 import { BaseNode } from '../base-node'
 import 'reflect-metadata'
 
@@ -116,13 +119,9 @@ export class TestNode extends BaseNode {
   @Output() @PortArray({
     defaultValue: [[0, 0], [0, 0]],
     elementConfig: {
-      // id: 'y',
-      // name: 'Y',
       kind: PortKindEnum.Array,
       defaultValue: [0, 0],
       elementConfig: {
-        // id: 'x',
-        // name: 'X',
         kind: PortKindEnum.Number,
         defaultValue: 0,
       },
@@ -186,7 +185,47 @@ export class TestNode extends BaseNode {
       { kind: TestUserObject, id: 'bob', defaultValue: new TestUserObject({ username: 'bob' }) },
     ],
   })
-  enumUsers?: TestUserObject
+  enumUsers = 'john'
+
+  @Input() @PortStreamInput({
+    defaultValue: new MultiChannel<string>(),
+    valueType: {
+      kind: PortKindEnum.String,
+      defaultValue: '',
+    },
+  })
+  inputStream: MultiChannel<string> = new MultiChannel<string>()
+
+  @Output() @PortStreamOutput({
+    defaultValue: new MultiChannel<string>(),
+    valueType: {
+      kind: PortKindEnum.String,
+      defaultValue: '',
+    },
+  })
+  outputStream: MultiChannel<string> = new MultiChannel<string>()
+
+  @Output() @PortStreamOutput({
+    defaultValue: new MultiChannel<TestUserObject>(),
+    valueType: {
+      kind: TestUserObject,
+      defaultValue: new TestUserObject(),
+    },
+  })
+  outputStreamUsers: MultiChannel<TestUserObject> = new MultiChannel<TestUserObject>()
+
+  @Output() @PortStreamOutput({
+    defaultValue: new MultiChannel<string[]>(),
+    valueType: {
+      kind: PortKindEnum.Array,
+      defaultValue: [],
+      elementConfig: {
+        kind: PortKindEnum.String,
+        defaultValue: '',
+      },
+    },
+  })
+  outputStreamBuffered = new MultiChannel<string[]>()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {

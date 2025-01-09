@@ -1,6 +1,6 @@
 import type { MultiChannel } from '../channel/multi-channel'
 import type { IPort, StreamInputPortConfig } from '../types'
-import { PortBase } from '../types'
+import { PortBase, PortDirectionEnum } from '../types'
 
 export class StreamInputPort<T> extends PortBase<StreamInputPortConfig<T>> {
   readonly config: StreamInputPortConfig<T>
@@ -8,6 +8,10 @@ export class StreamInputPort<T> extends PortBase<StreamInputPortConfig<T>> {
 
   constructor(config: StreamInputPortConfig<T>) {
     super()
+    if (config.direction !== PortDirectionEnum.Input) {
+      throw new Error('StreamInputPort must have direction set to "input".')
+    }
+
     this.config = config
   }
 
