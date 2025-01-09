@@ -6,7 +6,7 @@ import type {
 } from '@chaingraph/types/port'
 import {
   PortBase,
-} from '@chaingraph/types/port'
+} from '../types'
 
 export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfig<S>> {
   readonly config: ObjectPortConfig<S>

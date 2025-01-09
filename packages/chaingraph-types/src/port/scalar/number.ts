@@ -1,6 +1,6 @@
-import type { IPort, NumberPortConfig } from '@chaingraph/types/port'
-import { PortBase } from '@chaingraph/types/port'
+import type { IPort, NumberPortConfig } from '../types'
 import Decimal from 'decimal.js'
+import { PortBase } from '../types'
 
 export type NumberPortValue = number | string | Decimal
 

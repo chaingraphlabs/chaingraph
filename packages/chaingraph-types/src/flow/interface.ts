@@ -1,24 +1,16 @@
-import type { FlowExport } from '@chaingraph/types/flow/serialization'
-import type { IEdge } from '../edge'
-import type { INode } from '../node'
-import type { FlowEvents } from './events'
-import type {
-  FlowExecutionOptions,
-  FlowExecutionState,
-  FlowMetadata,
-  FlowStatus,
-  FlowValidationResult,
-} from './types'
+import type { IEdge } from '@chaingraph/types/edge'
+import type { INode } from '@chaingraph/types/node'
+import type { FlowMetadata } from './types'
 
 /**
- * Base interface for flows in ChainGraph
+ * Interface representing a flow (graph) that contains nodes and edges.
  */
 export interface IFlow {
-  /** Flow metadata */
-  readonly metadata: FlowMetadata
+  /** Unique identifier for the flow */
+  readonly id: string
 
-  /** Current flow status */
-  readonly status: FlowStatus
+  /** Metadata about the flow */
+  readonly metadata: FlowMetadata
 
   /** Map of nodes in the flow */
   readonly nodes: Map<string, INode>
@@ -26,87 +18,57 @@ export interface IFlow {
   /** Map of edges in the flow */
   readonly edges: Map<string, IEdge>
 
-  /** Current execution state */
-  readonly executionState: FlowExecutionState
-
   /**
-   * Initialize the flow
-   */
-  initialize: () => Promise<void>
-
-  /**
-   * Start flow execution
-   * @param options Execution options
-   */
-  execute: (options?: FlowExecutionOptions) => Promise<void>
-
-  /**
-   * Pause flow execution
-   */
-  pause: () => Promise<void>
-
-  /**
-   * Resume flow execution
-   */
-  resume: () => Promise<void>
-
-  /**
-   * Terminate flow execution
-   */
-  terminate: () => Promise<void>
-
-  /**
-   * Validate the flow
-   */
-  validate: () => Promise<FlowValidationResult>
-
-  /**
-   * Add a node to the flow
-   * @param node Node to add
+   * Adds a node to the flow.
+   * @param node The node to add.
    */
   addNode: (node: INode) => void
 
   /**
-   * Remove a node from the flow
-   * @param nodeId ID of node to remove
+   * Removes a node from the flow.
+   * @param nodeId The ID of the node to remove.
    */
   removeNode: (nodeId: string) => void
 
   /**
-   * Add an edge to the flow
-   * @param edge Edge to add
+   * Adds an edge to the flow.
+   * @param edge The edge to add.
    */
   addEdge: (edge: IEdge) => void
 
   /**
-   * Remove an edge from the flow
-   * @param edgeId ID of edge to remove
+   * Removes an edge from the flow.
+   * @param edgeId The ID of the edge to remove.
    */
   removeEdge: (edgeId: string) => void
 
   /**
-   * Subscribe to flow events
-   * @param event Event type
-   * @param handler Event handler
+   * Connects two nodes via their ports.
+   * @param sourceNodeId The ID of the source node.
+   * @param sourcePortId The ID of the source port.
+   * @param targetNodeId The ID of the target node.
+   * @param targetPortId The ID of the target port.
    */
-  on: <T extends keyof FlowEvents>(
-    event: T,
-    handler: (event: FlowEvents[T]) => void
-  ) => () => void
+  connectNodes: (
+    sourceNodeId: string,
+    sourcePortId: string,
+    targetNodeId: string,
+    targetPortId: string
+  ) => Promise<void>
 
   /**
-   * Export flow to serializable format
+   * Validates the entire flow.
+   * @returns A promise that resolves to true if the flow is valid.
    */
-  export: () => Promise<FlowExport>
+  validate: () => Promise<boolean>
 
   /**
-   * Import flow from serialized data
-   * @param data Imported flow data
+   * Executes the flow.
    */
-  import: (data: FlowExport) => Promise<void>
+  execute: () => Promise<void>
 
   /**
-   * Dispose of flow resources
+   * Disposes the flow and its resources.
    */
   dispose: () => Promise<void>
 }

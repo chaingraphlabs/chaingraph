@@ -1,3 +1,4 @@
+export * from './edge'
 export * from './events'
 export * from './factory'
 export * from './interface'

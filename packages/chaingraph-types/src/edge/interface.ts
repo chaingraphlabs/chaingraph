@@ -1,13 +1,9 @@
-import type {
-  EdgeEndpoints,
-  EdgeMetadata,
-  EdgeStatus,
-  EdgeTransformation,
-  EdgeValidationResult,
-} from './types'
+import type { INode } from '@chaingraph/types/node'
+import type { IPort } from '@chaingraph/types/port'
+import type { EdgeMetadata, EdgeStatus } from './types'
 
 /**
- * Base interface for all edges in ChainGraph
+ * Interface representing an edge in the graph, connecting output ports of one node to input ports of another node.
  */
 export interface IEdge {
   /** Unique identifier of the edge */
@@ -19,11 +15,13 @@ export interface IEdge {
   /** Edge metadata */
   readonly metadata: EdgeMetadata
 
-  /** Edge endpoints */
-  readonly endpoints: EdgeEndpoints
+  /** Source node and port */
+  readonly sourceNode: INode
+  readonly sourcePort: IPort<any>
 
-  /** Edge transformations */
-  readonly transformation?: EdgeTransformation
+  /** Target node and port */
+  readonly targetNode: INode
+  readonly targetPort: IPort<any>
 
   /**
    * Initialize the edge connection
@@ -31,37 +29,21 @@ export interface IEdge {
   initialize: () => Promise<void>
 
   /**
-   * Activate the edge for data flow
-   */
-  activate: () => Promise<void>
-
-  /**
-   * Deactivate the edge
-   */
-  deactivate: () => Promise<void>
-
-  /**
    * Validate the edge connection
    */
-  validate: () => Promise<EdgeValidationResult>
+  validate: () => Promise<boolean>
 
   /**
    * Transfer data from source to target
    * @param data Data to transfer
    */
-  transfer: (data: unknown) => Promise<void>
+  transfer: () => Promise<void>
 
   /**
    * Update edge metadata
    * @param metadata New metadata
    */
   updateMetadata: (metadata: Partial<EdgeMetadata>) => void
-
-  /**
-   * Set transformation options
-   * @param transformation New transformation options
-   */
-  setTransformation: (transformation: EdgeTransformation) => void
 
   /**
    * Dispose of edge resources

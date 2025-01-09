@@ -1,5 +1,5 @@
-import type { IPort, StringPortConfig } from '@chaingraph/types/port'
-import { PortBase } from '@chaingraph/types/port'
+import type { IPort, StringPortConfig } from '../types'
+import { PortBase } from '../types'
 
 export class StringPort extends PortBase<StringPortConfig> {
   readonly config: StringPortConfig

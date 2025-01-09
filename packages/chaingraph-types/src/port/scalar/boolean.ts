@@ -1,5 +1,5 @@
 import type { BooleanPortConfig, IPort } from '@chaingraph/types/port'
-import { PortBase } from '@chaingraph/types/port'
+import { PortBase } from '../types'
 
 export class BooleanPort extends PortBase<BooleanPortConfig> {
   readonly config: BooleanPortConfig
