@@ -1,4 +1,7 @@
+import { EventEmitter } from 'node:events'
 import 'reflect-metadata'
+
+EventEmitter.defaultMaxListeners = 0
 
 export * from './edge'
 export * from './flow'

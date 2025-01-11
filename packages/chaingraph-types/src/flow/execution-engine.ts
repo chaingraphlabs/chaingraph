@@ -1,6 +1,10 @@
-import type { INode } from '../node'
+import type { DebuggerController } from '@chaingraph/types/flow/debugger-types'
+import type { INode, NodeStatusChangeEvent } from '../node'
 import type { ExecutionContext } from './execution-context'
-import type { ExecutionOptions, Flow } from './flow'
+import type { Flow } from './flow'
+import { FlowDebugger } from '@chaingraph/types/flow/debugger'
+import { TypedEventEmitter } from '@chaingraph/types/flow/execution-event-emitter'
+import { ExecutionEventEnum } from '@chaingraph/types/flow/execution-events'
 import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'
 import { withTimeout } from '../utils/timeout'
@@ -8,6 +12,17 @@ import { withTimeout } from '../utils/timeout'
 const DEFAULT_MAX_CONCURRENCY = 10
 const DEFAULT_NODE_TIMEOUT_MS = 60000
 const DEFAULT_FLOW_TIMEOUT_MS = 300000
+
+export interface ExecutionOptions {
+  maxConcurrency?: number
+  nodeTimeoutMs?: number
+  flowTimeoutMs?: number
+}
+
+export interface ExecutionEngineOptions {
+  execution?: ExecutionOptions
+  debug?: boolean
+}
 
 export class ExecutionEngine {
   private readonly readyQueue: AsyncQueue<INode>
@@ -17,11 +32,13 @@ export class ExecutionEngine {
   private readonly nodeDependencies: Map<string, number>
   private readonly dependentsMap: Map<string, INode[]>
   private readonly semaphore: Semaphore
+  private readonly debugger: FlowDebugger | null = null
+  private readonly eventEmitter: TypedEventEmitter
 
   constructor(
     private readonly flow: Flow,
     private readonly context: ExecutionContext,
-    private readonly options?: ExecutionOptions,
+    private readonly options?: ExecutionEngineOptions,
   ) {
     this.readyQueue = new AsyncQueue<INode>()
     this.completedQueue = new AsyncQueue<INode>()
@@ -29,11 +46,20 @@ export class ExecutionEngine {
     this.completedNodes = new Set()
     this.nodeDependencies = new Map()
     this.dependentsMap = new Map()
-    this.semaphore = new Semaphore(this.options?.maxConcurrency || DEFAULT_MAX_CONCURRENCY)
+    this.semaphore = new Semaphore(this.options?.execution?.maxConcurrency || DEFAULT_MAX_CONCURRENCY)
+    this.eventEmitter = new TypedEventEmitter(context)
+
+    if (options?.debug) {
+      this.debugger = new FlowDebugger(this.eventEmitter)
+    }
   }
 
   async execute(): Promise<void> {
+    const startTime = Date.now()
     try {
+      // Emit flow started event
+      this.eventEmitter.emit(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow })
+
       // Initialize dependency tracking
       this.initializeDependencies()
 
@@ -49,11 +75,44 @@ export class ExecutionEngine {
 
       // Wait for all workers to complete
       await Promise.all(workerPromises)
+
+      // Emit flow completed event
+      this.eventEmitter.emit(
+        ExecutionEventEnum.FLOW_COMPLETED,
+        {
+          flow: this.flow,
+          executionTime: Date.now() - startTime,
+        },
+      )
     } catch (error) {
       // Ensure queues are closed on error
       this.readyQueue.close()
       this.completedQueue.close()
       this.context.abortController.abort()
+
+      // check if execution was cancelled or failed
+      if (this.context.abortSignal.aborted) {
+        // Emit flow cancelled event
+        this.eventEmitter.emit(
+          ExecutionEventEnum.FLOW_CANCELLED,
+          {
+            flow: this.flow,
+            reason: 'Execution cancelled',
+            executionTime: Date.now() - startTime,
+          },
+        )
+      } else {
+        // Emit flow failed event
+        this.eventEmitter.emit(
+          ExecutionEventEnum.FLOW_FAILED,
+          {
+            flow: this.flow,
+            error: error as Error,
+            executionTime: Date.now() - startTime,
+          },
+        )
+      }
+
       throw error
     }
   }
@@ -85,10 +144,21 @@ export class ExecutionEngine {
         }
       }
     }
+
+    // Emit node status changed events for initial nodes
+    for (const nodeId of this.executingNodes) {
+      const node = this.flow.nodes.get(nodeId)
+      if (node) {
+        this.eventEmitter.emit(
+          ExecutionEventEnum.NODE_STATUS_CHANGED,
+          { node, oldStatus: 'idle', newStatus: 'initialized' },
+        )
+      }
+    }
   }
 
   private startWorkers(): Promise<void>[] {
-    const maxConcurrency = this.options?.maxConcurrency || DEFAULT_MAX_CONCURRENCY
+    const maxConcurrency = this.options?.execution?.maxConcurrency || DEFAULT_MAX_CONCURRENCY
     const workerPromises: Promise<void>[] = []
 
     for (let i = 0; i < maxConcurrency; i++) {
@@ -105,7 +175,7 @@ export class ExecutionEngine {
 
   private async runMainExecutionProcess(): Promise<void> {
     const startTime = Date.now()
-    const flowTimeoutMs = this.options?.flowTimeoutMs || DEFAULT_FLOW_TIMEOUT_MS
+    const flowTimeoutMs = this.options?.execution?.flowTimeoutMs || DEFAULT_FLOW_TIMEOUT_MS
 
     while (!this.context.abortSignal.aborted) {
       // Check for timeout
@@ -129,6 +199,10 @@ export class ExecutionEngine {
       if (await this.isExecutionComplete()) {
         break
       }
+    }
+
+    if (this.context.abortSignal.aborted) {
+      throw new Error(this.context.abortSignal.reason || 'Execution cancelled')
     }
   }
 
@@ -175,31 +249,80 @@ export class ExecutionEngine {
       if (!node)
         break // Queue closed or execution aborted
 
+      const onStatusChange = (event: NodeStatusChangeEvent) => {
+        this.eventEmitter.emit(
+          ExecutionEventEnum.NODE_STATUS_CHANGED,
+          { node: event.node, oldStatus: event.oldStatus, newStatus: event.newStatus },
+        )
+      }
+      node.on('status-change', onStatusChange)
+
       try {
         await this.semaphore.acquire()
         await this.executeNode(node)
         // Add to completed queue
         this.completedQueue.enqueue(node)
+      } catch (error) {
+        // Release semaphore on error
+        if (this.context.abortSignal.aborted) {
+          break
+        }
+        throw error
       } finally {
         this.semaphore.release()
+        node.off('status-change', onStatusChange)
       }
     }
   }
 
   private async executeNode(node: INode): Promise<void> {
     if (this.context.abortSignal.aborted) {
-      throw new Error('Execution cancelled')
+      throw new Error(this.context.abortSignal.reason || 'Execution cancelled')
     }
+    const nodeStartTime = Date.now()
 
     try {
+      this.eventEmitter.emit(ExecutionEventEnum.NODE_STARTED, { node })
       node.setStatus('executing')
+
+      // Debug point - before execution
+      if (this.debugger) {
+        const command = await this.debugger.waitForCommand(node)
+        if (command === 'stop') {
+          this.eventEmitter.emit(
+            ExecutionEventEnum.FLOW_CANCELLED,
+            {
+              flow: this.flow,
+              reason: 'Stopped by debugger',
+              executionTime: Date.now() - nodeStartTime,
+            },
+          )
+
+          this.context.abortController.abort('Execution stopped by debugger') // Abort execution
+          throw new Error('Execution stopped by debugger')
+        }
+      }
 
       // Transfer data from incoming edges
       for (const edge of this.flow.getIncomingEdges(node)) {
-        await edge.transfer()
+        const transferStartTime = Date.now()
+        this.eventEmitter.emit(ExecutionEventEnum.EDGE_TRANSFER_STARTED, { edge })
+        try {
+          await edge.transfer()
+        } catch (error) {
+          this.eventEmitter.emit(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
+            edge,
+            error: error as Error,
+          })
+          throw error
+        }
+        this.eventEmitter.emit(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
+          edge,
+          transferTime: Date.now() - transferStartTime,
+        })
       }
 
-      const nodeTimeoutMs = this.options?.nodeTimeoutMs || DEFAULT_NODE_TIMEOUT_MS
+      const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs || DEFAULT_NODE_TIMEOUT_MS
       await withTimeout(
         node.execute(this.context),
         nodeTimeoutMs,
@@ -207,9 +330,26 @@ export class ExecutionEngine {
       )
 
       node.setStatus('completed')
+      this.eventEmitter.emit(ExecutionEventEnum.NODE_COMPLETED, {
+        node,
+        executionTime: Date.now() - nodeStartTime,
+      })
     } catch (error) {
       node.setStatus('error')
+      this.eventEmitter.emit(ExecutionEventEnum.NODE_FAILED, {
+        node,
+        error: error as Error,
+        executionTime: Date.now() - nodeStartTime,
+      })
       throw error
     }
+  }
+
+  public getDebugger(): DebuggerController | null {
+    return this.debugger
+  }
+
+  public getEventEmitter(): TypedEventEmitter {
+    return this.eventEmitter
   }
 }

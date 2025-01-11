@@ -1,5 +1,6 @@
+import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { NodeEvents } from '@chaingraph/types/node/events'
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types/node/execution'
+import type { NodeExecutionResult } from '@chaingraph/types/node/execution'
 import type { IPort, PortConfig } from '@chaingraph/types/port'
 import type {
   NodeMetadata,
@@ -70,6 +71,16 @@ export interface INode {
   getPort: (portId: string) => IPort<any> | undefined
 
   /**
+   * Get all input ports
+   */
+  getInputs: () => IPort<any>[]
+
+  /**
+   * Get all output ports
+   */
+  getOutputs: () => IPort<any>[]
+
+  /**
    * Set the node status
    * @param status New status
    */
@@ -81,4 +92,11 @@ export interface INode {
    * @param handler Event handler function
    */
   on: <T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void) => void
+
+  /**
+   * Event handling - Unsubscribe from node events
+   * @param event Event type
+   * @param handler Event handler function
+   */
+  off: <T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void) => void
 }

@@ -1,11 +1,12 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { IPort, PortConfig } from '../port'
-import type { NodeEvents } from './events'
+import type { NodeEvents, NodeStatusChangeEvent } from './events'
 import type { NodeExecutionResult } from './execution'
 import type { INode } from './interface'
-
 import type { NodeMetadata, NodeStatus, NodeValidationResult } from './types'
+
 import { EventEmitter } from 'node:events'
+import { PortDirectionEnum } from '../port'
 import { PortFactory } from '../port/port-factory'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
 import { PortConfigProcessor } from './port-config-processor'
@@ -106,8 +107,27 @@ export abstract class BaseNode implements INode {
     return this._ports.has(portId)
   }
 
+  getInputs(): IPort<any>[] {
+    return Array.from(
+      this._ports
+        .values()
+        .filter(port => port.config.direction === PortDirectionEnum.Input),
+    )
+  }
+
+  getOutputs(): IPort<any>[] {
+    return Array.from(
+      this._ports.values()
+        .filter(port => port.config.direction === PortDirectionEnum.Output),
+    )
+  }
+
   on<T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void): void {
     this.eventEmitter.on(event, handler)
+  }
+
+  off<T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void): void {
+    this.eventEmitter.off(event, handler)
   }
 
   protected emit<T extends keyof NodeEvents>(event: T, data: NodeEvents[T]): void {
@@ -147,12 +167,15 @@ export abstract class BaseNode implements INode {
   setStatus(status: NodeStatus): void {
     const oldStatus = this._status
     this._status = status
-    this.emit('status-change', {
+    const event: NodeStatusChangeEvent = {
       nodeId: this._id,
       timestamp: new Date(),
       type: 'status-change',
+      node: this,
       oldStatus,
       newStatus: status,
-    })
+    }
+
+    this.emit('status-change', event)
   }
 }

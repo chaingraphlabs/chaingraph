@@ -1,22 +1,10 @@
 import type { IEdge, INode } from '@chaingraph/types'
-import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { IFlow } from './interface'
-import type { FlowMetadata } from './types'
 
+import type { FlowMetadata } from './types'
 import { EventEmitter } from 'node:events'
 import { Edge } from '@chaingraph/types'
-import { ExecutionEngine } from '@chaingraph/types/flow/execution-engine'
 import { v4 as uuidv4 } from 'uuid'
-
-export interface FlowOptions {
-  execution?: ExecutionOptions
-}
-
-export interface ExecutionOptions {
-  maxConcurrency?: number
-  nodeTimeoutMs?: number
-  flowTimeoutMs?: number
-}
 
 export class Flow implements IFlow {
   readonly id: string
@@ -24,11 +12,9 @@ export class Flow implements IFlow {
   readonly nodes: Map<string, INode>
   readonly edges: Map<string, IEdge>
 
-  readonly options: FlowOptions = {}
-
   private eventEmitter = new EventEmitter()
 
-  constructor(metadata: Partial<FlowMetadata> = {}, options?: FlowOptions) {
+  constructor(metadata: Partial<FlowMetadata> = {}) {
     this.id = uuidv4()
     this.metadata = {
       name: metadata.name || 'Untitled Flow',
@@ -39,7 +25,6 @@ export class Flow implements IFlow {
     }
     this.nodes = new Map()
     this.edges = new Map()
-    this.options = options || {}
   }
 
   addNode(node: INode): void {
@@ -133,24 +118,6 @@ export class Flow implements IFlow {
     return true
   }
 
-  async execute(context: ExecutionContext): Promise<void> {
-    if (context.flowId !== this.id) {
-      throw new Error('Invalid execution context for flow.')
-    }
-
-    if (!context.executionId) {
-      throw new Error('Execution ID is required.')
-    }
-
-    const engine = new ExecutionEngine(
-      this,
-      context,
-      this.options.execution,
-    )
-
-    await engine.execute()
-  }
-
   public getIncomingEdges(node: INode): IEdge[] {
     return [...this.edges.values()].filter(edge => edge.targetNode.id === node.id)
   }
@@ -165,40 +132,5 @@ export class Flow implements IFlow {
     this.edges.clear()
     this.eventEmitter.removeAllListeners()
     return Promise.resolve()
-  }
-
-  private topologicalSort(): INode[] {
-    const visited = new Set<string>()
-    const tempMarks = new Set<string>()
-    const sorted: INode[] = []
-
-    const visit = (node: INode) => {
-      if (tempMarks.has(node.id)) {
-        throw new Error('Graph contains a cycle.')
-      }
-      if (!visited.has(node.id)) {
-        tempMarks.add(node.id)
-
-        const outgoingEdges = [...this.edges.values()].filter(
-          edge => edge.sourceNode.id === node.id,
-        )
-
-        for (const edge of outgoingEdges) {
-          visit(edge.targetNode)
-        }
-
-        tempMarks.delete(node.id)
-        visited.add(node.id)
-        sorted.push(node)
-      }
-    }
-
-    for (const node of this.nodes.values()) {
-      if (!visited.has(node.id)) {
-        visit(node)
-      }
-    }
-
-    return sorted.reverse() // Reverse to get correct order
   }
 }
