@@ -347,6 +347,8 @@ export class TestNode extends BaseNode {
   directionEnum: Direction = Direction.Up
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    this.colorEnum = '12'
+
     return {
       status: 'completed',
       startTime: context.startTime,

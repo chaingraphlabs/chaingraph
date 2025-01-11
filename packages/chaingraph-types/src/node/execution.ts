@@ -1,22 +1,22 @@
 /**
  * Execution context passed to nodes during execution
  */
-export interface ExecutionContext {
-  /** Unique execution ID */
-  executionId: string
-
-  /** Timestamp when execution started */
-  startTime: Date
-
-  /** Parent flow ID if part of a flow */
-  flowId?: string
-
-  /** Additional context data */
-  metadata?: Record<string, unknown>
-
-  /** Cancellation signal for interrupting execution */
-  cancelSignal?: AbortSignal
-}
+// export interface ExecutionContext {
+//   /** Unique execution ID */
+//   executionId: string
+//
+//   /** Timestamp when execution started */
+//   startTime: Date
+//
+//   /** Parent flow ID if part of a flow */
+//   flowId?: string
+//
+//   /** Additional context data */
+//   metadata?: Record<string, unknown>
+//
+//   /** Cancellation signal for interrupting execution */
+//   cancelSignal?: AbortSignal
+// }
 
 /**
  * Node execution result

@@ -1,6 +1,6 @@
 import type { INode } from '../node'
 import type { IEdge } from './interface'
-import type { EdgeMetadata, EdgeTransformation } from './types'
+import type { EdgeMetadata } from './types'
 
 /**
  * Edge creation options
@@ -11,7 +11,7 @@ export interface EdgeCreationOptions {
   targetNode: INode
   targetPortId: string
   metadata?: EdgeMetadata
-  transformation?: EdgeTransformation
+  // transformation?: EdgeTransformation
 }
 
 /**

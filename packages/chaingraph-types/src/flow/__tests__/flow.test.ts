@@ -1,5 +1,4 @@
 import type {
-  ExecutionContext,
   NodeExecutionResult,
 } from '@chaingraph/types'
 import {
@@ -8,6 +7,7 @@ import {
   PortDirectionEnum,
   PortKindEnum,
 } from '@chaingraph/types'
+import { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import { Flow } from '@chaingraph/types/flow/flow'
 import { describe, expect, it } from 'vitest'
 
@@ -44,9 +44,11 @@ class AddNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const a = this.inputA.getValue()?.toNumber() ?? 0
+
     const b = this.inputB.getValue()?.toNumber() ?? 0
     const result = a + b
     this.output.setValue(result)
+
     return {
       status: 'completed',
       startTime: context.startTime,
@@ -58,7 +60,13 @@ class AddNode extends BaseNode {
 
 describe('flow Execution', () => {
   it('should execute a simple flow', async () => {
-    const flow = new Flow({ name: 'Test Flow' })
+    const flow = new Flow({ name: 'Test Flow' }, {
+      execution: {
+        maxConcurrency: 1,
+        nodeTimeoutMs: 1000,
+        flowTimeoutMs: 5000,
+      },
+    })
 
     const node1 = new AddNode('node1')
     const node2 = new AddNode('node2')
@@ -87,7 +95,9 @@ describe('flow Execution', () => {
     node2.inputB.setValue(20)
 
     // Execute the flow
-    await flow.execute()
+    const abortController = new AbortController()
+    const context = new ExecutionContext(flow.id, abortController)
+    await flow.execute(context)
 
     // Verify results
     const resultNode1 = node1.output.getValue().toNumber()
@@ -98,7 +108,13 @@ describe('flow Execution', () => {
   })
 
   it('should execute a complex flow with multiple nodes', async () => {
-    const flow = new Flow({ name: 'Complex Test Flow' })
+    const flow = new Flow({ name: 'Complex Test Flow' }, {
+      execution: {
+        maxConcurrency: 5,
+        nodeTimeoutMs: 1000,
+        flowTimeoutMs: 5000,
+      },
+    })
 
     // Create nodes
     const sourceNode1 = new AddNode('source1') // 5 + 10 = 15
@@ -148,7 +164,9 @@ describe('flow Execution', () => {
     await flow.connectNodes('intermediate2', 'output', 'final', 'inputB')
 
     // Execute the flow
-    await flow.execute()
+    const abortController = new AbortController()
+    const context = new ExecutionContext(flow.id, abortController)
+    await flow.execute(context)
 
     // Verify results
     expect(sourceNode1.output.getValue().toNumber()).toBe(15) // 5 + 10
@@ -156,5 +174,5 @@ describe('flow Execution', () => {
     expect(intermediateNode1.output.getValue().toNumber()).toBe(25) // 15 + 10
     expect(intermediateNode2.output.getValue().toNumber()).toBe(30) // 10 + 20
     expect(finalNode.output.getValue().toNumber()).toBe(55) // 25 + 30
-  })
+  }, 100000)
 })

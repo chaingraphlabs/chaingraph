@@ -70,6 +70,12 @@ export interface INode {
   getPort: (portId: string) => IPort<any> | undefined
 
   /**
+   * Set the node status
+   * @param status New status
+   */
+  setStatus: (status: NodeStatus) => void
+
+  /**
    * Event handling - Subscribe to node events
    * @param event Event type
    * @param handler Event handler function

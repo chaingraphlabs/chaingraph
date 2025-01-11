@@ -1,4 +1,5 @@
 import type { IEdge } from '@chaingraph/types/edge'
+import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { INode } from '@chaingraph/types/node'
 import type { FlowMetadata } from './types'
 
@@ -65,7 +66,7 @@ export interface IFlow {
   /**
    * Executes the flow.
    */
-  execute: () => Promise<void>
+  execute: (context: ExecutionContext) => Promise<void>
 
   /**
    * Disposes the flow and its resources.

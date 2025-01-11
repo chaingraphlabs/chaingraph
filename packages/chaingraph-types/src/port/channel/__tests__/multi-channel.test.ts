@@ -95,8 +95,11 @@ describe('multiChannel', () => {
       }
     })()
 
+    Promise
+
     // Send messages
-    channel.send('Hello')
+      .channel
+      .send('Hello')
     channel.send('World')
     channel.send('Stop')
 

@@ -1,10 +1,22 @@
 import type { IEdge, INode } from '@chaingraph/types'
+import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
-import { EventEmitter } from 'node:events'
 
+import { EventEmitter } from 'node:events'
 import { Edge } from '@chaingraph/types'
+import { ExecutionEngine } from '@chaingraph/types/flow/execution-engine'
 import { v4 as uuidv4 } from 'uuid'
+
+export interface FlowOptions {
+  execution?: ExecutionOptions
+}
+
+export interface ExecutionOptions {
+  maxConcurrency?: number
+  nodeTimeoutMs?: number
+  flowTimeoutMs?: number
+}
 
 export class Flow implements IFlow {
   readonly id: string
@@ -12,9 +24,11 @@ export class Flow implements IFlow {
   readonly nodes: Map<string, INode>
   readonly edges: Map<string, IEdge>
 
+  readonly options: FlowOptions = {}
+
   private eventEmitter = new EventEmitter()
 
-  constructor(metadata: Partial<FlowMetadata> = {}) {
+  constructor(metadata: Partial<FlowMetadata> = {}, options?: FlowOptions) {
     this.id = uuidv4()
     this.metadata = {
       name: metadata.name || 'Untitled Flow',
@@ -25,6 +39,7 @@ export class Flow implements IFlow {
     }
     this.nodes = new Map()
     this.edges = new Map()
+    this.options = options || {}
   }
 
   addNode(node: INode): void {
@@ -118,40 +133,29 @@ export class Flow implements IFlow {
     return true
   }
 
-  async execute(): Promise<void> {
-    // Implement topological sorting to determine execution order
-    const sortedNodes = this.topologicalSort()
-
-    // Execute nodes in order
-    for (const node of sortedNodes) {
-      // Transfer data from upstream nodes to this node via edges
-      const incomingEdges = this.getIncomingEdges(node)
-
-      // Transfer data through each incoming edge
-      for (const edge of incomingEdges) {
-        await edge.transfer()
-      }
-
-      // Execute the node
-      const context = {
-        executionId: uuidv4(),
-        startTime: new Date(),
-        flowId: this.id,
-      }
-      await node.execute(context)
-
-      // Optionally, transfer data from this node's outputs to downstream nodes
-      const outgoingEdges = this.getOutgoingEdges(node)
-
-      // For edges connected from this node's outputs, data will be transferred in the next iteration when those nodes execute
+  async execute(context: ExecutionContext): Promise<void> {
+    if (context.flowId !== this.id) {
+      throw new Error('Invalid execution context for flow.')
     }
+
+    if (!context.executionId) {
+      throw new Error('Execution ID is required.')
+    }
+
+    const engine = new ExecutionEngine(
+      this,
+      context,
+      this.options.execution,
+    )
+
+    await engine.execute()
   }
 
-  private getIncomingEdges(node: INode): IEdge[] {
+  public getIncomingEdges(node: INode): IEdge[] {
     return [...this.edges.values()].filter(edge => edge.targetNode.id === node.id)
   }
 
-  private getOutgoingEdges(node: INode): IEdge[] {
+  public getOutgoingEdges(node: INode): IEdge[] {
     return [...this.edges.values()].filter(edge => edge.sourceNode.id === node.id)
   }
 

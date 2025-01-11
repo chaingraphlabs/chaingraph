@@ -16,6 +16,7 @@ export type NodeStatus =
   | 'idle'
   | 'initialized'
   | 'ready'
+  | 'pending'
   | 'executing'
   | 'completed'
   | 'error'

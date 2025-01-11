@@ -1,9 +1,10 @@
+import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { IPort, PortConfig } from '../port'
 import type { NodeEvents } from './events'
-import type { ExecutionContext, NodeExecutionResult } from './execution'
+import type { NodeExecutionResult } from './execution'
 import type { INode } from './interface'
-import type { NodeMetadata, NodeStatus, NodeValidationResult } from './types'
 
+import type { NodeMetadata, NodeStatus, NodeValidationResult } from './types'
 import { EventEmitter } from 'node:events'
 import { PortFactory } from '../port/port-factory'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
@@ -44,17 +45,9 @@ export abstract class BaseNode implements INode {
 
   async initialize(): Promise<void> {
     // Process PortConfigs using PortConfigProcessor
-    const processor = new PortConfigProcessor()
-    processor.processNodePorts(this)
+    (new PortConfigProcessor()).processNodePorts(this)
 
-    this._status = 'initialized'
-    this.emit('status-change', {
-      nodeId: this._id,
-      timestamp: new Date(),
-      type: 'status-change',
-      oldStatus: 'idle',
-      newStatus: 'initialized',
-    })
+    this.setStatus('initialized')
   }
 
   abstract execute(context: ExecutionContext): Promise<NodeExecutionResult>
@@ -97,26 +90,11 @@ export abstract class BaseNode implements INode {
     for (const port of this.ports.values()) {
       port.reset()
     }
-    this._status = 'idle'
-    this.emit('status-change', {
-      nodeId: this._id,
-      timestamp: new Date(),
-      type: 'status-change',
-      oldStatus: this._status,
-      newStatus: 'idle',
-    })
+    this.setStatus('idle')
   }
 
   async dispose(): Promise<void> {
-    // Clean up resources
-    this._status = 'disposed'
-    this.emit('status-change', {
-      nodeId: this._id,
-      timestamp: new Date(),
-      type: 'status-change',
-      oldStatus: this._status,
-      newStatus: 'disposed',
-    })
+    this.setStatus('disposed')
     this.eventEmitter.removeAllListeners()
   }
 
@@ -164,5 +142,17 @@ export abstract class BaseNode implements INode {
     } else {
       throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)
     }
+  }
+
+  setStatus(status: NodeStatus): void {
+    const oldStatus = this._status
+    this._status = status
+    this.emit('status-change', {
+      nodeId: this._id,
+      timestamp: new Date(),
+      type: 'status-change',
+      oldStatus,
+      newStatus: status,
+    })
   }
 }

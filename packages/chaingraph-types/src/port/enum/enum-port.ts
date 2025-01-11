@@ -3,9 +3,10 @@ import type {
   IPort,
   PortConfig,
   PortFromConfig,
-} from '@chaingraph/types/port'
-import { PortBase, PortFactory,
-} from '@chaingraph/types/port'
+} from '../types'
+import { PortFactory } from '@chaingraph/types/port'
+import { PortBase,
+} from '../types'
 
 export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> {
   readonly config: EnumPortConfig<E>
