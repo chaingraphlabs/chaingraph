@@ -28,6 +28,7 @@
     "decimal.js": "^10.4.3",
     "loglevel": "^1.9.2",
     "reflect-metadata": "^0.2.2",
+    "superjson": "^2.2.2",
     "ts-node": "^10.9.2",
     "tslog": "^4.9.3",
     "uuid": "^11.0.4",

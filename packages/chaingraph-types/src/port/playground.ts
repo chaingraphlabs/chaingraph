@@ -1,33 +1,34 @@
 import type { EnumPortConfig, StringPortConfig } from './types'
 import { PortFactory } from './port-factory'
+import { PortKindEnum } from './types'
 
 // Define option ports
 const redOptionConfig: StringPortConfig = {
   id: 'red',
-  name: 'Red',
-  kind: 'string',
+  key: 'Red',
+  kind: PortKindEnum.String,
   defaultValue: 'Red Color',
-}
+} as StringPortConfig
 
 const greenOptionConfig: StringPortConfig = {
   id: 'green',
-  name: 'Green',
-  kind: 'string',
+  key: 'Green',
+  kind: PortKindEnum.String,
   defaultValue: 'Green Color',
 }
 
 const blueOptionConfig: StringPortConfig = {
   id: 'blue',
-  name: 'Blue',
-  kind: 'string',
+  key: 'Blue',
+  kind: PortKindEnum.String,
   defaultValue: 'Blue Color',
 }
 
 // Define an EnumPortConfig
 const enumPortConfig: EnumPortConfig<StringPortConfig> = {
   id: 'colorSelector',
-  name: 'Color Selector',
-  kind: 'enum',
+  key: 'Color Selector',
+  kind: PortKindEnum.Enum,
   options: [redOptionConfig, greenOptionConfig, blueOptionConfig],
   defaultValue: 'red',
 }
@@ -41,8 +42,8 @@ console.log(enumPort.getValue()) // Output: 'red'
 // Add a new option at runtime
 const yellowOptionConfig: StringPortConfig = {
   id: 'yellow',
-  name: 'Yellow',
-  kind: 'string',
+  key: 'Yellow',
+  kind: PortKindEnum.String,
   defaultValue: 'Yellow Color',
 }
 

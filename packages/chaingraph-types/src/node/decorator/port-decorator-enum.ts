@@ -43,7 +43,7 @@ export function PortEnumOf<T>(
       return {
         id: `option${index}`,
         kind,
-        name: typeof defaultValue === 'string' ? defaultValue : `Option ${index}`,
+        key: typeof defaultValue === 'string' ? defaultValue : `Option ${index}`,
         defaultValue, // Note: This is the option's value, used when selected
       } as PortConfig
     })

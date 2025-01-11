@@ -91,7 +91,7 @@ export function Port<K extends PortKind>(config: PortDecoratorConfig<K>) {
       metadata.portsConfig.set(propertyKey, {
         ...inferredConfig,
         id: inferredConfig?.id ?? propertyKey,
-        name: inferredConfig?.name ?? propertyKey,
+        key: inferredConfig?.key ?? propertyKey,
         title: inferredConfig?.title ?? propertyKey,
       })
     } else {

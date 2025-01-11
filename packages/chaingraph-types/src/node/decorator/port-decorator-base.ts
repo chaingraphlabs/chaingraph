@@ -12,7 +12,7 @@ export function Description(description: string) {
 export function Name(name: string) {
   return function (target: any, propertyKey: string) {
     updatePortConfig(target, propertyKey, (config) => {
-      config.name = name
+      config.key = name
     })
   }
 }

@@ -210,7 +210,7 @@ export class TestNode extends BaseNode {
     defaultValue: [[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
     elementConfig: {
       id: 'z',
-      name: 'Z',
+      key: 'Z',
       kind: PortKindEnum.Array,
       defaultValue: [],
       elementConfig: {

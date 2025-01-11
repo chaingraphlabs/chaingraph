@@ -1,7 +1,10 @@
+import type { JSONObject } from 'superjson/dist/types'
 import type { IPort, StringPortConfig } from '../types'
+import { undefined } from 'zod'
 import { PortBase } from '../types'
 
 export class StringPort extends PortBase<StringPortConfig> {
+  readonly className = 'StringPort'
   readonly config: StringPortConfig
   value: string
 
@@ -34,5 +37,13 @@ export class StringPort extends PortBase<StringPortConfig> {
 
   clone(): IPort<StringPortConfig> {
     return new StringPort({ ...this.config, defaultValue: this.value })
+  }
+
+  deserialize(v: JSONObject): IPort<StringPortConfig> {
+    return undefined
+  }
+
+  serialize(v: IPort<StringPortConfig>): JSONObject {
+    return undefined
   }
 }

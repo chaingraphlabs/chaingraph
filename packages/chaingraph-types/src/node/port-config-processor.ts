@@ -137,9 +137,9 @@ export class PortConfigProcessor {
       newPortConfig.id = propertyKey || this.generateSortableUUID()
     }
 
-    // Assign name
-    if (!newPortConfig.name) {
-      newPortConfig.name = newPortConfig.title || newPortConfig.id
+    // Assign key
+    if (!newPortConfig.key) {
+      newPortConfig.key = newPortConfig.title || newPortConfig.id
     }
 
     // Assign defaultValue

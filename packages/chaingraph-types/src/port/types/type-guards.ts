@@ -23,43 +23,43 @@ import type { StreamOutputPort } from '@chaingraph/types/port/stream/stream-outp
 import { PortKindEnum,
 } from '@chaingraph/types/port'
 
-export function isStringPortConfig(config: PortConfig): config is StringPortConfig {
+export function isStringPortConfig(config: any): config is StringPortConfig {
   return config.kind === PortKindEnum.String
 }
 
-export function isNumberPortConfig(config: PortConfig): config is NumberPortConfig {
+export function isNumberPortConfig(config: any): config is NumberPortConfig {
   return config.kind === PortKindEnum.Number
 }
 
-export function isBooleanPortConfig(config: PortConfig): config is BooleanPortConfig {
+export function isBooleanPortConfig(config: any): config is BooleanPortConfig {
   return config.kind === PortKindEnum.Boolean
 }
 
-export function isArrayPortConfig<E extends PortConfig>(config: PortConfig): config is ArrayPortConfig<E> {
+export function isArrayPortConfig<E extends PortConfig>(config: any): config is ArrayPortConfig<E> {
   return config.kind === PortKindEnum.Array
 }
 
-export function isObjectPortConfig<S extends ObjectSchema>(config: PortConfig): config is ObjectPortConfig<S> {
+export function isObjectPortConfig<S extends ObjectSchema>(config: any): config is ObjectPortConfig<S> {
   return config.kind === PortKindEnum.Object
 }
 
-export function isAnyPortConfig(config: PortConfig): config is AnyPortConfig {
+export function isAnyPortConfig(config: any): config is AnyPortConfig {
   return config.kind === PortKindEnum.Any
 }
 
-export function isEnumPortConfig<E extends PortConfig>(config: PortConfig): config is EnumPortConfig<E> {
+export function isEnumPortConfig<E extends PortConfig>(config: any): config is EnumPortConfig<E> {
   return config.kind === PortKindEnum.Enum
 }
 
-export function isStreamInputPortConfig<T>(config: PortConfig): config is StreamInputPortConfig<T> {
+export function isStreamInputPortConfig<T>(config: any): config is StreamInputPortConfig<T> {
   return config.kind === PortKindEnum.StreamInput
 }
 
-export function isStreamOutputPortConfig<T>(config: PortConfig): config is StreamInputPortConfig<T> {
+export function isStreamOutputPortConfig<T>(config: any): config is StreamInputPortConfig<T> {
   return config.kind === PortKindEnum.StreamOutput
 }
 
-export function isPortConfig(config: PortConfig): config is PortConfig {
+export function isPortConfig(config: any): config is PortConfig {
   return isStringPortConfig(config)
     || isNumberPortConfig(config)
     || isBooleanPortConfig(config)
@@ -105,4 +105,16 @@ export function isStreamInputPort(port: IPort<any>): port is StreamInputPort<any
 
 export function isStreamOutputPort(port: IPort<any>): port is StreamOutputPort<any> {
   return port.config.kind === PortKindEnum.StreamOutput
+}
+
+export function isSomePort(port: IPort<any>): port is IPort<any> {
+  return isStringPort(port)
+    || isNumberPort(port)
+    || isBooleanPort(port)
+    || isArrayPort(port)
+    || isObjectPort(port)
+    || isAnyPort(port)
+    || isEnumPort(port)
+    || isStreamInputPort(port)
+    || isStreamOutputPort(port)
 }

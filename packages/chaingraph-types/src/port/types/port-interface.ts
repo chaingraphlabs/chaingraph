@@ -4,8 +4,16 @@ import type {
   PortKindEnum,
   PortValueFromConfig,
 } from '@chaingraph/types/port'
+import type { CustomTransfomer } from 'superjson/dist/custom-transformer-registry'
 
-export interface IPort<C extends PortConfig> {
+import type { JSONObject } from 'superjson/dist/types'
+import {
+  isPortConfig,
+} from '@chaingraph/types/port'
+import superjson from 'superjson'
+
+export interface IPort<C extends PortConfig> extends CustomTransfomer<IPort<C>, JSONObject> {
+  readonly className: string
   readonly config: C
   value: PortValueFromConfig<C>
 
@@ -15,9 +23,16 @@ export interface IPort<C extends PortConfig> {
   reset: () => void
   hasValue: () => boolean
   clone: () => IPort<C>
+
+  // superjson serialization methods
+  readonly name: string
+  isApplicable: (v: any) => v is IPort<C>
+  deserialize: (v: JSONObject) => IPort<C>
+  serialize: (v: IPort<C>) => JSONObject
 }
 
 export abstract class PortBase<C extends PortConfig> implements IPort<C> {
+  abstract readonly className: string
   abstract readonly config: C
   abstract value: PortValueFromConfig<C>
 
@@ -32,8 +47,8 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
     return this.config.id ?? ''
   }
 
-  get name(): string {
-    return this.config.name ?? ''
+  get key(): string {
+    return this.config.key ?? ''
   }
 
   get description(): string {
@@ -81,5 +96,42 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
       this.config.metadata = {}
     }
     this.config.metadata[key] = value
+  }
+
+  abstract deserialize(v: JSONObject): IPort<C>
+
+  serialize(v: IPort<C>): JSONObject {
+    return {
+      className: v.className,
+      config: superjson.stringify({ ...v.config }),
+      value: superjson.stringify(v.getValue()),
+    }
+  }
+
+  get name(): string {
+    return this.className
+  }
+
+  isApplicable(v: any): v is IPort<C> {
+    if (v === null || v === undefined) {
+      return false
+    }
+
+    if (typeof v !== 'object' || !('config' in v) || !('value' in v) || !('className' in v)) {
+      return false
+    }
+
+    if (!isPortConfig(v.config)) {
+      return false
+    }
+
+    return !(
+      v.config.kind !== this.config.kind
+      || v.className !== this.className
+    )
+  }
+
+  registerSuperjson() {
+    superjson.registerCustom<IPort<C>, JSONObject>(this, this.className)
   }
 }
