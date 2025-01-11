@@ -11,7 +11,9 @@
       "@chaingraph/backend/*": ["packages/chaingraph-backend/src/*"],
       "@chaingraph/backend": ["packages/chaingraph-backend/src"],
       "@chaingraph/types/*": ["packages/chaingraph-types/src/*"],
-      "@chaingraph/types": ["packages/chaingraph-types/src"]
+      "@chaingraph/types": ["packages/chaingraph-types/src"],
+      "@chaingraph/frontend": ["packages/chaingraph-frontend/src"],
+      "@chaingraph/frontend/*": ["packages/chaingraph-frontend/src/*"],
     },
     "resolveJsonModule": true,
     "types": ["bun-types"],  // Added Bun types
