@@ -1,9 +1,9 @@
 import type { PortConfig } from '@chaingraph/types/port/types/port-composite-types'
-import type { NumberPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import type { JSONValue } from 'superjson/dist/types'
 import { AnyPort } from '@chaingraph/types/port/any'
 import { ArrayPort } from '@chaingraph/types/port/array'
+import { MultiChannel } from '@chaingraph/types/port/channel'
 import { EnumPort } from '@chaingraph/types/port/enum'
 import { ObjectPort } from '@chaingraph/types/port/object'
 import { BooleanPort, NumberPort, StringPort } from '@chaingraph/types/port/scalar'
@@ -33,6 +33,7 @@ export function registerPortTransformer<C extends PortConfig>(port: IPort<C>): v
  * Registers all default port transformers with superjson
  */
 export function registerPortTransformers() {
+  // Register Decimal transformer
   superjson.registerCustom<Decimal, string>(
     {
       isApplicable: (v): v is Decimal => Decimal.isDecimal(v),
@@ -42,14 +43,53 @@ export function registerPortTransformers() {
     'decimal.js',
   )
 
-  const numberPort = new NumberPort({ kind: PortKindEnum.Number })
-  superjson.registerCustom<IPort<NumberPortConfig>, JSONValue>(
+  // Register MultiChannel transformer
+  superjson.registerCustom<MultiChannel<any>, JSONValue>(
     {
-      isApplicable: (v): v is IPort<NumberPortConfig> => numberPort.isApplicable(v),
-      serialize: v => numberPort.serialize(v),
-      deserialize: v => numberPort.deserialize(v),
+      // isApplicable: (v): v is MultiChannel<any> => v instanceof MultiChannel,
+      isApplicable: (v): v is MultiChannel<any> => {
+        if (v instanceof MultiChannel) {
+          return true
+        }
+
+        if (!v || typeof v !== 'object' || !('type' in v) || v.type !== 'MultiChannel') {
+          return false
+        }
+
+        if (!('buffer' in v) || !Array.isArray(v.buffer)) {
+          return false
+        }
+
+        return true
+      },
+      serialize: (v) => {
+        return {
+          type: 'MultiChannel',
+          buffer: v.getBuffer(),
+          isClosed: v.isChannelClosed(),
+        }
+      },
+      deserialize: (v) => {
+        if (!v || typeof v !== 'object') {
+          throw new Error('Invalid MultiChannel object')
+        }
+
+        if (!('type' in v) || v.type !== 'MultiChannel') {
+          throw new Error('Invalid MultiChannel type')
+        }
+
+        const chan = new MultiChannel()
+        if (v.buffer && Array.isArray(v.buffer)) {
+          chan.sendBatch(v.buffer)
+        }
+        if (v.isClosed) {
+          chan.close()
+        }
+
+        return chan
+      },
     },
-    numberPort.config.kind,
+    'MultiChannel',
   )
 
   // Register all port type transformers

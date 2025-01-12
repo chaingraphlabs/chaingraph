@@ -80,13 +80,13 @@ export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> 
     }
   }
 
-  async validate(): Promise<boolean> {
+  validate(): boolean {
     if (this.value === null) {
       return false // No value selected
     }
     const selectedPort = this.getSelectedOption()
     if (selectedPort) {
-      return await selectedPort.validate()
+      return selectedPort.validate()
     }
     return false
   }

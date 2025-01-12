@@ -1,6 +1,7 @@
 import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
 import type { AnyPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '../types/port-interface'
+import { PortFactory } from '@chaingraph/types/port'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
 import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
@@ -27,24 +28,20 @@ export class AnyPort extends PortBase<AnyPortConfig> {
   setValue(value: any): void {
     if (this.config.connectedPortConfig) {
       // Determine the expected type from connectedPortConfig
-      // const expectedType = this.config.connectedPortConfig.kind
+      const port = PortFactory.create(this.config.connectedPortConfig)
+      port.setValue(value as never)
+      if (!port.validate()) {
+        throw new Error('Invalid value for connected port')
+      }
 
-      // Perform type checking
-      // if (expectedType === 'string' && typeof value !== 'string') {
-      //   throw new TypeError('Value must be a string')
-      // } else if (expectedType === 'number' && typeof value !== 'number') {
-      //   throw new TypeError('Value must be a number')
-      // }
-      // Add other type checks as needed
-
-      this.value = value
+      this.value = port.getValue()
     } else {
       // Accept any value when not connected
       this.value = value
     }
   }
 
-  async validate(): Promise<boolean> {
+  validate(): boolean {
     // If connected, delegate validation to the connected port's config
     if (this.config.connectedPortConfig) {
       // Implement validation logic based on connectedPortConfig

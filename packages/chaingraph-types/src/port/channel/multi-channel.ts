@@ -13,6 +13,16 @@ export class MultiChannel<T> {
     }
   }
 
+  sendBatch(values: T[]): void {
+    if (this.isClosed) {
+      throw new Error('Cannot send to a closed channel.')
+    }
+    this.buffer.push(...values)
+    for (const subscriber of this.subscribers) {
+      subscriber.notify()
+    }
+  }
+
   close(): void {
     if (!this.isClosed) {
       this.isClosed = true

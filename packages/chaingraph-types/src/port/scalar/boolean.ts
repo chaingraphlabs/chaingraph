@@ -23,7 +23,7 @@ export class BooleanPort extends PortBase<BooleanPortConfig> {
     this.value = value
   }
 
-  async validate(): Promise<boolean> {
+  validate(): boolean {
     // Implement your validation logic here
     return true
   }

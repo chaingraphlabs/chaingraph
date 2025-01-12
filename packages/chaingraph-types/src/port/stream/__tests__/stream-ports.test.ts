@@ -3,11 +3,10 @@ import type {
   StreamOutputPortConfig,
 } from '@chaingraph/types/port/types/port-config'
 
+import { StreamInputPort, StreamOutputPort } from '@chaingraph/types'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
 import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 import { describe, expect, it } from 'vitest'
-import { StreamInputPort } from '../stream-input-port'
-import { StreamOutputPort } from '../stream-output-port'
 
 describe('stream Ports', () => {
   it('should transmit data from StreamOutputPort to StreamInputPort', async () => {

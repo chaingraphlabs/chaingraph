@@ -24,7 +24,7 @@ export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfi
     this.value = value
   }
 
-  async validate(): Promise<boolean> {
+  validate(): boolean {
     // Implement your validation logic here, possibly validating each property
     return true
   }

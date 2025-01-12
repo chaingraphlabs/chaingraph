@@ -1,5 +1,4 @@
-import { NumberPort } from '@chaingraph/types'
-import { registerPortTransformers } from '@chaingraph/types/port/port-transformers'
+import { NumberPort, registerPortTransformers } from '@chaingraph/types'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
 import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 import Decimal from 'decimal.js'

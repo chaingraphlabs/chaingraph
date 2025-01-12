@@ -16,7 +16,7 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
 
   abstract getValue(): PortValueFromConfig<C>
   abstract setValue(value: PortValueFromConfig<C>): void
-  abstract validate(): Promise<boolean>
+  abstract validate(): boolean
   abstract reset(): void
   abstract hasValue(): boolean
   abstract clone(): IPort<C>
@@ -89,8 +89,9 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
       throw new TypeError('Cannot deserialize non-object port')
     }
 
-    if (!('config' in v) || !('value' in v)) {
-      throw new Error('Cannot deserialize port without config and value')
+    // if (!('config' in v) || !('value' in v)) {
+    if (!('config' in v)) {
+      throw new Error('Cannot deserialize port without config')
     }
 
     if ((v.config as JSONObject)?.kind !== this.config.kind) {
@@ -106,7 +107,7 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
       throw new Error(`Cannot deserialize port with different kind, expected ${this.config.kind}, got ${validatedConfig.kind}`)
     }
 
-    const validatedValue = PortValueSchema.parse(v.value)
+    const validatedValue = PortValueSchema.parse(v?.value)
 
     const port = PortFactory.create(validatedConfig as C)
     port.setValue(validatedValue as never)

@@ -26,7 +26,7 @@ export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>
 
     // Set the value of the element and push it to the new value array
     // This is necessary to ensure that the value is properly validated
-    const newValue = []
+    const newValue = [] as Array<PortValueFromConfig<E>>
     for (const val of value) {
       element.setValue(val as never)
       newValue.push(element.getValue())
@@ -35,7 +35,7 @@ export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>
     this.value = newValue
   }
 
-  async validate(): Promise<boolean> {
+  validate(): boolean {
     // Implement your validation logic here, possibly validating each element
     return true
   }

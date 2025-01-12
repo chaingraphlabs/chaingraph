@@ -35,7 +35,7 @@ export type PortValueFromConfig<C extends PortConfig> =
           C extends ObjectPortConfig<infer S> ? ObjectPortValueFromSchema<S> :
             C extends AnyPortConfig ? any :
               C extends EnumPortConfig<any> ? string | null :
-                C extends StreamOutputPortConfig<infer T> ? MultiChannel<T> | null :
+                C extends StreamOutputPortConfig<infer T> ? MultiChannel<T> :
                   C extends StreamInputPortConfig<infer T> ? MultiChannel<T> | null :
                     never
 

@@ -8,7 +8,7 @@ export interface IPort<C extends PortConfig> extends CustomTransfomer<IPort<C>, 
 
   getValue: () => PortValueFromConfig<C>
   setValue: (value: PortValueFromConfig<C>) => void
-  validate: () => Promise<boolean>
+  validate: () => boolean
   reset: () => void
   hasValue: () => boolean
   clone: () => IPort<C>

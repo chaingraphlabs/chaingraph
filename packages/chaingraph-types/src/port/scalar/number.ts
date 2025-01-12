@@ -25,7 +25,7 @@ export class NumberPort extends PortBase<NumberPortConfig> {
     this.value = new Decimal(value)
   }
 
-  async validate(): Promise<boolean> {
+  validate(): boolean {
     // Implement your validation logic here
     return true
   }
