@@ -3,15 +3,10 @@ import type { ObjectSchema } from '@chaingraph/types/port'
 import type { PortConfig, PortConfigByKind } from '@chaingraph/types/port/types/port-composite-types'
 import type { BasePortConfig } from '@chaingraph/types/port/types/port-config'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
+import { ArrayPort, EnumPort, ObjectPort, StreamInputPort, StreamOutputPort } from '@chaingraph/types/port'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
 import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
-import {
-  isArrayPortConfig,
-  isEnumPortConfig,
-  isObjectPortConfig,
-  isStreamInputPortConfig,
-  isStreamOutputPortConfig,
-} from '@chaingraph/types/port/types/type-guards'
+
 import 'reflect-metadata'
 
 const PORT_METADATA_KEY = Symbol('port:metadata')
@@ -39,7 +34,7 @@ export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
     }
 
     const inferSchema = (config: BasePortConfig<any>): BasePortConfig<any> => {
-      if (isObjectPortConfig(config)) {
+      if (ObjectPort.isObjectPortConfig(config)) {
         if (config.schema && config.schema.properties) {
           // user provided the schema directly just return it
           return config
@@ -48,17 +43,17 @@ export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
         config.schema = createObjectSchemaFromMetadata(
           getOrCreateNodeMetadata(designType),
         )
-      } else if (isArrayPortConfig(config)) {
+      } else if (ArrayPort.isArrayPortConfig(config)) {
         if (!config?.elementConfig) {
           throw new Error(`Can not infer array port schema from ${JSON.stringify(config)}, elementConfig is missing`)
         } else {
           config.elementConfig = inferSchema(config.elementConfig)
         }
-      } else if (isEnumPortConfig(config)) {
+      } else if (EnumPort.isEnumPortConfig(config)) {
         for (const key in Object.keys(config.options)) {
           config.options[key] = inferSchema(config.options[key])
         }
-      } else if (isStreamInputPortConfig(config) || isStreamOutputPortConfig(config)) {
+      } else if (StreamInputPort.isStreamInputPortConfig(config) || StreamOutputPort.isStreamOutputPortConfig(config)) {
         if (!config.valueType) {
           throw new Error(`Can not infer stream port schema from ${JSON.stringify(config)}, valueType is missing`)
         }

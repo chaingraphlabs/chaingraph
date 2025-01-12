@@ -1,9 +1,13 @@
-import type { PortConfig, PortFromConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { PortFromConfig } from '@chaingraph/types/port/registry/port-from-config'
+import type { PortConfig } from '@chaingraph/types/port/types/port-composite-types'
 import type { EnumPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import { PortFactory } from '@chaingraph/types/port'
+import { PortFactory } from '@chaingraph/types/port/registry/port-factory'
+import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 
+@registerPort<EnumPortConfig<any>>(PortKindEnum.Enum)
 export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> {
   readonly config: EnumPortConfig<E>
   value: string | null
@@ -18,8 +22,7 @@ export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> 
 
     // Initialize option ports
     for (const optionConfig of config.options) {
-      const port = PortFactory.create(optionConfig) as PortFromConfig<E>
-      this.optionPorts.push(port)
+      this.optionPorts.push(PortFactory.create(optionConfig))
     }
   }
 
@@ -44,7 +47,7 @@ export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> 
     return this.getOptionById(this.value) ?? null
   }
 
-  getOptionById(id: string): PortFromConfig<E> | undefined {
+  getOptionById(id: string) {
     return this.optionPorts.find(port => port.config.id === id)
   }
 
@@ -57,8 +60,7 @@ export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> 
     if (existing) {
       throw new Error(`Option with id '${optionConfig.id}' already exists.`)
     }
-    const port = PortFactory.create(optionConfig) as PortFromConfig<E>
-    this.optionPorts.push(port)
+    this.optionPorts.push(PortFactory.create(optionConfig))
   }
 
   addOptions(optionConfigs: E[]): void {
@@ -99,5 +101,9 @@ export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> 
 
   clone(): IPort<EnumPortConfig<E>> {
     return new EnumPort({ ...this.config, defaultValue: this.value ?? undefined })
+  }
+
+  static isEnumPortConfig<E extends PortConfig>(config: any): config is EnumPortConfig<E> {
+    return config.kind === PortKindEnum.Enum
   }
 }

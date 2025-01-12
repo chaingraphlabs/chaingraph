@@ -1,5 +1,5 @@
 import type { ExecutionContext, IPort } from '@chaingraph/types'
-import { getOrCreateNodeMetadata, isArrayPort, NodeRegistry, PortFactory } from '@chaingraph/types'
+import { getOrCreateNodeMetadata, NodeRegistry, PortFactory } from '@chaingraph/types'
 import { TestNode } from '@chaingraph/types/node/examples/test-node'
 
 const nodeId = 'user-node-1'
@@ -18,10 +18,6 @@ userNode
     meta.portsConfig.forEach((portConfig) => {
       ports.push(PortFactory.create(portConfig))
     })
-
-    if (isArrayPort(ports[1])) {
-      const port = ports[1]
-    }
 
     const schemas = NodeRegistry.getInstance().getObjectSchemas()
 

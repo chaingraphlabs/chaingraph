@@ -1,10 +1,11 @@
 import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
 import type { AnyPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '../types/port-interface'
+import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 
-// do not change import path! because it will brake the right import order
-
+@registerPort<AnyPortConfig>(PortKindEnum.Any)
 export class AnyPort extends PortBase<AnyPortConfig> {
   readonly config: AnyPortConfig
   value: any
@@ -76,5 +77,9 @@ export class AnyPort extends PortBase<AnyPortConfig> {
     this.config.connectedPortConfig = null
     // Reset to default or undefined value
     this.reset()
+  }
+
+  static isAnyPortConfig(config: any): config is AnyPortConfig {
+    return config.kind === PortKindEnum.Any
   }
 }

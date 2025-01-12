@@ -1,9 +1,12 @@
 import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
 import type { ArrayPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '../types/port-interface'
+import { PortFactory } from '@chaingraph/types/port/registry/port-factory'
+import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortFactory } from '../port-factory'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 
+@registerPort<ArrayPortConfig<any>>(PortKindEnum.Array)
 export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>> {
   readonly config: ArrayPortConfig<E>
   value: Array<PortValueFromConfig<E>>
@@ -47,5 +50,9 @@ export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>
 
   clone(): IPort<ArrayPortConfig<E>> {
     return new ArrayPort({ ...this.config, defaultValue: this.value })
+  }
+
+  static isArrayPortConfig<E extends PortConfig>(config: any): config is ArrayPortConfig<E> {
+    return config.kind === PortKindEnum.Array
   }
 }

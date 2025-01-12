@@ -1,9 +1,15 @@
-import type { StreamOutputPortConfig } from '@chaingraph/types/port/types/port-config'
+import type {
+  StreamInputPortConfig,
+  StreamOutputPortConfig,
+} from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
+import { MultiChannel } from '@chaingraph/types/port'
+import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { MultiChannel } from '../channel/multi-channel'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 
+@registerPort<StreamOutputPortConfig<any>>(PortKindEnum.StreamOutput)
 export class StreamOutputPort<T> extends PortBase<StreamOutputPortConfig<T>> {
   readonly config: StreamOutputPortConfig<T>
   value: MultiChannel<T>
@@ -50,5 +56,9 @@ export class StreamOutputPort<T> extends PortBase<StreamOutputPortConfig<T>> {
 
   clone(): IPort<StreamOutputPortConfig<T>> {
     return new StreamOutputPort({ ...this.config })
+  }
+
+  static isStreamOutputPortConfig<T>(config: any): config is StreamInputPortConfig<T> {
+    return config.kind === PortKindEnum.StreamOutput
   }
 }

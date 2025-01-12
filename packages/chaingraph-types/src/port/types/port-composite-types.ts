@@ -1,16 +1,7 @@
+import type { MultiChannel } from '../channel'
 import type {
-  AnyPort,
-  ArrayPort,
-  BooleanPort,
-  EnumPort,
-  NumberPort,
-  ObjectPort,
   ObjectPortValueFromSchema,
-  StringPort,
-} from '@chaingraph/types'
-import type { MultiChannel } from '@chaingraph/types/port/channel/multi-channel'
-import type { StreamInputPort } from '@chaingraph/types/port/stream/stream-input-port'
-import type { StreamOutputPort } from '@chaingraph/types/port/stream/stream-output-port'
+} from './object-schema'
 import type {
   AnyPortConfig,
   ArrayPortConfig,
@@ -21,9 +12,9 @@ import type {
   StreamInputPortConfig,
   StreamOutputPortConfig,
   StringPortConfig,
-} from '@chaingraph/types/port/types/port-config'
-import type { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
-import type { NumberPortValue } from '@chaingraph/types/port/types/port-value'
+} from './port-config'
+import type { PortKindEnum } from './port-kind-enum'
+import type { NumberPortValue } from './port-value'
 
 export type PortConfig =
   | StringPortConfig
@@ -35,18 +26,6 @@ export type PortConfig =
   | EnumPortConfig<any>
   | StreamOutputPortConfig<any>
   | StreamInputPortConfig<any>
-
-export type PortFromConfig<C extends PortConfig> =
-  C extends StringPortConfig ? StringPort :
-    C extends NumberPortConfig ? NumberPort :
-      C extends BooleanPortConfig ? BooleanPort :
-        C extends ArrayPortConfig<infer E> ? ArrayPort<E> :
-          C extends ObjectPortConfig<infer S> ? ObjectPort<S> :
-            C extends AnyPortConfig ? AnyPort :
-              C extends EnumPortConfig<infer E> ? EnumPort<E> :
-                C extends StreamOutputPortConfig<infer T> ? StreamOutputPort<T> :
-                  C extends StreamInputPortConfig<infer T> ? StreamInputPort<T> :
-                    never
 
 export type PortValueFromConfig<C extends PortConfig> =
   C extends StringPortConfig ? string :

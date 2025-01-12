@@ -9,19 +9,9 @@ import type {
   StreamOutputPortConfig,
 } from '@chaingraph/types'
 import type { INode } from './interface'
-import {
-  getOrCreateNodeMetadata,
-  isAnyPortConfig,
-  isArrayPortConfig,
-  isBooleanPortConfig,
-  isEnumPortConfig,
-  isNumberPortConfig,
-  isObjectPortConfig,
-  isPortConfig,
-  isStreamInputPortConfig,
-  isStreamOutputPortConfig,
-  isStringPortConfig,
+import { AnyPort, ArrayPort, BooleanPort, EnumPort, getOrCreateNodeMetadata, NumberPort, ObjectPort, StreamInputPort, StreamOutputPort, StringPort,
 } from '@chaingraph/types'
+
 import { v7 as uuidv7 } from 'uuid' // For generating UUIDs.
 
 export interface Context {
@@ -75,22 +65,22 @@ export class PortConfigProcessor {
     portConfig = this.assignBasicFields(portConfig, context)
 
     // Process nested configurations based on port kind
-    if (isObjectPortConfig(portConfig)) {
+    if (ObjectPort.isObjectPortConfig(portConfig)) {
       portConfig = this.processObjectPortConfig(portConfig, context)
-    } else if (isArrayPortConfig(portConfig)) {
+    } else if (ArrayPort.isArrayPortConfig(portConfig)) {
       portConfig = this.processArrayPortConfig(portConfig, context)
-    } else if (isEnumPortConfig(portConfig)) {
+    } else if (EnumPort.isEnumPortConfig(portConfig)) {
       portConfig = this.processEnumPortConfig(portConfig, context)
-    } else if (isAnyPortConfig(portConfig)) {
+    } else if (AnyPort.isAnyPortConfig(portConfig)) {
       portConfig = this.processAnyPortConfig(portConfig, context)
-    } else if (isStreamInputPortConfig(portConfig)) {
+    } else if (StreamInputPort.isStreamInputPortConfig(portConfig)) {
       portConfig = this.processStreamInputPortConfig(portConfig, context)
-    } else if (isStreamOutputPortConfig(portConfig)) {
+    } else if (StreamOutputPort.isStreamOutputPortConfig(portConfig)) {
       portConfig = this.processStreamOutputPortConfig(portConfig, context)
     } else if (
-      isStringPortConfig(portConfig)
-      || isNumberPortConfig(portConfig)
-      || isBooleanPortConfig(portConfig)
+      StringPort.isStringPortConfig(portConfig)
+      || NumberPort.isNumberPortConfig(portConfig)
+      || BooleanPort.isBooleanPortConfig(portConfig)
     ) {
       // For primitive port configs, no further processing is needed
       // All necessary fields have been assigned in 'assignBasicFields'
@@ -184,7 +174,7 @@ export class PortConfigProcessor {
     portConfig: ObjectPortConfig<any>,
     context: Context,
   ): ObjectPortConfig<any> {
-    if (!isObjectPortConfig(portConfig)) {
+    if (!ObjectPort.isObjectPortConfig(portConfig)) {
       throw new Error(`Invalid object port configuration for property '${context.propertyKey}'.`)
     }
     const { propertyValue, nodeId } = context
@@ -231,7 +221,7 @@ export class PortConfigProcessor {
         propertyValue: propertyValue?.[key],
       }
 
-      if (isObjectPortConfig(nestedPortConfig)) {
+      if (ObjectPort.isObjectPortConfig(nestedPortConfig)) {
         propertyContext.propertyValue = portConfig.defaultValue?.[key]
       }
 
@@ -269,7 +259,7 @@ export class PortConfigProcessor {
       throw new Error(`Element kind or config for array port '${context.propertyKey}' is not defined.`)
     }
 
-    if (isPortConfig(elementConfig)) {
+    if (typeof elementConfig === 'object') {
       const processedElementConfig = this.processPortConfig(
         { ...elementConfig },
         {
@@ -285,7 +275,7 @@ export class PortConfigProcessor {
         elementConfig: processedElementConfig,
       }
     } else {
-      throw new Error(`Invalid elementConfig for array port '${context.propertyKey}'.`)
+      throw new TypeError(`Invalid elementConfig for array port '${context.propertyKey}'.`)
     }
 
     return newPortConfig

@@ -1,5 +1,9 @@
-import type { ObjectPortValueFromSchema, ObjectSchema } from '../object'
+import type { ObjectPortValueFromSchema, ObjectSchema } from './object-schema'
 import type { PortConfig, PortValueFromConfig } from './port-composite-types'
+import { z } from 'zod'
+import { ObjectSchemaSchema } from './object-schema'
+import { PortDirectionSchema } from './port-direction'
+import { PortKindEnum, PortKindSchema } from './port-kind-enum'
 import {
   ArrayPortValidationSchema,
   BooleanPortValidationSchema,
@@ -8,15 +12,11 @@ import {
   ObjectPortValidationSchema,
   PortValidationSchema,
   StringPortValidationSchema,
-} from '@chaingraph/types/port/types/port-validation'
+} from './port-validation'
 import {
   NumberPortValueSchema,
   PortValueSchema,
-} from '@chaingraph/types/port/types/port-value'
-import { z } from 'zod'
-import { ObjectSchemaSchema } from '../object'
-import { PortDirectionSchema } from './port-direction'
-import { PortKindEnum, PortKindSchema } from './port-kind-enum'
+} from './port-value'
 
 /*
  * * * * * * * * * * *

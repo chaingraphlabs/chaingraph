@@ -1,13 +1,14 @@
-import type { JSONValue } from 'superjson/dist/types'
+import type { JSONObject, JSONValue } from 'superjson/dist/types'
 import type { PortConfig, PortValueFromConfig } from './port-composite-types'
 import type { PortDirection } from './port-direction'
 import type { IPort } from './port-interface'
 import type { PortKindEnum } from './port-kind-enum'
 import superjson from 'superjson'
-import { PortFactory } from '../port-factory'
+import { PortFactory } from '../registry/port-factory'
 import { PortConfigDiscriminator } from './port-config'
 import { PortValueSchema } from './port-value'
-import { isPortConfig } from './type-guards'
+
+export type PortConstructor<C extends PortConfig> = new (config: C) => IPort<C>
 
 export abstract class PortBase<C extends PortConfig> implements IPort<C> {
   abstract readonly config: C
@@ -92,12 +93,8 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
       throw new Error('Cannot deserialize port without config and value')
     }
 
-    if (!isPortConfig(v.config)) {
-      throw new Error('Cannot deserialize port with invalid config')
-    }
-
-    if (v.config.kind !== this.config.kind) {
-      throw new Error(`Cannot deserialize port with different kind, expected ${this.config.kind}, got ${v.config.kind}`)
+    if ((v.config as JSONObject)?.kind !== this.config.kind) {
+      throw new Error(`Cannot deserialize port with different kind, expected ${this.config.kind}, got ${(v.config as JSONObject)?.kind}`)
     }
 
     const validatedConfig = PortConfigDiscriminator.parse(v.config)
@@ -131,10 +128,6 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
     }
 
     if (typeof v !== 'object' || !('config' in v) || !('value' in v)) {
-      return false
-    }
-
-    if (!isPortConfig(v.config)) {
       return false
     }
 

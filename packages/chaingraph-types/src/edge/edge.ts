@@ -1,4 +1,5 @@
 import type { EdgeMetadata, EdgeStatus, IEdge, INode, IPort } from '@chaingraph/types'
+import { PortDirectionEnum } from '@chaingraph/types'
 
 export class Edge implements IEdge {
   readonly id: string
