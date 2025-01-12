@@ -18,13 +18,13 @@ describe('stringPort serialization', () => {
 
     // Test different string values
     const testCases = [
-      // 'Simple string',
-      // 'String with numbers 123',
-      // 'String with special chars !@#$%^&*()',
-      // 'Multi\nline\nstring',
-      // 'Unicode string 你好世界',
+      'Simple string',
+      'String with numbers 123',
+      'String with special chars !@#$%^&*()',
+      'Multi\nline\nstring',
+      'Unicode string 你好世界',
       '', // empty string
-      // '   String with spaces   ',
+      '   String with spaces   ',
     ]
 
     for (const value of testCases) {
