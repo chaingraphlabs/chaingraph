@@ -29,25 +29,25 @@ export function createTestCaller() {
         input: inferProcedureInput<AppRouter['currentTime']>,
         callbacks: Parameters<TestObservable<TrackedEnvelope<Date>>['subscribe']>[0],
       ) {
-        console.log('Test caller: Creating subscription')
+        // console.log('Test caller: Creating subscription')
         let closed = false
 
         const unsubscribe = () => {
-          console.log('Test caller: Unsubscribing')
+          // console.log('Test caller: Unsubscribing')
           closed = true
         }
 
         const process = async () => {
           try {
-            console.log('Test caller: Starting subscription processing')
+            // console.log('Test caller: Starting subscription processing')
             const asyncIterable = await caller.currentTime(input)
 
             for await (const item of asyncIterable) {
               if (closed) {
-                console.log('Test caller: Subscription closed, breaking loop')
+                // console.log('Test caller: Subscription closed, breaking loop')
                 break
               }
-              console.log('Test caller: Received item:', item)
+              // console.log('Test caller: Received item:', item)
               callbacks.onData(item as unknown as TrackedEnvelope<Date>)
             }
             callbacks.onComplete?.()

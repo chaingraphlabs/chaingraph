@@ -1,10 +1,8 @@
-import type {
-  ArrayPortConfig,
-  IPort,
-  PortConfig,
-  PortValueFromConfig,
-} from '../types'
-import { PortBase } from '../types'
+import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { ArrayPortConfig } from '@chaingraph/types/port/types/port-config'
+import type { IPort } from '../types/port-interface'
+import { PortBase } from '@chaingraph/types/port/types/port-base'
+import { PortFactory } from '../port-factory'
 
 export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>> {
   readonly config: ArrayPortConfig<E>
@@ -21,7 +19,17 @@ export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>
   }
 
   setValue(value: Array<PortValueFromConfig<E>>): void {
-    this.value = value
+    const element = PortFactory.create(this.config.elementConfig)
+
+    // Set the value of the element and push it to the new value array
+    // This is necessary to ensure that the value is properly validated
+    const newValue = []
+    for (const val of value) {
+      element.setValue(val as never)
+      newValue.push(element.getValue())
+    }
+
+    this.value = newValue
   }
 
   async validate(): Promise<boolean> {
@@ -40,8 +48,4 @@ export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>
   clone(): IPort<ArrayPortConfig<E>> {
     return new ArrayPort({ ...this.config, defaultValue: this.value })
   }
-
-  // createElementPort(): PortFromConfig<E> {
-  //   return PortFactory.create(this.config.elementConfig)
-  // }
 }

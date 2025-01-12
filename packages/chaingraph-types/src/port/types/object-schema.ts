@@ -1,6 +1,7 @@
-import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port'
-import { BasePortConfigSchema, PortValueSchema } from '@chaingraph/types/port/types/port-config.zod'
+import type { PortConfig, PortValueFromConfig } from './port-composite-types'
 import { z } from 'zod'
+import { BasePortConfigSchema } from './port-config'
+import { PortValueSchema } from './port-value'
 
 export const ObjectSchemaSchema = z.object({
   id: z.string().optional(),

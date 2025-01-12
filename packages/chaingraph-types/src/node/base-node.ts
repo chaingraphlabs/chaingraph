@@ -1,12 +1,13 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { IPort, PortConfig } from '../port'
+import type { PortConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import type { NodeEvents, NodeStatusChangeEvent } from './events'
 import type { NodeExecutionResult } from './execution'
+
 import type { INode } from './interface'
 import type { NodeMetadata, NodeStatus, NodeValidationResult } from './types'
-
 import { EventEmitter } from 'node:events'
-import { PortDirectionEnum } from '../port'
+import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
 import { PortFactory } from '../port/port-factory'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
 import { PortConfigProcessor } from './port-config-processor'

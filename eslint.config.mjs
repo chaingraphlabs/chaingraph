@@ -30,6 +30,7 @@ export default antfu(
       'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
       'unused-imports/no-unused-vars': 'off',
       'ts/no-unsafe-function-type': 'off',
+      'no-console': 'off',
     },
   },
 )

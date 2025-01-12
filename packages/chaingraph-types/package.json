@@ -8,15 +8,15 @@
     "url": "git+https://github.com/badaitech/chaingraph.git",
     "directory": "./packages/chaingraph-types"
   },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "build": "bun build src/index.ts --outdir dist",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
-  },
-  "exports": {
-    ".": "./src/index.ts"
   },
   "dependencies": {},
   "devDependencies": {}

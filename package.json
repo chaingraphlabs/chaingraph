@@ -1,8 +1,8 @@
 {
   "name": "@badaitech/chaingraph",
+  "type": "module",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git"

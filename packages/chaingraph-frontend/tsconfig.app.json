@@ -2,27 +2,27 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ESNext",
-    "useDefineForClassFields": true,
+    "jsx": "react-jsx",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "moduleDetection": "force",
+    "useDefineForClassFields": true,
+
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "module": "ESNext",
-    "skipLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
+    "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noUncheckedSideEffectImports": true
   },
   "include": [
     "src"

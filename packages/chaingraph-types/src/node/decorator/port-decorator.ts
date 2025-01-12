@@ -1,22 +1,17 @@
 import type { NodeMetadataReflect } from '@chaingraph/types/node'
-import type {
-  BasePortConfig,
-  ObjectSchema,
-  PortConfig,
-  PortConfigByKind,
-  PortKind,
-} from '../../port'
+import type { ObjectSchema } from '@chaingraph/types/port'
+import type { PortConfig, PortConfigByKind } from '@chaingraph/types/port/types/port-composite-types'
+import type { BasePortConfig } from '@chaingraph/types/port/types/port-config'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
-import { PortKindEnum } from '@chaingraph/types/port'
+import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 import {
   isArrayPortConfig,
   isEnumPortConfig,
   isObjectPortConfig,
   isStreamInputPortConfig,
   isStreamOutputPortConfig,
-  PortDirectionEnum,
-} from '../../port'
-
+} from '@chaingraph/types/port/types/type-guards'
 import 'reflect-metadata'
 
 const PORT_METADATA_KEY = Symbol('port:metadata')
@@ -25,7 +20,7 @@ export type PortConfigWithClassKind = PortConfig | Omit<PortConfig, 'kind'> & {
   kind: Function
 }
 
-export type PartialPortConfig<K extends PortKind> = Omit<
+export type PartialPortConfig<K extends PortKindEnum> = Omit<
   PortConfigByKind<K>,
   'kind' | 'schema' | 'elementConfig' | 'valueType'
 > & {
@@ -34,9 +29,9 @@ export type PartialPortConfig<K extends PortKind> = Omit<
   valueType?: PortConfigWithClassKind // For StreamOutputPortConfig, StreamInputPortConfig
 }
 
-export type PortDecoratorConfig<K extends PortKind> = PartialPortConfig<K> & { kind: K | Function }
+export type PortDecoratorConfig<K extends PortKindEnum> = PartialPortConfig<K> & { kind: K | Function }
 
-export function Port<K extends PortKind>(config: PortDecoratorConfig<K>) {
+export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
   return function (target: any, propertyKey: string) {
     const metadata = getOrCreateNodeMetadata(target)
     if (!metadata.portsConfig) {
@@ -138,7 +133,7 @@ export function updatePortConfig(
   metadata.portsConfig.set(propertyKey, existingConfig)
 }
 
-function createPortDecorator<K extends PortKind>(kind: K) {
+function createPortDecorator<K extends PortKindEnum>(kind: K) {
   return (config?: PartialPortConfig<K>) => {
     return Port<K>({ ...(config || {} as PartialPortConfig<K>), kind })
   }

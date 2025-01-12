@@ -1,12 +1,7 @@
-import type {
-  IPort,
-  ObjectPortConfig,
-  ObjectPortValueFromSchema,
-  ObjectSchema,
-} from '@chaingraph/types/port'
-import {
-  PortBase,
-} from '../types'
+import type { ObjectPortValueFromSchema, ObjectSchema } from '@chaingraph/types/port'
+import type { ObjectPortConfig } from '@chaingraph/types/port/types/port-config'
+import type { IPort } from '@chaingraph/types/port/types/port-interface'
+import { PortBase } from '@chaingraph/types/port/types/port-base'
 
 export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfig<S>> {
   readonly config: ObjectPortConfig<S>
@@ -17,15 +12,6 @@ export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfi
     this.config = config
     this.value = config.defaultValue || {} as ObjectPortValueFromSchema<S>
   }
-
-  // private initializeValue(): ObjectPortValueFromSchema<S> {
-  //   const value: any = {}
-  //   for (const key in this.config.schema.properties) {
-  //     const propertyConfig = this.config.schema.properties[key]
-  //     value[key] = propertyConfig.defaultValue
-  //   }
-  //   return value
-  // }
 
   getValue(): ObjectPortValueFromSchema<S> {
     return this.value

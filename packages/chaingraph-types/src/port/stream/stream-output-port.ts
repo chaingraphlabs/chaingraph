@@ -1,6 +1,8 @@
-import type { IPort, StreamOutputPortConfig } from '../types'
+import type { StreamOutputPortConfig } from '@chaingraph/types/port/types/port-config'
+import type { IPort } from '@chaingraph/types/port/types/port-interface'
+import { PortBase } from '@chaingraph/types/port/types/port-base'
+import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
 import { MultiChannel } from '../channel/multi-channel'
-import { PortBase, PortDirectionEnum } from '../types'
 
 export class StreamOutputPort<T> extends PortBase<StreamOutputPortConfig<T>> {
   readonly config: StreamOutputPortConfig<T>

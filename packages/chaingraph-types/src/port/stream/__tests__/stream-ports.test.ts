@@ -1,12 +1,11 @@
 import type {
   StreamInputPortConfig,
   StreamOutputPortConfig,
-} from '../../types'
+} from '@chaingraph/types/port/types/port-config'
+
+import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 import { describe, expect, it } from 'vitest'
-import {
-  PortDirectionEnum,
-  PortKindEnum,
-} from '../../types'
 import { StreamInputPort } from '../stream-input-port'
 import { StreamOutputPort } from '../stream-output-port'
 

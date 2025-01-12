@@ -1,12 +1,8 @@
-import type {
-  EnumPortConfig,
-  IPort,
-  PortConfig,
-  PortFromConfig,
-} from '../types'
+import type { PortConfig, PortFromConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { EnumPortConfig } from '@chaingraph/types/port/types/port-config'
+import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import { PortFactory } from '@chaingraph/types/port'
-import { PortBase,
-} from '../types'
+import { PortBase } from '@chaingraph/types/port/types/port-base'
 
 export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> {
   readonly config: EnumPortConfig<E>

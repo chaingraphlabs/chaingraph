@@ -4,7 +4,9 @@
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "useDefineForClassFields": true,
-    "baseUrl": ".",  // Changed from "./src" to "."
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "baseUrl": ".", // Changed from "./src" to "."
     "module": "ESNext",
     "moduleResolution": "Node",
     "paths": {
@@ -13,10 +15,10 @@
       "@chaingraph/types/*": ["packages/chaingraph-types/src/*"],
       "@chaingraph/types": ["packages/chaingraph-types/src"],
       "@chaingraph/frontend": ["packages/chaingraph-frontend/src"],
-      "@chaingraph/frontend/*": ["packages/chaingraph-frontend/src/*"],
+      "@chaingraph/frontend/*": ["packages/chaingraph-frontend/src/*"]
     },
     "resolveJsonModule": true,
-    "types": ["bun-types"],  // Added Bun types
+    "types": ["bun-types"], // Added Bun types
     "allowJs": true,
     "strict": true,
     "strictNullChecks": true,
@@ -25,9 +27,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "skipLibCheck": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "skipLibCheck": true
   },
   "include": ["packages/*/src/**/*"],
   "exclude": ["node_modules"]

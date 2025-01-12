@@ -1,13 +1,7 @@
-import type {
-  PartialPortConfig,
-  PortConfig,
-  PortDecoratorConfig,
-  PortKind,
-} from '@chaingraph/types'
-import {
-  Port,
-  PortKindEnum,
-} from '@chaingraph/types'
+import type { PartialPortConfig, PortDecoratorConfig } from '@chaingraph/types/node'
+import type { PortConfig } from '@chaingraph/types/port/types/port-composite-types'
+import { Port } from '@chaingraph/types/node'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 
 /**
  * Decorator for defining an enum port with specified options.
@@ -21,7 +15,7 @@ export function PortEnumOf<T>(
 ) {
   return function (target: any, propertyKey: string) {
     const optionConfigs: PortConfig[] = options.map((option, index) => {
-      let kind: PortKind | Function
+      let kind: PortKindEnum | Function
       let defaultValue: any
 
       if (typeof option === 'string') {

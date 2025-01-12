@@ -1,12 +1,9 @@
-import type {
-  AnyPortConfig,
-  IPort,
-  PortConfig,
-  PortValueFromConfig,
-} from '@chaingraph/types/port'
+import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { AnyPortConfig } from '@chaingraph/types/port/types/port-config'
+import type { IPort } from '../types/port-interface'
+import { PortBase } from '@chaingraph/types/port/types/port-base'
 
 // do not change import path! because it will brake the right import order
-import { PortBase } from '../types'
 
 export class AnyPort extends PortBase<AnyPortConfig> {
   readonly config: AnyPortConfig
@@ -18,7 +15,7 @@ export class AnyPort extends PortBase<AnyPortConfig> {
     this.value = config.defaultValue
   }
 
-  getValue(): PortValueFromConfig<any> {
+  getValue(): any {
     if (this.config.connectedPortConfig) {
       const expectedType = this.config.connectedPortConfig.kind
       return this.value as PortValueFromConfig<typeof this.config.connectedPortConfig>
@@ -29,14 +26,14 @@ export class AnyPort extends PortBase<AnyPortConfig> {
   setValue(value: any): void {
     if (this.config.connectedPortConfig) {
       // Determine the expected type from connectedPortConfig
-      const expectedType = this.config.connectedPortConfig.kind
+      // const expectedType = this.config.connectedPortConfig.kind
 
       // Perform type checking
-      if (expectedType === 'string' && typeof value !== 'string') {
-        throw new TypeError('Value must be a string')
-      } else if (expectedType === 'number' && typeof value !== 'number') {
-        throw new TypeError('Value must be a number')
-      }
+      // if (expectedType === 'string' && typeof value !== 'string') {
+      //   throw new TypeError('Value must be a string')
+      // } else if (expectedType === 'number' && typeof value !== 'number') {
+      //   throw new TypeError('Value must be a number')
+      // }
       // Add other type checks as needed
 
       this.value = value

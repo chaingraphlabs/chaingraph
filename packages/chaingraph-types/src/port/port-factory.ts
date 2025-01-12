@@ -1,3 +1,4 @@
+import type { PortConfig, PortFromConfig } from '@chaingraph/types/port/types/port-composite-types'
 import type {
   AnyPortConfig,
   ArrayPortConfig,
@@ -5,21 +6,18 @@ import type {
   EnumPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
-  PortConfig,
-  PortFromConfig,
   StreamInputPortConfig,
   StreamOutputPortConfig,
   StringPortConfig,
-} from './types'
+} from '@chaingraph/types/port/types/port-config'
 import { EnumPort } from '@chaingraph/types/port/enum/enum-port'
 import { StreamInputPort } from '@chaingraph/types/port/stream/stream-input-port'
 import { StreamOutputPort } from '@chaingraph/types/port/stream/stream-output-port'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 import { AnyPort } from './any'
 import { ArrayPort } from './array'
 import { ObjectPort } from './object'
 import { BooleanPort, NumberPort, StringPort } from './scalar'
-import { PortKindEnum,
-} from './types'
 
 export class PortFactory {
   static create<C extends PortConfig>(config: C): PortFromConfig<C> {

@@ -8,18 +8,18 @@
     "url": "git+https://github.com/badaitech/chaingraph.git",
     "directory": "./packages/chaingraph-backend"
   },
+  "exports": {
+    ".": "./src/index.ts",
+    "./trpc": "./src/trpc.ts",
+    "./procedures": "./src/procedures/index.ts",
+    "./router": "./src/router.ts"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "build": "bun build src/index.ts --outdir dist",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
-  },
-  "exports": {
-    ".": "./src/index.ts",
-    "./trpc": "./src/trpc.ts",
-    "./procedures": "./src/procedures/index.ts",
-    "./router": "./src/router.ts"
   },
   "dependencies": {
     "@trpc/client": "^11.0.0-next-beta.318",

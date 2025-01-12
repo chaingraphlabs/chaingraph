@@ -1,27 +1,28 @@
 import type {
   AnyPort,
-  AnyPortConfig,
   ArrayPort,
-  ArrayPortConfig,
   BooleanPort,
-  BooleanPortConfig,
   EnumPort,
-  EnumPortConfig,
-  IPort,
   NumberPort,
-  NumberPortConfig,
   ObjectPort,
-  ObjectPortConfig,
-  ObjectSchema,
-  PortConfig,
-  StreamInputPortConfig,
   StringPort,
+} from '@chaingraph/types/port'
+import type { StreamInputPort } from '../stream/stream-input-port'
+import type { StreamOutputPort } from '../stream/stream-output-port'
+import type { ObjectSchema } from './object-schema'
+import type { PortConfig } from './port-composite-types'
+import type {
+  AnyPortConfig,
+  ArrayPortConfig,
+  BooleanPortConfig,
+  EnumPortConfig,
+  NumberPortConfig,
+  ObjectPortConfig,
+  StreamInputPortConfig,
   StringPortConfig,
-} from '@chaingraph/types/port'
-import type { StreamInputPort } from '@chaingraph/types/port/stream/stream-input-port'
-import type { StreamOutputPort } from '@chaingraph/types/port/stream/stream-output-port'
-import { PortKindEnum,
-} from '@chaingraph/types/port'
+} from './port-config'
+import type { IPort } from './port-interface'
+import { PortKindEnum } from './port-kind-enum'
 
 export function isStringPortConfig(config: any): config is StringPortConfig {
   return config.kind === PortKindEnum.String
