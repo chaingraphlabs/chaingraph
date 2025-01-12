@@ -1,5 +1,4 @@
 import type { EdgeMetadata, EdgeStatus, IEdge, INode, IPort } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types'
 
 export class Edge implements IEdge {
   readonly id: string
@@ -44,6 +43,7 @@ export class Edge implements IEdge {
       throw new Error(`Target port ${this.targetPort.config.id} is not an input port.`)
     }
 
+    // TODO: Add other validation checks here for example for AnyPort, StreamInputPort, StreamOutputPort, etc.
     if (sourcePortKind !== targetPortKind) {
       throw new Error(`Incompatible port types: ${sourcePortKind} -> ${targetPortKind}`)
     }

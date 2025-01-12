@@ -5,12 +5,12 @@ import {
   BaseNode,
   ExecutionEventEnum,
   NumberPort,
-  PortDirectionEnum,
-  PortKindEnum,
 } from '@chaingraph/types'
 import { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import { ExecutionEngine } from '@chaingraph/types/flow/execution-engine'
 import { Flow } from '@chaingraph/types/flow/flow'
+import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
+import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
@@ -80,7 +80,7 @@ describe('flow Execution', () => {
     flow.addNode(node2)
 
     // Connect node1 output to node2 inputA
-    await flow.connectNodes(
+    await flow.connectPorts(
       // 'node1',
       node1.id,
       node1.output.id,
@@ -147,19 +147,19 @@ describe('flow Execution', () => {
 
     // Connect nodes
     // sourceNode1.output -> intermediateNode1.inputA
-    await flow.connectNodes('source1', 'output', 'intermediate1', 'inputA')
+    await flow.connectPorts('source1', 'output', 'intermediate1', 'inputA')
 
     // sourceNode2.output -> intermediateNode1.inputB
-    await flow.connectNodes('source2', 'output', 'intermediate1', 'inputB')
+    await flow.connectPorts('source2', 'output', 'intermediate1', 'inputB')
 
     // sourceNode2.output -> intermediateNode2.inputA
-    await flow.connectNodes('source2', 'output', 'intermediate2', 'inputA')
+    await flow.connectPorts('source2', 'output', 'intermediate2', 'inputA')
 
     // intermediateNode1.output -> finalNode.inputA
-    await flow.connectNodes('intermediate1', 'output', 'final', 'inputA')
+    await flow.connectPorts('intermediate1', 'output', 'final', 'inputA')
 
     // intermediateNode2.output -> finalNode.inputB
-    await flow.connectNodes('intermediate2', 'output', 'final', 'inputB')
+    await flow.connectPorts('intermediate2', 'output', 'final', 'inputB')
 
     // Execute the flow
     const abortController = new AbortController()
@@ -206,8 +206,8 @@ describe('flow Execution', () => {
     sourceNode2.inputB.setValue(7)
 
     // Connect nodes
-    await flow.connectNodes('source1', 'output', 'final', 'inputA')
-    await flow.connectNodes('source2', 'output', 'final', 'inputB')
+    await flow.connectPorts('source1', 'output', 'final', 'inputA')
+    await flow.connectPorts('source2', 'output', 'final', 'inputB')
 
     // Create execution context and engine with debug mode
     const abortController = new AbortController()
@@ -283,7 +283,7 @@ describe('flow Execution', () => {
     finalNode.inputB.setValue(5)
 
     // Connect nodes
-    await flow.connectNodes('source', 'output', 'final', 'inputA')
+    await flow.connectPorts('source', 'output', 'final', 'inputA')
 
     // Create execution context and engine with debug mode
     const abortController = new AbortController()
@@ -384,23 +384,23 @@ describe('flow Execution', () => {
     source4.inputB.setValue(5) // 20
 
     // merger1 gets source1 output as inputA, source2 output as inputB
-    await flow.connectNodes('source1', 'output', 'merger1', 'inputA')
-    await flow.connectNodes('source2', 'output', 'merger1', 'inputB')
+    await flow.connectPorts('source1', 'output', 'merger1', 'inputA')
+    await flow.connectPorts('source2', 'output', 'merger1', 'inputB')
 
     // merger2 gets source3 output as inputA, source4 output as inputB
-    await flow.connectNodes('source3', 'output', 'merger2', 'inputA')
-    await flow.connectNodes('source4', 'output', 'merger2', 'inputB')
+    await flow.connectPorts('source3', 'output', 'merger2', 'inputA')
+    await flow.connectPorts('source4', 'output', 'merger2', 'inputB')
 
     // final gets merger1 output as inputA, merger2 output as inputB
-    await flow.connectNodes('merger1', 'output', 'final', 'inputA')
-    await flow.connectNodes('merger2', 'output', 'final', 'inputB')
+    await flow.connectPorts('merger1', 'output', 'final', 'inputA')
+    await flow.connectPorts('merger2', 'output', 'final', 'inputB')
 
     // Setup execution
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
     const executionEngine = new ExecutionEngine(flow, context, {
       execution: {
-        maxConcurrency: 1, // Force sequential execution for predictable debugging
+        maxConcurrency: 5, // Force sequential execution for predictable debugging
         nodeTimeoutMs: 1000,
         flowTimeoutMs: 5000,
       },
@@ -529,7 +529,7 @@ describe('flow Execution', () => {
     finalNode.inputB.setValue(5)
 
     // Connect nodes
-    await flow.connectNodes('source', 'output', 'final', 'inputA')
+    await flow.connectPorts('source', 'output', 'final', 'inputA')
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
@@ -582,7 +582,7 @@ describe('flow Execution', () => {
     finalNode.inputB.setValue(5)
 
     // Connect nodes
-    await flow.connectNodes('source', 'output', 'final', 'inputA')
+    await flow.connectPorts('source', 'output', 'final', 'inputA')
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)

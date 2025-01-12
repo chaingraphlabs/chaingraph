@@ -60,7 +60,7 @@ export class Flow implements IFlow {
     }
   }
 
-  async connectNodes(
+  async connectPorts(
     sourceNodeId: string,
     sourcePortId: string,
     targetNodeId: string,
@@ -85,6 +85,8 @@ export class Flow implements IFlow {
     if (!targetPort) {
       throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
     }
+
+    // TODO: Check dead loops
 
     // Optionally check for port compatibility here
 

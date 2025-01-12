@@ -49,7 +49,7 @@ export interface IFlow {
    * @param targetNodeId The ID of the target node.
    * @param targetPortId The ID of the target port.
    */
-  connectNodes: (
+  connectPorts: (
     sourceNodeId: string,
     sourcePortId: string,
     targetNodeId: string,
