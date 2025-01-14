@@ -40,10 +40,3 @@ export enum ExecutionStatus {
   Completed = 'completed',
   Error = 'error',
 }
-
-/**
- * Represents possible node events
- */
-export enum NodeEvents {
-  StatusChange = 'status-change',
-}

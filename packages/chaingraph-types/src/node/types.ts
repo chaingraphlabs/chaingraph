@@ -1,3 +1,4 @@
+import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
 import type { PortConfig } from '@chaingraph/types/port/types/port-config'
 import type { ExecutionStatus, NodeCategory, ValidationMessageType } from './node-enums'
 
@@ -16,6 +17,7 @@ export interface NodeMetadata {
   author?: string
   metadata?: { [key: string]: unknown }
   portsConfig?: Map<string, PortConfig>
+  ui?: NodeUIMetadata
 }
 
 /**
@@ -47,13 +49,3 @@ export interface NodeExecutionResult {
   error?: Error
   metadata?: { [key: string]: unknown }
 }
-
-/**
- * Type definition for serialized node
- */
-// export interface SerializedNode {
-//   id: string
-//   metadata: NodeMetadata
-//   status: NodeStatus
-//   ports: Map<string, SerializedPort>
-// }

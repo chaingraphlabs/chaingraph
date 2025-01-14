@@ -5,7 +5,8 @@ import type { Flow } from './flow'
 import { FlowDebugger } from '@chaingraph/types/flow/debugger'
 import { TypedEventEmitter } from '@chaingraph/types/flow/execution-event-emitter'
 import { ExecutionEventEnum } from '@chaingraph/types/flow/execution-events'
-import { NodeEvents, NodeStatus } from '@chaingraph/types/node/node-enums'
+import { NodeStatus } from '@chaingraph/types/node/node-enums'
+import { NodeEventType } from '../node'
 import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'
 import { withTimeout } from '../utils/timeout'
@@ -152,7 +153,7 @@ export class ExecutionEngine {
       if (node) {
         this.eventEmitter.emit(
           ExecutionEventEnum.NODE_STATUS_CHANGED,
-          { node, oldStatus: 'idle', newStatus: 'initialized' },
+          { node, oldStatus: NodeStatus.Idle, newStatus: NodeStatus.Initialized },
         )
       }
     }
@@ -253,10 +254,10 @@ export class ExecutionEngine {
       const onStatusChange = (event: NodeStatusChangeEvent) => {
         this.eventEmitter.emit(
           ExecutionEventEnum.NODE_STATUS_CHANGED,
-          { node: event.node, oldStatus: event.oldStatus, newStatus: event.newStatus },
+          { node, oldStatus: event.oldStatus, newStatus: event.newStatus },
         )
       }
-      node.on(NodeEvents.StatusChange, onStatusChange)
+      node.on(NodeEventType.StatusChange, onStatusChange)
 
       try {
         await this.semaphore.acquire()
@@ -271,7 +272,7 @@ export class ExecutionEngine {
         throw error
       } finally {
         this.semaphore.release()
-        node.off(NodeEvents.StatusChange, onStatusChange)
+        node.off(NodeEventType.StatusChange, onStatusChange)
       }
     }
   }

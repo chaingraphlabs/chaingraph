@@ -1,6 +1,14 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { NodeEventUnion, NodeStatusChangeEvent } from '@chaingraph/types/node/events'
+import type {
+  NodeDimensionsChangeEvent,
+  NodeEvent,
+  NodePositionChangeEvent,
+  NodeStateChangeEvent,
+  NodeStatusChangeEvent,
+  NodeStyleChangeEvent,
+} from '@chaingraph/types/node/events'
 import type { INode } from '@chaingraph/types/node/interface'
+import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
 import type {
   NodeExecutionResult,
   NodeMetadata,
@@ -9,18 +17,13 @@ import type {
 import type { PortConfig } from '@chaingraph/types/port'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import { EventEmitter } from 'node:events'
-import { NodeEvents, NodeStatus } from '@chaingraph/types/node/node-enums'
+import { NodeEventType } from '@chaingraph/types/node/events'
+import { NodeStatus } from '@chaingraph/types/node/node-enums'
 import { ArrayPort, EnumPort, ObjectPort, PortFactory, StreamInputPort, StreamOutputPort } from '@chaingraph/types/port'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { z } from 'zod'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
 import { PortConfigProcessor } from './port-config-processor'
 import 'reflect-metadata'
-
-export const NodeSchema = z.object({
-  id: z.string(),
-
-})
 
 export abstract class BaseNode implements INode {
   protected readonly _id: string
@@ -209,16 +212,28 @@ export abstract class BaseNode implements INode {
     )
   }
 
-  on<T extends NodeEventUnion>(event: T['type'], handler: (event: T) => void): void {
+  on<T extends NodeEvent>(event: T['type'], handler: (event: T) => void): void {
     this.eventEmitter.on(event, handler)
   }
 
-  off<T extends NodeEventUnion>(event: T['type'], handler: (event: T) => void): void {
+  off<T extends NodeEvent>(event: T['type'], handler: (event: T) => void): void {
     this.eventEmitter.off(event, handler)
   }
 
-  protected emit<T extends NodeEventUnion>(event: T['type'], data: T): void {
+  onAll(handler: (event: NodeEvent) => void): void {
+    this.eventEmitter.on(NodeEventType.All, handler)
+  }
+
+  offAll(handler: (event: NodeEvent) => void): void {
+    this.eventEmitter.off(NodeEventType.All, handler)
+  }
+
+  protected emit<T extends NodeEvent>(event: T['type'], data: T): void {
     this.eventEmitter.emit(event, data)
+
+    if (event !== NodeEventType.All) {
+      this.eventEmitter.emit(NodeEventType.All, data)
+    }
   }
 
   clone(): INode {
@@ -252,78 +267,113 @@ export abstract class BaseNode implements INode {
     const oldStatus = this._status
     this._status = status
     const event: NodeStatusChangeEvent = {
-      nodeId: this._id,
+      nodeId: this.id,
       timestamp: new Date(),
-      type: NodeEvents.StatusChange,
-      node: this,
+      type: NodeEventType.StatusChange,
       oldStatus,
       newStatus: status,
     }
 
-    this.emit(NodeEvents.StatusChange, event)
+    this.emit(NodeEventType.StatusChange, event)
   }
 
   setMetadata(metadata: NodeMetadata): void {
     this._metadata = metadata
   }
 
-  get name(): string {
-    return this._metadata.type
-  }
-
-  isApplicable(v: any): v is INode {
-    if (v instanceof BaseNode) {
-      return true
+  /**
+   * Updates node UI position
+   * @param position New position coordinates
+   */
+  setPosition(position: NodeUIMetadata['position']): void {
+    const oldPosition = this._metadata.ui?.position
+    if (!this._metadata.ui) {
+      this._metadata.ui = { position }
+    } else {
+      this._metadata.ui.position = position
     }
 
-    // try {
-    //   SerializedNodeSchema.parse(v)
-    // } catch (e) {
-    //   return false
-    // }
+    const event: NodePositionChangeEvent = {
+      type: NodeEventType.PositionChange,
+      nodeId: this._id,
+      timestamp: new Date(),
+      oldPosition,
+      newPosition: position,
+    }
 
-    return true
+    this.emit(NodeEventType.PositionChange, event)
+  }
+
+  setDimensions(dimensions: NodeUIMetadata['dimensions']): void {
+    const oldDimensions = this._metadata.ui?.dimensions
+    if (!this._metadata.ui) {
+      this._metadata.ui = { position: { x: 0, y: 0 }, dimensions }
+    } else {
+      this._metadata.ui.dimensions = dimensions
+    }
+
+    const event: NodeDimensionsChangeEvent = {
+      type: NodeEventType.DimensionsChange,
+      nodeId: this._id,
+      timestamp: new Date(),
+      oldDimensions,
+      newDimensions: dimensions,
+    }
+
+    this.emit(NodeEventType.DimensionsChange, event)
   }
 
   /**
-   * Serializes the node into a JSON-compatible format
-   * @returns Serialized representation of the node
+   * Updates node UI state
+   * @param state New UI state
    */
-  // serialize(v: INode): JSONValue {
-  //   const json = superjson.serialize({
-  //     id: v.id,
-  //     metadata: v.metadata,
-  //     status: v.status,
-  //     ports: v.ports,
-  //   })
-  //   return json as unknown as JSONValue
-  // }
-  //
-  // deserialize(v: JSONValue): INode {
-  //   const deserializedNode = superjson.deserialize<INode>(v as unknown as SuperJSONResult)
-  //
-  //   const node = NodeRegistry.getInstance().createNode(
-  //     deserializedNode.metadata.type,
-  //     deserializedNode.id,
-  //     deserializedNode.metadata,
-  //   )
-  //
-  //   // Validate the serialized data
-  //   // const validated = SerializedNodeSchema.parse(data)
-  //   //
-  //   // // Create a new node instance
-  //   // const node = new this(validated.id)
-  //   //
-  //   // // Set metadata and status
-  //   // node._metadata = validated.metadata
-  //   // node._status = validated.status
-  //   //
-  //   // // Create ports from configs
-  //   // for (const [portId, portConfig] of Object.entries(validated.ports)) {
-  //   //   const port = PortFactory.create(portConfig)
-  //   //   node._ports.set(portId, port)
-  //   // }
-  //
-  //   return node
-  // }
+  setUIState(state: NodeUIMetadata['state']): void {
+    const oldState = this._metadata.ui?.state
+    if (!this._metadata.ui) {
+      this._metadata.ui = { position: { x: 0, y: 0 }, state }
+    } else {
+      this._metadata.ui.state = state
+    }
+
+    const event: NodeStateChangeEvent = {
+      type: NodeEventType.StateChange,
+      nodeId: this._id,
+      timestamp: new Date(),
+      oldState,
+      newState: state,
+    }
+
+    this.emit(NodeEventType.StateChange, event)
+  }
+
+  /**
+   * Updates node UI style
+   * @param style New UI style
+   */
+  setUIStyle(style: NodeUIMetadata['style']): void {
+    const oldStyle = this._metadata.ui?.style
+    if (!this._metadata.ui) {
+      this._metadata.ui = { position: { x: 0, y: 0 }, style }
+    } else {
+      this._metadata.ui.style = style
+    }
+
+    const event: NodeStyleChangeEvent = {
+      type: NodeEventType.StyleChange,
+      nodeId: this._id,
+      timestamp: new Date(),
+      oldStyle,
+      newStyle: style,
+    }
+
+    this.emit(NodeEventType.StyleChange, event)
+  }
+
+  /**
+   * Gets current node UI metadata
+   * @returns Node UI metadata or undefined if not set
+   */
+  getUIMetadata(): NodeUIMetadata | undefined {
+    return this._metadata.ui
+  }
 }

@@ -1,6 +1,7 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { NodeEventUnion } from '@chaingraph/types/node/events'
+import type { NodeEvent } from '@chaingraph/types/node/events'
 import type { NodeStatus } from '@chaingraph/types/node/node-enums'
+import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
 import type { IPort } from '@chaingraph/types/port'
 import type {
   NodeExecutionResult,
@@ -96,18 +97,55 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * @param event Event type
    * @param handler Event handler function
    */
-  on: <T extends NodeEventUnion>(event: T['type'], handler: (event: T) => void) => void
+  on: <T extends NodeEvent>(event: T['type'], handler: (event: T) => void) => void
 
   /**
    * Event handling - Unsubscribe from node events
    * @param event Event type
    * @param handler Event handler function
    */
-  off: <T extends NodeEventUnion>(event: T['type'], handler: (event: T) => void) => void
+  off: <T extends NodeEvent>(event: T['type'], handler: (event: T) => void) => void
 
-  // superjson serialization methods
-  // readonly name: string
-  // isApplicable: (v: any) => v is INode
-  // deserialize: (v: JSONValue) => INode
-  // serialize: (v: INode) => JSONValue
+  /**
+   * Event handling - Subscribe to all node events
+   * @param handler Event handler function
+   */
+  onAll: (handler: (event: NodeEvent) => void) => void
+
+  /**
+   * Event handling - Unsubscribe from all node events
+   * @param handler Event handler function
+   */
+  offAll: (handler: (event: NodeEvent) => void) => void
+
+  /**
+   * Set the node UI position
+   * @param position New position
+   * @returns
+   */
+  setPosition: (position: NodeUIMetadata['position']) => void
+
+  /**
+   * Set the node UI dimensions
+   * @param dimensions New dimensions
+   */
+  setDimensions: (dimensions: NodeUIMetadata['dimensions']) => void
+
+  /**
+   * Set the node UI state
+   * @param state New state
+   */
+  setUIState: (state: NodeUIMetadata['state']) => void
+
+  /**
+   * Set the node UI style
+   * @param style New style
+   */
+  setUIStyle: (style: NodeUIMetadata['style']) => void
+
+  /**
+   * Get the node UI metadata
+   * @returns Node UI metadata
+   */
+  getUIMetadata: () => NodeUIMetadata | undefined
 }

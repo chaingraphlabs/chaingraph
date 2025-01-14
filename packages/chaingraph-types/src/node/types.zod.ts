@@ -3,6 +3,29 @@ import { BasePortConfigSchema, PortValueSchema } from '../port'
 import { ExecutionStatus, NodeCategory, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**
+ * Schema for node UI metadata
+ */
+export const NodeUIMetadataSchema = z.object({
+  position: z.object({
+    x: z.number(),
+    y: z.number(),
+  }),
+  dimensions: z.object({
+    width: z.number().optional(),
+    height: z.number().optional(),
+  }).optional(),
+  style: z.object({
+    backgroundColor: z.string().optional(),
+    borderColor: z.string().optional(),
+  }).optional(),
+  state: z.object({
+    isSelected: z.boolean().optional(),
+    isHighlighted: z.boolean().optional(),
+    isDisabled: z.boolean().optional(),
+  }).optional(),
+})
+
+/**
  * Schema for node metadata
  */
 export const NodeMetadataSchema = z.object({
@@ -17,6 +40,7 @@ export const NodeMetadataSchema = z.object({
   author: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   portsConfig: z.map(z.string(), BasePortConfigSchema).optional(),
+  ui: NodeUIMetadataSchema.optional(),
 })
 
 /**
