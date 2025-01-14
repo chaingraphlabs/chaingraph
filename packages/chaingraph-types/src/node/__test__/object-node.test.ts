@@ -1,10 +1,10 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, PortArray, PortKindEnum, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKindEnum, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 @PortObjectSchema({
@@ -129,6 +129,11 @@ describe('object node serialization', () => {
     registerPortTransformers()
     registerNodeTransformers()
   })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   it('serializes and deserializes a node with an object port', async () => {
     const objectNode = new ObjectNode('object-node')
     await objectNode.initialize()

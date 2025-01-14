@@ -14,7 +14,7 @@ export class NodeRegistry {
   private nodes: Map<string, NodeConstructor> = new Map()
   private objectSchema: Map<string, ObjectSchema> = new Map()
 
-  private constructor() {}
+  constructor() {}
 
   static getInstance(): NodeRegistry {
     if (!NodeRegistry.instance) {
@@ -75,7 +75,6 @@ export class NodeRegistry {
   registerObjectSchema(id: string, schema: ObjectSchema): void {
     this.objectSchema.set(id, {
       ...schema,
-
     })
   }
 
@@ -92,5 +91,10 @@ export class NodeRegistry {
    */
   getObjectSchemas(): Map<string, ObjectSchema> {
     return this.objectSchema
+  }
+
+  clear() {
+    this.nodes.clear()
+    this.objectSchema.clear()
   }
 }

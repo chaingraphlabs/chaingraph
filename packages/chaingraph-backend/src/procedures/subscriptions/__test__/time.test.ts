@@ -1,5 +1,5 @@
 import type { TrackedEnvelope } from '@trpc/server'
-import { createTestCaller } from '@chaingraph/backend/test/utils'
+import { createTestCaller } from '@chaingraph/backend/procedures/subscriptions/utils/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('time subscription', () => {

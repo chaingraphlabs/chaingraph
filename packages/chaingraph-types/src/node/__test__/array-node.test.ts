@@ -1,11 +1,12 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, PortArray, PortKindEnum, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKindEnum, registerPortTransformers } from '@chaingraph/types'
+
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 @Node({
@@ -39,6 +40,11 @@ describe('array node serialization', () => {
     registerPortTransformers()
     registerNodeTransformers()
   })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   it('serializes and deserializes a node with an array port', async () => {
     const arrayNode = new ArrayNode('array-node')
     await arrayNode.initialize()

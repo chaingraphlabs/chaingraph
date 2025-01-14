@@ -1,10 +1,9 @@
-import type { PortConfig } from '@chaingraph/types/port/types'
-import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import type { JSONValue } from 'superjson/dist/types'
-import { MultiChannel } from '@chaingraph/types/port/channel'
-import { PortRegistry } from '@chaingraph/types/port/registry'
+import type { IPort, PortConfig } from './types'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
+import { MultiChannel } from './channel'
+import { PortRegistry } from './registry'
 
 /**
  * Registers all default port transformers with superjson

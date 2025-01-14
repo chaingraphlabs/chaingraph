@@ -1,13 +1,11 @@
-import type { IPort } from '@chaingraph/types/port'
 import type {
   ArrayPortConfig,
+  IPort,
   PortConfig,
   PortValueFromConfig,
-} from '@chaingraph/types/port/types/port-config'
-import { PortFactory } from '@chaingraph/types/port/registry/port-factory'
-import { registerPort } from '@chaingraph/types/port/registry/port-registry'
-import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+} from '../types'
+import { PortFactory, registerPort } from '../registry'
+import { PortBase, PortKindEnum } from '../types'
 
 @registerPort<ArrayPortConfig<any>>(PortKindEnum.Array)
 export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>> {

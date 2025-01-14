@@ -8,7 +8,7 @@ import 'reflect-metadata'
 
 const NODE_METADATA_KEY = Symbol('node:metadata')
 
-export function Node(config: Omit<NodeMetadata, 'type'>) {
+export function Node(config: Omit<NodeMetadata, 'type'>, nodeRegistry?: NodeRegistry | null) {
   return function (constructor: any) {
     if (!constructor.prototype) {
       throw new Error('Node decorator can only be applied to classes')
@@ -29,7 +29,13 @@ export function Node(config: Omit<NodeMetadata, 'type'>) {
 
     Reflect.defineMetadata(NODE_METADATA_KEY, metadata, constructor)
 
-    NodeRegistry.getInstance().registerNode(constructor)
+    if (nodeRegistry !== undefined) {
+      if (nodeRegistry !== null) {
+        nodeRegistry.registerNode(constructor)
+      }
+    } else {
+      NodeRegistry.getInstance().registerNode(constructor)
+    }
   }
 }
 

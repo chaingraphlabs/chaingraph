@@ -1,8 +1,6 @@
-import type { EnumPortConfig, PortConfig } from '@chaingraph/types/port/types/port-config'
-import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import { registerPort } from '@chaingraph/types/port/registry/port-registry'
-import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import type { EnumPortConfig, IPort, PortConfig } from '../types'
+import { registerPort } from '../registry'
+import { PortBase, PortKindEnum } from '../types'
 
 @registerPort<EnumPortConfig<any>>(PortKindEnum.Enum)
 export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> {

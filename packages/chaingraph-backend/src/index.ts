@@ -1,7 +1,12 @@
-import { createContext } from '@chaingraph/backend/context'
+import { createContext, initializeContext } from '@chaingraph/backend/context'
+import { InMemoryFlowStore } from '@chaingraph/backend/stores/flowStore'
 import { createHTTPServer } from '@trpc/server/adapters/standalone'
 import cors from 'cors'
 import { appRouter } from './router'
+
+// Initialize stores and context
+const flowStore = new InMemoryFlowStore()
+initializeContext(flowStore)
 
 const server = createHTTPServer({
   middleware: cors(),

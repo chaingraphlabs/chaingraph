@@ -11,6 +11,7 @@ import {
   Name,
   Node,
   type NodeExecutionResult,
+  NodeRegistry,
   Optional,
   Output,
   Port,
@@ -39,7 +40,7 @@ import { registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 enum Direction {
@@ -430,6 +431,11 @@ describe('complex node', () => {
     registerPortTransformers()
     registerNodeTransformers()
   })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   it('instantiates a user profile node', async () => {
     const testNode = new UserProfileNode('test-node')
     await testNode.initialize()

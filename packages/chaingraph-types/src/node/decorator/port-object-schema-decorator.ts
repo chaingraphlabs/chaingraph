@@ -16,7 +16,7 @@ export interface ObjectSchemaMetadata {
   isObjectSchema?: boolean
 }
 
-export function PortObjectSchema(config?: ObjectSchemaMetadata) {
+export function PortObjectSchema(config?: ObjectSchemaMetadata, nodeRegistry?: NodeRegistry | null) {
   return function (target: any) {
     const nodeMetadata = getOrCreateNodeMetadata(target.prototype)
     const metadata: ObjectSchemaMetadata = {
@@ -41,14 +41,22 @@ export function PortObjectSchema(config?: ObjectSchemaMetadata) {
 
     metadata.category = '__OBJECT_SCHEMA__'
 
-    NodeRegistry.getInstance().registerObjectSchema(metadata.id as string, {
+    const metadataForSave = {
       id: metadata.id as string,
       type: metadata.type,
       category: metadata.category,
       description: metadata.description,
       properties: Object.fromEntries(metadata.portsConfig),
       isObjectSchema: true,
-    })
+    }
+
+    if (nodeRegistry !== undefined) {
+      if (nodeRegistry !== null) {
+        nodeRegistry.registerObjectSchema(metadata.id as string, metadataForSave)
+      }
+    } else {
+      NodeRegistry.getInstance().registerObjectSchema(metadata.id as string, metadataForSave)
+    }
 
     // nodeMetadata.id = metadata.id
     nodeMetadata.type = metadata?.type ?? target.name
@@ -56,6 +64,12 @@ export function PortObjectSchema(config?: ObjectSchemaMetadata) {
     nodeMetadata.category = metadata.category as any
 
     // update the metadata
-    NodeRegistry.getInstance().updateNode(target, nodeMetadata)
+    if (nodeRegistry !== undefined) {
+      if (nodeRegistry !== null) {
+        nodeRegistry.updateNode(target, nodeMetadata)
+      }
+    } else {
+      NodeRegistry.getInstance().updateNode(target, nodeMetadata)
+    }
   }
 }

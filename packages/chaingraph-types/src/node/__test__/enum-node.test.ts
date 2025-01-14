@@ -1,10 +1,10 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, PortEnumFromNative, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, PortEnumFromNative, registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 enum Color {
@@ -38,6 +38,11 @@ describe('enum node serialization', () => {
     registerPortTransformers()
     registerNodeTransformers()
   })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   it('serializes and deserializes a node with an enum port', async () => {
     const enumNode = new EnumNode('enum-node')
     await enumNode.initialize()

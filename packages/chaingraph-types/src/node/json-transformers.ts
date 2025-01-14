@@ -1,18 +1,21 @@
 import type { INode, PortConfig, PortValue } from '@chaingraph/types'
 import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
-import { getOrCreateNodeMetadata, NodeRegistry } from '@chaingraph/types'
-import { SerializedNodeSchema } from '@chaingraph/types/node/types.zod'
+import { getOrCreateNodeMetadata, NodeRegistry, SerializedNodeSchema } from '@chaingraph/types'
 import { parsePortConfig } from '@chaingraph/types/port/types/port-config-parsing.zod'
 import superjson from 'superjson'
 
 /**
  * Registers node transformers with SuperJSON
  */
-export function registerNodeTransformers() {
+export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
   // Register base node transformer
 
-  NodeRegistry.getInstance().getNodeTypes().forEach((nodeType) => {
-    const nodeInstance = NodeRegistry.getInstance().createNode(nodeType, '')
+  if (nodeRegistry === undefined) {
+    nodeRegistry = NodeRegistry.getInstance()
+  }
+
+  nodeRegistry.getNodeTypes().forEach((nodeType) => {
+    const nodeInstance = nodeRegistry.createNode(nodeType, '')
 
     const metadata = getOrCreateNodeMetadata(nodeInstance)
     if ((metadata as any)?.category === '__OBJECT_SCHEMA__') {
@@ -48,7 +51,7 @@ export function registerNodeTransformers() {
             status: nodeData.status,
           })
 
-          const node = NodeRegistry.getInstance().createNode(
+          const node = nodeRegistry.createNode(
             nodeDataParsed.metadata.type,
             nodeDataParsed.id,
             nodeDataParsed.metadata,

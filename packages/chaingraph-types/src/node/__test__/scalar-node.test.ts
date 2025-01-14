@@ -1,10 +1,10 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, PortBoolean, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, PortBoolean, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 @Node({
@@ -14,15 +14,21 @@ import 'reflect-metadata'
 })
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString()
+  @PortString({
+    defaultValue: 'default string',
+  })
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber()
+  @PortNumber({
+    defaultValue: 42,
+  })
   numInput: number = 42
 
   @Input()
-  @PortBoolean()
+  @PortBoolean({
+    defaultValue: true,
+  })
   boolInput: boolean = true
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
@@ -40,6 +46,11 @@ describe('scalar node serialization', () => {
     registerPortTransformers()
     registerNodeTransformers()
   })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   it('serializes and deserializes a node with scalar ports', async () => {
     const scalarNode = new ScalarNode('scalar-node')
     await scalarNode.initialize()

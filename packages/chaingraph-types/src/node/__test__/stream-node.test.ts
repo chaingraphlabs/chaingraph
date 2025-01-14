@@ -8,6 +8,7 @@ import {
   Input,
   MultiChannel,
   Node,
+  NodeRegistry,
   Output,
   PortKindEnum,
   PortStreamInput,
@@ -17,7 +18,7 @@ import {
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 @Node({
@@ -61,6 +62,11 @@ describe('stream node serialization', () => {
     registerPortTransformers()
     registerNodeTransformers()
   })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   it('serializes and deserializes a node with stream ports', async () => {
     const streamNode = new StreamNode('stream-node')
     await streamNode.initialize()

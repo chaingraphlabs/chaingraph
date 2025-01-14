@@ -1,5 +1,5 @@
-import { BasePortConfigSchema, PortValueSchema } from '@chaingraph/types'
 import { z } from 'zod'
+import { BasePortConfigSchema, PortValueSchema } from '../port'
 import { ExecutionStatus, NodeCategory, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**

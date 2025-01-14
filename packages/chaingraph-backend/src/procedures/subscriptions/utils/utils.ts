@@ -1,7 +1,7 @@
-import type { Context } from '@chaingraph/backend/context'
 import type { AppRouter } from '@chaingraph/backend/router'
 import type { inferProcedureInput, TrackedEnvelope } from '@trpc/server'
 import { createCaller } from '@chaingraph/backend/router'
+import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
 
 export interface TestObservable<TData> {
   subscribe: (callbacks: {
@@ -15,18 +15,14 @@ export interface TestObservable<TData> {
 }
 
 export function createTestCaller() {
-  const ctx: Context = {
-    session: {
-      userId: 'test-user-id',
-    },
-  }
+  const ctx = createTestContext()
   const caller = createCaller(ctx)
 
   return {
     ...caller,
     currentTime: {
       subscribe(
-        input: inferProcedureInput<AppRouter['currentTime']>,
+        input: inferProcedureInput<AppRouter['testProcedures']['currentTime']>,
         callbacks: Parameters<TestObservable<TrackedEnvelope<Date>>['subscribe']>[0],
       ) {
         // console.log('Test caller: Creating subscription')
@@ -40,7 +36,7 @@ export function createTestCaller() {
         const process = async () => {
           try {
             // console.log('Test caller: Starting subscription processing')
-            const asyncIterable = await caller.currentTime(input)
+            const asyncIterable = await caller.testProcedures.currentTime(input)
 
             for await (const item of asyncIterable) {
               if (closed) {
