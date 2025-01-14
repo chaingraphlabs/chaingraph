@@ -1,27 +1,34 @@
-import type { INode } from '@chaingraph/types/node/interface'
-import type { NodeStatus } from './types'
+import { NodeEvents, NodeStatus } from '@chaingraph/types/node/node-enums'
+import { z } from 'zod'
 
 /**
- * Base node event interface
+ * Schema and type for base node event
  */
-export interface NodeEvent {
-  nodeId: string
-  timestamp: Date
-}
+export const NodeEventSchema = z.object({
+  nodeId: z.string(),
+  timestamp: z.date(),
+  type: z.nativeEnum(NodeEvents),
+})
+
+export type NodeEvent = z.infer<typeof NodeEventSchema>
 
 /**
- * Status change event
+ * Schema and type for node status change event
  */
-export interface NodeStatusChangeEvent extends NodeEvent {
-  type: 'status-change'
-  node: INode
-  oldStatus: NodeStatus
-  newStatus: NodeStatus
-}
+export const NodeStatusChangeEventSchema = NodeEventSchema.extend({
+  type: z.literal(NodeEvents.StatusChange),
+  node: z.any(), // TODO: Will be properly typed when full node schema is available
+  oldStatus: z.nativeEnum(NodeStatus),
+  newStatus: z.nativeEnum(NodeStatus),
+})
+
+export type NodeStatusChangeEvent = z.infer<typeof NodeStatusChangeEventSchema>
 
 /**
- * Node events mapped by event type
+ * Schema and type for node event
  */
-export interface NodeEvents {
-  'status-change': NodeStatusChangeEvent
-}
+export const NodeEventUnionSchema = z.discriminatedUnion('type', [
+  NodeStatusChangeEventSchema,
+])
+
+export type NodeEventUnion = z.infer<typeof NodeEventUnionSchema>

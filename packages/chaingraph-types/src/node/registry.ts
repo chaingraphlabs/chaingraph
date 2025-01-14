@@ -73,7 +73,10 @@ export class NodeRegistry {
    * @param schema Object schema
    */
   registerObjectSchema(id: string, schema: ObjectSchema): void {
-    this.objectSchema.set(id, schema)
+    this.objectSchema.set(id, {
+      ...schema,
+
+    })
   }
 
   /**

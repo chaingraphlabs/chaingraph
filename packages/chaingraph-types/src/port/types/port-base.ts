@@ -1,15 +1,15 @@
-import type { JSONObject, JSONValue } from 'superjson/dist/types'
-import type { PortConfig, PortValueFromConfig } from './port-composite-types'
+import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
+import type { PortConfig, PortValueFromConfig } from './port-config'
 import type { PortDirection } from './port-direction'
 import type { IPort } from './port-interface'
 import type { PortKindEnum } from './port-kind-enum'
+import { parsePortConfig } from '@chaingraph/types/port/types/port-config-parsing.zod'
 import superjson from 'superjson'
-import { PortFactory } from '../registry/port-factory'
-import { PortConfigDiscriminator } from './port-config'
-import { PortValueSchema } from './port-value'
+import { PortFactory } from '../registry'
 
 export type PortConstructor<C extends PortConfig> = new (config: C) => IPort<C>
 
+// export abstract class PortBase<C extends PortConfig> implements IPort<C> {
 export abstract class PortBase<C extends PortConfig> implements IPort<C> {
   abstract readonly config: C
   abstract value: PortValueFromConfig<C>
@@ -80,71 +80,26 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
     return this.config.kind
   }
 
-  deserialize(v: JSONValue): IPort<C> {
-    if (v === null || v === undefined) {
-      throw new Error('Cannot deserialize null or undefined')
-    }
-
-    if (typeof v !== 'object') {
-      throw new TypeError('Cannot deserialize non-object port')
-    }
-
-    // if (!('config' in v) || !('value' in v)) {
-    if (!('config' in v)) {
-      throw new Error('Cannot deserialize port without config')
-    }
-
-    if ((v.config as JSONObject)?.kind !== this.config.kind) {
-      throw new Error(`Cannot deserialize port with different kind, expected ${this.config.kind}, got ${(v.config as JSONObject)?.kind}`)
-    }
-
-    const validatedConfig = PortConfigDiscriminator.parse(v.config)
-    if (!validatedConfig) {
-      throw new Error('Cannot deserialize port with invalid config')
-    }
-
-    if (validatedConfig.kind !== this.config.kind) {
-      throw new Error(`Cannot deserialize port with different kind, expected ${this.config.kind}, got ${validatedConfig.kind}`)
-    }
-
-    const validatedValue = PortValueSchema.parse(v?.value)
-
-    const port = PortFactory.create(validatedConfig as C)
-    port.setValue(validatedValue as never)
-
-    // TODO: is there better way to infer the type?
-    return (port as unknown) as IPort<C>
+  serializePort(): JSONValue {
+    return superjson.serialize({
+      config: this.config,
+      value: this.getValue(),
+    }) as unknown as JSONValue
   }
 
-  serialize(v: IPort<C>): JSONValue {
-    return {
-      config: v.config,
-      value: v.getValue(),
-    } as JSONValue
-  }
+  deserializePort(serializedPort: JSONValue): IPort<C> {
+    const deserializedPort = superjson.deserialize<{
+      config: any
+      value: any
+    }>(serializedPort as unknown as SuperJSONResult)
 
-  isApplicable(v: any): v is IPort<C> {
-    if (v === null || v === undefined) {
-      return false
-    }
+    // validate config
+    const portConfig = parsePortConfig(deserializedPort.config)
 
-    if (typeof v !== 'object' || !('config' in v) || !('value' in v)) {
-      return false
-    }
+    // const port = PortFactory.create(deserializedPort.config as C)
+    const port = PortFactory.create(portConfig as C)
+    port.setValue(deserializedPort.value as never)
 
-    if (v.config.kind !== this.config.kind) {
-      return false
-    }
-
-    try {
-      PortConfigDiscriminator.parse(v.config)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  registerSuperjson(): void {
-    superjson.registerCustom<IPort<C>, JSONValue>(this, this.name)
+    return port
   }
 }

@@ -1,5 +1,5 @@
-import type { EdgeMetadata, EdgeStatus, IEdge, INode, IPort } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types'
+import type { EdgeMetadata, IEdge, INode, IPort } from '@chaingraph/types'
+import { EdgeStatus, PortDirectionEnum } from '@chaingraph/types'
 
 export class Edge implements IEdge {
   readonly id: string
@@ -8,7 +8,7 @@ export class Edge implements IEdge {
   readonly targetNode: INode
   readonly targetPort: IPort<any>
   readonly metadata: EdgeMetadata
-  status: EdgeStatus = 'inactive'
+  status: EdgeStatus = EdgeStatus.Inactive
 
   constructor(
     id: string,
@@ -29,7 +29,7 @@ export class Edge implements IEdge {
   async initialize(): Promise<void> {
     // Initialize the edge if necessary
     await this.validate()
-    this.status = 'active'
+    this.status = EdgeStatus.Active
   }
 
   async validate(): Promise<boolean> {
@@ -64,6 +64,6 @@ export class Edge implements IEdge {
 
   async dispose(): Promise<void> {
     // Clean up resources if necessary
-    this.status = 'inactive'
+    this.status = EdgeStatus.Inactive
   }
 }

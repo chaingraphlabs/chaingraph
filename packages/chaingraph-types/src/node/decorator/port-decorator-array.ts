@@ -50,6 +50,7 @@ export type DecoratorArrayPortConfig = Partial<ArrayPortConfig<any>> & {
  */
 export function PortStringArray(config?: DecoratorArrayPortConfig) {
   return PortArray({
+    defaultValue: config?.defaultValue || [],
     ...config,
     elementConfig: {
       kind: PortKindEnum.String,
@@ -93,6 +94,7 @@ export function PortStringArray(config?: DecoratorArrayPortConfig) {
  */
 export function PortArrayNumber(config?: DecoratorArrayPortConfig) {
   return PortArray({
+    defaultValue: [],
     ...config,
     elementConfig: {
       kind: PortKindEnum.Number,
@@ -138,8 +140,10 @@ export function PortArrayNumber(config?: DecoratorArrayPortConfig) {
  */
 export function PortArrayObject<T>(objectType: new () => T, config?: DecoratorArrayPortConfig) {
   return PortArray({
+    defaultValue: [],
     ...config,
     elementConfig: {
+      defaultValue: {},
       kind: objectType,
       ...(config?.elementConfig || {}),
     },
@@ -197,11 +201,13 @@ export function PortArrayNested(depth: number, elementConfig: PortConfigWithClas
     }
     return {
       kind: PortKindEnum.Array,
+      defaultValue: [],
       elementConfig: createNestedConfig(level - 1),
     }
   }
 
   return PortArray({
+    defaultValue: [],
     elementConfig: createNestedConfig(depth - 1),
   })
 }

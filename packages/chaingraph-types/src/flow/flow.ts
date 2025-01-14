@@ -1,7 +1,7 @@
 import type { IEdge, INode } from '@chaingraph/types'
 import type { IFlow } from './interface'
-
 import type { FlowMetadata } from './types'
+
 import { EventEmitter } from 'node:events'
 import { Edge } from '@chaingraph/types'
 import { v4 as uuidv4 } from 'uuid'
@@ -11,16 +11,21 @@ export class Flow implements IFlow {
   readonly metadata: FlowMetadata
   readonly nodes: Map<string, INode>
   readonly edges: Map<string, IEdge>
+  // TODO: add known object types schemas
 
   private eventEmitter = new EventEmitter()
 
   constructor(metadata: Partial<FlowMetadata> = {}) {
-    this.id = uuidv4()
+    this.id = metadata.id || uuidv4()
+    if (metadata.id !== this.id) {
+      metadata.id = this.id
+    }
+
     this.metadata = {
       name: metadata.name || 'Untitled Flow',
       description: metadata.description || '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: metadata.createdAt || new Date(),
+      updatedAt: metadata.updatedAt || new Date(),
       ...metadata,
     }
     this.nodes = new Map()

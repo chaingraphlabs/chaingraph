@@ -3,7 +3,6 @@
  * Port Kind
  * * * * * * * * * * *
  */
-import { z } from 'zod'
 
 export enum PortKindEnum {
   String = 'port:string',
@@ -16,8 +15,6 @@ export enum PortKindEnum {
   StreamOutput = 'port:stream-output',
   StreamInput = 'port:stream-input',
 }
-
-export const PortKindSchema = z.nativeEnum(PortKindEnum)
 
 export type PortKind =
   | PortKindEnum.String

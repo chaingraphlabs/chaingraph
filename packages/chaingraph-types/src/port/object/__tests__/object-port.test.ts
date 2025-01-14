@@ -135,7 +135,8 @@ describe('objectPort serialization', () => {
           postalCode: 67890,
         },
       },
-    } as ObjectPortConfig<typeof personSchema>)
+    } as ObjectPortConfig<typeof personSchema>) as ObjectPort<typeof personSchema>
+
 
     // Act
     const serialized = superjson.stringify(originalPort)

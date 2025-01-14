@@ -35,7 +35,7 @@ describe('enumPort serialization', () => {
       id: 'test-enum-port',
       direction: PortDirectionEnum.Input,
       options,
-      defaultValue: 'string-option',
+      defaultValue: null,
     })
 
     // Test selecting different options
@@ -72,8 +72,7 @@ describe('enumPort serialization', () => {
       // Check each option
       deserializedOptions.forEach((option, index) => {
         const originalOption = originalOptions[index]
-        expect(option.config).toEqual(originalOption.config)
-        expect(option.getValue()).toEqual(originalOption.getValue())
+        expect(option).toEqual(originalOption)
       })
 
       // Check selected option
@@ -82,8 +81,7 @@ describe('enumPort serialization', () => {
       if (originalSelected === null) {
         expect(deserializedSelected).toBeNull()
       } else {
-        expect(deserializedSelected?.config).toEqual(originalSelected.config)
-        expect(deserializedSelected?.getValue()).toEqual(originalSelected.getValue())
+        expect(deserializedSelected).toEqual(originalSelected)
       }
     }
   })
@@ -145,8 +143,7 @@ describe('enumPort serialization', () => {
     expect(options.length).toBe(config.options.length)
     options.forEach((option, index) => {
       const configOption = config.options[index]
-      expect(option.config).toEqual(configOption)
-      expect(option.getValue()).toEqual(configOption.defaultValue)
+      expect(option).toEqual(configOption)
     })
   })
 

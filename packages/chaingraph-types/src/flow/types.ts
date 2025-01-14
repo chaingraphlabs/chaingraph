@@ -21,5 +21,5 @@ export interface FlowMetadata {
   tags?: string[]
 
   /** Custom metadata */
-  [key: string]: unknown
+  metadata?: Record<string, unknown>
 }

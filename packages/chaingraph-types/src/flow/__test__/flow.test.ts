@@ -9,6 +9,7 @@ import {
   PortDirectionEnum,
   PortKindEnum,
 } from '@chaingraph/types'
+import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
@@ -18,7 +19,12 @@ class AddNode extends BaseNode {
   output: NumberPort
 
   constructor(id: string) {
-    super(id, { type: 'AddNode', title: 'Add Node', category: 'Math' })
+    super(id, {
+      id,
+      type: 'AddNode',
+      title: 'Add Node',
+      category: NodeCategory.Custom,
+    })
 
     this.inputA = new NumberPort({
       id: 'inputA',
@@ -51,7 +57,8 @@ class AddNode extends BaseNode {
     this.output.setValue(result)
 
     return {
-      status: 'completed',
+      // status: 'completed',
+      status: ExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['output', this.output.getValue()]]),
@@ -67,8 +74,8 @@ describe('flow Execution', () => {
     const node2 = new AddNode('node2')
 
     // Initialize nodes
-    await node1.initialize()
-    await node2.initialize()
+    node1.initialize()
+    node2.initialize()
 
     // Set initial values
     node1.inputA.setValue(5)
@@ -88,6 +95,8 @@ describe('flow Execution', () => {
 
     // Set node2 inputB
     node2.inputB.setValue(20)
+
+    await flow.validate()
 
     // Execute the flow
     const abortController = new AbortController()
@@ -120,11 +129,11 @@ describe('flow Execution', () => {
     const finalNode = new AddNode('final') // 25 + 30 = 55
 
     // Initialize all nodes
-    await sourceNode1.initialize()
-    await sourceNode2.initialize()
-    await intermediateNode1.initialize()
-    await intermediateNode2.initialize()
-    await finalNode.initialize()
+    sourceNode1.initialize()
+    sourceNode2.initialize()
+    intermediateNode1.initialize()
+    intermediateNode2.initialize()
+    finalNode.initialize()
 
     // Add nodes to flow
     flow.addNode(sourceNode1)
@@ -159,6 +168,8 @@ describe('flow Execution', () => {
     // intermediateNode2.output -> finalNode.inputB
     await flow.connectPorts('intermediate2', 'output', 'final', 'inputB')
 
+    await flow.validate()
+
     // Execute the flow
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
@@ -188,9 +199,9 @@ describe('flow Execution', () => {
     const sourceNode2 = new AddNode('source2') // 3 + 7 = 10
     const finalNode = new AddNode('final') // 15 + 10 = 25
 
-    await sourceNode1.initialize()
-    await sourceNode2.initialize()
-    await finalNode.initialize()
+    sourceNode1.initialize()
+    sourceNode2.initialize()
+    finalNode.initialize()
 
     // Add nodes to flow
     flow.addNode(sourceNode1)

@@ -1,6 +1,9 @@
-import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
-import type { ArrayPortConfig } from '@chaingraph/types/port/types/port-config'
-import type { IPort } from '../types/port-interface'
+import type { IPort } from '@chaingraph/types/port'
+import type {
+  ArrayPortConfig,
+  PortConfig,
+  PortValueFromConfig,
+} from '@chaingraph/types/port/types/port-config'
 import { PortFactory } from '@chaingraph/types/port/registry/port-factory'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'

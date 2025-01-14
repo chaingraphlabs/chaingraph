@@ -1,6 +1,5 @@
-import type { NodeMetadataReflect } from '@chaingraph/types/node'
-import type { ObjectSchema } from '@chaingraph/types/port'
-import type { PortConfig, PortConfigByKind } from '@chaingraph/types/port/types/port-composite-types'
+import type { NodeMetadata } from '@chaingraph/types/node'
+import type { ObjectSchema, PortConfig, PortConfigByKind } from '@chaingraph/types/port'
 import type { BasePortConfig } from '@chaingraph/types/port/types/port-config'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
 import { ArrayPort, EnumPort, ObjectPort, StreamInputPort, StreamOutputPort } from '@chaingraph/types/port'
@@ -39,10 +38,22 @@ export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
           // user provided the schema directly just return it
           return config
         }
-        const designType = Reflect.getMetadata('design:type', target, propertyKey)
-        config.schema = createObjectSchemaFromMetadata(
-          getOrCreateNodeMetadata(designType),
-        )
+
+        if (config.schema && typeof config.schema === 'function') {
+          // user provided the schema as a class, create the schema from the class
+          config.schema = createObjectSchemaFromMetadata(
+            getOrCreateNodeMetadata(config.schema),
+          )
+        } else {
+          // try to infer the schema from the field value or type or class
+          const designType = Reflect.getMetadata('design:type', target, propertyKey)
+          if (!designType) {
+            throw new Error(`Can not infer object port schema from ${JSON.stringify(config)}, design:type is missing`)
+          }
+          config.schema = createObjectSchemaFromMetadata(
+            getOrCreateNodeMetadata(designType),
+          )
+        }
       } else if (ArrayPort.isArrayPortConfig(config)) {
         if (!config?.elementConfig) {
           throw new Error(`Can not infer array port schema from ${JSON.stringify(config)}, elementConfig is missing`)
@@ -93,7 +104,7 @@ export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
   }
 }
 
-function createObjectSchemaFromMetadata(metadata: NodeMetadataReflect): ObjectSchema {
+function createObjectSchemaFromMetadata(metadata: NodeMetadata): ObjectSchema {
   if (!metadata || !metadata.portsConfig) {
     // throw new Error(`Port kind class ${JSON.stringify(config)} does not have any ports defined`)
     throw new Error(`Can not infer object port schema from ${JSON.stringify(metadata)}, portsConfig is missing`)

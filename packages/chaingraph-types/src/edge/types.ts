@@ -1,10 +1,11 @@
 /**
- * Edge status representing the current state of the connection
+ * Edge status enumeration
  */
-export type EdgeStatus =
-  | 'active' // Connection is established and working
-  | 'inactive' // Connection exists but not currently in use
-  | 'error' // Connection has an error
+export enum EdgeStatus {
+  Active = 'active',
+  Inactive = 'inactive',
+  Error = 'error',
+}
 
 /**
  * Edge configuration metadata

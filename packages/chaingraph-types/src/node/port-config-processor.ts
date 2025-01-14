@@ -12,7 +12,8 @@ import type { INode } from './interface'
 import { AnyPort, ArrayPort, BooleanPort, EnumPort, getOrCreateNodeMetadata, NumberPort, ObjectPort, StreamInputPort, StreamOutputPort, StringPort,
 } from '@chaingraph/types'
 
-import { v7 as uuidv7 } from 'uuid' // For generating UUIDs.
+// For generating UUIDs.
+import { v7 as uuidv7 } from 'uuid'
 
 export interface Context {
   nodeId: string
@@ -30,24 +31,23 @@ export class PortConfigProcessor {
     const nodeMetadata = getOrCreateNodeMetadata(node)
     const nodeId = node.id
 
-    if (!nodeMetadata.portsConfig) {
-      throw new Error('No portsConfig found in node metadata.')
-    }
+    if (nodeMetadata.portsConfig) {
+      // Process each port configuration associated with the node
+      for (const [propertyKey, portConfig] of nodeMetadata.portsConfig.entries()) {
+        const processedPortConfig = this.processPortConfig(
+          // { ...portConfig }, // Clone to avoid mutating original
+          this.deepCopy(portConfig), // Clone to avoid mutating original
+          {
+            nodeId,
+            parentPortConfig: null,
+            propertyKey,
+            propertyValue: (node as any)[propertyKey],
+          },
+        )
 
-    // Process each port configuration associated with the node
-    for (const [propertyKey, portConfig] of nodeMetadata.portsConfig.entries()) {
-      const processedPortConfig = this.processPortConfig(
-        { ...portConfig }, // Clone to avoid mutating original
-        {
-          nodeId,
-          parentPortConfig: null,
-          propertyKey,
-          propertyValue: (node as any)[propertyKey],
-        },
-      )
-
-      // Update the port config in the node metadata
-      nodeMetadata.portsConfig.set(propertyKey, processedPortConfig)
+        // Update the port config in the node metadata
+        nodeMetadata.portsConfig.set(propertyKey, processedPortConfig)
+      }
     }
   }
 
@@ -121,11 +121,13 @@ export class PortConfigProcessor {
     //   }
     // }
 
-    if (parentPortConfig?.id) {
-      newPortConfig.id = `${parentPortConfig.id}.${propertyKey}` || this.generateSortableUUID()
-    } else {
-      newPortConfig.id = propertyKey || this.generateSortableUUID()
-    }
+    // TODO: needs to decide how to handle id!!!
+    // if (parentPortConfig?.id) {
+    //   newPortConfig.id = `${parentPortConfig.id}.${propertyKey}` || this.generateSortableUUID()
+    // } else {
+    //   newPortConfig.id = propertyKey || this.generateSortableUUID()
+    // }
+    newPortConfig.id = propertyKey || this.generateSortableUUID()
 
     // Assign key
     if (!newPortConfig.key) {
@@ -134,7 +136,7 @@ export class PortConfigProcessor {
 
     // Assign defaultValue
     if (newPortConfig.defaultValue === undefined && propertyKey && propertyValue !== undefined) {
-      newPortConfig.defaultValue = propertyValue
+      newPortConfig.defaultValue = this.deepCopy(propertyValue)
     }
 
     // Assign parentId
@@ -161,6 +163,44 @@ export class PortConfigProcessor {
     }
 
     return newPortConfig
+  }
+
+  private deepCopy(obj: any): any {
+    let copy
+
+    // Handle the 3 simple types, and null or undefined
+    if (obj == null || typeof obj != 'object')
+      return obj
+
+    // Handle Date
+    if (obj instanceof Date) {
+      copy = new Date()
+      copy.setTime(obj.getTime())
+      return copy
+    }
+
+    // Handle Array
+    if (Array.isArray(obj)) {
+      copy = []
+      for (let i = 0, len = obj.length; i < len; i++) {
+        copy[i] = this.deepCopy(obj[i])
+      }
+      return copy
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+      copy = {}
+      for (const attr in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, attr))
+          (copy as any)[attr] = this.deepCopy(obj[attr])
+      }
+
+      // Copy type information
+      return copy
+    }
+
+    throw new Error('Unable to copy obj! Its type isn\'t supported.')
   }
 
   /**
@@ -222,7 +262,7 @@ export class PortConfigProcessor {
       }
 
       if (ObjectPort.isObjectPortConfig(nestedPortConfig)) {
-        propertyContext.propertyValue = portConfig.defaultValue?.[key]
+        propertyContext.propertyValue = this.deepCopy(portConfig.defaultValue?.[key])
       }
 
       processedProperties[key] = this.processPortConfig(
@@ -261,11 +301,14 @@ export class PortConfigProcessor {
 
     if (typeof elementConfig === 'object') {
       const processedElementConfig = this.processPortConfig(
-        { ...elementConfig },
+        // this.deepCopy(elementConfig),
+        elementConfig,
         {
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
-          propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
+          // TODO: needs to decide how to handle id!!!
+          // propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
+          propertyKey: elementConfig.id,
           propertyValue: newPortConfig.elementConfig,
         },
       )

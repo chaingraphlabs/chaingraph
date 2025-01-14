@@ -1,17 +1,17 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { NodeEvents } from '@chaingraph/types/node/events'
-import type { NodeExecutionResult } from '@chaingraph/types/node/execution'
-import type { IPort, PortConfig } from '@chaingraph/types/port'
+import type { NodeEventUnion } from '@chaingraph/types/node/events'
+import type { NodeStatus } from '@chaingraph/types/node/node-enums'
+import type { IPort } from '@chaingraph/types/port'
 import type {
+  NodeExecutionResult,
   NodeMetadata,
-  NodeStatus,
   NodeValidationResult,
 } from './types'
 
 /**
  * Base interface for all nodes in ChainGraph
  */
-export interface INode {
+export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   get id(): string
   get metadata(): NodeMetadata
   get status(): NodeStatus
@@ -19,9 +19,8 @@ export interface INode {
 
   /**
    * Initialize the node
-   * @returns Promise that resolves when initialization is complete
    */
-  initialize: () => Promise<void>
+  initialize: () => void
 
   /**
    * Execute the node's logic
@@ -54,9 +53,9 @@ export interface INode {
 
   /**
    * Add a port to the node
-   * @param config Port configuration
+   * @param port Port to add
    */
-  addPort: (config: PortConfig) => IPort<any>
+  addPort: (port: IPort<any>) => IPort<any>
 
   /**
    * Remove a port from the node
@@ -87,16 +86,28 @@ export interface INode {
   setStatus: (status: NodeStatus) => void
 
   /**
+   * Set the node metadata
+   * @param metadata New metadata
+   */
+  setMetadata: (metadata: NodeMetadata) => void
+
+  /**
    * Event handling - Subscribe to node events
    * @param event Event type
    * @param handler Event handler function
    */
-  on: <T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void) => void
+  on: <T extends NodeEventUnion>(event: T['type'], handler: (event: T) => void) => void
 
   /**
    * Event handling - Unsubscribe from node events
    * @param event Event type
    * @param handler Event handler function
    */
-  off: <T extends keyof NodeEvents>(event: T, handler: (event: NodeEvents[T]) => void) => void
+  off: <T extends NodeEventUnion>(event: T['type'], handler: (event: T) => void) => void
+
+  // superjson serialization methods
+  // readonly name: string
+  // isApplicable: (v: any) => v is INode
+  // deserialize: (v: JSONValue) => INode
+  // serialize: (v: INode) => JSONValue
 }

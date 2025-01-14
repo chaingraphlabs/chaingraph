@@ -1,47 +1,46 @@
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@chaingraph/types'
+import type { SuperJSONResult } from 'superjson/dist/types'
 import {
+  BaseNode,
+  DefaultValue,
+  Description,
+  type ExecutionContext,
+  Id,
   Input,
+  Metadata,
+  MultiChannel,
+  Name,
   Node,
+  type NodeExecutionResult,
+  Optional,
   Output,
   Port,
   PortArray,
+  PortArrayNested,
+  PortArrayNumber,
+  PortArrayObject,
   PortEnum,
+  PortEnumFromNative,
   PortEnumFromObject,
-  PortEnumFromTypeScriptEnum,
   PortKindEnum,
   PortNumber,
   PortNumberEnum,
   PortObject,
+  PortObjectSchema,
   PortStreamInput,
   PortStreamOutput,
   PortString,
-  PortStringEnum,
-} from '@chaingraph/types'
-
-import {
-  PortArrayNested,
-  PortArrayNumber,
-  PortArrayObject,
   PortStringArray,
-} from '@chaingraph/types/node/decorator/port-decorator-array'
-import {
-  DefaultValue,
-  Description,
-  Id,
-  Metadata,
-  Name,
-  Optional,
+  PortStringEnum,
   Required,
   Title,
-} from '@chaingraph/types/node/decorator/port-decorator-base'
-import { PortObjectSchema } from '@chaingraph/types/node/decorator/port-object-schema-decorator'
-import { MultiChannel } from '@chaingraph/types/port/channel/multi-channel'
-import { BaseNode } from '../base-node'
+} from '@chaingraph/types'
+
+import { registerPortTransformers } from '@chaingraph/types'
+import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
+import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import superjson from 'superjson'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
-import 'core-js'
 
 enum Direction {
   Up = 'Up',
@@ -52,10 +51,12 @@ enum Direction {
 
 @PortObjectSchema()
 export class UserStatus {
-  @PortString()
-  status: string
+  @PortString({
+    defaultValue: '',
+  })
+  status: string = ''
 
-  constructor(status: string) {
+  constructor(status: string = '') {
     this.status = status
   }
 }
@@ -76,18 +77,21 @@ type UserStatusOptionId = keyof typeof userStatusOptions
 export class TestUserAddress {
   @PortString({
     description: 'Street of the address',
+    defaultValue: '',
   })
   street?: string = ''
 
   @PortString({
     description: 'City of the address',
+    defaultValue: '',
   })
   city?: string
 
   @PortString({
     description: 'State of the address',
+    defaultValue: '',
   })
-  country?: string = 'RU'
+  country?: string = 'EU'
 }
 
 @PortObjectSchema({
@@ -117,6 +121,7 @@ export class TestUserObject {
 
   @PortObject({
     description: 'Address of the user',
+    schema: TestUserAddress,
     defaultValue: new TestUserAddress(),
   })
   address: TestUserAddress = new TestUserAddress()
@@ -133,45 +138,55 @@ export class TestUserObject {
 }
 
 @Node({
-  type: 'TestNode',
-  title: 'Test Node',
-  category: 'test',
+  title: 'User Profile',
+  category: NodeCategory.Custom,
   description: 'Test node description',
 })
-export class TestNode extends BaseNode {
+export class UserProfileNode extends BaseNode {
   // Case for infer schema from field value
-  @Input() @PortObject()
+  @Input() @PortObject({
+    schema: TestUserObject,
+    defaultValue: new TestUserObject(),
+  })
   user1: TestUserObject = new TestUserObject()
 
   // Case for infer schema from field type
-  @Input() @PortObject()
+  @Input() @PortObject({
+    defaultValue: new TestUserObject(),
+    schema: TestUserObject,
+  })
   user2?: TestUserObject
 
   // Case for infer schema from shema class
   @Input() @PortObject({
     schema: TestUserObject,
+    defaultValue: new TestUserObject(),
   })
   user3?: TestUserObject
 
   // Case for infer schema from kind field
   @Input() @Port({
     kind: TestUserObject,
+    defaultValue: new TestUserObject(),
   })
   user4?: TestUserObject
 
   // Case for infer schema from decorator default value
   @Input() @PortObject({
+    schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
   user5?: TestUserObject
 
   // Case for infer schema from decorator default value
   @Input() @PortObject({
+    schema: TestUserObject,
     defaultValue: new TestUserAddress(),
   })
   address?: TestUserAddress
 
   @Input() @PortArray({
+    defaultValue: [],
     elementConfig: {
       kind: TestUserObject,
       defaultValue: new TestUserObject(),
@@ -180,6 +195,7 @@ export class TestNode extends BaseNode {
   friends?: TestUserObject[]
 
   @Input() @PortArray({
+    defaultValue: [],
     elementConfig: {
       kind: PortKindEnum.Number,
       defaultValue: 0,
@@ -188,6 +204,7 @@ export class TestNode extends BaseNode {
   numbers: number[] = [0, 1, 2, 3]
 
   @Output() @PortArray({
+    defaultValue: [],
     elementConfig: {
       kind: PortKindEnum.String,
       defaultValue: '',
@@ -196,7 +213,9 @@ export class TestNode extends BaseNode {
   strings: string[] = ['0', '1', '2', '3']
 
   @Output() @PortArray({
+    defaultValue: [],
     elementConfig: {
+      defaultValue: [],
       kind: PortKindEnum.Array,
       elementConfig: {
         kind: PortKindEnum.Number,
@@ -215,12 +234,12 @@ export class TestNode extends BaseNode {
       defaultValue: [],
       elementConfig: {
         id: 'y',
-        name: 'Y',
+        key: 'Y',
         kind: PortKindEnum.Array,
         defaultValue: [],
         elementConfig: {
           id: 'x',
-          name: 'X',
+          key: 'X',
           kind: PortKindEnum.Number,
           defaultValue: 0,
         },
@@ -313,7 +332,10 @@ export class TestNode extends BaseNode {
   numberArray?: number[]
 
   @Output()
-  @PortArrayObject(TestUserObject)
+  @PortArrayObject(TestUserObject, {
+    kind: PortKindEnum.Array,
+    defaultValue: [],
+  })
   simpleObjectArray?: TestUserObject[]
 
   @Output()
@@ -327,6 +349,7 @@ export class TestNode extends BaseNode {
   @Output()
   @PortArrayNested(2, {
     kind: TestUserObject,
+    defaultValue: new TestUserObject(),
   })
   user2DArray?: TestUserObject[][]
 
@@ -343,14 +366,14 @@ export class TestNode extends BaseNode {
   statusEnum: UserStatusOptionId = 'active'
 
   @Output()
-  @PortEnumFromTypeScriptEnum(Direction)
+  @PortEnumFromNative(Direction)
   directionEnum: Direction = Direction.Up
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     this.colorEnum = '12'
 
     return {
-      status: 'completed',
+      status: ExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -359,34 +382,63 @@ export class TestNode extends BaseNode {
 }
 
 @Node({
-  type: 'AdvancedNode',
   title: 'Advanced Node',
-  category: 'test',
+  category: NodeCategory.Custom,
 })
-export class AdvancedNode {
+export class AdvancedNode extends BaseNode {
   @Input()
   @Required()
   @Name('Username')
   @Description('Enter your username')
-  @PortString()
+  @PortString({
+    defaultValue: '',
+  })
   username: string = ''
 
   @Input()
   @Optional()
   @Name('Password')
   @Description('Enter your password')
-  @PortString()
+  @PortString({
+    defaultValue: '',
+  })
   password?: string
 
   @Input()
   @DefaultValue(0)
-  @PortNumber()
+  @PortNumber({
+    defaultValue: 0,
+  })
   progress: number = 0
 
   @Output()
   @Id('user_status')
   @Title('User Status')
   @Metadata('ui:widget', 'status-indicator')
-  @PortString()
-  status: string = 'active'
+  @PortString({
+    defaultValue: 'active',
+  })
+  userStatus: string = 'active'
+
+  execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    return Promise.resolve({})
+  }
 }
+
+describe('complex node', () => {
+  beforeAll(() => {
+    registerPortTransformers()
+    registerNodeTransformers()
+  })
+  it('instantiates a user profile node', async () => {
+    const testNode = new UserProfileNode('test-node')
+    await testNode.initialize()
+
+    // const json = superjson.stringify(testNode)
+    const json = superjson.serialize(testNode)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+
+    expect(parsed).toBeDefined()
+    expect(parsed).toEqual(testNode)
+  })
+})

@@ -1,21 +1,17 @@
-import type { ObjectPortValueFromSchema, ObjectSchema } from './object-schema'
-import type { PortConfig, PortValueFromConfig } from './port-composite-types'
-import { z } from 'zod'
-import { ObjectSchemaSchema } from './object-schema'
-import { PortDirectionSchema } from './port-direction'
-import { PortKindEnum, PortKindSchema } from './port-kind-enum'
-import {
-  ArrayPortValidationSchema,
-  BooleanPortValidationSchema,
-  EnumPortValidationSchema,
-  NumberPortValidationSchema,
-  ObjectPortValidationSchema,
-  PortValidationSchema,
-  StringPortValidationSchema,
+import type { MultiChannel } from '@chaingraph/types/port'
+import type { PortDirection } from './port-direction'
+import type { PortKindEnum } from './port-kind-enum'
+import type {
+  ArrayPortValidation,
+  BooleanPortValidation,
+  EnumPortValidation,
+  NumberPortValidation,
+  ObjectPortValidation,
+  PortValidation,
+  StringPortValidation,
 } from './port-validation'
-import {
-  NumberPortValueSchema,
-  PortValueSchema,
+import type {
+  NumberPortValue,
 } from './port-value'
 
 /*
@@ -23,25 +19,20 @@ import {
  * Base Port Config
  * * * * * * * * * * *
  */
-export const BasePortConfigSchema = z.object({
-  kind: PortKindSchema,
-  id: z.string().optional(),
-  parentId: z.string().optional(),
-  nodeId: z.string().optional(),
-  key: z.string().optional(),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  direction: PortDirectionSchema.optional(),
-  optional: z.boolean().optional(),
-  defaultValue: z.any().optional(), // Will be specified in each specific config
-  validation: PortValidationSchema.optional(), // Will be specified in each specific config
-  metadata: z.record(z.string(), z.unknown()).optional(),
-})
 
-export type BasePortConfigSchemaType = z.infer<typeof BasePortConfigSchema>
-
-export interface BasePortConfig<K extends PortKindEnum> extends BasePortConfigSchemaType {
+export interface BasePortConfig<K extends PortKindEnum> {
   kind: K
+  id?: string
+  parentId?: string
+  nodeId?: string
+  key?: string
+  title?: string
+  description?: string
+  direction?: PortDirection
+  optional?: boolean
+  defaultValue?: any // Will be specified in each specific config
+  validation?: PortValidation // Will be specified in each specific config
+  metadata?: { [key: string]: unknown }
 }
 
 /*
@@ -49,53 +40,43 @@ export interface BasePortConfig<K extends PortKindEnum> extends BasePortConfigSc
  * String Port Config
  * * * * * * * * * * *
  */
-export const StringPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.String),
-  defaultValue: z.string().optional(),
-  validation: StringPortValidationSchema,
-})
-export type StringPortConfig = z.infer<typeof StringPortConfigSchema>
+
+export interface StringPortConfig extends BasePortConfig<PortKindEnum.String> {
+  defaultValue?: string
+  validation?: StringPortValidation
+}
 
 /*
  * * * * * * * * * * *
  * Number Port Config
  * * * * * * * * * * *
  */
-export const NumberPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Number),
-  defaultValue: NumberPortValueSchema.optional(),
-  validation: NumberPortValidationSchema,
-})
-export type NumberPortConfig = z.infer<typeof NumberPortConfigSchema>
+
+export interface NumberPortConfig extends BasePortConfig<PortKindEnum.Number> {
+  defaultValue?: NumberPortValue
+  validation?: NumberPortValidation
+}
 
 /*
  * * * * * * * * * * *
  * Boolean Port Config
  * * * * * * * * * * *
  */
-export const BooleanPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Boolean),
-  defaultValue: z.boolean().optional(),
-  validation: BooleanPortValidationSchema,
-})
-export type BooleanPortConfig = z.infer<typeof BooleanPortConfigSchema>
+export interface BooleanPortConfig extends BasePortConfig<PortKindEnum.Boolean> {
+  defaultValue?: boolean
+  validation?: BooleanPortValidation
+}
 
 /*
  * * * * * * * * * * *
  * Array Port Config
  * * * * * * * * * * *
  */
-export const ArrayPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Array),
-  elementConfig: BasePortConfigSchema,
-  defaultValue: z.array(PortValueSchema).optional(),
-  validation: ArrayPortValidationSchema,
-})
 
-export interface ArrayPortConfig<E extends PortConfig>
-  extends BasePortConfig<PortKindEnum.Array>, z.infer<typeof ArrayPortConfigSchema> {
+export interface ArrayPortConfig<E extends PortConfig> extends BasePortConfig<PortKindEnum.Array> {
   elementConfig: E
   defaultValue?: Array<PortValueFromConfig<E>>
+  validation?: ArrayPortValidation
 }
 
 /*
@@ -103,16 +84,26 @@ export interface ArrayPortConfig<E extends PortConfig>
  * Object Port Config
  * * * * * * * * * * *
  */
-export const ObjectPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Object),
-  schema: ObjectSchemaSchema,
-  defaultValue: z.record(z.string(), PortValueSchema).optional(),
-  validation: ObjectPortValidationSchema,
-})
-export interface ObjectPortConfig<S extends ObjectSchema>
-  extends BasePortConfig<PortKindEnum.Object>, z.infer<typeof ObjectPortConfigSchema> {
+
+export interface ObjectSchema {
+  id?: string
+  type?: string
+  description?: string
+  category?: string
+  properties: {
+    [key: string]: PortConfig
+  }
+  isObjectSchema?: boolean
+}
+
+export type ObjectPortValueFromSchema<S extends ObjectSchema> = {
+  [K in keyof S['properties']]: PortValueFromConfig<S['properties'][K]>;
+}
+
+export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig<PortKindEnum.Object> {
   schema: S
   defaultValue?: ObjectPortValueFromSchema<S>
+  validation?: ObjectPortValidation
 }
 
 /*
@@ -120,14 +111,7 @@ export interface ObjectPortConfig<S extends ObjectSchema>
  * Any Port Config
  * * * * * * * * * * *
  */
-export const AnyPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Any),
-  connectedPortConfig: BasePortConfigSchema.nullable().optional(),
-  defaultValue: z.any(),
-})
-
-export interface AnyPortConfig
-  extends BasePortConfig<PortKindEnum.Any>, z.infer<typeof AnyPortConfigSchema> {
+export interface AnyPortConfig extends BasePortConfig<PortKindEnum.Any> {
   connectedPortConfig?: PortConfig | null
   defaultValue?: any
 }
@@ -137,17 +121,11 @@ export interface AnyPortConfig
  * Enum Port Config
  * * * * * * * * * * *
  */
-export const EnumPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Enum),
-  options: z.array(BasePortConfigSchema),
-  defaultValue: z.string().nullable().optional(),
-  validation: EnumPortValidationSchema,
-})
 
-export interface EnumPortConfig<E extends PortConfig>
-  extends BasePortConfig<PortKindEnum.Enum>, z.infer<typeof EnumPortConfigSchema> {
-  options: E[] // Array of options, each is a PortConfig of specific type
+export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<PortKindEnum.Enum> {
+  options: E[] // Array of options, each is a PortConfig of a specific type
   defaultValue?: string | null // Selected option's id
+  validation?: EnumPortValidation
 }
 
 /*
@@ -155,14 +133,9 @@ export interface EnumPortConfig<E extends PortConfig>
  * Stream Output Port Config
  * * * * * * * * * * *
  */
-export const StreamOutputPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.StreamOutput),
-  valueType: BasePortConfigSchema,
-})
 
-export interface StreamOutputPortConfig<T>
-  extends BasePortConfig<PortKindEnum.StreamOutput>, z.infer<typeof StreamOutputPortConfigSchema> {
-  valueType: PortConfig
+export interface StreamOutputPortConfig<T> extends BasePortConfig<PortKindEnum.StreamOutput> {
+  valueType?: PortConfig
 }
 
 /*
@@ -170,26 +143,44 @@ export interface StreamOutputPortConfig<T>
  * Enum Port Config
  * * * * * * * * * * *
  */
-export const StreamInputPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.StreamInput),
-  valueType: BasePortConfigSchema,
-})
-export interface StreamInputPortConfig<T>
-  extends BasePortConfig<PortKindEnum.StreamInput>, z.infer<typeof StreamInputPortConfigSchema> {
-  valueType: PortConfig
+
+export interface StreamInputPortConfig<T> extends BasePortConfig<PortKindEnum.StreamInput> {
+  valueType?: PortConfig
 }
 
-// Union type of all PortConfigs
-export const PortConfigDiscriminator = z.lazy(() => z.discriminatedUnion('kind', [
-  StringPortConfigSchema,
-  NumberPortConfigSchema,
-  BooleanPortConfigSchema,
-  ArrayPortConfigSchema,
-  ObjectPortConfigSchema,
-  AnyPortConfigSchema,
-  EnumPortConfigSchema,
-  StreamOutputPortConfigSchema,
-  StreamInputPortConfigSchema,
-]))
+export type PortConfig =
+  | StringPortConfig
+  | NumberPortConfig
+  | BooleanPortConfig
+  | ArrayPortConfig<any>
+  | ObjectPortConfig<any>
+  | AnyPortConfig
+  | EnumPortConfig<any>
+  | StreamOutputPortConfig<any>
+  | StreamInputPortConfig<any>
 
-export type PortConfigDiscriminatorType = z.infer<typeof PortConfigDiscriminator>
+export type PortValueFromConfig<C extends PortConfig> =
+  C extends StringPortConfig ? string :
+    C extends NumberPortConfig ? NumberPortValue :
+      C extends BooleanPortConfig ? boolean :
+        C extends ArrayPortConfig<infer E> ? Array<PortValueFromConfig<E>> :
+          C extends ObjectPortConfig<infer S> ? ObjectPortValueFromSchema<S> :
+            C extends AnyPortConfig ? any :
+              C extends EnumPortConfig<any> ? string | null :
+                C extends StreamOutputPortConfig<infer T> ? MultiChannel<T> :
+                  C extends StreamInputPortConfig<infer T> ? MultiChannel<T> | null :
+                    never
+
+export type PortValueByKind<K extends PortKindEnum> = PortValueFromConfig<PortConfigByKind<K>>
+
+export type PortConfigByKind<K extends PortKindEnum> =
+  K extends PortKindEnum.String ? StringPortConfig :
+    K extends PortKindEnum.Number ? NumberPortConfig :
+      K extends PortKindEnum.Boolean ? BooleanPortConfig :
+        K extends PortKindEnum.Array ? ArrayPortConfig<any> :
+          K extends PortKindEnum.Object ? ObjectPortConfig<any> :
+            K extends PortKindEnum.Any ? AnyPortConfig :
+              K extends PortKindEnum.Enum ? EnumPortConfig<any> :
+                K extends PortKindEnum.StreamOutput ? StreamOutputPortConfig<any> :
+                  K extends PortKindEnum.StreamInput ? StreamInputPortConfig<any> :
+                    never

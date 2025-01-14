@@ -1,6 +1,5 @@
-import type { PortConfig, PortValueFromConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { IPort, PortConfig, PortValueFromConfig } from '@chaingraph/types/port'
 import type { AnyPortConfig } from '@chaingraph/types/port/types/port-config'
-import type { IPort } from '../types/port-interface'
 import { PortFactory } from '@chaingraph/types/port'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
@@ -80,3 +79,12 @@ export class AnyPort extends PortBase<AnyPortConfig> {
     return config.kind === PortKindEnum.Any
   }
 }
+//
+// superjson.registerCustom<AnyPort, JSONValue>(
+//   {
+//     isApplicable: (v): v is AnyPort => v instanceof AnyPort,
+//     serialize: v => v.serializePort(),
+//     deserialize: v => PortBase.deserializePort(v) as unknown as AnyPort,
+//   },
+//   PortKindEnum.Any,
+// )

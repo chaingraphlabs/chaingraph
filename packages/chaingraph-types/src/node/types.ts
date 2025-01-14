@@ -1,73 +1,59 @@
-/**
- * Node category types
- */
-export type NodeCategory =
-  | 'input'
-  | 'processing'
-  | 'output'
-  | 'flow-control'
-  | 'custom'
-  | string // Allow custom categories
+import type { PortConfig } from '@chaingraph/types/port/types/port-config'
+import type { ExecutionStatus, NodeCategory, ValidationMessageType } from './node-enums'
 
 /**
- * Node execution status
- */
-export type NodeStatus =
-  | 'idle'
-  | 'initialized'
-  | 'ready'
-  | 'pending'
-  | 'executing'
-  | 'completed'
-  | 'error'
-  | 'disposed'
-
-/**
- * Node configuration metadata
+ * Type definition for node metadata
  */
 export interface NodeMetadata {
-  /** Display name of the node */
   type: string
-
-  /** Display name of the node */
-  title: string
-
-  /** Node category for organization */
-  category: string
-
-  /** Detailed description */
+  id?: string
+  title?: string
+  category?: NodeCategory
   description?: string
-
-  /** Version information */
   version?: string
-
-  /** Icon identifier */
   icon?: string
-
-  /** Tags for organization */
   tags?: string[]
-
-  /** Author information */
   author?: string
-
-  /** Custom metadata */
-  [key: string]: unknown
+  metadata?: { [key: string]: unknown }
+  portsConfig?: Map<string, PortConfig>
 }
 
 /**
- * Node validation result
+ * Type definition for validation message
+ */
+export interface ValidationMessage {
+  type: ValidationMessageType
+  message: string
+  portId?: string
+}
+
+/**
+ * Type definition for node validation result
  */
 export interface NodeValidationResult {
-  /** Is the node valid */
   isValid: boolean
-
-  /** Validation messages */
-  messages: Array<{
-    type: 'error' | 'warning' | 'info'
-    message: string
-    portId?: string
-  }>
-
-  /** Additional validation metadata */
-  metadata?: Record<string, unknown>
+  messages: ValidationMessage[]
+  metadata?: { [key: string]: unknown }
 }
+
+/**
+ * Type definition for node execution result
+ */
+export interface NodeExecutionResult {
+  status?: ExecutionStatus
+  startTime?: Date
+  endTime?: Date
+  outputs?: Map<string, unknown>
+  error?: Error
+  metadata?: { [key: string]: unknown }
+}
+
+/**
+ * Type definition for serialized node
+ */
+// export interface SerializedNode {
+//   id: string
+//   metadata: NodeMetadata
+//   status: NodeStatus
+//   ports: Map<string, SerializedPort>
+// }

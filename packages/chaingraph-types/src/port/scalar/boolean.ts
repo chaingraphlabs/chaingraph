@@ -1,5 +1,4 @@
-import type { BooleanPortConfig } from '../types/port-config'
-import type { IPort } from '../types/port-interface'
+import type { BooleanPortConfig, IPort } from '../types'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
 import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'

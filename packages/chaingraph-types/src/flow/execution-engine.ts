@@ -5,6 +5,7 @@ import type { Flow } from './flow'
 import { FlowDebugger } from '@chaingraph/types/flow/debugger'
 import { TypedEventEmitter } from '@chaingraph/types/flow/execution-event-emitter'
 import { ExecutionEventEnum } from '@chaingraph/types/flow/execution-events'
+import { NodeEvents, NodeStatus } from '@chaingraph/types/node/node-enums'
 import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'
 import { withTimeout } from '../utils/timeout'
@@ -255,7 +256,7 @@ export class ExecutionEngine {
           { node: event.node, oldStatus: event.oldStatus, newStatus: event.newStatus },
         )
       }
-      node.on('status-change', onStatusChange)
+      node.on(NodeEvents.StatusChange, onStatusChange)
 
       try {
         await this.semaphore.acquire()
@@ -270,7 +271,7 @@ export class ExecutionEngine {
         throw error
       } finally {
         this.semaphore.release()
-        node.off('status-change', onStatusChange)
+        node.off(NodeEvents.StatusChange, onStatusChange)
       }
     }
   }
@@ -283,7 +284,7 @@ export class ExecutionEngine {
 
     try {
       this.eventEmitter.emit(ExecutionEventEnum.NODE_STARTED, { node })
-      node.setStatus('executing')
+      node.setStatus(NodeStatus.Executing)
 
       // Debug point - before execution
       if (this.debugger) {
@@ -329,13 +330,13 @@ export class ExecutionEngine {
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
 
-      node.setStatus('completed')
+      node.setStatus(NodeStatus.Completed)
       this.eventEmitter.emit(ExecutionEventEnum.NODE_COMPLETED, {
         node,
         executionTime: Date.now() - nodeStartTime,
       })
     } catch (error) {
-      node.setStatus('error')
+      node.setStatus(NodeStatus.Error)
       this.eventEmitter.emit(ExecutionEventEnum.NODE_FAILED, {
         node,
         error: error as Error,

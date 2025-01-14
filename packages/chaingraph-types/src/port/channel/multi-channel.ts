@@ -1,3 +1,11 @@
+import type { JSONArray, JSONValue } from 'superjson/dist/types'
+import { z } from 'zod'
+
+export const MultiChannelSchema = z.object({
+  buffer: z.array(z.any()),
+  isClosed: z.boolean(),
+})
+
 export class MultiChannel<T> {
   private buffer: T[] = []
   private isClosed = false
@@ -53,6 +61,25 @@ export class MultiChannel<T> {
 
   public getBuffer(): T[] {
     return this.buffer
+  }
+
+  public serialize(): JSONValue {
+    return {
+      buffer: this.getBuffer() as JSONArray,
+      isClosed: this.isChannelClosed(),
+    }
+  }
+
+  public static deserialize(value: JSONValue): MultiChannel<any> {
+    const parsed = MultiChannelSchema.parse(value)
+    const chan = new MultiChannel()
+    if (parsed.buffer.length > 0) {
+      chan.sendBatch(parsed.buffer)
+    }
+    if (parsed.isClosed) {
+      chan.close()
+    }
+    return chan
   }
 }
 

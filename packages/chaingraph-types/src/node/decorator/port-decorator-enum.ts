@@ -1,5 +1,5 @@
 import type { PartialPortConfig, PortDecoratorConfig } from '@chaingraph/types/node'
-import type { PortConfig } from '@chaingraph/types/port/types/port-composite-types'
+import type { PortConfig } from '@chaingraph/types/port'
 import { Port } from '@chaingraph/types/node'
 import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
 
@@ -167,16 +167,16 @@ export function PortEnumFromObject<T>(
 }
 
 /**
- * Decorator for defining an enum port based on a TypeScript enum.
+ * Decorator for defining an enum port based on a TypeScript native enum.
  *
- * @param tsEnum - The TypeScript enum object.
+ * @param nativeEnum - The TypeScript enum object.
  * @param config - Optional configuration to customize the enum port.
  */
-export function PortEnumFromTypeScriptEnum<E extends Record<string, string | number>>(
-  tsEnum: E,
+export function PortEnumFromNative<E extends Record<string, string | number>>(
+  nativeEnum: E,
   config?: PartialPortConfig<PortKindEnum.Enum>,
 ) {
-  const options = Object.values(tsEnum).filter(
+  const options = Object.values(nativeEnum).filter(
     value => typeof value === 'string' || typeof value === 'number',
   ) as Array<string | number>
 
