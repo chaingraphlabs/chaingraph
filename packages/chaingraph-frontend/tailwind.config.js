@@ -4,8 +4,76 @@ export default {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
+  darkMode: 'class', // Enable dark mode support
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // UI Theme Colors
+        ui: {
+          // Main background colors
+          background: {
+            light: '#f5f5f5',
+            dark: '#161616', // Main dark background
+          },
+          // Secondary background (for panels, cards etc)
+          surface: {
+            light: '#ffffff',
+            dark: '#1e1e1e', // Slightly lighter than background
+          },
+          // Accent surface (for hover states, active items)
+          accent: {
+            light: '#f0f0f0',
+            dark: '#242424', // Even lighter, for contrast
+          },
+          // Border colors
+          border: {
+            light: '#e5e5e5',
+            dark: '#2a2a2a',
+          },
+        },
+        // Functional colors
+        flow: {
+          // For nodes and connections
+          execute: {
+            light: '#22c55e',
+            DEFAULT: '#16a34a',
+            dark: '#15803d',
+          },
+          data: {
+            light: '#3b82f6',
+            DEFAULT: '#2563eb',
+            dark: '#1d4ed8',
+          },
+          stream: {
+            light: '#f59e0b',
+            DEFAULT: '#d97706',
+            dark: '#b45309',
+          },
+        },
+        // Status colors
+        status: {
+          success: {
+            light: '#22c55e',
+            DEFAULT: '#16a34a',
+            dark: '#15803d',
+          },
+          error: {
+            light: '#ef4444',
+            DEFAULT: '#dc2626',
+            dark: '#b91c1c',
+          },
+          warning: {
+            light: '#f59e0b',
+            DEFAULT: '#d97706',
+            dark: '#b45309',
+          },
+        },
+      },
+      fontFamily: {
+        sans: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+    },
   },
   plugins: [
 

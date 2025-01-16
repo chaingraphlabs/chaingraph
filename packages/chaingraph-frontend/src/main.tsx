@@ -4,10 +4,10 @@ import {
   registerNodeTransformers,
   registerPortTransformers,
 } from '@chaingraph/types'
-import { Theme } from '@radix-ui/themes'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import { RootProvider } from './providers/RootProvider.tsx'
 import './index.css'
 import '@radix-ui/themes/styles.css'
 import './reflect'
@@ -18,15 +18,9 @@ registerFlowTransformers()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Theme
-      accentColor="grass"
-      grayColor="gray"
-      radius="small"
-      scaling="90%"
-      appearance="dark"
-    >
+    <RootProvider>
       <App />
       {/* <ThemePanel /> */}
-    </Theme>
+    </RootProvider>
   </StrictMode>,
 )

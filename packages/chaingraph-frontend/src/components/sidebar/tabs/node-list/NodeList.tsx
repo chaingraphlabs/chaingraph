@@ -1,8 +1,8 @@
 import type { INode } from '@chaingraph/types'
 import { Box, Heading } from '@radix-ui/themes'
-import { trpc } from '../../../api/trpc/client.ts'
-import { Loading } from '../../common/Loading.tsx'
-import { NodeListItem } from './node-list-item.tsx'
+import { trpc } from '../../../../api/trpc/client.ts'
+import { Loading } from '../../../common/Loading.tsx'
+import { NodeListItem } from './NodeListItem.tsx'
 
 export function NodeList() {
   // Fetch available node types using tRPC

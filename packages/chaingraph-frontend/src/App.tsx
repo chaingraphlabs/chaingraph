@@ -1,27 +1,23 @@
 import { Flex } from '@radix-ui/themes'
 import { ReactFlowProvider } from '@xyflow/react'
-import React from 'react'
-import Flow from './components/flow/Flow'
-import { NodeList } from './components/nodes/node-list'
-import { Providers } from './providers'
+import Flow from './components/flow/Flow.tsx'
+import { Sidebar } from './components/sidebar/Sidebar.tsx'
+import { ThemeToggle } from './components/theme/ThemeToggle.tsx'
 
 function App() {
   return (
-    <Providers>
-      <Flex direction="row" style={{ height: '100vh' }}>
+    <Flex direction="row" style={{ height: '100vh' }}>
+      <Sidebar />
 
-        <div className="w-80 border-r overflow-y-auto">
-          <NodeList />
-        </div>
+      <div className="flex-1">
+        <ReactFlowProvider>
+          <Flow />
+        </ReactFlowProvider>
+      </div>
 
-        {/* Flow Editor */}
-        <div className="flex-1">
-          <ReactFlowProvider>
-            <Flow />
-          </ReactFlowProvider>
-        </div>
-      </Flex>
-    </Providers>
+      {/* Theme Toggle Button */}
+      <ThemeToggle />
+    </Flex>
   )
 }
 

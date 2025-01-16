@@ -9,23 +9,34 @@ import type {
   OnNodeDrag,
   OnNodesChange,
 } from '@xyflow/react'
-import type { Connection } from '@xyflow/system'
+import type { Connection, Viewport } from '@xyflow/system'
 import {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
+  Background,
+  Controls,
   ReactFlow,
   reconnectEdge,
 } from '@xyflow/react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { edgeTypes, initialEdges } from './edges'
 import { initialNodes } from './nodes'
-import NumberNodeComponent from './nodes/number-node.tsx'
-import { PositionLoggerNodeComponent } from './nodes/position-logger-node.tsx'
+import { ChaingraphCustomNode } from './nodes/ChaingraphCustomNode'
+import NumberNodeComponent from './nodes/NumberNode.tsx'
+import { PositionLoggerNodeComponent } from './nodes/PositionLoggerNode.tsx'
 import '@xyflow/react/dist/style.css'
 
 const fitViewOptions: FitViewOptions = {
+  minZoom: 0.1,
+  maxZoom: 4,
   padding: 0.2,
+}
+
+const defaultViewport: Viewport = {
+  x: 0,
+  y: 0,
+  zoom: 0.2,
 }
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
@@ -40,6 +51,7 @@ function Flow() {
   const nodeTypes: NodeTypes = useMemo(() => ({
     'position-logger': PositionLoggerNodeComponent,
     'number': NumberNodeComponent,
+    'chaingraphNode': ChaingraphCustomNode,
     // Add any of your custom nodes here!
   }), [])
 
@@ -90,9 +102,16 @@ function Flow() {
       onReconnectEnd={onReconnectEnd}
       onNodeDrag={onNodeDrag}
       fitView
-      fitViewOptions={fitViewOptions}
+      // viewport={}
+      preventScrolling
+      // fitViewOptions={fitViewOptions}
+      defaultViewport={defaultViewport}
       defaultEdgeOptions={defaultEdgeOptions}
-    />
+
+    >
+      <Background color="#626262" />
+      <Controls position="bottom-right" />
+    </ReactFlow>
   )
 }
 

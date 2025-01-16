@@ -7,7 +7,7 @@ interface NodeListItemProps {
 
 export function NodeListItem({ node }: NodeListItemProps) {
   return (
-    <Box className="p-3 border rounded-md hover:bg-gray-50 text-white">
+    <Box className="p-3 border rounded-md hover:bg-gray-50">
       <Text weight="medium">{node.metadata?.title || node.metadata?.type}</Text>
 
       {node.metadata?.description && (
