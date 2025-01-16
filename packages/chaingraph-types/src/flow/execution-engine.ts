@@ -40,7 +40,6 @@ export class ExecutionEngine {
   private readonly dependentsMap: Map<string, INode[]>
   private readonly semaphore: Semaphore
   private readonly debugger: FlowDebugger | null = null
-  // private readonly eventEmitter: TypedEventEmitter
 
   private readonly eventQueue: EventQueue<AllExecutionEvents>
   private eventIndex: number = 0

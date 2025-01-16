@@ -6,7 +6,7 @@
     "useDefineForClassFields": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": ".", // Changed from "./src" to "."
+    "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Node",
     "paths": {
@@ -29,7 +29,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": ["packages/*/src/**/*"],
   "exclude": ["node_modules"]

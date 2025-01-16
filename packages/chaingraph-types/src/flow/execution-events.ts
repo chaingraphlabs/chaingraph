@@ -104,6 +104,12 @@ export type AllExecutionEvents = {
   [T in ExecutionEventEnum]: ExecutionEvent<T>
 }[ExecutionEventEnum]
 
+// Helper type to get event data type based on event type
+export type EventDataType<T extends ExecutionEventEnum> = Extract<
+  ExecutionEvent,
+  { type: T }
+>['data']
+
 // Generic ExecutionEvent type
 // export type ExecutionEvent<T extends ExecutionEventEnum = ExecutionEventEnum> = BaseExecutionEvent<T>
 
@@ -276,11 +282,6 @@ export type AllExecutionEvents = {
 //   ExecutionEventEnum.EDGE_TRANSFER_FAILED |
 //   ExecutionEventEnum.DEBUG_BREAKPOINT_HIT
 
-// Helper type to get event data type based on event type
-// export type EventDataType<T extends ExecutionEventEnum> = Extract<
-//   ExecutionEvent,
-//   { type: T }
-// >['data']
 //
 // // Type-safe event emitter interface
 // export interface ExecutionEventEmitter {
