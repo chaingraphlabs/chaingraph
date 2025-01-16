@@ -1,3 +1,7 @@
+import { connectPorts } from '@chaingraph/backend/procedures/flow/connect-ports'
+import { addNode } from '@chaingraph/backend/procedures/flow/nodes'
+import { removeNode } from '@chaingraph/backend/procedures/flow/remove-node'
+import { subscribeToEvents } from '@chaingraph/backend/procedures/flow/subscriptions'
 import { publicProcedure, router } from '@chaingraph/backend/trpc'
 import { z } from 'zod'
 
@@ -7,7 +11,6 @@ export const flowProcedures = router({
       name: z.string(),
       description: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      // metadata: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       return await ctx.flowStore.createFlow({
@@ -40,4 +43,9 @@ export const flowProcedures = router({
       const success = await ctx.flowStore.deleteFlow(flowId)
       return { success }
     }),
+
+  subscribeToEvents,
+  addNode,
+  removeNode,
+  connectPorts,
 })

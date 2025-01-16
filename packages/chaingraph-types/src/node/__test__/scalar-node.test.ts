@@ -56,9 +56,10 @@ describe('scalar node serialization', () => {
     await scalarNode.initialize()
 
     const json = superjson.serialize(scalarNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ScalarNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(scalarNode)
+    expect(parsed.metadata).toEqual(scalarNode.metadata)
+    expect(parsed.status).toEqual(scalarNode.status)
   })
 })

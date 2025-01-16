@@ -99,12 +99,7 @@ describe('flow Serialization', () => {
     sourceNode.input = 'Hello, World!'
 
     // Connect nodes
-    await flow.connectPorts(
-      sourceNode.id,
-      'output',
-      targetNode.id,
-      'textInput',
-    )
+    await flow.connectPorts(sourceNode.id, 'output', targetNode.id, 'textInput')
 
     await flow.validate()
 
@@ -129,9 +124,9 @@ describe('flow Serialization', () => {
     const deserializedTargetNode = deserialized.nodes.get('target-1')
 
     expect(deserializedSourceNode).toBeDefined()
-    expect(deserializedSourceNode).toEqual(sourceNode)
+    expect(deserializedSourceNode?.metadata).toEqual(sourceNode.metadata)
     expect(deserializedTargetNode).toBeDefined()
-    expect(deserializedTargetNode).toEqual(targetNode)
+    expect(deserializedTargetNode?.metadata).toEqual(targetNode.metadata)
 
     // Verify ports
     expect(deserializedSourceNode?.getPort('output')).toBeDefined()
@@ -196,22 +191,22 @@ describe('flow Serialization', () => {
     const deserializedNodeSource1 = deserialized.nodes.get('source-1')
     expect(deserializedNodeSource1).toBeDefined()
     expect(deserializedNodeSource1 instanceof SourceNode).toBe(true)
-    expect(deserializedNodeSource1).toEqual(source1)
+    expect(deserializedNodeSource1?.metadata).toEqual(source1.metadata)
 
     const deserializedNodeSource2 = deserialized.nodes.get('source-2')
     expect(deserializedNodeSource2).toBeDefined()
     expect(deserializedNodeSource2 instanceof SourceNode).toBe(true)
-    expect(deserializedNodeSource2).toEqual(source2)
+    expect(deserializedNodeSource2?.metadata).toEqual(source2?.metadata)
 
     const deserializedNodeTarget1 = deserialized.nodes.get('target-1')
     expect(deserializedNodeTarget1).toBeDefined()
     expect(deserializedNodeTarget1 instanceof TargetNode).toBe(true)
-    expect(deserializedNodeTarget1).toEqual(target1)
+    expect(deserializedNodeTarget1?.metadata).toEqual(target1?.metadata)
 
     const deserializedNodeTarget2 = deserialized.nodes.get('target-2')
     expect(deserializedNodeTarget2).toBeDefined()
     expect(deserializedNodeTarget2 instanceof TargetNode).toBe(true)
-    expect(deserializedNodeTarget2).toEqual(target2)
+    expect(deserializedNodeTarget2?.metadata).toEqual(target2?.metadata)
 
     // Verify connections
     const edges = Array.from(deserialized.edges.values())

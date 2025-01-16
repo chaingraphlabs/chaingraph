@@ -1,15 +1,14 @@
 import type { INode } from '@chaingraph/types'
 import { publicProcedure, router } from '@chaingraph/backend/trpc'
-import { NodeRegistry } from '@chaingraph/types'
 import { z } from 'zod'
 
 export const nodeRegistryProcedures = router({
   listAvailableTypes: publicProcedure
-    .query(async () => {
-      const nodeTypes = NodeRegistry.getInstance().getNodeTypes()
+    .query(async ({ ctx }) => {
+      const nodeTypes = ctx.nodeRegistry.getNodeTypes()
       const availableNodes = [] as INode[]
       nodeTypes.forEach((type) => {
-        availableNodes.push(NodeRegistry.getInstance().createNode(type, `id:${type}`))
+        availableNodes.push(ctx.nodeRegistry.createNode(type, `id:${type}`))
       })
 
       return availableNodes
@@ -17,7 +16,7 @@ export const nodeRegistryProcedures = router({
 
   getNodeType: publicProcedure
     .input(z.string())
-    .query(async ({ input: nodeType }) => {
-      return NodeRegistry.getInstance().createNode(nodeType, `id:${nodeType}`)
+    .query(async ({ input: nodeType, ctx }) => {
+      return ctx.nodeRegistry.createNode(nodeType, `id:${nodeType}`)
     }),
 })

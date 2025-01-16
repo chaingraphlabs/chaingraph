@@ -4,6 +4,7 @@ export interface DebuggerState {
   isPaused: boolean
   currentNode: string | null
   breakpoints: Set<string>
+  pausedNodes: Set<string>
 }
 
 export interface DebuggerController {

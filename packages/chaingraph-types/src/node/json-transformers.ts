@@ -63,8 +63,10 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
           }
 
           node.setMetadata({ ...node.metadata, portsConfig })
+          node.disableEvents()
           node.initialize()
           node.setStatus((nodeData as any).status)
+          node.enableEvents()
 
           // set ports values
           const portsValues = (nodeData as any).portsValues.entries()

@@ -1,22 +1,23 @@
 import type { INode } from '@chaingraph/types'
-import type { TypedEventEmitter } from '@chaingraph/types/flow/execution-event-emitter'
 import type { DebuggerCommand, DebuggerController, DebuggerState } from './debugger-types'
-import { ExecutionEventEnum } from '@chaingraph/types/flow/execution-events'
 
 export class FlowDebugger implements DebuggerController {
   private state: DebuggerState = {
     isPaused: false,
     currentNode: null,
     breakpoints: new Set(),
+    pausedNodes: new Set(),
   }
 
-  private commandResolver: ((command: DebuggerCommand) => void) | null = null
+  private commandResolvers: Map<string, (command: DebuggerCommand) => void> = new Map()
   private stopRequested: boolean = false
 
-  private eventEmitter: TypedEventEmitter
+  private readonly onBreakpointHit?: (node: INode) => void
 
-  constructor(eventEmitter: TypedEventEmitter) {
-    this.eventEmitter = eventEmitter
+  constructor(
+    onBreakpointHit?: (node: INode) => void,
+  ) {
+    this.onBreakpointHit = onBreakpointHit
     this.reset()
   }
 
@@ -25,9 +26,10 @@ export class FlowDebugger implements DebuggerController {
       isPaused: false,
       currentNode: null,
       breakpoints: new Set(),
+      pausedNodes: new Set(),
     }
     this.stopRequested = false
-    this.commandResolver = null
+    this.commandResolvers.clear()
   }
 
   public pause(): void {
@@ -35,26 +37,31 @@ export class FlowDebugger implements DebuggerController {
   }
 
   public continue(): void {
-    if (this.commandResolver) {
-      this.commandResolver('continue')
-      this.commandResolver = null
-    }
+    this.commandResolvers.forEach((resolver) => {
+      resolver('continue')
+    })
+    this.commandResolvers.clear()
     this.state.isPaused = false
   }
 
   public step(): void {
-    if (this.commandResolver) {
-      this.commandResolver('step')
-      this.commandResolver = null
-    }
+    this.commandResolvers.forEach((resolver) => {
+      resolver('step')
+    })
+    this.commandResolvers.clear()
+    // If we're still in paused mode, we need to wait for nodes to hit the next breakpoint
+    // Otherwise, if there are no more nodes to pause, we can reset the paused state
+    // if (this.commandResolvers.size === 0 && this.state.breakpoints.size === 0) {
+    //   this.state.isPaused = false
+    // }
   }
 
   public stop(): void {
     this.stopRequested = true
-    if (this.commandResolver) {
-      this.commandResolver('stop')
-      this.commandResolver = null
-    }
+    this.commandResolvers.forEach((resolver) => {
+      resolver('stop')
+    })
+    this.commandResolvers.clear()
   }
 
   public addBreakpoint(nodeId: string): void {
@@ -66,49 +73,13 @@ export class FlowDebugger implements DebuggerController {
   }
 
   public getState(): DebuggerState {
-    return { ...this.state }
+    return {
+      isPaused: this.state.isPaused,
+      currentNode: this.state.currentNode,
+      breakpoints: new Set(this.state.breakpoints),
+      pausedNodes: new Set(this.commandResolvers.keys()),
+    }
   }
-
-  // async waitForCommand(node: INode): Promise<DebuggerCommand> {
-  //   this.state.currentNode = node.id
-  //
-  //   // Always check if we're already stopped
-  //   if (this.state.isPaused) {
-  //     return new Promise((resolve) => {
-  //       this.commandResolver = resolve
-  //       this.eventEmitter.emit(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node })
-  //     })
-  //   }
-  //
-  //   // If we hit a breakpoint, pause and wait
-  //   if (this.state.breakpoints.has(node.id)) {
-  //     this.state.isPaused = true
-  //     return new Promise((resolve) => {
-  //       this.commandResolver = resolve
-  //       this.eventEmitter.emit(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node })
-  //     })
-  //   }
-  //
-  //   if (this.commandResolver) {
-  //     // If there's a pending command resolver, we should wait for it
-  //     return new Promise((resolve) => {
-  //       this.commandResolver = resolve
-  //     })
-  //   }
-  //
-  //   // Create a Promise that resolves immediately with 'continue'
-  //   // but can be intercepted by a stop command
-  //   return new Promise((resolve) => {
-  //     this.commandResolver = resolve
-  //     // Immediately resolve with continue if no stop is pending
-  //     setImmediate(() => {
-  //       if (this.commandResolver === resolve) {
-  //         this.commandResolver = null
-  //         resolve('continue')
-  //       }
-  //     })
-  //   })
-  // }
 
   async waitForCommand(node: INode): Promise<DebuggerCommand> {
     // If stop was requested, immediately return stop command
@@ -116,6 +87,7 @@ export class FlowDebugger implements DebuggerController {
       return 'stop'
     }
 
+    // Set currentNode for informational purposes
     this.state.currentNode = node.id
 
     // If we're paused or hit a breakpoint, wait for command
@@ -123,8 +95,11 @@ export class FlowDebugger implements DebuggerController {
       this.state.isPaused = true
 
       return new Promise<DebuggerCommand>((resolve) => {
-        this.commandResolver = resolve
-        this.eventEmitter.emit(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node })
+        this.commandResolvers.set(node.id, resolve)
+
+        if (this.onBreakpointHit) {
+          this.onBreakpointHit(node)
+        }
       })
     }
 

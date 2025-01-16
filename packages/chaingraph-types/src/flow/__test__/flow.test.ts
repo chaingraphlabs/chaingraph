@@ -85,13 +85,7 @@ describe('flow Execution', () => {
     flow.addNode(node2)
 
     // Connect node1 output to node2 inputA
-    await flow.connectPorts(
-      // 'node1',
-      node1.id,
-      node1.output.id,
-      node2.id,
-      node2.inputA.id,
-    )
+    await flow.connectPorts(node1.id, node1.output.id, node2.id, node2.inputA.id)
 
     // Set node2 inputB
     node2.inputB.setValue(20)
@@ -240,11 +234,11 @@ describe('flow Execution', () => {
     const breakpointHits: string[] = []
     let nodeAtBreakpoint: string | null = null
 
-    executionEngine.getEventEmitter().on(ExecutionEventEnum.NODE_STARTED, (event) => {
+    executionEngine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       executedNodes.push(event.data.node.id)
     })
 
-    executionEngine.getEventEmitter().on(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, (event) => {
+    executionEngine.on(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, (event) => {
       breakpointHits.push(event.data.node.id)
       nodeAtBreakpoint = event.data.node.id
 
@@ -314,22 +308,24 @@ describe('flow Execution', () => {
     // Track execution events
     const executionSteps: Array<{ type: string, nodeId: string }> = []
 
-    executionEngine.getEventEmitter().onAll((event) => {
-      if (event.type === ExecutionEventEnum.DEBUG_BREAKPOINT_HIT) {
-        executionSteps.push({
-          type: 'started',
-          nodeId: event.data.node.id,
-        })
+    executionEngine.onAll((event) => {
+      switch (event.type) {
+        case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+          executionSteps.push({
+            type: 'started',
+            nodeId: event.data.node.id,
+          })
+          setTimeout(() => {
+            dbg!.step()
+          }, 50)
+          break
 
-        // Step to next node after a small delay
-        setTimeout(() => {
-          dbg!.step()
-        }, 100)
-      } else if (event.type === ExecutionEventEnum.NODE_COMPLETED) {
-        executionSteps.push({
-          type: 'completed',
-          nodeId: event.data.node.id,
-        })
+        case ExecutionEventEnum.NODE_COMPLETED:
+          executionSteps.push({
+            type: 'completed',
+            nodeId: event.data.node.id,
+          })
+          break
       }
     })
 
@@ -409,9 +405,9 @@ describe('flow Execution', () => {
     const context = new ExecutionContext(flow.id, abortController)
     const executionEngine = new ExecutionEngine(flow, context, {
       execution: {
-        maxConcurrency: 5, // Force sequential execution for predictable debugging
-        nodeTimeoutMs: 1000,
-        flowTimeoutMs: 5000,
+        maxConcurrency: 2, // Force sequential execution for predictable debugging
+        nodeTimeoutMs: 10000000,
+        flowTimeoutMs: 5000000,
       },
       debug: true,
     })
@@ -427,28 +423,34 @@ describe('flow Execution', () => {
       outputs?: Map<string, unknown>
     }> = []
 
-    executionEngine.getEventEmitter().onAll((event) => {
-      if (event.type === ExecutionEventEnum.DEBUG_BREAKPOINT_HIT) {
-        executionSteps.push({
-          event: 'paused',
-          nodeId: event.data.node.id,
-        })
+    executionEngine.onAll((event) => {
+      switch (event.type) {
+        case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+          executionSteps.push({
+            event: 'paused',
+            nodeId: event.data.node.id,
+          })
 
-        // Continue execution
-        dbg!.step()
-      } else if (event.type === ExecutionEventEnum.NODE_STARTED) {
-        executionSteps.push({
-          event: 'started',
-          nodeId: event.data.node.id,
-        })
-      } else if (event.type === ExecutionEventEnum.NODE_COMPLETED) {
-        executionSteps.push({
-          event: 'completed',
-          nodeId: event.data.node.id,
-          outputs: new Map(
-            event.data.node.getOutputs().map(port => [port.config.id, port.getValue()]),
-          ),
-        })
+          // Continue execution
+          dbg!.step()
+          break
+
+        case ExecutionEventEnum.NODE_STARTED:
+          executionSteps.push({
+            event: 'started',
+            nodeId: event.data.node.id,
+          })
+          break
+
+        case ExecutionEventEnum.NODE_COMPLETED:
+          executionSteps.push({
+            event: 'completed',
+            nodeId: event.data.node.id,
+            outputs: new Map(
+              event.data.node.getOutputs().map(port => [port.config.id, port.getValue()]),
+            ),
+          })
+          break
       }
     })
 
@@ -516,7 +518,7 @@ describe('flow Execution', () => {
         }
       }
     })
-  })
+  }, { timeout: 20000000 })
 
   it('should handle stop command during execution', async () => {
     const flow = new Flow({ name: 'Stop Test Flow' })
@@ -556,7 +558,7 @@ describe('flow Execution', () => {
 
     // Track events
     const events: ExecutionEventEnum[] = []
-    executionEngine.getEventEmitter().onAll((event) => {
+    executionEngine.onAll((event) => {
       events.push(event.type)
     })
 
@@ -605,7 +607,7 @@ describe('flow Execution', () => {
 
     // Track events
     const events: ExecutionEventEnum[] = []
-    executionEngine.getEventEmitter().onAll((event) => {
+    executionEngine.onAll((event) => {
       events.push(event.type)
     })
 

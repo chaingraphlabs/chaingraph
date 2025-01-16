@@ -1,10 +1,13 @@
 import {
+  AnotherTestNode,
   cleanupTestNodes,
   registerTestNodes,
+  TestNode,
 } from '@chaingraph/backend/procedures/nodeRegistry/__tests__/utils'
 import { appRouter } from '@chaingraph/backend/router'
 import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
 import { createCallerFactory } from '@chaingraph/backend/trpc'
+import { NodeRegistry } from '@chaingraph/types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 describe('node Registry Procedures', () => {
@@ -20,7 +23,7 @@ describe('node Registry Procedures', () => {
 
   describe('listAvailableTypes', () => {
     it('should list all registered node types', async () => {
-      const ctx = createTestContext()
+      const ctx = createTestContext(NodeRegistry.getInstance())
       const caller = createCaller(ctx)
 
       const availableNodes = await caller.nodeRegistry.listAvailableTypes()
@@ -31,7 +34,7 @@ describe('node Registry Procedures', () => {
     })
 
     it('should return nodes with correct metadata', async () => {
-      const ctx = createTestContext()
+      const ctx = createTestContext(NodeRegistry.getInstance())
       const caller = createCaller(ctx)
 
       const availableNodes = await caller.nodeRegistry.listAvailableTypes()
@@ -45,28 +48,28 @@ describe('node Registry Procedures', () => {
       })
     })
 
-    // it('should return empty array when no nodes registered', async () => {
-    //   const ctx = createTestContext()
-    //   const caller = createCaller(ctx)
-    //
-    //   // Temporarily clear registry
-    //   const registry = NodeRegistry.getInstance()
-    //   const originalNodes = registry.getNodeTypes()
-    //   // cleanupTestNodes()
-    //
-    //   const availableNodes = await caller.nodeRegistry.listAvailableTypes()
-    //   expect(availableNodes).toHaveLength(0)
-    //
-    //   // Restore registry
-    //   originalNodes.forEach((type) => {
-    //     registry.registerNode(type === 'TestNode' ? TestNode : AnotherTestNode)
-    //   })
-    // })
+    it('should return empty array when no nodes registered', async () => {
+      const ctx = createTestContext(NodeRegistry.getInstance())
+      const caller = createCaller(ctx)
+
+      // Temporarily clear registry
+      const registry = NodeRegistry.getInstance()
+      const originalNodes = registry.getNodeTypes()
+      cleanupTestNodes()
+
+      const availableNodes = await caller.nodeRegistry.listAvailableTypes()
+      expect(availableNodes).toHaveLength(0)
+
+      // Restore registry
+      originalNodes.forEach((type) => {
+        registry.registerNode(type === 'TestNode' ? TestNode : AnotherTestNode)
+      })
+    })
   })
 
   describe('getNodeType', () => {
     it('should return correct node instance for valid type', async () => {
-      const ctx = createTestContext()
+      const ctx = createTestContext(NodeRegistry.getInstance())
       const caller = createCaller(ctx)
 
       const node = await caller.nodeRegistry.getNodeType('TestNode')
@@ -77,7 +80,7 @@ describe('node Registry Procedures', () => {
     })
 
     it('should throw error for non-existent node type', async () => {
-      const ctx = createTestContext()
+      const ctx = createTestContext(NodeRegistry.getInstance())
       const caller = createCaller(ctx)
 
       await expect(
@@ -86,7 +89,7 @@ describe('node Registry Procedures', () => {
     })
 
     it('should create unique instances for same type', async () => {
-      const ctx = createTestContext()
+      const ctx = createTestContext(NodeRegistry.getInstance())
       const caller = createCaller(ctx)
 
       const node1 = await caller.nodeRegistry.getNodeType('TestNode')
@@ -98,7 +101,7 @@ describe('node Registry Procedures', () => {
     })
 
     it('should preserve node metadata', async () => {
-      const ctx = createTestContext()
+      const ctx = createTestContext(NodeRegistry.getInstance())
       const caller = createCaller(ctx)
 
       const node = await caller.nodeRegistry.getNodeType('AnotherTestNode')

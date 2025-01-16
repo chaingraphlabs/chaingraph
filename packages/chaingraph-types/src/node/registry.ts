@@ -11,7 +11,7 @@ export type NodeConstructor = new (...args: any[]) => INode
  */
 export class NodeRegistry {
   private static instance: NodeRegistry
-  private nodes: Map<string, NodeConstructor> = new Map()
+  private nodesConstructors: Map<string, NodeConstructor> = new Map()
   private objectSchema: Map<string, ObjectSchema> = new Map()
 
   constructor() {}
@@ -30,7 +30,7 @@ export class NodeRegistry {
   registerNode(nodeClass: NodeConstructor): void {
     const metadata = getOrCreateNodeMetadata(nodeClass)
     if (metadata) {
-      this.nodes.set(metadata.type, nodeClass)
+      this.nodesConstructors.set(metadata.type, nodeClass)
     } else {
       throw new Error('Node metadata missing. Ensure @Node decorator is used.')
     }
@@ -44,7 +44,7 @@ export class NodeRegistry {
   updateNode(nodeClass: NodeConstructor, metadata: any): void {
     const nodeMetadata = getOrCreateNodeMetadata(nodeClass)
     Object.assign(nodeMetadata, metadata)
-    this.nodes.set(nodeMetadata.type, nodeClass)
+    this.nodesConstructors.set(nodeMetadata.type, nodeClass)
   }
 
   /**
@@ -53,7 +53,7 @@ export class NodeRegistry {
    * @param args Arguments to pass to the node constructor
    */
   createNode(type: string, ...args: any[]): INode {
-    const NodeClass = this.nodes.get(type)
+    const NodeClass = this.nodesConstructors.get(type)
     if (!NodeClass)
       throw new Error(`Unknown node type: ${type}`)
 
@@ -64,7 +64,7 @@ export class NodeRegistry {
    * Get all registered node types
    */
   getNodeTypes(): string[] {
-    return Array.from(this.nodes.keys())
+    return Array.from(this.nodesConstructors.keys())
   }
 
   /**
@@ -94,7 +94,7 @@ export class NodeRegistry {
   }
 
   clear() {
-    this.nodes.clear()
+    this.nodesConstructors.clear()
     this.objectSchema.clear()
   }
 }

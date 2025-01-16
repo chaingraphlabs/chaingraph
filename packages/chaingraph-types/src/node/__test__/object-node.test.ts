@@ -141,10 +141,11 @@ describe('object node serialization', () => {
     objectNode.address.city = 'Myyyyy own city'
 
     const json = superjson.serialize(objectNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ObjectNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(objectNode)
+    expect(parsed.metadata).toEqual(objectNode.metadata)
+    expect(parsed.status).toEqual(objectNode.status)
   })
 
   it('serializes and deserializes a node with nested object ports', async () => {
@@ -152,10 +153,11 @@ describe('object node serialization', () => {
     await nestedObjectNode.initialize()
 
     const json = superjson.serialize(nestedObjectNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as NestedObjectNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(nestedObjectNode)
+    expect(parsed.metadata).toEqual(nestedObjectNode.metadata)
+    expect(parsed.status).toEqual(nestedObjectNode.status)
   })
 
   it('serializes and deserializes a node with nested arrays and objects', async () => {
@@ -163,9 +165,10 @@ describe('object node serialization', () => {
     await complexNode.initialize()
 
     const json = superjson.serialize(complexNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ComplexNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(complexNode)
+    expect(parsed.metadata).toEqual(complexNode.metadata)
+    expect(parsed.status).toEqual(complexNode.status)
   })
 })

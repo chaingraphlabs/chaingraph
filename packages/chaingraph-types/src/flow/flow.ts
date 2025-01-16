@@ -1,9 +1,18 @@
-import type { IEdge, INode } from '@chaingraph/types'
+import type { IEdge, INode, NodeEvent } from '@chaingraph/types'
+import type {
+  EdgeAddedEventData,
+  EdgeRemovedEventData,
+  FlowEvent,
+  NodeAddedEventData,
+  NodeRemovedEventData,
+  NodeUIEventData,
+} from '@chaingraph/types/flow/events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
 
-import { EventEmitter } from 'node:events'
-import { Edge } from '@chaingraph/types'
+import { Edge, NodeEventType } from '@chaingraph/types'
+import { FlowEventType } from '@chaingraph/types/flow/events'
+import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { v4 as uuidv4 } from 'uuid'
 
 export class Flow implements IFlow {
@@ -13,7 +22,15 @@ export class Flow implements IFlow {
   readonly edges: Map<string, IEdge>
   // TODO: add known object types schemas
 
-  private eventEmitter = new EventEmitter()
+  // private eventEmitter = new EventEmitter()
+  protected eventQueue = new EventQueue<FlowEvent>()
+  private eventIndex: number = 1
+
+  /**
+   * Map to store node event handlers
+   * Key: nodeId, Value: event handler function
+   */
+  private nodeEventHandlersCancel: Map<string, () => void> = new Map()
 
   constructor(metadata: Partial<FlowMetadata> = {}) {
     this.id = metadata.id || uuidv4()
@@ -37,19 +54,65 @@ export class Flow implements IFlow {
       throw new Error(`Node with ID ${node.id} already exists in the flow.`)
     }
     this.nodes.set(node.id, node)
+
+    // Create handler for this specific node
+    const cancel = node.onAll((event: NodeEvent) => {
+      this.handleNodeEvent(node, event)
+    })
+
+    // Store the handler and subscribe to node events
+    this.nodeEventHandlersCancel.set(node.id, cancel)
+
+    // Emit NodeAdded event
+    const event: FlowEvent<FlowEventType.NodeAdded, NodeAddedEventData> = {
+      index: this.getNextEventIndex(),
+      flowId: this.id,
+      type: FlowEventType.NodeAdded,
+      timestamp: new Date(),
+      data: {
+        node,
+      },
+    }
+    this.emitEvent(event)
   }
 
   removeNode(nodeId: string): void {
-    if (!this.nodes.delete(nodeId)) {
+    const node = this.nodes.get(nodeId)
+    if (!node) {
       throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
     }
 
+    // Unsubscribe from node events
+    const cancel = this.nodeEventHandlersCancel.get(nodeId)
+    if (cancel) {
+      cancel()
+      this.nodeEventHandlersCancel.delete(nodeId)
+    }
+
+    this.nodes.delete(nodeId)
+
     // Remove any edges connected to this node
+    const edgesToRemove = []
     for (const [edgeId, edge] of this.edges.entries()) {
       if (edge.sourceNode.id === nodeId || edge.targetNode.id === nodeId) {
-        this.edges.delete(edgeId)
+        edgesToRemove.push(edgeId)
       }
     }
+    for (const edgeId of edgesToRemove) {
+      this.removeEdge(edgeId)
+    }
+
+    // Emit NodeRemoved event
+    const event: FlowEvent<FlowEventType.NodeRemoved, NodeRemovedEventData> = {
+      index: this.getNextEventIndex(),
+      flowId: this.id,
+      type: FlowEventType.NodeRemoved,
+      timestamp: new Date(),
+      data: {
+        nodeId,
+      },
+    }
+    this.emitEvent(event)
   }
 
   addEdge(edge: IEdge): void {
@@ -57,12 +120,38 @@ export class Flow implements IFlow {
       throw new Error(`Edge with ID ${edge.id} already exists in the flow.`)
     }
     this.edges.set(edge.id, edge)
+
+    // Emit EdgeAdded event
+    const event: FlowEvent<FlowEventType.EdgeAdded, EdgeAddedEventData> = {
+      index: this.getNextEventIndex(),
+      flowId: this.id,
+      type: FlowEventType.EdgeAdded,
+      timestamp: new Date(),
+      data: {
+        edge,
+      },
+    }
+    this.emitEvent(event)
   }
 
   removeEdge(edgeId: string): void {
-    if (!this.edges.delete(edgeId)) {
+    const edge = this.edges.get(edgeId)
+    if (!edge) {
       throw new Error(`Edge with ID ${edgeId} does not exist in the flow.`)
     }
+    this.edges.delete(edgeId)
+
+    // Emit EdgeRemoved event
+    const event: FlowEvent<FlowEventType.EdgeRemoved, EdgeRemovedEventData> = {
+      index: this.getNextEventIndex(),
+      flowId: this.id,
+      type: FlowEventType.EdgeRemoved,
+      timestamp: new Date(),
+      data: {
+        edgeId,
+      },
+    }
+    this.emitEvent(event)
   }
 
   async connectPorts(
@@ -70,7 +159,7 @@ export class Flow implements IFlow {
     sourcePortId: string,
     targetNodeId: string,
     targetPortId: string,
-  ): Promise<void> {
+  ): Promise<Edge> {
     const sourceNode = this.nodes.get(sourceNodeId)
     const targetNode = this.nodes.get(targetNodeId)
 
@@ -104,6 +193,8 @@ export class Flow implements IFlow {
     )
     await edge.initialize()
     this.addEdge(edge)
+
+    return edge
   }
 
   async validate(): Promise<boolean> {
@@ -133,11 +224,105 @@ export class Flow implements IFlow {
     return [...this.edges.values()].filter(edge => edge.sourceNode.id === node.id)
   }
 
-  dispose(): Promise<void> {
-    // Clean up resources
+  async dispose(): Promise<void> {
+    // Unsubscribe from all node events
+    for (const [nodeId, cancel] of this.nodeEventHandlersCancel) {
+      const node = this.nodes.get(nodeId)
+      if (node) {
+        cancel()
+      }
+    }
+    this.nodeEventHandlersCancel.clear()
+
+    // Clear all nodes and edges
     this.nodes.clear()
     this.edges.clear()
-    this.eventEmitter.removeAllListeners()
+    await this.eventQueue.close()
+
     return Promise.resolve()
+  }
+
+  /**
+   * Emit a flow event
+   * @param event The event to emit
+   */
+  private emitEvent<T extends FlowEvent>(event: T): void {
+    this.eventQueue.publish(event)
+  }
+
+  /**
+   * Subscribe to flow events
+   * @param handler The event handler
+   */
+  public onEvent(handler: (event: FlowEvent) => void): () => void {
+    return this.eventQueue.subscribe(handler)
+  }
+
+  /**
+   * Generate a new event index
+   */
+  private getNextEventIndex(): number {
+    return this.eventIndex++
+  }
+
+  /**
+   * Handle events emitted by nodes
+   * @param node The node emitting the event
+   * @param nodeEvent The event emitted by the node
+   */
+  private handleNodeEvent = (node: INode, nodeEvent: NodeEvent): void => {
+    // Map node events to flow events
+    let flowEvent: FlowEvent | null = null
+
+    switch (nodeEvent.type) {
+      case NodeEventType.StatusChange:
+      case NodeEventType.UIPositionChange:
+      case NodeEventType.UIDimensionsChange:
+      case NodeEventType.UIStateChange:
+      case NodeEventType.UIStyleChange:
+      {
+        const nodeUIEventData: NodeUIEventData = {
+          nodeId: node.id,
+          oldValue: (nodeEvent as any).oldValue,
+          newValue: (nodeEvent as any).newValue,
+        }
+        flowEvent = {
+          index: this.getNextEventIndex(),
+          flowId: this.id,
+          type: this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+          timestamp: new Date(),
+          data: nodeUIEventData,
+        }
+        break
+      }
+
+      // Handle other node events if needed
+
+      default:
+        // Ignore other events
+        break
+    }
+
+    if (flowEvent) {
+      this.emitEvent(flowEvent)
+    }
+  }
+
+  /**
+   * Map node UI event types to flow event types
+   */
+  private mapNodeUIEventToFlowEvent(nodeEventType: NodeEventType): FlowEventType {
+    switch (nodeEventType) {
+      case NodeEventType.UIPositionChange:
+        return FlowEventType.NodeUIPositionChanged
+      case NodeEventType.UIDimensionsChange:
+        return FlowEventType.NodeUIDimensionsChanged
+      case NodeEventType.UIStateChange:
+        return FlowEventType.NodeUIStateChanged
+      case NodeEventType.UIStyleChange:
+        return FlowEventType.NodeUIStyleChanged
+      default:
+        throw new Error(`Unsupported node event type: ${nodeEventType}`)
+    }
   }
 }

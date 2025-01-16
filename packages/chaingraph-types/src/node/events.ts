@@ -44,10 +44,10 @@ export enum NodeEventType {
   StatusChange = 'node:status-change',
 
   // UI events
-  PositionChange = 'node:ui:position-change',
-  DimensionsChange = 'node:ui:dimensions-change',
-  StateChange = 'node:ui:state-change',
-  StyleChange = 'node:ui:style-change',
+  UIPositionChange = 'node:ui:position-change',
+  UIDimensionsChange = 'node:ui:dimensions-change',
+  UIStateChange = 'node:ui:state-change',
+  UIStyleChange = 'node:ui:style-change',
 }
 
 /**
@@ -71,8 +71,8 @@ export interface NodeStatusChangeEvent extends NodeEventBase {
 /**
  * Event emitted when node position changes
  */
-export interface NodePositionChangeEvent extends NodeEventBase {
-  type: NodeEventType.PositionChange
+export interface NodeUIPositionChangeEvent extends NodeEventBase {
+  type: NodeEventType.UIPositionChange
   oldPosition?: NodeUIMetadata['position']
   newPosition: NodeUIMetadata['position']
 }
@@ -80,8 +80,8 @@ export interface NodePositionChangeEvent extends NodeEventBase {
 /**
  * Event emitted when node dimensions change
  */
-export interface NodeDimensionsChangeEvent extends NodeEventBase {
-  type: NodeEventType.DimensionsChange
+export interface NodeUIDimensionsChangeEvent extends NodeEventBase {
+  type: NodeEventType.UIDimensionsChange
   oldDimensions: NodeUIMetadata['dimensions']
   newDimensions: NodeUIMetadata['dimensions']
 }
@@ -89,8 +89,8 @@ export interface NodeDimensionsChangeEvent extends NodeEventBase {
 /**
  * Event emitted when node UI state changes
  */
-export interface NodeStateChangeEvent extends NodeEventBase {
-  type: NodeEventType.StateChange
+export interface NodeUIStateChangeEvent extends NodeEventBase {
+  type: NodeEventType.UIStateChange
   oldState: NodeUIMetadata['state']
   newState: NodeUIMetadata['state']
 }
@@ -98,8 +98,8 @@ export interface NodeStateChangeEvent extends NodeEventBase {
 /**
  * Event emitted when node style changes
  */
-export interface NodeStyleChangeEvent extends NodeEventBase {
-  type: NodeEventType.StyleChange
+export interface NodeUIStyleChangeEvent extends NodeEventBase {
+  type: NodeEventType.UIStyleChange
   oldStyle: NodeUIMetadata['style']
   newStyle: NodeUIMetadata['style']
 }
@@ -110,10 +110,10 @@ export interface NodeStyleChangeEvent extends NodeEventBase {
 export type NodeEvent =
   | NodeEventBase
   | NodeStatusChangeEvent
-  | NodePositionChangeEvent
-  | NodeDimensionsChangeEvent
-  | NodeStateChangeEvent
-  | NodeStyleChangeEvent
+  | NodeUIPositionChangeEvent
+  | NodeUIDimensionsChangeEvent
+  | NodeUIStateChangeEvent
+  | NodeUIStyleChangeEvent
 
 /**
  * Type guard to check if an event is a specific type

@@ -1,11 +1,16 @@
 import type { DebuggerController } from '@chaingraph/types/flow/debugger-types'
+import type {
+  AllExecutionEvents,
+  ExecutionEvent,
+  ExecutionEventData,
+} from '@chaingraph/types/flow/execution-events'
 import type { INode, NodeStatusChangeEvent } from '../node'
 import type { ExecutionContext } from './execution-context'
 import type { Flow } from './flow'
 import { FlowDebugger } from '@chaingraph/types/flow/debugger'
-import { TypedEventEmitter } from '@chaingraph/types/flow/execution-event-emitter'
 import { ExecutionEventEnum } from '@chaingraph/types/flow/execution-events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
+import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { NodeEventType } from '../node'
 import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'
@@ -35,7 +40,10 @@ export class ExecutionEngine {
   private readonly dependentsMap: Map<string, INode[]>
   private readonly semaphore: Semaphore
   private readonly debugger: FlowDebugger | null = null
-  private readonly eventEmitter: TypedEventEmitter
+  // private readonly eventEmitter: TypedEventEmitter
+
+  private readonly eventQueue: EventQueue<AllExecutionEvents>
+  private eventIndex: number = 0
 
   constructor(
     private readonly flow: Flow,
@@ -49,10 +57,29 @@ export class ExecutionEngine {
     this.nodeDependencies = new Map()
     this.dependentsMap = new Map()
     this.semaphore = new Semaphore(this.options?.execution?.maxConcurrency || DEFAULT_MAX_CONCURRENCY)
-    this.eventEmitter = new TypedEventEmitter(context)
+    this.eventQueue = new EventQueue<AllExecutionEvents>()
 
     if (options?.debug) {
-      this.debugger = new FlowDebugger(this.eventEmitter)
+      this.debugger = new FlowDebugger(
+        async (node) => {
+          this.eventQueue.publish(
+            this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node }),
+          )
+        },
+      )
+    }
+  }
+
+  protected createEvent<T extends ExecutionEventEnum>(
+    type: T,
+    data: ExecutionEventData[T],
+  ): ExecutionEvent<T> {
+    return {
+      index: this.eventIndex++,
+      type,
+      timestamp: new Date(),
+      context: this.context,
+      data,
     }
   }
 
@@ -60,7 +87,10 @@ export class ExecutionEngine {
     const startTime = Date.now()
     try {
       // Emit flow started event
-      this.eventEmitter.emit(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow })
+      // this.eventEmitter.emit(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow })
+      this.eventQueue.publish(
+        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow }),
+      )
 
       // Initialize dependency tracking
       this.initializeDependencies()
@@ -79,13 +109,10 @@ export class ExecutionEngine {
       await Promise.all(workerPromises)
 
       // Emit flow completed event
-      this.eventEmitter.emit(
-        ExecutionEventEnum.FLOW_COMPLETED,
-        {
-          flow: this.flow,
-          executionTime: Date.now() - startTime,
-        },
-      )
+      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
+        flow: this.flow,
+        executionTime: Date.now() - startTime,
+      }))
     } catch (error) {
       // Ensure queues are closed on error
       this.readyQueue.close()
@@ -95,27 +122,23 @@ export class ExecutionEngine {
       // check if execution was cancelled or failed
       if (this.context.abortSignal.aborted) {
         // Emit flow cancelled event
-        this.eventEmitter.emit(
-          ExecutionEventEnum.FLOW_CANCELLED,
-          {
-            flow: this.flow,
-            reason: 'Execution cancelled',
-            executionTime: Date.now() - startTime,
-          },
-        )
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
+          flow: this.flow,
+          reason: 'Execution cancelled',
+          executionTime: Date.now() - startTime,
+        }))
       } else {
         // Emit flow failed event
-        this.eventEmitter.emit(
-          ExecutionEventEnum.FLOW_FAILED,
-          {
-            flow: this.flow,
-            error: error as Error,
-            executionTime: Date.now() - startTime,
-          },
-        )
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
+          flow: this.flow,
+          error: error as Error,
+          executionTime: Date.now() - startTime,
+        }))
       }
 
       throw error
+    } finally {
+      await this.eventQueue.close()
     }
   }
 
@@ -151,10 +174,11 @@ export class ExecutionEngine {
     for (const nodeId of this.executingNodes) {
       const node = this.flow.nodes.get(nodeId)
       if (node) {
-        this.eventEmitter.emit(
-          ExecutionEventEnum.NODE_STATUS_CHANGED,
-          { node, oldStatus: NodeStatus.Idle, newStatus: NodeStatus.Initialized },
-        )
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+          node,
+          oldStatus: NodeStatus.Idle,
+          newStatus: NodeStatus.Initialized,
+        }))
       }
     }
   }
@@ -252,12 +276,13 @@ export class ExecutionEngine {
         break // Queue closed or execution aborted
 
       const onStatusChange = (event: NodeStatusChangeEvent) => {
-        this.eventEmitter.emit(
-          ExecutionEventEnum.NODE_STATUS_CHANGED,
-          { node, oldStatus: event.oldStatus, newStatus: event.newStatus },
-        )
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+          node,
+          oldStatus: event.oldStatus,
+          newStatus: event.newStatus,
+        }))
       }
-      node.on(NodeEventType.StatusChange, onStatusChange)
+      const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
       try {
         await this.semaphore.acquire()
@@ -272,7 +297,7 @@ export class ExecutionEngine {
         throw error
       } finally {
         this.semaphore.release()
-        node.off(NodeEventType.StatusChange, onStatusChange)
+        cancel()
       }
     }
   }
@@ -284,21 +309,19 @@ export class ExecutionEngine {
     const nodeStartTime = Date.now()
 
     try {
-      this.eventEmitter.emit(ExecutionEventEnum.NODE_STARTED, { node })
+      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node }))
+
       node.setStatus(NodeStatus.Executing)
 
       // Debug point - before execution
       if (this.debugger) {
         const command = await this.debugger.waitForCommand(node)
         if (command === 'stop') {
-          this.eventEmitter.emit(
-            ExecutionEventEnum.FLOW_CANCELLED,
-            {
-              flow: this.flow,
-              reason: 'Stopped by debugger',
-              executionTime: Date.now() - nodeStartTime,
-            },
-          )
+          this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
+            flow: this.flow,
+            reason: 'Stopped by debugger',
+            executionTime: Date.now() - nodeStartTime,
+          }))
 
           this.context.abortController.abort('Execution stopped by debugger') // Abort execution
           throw new Error('Execution stopped by debugger')
@@ -308,20 +331,21 @@ export class ExecutionEngine {
       // Transfer data from incoming edges
       for (const edge of this.flow.getIncomingEdges(node)) {
         const transferStartTime = Date.now()
-        this.eventEmitter.emit(ExecutionEventEnum.EDGE_TRANSFER_STARTED, { edge })
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_STARTED, { edge }))
+
         try {
           await edge.transfer()
         } catch (error) {
-          this.eventEmitter.emit(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
+          this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
             edge,
             error: error as Error,
-          })
+          }))
           throw error
         }
-        this.eventEmitter.emit(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
           edge,
           transferTime: Date.now() - transferStartTime,
-        })
+        }))
       }
 
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs || DEFAULT_NODE_TIMEOUT_MS
@@ -332,17 +356,18 @@ export class ExecutionEngine {
       )
 
       node.setStatus(NodeStatus.Completed)
-      this.eventEmitter.emit(ExecutionEventEnum.NODE_COMPLETED, {
+      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
         node,
         executionTime: Date.now() - nodeStartTime,
-      })
+      }))
     } catch (error) {
       node.setStatus(NodeStatus.Error)
-      this.eventEmitter.emit(ExecutionEventEnum.NODE_FAILED, {
+
+      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
         node,
         error: error as Error,
         executionTime: Date.now() - nodeStartTime,
-      })
+      }))
       throw error
     }
   }
@@ -351,7 +376,18 @@ export class ExecutionEngine {
     return this.debugger
   }
 
-  public getEventEmitter(): TypedEventEmitter {
-    return this.eventEmitter
+  public on<T extends ExecutionEventEnum>(
+    type: T,
+    handler: (event: ExecutionEvent<T>) => void,
+  ): () => void {
+    return this.eventQueue.subscribe((event) => {
+      if (event.type === type) {
+        handler(event as ExecutionEvent<T>)
+      }
+    })
+  }
+
+  public onAll(handler: (event: AllExecutionEvents) => void): () => void {
+    return this.eventQueue.subscribe(handler)
   }
 }

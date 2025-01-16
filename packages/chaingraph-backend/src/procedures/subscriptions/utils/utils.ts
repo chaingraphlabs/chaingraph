@@ -35,15 +35,12 @@ export function createTestCaller() {
 
         const process = async () => {
           try {
-            // console.log('Test caller: Starting subscription processing')
             const asyncIterable = await caller.testProcedures.currentTime(input)
 
             for await (const item of asyncIterable) {
               if (closed) {
-                // console.log('Test caller: Subscription closed, breaking loop')
                 break
               }
-              // console.log('Test caller: Received item:', item)
               callbacks.onData(item as unknown as TrackedEnvelope<Date>)
             }
             callbacks.onComplete?.()

@@ -10,6 +10,7 @@ export default defineConfig({
       '@chaingraph/types': resolve(__dirname, './packages/chaingraph-types/src'),
       '@chaingraph/backend': resolve(__dirname, './packages/chaingraph-backend/src'),
       '@chaingraph/frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
+      '@chaingraph/nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
     },
     typecheck: {
       enabled: true,
@@ -31,6 +32,7 @@ export default defineConfig({
       '@chaingraph/types': resolve(__dirname, './packages/chaingraph-types/src'),
       '@chaingraph/backend': resolve(__dirname, './packages/chaingraph-backend/src'),
       '@chaingraph/frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
+      '@chaingraph/nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
     },
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },

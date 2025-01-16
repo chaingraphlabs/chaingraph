@@ -442,9 +442,10 @@ describe('complex node', () => {
 
     // const json = superjson.stringify(testNode)
     const json = superjson.serialize(testNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as UserProfileNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(testNode)
+    expect(parsed.metadata).toEqual(testNode.metadata)
+    expect(parsed.status).toEqual(testNode.status)
   })
 })

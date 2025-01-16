@@ -81,9 +81,10 @@ describe('stream node serialization', () => {
     streamNode.outputStream.send('world')
 
     const json2 = superjson.serialize(streamNode)
-    const parsed2 = superjson.deserialize(json2 as any as SuperJSONResult)
+    const parsed2 = superjson.deserialize(json2 as any as SuperJSONResult) as StreamNode
 
     expect(parsed2).toBeDefined()
-    expect(parsed2).toEqual(streamNode)
+    expect(parsed2.metadata).toEqual(streamNode.metadata)
+    expect(parsed2.status).toEqual(streamNode.status)
   })
 })

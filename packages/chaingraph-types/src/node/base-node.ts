@@ -1,11 +1,11 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type {
-  NodeDimensionsChangeEvent,
   NodeEvent,
-  NodePositionChangeEvent,
-  NodeStateChangeEvent,
   NodeStatusChangeEvent,
-  NodeStyleChangeEvent,
+  NodeUIDimensionsChangeEvent,
+  NodeUIPositionChangeEvent,
+  NodeUIStateChangeEvent,
+  NodeUIStyleChangeEvent,
 } from '@chaingraph/types/node/events'
 import type { INode } from '@chaingraph/types/node/interface'
 import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
@@ -16,11 +16,11 @@ import type {
 } from '@chaingraph/types/node/types'
 import type { PortConfig } from '@chaingraph/types/port'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import { EventEmitter } from 'node:events'
 import { NodeEventType } from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { ArrayPort, EnumPort, ObjectPort, PortFactory, StreamInputPort, StreamOutputPort } from '@chaingraph/types/port'
+import { PortFactory } from '@chaingraph/types/port'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
+import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
 import { PortConfigProcessor } from './port-config-processor'
 import 'reflect-metadata'
@@ -31,7 +31,8 @@ export abstract class BaseNode implements INode {
   protected _status: NodeStatus = NodeStatus.Idle
   protected _ports: Map<string, IPort<any>> = new Map()
 
-  protected eventEmitter = new EventEmitter()
+  protected eventQueue = new EventQueue<NodeEvent>()
+  protected eventsDisabled = false
 
   constructor(id: string, _metadata?: NodeMetadata) {
     this._id = id
@@ -42,19 +43,7 @@ export abstract class BaseNode implements INode {
         throw new Error('Node type is required in metadata.')
       }
 
-      // const ports = new Map<string, IPort<any>>()
-      // const portsConfig = new Map<string, PortConfig>()
-      // for (const [key, portConfig] of _metadata?.portsConfig?.entries() || []) {
-      //   const portConfigParsed = parsePortConfig(portConfig)
-      //   portsConfig.set(key, portConfigParsed)
-      //
-      //   const port = PortFactory.create(portConfig)
-      //   ports.set(key, port)
-      // }
-      // _metadata.portsConfig = portsConfig
-
       this._metadata = _metadata
-      // this._ports = ports
     } else {
       const metadata = getOrCreateNodeMetadata(this)
       if (!metadata) {
@@ -113,34 +102,10 @@ export abstract class BaseNode implements INode {
         },
         configurable: true,
         enumerable: true,
-        // value: true,
-        // writable: true,
       })
     }
     // Store the port in the _ports Map
     this._ports.set(portId, port)
-
-    // Handle nested ports based on port kind
-    if (ArrayPort.isArrayPortConfig(portConfig)) {
-      // Initialize element configuration
-      // this.initializePort(portConfig.elementConfig, portId)
-    } else if (ObjectPort.isObjectPortConfig(portConfig)) {
-      const properties = portConfig.schema.properties
-      // for (const [propName, propConfig] of Object.entries(properties)) {
-      //   this.initializePort(propConfig, portId)
-      // }
-    } else if (EnumPort.isEnumPortConfig(portConfig)) {
-      // Initialize each option
-      // for (const optionConfig of portConfig.options) {
-      //   this.initializePort(optionConfig, portId)
-      // }
-    } else if (StreamInputPort.isStreamInputPortConfig(portConfig) || StreamOutputPort.isStreamOutputPortConfig(portConfig)) {
-      // Initialize valueType
-      // if (portConfig.valueType) {
-      //   this.initializePort(portConfig.valueType, portId)
-      // }
-    }
-    // For other port kinds, nothing more to do
   }
 
   /**
@@ -186,7 +151,7 @@ export abstract class BaseNode implements INode {
 
   async dispose(): Promise<void> {
     this.setStatus(NodeStatus.Disposed)
-    this.eventEmitter.removeAllListeners()
+    return this.eventQueue.close()
   }
 
   getPort(portId: string): IPort<any> | undefined {
@@ -212,28 +177,42 @@ export abstract class BaseNode implements INode {
     )
   }
 
-  on<T extends NodeEvent>(event: T['type'], handler: (event: T) => void): void {
-    this.eventEmitter.on(event, handler)
+  /**
+   * Subscribe to node events of a specific type.
+   * @param eventType - The type of event to subscribe to.
+   * @param handler - The event handler function.
+   * @returns An unsubscribe function.
+   */
+  on<T extends NodeEvent>(
+    eventType: T['type'],
+    handler: (event: T) => void,
+  ): () => void {
+    return this.eventQueue.subscribe((event) => {
+      if (event.type === eventType) {
+        handler(event as T)
+      }
+    })
   }
 
-  off<T extends NodeEvent>(event: T['type'], handler: (event: T) => void): void {
-    this.eventEmitter.off(event, handler)
+  /**
+   * Subscribe to all node events.
+   * @param handler - The event handler function.
+   * @returns An unsubscribe function.
+   */
+  onAll(handler: (event: NodeEvent) => void): () => void {
+    return this.eventQueue.subscribe(handler)
   }
 
-  onAll(handler: (event: NodeEvent) => void): void {
-    this.eventEmitter.on(NodeEventType.All, handler)
-  }
-
-  offAll(handler: (event: NodeEvent) => void): void {
-    this.eventEmitter.off(NodeEventType.All, handler)
-  }
-
-  protected emit<T extends NodeEvent>(event: T['type'], data: T): void {
-    this.eventEmitter.emit(event, data)
-
-    if (event !== NodeEventType.All) {
-      this.eventEmitter.emit(NodeEventType.All, data)
+  /**
+   * Emit an event to all subscribers.
+   * @param event - The event object.
+   */
+  protected emit<T extends NodeEvent>(event: T): Promise<void> {
+    if (this.eventsDisabled) {
+      return Promise.resolve()
     }
+
+    return this.eventQueue.publish(event)
   }
 
   clone(): INode {
@@ -252,12 +231,16 @@ export abstract class BaseNode implements INode {
     }
 
     this._ports.set(port.config.id, port)
+
+    // TODO: add event
+
     return port
   }
 
   removePort(portId: string): void {
     if (this._ports.delete(portId)) {
       // Port removed successfully
+      // TODO: add event
     } else {
       throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)
     }
@@ -267,14 +250,14 @@ export abstract class BaseNode implements INode {
     const oldStatus = this._status
     this._status = status
     const event: NodeStatusChangeEvent = {
+      type: NodeEventType.StatusChange,
       nodeId: this.id,
       timestamp: new Date(),
-      type: NodeEventType.StatusChange,
       oldStatus,
       newStatus: status,
     }
 
-    this.emit(NodeEventType.StatusChange, event)
+    this.emit(event)
   }
 
   setMetadata(metadata: NodeMetadata): void {
@@ -288,20 +271,31 @@ export abstract class BaseNode implements INode {
   setPosition(position: NodeUIMetadata['position']): void {
     const oldPosition = this._metadata.ui?.position
     if (!this._metadata.ui) {
-      this._metadata.ui = { position }
+      this._metadata = {
+        ...this._metadata,
+        ui: {
+          position: { ...position },
+        },
+      }
     } else {
-      this._metadata.ui.position = position
+      this._metadata = {
+        ...this._metadata,
+        ui: {
+          ...this._metadata.ui,
+          position: { ...position },
+        },
+      }
     }
 
-    const event: NodePositionChangeEvent = {
-      type: NodeEventType.PositionChange,
+    const event: NodeUIPositionChangeEvent = {
+      type: NodeEventType.UIPositionChange,
       nodeId: this._id,
       timestamp: new Date(),
       oldPosition,
-      newPosition: position,
+      newPosition: { ...position },
     }
 
-    this.emit(NodeEventType.PositionChange, event)
+    this.emit(event)
   }
 
   setDimensions(dimensions: NodeUIMetadata['dimensions']): void {
@@ -312,15 +306,15 @@ export abstract class BaseNode implements INode {
       this._metadata.ui.dimensions = dimensions
     }
 
-    const event: NodeDimensionsChangeEvent = {
-      type: NodeEventType.DimensionsChange,
+    const event: NodeUIDimensionsChangeEvent = {
+      type: NodeEventType.UIDimensionsChange,
       nodeId: this._id,
       timestamp: new Date(),
       oldDimensions,
       newDimensions: dimensions,
     }
 
-    this.emit(NodeEventType.DimensionsChange, event)
+    this.emit(event)
   }
 
   /**
@@ -335,15 +329,15 @@ export abstract class BaseNode implements INode {
       this._metadata.ui.state = state
     }
 
-    const event: NodeStateChangeEvent = {
-      type: NodeEventType.StateChange,
+    const event: NodeUIStateChangeEvent = {
+      type: NodeEventType.UIStateChange,
       nodeId: this._id,
       timestamp: new Date(),
       oldState,
       newState: state,
     }
 
-    this.emit(NodeEventType.StateChange, event)
+    this.emit(event)
   }
 
   /**
@@ -358,15 +352,15 @@ export abstract class BaseNode implements INode {
       this._metadata.ui.style = style
     }
 
-    const event: NodeStyleChangeEvent = {
-      type: NodeEventType.StyleChange,
+    const event: NodeUIStyleChangeEvent = {
+      type: NodeEventType.UIStyleChange,
       nodeId: this._id,
       timestamp: new Date(),
       oldStyle,
       newStyle: style,
     }
 
-    this.emit(NodeEventType.StyleChange, event)
+    this.emit(event)
   }
 
   /**
@@ -375,5 +369,13 @@ export abstract class BaseNode implements INode {
    */
   getUIMetadata(): NodeUIMetadata | undefined {
     return this._metadata.ui
+  }
+
+  disableEvents(): void {
+    this.eventsDisabled = true
+  }
+
+  enableEvents(): void {
+    this.eventsDisabled = false
   }
 }

@@ -1,4 +1,5 @@
-import type { IEdge } from '@chaingraph/types/edge'
+import type { Edge, IEdge } from '@chaingraph/types/edge'
+import type { FlowEvent } from '@chaingraph/types/flow/events'
 import type { INode } from '@chaingraph/types/node'
 import type { FlowMetadata } from './types'
 
@@ -54,7 +55,7 @@ export interface IFlow {
     sourcePortId: string,
     targetNodeId: string,
     targetPortId: string
-  ) => Promise<void>
+  ) => Promise<Edge>
 
   /**
    * Validates the entire flow.
@@ -66,4 +67,11 @@ export interface IFlow {
    * Disposes the flow and its resources.
    */
   dispose: () => Promise<void>
+
+  /**
+   * Subscribe to flow events
+   * @param handler Event handler function
+   */
+  onEvent: (handler: (event: FlowEvent) => void) => () => void
+
 }

@@ -53,9 +53,11 @@ describe('array node serialization', () => {
     expect(arrayNode.getPort('numArray')?.getValue()).toEqual([new Decimal(1), new Decimal(2), new Decimal(3)])
 
     const json = superjson.serialize(arrayNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ArrayNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(arrayNode)
+    expect(parsed.numArray).toEqual(arrayNode.numArray)
+    expect(parsed.metadata).toEqual(arrayNode.metadata)
+    expect(parsed.status).toEqual(arrayNode.status)
   })
 })

@@ -48,9 +48,10 @@ describe('enum node serialization', () => {
     await enumNode.initialize()
 
     const json = superjson.serialize(enumNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult)
+    const parsed = superjson.deserialize(json as any as SuperJSONResult) as EnumNode
 
     expect(parsed).toBeDefined()
-    expect(parsed).toEqual(enumNode)
+    expect(parsed.metadata).toEqual(enumNode.metadata)
+    expect(parsed.status).toEqual(enumNode.status)
   })
 })

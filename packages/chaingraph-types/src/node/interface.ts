@@ -97,26 +97,13 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * @param event Event type
    * @param handler Event handler function
    */
-  on: <T extends NodeEvent>(event: T['type'], handler: (event: T) => void) => void
-
-  /**
-   * Event handling - Unsubscribe from node events
-   * @param event Event type
-   * @param handler Event handler function
-   */
-  off: <T extends NodeEvent>(event: T['type'], handler: (event: T) => void) => void
+  on: <T extends NodeEvent>(event: T['type'], handler: (event: T) => void) => () => void
 
   /**
    * Event handling - Subscribe to all node events
    * @param handler Event handler function
    */
-  onAll: (handler: (event: NodeEvent) => void) => void
-
-  /**
-   * Event handling - Unsubscribe from all node events
-   * @param handler Event handler function
-   */
-  offAll: (handler: (event: NodeEvent) => void) => void
+  onAll: (handler: (event: NodeEvent) => void) => () => void
 
   /**
    * Set the node UI position
@@ -148,4 +135,14 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * @returns Node UI metadata
    */
   getUIMetadata: () => NodeUIMetadata | undefined
+
+  /**
+   * Disable node events
+   */
+  disableEvents: () => void
+
+  /**
+   * Enable node events (default)
+   */
+  enableEvents: () => void
 }
