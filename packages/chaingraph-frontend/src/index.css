@@ -4,48 +4,74 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    /* Base Theme Colors */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 215 20.2% 65.1%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 142 76% 36%;
     --radius: 0.5rem;
+
+    /* Flow specific colors */
+    --flow-execute: 142 76% 36%;
+    --flow-data: 217 91% 60%;
+    --flow-stream: 35 92% 50%;
+
+    /* Font settings */
+    --font-sans: 'Inter var', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Glow effect colors in RGB format for shadow opacity */
+    --glow-execute-rgb: 22, 163, 74;
+    --glow-data-rgb: 37, 99, 235;
+    --glow-stream-rgb: 217, 119, 6;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --ring: 216 34% 17%;
+    /* Dark Theme Colors */
+    --background: 0 0% 12%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 142 70% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 142 70% 45%;
+
+    /* Flow specific colors */
+    --flow-execute: 142 70% 45%;
+    --flow-data: 217 91% 60%;
+    --flow-stream: 35 92% 50%;
+
+    /* Dark theme glow colors */
+    --glow-execute-rgb: 21, 128, 61;
+    --glow-data-rgb: 29, 78, 216;
+    --glow-stream-rgb: 180, 83, 9;
   }
 }
 
@@ -54,91 +80,78 @@
     @apply border-border;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground antialiased font-sans;
   }
 }
 
-/* Theme transitions */
-* {
-  transition-property: color, background-color, border-color;
-  transition-duration: 100ms;
-  transition-timing-function: ease-out;
-}
-
-/* Base layout */
-html,
-body,
-#root {
-  @apply w-full h-full m-0 p-0;
-  @apply bg-ui-background-light dark:bg-ui-background-dark;
-  @apply text-gray-900 dark:text-gray-100;
-}
-
-/* ReactFlow base customization */
+/* ReactFlow Customization */
 .react-flow {
-  @apply bg-ui-background-light dark:bg-ui-background-dark;
+  @apply bg-background;
 }
 
-.react-flow__background {
-  @apply bg-ui-background-light dark:bg-ui-background-dark;
-}
-
-/* Grid and dots */
-.react-flow__dots {
-  @apply fill-ui-accent-light dark:fill-ui-accent-dark;
-}
-
-.react-flow__lines {
-  @apply stroke-ui-accent-light dark:stroke-ui-accent-dark;
-}
-
-/* Node styles */
 .react-flow__node {
-  @apply rounded-xl shadow-sm;
-  @apply bg-ui-surface-light dark:bg-ui-surface-dark;
-  @apply border border-ui-border-light dark:border-ui-border-dark;
+  @apply rounded-xl bg-card border-border;
+  @apply shadow-node dark:shadow-node-dark;
+  @apply transition-shadow duration-200;
 }
 
-/* Controls and minimap */
-.react-flow__controls,
-.react-flow__minimap {
-  @apply rounded-md shadow-sm;
-  @apply bg-ui-surface-light dark:bg-ui-surface-dark;
-  @apply border border-ui-border-light dark:border-ui-border-dark;
-}
-
-/* Handle (port) styles */
 .react-flow__handle {
   @apply w-3 h-3 rounded-full;
-  @apply border-2 border-ui-surface-light dark:border-ui-surface-dark;
+  @apply border-2 border-background;
   @apply transition-colors duration-200;
   background: currentColor;
 }
 
-/* Connection lines */
 .react-flow__edge-path {
-  @apply stroke-2 stroke-ui-border-light dark:stroke-ui-border-dark;
+  @apply stroke-2 stroke-border;
 }
 
-/* Selected state */
+/* Node Types */
+.node-execute {
+  @apply border-[hsl(var(--flow-execute))];
+}
+
+.node-data {
+  @apply border-[hsl(var(--flow-data))];
+}
+
+.node-stream {
+  @apply border-[hsl(var(--flow-stream))];
+}
+
 .react-flow__node.selected {
-  @apply border-flow-execute dark:border-flow-execute-dark;
+  @apply border-[hsl(var(--flow-execute))];
+  --glow-color: var(--glow-execute-rgb);
+  @apply shadow-node-selected dark:shadow-node-selected-dark;
 }
 
-/* Selection box */
+.node-execute.selected {
+  --glow-color: var(--glow-execute-rgb);
+}
+
+.node-data.selected {
+  --glow-color: var(--glow-data-rgb);
+}
+
+.node-stream.selected {
+  --glow-color: var(--glow-stream-rgb);
+}
+
+/* Selection */
 .react-flow__selection {
-  @apply border-2 border-flow-execute/50;
-  @apply bg-flow-execute/10;
+  @apply border-2 border-[hsl(var(--flow-execute))]/50;
+  @apply bg-[hsl(var(--flow-execute))]/10;
 }
 
-/* Connection line when dragging */
 .react-flow__connection-path {
-  @apply stroke-flow-execute;
+  @apply stroke-[hsl(var(--flow-execute))];
 }
 
-/* Panel elements */
-.react-flow__panel {
-  @apply text-gray-600 dark:text-gray-400;
+/* Controls */
+.react-flow__controls,
+.react-flow__minimap {
+  @apply rounded-md shadow-sm;
+  @apply bg-card border-border;
 }
 
 /* Hide attribution */

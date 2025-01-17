@@ -1,9 +1,13 @@
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
+
 export function EventList() {
   return (
-    <div className="space-y-2">
-      <div className="text-sm text-gray-600 dark:text-gray-400">
-        Events List
+    <ScrollArea className="h-[calc(100vh-10rem)]">
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          No events recorded yet.
+        </p>
       </div>
-    </div>
+    </ScrollArea>
   )
 }

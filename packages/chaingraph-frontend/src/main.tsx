@@ -9,7 +9,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import { RootProvider } from './providers/RootProvider.tsx'
 import './index.css'
-import '@radix-ui/themes/styles.css'
 import './reflect'
 
 registerPortTransformers()
@@ -20,7 +19,6 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RootProvider>
       <App />
-      {/* <ThemePanel /> */}
     </RootProvider>
   </StrictMode>,
 )

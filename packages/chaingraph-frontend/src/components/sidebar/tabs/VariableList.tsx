@@ -1,10 +1,13 @@
+import { ScrollArea } from '@/components/ui/scroll-area'
+
 export function VariableList() {
   return (
-    <div className="space-y-2">
-      <div className="text-sm text-gray-600 dark:text-gray-400">
-        Variable List
+    <ScrollArea className="h-[calc(100vh-10rem)]">
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          No variables defined yet.
+        </p>
       </div>
-      {/* VariableList content */}
-    </div>
+    </ScrollArea>
   )
 }

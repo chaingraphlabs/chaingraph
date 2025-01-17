@@ -1,11 +1,22 @@
+const { fontFamily } = require('tailwindcss/defaultTheme')
+
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
+  darkMode: ['class'],
   content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
-  darkMode: 'class', // Enable dark mode support
   theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
     extend: {
       colors: {
         border: 'hsl(var(--border))',
@@ -41,80 +52,62 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-
-        // UI Theme Colors
-        ui: {
-          // Main background colors
-          background: {
-            light: '#f5f5f5',
-            dark: '#161616', // Main dark background
-          },
-          // Secondary background (for panels, cards etc)
-          surface: {
-            light: '#ffffff',
-            dark: '#1e1e1e', // Slightly lighter than background
-          },
-          // Accent surface (for hover states, active items)
-          accent: {
-            light: '#f0f0f0',
-            dark: '#242424', // Even lighter, for contrast
-          },
-          // Border colors
-          border: {
-            light: '#e5e5e5',
-            dark: '#2a2a2a',
-          },
-        },
-        // Functional colors
+        // Flow specific colors
         flow: {
-          // For nodes and connections
-          execute: {
-            light: '#22c55e',
-            DEFAULT: '#16a34a',
-            dark: '#15803d',
-          },
-          data: {
-            light: '#3b82f6',
-            DEFAULT: '#2563eb',
-            dark: '#1d4ed8',
-          },
-          stream: {
-            light: '#f59e0b',
-            DEFAULT: '#d97706',
-            dark: '#b45309',
-          },
+          execute: 'hsl(var(--flow-execute))',
+          data: 'hsl(var(--flow-data))',
+          stream: 'hsl(var(--flow-stream))',
         },
-        // Status colors
-        status: {
-          success: {
-            light: '#22c55e',
-            DEFAULT: '#16a34a',
-            dark: '#15803d',
-          },
-          error: {
-            light: '#ef4444',
-            DEFAULT: '#dc2626',
-            dark: '#b91c1c',
-          },
-          warning: {
-            light: '#f59e0b',
-            DEFAULT: '#d97706',
-            dark: '#b45309',
-          },
-        },
-      },
-      fontFamily: {
-        sans: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        // Base node shadows
+        'node': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+        'node-dark': '0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
+
+        // Selection glow effects
+        'node-selected': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06), 0 0 15px rgba(var(--glow-color), 0.35)',
+        'node-selected-dark': '0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 15px rgba(var(--glow-color), 0.5)',
+
+        // Card shadows
+        'card-hover': '0 2px 4px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
+        'card-selected': `
+          0 0 0 1px hsl(var(--primary)/0.2),
+          0 0 12px -2px hsl(var(--primary)/0.4)
+        `,
+        'card-selected-dark': `
+          0 0 0 1px hsl(var(--primary)/0.3),
+          0 0 12px -2px hsl(var(--primary)/0.6)
+        `,
+
+        // Additional utility shadows
+        'soft': '0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        'medium': '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+        'strong': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+      },
+      fontFamilyfontFamily: {
+        sans: ['Inter var', 'Inter', ...fontFamily.sans],
+        mono: ['JetBrains Mono', ...fontFamily.mono],
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: 0 },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
       },
     },
   },
-  plugins: [
-    require('tailwindcss-animate'),
-  ],
+  plugins: [require('tailwindcss-animate')],
 }

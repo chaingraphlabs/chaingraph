@@ -1,13 +1,16 @@
 import type { FlowMetadata } from '@chaingraph/types'
-import { Box, Spinner } from '@radix-ui/themes'
+import { useFlowSearch } from '@/components/sidebar/tabs/flow/hooks/useFlowSearch'
+import { useFlowSort } from '@/components/sidebar/tabs/flow/hooks/useFlowSort'
+import { ErrorMessage } from '@/components/ui/error-message.tsx'
+import { Spinner } from '@radix-ui/themes'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { EmptyFlowState } from './components/EmptyFlowState'
 import { FlowForm } from './components/FlowForm'
 import { FlowListHeader } from './components/FlowListHeader'
 import { FlowListItem } from './components/FlowListItem'
 import { useFlows } from './hooks/useFlows'
-import { useSelectedFlow } from './hooks/useSelectedFlow.ts'
+import { useSelectedFlow } from './hooks/useSelectedFlow'
 
 export function FlowList() {
   // Get flow context
@@ -15,7 +18,7 @@ export function FlowList() {
 
   // State for create/edit forms
   const [isCreating, setIsCreating] = useState(false)
-  const [editingFlow, setEditingFlow] = useState<FlowMetadata | null>(null)
+  const [editingFlow, setEditingFlow] = useState<FlowMetadata | undefined>(undefined)
 
   // Get flows data and mutations
   const {
@@ -30,10 +33,16 @@ export function FlowList() {
     isEditing: isEditingFlow,
   } = useFlows()
 
+  // Sort flows with selected flow at the top
+  const sortedFlows = useFlowSort(flows, selectedFlow?.id)
+
+  // Search functionality with sorted flows
+  const { searchQuery, setSearchQuery, filteredFlows } = useFlowSearch(sortedFlows)
+
   // Handlers
   const handleCreateClick = useCallback(() => {
     setIsCreating(true)
-    setEditingFlow(null)
+    setEditingFlow(undefined)
   }, [])
 
   const handleEditClick = useCallback((flow: FlowMetadata) => {
@@ -46,19 +55,6 @@ export function FlowList() {
     setSelectedFlow(flow)
   }, [setSelectedFlow])
 
-  // Sorted flows
-  const sortedFlows = useMemo(() => {
-    if (!flows)
-      return []
-
-    return [...flows].filter(
-      flow => flow && flow.updatedAt && flow.updatedAt.getTime() > 0,
-    ).sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )
-  }, [flows])
-
   // Loading state
   if (isLoading) {
     return <Spinner />
@@ -67,25 +63,25 @@ export function FlowList() {
   // Error state
   if (error) {
     return (
-      <Box className="p-4 text-red-500">
-        Error loading flows:
+      <ErrorMessage>
+        Failed to load flows:
         {' '}
         {error.message}
-      </Box>
+      </ErrorMessage>
     )
   }
 
-  const hasFlows = flows && flows.length > 0
+  const hasFlows = filteredFlows && filteredFlows.length > 0
   const isEditing = Boolean(editingFlow)
-  const showEmptyState = !hasFlows && !isCreating && !isEditing
-  const showList = hasFlows && !isCreating && !isEditing
+  const showEmptyState = !flows?.length && !isCreating && !isEditing
+  const showList = (flows?.length ?? 0) > 0 && !isCreating && !isEditing
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Empty State */}
-      <AnimatePresence mode="wait">
+    <div className="flex flex-col h-full relative">
+      <AnimatePresence mode="sync">
         {showEmptyState && (
           <motion.div
+            key="empty-state"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -95,80 +91,97 @@ export function FlowList() {
           </motion.div>
         )}
 
-        {/* Flow List */}
         {showList && (
           <motion.div
+            key="flow-list"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="flex flex-col h-full"
           >
-            {/* Header */}
             <div className="px-2 pt-4 pb-2">
               <FlowListHeader
                 selectedFlow={selectedFlow}
                 isLoadingSelectedFlow={isLoadingSelectedFlow}
                 onCreateClick={handleCreateClick}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
               />
             </div>
 
-            {/* List */}
             <div className="flex-1 overflow-y-auto px-2 py-2">
-              <div className="space-y-2">
-                {sortedFlows?.map(flow => (
-                  <FlowListItem
-                    key={flow.id}
-                    flow={flow}
-                    selected={selectedFlow?.id === flow.id}
-                    onSelect={() => handleFlowSelect(flow)}
-                    onDelete={() => deleteFlow(flow.id!)}
-                    onEdit={() => handleEditClick(flow)}
-                    disabled={isCreatingFlow || isDeletingFlow || isEditingFlow}
-                  />
-                ))}
-              </div>
+              {!hasFlows && searchQuery
+                ? (
+                    <div className="text-center p-4 text-muted-foreground">
+                      No flows found matching "
+                      {searchQuery}
+                      "
+                    </div>
+                  )
+                : (
+                    <div className="space-y-2">
+                      {filteredFlows?.map(flow => (
+                        <FlowListItem
+                          key={flow.id}
+                          flow={flow}
+                          selected={selectedFlow?.id === flow.id}
+                          onSelect={() => handleFlowSelect(flow)}
+                          onDelete={() => deleteFlow(flow.id!)}
+                          onEdit={() => handleEditClick(flow)}
+                          disabled={isCreatingFlow || isDeletingFlow || isEditingFlow}
+                        />
+                      ))}
+                    </div>
+                  )}
             </div>
           </motion.div>
         )}
 
-        {/* Create Form */}
-        {isCreating && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="px-2 py-2"
-          >
-            <FlowForm
-              onCancel={() => setIsCreating(false)}
-              onCreate={async (data) => {
-                await createFlow(data)
-                setIsCreating(false)
+        {/* Forms */}
+        <AnimatePresence mode="sync">
+          {(isCreating || editingFlow) && (
+            <motion.div
+              key={isCreating ? 'create-form' : 'edit-form'}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                transition: {
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30,
+                },
               }}
-              isLoading={isCreatingFlow}
-            />
-          </motion.div>
-        )}
-
-        {/* Edit Form */}
-        {editingFlow && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="px-2 py-2"
-          >
-            <FlowForm
-              flow={editingFlow}
-              onCancel={() => setEditingFlow(null)}
-              onEdit={async (data) => {
-                await editFlow(data)
-                setEditingFlow(null)
+              exit={{
+                opacity: 0,
+                y: 20,
+                scale: 0.95,
+                transition: {
+                  duration: 0.2,
+                },
               }}
-              isLoading={isEditingFlow}
-            />
-          </motion.div>
-        )}
+              className="absolute inset-x-0 top-0 px-2 py-2 z-10"
+            >
+              <FlowForm
+                flow={editingFlow}
+                onCancel={() => {
+                  setIsCreating(false)
+                  setEditingFlow(undefined)
+                }}
+                onCreate={async (data) => {
+                  await createFlow(data)
+                  setIsCreating(false)
+                }}
+                onEdit={async (data) => {
+                  await editFlow(data)
+                  setEditingFlow(undefined)
+                }}
+                isLoading={isCreatingFlow || isEditingFlow}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </AnimatePresence>
     </div>
   )

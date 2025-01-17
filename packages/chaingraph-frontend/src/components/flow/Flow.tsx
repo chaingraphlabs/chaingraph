@@ -109,7 +109,7 @@ function Flow() {
       defaultEdgeOptions={defaultEdgeOptions}
 
     >
-      <Background color="#626262" />
+      <Background />
       <Controls position="bottom-right" />
     </ReactFlow>
   )

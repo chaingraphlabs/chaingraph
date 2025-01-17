@@ -1,56 +1,61 @@
 import type { FlowMetadata } from '@chaingraph/types'
-import { MagnifyingGlassIcon, PlusIcon } from '@radix-ui/react-icons'
-import { Box, Button, Spinner, Text } from '@radix-ui/themes'
+import { Button } from '@/components/ui/button'
+import {
+  Command,
+  CommandInput,
+} from '@/components/ui/command'
+import { PlusIcon } from '@radix-ui/react-icons'
+import { Spinner } from '@radix-ui/themes'
 
 interface FlowListHeaderProps {
   selectedFlow?: FlowMetadata
   isLoadingSelectedFlow: boolean
   onCreateClick: () => void
+  searchQuery: string
+  onSearchChange: (value: string) => void
 }
 
-export function FlowListHeader({ selectedFlow, isLoadingSelectedFlow, onCreateClick }: FlowListHeaderProps) {
+export function FlowListHeader({
+  selectedFlow,
+  isLoadingSelectedFlow,
+  onCreateClick,
+  searchQuery,
+  onSearchChange,
+}: FlowListHeaderProps) {
   return (
-    <Box className="space-y-3">
+    <div className="space-y-3">
+      {/* Selected Flow Indicator */}
       {(selectedFlow || isLoadingSelectedFlow) && (
-        <div className="flex items-center gap-2">
-          {isLoadingSelectedFlow && (
-            <Spinner />
-          )}
-          <Text size="2" className="text-primary-500 dark:text-primary-400">
-            {!isLoadingSelectedFlow && `Selected: ${selectedFlow?.name}`}
-          </Text>
+        <div className="inline-flex items-center gap-1.5 text-sm text-primary">
+          <span className="text-muted-foreground">Selected:</span>
+          {isLoadingSelectedFlow
+            ? (
+                <Spinner className="w-3 h-3" />
+              )
+            : (
+                <span className="font-medium">{selectedFlow?.name}</span>
+              )}
         </div>
       )}
 
       {/* Search */}
-      <div className="relative">
-        <MagnifyingGlassIcon
-          width="16"
-          height="16"
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-        />
-        <input
-          type="text"
+      <Command className="rounded-lg border shadow-none">
+        <CommandInput
+          value={searchQuery}
+          onValueChange={onSearchChange}
           placeholder="Search flows..."
-          className="w-full pl-9 pr-4 py-2 text-sm
-                     bg-ui-surface-light dark:bg-ui-surface-dark
-                     border border-ui-border-light dark:border-ui-border-dark
-                     rounded-md
-                     focus:outline-none focus:ring-2 focus:ring-primary-500
-                     placeholder-gray-400 dark:placeholder-gray-500"
+          className="h-10"
         />
-      </div>
+      </Command>
 
-      {/* Actions */}
+      {/* Create Button */}
       <Button
         onClick={onCreateClick}
-        className="w-full bg-primary-500 hover:bg-primary-600 text-white
-                   dark:bg-primary-600 dark:hover:bg-primary-700
-                   flex items-center justify-center gap-2"
+        className="w-full"
       >
-        <PlusIcon />
+        <PlusIcon className="mr-2 h-4 w-4" />
         New Flow
       </Button>
-    </Box>
+    </div>
   )
 }
