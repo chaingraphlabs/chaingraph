@@ -5,7 +5,8 @@ import { useTheme } from '@/components/theme/hooks/useTheme.ts'
 import { Card } from '@/components/ui/card.tsx'
 import { cn } from '@/lib/utils.ts'
 import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
-import { Handle, Position } from '@xyflow/react'
+import { CornerBottomRightIcon } from '@radix-ui/react-icons'
+import { Handle, NodeResizeControl, Position, ResizeControlVariant } from '@xyflow/react'
 import { memo, useEffect, useMemo, useState } from 'react'
 
 function ChaingraphNodeComponent({
@@ -149,6 +150,19 @@ function ChaingraphNodeComponent({
         </div>
 
       </div>
+
+      {/* Resize Control */}
+      <NodeResizeControl
+        // minWidth={280}
+        // minHeight={100}
+        variant={ResizeControlVariant.Handle}
+        position="bottom-right"
+        style={{ background: 'transparent', border: 'none' }}
+      >
+        <div className="absolute bottom-1 right-1">
+          <CornerBottomRightIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+        </div>
+      </NodeResizeControl>
     </Card>
   )
 }

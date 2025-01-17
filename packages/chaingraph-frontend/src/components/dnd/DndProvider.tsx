@@ -1,5 +1,6 @@
 import type { CategoryMetadata, INode } from '@chaingraph/types'
 import { useDnd } from '@/components/dnd/useDnd'
+import { ZoomContext } from '@/providers/ZoomProvider'
 import {
   DndContext,
   type DragEndEvent,
@@ -10,7 +11,7 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import { DragOverlay } from '@dnd-kit/core'
-import { useCallback } from 'react'
+import { useCallback, useContext } from 'react'
 import { NodePreview } from '../sidebar/tabs/node-list/NodePreview'
 
 interface DndProviderProps {
@@ -19,16 +20,17 @@ interface DndProviderProps {
 
 export function DndProvider({ children }: DndProviderProps) {
   const { draggedNode, setDraggedNode, emitNodeDrop } = useDnd()
+  const { zoom } = useContext(ZoomContext)
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      distance: 10,
+      distance: 6,
     },
   })
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 250,
-      tolerance: 5,
+      delay: 150,
+      tolerance: 3,
     },
   })
   const sensors = useSensors(mouseSensor, touchSensor)
@@ -68,9 +70,17 @@ export function DndProvider({ children }: DndProviderProps) {
     >
       {children}
 
-      <DragOverlay>
+      <DragOverlay
+        dropAnimation={null}
+      >
         {draggedNode && (
-          <div className="opacity-80">
+          <div
+            className="opacity-80"
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top center',
+            }}
+          >
             <NodePreview
               node={draggedNode.node}
               categoryMetadata={draggedNode.categoryMetadata}

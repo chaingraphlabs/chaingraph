@@ -1,8 +1,8 @@
 import type { NodeDropEvent } from '@/components/dnd'
+import type { CategoryMetadata, INode } from '@chaingraph/types'
 import type {
   DefaultEdgeOptions,
   Edge,
-  FitViewOptions,
   Node,
   NodeTypes,
   OnConnect,
@@ -12,7 +12,9 @@ import type {
 } from '@xyflow/react'
 import type { Connection, Viewport } from '@xyflow/system'
 import { useDnd } from '@/components/dnd'
+import { NodeContextMenu } from '@/components/flow/context-menu/NodeContextMenu.tsx'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
+import { ZoomContext } from '@/providers/ZoomProvider'
 import {
   addEdge,
   applyEdgeChanges,
@@ -23,7 +25,8 @@ import {
   reconnectEdge,
   useReactFlow,
 } from '@xyflow/react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { v7 as uuidv7 } from 'uuid'
 import { edgeTypes, initialEdges } from './edges'
 import { initialNodes } from './nodes'
@@ -43,17 +46,12 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   animated: true,
 }
 
-const fitViewOptions: FitViewOptions = {
-  minZoom: 0.1,
-  maxZoom: 4,
-  padding: 0.2,
-}
-
 function Flow() {
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, getZoom } = useReactFlow()
   const { onNodeDrop } = useDnd()
+  const { setZoom } = useContext(ZoomContext)
   const edgeReconnectSuccessful = useRef(true)
 
   // State
@@ -68,6 +66,15 @@ function Flow() {
     'chaingraphNode': ChaingraphNode,
   }), [])
 
+  // Update zoom when viewport changes
+  const onViewportChange = useCallback(() => {
+    const currentZoom = getZoom()
+    setZoom(currentZoom)
+  }, [getZoom, setZoom])
+
+  // State for context menu
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null)
+
   // Subscribe to node drop events
   useEffect(() => {
     // Handler for node drops
@@ -80,8 +87,8 @@ function Flow() {
 
       // Calculate position relative to the ReactFlow container
       const position = screenToFlowPosition({
-        x: event.position.x, // - reactFlowBounds.left,
-        y: event.position.y, // - reactFlowBounds.top,
+        x: event.position.x,
+        y: event.position.y,
       })
 
       // Create new node
@@ -104,6 +111,10 @@ function Flow() {
     // Cleanup subscription
     return unsubscribe
   }, [onNodeDrop, screenToFlowPosition])
+
+  const onInit = useCallback(() => {
+    setZoom(getZoom())
+  }, [getZoom, setZoom])
 
   // Node changes handler
   const onNodesChange: OnNodesChange = useCallback(
@@ -144,8 +155,54 @@ function Flow() {
     console.log('Node dragged:', node.id)
   }, [])
 
+  // State for context menu position
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null)
+
+  // Handle context menu
+  const onContextMenu = useCallback((event: React.MouseEvent) => {
+    // Prevent default context menu
+    event.preventDefault()
+
+    // Get position
+    const position = {
+      x: event.clientX,
+      y: event.clientY,
+    }
+
+    console.log('Context menu opening at:', position)
+    setContextMenu(position)
+  }, [])
+
+  // Handle node selection
+  const handleNodeSelect = useCallback((node: INode, categoryMetadata: CategoryMetadata) => {
+    if (!contextMenu)
+      return
+
+    const flowPosition = screenToFlowPosition({
+      x: contextMenu.x,
+      y: contextMenu.y,
+    })
+
+    const newNode = {
+      id: uuidv7(),
+      type: 'chaingraphNode',
+      position: flowPosition,
+      data: {
+        node,
+        categoryMetadata,
+      },
+    }
+
+    setNodes(nodes => [...nodes, newNode])
+    setContextMenu(null) // Close menu
+  }, [contextMenu, screenToFlowPosition])
+
   return (
-    <div className="h-full w-full" ref={reactFlowWrapper}>
+    <div
+      className="w-full h-full relative"
+      ref={reactFlowWrapper}
+      onContextMenu={onContextMenu}
+    >
       <ReactFlow
         nodes={nodes}
         nodeTypes={nodeTypes}
@@ -153,21 +210,35 @@ function Flow() {
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onInit={onInit}
         onConnect={onConnect}
         onReconnect={onReconnect}
         onReconnectStart={onReconnectStart}
         onReconnectEnd={onReconnectEnd}
         onNodeDrag={onNodeDrag}
+        onViewportChange={onViewportChange}
         fitView
         preventScrolling
         defaultViewport={defaultViewport}
         defaultEdgeOptions={defaultEdgeOptions}
-        fitViewOptions={fitViewOptions}
         className="bg-background"
+        minZoom={0.2}
+        maxZoom={2}
       >
         <Background />
         <Controls position="bottom-right" />
       </ReactFlow>
+
+      {/* Context Menu */}
+      <AnimatePresence>
+        {contextMenu && (
+          <NodeContextMenu
+            position={contextMenu}
+            onSelect={handleNodeSelect}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
