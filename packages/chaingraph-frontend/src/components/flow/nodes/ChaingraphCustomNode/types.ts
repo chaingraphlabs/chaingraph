@@ -9,7 +9,7 @@ export type NodeVariant =
   | 'error'
   | 'success'
 
-export type ChaingraphNode = Node<{
+export type ChaingraphNodeCustom = Node<{
   title: string
   variant?: NodeVariant
   icon?: string
@@ -23,4 +23,4 @@ export type ChaingraphNode = Node<{
     label: string
     type?: 'execute' | 'data' | 'stream'
   }>
-}, 'chaingraphNode'>
+}, 'chaingraphNodeTest'>

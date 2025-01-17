@@ -20,9 +20,13 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
   const { theme } = useTheme()
   const style = theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light
 
+  // Setup draggable
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: node.id,
-    data: node,
+    data: {
+      node,
+      categoryMetadata,
+    },
   })
 
   return (

@@ -1,4 +1,4 @@
-import type { ChaingraphNode } from './types'
+import type { ChaingraphNodeCustom } from './types'
 import {
   ChevronDownIcon,
   CornerBottomRightIcon,
@@ -19,7 +19,7 @@ import { memo } from 'react'
 //   border: 'none',
 // }
 
-function ChaingraphCustomNode({ data }: NodeProps<ChaingraphNode>) {
+function ChaingraphCustomNode({ data }: NodeProps<ChaingraphNodeCustom>) {
   return (
     <div>
       {/* Header */}

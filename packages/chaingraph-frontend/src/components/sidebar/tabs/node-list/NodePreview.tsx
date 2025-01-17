@@ -4,6 +4,7 @@ import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
+import { useEffect, useMemo, useState } from 'react'
 
 interface NodePreviewProps {
   node: INode
@@ -12,19 +13,35 @@ interface NodePreviewProps {
 
 export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
   const { theme } = useTheme()
-  const style = theme === 'dark'
-    ? categoryMetadata.style.dark
-    : categoryMetadata.style.light
-  const inputs = node.getInputs()
-  const outputs = node.getOutputs()
 
-  const Icon = getCategoryIcon(categoryMetadata.icon as CategoryIconName)
+  const [style, setStyle] = useState(
+    theme === 'dark'
+      ? categoryMetadata.style.dark
+      : categoryMetadata.style.light,
+  )
+  const [inputs, setInputs] = useState(node.getInputs())
+  const [outputs, setOutputs] = useState(node.getOutputs())
+
+  useEffect(() => {
+    setStyle(
+      theme === 'dark'
+        ? categoryMetadata.style.dark
+        : categoryMetadata.style.light,
+    )
+  }, [theme, categoryMetadata])
+
+  useEffect(() => {
+    setInputs(node.getInputs())
+    setOutputs(node.getOutputs())
+  }, [node])
+
+  const Icon = useMemo(() => getCategoryIcon(categoryMetadata.icon as CategoryIconName), [categoryMetadata.icon])
 
   return (
     <div className={cn(
       'w-[280px] rounded-lg overflow-hidden shadow-lg',
       'border border-border',
-      'bg-background dark:bg-[#1E1E1E]',
+      'bg-card',
     )}
     >
       {/* Header */}

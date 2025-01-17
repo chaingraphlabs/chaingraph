@@ -1,15 +1,22 @@
+import type { ChaingraphNodeCustom } from '@/components/flow/nodes/ChaingraphCustomNode'
+import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode'
+import type { NodeCategoryValue } from '@chaingraph/nodes/categories/constants.ts'
 import type { BuiltInNode } from '@xyflow/react'
-import type { ChaingraphNode } from './ChaingraphCustomNode'
 import type { NumberNode } from './NumberNode.tsx'
 import type { PositionLoggerNode } from './PositionLoggerNode.tsx'
+import { nodeRegistry } from '@chaingraph/nodes'
+import { CATEGORY_METADATA } from '@chaingraph/nodes/categories/constants.ts'
 
-export type AppNode = BuiltInNode | PositionLoggerNode | NumberNode | ChaingraphNode
+export type AppNode = BuiltInNode | PositionLoggerNode | NumberNode | ChaingraphNodeCustom | ChaingraphNode
+
+const testCGNode = nodeRegistry.createNode('LLMPromptNode', 'LLMPromptNode:test')
+testCGNode.initialize()
 
 export const initialNodes: AppNode[] = [
 
   {
     id: '1',
-    type: 'chaingraphNode',
+    type: 'chaingraphNodeTest',
     position: { x: 100, y: 100 },
     data: {
       title: 'Create Message',
@@ -26,7 +33,7 @@ export const initialNodes: AppNode[] = [
   },
   {
     id: '2',
-    type: 'chaingraphNode',
+    type: 'chaingraphNodeTest',
     position: { x: 400, y: 100 },
     data: {
       title: 'Send Message',
@@ -38,6 +45,15 @@ export const initialNodes: AppNode[] = [
       outputs: [
         { id: 'execute-out', label: 'Execute', type: 'execute' },
       ],
+    },
+  },
+  {
+    id: '3',
+    type: 'chaingraphNode',
+    position: { x: 400, y: 400 },
+    data: {
+      node: testCGNode,
+      categoryMetadata: CATEGORY_METADATA[testCGNode.metadata.category as NodeCategoryValue],
     },
   },
 ]
