@@ -1,13 +1,26 @@
+import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
+import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon.tsx'
+import {
+  useExpandedCategories,
+} from '@/components/sidebar/tabs/node-list/hooks/useExpandedCategories.ts'
+import { useTheme } from '@/components/theme/hooks/useTheme.ts'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Command, CommandInput } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { trpc } from '@chaingraph/frontend/api/trpc/client'
-import { LayersIcon, SearchIcon } from 'lucide-react'
+import { LayersIcon } from 'lucide-react'
 import { useState } from 'react'
-import { NodeCategory } from './NodeCategory'
+import { NodeCard } from './NodeCard'
 import { NodeListSkeleton } from './NodeListSkeleton'
 
 export function NodeList() {
+  const { theme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
 
   const { data: categorizedNodes, isLoading } = trpc.nodeRegistry.getCategorizedNodes.useQuery()
@@ -15,7 +28,11 @@ export function NodeList() {
     enabled: searchQuery.length > 0,
   })
 
-  const nodes = searchQuery ? searchResults : categorizedNodes
+  const categories = searchQuery ? searchResults : categorizedNodes
+  const availableCategories = categories?.map(c => c.category) || []
+
+  // Get expanded categories state
+  const [expandedCategories, setExpandedCategories] = useExpandedCategories(availableCategories)
 
   if (isLoading) {
     return <NodeListSkeleton />
@@ -23,54 +40,80 @@ export function NodeList() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
-          <LayersIcon className="w-5 h-5" />
-          Node Library
-        </h2>
-
-        {/* Search */}
-        <Command className="rounded-lg border shadow-none">
-          <div className="flex items-center px-3">
-            <SearchIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+      {/* Compact Header */}
+      <div className="p-2 border-b">
+        <Command className="rounded-md border shadow-none">
+          <div className="flex items-center">
             <CommandInput
               value={searchQuery}
               onValueChange={setSearchQuery}
               placeholder="Search nodes..."
-              className="h-9 border-0 focus:ring-0 px-2"
+              className="h-7 border-0 focus:ring-0 px-1.5 text-sm"
             />
           </div>
         </Command>
       </div>
 
       {/* Node Categories */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-6">
-          {nodes?.map((category, index) => (
-            <NodeCategory
+      <ScrollArea className="flex-1">
+        <Accordion
+          type="multiple"
+          value={expandedCategories}
+          onValueChange={setExpandedCategories}
+          className="space-y-0.5 p-1"
+        >
+          {categories?.map(category => (
+            <AccordionItem
               key={category.category}
-              category={category}
-              isExpanded={index === 0} // Первая категория раскрыта по умолчанию
-            />
-          ))}
-
-          {/* Empty State */}
-          {nodes?.length === 0 && (
-            <div className={cn(
-              'flex flex-col items-center justify-center py-12 px-4',
-              'text-center text-muted-foreground',
-            )}
+              value={category.category}
+              className="border-0"
             >
-              <LayersIcon className="w-12 h-12 mb-4 opacity-20" />
-              <p className="text-sm">
-                {searchQuery
-                  ? `No nodes found matching "${searchQuery}"`
-                  : 'No nodes available'}
-              </p>
-            </div>
-          )}
-        </div>
+              <AccordionTrigger
+                className={cn(
+                  'py-1 px-2 rounded-sm hover:bg-accent/50',
+                  'hover:no-underline text-sm',
+                  'data-[state=open]:bg-accent/40',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <CategoryIcon
+                    name={category.metadata.icon as CategoryIconName}
+                    size={16}
+                    className="text-muted-foreground"
+                  />
+                  <span className="font-medium">{category.metadata.label}</span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    {category.nodes.length}
+                  </span>
+                </div>
+              </AccordionTrigger>
+
+              <AccordionContent className="pt-1 pb-2">
+                <div className="space-y-1 pl-6">
+                  {category.nodes.map(node => (
+                    <NodeCard
+                      key={node.id}
+                      node={node}
+                      categoryMetadata={category.metadata}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+
+        {/* Empty State */}
+        {categories?.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">
+            <LayersIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
+            <p className="text-sm">
+              {searchQuery
+                ? `No nodes found matching "${searchQuery}"`
+                : 'No nodes available'}
+            </p>
+          </div>
+        )}
       </ScrollArea>
     </div>
   )

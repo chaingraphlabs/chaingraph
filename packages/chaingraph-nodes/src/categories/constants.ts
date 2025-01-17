@@ -21,16 +21,16 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     icon: 'MessageSquare',
     style: {
       light: {
-        primary: '#10B981', // Emerald 500
-        secondary: '#D1FAE5', // Emerald 100
-        background: '#ECFDF5', // Emerald 50
-        text: '#065F46', // Emerald 800
+        primary: '#E2F5E9', // Soft mint green
+        secondary: '#F5FAF7',
+        background: '#FFFFFF',
+        text: '#419a42', // Darker, more contrasty green
       },
       dark: {
-        primary: '#059669', // Emerald 600
-        secondary: '#064E3B', // Emerald 900
-        background: '#064E3B', // Emerald 900
-        text: '#A7F3D0', // Emerald 200
+        primary: '#1B4D1E',
+        secondary: '#0F2911',
+        background: '#1C1C1C',
+        text: '#8be68d',
       },
     },
     order: 0,
@@ -42,16 +42,16 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     icon: 'Brain',
     style: {
       light: {
-        primary: '#8B5CF6', // Violet 500
-        secondary: '#EDE9FE', // Violet 100
-        background: '#F5F3FF', // Violet 50
-        text: '#5B21B6', // Violet 800
+        primary: '#F3E8FD', // Soft lavender
+        secondary: '#F9F4FE',
+        background: '#FFFFFF',
+        text: '#6200EA', // Deeper purple
       },
       dark: {
-        primary: '#7C3AED', // Violet 600
-        secondary: '#4C1D95', // Violet 900
-        background: '#4C1D95', // Violet 900
-        text: '#DDD6FE', // Violet 200
+        primary: '#2D1B47',
+        secondary: '#1A0F2E',
+        background: '#1C1C1C',
+        text: '#B794F6',
       },
     },
     order: 1,
@@ -63,16 +63,16 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     icon: 'Calculator',
     style: {
       light: {
-        primary: '#3B82F6', // Blue 500
-        secondary: '#DBEAFE', // Blue 100
-        background: '#EFF6FF', // Blue 50
-        text: '#1E40AF', // Blue 800
+        primary: '#E7F1FF', // Soft sky blue
+        secondary: '#F5F9FF',
+        background: '#FFFFFF',
+        text: '#1976D2', // Deeper blue
       },
       dark: {
-        primary: '#2563EB', // Blue 600
-        secondary: '#1E3A8A', // Blue 900
-        background: '#1E3A8A', // Blue 900
-        text: '#BFDBFE', // Blue 200
+        primary: '#1C3A5E',
+        secondary: '#0F1F35',
+        background: '#1C1C1C',
+        text: '#64B5F6',
       },
     },
     order: 2,
@@ -84,16 +84,16 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     icon: 'Database',
     style: {
       light: {
-        primary: '#F59E0B', // Amber 500
-        secondary: '#FEF3C7', // Amber 100
-        background: '#FFFBEB', // Amber 50
-        text: '#92400E', // Amber 800
+        primary: '#FFF3E0', // Soft orange
+        secondary: '#FFF8EC',
+        background: '#FFFFFF',
+        text: '#E65100', // Deeper orange
       },
       dark: {
-        primary: '#D97706', // Amber 600
-        secondary: '#78350F', // Amber 900
-        background: '#78350F', // Amber 900
-        text: '#FDE68A', // Amber 200
+        primary: '#4D2E1B',
+        secondary: '#2E1B0F',
+        background: '#1C1C1C',
+        text: '#FFB74D',
       },
     },
     order: 3,
@@ -105,16 +105,16 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     icon: 'GitBranch',
     style: {
       light: {
-        primary: '#EC4899', // Pink 500
-        secondary: '#FCE7F3', // Pink 100
-        background: '#FDF2F8', // Pink 50
-        text: '#9D174D', // Pink 800
+        primary: '#FCE4EC', // Soft pink
+        secondary: '#FEF3F6',
+        background: '#FFFFFF',
+        text: '#C2185B', // Deeper pink
       },
       dark: {
-        primary: '#DB2777', // Pink 600
-        secondary: '#831843', // Pink 900
-        background: '#831843', // Pink 900
-        text: '#FBCFE8', // Pink 200
+        primary: '#4A1F2E',
+        secondary: '#2E131C',
+        background: '#1C1C1C',
+        text: '#F48FB1',
       },
     },
     order: 4,
@@ -123,19 +123,19 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     id: NODE_CATEGORIES.UTILITIES,
     label: 'Utilities',
     description: 'General purpose utility nodes',
-    icon: 'Tool',
+    icon: 'Wrench',
     style: {
       light: {
-        primary: '#6366F1', // Indigo 500
-        secondary: '#E0E7FF', // Indigo 100
-        background: '#EEF2FF', // Indigo 50
-        text: '#3730A3', // Indigo 800
+        primary: '#E8EAF6', // Soft indigo
+        secondary: '#F1F3FA',
+        background: '#FFFFFF',
+        text: '#3949AB', // Deeper indigo
       },
       dark: {
-        primary: '#4F46E5', // Indigo 600
-        secondary: '#312E81', // Indigo 900
-        background: '#312E81', // Indigo 900
-        text: '#C7D2FE', // Indigo 200
+        primary: '#232858',
+        secondary: '#151833',
+        background: '#1C1C1C',
+        text: '#7986CB',
       },
     },
     order: 5,
@@ -147,16 +147,16 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     icon: 'Package',
     style: {
       light: {
-        primary: '#64748B', // Slate 500
-        secondary: '#F1F5F9', // Slate 100
-        background: '#F8FAFC', // Slate 50
-        text: '#334155', // Slate 700
+        primary: '#F5F5F5', // Soft gray
+        secondary: '#FAFAFA',
+        background: '#FFFFFF',
+        text: '#616161', // Darker gray
       },
       dark: {
-        primary: '#475569', // Slate 600
-        secondary: '#0F172A', // Slate 900
-        background: '#0F172A', // Slate 900
-        text: '#CBD5E1', // Slate 300
+        primary: '#2C2C2C',
+        secondary: '#1F1F1F',
+        background: '#1C1C1C',
+        text: '#BDBDBD',
       },
     },
     order: 6,

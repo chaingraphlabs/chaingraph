@@ -29,8 +29,7 @@ export function isCategoryIcon(name: string): name is CategoryIconName {
   return name in CategoryIcons
 }
 
-// Helper now returns properly typed component
-export function getCategoryIcon(name: string): IconComponent | undefined {
+export function getCategoryIcon(name: string): IconComponent {
   if (isCategoryIcon(name)) {
     return CategoryIcons[name]
   }
