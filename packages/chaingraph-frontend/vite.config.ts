@@ -21,6 +21,7 @@ export default defineConfig({
       '@chaingraph/types': resolve(__dirname, '../chaingraph-types/src'),
       '@chaingraph/nodes': resolve(__dirname, '../chaingraph-nodes/src'),
       '@chaingraph/backend': resolve(__dirname, '../chaingraph-backend/src'),
+      '@': resolve(__dirname, 'src'),
     },
   },
   optimizeDeps: {

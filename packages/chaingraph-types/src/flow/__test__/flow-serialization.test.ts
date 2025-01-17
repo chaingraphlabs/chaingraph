@@ -8,6 +8,7 @@ import {
   Flow,
   Input,
   Node,
+  NodeRegistry,
   Output,
   PortNumber,
   PortString,
@@ -18,7 +19,7 @@ import { registerFlowTransformers } from '@chaingraph/types/flow/json-transforme
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // Simple test nodes
 @Node({
@@ -74,6 +75,10 @@ describe('flow Serialization', () => {
     registerPortTransformers()
     registerNodeTransformers()
     registerFlowTransformers()
+  })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
   })
 
   it('should correctly serialize and deserialize a simple flow', async () => {

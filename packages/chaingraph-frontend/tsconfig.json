@@ -2,7 +2,11 @@
   "compilerOptions": {
     "composite": true,
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "references": [
     { "path": "./tsconfig.app.json" },

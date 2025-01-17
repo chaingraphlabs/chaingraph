@@ -68,4 +68,15 @@ export class InMemoryFlowStore implements IFlowStore {
   async deleteFlow(flowId: string): Promise<boolean> {
     return this.flows.delete(flowId)
   }
+
+  /**
+   * Updates flow with new data
+   * @param flowId Flow identifier
+   * @param flow Flow data
+   * @returns Updated flow
+   */
+  async updateFlow(flowId: string, flow: Flow): Promise<Flow> {
+    this.flows.set(flowId, flow)
+    return flow
+  }
 }

@@ -10,4 +10,5 @@ export interface IFlowStore {
   addNode: (flowId: string, node: INode) => Promise<void>
   listFlowNodes: (flowId: string) => Promise<INode[]>
   deleteFlow: (flowId: string) => Promise<boolean>
+  updateFlow: (flowId: string, flow: Flow) => Promise<Flow>
 }

@@ -1,7 +1,6 @@
 import type { INode } from '@chaingraph/types'
-import { Box, Heading } from '@radix-ui/themes'
-import { trpc } from '../../../../api/trpc/client.ts'
-import { Loading } from '../../../common/Loading.tsx'
+import { trpc } from '@chaingraph/frontend/api/trpc/client'
+import { Box, Heading, Spinner } from '@radix-ui/themes'
 import { NodeListItem } from './NodeListItem.tsx'
 
 export function NodeList() {
@@ -9,7 +8,7 @@ export function NodeList() {
   const { data: nodes, isLoading, error } = trpc.nodeRegistry.listAvailableTypes.useQuery()
 
   if (isLoading)
-    return <Loading />
+    return <Spinner />
 
   if (error) {
     return (

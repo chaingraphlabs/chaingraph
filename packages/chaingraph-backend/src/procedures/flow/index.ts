@@ -32,9 +32,28 @@ export const flowProcedures = router({
       return flow
     }),
 
+  getMeta: publicProcedure
+    .input(z.string())
+    .query(async ({ input: flowId, ctx }) => {
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
+      return flow.metadata
+    }),
+
   list: publicProcedure
     .query(async ({ ctx }) => {
-      return ctx.flowStore.listFlows()
+      const flows = await ctx.flowStore.listFlows()
+
+      return flows
+        .map(flow => flow.metadata)
+        .filter(flowMeta =>
+          flowMeta
+          && flowMeta.id !== ''
+          && flowMeta.createdAt !== null
+          && flowMeta.updatedAt !== null,
+        )
     }),
 
   delete: publicProcedure
@@ -42,6 +61,36 @@ export const flowProcedures = router({
     .mutation(async ({ input: flowId, ctx }) => {
       const success = await ctx.flowStore.deleteFlow(flowId)
       return { success }
+    }),
+
+  edit: publicProcedure
+    .input(z.object({
+      flowId: z.string(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { flowId, name, description, tags } = input
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
+
+      if (name) {
+        flow.metadata.name = name
+      }
+      if (description) {
+        flow.metadata.description = description
+      }
+      if (tags) {
+        flow.metadata.tags = tags
+      }
+
+      flow.metadata.updatedAt = new Date()
+
+      await ctx.flowStore.updateFlow(flowId, flow)
+      return flow
     }),
 
   subscribeToEvents,
