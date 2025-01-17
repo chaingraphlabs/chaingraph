@@ -9,7 +9,7 @@ import {
   PortDirectionEnum,
   PortKindEnum,
 } from '@chaingraph/types'
-import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
@@ -23,7 +23,6 @@ class AddNode extends BaseNode {
       id,
       type: 'AddNode',
       title: 'Add Node',
-      category: NodeCategory.Custom,
     })
 
     this.inputA = new NumberPort({

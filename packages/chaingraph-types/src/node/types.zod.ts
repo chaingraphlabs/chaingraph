@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { BasePortConfigSchema, PortValueSchema } from '../port'
-import { ExecutionStatus, NodeCategory, NodeStatus, ValidationMessageType } from './node-enums'
+import { ExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**
  * Schema for node UI metadata
@@ -32,7 +32,7 @@ export const NodeMetadataSchema = z.object({
   type: z.string(),
   id: z.string().optional(),
   title: z.string().optional(),
-  category: z.nativeEnum(NodeCategory).default(NodeCategory.Custom).optional(),
+  category: z.string().optional(),
   description: z.string().optional(),
   version: z.string().optional(),
   icon: z.string().optional(),

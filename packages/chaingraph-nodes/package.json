@@ -9,9 +9,21 @@
     "directory": "./packages/chaingraph-nodes"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./icons": "./src/icons/index.ts"
   },
-  "scripts": {},
-  "dependencies": {},
-  "devDependencies": {}
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.279.0"
+  },
+  "devDependencies": {
+    "@svgr/core": "^8.0.0",
+    "@svgr/plugin-jsx": "^8.0.1",
+    "@svgr/plugin-svgo": "^8.0.1",
+    "@types/react": "^18.3.18",
+    "vite": "^4.4.9",
+    "vite-plugin-svgr": "^3.2.0"
+  }
 }

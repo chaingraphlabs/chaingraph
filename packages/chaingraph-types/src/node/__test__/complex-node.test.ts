@@ -38,7 +38,7 @@ import {
 
 import { registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
@@ -140,7 +140,6 @@ export class TestUserObject {
 
 @Node({
   title: 'User Profile',
-  category: NodeCategory.Custom,
   description: 'Test node description',
 })
 export class UserProfileNode extends BaseNode {
@@ -384,7 +383,6 @@ export class UserProfileNode extends BaseNode {
 
 @Node({
   title: 'Advanced Node',
-  category: NodeCategory.Custom,
 })
 export class AdvancedNode extends BaseNode {
   @Input()

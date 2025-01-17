@@ -1,5 +1,4 @@
 import { publicProcedure } from '@chaingraph/backend/trpc'
-import { NodeCategory } from '@chaingraph/types'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
 
@@ -13,7 +12,7 @@ const NodePositionSchema = z.object({
 const NodeMetadataSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
-  category: z.nativeEnum(NodeCategory).optional(),
+  category: z.string().optional(),
   tags: z.array(z.string()).optional(),
 }).optional()
 

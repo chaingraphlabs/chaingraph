@@ -1,16 +1,4 @@
 /**
- * Represents possible node categories
- */
-export enum NodeCategory {
-  Custom = 'custom',
-
-  Input = 'input',
-  Processing = 'processing',
-  Output = 'output',
-  FlowControl = 'flow-control',
-}
-
-/**
  * Represents possible node execution statuses
  */
 export enum NodeStatus {

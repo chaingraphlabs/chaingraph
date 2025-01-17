@@ -2,7 +2,7 @@ import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKindEnum, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
@@ -39,7 +39,6 @@ class User {
 
 @Node({
   title: 'Object Node',
-  category: NodeCategory.Custom,
   description: 'Node with an object port',
 })
 class ObjectNode extends BaseNode {
@@ -61,7 +60,6 @@ class ObjectNode extends BaseNode {
 
 @Node({
   title: 'Nested Object Node',
-  category: NodeCategory.Custom,
   description: 'Node with nested object ports',
 })
 class NestedObjectNode extends BaseNode {
@@ -83,7 +81,6 @@ class NestedObjectNode extends BaseNode {
 
 @Node({
   title: 'Complex Node',
-  category: NodeCategory.Custom,
   description: 'Node with nested arrays and objects',
 })
 class ComplexNode extends BaseNode {

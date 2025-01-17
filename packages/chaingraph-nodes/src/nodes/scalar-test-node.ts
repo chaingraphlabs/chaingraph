@@ -1,21 +1,19 @@
+import { nodeRegistry } from '@chaingraph/nodes/registry'
 import {
   BaseNode,
   type ExecutionContext,
   ExecutionStatus,
   Input,
   Node,
-  NodeCategory,
   type NodeExecutionResult,
   Output,
   PortBoolean,
   PortNumber,
   PortString,
 } from '@chaingraph/types'
-import { nodeRegistry } from '../registry'
 
 @Node({
   title: 'Scalar Node',
-  category: NodeCategory.Custom,
   description: 'Node with scalar ports',
 }, nodeRegistry)
 class ScalarNode extends BaseNode {

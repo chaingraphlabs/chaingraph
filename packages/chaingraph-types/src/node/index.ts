@@ -1,4 +1,5 @@
 export * from './base-node'
+export * from './category'
 export * from './decorator'
 export * from './events'
 export * from './interface'

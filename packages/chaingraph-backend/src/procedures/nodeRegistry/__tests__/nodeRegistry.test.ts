@@ -1,116 +1,91 @@
 import {
-  AnotherTestNode,
   cleanupTestNodes,
   registerTestNodes,
-  TestNode,
 } from '@chaingraph/backend/procedures/nodeRegistry/__tests__/utils'
 import { appRouter } from '@chaingraph/backend/router'
 import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
 import { createCallerFactory } from '@chaingraph/backend/trpc'
+import { NodeCatalog } from '@chaingraph/nodes'
 import { NodeRegistry } from '@chaingraph/types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 describe('node Registry Procedures', () => {
   const createCaller = createCallerFactory(appRouter)
+  let nodeRegistry: NodeRegistry
+  let nodeCatalog: NodeCatalog
 
   beforeAll(() => {
+    nodeRegistry = NodeRegistry.getInstance()
     registerTestNodes()
+    nodeCatalog = NodeCatalog.getInstance(nodeRegistry)
   })
 
   afterAll(() => {
     cleanupTestNodes()
   })
 
-  describe('listAvailableTypes', () => {
-    it('should list all registered node types', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
+  describe('getCategorizedNodes', () => {
+    it('should return nodes grouped by categories', async () => {
+      const ctx = createTestContext(nodeRegistry, nodeCatalog)
       const caller = createCaller(ctx)
 
-      const availableNodes = await caller.nodeRegistry.listAvailableTypes()
+      const categorizedNodes = await caller.nodeRegistry.getCategorizedNodes()
 
-      expect(availableNodes).toHaveLength(2) // TestNode and AnotherTestNode
-      expect(availableNodes.map(node => node.metadata.type))
-        .toEqual(expect.arrayContaining(['TestNode', 'AnotherTestNode']))
-    })
+      expect(categorizedNodes).toBeDefined()
+      expect(Array.isArray(categorizedNodes)).toBe(true)
+      expect(categorizedNodes.length).toBeGreaterThan(0)
 
-    it('should return nodes with correct metadata', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
-      const caller = createCaller(ctx)
-
-      const availableNodes = await caller.nodeRegistry.listAvailableTypes()
-
-      const testNode = availableNodes.find(node => node.metadata.type === 'TestNode')
-      expect(testNode).toBeDefined()
-      expect(testNode?.metadata).toMatchObject({
-        type: 'TestNode',
-        category: 'processing',
-        description: 'Test node for testing purposes',
-      })
-    })
-
-    it('should return empty array when no nodes registered', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
-      const caller = createCaller(ctx)
-
-      // Temporarily clear registry
-      const registry = NodeRegistry.getInstance()
-      const originalNodes = registry.getNodeTypes()
-      cleanupTestNodes()
-
-      const availableNodes = await caller.nodeRegistry.listAvailableTypes()
-      expect(availableNodes).toHaveLength(0)
-
-      // Restore registry
-      originalNodes.forEach((type) => {
-        registry.registerNode(type === 'TestNode' ? TestNode : AnotherTestNode)
-      })
+      // Check structure of returned data
+      const firstCategory = categorizedNodes[0]
+      expect(firstCategory).toHaveProperty('category')
+      expect(firstCategory).toHaveProperty('metadata')
+      expect(firstCategory).toHaveProperty('nodes')
+      expect(Array.isArray(firstCategory.nodes)).toBe(true)
     })
   })
 
-  describe('getNodeType', () => {
-    it('should return correct node instance for valid type', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
+  describe('searchNodes', () => {
+    it('should find nodes matching search query', async () => {
+      const ctx = createTestContext(nodeRegistry, nodeCatalog)
       const caller = createCaller(ctx)
 
-      const node = await caller.nodeRegistry.getNodeType('TestNode')
+      const searchResults = await caller.nodeRegistry.searchNodes('test')
 
-      expect(node).toBeDefined()
-      expect(node.metadata.type).toBe('TestNode')
-      expect(node.id).toBe('id:TestNode')
+      expect(searchResults).toBeDefined()
+      expect(Array.isArray(searchResults)).toBe(true)
+
+      // Should find our test nodes
+      const allNodes = searchResults.flatMap(category => category.nodes)
+      expect(allNodes.some(node => node.metadata.type === 'TestNode')).toBe(true)
     })
 
-    it('should throw error for non-existent node type', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
+    it('should return empty array for non-matching query', async () => {
+      const ctx = createTestContext(nodeRegistry, nodeCatalog)
       const caller = createCaller(ctx)
 
-      await expect(
-        caller.nodeRegistry.getNodeType('NonExistentNode'),
-      ).rejects.toThrow()
+      const searchResults = await caller.nodeRegistry.searchNodes('nonexistent')
+      expect(searchResults).toHaveLength(0)
+    })
+  })
+
+  describe('getNodesByCategory', () => {
+    it('should return nodes for existing category', async () => {
+      const ctx = createTestContext(nodeRegistry, nodeCatalog)
+      const caller = createCaller(ctx)
+
+      const category = nodeCatalog.getCategories()[0]
+      const categoryNodes = await caller.nodeRegistry.getNodesByCategory(category)
+
+      expect(categoryNodes).toBeDefined()
+      expect(categoryNodes?.nodes.length).toBeGreaterThan(0)
     })
 
-    it('should create unique instances for same type', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
+    it('should return undefined for non-existent category', async () => {
+      const ctx = createTestContext(nodeRegistry, nodeCatalog)
       const caller = createCaller(ctx)
 
-      const node1 = await caller.nodeRegistry.getNodeType('TestNode')
-      const node2 = await caller.nodeRegistry.getNodeType('TestNode')
-
-      expect(node1.id).toBe('id:TestNode')
-      expect(node2.id).toBe('id:TestNode')
-      expect(node1).not.toBe(node2) // Should be different instances
-    })
-
-    it('should preserve node metadata', async () => {
-      const ctx = createTestContext(NodeRegistry.getInstance())
-      const caller = createCaller(ctx)
-
-      const node = await caller.nodeRegistry.getNodeType('AnotherTestNode')
-
-      expect(node.metadata).toMatchObject({
-        type: 'AnotherTestNode',
-        category: 'input',
-        description: 'Another test node',
-      })
+      const categoryNodes = await caller.nodeRegistry.getNodesByCategory('nonexistent')
+      expect(categoryNodes).toBeUndefined()
     })
   })
 })

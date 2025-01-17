@@ -90,7 +90,7 @@ describe('flow Procedures', () => {
 
       const flows = await caller.flow.list()
       expect(flows).toHaveLength(3)
-      expect(flows.map(f => f.metadata.name)).toEqual(['Flow 1', 'Flow 2', 'Flow 3'])
+      expect(flows.map(f => f.name)).toEqual(['Flow 1', 'Flow 2', 'Flow 3'])
     })
 
     it('should return empty array when no flows exist', async () => {

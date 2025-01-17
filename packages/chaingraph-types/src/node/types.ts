@@ -1,6 +1,7 @@
+import type { NodeCategory } from '@chaingraph/types/node/category'
 import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
 import type { PortConfig } from '@chaingraph/types/port/types/port-config'
-import type { ExecutionStatus, NodeCategory, ValidationMessageType } from './node-enums'
+import type { ExecutionStatus, ValidationMessageType } from './node-enums'
 
 /**
  * Type definition for node metadata

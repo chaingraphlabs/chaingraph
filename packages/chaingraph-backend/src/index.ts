@@ -1,6 +1,6 @@
 import { createContext, initializeContext } from '@chaingraph/backend/context'
 import { InMemoryFlowStore } from '@chaingraph/backend/stores/flowStore'
-import { nodeRegistry } from '@chaingraph/nodes'
+import { NodeCatalog, nodeRegistry } from '@chaingraph/nodes'
 
 import {
   registerFlowTransformers,
@@ -17,9 +17,11 @@ registerFlowTransformers()
 
 // Initialize stores and context
 const flowStore = new InMemoryFlowStore()
+const nodesCatalog = new NodeCatalog(nodeRegistry)
 initializeContext(
   flowStore,
   nodeRegistry,
+  nodesCatalog,
 )
 
 const server = createHTTPServer({

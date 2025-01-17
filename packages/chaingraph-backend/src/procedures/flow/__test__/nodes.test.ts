@@ -33,21 +33,21 @@ describe('flow Node Procedures', () => {
       const testNodeType = nodeTypes[0]
 
       // Add node to flow
-      const result = await caller.flow.addNode({
+      const node = await caller.flow.addNode({
         flowId: flow.id,
         nodeType: testNodeType.metadata.type,
         position: { x: 100, y: 100 },
       })
 
       // Verify node was added
-      expect(result.nodeId).toBeDefined()
-      expect(result.node).toBeDefined()
-      expect(result.node.metadata.title).toBe('Scalar Node')
+      expect(node).toBeDefined()
+      expect(node).toBeDefined()
+      expect(node.metadata.title).toBe('Scalar Node')
 
       // Verify node exists in flow
       const flowNodes = await ctx.flowStore.listFlowNodes(flow.id)
       expect(flowNodes).toHaveLength(1)
-      expect(flowNodes[0].id).toBe(result.nodeId)
+      expect(flowNodes[0].id).toBe(node.id)
     })
 
     it('should throw error when flow does not exist', async () => {

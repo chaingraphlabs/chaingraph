@@ -2,7 +2,6 @@ import type { NodeMetadata } from '@chaingraph/types/node/types'
 
 import type { PortConfig } from '@chaingraph/types/port'
 
-import { NodeCategory } from '@chaingraph/types/node/node-enums'
 import { NodeRegistry } from '@chaingraph/types/node/registry'
 import 'reflect-metadata'
 
@@ -47,7 +46,6 @@ export function getOrCreateNodeMetadata(target: any): NodeMetadata {
   if (!Reflect.hasMetadata(NODE_METADATA_KEY, target)) {
     const nodeMetadata: NodeMetadata = {
       type: '',
-      category: NodeCategory.Custom,
       portsConfig: new Map<string, PortConfig>(),
     }
 

@@ -1,4 +1,5 @@
 import type { IFlowStore } from '@chaingraph/backend/stores/flowStore'
+import type { NodeCatalog } from '@chaingraph/nodes'
 import type { NodeRegistry } from '@chaingraph/types'
 import type { CreateNextContextOptions } from '@trpc/server/dist/adapters/next'
 
@@ -10,10 +11,12 @@ export interface AppContext {
   session: Session
   flowStore: IFlowStore
   nodeRegistry: NodeRegistry
+  nodesCatalog: NodeCatalog
 }
 
 let flowStore: IFlowStore | null = null
 let nodeRegistry: NodeRegistry | null = null
+let nodesCatalog: NodeCatalog | null = null
 
 /**
  * Initialize application context with stores
@@ -22,9 +25,11 @@ let nodeRegistry: NodeRegistry | null = null
 export function initializeContext(
   store: IFlowStore,
   registry: NodeRegistry,
+  catalog: NodeCatalog,
 ) {
   flowStore = store
   nodeRegistry = registry
+  nodesCatalog = catalog
 }
 
 /**
@@ -32,7 +37,7 @@ export function initializeContext(
  * Reuses initialized stores instead of creating new ones
  */
 export async function createContext(opts: CreateNextContextOptions): Promise<AppContext> {
-  if (!flowStore || !nodeRegistry) {
+  if (!flowStore || !nodeRegistry || !nodesCatalog) {
     throw new Error('Context not initialized. Call initializeContext first.')
   }
 
@@ -42,6 +47,7 @@ export async function createContext(opts: CreateNextContextOptions): Promise<App
     },
     flowStore,
     nodeRegistry,
+    nodesCatalog,
   }
 }
 

@@ -16,14 +16,13 @@ import {
   registerPortTransformers,
 } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 @Node({
   title: 'Stream Node',
-  category: NodeCategory.Custom,
   description: 'Node with stream ports',
 })
 class StreamNode extends BaseNode {

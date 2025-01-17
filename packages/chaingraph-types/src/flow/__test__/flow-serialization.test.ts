@@ -17,14 +17,13 @@ import {
 
 import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // Simple test nodes
 @Node({
   title: 'Source Node',
-  category: NodeCategory.Input,
 })
 class SourceNode extends BaseNode {
   @Input()
@@ -48,7 +47,6 @@ class SourceNode extends BaseNode {
 
 @Node({
   title: 'Target Node',
-  category: NodeCategory.Output,
 })
 class TargetNode extends BaseNode {
   @Input()

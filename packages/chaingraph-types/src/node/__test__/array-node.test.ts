@@ -3,7 +3,7 @@ import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKindEnum, registerPortTransformers } from '@chaingraph/types'
 
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus, NodeCategory } from '@chaingraph/types/node/node-enums'
+import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -11,7 +11,6 @@ import 'reflect-metadata'
 
 @Node({
   title: 'Array Node',
-  category: NodeCategory.Custom,
   description: 'Node with an array port',
 })
 class ArrayNode extends BaseNode {
