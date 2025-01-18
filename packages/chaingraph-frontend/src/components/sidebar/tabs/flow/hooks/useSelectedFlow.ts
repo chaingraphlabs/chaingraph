@@ -22,9 +22,9 @@ export function useSelectedFlow() {
     error,
   } = trpc.flow.getMeta.useQuery(storedFlowId!, {
     enabled: Boolean(storedFlowId),
-    // staleTime: 1000 * 60, // Consider data fresh for 1 minute
+    staleTime: 1000 * 60, // Consider data fresh for 1 minute
     // Proper query options
-    // gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
     retry: false, // Don't retry on error
   })
 

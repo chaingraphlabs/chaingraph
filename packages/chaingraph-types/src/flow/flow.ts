@@ -1,17 +1,14 @@
 import type { IEdge, INode, NodeEvent } from '@chaingraph/types'
 import type {
-  EdgeAddedEventData,
-  EdgeRemovedEventData,
   FlowEvent,
-  NodeAddedEventData,
-  NodeRemovedEventData,
   NodeUIEventData,
 } from '@chaingraph/types/flow/events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
-
 import { Edge, NodeEventType } from '@chaingraph/types'
-import { FlowEventType } from '@chaingraph/types/flow/events'
+
+import { FlowEventType, newEvent,
+} from '@chaingraph/types/flow/events'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -64,16 +61,21 @@ export class Flow implements IFlow {
     this.nodeEventHandlersCancel.set(node.id, cancel)
 
     // Emit NodeAdded event
-    const event: FlowEvent<FlowEventType.NodeAdded, NodeAddedEventData> = {
-      index: this.getNextEventIndex(),
-      flowId: this.id,
-      type: FlowEventType.NodeAdded,
-      timestamp: new Date(),
-      data: {
-        node,
-      },
-    }
-    this.emitEvent(event)
+    // const event: FlowEvent<FlowEventType.NodeAdded, NodeAddedEventData> = {
+    //   index: this.getNextEventIndex(),
+    //   flowId: this.id,
+    //   type: FlowEventType.NodeAdded,
+    //   timestamp: new Date(),
+    //   data: {
+    //     node,
+    //   },
+    // }
+    this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.NodeAdded,
+      { node },
+    ))
   }
 
   removeNode(nodeId: string): void {
@@ -103,16 +105,21 @@ export class Flow implements IFlow {
     }
 
     // Emit NodeRemoved event
-    const event: FlowEvent<FlowEventType.NodeRemoved, NodeRemovedEventData> = {
-      index: this.getNextEventIndex(),
-      flowId: this.id,
-      type: FlowEventType.NodeRemoved,
-      timestamp: new Date(),
-      data: {
-        nodeId,
-      },
-    }
-    this.emitEvent(event)
+    // const event: FlowEvent<FlowEventType.NodeRemoved, NodeRemovedEventData> = {
+    //   index: this.getNextEventIndex(),
+    //   flowId: this.id,
+    //   type: FlowEventType.NodeRemoved,
+    //   timestamp: new Date(),
+    //   data: {
+    //     nodeId,
+    //   },
+    // }
+    this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.NodeRemoved,
+      { nodeId },
+    ))
   }
 
   addEdge(edge: IEdge): void {
@@ -122,16 +129,21 @@ export class Flow implements IFlow {
     this.edges.set(edge.id, edge)
 
     // Emit EdgeAdded event
-    const event: FlowEvent<FlowEventType.EdgeAdded, EdgeAddedEventData> = {
-      index: this.getNextEventIndex(),
-      flowId: this.id,
-      type: FlowEventType.EdgeAdded,
-      timestamp: new Date(),
-      data: {
-        edge,
-      },
-    }
-    this.emitEvent(event)
+    // const event: FlowEvent<FlowEventType.EdgeAdded, EdgeAddedEventData> = {
+    //   index: this.getNextEventIndex(),
+    //   flowId: this.id,
+    //   type: FlowEventType.EdgeAdded,
+    //   timestamp: new Date(),
+    //   data: {
+    //     edge,
+    //   },
+    // }
+    this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.EdgeAdded,
+      { edge },
+    ))
   }
 
   removeEdge(edgeId: string): void {
@@ -142,16 +154,21 @@ export class Flow implements IFlow {
     this.edges.delete(edgeId)
 
     // Emit EdgeRemoved event
-    const event: FlowEvent<FlowEventType.EdgeRemoved, EdgeRemovedEventData> = {
-      index: this.getNextEventIndex(),
-      flowId: this.id,
-      type: FlowEventType.EdgeRemoved,
-      timestamp: new Date(),
-      data: {
-        edgeId,
-      },
-    }
-    this.emitEvent(event)
+    // const event: FlowEvent<FlowEventType.EdgeRemoved, EdgeRemovedEventData> = {
+    //   index: this.getNextEventIndex(),
+    //   flowId: this.id,
+    //   type: FlowEventType.EdgeRemoved,
+    //   timestamp: new Date(),
+    //   data: {
+    //     edgeId,
+    //   },
+    // }
+    this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.EdgeRemoved,
+      { edgeId },
+    ))
   }
 
   async connectPorts(
@@ -246,8 +263,8 @@ export class Flow implements IFlow {
    * Emit a flow event
    * @param event The event to emit
    */
-  private emitEvent<T extends FlowEvent>(event: T): void {
-    this.eventQueue.publish(event)
+  private emitEvent<T extends FlowEvent>(event: T): Promise<void> {
+    return this.eventQueue.publish(event)
   }
 
   /**
@@ -286,13 +303,21 @@ export class Flow implements IFlow {
           oldValue: (nodeEvent as any).oldValue,
           newValue: (nodeEvent as any).newValue,
         }
-        flowEvent = {
-          index: this.getNextEventIndex(),
-          flowId: this.id,
-          type: this.mapNodeUIEventToFlowEvent(nodeEvent.type),
-          timestamp: new Date(),
-          data: nodeUIEventData,
-        }
+        // flowEvent = {
+        //   index: this.getNextEventIndex(),
+        //   flowId: this.id,
+        //   type: this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+        //   timestamp: new Date(),
+        //   data: nodeUIEventData,
+        // }
+        //
+        flowEvent = newEvent(
+          this.getNextEventIndex(),
+          this.id,
+          this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+          nodeUIEventData,
+        )
+
         break
       }
 

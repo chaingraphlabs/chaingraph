@@ -17,6 +17,7 @@
     "dev": "bun run --cwd packages/chaingraph-backend dev",
     "start": "bun run --cwd packages/chaingraph-backend start",
     "build": "bun run --cwd packages/chaingraph-backend build",
+    "tsx-backend": "tsx --cwd packages/chaingraph-backend",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",

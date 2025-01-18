@@ -27,26 +27,6 @@ export enum FlowEventType {
 }
 
 /**
- * Base interface for all flow events
- */
-export interface FlowEvent<T extends FlowEventType = FlowEventType, D = any> {
-  /** Unique index for the event. Used for linearization. */
-  index: number
-
-  /** The flow where the event occurred */
-  flowId: string
-
-  /** Type of the event */
-  type: T
-
-  /** Timestamp when the event occurred */
-  timestamp: Date
-
-  /** Event-specific data */
-  data: D
-}
-
-/**
  * Event data definitions
  */
 
@@ -89,22 +69,68 @@ export interface NodeUIEventData {
 
 /** Data for MetadataUpdated event */
 export interface MetadataUpdatedEventData {
-  oldMetadata: IFlow['metadata']
+  oldMetadata?: IFlow['metadata']
   newMetadata: IFlow['metadata']
 }
 
 /**
- * Union type for all flow events
+ * Mapping between event types and their corresponding data types
  */
-export type FlowEvents =
-  | FlowEvent<FlowEventType.NodeAdded, NodeAddedEventData>
-  | FlowEvent<FlowEventType.NodeRemoved, NodeRemovedEventData>
-  | FlowEvent<FlowEventType.NodeUpdated, NodeUpdatedEventData>
-  | FlowEvent<FlowEventType.EdgeAdded, EdgeAddedEventData>
-  | FlowEvent<FlowEventType.EdgeRemoved, EdgeRemovedEventData>
-  | FlowEvent<FlowEventType.EdgeUpdated, EdgeUpdatedEventData>
-  | FlowEvent<FlowEventType.NodeUIPositionChanged, NodeUIEventData>
-  | FlowEvent<FlowEventType.NodeUIDimensionsChanged, NodeUIEventData>
-  | FlowEvent<FlowEventType.NodeUIStyleChanged, NodeUIEventData>
-  | FlowEvent<FlowEventType.NodeUIStateChanged, NodeUIEventData>
-  | FlowEvent<FlowEventType.MetadataUpdated, MetadataUpdatedEventData>
+export interface EventDataMap {
+  [FlowEventType.NodeAdded]: NodeAddedEventData
+  [FlowEventType.NodeRemoved]: NodeRemovedEventData
+  [FlowEventType.NodeUpdated]: NodeUpdatedEventData
+  [FlowEventType.EdgeAdded]: EdgeAddedEventData
+  [FlowEventType.EdgeRemoved]: EdgeRemovedEventData
+  [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData
+  [FlowEventType.NodeUIPositionChanged]: NodeUIEventData
+  [FlowEventType.NodeUIDimensionsChanged]: NodeUIEventData
+  [FlowEventType.NodeUIStyleChanged]: NodeUIEventData
+  [FlowEventType.NodeUIStateChanged]: NodeUIEventData
+  [FlowEventType.MetadataUpdated]: MetadataUpdatedEventData
+}
+
+/**
+ * Base flow event interface
+ */
+export interface FlowEvent<T extends FlowEventType = FlowEventType> {
+  /** Unique index for the event. Used for linearization. */
+  index: number
+
+  /** The flow where the event occurred */
+  flowId: string
+
+  /** Type of the event */
+  type: T
+
+  /** Timestamp when the event occurred */
+  timestamp: Date
+
+  /** Event-specific data */
+  data: EventDataMap[T]
+}
+
+/**
+ * Helper type to get all possible flow event types
+ */
+export type FlowEvents = {
+  [K in FlowEventType]: FlowEvent<K>
+}[FlowEventType]
+
+/**
+ * Helper function to create new flow events with proper typing
+ */
+export function newEvent<T extends FlowEventType>(
+  index: number,
+  flowId: string,
+  type: T,
+  data: EventDataMap[T],
+): FlowEvent<T> {
+  return {
+    index,
+    flowId,
+    type,
+    timestamp: new Date(),
+    data,
+  }
+}

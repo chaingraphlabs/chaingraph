@@ -28,6 +28,8 @@ export function FlowListHeader({
       {(selectedFlow || isLoadingSelectedFlow) && (
         <div className="inline-flex items-center gap-1.5 text-sm text-primary">
           <span className="text-muted-foreground">Selected:</span>
+          {' '}
+          {isLoadingSelectedFlow}
           {isLoadingSelectedFlow
             ? (
                 <Spinner className="w-3 h-3" />

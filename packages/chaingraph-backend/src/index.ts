@@ -10,6 +10,7 @@ import {
 import { createHTTPServer } from '@trpc/server/adapters/standalone'
 import cors from 'cors'
 import { appRouter } from './router'
+import './setup'
 
 registerPortTransformers()
 registerNodeTransformers(nodeRegistry)

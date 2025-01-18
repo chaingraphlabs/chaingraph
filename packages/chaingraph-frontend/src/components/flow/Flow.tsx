@@ -14,6 +14,7 @@ import type { Connection, Viewport } from '@xyflow/system'
 import { useDnd } from '@/components/dnd'
 import { NodeContextMenu } from '@/components/flow/context-menu/NodeContextMenu.tsx'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
+import { useFlowDebug } from '@/providers/FlowProvider/useFlowDebug.ts'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
   addEdge,
@@ -47,6 +48,8 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 }
 
 function Flow() {
+  useFlowDebug()
+
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, getZoom } = useReactFlow()
