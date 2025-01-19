@@ -6,6 +6,12 @@ import type { IFlow } from './interface'
  * Enumeration of flow event types
  */
 export enum FlowEventType {
+
+  // Flow events
+  FlowInitStart = 'flow:init-start',
+  FlowInitEnd = 'flow:init-end',
+  MetadataUpdated = 'flow:metadata-updated',
+
   // Node events
   NodeAdded = 'flow:node:added',
   NodeRemoved = 'flow:node:removed',
@@ -22,8 +28,6 @@ export enum FlowEventType {
   NodeUIStyleChanged = 'flow:node:ui:style-changed',
   NodeUIStateChanged = 'flow:node:ui:state-changed',
 
-  // Metadata events
-  MetadataUpdated = 'flow:metadata-updated',
 }
 
 /**
@@ -73,10 +77,24 @@ export interface MetadataUpdatedEventData {
   newMetadata: IFlow['metadata']
 }
 
+/** Data for FlowInitStart event */
+export interface FlowInitStart {
+  flowId: string
+  metadata: IFlow['metadata']
+}
+
+/** Data for FlowInitEnd event */
+export interface FlowInitEnd {
+  flowId: string
+}
+
 /**
  * Mapping between event types and their corresponding data types
  */
 export interface EventDataMap {
+  [FlowEventType.FlowInitStart]: FlowInitStart
+  [FlowEventType.FlowInitEnd]: FlowInitEnd
+  [FlowEventType.MetadataUpdated]: MetadataUpdatedEventData
   [FlowEventType.NodeAdded]: NodeAddedEventData
   [FlowEventType.NodeRemoved]: NodeRemovedEventData
   [FlowEventType.NodeUpdated]: NodeUpdatedEventData
@@ -87,7 +105,6 @@ export interface EventDataMap {
   [FlowEventType.NodeUIDimensionsChanged]: NodeUIEventData
   [FlowEventType.NodeUIStyleChanged]: NodeUIEventData
   [FlowEventType.NodeUIStateChanged]: NodeUIEventData
-  [FlowEventType.MetadataUpdated]: MetadataUpdatedEventData
 }
 
 /**

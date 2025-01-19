@@ -23,7 +23,7 @@ export interface IFlow {
    * Adds a node to the flow.
    * @param node The node to add.
    */
-  addNode: (node: INode) => void
+  addNode: (node: INode) => INode
 
   /**
    * Removes a node from the flow.

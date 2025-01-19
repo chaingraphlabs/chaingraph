@@ -2,39 +2,67 @@ import type { FlowMetadata } from '@chaingraph/types'
 import { useFlowSearch } from '@/components/sidebar/tabs/flow/hooks/useFlowSearch'
 import { useFlowSort } from '@/components/sidebar/tabs/flow/hooks/useFlowSort'
 import { ErrorMessage } from '@/components/ui/error-message.tsx'
+import {
+  $flowsError,
+  createFlow,
+  type CreateFlowEvent,
+  deleteFlow,
+  setActiveFlowId,
+  updateFlow,
+  type UpdateFlowEvent,
+} from '@/store'
+import {
+  $activeFlowId,
+  $createFlowError,
+  $deleteFlowError,
+  $flows,
+  $isCreatingFlow,
+  $isDeletingFlow,
+  $isFlowsLoading,
+  $isUpdatingFlow,
+  $updateFlowError,
+} from '@/store/flow'
 import { Spinner } from '@radix-ui/themes'
+import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
 import { EmptyFlowState } from './components/EmptyFlowState'
 import { FlowForm } from './components/FlowForm'
 import { FlowListHeader } from './components/FlowListHeader'
 import { FlowListItem } from './components/FlowListItem'
-import { useFlows } from './hooks/useFlows'
-import { useSelectedFlow } from './hooks/useSelectedFlow'
 
 export function FlowList() {
-  // Get flow context
-  const { selectedFlow, setSelectedFlow, isLoading: isLoadingSelectedFlow } = useSelectedFlow()
+  // Get store values and effects statuses
+  const {
+    flows,
+    activeFlowId,
+    isLoading,
+    loadError,
+    createError,
+    updateError,
+    deleteError, // TODO: handle delete error
+    isCreatingFlow,
+    isDeletingFlow,
+    isEditingFlow,
+  } = useUnit({
+    flows: $flows,
+    activeFlowId: $activeFlowId,
+    isLoading: $isFlowsLoading,
+    loadError: $flowsError,
+    createError: $createFlowError,
+    updateError: $updateFlowError,
+    deleteError: $deleteFlowError,
+    isCreatingFlow: $isCreatingFlow,
+    isDeletingFlow: $isDeletingFlow,
+    isEditingFlow: $isUpdatingFlow,
+  })
 
-  // State for create/edit forms
+  // Local UI state
   const [isCreating, setIsCreating] = useState(false)
   const [editingFlow, setEditingFlow] = useState<FlowMetadata | undefined>(undefined)
 
-  // Get flows data and mutations
-  const {
-    flows,
-    isLoading,
-    error,
-    createFlow,
-    deleteFlow,
-    editFlow,
-    isCreating: isCreatingFlow,
-    isDeleting: isDeletingFlow,
-    isEditing: isEditingFlow,
-  } = useFlows()
-
   // Sort flows with selected flow at the top
-  const sortedFlows = useFlowSort(flows, selectedFlow?.id)
+  const sortedFlows = useFlowSort(flows, activeFlowId)
 
   // Search functionality with sorted flows
   const { searchQuery, setSearchQuery, filteredFlows } = useFlowSearch(sortedFlows)
@@ -50,10 +78,17 @@ export function FlowList() {
     setIsCreating(false)
   }, [])
 
-  // Handle flow selection
-  const handleFlowSelect = useCallback((flow: FlowMetadata) => {
-    setSelectedFlow(flow)
-  }, [setSelectedFlow])
+  const handleCreateFlow = useCallback(async (event: CreateFlowEvent) => {
+    await createFlow(event)
+    setIsCreating(false)
+  }, [])
+
+  const handleEditFlow = useCallback(async (event: UpdateFlowEvent) => {
+    if (editingFlow?.id) {
+      await updateFlow(event)
+      setEditingFlow(undefined)
+    }
+  }, [editingFlow])
 
   // Loading state
   if (isLoading) {
@@ -61,12 +96,12 @@ export function FlowList() {
   }
 
   // Error state
-  if (error) {
+  if (loadError) {
     return (
       <ErrorMessage>
         Failed to load flows:
         {' '}
-        {error.message}
+        {loadError.message}
       </ErrorMessage>
     )
   }
@@ -101,8 +136,8 @@ export function FlowList() {
           >
             <div className="px-2 pt-4 pb-2">
               <FlowListHeader
-                selectedFlow={selectedFlow}
-                isLoadingSelectedFlow={isLoadingSelectedFlow}
+                selectedFlow={flows?.find(flow => flow.id === activeFlowId)}
+                isLoadingSelectedFlow={false}
                 onCreateClick={handleCreateClick}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -124,8 +159,8 @@ export function FlowList() {
                         <FlowListItem
                           key={flow.id}
                           flow={flow}
-                          selected={selectedFlow?.id === flow.id}
-                          onSelect={() => handleFlowSelect(flow)}
+                          selected={activeFlowId === flow.id}
+                          onSelect={() => setActiveFlowId(flow.id!)}
                           onDelete={() => deleteFlow(flow.id!)}
                           onEdit={() => handleEditClick(flow)}
                           disabled={isCreatingFlow || isDeletingFlow || isEditingFlow}
@@ -169,15 +204,10 @@ export function FlowList() {
                   setIsCreating(false)
                   setEditingFlow(undefined)
                 }}
-                onCreate={async (data) => {
-                  await createFlow(data)
-                  setIsCreating(false)
-                }}
-                onEdit={async (data) => {
-                  await editFlow(data)
-                  setEditingFlow(undefined)
-                }}
+                onCreate={handleCreateFlow}
+                onEdit={handleEditFlow}
                 isLoading={isCreatingFlow || isEditingFlow}
+                error={createError || updateError}
               />
             </motion.div>
           )}

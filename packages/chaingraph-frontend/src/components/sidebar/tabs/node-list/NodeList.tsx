@@ -1,9 +1,7 @@
-import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon.tsx'
 import {
   useExpandedCategories,
 } from '@/components/sidebar/tabs/node-list/hooks/useExpandedCategories.ts'
-import { useTheme } from '@/components/theme/hooks/useTheme.ts'
 import {
   Accordion,
   AccordionContent,
@@ -13,23 +11,38 @@ import {
 import { Command, CommandInput } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import { trpc } from '@chaingraph/frontend/api/trpc/client'
+import { $categorizedNodes, $isLoading } from '@/store'
+import { useUnit } from 'effector-react'
 import { LayersIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NodeCard } from './NodeCard'
 import { NodeListSkeleton } from './NodeListSkeleton'
 
 export function NodeList() {
-  const { theme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
+  const categories = useUnit($categorizedNodes)
+  const isLoading = useUnit($isLoading)
 
-  const { data: categorizedNodes, isLoading } = trpc.nodeRegistry.getCategorizedNodes.useQuery()
-  const { data: searchResults } = trpc.nodeRegistry.searchNodes.useQuery(searchQuery, {
-    enabled: searchQuery.length > 0,
-  })
+  // Memoize filtered categories based on search
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery)
+      return categories
 
-  const categories = searchQuery ? searchResults : categorizedNodes
-  const availableCategories = categories?.map(c => c.category) || []
+    return categories?.filter(category =>
+      category.nodes.some(node =>
+        node.metadata.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        || node.metadata.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        || node.metadata.tags?.some(tag =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
+      ),
+    )
+  }, [searchQuery, categories])
+
+  const availableCategories = useMemo(
+    () => filteredCategories?.map(c => c.category) || [],
+    [filteredCategories],
+  )
 
   // Get expanded categories state
   const [expandedCategories, setExpandedCategories] = useExpandedCategories(availableCategories)
@@ -62,7 +75,7 @@ export function NodeList() {
           onValueChange={setExpandedCategories}
           className="space-y-0.5 p-1"
         >
-          {categories?.map(category => (
+          {filteredCategories?.map(category => (
             <AccordionItem
               key={category.category}
               value={category.category}
@@ -77,7 +90,7 @@ export function NodeList() {
               >
                 <div className="flex items-center gap-2">
                   <CategoryIcon
-                    name={category.metadata.icon as CategoryIconName}
+                    name={category.metadata.icon}
                     size={16}
                     className="text-muted-foreground"
                   />
@@ -104,7 +117,7 @@ export function NodeList() {
         </Accordion>
 
         {/* Empty State */}
-        {categories?.length === 0 && (
+        {filteredCategories?.length === 0 && (
           <div className="p-8 text-center text-muted-foreground">
             <LayersIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
             <p className="text-sm">

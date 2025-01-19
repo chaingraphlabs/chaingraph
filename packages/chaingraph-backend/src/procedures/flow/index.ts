@@ -1,5 +1,5 @@
+import { addNode } from '@chaingraph/backend/procedures/flow/add-node'
 import { connectPorts } from '@chaingraph/backend/procedures/flow/connect-ports'
-import { addNode } from '@chaingraph/backend/procedures/flow/nodes'
 import { removeNode } from '@chaingraph/backend/procedures/flow/remove-node'
 import { subscribeToEvents } from '@chaingraph/backend/procedures/flow/subscriptions'
 import { publicProcedure, router } from '@chaingraph/backend/trpc'
@@ -89,8 +89,7 @@ export const flowProcedures = router({
 
       flow.metadata.updatedAt = new Date()
 
-      await ctx.flowStore.updateFlow(flowId, flow)
-      return flow
+      return await ctx.flowStore.updateFlow(flowId, flow)
     }),
 
   subscribeToEvents,

@@ -1,3 +1,4 @@
+import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store'
 import type { FlowMetadata } from '@chaingraph/types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -7,15 +8,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Cross1Icon, FrameIcon, PlusIcon, TextIcon } from '@radix-ui/react-icons'
 import { Spinner } from '@radix-ui/themes' // оставляем пока
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { FlowTag } from './FlowTag'
 
 interface FlowFormProps {
   flow?: FlowMetadata
   onCancel: () => void
-  onCreate?: (data: { name: string, description: string, tags: string[] }) => void
-  onEdit?: (data: { flowId: string, name: string, description: string, tags: string[] }) => void
+  onCreate?: (data: CreateFlowEvent) => void
+  onEdit?: (data: UpdateFlowEvent) => void
   isLoading?: boolean
+  error?: Error | null
 }
 
 export function FlowForm({
@@ -24,6 +26,7 @@ export function FlowForm({
   onCreate,
   onEdit,
   isLoading = false,
+  error,
 }: FlowFormProps) {
   const isEditMode = Boolean(flow)
   const [name, setName] = useState(flow?.name || '')
@@ -41,12 +44,12 @@ export function FlowForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const data = { name, description, tags }
+    const data: FlowMetadataEvent = { name, description, tags }
 
     if (isEditMode && onEdit && flow?.id) {
-      onEdit({ ...data, flowId: flow.id })
+      onEdit({ id: flow.id, metadata: { ...data } })
     } else if (!isEditMode && onCreate) {
-      onCreate(data)
+      onCreate({ metadata: data })
     }
   }
 
@@ -160,13 +163,7 @@ export function FlowForm({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (newTag && !tags.includes(newTag)) {
-                    setTags(currentTags => [...currentTags, newTag])
-                    setNewTag('')
-                  }
-                }}
+                onClick={handleAddTag}
                 disabled={isLoading || !newTag}
               >
                 <PlusIcon className="h-4 w-4" />
@@ -206,6 +203,11 @@ export function FlowForm({
                     )}
             </Button>
           </div>
+          {error && (
+            <div className="text-sm text-destructive">
+              {error.message}
+            </div>
+          )}
         </form>
       </motion.div>
     </Card>

@@ -127,7 +127,7 @@ export class PortConfigProcessor {
     // } else {
     //   newPortConfig.id = propertyKey || this.generateSortableUUID()
     // }
-    newPortConfig.id = propertyKey || this.generateSortableUUID()
+    newPortConfig.id = portConfig.id || this.generateSortableUUID()
 
     // Assign key
     if (!newPortConfig.key) {

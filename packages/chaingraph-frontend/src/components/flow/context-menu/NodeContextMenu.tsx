@@ -1,12 +1,13 @@
 import type { CategoryMetadata, INode } from '@chaingraph/types'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
-import { Command, CommandInput } from '@/components/ui/command'
+import { useTheme } from '@/components/theme/hooks/useTheme.ts'
+import { Button } from '@/components/ui/button.tsx'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import { trpc } from '@chaingraph/frontend/api/trpc/client'
-import { LayersIcon } from '@radix-ui/react-icons'
+import { useCategories } from '@/store/categories'
 import { motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 interface NodeContextMenuProps {
   position: { x: number, y: number }
@@ -15,9 +16,35 @@ interface NodeContextMenuProps {
 }
 
 export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenuProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const { theme } = useTheme()
+  const [search, setSearch] = useState('')
   const menuRef = useRef<HTMLDivElement>(null)
   const [menuPosition, setMenuPosition] = useState(position)
+
+  const { categories } = useCategories()
+
+  // Filter nodes based on search
+  const filteredCategories = useMemo(() => {
+    if (!search)
+      return categories
+
+    return categories.map(category => ({
+      ...category,
+      nodes: category.nodes.filter(node =>
+        node.metadata.title?.toLowerCase().includes(search.toLowerCase())
+        || node.metadata.description?.toLowerCase().includes(search.toLowerCase())
+        || node.metadata.tags?.some(tag =>
+          tag.toLowerCase().includes(search.toLowerCase()),
+        ),
+      ),
+    })).filter(category => category.nodes.length > 0)
+  }, [categories, search])
+
+  // Handle node selection
+  const handleSelect = useCallback((node: INode, categoryMetadata: CategoryMetadata) => {
+    onSelect(node, categoryMetadata)
+    onClose()
+  }, [onSelect, onClose])
 
   // Calculate menu position to keep it in viewport
   useEffect(() => {
@@ -44,13 +71,6 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
     setMenuPosition({ x, y })
   }, [position])
 
-  const { data: categorizedNodes } = trpc.nodeRegistry.getCategorizedNodes.useQuery()
-  const { data: searchResults } = trpc.nodeRegistry.searchNodes.useQuery(searchQuery, {
-    enabled: searchQuery.length > 0,
-  })
-
-  const categories = searchQuery ? searchResults : categorizedNodes
-
   return (
     <>
       {/* Overlay to catch clicks outside */}
@@ -59,7 +79,6 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
         onClick={onClose}
       />
 
-      {/* Menu */}
       <motion.div
         ref={menuRef}
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -73,8 +92,9 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
           stiffness: 200,
         }}
         className={cn(
-          'fixed z-50 w-64 rounded-lg border bg-popover shadow-md',
-          'backdrop-blur-sm bg-opacity-98',
+          'fixed z-50 w-64',
+          'bg-popover text-popover-foreground',
+          'rounded-md border shadow-md',
         )}
         style={{
           left: menuPosition.x,
@@ -83,78 +103,70 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Search */}
-        <div className="p-2 border-b">
-          <Command className="rounded-md">
-            <CommandInput
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              placeholder="Search nodes..."
-              className="h-8"
-              autoFocus
-            />
-          </Command>
-        </div>
+        <Command className="rounded-md">
+          <CommandInput
+            placeholder="Search nodes..."
+            value={search}
+            onValueChange={setSearch}
+            autoFocus
+          />
 
-        {/* Node List */}
-        <ScrollArea className="h-[300px]">
-          <div className="p-2">
-            {categories?.map(category => (
-              <div key={category.category} className="mb-4 last:mb-0">
-                {/* Category Header */}
-                <div className="flex items-center gap-2 px-2 py-1.5">
-                  <CategoryIcon
-                    name={category.metadata.icon}
-                    size={16}
-                    className="text-muted-foreground"
-                  />
-                  <span className="text-sm font-medium">
-                    {category.metadata.label}
-                  </span>
-                </div>
-
-                {/* Nodes */}
-                <div className="mt-1">
-                  {category.nodes.map(node => (
-                    <motion.div
-                      key={node.id}
-                      className={cn(
-                        'flex items-center gap-2 px-4 py-1.5 rounded-sm text-sm',
-                        'cursor-pointer hover:bg-accent',
-                      )}
-                      onClick={() => onSelect(node, category.metadata)}
-                      whileHover={{ x: 2 }}
-                      transition={{ duration: 0.1 }}
+          <ScrollArea className="h-[300px]">
+            {filteredCategories.map(category => (
+              <CommandGroup
+                key={category.category}
+                heading={(
+                  <div className="flex items-center gap-2">
+                    <CategoryIcon
+                      name={category.metadata.icon}
+                      size={14}
+                      style={{
+                        color: theme === 'dark'
+                          ? category.metadata.style.dark.text
+                          : category.metadata.style.light.text,
+                      }}
+                    />
+                    <span>{category.metadata.label}</span>
+                  </div>
+                )}
+              >
+                {category.nodes.map(node => (
+                  <CommandItem
+                    key={node.id}
+                    value={`${category.category}:${node.metadata.title}`}
+                    onSelect={() => handleSelect(node, category.metadata)}
+                  >
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 p-0 h-auto font-normal"
                     >
                       <span
-                        className="h-2 w-2 rounded-full shrink-0"
+                        className={cn(
+                          'h-2 w-2 rounded-full shrink-0',
+                          'ring-[1.5px] ring-background',
+                          'shadow-sm',
+                        )}
                         style={{
-                          backgroundColor: category.metadata.style.dark.text,
-                          boxShadow: `0 1px 2px ${category.metadata.style.dark.text}40`,
+                          backgroundColor: theme === 'dark'
+                            ? category.metadata.style.dark.text
+                            : category.metadata.style.light.text,
+                          boxShadow: `0 1px 3px ${
+                            theme === 'dark'
+                              ? category.metadata.style.dark.text
+                              : category.metadata.style.light.text
+                          }80`,
                         }}
                       />
-                      <span className="flex-1 truncate">
-                        {node.metadata.title}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
+                      <span>{node.metadata.title}</span>
+                    </Button>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             ))}
 
-            {/* Empty State */}
-            {(!categories || categories.length === 0) && (
-              <div className="p-4 text-center text-muted-foreground">
-                <LayersIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                <p className="text-sm">
-                  {searchQuery
-                    ? `No nodes found matching "${searchQuery}"`
-                    : 'No nodes available'}
-                </p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+            <CommandEmpty>No nodes found.</CommandEmpty>
+          </ScrollArea>
+        </Command>
       </motion.div>
     </>
   )

@@ -3,6 +3,7 @@ import type { CategoryMetadata, INode } from '@chaingraph/types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useCategories } from '@/store/categories'
 import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -13,29 +14,26 @@ interface NodePreviewProps {
 
 export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
   const { theme } = useTheme()
+  const { getCategoryMetadata } = useCategories()
 
-  const [style, setStyle] = useState(
+  const style = useMemo(() => (
     theme === 'dark'
       ? categoryMetadata.style.dark
-      : categoryMetadata.style.light,
-  )
+      : categoryMetadata.style.light
+  ), [theme, categoryMetadata])
+
   const [inputs, setInputs] = useState(node.getInputs())
   const [outputs, setOutputs] = useState(node.getOutputs())
-
-  useEffect(() => {
-    setStyle(
-      theme === 'dark'
-        ? categoryMetadata.style.dark
-        : categoryMetadata.style.light,
-    )
-  }, [theme, categoryMetadata])
 
   useEffect(() => {
     setInputs(node.getInputs())
     setOutputs(node.getOutputs())
   }, [node])
 
-  const Icon = useMemo(() => getCategoryIcon(categoryMetadata.icon as CategoryIconName), [categoryMetadata.icon])
+  const Icon = useMemo(
+    () => getCategoryIcon(categoryMetadata.icon as CategoryIconName),
+    [categoryMetadata.icon],
+  )
 
   return (
     <div className={cn(
@@ -84,7 +82,7 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
             <div className="space-y-2">
               {inputs.map(port => (
                 <div
-                  key={port.config.id}
+                  key={port.config.id || port.config.key + port.config.title}
                   className="group relative pl-3 flex items-start"
                 >
                   {/* Port Circle */}
@@ -122,7 +120,7 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
             <div className="space-y-2">
               {outputs.map(port => (
                 <div
-                  key={port.config.id}
+                  key={port.config.id || port.config.key + port.config.title}
                   className="group relative pr-3 flex items-start justify-end text-right"
                 >
                   {/* Port Content */}

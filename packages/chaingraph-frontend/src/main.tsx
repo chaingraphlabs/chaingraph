@@ -1,3 +1,4 @@
+import { initializeStores } from '@/store/init.ts'
 import { nodeRegistry } from '@chaingraph/nodes'
 import {
   registerFlowTransformers,
@@ -14,6 +15,8 @@ import './reflect'
 registerPortTransformers()
 registerNodeTransformers(nodeRegistry)
 registerFlowTransformers()
+
+initializeStores().catch(console.error)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

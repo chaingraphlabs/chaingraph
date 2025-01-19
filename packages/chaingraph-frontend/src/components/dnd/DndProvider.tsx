@@ -81,10 +81,7 @@ export function DndProvider({ children }: DndProviderProps) {
               transformOrigin: 'top center',
             }}
           >
-            <NodePreview
-              node={draggedNode.node}
-              categoryMetadata={draggedNode.categoryMetadata}
-            />
+            <NodePreview node={draggedNode.node} categoryMetadata={draggedNode.categoryMetadata} />
           </div>
         )}
       </DragOverlay>

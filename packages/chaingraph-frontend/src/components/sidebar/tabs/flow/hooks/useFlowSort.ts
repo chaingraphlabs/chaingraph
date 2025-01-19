@@ -1,7 +1,7 @@
 import type { FlowMetadata } from '@chaingraph/types'
 import { useMemo } from 'react'
 
-export function useFlowSort(flows: FlowMetadata[] | undefined, selectedFlowId?: string) {
+export function useFlowSort(flows: FlowMetadata[] | undefined, selectedFlowId: string | null) {
   return useMemo(() => {
     if (!flows)
       return []

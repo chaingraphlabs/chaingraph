@@ -1,3 +1,5 @@
+import { FlowList } from '@/components/sidebar/tabs/flow/FlowList.tsx'
+import { NodeList } from '@/components/sidebar/tabs/node-list'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -11,16 +13,14 @@ import {
   ChevronLeftIcon,
   CodeIcon,
   GearIcon,
-  LayersIcon,
   QuestionMarkIcon,
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
+import { LayersIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { EventList } from './tabs/EventList'
-import { FlowList } from './tabs/flow/FlowList'
 import { Help } from './tabs/Help'
-import { NodeList } from './tabs/node-list'
 import { Settings } from './tabs/Settings'
 import { VariableList } from './tabs/VariableList'
 
