@@ -5,6 +5,7 @@ import {
   setFlowMetadata,
   setFlowSubscriptionError,
   setFlowSubscriptionStatus,
+  setNodes,
 } from '@/store'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
@@ -21,18 +22,23 @@ export function useFlowSubscription() {
 
   // Create event handlers map
   const eventHandlers: FlowEventHandlerMap = useMemo(() => ({
+    [FlowEventType.FlowInitStart]: (data) => {
+      // clean up existing flow data
+      setNodes({})
+      setFlowMetadata(data.metadata)
+    },
+
+    [FlowEventType.FlowInitEnd]: (data) => {},
+
     [FlowEventType.MetadataUpdated]: (data) => {
-      console.log('Flow metadata updated:', data)
       setFlowMetadata(data.newMetadata)
     },
 
     [FlowEventType.NodeAdded]: (data) => {
-      console.log('Node added:', data)
       addNode(data.node)
     },
 
     [FlowEventType.NodeRemoved]: (data) => {
-      console.log('Node removed:', data)
       removeNode(data.nodeId)
     },
 

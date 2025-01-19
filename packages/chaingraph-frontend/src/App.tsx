@@ -1,5 +1,5 @@
+import Flow from '@/components/flow/Flow.tsx'
 import { ReactFlowProvider } from '@xyflow/react'
-import Flow from './components/flow/Flow.tsx'
 import { Sidebar } from './components/sidebar/Sidebar.tsx'
 import { ThemeToggle } from './components/theme/ThemeToggle.tsx'
 

@@ -1,4 +1,4 @@
-import type { NodeState } from './types'
+import type { INode } from '@chaingraph/types'
 import { combine, createStore } from 'effector'
 import {
   addNodeToFlowFx,
@@ -14,28 +14,44 @@ import {
 } from './events'
 
 // Store for nodes
-export const $nodes = createStore<Record<string, NodeState>>({})
+export const $nodes = createStore<Record<string, INode>>({})
   .on(setNodes, (_, nodes) => nodes)
   .on(addNode, (state, node) => ({
     ...state,
-    [node.id]: {
-      id: node.id,
-      metadata: node.metadata,
-      status: node.status,
-      portIds: Array.from(node.ports.keys()),
-    },
+    [node.id]: node,
   }))
   .on(removeNode, (state, id) => {
     const { [id]: _, ...rest } = state
     return rest
   })
-  .on(setNodeMetadata, (state, { id, metadata }) => ({
+  .on(setNodeMetadata, (state, { id, metadata }) => {
+    const node = state[id]
+    if (!node)
+      return state
+
+    node.setMetadata(metadata)
+
+    return {
+      ...state,
+      [id]: node,
+    }
+  })
+  .reset(clearNodes)
+
+// Store for tracking node versions
+export const $nodeVersions = createStore<Record<string, number>>({})
+  .on(addNode, (state, node) => ({
     ...state,
-    [id]: {
-      ...state[id],
-      metadata,
-    },
+    [node.id]: 1,
   }))
+  .on(setNodeMetadata, (state, { id }) => ({
+    ...state,
+    [id]: (state[id] || 0) + 1,
+  }))
+  .on(removeNode, (state, id) => {
+    const { [id]: _, ...rest } = state
+    return rest
+  })
   .reset(clearNodes)
 
 // Loading states
@@ -60,6 +76,20 @@ export const $nodesError = combine(
   (addError, removeError) => addError || removeError,
 )
 
+// Combined store for nodes with versions
+export const $nodesWithVersions = combine(
+  $nodes,
+  $nodeVersions,
+  (nodes, versions) => ({
+    nodes,
+    versions,
+  }),
+)
+
 // Computed stores
-export const $nodesList = $nodes.map(nodes => Object.values(nodes))
-export const $nodesCount = $nodes.map(nodes => Object.keys(nodes).length)
+// export const $nodesList = $nodesWithVersions.map(
+//   nodes => Object.values(nodes),
+// )
+// export const $nodesCount = $nodesWithVersions.map(
+//   nodes => Object.keys(nodes).length,
+// )

@@ -91,7 +91,7 @@ export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
     if (!existsPortConfig) {
       metadata.portsConfig.set(propertyKey, {
         ...inferredConfig,
-        id: inferredConfig?.id ?? propertyKey,
+        // id: inferredConfig?.id ?? propertyKey,
         key: inferredConfig?.key ?? propertyKey,
         title: inferredConfig?.title ?? propertyKey,
       })

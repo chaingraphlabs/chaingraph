@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
 import { ArrowRightIcon } from 'lucide-react'
+import { useMemo } from 'react'
 import { NodePreview } from './NodePreview'
 
 interface NodeCardProps {
@@ -18,7 +19,12 @@ interface NodeCardProps {
 
 export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
   const { theme } = useTheme()
-  const style = theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light
+
+  const style = useMemo(() => (
+    theme === 'dark'
+      ? categoryMetadata.style.dark
+      : categoryMetadata.style.light
+  ), [theme, categoryMetadata])
 
   // Setup draggable
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({

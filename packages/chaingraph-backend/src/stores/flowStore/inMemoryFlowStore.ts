@@ -42,12 +42,12 @@ export class InMemoryFlowStore implements IFlowStore {
    * @param node Node to add
    * @throws Error if flow not found
    */
-  async addNode(flowId: string, node: INode): Promise<void> {
+  async addNode(flowId: string, node: INode): Promise<INode> {
     const flow = this.flows.get(flowId)
     if (!flow) {
       throw new Error(`Flow ${flowId} not found`)
     }
-    flow.addNode(node)
+    return flow.addNode(node)
   }
 
   /**

@@ -1,4 +1,4 @@
-import { sample } from 'effector'
+import { createEffect, sample } from 'effector'
 import {
   createFlowFx,
   deleteFlowFx,
@@ -23,6 +23,11 @@ import {
   $flowSubscriptionError,
   $flowSubscriptionStatus,
 } from './stores'
+
+export const initializeFlowsFx = createEffect(async () => {
+  const flows = await loadFlowsListFx()
+  return flows
+})
 
 // Flow List operations
 sample({

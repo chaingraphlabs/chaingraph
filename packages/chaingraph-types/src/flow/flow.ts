@@ -46,7 +46,7 @@ export class Flow implements IFlow {
     this.edges = new Map()
   }
 
-  addNode(node: INode): void {
+  addNode(node: INode): INode {
     if (this.nodes.has(node.id)) {
       throw new Error(`Node with ID ${node.id} already exists in the flow.`)
     }
@@ -61,21 +61,14 @@ export class Flow implements IFlow {
     this.nodeEventHandlersCancel.set(node.id, cancel)
 
     // Emit NodeAdded event
-    // const event: FlowEvent<FlowEventType.NodeAdded, NodeAddedEventData> = {
-    //   index: this.getNextEventIndex(),
-    //   flowId: this.id,
-    //   type: FlowEventType.NodeAdded,
-    //   timestamp: new Date(),
-    //   data: {
-    //     node,
-    //   },
-    // }
     this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
       FlowEventType.NodeAdded,
       { node },
     ))
+
+    return node
   }
 
   removeNode(nodeId: string): void {

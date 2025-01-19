@@ -32,11 +32,20 @@ export const subscribeToEvents = publicProcedure
     const eventQueue = new EventQueue<FlowEvent>(100)
 
     try {
+      // Subscribe to future events
+      const unsubscribe = flow.onEvent((event) => {
+        // Filter by event types if specified
+        if (eventTypes && !eventTypes.includes(event.type)) {
+          return
+        }
+        eventQueue.publish(event)
+      })
+
       // Send initial state events
       // 1. Metadata
-      yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.MetadataUpdated, {
-        oldMetadata: undefined,
-        newMetadata: flow.metadata,
+      yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitStart, {
+        flowId,
+        metadata: flow.metadata,
       }))
 
       // 2. Existing nodes
@@ -49,14 +58,9 @@ export const subscribeToEvents = publicProcedure
         yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgeAdded, { edge }))
       }
 
-      // Subscribe to future events
-      const unsubscribe = flow.onEvent((event) => {
-        // Filter by event types if specified
-        if (eventTypes && !eventTypes.includes(event.type)) {
-          return
-        }
-        eventQueue.publish(event)
-      })
+      yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitEnd, {
+        flowId,
+      }))
 
       try {
         const iterator = createQueueIterator(eventQueue)

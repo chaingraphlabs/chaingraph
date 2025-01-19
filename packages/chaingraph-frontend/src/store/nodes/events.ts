@@ -13,7 +13,7 @@ export const addNodeToFlow = createEvent<AddNodeEvent>()
 export const removeNodeFromFlow = createEvent<{ flowId: string, nodeId: string }>()
 
 // Bulk operations
-export const setNodes = createEvent<Record<string, NodeState>>()
+export const setNodes = createEvent<Record<string, INode>>()
 export const clearNodes = createEvent()
 
 // State events

@@ -18,7 +18,7 @@ import type { PortConfig } from '@chaingraph/types/port'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import { NodeEventType } from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { PortFactory } from '@chaingraph/types/port'
+import { ObjectPort, PortFactory } from '@chaingraph/types/port'
 import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
@@ -74,11 +74,11 @@ export abstract class BaseNode implements INode {
     }
 
     for (const [portId, portConfig] of ports) {
-      this.initializePort(portConfig)
+      this.initializePort(this, portConfig)
     }
   }
 
-  protected initializePort(portConfig: PortConfig, parentPortId?: string): void {
+  protected initializePort(objectValue: object, portConfig: PortConfig, parentPortId?: string): void {
     // Create the port instance
     const port = PortFactory.create(portConfig)
 
@@ -86,14 +86,14 @@ export abstract class BaseNode implements INode {
     const portId = portConfig.id || `${parentPortId || ''}.${portConfig.key}`
 
     // check if the node has a field with the same key as the port
-    if (portConfig.key && Object.prototype.hasOwnProperty.call(this, portConfig.key)) {
-      const value = (this as any)[portConfig.key]
+    if (portConfig.key && Object.prototype.hasOwnProperty.call(objectValue, portConfig.key)) {
+      const value = (objectValue as any)[portConfig.key]
       if (value) {
         port.setValue(value)
       }
 
       // set up a getter and setter for the field
-      Object.defineProperty(this, portConfig.key, {
+      Object.defineProperty(objectValue, portConfig.key, {
         get: () => {
           return port.value
         },
@@ -104,8 +104,23 @@ export abstract class BaseNode implements INode {
         enumerable: true,
       })
     }
+
     // Store the port in the _ports Map
     this._ports.set(portId, port)
+
+    if (ObjectPort.isObjectPortConfig(portConfig)) {
+      // for the object port, initialize its nested ports recursively
+      const nestedPorts = portConfig.schema?.properties
+      if (nestedPorts) {
+        for (const [nestedPortId, nestedPortConfig] of Object.entries(nestedPorts)) {
+          this.initializePort(
+            port.value,
+            nestedPortConfig,
+            portId,
+          )
+        }
+      }
+    }
   }
 
   /**
