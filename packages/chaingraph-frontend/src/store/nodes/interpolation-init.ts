@@ -1,5 +1,5 @@
 import { updateNodePositionInterpolated } from './events'
-import { positionInterpolator } from './position-interpolation'
+import { positionInterpolator } from './position-interpolation-advanced'
 
 // Initialize interpolator update handler
 positionInterpolator.onUpdate = (nodeId, position) => {
@@ -8,3 +8,5 @@ positionInterpolator.onUpdate = (nodeId, position) => {
     position,
   })
 }
+
+positionInterpolator.start()

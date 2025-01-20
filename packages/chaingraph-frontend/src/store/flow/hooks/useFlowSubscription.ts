@@ -11,7 +11,7 @@ import {
 } from '@/store'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
-import { positionInterpolator } from '@/store/nodes/position-interpolation'
+import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { createEventHandler } from '@chaingraph/types/flow/eventHandlers'
 import { FlowEventType } from '@chaingraph/types/flow/events'
 import { DefaultPosition } from '@chaingraph/types/node/node-ui.ts'
@@ -75,11 +75,12 @@ export function useFlowSubscription() {
       })
 
       const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
-      positionInterpolator.startInterpolation(
-        data.nodeId,
-        currentPosition,
-        data.newPosition,
-      )
+      // positionInterpolator.startInterpolation(
+      //   data.nodeId,
+      //   currentPosition,
+      //   data.newPosition,
+      // )
+      positionInterpolator.addState(data.nodeId, data.newPosition, currentPosition)
     },
 
     [FlowEventType.NodeUIStateChanged]: (data) => {
