@@ -10,7 +10,7 @@ import {
   Node,
   NodeRegistry,
   Output,
-  PortKindEnum,
+  PortKind,
   PortStreamInput,
   PortStreamOutput,
   registerPortTransformers,
@@ -30,7 +30,7 @@ class StreamNode extends BaseNode {
   @PortStreamInput({
     defaultValue: new MultiChannel<string>(),
     valueType: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
     },
   })
@@ -40,7 +40,7 @@ class StreamNode extends BaseNode {
   @PortStreamOutput({
     defaultValue: new MultiChannel<string>(),
     valueType: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
     },
   })

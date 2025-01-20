@@ -1,39 +1,100 @@
 import { createCaller } from '@chaingraph/backend/router'
 import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { PortKindEnum } from '@chaingraph/types'
+import { NodeCatalog } from '@chaingraph/nodes'
+import {
+  BaseNode,
+  type ExecutionContext,
+  ExecutionStatus,
+  Id,
+  Input,
+  Node,
+  type NodeExecutionResult,
+  NodeRegistry,
+  Output,
+  PortBoolean,
+  PortKind,
+  PortNumber,
+  PortString,
+} from '@chaingraph/types'
 import { FlowEventType } from '@chaingraph/types/flow/events'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
+@Node({
+  title: 'Scalar Node',
+  description: 'Node with scalar ports',
+}, null)
+class ScalarNode extends BaseNode {
+  @Input()
+  @PortString({
+    defaultValue: 'default string',
+  })
+  @Id('strInput')
+  strInput: string = 'default string'
+
+  @Input()
+  @PortNumber({
+    defaultValue: 42,
+  })
+  @Id('numInput')
+  numInput: number = 42
+
+  @Input()
+  @PortBoolean({
+    defaultValue: true,
+  })
+  @Id('boolInput')
+  boolInput: boolean = true
+
+  @Id('strOutput')
+  @PortString()
+  @Output()
+  strOutput: string = ''
+
+  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    return {
+      status: ExecutionStatus.Completed,
+      startTime: context.startTime,
+      endTime: new Date(),
+      outputs: new Map(),
+    }
+  }
+}
 
 describe('flow Event Subscription', () => {
+  beforeAll(() => {
+    NodeRegistry.getInstance().clear()
+    NodeRegistry.getInstance().registerNode(ScalarNode)
+  })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
   // Helper function to setup test environment
   async function setupTestFlow() {
-    const ctx = createTestContext()
+    const ctx = createTestContext(
+      NodeRegistry.getInstance(),
+      new NodeCatalog(NodeRegistry.getInstance()),
+    )
+
     const caller = createCaller(ctx)
     const flow = await caller.flow.create({ name: 'Test Flow' })
     const types = await caller.nodeRegistry.listAvailableTypes()
     expect(types.length).toBeGreaterThan(0)
 
     // Find ScalarNode type
-    const scalarNodeType = types.find(t => t.metadata.title === 'Scalar Node')
+    const scalarNodeType = types.find(t => t.title === 'Scalar Node')
     expect(scalarNodeType).toBeDefined()
 
-    return { caller, flow, nodeType: scalarNodeType!.metadata.type }
+    return { caller, flow, nodeType: scalarNodeType!.type }
   }
 
   // Basic test for node addition events
   it('should receive node added events and verify their structure', async () => {
     // Setup test context and caller
-    const ctx = createTestContext()
-    const caller = createCaller(ctx)
-
-    // Create a test flow
-    const flow = await caller.flow.create({ name: 'Test Flow' })
-
-    // Get ScalarNode type
-    const types = await caller.nodeRegistry.listAvailableTypes()
-    expect(types.length).toBeGreaterThan(0)
-    const scalarNodeType = types.find(t => t.metadata.title === 'Scalar Node')
-    expect(scalarNodeType).toBeDefined()
+    // const ctx = createTestContext()
+    // const caller = createCaller(ctx)
+    const { caller, flow, nodeType } = await setupTestFlow()
 
     // Array to collect received events
     const receivedEvents: any[] = []
@@ -41,14 +102,14 @@ describe('flow Event Subscription', () => {
     // Create subscription to flow events
     const eventsGenerator = await caller.flow.subscribeToEvents({
       flowId: flow.id,
-      eventTypes: [FlowEventType.NodeAdded],
+      eventTypes: [], // just any event
     })
 
     // Start collecting events in background
     const collectionPromise = (async () => {
       for await (const event of eventsGenerator) {
         receivedEvents.push(event)
-        if (receivedEvents.length >= 2)
+        if (receivedEvents.length >= 4)
           break
       }
     })()
@@ -56,13 +117,13 @@ describe('flow Event Subscription', () => {
     // Add two nodes to trigger events
     await caller.flow.addNode({
       flowId: flow.id,
-      nodeType: scalarNodeType!.metadata.type,
+      nodeType,
       position: { x: 0, y: 0 },
     })
 
     await caller.flow.addNode({
       flowId: flow.id,
-      nodeType: scalarNodeType!.metadata.type,
+      nodeType,
       position: { x: 100, y: 100 },
     })
 
@@ -70,7 +131,11 @@ describe('flow Event Subscription', () => {
     await collectionPromise
 
     // Verify we received exactly 2 events
-    expect(receivedEvents).toHaveLength(2)
+    expect(receivedEvents).toHaveLength(4)
+
+    let foundStart = false
+    let foundEnd = false
+    let count = 0
 
     // Verify the structure of each event (TrackedEnvelope format)
     receivedEvents.forEach((event) => {
@@ -79,6 +144,18 @@ describe('flow Event Subscription', () => {
 
       // Destructure the TrackedEnvelope components
       const [id, eventData, symbol] = event
+
+      if (!foundStart) {
+        expect(eventData.type).toBe(FlowEventType.FlowInitStart)
+        foundStart = true
+        return
+      }
+
+      if (!foundEnd) {
+        expect(eventData.type).toBe(FlowEventType.FlowInitEnd)
+        foundEnd = true
+        return
+      }
 
       // Verify event structure
       expect(typeof id).toBe('string')
@@ -91,7 +168,7 @@ describe('flow Event Subscription', () => {
 
       // Verify node structure
       const node = eventData.data.node
-      expect(node.metadata.type).toBe(scalarNodeType!.metadata.type)
+      expect(node.metadata.type).toBe(nodeType)
 
       // Verify ScalarNode specific ports
       const ports = node.ports
@@ -99,7 +176,11 @@ describe('flow Event Subscription', () => {
       expect(ports.has('numInput')).toBe(true)
       expect(ports.has('boolInput')).toBe(true)
       expect(ports.has('strOutput')).toBe(true)
+
+      count++
     })
+
+    expect(foundEnd).toBe(true)
 
     // Verify events are properly ordered by checking indexes
     expect(receivedEvents[1][1].index).toBeGreaterThan(receivedEvents[0][1].index)
@@ -364,8 +445,8 @@ describe('flow Event Subscription', () => {
     expect(edge.metadata.description).toBe('string connection')
 
     // Verify port types
-    expect(edge.sourcePort.config.kind).toBe(PortKindEnum.String)
-    expect(edge.targetPort.config.kind).toBe(PortKindEnum.String)
+    expect(edge.sourcePort.config.kind).toBe(PortKind.String)
+    expect(edge.targetPort.config.kind).toBe(PortKind.String)
   }, { timeout: 10000 })
 
   it('should handle node removal with connections', async () => {

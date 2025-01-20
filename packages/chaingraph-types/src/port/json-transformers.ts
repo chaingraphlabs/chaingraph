@@ -1,7 +1,7 @@
 import type { JSONValue } from 'superjson/dist/types'
 import type { IPort, PortConfig } from './types'
 import Decimal from 'decimal.js'
-import superjson from 'superjson'
+import SuperJSON from 'superjson'
 import { MultiChannel } from './channel'
 import { PortRegistry } from './registry'
 
@@ -10,7 +10,7 @@ import { PortRegistry } from './registry'
  */
 export function registerPortTransformers() {
   // Register Decimal transformer
-  superjson.registerCustom<Decimal, string>(
+  SuperJSON.registerCustom<Decimal, string>(
     {
       isApplicable: (v): v is Decimal => Decimal.isDecimal(v),
       serialize: v => v.toJSON(),
@@ -20,7 +20,7 @@ export function registerPortTransformers() {
   )
 
   // Register MultiChannel transformer
-  superjson.registerCustom<MultiChannel<any>, JSONValue>(
+  SuperJSON.registerCustom<MultiChannel<any>, JSONValue>(
     {
       // isApplicable: (v): v is MultiChannel<any> => v instanceof MultiChannel,
       isApplicable: (v): v is MultiChannel<any> => {
@@ -46,7 +46,7 @@ export function registerPortTransformers() {
  * @param port Instance of port to create transformer from
  */
 export function registerPortTransformer<C extends PortConfig>(port: IPort<C>): void {
-  superjson.registerCustom<IPort<C>, JSONValue>(
+  SuperJSON.registerCustom<IPort<C>, JSONValue>(
     {
       isApplicable: (v): v is IPort<C> => v instanceof port.constructor,
       serialize: v => v.serializePort(),

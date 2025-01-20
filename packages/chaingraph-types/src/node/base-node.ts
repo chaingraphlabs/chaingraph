@@ -1,14 +1,11 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type {
+  EventReturnType,
   NodeEvent,
-  NodeStatusChangeEvent,
-  NodeUIDimensionsChangeEvent,
-  NodeUIPositionChangeEvent,
-  NodeUIStateChangeEvent,
-  NodeUIStyleChangeEvent,
+  NodeEventDataType,
 } from '@chaingraph/types/node/events'
 import type { INode } from '@chaingraph/types/node/interface'
-import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
+import type { Dimensions, NodeUIMetadata, NodeUIStyle, Position } from '@chaingraph/types/node/node-ui'
 import type {
   NodeExecutionResult,
   NodeMetadata,
@@ -19,7 +16,7 @@ import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import { NodeEventType } from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
 import { ObjectPort, PortFactory } from '@chaingraph/types/port'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
 import { PortConfigProcessor } from './port-config-processor'
@@ -32,7 +29,7 @@ export abstract class BaseNode implements INode {
   protected _ports: Map<string, IPort<any>> = new Map()
 
   protected eventQueue = new EventQueue<NodeEvent>()
-  protected eventsDisabled = false
+  private eventsDisabled = false
 
   constructor(id: string, _metadata?: NodeMetadata) {
     this._id = id
@@ -43,7 +40,7 @@ export abstract class BaseNode implements INode {
         throw new Error('Node type is required in metadata.')
       }
 
-      this._metadata = _metadata
+      this._metadata = { ..._metadata }
     } else {
       const metadata = getOrCreateNodeMetadata(this)
       if (!metadata) {
@@ -54,8 +51,17 @@ export abstract class BaseNode implements INode {
         throw new Error('Node type is required in metadata.')
       }
 
-      this._metadata = metadata
+      this._metadata = { ...metadata }
     }
+
+    // Initialize version if not set
+    if (!this._metadata.version) {
+      this._metadata.version = 1
+    }
+
+    // if (this._id !== '' && this._id !== this._metadata.id) {
+    //   this._metadata.id = this._id
+    // }
   }
 
   abstract execute(context: ExecutionContext): Promise<NodeExecutionResult>
@@ -64,7 +70,7 @@ export abstract class BaseNode implements INode {
     // Process PortConfigs using PortConfigProcessor
     (new PortConfigProcessor()).processNodePorts(this)
     this.initializePorts()
-    this.setStatus(NodeStatus.Initialized)
+    this.setStatus(NodeStatus.Initialized, false)
   }
 
   protected initializePorts(): void {
@@ -95,7 +101,7 @@ export abstract class BaseNode implements INode {
       // set up a getter and setter for the field
       Object.defineProperty(objectValue, portConfig.key, {
         get: () => {
-          return port.value
+          return port.getValue()
         },
         set: (newValue: any) => {
           port.setValue(newValue)
@@ -161,11 +167,11 @@ export abstract class BaseNode implements INode {
     for (const port of this.ports.values()) {
       port.reset()
     }
-    this.setStatus(NodeStatus.Idle)
+    this.setStatus(NodeStatus.Idle, false)
   }
 
   async dispose(): Promise<void> {
-    this.setStatus(NodeStatus.Disposed)
+    this.setStatus(NodeStatus.Disposed, false)
     return this.eventQueue.close()
   }
 
@@ -181,14 +187,14 @@ export abstract class BaseNode implements INode {
     return Array.from(
       this._ports
         .values()
-        .filter(port => port.config.direction === PortDirectionEnum.Input),
+        .filter(port => port.config.direction === PortDirection.Input),
     )
   }
 
   getOutputs(): IPort<any>[] {
     return Array.from(
       this._ports.values()
-        .filter(port => port.config.direction === PortDirectionEnum.Output),
+        .filter(port => port.config.direction === PortDirection.Output),
     )
   }
 
@@ -247,7 +253,7 @@ export abstract class BaseNode implements INode {
 
     this._ports.set(port.config.id, port)
 
-    // TODO: add event
+    // TODO: add event and version update
 
     return port
   }
@@ -255,41 +261,46 @@ export abstract class BaseNode implements INode {
   removePort(portId: string): void {
     if (this._ports.delete(portId)) {
       // Port removed successfully
-      // TODO: add event
+      // TODO: add event and version update
     } else {
       throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)
     }
   }
 
-  setStatus(status: NodeStatus): void {
-    const oldStatus = this._status
-    this._status = status
-    const event: NodeStatusChangeEvent = {
-      type: NodeEventType.StatusChange,
-      nodeId: this.id,
-      timestamp: new Date(),
-      oldStatus,
-      newStatus: status,
-    }
-
-    this.emit(event)
-  }
-
+  /**
+   * Set the node metadata. Does not emit an event and does not update the version.
+   * @param metadata
+   */
   setMetadata(metadata: NodeMetadata): void {
     this._metadata = metadata
+  }
+
+  setStatus(status: NodeStatus, emitEvent?: boolean): void {
+    const oldStatus = this._status
+    this._status = status
+
+    if (!emitEvent) {
+      return
+    }
+    this.incrementVersion()
+    this.emit(this.createEvent(NodeEventType.StatusChange, {
+      oldStatus,
+      newStatus: status,
+    }))
   }
 
   /**
    * Updates node UI position
    * @param position New position coordinates
+   * @param emitEvent
    */
-  setPosition(position: NodeUIMetadata['position']): void {
+  setPosition(position: Position, emitEvent?: boolean): void {
     const oldPosition = this._metadata.ui?.position
     if (!this._metadata.ui) {
       this._metadata = {
         ...this._metadata,
         ui: {
-          position: { ...position },
+          position,
         },
       }
     } else {
@@ -297,85 +308,92 @@ export abstract class BaseNode implements INode {
         ...this._metadata,
         ui: {
           ...this._metadata.ui,
-          position: { ...position },
+          position,
         },
       }
     }
 
-    const event: NodeUIPositionChangeEvent = {
-      type: NodeEventType.UIPositionChange,
-      nodeId: this._id,
-      timestamp: new Date(),
-      oldPosition,
-      newPosition: { ...position },
+    if (!emitEvent) {
+      return
     }
 
-    this.emit(event)
+    // update the version
+    this.incrementVersion()
+
+    this.emit(this.createEvent(NodeEventType.UIPositionChange, {
+      oldPosition,
+      newPosition: { ...position },
+    }))
   }
 
-  setDimensions(dimensions: NodeUIMetadata['dimensions']): void {
+  setDimensions(dimensions: Dimensions, emitEvent?: boolean): void {
     const oldDimensions = this._metadata.ui?.dimensions
     if (!this._metadata.ui) {
-      this._metadata.ui = { position: { x: 0, y: 0 }, dimensions }
+      this._metadata.ui = { dimensions }
     } else {
       this._metadata.ui.dimensions = dimensions
     }
 
-    const event: NodeUIDimensionsChangeEvent = {
-      type: NodeEventType.UIDimensionsChange,
-      nodeId: this._id,
-      timestamp: new Date(),
-      oldDimensions,
-      newDimensions: dimensions,
+    if (!emitEvent) {
+      return
     }
 
-    this.emit(event)
+    this.incrementVersion()
+    this.emit(this.createEvent(NodeEventType.UIDimensionsChange, {
+      oldDimensions,
+      newDimensions: dimensions,
+    }))
   }
 
   /**
    * Updates node UI state
    * @param state New UI state
+   * @param emitEvent
    */
-  setUIState(state: NodeUIMetadata['state']): void {
+  setUIState(state: NodeUIMetadata['state'], emitEvent?: boolean): void {
     const oldState = this._metadata.ui?.state
     if (!this._metadata.ui) {
-      this._metadata.ui = { position: { x: 0, y: 0 }, state }
+      this._metadata.ui = { state }
     } else {
       this._metadata.ui.state = state
     }
 
-    const event: NodeUIStateChangeEvent = {
-      type: NodeEventType.UIStateChange,
-      nodeId: this._id,
-      timestamp: new Date(),
-      oldState,
-      newState: state,
+    if (!emitEvent) {
+      return
     }
 
-    this.emit(event)
+    this.incrementVersion()
+
+    this.emit(this.createEvent(NodeEventType.UIStateChange, {
+      oldState,
+      newState: state,
+    }))
   }
 
   /**
    * Updates node UI style
    * @param style New UI style
+   * @param emitEvent
    */
-  setUIStyle(style: NodeUIMetadata['style']): void {
+  setUIStyle(style: NodeUIStyle, emitEvent?: boolean): void {
     const oldStyle = this._metadata.ui?.style
     if (!this._metadata.ui) {
-      this._metadata.ui = { position: { x: 0, y: 0 }, style }
+      this._metadata.ui = { style }
     } else {
       this._metadata.ui.style = style
     }
 
-    const event: NodeUIStyleChangeEvent = {
-      type: NodeEventType.UIStyleChange,
-      nodeId: this._id,
-      timestamp: new Date(),
-      oldStyle,
-      newStyle: style,
+    if (!emitEvent) {
+      return
     }
 
-    this.emit(event)
+    // update the version
+    this.incrementVersion()
+
+    this.emit(this.createEvent(NodeEventType.UIStyleChange, {
+      oldStyle,
+      newStyle: style,
+    }))
   }
 
   /**
@@ -386,11 +404,40 @@ export abstract class BaseNode implements INode {
     return this._metadata.ui
   }
 
+  /**
+   * Disables node events to prevent event emission
+   */
   disableEvents(): void {
     this.eventsDisabled = true
   }
 
+  /**
+   * Enables node events to allow event emission
+   */
   enableEvents(): void {
     this.eventsDisabled = false
+  }
+
+  incrementVersion(): number {
+    console.log(`Incrementing version for node ${this.id}, current version: ${this.getVersion()}`)
+    this._metadata.version = this.getVersion() + 1
+    return this._metadata.version
+  }
+
+  getVersion(): number {
+    return this._metadata.version || 0
+  }
+
+  protected createEvent<T extends NodeEventType>(
+    type: T,
+    data: NodeEventDataType<T>,
+  ): EventReturnType<T> {
+    return {
+      type,
+      nodeId: this.id,
+      timestamp: new Date(),
+      version: this.getVersion(),
+      ...data,
+    } as EventReturnType<T>
   }
 }

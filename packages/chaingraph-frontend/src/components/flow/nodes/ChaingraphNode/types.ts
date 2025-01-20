@@ -6,14 +6,17 @@ import type { Node } from '@xyflow/react'
 //   categoryMetadata: CategoryMetadata
 // }, 'chaingraphNode'>
 
-interface BaseChaingraphNodeData {
-  node: INode
-  categoryMetadata: CategoryMetadata
-}
+// interface BaseChaingraphNodeData {
+//   node: INode
+//   categoryMetadata: CategoryMetadata
+// }
 
 // Extended interface with index signature
-export type ChaingraphNodeData = BaseChaingraphNodeData & {
-  [key: string]: unknown
-}
+// export type ChaingraphNodeData = BaseChaingraphNodeData & {
+//   [key: string]: unknown
+// }
 
-export type ChaingraphNode = Node<ChaingraphNodeData, 'chaingraphNode'>
+export type ChaingraphNode = Node<{
+  node: INode
+  categoryMetadata: CategoryMetadata
+}, 'chaingraphNode'>

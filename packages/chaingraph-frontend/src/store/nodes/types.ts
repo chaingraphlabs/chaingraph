@@ -1,4 +1,5 @@
 import type { NodeMetadata, NodeStatus } from '@chaingraph/types'
+import type { NodeUIMetadata, Position } from '@chaingraph/types/node/node-ui.ts'
 
 // State types
 export interface NodeState {
@@ -27,4 +28,18 @@ export interface AddNodeEvent {
 export interface UpdateNodeEvent {
   id: string
   data: Partial<NodeState>
+}
+
+export interface UpdateNodeUIEvent {
+  flowId: string
+  nodeId: string
+  ui: Partial<NodeUIMetadata>
+  version: number
+}
+
+export interface UpdateNodePosition {
+  flowId: string
+  nodeId: string
+  position: Position
+  version: number
 }

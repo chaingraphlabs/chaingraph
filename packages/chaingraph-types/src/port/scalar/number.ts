@@ -3,11 +3,15 @@ import type { NumberPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { NumberPortValue } from '@chaingraph/types/port/types/port-value'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 import Decimal from 'decimal.js'
 
-@registerPort<NumberPortConfig>(PortKindEnum.Number)
-export class NumberPort extends PortBase<NumberPortConfig> {
+export type NumberPortReturnType<T extends Decimal | number> = T extends Decimal
+  ? Decimal
+  : number
+
+@registerPort<NumberPortConfig>(PortKind.Number)
+export class NumberPort<D extends Decimal | number = Decimal> extends PortBase<NumberPortConfig> {
   readonly config: NumberPortConfig
   value: Decimal
 
@@ -17,8 +21,12 @@ export class NumberPort extends PortBase<NumberPortConfig> {
     this.value = new Decimal(config.defaultValue ?? 0)
   }
 
-  getValue(): Decimal {
-    return this.value
+  getValue(): NumberPortReturnType<D> {
+    if (!this.config.isNumber) {
+      return this.value as NumberPortReturnType<D>
+    }
+
+    return this.value.toNumber() as NumberPortReturnType<D>
   }
 
   setValue(value: NumberPortValue): void {
@@ -43,6 +51,6 @@ export class NumberPort extends PortBase<NumberPortConfig> {
   }
 
   static isNumberPortConfig(config: any): config is NumberPortConfig {
-    return config.kind === PortKindEnum.Number
+    return config.kind === PortKind.Number
   }
 }

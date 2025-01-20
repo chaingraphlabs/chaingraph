@@ -5,7 +5,7 @@ import type {
 
 import {
   PortArray,
-  PortKindEnum,
+  PortKind,
 } from '@chaingraph/types'
 
 /**
@@ -13,7 +13,7 @@ import {
  * Extends the partial `ArrayPortConfig` and ensures that the `kind` is `PortKindEnum.Array`.
  */
 export type DecoratorArrayPortConfig = Partial<ArrayPortConfig<any>> & {
-  kind: PortKindEnum.Array
+  kind: PortKind.Array
 }
 
 /**
@@ -53,7 +53,7 @@ export function PortStringArray(config?: DecoratorArrayPortConfig) {
     defaultValue: config?.defaultValue || [],
     ...config,
     elementConfig: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
       ...(config?.elementConfig || {}),
     },
@@ -97,7 +97,7 @@ export function PortArrayNumber(config?: DecoratorArrayPortConfig) {
     defaultValue: [],
     ...config,
     elementConfig: {
-      kind: PortKindEnum.Number,
+      kind: PortKind.Number,
       defaultValue: 0,
       ...(config?.elementConfig || {}),
     },
@@ -200,7 +200,7 @@ export function PortArrayNested(depth: number, elementConfig: PortConfigWithClas
       return elementConfig
     }
     return {
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       defaultValue: [],
       elementConfig: createNestedConfig(level - 1),
     }

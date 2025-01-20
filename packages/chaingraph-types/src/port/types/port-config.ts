@@ -1,6 +1,6 @@
 import type { MultiChannel } from '@chaingraph/types/port'
-import type { PortDirection } from './port-direction'
-import type { PortKindEnum } from './port-kind-enum'
+import type { PortDirectionUnion } from './port-direction-union'
+import type { PortKind } from './port-kind'
 import type {
   ArrayPortValidation,
   BooleanPortValidation,
@@ -20,7 +20,7 @@ import type {
  * * * * * * * * * * *
  */
 
-export interface BasePortConfig<K extends PortKindEnum> {
+export interface BasePortConfig<K extends PortKind> {
   kind: K
   id?: string
   parentId?: string
@@ -28,7 +28,7 @@ export interface BasePortConfig<K extends PortKindEnum> {
   key?: string
   title?: string
   description?: string
-  direction?: PortDirection
+  direction?: PortDirectionUnion
   optional?: boolean
   defaultValue?: any // Will be specified in each specific config
   validation?: PortValidation // Will be specified in each specific config
@@ -41,7 +41,7 @@ export interface BasePortConfig<K extends PortKindEnum> {
  * * * * * * * * * * *
  */
 
-export interface StringPortConfig extends BasePortConfig<PortKindEnum.String> {
+export interface StringPortConfig extends BasePortConfig<PortKind.String> {
   defaultValue?: string
   validation?: StringPortValidation
 }
@@ -52,9 +52,10 @@ export interface StringPortConfig extends BasePortConfig<PortKindEnum.String> {
  * * * * * * * * * * *
  */
 
-export interface NumberPortConfig extends BasePortConfig<PortKindEnum.Number> {
+export interface NumberPortConfig extends BasePortConfig<PortKind.Number> {
   defaultValue?: NumberPortValue
   validation?: NumberPortValidation
+  isNumber?: boolean
 }
 
 /*
@@ -62,7 +63,7 @@ export interface NumberPortConfig extends BasePortConfig<PortKindEnum.Number> {
  * Boolean Port Config
  * * * * * * * * * * *
  */
-export interface BooleanPortConfig extends BasePortConfig<PortKindEnum.Boolean> {
+export interface BooleanPortConfig extends BasePortConfig<PortKind.Boolean> {
   defaultValue?: boolean
   validation?: BooleanPortValidation
 }
@@ -73,7 +74,7 @@ export interface BooleanPortConfig extends BasePortConfig<PortKindEnum.Boolean> 
  * * * * * * * * * * *
  */
 
-export interface ArrayPortConfig<E extends PortConfig> extends BasePortConfig<PortKindEnum.Array> {
+export interface ArrayPortConfig<E extends PortConfig> extends BasePortConfig<PortKind.Array> {
   elementConfig: E
   defaultValue?: Array<PortValueFromConfig<E>>
   validation?: ArrayPortValidation
@@ -100,7 +101,7 @@ export type ObjectPortValueFromSchema<S extends ObjectSchema> = {
   [K in keyof S['properties']]: PortValueFromConfig<S['properties'][K]>;
 }
 
-export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig<PortKindEnum.Object> {
+export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig<PortKind.Object> {
   schema: S
   defaultValue?: ObjectPortValueFromSchema<S>
   validation?: ObjectPortValidation
@@ -111,7 +112,7 @@ export interface ObjectPortConfig<S extends ObjectSchema> extends BasePortConfig
  * Any Port Config
  * * * * * * * * * * *
  */
-export interface AnyPortConfig extends BasePortConfig<PortKindEnum.Any> {
+export interface AnyPortConfig extends BasePortConfig<PortKind.Any> {
   connectedPortConfig?: PortConfig | null
   defaultValue?: any
 }
@@ -122,7 +123,7 @@ export interface AnyPortConfig extends BasePortConfig<PortKindEnum.Any> {
  * * * * * * * * * * *
  */
 
-export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<PortKindEnum.Enum> {
+export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<PortKind.Enum> {
   options: E[] // Array of options, each is a PortConfig of a specific type
   defaultValue?: string | null // Selected option's id
   validation?: EnumPortValidation
@@ -134,7 +135,7 @@ export interface EnumPortConfig<E extends PortConfig> extends BasePortConfig<Por
  * * * * * * * * * * *
  */
 
-export interface StreamOutputPortConfig<T> extends BasePortConfig<PortKindEnum.StreamOutput> {
+export interface StreamOutputPortConfig<T> extends BasePortConfig<PortKind.StreamOutput> {
   valueType?: PortConfig
 }
 
@@ -144,7 +145,7 @@ export interface StreamOutputPortConfig<T> extends BasePortConfig<PortKindEnum.S
  * * * * * * * * * * *
  */
 
-export interface StreamInputPortConfig<T> extends BasePortConfig<PortKindEnum.StreamInput> {
+export interface StreamInputPortConfig<T> extends BasePortConfig<PortKind.StreamInput> {
   valueType?: PortConfig
 }
 
@@ -171,16 +172,16 @@ export type PortValueFromConfig<C extends PortConfig> =
                   C extends StreamInputPortConfig<infer T> ? MultiChannel<T> | null :
                     never
 
-export type PortValueByKind<K extends PortKindEnum> = PortValueFromConfig<PortConfigByKind<K>>
+export type PortValueByKind<K extends PortKind> = PortValueFromConfig<PortConfigByKind<K>>
 
-export type PortConfigByKind<K extends PortKindEnum> =
-  K extends PortKindEnum.String ? StringPortConfig :
-    K extends PortKindEnum.Number ? NumberPortConfig :
-      K extends PortKindEnum.Boolean ? BooleanPortConfig :
-        K extends PortKindEnum.Array ? ArrayPortConfig<any> :
-          K extends PortKindEnum.Object ? ObjectPortConfig<any> :
-            K extends PortKindEnum.Any ? AnyPortConfig :
-              K extends PortKindEnum.Enum ? EnumPortConfig<any> :
-                K extends PortKindEnum.StreamOutput ? StreamOutputPortConfig<any> :
-                  K extends PortKindEnum.StreamInput ? StreamInputPortConfig<any> :
+export type PortConfigByKind<K extends PortKind> =
+  K extends PortKind.String ? StringPortConfig :
+    K extends PortKind.Number ? NumberPortConfig :
+      K extends PortKind.Boolean ? BooleanPortConfig :
+        K extends PortKind.Array ? ArrayPortConfig<any> :
+          K extends PortKind.Object ? ObjectPortConfig<any> :
+            K extends PortKind.Any ? AnyPortConfig :
+              K extends PortKind.Enum ? EnumPortConfig<any> :
+                K extends PortKind.StreamOutput ? StreamOutputPortConfig<any> :
+                  K extends PortKind.StreamInput ? StreamInputPortConfig<any> :
                     never

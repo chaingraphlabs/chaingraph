@@ -4,8 +4,8 @@ import type {
   StringPortConfig,
 } from '@chaingraph/types/port/types/port-config'
 import { ArrayPort, registerPortTransformers } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -18,14 +18,14 @@ describe('arrayPort serialization', () => {
   it('should correctly serialize and deserialize ArrayPort with string elements', () => {
     // Arrange
     const elementConfig = {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       id: 'string-element',
     } as StringPortConfig
 
     const originalPort = new ArrayPort({
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       id: 'test-array-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       elementConfig,
       defaultValue: ['one', 'two', 'three'],
     })
@@ -62,14 +62,14 @@ describe('arrayPort serialization', () => {
   it('should correctly serialize and deserialize ArrayPort with number elements', () => {
     // Arrange
     const elementConfig = {
-      kind: PortKindEnum.Number,
+      kind: PortKind.Number,
       id: 'number-element',
     } as NumberPortConfig
 
     const originalPort = new ArrayPort({
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       id: 'test-number-array-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       elementConfig,
       defaultValue: [1, 2, 3],
     })
@@ -108,9 +108,9 @@ describe('arrayPort serialization', () => {
   it('should preserve complex configuration after serialization', () => {
     // Arrange
     const config = {
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       id: 'complex-array-port',
-      direction: PortDirectionEnum.Output,
+      direction: PortDirection.Output,
       optional: true,
       title: 'Complex Array Port',
       description: 'A test array port with complex configuration',
@@ -119,7 +119,7 @@ describe('arrayPort serialization', () => {
         priority: 1,
       },
       elementConfig: {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'string-element',
         title: 'String Element',
       } as StringPortConfig,
@@ -154,7 +154,7 @@ describe('arrayPort serialization', () => {
   it('should handle empty array with complex element config', () => {
     // Arrange
     const elementConfig = {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       id: 'complex-element',
       title: 'Complex Element',
       description: 'Element with full configuration',
@@ -165,7 +165,7 @@ describe('arrayPort serialization', () => {
     } as StringPortConfig
 
     const originalPort = new ArrayPort({
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       id: 'empty-array-port',
       elementConfig,
       defaultValue: [],

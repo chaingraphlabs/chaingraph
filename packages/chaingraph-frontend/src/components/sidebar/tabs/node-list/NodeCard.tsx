@@ -1,4 +1,4 @@
-import type { CategoryMetadata, INode } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import {
   Tooltip,
@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { PortDirection } from '@chaingraph/types'
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
 import { ArrowRightIcon } from 'lucide-react'
@@ -13,7 +14,7 @@ import { useMemo } from 'react'
 import { NodePreview } from './NodePreview'
 
 interface NodeCardProps {
-  node: INode
+  node: NodeMetadata
   categoryMetadata: CategoryMetadata
 }
 
@@ -28,12 +29,22 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
 
   // Setup draggable
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: node.id,
+    id: node.type ?? '',
     data: {
       node,
       categoryMetadata,
     },
   })
+
+  const inputsLength = useMemo(() =>
+    Array.from(node.portsConfig?.values() ?? [])?.filter(
+      port => port.direction === PortDirection.Input,
+    ).length, [node])
+
+  const outputsLength = useMemo(() =>
+    Array.from(node.portsConfig?.values() ?? [])?.filter(
+      port => port.direction === PortDirection.Output,
+    ).length, [node])
 
   return (
     <div className="relative">
@@ -70,7 +81,7 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
                     }}
                   />
                   <span className="text-sm truncate">
-                    {node.metadata.title}
+                    {node.title}
                   </span>
                 </div>
               </div>
@@ -83,9 +94,9 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
                 )}
                 style={{ color: style.text }}
               >
-                <span>{node.getInputs().length}</span>
+                <span>{inputsLength}</span>
                 <ArrowRightIcon className="w-3 h-3" />
-                <span>{node.getOutputs().length}</span>
+                <span>{outputsLength}</span>
               </div>
             </div>
           </TooltipTrigger>
@@ -104,6 +115,7 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
               onMouseDown={e => e.stopPropagation()}
             >
               <NodePreview
+                key={node.type}
                 node={node}
                 categoryMetadata={categoryMetadata}
               />

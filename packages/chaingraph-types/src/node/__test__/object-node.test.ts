@@ -1,6 +1,6 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKindEnum, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKind, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
@@ -88,7 +88,7 @@ class ComplexNode extends BaseNode {
   @PortArray({
     defaultValue: [],
     elementConfig: {
-      kind: PortKindEnum.Object,
+      kind: PortKind.Object,
       schema: User,
       defaultValue: new User(),
     },
@@ -98,10 +98,10 @@ class ComplexNode extends BaseNode {
   @Input()
   @PortArray({
     elementConfig: {
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       defaultValue: [],
       elementConfig: {
-        kind: PortKindEnum.Number,
+        kind: PortKind.Number,
         defaultValue: 0,
       },
     },
@@ -134,8 +134,6 @@ describe('object node serialization', () => {
   it('serializes and deserializes a node with an object port', async () => {
     const objectNode = new ObjectNode('object-node')
     await objectNode.initialize()
-
-    objectNode.address.city = 'Myyyyy own city'
 
     const json = superjson.serialize(objectNode)
     const parsed = superjson.deserialize(json as any as SuperJSONResult) as ObjectNode

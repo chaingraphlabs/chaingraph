@@ -5,9 +5,9 @@ import type {
   PortValueFromConfig,
 } from '../types'
 import { PortFactory, registerPort } from '../registry'
-import { PortBase, PortKindEnum } from '../types'
+import { PortBase, PortKind } from '../types'
 
-@registerPort<ArrayPortConfig<any>>(PortKindEnum.Array)
+@registerPort<ArrayPortConfig<any>>(PortKind.Array)
 export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>> {
   readonly config: ArrayPortConfig<E>
   value: Array<PortValueFromConfig<E>>
@@ -54,6 +54,6 @@ export class ArrayPort<E extends PortConfig> extends PortBase<ArrayPortConfig<E>
   }
 
   static isArrayPortConfig<E extends PortConfig>(config: any): config is ArrayPortConfig<E> {
-    return config.kind === PortKindEnum.Array
+    return config.kind === PortKind.Array
   }
 }

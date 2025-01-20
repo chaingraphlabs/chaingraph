@@ -30,9 +30,9 @@ export function NodeList() {
 
     return categories?.filter(category =>
       category.nodes.some(node =>
-        node.metadata.title?.toLowerCase().includes(searchQuery.toLowerCase())
-        || node.metadata.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        || node.metadata.tags?.some(tag =>
+        node.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        || node.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        || node.tags?.some(tag =>
           tag.toLowerCase().includes(searchQuery.toLowerCase()),
         ),
       ),
@@ -105,7 +105,7 @@ export function NodeList() {
                 <div className="space-y-1 pl-6">
                   {category.nodes.map(node => (
                     <NodeCard
-                      key={node.id}
+                      key={node.type}
                       node={node}
                       categoryMetadata={category.metadata}
                     />

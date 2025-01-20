@@ -1,4 +1,4 @@
-import type { CategoryMetadata, INode } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
 import { useDnd } from '@/components/dnd/useDnd'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
@@ -37,7 +37,7 @@ export function DndProvider({ children }: DndProviderProps) {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { node, categoryMetadata } = event.active.data.current as {
-      node: INode
+      node: NodeMetadata
       categoryMetadata: CategoryMetadata
     }
     setDraggedNode({ node, categoryMetadata })
@@ -81,7 +81,11 @@ export function DndProvider({ children }: DndProviderProps) {
               transformOrigin: 'top center',
             }}
           >
-            <NodePreview node={draggedNode.node} categoryMetadata={draggedNode.categoryMetadata} />
+            <NodePreview
+              key={draggedNode.node.type}
+              node={draggedNode.node}
+              categoryMetadata={draggedNode.categoryMetadata}
+            />
           </div>
         )}
       </DragOverlay>

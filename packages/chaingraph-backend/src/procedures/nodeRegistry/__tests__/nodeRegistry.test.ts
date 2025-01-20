@@ -56,7 +56,7 @@ describe('node Registry Procedures', () => {
 
       // Should find our test nodes
       const allNodes = searchResults.flatMap(category => category.nodes)
-      expect(allNodes.some(node => node.metadata.type === 'TestNode')).toBe(true)
+      expect(allNodes.some(node => node.type === 'TestNode')).toBe(true)
     })
 
     it('should return empty array for non-matching query', async () => {

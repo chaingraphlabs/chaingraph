@@ -1,6 +1,6 @@
 import { NumberPort, registerPortTransformers } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { describe, expect, it } from 'vitest'
@@ -11,9 +11,9 @@ describe('numberPort serialization', () => {
   it('should correctly serialize and deserialize NumberPort with different value types', () => {
     // Arrange
     const originalPort = new NumberPort({
-      kind: PortKindEnum.Number,
+      kind: PortKind.Number,
       id: 'test-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       defaultValue: 42,
     })
 

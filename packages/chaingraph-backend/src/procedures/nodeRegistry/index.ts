@@ -1,4 +1,4 @@
-import type { CategorizedNodes } from '@chaingraph/nodes'
+import type { CategorizedNodes } from '@chaingraph/types'
 import { publicProcedure, router } from '@chaingraph/backend/trpc'
 import { z } from 'zod'
 
@@ -6,7 +6,17 @@ export const nodeRegistryProcedures = router({
   // Get all nodes grouped by categories
   getCategorizedNodes: publicProcedure
     .query(async ({ ctx }): Promise<CategorizedNodes[]> => {
-      return ctx.nodesCatalog.getAllNodes()
+      // return ctx.nodesCatalog.getAllNodes()
+      const nodes = ctx.nodesCatalog.getAllNodes()
+      for (const category of nodes) {
+        for (const node of category.nodes) {
+          if (typeof node.version === 'string') {
+            console.warn(`Node "${node.type}" has a string version`)
+          }
+        }
+      }
+
+      return nodes
     }),
 
   // Search nodes across all categories

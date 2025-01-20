@@ -51,8 +51,15 @@ export function getOrCreateNodeMetadata(target: any): NodeMetadata {
 
     Reflect.defineMetadata(NODE_METADATA_KEY, nodeMetadata, target)
   }
-
   return Reflect.getMetadata(NODE_METADATA_KEY, target)
+  // const metadata = Reflect.getMetadata(NODE_METADATA_KEY, target)
+  // if (!metadata) {
+  //   throw new Error(`Node metadata not found for ${target.constructor.name}`)
+  // }
+  //
+  // return {
+  //   ...metadata,
+  // }
 }
 
 export function getPortMetadata(node: any, fieldName: string): PortConfig | undefined {

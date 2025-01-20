@@ -1,17 +1,18 @@
-import type { CategoryMetadata, INode } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
 import type {
   DefaultEdgeOptions,
   NodeTypes,
-  OnNodeDrag,
 } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
 import { useDnd } from '@/components/dnd'
 import { NodeContextMenu } from '@/components/flow/context-menu/NodeContextMenu.tsx'
-import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
+import { useFlowNodes1 } from '@/components/flow/hooks/useFlowNodes.ts'
+import { useNodeDrag } from '@/components/flow/hooks/useNodeDrag.ts'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop.ts'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import { useFlowSubscription } from '@/store'
+import { nodeRegistry } from '@chaingraph/nodes'
 import {
   Background,
   Controls,
@@ -19,7 +20,7 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import { AnimatePresence } from 'framer-motion'
-import { useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useRef, useState } from 'react'
 import { v7 as uuidv7 } from 'uuid'
 import '@xyflow/react/dist/style.css'
 
@@ -32,6 +33,11 @@ const defaultViewport: Viewport = {
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
   animated: true,
+}
+
+const nodeTypes: NodeTypes = {
+  chaingraphNode: ChaingraphNode,
+  // chaingraphNodeTest: ChaingraphCustomNode,
 }
 
 function Flow() {
@@ -48,7 +54,8 @@ function Flow() {
   // State
   // const [nodes, setNodes] = useState<Node[]>(initialNodes)
   // const [edges, setEdges] = useState<Edge[]>(initialEdges)
-  const nodes = useFlowNodes()
+  const nodes = useFlowNodes1()
+
   // const edges = useFlowEdges()
 
   // Setup node drop handling
@@ -62,9 +69,6 @@ function Flow() {
   // } = useFlowCallbacks()
 
   // Register node types
-  const nodeTypes: NodeTypes = useMemo(() => ({
-    chaingraphNode: ChaingraphNode,
-  }), [])
 
   // const edgeTypes = useMemo(() => ({
   //   chaingraphEdge: ChaingraphEdge,
@@ -152,9 +156,15 @@ function Flow() {
   // }, [])
 
   // Node drag handler
-  const onNodeDrag: OnNodeDrag = useCallback((_, node) => {
-    console.log('Node dragged:', node.id)
-  }, [])
+  // const onNodeDrag: OnNodeDrag = useCallback((_, node) => {
+  //   updateNodeUI({
+  //     nodeId: node.id,
+  //     ui: {
+  //       position: node.position,
+  //     },
+  //   })
+  // }, [])
+  const onNodeDrag = useNodeDrag()
 
   // Handle context menu
   const onContextMenu = useCallback((event: React.MouseEvent) => {
@@ -172,7 +182,7 @@ function Flow() {
   }, [])
 
   // Handle node selection
-  const handleNodeSelect = useCallback((node: INode, categoryMetadata: CategoryMetadata) => {
+  const handleNodeSelect = useCallback((nodeMeta: NodeMetadata, categoryMetadata: CategoryMetadata) => {
     if (!contextMenu)
       return
 
@@ -180,6 +190,10 @@ function Flow() {
       x: contextMenu.x,
       y: contextMenu.y,
     })
+
+    const nodeId = uuidv7()
+    const node = nodeRegistry.createNode(nodeMeta.type, nodeId)
+    node.initialize()
 
     const newNode = {
       id: uuidv7(),

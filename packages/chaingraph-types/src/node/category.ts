@@ -1,3 +1,5 @@
+import type { NodeMetadata } from '@chaingraph/types/node/types'
+
 /**
  * Base type for node category identifier
  */
@@ -33,4 +35,10 @@ export interface CategoryMetadata {
   icon: string
   style: CategoryStyle
   order: number
+}
+
+export interface CategorizedNodes {
+  category: NodeCategory
+  metadata: CategoryMetadata
+  nodes: NodeMetadata[]
 }

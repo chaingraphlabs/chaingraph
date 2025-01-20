@@ -6,6 +6,10 @@ import { createQueueIterator, EventQueue } from '@chaingraph/types/utils/event-q
 import { tracked } from '@trpc/server'
 import { z } from 'zod'
 
+function isAcceptedEventType(eventTypes: FlowEventType[] | undefined, type: FlowEventType) {
+  return !eventTypes || eventTypes.length === 0 || eventTypes.includes(type)
+}
+
 export const subscribeToEvents = publicProcedure
   .input(
     z.object({
@@ -35,7 +39,7 @@ export const subscribeToEvents = publicProcedure
       // Subscribe to future events
       const unsubscribe = flow.onEvent((event) => {
         // Filter by event types if specified
-        if (eventTypes && !eventTypes.includes(event.type)) {
+        if (!isAcceptedEventType(eventTypes, event.type)) {
           return
         }
         eventQueue.publish(event)
@@ -43,28 +47,43 @@ export const subscribeToEvents = publicProcedure
 
       // Send initial state events
       // 1. Metadata
-      yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitStart, {
-        flowId,
-        metadata: flow.metadata,
-      }))
+      // if (!eventTypes || eventTypes?.includes(FlowEventType.MetadataUpdated)) {
+      if (isAcceptedEventType(eventTypes, FlowEventType.MetadataUpdated)) {
+        yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitStart, {
+          flowId,
+          metadata: flow.metadata,
+        }))
+      }
 
       // 2. Existing nodes
-      for (const node of flow.nodes.values()) {
-        yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, { node }))
+      if (isAcceptedEventType(eventTypes, FlowEventType.NodeAdded)) {
+        for (const node of flow.nodes.values()) {
+          console.log('NodeAdded with version:', node.getVersion())
+          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
+            node,
+          }))
+        }
       }
 
       // 3. Existing edges
-      for (const edge of flow.edges.values()) {
-        yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgeAdded, { edge }))
+      if (isAcceptedEventType(eventTypes, FlowEventType.EdgeAdded)) {
+        for (const edge of flow.edges.values()) {
+          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgeAdded, { edge }))
+        }
       }
 
-      yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitEnd, {
-        flowId,
-      }))
+      if (isAcceptedEventType(eventTypes, FlowEventType.FlowInitEnd)) {
+        yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitEnd, {
+          flowId,
+        }))
+      }
 
       try {
         const iterator = createQueueIterator(eventQueue)
         for await (const event of iterator) {
+          if (!isAcceptedEventType(eventTypes, event.type)) {
+            continue
+          }
           yield tracked(String(eventIndex++), event)
         }
       } finally {

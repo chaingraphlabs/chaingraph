@@ -3,21 +3,12 @@ import type {
   NodeExecutionResult,
 } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import {
-  BaseNode,
-  Flow,
-  Input,
-  Node,
-  NodeRegistry,
-  Output,
-  PortNumber,
-  PortString,
-  registerPortTransformers,
-} from '@chaingraph/types'
+import { BaseNode, Flow, Id, Input, Node, NodeRegistry, Output, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
 
 import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { findPort } from '@chaingraph/types/node/ports-traverser'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
@@ -28,10 +19,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 class SourceNode extends BaseNode {
   @Input()
   @PortString()
+  @Id('input')
   input: string = 'test'
 
   @Output()
   @PortString()
+  @Id('output')
   output: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
@@ -51,10 +44,12 @@ class SourceNode extends BaseNode {
 class TargetNode extends BaseNode {
   @Input()
   @PortString()
+  @Id('textInput')
   textInput: string = ''
 
   @Input()
   @PortNumber()
+  @Id('numberInput')
   numberInput: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
@@ -98,11 +93,28 @@ describe('flow Serialization', () => {
     flow.addNode(sourceNode)
     flow.addNode(targetNode)
 
+    const sourcePort = findPort(
+      sourceNode,
+      port => port.config.key === 'output',
+    )
+    const targetPort = findPort(
+      targetNode,
+      port => port.config.key === 'textInput',
+    )
+
+    expect(sourcePort).toBeDefined()
+    expect(targetPort).toBeDefined()
+
     // Set initial values
     sourceNode.input = 'Hello, World!'
 
     // Connect nodes
-    await flow.connectPorts(sourceNode.id, 'output', targetNode.id, 'textInput')
+    await flow.connectPorts(
+      sourceNode.id,
+      sourcePort?.config.id ?? '',
+      targetNode.id,
+      targetPort?.config.id ?? '',
+    )
 
     await flow.validate()
 

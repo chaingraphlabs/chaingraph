@@ -12,6 +12,7 @@ import type { INode } from './interface'
 import { AnyPort, ArrayPort, BooleanPort, EnumPort, getOrCreateNodeMetadata, NumberPort, ObjectPort, StreamInputPort, StreamOutputPort, StringPort,
 } from '@chaingraph/types'
 
+import Decimal from 'decimal.js'
 // For generating UUIDs.
 import { v7 as uuidv7 } from 'uuid'
 
@@ -186,6 +187,14 @@ export class PortConfigProcessor {
         copy[i] = this.deepCopy(obj[i])
       }
       return copy
+    }
+
+    if (Decimal.isDecimal(obj)) {
+      return new Decimal(obj)
+    }
+
+    if (typeof obj === 'number') {
+      return obj
     }
 
     // Handle Object

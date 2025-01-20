@@ -6,8 +6,8 @@ import type {
 } from '@chaingraph/types'
 import {
   AnyPort,
-  PortDirectionEnum,
-  PortKindEnum,
+  PortDirection,
+  PortKind,
 } from '@chaingraph/types'
 import { registerPortTransformers } from '@chaingraph/types/port/json-transformers'
 import Decimal from 'decimal.js'
@@ -22,9 +22,9 @@ describe('anyPort serialization', () => {
   it('should correctly serialize and deserialize AnyPort without connected port', () => {
     // Arrange
     const originalPort = new AnyPort({
-      kind: PortKindEnum.Any,
+      kind: PortKind.Any,
       id: 'test-any-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       defaultValue: 'some value',
     })
 
@@ -64,15 +64,15 @@ describe('anyPort serialization', () => {
   it('should correctly serialize and deserialize AnyPort with connected port', () => {
     // Arrange
     const connectedPortConfig = {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       id: 'connected-port',
       defaultValue: 'default string',
     } as StringPortConfig
 
     const originalPort = new AnyPort({
-      kind: PortKindEnum.Any,
+      kind: PortKind.Any,
       id: 'test-any-port-connected',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       connectedPortConfig,
     })
 
@@ -105,15 +105,15 @@ describe('anyPort serialization', () => {
   it('should handle invalid values when connected to a port with specific type', () => {
     // Arrange
     const connectedPortConfig = {
-      kind: PortKindEnum.Number,
+      kind: PortKind.Number,
       id: 'connected-number-port',
       defaultValue: 0,
     } as NumberPortConfig
 
     const originalPort = new AnyPort({
-      kind: PortKindEnum.Any,
+      kind: PortKind.Any,
       id: 'test-any-port-connected-number',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       connectedPortConfig,
     })
 
@@ -140,15 +140,15 @@ describe('anyPort serialization', () => {
   it('should preserve configuration and value after serialization', () => {
     // Arrange
     const connectedPortConfig: PortConfig = {
-      kind: PortKindEnum.Boolean,
+      kind: PortKind.Boolean,
       id: 'connected-boolean-port',
       defaultValue: true,
     }
 
     const config = {
-      kind: PortKindEnum.Any,
+      kind: PortKind.Any,
       id: 'complex-any-port',
-      direction: PortDirectionEnum.Output,
+      direction: PortDirection.Output,
       optional: true,
       title: 'Complex Any Port',
       description: 'A test any port with complex configuration',

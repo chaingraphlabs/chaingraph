@@ -39,18 +39,18 @@ export function useNodeDrop() {
         y: event.position.y,
       })
 
-      console.log('Dropped node:', event.node.metadata.title, position)
+      console.log('Dropped node:', event.node.title, position)
 
       // Dispatch addNodeToFlow event
       addNodeToFlow({
         flowId: activeFlow.id,
-        nodeType: event.node.metadata.type,
+        nodeType: event.node.type,
         position,
         metadata: {
-          title: event.node.metadata.title,
-          description: event.node.metadata.description,
-          category: event.node.metadata.category,
-          tags: event.node.metadata.tags,
+          title: event.node.title,
+          description: event.node.description,
+          category: event.node.category,
+          tags: event.node.tags,
         },
       })
     } catch (error) {

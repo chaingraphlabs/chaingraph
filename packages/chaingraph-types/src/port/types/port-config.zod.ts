@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { PortDirectionEnum } from './port-direction'
-import { PortKindEnum } from './port-kind-enum'
+import { PortDirection } from './port-direction-union'
+import { PortKind } from './port-kind'
 import {
   ArrayPortValidationSchema,
   BooleanPortValidationSchema,
@@ -21,9 +21,9 @@ import {
  * * * * * * * * * * *
  */
 
-export const PortKindSchema = z.nativeEnum(PortKindEnum)
+export const PortKindSchema = z.nativeEnum(PortKind)
 
-export const PortDirectionSchema = z.nativeEnum(PortDirectionEnum)
+export const PortDirectionSchema = z.nativeEnum(PortDirection)
 
 // export const BasePortConfigSchema = z.object({
 export const BasePortConfigSchema = z.object({
@@ -47,7 +47,7 @@ export const BasePortConfigSchema = z.object({
  * * * * * * * * * * *
  */
 export const StringPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.String),
+  kind: z.literal(PortKind.String),
   defaultValue: z.string().optional(),
   validation: StringPortValidationSchema,
 })
@@ -58,9 +58,10 @@ export const StringPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const NumberPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Number),
+  kind: z.literal(PortKind.Number),
   defaultValue: NumberPortValueSchema.optional(),
   validation: NumberPortValidationSchema,
+  isNumber: z.boolean().optional(),
 })
 
 /*
@@ -69,7 +70,7 @@ export const NumberPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const BooleanPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Boolean),
+  kind: z.literal(PortKind.Boolean),
   defaultValue: z.boolean().optional(),
   validation: BooleanPortValidationSchema,
 })
@@ -80,7 +81,7 @@ export const BooleanPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const ArrayPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Array),
+  kind: z.literal(PortKind.Array),
   elementConfig: BasePortConfigSchema,
   defaultValue: z.array(PortValueSchema).optional(),
   validation: ArrayPortValidationSchema,
@@ -100,7 +101,7 @@ export const ObjectSchemaSchema = z.object({
 })
 
 export const ObjectPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Object),
+  kind: z.literal(PortKind.Object),
   schema: ObjectSchemaSchema,
   defaultValue: z.record(z.string(), PortValueSchema).optional(),
   validation: ObjectPortValidationSchema,
@@ -112,7 +113,7 @@ export const ObjectPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const AnyPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Any),
+  kind: z.literal(PortKind.Any),
   connectedPortConfig: BasePortConfigSchema.optional(),
   defaultValue: z.any(),
 })
@@ -123,7 +124,7 @@ export const AnyPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const EnumPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.Enum),
+  kind: z.literal(PortKind.Enum),
   options: z.array(BasePortConfigSchema),
   defaultValue: z.string().nullable().optional(),
   validation: EnumPortValidationSchema,
@@ -135,7 +136,7 @@ export const EnumPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const StreamOutputPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.StreamOutput),
+  kind: z.literal(PortKind.StreamOutput),
   valueType: BasePortConfigSchema.optional(),
 })
 
@@ -145,7 +146,7 @@ export const StreamOutputPortConfigSchema = BasePortConfigSchema.extend({
  * * * * * * * * * * *
  */
 export const StreamInputPortConfigSchema = BasePortConfigSchema.extend({
-  kind: z.literal(PortKindEnum.StreamInput),
+  kind: z.literal(PortKind.StreamInput),
   valueType: BasePortConfigSchema.optional(),
 })
 

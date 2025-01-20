@@ -1,8 +1,8 @@
 import type { EnumPortConfig, IPort, PortConfig } from '../types'
 import { registerPort } from '../registry'
-import { PortBase, PortKindEnum } from '../types'
+import { PortBase, PortKind } from '../types'
 
-@registerPort<EnumPortConfig<any>>(PortKindEnum.Enum)
+@registerPort<EnumPortConfig<any>>(PortKind.Enum)
 export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> {
   readonly config: EnumPortConfig<E>
   value: string | null
@@ -86,6 +86,6 @@ export class EnumPort<E extends PortConfig> extends PortBase<EnumPortConfig<E>> 
   }
 
   static isEnumPortConfig<E extends PortConfig>(config: any): config is EnumPortConfig<E> {
-    return config.kind === PortKindEnum.Enum
+    return config.kind === PortKind.Enum
   }
 }

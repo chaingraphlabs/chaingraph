@@ -1,7 +1,7 @@
 import type { EnumPortConfig, StringPortConfig } from '@chaingraph/types/port/types/port-config'
 import { EnumPort, registerPortTransformers } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 
@@ -14,26 +14,26 @@ describe('enumPort serialization', () => {
     // Arrange
     const options = [
       {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'one',
         defaultValue: 'One',
       } as StringPortConfig,
       {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'two',
         defaultValue: 'Two',
       } as StringPortConfig,
       {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'three',
         defaultValue: 'Three',
       } as StringPortConfig,
     ]
 
     const originalPort = new EnumPort({
-      kind: PortKindEnum.Enum,
+      kind: PortKind.Enum,
       id: 'test-enum-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       options,
       defaultValue: null,
     })
@@ -89,9 +89,9 @@ describe('enumPort serialization', () => {
   it('should preserve complex configuration after serialization', () => {
     // Arrange
     const config = {
-      kind: PortKindEnum.Enum,
+      kind: PortKind.Enum,
       id: 'complex-enum-port',
-      direction: PortDirectionEnum.Output,
+      direction: PortDirection.Output,
       optional: true,
       title: 'Complex Enum Port',
       description: 'A test enum port with complex configuration',
@@ -101,13 +101,13 @@ describe('enumPort serialization', () => {
       },
       options: [
         {
-          kind: PortKindEnum.String,
+          kind: PortKind.String,
           id: 'option-1',
           title: 'Option 1',
           defaultValue: 'value 1',
         } as StringPortConfig,
         {
-          kind: PortKindEnum.String,
+          kind: PortKind.String,
           id: 'option-2',
           title: 'Option 2',
           defaultValue: 'value 2',
@@ -150,7 +150,7 @@ describe('enumPort serialization', () => {
   it('should handle empty options array', () => {
     // Arrange
     const originalPort = new EnumPort({
-      kind: PortKindEnum.Enum,
+      kind: PortKind.Enum,
       id: 'empty-enum-port',
       options: [],
     })

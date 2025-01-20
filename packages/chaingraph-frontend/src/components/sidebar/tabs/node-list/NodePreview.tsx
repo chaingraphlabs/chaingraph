@@ -1,14 +1,15 @@
 import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
-import type { CategoryMetadata, INode } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
 import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
+import { PortDirection } from '@chaingraph/types'
 import { useEffect, useMemo, useState } from 'react'
 
 interface NodePreviewProps {
-  node: INode
+  node: NodeMetadata
   categoryMetadata: CategoryMetadata
 }
 
@@ -22,12 +23,28 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
       : categoryMetadata.style.light
   ), [theme, categoryMetadata])
 
-  const [inputs, setInputs] = useState(node.getInputs())
-  const [outputs, setOutputs] = useState(node.getOutputs())
+  const [inputs, setInputs] = useState(
+    Array.from(node.portsConfig?.values() || []).filter(
+      port => port.direction === PortDirection.Input,
+    ),
+  )
+  const [outputs, setOutputs] = useState(
+    Array.from(node.portsConfig?.values() || []).filter(
+      port => port.direction === PortDirection.Output,
+    ),
+  )
 
   useEffect(() => {
-    setInputs(node.getInputs())
-    setOutputs(node.getOutputs())
+    setInputs(
+      Array.from(node.portsConfig?.values() || []).filter(
+        port => port.direction === PortDirection.Input,
+      ),
+    )
+    setOutputs(
+      Array.from(node.portsConfig?.values() || []).filter(
+        port => port.direction === PortDirection.Output,
+      ),
+    )
   }, [node])
 
   const Icon = useMemo(
@@ -58,7 +75,7 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
             <Icon className="w-4 h-4" style={{ color: style.text }} />
           </div>
           <h3 className="font-medium text-sm" style={{ color: style.text }}>
-            {node.metadata.title}
+            {node.title}
           </h3>
         </div>
       </div>
@@ -69,9 +86,9 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
         // style={{ background: style.background }}
       >
         {/* Description */}
-        {node.metadata.description && (
+        {node.description && (
           <p className="text-xs text-muted-foreground">
-            {node.metadata.description}
+            {node.description}
           </p>
         )}
 
@@ -82,7 +99,7 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
             <div className="space-y-2">
               {inputs.map(port => (
                 <div
-                  key={port.config.id || port.config.key + port.config.title}
+                  key={port.key}
                   className="group relative pl-3 flex items-start"
                 >
                   {/* Port Circle */}
@@ -102,11 +119,11 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
                   {/* Port Content */}
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium text-foreground">
-                      {port.config.title}
+                      {port.title}
                     </div>
-                    {port.config.description && (
+                    {port.description && (
                       <div className="text-[10px] text-muted-foreground line-clamp-2">
-                        {port.config.description}
+                        {port.description}
                       </div>
                     )}
                   </div>
@@ -120,17 +137,17 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
             <div className="space-y-2">
               {outputs.map(port => (
                 <div
-                  key={port.config.id || port.config.key + port.config.title}
+                  key={port.key}
                   className="group relative pr-3 flex items-start justify-end text-right"
                 >
                   {/* Port Content */}
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium text-foreground">
-                      {port.config.title}
+                      {port.title}
                     </div>
-                    {port.config.description && (
+                    {port.description && (
                       <div className="text-[10px] text-muted-foreground line-clamp-2">
-                        {port.config.description}
+                        {port.description}
                       </div>
                     )}
                   </div>
@@ -155,9 +172,9 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
         </div>
 
         {/* Tags */}
-        {node.metadata.tags && node.metadata.tags.length > 0 && (
+        {node.tags && node.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-2 border-t">
-            {node.metadata.tags.map(tag => (
+            {node.tags.map(tag => (
               <Badge
                 key={tag}
                 variant="secondary"

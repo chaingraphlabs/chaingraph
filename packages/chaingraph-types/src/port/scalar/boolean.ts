@@ -1,9 +1,9 @@
 import type { BooleanPortConfig, IPort } from '../types'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 
-@registerPort<BooleanPortConfig>(PortKindEnum.Boolean)
+@registerPort<BooleanPortConfig>(PortKind.Boolean)
 export class BooleanPort extends PortBase<BooleanPortConfig> {
   readonly config: BooleanPortConfig
   value: boolean
@@ -40,6 +40,6 @@ export class BooleanPort extends PortBase<BooleanPortConfig> {
   }
 
   static isBooleanPortConfig(config: any): config is BooleanPortConfig {
-    return config.kind === PortKindEnum.Boolean
+    return config.kind === PortKind.Boolean
   }
 }

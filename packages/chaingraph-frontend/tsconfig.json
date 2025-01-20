@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "outDir": "./dist"
   },
   "references": [
     { "path": "./tsconfig.app.json" },

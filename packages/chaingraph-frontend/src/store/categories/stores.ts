@@ -1,6 +1,5 @@
 import type { FetchCategoriesError } from '@/store/categories/types.ts'
-import type { CategorizedNodes } from '@chaingraph/nodes'
-import type { CategoryMetadata } from '@chaingraph/types'
+import type { CategorizedNodes, CategoryMetadata } from '@chaingraph/types'
 import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
 import { combine, createStore } from 'effector'
 import { fetchCategorizedNodesFx } from './effects'

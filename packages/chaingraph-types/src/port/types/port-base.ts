@@ -1,8 +1,8 @@
 import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
 import type { PortConfig, PortValueFromConfig } from './port-config'
-import type { PortDirection } from './port-direction'
+import type { PortDirectionUnion } from './port-direction-union'
 import type { IPort } from './port-interface'
-import type { PortKindEnum } from './port-kind-enum'
+import type { PortKind } from './port-kind'
 import { parsePortConfig } from '@chaingraph/types/port/types/port-config-parsing.zod'
 import superjson from 'superjson'
 import { PortFactory } from '../registry'
@@ -33,7 +33,7 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
     return this.config.description ?? ''
   }
 
-  get kind(): PortKindEnum {
+  get kind(): PortKind {
     return this.config.kind
   }
 
@@ -53,7 +53,7 @@ export abstract class PortBase<C extends PortConfig> implements IPort<C> {
     return this.config.defaultValue
   }
 
-  get direction(): PortDirection | undefined {
+  get direction(): PortDirectionUnion | undefined {
     return this.config.direction
   }
 

@@ -35,12 +35,14 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
 
           // serialize only ports values instead of all ports
           // for better performance and smaller payload
-          return superjson.serialize({
+          const res = superjson.serialize({
             id: v.id,
             metadata: v.metadata,
             status: v.status,
             portsValues,
           }) as unknown as JSONValue
+
+          return res
         },
         deserialize: (v) => {
           const nodeData = superjson.deserialize<INode>(v as any as SuperJSONResult)
@@ -92,4 +94,25 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
       nodeInstance.metadata.type,
     )
   })
+//
+//   superjson.registerCustom<CategorizedNodes, JSONValue>(
+//     {
+//       isApplicable: (v): v is CategorizedNodes => {
+//         return (v as any).category && (v as any).metadata && isKnownCategory((v as any).category)
+//       },
+//       serialize: (v) => {
+//         // serialize only ports values instead of all ports
+//         // for better performance and smaller payload
+//         return superjson.serialize({
+//           category: v.category,
+//           metadata: v.metadata,
+//           nodes: v.nodes,
+//         }) as unknown as JSONValue
+//       },
+//       deserialize: (v) => {
+//         return superjson.deserialize(v) as unknown as CategorizedNodes
+//       },
+//     },
+//     'CategorizedNodes',
+//   )
 }

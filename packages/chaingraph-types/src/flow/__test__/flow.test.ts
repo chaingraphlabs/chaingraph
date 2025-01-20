@@ -6,17 +6,17 @@ import {
   ExecutionEventEnum,
   Flow,
   NumberPort,
-  PortDirectionEnum,
-  PortKindEnum,
+  PortDirection,
+  PortKind,
 } from '@chaingraph/types'
 import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
 class AddNode extends BaseNode {
-  inputA: NumberPort
-  inputB: NumberPort
-  output: NumberPort
+  inputA: NumberPort<Decimal>
+  inputB: NumberPort<Decimal>
+  output: NumberPort<Decimal>
 
   constructor(id: string) {
     super(id, {
@@ -27,20 +27,20 @@ class AddNode extends BaseNode {
 
     this.inputA = new NumberPort({
       id: 'inputA',
-      kind: PortKindEnum.Number,
-      direction: PortDirectionEnum.Input,
+      kind: PortKind.Number,
+      direction: PortDirection.Input,
     })
 
     this.inputB = new NumberPort({
       id: 'inputB',
-      kind: PortKindEnum.Number,
-      direction: PortDirectionEnum.Input,
+      kind: PortKind.Number,
+      direction: PortDirection.Input,
     })
 
     this.output = new NumberPort({
       id: 'output',
-      kind: PortKindEnum.Number,
-      direction: PortDirectionEnum.Output,
+      kind: PortKind.Number,
+      direction: PortDirection.Output,
     })
 
     this.ports.set('inputA', this.inputA)

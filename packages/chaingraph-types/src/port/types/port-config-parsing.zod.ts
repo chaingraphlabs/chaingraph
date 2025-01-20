@@ -21,7 +21,7 @@ import {
   StreamOutputPortConfigSchema,
   StringPortConfigSchema,
 } from './port-config.zod'
-import { PortKindEnum } from './port-kind-enum'
+import { PortKind } from './port-kind'
 
 export class PortConfigParsingError extends Error {
   constructor(
@@ -70,23 +70,23 @@ export function parsePortConfig(
 
     // Now handle parsing based on the port kind
     switch (kind) {
-      case PortKindEnum.String:
+      case PortKind.String:
         return safeParse(StringPortConfigSchema, data, path)
-      case PortKindEnum.Number:
+      case PortKind.Number:
         return safeParse(NumberPortConfigSchema, data, path)
-      case PortKindEnum.Boolean:
+      case PortKind.Boolean:
         return safeParse(BooleanPortConfigSchema, data, path)
-      case PortKindEnum.Array:
+      case PortKind.Array:
         return parseArrayPortConfig(data, path)
-      case PortKindEnum.Object:
+      case PortKind.Object:
         return parseObjectPortConfig(data, path)
-      case PortKindEnum.Enum:
+      case PortKind.Enum:
         return parseEnumPortConfig(data, path)
-      case PortKindEnum.Any:
+      case PortKind.Any:
         return parseAnyPortConfig(data, path)
-      case PortKindEnum.StreamInput:
+      case PortKind.StreamInput:
         return parseStreamInputPortConfig(data, path)
-      case PortKindEnum.StreamOutput:
+      case PortKind.StreamOutput:
         return parseStreamOutputPortConfig(data, path)
       default:
         throw new PortConfigParsingError(

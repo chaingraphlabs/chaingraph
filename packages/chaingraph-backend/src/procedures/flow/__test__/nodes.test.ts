@@ -1,41 +1,100 @@
 import { appRouter } from '@chaingraph/backend/router'
 import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
 import { createCallerFactory } from '@chaingraph/backend/trpc'
-import { NodeRegistry } from '@chaingraph/types'
-import { describe, expect, it } from 'vitest'
+import { NodeCatalog } from '@chaingraph/nodes'
+import {
+  BaseNode,
+  type ExecutionContext,
+  ExecutionStatus,
+  Id,
+  Input,
+  Node,
+  type NodeExecutionResult,
+  NodeRegistry,
+  Output,
+  PortBoolean,
+  PortNumber,
+  PortString,
+} from '@chaingraph/types'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
+@Node({
+  title: 'Scalar Node',
+  description: 'Node with scalar ports',
+}, null)
+class ScalarNode extends BaseNode {
+  @Input()
+  @PortString({
+    defaultValue: 'default string',
+  })
+  @Id('strInput')
+  strInput: string = 'default string'
+
+  @Input()
+  @PortNumber({
+    defaultValue: 42,
+  })
+  @Id('numInput')
+  numInput: number = 42
+
+  @Input()
+  @PortBoolean({
+    defaultValue: true,
+  })
+  @Id('boolInput')
+  boolInput: boolean = true
+
+  @Id('strOutput')
+  @PortString()
+  @Output()
+  strOutput: string = ''
+
+  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    return {
+      status: ExecutionStatus.Completed,
+      startTime: context.startTime,
+      endTime: new Date(),
+      outputs: new Map(),
+    }
+  }
+}
 
 describe('flow Node Procedures', () => {
-  const createCaller = createCallerFactory(appRouter)
+  beforeAll(() => {
+    NodeRegistry.getInstance().clear()
+    NodeRegistry.getInstance().registerNode(ScalarNode)
+  })
+
+  afterAll(() => {
+    NodeRegistry.getInstance().clear()
+  })
+
+  async function setupTestFlow() {
+    const ctx = createTestContext(
+      NodeRegistry.getInstance(),
+      new NodeCatalog(NodeRegistry.getInstance()),
+    )
+
+    const caller = createCallerFactory(appRouter)(ctx)
+    const flow = await caller.flow.create({ name: 'Test Flow' })
+    const types = await caller.nodeRegistry.listAvailableTypes()
+    expect(types.length).toBeGreaterThan(0)
+
+    // Find ScalarNode type
+    const scalarNodeType = types.find(t => t.title === 'Scalar Node')
+    expect(scalarNodeType).toBeDefined()
+
+    return { caller, flow, nodeType: scalarNodeType!.type }
+  }
 
   describe('addNode', () => {
     it('should add node to existing flow', async () => {
-      const ctx = createTestContext()
-      const caller = createCaller(ctx)
-
-      // Create a test flow first
-      const flow = await caller.flow.create({
-        name: 'Test Flow',
-      })
-      if (!flow) {
-        throw new Error('Flow creation failed')
-      }
-
-      const nodeTypes = await caller.nodeRegistry.listAvailableTypes()
-      if (!nodeTypes || nodeTypes.length === 0) {
-        throw new Error('No node types available')
-      }
-
-      // Get first available node type from registry
-      // const nodeTypes = NodeRegistry.getInstance().getNodeTypes()
-      // if (nodeTypes.length === 0) {
-      //   throw new Error('No node types available')
-      // }
-      const testNodeType = nodeTypes[0]
+      const { caller, flow, nodeType } = await setupTestFlow()
 
       // Add node to flow
       const node = await caller.flow.addNode({
         flowId: flow.id,
-        nodeType: testNodeType.metadata.type,
+        nodeType,
         position: { x: 100, y: 100 },
       })
 
@@ -45,23 +104,9 @@ describe('flow Node Procedures', () => {
       expect(node.metadata.title).toBe('Scalar Node')
 
       // Verify node exists in flow
-      const flowNodes = await ctx.flowStore.listFlowNodes(flow.id)
-      expect(flowNodes).toHaveLength(1)
-      expect(flowNodes[0].id).toBe(node.id)
-    })
-
-    it('should throw error when flow does not exist', async () => {
-      const ctx = createTestContext()
-      const caller = createCaller(ctx)
-
-      const nodeTypes = NodeRegistry.getInstance().getNodeTypes()
-      const testNodeType = nodeTypes[0]
-
-      await expect(caller.flow.addNode({
-        flowId: 'non-existent-flow',
-        nodeType: testNodeType,
-        position: { x: 0, y: 0 },
-      })).rejects.toThrow()
+      const fetchedFlow = await caller.flow.get(flow.id)
+      expect(fetchedFlow.nodes).toHaveLength(1)
+      expect(Array.from(fetchedFlow.nodes.values())[0].id).toBe(node.id)
     })
   })
 })

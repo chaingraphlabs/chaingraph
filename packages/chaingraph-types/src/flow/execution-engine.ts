@@ -310,7 +310,7 @@ export class ExecutionEngine {
     try {
       this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node }))
 
-      node.setStatus(NodeStatus.Executing)
+      node.setStatus(NodeStatus.Executing, true)
 
       // Debug point - before execution
       if (this.debugger) {
@@ -354,13 +354,13 @@ export class ExecutionEngine {
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
 
-      node.setStatus(NodeStatus.Completed)
+      node.setStatus(NodeStatus.Completed, true)
       this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
         node,
         executionTime: Date.now() - nodeStartTime,
       }))
     } catch (error) {
-      node.setStatus(NodeStatus.Error)
+      node.setStatus(NodeStatus.Error, true)
 
       this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
         node,

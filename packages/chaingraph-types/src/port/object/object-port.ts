@@ -3,9 +3,9 @@ import type { ObjectPortConfig } from '@chaingraph/types/port/types/port-config'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 
-@registerPort<ObjectPortConfig<any>>(PortKindEnum.Object)
+@registerPort<ObjectPortConfig<any>>(PortKind.Object)
 export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfig<S>> {
   readonly config: ObjectPortConfig<S>
   value: ObjectPortValueFromSchema<S>
@@ -42,6 +42,6 @@ export class ObjectPort<S extends ObjectSchema> extends PortBase<ObjectPortConfi
   }
 
   static isObjectPortConfig<S extends ObjectSchema>(config: any): config is ObjectPortConfig<S> {
-    return config.kind === PortKindEnum.Object
+    return config.kind === PortKind.Object
   }
 }

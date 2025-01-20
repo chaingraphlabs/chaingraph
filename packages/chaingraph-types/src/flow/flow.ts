@@ -2,13 +2,16 @@ import type { IEdge, INode, NodeEvent } from '@chaingraph/types'
 import type {
   FlowEvent,
   NodeUIEventData,
+  NodeUIPositionChangedEventData,
 } from '@chaingraph/types/flow/events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
 import { Edge, NodeEventType } from '@chaingraph/types'
-
-import { FlowEventType, newEvent,
+import {
+  FlowEventType,
+  newEvent,
 } from '@chaingraph/types/flow/events'
+
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -285,8 +288,25 @@ export class Flow implements IFlow {
     let flowEvent: FlowEvent | null = null
 
     switch (nodeEvent.type) {
-      case NodeEventType.StatusChange:
       case NodeEventType.UIPositionChange:
+        {
+          const nodeUIPositionEventData: NodeUIPositionChangedEventData = {
+            nodeId: node.id,
+            oldPosition: (nodeEvent as any).oldPosition,
+            newPosition: (nodeEvent as any).newPosition,
+            version: nodeEvent.version,
+          }
+
+          flowEvent = newEvent(
+            this.getNextEventIndex(),
+            this.id,
+            this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+            nodeUIPositionEventData,
+          )
+        }
+        break
+
+      case NodeEventType.StatusChange:
       case NodeEventType.UIDimensionsChange:
       case NodeEventType.UIStateChange:
       case NodeEventType.UIStyleChange:
@@ -295,15 +315,8 @@ export class Flow implements IFlow {
           nodeId: node.id,
           oldValue: (nodeEvent as any).oldValue,
           newValue: (nodeEvent as any).newValue,
+          version: nodeEvent.version,
         }
-        // flowEvent = {
-        //   index: this.getNextEventIndex(),
-        //   flowId: this.id,
-        //   type: this.mapNodeUIEventToFlowEvent(nodeEvent.type),
-        //   timestamp: new Date(),
-        //   data: nodeUIEventData,
-        // }
-        //
         flowEvent = newEvent(
           this.getNextEventIndex(),
           this.id,

@@ -9,10 +9,10 @@ export const NodeUIMetadataSchema = z.object({
   position: z.object({
     x: z.number(),
     y: z.number(),
-  }),
+  }).optional(),
   dimensions: z.object({
-    width: z.number().optional(),
-    height: z.number().optional(),
+    width: z.number(),
+    height: z.number(),
   }).optional(),
   style: z.object({
     backgroundColor: z.string().optional(),
@@ -34,13 +34,14 @@ export const NodeMetadataSchema = z.object({
   title: z.string().optional(),
   category: z.string().optional(),
   description: z.string().optional(),
-  version: z.string().optional(),
   icon: z.string().optional(),
   tags: z.array(z.string()).optional(),
   author: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   portsConfig: z.map(z.string(), BasePortConfigSchema).optional(),
   ui: NodeUIMetadataSchema.optional(),
+  version: z.number().optional(),
+  // version: z.any(),
 })
 
 /**

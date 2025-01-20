@@ -1,13 +1,10 @@
 import type { NodeStatus } from '@chaingraph/types/node/node-enums'
-import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
+import type { NodeUIMetadata, Position } from '@chaingraph/types/node/node-ui'
 
 /**
  * Enum for all possible node events
  */
 export enum NodeEventType {
-  // Handle for all events
-  All = 'node:all',
-
   // Status events
   StatusChange = 'node:status-change',
 
@@ -25,6 +22,7 @@ export interface NodeEventBase {
   type: NodeEventType
   nodeId: string
   timestamp: Date
+  version: number
 }
 
 /**
@@ -41,8 +39,8 @@ export interface NodeStatusChangeEvent extends NodeEventBase {
  */
 export interface NodeUIPositionChangeEvent extends NodeEventBase {
   type: NodeEventType.UIPositionChange
-  oldPosition?: NodeUIMetadata['position']
-  newPosition: NodeUIMetadata['position']
+  oldPosition?: Position
+  newPosition: Position
 }
 
 /**
@@ -82,6 +80,21 @@ export type NodeEvent =
   | NodeUIDimensionsChangeEvent
   | NodeUIStateChangeEvent
   | NodeUIStyleChangeEvent
+
+export interface EventTypeToInterface {
+  [NodeEventType.StatusChange]: NodeStatusChangeEvent
+  [NodeEventType.UIPositionChange]: NodeUIPositionChangeEvent
+  [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent
+  [NodeEventType.UIStateChange]: NodeUIStateChangeEvent
+  [NodeEventType.UIStyleChange]: NodeUIStyleChangeEvent
+}
+
+export type NodeEventDataType<T extends NodeEventType> = Omit<
+  EventTypeToInterface[T],
+  keyof NodeEventBase
+>
+
+export type EventReturnType<T extends NodeEventType> = EventTypeToInterface[T]
 
 /**
  * Type guard to check if an event is a specific type

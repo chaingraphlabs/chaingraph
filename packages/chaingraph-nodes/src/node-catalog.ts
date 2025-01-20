@@ -1,23 +1,16 @@
-import type { INode, NodeRegistry } from '@chaingraph/types'
-import type { CategoryMetadata, NodeCategory } from '@chaingraph/types/node/category'
-import type {
-  NodeCategoryValue,
-} from './categories/constants'
+import type { CategorizedNodes, INode, NodeRegistry } from '@chaingraph/types'
+import type { NodeCategory } from '@chaingraph/types/node/category'
+
 import {
   CATEGORY_METADATA,
   NODE_CATEGORIES,
+  type NodeCategoryValue,
 } from './categories/constants'
-
-export interface CategorizedNodes {
-  category: NodeCategory
-  metadata: CategoryMetadata
-  nodes: INode[]
-}
 
 /**
  * Type guard to check if a category is one of predefined categories
  */
-function isKnownCategory(category: NodeCategory): category is NodeCategoryValue {
+export function isKnownCategory(category: NodeCategory): category is NodeCategoryValue {
   return Object.values(NODE_CATEGORIES).includes(category as NodeCategoryValue)
 }
 
@@ -73,7 +66,7 @@ export class NodeCatalog {
         }
 
         // Add node to category
-        this.categorizedNodes.get(category)?.nodes.push(node)
+        this.categorizedNodes.get(category)?.nodes.push(node.metadata)
       } catch (error) {
         console.error(`Failed to initialize node type: ${type}`, error)
       }
@@ -82,7 +75,7 @@ export class NodeCatalog {
     // Sort nodes within categories
     this.categorizedNodes.forEach((category) => {
       category.nodes.sort((a, b) =>
-        (a.metadata.title || '').localeCompare(b.metadata.title || ''),
+        (a.title || '').localeCompare(b.title || ''),
       )
     })
   }
@@ -133,9 +126,9 @@ export class NodeCatalog {
 
     this.categorizedNodes.forEach((categoryData, category) => {
       const matchedNodes = categoryData.nodes.filter((node) => {
-        const title = node.metadata.title?.toLowerCase() || ''
-        const description = node.metadata.description?.toLowerCase() || ''
-        const tags = node.metadata.tags?.map(t => t.toLowerCase()) || []
+        const title = node.title?.toLowerCase() || ''
+        const description = node.description?.toLowerCase() || ''
+        const tags = node.tags?.map(t => t.toLowerCase()) || []
 
         return (
           title.includes(normalizedQuery)

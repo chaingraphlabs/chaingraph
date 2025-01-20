@@ -1,8 +1,8 @@
 import type { AnyPortConfig, IPort, PortConfig, PortValueFromConfig } from '../types'
 import { PortFactory, registerPort } from '../registry'
-import { PortBase, PortKindEnum } from '../types'
+import { PortBase, PortKind } from '../types'
 
-@registerPort<AnyPortConfig>(PortKindEnum.Any)
+@registerPort<AnyPortConfig>(PortKind.Any)
 export class AnyPort extends PortBase<AnyPortConfig> {
   readonly config: AnyPortConfig
   value: any
@@ -73,7 +73,7 @@ export class AnyPort extends PortBase<AnyPortConfig> {
   }
 
   static isAnyPortConfig(config: any): config is AnyPortConfig {
-    return config.kind === PortKindEnum.Any
+    return config.kind === PortKind.Any
   }
 }
 //

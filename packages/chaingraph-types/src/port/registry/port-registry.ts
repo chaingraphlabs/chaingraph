@@ -1,19 +1,19 @@
 import type { PortConfig } from '@chaingraph/types/port'
 import type { PortConstructor } from '@chaingraph/types/port/types/port-base'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import type { PortKind } from '@chaingraph/types/port/types/port-kind-enum'
+import type { PortKindUnion } from '@chaingraph/types/port/types/port-kind'
 
 export class PortRegistry {
-  private static registry: Map<PortKind, PortConstructor<any>> = new Map()
+  private static registry: Map<PortKindUnion, PortConstructor<any>> = new Map()
 
-  static register<C extends PortConfig>(kind: PortKind, constructor: PortConstructor<C>): void {
+  static register<C extends PortConfig>(kind: PortKindUnion, constructor: PortConstructor<C>): void {
     if (this.registry.has(kind)) {
       throw new Error(`Port kind '${kind}' is already registered.`)
     }
     this.registry.set(kind, constructor)
   }
 
-  static getConstructor<C extends PortConfig>(kind: PortKind): PortConstructor<C> {
+  static getConstructor<C extends PortConfig>(kind: PortKindUnion): PortConstructor<C> {
     const constructor = this.registry.get(kind)
     if (!constructor) {
       throw new Error(`No port registered for kind '${kind}'.`)
@@ -31,11 +31,11 @@ export class PortRegistry {
   }
 }
 
-export function getPortConstructor<C extends PortConfig>(kind: PortKind): PortConstructor<C> {
+export function getPortConstructor<C extends PortConfig>(kind: PortKindUnion): PortConstructor<C> {
   return PortRegistry.getConstructor(kind)
 }
 
-export function registerPort<C extends PortConfig>(kind: PortKind) {
+export function registerPort<C extends PortConfig>(kind: PortKindUnion) {
   return function (constructor: new (config: C) => IPort<C>) {
     PortRegistry.register(kind, constructor)
   }

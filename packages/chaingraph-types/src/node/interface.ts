@@ -1,7 +1,13 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import type { NodeEvent } from '@chaingraph/types/node/events'
 import type { NodeStatus } from '@chaingraph/types/node/node-enums'
-import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
+import type {
+  Dimensions,
+  NodeUIMetadata,
+  NodeUIState,
+  NodeUIStyle,
+  Position,
+} from '@chaingraph/types/node/node-ui'
 import type { IPort } from '@chaingraph/types/port'
 import type {
   NodeExecutionResult,
@@ -84,7 +90,7 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Set the node status
    * @param status New status
    */
-  setStatus: (status: NodeStatus) => void
+  setStatus: (status: NodeStatus, emitEvent?: boolean) => void
 
   /**
    * Set the node metadata
@@ -108,27 +114,31 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   /**
    * Set the node UI position
    * @param position New position
+   * @param emitEvent Emit event
    * @returns
    */
-  setPosition: (position: NodeUIMetadata['position']) => void
+  setPosition: (position: Position, emitEvent?: boolean) => void
 
   /**
    * Set the node UI dimensions
    * @param dimensions New dimensions
+   * @param emitEvent Emit event
    */
-  setDimensions: (dimensions: NodeUIMetadata['dimensions']) => void
+  setDimensions: (dimensions: Dimensions, emitEvent?: boolean) => void
 
   /**
    * Set the node UI state
    * @param state New state
+   * @param emitEvent Emit event
    */
-  setUIState: (state: NodeUIMetadata['state']) => void
+  setUIState: (state: NodeUIState, emitEvent?: boolean) => void
 
   /**
    * Set the node UI style
    * @param style New style
+   * @param emitEvent Emit event
    */
-  setUIStyle: (style: NodeUIMetadata['style']) => void
+  setUIStyle: (style: NodeUIStyle, emitEvent?: boolean) => void
 
   /**
    * Get the node UI metadata
@@ -145,4 +155,14 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Enable node events (default)
    */
   enableEvents: () => void
+
+  /**
+   * Increment the node version
+   */
+  incrementVersion: () => void
+
+  /**
+   * Get the node version
+   */
+  getVersion: () => number
 }

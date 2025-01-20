@@ -1,5 +1,5 @@
 import type { EdgeMetadata, IEdge, INode, IPort } from '@chaingraph/types'
-import { EdgeStatus, PortDirectionEnum } from '@chaingraph/types'
+import { EdgeStatus, PortDirection } from '@chaingraph/types'
 
 export class Edge implements IEdge {
   readonly id: string
@@ -37,10 +37,10 @@ export class Edge implements IEdge {
     const sourcePortKind = this.sourcePort.config.kind
     const targetPortKind = this.targetPort.config.kind
 
-    if (this.sourcePort.config.direction !== PortDirectionEnum.Output) {
+    if (this.sourcePort.config.direction !== PortDirection.Output) {
       throw new Error(`Source port ${this.sourcePort.config.id} is not an output port.`)
     }
-    if (this.targetPort.config.direction !== PortDirectionEnum.Input) {
+    if (this.targetPort.config.direction !== PortDirection.Input) {
       throw new Error(`Target port ${this.targetPort.config.id} is not an input port.`)
     }
 

@@ -2,8 +2,8 @@ import type {
   StringPortConfig,
 } from '@chaingraph/types/port'
 import {
-  PortDirectionEnum,
-  PortKindEnum,
+  PortDirection,
+  PortKind,
   StreamInputPort,
   StreamOutputPort,
 } from '@chaingraph/types/port'
@@ -19,11 +19,11 @@ describe('stream ports serialization', () => {
   it('should correctly serialize and deserialize a StreamOutputPort without sending data', () => {
     // Arrange
     const outputPort = new StreamOutputPort<string>({
-      kind: PortKindEnum.StreamOutput,
+      kind: PortKind.StreamOutput,
       id: 'output-port',
-      direction: PortDirectionEnum.Output,
+      direction: PortDirection.Output,
       valueType: {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'string-type',
       } as StringPortConfig,
     })
@@ -43,11 +43,11 @@ describe('stream ports serialization', () => {
   it('should correctly serialize and deserialize a StreamOutputPort after sending data', async () => {
     // Arrange
     const outputPort = new StreamOutputPort<string>({
-      kind: PortKindEnum.StreamOutput,
+      kind: PortKind.StreamOutput,
       id: 'output-port',
-      direction: PortDirectionEnum.Output,
+      direction: PortDirection.Output,
       valueType: {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'string-type',
       } as StringPortConfig,
     })
@@ -86,17 +86,17 @@ describe('stream ports serialization', () => {
   it('should correctly serialize and deserialize a StreamInputPort connected to a StreamOutputPort', async () => {
     // Arrange
     const outputPort = new StreamOutputPort<string>({
-      kind: PortKindEnum.StreamOutput,
+      kind: PortKind.StreamOutput,
       id: 'output-port',
-      direction: PortDirectionEnum.Output,
-      valueType: { kind: PortKindEnum.String } as StringPortConfig,
+      direction: PortDirection.Output,
+      valueType: { kind: PortKind.String } as StringPortConfig,
     })
 
     const inputPort = new StreamInputPort<string>({
-      kind: PortKindEnum.StreamInput,
+      kind: PortKind.StreamInput,
       id: 'input-port',
-      direction: PortDirectionEnum.Input,
-      valueType: { kind: PortKindEnum.String } as StringPortConfig,
+      direction: PortDirection.Input,
+      valueType: { kind: PortKind.String } as StringPortConfig,
     })
 
     // Connect input port to output port
@@ -143,17 +143,17 @@ describe('stream ports serialization', () => {
   it('should preserve the channel state during serialization and deserialization', async () => {
     // Arrange
     const outputPort = new StreamOutputPort<number>({
-      kind: PortKindEnum.StreamOutput,
+      kind: PortKind.StreamOutput,
       id: 'number-output-port',
-      direction: PortDirectionEnum.Output,
-      valueType: { kind: PortKindEnum.Number },
+      direction: PortDirection.Output,
+      valueType: { kind: PortKind.Number },
     })
 
     const inputPort = new StreamInputPort<number>({
-      kind: PortKindEnum.StreamInput,
+      kind: PortKind.StreamInput,
       id: 'number-input-port',
-      direction: PortDirectionEnum.Input,
-      valueType: { kind: PortKindEnum.Number },
+      direction: PortDirection.Input,
+      valueType: { kind: PortKind.Number },
     })
 
     // Connect ports
@@ -202,10 +202,10 @@ describe('stream ports serialization', () => {
   it('should serialize and deserialize StreamInputPort without a connected channel', () => {
     // Arrange
     const inputPort = new StreamInputPort<string>({
-      kind: PortKindEnum.StreamInput,
+      kind: PortKind.StreamInput,
       id: 'input-port',
-      direction: PortDirectionEnum.Input,
-      valueType: { kind: PortKindEnum.String } as StringPortConfig,
+      direction: PortDirection.Input,
+      valueType: { kind: PortKind.String } as StringPortConfig,
     })
 
     // Act

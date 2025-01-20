@@ -11,11 +11,15 @@ import {
   setNodeMetadata,
   setNodes,
   setNodesLoading,
+  setNodeVersion,
+  updateNodePositionInterpolated,
+  updateNodePositionLocal,
+  updateNodeUILocal,
 } from './events'
 
 // Store for nodes
 export const $nodes = createStore<Record<string, INode>>({})
-  .on(setNodes, (_, nodes) => nodes)
+  .on(setNodes, (_, nodes) => ({ ...nodes }))
   .on(addNode, (state, node) => ({
     ...state,
     [node.id]: node,
@@ -37,22 +41,62 @@ export const $nodes = createStore<Record<string, INode>>({})
     }
   })
   .reset(clearNodes)
+  .on(setNodeVersion, (state, { id, version }) => {
+    const node = state[id]
+    if (!node)
+      return state
 
-// Store for tracking node versions
-export const $nodeVersions = createStore<Record<string, number>>({})
-  .on(addNode, (state, node) => ({
-    ...state,
-    [node.id]: 1,
-  }))
-  .on(setNodeMetadata, (state, { id }) => ({
-    ...state,
-    [id]: (state[id] || 0) + 1,
-  }))
-  .on(removeNode, (state, id) => {
-    const { [id]: _, ...rest } = state
-    return rest
+    console.log(`Setting version for node ${id} to ${version}`)
+
+    node.setMetadata({
+      ...node.metadata,
+      version,
+    })
+
+    return {
+      ...state,
+      [id]: node,
+    }
   })
-  .reset(clearNodes)
+
+// Update nodes store to handle UI updates
+$nodes
+  .on(updateNodeUILocal, (state, { flowId, nodeId, ui }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...node.metadata.ui,
+        ...ui,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
+  .on(updateNodePositionLocal, (state, { flowId, nodeId, position }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...node.metadata.ui,
+        position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
 
 // Loading states
 export const $isNodesLoading = createStore(false)
@@ -76,16 +120,6 @@ export const $nodesError = combine(
   (addError, removeError) => addError || removeError,
 )
 
-// Combined store for nodes with versions
-export const $nodesWithVersions = combine(
-  $nodes,
-  $nodeVersions,
-  (nodes, versions) => ({
-    nodes,
-    versions,
-  }),
-)
-
 // Computed stores
 // export const $nodesList = $nodesWithVersions.map(
 //   nodes => Object.values(nodes),
@@ -93,3 +127,24 @@ export const $nodesWithVersions = combine(
 // export const $nodesCount = $nodesWithVersions.map(
 //   nodes => Object.keys(nodes).length,
 // )
+
+// Update store to handle interpolated positions
+$nodes
+  .on(updateNodePositionInterpolated, (state, { nodeId, position }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...node.metadata.ui,
+        position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })

@@ -1,16 +1,20 @@
 import type { FlowEventHandlerMap } from '@chaingraph/types/flow/eventHandlers'
 import { trpc } from '@/api/trpc/client'
 import {
+  $nodes,
   FlowSubscriptionStatus,
   setFlowMetadata,
   setFlowSubscriptionError,
   setFlowSubscriptionStatus,
   setNodes,
+  setNodeVersion,
 } from '@/store'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
+import { positionInterpolator } from '@/store/nodes/position-interpolation'
 import { createEventHandler } from '@chaingraph/types/flow/eventHandlers'
 import { FlowEventType } from '@chaingraph/types/flow/events'
+import { DefaultPosition } from '@chaingraph/types/node/node-ui.ts'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { useEffect, useMemo } from 'react'
@@ -19,6 +23,7 @@ export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)
   const isFlowsLoading = useUnit($isFlowsLoading)
   const subscriptionState = useUnit($flowSubscriptionState)
+  const nodes = useUnit($nodes)
 
   // Create event handlers map
   const eventHandlers: FlowEventHandlerMap = useMemo(() => ({
@@ -35,6 +40,7 @@ export function useFlowSubscription() {
     },
 
     [FlowEventType.NodeAdded]: (data) => {
+      console.log('Adding node: version:', data.node.metadata.version)
       addNode(data.node)
     },
 
@@ -42,8 +48,69 @@ export function useFlowSubscription() {
       removeNode(data.nodeId)
     },
 
+    [FlowEventType.NodeUIPositionChanged]: (data) => {
+      const currentNode = nodes[data.nodeId]
+      if (!currentNode)
+        return
+
+      const currentVersion = currentNode.getVersion()
+
+      // if event contains version + 1 then just update the version
+      if (data.version && data.version <= currentVersion) {
+        console.log(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        return
+      }
+
+      // ignore outdated events
+      // if (data.version && data.version <= currentVersion) {
+      //   console.log(`Ignoring outdated position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+      //   return
+      // }
+
+      console.log(`[NOT SKIP] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+
+      setNodeVersion({
+        id: data.nodeId,
+        version: data.version,
+      })
+
+      const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
+      positionInterpolator.startInterpolation(
+        data.nodeId,
+        currentPosition,
+        data.newPosition,
+      )
+    },
+
+    [FlowEventType.NodeUIStateChanged]: (data) => {
+      const currentNode = nodes[data.nodeId]
+      if (!currentNode)
+        return
+
+      const currentVersion = currentNode.getVersion()
+
+      // ignore outdated events
+      if (data.version && data.version <= currentVersion) {
+        console.log(`Ignoring outdated state change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        return
+      }
+
+      currentNode.setMetadata({
+        ...currentNode.metadata,
+        ui: {
+          ...currentNode.metadata.ui,
+          ...data.newValue,
+          position: data.newValue.position || currentNode.metadata.ui?.position,
+          dimensions: data.newValue.dimensions || currentNode.metadata.ui?.dimensions,
+          style: data.newValue.style || currentNode.metadata.ui?.style,
+          state: data.newValue.state || currentNode.metadata.ui?.state,
+          version: data.newValue.version,
+        },
+      })
+    },
+
     // Add other event handlers as needed
-  }), [])
+  }), [nodes])
 
   // Create event handler with error handling
   const handleEvent = useMemo(() => createEventHandler(eventHandlers, {
@@ -96,6 +163,12 @@ export function useFlowSubscription() {
       }
     }
   }, [activeFlowId, subscription])
+
+  useEffect(() => {
+    return () => {
+      positionInterpolator.dispose()
+    }
+  }, [])
 
   return {
     ...subscriptionState,

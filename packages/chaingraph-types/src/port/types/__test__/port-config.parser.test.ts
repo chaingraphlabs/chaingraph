@@ -6,7 +6,7 @@ import {
 } from '@chaingraph/types/port/types/port-config-parsing.zod'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { PortKindEnum } from '../port-kind-enum'
+import { PortKind } from '../port-kind'
 
 describe('parsePortConfig', () => {
   beforeAll(() => {
@@ -16,83 +16,83 @@ describe('parsePortConfig', () => {
   describe('simple port types', () => {
     it('should parse string port config', () => {
       const config = {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         defaultValue: 'test',
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.String)
+      expect(result.kind).toBe(PortKind.String)
     })
 
     it('should parse number port config', () => {
       const config = {
-        kind: PortKindEnum.Number,
+        kind: PortKind.Number,
         defaultValue: 42,
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.Number)
+      expect(result.kind).toBe(PortKind.Number)
     })
 
     it('should parse boolean port config', () => {
       const config = {
-        kind: PortKindEnum.Boolean,
+        kind: PortKind.Boolean,
         defaultValue: true,
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.Boolean)
+      expect(result.kind).toBe(PortKind.Boolean)
     })
   })
 
   describe('array port config', () => {
     it('should parse array port config with simple element type', () => {
       const config = {
-        kind: PortKindEnum.Array,
+        kind: PortKind.Array,
         elementConfig: {
-          kind: PortKindEnum.String,
+          kind: PortKind.String,
         },
         defaultValue: ['test'],
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.Array)
-      expect((result as any)?.elementConfig.kind).toBe(PortKindEnum.String)
+      expect(result.kind).toBe(PortKind.Array)
+      expect((result as any)?.elementConfig.kind).toBe(PortKind.String)
     })
 
     it('should parse nested array port config', () => {
       const config = {
-        kind: PortKindEnum.Array,
+        kind: PortKind.Array,
         elementConfig: {
-          kind: PortKindEnum.Array,
+          kind: PortKind.Array,
           elementConfig: {
-            kind: PortKindEnum.Number,
+            kind: PortKind.Number,
           },
         },
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect((result as any)?.elementConfig.kind).toBe(PortKindEnum.Array)
-      expect((result as any)?.elementConfig.elementConfig.kind).toBe(PortKindEnum.Number)
+      expect((result as any)?.elementConfig.kind).toBe(PortKind.Array)
+      expect((result as any)?.elementConfig.elementConfig.kind).toBe(PortKind.Number)
     })
   })
 
   describe('object port config', () => {
     it('should parse object port config with simple properties', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             name: {
-              kind: PortKindEnum.String,
+              kind: PortKind.String,
             },
             age: {
-              kind: PortKindEnum.Number,
+              kind: PortKind.Number,
             },
           },
         },
@@ -100,22 +100,22 @@ describe('parsePortConfig', () => {
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.Object)
-      expect((result as any)?.schema?.properties.name.kind).toBe(PortKindEnum.String)
-      expect((result as any)?.schema?.properties.age.kind).toBe(PortKindEnum.Number)
+      expect(result.kind).toBe(PortKind.Object)
+      expect((result as any)?.schema?.properties.name.kind).toBe(PortKind.String)
+      expect((result as any)?.schema?.properties.age.kind).toBe(PortKind.Number)
     })
 
     it('should parse nested object port config', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             user: {
-              kind: PortKindEnum.Object,
+              kind: PortKind.Object,
               schema: {
                 properties: {
                   name: {
-                    kind: PortKindEnum.String,
+                    kind: PortKind.String,
                   },
                 },
               },
@@ -126,22 +126,22 @@ describe('parsePortConfig', () => {
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect((result as any)?.schema?.properties.user.kind).toBe(PortKindEnum.Object)
-      expect((result as any)?.schema?.properties.user.schema?.properties.name.kind).toBe(PortKindEnum.String)
+      expect((result as any)?.schema?.properties.user.kind).toBe(PortKind.Object)
+      expect((result as any)?.schema?.properties.user.schema?.properties.name.kind).toBe(PortKind.String)
     })
   })
 
   describe('enum port config', () => {
     it('should parse enum port config', () => {
       const config = {
-        kind: PortKindEnum.Enum,
+        kind: PortKind.Enum,
         options: [
           {
-            kind: PortKindEnum.String,
+            kind: PortKind.String,
             id: 'option1',
           },
           {
-            kind: PortKindEnum.Number,
+            kind: PortKind.Number,
             id: 'option2',
           },
         ],
@@ -150,17 +150,17 @@ describe('parsePortConfig', () => {
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.Enum)
+      expect(result.kind).toBe(PortKind.Enum)
       expect((result as any)?.options).toHaveLength(2)
-      expect((result as any)?.options[0].kind).toBe(PortKindEnum.String)
-      expect((result as any)?.options[1].kind).toBe(PortKindEnum.Number)
+      expect((result as any)?.options[0].kind).toBe(PortKind.String)
+      expect((result as any)?.options[1].kind).toBe(PortKind.Number)
     })
   })
 
   describe('any port config', () => {
     it('should parse any port config without connected config', () => {
       const config = {
-        kind: PortKindEnum.Any,
+        kind: PortKind.Any,
         defaultValue: 'anything',
       }
 
@@ -170,45 +170,45 @@ describe('parsePortConfig', () => {
 
     it('should parse any port config with connected config', () => {
       const config = {
-        kind: PortKindEnum.Any,
+        kind: PortKind.Any,
         connectedPortConfig: {
-          kind: PortKindEnum.String,
+          kind: PortKind.String,
         },
       }
 
       const result = parsePortConfig(config)
-      expect(result.kind).toBe(PortKindEnum.Any)
-      expect((result as any)?.connectedPortConfig?.kind).toBe(PortKindEnum.String)
+      expect(result.kind).toBe(PortKind.Any)
+      expect((result as any)?.connectedPortConfig?.kind).toBe(PortKind.String)
     })
   })
 
   describe('stream port configs', () => {
     it('should parse stream input port config', () => {
       const config = {
-        kind: PortKindEnum.StreamInput,
+        kind: PortKind.StreamInput,
         valueType: {
-          kind: PortKindEnum.String,
+          kind: PortKind.String,
         },
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.StreamInput)
-      expect((result as any)?.valueType?.kind).toBe(PortKindEnum.String)
+      expect(result.kind).toBe(PortKind.StreamInput)
+      expect((result as any)?.valueType?.kind).toBe(PortKind.String)
     })
 
     it('should parse stream output port config', () => {
       const config = {
-        kind: PortKindEnum.StreamOutput,
+        kind: PortKind.StreamOutput,
         valueType: {
-          kind: PortKindEnum.Number,
+          kind: PortKind.Number,
         },
       }
 
       const result = parsePortConfig(config)
       expect(result).toEqual(config)
-      expect(result.kind).toBe(PortKindEnum.StreamOutput)
-      expect((result as any)?.valueType?.kind).toBe(PortKindEnum.Number)
+      expect(result.kind).toBe(PortKind.StreamOutput)
+      expect((result as any)?.valueType?.kind).toBe(PortKind.Number)
     })
   })
 
@@ -231,7 +231,7 @@ describe('parsePortConfig', () => {
 
     it('should include path in error for nested config', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             invalid: {
@@ -256,7 +256,7 @@ describe('parsePortConfig', () => {
 
     it('should validate required fields', () => {
       const config = {
-        kind: PortKindEnum.Array,
+        kind: PortKind.Array,
         // missing elementConfig
       }
 
@@ -267,27 +267,27 @@ describe('parsePortConfig', () => {
   describe('complex scenarios', () => {
     it('should parse complex nested configuration', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             items: {
-              kind: PortKindEnum.Array,
+              kind: PortKind.Array,
               elementConfig: {
-                kind: PortKindEnum.Object,
+                kind: PortKind.Object,
                 schema: {
                   properties: {
                     name: {
-                      kind: PortKindEnum.String,
+                      kind: PortKind.String,
                     },
                     type: {
-                      kind: PortKindEnum.Enum,
+                      kind: PortKind.Enum,
                       options: [
                         {
-                          kind: PortKindEnum.String,
+                          kind: PortKind.String,
                           id: 'type1',
                         },
                         {
-                          kind: PortKindEnum.String,
+                          kind: PortKind.String,
                           id: 'type2',
                         },
                       ],
@@ -297,11 +297,11 @@ describe('parsePortConfig', () => {
               },
             },
             stream: {
-              kind: PortKindEnum.StreamInput,
+              kind: PortKind.StreamInput,
               valueType: {
-                kind: PortKindEnum.Any,
+                kind: PortKind.Any,
                 connectedPortConfig: {
-                  kind: PortKindEnum.Number,
+                  kind: PortKind.Number,
                 },
               },
             },
@@ -311,18 +311,18 @@ describe('parsePortConfig', () => {
 
       const result = parsePortConfig(config)
       expect(result).toBeDefined()
-      expect(result.kind).toBe(PortKindEnum.Object)
-      expect((result as any)?.schema?.properties.items.kind).toBe(PortKindEnum.Array)
-      expect((result as any)?.schema?.properties.items.elementConfig.kind).toBe(PortKindEnum.Object)
-      expect((result as any)?.schema?.properties.stream.kind).toBe(PortKindEnum.StreamInput)
-      expect((result as any)?.schema?.properties.stream.valueType?.kind).toBe(PortKindEnum.Any)
+      expect(result.kind).toBe(PortKind.Object)
+      expect((result as any)?.schema?.properties.items.kind).toBe(PortKind.Array)
+      expect((result as any)?.schema?.properties.items.elementConfig.kind).toBe(PortKind.Object)
+      expect((result as any)?.schema?.properties.stream.kind).toBe(PortKind.StreamInput)
+      expect((result as any)?.schema?.properties.stream.valueType?.kind).toBe(PortKind.Any)
     })
   })
 
   describe('optional fields', () => {
     it('should parse config with optional fields', () => {
       const config = {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         id: 'test-id',
         title: 'Test Title',
         description: 'Test Description',
@@ -345,7 +345,7 @@ describe('parsePortConfig', () => {
   describe('error handling and paths', () => {
     it('should include path in error for nested config', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             invalid: {
@@ -368,7 +368,7 @@ describe('parsePortConfig', () => {
 
     it('should include path in error for array element config', () => {
       const config = {
-        kind: PortKindEnum.Array,
+        kind: PortKind.Array,
         elementConfig: {
           kind: 'invalid',
         },
@@ -387,7 +387,7 @@ describe('parsePortConfig', () => {
 
     it('should include path in error for enum options', () => {
       const config = {
-        kind: PortKindEnum.Enum,
+        kind: PortKind.Enum,
         options: [
           {
             kind: 'invalid',
@@ -408,7 +408,7 @@ describe('parsePortConfig', () => {
 
     it('should handle multiple validation errors', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             field1: {
@@ -438,7 +438,7 @@ describe('parsePortConfig', () => {
   describe('superjson serialize and deserialize config', () => {
     it('should parse string port config', () => {
       const config: StringPortConfig = {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         defaultValue: 'test',
       }
 
@@ -447,36 +447,36 @@ describe('parsePortConfig', () => {
 
       const result = parsePortConfig(configDeserialized)
       expect(result).toEqual(configDeserialized)
-      expect(result.kind).toBe(PortKindEnum.String)
+      expect(result.kind).toBe(PortKind.String)
 
       // const result = parsePortConfig(config)
       expect(configDeserialized).toEqual(config)
-      expect(configDeserialized.kind).toBe(PortKindEnum.String)
+      expect(configDeserialized.kind).toBe(PortKind.String)
     })
 
     it('should parse complex nested configuration', () => {
       const config = {
-        kind: PortKindEnum.Object,
+        kind: PortKind.Object,
         schema: {
           properties: {
             items: {
-              kind: PortKindEnum.Array,
+              kind: PortKind.Array,
               elementConfig: {
-                kind: PortKindEnum.Object,
+                kind: PortKind.Object,
                 schema: {
                   properties: {
                     name: {
-                      kind: PortKindEnum.String,
+                      kind: PortKind.String,
                     },
                     type: {
-                      kind: PortKindEnum.Enum,
+                      kind: PortKind.Enum,
                       options: [
                         {
-                          kind: PortKindEnum.String,
+                          kind: PortKind.String,
                           id: 'type1',
                         },
                         {
-                          kind: PortKindEnum.String,
+                          kind: PortKind.String,
                           id: 'type2',
                         },
                       ],
@@ -486,11 +486,11 @@ describe('parsePortConfig', () => {
               },
             },
             stream: {
-              kind: PortKindEnum.StreamInput,
+              kind: PortKind.StreamInput,
               valueType: {
-                kind: PortKindEnum.Any,
+                kind: PortKind.Any,
                 connectedPortConfig: {
-                  kind: PortKindEnum.Number,
+                  kind: PortKind.Number,
                 },
               },
             },
@@ -503,11 +503,11 @@ describe('parsePortConfig', () => {
 
       const result = parsePortConfig(configDeserialized)
       expect(result).toBeDefined()
-      expect(result.kind).toBe(PortKindEnum.Object)
-      expect((result as any)?.schema?.properties.items.kind).toBe(PortKindEnum.Array)
-      expect((result as any)?.schema?.properties.items.elementConfig.kind).toBe(PortKindEnum.Object)
-      expect((result as any)?.schema?.properties.stream.kind).toBe(PortKindEnum.StreamInput)
-      expect((result as any)?.schema?.properties.stream.valueType?.kind).toBe(PortKindEnum.Any)
+      expect(result.kind).toBe(PortKind.Object)
+      expect((result as any)?.schema?.properties.items.kind).toBe(PortKind.Array)
+      expect((result as any)?.schema?.properties.items.elementConfig.kind).toBe(PortKind.Object)
+      expect((result as any)?.schema?.properties.stream.kind).toBe(PortKind.StreamInput)
+      expect((result as any)?.schema?.properties.stream.valueType?.kind).toBe(PortKind.Any)
     })
   })
 })

@@ -2,9 +2,9 @@ import type { IPort } from '@chaingraph/types/port'
 import type { StringPortConfig } from '@chaingraph/types/port/types/port-config'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 
-@registerPort<StringPortConfig>(PortKindEnum.String)
+@registerPort<StringPortConfig>(PortKind.String)
 export class StringPort extends PortBase<StringPortConfig> {
   readonly config: StringPortConfig
   value: string
@@ -41,6 +41,6 @@ export class StringPort extends PortBase<StringPortConfig> {
   }
 
   static isStringPortConfig(config: any): config is StringPortConfig {
-    return config.kind === PortKindEnum.String
+    return config.kind === PortKind.String
   }
 }

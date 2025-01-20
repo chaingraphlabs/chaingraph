@@ -1,13 +1,13 @@
 import type { Context } from '@chaingraph/backend/context'
 import { initTRPC, TRPCError } from '@trpc/server'
-import superjson from 'superjson'
+import SuperJSON from 'superjson'
 import { ZodError } from 'zod'
 
 const t = initTRPC
   .context<Context>()
   // .meta<Meta>()
   .create({
-    transformer: superjson,
+    transformer: SuperJSON,
 
     errorFormatter(opts) {
       const { shape, error } = opts

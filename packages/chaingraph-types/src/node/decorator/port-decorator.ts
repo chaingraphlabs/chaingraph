@@ -3,8 +3,8 @@ import type { ObjectSchema, PortConfig, PortConfigByKind } from '@chaingraph/typ
 import type { BasePortConfig } from '@chaingraph/types/port/types/port-config'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
 import { ArrayPort, EnumPort, ObjectPort, StreamInputPort, StreamOutputPort } from '@chaingraph/types/port'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 
 import 'reflect-metadata'
 
@@ -14,7 +14,7 @@ export type PortConfigWithClassKind = PortConfig | Omit<PortConfig, 'kind'> & {
   kind: Function
 }
 
-export type PartialPortConfig<K extends PortKindEnum> = Omit<
+export type PartialPortConfig<K extends PortKind> = Omit<
   PortConfigByKind<K>,
   'kind' | 'schema' | 'elementConfig' | 'valueType'
 > & {
@@ -23,9 +23,9 @@ export type PartialPortConfig<K extends PortKindEnum> = Omit<
   valueType?: PortConfigWithClassKind // For StreamOutputPortConfig, StreamInputPortConfig
 }
 
-export type PortDecoratorConfig<K extends PortKindEnum> = PartialPortConfig<K> & { kind: K | Function }
+export type PortDecoratorConfig<K extends PortKind> = PartialPortConfig<K> & { kind: K | Function }
 
-export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
+export function Port<K extends PortKind>(config: PortDecoratorConfig<K>) {
   return function (target: any, propertyKey: string) {
     const metadata = getOrCreateNodeMetadata(target)
     if (!metadata.portsConfig) {
@@ -77,7 +77,7 @@ export function Port<K extends PortKindEnum>(config: PortDecoratorConfig<K>) {
         const kind = (config as any).kind
         const classMetadata = getOrCreateNodeMetadata(kind.prototype)
         Object.assign(config, {
-          kind: PortKindEnum.Object,
+          kind: PortKind.Object,
           schema: createObjectSchemaFromMetadata(classMetadata),
         })
       }
@@ -139,7 +139,7 @@ export function updatePortConfig(
   metadata.portsConfig.set(propertyKey, existingConfig)
 }
 
-function createPortDecorator<K extends PortKindEnum>(kind: K) {
+function createPortDecorator<K extends PortKind>(kind: K) {
   return (config?: PartialPortConfig<K>) => {
     return Port<K>({ ...(config || {} as PartialPortConfig<K>), kind })
   }
@@ -155,13 +155,13 @@ export function Input() {
     const portConfig = metadata.portsConfig.get(propertyKey)
     if (!portConfig) {
       metadata.portsConfig.set(propertyKey, {
-        kind: PortKindEnum.Any,
-        direction: PortDirectionEnum.Input,
+        kind: PortKind.Any,
+        direction: PortDirection.Input,
       })
     } else {
       metadata.portsConfig.set(propertyKey, {
         ...portConfig,
-        direction: PortDirectionEnum.Input,
+        direction: PortDirection.Input,
       })
     }
   }
@@ -177,13 +177,13 @@ export function Output() {
     const portConfig = metadata.portsConfig.get(propertyKey)
     if (!portConfig) {
       metadata.portsConfig.set(propertyKey, {
-        kind: PortKindEnum.Any,
-        direction: PortDirectionEnum.Output,
+        kind: PortKind.Any,
+        direction: PortDirection.Output,
       })
     } else {
       metadata.portsConfig.set(propertyKey, {
         ...portConfig,
-        direction: PortDirectionEnum.Output,
+        direction: PortDirection.Output,
       })
     }
   }
@@ -193,52 +193,52 @@ export function Output() {
  * @see ObjectPort
  * @see ObjectPortConfig
  */
-export const PortString = createPortDecorator(PortKindEnum.String)
+export const PortString = createPortDecorator(PortKind.String)
 
 /**
  * @see NumberPort
  * @see NumberPortConfig
  */
-export const PortNumber = createPortDecorator(PortKindEnum.Number)
+export const PortNumber = createPortDecorator(PortKind.Number)
 
 /**
  * @see BooleanPort
  * @see BooleanPortConfig
  */
-export const PortBoolean = createPortDecorator(PortKindEnum.Boolean)
+export const PortBoolean = createPortDecorator(PortKind.Boolean)
 
 /**
  * @see ArrayPort
  * @see ArrayPortConfig
  */
-export const PortArray = createPortDecorator(PortKindEnum.Array)
+export const PortArray = createPortDecorator(PortKind.Array)
 
 /**
  * @see ObjectPort
  * @see ObjectPortConfig
  */
-export const PortObject = createPortDecorator(PortKindEnum.Object)
+export const PortObject = createPortDecorator(PortKind.Object)
 
 /**
  * @see AnyPort
  * @see AnyPortConfig
  */
-export const PortAny = createPortDecorator(PortKindEnum.Any)
+export const PortAny = createPortDecorator(PortKind.Any)
 
 /**
  * @see EnumPort
  * @see EnumPortConfig
  */
-export const PortEnum = createPortDecorator(PortKindEnum.Enum)
+export const PortEnum = createPortDecorator(PortKind.Enum)
 
 /**
  * @see StreamOutputPort
  * @see StreamOutputPortConfig
  */
-export const PortStreamOutput = createPortDecorator(PortKindEnum.StreamOutput)
+export const PortStreamOutput = createPortDecorator(PortKind.StreamOutput)
 
 /**
  * @see StreamInputPort
  * @see StreamInputPortConfig
  */
-export const PortStreamInput = createPortDecorator(PortKindEnum.StreamInput)
+export const PortStreamInput = createPortDecorator(PortKind.StreamInput)

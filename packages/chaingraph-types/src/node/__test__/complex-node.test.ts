@@ -22,7 +22,7 @@ import {
   PortEnum,
   PortEnumFromNative,
   PortEnumFromObject,
-  PortKindEnum,
+  PortKind,
   PortNumber,
   PortNumberEnum,
   PortObject,
@@ -39,6 +39,7 @@ import {
 import { registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
@@ -117,8 +118,15 @@ export class TestUserObject {
 
   @PortNumber({
     description: 'Age of the user',
+    isNumber: true,
   })
   age: number = 0
+
+  @PortNumber({
+    description: 'Age of the user decimal',
+    isNumber: false,
+  })
+  ageDecimal: Decimal = new Decimal(0)
 
   @PortObject({
     description: 'Address of the user',
@@ -131,7 +139,7 @@ export class TestUserObject {
     title: 'Emails',
     description: 'Emails of the user',
     elementConfig: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
     },
   })
@@ -197,7 +205,7 @@ export class UserProfileNode extends BaseNode {
   @Input() @PortArray({
     defaultValue: [],
     elementConfig: {
-      kind: PortKindEnum.Number,
+      kind: PortKind.Number,
       defaultValue: 0,
     },
   })
@@ -206,7 +214,7 @@ export class UserProfileNode extends BaseNode {
   @Output() @PortArray({
     defaultValue: [],
     elementConfig: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
     },
   })
@@ -216,9 +224,9 @@ export class UserProfileNode extends BaseNode {
     defaultValue: [],
     elementConfig: {
       defaultValue: [],
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       elementConfig: {
-        kind: PortKindEnum.Number,
+        kind: PortKind.Number,
         defaultValue: 0,
       },
     },
@@ -230,17 +238,17 @@ export class UserProfileNode extends BaseNode {
     elementConfig: {
       id: 'z',
       key: 'Z',
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       defaultValue: [],
       elementConfig: {
         id: 'y',
         key: 'Y',
-        kind: PortKindEnum.Array,
+        kind: PortKind.Array,
         defaultValue: [],
         elementConfig: {
           id: 'x',
           key: 'X',
-          kind: PortKindEnum.Number,
+          kind: PortKind.Number,
           defaultValue: 0,
         },
       },
@@ -251,7 +259,7 @@ export class UserProfileNode extends BaseNode {
   @Output() @PortArray({
     defaultValue: [],
     elementConfig: {
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       defaultValue: [],
       elementConfig: {
         kind: TestUserObject,
@@ -264,9 +272,9 @@ export class UserProfileNode extends BaseNode {
   @PortEnum({
     defaultValue: 'red',
     options: [
-      { kind: PortKindEnum.String, id: 'red', defaultValue: 'Red' },
-      { kind: PortKindEnum.String, id: 'green', defaultValue: 'Green' },
-      { kind: PortKindEnum.String, id: 'blue', defaultValue: 'Blue' },
+      { kind: PortKind.String, id: 'red', defaultValue: 'Red' },
+      { kind: PortKind.String, id: 'green', defaultValue: 'Green' },
+      { kind: PortKind.String, id: 'blue', defaultValue: 'Blue' },
     ],
   })
   @Output()
@@ -286,7 +294,7 @@ export class UserProfileNode extends BaseNode {
   @Input() @PortStreamInput({
     defaultValue: new MultiChannel<string>(),
     valueType: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
     },
   })
@@ -295,7 +303,7 @@ export class UserProfileNode extends BaseNode {
   @Output() @PortStreamOutput({
     defaultValue: new MultiChannel<string>(),
     valueType: {
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       defaultValue: '',
     },
   })
@@ -313,10 +321,10 @@ export class UserProfileNode extends BaseNode {
   @Output() @PortStreamOutput({
     defaultValue: new MultiChannel<string[]>(),
     valueType: {
-      kind: PortKindEnum.Array,
+      kind: PortKind.Array,
       defaultValue: [],
       elementConfig: {
-        kind: PortKindEnum.String,
+        kind: PortKind.String,
         defaultValue: '',
       },
     },
@@ -333,17 +341,17 @@ export class UserProfileNode extends BaseNode {
 
   @Output()
   @PortArrayObject(TestUserObject, {
-    kind: PortKindEnum.Array,
+    kind: PortKind.Array,
     defaultValue: [],
   })
   simpleObjectArray?: TestUserObject[]
 
   @Output()
-  @PortArrayNested(2, { kind: PortKindEnum.String, defaultValue: '' })
+  @PortArrayNested(2, { kind: PortKind.String, defaultValue: '' })
   simple2dArray?: string[][]
 
   @Output()
-  @PortArrayNested(3, { kind: PortKindEnum.Number, defaultValue: 0 })
+  @PortArrayNested(3, { kind: PortKind.Number, defaultValue: 0 })
   numbers3d_2?: number[][][]
 
   @Output()
@@ -443,6 +451,14 @@ describe('complex node', () => {
     const parsed = superjson.deserialize(json as any as SuperJSONResult) as UserProfileNode
 
     expect(parsed).toBeDefined()
+
+    // iterate over metadata ports config and compare with the original node
+    for (const [key, value] of testNode.metadata.portsConfig!.entries()) {
+      const config = parsed.metadata.portsConfig!.get(key)
+      expect(config).toBeDefined()
+      expect(config).toEqual(value)
+    }
+
     expect(parsed.metadata).toEqual(testNode.metadata)
     expect(parsed.status).toEqual(testNode.status)
   })

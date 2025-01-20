@@ -1,5 +1,4 @@
-import type { CategorizedNodes } from '@chaingraph/nodes'
-import type { CategoryMetadata } from '@chaingraph/types'
+import type { CategorizedNodes, CategoryMetadata } from '@chaingraph/types'
 
 export interface CategoryState {
   categories: CategorizedNodes[]

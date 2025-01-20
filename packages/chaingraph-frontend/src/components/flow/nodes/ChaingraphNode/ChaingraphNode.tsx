@@ -9,7 +9,7 @@ import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/r
 import { memo, useEffect, useState } from 'react'
 
 function ChaingraphNodeComponent({
-  data: { node, categoryMetadata },
+  data,
   selected,
   id,
 }: NodeProps<ChaingraphNode>) {
@@ -17,21 +17,21 @@ function ChaingraphNodeComponent({
   const { setNodes } = useReactFlow()
 
   const [style, setStyle] = useState(
-    theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light,
+    theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
   )
-  const [inputs, setInputs] = useState(node.getInputs())
-  const [outputs, setOutputs] = useState(node.getOutputs())
+  const [inputs, setInputs] = useState(data.node.getInputs())
+  const [outputs, setOutputs] = useState(data.node.getOutputs())
 
   useEffect(() => {
     setStyle(
-      theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light,
+      theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
     )
-  }, [theme, categoryMetadata])
+  }, [theme, data.categoryMetadata])
 
   useEffect(() => {
-    setInputs(node.getInputs())
-    setOutputs(node.getOutputs())
-  }, [node])
+    setInputs(data.node.getInputs())
+    setOutputs(data.node.getOutputs())
+  }, [data.node])
 
   return (
     <Card
@@ -46,11 +46,13 @@ function ChaingraphNodeComponent({
       }}
     >
       <NodeHeader
-        title={node.metadata.title || node.metadata.category || 'Node'}
-        icon={categoryMetadata.icon}
+        title={data.node.metadata.title || data.node.metadata.category || 'Node'}
+        icon={data.categoryMetadata.icon}
         style={style}
         onDelete={() => setNodes(nodes => nodes.filter(n => n.id !== id))}
       />
+
+      {data.node.metadata.version}
 
       <NodeBody
         inputs={inputs}

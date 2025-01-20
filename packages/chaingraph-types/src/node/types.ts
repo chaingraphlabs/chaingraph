@@ -12,7 +12,7 @@ export interface NodeMetadata {
   title?: string
   category?: NodeCategory
   description?: string
-  version?: string
+  version?: number
   icon?: string
   tags?: string[]
   author?: string

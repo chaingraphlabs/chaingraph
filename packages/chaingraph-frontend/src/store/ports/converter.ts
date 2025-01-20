@@ -1,4 +1,4 @@
-import type { PortState } from '@/store'
+import type { PortState } from '@/store/ports/types.ts'
 import type { IPort } from '@chaingraph/types'
 
 // Helpers for converting between live ports and their state representation

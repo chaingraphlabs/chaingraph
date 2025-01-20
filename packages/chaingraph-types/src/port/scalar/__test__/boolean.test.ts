@@ -1,7 +1,7 @@
 import type { BooleanPortConfig } from '@chaingraph/types/port/types/port-config'
 import { BooleanPort, registerPortTransformers } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 import superjson from 'superjson'
 import { describe, expect, it } from 'vitest'
 
@@ -11,9 +11,9 @@ describe('booleanPort serialization', () => {
   it('should correctly serialize and deserialize BooleanPort with different value types', () => {
     // Arrange
     const originalPort = new BooleanPort({
-      kind: PortKindEnum.Boolean,
+      kind: PortKind.Boolean,
       id: 'test-boolean-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       defaultValue: false,
     })
 
@@ -45,9 +45,9 @@ describe('booleanPort serialization', () => {
   it('should preserve port configuration after serialization', () => {
     // Arrange
     const config = {
-      kind: PortKindEnum.Boolean,
+      kind: PortKind.Boolean,
       id: 'test-boolean-port',
-      direction: PortDirectionEnum.Output,
+      direction: PortDirection.Output,
       defaultValue: true,
       optional: true,
       title: 'Test Boolean Port',

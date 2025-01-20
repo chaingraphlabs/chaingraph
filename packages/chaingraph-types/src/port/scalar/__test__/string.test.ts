@@ -1,6 +1,6 @@
 import { registerPortTransformers, StringPort } from '@chaingraph/types'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 import superjson from 'superjson'
 import { describe, expect, it } from 'vitest'
 
@@ -10,9 +10,9 @@ describe('stringPort serialization', () => {
   it('should correctly serialize and deserialize StringPort with different value types', () => {
     // Arrange
     const originalPort = new StringPort({
-      kind: PortKindEnum.String,
+      kind: PortKind.String,
       id: 'test-string-port',
-      direction: PortDirectionEnum.Input,
+      direction: PortDirection.Input,
       defaultValue: 'default value',
     })
 

@@ -1,7 +1,7 @@
 import type { PartialPortConfig, PortDecoratorConfig } from '@chaingraph/types/node'
 import type { PortConfig } from '@chaingraph/types/port'
 import { Port } from '@chaingraph/types/node'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 
 /**
  * Decorator for defining an enum port with specified options.
@@ -11,21 +11,21 @@ import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
  */
 export function PortEnumOf<T>(
   options: Array<T>,
-  config?: PartialPortConfig<PortKindEnum.Enum>,
+  config?: PartialPortConfig<PortKind.Enum>,
 ) {
   return function (target: any, propertyKey: string) {
     const optionConfigs: PortConfig[] = options.map((option, index) => {
-      let kind: PortKindEnum | Function
+      let kind: PortKind | Function
       let defaultValue: any
 
       if (typeof option === 'string') {
-        kind = PortKindEnum.String
+        kind = PortKind.String
         defaultValue = option
       } else if (typeof option === 'number') {
-        kind = PortKindEnum.Number
+        kind = PortKind.Number
         defaultValue = option
       } else if (typeof option === 'boolean') {
-        kind = PortKindEnum.Boolean
+        kind = PortKind.Boolean
         defaultValue = option
       } else if (typeof option === 'object' && option !== null) {
         kind = option.constructor
@@ -44,14 +44,14 @@ export function PortEnumOf<T>(
 
     const defaultOptionId = optionConfigs[0]?.id // Default to the first option's id
 
-    const enumConfig: PortDecoratorConfig<PortKindEnum.Enum> = {
+    const enumConfig: PortDecoratorConfig<PortKind.Enum> = {
       ...config,
-      kind: PortKindEnum.Enum,
+      kind: PortKind.Enum,
       options: optionConfigs,
       defaultValue: defaultOptionId, // Must be the id of the selected option
     }
 
-    return Port<PortKindEnum.Enum>(enumConfig)(target, propertyKey)
+    return Port<PortKind.Enum>(enumConfig)(target, propertyKey)
   }
 }
 
@@ -63,25 +63,25 @@ export function PortEnumOf<T>(
  */
 export function PortStringEnum(
   options: string[],
-  config?: PartialPortConfig<PortKindEnum.Enum>,
+  config?: PartialPortConfig<PortKind.Enum>,
 ) {
   const optionConfigs = options.map(value => ({
     id: value,
-    kind: PortKindEnum.String,
+    kind: PortKind.String,
     defaultValue: value, // The value to use when this option is selected
   }))
 
   const defaultOptionId = options[0] // Default to the first option's id
 
-  const enumConfig: PortDecoratorConfig<PortKindEnum.Enum> = {
+  const enumConfig: PortDecoratorConfig<PortKind.Enum> = {
     ...config,
-    kind: PortKindEnum.Enum,
+    kind: PortKind.Enum,
     options: optionConfigs,
     defaultValue: defaultOptionId, // Must be the id of the selected option
   }
 
   return function (target: any, propertyKey: string) {
-    return Port<PortKindEnum.Enum>(enumConfig)(target, propertyKey)
+    return Port<PortKind.Enum>(enumConfig)(target, propertyKey)
   }
 }
 
@@ -93,25 +93,25 @@ export function PortStringEnum(
  */
 export function PortNumberEnum(
   options: number[],
-  config?: PartialPortConfig<PortKindEnum.Enum>,
+  config?: PartialPortConfig<PortKind.Enum>,
 ) {
   const optionConfigs = options.map(value => ({
     id: value.toString(),
-    kind: PortKindEnum.Number,
+    kind: PortKind.Number,
     defaultValue: value, // The value to use when this option is selected
   }))
 
   const defaultOptionId = options[0].toString() // Default to the first option's id
 
-  const enumConfig: PortDecoratorConfig<PortKindEnum.Enum> = {
+  const enumConfig: PortDecoratorConfig<PortKind.Enum> = {
     ...config,
-    kind: PortKindEnum.Enum,
+    kind: PortKind.Enum,
     options: optionConfigs,
     defaultValue: defaultOptionId, // Must be the id of the selected option
   }
 
   return function (target: any, propertyKey: string) {
-    return Port<PortKindEnum.Enum>(enumConfig)(target, propertyKey)
+    return Port<PortKind.Enum>(enumConfig)(target, propertyKey)
   }
 }
 
@@ -123,20 +123,20 @@ export function PortNumberEnum(
  */
 export function PortEnumFromObject<T>(
   options: { [key: string]: T },
-  config?: PartialPortConfig<PortKindEnum.Enum>,
+  config?: PartialPortConfig<PortKind.Enum>,
 ) {
   const optionConfigs = Object.entries(options).map(([id, value]) => {
-    let kind: PortKindEnum | Function
+    let kind: PortKind | Function
     let defaultValue: any
 
     if (typeof value === 'string') {
-      kind = PortKindEnum.String
+      kind = PortKind.String
       defaultValue = value
     } else if (typeof value === 'number') {
-      kind = PortKindEnum.Number
+      kind = PortKind.Number
       defaultValue = value
     } else if (typeof value === 'boolean') {
-      kind = PortKindEnum.Boolean
+      kind = PortKind.Boolean
       defaultValue = value
     } else if (typeof value === 'object' && value !== null) {
       kind = value.constructor
@@ -154,15 +154,15 @@ export function PortEnumFromObject<T>(
 
   const defaultOptionId = Object.keys(options)[0] // Default to the first option's id
 
-  const enumConfig: PortDecoratorConfig<PortKindEnum.Enum> = {
+  const enumConfig: PortDecoratorConfig<PortKind.Enum> = {
     ...config,
-    kind: PortKindEnum.Enum,
+    kind: PortKind.Enum,
     options: optionConfigs,
     defaultValue: defaultOptionId, // Must be the id of the selected option
   }
 
   return function (target: any, propertyKey: string) {
-    return Port<PortKindEnum.Enum>(enumConfig)(target, propertyKey)
+    return Port<PortKind.Enum>(enumConfig)(target, propertyKey)
   }
 }
 
@@ -174,19 +174,19 @@ export function PortEnumFromObject<T>(
  */
 export function PortEnumFromNative<E extends Record<string, string | number>>(
   nativeEnum: E,
-  config?: PartialPortConfig<PortKindEnum.Enum>,
+  config?: PartialPortConfig<PortKind.Enum>,
 ) {
   const options = Object.values(nativeEnum).filter(
     value => typeof value === 'string' || typeof value === 'number',
   ) as Array<string | number>
 
   const optionConfigs = options.map((value) => {
-    let kind: PortKindEnum
+    let kind: PortKind
 
     if (typeof value === 'string') {
-      kind = PortKindEnum.String
+      kind = PortKind.String
     } else if (typeof value === 'number') {
-      kind = PortKindEnum.Number
+      kind = PortKind.Number
     } else {
       throw new TypeError(`Unsupported enum value type: ${typeof value}`)
     }
@@ -200,14 +200,14 @@ export function PortEnumFromNative<E extends Record<string, string | number>>(
 
   const defaultOptionId = optionConfigs[0]?.id
 
-  const enumConfig: PortDecoratorConfig<PortKindEnum.Enum> = {
+  const enumConfig: PortDecoratorConfig<PortKind.Enum> = {
     ...config,
-    kind: PortKindEnum.Enum,
+    kind: PortKind.Enum,
     options: optionConfigs,
     defaultValue: defaultOptionId, // Must be the id of the selected option
   }
 
   return function (target: any, propertyKey: string) {
-    return Port<PortKindEnum.Enum>(enumConfig)(target, propertyKey)
+    return Port<PortKind.Enum>(enumConfig)(target, propertyKey)
   }
 }

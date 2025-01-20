@@ -4,10 +4,10 @@ import type {
 } from '@chaingraph/types/port/types/port-config'
 import { registerPort } from '@chaingraph/types/port/registry/port-registry'
 import { PortBase } from '@chaingraph/types/port/types/port-base'
-import { PortDirectionEnum } from '@chaingraph/types/port/types/port-direction'
-import { PortKindEnum } from '@chaingraph/types/port/types/port-kind-enum'
+import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
+import { PortKind } from '@chaingraph/types/port/types/port-kind'
 
-@registerPort<StreamInputPortConfig<any>>(PortKindEnum.StreamInput)
+@registerPort<StreamInputPortConfig<any>>(PortKind.StreamInput)
 export class StreamInputPort<T> extends PortBase<StreamInputPortConfig<T>> {
   readonly config: StreamInputPortConfig<T>
   value: MultiChannel<T> | null = null
@@ -44,7 +44,7 @@ export class StreamInputPort<T> extends PortBase<StreamInputPortConfig<T>> {
   }
 
   validate(): boolean {
-    if (this.config.direction !== PortDirectionEnum.Input) {
+    if (this.config.direction !== PortDirection.Input) {
       return false
     }
 
@@ -57,6 +57,6 @@ export class StreamInputPort<T> extends PortBase<StreamInputPortConfig<T>> {
   }
 
   static isStreamInputPortConfig<T>(config: any): config is StreamInputPortConfig<T> {
-    return config.kind === PortKindEnum.StreamInput
+    return config.kind === PortKind.StreamInput
   }
 }

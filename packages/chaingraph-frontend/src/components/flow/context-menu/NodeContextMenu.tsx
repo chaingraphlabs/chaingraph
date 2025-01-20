@@ -1,4 +1,4 @@
-import type { CategoryMetadata, INode } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import { useTheme } from '@/components/theme/hooks/useTheme.ts'
 import { Button } from '@/components/ui/button.tsx'
@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 interface NodeContextMenuProps {
   position: { x: number, y: number }
-  onSelect: (node: INode, category: CategoryMetadata) => void
+  onSelect: (node: NodeMetadata, category: CategoryMetadata) => void
   onClose: () => void
 }
 
@@ -31,9 +31,9 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
     return categories.map(category => ({
       ...category,
       nodes: category.nodes.filter(node =>
-        node.metadata.title?.toLowerCase().includes(search.toLowerCase())
-        || node.metadata.description?.toLowerCase().includes(search.toLowerCase())
-        || node.metadata.tags?.some(tag =>
+        node.title?.toLowerCase().includes(search.toLowerCase())
+        || node.description?.toLowerCase().includes(search.toLowerCase())
+        || node.tags?.some(tag =>
           tag.toLowerCase().includes(search.toLowerCase()),
         ),
       ),
@@ -41,7 +41,7 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
   }, [categories, search])
 
   // Handle node selection
-  const handleSelect = useCallback((node: INode, categoryMetadata: CategoryMetadata) => {
+  const handleSelect = useCallback((node: NodeMetadata, categoryMetadata: CategoryMetadata) => {
     onSelect(node, categoryMetadata)
     onClose()
   }, [onSelect, onClose])
@@ -132,8 +132,8 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
               >
                 {category.nodes.map(node => (
                   <CommandItem
-                    key={node.id}
-                    value={`${category.category}:${node.metadata.title}`}
+                    key={node.type}
+                    value={`${category.category}:${node.title}`}
                     onSelect={() => handleSelect(node, category.metadata)}
                   >
                     <Button
@@ -157,7 +157,7 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
                           }80`,
                         }}
                       />
-                      <span>{node.metadata.title}</span>
+                      <span>{node.title}</span>
                     </Button>
                   </CommandItem>
                 ))}

@@ -1,9 +1,10 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKindEnum, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKind, registerPortTransformers } from '@chaingraph/types'
 
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { findPort } from '@chaingraph/types/node/ports-traverser'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -18,7 +19,7 @@ class ArrayNode extends BaseNode {
   @PortArray({
     defaultValue: [],
     elementConfig: {
-      kind: PortKindEnum.Number,
+      kind: PortKind.Number,
       defaultValue: 0,
     },
   })
@@ -48,8 +49,13 @@ describe('array node serialization', () => {
     const arrayNode = new ArrayNode('array-node')
     await arrayNode.initialize()
 
-    expect(arrayNode.getPort('numArray')).toBeDefined()
-    expect(arrayNode.getPort('numArray')?.getValue()).toEqual([new Decimal(1), new Decimal(2), new Decimal(3)])
+    const numArrayPort = await findPort(
+      arrayNode,
+      port => port.config.key === 'numArray',
+    )
+
+    expect(numArrayPort).toBeDefined()
+    expect(numArrayPort?.getValue()).toEqual([new Decimal(1), new Decimal(2), new Decimal(3)])
 
     const json = superjson.serialize(arrayNode)
     const parsed = superjson.deserialize(json as any as SuperJSONResult) as ArrayNode
