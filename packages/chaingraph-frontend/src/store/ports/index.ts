@@ -28,6 +28,7 @@ export const $ports = createStore<PortsStore>(initialState)
         nodeId: port.config.nodeId!,
         config: port.config,
         value: port.getValue(),
+        parentPortId: port.config.parentPortId,
       },
     },
   }))

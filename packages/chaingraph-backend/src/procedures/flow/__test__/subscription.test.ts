@@ -12,7 +12,6 @@ import {
   NodeRegistry,
   Output,
   PortBoolean,
-  PortKind,
   PortNumber,
   PortString,
 } from '@chaingraph/types'
@@ -431,22 +430,18 @@ describe('flow Event Subscription', () => {
     expect(edgeEvent).toBeDefined()
 
     const [, edgeEventData] = edgeEvent!
-    const edge = edgeEventData.data.edge
+    const edge = edgeEventData.data
 
     // Verify nodes connection
-    expect(edge.sourceNode.id).toBe(sourceNode.id)
-    expect(edge.targetNode.id).toBe(targetNode.id)
+    expect(edge.sourceNodeId).toBe(sourceNode.id)
+    expect(edge.targetNodeId).toBe(targetNode.id)
 
     // Verify ports connection
-    expect(edge.sourcePort.config.id).toBe('strOutput')
-    expect(edge.targetPort.config.id).toBe('strInput')
+    expect(edge.sourcePortId).toBe('strOutput')
+    expect(edge.targetPortId).toBe('strInput')
 
     // Verify metadata
     expect(edge.metadata.description).toBe('string connection')
-
-    // Verify port types
-    expect(edge.sourcePort.config.kind).toBe(PortKind.String)
-    expect(edge.targetPort.config.kind).toBe(PortKind.String)
   }, { timeout: 10000 })
 
   it('should handle node removal with connections', async () => {

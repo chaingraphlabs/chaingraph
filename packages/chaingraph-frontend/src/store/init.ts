@@ -3,6 +3,7 @@ import { initializeFlowsFx } from '@/store/flow/init.ts'
 import './flow/init'
 import './nodes/init'
 import './categories/init'
+import './edges/init'
 
 /**
  * Initialize all stores and load initial data

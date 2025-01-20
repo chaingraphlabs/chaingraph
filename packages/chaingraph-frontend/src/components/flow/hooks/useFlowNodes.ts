@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 /**
  * Hook to transform flow nodes into ReactFlow nodes
  */
-export function useFlowNodes1() {
+export function useFlowNodes() {
   const nodes = useUnit($nodes)
 
   const { getCategoryMetadata } = useCategories()
@@ -22,7 +22,7 @@ export function useFlowNodes1() {
     return Object.values(nodes).map((node): Node => {
       const categoryMetadata = getCategoryMetadata(node.metadata.category!)
 
-      return {
+      const reactflowNode: Node = {
         id: node.id,
         type: 'chaingraphNode',
         position: node.metadata.ui?.position ?? DefaultPosition,
@@ -30,7 +30,16 @@ export function useFlowNodes1() {
           node,
           categoryMetadata,
         },
-      } as Node
+        selected: node.metadata.ui?.state?.isSelected ?? false,
+      }
+
+      // set dimensions
+      if (node.metadata.ui?.dimensions && node.metadata.ui.dimensions.width > 0 && node.metadata.ui.dimensions.height > 0) {
+        reactflowNode.width = node.metadata.ui.dimensions.width
+        reactflowNode.height = node.metadata.ui.dimensions.height
+      }
+
+      return reactflowNode
     })
   }, [nodes, getCategoryMetadata])
 }

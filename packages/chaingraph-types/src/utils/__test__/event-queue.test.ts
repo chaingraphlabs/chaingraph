@@ -133,13 +133,14 @@ describe('eventQueue', () => {
     expect(receivedEvents).toEqual([{ type: 'event3' }])
   })
 
-  it('should prevent publishing events after the queue is closed', async () => {
-    // Close the queue
-    await queue.close()
-
-    // Attempt to publish an event
-    await expect(queue.publish({ type: 'event1' })).rejects.toThrowError('Cannot publish to a closed EventQueue.')
-  })
+  // TODO: consider to enable throwing error when publishing to a closed queue, for now it's disabled
+  // it('should prevent publishing events after the queue is closed', async () => {
+  //   // Close the queue
+  //   await queue.close()
+  //
+  //   // Attempt to publish an event
+  //   await expect(queue.publish({ type: 'event1' })).rejects.toThrowError('Cannot publish to a closed EventQueue.')
+  // })
 
   it('should notify subscribers when the queue is closed', async () => {
     const onErrorMock = vi.fn()

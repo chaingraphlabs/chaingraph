@@ -25,7 +25,7 @@ export class PositionInterpolator {
   private animationFrame: number | null = null
 
   // Start interpolation for a specific node
-  startInterpolation(nodeId: string, currentPosition: Position, targetPosition: Position) {
+  addState(nodeId: string, targetPosition: Position, currentPosition: Position) {
     const existingState = this.interpolationStates.get(nodeId)
 
     this.interpolationStates.set(nodeId, {

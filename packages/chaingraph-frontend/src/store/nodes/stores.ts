@@ -46,7 +46,7 @@ export const $nodes = createStore<Record<string, INode>>({})
     if (!node)
       return state
 
-    console.log(`Setting version for node ${id} to ${version}`)
+    // console.log(`Setting version for node ${id} to ${version}`)
 
     node.setMetadata({
       ...node.metadata,
@@ -83,6 +83,8 @@ $nodes
     const node = state[nodeId]
     if (!node)
       return state
+
+    // console.log(`[LOCAL] Updating node position for node ${nodeId}, position:`, position)
 
     node.setMetadata({
       ...node.metadata,

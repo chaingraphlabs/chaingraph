@@ -8,6 +8,8 @@ import superjson from 'superjson'
  * Registers flow transformers with SuperJSON
  */
 export function registerFlowTransformers() {
+  // registerEdgeTransformers()
+
   // Flow
   superjson.registerCustom<Flow, JSONValue>(
     {

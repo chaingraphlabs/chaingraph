@@ -44,5 +44,10 @@ export const connectPorts = publicProcedure
 
     return {
       edgeId: edge.id,
+      sourceNodeId,
+      sourcePortId,
+      targetNodeId,
+      targetPortId,
+      metadata: edge.metadata,
     }
   })

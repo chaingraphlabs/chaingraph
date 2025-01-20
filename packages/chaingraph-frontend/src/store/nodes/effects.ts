@@ -29,10 +29,8 @@ export const removeNodeFromFlowFx = createEffect(async (params: {
 // })
 
 export const baseUpdateNodePositionFx = createEffect(async (params: UpdateNodePosition) => {
-  console.log(`[baseUpdateNodePositionFx] Updating node position for node ${params.nodeId}, new version: ${params.version + 1}`)
-
   return await trpcClient.flow.updateNodePosition.mutate({
     ...params,
-    version: params.version + 1,
+    version: params.version,
   })
 })

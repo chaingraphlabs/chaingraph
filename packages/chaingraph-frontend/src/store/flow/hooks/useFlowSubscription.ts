@@ -3,6 +3,9 @@ import { trpc } from '@/api/trpc/client'
 import {
   $nodes,
   FlowSubscriptionStatus,
+  removeEdge,
+  setEdge,
+  setEdges,
   setFlowMetadata,
   setFlowSubscriptionError,
   setFlowSubscriptionStatus,
@@ -30,6 +33,7 @@ export function useFlowSubscription() {
     [FlowEventType.FlowInitStart]: (data) => {
       // clean up existing flow data
       setNodes({})
+      setEdges([])
       setFlowMetadata(data.metadata)
     },
 
@@ -48,6 +52,26 @@ export function useFlowSubscription() {
       removeNode(data.nodeId)
     },
 
+    [FlowEventType.EdgeAdded]: (data) => {
+      // Transform edge data to match our store format
+      setEdge({
+        flowId: activeFlowId!, // We know it exists because we're subscribed
+        edgeId: data.edgeId,
+        sourceNodeId: data.sourceNodeId,
+        sourcePortId: data.sourcePortId,
+        targetNodeId: data.targetNodeId,
+        targetPortId: data.targetPortId,
+        metadata: data.metadata,
+      })
+    },
+
+    [FlowEventType.EdgeRemoved]: (data) => {
+      removeEdge({
+        flowId: activeFlowId!, // We know it exists because we're subscribed
+        edgeId: data.edgeId,
+      })
+    },
+
     [FlowEventType.NodeUIPositionChanged]: (data) => {
       const currentNode = nodes[data.nodeId]
       if (!currentNode)
@@ -57,17 +81,11 @@ export function useFlowSubscription() {
 
       // if event contains version + 1 then just update the version
       if (data.version && data.version <= currentVersion) {
-        console.log(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        // console.log(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
         return
       }
 
-      // ignore outdated events
-      // if (data.version && data.version <= currentVersion) {
-      //   console.log(`Ignoring outdated position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
-      //   return
-      // }
-
-      console.log(`[NOT SKIP] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+      // console.log(`[NOT SKIP] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
 
       setNodeVersion({
         id: data.nodeId,
@@ -75,11 +93,6 @@ export function useFlowSubscription() {
       })
 
       const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
-      // positionInterpolator.startInterpolation(
-      //   data.nodeId,
-      //   currentPosition,
-      //   data.newPosition,
-      // )
       positionInterpolator.addState(data.nodeId, data.newPosition, currentPosition)
     },
 
@@ -111,7 +124,7 @@ export function useFlowSubscription() {
     },
 
     // Add other event handlers as needed
-  }), [nodes])
+  }), [nodes, activeFlowId])
 
   // Create event handler with error handling
   const handleEvent = useMemo(() => createEventHandler(eventHandlers, {

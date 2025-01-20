@@ -6,12 +6,14 @@ import type {
 import type { Viewport } from '@xyflow/system'
 import { useDnd } from '@/components/dnd'
 import { NodeContextMenu } from '@/components/flow/context-menu/NodeContextMenu.tsx'
-import { useFlowNodes1 } from '@/components/flow/hooks/useFlowNodes.ts'
+import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks.ts'
+import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges.ts'
+import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
 import { useNodeDrag } from '@/components/flow/hooks/useNodeDrag.ts'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop.ts'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
 import { ZoomContext } from '@/providers/ZoomProvider'
-import { useFlowSubscription } from '@/store'
+import { $activeFlowMetadata, addNodeToFlow, useFlowSubscription } from '@/store'
 import { nodeRegistry } from '@chaingraph/nodes'
 import {
   Background,
@@ -19,9 +21,9 @@ import {
   ReactFlow,
   useReactFlow,
 } from '@xyflow/react'
+import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
-import { v7 as uuidv7 } from 'uuid'
 import '@xyflow/react/dist/style.css'
 
 // Configuration constants
@@ -54,7 +56,9 @@ function Flow() {
   // State
   // const [nodes, setNodes] = useState<Node[]>(initialNodes)
   // const [edges, setEdges] = useState<Edge[]>(initialEdges)
-  const nodes = useFlowNodes1()
+  const nodes = useFlowNodes()
+  const edges = useFlowEdges()
+  const activeFlow = useUnit($activeFlowMetadata)
 
   // const edges = useFlowEdges()
 
@@ -62,11 +66,14 @@ function Flow() {
   useNodeDrop()
 
   // Get interaction callbacks
-  // const {
-  //   onNodesChange,
-  //   onEdgesChange,
-  //   onConnect,
-  // } = useFlowCallbacks()
+  const {
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onReconnect,
+    onReconnectStart,
+    onReconnectEnd,
+  } = useFlowCallbacks()
 
   // Register node types
 
@@ -183,7 +190,7 @@ function Flow() {
 
   // Handle node selection
   const handleNodeSelect = useCallback((nodeMeta: NodeMetadata, categoryMetadata: CategoryMetadata) => {
-    if (!contextMenu)
+    if (!contextMenu || !activeFlow)
       return
 
     const flowPosition = screenToFlowPosition({
@@ -191,23 +198,23 @@ function Flow() {
       y: contextMenu.y,
     })
 
-    const nodeId = uuidv7()
-    const node = nodeRegistry.createNode(nodeMeta.type, nodeId)
-    node.initialize()
+    const node = nodeRegistry.createNode(nodeMeta.type, 'new')
 
-    const newNode = {
-      id: uuidv7(),
-      type: 'chaingraphNode',
+    // Dispatch addNodeToFlow event
+    addNodeToFlow({
+      flowId: activeFlow.id!,
+      nodeType: nodeMeta.type,
       position: flowPosition,
-      data: {
-        node,
-        categoryMetadata,
+      metadata: {
+        title: node.metadata.title,
+        description: node.metadata.description,
+        category: node.metadata.category,
+        tags: node.metadata.tags,
       },
-    }
+    })
 
-    // setNodes(nodes => [...nodes, newNode])
     setContextMenu(null) // Close menu
-  }, [contextMenu, screenToFlowPosition])
+  }, [activeFlow, contextMenu, screenToFlowPosition])
 
   return (
     <div
@@ -218,16 +225,20 @@ function Flow() {
       <ReactFlow
         nodes={nodes}
         nodeTypes={nodeTypes}
-        // edges={edges}
+        edges={edges}
         // edgeTypes={edgeTypes}
-        // onNodesChange={onNodesChange}
+        onNodesChange={onNodesChange}
         // onEdgesChange={onEdgesChange}
         onInit={onInit}
-        // onConnect={onConnect}
+        onConnect={onConnect}
+        onEdgesChange={onEdgesChange}
+        onReconnect={onReconnect}
+        onReconnectStart={onReconnectStart}
+        onReconnectEnd={onReconnectEnd}
         // onReconnect={onReconnect}
         // onReconnectStart={onReconnectStart}
         // onReconnectEnd={onReconnectEnd}
-        onNodeDrag={onNodeDrag}
+        // onNodeDrag={onNodeDrag}
         onViewportChange={onViewportChange}
         fitView
         preventScrolling

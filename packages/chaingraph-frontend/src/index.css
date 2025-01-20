@@ -39,6 +39,14 @@
     --glow-execute-rgb: 22, 163, 74;
     --glow-data-rgb: 37, 99, 235;
     --glow-stream-rgb: 217, 119, 6;
+
+    /* Edge Colors - Light Theme */
+    --edge-color: 215 25% 27%;
+    --edge-connecting: 142 76% 36%;
+    --edge-selected: 217 91% 60%;
+
+    /* Base edge opacity */
+    --edge-opacity: 0.7;
   }
 
   .dark {
@@ -72,6 +80,14 @@
     --glow-execute-rgb: 21, 128, 61;
     --glow-data-rgb: 29, 78, 216;
     --glow-stream-rgb: 180, 83, 9;
+
+    /* Edge Colors - Dark Theme */
+    --edge-color: 215 25% 85%;
+    --edge-connecting: 142 70% 45%;
+    --edge-selected: 217 91% 60%;
+
+    /* Base edge opacity for dark theme */
+    --edge-opacity: 0.6;
   }
 }
 
@@ -102,8 +118,74 @@
   background: currentColor;
 }
 
+/* Base edge style */
+/*.react-flow__edge-path {*/
+/*  @apply stroke-[2px] transition-colors duration-200;*/
+/*  stroke: hsl(var(--edge-color) / var(--edge-opacity));*/
+/*  animation: none !important;*/
+/*}*/
+
 .react-flow__edge-path {
-  @apply stroke-2 stroke-border;
+  stroke-dasharray: none !important; /* Remove dashed line */
+  animation: none !important; /* Remove animation */
+  @apply stroke-[3px] transition-colors duration-200;
+}
+
+/* Hover state */
+.react-flow__edge:hover .react-flow__edge-path {
+  @apply stroke-[3.5px];
+  stroke: hsl(var(--edge-color));
+}
+
+/* Selected state */
+.react-flow__edge.selected .react-flow__edge-path {
+  @apply stroke-[3.5px];
+  stroke: hsl(var(--edge-selected));
+}
+
+/* Connection line (when dragging new connection) */
+.react-flow__connection-path {
+  @apply stroke-[3.5px];
+  stroke: hsl(var(--edge-connecting));
+}
+
+/* Add edge animation */
+@keyframes flow-edge {
+  from {
+    stroke-dashoffset: 8;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-flow-edge {
+  animation: flow-edge 1s linear infinite;
+}
+
+/* Edge Types */
+.react-flow__edge.edge-execute .react-flow__edge-path {
+  stroke: hsl(var(--flow-execute) / var(--edge-opacity));
+}
+
+.react-flow__edge.edge-execute:hover .react-flow__edge-path {
+  stroke: hsl(var(--flow-execute) / var(--edge-hover-opacity));
+}
+
+.react-flow__edge.edge-data .react-flow__edge-path {
+  stroke: hsl(var(--flow-data) / var(--edge-opacity));
+}
+
+.react-flow__edge.edge-data:hover .react-flow__edge-path {
+  stroke: hsl(var(--flow-data) / var(--edge-hover-opacity));
+}
+
+.react-flow__edge.edge-stream .react-flow__edge-path {
+  stroke: hsl(var(--flow-stream) / var(--edge-opacity));
+}
+
+.react-flow__edge.edge-stream:hover .react-flow__edge-path {
+  stroke: hsl(var(--flow-stream) / var(--edge-hover-opacity));
 }
 
 /* Node Types */

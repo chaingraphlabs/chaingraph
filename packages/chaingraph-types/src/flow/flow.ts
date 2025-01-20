@@ -123,23 +123,6 @@ export class Flow implements IFlow {
       throw new Error(`Edge with ID ${edge.id} already exists in the flow.`)
     }
     this.edges.set(edge.id, edge)
-
-    // Emit EdgeAdded event
-    // const event: FlowEvent<FlowEventType.EdgeAdded, EdgeAddedEventData> = {
-    //   index: this.getNextEventIndex(),
-    //   flowId: this.id,
-    //   type: FlowEventType.EdgeAdded,
-    //   timestamp: new Date(),
-    //   data: {
-    //     edge,
-    //   },
-    // }
-    this.emitEvent(newEvent(
-      this.getNextEventIndex(),
-      this.id,
-      FlowEventType.EdgeAdded,
-      { edge },
-    ))
   }
 
   removeEdge(edgeId: string): void {
@@ -149,16 +132,6 @@ export class Flow implements IFlow {
     }
     this.edges.delete(edgeId)
 
-    // Emit EdgeRemoved event
-    // const event: FlowEvent<FlowEventType.EdgeRemoved, EdgeRemovedEventData> = {
-    //   index: this.getNextEventIndex(),
-    //   flowId: this.id,
-    //   type: FlowEventType.EdgeRemoved,
-    //   timestamp: new Date(),
-    //   data: {
-    //     edgeId,
-    //   },
-    // }
     this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
@@ -206,6 +179,20 @@ export class Flow implements IFlow {
     )
     await edge.initialize()
     this.addEdge(edge)
+
+    this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.EdgeAdded,
+      {
+        edgeId: edge.id,
+        sourceNodeId,
+        sourcePortId,
+        targetNodeId,
+        targetPortId,
+        metadata: edge.metadata,
+      },
+    ))
 
     return edge
   }
@@ -259,7 +246,7 @@ export class Flow implements IFlow {
    * Emit a flow event
    * @param event The event to emit
    */
-  private emitEvent<T extends FlowEvent>(event: T): Promise<void> {
+  private emitEvent<T extends FlowEvent>(event: T): Promise<Awaited<void>[]> {
     return this.eventQueue.publish(event)
   }
 

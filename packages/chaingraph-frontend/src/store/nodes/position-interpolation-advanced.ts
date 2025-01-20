@@ -11,18 +11,17 @@ export class AdvancedPositionInterpolator {
   private springStates: Map<string, {
     velocity: Position
     currentPosition: Position
-    isInitialMove: boolean // Track if this is the first movement
   }> = new Map()
 
   // Faster and more precise configuration
-  private readonly bufferTime = 200
-  private readonly springConstant = 8.5 // Increased for faster movement
+  private readonly bufferTime = 1000
+  private readonly springConstant = 10.5 // Increased for faster movement
   private readonly dampingFactor = 6.5 // Increased for less oscillation
-  private readonly velocityThreshold = 0.1
-  private readonly positionThreshold = 1
+  private readonly velocityThreshold = 0.2
+  private readonly positionThreshold = 2
   private readonly initialMoveSpeed = 8 // Speed for initial linear movement
 
-  addState(nodeId: string, position: Position, currentPosition?: Position) {
+  addState(nodeId: string, position: Position, currentPosition: Position) {
     const timestamp = performance.now()
     const buffer = this.stateBuffer.get(nodeId) || []
 
@@ -37,7 +36,6 @@ export class AdvancedPositionInterpolator {
         velocity: { x: 0, y: 0 },
         // Use current position if provided, otherwise use target position
         currentPosition: currentPosition || position,
-        isInitialMove: currentPosition !== undefined,
       })
     }
 
@@ -50,32 +48,6 @@ export class AdvancedPositionInterpolator {
     }
 
     this.stateBuffer.set(nodeId, buffer)
-  }
-
-  private linearInterpolate(
-    current: Position,
-    target: Position,
-    speed: number,
-  ): { position: Position, finished: boolean } {
-    const dx = target.x - current.x
-    const dy = target.y - current.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-
-    // If we're close enough, snap to target
-    if (distance < speed) {
-      return { position: target, finished: true }
-    }
-
-    // Calculate normalized direction and new position
-    const dirX = dx / distance
-    const dirY = dy / distance
-
-    const newPosition = {
-      x: current.x + dirX * speed,
-      y: current.y + dirY * speed,
-    }
-
-    return { position: newPosition, finished: false }
   }
 
   private springInterpolate(
@@ -130,40 +102,23 @@ export class AdvancedPositionInterpolator {
       const springState = this.springStates.get(nodeId)!
       const targetPosition = buffer[buffer.length - 1].position
 
-      if (springState.isInitialMove) {
-        // Use linear interpolation for initial movement
-        const { position, finished } = this.linearInterpolate(
-          springState.currentPosition,
-          targetPosition,
-          this.initialMoveSpeed,
-        )
+      // Use spring interpolation for subsequent movements
+      const deltaTime = 1 / 60
+      const { position, velocity, finished } = this.springInterpolate(
+        springState.currentPosition,
+        targetPosition,
+        springState.velocity,
+        deltaTime,
+      )
 
-        if (finished) {
-          springState.isInitialMove = false
-        }
-
-        springState.currentPosition = position
-        springState.velocity = { x: 0, y: 0 }
-        this.onUpdate(nodeId, position)
-      } else {
-        // Use spring interpolation for subsequent movements
-        const deltaTime = 1 / 60
-        const { position, velocity, finished } = this.springInterpolate(
-          springState.currentPosition,
-          targetPosition,
-          springState.velocity,
-          deltaTime,
-        )
-
-        if (finished) {
-          buffer.length = 1
-          buffer[0] = { position: targetPosition, timestamp }
-        }
-
-        springState.currentPosition = position
-        springState.velocity = velocity
-        this.onUpdate(nodeId, position)
+      if (finished) {
+        buffer.length = 1
+        buffer[0] = { position: targetPosition, timestamp }
       }
+
+      springState.currentPosition = position
+      springState.velocity = velocity
+      this.onUpdate(nodeId, position)
     })
 
     this.animationFrame = requestAnimationFrame(this.animate)
@@ -183,6 +138,11 @@ export class AdvancedPositionInterpolator {
     }
     this.stateBuffer.clear()
     this.springStates.clear()
+  }
+
+  clearNodeState(nodeId: string) {
+    this.stateBuffer.delete(nodeId)
+    this.springStates.delete(nodeId)
   }
 
   onUpdate: (nodeId: string, position: Position) => void = () => {}

@@ -40,6 +40,7 @@ export const updateNodePosition = publicProcedure
       flowId: input.flowId,
       nodeId: input.nodeId,
       position: input.position,
+      requestedVersion: input.version,
       version: node.getVersion(),
     }
   })

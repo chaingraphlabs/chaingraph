@@ -1,0 +1,49 @@
+import type { EdgeData, EdgeError } from './types'
+import { combine, createStore } from 'effector'
+import { addEdgeFx, removeEdgeFx } from './effects'
+import {
+  removeEdge,
+  resetEdges,
+  setEdge,
+  setEdges,
+  setEdgesError,
+  setEdgesLoading,
+} from './events'
+
+// Main edges store
+export const $edges = createStore<EdgeData[]>([])
+  .on(setEdges, (_, edges) => edges)
+  .on(setEdge, (edges, edge) => [
+    ...edges,
+    { ...edge },
+  ])
+  .on(removeEdge, (edges, event) => edges.filter(
+    edge => edge.edgeId !== event.edgeId,
+  ))
+  .reset(resetEdges)
+
+// Loading state
+export const $isEdgesLoading = createStore(false)
+  .on(setEdgesLoading, (_, isLoading) => isLoading)
+  .on(addEdgeFx.pending, (_, isPending) => isPending)
+  .on(removeEdgeFx.pending, (_, isPending) => isPending)
+
+// Error state
+export const $edgesError = createStore<EdgeError | null>(null)
+  .on(setEdgesError, (_, error) => error)
+  .on(addEdgeFx.failData, (_, error) => ({
+    message: error.message,
+    timestamp: new Date(),
+  }))
+  .on(removeEdgeFx.failData, (_, error) => ({
+    message: error.message,
+    timestamp: new Date(),
+  }))
+  .reset([addEdgeFx.done, removeEdgeFx.done])
+
+// Combined store for edge state
+export const $edgesState = combine({
+  edges: $edges,
+  isLoading: $isEdgesLoading,
+  error: $edgesError,
+})

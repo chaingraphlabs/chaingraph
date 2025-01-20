@@ -1,7 +1,7 @@
 import { $nodes } from '@/store'
+import { NODE_POSITION_DEBOUNCE_MS } from '@/store/nodes/constants.ts'
+import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample.ts'
 import { sample } from 'effector'
-import { throttle } from 'patronum'
-import { NODE_POSITION_DEBOUNCE_MS } from './constants.ts'
 import {
   addNodeToFlowFx,
   baseUpdateNodePositionFx,
@@ -18,39 +18,40 @@ import {
 } from './events'
 import './interpolation-init'
 
+// * * * * * * * * * * * * * * *
+// CRUD operations
+// * * * * * * * * * * * * * * *
 // Handle backend node operations
 sample({
   clock: addNodeToFlow,
   target: addNodeToFlowFx,
 })
 
-// TODO: we don't need this sample due we have subscriptions
-// sample({
-//   clock: addNodeToFlowFx.doneData,
-//   target: addNode,
-// })
-
 sample({
   clock: removeNodeFromFlow,
   target: removeNodeFromFlowFx,
 })
 
-// TODO: we don't need this sample due we have subscriptions
-// sample({
-//   clock: removeNodeFromFlowFx.doneData,
-//   fn: result => result.removedNodeId,
-//   target: removeNode,
-// })
+// * * * * * * * * * * * * * * *
+// Position operations
+// * * * * * * * * * * * * * * *
 
-// throttle({
+// Update local position immediately
+sample({
+  clock: updateNodePosition,
+  target: updateNodePositionLocal,
+})
+
+// Debounce node position updates
+// const throttledUpdatePosition = throttle({
 //   source: updateNodePosition,
 //   timeout: NODE_POSITION_DEBOUNCE_MS,
-//   target: baseUpdateNodePositionFx,
 // })
 
-const throttledUpdatePosition = throttle({
+const throttledUpdatePosition = accumulateAndSample({
   source: updateNodePosition,
-  timeout: NODE_POSITION_DEBOUNCE_MS * 1.2,
+  timeout: NODE_POSITION_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
 })
 
 // Create middleware to update the version of the node before sending it to the server
@@ -61,6 +62,8 @@ const nodePositionWithNewVersion = sample({
     const node = nodes[params.nodeId]
     const newVersion = (node?.metadata.version ?? 0) + 1
 
+    console.log(`[throttleByKey] Processing update for node ${params.nodeId}, new version: ${newVersion}`)
+
     return {
       ...params,
       version: newVersion,
@@ -68,8 +71,8 @@ const nodePositionWithNewVersion = sample({
   },
 })
 
-// Обновляем локальную версию
-sample({
+// Update local state with the new version
+const optimisticVersionPositionUpdated = sample({
   clock: nodePositionWithNewVersion,
   fn: params => ({
     id: params.nodeId,
@@ -78,11 +81,16 @@ sample({
   target: setNodeVersion,
 })
 
-// Отправляем запрос на сервер
+// Send the updated node position to the server
 sample({
-  clock: nodePositionWithNewVersion,
+  clock: optimisticVersionPositionUpdated,
+  source: nodePositionWithNewVersion,
   target: baseUpdateNodePositionFx,
 })
+
+// * * * * * * * * * * * * * * *
+// Node UI operations
+// * * * * * * * * * * * * * * *
 
 // sample({
 //   source: updateNodeUI,
@@ -93,12 +101,6 @@ sample({
 sample({
   clock: updateNodeUI,
   target: updateNodeUILocal, // Update local state immediately
-})
-
-// Handle optimistic updates for position
-sample({
-  clock: updateNodePosition,
-  target: updateNodePositionLocal, // Update local state immediately
 })
 
 // Connect debounced effects to the main flow

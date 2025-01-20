@@ -171,8 +171,12 @@ export abstract class BaseNode implements INode {
   }
 
   async dispose(): Promise<void> {
+    this._ports.clear()
+
+    // Close event queue
+    await this.eventQueue.close()
+
     this.setStatus(NodeStatus.Disposed, false)
-    return this.eventQueue.close()
   }
 
   getPort(portId: string): IPort<any> | undefined {

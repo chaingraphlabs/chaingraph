@@ -7,11 +7,16 @@ export enum EdgeStatus {
   Error = 'error',
 }
 
+export interface EdgeStyle {
+  stroke?: string
+  strokeWidth?: number
+  strokeDasharray?: string
+}
+
 /**
  * Edge configuration metadata
  */
 export interface EdgeMetadata {
-  /** Optional label for the edge */
   label?: string
 
   /** Custom metadata */

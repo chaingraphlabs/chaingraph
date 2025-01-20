@@ -1,5 +1,6 @@
 import { addNode } from '@chaingraph/backend/procedures/flow/add-node'
 import { connectPorts } from '@chaingraph/backend/procedures/flow/connect-ports'
+import { removeEdge } from '@chaingraph/backend/procedures/flow/remove-edge'
 import { removeNode } from '@chaingraph/backend/procedures/flow/remove-node'
 import { subscribeToEvents } from '@chaingraph/backend/procedures/flow/subscriptions'
 import { updateNodePosition } from '@chaingraph/backend/procedures/flow/update-node-position'
@@ -98,6 +99,7 @@ export const flowProcedures = router({
   addNode,
   removeNode,
   connectPorts,
+  removeEdge,
   updateNodeUI,
   updateNodePosition,
 })

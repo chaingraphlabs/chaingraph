@@ -1,5 +1,5 @@
 import type { Position } from '@chaingraph/types/node/node-ui'
-import type { IEdge } from '../edge'
+import type { EdgeMetadata } from '../edge'
 import type { INode } from '../node'
 import type { IFlow } from './interface'
 
@@ -21,7 +21,7 @@ export enum FlowEventType {
   // Edge events
   EdgeAdded = 'flow:edge:added',
   EdgeRemoved = 'flow:edge:removed',
-  EdgeUpdated = 'flow:edge:updated',
+  // EdgeUpdated = 'flow:edge:updated',
 
   // Node UI events
   NodeUIPositionChanged = 'flow:node:ui:position-changed',
@@ -52,7 +52,12 @@ export interface NodeUpdatedEventData {
 
 /** Data for EdgeAdded event */
 export interface EdgeAddedEventData {
-  edge: IEdge
+  edgeId: string
+  sourceNodeId: string
+  sourcePortId: string
+  targetNodeId: string
+  targetPortId: string
+  metadata: EdgeMetadata
 }
 
 /** Data for EdgeRemoved event */
@@ -62,7 +67,12 @@ export interface EdgeRemovedEventData {
 
 /** Data for EdgeUpdated event */
 export interface EdgeUpdatedEventData {
-  edge: IEdge
+  edgeId: string
+  sourceNodeId: string
+  sourcePortId: string
+  targetNodeId: string
+  targetPortId: string
+  metadata: EdgeMetadata
 }
 
 /** Data for Node UI events */
@@ -110,7 +120,7 @@ export interface EventDataMap {
   [FlowEventType.NodeUpdated]: NodeUpdatedEventData
   [FlowEventType.EdgeAdded]: EdgeAddedEventData
   [FlowEventType.EdgeRemoved]: EdgeRemovedEventData
-  [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData
+  // [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData
   [FlowEventType.NodeUIPositionChanged]: NodeUIPositionChangedEventData
   [FlowEventType.NodeUIDimensionsChanged]: NodeUIEventData
   [FlowEventType.NodeUIStyleChanged]: NodeUIEventData

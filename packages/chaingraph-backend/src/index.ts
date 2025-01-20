@@ -1,7 +1,8 @@
 import { createContext, initializeContext } from '@chaingraph/backend/context'
+import { MetricsCollector } from '@chaingraph/backend/monitoring/metrics'
+
 import { InMemoryFlowStore } from '@chaingraph/backend/stores/flowStore'
 import { NodeCatalog, nodeRegistry } from '@chaingraph/nodes'
-
 import {
   registerFlowTransformers,
   registerNodeTransformers,
@@ -24,6 +25,9 @@ initializeContext(
   nodeRegistry,
   nodesCatalog,
 )
+
+const metricsCollector = new MetricsCollector(flowStore)
+metricsCollector.startMonitoring()
 
 const server = createHTTPServer({
   middleware: cors(),
