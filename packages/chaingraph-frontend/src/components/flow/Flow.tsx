@@ -9,7 +9,6 @@ import { NodeContextMenu } from '@/components/flow/context-menu/NodeContextMenu.
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks.ts'
 import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges.ts'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
-import { useNodeDrag } from '@/components/flow/hooks/useNodeDrag.ts'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop.ts'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
 import { ZoomContext } from '@/providers/ZoomProvider'
@@ -171,7 +170,6 @@ function Flow() {
   //     },
   //   })
   // }, [])
-  const onNodeDrag = useNodeDrag()
 
   // Handle context menu
   const onContextMenu = useCallback((event: React.MouseEvent) => {

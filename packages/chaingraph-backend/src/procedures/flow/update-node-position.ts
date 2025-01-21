@@ -34,6 +34,20 @@ export const updateNodePosition = publicProcedure
       }
     }
 
+    const hasPositionChanged = (
+      !node.metadata.ui?.position
+      || node.metadata.ui.position.x !== input.position.x
+      || node.metadata.ui.position.y !== input.position.y
+    )
+    if (!hasPositionChanged) {
+      return {
+        flowId: input.flowId,
+        nodeId: input.nodeId,
+        position: input.position,
+        version: node.getVersion(),
+      }
+    }
+
     node.setPosition(input.position, true)
 
     return {

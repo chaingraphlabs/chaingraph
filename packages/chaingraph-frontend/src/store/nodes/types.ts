@@ -33,7 +33,7 @@ export interface UpdateNodeEvent {
 export interface UpdateNodeUIEvent {
   flowId: string
   nodeId: string
-  ui: Partial<NodeUIMetadata>
+  ui?: NodeUIMetadata
   version: number
 }
 

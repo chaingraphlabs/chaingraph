@@ -1,6 +1,7 @@
 import type { IEdge, INode, NodeEvent } from '@chaingraph/types'
 import type {
   FlowEvent,
+  NodeUIDimensionsChangedEventData,
   NodeUIEventData,
   NodeUIPositionChangedEventData,
 } from '@chaingraph/types/flow/events'
@@ -293,8 +294,25 @@ export class Flow implements IFlow {
         }
         break
 
-      case NodeEventType.StatusChange:
       case NodeEventType.UIDimensionsChange:
+        {
+        // Handle node dimensions change event
+          const nodeUIDimensionsEventData: NodeUIDimensionsChangedEventData = {
+            nodeId: node.id,
+            oldDimensions: (nodeEvent as any).oldDimensions,
+            newDimensions: (nodeEvent as any).newDimensions,
+            version: nodeEvent.version,
+          }
+          flowEvent = newEvent(
+            this.getNextEventIndex(),
+            this.id,
+            this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+            nodeUIDimensionsEventData,
+          )
+        }
+        break
+
+      case NodeEventType.StatusChange:
       case NodeEventType.UIStateChange:
       case NodeEventType.UIStyleChange:
       {

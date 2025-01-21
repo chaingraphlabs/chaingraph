@@ -1,7 +1,6 @@
 import type { IFlowStore } from '@chaingraph/backend/stores/flowStore'
 import type { NodeCatalog } from '@chaingraph/nodes'
 import type { NodeRegistry } from '@chaingraph/types'
-import type { CreateNextContextOptions } from '@trpc/server/dist/adapters/next'
 
 export interface Session {
   userId: string
@@ -36,7 +35,7 @@ export function initializeContext(
  * Creates context for tRPC procedures
  * Reuses initialized stores instead of creating new ones
  */
-export async function createContext(opts: CreateNextContextOptions): Promise<AppContext> {
+export async function createContext(): Promise<AppContext> {
   if (!flowStore || !nodeRegistry || !nodesCatalog) {
     throw new Error('Context not initialized. Call initializeContext first.')
   }

@@ -11,6 +11,7 @@ import {
   setFlowSubscriptionStatus,
   setNodes,
   setNodeVersion,
+  updateNodeUILocal,
 } from '@/store'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
@@ -96,32 +97,64 @@ export function useFlowSubscription() {
       positionInterpolator.addState(data.nodeId, data.newPosition, currentPosition)
     },
 
-    [FlowEventType.NodeUIStateChanged]: (data) => {
+    [FlowEventType.NodeUIDimensionsChanged]: (data) => {
       const currentNode = nodes[data.nodeId]
       if (!currentNode)
         return
 
       const currentVersion = currentNode.getVersion()
 
-      // ignore outdated events
+      // if event contains version + 1 then just update the version
       if (data.version && data.version <= currentVersion) {
-        console.log(`Ignoring outdated state change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
         return
       }
 
-      currentNode.setMetadata({
-        ...currentNode.metadata,
+      if (!data.newDimensions || !data.newDimensions.width || !data.newDimensions.height) {
+        return
+      }
+
+      setNodeVersion({
+        id: data.nodeId,
+        version: data.version,
+      })
+
+      updateNodeUILocal({
+        flowId: activeFlowId!,
+        nodeId: data.nodeId,
         ui: {
-          ...currentNode.metadata.ui,
-          ...data.newValue,
-          position: data.newValue.position || currentNode.metadata.ui?.position,
-          dimensions: data.newValue.dimensions || currentNode.metadata.ui?.dimensions,
-          style: data.newValue.style || currentNode.metadata.ui?.style,
-          state: data.newValue.state || currentNode.metadata.ui?.state,
-          version: data.newValue.version,
+          ...(currentNode.metadata.ui ?? {}),
+          dimensions: data.newDimensions,
         },
+        version: data.version,
       })
     },
+
+    // [FlowEventType.NodeUIStateChanged]: (data) => {
+    //   const currentNode = nodes[data.nodeId]
+    //   if (!currentNode)
+    //     return
+    //
+    //   const currentVersion = currentNode.getVersion()
+    //
+    //   // ignore outdated events
+    //   if (data.version && data.version <= currentVersion) {
+    //     console.log(`Ignoring outdated state change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+    //     return
+    //   }
+    //
+    //   currentNode.setMetadata({
+    //     ...currentNode.metadata,
+    //     ui: {
+    //       ...currentNode.metadata.ui,
+    //       ...data.newValue,
+    //       position: data.newValue.position || currentNode.metadata.ui?.position,
+    //       dimensions: data.newValue.dimensions || currentNode.metadata.ui?.dimensions,
+    //       style: data.newValue.style || currentNode.metadata.ui?.style,
+    //       state: data.newValue.state || currentNode.metadata.ui?.state,
+    //       version: data.newValue.version,
+    //     },
+    //   })
+    // },
 
     // Add other event handlers as needed
   }), [nodes, activeFlowId])

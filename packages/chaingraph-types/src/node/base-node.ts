@@ -232,9 +232,9 @@ export abstract class BaseNode implements INode {
    * Emit an event to all subscribers.
    * @param event - The event object.
    */
-  protected emit<T extends NodeEvent>(event: T): Promise<void> {
+  protected emit<T extends NodeEvent>(event: T): Promise<Awaited<void>[]> {
     if (this.eventsDisabled) {
-      return Promise.resolve()
+      return Promise.resolve([])
     }
 
     return this.eventQueue.publish(event)
@@ -423,7 +423,6 @@ export abstract class BaseNode implements INode {
   }
 
   incrementVersion(): number {
-    console.log(`Incrementing version for node ${this.id}, current version: ${this.getVersion()}`)
     this._metadata.version = this.getVersion() + 1
     return this._metadata.version
   }

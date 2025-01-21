@@ -41,7 +41,6 @@ export const NodeMetadataSchema = z.object({
   portsConfig: z.map(z.string(), BasePortConfigSchema).optional(),
   ui: NodeUIMetadataSchema.optional(),
   version: z.number().optional(),
-  // version: z.any(),
 })
 
 /**

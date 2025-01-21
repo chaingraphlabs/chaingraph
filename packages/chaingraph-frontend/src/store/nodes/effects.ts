@@ -1,4 +1,4 @@
-import type { AddNodeEvent, UpdateNodePosition } from './types'
+import type { AddNodeEvent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
 import { trpcClient } from '@/api/trpc/client'
 import { createEffect } from 'effector'
 
@@ -19,14 +19,18 @@ export const removeNodeFromFlowFx = createEffect(async (params: {
   return await trpcClient.flow.removeNode.mutate(params)
 })
 
-// export const updateNodeUIFx = createEffect(async (params: UpdateNodeUIEvent): Promise<UpdateNodeUIEvent> => {
-//   return await trpcClient.flow.updateNodeUI.mutate({
-//     flowId: params.flowId,
-//     nodeId: params.nodeId,
-//     ui: params.ui,
-//     version: params.version,
-//   })
-// })
+export const updateNodeUIFx = createEffect(async (params: UpdateNodeUIEvent): Promise<UpdateNodeUIEvent> => {
+  if (!params.ui) {
+    throw new Error('UI metadata is required')
+  }
+
+  return await trpcClient.flow.updateNodeUI.mutate({
+    flowId: params.flowId,
+    nodeId: params.nodeId,
+    ui: params.ui,
+    version: params.version,
+  })
+})
 
 export const baseUpdateNodePositionFx = createEffect(async (params: UpdateNodePosition) => {
   return await trpcClient.flow.updateNodePosition.mutate({

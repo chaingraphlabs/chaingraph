@@ -5,7 +5,9 @@ import { NodeHeader } from '@/components/flow/nodes/ChaingraphNode/NodeHeader.ts
 import { useTheme } from '@/components/theme/hooks/useTheme.ts'
 import { Card } from '@/components/ui/card.tsx'
 import { cn } from '@/lib/utils.ts'
-import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/react'
+import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
+import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
+import { useUnit } from 'effector-react'
 import { memo, useEffect, useState } from 'react'
 
 function ChaingraphNodeComponent({
@@ -13,8 +15,8 @@ function ChaingraphNodeComponent({
   selected,
   id,
 }: NodeProps<ChaingraphNode>) {
+  const activeFlow = useUnit($activeFlowMetadata)
   const { theme } = useTheme()
-  const { setNodes } = useReactFlow()
 
   const [style, setStyle] = useState(
     theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
@@ -33,6 +35,9 @@ function ChaingraphNodeComponent({
     setOutputs(data.node.getOutputs())
   }, [data.node])
 
+  if (!activeFlow || !activeFlow.id)
+    return null
+
   return (
     <Card
       className={cn(
@@ -49,7 +54,10 @@ function ChaingraphNodeComponent({
         title={data.node.metadata.title || data.node.metadata.category || 'Node'}
         icon={data.categoryMetadata.icon}
         style={style}
-        onDelete={() => setNodes(nodes => nodes.filter(n => n.id !== id))}
+        onDelete={() => removeNodeFromFlow({
+          flowId: activeFlow.id!,
+          nodeId: id,
+        })}
       />
 
       {data.node.metadata.version}

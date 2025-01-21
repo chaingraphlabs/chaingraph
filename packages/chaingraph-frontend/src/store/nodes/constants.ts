@@ -1,2 +1,2 @@
-export const NODE_POSITION_DEBOUNCE_MS = 300
-export const NODE_UI_DEBOUNCE_MS = 100
+export const NODE_POSITION_DEBOUNCE_MS = 500
+export const NODE_UI_DEBOUNCE_MS = 300

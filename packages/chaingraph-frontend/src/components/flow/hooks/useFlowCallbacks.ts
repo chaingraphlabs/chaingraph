@@ -7,6 +7,7 @@ import {
   requestRemoveEdge,
   setNodeMetadata,
   updateNodePosition,
+  updateNodeUI,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
 import { useUnit } from 'effector-react'
@@ -77,16 +78,24 @@ export function useFlowCallbacks() {
 
           console.log(`[useFlowCallbacks] Setting dimensions for node ${change.id} to:`, change.dimensions)
 
-          setNodeMetadata({
-            id: change.id,
-            metadata: {
-              ...node.metadata,
-              ui: {
-                ...node.metadata.ui,
-                dimensions: change.dimensions,
-              },
+          updateNodeUI({
+            flowId: activeFlow.id!,
+            nodeId: change.id,
+            ui: {
+              dimensions: change.dimensions,
             },
+            version: node.getVersion(),
           })
+          // setNodeMetadata({
+          //   id: change.id,
+          //   metadata: {
+          //     ...node.metadata,
+          //     ui: {
+          //       ...node.metadata.ui,
+          //       dimensions: change.dimensions,
+          //     },
+          //   },
+          // })
 
           break
         }

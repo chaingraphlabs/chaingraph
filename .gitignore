@@ -7,5 +7,6 @@ node_modules
 prompts
 coverage
 **/coverage/**/*
+**/dist/**/*
 #**/__test__/**/*
 #**/__tests__/**/*

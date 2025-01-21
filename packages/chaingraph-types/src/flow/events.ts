@@ -1,4 +1,4 @@
-import type { Position } from '@chaingraph/types/node/node-ui'
+import type { Dimensions, Position } from '@chaingraph/types/node/node-ui'
 import type { EdgeMetadata } from '../edge'
 import type { INode } from '../node'
 import type { IFlow } from './interface'
@@ -91,6 +91,14 @@ export interface NodeUIPositionChangedEventData {
   version: number
 }
 
+/** Data for Node UI Dimensions Changed event */
+export interface NodeUIDimensionsChangedEventData {
+  nodeId: string
+  oldDimensions: Dimensions
+  newDimensions: Dimensions
+  version: number
+}
+
 /** Data for MetadataUpdated event */
 export interface MetadataUpdatedEventData {
   oldMetadata?: IFlow['metadata']
@@ -122,7 +130,7 @@ export interface EventDataMap {
   [FlowEventType.EdgeRemoved]: EdgeRemovedEventData
   // [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData
   [FlowEventType.NodeUIPositionChanged]: NodeUIPositionChangedEventData
-  [FlowEventType.NodeUIDimensionsChanged]: NodeUIEventData
+  [FlowEventType.NodeUIDimensionsChanged]: NodeUIDimensionsChangedEventData
   [FlowEventType.NodeUIStyleChanged]: NodeUIEventData
   [FlowEventType.NodeUIStateChanged]: NodeUIEventData
 }

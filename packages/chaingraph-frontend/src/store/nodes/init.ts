@@ -1,5 +1,5 @@
-import { $nodes } from '@/store'
-import { NODE_POSITION_DEBOUNCE_MS } from '@/store/nodes/constants.ts'
+import { $nodes, updateNodeUIFx } from '@/store'
+import { NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants.ts'
 import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample.ts'
 import { sample } from 'effector'
 import {
@@ -58,17 +58,10 @@ const throttledUpdatePosition = accumulateAndSample({
 const nodePositionWithNewVersion = sample({
   clock: throttledUpdatePosition,
   source: $nodes,
-  fn: (nodes, params) => {
-    const node = nodes[params.nodeId]
-    const newVersion = (node?.metadata.version ?? 0) + 1
-
-    console.log(`[throttleByKey] Processing update for node ${params.nodeId}, new version: ${newVersion}`)
-
-    return {
-      ...params,
-      version: newVersion,
-    }
-  },
+  fn: (nodes, params) => ({
+    ...params,
+    version: (nodes[params.nodeId]?.metadata.version ?? 0) + 1,
+  }),
 })
 
 // Update local state with the new version
@@ -101,6 +94,39 @@ sample({
 sample({
   clock: updateNodeUI,
   target: updateNodeUILocal, // Update local state immediately
+})
+
+const throttledUIUpdate = accumulateAndSample({
+  source: updateNodeUI,
+  timeout: NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+// Create middleware to update the version of the node before sending it to the server
+const nodeUIUpdateNewVersion = sample({
+  clock: throttledUIUpdate,
+  source: $nodes,
+  fn: (nodes, params) => ({
+    ...params,
+    version: (nodes[params.nodeId]?.metadata.version ?? 0) + 1,
+  }),
+})
+
+// Update local state with the new version
+const optimisticVersionUIUpdated = sample({
+  clock: nodeUIUpdateNewVersion,
+  fn: params => ({
+    id: params.nodeId,
+    version: params.version,
+  }),
+  target: setNodeVersion,
+})
+
+// Send the updated node UI to the server
+sample({
+  clock: optimisticVersionUIUpdated,
+  source: nodeUIUpdateNewVersion,
+  target: updateNodeUIFx,
 })
 
 // Connect debounced effects to the main flow

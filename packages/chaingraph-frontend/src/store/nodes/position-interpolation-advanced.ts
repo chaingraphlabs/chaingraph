@@ -21,7 +21,11 @@ export class AdvancedPositionInterpolator {
   private readonly positionThreshold = 2
   private readonly initialMoveSpeed = 8 // Speed for initial linear movement
 
-  addState(nodeId: string, position: Position, currentPosition: Position) {
+  addState(
+    nodeId: string,
+    position: Position,
+    currentPosition: Position,
+  ) {
     const timestamp = performance.now()
     const buffer = this.stateBuffer.get(nodeId) || []
 
