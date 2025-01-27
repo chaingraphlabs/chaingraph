@@ -232,9 +232,9 @@ export abstract class BaseNode implements INode {
    * Emit an event to all subscribers.
    * @param event - The event object.
    */
-  protected emit<T extends NodeEvent>(event: T): Promise<Awaited<void>[]> {
+  protected emit<T extends NodeEvent>(event: T): Promise<void> {
     if (this.eventsDisabled) {
-      return Promise.resolve([])
+      return Promise.resolve()
     }
 
     return this.eventQueue.publish(event)

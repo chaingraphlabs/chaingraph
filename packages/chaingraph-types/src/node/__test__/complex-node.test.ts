@@ -38,7 +38,7 @@ import {
 
 import { registerPortTransformers } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -381,7 +381,7 @@ export class UserProfileNode extends BaseNode {
     this.colorEnum = '12'
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),

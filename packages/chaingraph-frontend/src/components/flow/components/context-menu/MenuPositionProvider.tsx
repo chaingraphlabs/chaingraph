@@ -1,6 +1,6 @@
-import type { MenuPosition } from './MenuPositionContext'
+import type { MenuPosition } from './MenuPositionContext.tsx'
 import { useMemo, useState } from 'react'
-import { MenuPositionContext } from './MenuPositionContext'
+import { MenuPositionContext } from './MenuPositionContext.tsx'
 
 export function MenuPositionProvider({ children }: { children: React.ReactNode }) {
   const [position, setPosition] = useState<MenuPosition | null>(null)

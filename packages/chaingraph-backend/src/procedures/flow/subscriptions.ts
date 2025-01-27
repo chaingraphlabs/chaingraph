@@ -59,7 +59,6 @@ export const subscribeToEvents = publicProcedure
       // 2. Existing nodes
       if (isAcceptedEventType(eventTypes, FlowEventType.NodeAdded)) {
         for (const node of flow.nodes.values()) {
-          console.log('NodeAdded with version:', node.getVersion())
           yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
             node,
           }))

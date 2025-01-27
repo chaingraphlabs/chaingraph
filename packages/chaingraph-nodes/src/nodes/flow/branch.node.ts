@@ -3,10 +3,10 @@ import { nodeRegistry } from '@chaingraph/nodes/registry'
 import {
   BaseNode,
   type ExecutionContext,
-  ExecutionStatus,
   Input,
   Node,
   type NodeExecutionResult,
+  NodeExecutionStatus,
   Output,
   PortString,
 } from '@chaingraph/types'
@@ -37,7 +37,7 @@ export class BranchNode extends BaseNode {
     this.result = `Branched on condition: ${this.condition}`
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['result', this.result]]),

@@ -7,7 +7,11 @@ export class ExecutionContext {
   public readonly metadata: Record<string, unknown>
   public readonly abortController: AbortController
 
-  constructor(flowId: string, abortController: AbortController, metadata?: Record<string, unknown>) {
+  constructor(
+    flowId: string,
+    abortController: AbortController,
+    metadata?: Record<string, unknown>,
+  ) {
     this.executionId = uuidv4()
     this.startTime = new Date()
     this.flowId = flowId

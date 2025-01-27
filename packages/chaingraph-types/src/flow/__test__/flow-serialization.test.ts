@@ -7,7 +7,7 @@ import { BaseNode, Flow, Id, Input, Node, NodeRegistry, Output, PortNumber, Port
 
 import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import { findPort } from '@chaingraph/types/node/ports-traverser'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -30,7 +30,7 @@ class SourceNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     this.output = this.input
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['output', this.output]]),
@@ -54,7 +54,7 @@ class TargetNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),

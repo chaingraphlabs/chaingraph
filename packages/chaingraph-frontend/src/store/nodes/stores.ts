@@ -1,4 +1,5 @@
 import type { INode } from '@chaingraph/types'
+import { clearActiveFlow } from '@/store'
 import { combine, createStore } from 'effector'
 import {
   addNodeToFlowFx,
@@ -41,6 +42,7 @@ export const $nodes = createStore<Record<string, INode>>({})
     }
   })
   .reset(clearNodes)
+  .reset(clearActiveFlow)
   .on(setNodeVersion, (state, { id, version }) => {
     const node = state[id]
     if (!node)

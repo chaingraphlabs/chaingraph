@@ -2,10 +2,10 @@ import { nodeRegistry } from '@chaingraph/nodes/registry'
 import {
   BaseNode,
   type ExecutionContext,
-  ExecutionStatus,
   Input,
   Node,
   type NodeExecutionResult,
+  NodeExecutionStatus,
   Output,
   PortBoolean,
   PortNumber,
@@ -41,7 +41,7 @@ class ScalarNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),

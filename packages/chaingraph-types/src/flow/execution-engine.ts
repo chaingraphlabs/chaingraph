@@ -1,6 +1,5 @@
 import type { DebuggerController } from '@chaingraph/types/flow/debugger-types'
 import type {
-  AllExecutionEvents,
   ExecutionEvent,
   ExecutionEventData,
 } from '@chaingraph/types/flow/execution-events'
@@ -19,6 +18,9 @@ import { withTimeout } from '../utils/timeout'
 const DEFAULT_MAX_CONCURRENCY = 10
 const DEFAULT_NODE_TIMEOUT_MS = 60000
 const DEFAULT_FLOW_TIMEOUT_MS = 300000
+
+export const ExecutionCancelledReason = 'Execution cancelled'
+export const ExecutionStoppedByDebugger = 'Stopped by debugger'
 
 export interface ExecutionOptions {
   maxConcurrency?: number
@@ -41,7 +43,7 @@ export class ExecutionEngine {
   private readonly semaphore: Semaphore
   private readonly debugger: FlowDebugger | null = null
 
-  private readonly eventQueue: EventQueue<AllExecutionEvents>
+  private readonly eventQueue: EventQueue<ExecutionEvent>
   private eventIndex: number = 0
 
   constructor(
@@ -55,8 +57,8 @@ export class ExecutionEngine {
     this.completedNodes = new Set()
     this.nodeDependencies = new Map()
     this.dependentsMap = new Map()
-    this.semaphore = new Semaphore(this.options?.execution?.maxConcurrency || DEFAULT_MAX_CONCURRENCY)
-    this.eventQueue = new EventQueue<AllExecutionEvents>()
+    this.semaphore = new Semaphore(this.options?.execution?.maxConcurrency ?? DEFAULT_MAX_CONCURRENCY)
+    this.eventQueue = new EventQueue<ExecutionEvent>()
 
     if (options?.debug) {
       this.debugger = new FlowDebugger(
@@ -69,25 +71,12 @@ export class ExecutionEngine {
     }
   }
 
-  protected createEvent<T extends ExecutionEventEnum>(
-    type: T,
-    data: ExecutionEventData[T],
-  ): ExecutionEvent<T> {
-    return {
-      index: this.eventIndex++,
-      type,
-      timestamp: new Date(),
-      context: this.context,
-      data,
-    }
-  }
-
   async execute(): Promise<void> {
     const startTime = Date.now()
     try {
       // Emit flow started event
       // this.eventEmitter.emit(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow })
-      this.eventQueue.publish(
+      await this.eventQueue.publish(
         this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow }),
       )
 
@@ -108,7 +97,7 @@ export class ExecutionEngine {
       await Promise.all(workerPromises)
 
       // Emit flow completed event
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
+      await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
         flow: this.flow,
         executionTime: Date.now() - startTime,
       }))
@@ -118,24 +107,31 @@ export class ExecutionEngine {
       this.completedQueue.close()
       this.context.abortController.abort()
 
+      const isAborted = this.context.abortSignal.aborted
+      const isAbortedDueToError
+        = isAborted && this.context.abortSignal.reason instanceof Error
+
+      const isAbortedDueToDebugger = isAborted && this.context.abortSignal.reason instanceof Error
+        && this.context.abortSignal.reason.message === ExecutionStoppedByDebugger
+
       // check if execution was cancelled or failed
-      if (this.context.abortSignal.aborted) {
+      if (this.context.abortSignal.aborted && (!isAbortedDueToError || isAbortedDueToDebugger)) {
         // Emit flow cancelled event
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
+        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
           flow: this.flow,
-          reason: 'Execution cancelled',
+          reason: this.context.abortSignal.reason ?? ExecutionCancelledReason,
           executionTime: Date.now() - startTime,
         }))
       } else {
         // Emit flow failed event
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
+        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
           flow: this.flow,
           error: error as Error,
           executionTime: Date.now() - startTime,
         }))
       }
 
-      throw error
+      return Promise.reject(error)
     } finally {
       await this.eventQueue.close()
     }
@@ -183,14 +179,14 @@ export class ExecutionEngine {
   }
 
   private startWorkers(): Promise<void>[] {
-    const maxConcurrency = this.options?.execution?.maxConcurrency || DEFAULT_MAX_CONCURRENCY
+    const maxConcurrency = this.options?.execution?.maxConcurrency ?? DEFAULT_MAX_CONCURRENCY
     const workerPromises: Promise<void>[] = []
 
     for (let i = 0; i < maxConcurrency; i++) {
       workerPromises.push(
         this.workerLoop().catch((error) => {
-          this.context.abortController.abort()
-          throw error
+          this.context.abortController.abort(error)
+          throw error // TODO: do we need to throw here?
         }),
       )
     }
@@ -200,7 +196,7 @@ export class ExecutionEngine {
 
   private async runMainExecutionProcess(): Promise<void> {
     const startTime = Date.now()
-    const flowTimeoutMs = this.options?.execution?.flowTimeoutMs || DEFAULT_FLOW_TIMEOUT_MS
+    const flowTimeoutMs = this.options?.execution?.flowTimeoutMs ?? DEFAULT_FLOW_TIMEOUT_MS
 
     while (!this.context.abortSignal.aborted) {
       // Check for timeout
@@ -227,7 +223,10 @@ export class ExecutionEngine {
     }
 
     if (this.context.abortSignal.aborted) {
-      throw new Error(this.context.abortSignal.reason || 'Execution cancelled')
+      if (this.context.abortSignal.reason instanceof Error) {
+        throw this.context.abortSignal.reason
+      }
+      throw new Error(this.context.abortSignal.reason ?? ExecutionCancelledReason)
     }
   }
 
@@ -243,7 +242,7 @@ export class ExecutionEngine {
   }
 
   private async processDependents(completedNode: INode): Promise<void> {
-    const dependents = this.dependentsMap.get(completedNode.id) || []
+    const dependents = this.dependentsMap.get(completedNode.id) ?? []
 
     for (const dependentNode of dependents) {
       if (this.context.abortSignal.aborted)
@@ -290,9 +289,10 @@ export class ExecutionEngine {
         this.completedQueue.enqueue(node)
       } catch (error) {
         // Release semaphore on error
-        if (this.context.abortSignal.aborted) {
+        if (this.context.abortSignal.aborted && !(this.context.abortSignal.reason instanceof Error)) {
           break
         }
+
         throw error
       } finally {
         this.semaphore.release()
@@ -316,14 +316,9 @@ export class ExecutionEngine {
       if (this.debugger) {
         const command = await this.debugger.waitForCommand(node)
         if (command === 'stop') {
-          this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
-            flow: this.flow,
-            reason: 'Stopped by debugger',
-            executionTime: Date.now() - nodeStartTime,
-          }))
-
-          this.context.abortController.abort('Execution stopped by debugger') // Abort execution
-          throw new Error('Execution stopped by debugger')
+          const error = new Error(ExecutionStoppedByDebugger)
+          this.context.abortController.abort(error) // Abort execution
+          throw error
         }
       }
 
@@ -347,7 +342,7 @@ export class ExecutionEngine {
         }))
       }
 
-      const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs || DEFAULT_NODE_TIMEOUT_MS
+      const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
       await withTimeout(
         node.execute(this.context),
         nodeTimeoutMs,
@@ -386,7 +381,20 @@ export class ExecutionEngine {
     })
   }
 
-  public onAll(handler: (event: AllExecutionEvents) => void): () => void {
+  public onAll(handler: (event: ExecutionEvent) => void): () => void {
     return this.eventQueue.subscribe(handler)
+  }
+
+  protected createEvent<T extends ExecutionEventEnum>(
+    type: T,
+    data: ExecutionEventData[T],
+  ): ExecutionEvent<T> {
+    return {
+      index: this.eventIndex++,
+      type,
+      timestamp: new Date(),
+      context: this.context,
+      data,
+    }
   }
 }

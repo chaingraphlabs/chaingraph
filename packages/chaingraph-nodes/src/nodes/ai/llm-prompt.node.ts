@@ -3,11 +3,13 @@ import { nodeRegistry } from '@chaingraph/nodes/registry'
 import {
   BaseNode,
   type ExecutionContext,
-  ExecutionStatus,
   Input,
   Node,
   type NodeExecutionResult,
+  NodeExecutionStatus,
   Output,
+  Port,
+  PortKind,
   PortString,
 } from '@chaingraph/types'
 
@@ -26,9 +28,12 @@ export class LLMPromptNode extends BaseNode {
   prompt: string = ''
 
   @Output()
-  @PortString({
-    title: 'Response',
-    description: 'Language model response',
+  // @PortString({
+  //   title: 'Response',
+  //   description: 'Language model response',
+  // })
+  @Port({
+    kind: PortKind.String,
   })
   response: string = ''
 
@@ -37,7 +42,7 @@ export class LLMPromptNode extends BaseNode {
     this.response = `AI Response to: ${this.prompt}`
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['response', this.response]]),

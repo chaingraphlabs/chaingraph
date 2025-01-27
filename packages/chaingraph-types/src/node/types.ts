@@ -1,7 +1,7 @@
 import type { NodeCategory } from '@chaingraph/types/node/category'
 import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
 import type { PortConfig } from '@chaingraph/types/port/types/port-config'
-import type { ExecutionStatus, ValidationMessageType } from './node-enums'
+import type { NodeExecutionStatus, ValidationMessageType } from './node-enums'
 
 /**
  * Type definition for node metadata
@@ -43,7 +43,7 @@ export interface NodeValidationResult {
  * Type definition for node execution result
  */
 export interface NodeExecutionResult {
-  status?: ExecutionStatus
+  status?: NodeExecutionStatus
   startTime?: Date
   endTime?: Date
   outputs?: Map<string, unknown>

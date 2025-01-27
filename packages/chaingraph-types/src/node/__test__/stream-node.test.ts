@@ -16,7 +16,7 @@ import {
   registerPortTransformers,
 } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
@@ -48,7 +48,7 @@ class StreamNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),

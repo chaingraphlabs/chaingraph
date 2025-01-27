@@ -9,6 +9,7 @@ interface Subscriber<T> {
 export class EventQueue<T> {
   private readonly buffer: T[] = []
   private readonly subscribers: Map<string, Subscriber<T>> = new Map()
+  private closeHandlers: Array<() => void | Promise<void>> = []
   private readonly maxBufferSize: number
   private currentPosition: number = 0
   private closingPromise: Promise<void> | null = null
@@ -50,9 +51,9 @@ export class EventQueue<T> {
     }
   }
 
-  async publish(event: T): Promise<Awaited<void>[]> {
+  async publish(event: T): Promise<void> {
     if (this.isClosed) {
-      return Promise.resolve([])
+      return Promise.resolve()
     }
 
     this.buffer.push(event)
@@ -72,7 +73,7 @@ export class EventQueue<T> {
     }
 
     // Wait for all subscribers to process the event
-    return Promise.all(promises)
+    return await Promise.all(promises).then(() => {})
   }
 
   private async processSubscriberEvents(subscriber: Subscriber<T>): Promise<void> {
@@ -123,7 +124,6 @@ export class EventQueue<T> {
       this.buffer.splice(0, eventsToRemove)
     }
 
-    // Принудительное ограничение размера буфера
     if (this.buffer.length > this.maxBufferSize) {
       const removeCount = this.buffer.length - this.maxBufferSize
       this.buffer.splice(0, removeCount)
@@ -138,18 +138,29 @@ export class EventQueue<T> {
     this.isClosed = true
 
     const promises: Promise<void>[] = []
+
+    // Process remaining events for subscribers
     for (const subscriber of this.subscribers.values()) {
       promises.push(this.processSubscriberEvents(subscriber))
     }
 
+    // Execute close handlers
+    for (const handler of this.closeHandlers) {
+      promises.push(Promise.resolve(handler()))
+    }
+
     this.closingPromise = Promise.all(promises).then(() => {
+      // Notify subscribers about closure
       for (const subscriber of this.subscribers.values()) {
         if (subscriber.onError) {
           subscriber.onError(new Error('EventQueue is closed.'))
         }
       }
+
+      // Clear everything
       this.subscribers.clear()
       this.buffer.length = 0
+      this.closeHandlers = []
     })
 
     return this.closingPromise
@@ -170,6 +181,25 @@ export class EventQueue<T> {
         position: s.position,
         behind: this.currentPosition - s.position,
       })),
+    }
+  }
+
+  createIterator(signal?: AbortSignal): AsyncIterableIterator<T> {
+    return createQueueIterator(this, signal)
+  }
+
+  /**
+   * Register a handler to be called when the queue is closed
+   * @param handler Function to be called on queue close
+   * @returns Function to unregister the handler
+   */
+  onClose(handler: () => void | Promise<void>): () => void {
+    this.closeHandlers.push(handler)
+    return () => {
+      const index = this.closeHandlers.indexOf(handler)
+      if (index !== -1) {
+        this.closeHandlers.splice(index, 1)
+      }
     }
   }
 }

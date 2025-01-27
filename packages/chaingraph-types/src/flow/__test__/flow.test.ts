@@ -1,15 +1,7 @@
 import type { NodeExecutionResult } from '@chaingraph/types'
-import {
-  BaseNode,
-  ExecutionContext,
-  ExecutionEngine,
-  ExecutionEventEnum,
-  Flow,
-  NumberPort,
-  PortDirection,
-  PortKind,
-} from '@chaingraph/types'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { BaseNode, ExecutionContext, ExecutionEngine, ExecutionEventEnum, ExecutionStoppedByDebugger, Flow, NumberPort, PortDirection, PortKind } from '@chaingraph/types'
+import { createExecutionEventHandler } from '@chaingraph/types/flow/execution-handlers'
+import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
@@ -57,7 +49,7 @@ class AddNode extends BaseNode {
 
     return {
       // status: 'completed',
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['output', this.output.getValue()]]),
@@ -307,44 +299,47 @@ describe('flow Execution', () => {
     // Track execution events
     const executionSteps: Array<{ type: string, nodeId: string }> = []
 
-    executionEngine.onAll((event) => {
-      switch (event.type) {
-        case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
-          executionSteps.push({
-            type: 'started',
-            nodeId: event.data.node.id,
-          })
-          setTimeout(() => {
-            dbg!.step()
-          }, 50)
-          break
-
-        case ExecutionEventEnum.NODE_COMPLETED:
-          executionSteps.push({
-            type: 'completed',
-            nodeId: event.data.node.id,
-          })
-          break
-      }
+    const handleEvent = createExecutionEventHandler({
+      [ExecutionEventEnum.DEBUG_BREAKPOINT_HIT]: (data) => {
+        executionSteps.push({
+          type: 'started',
+          nodeId: data.node.id,
+        })
+        setTimeout(() => {
+          dbg!.step()
+        }, 50)
+      },
+      [ExecutionEventEnum.NODE_COMPLETED]: (data) => {
+        executionSteps.push({
+          type: 'completed',
+          nodeId: data.node.id,
+        })
+      },
     })
 
+    const unsubscribe = executionEngine.onAll(handleEvent)
+
     // Start execution
-    const executionPromise = executionEngine.execute()
+    try {
+      const executionPromise = executionEngine.execute()
 
-    // Wait for execution to complete
-    await executionPromise
+      // Wait for execution to complete
+      await executionPromise
 
-    // Verify execution steps
-    expect(executionSteps).toEqual([
-      { type: 'started', nodeId: 'source' },
-      { type: 'completed', nodeId: 'source' },
-      { type: 'started', nodeId: 'final' },
-      { type: 'completed', nodeId: 'final' },
-    ])
+      // Verify execution steps
+      expect(executionSteps).toEqual([
+        { type: 'started', nodeId: 'source' },
+        { type: 'completed', nodeId: 'source' },
+        { type: 'started', nodeId: 'final' },
+        { type: 'completed', nodeId: 'final' },
+      ])
 
-    // Verify results
-    expect(sourceNode.output.getValue().toNumber()).toBe(15) // 5 + 10
-    expect(finalNode.output.getValue().toNumber()).toBe(20) // 15 + 5
+      // Verify results
+      expect(sourceNode.output.getValue().toNumber()).toBe(15) // 5 + 10
+      expect(finalNode.output.getValue().toNumber()).toBe(20) // 15 + 5
+    } finally {
+      unsubscribe()
+    }
   }, 1000)
 
   it('should step through complex execution with conditional branches', async () => {
@@ -422,101 +417,103 @@ describe('flow Execution', () => {
       outputs?: Map<string, unknown>
     }> = []
 
-    executionEngine.onAll((event) => {
-      switch (event.type) {
-        case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
-          executionSteps.push({
-            event: 'paused',
-            nodeId: event.data.node.id,
-          })
+    const handleEvent = createExecutionEventHandler({
+      [ExecutionEventEnum.DEBUG_BREAKPOINT_HIT]: (data) => {
+        executionSteps.push({
+          event: 'paused',
+          nodeId: data.node.id,
+        })
+        dbg!.step()
+      },
 
-          // Continue execution
-          dbg!.step()
-          break
+      [ExecutionEventEnum.NODE_STARTED]: (data) => {
+        executionSteps.push({
+          event: 'started',
+          nodeId: data.node.id,
+        })
+      },
 
-        case ExecutionEventEnum.NODE_STARTED:
-          executionSteps.push({
-            event: 'started',
-            nodeId: event.data.node.id,
-          })
-          break
+      [ExecutionEventEnum.NODE_COMPLETED]: (data) => {
+        executionSteps.push({
+          event: 'completed',
+          nodeId: data.node.id,
+          outputs: new Map(
+            data.node.getOutputs().map(port => [port.config.id, port.getValue()]),
+          ),
+        })
+      },
+    })
 
-        case ExecutionEventEnum.NODE_COMPLETED:
-          executionSteps.push({
-            event: 'completed',
-            nodeId: event.data.node.id,
-            outputs: new Map(
-              event.data.node.getOutputs().map(port => [port.config.id, port.getValue()]),
-            ),
-          })
-          break
+    const unsubscribe = executionEngine.onAll(handleEvent)
+
+    try {
+      // Start execution
+      const executionPromise = executionEngine.execute()
+
+      // Wait for execution to complete
+      await executionPromise
+
+      // Verify execution steps sequence
+      // The exact sequence might vary due to parallel execution, but we can verify certain constraints
+      const nodeSequence = executionSteps.map(step => step.nodeId)
+
+      // Verify that source nodes execute before merger nodes
+      function verifyExecutionOrder(sourceId: string, mergerId: string) {
+        const sourceIndex = nodeSequence.findIndex(id => id === sourceId)
+        const mergerIndex = nodeSequence.findIndex(id => id === mergerId)
+        expect(sourceIndex).toBeLessThan(mergerIndex)
       }
-    })
 
-    // Start execution
-    const executionPromise = executionEngine.execute()
+      verifyExecutionOrder('source1', 'merger1')
+      verifyExecutionOrder('source2', 'merger1')
+      verifyExecutionOrder('source3', 'merger2')
+      verifyExecutionOrder('source4', 'merger2')
+      verifyExecutionOrder('merger1', 'final')
+      verifyExecutionOrder('merger2', 'final')
 
-    // Wait for execution to complete
-    await executionPromise
+      // Verify that each node appears in started -> paused -> completed sequence
+      const nodesIds = ['source1', 'source2', 'source3', 'source4', 'merger1', 'merger2', 'final']
+      nodesIds.forEach((nodeId) => {
+        const nodeSteps = executionSteps.filter(step => step.nodeId === nodeId)
+        expect(nodeSteps.map(step => step.event)).toEqual(['started', 'paused', 'completed'])
+      })
 
-    // Verify execution steps sequence
-    // The exact sequence might vary due to parallel execution, but we can verify certain constraints
-    const nodeSequence = executionSteps.map(step => step.nodeId)
+      // Verify final results
+      expect(source1.output.getValue().toNumber()).toBe(15) // 5 + 10
+      expect(source2.output.getValue().toNumber()).toBe(10) // 3 + 7
+      expect(source3.output.getValue().toNumber()).toBe(10) // 8 + 2
+      expect(source4.output.getValue().toNumber()).toBe(20) // 15 + 5
+      expect(merger1.output.getValue().toNumber()).toBe(25) // 15 + 10
+      expect(merger2.output.getValue().toNumber()).toBe(30) // 10 + 20
+      expect(final.output.getValue().toNumber()).toBe(55) // 25 + 30
 
-    // Verify that source nodes execute before merger nodes
-    function verifyExecutionOrder(sourceId: string, mergerId: string) {
-      const sourceIndex = nodeSequence.findIndex(id => id === sourceId)
-      const mergerIndex = nodeSequence.findIndex(id => id === mergerId)
-      expect(sourceIndex).toBeLessThan(mergerIndex)
-    }
+      // Verify that we have the correct number of execution steps
+      // For each node we expect: started, paused, completed = 3 events
+      expect(executionSteps.length).toBe(nodesIds.length * 3)
 
-    verifyExecutionOrder('source1', 'merger1')
-    verifyExecutionOrder('source2', 'merger1')
-    verifyExecutionOrder('source3', 'merger2')
-    verifyExecutionOrder('source4', 'merger2')
-    verifyExecutionOrder('merger1', 'final')
-    verifyExecutionOrder('merger2', 'final')
+      // Additional verification of the execution flow
+      executionSteps.forEach((step) => {
+        if (step.event === 'completed' && step.outputs) {
+          const nodeId = step.nodeId
+          const expectedOutput = {
+            source1: new Decimal(15),
+            source2: new Decimal(10),
+            source3: new Decimal(10),
+            source4: new Decimal(20),
+            merger1: new Decimal(25),
+            merger2: new Decimal(30),
+            final: new Decimal(55),
+          }[nodeId]
 
-    // Verify that each node appears in started -> paused -> completed sequence
-    const nodesIds = ['source1', 'source2', 'source3', 'source4', 'merger1', 'merger2', 'final']
-    nodesIds.forEach((nodeId) => {
-      const nodeSteps = executionSteps.filter(step => step.nodeId === nodeId)
-      expect(nodeSteps.map(step => step.event)).toEqual(['started', 'paused', 'completed'])
-    })
-
-    // Verify final results
-    expect(source1.output.getValue().toNumber()).toBe(15) // 5 + 10
-    expect(source2.output.getValue().toNumber()).toBe(10) // 3 + 7
-    expect(source3.output.getValue().toNumber()).toBe(10) // 8 + 2
-    expect(source4.output.getValue().toNumber()).toBe(20) // 15 + 5
-    expect(merger1.output.getValue().toNumber()).toBe(25) // 15 + 10
-    expect(merger2.output.getValue().toNumber()).toBe(30) // 10 + 20
-    expect(final.output.getValue().toNumber()).toBe(55) // 25 + 30
-
-    // Verify that we have the correct number of execution steps
-    // For each node we expect: started, paused, completed = 3 events
-    expect(executionSteps.length).toBe(nodesIds.length * 3)
-
-    // Additional verification of the execution flow
-    executionSteps.forEach((step) => {
-      if (step.event === 'completed' && step.outputs) {
-        const nodeId = step.nodeId
-        const expectedOutput = {
-          source1: new Decimal(15),
-          source2: new Decimal(10),
-          source3: new Decimal(10),
-          source4: new Decimal(20),
-          merger1: new Decimal(25),
-          merger2: new Decimal(30),
-          final: new Decimal(55),
-        }[nodeId]
-
-        const output = step.outputs.get('output')
-        if (output && typeof output === 'object' && 'toNumber' in output) {
-          expect(output).toStrictEqual(expectedOutput)
+          const output = step.outputs.get('output')
+          if (output && typeof output === 'object' && 'toNumber' in output) {
+            expect(output).toStrictEqual(expectedOutput)
+          }
         }
-      }
-    })
+      })
+    } finally {
+      unsubscribe()
+    }
   }, { timeout: 20000000 })
 
   it('should handle stop command during execution', async () => {
@@ -565,7 +562,7 @@ describe('flow Execution', () => {
     dbg!.stop()
 
     // Execute and expect it to fail
-    await expect(executionEngine.execute()).rejects.toThrow('Execution stopped by debugger')
+    await expect(executionEngine.execute()).rejects.toThrow(ExecutionStoppedByDebugger)
 
     // Verify events
     expect(events).toContain(ExecutionEventEnum.FLOW_STARTED)

@@ -247,7 +247,7 @@ export class Flow implements IFlow {
    * Emit a flow event
    * @param event The event to emit
    */
-  private emitEvent<T extends FlowEvent>(event: T): Promise<Awaited<void>[]> {
+  private emitEvent<T extends FlowEvent>(event: T): Promise<void> {
     return this.eventQueue.publish(event)
   }
 

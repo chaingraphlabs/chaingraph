@@ -59,7 +59,7 @@ export async function handleFlowEvent<T extends FlowEventType>(
     return
 
   try {
-    await Promise.resolve(handler(event.data))
+    await handler(event.data)
   } catch (error) {
     if (options.onError) {
       options.onError(error as Error, event)

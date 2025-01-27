@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { BasePortConfigSchema, PortValueSchema } from '../port'
-import { ExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
+import { NodeExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**
  * Schema for node UI metadata
@@ -65,7 +65,7 @@ export const NodeValidationResultSchema = z.object({
  * Schema for node execution result
  */
 export const NodeExecutionResultSchema = z.object({
-  status: z.nativeEnum(ExecutionStatus),
+  status: z.nativeEnum(NodeExecutionStatus),
   startTime: z.date(),
   endTime: z.date(),
   outputs: z.map(z.string(), z.unknown()),

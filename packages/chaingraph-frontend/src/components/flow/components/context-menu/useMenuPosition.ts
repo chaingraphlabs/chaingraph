@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { MenuPositionContext } from './MenuPositionContext'
+import { MenuPositionContext } from './MenuPositionContext.tsx'
 
 export function useMenuPosition() {
   const context = useContext(MenuPositionContext)
