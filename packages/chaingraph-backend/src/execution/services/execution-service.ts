@@ -120,7 +120,8 @@ export class ExecutionService {
       })
     }
 
-    if (instance.status !== ExecutionStatus.Running
+    if (instance.status !== ExecutionStatus.Created
+      && instance.status !== ExecutionStatus.Running
       && instance.status !== ExecutionStatus.Paused) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
