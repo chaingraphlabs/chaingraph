@@ -108,7 +108,7 @@ function CompactEventContent({ event }: { event: ExecutionEventImpl }) {
       return (
         <span className="text-sm truncate">
           Node started "
-          {(event.data as any).node._metadata.title}
+          {(event.data as any).node.metadata.title}
           "
         </span>
       )
@@ -118,7 +118,7 @@ function CompactEventContent({ event }: { event: ExecutionEventImpl }) {
         <span className="text-sm truncate">
           <span className="text-muted-foreground">
             Node "
-            {(event.data as any).node._metadata.title}
+            {(event.data as any).node.metadata.title}
             " completed in
           </span>
           {' '}
@@ -131,7 +131,7 @@ function CompactEventContent({ event }: { event: ExecutionEventImpl }) {
       return (
         <span className="text-sm truncate">
           Node "
-          {(event.data as any).node._metadata.title}
+          {(event.data as any).node.metadata.title}
           "
           <br />
           {' status changed to '}
@@ -143,12 +143,14 @@ function CompactEventContent({ event }: { event: ExecutionEventImpl }) {
 
     case ExecutionEventEnum.EDGE_TRANSFER_STARTED: {
       const { edge } = event.data as any
+
+      // debugger
       return (
         <span className="text-sm truncate">
-          {edge.sourceNode._metadata.title}
+          {edge.sourceNode.metadata.title}
           {' '}
           →
-          {edge.targetNode._metadata.title}
+          {edge.targetNode.metadata.title}
         </span>
       )
     }
@@ -157,7 +159,7 @@ function CompactEventContent({ event }: { event: ExecutionEventImpl }) {
       return (
         <span className="text-sm text-yellow-500 dark:text-yellow-400 truncate">
           Breakpoint at "
-          {(event.data as any).node._metadata.title}
+          {(event.data as any).node.metadata.title}
           "
         </span>
       )
@@ -273,12 +275,12 @@ function NodeStartedContent({ event }: { event: ExecutionEventImpl }) {
       <div className="text-sm flex items-center gap-2">
         <span>Started node execution:</span>
         <Badge variant="outline" className="text-xs">
-          {node._metadata.title}
+          {node.metadata.title}
         </Badge>
       </div>
-      {node._metadata.description && (
+      {node.metadata.description && (
         <div className="text-xs text-muted-foreground">
-          {node._metadata.description}
+          {node.metadata.description}
         </div>
       )}
     </div>
@@ -291,7 +293,7 @@ function NodeCompletedContent({ event }: { event: ExecutionEventImpl }) {
     <div className="space-y-1">
       <div className="text-sm flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
-          {node._metadata.title}
+          {node.metadata.title}
         </Badge>
         <span className="text-green-500 dark:text-green-400">completed</span>
         <Badge variant="secondary" className="text-xs">
@@ -310,7 +312,7 @@ function NodeFailedContent({ event }: { event: ExecutionEventImpl }) {
     <div className="space-y-1">
       <div className="text-sm flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
-          {node._metadata.title}
+          {node.metadata.title}
         </Badge>
         <span className="text-red-500">failed</span>
       </div>
@@ -328,11 +330,11 @@ function EdgeTransferStartedContent({ event }: { event: ExecutionEventImpl }) {
       <div className="flex items-center gap-2">
         <span>Data transfer:</span>
         <Badge variant="outline" className="text-xs">
-          {edge.sourceNode._metadata.title}
+          {edge.sourceNode.metadata.title}
         </Badge>
         <span>→</span>
         <Badge variant="outline" className="text-xs">
-          {edge.targetNode._metadata.title}
+          {edge.targetNode.metadata.title}
         </Badge>
       </div>
     </div>
@@ -363,7 +365,7 @@ function BreakpointHitContent({ event }: { event: ExecutionEventImpl }) {
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
-          {node._metadata.title}
+          {node.metadata.title}
         </Badge>
       </div>
       <PortsPreview node={node} />

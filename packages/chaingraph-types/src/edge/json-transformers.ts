@@ -1,4 +1,3 @@
-import type { IEdge, INode } from '@chaingraph/types'
 import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
 import { Edge } from '@chaingraph/types'
 import superjson from 'superjson'
@@ -7,43 +6,42 @@ import superjson from 'superjson'
  * Registers edge transformers with superjson
  */
 export function registerEdgeTransformers() {
-  const edge = new Edge('', {} as INode, {} as any, {} as INode, {} as any, {})
+  // const edge = new Edge('', {} as INode, {} as any, {} as INode, {} as any, {})
 
-  superjson.registerCustom<IEdge, JSONValue>(
+  superjson.registerCustom<Edge, JSONValue>(
     {
-      isApplicable: (v): v is IEdge => {
-        return v instanceof edge.constructor
+      isApplicable: (v): v is Edge => {
+        return v instanceof Edge
       },
       serialize: (v) => {
         return superjson.serialize({
           id: v.id,
           status: v.status,
           metadata: v.metadata,
-          sourceNode: v.sourceNode,
-          sourcePort: v.sourcePort,
-          targetNode: v.targetNode,
-          targetPort: v.targetPort,
+          sourceNode: superjson.serialize(v.sourceNode),
+          sourcePort: superjson.serialize(v.sourcePort),
+          targetNode: superjson.serialize(v.targetNode),
+          targetPort: superjson.serialize(v.targetPort),
         }) as unknown as JSONValue
       },
       deserialize: (v) => {
+        debugger
+
         const edgeData = superjson.deserialize(
           v as any as SuperJSONResult,
         ) as any
 
         // todo: validate edgeData
-
-        const edge = new Edge(
+        return new Edge(
           edgeData.id,
-          edgeData.sourceNode,
-          edgeData.sourcePort,
-          edgeData.targetNode,
-          edgeData.targetPort,
+          superjson.deserialize(edgeData.sourceNode),
+          superjson.deserialize(edgeData.sourcePort),
+          superjson.deserialize(edgeData.targetNode),
+          superjson.deserialize(edgeData.targetPort),
           edgeData.metadata,
         )
-
-        return edge
       },
     },
-    'IEdge',
+    Edge.name,
   )
 }

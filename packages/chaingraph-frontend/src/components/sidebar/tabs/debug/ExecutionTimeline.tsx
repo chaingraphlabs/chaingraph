@@ -23,6 +23,10 @@ export function ExecutionTimeline({
       {/* Timeline Line */}
       <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
 
+      <div>
+        {filteredEvents.length}
+      </div>
+
       {/* Events */}
       <AnimatePresence mode="popLayout">
         {Object.entries(groupedEvents).map(([timestamp, timeEvents]) => (

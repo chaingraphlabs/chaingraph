@@ -3,7 +3,7 @@ import type {
   ExecutionEngine,
   ExecutionEventEnum,
   ExecutionEventImpl,
-  IFlow,
+  Flow,
 } from '@chaingraph/types'
 
 export enum ExecutionStatus {
@@ -30,7 +30,7 @@ export interface ExecutionInstance {
   id: string
   context: ExecutionContext
   engine: ExecutionEngine
-  flow: IFlow
+  flow: Flow
   status: ExecutionStatus
   createdAt: Date
   startedAt?: Date

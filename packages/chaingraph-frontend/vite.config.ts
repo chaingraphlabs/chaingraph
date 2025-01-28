@@ -33,7 +33,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@chaingraph/types', '@chaingraph/nodes', '@chaingraph/backend'],
+    include: ['@chaingraph/types', '@chaingraph/nodes', '@chaingraph/backend', 'superjson'],
     exclude: ['reflect-metadata'],
   },
   build: {

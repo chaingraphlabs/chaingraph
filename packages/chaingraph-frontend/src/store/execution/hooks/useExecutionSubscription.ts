@@ -134,10 +134,11 @@ export function useExecutionSubscription() {
       },
       onData: async (trackedData) => {
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
-        console.log('Received execution event:', trackedData.data)
 
-        newExecutionEvent(trackedData.data)
-        await handleEvent(trackedData.data)
+        if (trackedData.type !== ExecutionEventEnum.NODE_STATUS_CHANGED) {
+          newExecutionEvent(trackedData)
+        }
+        await handleEvent(trackedData)
       },
       onError: (error) => {
         console.error('Error subscribing to execution events:', error)

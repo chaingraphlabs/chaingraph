@@ -35,14 +35,12 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
 
           // serialize only ports values instead of all ports
           // for better performance and smaller payload
-          const res = superjson.serialize({
+          return superjson.serialize({
             id: v.id,
             metadata: v.metadata,
             status: v.status,
             portsValues,
           }) as unknown as JSONValue
-
-          return res
         },
         deserialize: (v) => {
           const nodeData = superjson.deserialize<INode>(v as any as SuperJSONResult)

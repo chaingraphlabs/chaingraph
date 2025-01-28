@@ -1,6 +1,8 @@
-import type { ExecutionState, ExecutionSubscriptionState } from './types'
-import { createExecutionFx } from '@/store/execution/effects.ts'
+import type { ExecutionEventData } from '@chaingraph/types'
+import type { ExecutionState, ExecutionSubscriptionState, NodeExecutionState } from './types'
 
+import { createExecutionFx } from '@/store/execution/effects.ts'
+import { ExecutionEventEnum } from '@chaingraph/types'
 import { combine, createStore } from 'effector'
 import {
   addBreakpoint,
@@ -19,7 +21,6 @@ const initialState: ExecutionState = {
   status: ExecutionStatus.IDLE,
   executionId: null,
   debugMode: false,
-  currentNodeId: null,
   breakpoints: new Set(),
   error: null,
   events: [],
@@ -28,6 +29,7 @@ const initialState: ExecutionState = {
     error: null,
     isSubscribed: false,
   },
+  nodeStates: new Map(),
 }
 
 export const $executionState = createStore<ExecutionState>(initialState)
@@ -47,6 +49,8 @@ export const $executionState = createStore<ExecutionState>(initialState)
       executionId,
       status: ExecutionStatus.CREATED,
       events: [],
+      nodeStates: new Map(),
+      error: null,
     }
   })
 // .on(startExecutionFx.pending, state => ({
@@ -132,8 +136,57 @@ export const $executionState = createStore<ExecutionState>(initialState)
   })
 
   .on(newExecutionEvent, (state, event) => {
+    const nodeStates = new Map(state.nodeStates)
+
+    switch (event.type) {
+      case ExecutionEventEnum.NODE_STARTED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
+          nodeStates.set(eventData.node.id, {
+            status: 'running',
+            startTime: event.timestamp,
+          })
+        }
+        break
+
+      case ExecutionEventEnum.NODE_COMPLETED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
+        const prevState = nodeStates.get(eventData.node.id)
+        nodeStates.set(eventData.node.id, {
+          status: 'completed',
+          startTime: prevState?.startTime,
+          endTime: event.timestamp,
+          executionTime: eventData.executionTime,
+        })
+        break
+      }
+
+      case ExecutionEventEnum.NODE_FAILED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
+        nodeStates.set(eventData.node.id, {
+          status: 'failed',
+          endTime: event.timestamp,
+          error: eventData.error,
+        })
+        break
+      }
+
+      case ExecutionEventEnum.NODE_SKIPPED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
+        nodeStates.set(eventData.node.id, {
+          status: 'skipped',
+          endTime: event.timestamp,
+        })
+        break
+      }
+    }
+
     return {
       ...state,
+      nodeStates,
       events: [...state.events, event],
     }
   })
@@ -171,3 +224,6 @@ export const $executionSubscriptionState = combine<ExecutionSubscriptionState>({
     state => state.subscription.status === ExecutionSubscriptionStatus.SUBSCRIBED,
   ),
 })
+
+export const $nodeExecutionStates = createStore<Map<string, NodeExecutionState>>(new Map())
+  .reset(clearExecutionState)

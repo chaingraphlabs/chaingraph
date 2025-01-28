@@ -15,11 +15,11 @@ export interface ExecutionState {
   status: ExecutionStatus
   executionId: string | null
   debugMode: boolean
-  currentNodeId: string | null
   breakpoints: Set<string>
   error: ExecutionError | null
   events: ExecutionEventImpl[]
   subscription: ExecutionSubscriptionState
+  nodeStates: Map<string, NodeExecutionState>
 }
 
 export interface ExecutionError {
@@ -71,4 +71,12 @@ export type TerminalExecutionStatus = typeof TERMINAL_EXECUTION_STATUSES[number]
 
 export function isTerminalStatus(status: ExecutionStatus): status is TerminalExecutionStatus {
   return TERMINAL_EXECUTION_STATUSES.includes(status as TerminalExecutionStatus)
+}
+
+export interface NodeExecutionState {
+  status: 'idle' | 'running' | 'completed' | 'failed' | 'skipped'
+  startTime?: Date
+  endTime?: Date
+  executionTime?: number
+  error?: Error
 }

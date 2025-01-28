@@ -1,15 +1,15 @@
 import type { INode } from '@chaingraph/types'
 import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
-import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
-import { Edge, Flow } from '@chaingraph/types'
+import type { SuperJSONResult } from 'superjson'
+import type { JSONValue } from 'superjson/dist/types'
+import { Edge, ExecutionEventImpl, Flow } from '@chaingraph/types'
+import { registerEdgeTransformers } from '@chaingraph/types/edge/json-transformers'
 import SuperJSON from 'superjson'
 
 /**
  * Registers flow transformers with SuperJSON
  */
 export function registerFlowTransformers() {
-  // registerEdgeTransformers()
-
   // Flow
   SuperJSON.registerCustom<Flow, JSONValue>(
     {
@@ -95,38 +95,40 @@ export function registerFlowTransformers() {
   )
 
   // Execution event data
-  // SuperJSON.registerCustom<ExecutionEventImpl, string>(
-  //   {
-  //     isApplicable: (v): v is ExecutionEventImpl<any> => {
-  //       return v instanceof ExecutionEventImpl
-  //     },
-  //     serialize: (v) => {
-  //       return SuperJSON.stringify({
-  //         index: v.index,
-  //         type: v.type,
-  //         timestamp: v.timestamp,
-  //         data: SuperJSON.serialize(v.data),
-  //       })
-  //     },
-  //     deserialize: (v) => {
-  //       const eventData = SuperJSON.parse(v) as any
-  //
-  //       if (!eventData) {
-  //         throw new Error('Invalid execution event data')
-  //       }
-  //
-  //       const data = SuperJSON.deserialize(eventData.data)
-  //
-  //       console.log('!!!!!!!!!Deserializing execution event:', data)
-  //
-  //       return new ExecutionEventImpl(
-  //         eventData.index,
-  //         eventData.type,
-  //         eventData.timestamp,
-  //         data,
-  //       )
-  //     },
-  //   },
-  //   ExecutionEventImpl.name,
-  // )
+  SuperJSON.registerCustom<ExecutionEventImpl, JSONValue>(
+    {
+      isApplicable: (v): v is ExecutionEventImpl<any> => {
+        return v instanceof ExecutionEventImpl
+      },
+      serialize: (v) => {
+        return SuperJSON.serialize({
+          index: v.index,
+          type: v.type,
+          timestamp: v.timestamp,
+          data: SuperJSON.serialize(v.data),
+        }) as unknown as JSONValue
+      },
+      deserialize: (v) => {
+        const eventData = SuperJSON.deserialize(v as any) as any
+
+        if (!eventData) {
+          throw new Error('Invalid execution event data')
+        }
+
+        const data = SuperJSON.deserialize(eventData.data)
+
+        console.log('!!!!!!!!!Deserializing execution event:', data)
+
+        return new ExecutionEventImpl(
+          eventData.index,
+          eventData.type,
+          eventData.timestamp,
+          data,
+        )
+      },
+    },
+    ExecutionEventImpl.name,
+  )
+
+  registerEdgeTransformers()
 }

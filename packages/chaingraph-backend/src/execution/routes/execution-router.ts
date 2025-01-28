@@ -1,8 +1,10 @@
+import type { ExecutionEventData } from '@chaingraph/types'
 import { debugRouter } from '@chaingraph/backend/execution/routes/debug-router'
+import { zAsyncIterable } from '@chaingraph/backend/procedures/subscriptions/utils/zAsyncIterable'
 import { publicProcedure, router } from '@chaingraph/backend/trpc'
 import { ExecutionEventEnum, ExecutionEventImpl } from '@chaingraph/types'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
-import { tracked, TRPCError } from '@trpc/server'
+import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
 export const executionRouter = router({
@@ -130,6 +132,12 @@ export const executionRouter = router({
       eventTypes: z.array(z.nativeEnum(ExecutionEventEnum)).optional(),
       lastEventId: z.string().nullish(),
     }))
+    .output(
+      zAsyncIterable({
+        yield: z.custom<ExecutionEventImpl>(),
+        tracked: false,
+      }),
+    )
     .subscription(async function* ({ input, ctx }) {
       const instance = await ctx.executionService.getInstance(input.executionId)
       if (!instance) {
@@ -139,7 +147,7 @@ export const executionRouter = router({
         })
       }
 
-      let eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
+      const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
       const eventQueue = new EventQueue<ExecutionEventImpl>(200)
 
       try {
@@ -153,20 +161,22 @@ export const executionRouter = router({
         })
 
         // // Send initial state event
-        yield tracked(String(eventIndex++), new ExecutionEventImpl(
+        // yield tracked(String(eventIndex++), new ExecutionEventImpl(
+        yield new ExecutionEventImpl(
           -1,
           ExecutionEventEnum.FLOW_SUBSCRIBED,
           new Date(),
           {
             flow: instance.flow,
-          },
-        ))
+          } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
+        )
 
         try {
           // Create async iterator for event queue
           const iterator = eventQueue.createIterator()
           for await (const event of iterator) {
-            yield tracked(String(eventIndex++), event)
+            // yield tracked(String(eventIndex++), event)
+            yield event
 
             // Check if execution is completed or failed
             // if (
