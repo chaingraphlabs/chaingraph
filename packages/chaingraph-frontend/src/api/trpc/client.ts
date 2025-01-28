@@ -41,7 +41,9 @@ export const trpcClient = trpc.createClient({
   // transformer: superjson,
   links: [
     // adds pretty logs to your console in development and logs errors in production
-    loggerLink(),
+    loggerLink({
+      withContext: true,
+    }),
 
     splitLink({
       // uses the httpSubscriptionLink for subscriptions

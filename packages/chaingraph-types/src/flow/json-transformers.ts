@@ -2,7 +2,7 @@ import type { INode } from '@chaingraph/types'
 import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
 import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
 import { Edge, Flow } from '@chaingraph/types'
-import superjson from 'superjson'
+import SuperJSON from 'superjson'
 
 /**
  * Registers flow transformers with SuperJSON
@@ -11,7 +11,7 @@ export function registerFlowTransformers() {
   // registerEdgeTransformers()
 
   // Flow
-  superjson.registerCustom<Flow, JSONValue>(
+  SuperJSON.registerCustom<Flow, JSONValue>(
     {
       isApplicable: (v): v is Flow => {
         return v instanceof Flow
@@ -37,10 +37,10 @@ export function registerFlowTransformers() {
           edges: serializedEdges,
         }
 
-        return superjson.serialize(serializedFlow) as unknown as JSONValue
+        return SuperJSON.serialize(serializedFlow) as unknown as JSONValue
       },
       deserialize: (v) => {
-        const flowData = superjson.deserialize<SerializedFlow>(
+        const flowData = SuperJSON.deserialize<SerializedFlow>(
           v as any as SuperJSONResult,
         )
 
@@ -93,4 +93,40 @@ export function registerFlowTransformers() {
     },
     Flow.name,
   )
+
+  // Execution event data
+  // SuperJSON.registerCustom<ExecutionEventImpl, string>(
+  //   {
+  //     isApplicable: (v): v is ExecutionEventImpl<any> => {
+  //       return v instanceof ExecutionEventImpl
+  //     },
+  //     serialize: (v) => {
+  //       return SuperJSON.stringify({
+  //         index: v.index,
+  //         type: v.type,
+  //         timestamp: v.timestamp,
+  //         data: SuperJSON.serialize(v.data),
+  //       })
+  //     },
+  //     deserialize: (v) => {
+  //       const eventData = SuperJSON.parse(v) as any
+  //
+  //       if (!eventData) {
+  //         throw new Error('Invalid execution event data')
+  //       }
+  //
+  //       const data = SuperJSON.deserialize(eventData.data)
+  //
+  //       console.log('!!!!!!!!!Deserializing execution event:', data)
+  //
+  //       return new ExecutionEventImpl(
+  //         eventData.index,
+  //         eventData.type,
+  //         eventData.timestamp,
+  //         data,
+  //       )
+  //     },
+  //   },
+  //   ExecutionEventImpl.name,
+  // )
 }

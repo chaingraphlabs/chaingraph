@@ -1,7 +1,6 @@
-import type { ExecutionEvent } from '@chaingraph/types'
 import { debugRouter } from '@chaingraph/backend/execution/routes/debug-router'
 import { publicProcedure, router } from '@chaingraph/backend/trpc'
-import { ExecutionEventEnum } from '@chaingraph/types'
+import { ExecutionEventEnum, ExecutionEventImpl } from '@chaingraph/types'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { tracked, TRPCError } from '@trpc/server'
 import { z } from 'zod'
@@ -141,7 +140,7 @@ export const executionRouter = router({
       }
 
       let eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
-      const eventQueue = new EventQueue<ExecutionEvent>(200)
+      const eventQueue = new EventQueue<ExecutionEventImpl>(200)
 
       try {
         // Subscribe to engine events
@@ -153,18 +152,15 @@ export const executionRouter = router({
           eventQueue.publish(event)
         })
 
-        // Send initial state event
-        if (isAcceptedEventType(input.eventTypes, ExecutionEventEnum.FLOW_STARTED)) {
-          yield tracked(String(eventIndex++), {
-            type: ExecutionEventEnum.FLOW_STARTED,
-            timestamp: new Date(),
-            context: instance.context,
-            data: {
-              flow: instance.flow,
-            },
-            index: eventIndex,
-          })
-        }
+        // // Send initial state event
+        yield tracked(String(eventIndex++), new ExecutionEventImpl(
+          -1,
+          ExecutionEventEnum.FLOW_SUBSCRIBED,
+          new Date(),
+          {
+            flow: instance.flow,
+          },
+        ))
 
         try {
           // Create async iterator for event queue
@@ -173,15 +169,18 @@ export const executionRouter = router({
             yield tracked(String(eventIndex++), event)
 
             // Check if execution is completed or failed
-            if (
-              event.type === ExecutionEventEnum.FLOW_COMPLETED
-              || event.type === ExecutionEventEnum.FLOW_FAILED
-              || event.type === ExecutionEventEnum.FLOW_CANCELLED
-            ) {
-              break
-            }
+            // if (
+            //   event.type === ExecutionEventEnum.FLOW_COMPLETED
+            //   || event.type === ExecutionEventEnum.FLOW_FAILED
+            //   || event.type === ExecutionEventEnum.FLOW_CANCELLED
+            // ) {
+            //   break
+            // }
           }
+        } catch (error) {
+          console.error('Error handling execution events:', error)
         } finally {
+          console.log('Unsubscribing from engine events')
           unsubscribe()
         }
       } finally {

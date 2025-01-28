@@ -1,4 +1,4 @@
-import type { ExecutionEvent } from '@chaingraph/types'
+import type { ExecutionEventImpl } from '@chaingraph/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button.tsx'
 import { Card } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 
 interface TimelineEventProps {
-  event: ExecutionEvent
+  event: ExecutionEventImpl
   isGrouped?: boolean
 }
 
@@ -83,12 +83,12 @@ export function TimelineEvent({ event, isGrouped = false }: TimelineEventProps) 
   )
 }
 
-function CompactEventContent({ event }: { event: ExecutionEvent }) {
+function CompactEventContent({ event }: { event: ExecutionEventImpl }) {
   switch (event.type) {
     case ExecutionEventEnum.FLOW_STARTED:
       return (
         <span className="text-sm truncate">
-          Started "
+          Flow started "
           {(event.data as any).flow.metadata.name}
           "
         </span>
@@ -107,8 +107,8 @@ function CompactEventContent({ event }: { event: ExecutionEvent }) {
     case ExecutionEventEnum.NODE_STARTED:
       return (
         <span className="text-sm truncate">
-          Node "
-          {(event.data as any).node.metadata.title}
+          Node started "
+          {(event.data as any).node._metadata.title}
           "
         </span>
       )
@@ -116,10 +116,28 @@ function CompactEventContent({ event }: { event: ExecutionEvent }) {
     case ExecutionEventEnum.NODE_COMPLETED:
       return (
         <span className="text-sm truncate">
-          <span className="text-muted-foreground">Node completed in</span>
+          <span className="text-muted-foreground">
+            Node "
+            {(event.data as any).node._metadata.title}
+            " completed in
+          </span>
           {' '}
           {(event.data as any).executionTime}
           ms
+        </span>
+      )
+
+    case ExecutionEventEnum.NODE_STATUS_CHANGED:
+      return (
+        <span className="text-sm truncate">
+          Node "
+          {(event.data as any).node._metadata.title}
+          "
+          <br />
+          {' status changed to '}
+          <span className="text-muted-foreground">
+            {(event.data as any).newStatus}
+          </span>
         </span>
       )
 
@@ -127,10 +145,10 @@ function CompactEventContent({ event }: { event: ExecutionEvent }) {
       const { edge } = event.data as any
       return (
         <span className="text-sm truncate">
-          {edge.sourceNode.metadata.title}
+          {edge.sourceNode._metadata.title}
           {' '}
           →
-          {edge.targetNode.metadata.title}
+          {edge.targetNode._metadata.title}
         </span>
       )
     }
@@ -139,7 +157,7 @@ function CompactEventContent({ event }: { event: ExecutionEvent }) {
       return (
         <span className="text-sm text-yellow-500 dark:text-yellow-400 truncate">
           Breakpoint at "
-          {(event.data as any).node.metadata.title}
+          {(event.data as any).node._metadata.title}
           "
         </span>
       )
@@ -153,7 +171,7 @@ function CompactEventContent({ event }: { event: ExecutionEvent }) {
   }
 }
 
-function DetailedEventContent({ event }: { event: ExecutionEvent }) {
+function DetailedEventContent({ event }: { event: ExecutionEventImpl }) {
   // Detailed content when expanded
   return (
     <div className="space-y-2 text-xs">
@@ -209,7 +227,7 @@ function getEventConfig(type: ExecutionEventEnum) {
 }
 
 // Event-specific content components
-function FlowStartedContent({ event }: { event: ExecutionEvent }) {
+function FlowStartedContent({ event }: { event: ExecutionEventImpl }) {
   const flow = (event.data as any).flow
   return (
     <div className="space-y-1">
@@ -230,7 +248,7 @@ function FlowStartedContent({ event }: { event: ExecutionEvent }) {
   )
 }
 
-function FlowCompletedContent({ event }: { event: ExecutionEvent }) {
+function FlowCompletedContent({ event }: { event: ExecutionEventImpl }) {
   const { executionTime } = event.data as any
   return (
     <div className="space-y-1">
@@ -248,32 +266,32 @@ function FlowCompletedContent({ event }: { event: ExecutionEvent }) {
   )
 }
 
-function NodeStartedContent({ event }: { event: ExecutionEvent }) {
+function NodeStartedContent({ event }: { event: ExecutionEventImpl }) {
   const node = (event.data as any).node
   return (
     <div className="space-y-1">
       <div className="text-sm flex items-center gap-2">
         <span>Started node execution:</span>
         <Badge variant="outline" className="text-xs">
-          {node.metadata.title}
+          {node._metadata.title}
         </Badge>
       </div>
-      {node.metadata.description && (
+      {node._metadata.description && (
         <div className="text-xs text-muted-foreground">
-          {node.metadata.description}
+          {node._metadata.description}
         </div>
       )}
     </div>
   )
 }
 
-function NodeCompletedContent({ event }: { event: ExecutionEvent }) {
+function NodeCompletedContent({ event }: { event: ExecutionEventImpl }) {
   const { node, executionTime } = event.data as any
   return (
     <div className="space-y-1">
       <div className="text-sm flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
-          {node.metadata.title}
+          {node._metadata.title}
         </Badge>
         <span className="text-green-500 dark:text-green-400">completed</span>
         <Badge variant="secondary" className="text-xs">
@@ -286,13 +304,13 @@ function NodeCompletedContent({ event }: { event: ExecutionEvent }) {
   )
 }
 
-function NodeFailedContent({ event }: { event: ExecutionEvent }) {
+function NodeFailedContent({ event }: { event: ExecutionEventImpl }) {
   const { node, error } = event.data as any
   return (
     <div className="space-y-1">
       <div className="text-sm flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
-          {node.metadata.title}
+          {node._metadata.title}
         </Badge>
         <span className="text-red-500">failed</span>
       </div>
@@ -303,25 +321,25 @@ function NodeFailedContent({ event }: { event: ExecutionEvent }) {
   )
 }
 
-function EdgeTransferStartedContent({ event }: { event: ExecutionEvent }) {
+function EdgeTransferStartedContent({ event }: { event: ExecutionEventImpl }) {
   const { edge } = event.data as any
   return (
     <div className="text-sm">
       <div className="flex items-center gap-2">
         <span>Data transfer:</span>
         <Badge variant="outline" className="text-xs">
-          {edge.sourceNode.metadata.title}
+          {edge.sourceNode._metadata.title}
         </Badge>
         <span>→</span>
         <Badge variant="outline" className="text-xs">
-          {edge.targetNode.metadata.title}
+          {edge.targetNode._metadata.title}
         </Badge>
       </div>
     </div>
   )
 }
 
-function EdgeTransferCompletedContent({ event }: { event: ExecutionEvent }) {
+function EdgeTransferCompletedContent({ event }: { event: ExecutionEventImpl }) {
   const { edge, transferTime } = event.data as any
   return (
     <div className="space-y-1">
@@ -336,7 +354,7 @@ function EdgeTransferCompletedContent({ event }: { event: ExecutionEvent }) {
   )
 }
 
-function BreakpointHitContent({ event }: { event: ExecutionEvent }) {
+function BreakpointHitContent({ event }: { event: ExecutionEventImpl }) {
   const { node } = event.data as any
   return (
     <div className="space-y-1">
@@ -345,7 +363,7 @@ function BreakpointHitContent({ event }: { event: ExecutionEvent }) {
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
-          {node.metadata.title}
+          {node._metadata.title}
         </Badge>
       </div>
       <PortsPreview node={node} />

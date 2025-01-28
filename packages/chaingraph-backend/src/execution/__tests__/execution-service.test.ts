@@ -1,4 +1,4 @@
-import type { ExecutionContext, ExecutionEvent, INode } from '@chaingraph/types'
+import type { ExecutionContext, ExecutionEventImpl, INode } from '@chaingraph/types'
 import type { NodeExecutionResult } from '@chaingraph/types/node/types'
 import { ExecutionStatus } from '@chaingraph/backend/execution'
 import { BaseNode, ExecutionEventEnum, Flow, Node, NodeExecutionStatus } from '@chaingraph/types'
@@ -77,7 +77,7 @@ describe('executionService', () => {
 
   describe('event handling', () => {
     it('should emit execution events', async () => {
-      const events: ExecutionEvent[] = []
+      const events: ExecutionEventImpl[] = []
       const instance = await executionService.createExecution(flow)
 
       // Subscribe to events

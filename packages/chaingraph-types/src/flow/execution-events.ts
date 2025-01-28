@@ -1,8 +1,8 @@
 import type { IEdge, IFlow, INode, NodeStatus } from '@chaingraph/types'
-import type { ExecutionContext } from './execution-context'
 
 export enum ExecutionEventEnum {
   // Flow events
+  FLOW_SUBSCRIBED = 'flow:subscribed',
   FLOW_STARTED = 'flow:started',
   FLOW_COMPLETED = 'flow:completed',
   FLOW_FAILED = 'flow:failed',
@@ -27,6 +27,9 @@ export enum ExecutionEventEnum {
 }
 
 export interface ExecutionEventData {
+  [ExecutionEventEnum.FLOW_SUBSCRIBED]: {
+    flow: IFlow
+  }
   [ExecutionEventEnum.FLOW_STARTED]: {
     flow: IFlow
   }
@@ -93,16 +96,24 @@ export interface ExecutionEvent<T extends ExecutionEventEnum = ExecutionEventEnu
   index: number
   type: T
   timestamp: Date
-  context: ExecutionContext
   data: ExecutionEventData[T]
 }
 
+export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnum> implements ExecutionEvent<T> {
+  constructor(
+    public index: number,
+    public type: T,
+    public timestamp: Date,
+    public data: ExecutionEventData[T],
+  ) {}
+}
+
 export type AllExecutionEvents = {
-  [T in ExecutionEventEnum]: ExecutionEvent<T>
+  [T in ExecutionEventEnum]: ExecutionEventImpl<T>
 }[ExecutionEventEnum]
 
 // Helper type to get event data type based on event type
 export type EventDataType<T extends ExecutionEventEnum> = Extract<
-  ExecutionEvent,
+  ExecutionEventImpl,
   { type: T }
 >['data']

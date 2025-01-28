@@ -22,6 +22,7 @@ import {
   addNodeToFlow,
   useFlowSubscription,
 } from '@/store'
+import { $executionState, useExecutionSubscription } from '@/store/execution'
 import { nodeRegistry } from '@chaingraph/nodes'
 import {
   Background,
@@ -47,6 +48,32 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 const nodeTypes: NodeTypes = {
   chaingraphNode: ChaingraphNode,
   // chaingraphNodeTest: ChaingraphCustomNode,
+}
+
+function ExecutionComponent() {
+  const { status: executionStatus } = useUnit($executionState)
+  const { isSubscribed, isConnecting, status: subscriptionStatus, error } = useExecutionSubscription()
+
+  return (
+    <div>
+      <p>
+        Execution Status:
+        {executionStatus}
+      </p>
+      <p>
+        Subscription Status:
+        {subscriptionStatus}
+      </p>
+      {isSubscribed && <p>Subscription is active</p>}
+      {isConnecting && <p>Connecting...</p>}
+      {error && (
+        <p>
+          Error:
+          {error.message}
+        </p>
+      )}
+    </div>
+  )
 }
 
 function Flow() {
@@ -272,6 +299,10 @@ function Flow() {
         {activeFlow && (
           <FlowControlPanel />
         )}
+
+        <div className="absolute top-4 left-4 z-50">
+          <ExecutionComponent />
+        </div>
       </ReactFlow>
 
       {/* Context Menu */}

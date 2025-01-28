@@ -1,13 +1,15 @@
 import type { DebuggerController } from '@chaingraph/types/flow/debugger-types'
 import type {
-  ExecutionEvent,
   ExecutionEventData,
 } from '@chaingraph/types/flow/execution-events'
 import type { INode, NodeStatusChangeEvent } from '../node'
 import type { ExecutionContext } from './execution-context'
 import type { Flow } from './flow'
 import { FlowDebugger } from '@chaingraph/types/flow/debugger'
-import { ExecutionEventEnum } from '@chaingraph/types/flow/execution-events'
+import {
+  ExecutionEventEnum,
+  ExecutionEventImpl,
+} from '@chaingraph/types/flow/execution-events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { NodeEventType } from '../node'
@@ -43,7 +45,8 @@ export class ExecutionEngine {
   private readonly semaphore: Semaphore
   private readonly debugger: FlowDebugger | null = null
 
-  private readonly eventQueue: EventQueue<ExecutionEvent>
+  // private readonly eventQueue: EventQueue<ExecutionEvent>
+  private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
 
   constructor(
@@ -58,7 +61,7 @@ export class ExecutionEngine {
     this.nodeDependencies = new Map()
     this.dependentsMap = new Map()
     this.semaphore = new Semaphore(this.options?.execution?.maxConcurrency ?? DEFAULT_MAX_CONCURRENCY)
-    this.eventQueue = new EventQueue<ExecutionEvent>()
+    this.eventQueue = new EventQueue<ExecutionEventImpl>()
 
     if (options?.debug) {
       this.debugger = new FlowDebugger(
@@ -105,7 +108,7 @@ export class ExecutionEngine {
       // Ensure queues are closed on error
       this.readyQueue.close()
       this.completedQueue.close()
-      this.context.abortController.abort()
+      this.context.abortController?.abort()
 
       const isAborted = this.context.abortSignal.aborted
       const isAbortedDueToError
@@ -185,7 +188,7 @@ export class ExecutionEngine {
     for (let i = 0; i < maxConcurrency; i++) {
       workerPromises.push(
         this.workerLoop().catch((error) => {
-          this.context.abortController.abort(error)
+          this.context.abortController?.abort(error)
           throw error // TODO: do we need to throw here?
         }),
       )
@@ -317,7 +320,7 @@ export class ExecutionEngine {
         const command = await this.debugger.waitForCommand(node)
         if (command === 'stop') {
           const error = new Error(ExecutionStoppedByDebugger)
-          this.context.abortController.abort(error) // Abort execution
+          this.context.abortController?.abort(error) // Abort execution
           throw error
         }
       }
@@ -372,29 +375,40 @@ export class ExecutionEngine {
 
   public on<T extends ExecutionEventEnum>(
     type: T,
-    handler: (event: ExecutionEvent<T>) => void,
+    handler: (event: ExecutionEventImpl<T>) => void,
   ): () => void {
     return this.eventQueue.subscribe((event) => {
       if (event.type === type) {
-        handler(event as ExecutionEvent<T>)
+        handler(event as ExecutionEventImpl<T>)
       }
     })
   }
 
-  public onAll(handler: (event: ExecutionEvent) => void): () => void {
+  public onAll(handler: (event: ExecutionEventImpl) => void): () => void {
     return this.eventQueue.subscribe(handler)
   }
 
+  // protected createEvent<T extends ExecutionEventEnum>(
+  //   type: T,
+  //   data: ExecutionEventData[T],
+  // ): ExecutionEvent<T> {
+  //   return {
+  //     index: this.eventIndex++,
+  //     type,
+  //     timestamp: new Date(),
+  //     context: this.context,
+  //     data,
+  //   }
+  // }
   protected createEvent<T extends ExecutionEventEnum>(
     type: T,
     data: ExecutionEventData[T],
-  ): ExecutionEvent<T> {
-    return {
-      index: this.eventIndex++,
+  ): ExecutionEventImpl<T> {
+    return new ExecutionEventImpl(
+      this.eventIndex++,
       type,
-      timestamp: new Date(),
-      context: this.context,
+      new Date(),
       data,
-    }
+    )
   }
 }

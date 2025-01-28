@@ -1,25 +1,45 @@
-import type { ExecutionStatus } from './types'
 import { cn } from '@/lib/utils'
+import { ExecutionStatus } from '@/store/execution'
 import { motion } from 'framer-motion'
 
 interface StatusIndicatorProps {
   status: ExecutionStatus
-  breakpointHit: boolean
+  debugMode: boolean
 }
 
-export function StatusIndicator({ status, breakpointHit }: StatusIndicatorProps) {
+export function StatusIndicator({ status, debugMode }: StatusIndicatorProps) {
   const statusConfig = {
-    stopped: {
-      label: 'Stopped',
+    [ExecutionStatus.IDLE]: {
+      label: 'Idle',
       color: 'bg-gray-400 dark:bg-gray-500',
     },
-    running: {
+    [ExecutionStatus.CREATING]: {
+      label: 'Creating',
+      color: 'bg-blue-500',
+    },
+    [ExecutionStatus.CREATED]: {
+      label: 'Created',
+      color: 'bg-emerald-500',
+    },
+    [ExecutionStatus.RUNNING]: {
       label: 'Running',
       color: 'bg-emerald-500',
     },
-    paused: {
-      label: breakpointHit ? 'Breakpoint' : 'Paused',
-      color: breakpointHit ? 'bg-yellow-500' : 'bg-blue-500',
+    [ExecutionStatus.PAUSED]: {
+      label: debugMode ? 'Debug Paused' : 'Paused',
+      color: debugMode ? 'bg-yellow-500' : 'bg-blue-500',
+    },
+    [ExecutionStatus.STOPPED]: {
+      label: 'Stopped',
+      color: 'bg-gray-400 dark:bg-gray-500',
+    },
+    [ExecutionStatus.COMPLETED]: {
+      label: 'Completed',
+      color: 'bg-emerald-500',
+    },
+    [ExecutionStatus.ERROR]: {
+      label: 'Error',
+      color: 'bg-red-500',
     },
   }
 
@@ -34,7 +54,7 @@ export function StatusIndicator({ status, breakpointHit }: StatusIndicatorProps)
         )}
         />
 
-        {status === 'running' && (
+        {status === ExecutionStatus.RUNNING && (
           <motion.div
             className={cn(
               'absolute inset-0 rounded-full',

@@ -1,5 +1,5 @@
-import type { ExecutionStatus } from './types'
-import { StatusIndicator } from '@/components/flow/components/control-panel/StatusIndicator.tsx'
+import type { FlowControlPanelProps } from './types'
+import { StatusIndicator } from '@/components/flow/components/control-panel/StatusIndicator'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -9,55 +9,86 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
+  $executionState,
+  $executionSubscriptionState,
+  createExecution,
+  ExecutionStatus,
+  isTerminalStatus,
+  pauseExecution,
+  resumeExecution,
+  startExecution,
+  stopExecution,
+  toggleDebugMode,
+} from '@/store/execution'
+import { $activeFlowMetadata } from '@/store/flow'
+import {
   PauseIcon,
   PlayIcon,
   ReloadIcon,
   StopIcon,
 } from '@radix-ui/react-icons'
+import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bug } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { DebugControls } from './DebugControls'
 
 const MotionButton = motion(Button)
 
-export function FlowControlPanel() {
-  const [status, setStatus] = useState<ExecutionStatus>('stopped')
-  const [isDebugMode, setIsDebugMode] = useState(false)
-  const [breakpointHit, setBreakpointHit] = useState(false)
+export function FlowControlPanel({ className }: FlowControlPanelProps) {
+  // Get states from stores
+  const { status: executionStatus, executionId, debugMode } = useUnit($executionState)
+  const { isSubscribed } = useUnit($executionSubscriptionState)
+  const activeFlow = useUnit($activeFlowMetadata)
 
+  // Handlers for execution control
   const handlePlay = useCallback(() => {
-    if (status === 'stopped' || status === 'paused') {
-      setStatus('running')
-      setBreakpointHit(false)
+    if (!activeFlow?.id)
+      return
+
+    if (!executionId || executionStatus === ExecutionStatus.IDLE || isTerminalStatus(executionStatus)) {
+      // Create new execution
+      createExecution({
+        flowId: activeFlow.id,
+        debug: debugMode,
+      })
+    } else if (executionStatus === ExecutionStatus.CREATED) {
+      // Start newly created execution
+      startExecution(executionId)
+    } else if (executionStatus === ExecutionStatus.PAUSED) {
+      // Resume execution
+      resumeExecution(executionId)
     }
-  }, [status])
+  }, [activeFlow?.id, executionId, executionStatus, debugMode])
 
   const handlePause = useCallback(() => {
-    if (status === 'running') {
-      setStatus('paused')
+    if (executionId && executionStatus === ExecutionStatus.RUNNING) {
+      pauseExecution(executionId)
     }
-  }, [status])
+  }, [executionId, executionStatus])
 
   const handleStop = useCallback(() => {
-    setStatus('stopped')
-    setBreakpointHit(false)
-  }, [])
+    if (executionId) {
+      stopExecution(executionId)
+    }
+  }, [executionId])
 
   const handleDebugToggle = useCallback(() => {
-    setIsDebugMode(!isDebugMode)
-  }, [isDebugMode])
+    toggleDebugMode(!debugMode)
+  }, [debugMode])
 
-  const simulateBreakpointHit = useCallback(() => {
-    setStatus('paused')
-    setBreakpointHit(true)
-  }, [])
+  const canControl = isSubscribed && !!executionId
+  // const canPause = executionStatus === ExecutionStatus.RUNNING
+  // const canPlay = !isTerminalStatus(executionStatus)
+  //   && (executionStatus === ExecutionStatus.CREATED
+  //     || executionStatus === ExecutionStatus.PAUSED)
 
   return (
     <motion.div
       className={cn(
         'absolute top-4 left-1/2 -translate-x-1/2 z-50',
         'inline-flex items-center justify-center',
+        className,
       )}
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -67,7 +98,7 @@ export function FlowControlPanel() {
         <div className="relative flex items-center justify-center">
           {/* Status Panel (Left Side) */}
           <AnimatePresence>
-            {status !== 'stopped' && (
+            {executionStatus !== ExecutionStatus.IDLE && (
               <motion.div
                 className={cn(
                   'absolute right-full mr-2',
@@ -80,7 +111,10 @@ export function FlowControlPanel() {
                 exit={{ x: 20, opacity: 0, scale: 0.8 }}
                 transition={{ type: 'spring', duration: 0.4 }}
               >
-                <StatusIndicator status={status} breakpointHit={breakpointHit} />
+                <StatusIndicator
+                  status={executionStatus}
+                  debugMode={debugMode}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -100,30 +134,31 @@ export function FlowControlPanel() {
                 <MotionButton
                   variant="ghost"
                   size="icon"
-                  onClick={status === 'running' ? handlePause : handlePlay}
+                  onClick={executionStatus === ExecutionStatus.RUNNING ? handlePause : handlePlay}
+                  disabled={!activeFlow?.id}
                   className={cn(
                     'relative rounded-full',
-                    status === 'running' && 'text-primary',
+                    executionStatus === ExecutionStatus.RUNNING && 'text-primary',
                   )}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={status === 'running' ? 'pause' : 'play'}
+                      key={executionStatus === ExecutionStatus.RUNNING ? 'pause' : 'play'}
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.8, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {status === 'running'
+                      {executionStatus === ExecutionStatus.RUNNING
                         ? <PauseIcon className="w-4 h-4" />
                         : <PlayIcon className="w-4 h-4" />}
                     </motion.div>
                   </AnimatePresence>
 
                   {/* Play button glow effect */}
-                  {status === 'running' && (
+                  {executionStatus === ExecutionStatus.RUNNING && (
                     <motion.div
                       className="absolute inset-0 rounded-full bg-primary/20"
                       animate={{
@@ -140,13 +175,13 @@ export function FlowControlPanel() {
                 </MotionButton>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                {status === 'running' ? 'Pause Flow' : 'Start Flow'}
+                {executionStatus === ExecutionStatus.RUNNING ? 'Pause Flow' : 'Start Flow'}
               </TooltipContent>
             </Tooltip>
 
             {/* Additional Controls (Visible when running) */}
             <AnimatePresence>
-              {status !== 'stopped' && (
+              {executionId && (
                 <motion.div
                   className="flex items-center gap-1"
                   initial={{ width: 0, opacity: 0 }}
@@ -161,6 +196,7 @@ export function FlowControlPanel() {
                         variant="ghost"
                         size="icon"
                         onClick={handleStop}
+                        disabled={!canControl}
                         className="rounded-full"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -180,6 +216,7 @@ export function FlowControlPanel() {
                         variant="ghost"
                         size="icon"
                         onClick={handleStop}
+                        disabled={!canControl}
                         className="rounded-full"
                         whileHover={{ rotate: 180 }}
                         whileTap={{ scale: 0.9 }}
@@ -199,12 +236,13 @@ export function FlowControlPanel() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <MotionButton
-                  variant={isDebugMode ? 'secondary' : 'ghost'}
+                  variant={debugMode ? 'secondary' : 'ghost'}
                   size="icon"
                   onClick={handleDebugToggle}
+                  disabled={!activeFlow?.id}
                   className={cn(
                     'rounded-full',
-                    isDebugMode && 'text-yellow-500 dark:text-yellow-400',
+                    debugMode && 'text-yellow-500 dark:text-yellow-400',
                   )}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -213,14 +251,14 @@ export function FlowControlPanel() {
                 </MotionButton>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                {isDebugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
+                {debugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
               </TooltipContent>
             </Tooltip>
           </div>
 
           {/* Debug Controls (Right Side) */}
           <AnimatePresence>
-            {isDebugMode && (
+            {debugMode && executionId && (
               <motion.div
                 className={cn(
                   'absolute left-full ml-2',
@@ -234,20 +272,8 @@ export function FlowControlPanel() {
                 transition={{ type: 'spring', duration: 0.4 }}
               >
                 <DebugControls
-                  status={status}
-                  breakpointHit={breakpointHit}
-                  onStepOver={() => {
-                    console.log('Step over')
-                    simulateBreakpointHit()
-                  }}
-                  onStepInto={() => {
-                    console.log('Step into')
-                    simulateBreakpointHit()
-                  }}
-                  onStepOut={() => {
-                    console.log('Step out')
-                    simulateBreakpointHit()
-                  }}
+                  executionId={executionId}
+                  canControl={canControl}
                 />
               </motion.div>
             )}

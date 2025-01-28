@@ -1,9 +1,9 @@
-import type { ExecutionEvent, ExecutionEventEnum } from '@chaingraph/types'
+import type { ExecutionEventEnum, ExecutionEventImpl } from '@chaingraph/types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { TimelineEvent } from './TimelineEvent'
 
 interface ExecutionTimelineProps {
-  events: ExecutionEvent[]
+  events: ExecutionEventImpl[]
   selectedEventTypes: Set<ExecutionEventEnum>
 }
 
@@ -59,8 +59,8 @@ export function ExecutionTimeline({
   )
 }
 
-function groupEventsByTime(events: ExecutionEvent[]): Record<string, ExecutionEvent[]> {
-  const groups: Record<string, ExecutionEvent[]> = {}
+function groupEventsByTime(events: ExecutionEventImpl[]): Record<string, ExecutionEventImpl[]> {
+  const groups: Record<string, ExecutionEventImpl[]> = {}
 
   events.forEach((event) => {
     // Group by minute

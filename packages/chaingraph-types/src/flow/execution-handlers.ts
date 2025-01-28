@@ -1,11 +1,15 @@
-import type { ExecutionEvent, ExecutionEventData, ExecutionEventEnum } from './execution-events'
+import type {
+  ExecutionEventData,
+  ExecutionEventEnum,
+  ExecutionEventImpl,
+} from './execution-events'
 
 /**
  * Type representing a handler function for a specific execution event type
  */
 export type ExecutionEventHandler<T extends ExecutionEventEnum> = (
   data: ExecutionEventData[T],
-  context: ExecutionEvent<T>['context']
+  context: ExecutionEventImpl<T>['context']
 ) => void | Promise<void>
 
 /**
@@ -27,7 +31,7 @@ export interface HandleExecutionEventOptions {
   /**
    * Custom error handler
    */
-  onError?: (error: Error, event: ExecutionEvent) => void
+  onError?: (error: Error, event: ExecutionEventImpl) => void
 }
 
 /**
@@ -53,7 +57,7 @@ export interface HandleExecutionEventOptions {
  * ```
  */
 export async function handleExecutionEvent<T extends ExecutionEventEnum>(
-  event: ExecutionEvent<T>,
+  event: ExecutionEventImpl<T>,
   handlers: ExecutionEventHandlerMap,
   options: HandleExecutionEventOptions = {},
 ): Promise<void> {
@@ -97,7 +101,7 @@ export function createExecutionEventHandler(
   handlers: ExecutionEventHandlerMap,
   options: HandleExecutionEventOptions = {},
 ) {
-  return (event: ExecutionEvent) => handleExecutionEvent(event, handlers, options)
+  return (event: ExecutionEventImpl) => handleExecutionEvent(event, handlers, options)
 }
 
 /**
@@ -138,4 +142,4 @@ export type ExecutionEventDataType<T extends ExecutionEventEnum> = ExecutionEven
 /**
  * Type helper to extract full event type from event enum
  */
-export type ExecutionEventType<T extends ExecutionEventEnum> = ExecutionEvent<T>
+export type ExecutionEventType<T extends ExecutionEventEnum> = ExecutionEventImpl<T>

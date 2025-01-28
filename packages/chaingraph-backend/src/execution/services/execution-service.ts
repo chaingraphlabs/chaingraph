@@ -4,7 +4,7 @@ import type {
   ExecutionOptions,
   ExecutionState,
 } from '@chaingraph/backend/execution/types'
-import type { ExecutionEvent, Flow } from '@chaingraph/types'
+import type { ExecutionEvent, ExecutionEventImpl, Flow } from '@chaingraph/types'
 import type {
   ExecutionEventHandler,
 } from '@chaingraph/types/flow/execution-handlers'
@@ -20,7 +20,7 @@ import { ExecutionStatus } from '../types'
 
 export class ExecutionService {
   // Keep track of event queues per execution
-  private eventQueues: Map<string, EventQueue<ExecutionEvent>> = new Map()
+  private eventQueues: Map<string, EventQueue<ExecutionEventImpl>> = new Map()
   private readonly cleanupService: CleanupService
 
   constructor(

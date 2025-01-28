@@ -1,8 +1,8 @@
 import type {
   ExecutionContext,
   ExecutionEngine,
-  ExecutionEvent,
   ExecutionEventEnum,
+  ExecutionEventImpl,
   IFlow,
 } from '@chaingraph/types'
 
@@ -43,7 +43,7 @@ export interface ExecutionInstance {
 
 export interface ExecutionEventSubscription {
   eventTypes?: ExecutionEventEnum[]
-  onEvent: (event: ExecutionEvent) => void
+  onEvent: (event: ExecutionEventImpl) => void
   onError?: (error: Error) => void
   onComplete?: () => void
 }
