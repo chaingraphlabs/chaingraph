@@ -36,8 +36,8 @@ export class TelegramMessageNode extends BaseNode {
     // Mock implementation
     this.result = `Telegram message sent: ${this.message}`
 
-    // delay 3 sec
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    // delay 3 sec + 2 sec random time
+    await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000))
 
     return {
       status: NodeExecutionStatus.Completed,

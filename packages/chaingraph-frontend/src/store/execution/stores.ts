@@ -227,3 +227,18 @@ export const $executionSubscriptionState = combine<ExecutionSubscriptionState>({
 
 export const $nodeExecutionStates = createStore<Map<string, NodeExecutionState>>(new Map())
   .reset(clearExecutionState)
+
+// Auto start conditions
+export const $autoStartConditions = combine({
+  executionStatus: $executionState.map(state => state.status),
+  subscriptionStatus: $executionSubscriptionState.map(state => state.status),
+  executionId: $executionState.map(state => state.executionId),
+  hasError: combine(
+    $executionState.map(state => state.error),
+    $executionSubscriptionState.map(state => state.error),
+    (execError, subError) => Boolean(execError || subError),
+  ),
+})
+
+// Store to prevent multiple start attempts
+export const $startAttempted = createStore(false)

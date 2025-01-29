@@ -30,3 +30,6 @@ export const setExecutionSubscriptionError = createEvent<ExecutionError | null>(
 
 export const setExecutionStatus = createEvent<ExecutionStatus>()
 export const newExecutionEvent = createEvent<ExecutionEventImpl>()
+
+export const resetAutoStart = createEvent()
+export const markStartAttempted = createEvent()

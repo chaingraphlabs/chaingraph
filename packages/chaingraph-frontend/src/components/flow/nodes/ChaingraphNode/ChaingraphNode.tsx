@@ -79,8 +79,6 @@ function ChaingraphNodeComponent({
         })}
       />
 
-      {data.node.metadata.version}
-
       <NodeBody
         inputs={inputs}
         outputs={outputs}
@@ -96,7 +94,7 @@ function ChaingraphNodeComponent({
         }}
       />
 
-      {nodeExecution.executionTime && (
+      {nodeExecution.executionTime !== undefined && (
         <div className="absolute -top-2 -right-2 px-1 py-0.5 text-xs bg-background rounded border shadow-sm">
           {nodeExecution.executionTime}
           ms

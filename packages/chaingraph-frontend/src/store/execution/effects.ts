@@ -11,7 +11,7 @@ export const createExecutionFx = createEffect(
       options: {
         debug,
         execution: {
-          maxConcurrency: 1,
+          maxConcurrency: 5,
           nodeTimeoutMs: 90000,
           flowTimeoutMs: 300000,
         },

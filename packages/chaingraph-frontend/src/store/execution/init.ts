@@ -1,3 +1,9 @@
+import { $autoStartConditions, $executionState, $startAttempted } from '@/store/execution/stores.ts'
+import {
+  ExecutionStatus,
+  ExecutionSubscriptionStatus,
+  isTerminalStatus,
+} from '@/store/execution/types.ts'
 import { sample } from 'effector'
 import {
   addBreakpointFx,
@@ -11,11 +17,15 @@ import {
 } from './effects'
 import {
   addBreakpoint,
+  clearExecutionState,
   createExecution,
+  markStartAttempted,
   pauseExecution,
   removeBreakpoint,
+  resetAutoStart,
   resumeExecution,
   setExecutionError,
+  setExecutionSubscriptionStatus,
   startExecution,
   stepExecution,
   stopExecution,
@@ -100,3 +110,61 @@ sample({
 //   filter: status => status === ExecutionSubscriptionStatus.DISCONNECTED,
 //   target: clearExecutionState,
 // })
+
+// Handle start attempt tracking
+$startAttempted
+  .on(markStartAttempted, () => true)
+  .reset([
+    resetAutoStart,
+    createExecution,
+    // Reset on terminal states
+    sample({
+      clock: $executionState,
+      filter: state => isTerminalStatus(state.status),
+    }),
+  ])
+
+// Auto-start logic
+sample({
+  clock: $autoStartConditions,
+  source: $startAttempted,
+  filter: (attempted, conditions) => {
+    return (
+      !attempted
+      && conditions.executionStatus === ExecutionStatus.CREATED
+      && conditions.subscriptionStatus === ExecutionSubscriptionStatus.SUBSCRIBED
+      && !conditions.hasError
+      && conditions.executionId !== null
+    )
+  },
+  fn: (_, conditions) => conditions.executionId!,
+  target: [
+    startExecution,
+    markStartAttempted,
+  ],
+})
+
+// Reset auto-start when needed
+sample({
+  clock: [
+    createExecution,
+    clearExecutionState,
+    // Add reset when subscription disconnects
+    sample({
+      clock: setExecutionSubscriptionStatus,
+      filter: status => status === ExecutionSubscriptionStatus.DISCONNECTED,
+    }),
+  ],
+  target: resetAutoStart,
+})
+
+// Debug logging in development
+if (process.env.NODE_ENV === 'development') {
+  $autoStartConditions.watch((conditions) => {
+    console.log('Auto-start conditions:', conditions)
+  })
+
+  startExecution.watch((executionId) => {
+    console.log('Auto-starting execution:', executionId)
+  })
+}
