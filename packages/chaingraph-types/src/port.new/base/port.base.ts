@@ -1,0 +1,182 @@
+import type { z } from 'zod'
+import type { PortConfig } from '../config/types'
+import type { PortValueType } from '../config/value-types'
+import type { IPort, PortEventHandler, PortEventType, SerializedPortData } from './port.interface'
+import { portConfigSchema } from '@chaingraph/types/port.new/config/schemas'
+import { ERROR_MESSAGES } from '../config/constants'
+import { PortValueSerializer } from '../serialization/serializer'
+
+/**
+ * Abstract base class for all port types
+ */
+export abstract class Port<TConfig extends PortConfig, TValue = PortValueType<TConfig>>
+implements IPort<TConfig, TValue> {
+  protected _value: TValue | undefined
+  protected _eventHandlers: Map<PortEventType, Set<PortEventHandler>> = new Map()
+  protected _serializer = new PortValueSerializer()
+
+  constructor(
+    public readonly config: TConfig,
+  ) {
+    this.validateConfig(config)
+    if (config.defaultValue !== undefined) {
+      this.setValue(config.defaultValue as TValue)
+    }
+  }
+
+  // Abstract methods that must be implemented by derived classes
+  abstract getValueSchema(): z.ZodType<TValue>
+  abstract getConfigSchema(): z.ZodType<TConfig>
+
+  // Value management
+  get value(): TValue {
+    return this.getValue()
+  }
+
+  set value(newValue: TValue) {
+    this.setValue(newValue)
+  }
+
+  getValue(): TValue {
+    if (!this.hasValue()) {
+      throw new Error(ERROR_MESSAGES.INVALID_VALUE)
+    }
+    return this._value as TValue
+  }
+
+  setValue(value: TValue): void {
+    if (!this.validateValue(value)) {
+      throw new Error(ERROR_MESSAGES.INVALID_VALUE)
+    }
+    const oldValue = this._value
+    this._value = value
+    if (oldValue !== value) {
+      this.emit('value:change', { oldValue, newValue: value })
+    }
+  }
+
+  hasValue(): boolean {
+    return this._value !== undefined
+  }
+
+  reset(): void {
+    const oldValue = this._value
+    this._value = undefined
+    if (oldValue !== undefined) {
+      this.emit('value:reset', { oldValue })
+    }
+    if (this.config.defaultValue !== undefined) {
+      this.setValue(this.config.defaultValue as TValue)
+    }
+  }
+
+  // Validation
+  validate(): boolean {
+    return this.validateConfig(this.config) && (!this.hasValue() || this.validateValue(this._value as TValue))
+  }
+
+  validateValue(value: unknown): value is TValue {
+    try {
+      const schema = this.getValueSchema()
+      schema.parse(value)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  validateConfig(config: unknown): config is TConfig {
+    try {
+      const schema = this.getConfigSchema()
+      schema.parse(config)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // Metadata
+  getMetadata<T = unknown>(key: string): T | undefined {
+    return this.config.metadata?.[key] as T | undefined
+  }
+
+  setMetadata(key: string, value: unknown): void {
+    if (!this.config.metadata) {
+      this.config.metadata = {}
+    }
+    const oldValue = this.config.metadata[key]
+    this.config.metadata[key] = value
+    if (oldValue !== value) {
+      this.emit('metadata:change', { key, oldValue, newValue: value })
+    }
+  }
+
+  // Event handling
+  protected emit(event: PortEventType, data?: unknown): void {
+    const handlers = this._eventHandlers.get(event)
+    if (handlers) {
+      handlers.forEach(handler => handler(event, data))
+    }
+  }
+
+  on(event: PortEventType, handler: PortEventHandler): void {
+    let handlers = this._eventHandlers.get(event)
+    if (!handlers) {
+      handlers = new Set()
+      this._eventHandlers.set(event, handlers)
+    }
+    handlers.add(handler)
+  }
+
+  off(event: PortEventType, handler: PortEventHandler): void {
+    const handlers = this._eventHandlers.get(event)
+    if (handlers) {
+      handlers.delete(handler)
+    }
+  }
+
+  // Serialization
+  serialize(): SerializedPortData {
+    const serializedValue = this.hasValue()
+      ? this._serializer.serialize(this.config, this.getValue())
+      : undefined
+
+    return {
+      config: this.config,
+      value: serializedValue,
+      metadata: this.config.metadata,
+    }
+  }
+
+  deserialize(data: SerializedPortData): IPort<TConfig, TValue> {
+    try {
+      const config = portConfigSchema.parse(data.config) as TConfig
+      const port = new (this.constructor as new (config: TConfig) => Port<TConfig, TValue>)(config)
+
+      if (data.value !== undefined) {
+        const deserializedValue = this._serializer.deserialize(this.config, data.value)
+        port.setValue(deserializedValue as TValue)
+      }
+
+      if (data.metadata) {
+        Object.entries(data.metadata).forEach(([key, value]) => {
+          port.setMetadata(key, value)
+        })
+      }
+
+      return port
+    } catch (error) {
+      throw new Error(`${ERROR_MESSAGES.DESERIALIZATION_ERROR}: ${error}`)
+    }
+  }
+
+  // Utility
+  clone(): IPort<TConfig, TValue> {
+    const serialized = this.serialize()
+    return this.deserialize(serialized)
+  }
+
+  toString(): string {
+    return `Port(${this.config.type}${this.hasValue() ? `: ${JSON.stringify(this.getValue())}` : ''})`
+  }
+}
