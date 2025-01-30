@@ -1,4 +1,5 @@
 import { PortType } from '../config/constants'
+import { registerAnyPort } from '../ports/any.port'
 import { registerArrayPort } from '../ports/array.port'
 import { registerBooleanPort } from '../ports/boolean.port'
 import { registerNumberPort } from '../ports/number.port'
@@ -23,6 +24,7 @@ export function registerAllPorts(): void {
   registerObjectPort()
   registerArrayPort()
   registerStreamPort()
+  registerAnyPort()
 }
 
 /**
@@ -40,6 +42,7 @@ export function registerTestPorts(...types: PortType[]): void {
     [PortType.Object]: registerObjectPort,
     [PortType.Array]: registerArrayPort,
     [PortType.Stream]: registerStreamPort,
+    [PortType.Any]: registerAnyPort,
   }
 
   // Register only the specified types

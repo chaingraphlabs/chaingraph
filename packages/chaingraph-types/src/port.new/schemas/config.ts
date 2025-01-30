@@ -30,6 +30,7 @@ export const booleanPortSchema = basePortSchema.extend({
 })
 
 // Forward declaration for recursive schemas
+// eslint-disable-next-line import/no-mutable-exports
 let portConfigSchema: z.ZodType
 
 /**
@@ -83,6 +84,7 @@ export const streamPortSchema = basePortSchema.extend({
  */
 export const anyPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Any),
+  internalType: z.lazy(() => portConfigSchema.optional()),
   defaultValue: z.unknown().optional(),
 })
 

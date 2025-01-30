@@ -98,6 +98,7 @@ export const portConfigSchema: z.ZodType<PortConfig> = z.lazy(() =>
     // Any port
     basePortConfigSchema.extend({
       type: z.literal(PortType.Any),
+      internalType: z.lazy(() => portConfigSchema).optional(),
       defaultValue: z.unknown().optional(),
     }),
   ]),
@@ -157,6 +158,7 @@ export type PortConfig = {
   | {
     type: PortType.Any
     defaultValue?: unknown
+    internalType?: PortConfig
   }
 )
 
