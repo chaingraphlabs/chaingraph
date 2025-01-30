@@ -15,7 +15,6 @@ export {
   ERROR_MESSAGES,
   PortDirection,
   PortType,
-  StreamBufferPolicy,
 } from './config/constants'
 
 export * from './config/types'
@@ -28,8 +27,9 @@ export type {
 } from './config/types'
 
 export * from './config/value-types'
-
 export type {
   PortValueType,
   ValueTypeFromPortType,
 } from './config/value-types'
+
+export * from './registry'

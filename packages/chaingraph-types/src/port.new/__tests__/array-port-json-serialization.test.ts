@@ -1,4 +1,4 @@
-import type { SerializedPort } from '../config/types'
+import type { SerializedPortData } from '@chaingraph/types/port.new'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { PortDirection, PortType } from '../config/constants'
 import { ArrayPort } from '../ports/array.port'
@@ -44,7 +44,7 @@ describe('array port json serialization', () => {
       const jsonString = JSON.stringify(serialized)
 
       // Deserialize from JSON string
-      const parsed = JSON.parse(jsonString) as SerializedPort
+      const parsed = JSON.parse(jsonString) as SerializedPortData
       const restoredPort = originalPort.deserialize(parsed)
 
       // Verify restored port
@@ -73,7 +73,7 @@ describe('array port json serialization', () => {
       const jsonString = JSON.stringify(serialized)
 
       // Deserialize from JSON string
-      const parsed = JSON.parse(jsonString) as SerializedPort
+      const parsed = JSON.parse(jsonString) as SerializedPortData
       const restoredPort = originalPort.deserialize(parsed)
 
       // Verify restored port
@@ -105,7 +105,7 @@ describe('array port json serialization', () => {
       const jsonString = JSON.stringify(serialized)
 
       // Deserialize from JSON string
-      const parsed = JSON.parse(jsonString) as SerializedPort
+      const parsed = JSON.parse(jsonString) as SerializedPortData
       const restoredPort = originalPort.deserialize(parsed)
 
       // Verify restored port
@@ -156,7 +156,7 @@ describe('array port json serialization', () => {
       const jsonString = JSON.stringify(serialized)
 
       // Deserialize from JSON string
-      const parsed = JSON.parse(jsonString) as SerializedPort
+      const parsed = JSON.parse(jsonString) as SerializedPortData
       const restoredPort = originalPort.deserialize(parsed)
 
       // Verify restored port

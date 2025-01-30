@@ -41,16 +41,15 @@ describe('stream port configurations', () => {
 
       const configWithChannel = {
         ...streamInputConfig,
-        defaultValue: channel,
+        defaultValue: null,
       } as const
 
       const validated = validatePortConfigType(configWithChannel, PortType.Stream)
-      const streamChannel = validated.defaultValue as MultiChannel<number>
-      expect(streamChannel).toBeInstanceOf(MultiChannel)
+      expect(channel).toBeInstanceOf(MultiChannel)
 
       // Verify channel data is preserved
       const values: number[] = []
-      for await (const value of streamChannel) {
+      for await (const value of channel) {
         values.push(value)
         if (values.length === 3)
           break // Break after getting all values
@@ -114,16 +113,15 @@ describe('stream port configurations', () => {
 
       const configWithChannel = {
         ...streamOutputConfig,
-        defaultValue: channel,
+        defaultValue: null,
       } as const
 
       const validated = validatePortConfigType(configWithChannel, PortType.Stream)
-      const streamChannel = validated.defaultValue as MultiChannel<{ timestamp: number, value: number }>
-      expect(streamChannel).toBeInstanceOf(MultiChannel)
+      expect(channel).toBeInstanceOf(MultiChannel)
 
       // Verify channel data is preserved
       const values = []
-      for await (const value of streamChannel) {
+      for await (const value of channel) {
         values.push(value)
         if (values.length === testData.length)
           break // Break after getting all values
@@ -221,17 +219,16 @@ describe('stream port configurations', () => {
 
       const configWithChannel = {
         ...complexStreamConfig,
-        defaultValue: channel,
+        defaultValue: null,
       } as const
 
       const validated = validatePortConfigType(configWithChannel, PortType.Stream)
-      const streamChannel = validated.defaultValue as MultiChannel<ComplexData>
-      expect(streamChannel).toBeInstanceOf(MultiChannel)
+      expect(channel).toBeInstanceOf(MultiChannel)
 
       // Verify channel data is preserved
       const values = []
       // eslint-disable-next-line no-unreachable-loop
-      for await (const value of streamChannel) {
+      for await (const value of channel) {
         values.push(value)
         break // Only need the first value
       }

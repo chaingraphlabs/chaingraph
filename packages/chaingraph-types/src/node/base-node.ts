@@ -1,23 +1,21 @@
 import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type {
-  EventReturnType,
-  NodeEvent,
-  NodeEventDataType,
-} from '@chaingraph/types/node/events'
+import type { EventReturnType, NodeEvent, NodeEventDataType } from '@chaingraph/types/node/events'
 import type { INode } from '@chaingraph/types/node/interface'
-import type { Dimensions, NodeUIMetadata, NodeUIStyle, Position } from '@chaingraph/types/node/node-ui'
+import type {
+  Dimensions,
+  NodeUIMetadata,
+  NodeUIStyle,
+  Position,
+} from '@chaingraph/types/node/node-ui'
 import type {
   NodeExecutionResult,
   NodeMetadata,
   NodeValidationResult,
 } from '@chaingraph/types/node/types'
-import type { PortConfig } from '@chaingraph/types/port'
-import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import {
-  NodeEventType,
-} from '@chaingraph/types/node/events'
+import type { IPortAny, PortConfig } from '@chaingraph/types/port.new'
+import { NodeEventType } from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { ObjectPort, PortFactory } from '@chaingraph/types/port'
+import { PortFactory, PortType } from '@chaingraph/types/port.new'
 import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
@@ -28,7 +26,7 @@ export abstract class BaseNode implements INode {
   protected readonly _id: string
   protected _metadata: NodeMetadata
   protected _status: NodeStatus = NodeStatus.Idle
-  protected _ports: Map<string, IPort<any>> = new Map()
+  protected _ports: Map<string, IPortAny> = new Map()
 
   protected eventQueue = new EventQueue<NodeEvent>()
   private eventsDisabled = false
@@ -116,13 +114,13 @@ export abstract class BaseNode implements INode {
     // Store the port in the _ports Map
     this._ports.set(portId, port)
 
-    if (ObjectPort.isObjectPortConfig(portConfig)) {
+    if (portConfig.type === PortType.Object) {
       // for the object port, initialize its nested ports recursively
       const nestedPorts = portConfig.schema?.properties
       if (nestedPorts) {
-        for (const [nestedPortId, nestedPortConfig] of Object.entries(nestedPorts)) {
+        for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
           this.initializePort(
-            port.value,
+            port.value as object,
             nestedPortConfig,
             portId,
           )
@@ -155,7 +153,7 @@ export abstract class BaseNode implements INode {
   /**
    * Get the node inputs
    */
-  get ports(): Map<string, IPort<any>> {
+  get ports(): Map<string, IPortAny> {
     return this._ports
   }
 
@@ -181,7 +179,7 @@ export abstract class BaseNode implements INode {
     this.setStatus(NodeStatus.Disposed, false)
   }
 
-  getPort(portId: string): IPort<any> | undefined {
+  getPort(portId: string): IPortAny | undefined {
     return this._ports.get(portId)
   }
 
@@ -189,7 +187,7 @@ export abstract class BaseNode implements INode {
     return this._ports.has(portId)
   }
 
-  getInputs(): IPort<any>[] {
+  getInputs(): IPortAny[] {
     return Array.from(
       this._ports
         .values()
@@ -197,7 +195,7 @@ export abstract class BaseNode implements INode {
     )
   }
 
-  getOutputs(): IPort<any>[] {
+  getOutputs(): IPortAny[] {
     return Array.from(
       this._ports.values()
         .filter(port => port.config.direction === PortDirection.Output),
@@ -252,7 +250,7 @@ export abstract class BaseNode implements INode {
     return this
   }
 
-  addPort(port: IPort<any>): IPort<any> {
+  addPort(port: IPortAny): IPortAny {
     if (!port.config.id) {
       throw new Error('Port ID is required.')
     }
@@ -262,6 +260,10 @@ export abstract class BaseNode implements INode {
     // TODO: add event and version update
 
     return port
+  }
+
+  setPorts(ports: Map<string, IPortAny>): void {
+    this._ports = ports
   }
 
   removePort(portId: string): void {

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BasePortConfigSchema, PortValueSchema } from '../port'
+import { BasePortConfigSchema } from '../port'
 import { NodeExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**
@@ -81,8 +81,10 @@ export const SerializedNodeSchema = z.object({
   id: z.string(),
   metadata: NodeMetadataSchema,
   status: z.nativeEnum(NodeStatus),
-  ports: z.map(z.string(), z.object({
-    config: BasePortConfigSchema,
-    value: PortValueSchema,
-  })).optional(),
+
+  // TODO: define ports values schema
+  // ports: z.map(z.string(), z.object({
+  //   config: BasePortConfigSchema,
+  //   value: PortValueSchema,
+  // })).optional(),
 })

@@ -11,6 +11,8 @@ export interface SerializedPortData {
   metadata?: Record<string, unknown>
 }
 
+export type IPortAny = IPort<PortConfig, unknown>
+
 /**
  * Base interface for all port types
  */
@@ -37,6 +39,8 @@ export interface IPort<TConfig extends PortConfig = PortConfig, TValue = PortVal
   // Serialization
   serialize: () => SerializedPortData
   deserialize: (data: SerializedPortData) => IPort<TConfig, TValue>
+  serializeValue: () => unknown
+  deserializeValue: (value: unknown) => TValue
 
   // Utility
   clone: () => IPort<TConfig, TValue>

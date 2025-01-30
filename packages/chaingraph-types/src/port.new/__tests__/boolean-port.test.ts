@@ -1,4 +1,4 @@
-import type { PortEventHandler, PortEventType } from '../base/port.interface'
+import type { PortEventHandler } from '../base/port.interface'
 import { describe, expect, it } from 'vitest'
 import { PortDirection, PortType } from '../config/constants'
 import { BooleanPort } from '../ports/boolean.port'

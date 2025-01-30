@@ -1,7 +1,12 @@
-import type { INode, PortConfig, PortValue } from '@chaingraph/types'
+import type { INode } from '@chaingraph/types'
+import type { IPortAny, PortConfig, SerializedPortData } from '@chaingraph/types/port.new'
 import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, getOrCreateNodeMetadata, NodeRegistry, SerializedNodeSchema } from '@chaingraph/types'
-import { parsePortConfig } from '@chaingraph/types/port/types/port-config-parsing.zod'
+import {
+  getOrCreateNodeMetadata,
+  NodeRegistry,
+  SerializedNodeSchema,
+} from '@chaingraph/types'
+import { PortFactory } from '@chaingraph/types/port.new'
 import superjson from 'superjson'
 
 /**
@@ -28,27 +33,23 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
           return v instanceof nodeInstance.constructor
         },
         serialize: (v) => {
-          const portsValues = new Map<string, PortValue>()
+          const ports = new Map<string, SerializedPortData>()
           for (const [portId, port] of v.ports.entries()) {
-            portsValues.set(portId, port.getValue())
+            ports.set(portId, port.serialize())
           }
 
           // serialize only ports values instead of all ports
           // for better performance and smaller payload
 
-          try {
-            const res = superjson.serialize({
-              id: v.id,
-              metadata: v.metadata,
-              status: v.status,
-              portsValues,
-            }) as unknown as JSONValue
-            console.log('res', res)
-
-            return res
-          } catch (e) {
-            console.error(e)
-          }
+          return superjson.serialize({
+            id: v.id,
+            metadata: {
+              ...v.metadata,
+              portsConfig: {}, // exclude ports config because it's already in the ports
+            },
+            status: v.status,
+            ports,
+          }) as unknown as JSONValue
         },
         deserialize: (v) => {
           const nodeData = superjson.deserialize(v as any as SuperJSONResult) as any
@@ -67,34 +68,21 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
             nodeDataParsed.metadata,
           )
 
+          const ports = new Map<string, IPortAny>()
           const portsConfig = new Map<string, PortConfig>()
-          for (const [portId, portConfig] of ((metadata as any).portsConfig as any).entries() || []) {
-            portsConfig.set(portId, parsePortConfig(portConfig))
+          const serializedPorts = nodeData.ports as Map<string, SerializedPortData>
+          for (const [portId, serializedPort] of serializedPorts.entries()) {
+            const port = PortFactory
+              .create(serializedPort.config)
+              .deserialize(serializedPort)
+
+            ports.set(portId, port)
+            portsConfig.set(portId, port.config)
           }
 
           node.setMetadata({ ...node.metadata, portsConfig })
-          node.disableEvents()
-          node.initialize()
-          node.setStatus((nodeData as any).status)
-          node.enableEvents()
-
-          // set ports values
-          const portsValues = (nodeData as any).portsValues.entries()
-          portsValues.forEach(([portId, portValue]: any) => {
-            const port = node.getPort(portId)
-            port?.setValue(portValue)
-          })
-
-          // const ports = (nodeData as any).ports.entries()
-          // ports.forEach(([portId, portData]: any) => {
-          //   // validate port config
-          //   const config = parsePortConfig(portData.config)
-          //   const value = PortValueSchema.parse(portData.value)
-          //   const port = PortFactory.create(config)
-          //   port.setValue(value)
-          //
-          //   node.addPort(port)
-          // })
+          node.setPorts(ports)
+          node.setStatus((nodeData as any).status, false)
 
           return node as INode
         },
@@ -102,101 +90,4 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
       nodeInstance.metadata.type,
     )
   })
-//
-//   superjson.registerCustom<CategorizedNodes, JSONValue>(
-//     {
-//       isApplicable: (v): v is CategorizedNodes => {
-//         return (v as any).category && (v as any).metadata && isKnownCategory((v as any).category)
-//       },
-//       serialize: (v) => {
-//         // serialize only ports values instead of all ports
-//         // for better performance and smaller payload
-//         return superjson.serialize({
-//           category: v.category,
-//           metadata: v.metadata,
-//           nodes: v.nodes,
-//         }) as unknown as JSONValue
-//       },
-//       deserialize: (v) => {
-//         return superjson.deserialize(v) as unknown as CategorizedNodes
-//       },
-//     },
-//     'CategorizedNodes',
-//   )
-}
-export function registerNodeTransformers3(nodeRegistry?: NodeRegistry): void {
-  // Register base node transformer
-
-  if (nodeRegistry === undefined) {
-    nodeRegistry = NodeRegistry.getInstance()
-  }
-  superjson.registerCustom<BaseNode, JSONValue>(
-    {
-      isApplicable: (v): v is BaseNode => {
-        return v instanceof BaseNode
-      },
-      serialize: (v) => {
-        const portsValues = new Map<string, PortValue>()
-        for (const [portId, port] of v.ports.entries()) {
-          portsValues.set(portId, port.getValue())
-        }
-
-        // serialize only ports values instead of all ports
-        // for better performance and smaller payload
-        return superjson.serialize({
-          id: v.id,
-          metadata: superjson.serialize(v.metadata),
-          status: v.status,
-          portsValues,
-        }) as unknown as JSONValue
-      },
-      deserialize: (v) => {
-        const nodeData = superjson.deserialize(v as any as SuperJSONResult) as any
-
-        const nodeDataParsed = SerializedNodeSchema.parse({
-          id: nodeData.id,
-          metadata: superjson.deserialize(nodeData.metadata),
-          status: nodeData.status,
-        })
-
-        const node = nodeRegistry.createNode(
-          nodeDataParsed.metadata.type,
-          nodeDataParsed.id,
-          nodeDataParsed.metadata,
-        )
-
-        const portsConfig = new Map<string, PortConfig>()
-        for (const [portId, portConfig] of nodeData.metadata?.portsConfig?.entries() || []) {
-          portsConfig.set(portId, parsePortConfig(portConfig))
-        }
-
-        node.setMetadata({ ...node.metadata, portsConfig })
-        node.disableEvents()
-        node.initialize()
-        node.setStatus((nodeData as any).status)
-        node.enableEvents()
-
-        // set ports values
-        const portsValues = (nodeData as any).portsValues.entries()
-        portsValues.forEach(([portId, portValue]: any) => {
-          const port = node.getPort(portId)
-          port?.setValue(portValue)
-        })
-
-        // const ports = (nodeData as any).ports.entries()
-        // ports.forEach(([portId, portData]: any) => {
-        //   // validate port config
-        //   const config = parsePortConfig(portData.config)
-        //   const value = PortValueSchema.parse(portData.value)
-        //   const port = PortFactory.create(config)
-        //   port.setValue(value)
-        //
-        //   node.addPort(port)
-        // })
-
-        return node as any
-      },
-    },
-    BaseNode.name,
-  )
 }

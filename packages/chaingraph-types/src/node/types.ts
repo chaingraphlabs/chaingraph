@@ -1,6 +1,6 @@
 import type { NodeCategory } from '@chaingraph/types/node/category'
 import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
-import type { PortConfig } from '@chaingraph/types/port/types/port-config'
+import type { PortConfig } from '@chaingraph/types/port.new'
 import type { NodeExecutionStatus, ValidationMessageType } from './node-enums'
 
 /**
@@ -17,7 +17,7 @@ export interface NodeMetadata {
   tags?: string[]
   author?: string
   parentNodeId?: string
-  metadata?: { [key: string]: unknown }
+  metadata?: Record<string, unknown>
   portsConfig?: Map<string, PortConfig>
   ui?: NodeUIMetadata
 }

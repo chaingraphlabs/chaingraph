@@ -1,3 +1,4 @@
+import type { MultiChannel } from '@chaingraph/types/port.new/channel'
 import { z } from 'zod'
 import { PortDirection, PortType } from './constants'
 
@@ -7,6 +8,7 @@ import { PortDirection, PortType } from './constants'
 export const basePortConfigSchema = z.object({
   id: z.string().optional(),
   title: z.string().optional(),
+  key: z.string().optional(),
   description: z.string().optional(),
   direction: z.nativeEnum(PortDirection).optional(),
   optional: z.boolean().optional(),
@@ -111,6 +113,9 @@ export type PortConfig = {
   type: PortType
   id?: string
   title?: string
+  key?: string
+  parentId?: string
+  nodeId?: string
   description?: string
   direction?: PortDirection
   optional?: boolean
@@ -138,9 +143,7 @@ export type PortConfig = {
   }
   | {
     type: PortType.Object
-    schema: {
-      properties: Record<string, PortConfig>
-    }
+    schema: ObjectSchema
     defaultValue?: Record<string, unknown>
   }
   | {
@@ -148,7 +151,7 @@ export type PortConfig = {
     valueType: PortConfig
     mode: 'input' | 'output'
     bufferSize?: number
-    defaultValue?: unknown
+    defaultValue?: MultiChannel<unknown>
   }
   | {
     type: PortType.Enum
@@ -162,6 +165,17 @@ export type PortConfig = {
   }
 )
 
+export interface ObjectSchema {
+  properties: Record<string, PortConfig>
+
+  // Metadata
+  id?: string
+  type?: string
+  description?: string
+  category?: string
+  isObjectSchema?: boolean
+}
+
 /**
  * Helper type for extracting config type from port type
  */
@@ -173,13 +187,4 @@ export type ConfigFromPortType<T extends PortType> = Extract<PortConfig, { type:
 export interface ValidationResult {
   valid: boolean
   errors?: string[]
-}
-
-/**
- * Serialized port data
- */
-export interface SerializedPort {
-  config: PortConfig
-  value?: unknown
-  metadata?: Record<string, unknown>
 }

@@ -1,19 +1,18 @@
-import type {
-  AnyPortConfig,
-  ArrayPortConfig,
-  EnumPortConfig,
-  ObjectPortConfig,
-  ObjectSchema,
-  PortConfig,
-  StreamInputPortConfig,
-  StreamOutputPortConfig,
-} from '@chaingraph/types'
+import type { ConfigFromPortType, ObjectSchema, PortConfig } from '@chaingraph/types/port.new'
+// import type {
+//   AnyPortConfig,
+//   ArrayPortConfig,
+//   EnumPortConfig,
+//   ObjectPortConfig,
+//   ObjectSchema,
+//   StreamInputPortConfig,
+//   StreamOutputPortConfig,
+// } from '@chaingraph/types'
 import type { INode } from './interface'
-import { AnyPort, ArrayPort, BooleanPort, EnumPort, getOrCreateNodeMetadata, NumberPort, ObjectPort, StreamInputPort, StreamOutputPort, StringPort,
-} from '@chaingraph/types'
 
+import { getOrCreateNodeMetadata } from '@chaingraph/types/node/decorator'
+import { PortType } from '@chaingraph/types/port.new'
 import Decimal from 'decimal.js'
-// For generating UUIDs.
 import { v7 as uuidv7 } from 'uuid'
 
 export interface Context {
@@ -66,22 +65,22 @@ export class PortConfigProcessor {
     portConfig = this.assignBasicFields(portConfig, context)
 
     // Process nested configurations based on port kind
-    if (ObjectPort.isObjectPortConfig(portConfig)) {
+    if (portConfig.type === PortType.Object) {
       portConfig = this.processObjectPortConfig(portConfig, context)
-    } else if (ArrayPort.isArrayPortConfig(portConfig)) {
+    } else if (portConfig.type === PortType.Array) {
       portConfig = this.processArrayPortConfig(portConfig, context)
-    } else if (EnumPort.isEnumPortConfig(portConfig)) {
+    } else if (portConfig.type === PortType.Enum) {
       portConfig = this.processEnumPortConfig(portConfig, context)
-    } else if (AnyPort.isAnyPortConfig(portConfig)) {
+    } else if (portConfig.type === PortType.Any) {
       portConfig = this.processAnyPortConfig(portConfig, context)
-    } else if (StreamInputPort.isStreamInputPortConfig(portConfig)) {
+    } else if (portConfig.type === PortType.Stream && portConfig.mode === 'input') {
       portConfig = this.processStreamInputPortConfig(portConfig, context)
-    } else if (StreamOutputPort.isStreamOutputPortConfig(portConfig)) {
+    } else if (portConfig.type === PortType.Stream && portConfig.mode === 'output') {
       portConfig = this.processStreamOutputPortConfig(portConfig, context)
     } else if (
-      StringPort.isStringPortConfig(portConfig)
-      || NumberPort.isNumberPortConfig(portConfig)
-      || BooleanPort.isBooleanPortConfig(portConfig)
+      portConfig.type === PortType.String
+      || portConfig.type === PortType.Number
+      || portConfig.type === PortType.Boolean
     ) {
       // For primitive port configs, no further processing is needed
       // All necessary fields have been assigned in 'assignBasicFields'
@@ -220,12 +219,9 @@ export class PortConfigProcessor {
    * @returns A new processed ObjectPortConfig.
    */
   private processObjectPortConfig(
-    portConfig: ObjectPortConfig<any>,
+    portConfig: ConfigFromPortType<PortType.Object>,
     context: Context,
-  ): ObjectPortConfig<any> {
-    if (!ObjectPort.isObjectPortConfig(portConfig)) {
-      throw new Error(`Invalid object port configuration for property '${context.propertyKey}'.`)
-    }
+  ): ConfigFromPortType<PortType.Object> {
     const { propertyValue, nodeId } = context
 
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
@@ -270,7 +266,7 @@ export class PortConfigProcessor {
         propertyValue: propertyValue?.[key],
       }
 
-      if (ObjectPort.isObjectPortConfig(nestedPortConfig)) {
+      if (nestedPortConfig.type === PortType.Object) {
         propertyContext.propertyValue = this.deepCopy(portConfig.defaultValue?.[key])
       }
 
@@ -298,13 +294,13 @@ export class PortConfigProcessor {
    * @returns A new processed ArrayPortConfig.
    */
   private processArrayPortConfig(
-    portConfig: ArrayPortConfig<any>,
+    portConfig: ConfigFromPortType<PortType.Array>,
     context: Context,
-  ): ArrayPortConfig<any> {
+  ): ConfigFromPortType<PortType.Array> {
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
 
     const elementConfig = newPortConfig.elementConfig
-    if (!elementConfig || !elementConfig.kind) {
+    if (!elementConfig || !elementConfig.type) {
       throw new Error(`Element kind or config for array port '${context.propertyKey}' is not defined.`)
     }
 
@@ -317,7 +313,7 @@ export class PortConfigProcessor {
           parentPortConfig: newPortConfig,
           // TODO: needs to decide how to handle id!!!
           // propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
-          propertyKey: elementConfig.id,
+          propertyKey: elementConfig.id ?? this.generateSortableUUID(),
           propertyValue: newPortConfig.elementConfig,
         },
       )

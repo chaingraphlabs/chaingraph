@@ -137,14 +137,24 @@ implements IEventPort<TConfig, TValue> {
 
   // Serialization
   serialize(): SerializedPortData {
+    const serializedMetadata = this.config.metadata
+
     const serializedValue = this.hasValue()
       ? this._serializer.serialize(this.config, this.getValue())
       : undefined
 
+    const serializedDefault = this.config.defaultValue !== undefined
+      ? this._serializer.serialize(this.config, this.config.defaultValue)
+      : undefined
+
+    if (serializedMetadata && serializedDefault !== undefined) {
+      serializedMetadata.defaultValue = serializedDefault
+    }
+
     return {
       config: this.config,
       value: serializedValue,
-      metadata: this.config.metadata,
+      metadata: serializedMetadata,
     }
   }
 
@@ -166,6 +176,13 @@ implements IEventPort<TConfig, TValue> {
 
       if (data.metadata) {
         Object.entries(data.metadata).forEach(([key, value]) => {
+          if (key === 'defaultValue' && value !== undefined) {
+            const defaultValue = this._serializer.deserialize(this.config, value)
+            if (defaultValue !== undefined) {
+              port.config.defaultValue = defaultValue as TValue
+            }
+            return
+          }
           port.setMetadata(key, value)
         })
       }
@@ -174,6 +191,14 @@ implements IEventPort<TConfig, TValue> {
     } catch (error) {
       throw new Error(`${ERROR_MESSAGES.DESERIALIZATION_ERROR}: ${error instanceof Error ? error.message : String(error)}`)
     }
+  }
+
+  serializeValue(): unknown {
+    return this._serializer.serialize(this.config, this.getValue())
+  }
+
+  deserializeValue(value: unknown): TValue {
+    return this._serializer.deserialize(this.config, value) as TValue
   }
 
   // Utility
