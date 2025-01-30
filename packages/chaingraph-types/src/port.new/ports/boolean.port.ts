@@ -1,9 +1,10 @@
+import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
-import { z } from 'zod'
 import { Port } from '../base/port.base'
-import { PortDirection, PortType } from '../config/constants'
+import { PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
+import { booleanConfigSchema, booleanValueSchema } from '../schemas'
 
 /**
  * Boolean port implementation
@@ -14,31 +15,30 @@ export class BooleanPort extends Port<ConfigFromPortType<PortType.Boolean>, bool
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Boolean>> {
-    return z.object({
-      type: z.literal(PortType.Boolean),
-      defaultValue: z.boolean().optional(),
-      id: z.string().optional(),
-      title: z.string().optional(),
-      description: z.string().optional(),
-      direction: z.nativeEnum(PortDirection).optional(),
-      optional: z.boolean().optional(),
-      metadata: z.record(z.unknown()).optional(),
-    })
+    return booleanConfigSchema as z.ZodType<ConfigFromPortType<PortType.Boolean>>
   }
 
   getValueSchema(): z.ZodType<boolean> {
-    return z.boolean()
+    return booleanValueSchema
   }
 
   setValue(value: boolean): void {
     if (typeof value !== 'boolean') {
       throw new TypeError('Value must be a boolean')
     }
+
+    const schema = this.getValueSchema()
+    try {
+      schema.parse(value)
+    } catch (error) {
+      throw new TypeError(`Invalid boolean value: ${error instanceof Error ? error.message : 'unknown error'}`)
+    }
+
     super.setValue(value)
   }
 
   toString(): string {
-    return `BooleanPort(${this.hasValue() ? this.getValue().toString() : 'undefined'})`
+    return `BooleanPort(${this.hasValue() ? this.getValue() : 'undefined'})`
   }
 }
 
@@ -57,7 +57,16 @@ const booleanPortValidator: BasePortValidator = {
     if (config.type !== PortType.Boolean) {
       return false
     }
-    return typeof value === 'boolean'
+    if (typeof value !== 'boolean') {
+      return false
+    }
+    const port = new BooleanPort(config)
+    try {
+      port.setValue(value)
+      return true
+    } catch {
+      return false
+    }
   },
 }
 
