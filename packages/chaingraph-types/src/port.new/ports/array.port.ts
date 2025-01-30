@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Port } from '../base/port.base'
 import { PortType } from '../config/constants'
 import { type BasePortConstructor, type BasePortSerializer, type BasePortValidator, PortFactory } from '../registry/port-factory'
-import { arrayPortSchema, validatePortConfigType } from '../validation/schemas'
+import { arrayPortSchema } from '../schemas'
 
 /**
  * Array port implementation
@@ -13,8 +13,11 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   constructor(config: ConfigFromPortType<PortType.Array>) {
     super(config)
 
-    // Validate array-specific configuration using validatePortConfigType
-    validatePortConfigType(config, PortType.Array)
+    // Validate array-specific configuration
+    const result = arrayPortSchema.safeParse(config)
+    if (!result.success) {
+      throw new TypeError(`Invalid array port configuration: ${result.error.message}`)
+    }
 
     // Additional validation for elementConfig through PortFactory
     try {

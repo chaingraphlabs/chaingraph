@@ -1,14 +1,13 @@
-import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
+import { z } from 'zod'
 import { Port } from '../base/port.base'
 import { PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
 import {
   applyRangeValidation,
   hasRangeValidation,
-  numberConfigSchema,
-  numberValueSchema,
+  numberPortSchema,
 } from '../schemas'
 
 /**
@@ -16,15 +15,21 @@ import {
  */
 export class NumberPort extends Port<ConfigFromPortType<PortType.Number>, number> {
   constructor(config: ConfigFromPortType<PortType.Number>) {
+    // Validate number-specific configuration
+    const result = numberPortSchema.safeParse(config)
+    if (!result.success) {
+      throw new TypeError(`Invalid number port configuration: ${result.error.message}`)
+    }
+
     super(config)
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Number>> {
-    return numberConfigSchema as z.ZodType<ConfigFromPortType<PortType.Number>>
+    return numberPortSchema as z.ZodType<ConfigFromPortType<PortType.Number>>
   }
 
   getValueSchema(): z.ZodType<number> {
-    let schema = numberValueSchema
+    let schema = z.number()
 
     if (hasRangeValidation(this.config)) {
       schema = applyRangeValidation(schema, this.config.validation)

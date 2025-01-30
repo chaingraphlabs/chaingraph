@@ -2,8 +2,8 @@ import type { z } from 'zod'
 import type { PortConfig } from '../config/types'
 import type { PortValueType } from '../config/value-types'
 import type { IEventPort, PortEventHandler, PortEventType, SerializedPortData } from './port.interface'
-import { portConfigSchema } from '@chaingraph/types/port.new/config/schemas'
 import { ERROR_MESSAGES } from '../config/constants'
+import { portConfigSchema } from '../schemas'
 import { PortValueSerializer } from '../serialization/serializer'
 
 /**

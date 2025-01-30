@@ -7,65 +7,20 @@ import { PortDirection } from '../config/constants'
 export const baseMetadataSchema = z.record(z.unknown())
 
 /**
- * Base port properties schema
+ * Base port schema
  * Common properties shared by all port types
  */
-export const basePortPropsSchema = z.object({
+export const basePortSchema = z.object({
   id: z.string().optional(),
+  parentId: z.string().optional(),
+  nodeId: z.string().optional(),
+  key: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
   direction: z.nativeEnum(PortDirection).optional(),
   optional: z.boolean().optional(),
   metadata: baseMetadataSchema.optional(),
 })
-
-/**
- * Create a min/max validation schema
- */
-export function createMinMaxValidation(options: {
-  minKey: string
-  maxKey: string
-  message: string
-}) {
-  return z.object({
-    [options.minKey]: z.number().optional(),
-    [options.maxKey]: z.number().optional(),
-  }).refine((val) => {
-    const min = val[options.minKey]
-    const max = val[options.maxKey]
-    if (min !== undefined && max !== undefined) {
-      return max >= min
-    }
-    return true
-  }, options.message)
-}
-
-/**
- * Create a length validation schema
- */
-export function createLengthValidation() {
-  return createMinMaxValidation({
-    minKey: 'minLength',
-    maxKey: 'maxLength',
-    message: 'maxLength must be greater than or equal to minLength',
-  })
-}
-
-/**
- * Create a numeric range validation schema
- */
-export function createRangeValidation() {
-  return z.object({
-    min: z.number().optional(),
-    max: z.number().optional(),
-    integer: z.boolean().optional(),
-  }).refine((val) => {
-    if (val.min !== undefined && val.max !== undefined) {
-      return val.max >= val.min
-    }
-    return true
-  }, 'max must be greater than or equal to min')
-}
 
 /**
  * Type guard to check if a value has validation properties
@@ -101,39 +56,5 @@ export function hasRangeValidation(value: unknown): value is {
     && ('min' in value.validation || 'max' in value.validation || 'integer' in value.validation)
 }
 
-/**
- * Apply length validation to a string schema
- */
-export function applyLengthValidation(
-  schema: z.ZodString,
-  validation: { minLength?: number, maxLength?: number },
-): z.ZodString {
-  let result = schema
-  if (typeof validation.minLength === 'number') {
-    result = result.min(validation.minLength)
-  }
-  if (typeof validation.maxLength === 'number') {
-    result = result.max(validation.maxLength)
-  }
-  return result
-}
-
-/**
- * Apply range validation to a number schema
- */
-export function applyRangeValidation(
-  schema: z.ZodNumber,
-  validation: { min?: number, max?: number, integer?: boolean },
-): z.ZodNumber {
-  let result = schema
-  if (typeof validation.min === 'number') {
-    result = result.min(validation.min)
-  }
-  if (typeof validation.max === 'number') {
-    result = result.max(validation.max)
-  }
-  if (validation.integer) {
-    result = result.int()
-  }
-  return result
-}
+// Export types for the base port schema
+export type BasePortSchema = z.infer<typeof basePortSchema>

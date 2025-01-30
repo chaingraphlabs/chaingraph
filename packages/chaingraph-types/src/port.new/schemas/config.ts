@@ -1,32 +1,32 @@
 import { z } from 'zod'
 import { PortType } from '../config/constants'
-import { basePortPropsSchema, createLengthValidation, createRangeValidation } from './base'
-import { booleanValueSchema, numberValueSchema, stringValueSchema } from './value'
+import { basePortSchema } from './base'
+import { createLengthValidation, createRangeValidation } from './validation'
 
 /**
  * String port configuration schema
  */
-export const stringConfigSchema = basePortPropsSchema.extend({
+export const stringPortSchema = basePortSchema.extend({
   type: z.literal(PortType.String),
   validation: createLengthValidation().optional(),
-  defaultValue: stringValueSchema.optional(),
+  defaultValue: z.string().optional(),
 })
 
 /**
  * Number port configuration schema
  */
-export const numberConfigSchema = basePortPropsSchema.extend({
+export const numberPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Number),
   validation: createRangeValidation().optional(),
-  defaultValue: numberValueSchema.optional(),
+  defaultValue: z.number().optional(),
 })
 
 /**
  * Boolean port configuration schema
  */
-export const booleanConfigSchema = basePortPropsSchema.extend({
+export const booleanPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Boolean),
-  defaultValue: booleanValueSchema.optional(),
+  defaultValue: z.boolean().optional(),
 })
 
 // Forward declaration for recursive schemas
@@ -35,7 +35,7 @@ let portConfigSchema: z.ZodType
 /**
  * Array port configuration schema
  */
-export const arrayConfigSchema = basePortPropsSchema.extend({
+export const arrayPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Array),
   elementConfig: z.lazy(() => portConfigSchema),
   defaultValue: z.array(z.unknown()).optional(),
@@ -52,7 +52,7 @@ export const objectSchemaConfig = z.object({
 /**
  * Object port configuration schema
  */
-export const objectConfigSchema = basePortPropsSchema.extend({
+export const objectPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Object),
   schema: objectSchemaConfig,
   defaultValue: z.record(z.unknown()).optional(),
@@ -61,7 +61,7 @@ export const objectConfigSchema = basePortPropsSchema.extend({
 /**
  * Enum port configuration schema
  */
-export const enumConfigSchema = basePortPropsSchema.extend({
+export const enumPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Enum),
   options: z.array(z.string()),
   defaultValue: z.string().optional(),
@@ -70,7 +70,7 @@ export const enumConfigSchema = basePortPropsSchema.extend({
 /**
  * Stream port configuration schema
  */
-export const streamConfigSchema = basePortPropsSchema.extend({
+export const streamPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Stream),
   valueType: z.lazy(() => portConfigSchema),
   mode: z.enum(['input', 'output']),
@@ -81,67 +81,24 @@ export const streamConfigSchema = basePortPropsSchema.extend({
 /**
  * Any port configuration schema
  */
-export const anyConfigSchema = basePortPropsSchema.extend({
+export const anyPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Any),
   defaultValue: z.unknown().optional(),
 })
 
 // Initialize the combined schema
 portConfigSchema = z.discriminatedUnion('type', [
-  stringConfigSchema,
-  numberConfigSchema,
-  booleanConfigSchema,
-  arrayConfigSchema,
-  objectConfigSchema,
-  enumConfigSchema,
-  streamConfigSchema,
-  anyConfigSchema,
+  stringPortSchema,
+  numberPortSchema,
+  booleanPortSchema,
+  arrayPortSchema,
+  objectPortSchema,
+  enumPortSchema,
+  streamPortSchema,
+  anyPortSchema,
 ])
 
 /**
  * Export the combined port configuration schema
  */
 export { portConfigSchema }
-
-/**
- * Helper function to validate a port configuration
- */
-export function validatePortConfig(config: unknown): z.infer<typeof portConfigSchema> {
-  return portConfigSchema.parse(config)
-}
-
-/**
- * Helper function to validate a port configuration of a specific type
- */
-export function validatePortConfigType<T extends PortType>(
-  config: unknown,
-  type: T,
-): z.infer<typeof portConfigSchema> & { type: T } {
-  const validated = validatePortConfig(config)
-  if (validated.type !== type) {
-    throw new Error(`Expected port config of type "${type}" but got "${validated.type}"`)
-  }
-  return validated as z.infer<typeof portConfigSchema> & { type: T }
-}
-
-/**
- * Type guard to check if a value is a valid port configuration
- */
-export function isPortConfig(value: unknown): value is z.infer<typeof portConfigSchema> {
-  try {
-    validatePortConfig(value)
-    return true
-  } catch {
-    return false
-  }
-}
-
-/**
- * Type guard to check if a port configuration is of a specific type
- */
-export function isPortType<T extends PortType>(
-  config: z.infer<typeof portConfigSchema>,
-  type: T,
-): config is z.infer<typeof portConfigSchema> & { type: T } {
-  return config.type === type
-}

@@ -1,25 +1,31 @@
-import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
+import { z } from 'zod'
 import { Port } from '../base/port.base'
 import { PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
-import { applyLengthValidation, hasLengthValidation, stringConfigSchema, stringValueSchema } from '../schemas'
+import { applyLengthValidation, hasLengthValidation, stringPortSchema } from '../schemas'
 
 /**
  * String port implementation
  */
 export class StringPort extends Port<ConfigFromPortType<PortType.String>, string> {
   constructor(config: ConfigFromPortType<PortType.String>) {
+    // Validate string-specific configuration
+    const result = stringPortSchema.safeParse(config)
+    if (!result.success) {
+      throw new TypeError(`Invalid string port configuration: ${result.error.message}`)
+    }
+
     super(config)
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.String>> {
-    return stringConfigSchema as z.ZodType<ConfigFromPortType<PortType.String>>
+    return stringPortSchema as z.ZodType<ConfigFromPortType<PortType.String>>
   }
 
   getValueSchema(): z.ZodType<string> {
-    let schema = stringValueSchema
+    let schema = z.string()
 
     if (hasLengthValidation(this.config)) {
       schema = applyLengthValidation(schema, this.config.validation)

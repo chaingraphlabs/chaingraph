@@ -4,8 +4,8 @@ import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from 
 import { z } from 'zod'
 import { Port } from '../base/port.base'
 import { PortType } from '../config/constants'
-import { portConfigSchema } from '../config/types'
 import { PortFactory } from '../registry/port-factory'
+import { objectPortSchema } from '../schemas'
 
 /**
  * Object port implementation
@@ -13,8 +13,9 @@ import { PortFactory } from '../registry/port-factory'
 export class ObjectPort<T extends Record<string, unknown> = Record<string, unknown>> extends Port<ConfigFromPortType<PortType.Object>, T> {
   constructor(config: ConfigFromPortType<PortType.Object>) {
     // Validate object-specific configuration
-    if (!config.schema || !config.schema.properties) {
-      throw new TypeError('Object port requires schema with properties')
+    const result = objectPortSchema.safeParse(config)
+    if (!result.success) {
+      throw new TypeError(`Invalid object port configuration: ${result.error.message}`)
     }
 
     // Additional validation for property types through PortFactory
@@ -30,10 +31,7 @@ export class ObjectPort<T extends Record<string, unknown> = Record<string, unkno
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Object>> {
-    return portConfigSchema.refine(
-      (config): config is ConfigFromPortType<PortType.Object> => config.type === PortType.Object,
-      { message: 'Invalid port type' },
-    ) as z.ZodType<ConfigFromPortType<PortType.Object>>
+    return objectPortSchema as z.ZodType<ConfigFromPortType<PortType.Object>>
   }
 
   getValueSchema(): z.ZodType<T> {

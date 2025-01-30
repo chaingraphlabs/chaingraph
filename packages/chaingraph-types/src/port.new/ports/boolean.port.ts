@@ -1,25 +1,31 @@
-import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
+import { z } from 'zod'
 import { Port } from '../base/port.base'
 import { PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
-import { booleanConfigSchema, booleanValueSchema } from '../schemas'
+import { booleanPortSchema } from '../schemas'
 
 /**
  * Boolean port implementation
  */
 export class BooleanPort extends Port<ConfigFromPortType<PortType.Boolean>, boolean> {
   constructor(config: ConfigFromPortType<PortType.Boolean>) {
+    // Validate boolean-specific configuration
+    const result = booleanPortSchema.safeParse(config)
+    if (!result.success) {
+      throw new TypeError(`Invalid boolean port configuration: ${result.error.message}`)
+    }
+
     super(config)
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Boolean>> {
-    return booleanConfigSchema as z.ZodType<ConfigFromPortType<PortType.Boolean>>
+    return booleanPortSchema as z.ZodType<ConfigFromPortType<PortType.Boolean>>
   }
 
   getValueSchema(): z.ZodType<boolean> {
-    return booleanValueSchema
+    return z.boolean()
   }
 
   setValue(value: boolean): void {
