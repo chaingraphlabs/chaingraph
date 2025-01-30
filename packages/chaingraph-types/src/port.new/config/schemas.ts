@@ -61,6 +61,13 @@ export const portConfigSchema: z.ZodType<PortConfig> = z.lazy(() =>
       elementConfig: z.lazy(() => portConfigSchema),
       defaultValue: z.array(z.unknown()).optional(),
     }),
+    basePortSchema.extend({
+      type: z.literal(PortType.Object),
+      schema: z.object({
+        properties: z.record(z.lazy(() => portConfigSchema)),
+      }),
+      defaultValue: z.record(z.unknown()).optional(),
+    }),
   ]),
 )
 
@@ -104,6 +111,19 @@ export const arrayPortSchema = portConfigSchema.pipe(
     type: z.literal(PortType.Array),
     elementConfig: z.lazy(() => portConfigSchema),
     defaultValue: z.array(z.unknown()).optional(),
+  }),
+)
+
+/**
+ * Object port schema
+ */
+export const objectPortSchema = portConfigSchema.pipe(
+  z.object({
+    type: z.literal(PortType.Object),
+    schema: z.object({
+      properties: z.record(z.lazy(() => portConfigSchema)),
+    }),
+    defaultValue: z.record(z.unknown()).optional(),
   }),
 )
 

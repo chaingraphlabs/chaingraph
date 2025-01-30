@@ -1,9 +1,9 @@
 import type { SerializedPortData } from '../base/port.interface'
-import type { ConfigFromPortType } from '../config/types'
+import type { ConfigFromPortType, PortConfig } from '../config/types'
 import { z } from 'zod'
 import { Port } from '../base/port.base'
-import { PortType } from '../config/constants'
-import { arrayPortSchema } from '../config/schemas'
+import { PortDirection, PortType } from '../config/constants'
+import { type BasePortConstructor, type BasePortSerializer, type BasePortValidator, PortFactory } from '../registry/port-factory'
 
 /**
  * Array port implementation
@@ -14,35 +14,21 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Array>> {
-    return arrayPortSchema as z.ZodType<ConfigFromPortType<PortType.Array>>
+    return z.object({
+      type: z.literal(PortType.Array),
+      elementConfig: z.lazy(() => PortFactory.getSchema(this.config.elementConfig)),
+      defaultValue: z.array(z.unknown()).optional(),
+      id: z.string().optional(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      direction: z.nativeEnum(PortDirection).optional(),
+      optional: z.boolean().optional(),
+      metadata: z.record(z.unknown()).optional(),
+    }) as z.ZodType<ConfigFromPortType<PortType.Array>>
   }
 
   getValueSchema(): z.ZodType<T[]> {
-    return z.array(this.getElementSchema())
-  }
-
-  private getElementSchema(): z.ZodType {
-    const { elementConfig } = this.config
-
-    // Handle nested arrays recursively
-    if (elementConfig.type === PortType.Array) {
-      const nestedPort = new ArrayPort(elementConfig)
-      return nestedPort.getValueSchema()
-    }
-
-    // Create schema based on element type
-    switch (elementConfig.type) {
-      case PortType.String:
-        return z.string()
-      case PortType.Number:
-        return z.number()
-      case PortType.Boolean:
-        return z.boolean()
-      case PortType.Object:
-        return z.record(z.unknown())
-      default:
-        return z.unknown()
-    }
+    return z.array(PortFactory.getSchema(this.config.elementConfig) as z.ZodType<T>)
   }
 
   setValue(value: T[]): void {
@@ -51,11 +37,8 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
     }
 
     // Validate each element
-    const elementSchema = this.getElementSchema()
     value.forEach((item, index) => {
-      try {
-        elementSchema.parse(item)
-      } catch (error) {
+      if (!PortFactory.validate(item, this.config.elementConfig)) {
         throw new TypeError(`Invalid array element at index ${index}`)
       }
     })
@@ -66,12 +49,11 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   serialize(): SerializedPortData {
     const serialized = super.serialize()
 
-    // Handle nested array serialization
-    if (serialized.value && this.config.elementConfig.type === PortType.Array) {
-      serialized.value = (serialized.value as T[]).map((item) => {
-        const nestedPort = new ArrayPort(this.config.elementConfig as ConfigFromPortType<PortType.Array>)
-        return nestedPort.serialize().value
-      })
+    if (serialized.value) {
+      const value = serialized.value as T[]
+      serialized.value = value.map(item =>
+        PortFactory.serialize(item, this.config.elementConfig),
+      )
     }
 
     return serialized
@@ -80,13 +62,12 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   deserialize(data: SerializedPortData): ArrayPort<T> {
     const port = super.deserialize(data) as ArrayPort<T>
 
-    // Handle nested array deserialization
-    if (data.value && this.config.elementConfig.type === PortType.Array) {
-      const value = (data.value as unknown[]).map((item) => {
-        const nestedPort = new ArrayPort(this.config.elementConfig as ConfigFromPortType<PortType.Array>)
-        return nestedPort.deserialize({ config: this.config, value: item }).getValue()
-      })
-      port.setValue(value as T[])
+    if (data.value) {
+      const value = data.value as unknown[]
+      const deserializedValue = value.map(item =>
+        PortFactory.deserialize(item, this.config.elementConfig),
+      )
+      port.setValue(deserializedValue as T[])
     }
 
     return port
@@ -96,3 +77,46 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
     return `ArrayPort(${this.hasValue() ? JSON.stringify(this.getValue()) : 'undefined'})`
   }
 }
+
+/**
+ * Array port validator
+ */
+const arrayPortValidator: BasePortValidator = {
+  getSchema: (config: PortConfig) => {
+    const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
+    return port.getValueSchema()
+  },
+  validate: (value: unknown, config: PortConfig) => {
+    const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
+    try {
+      port.setValue(value as any[])
+      return true
+    } catch {
+      return false
+    }
+  },
+}
+
+/**
+ * Array port serializer
+ */
+const arrayPortSerializer: BasePortSerializer = {
+  serialize: (value: unknown, config: PortConfig) => {
+    const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
+    port.setValue(value as any[])
+    return port.serialize().value
+  },
+  deserialize: (value: unknown, config: PortConfig) => {
+    const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
+    return port.deserialize({ config, value }).getValue()
+  },
+}
+
+/**
+ * Register array port
+ */
+PortFactory.register(PortType.Array, {
+  constructor: ArrayPort as unknown as BasePortConstructor,
+  validator: arrayPortValidator,
+  serializer: arrayPortSerializer,
+})
