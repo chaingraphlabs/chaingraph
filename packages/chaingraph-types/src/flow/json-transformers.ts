@@ -117,8 +117,6 @@ export function registerFlowTransformers() {
 
         const data = SuperJSON.deserialize(eventData.data)
 
-        console.log('!!!!!!!!!Deserializing execution event:', data)
-
         return new ExecutionEventImpl(
           eventData.index,
           eventData.type,

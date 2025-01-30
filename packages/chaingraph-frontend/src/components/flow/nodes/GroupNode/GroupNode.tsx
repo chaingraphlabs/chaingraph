@@ -14,6 +14,7 @@ function GroupNodeComponent({
       <div
         className={cn(
           'w-full h-full',
+          'min-w-[100px] min-h-[100px]',
           // Choose one of these background variations:
 
           // Variation 1: Subtle blue
@@ -23,7 +24,7 @@ function GroupNodeComponent({
           // 'bg-gray-50/90 dark:bg-gray-900/50',
 
           // Variation 3: Gentle purple
-          'bg-purple-200/60 dark:bg-purple-950/50',
+          'bg-purple-200/20 dark:bg-purple-950/30',
 
           // Variation 4: Soft green
           // 'bg-green-50/80 dark:bg-green-950/50',
@@ -32,7 +33,7 @@ function GroupNodeComponent({
           'transition-all duration-200',
           selected
             ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
-            : 'border-border/40 hover:border-border/60',
+            : 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.1)]',
         )}
       >
         {/* Header */}
@@ -49,13 +50,6 @@ function GroupNodeComponent({
           position="bottom-right"
           className="absolute -bottom-1 -right-1 w-3 h-3 border-0 bg-transparent"
         >
-          <div className={cn(
-            'w-2 h-2 rounded-sm rotate-45',
-            'bg-border/60 hover:bg-border',
-            'transition-colors duration-200',
-            selected && 'bg-primary/60 hover:bg-primary',
-          )}
-          />
         </NodeResizeControl>
       </div>
     </>

@@ -79,9 +79,12 @@ function ChaingraphNodeComponent({
   return (
     <Card
       className={cn(
-        'shadow-none border-2 transition-all duration-200',
-        'bg-card',
-        selected && 'shadow-node-selected dark:shadow-node-selected-dark',
+        'shadow-none transition-all duration-200',
+        'bg-card opacity-95',
+        // selected && 'shadow-node-selected dark:shadow-node-selected-dark',
+        selected
+          ? 'border-10 border-primary/50 border-green-500 shadow-[0_0_25px_rgba(34,197,94,0.6)]'
+          : 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.3)]',
         executionStateStyle,
       )}
       style={{
@@ -120,12 +123,6 @@ function ChaingraphNodeComponent({
         inputs={inputs}
         outputs={outputs}
       />
-
-      <div>
-        parent:
-        {' '}
-        {data.node.metadata.parentNodeId}
-      </div>
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}

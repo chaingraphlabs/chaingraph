@@ -64,7 +64,6 @@ describe('executionEventImpl Serialization', () => {
       0, // index
       ExecutionEventEnum.NODE_COMPLETED, // type
       new Date(), // timestamp
-      executionContext, // context
       data, // data
     )
 
@@ -79,10 +78,6 @@ describe('executionEventImpl Serialization', () => {
     expect(deserialized.index).toBe(event.index)
     expect(deserialized.type).toBe(event.type)
     expect(deserialized.timestamp).toEqual(event.timestamp)
-    expect(deserialized.context.executionId).toBe(event.context.executionId)
-    expect(deserialized.context.flowId).toBe(event.context.flowId)
-    // expect(deserialized.data.node.id).toBe(event.data.node.id)
-    // expect(deserialized.data.executionTime).toBe(event.data.executionTime)
   })
 
   it('should serialize and deserialize ExecutionEventImpl for FLOW_STARTED correctly', () => {
@@ -131,7 +126,6 @@ describe('executionEventImpl Serialization', () => {
       1, // index
       ExecutionEventEnum.FLOW_STARTED, // type
       new Date(), // timestamp
-      executionContext, // context
       data, // data
     )
 
@@ -146,18 +140,5 @@ describe('executionEventImpl Serialization', () => {
     expect(deserialized.index).toBe(event.index)
     expect(deserialized.type).toBe(event.type)
     expect(deserialized.timestamp).toEqual(event.timestamp)
-    expect(deserialized.context.executionId).toBe(event.context.executionId)
-    expect(deserialized.context.flowId).toBe(event.context.flowId)
-    // expect(deserialized.context.startTime).toEqual(event.context.startTime)
-
-    // Verify the flow
-    // expect(deserialized.data.flow.id).toBe(flow.id)
-    // expect(deserialized.data.flow.metadata.name).toBe(flow.metadata.name)
-
-    // Verify the node inside the flow
-    // const deserializedNode = deserialized.data.flow.nodes.get('node-1')
-    // expect(deserializedNode).toBeDefined()
-    // expect(deserializedNode?.metadata).toEqual(mockNode.metadata)
-    // expect(deserializedNode).toBeInstanceOf(MockNode)
   })
 })

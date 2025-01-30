@@ -105,34 +105,34 @@
   @apply bg-background;
 }
 
-.react-flow__node {
-  @apply rounded-xl bg-card border-border;
-  @apply shadow-node dark:shadow-node-dark;
-  @apply transition-shadow duration-200;
-}
+/*.react-flow__node {*/
+/*  @apply rounded-xl bg-card border-border;*/
+/*  @apply shadow-node dark:shadow-node-dark;*/
+/*  @apply transition-shadow duration-200;*/
+/*}*/
 
 /* Group Node specific styles */
-.react-flow__node-groupNode {
-  @apply z-[-1]; /* Keep groups behind regular nodes */
-  background: transparent !important; /* Remove default node background */
-  border: none !important; /* Remove default node border */
-  padding: 0 !important; /* Remove default padding */
-  border-radius: 0 !important; /* Remove default border radius */
-}
+/*.react-flow__node-groupNode {*/
+/*  @apply z-[-1]; !* Keep groups behind regular nodes *!*/
+/*  background: transparent !important; !* Remove default node background *!*/
+/*  border: none !important; !* Remove default node border *!*/
+/*  padding: 0 !important; !* Remove default padding *!*/
+/*  border-radius: 0 !important; !* Remove default border radius *!*/
+/*}*/
 
-.react-flow__node-groupNode.selected {
-  @apply z-[0]; /* Bring selected groups above other groups */
-  background: transparent !important;
-}
+/*.react-flow__node-groupNode.selected {*/
+/*  @apply z-[0]; !* Bring selected groups above other groups *!*/
+/*  background: transparent !important;*/
+/*}*/
 
-/* Ensure resize handle is properly positioned */
-.react-flow__node-groupNode .react-flow__resize-control.handle {
-  border: none !important;
-  background: transparent !important;
-}
+/*!* Ensure resize handle is properly positioned *!*/
+/*.react-flow__node-groupNode .react-flow__resize-control.handle {*/
+/*  border: none !important;*/
+/*  background: transparent !important;*/
+/*}*/
 
 .react-flow__handle {
-  @apply w-3 h-3 rounded-full;
+  @apply w-4 h-4 rounded-full;
   @apply border-2 border-background;
   @apply transition-colors duration-200;
   background: currentColor;
@@ -183,11 +183,10 @@
   animation: flow-edge 1s linear infinite;
 }
 
-.react-flow__node.selected {
-  @apply border-[hsl(var(--flow-execute))];
-  --glow-color: var(--glow-execute-rgb);
-  @apply shadow-node-selected dark:shadow-node-selected-dark;
-}
+/*.react-flow__node.selected {*/
+/*  @apply border-[hsl(var(--flow-execute))];*/
+/*  @apply bg-[hsl(var(--flow-execute))]/10;*/
+/*}*/
 
 /* Selection */
 .react-flow__selection {

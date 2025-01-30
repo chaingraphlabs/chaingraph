@@ -1,15 +1,37 @@
-import type { XYPosition } from '@xyflow/react'
+import type { Position } from '@chaingraph/types/node/node-ui'
 
-export function getNodePositionInsideParent(position: XYPosition, parentPosition: XYPosition): XYPosition {
+export function getNodePositionInsideParent(
+  flowPosition: Position,
+  parentPosition: Position,
+): Position {
+  if (!flowPosition || !parentPosition) {
+    console.warn('Invalid positions provided to getNodePositionInsideParent:', {
+      flowPosition,
+      parentPosition,
+    })
+    return { x: 0, y: 0 }
+  }
+
   return {
-    x: position.x - parentPosition.x,
-    y: position.y - parentPosition.y,
+    x: Math.round(flowPosition.x - parentPosition.x),
+    y: Math.round(flowPosition.y - parentPosition.y),
   }
 }
 
-export function getNodePositionInFlow(position: XYPosition, parentPosition: XYPosition): XYPosition {
+export function getNodePositionInFlow(
+  nodePosition: Position,
+  parentPosition: Position,
+): Position {
+  if (!nodePosition || !parentPosition) {
+    console.warn('Invalid positions provided to getNodePositionInFlow:', {
+      nodePosition,
+      parentPosition,
+    })
+    return { x: 0, y: 0 }
+  }
+
   return {
-    x: position.x + parentPosition.x,
-    y: position.y + parentPosition.y,
+    x: Math.round(nodePosition.x + parentPosition.x),
+    y: Math.round(nodePosition.y + parentPosition.y),
   }
 }

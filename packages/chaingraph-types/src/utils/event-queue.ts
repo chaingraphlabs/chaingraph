@@ -73,7 +73,7 @@ export class EventQueue<T> {
     }
 
     // Wait for all subscribers to process the event
-    return await Promise.all(promises).then(() => {})
+    return Promise.all(promises).then(() => {})
   }
 
   private async processSubscriberEvents(subscriber: Subscriber<T>): Promise<void> {
