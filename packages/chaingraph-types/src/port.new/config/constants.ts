@@ -65,4 +65,6 @@ export const ERROR_MESSAGES = {
   DIVISION_BY_ZERO: 'Division by zero',
   SERIALIZATION_FAILED: 'Failed to serialize port configuration',
   DESERIALIZATION_FAILED: 'Failed to deserialize port configuration',
+  INVALID_VALUE: 'Invalid value',
+  DESERIALIZATION_ERROR: 'Deserialization error',
 } as const

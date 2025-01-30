@@ -38,39 +38,74 @@ export const numberValidationSchema = z.object({
 )
 
 /**
+ * Combined port configuration schema
+ */
+export const portConfigSchema: z.ZodType<PortConfig> = z.lazy(() =>
+  z.discriminatedUnion('type', [
+    basePortSchema.extend({
+      type: z.literal(PortType.String),
+      validation: stringValidationSchema.optional(),
+      defaultValue: z.string().optional(),
+    }),
+    basePortSchema.extend({
+      type: z.literal(PortType.Number),
+      validation: numberValidationSchema.optional(),
+      defaultValue: z.number().optional(),
+    }),
+    basePortSchema.extend({
+      type: z.literal(PortType.Boolean),
+      defaultValue: z.boolean().optional(),
+    }),
+    basePortSchema.extend({
+      type: z.literal(PortType.Array),
+      elementConfig: z.lazy(() => portConfigSchema),
+      defaultValue: z.array(z.unknown()).optional(),
+    }),
+  ]),
+)
+
+/**
  * String port schema
  */
-export const stringPortSchema = basePortSchema.extend({
-  type: z.literal(PortType.String),
-  validation: stringValidationSchema.optional(),
-  defaultValue: z.string().optional(),
-})
+export const stringPortSchema = portConfigSchema.pipe(
+  z.object({
+    type: z.literal(PortType.String),
+    validation: stringValidationSchema.optional(),
+    defaultValue: z.string().optional(),
+  }),
+)
 
 /**
  * Number port schema
  */
-export const numberPortSchema = basePortSchema.extend({
-  type: z.literal(PortType.Number),
-  validation: numberValidationSchema.optional(),
-  defaultValue: z.number().optional(),
-})
+export const numberPortSchema = portConfigSchema.pipe(
+  z.object({
+    type: z.literal(PortType.Number),
+    validation: numberValidationSchema.optional(),
+    defaultValue: z.number().optional(),
+  }),
+)
 
 /**
  * Boolean port schema
  */
-export const booleanPortSchema = basePortSchema.extend({
-  type: z.literal(PortType.Boolean),
-  defaultValue: z.boolean().optional(),
-})
+export const booleanPortSchema = portConfigSchema.pipe(
+  z.object({
+    type: z.literal(PortType.Boolean),
+    defaultValue: z.boolean().optional(),
+  }),
+)
 
 /**
- * Combined port configuration schema
+ * Array port schema
  */
-export const portConfigSchema = z.union([
-  stringPortSchema,
-  numberPortSchema,
-  booleanPortSchema,
-])
+export const arrayPortSchema = portConfigSchema.pipe(
+  z.object({
+    type: z.literal(PortType.Array),
+    elementConfig: z.lazy(() => portConfigSchema),
+    defaultValue: z.array(z.unknown()).optional(),
+  }),
+)
 
 /**
  * Helper function to validate port configuration

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { PortDirection, PortType, StreamBufferPolicy } from './constants'
+import { PortDirection, PortType } from './constants'
 
 /**
  * Base port configuration
@@ -37,14 +37,6 @@ export const numberValidationSchema = z.object({
   val => !val.min || !val.max || val.max >= val.min,
   'max must be greater than or equal to min',
 )
-
-/**
- * Stream buffer configuration
- */
-export const streamBufferSchema = z.object({
-  size: z.number().int().min(1),
-  policy: z.nativeEnum(StreamBufferPolicy).optional(),
-})
 
 /**
  * Port configuration schemas
