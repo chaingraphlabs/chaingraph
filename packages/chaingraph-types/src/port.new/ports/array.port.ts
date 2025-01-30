@@ -18,7 +18,30 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
       type: z.literal(PortType.Array),
       elementConfig: z.object({
         type: z.nativeEnum(PortType),
-      }).passthrough(),
+        validation: z.object({
+          min: z.number().optional(),
+          max: z.number().optional(),
+          minLength: z.number().int().min(0).optional(),
+          maxLength: z.number().int().min(0).optional(),
+          integer: z.boolean().optional(),
+        }).optional(),
+      }).passthrough().refine((config) => {
+        if (config.validation) {
+          if (typeof config.validation.min === 'number' && typeof config.validation.max === 'number') {
+            if (config.validation.max < config.validation.min) {
+              return false
+            }
+          }
+          if (typeof config.validation.minLength === 'number' && typeof config.validation.maxLength === 'number') {
+            if (config.validation.maxLength < config.validation.minLength) {
+              return false
+            }
+          }
+        }
+        return true
+      }, {
+        message: 'Invalid validation: max/maxLength must be greater than or equal to min/minLength',
+      }),
       defaultValue: z.array(z.unknown()).optional(),
       id: z.string().optional(),
       title: z.string().optional(),
