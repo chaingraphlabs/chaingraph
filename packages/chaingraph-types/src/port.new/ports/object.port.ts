@@ -11,6 +11,22 @@ import { PortFactory } from '../registry/port-factory'
  */
 export class ObjectPort<T extends Record<string, unknown> = Record<string, unknown>> extends Port<ConfigFromPortType<PortType.Object>, T> {
   constructor(config: ConfigFromPortType<PortType.Object>) {
+    if (!config.schema || !config.schema.properties) {
+      throw new TypeError('Object port requires schema with properties')
+    }
+
+    // Validate property types before calling super
+    for (const [key, propertyConfig] of Object.entries(config.schema.properties)) {
+      if (!propertyConfig.type || !Object.values(PortType).includes(propertyConfig.type)) {
+        throw new TypeError(`Invalid property type for "${key}"`)
+      }
+      try {
+        PortFactory.getSchema(propertyConfig)
+      } catch (error) {
+        throw new TypeError(`Invalid property config for "${key}": ${error instanceof Error ? error.message : 'unknown error'}`)
+      }
+    }
+
     super(config)
   }
 
@@ -18,7 +34,9 @@ export class ObjectPort<T extends Record<string, unknown> = Record<string, unkno
     return z.object({
       type: z.literal(PortType.Object),
       schema: z.object({
-        properties: z.record(z.lazy(() => z.any())),
+        properties: z.record(z.object({
+          type: z.nativeEnum(PortType),
+        }).passthrough()),
       }),
       defaultValue: z.record(z.unknown()).optional(),
       id: z.string().optional(),
