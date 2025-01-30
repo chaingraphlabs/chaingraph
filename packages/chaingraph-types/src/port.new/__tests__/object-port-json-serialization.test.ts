@@ -1,4 +1,4 @@
-import type { ConfigFromPortType, SerializedPort } from '../config/types'
+import type { SerializedPort } from '../config/types'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { PortDirection, PortType } from '../config/constants'
 import { ObjectPort } from '../ports/object.port'
