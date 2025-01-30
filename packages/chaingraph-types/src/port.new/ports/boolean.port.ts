@@ -2,7 +2,7 @@ import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
 import { Port } from '../base/port.base'
-import { PortType } from '../config/constants'
+import { PortDirection, PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
 import { booleanConfigSchema, booleanValueSchema } from '../schemas'
 

@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import type { PortConfig } from '../config/types'
 import type { PortValueType } from '../config/value-types'
-import type { IPort, PortEventHandler, PortEventType, SerializedPortData } from './port.interface'
+import type { IEventPort, PortEventHandler, PortEventType, SerializedPortData } from './port.interface'
 import { portConfigSchema } from '@chaingraph/types/port.new/config/schemas'
 import { ERROR_MESSAGES } from '../config/constants'
 import { PortValueSerializer } from '../serialization/serializer'
@@ -10,7 +10,7 @@ import { PortValueSerializer } from '../serialization/serializer'
  * Abstract base class for all port types
  */
 export abstract class Port<TConfig extends PortConfig, TValue = PortValueType<TConfig>>
-implements IPort<TConfig, TValue> {
+implements IEventPort<TConfig, TValue> {
   protected _value: TValue | undefined
   protected _eventHandlers: Map<PortEventType, Set<PortEventHandler>> = new Map()
   protected _serializer = new PortValueSerializer()
@@ -112,7 +112,7 @@ implements IPort<TConfig, TValue> {
   }
 
   // Event handling
-  protected emit(event: PortEventType, data?: unknown): void {
+  emit(event: PortEventType, data?: unknown): void {
     const handlers = this._eventHandlers.get(event)
     if (handlers) {
       handlers.forEach(handler => handler(event, data))
@@ -148,9 +148,15 @@ implements IPort<TConfig, TValue> {
     }
   }
 
-  deserialize(data: SerializedPortData): IPort<TConfig, TValue> {
+  deserialize(data: SerializedPortData): IEventPort<TConfig, TValue> {
     try {
-      const config = portConfigSchema.parse(data.config) as TConfig
+      // First validate the config using the port's specific config schema
+      const config = this.getConfigSchema().parse(data.config) as TConfig
+
+      // Then validate using the general port config schema
+      portConfigSchema.parse(data.config)
+
+      // Create a new port instance
       const port = new (this.constructor as new (config: TConfig) => Port<TConfig, TValue>)(config)
 
       if (data.value !== undefined) {
@@ -166,12 +172,12 @@ implements IPort<TConfig, TValue> {
 
       return port
     } catch (error) {
-      throw new Error(`${ERROR_MESSAGES.DESERIALIZATION_ERROR}: ${error}`)
+      throw new Error(`${ERROR_MESSAGES.DESERIALIZATION_ERROR}: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
   // Utility
-  clone(): IPort<TConfig, TValue> {
+  clone(): IEventPort<TConfig, TValue> {
     const serialized = this.serialize()
     return this.deserialize(serialized)
   }
