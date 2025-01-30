@@ -149,10 +149,12 @@ const objectPortSerializer: BasePortSerializer = {
 }
 
 /**
- * Register object port
+ * Register object port in the factory
  */
-PortFactory.register(PortType.Object, {
-  constructor: ObjectPort as unknown as BasePortConstructor,
-  validator: objectPortValidator,
-  serializer: objectPortSerializer,
-})
+export function registerObjectPort(): void {
+  PortFactory.register(PortType.Object, {
+    constructor: ObjectPort as unknown as BasePortConstructor,
+    validator: objectPortValidator,
+    serializer: objectPortSerializer,
+  })
+}

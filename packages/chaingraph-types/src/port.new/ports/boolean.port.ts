@@ -86,10 +86,12 @@ const booleanPortSerializer: BasePortSerializer = {
 }
 
 /**
- * Register boolean port
+ * Register boolean port in the factory
  */
-PortFactory.register(PortType.Boolean, {
-  constructor: BooleanPort as unknown as BasePortConstructor,
-  validator: booleanPortValidator,
-  serializer: booleanPortSerializer,
-})
+export function registerBooleanPort(): void {
+  PortFactory.register(PortType.Boolean, {
+    constructor: BooleanPort as unknown as BasePortConstructor,
+    validator: booleanPortValidator,
+    serializer: booleanPortSerializer,
+  })
+}

@@ -119,10 +119,12 @@ const stringPortSerializer: BasePortSerializer = {
 }
 
 /**
- * Register string port
+ * Register string port in the factory
  */
-PortFactory.register(PortType.String, {
-  constructor: StringPort as unknown as BasePortConstructor,
-  validator: stringPortValidator,
-  serializer: stringPortSerializer,
-})
+export function registerStringPort(): void {
+  PortFactory.register(PortType.String, {
+    constructor: StringPort as unknown as BasePortConstructor,
+    validator: stringPortValidator,
+    serializer: stringPortSerializer,
+  })
+}

@@ -1,4 +1,4 @@
-import type { SerializedPortData } from '../base/port.interface'
+import type { IPort, SerializedPortData } from '../base/port.interface'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import { z } from 'zod'
 import { Port } from '../base/port.base'
@@ -16,7 +16,9 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Array>> {
     return z.object({
       type: z.literal(PortType.Array),
-      elementConfig: z.lazy(() => PortFactory.getSchema(this.config.elementConfig)),
+      elementConfig: z.object({
+        type: z.nativeEnum(PortType),
+      }).passthrough(),
       defaultValue: z.array(z.unknown()).optional(),
       id: z.string().optional(),
       title: z.string().optional(),
@@ -59,8 +61,8 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
     return serialized
   }
 
-  deserialize(data: SerializedPortData): ArrayPort<T> {
-    const port = super.deserialize(data) as ArrayPort<T>
+  override deserialize(data: SerializedPortData): IPort<ConfigFromPortType<PortType.Array>, T[]> {
+    const port = super.deserialize(data)
 
     if (data.value) {
       const value = data.value as unknown[]
@@ -76,6 +78,33 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   toString(): string {
     return `ArrayPort(${this.hasValue() ? JSON.stringify(this.getValue()) : 'undefined'})`
   }
+
+  validateConfig(config: unknown): config is ConfigFromPortType<PortType.Array> {
+    try {
+      const schema = this.getConfigSchema()
+      schema.parse(config)
+
+      // Additional validation for elementConfig
+      const typedConfig = config as ConfigFromPortType<PortType.Array>
+      if (!typedConfig.elementConfig) {
+        throw new TypeError('elementConfig is required for array port')
+      }
+
+      // Validate element config
+      try {
+        PortFactory.getSchema(typedConfig.elementConfig)
+      } catch (error) {
+        throw new TypeError(`Invalid elementConfig: ${error instanceof Error ? error.message : 'unknown error'}`)
+      }
+
+      return true
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new TypeError(`Invalid array port configuration: ${error.errors.map(e => e.message).join(', ')}`)
+      }
+      throw error
+    }
+  }
 }
 
 /**
@@ -83,10 +112,16 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
  */
 const arrayPortValidator: BasePortValidator = {
   getSchema: (config: PortConfig) => {
+    if (config.type !== PortType.Array) {
+      throw new TypeError('Invalid config type')
+    }
     const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
     return port.getValueSchema()
   },
   validate: (value: unknown, config: PortConfig) => {
+    if (config.type !== PortType.Array) {
+      return false
+    }
     const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
     try {
       port.setValue(value as any[])
@@ -102,21 +137,29 @@ const arrayPortValidator: BasePortValidator = {
  */
 const arrayPortSerializer: BasePortSerializer = {
   serialize: (value: unknown, config: PortConfig) => {
+    if (config.type !== PortType.Array) {
+      throw new TypeError('Invalid config type')
+    }
     const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
     port.setValue(value as any[])
     return port.serialize().value
   },
   deserialize: (value: unknown, config: PortConfig) => {
+    if (config.type !== PortType.Array) {
+      throw new TypeError('Invalid config type')
+    }
     const port = new ArrayPort(config as ConfigFromPortType<PortType.Array>)
     return port.deserialize({ config, value }).getValue()
   },
 }
 
 /**
- * Register array port
+ * Register array port in the factory
  */
-PortFactory.register(PortType.Array, {
-  constructor: ArrayPort as unknown as BasePortConstructor,
-  validator: arrayPortValidator,
-  serializer: arrayPortSerializer,
-})
+export function registerArrayPort(): void {
+  PortFactory.register(PortType.Array, {
+    constructor: ArrayPort as unknown as BasePortConstructor,
+    validator: arrayPortValidator,
+    serializer: arrayPortSerializer,
+  })
+}

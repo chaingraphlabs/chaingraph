@@ -124,10 +124,12 @@ const numberPortSerializer: BasePortSerializer = {
 }
 
 /**
- * Register number port
+ * Register number port in the factory
  */
-PortFactory.register(PortType.Number, {
-  constructor: NumberPort as unknown as BasePortConstructor,
-  validator: numberPortValidator,
-  serializer: numberPortSerializer,
-})
+export function registerNumberPort(): void {
+  PortFactory.register(PortType.Number, {
+    constructor: NumberPort as unknown as BasePortConstructor,
+    validator: numberPortValidator,
+    serializer: numberPortSerializer,
+  })
+}
