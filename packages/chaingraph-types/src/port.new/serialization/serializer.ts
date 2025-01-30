@@ -1,4 +1,4 @@
-import type { PortConfig, PortTypeConfig, PortValueType } from '../config/types'
+import type { PortConfig } from '../config/types'
 import { ERROR_MESSAGES, PortType } from '../config/constants'
 
 /**
@@ -93,7 +93,7 @@ export class PortValueSerializer {
   /**
    * Serialize a port value based on its configuration
    */
-  public serialize<T extends PortTypeConfig>(config: PortConfig<T>, value: PortValueType<T>): unknown {
+  public serialize(config: PortConfig, value: unknown): unknown {
     switch (config.type) {
       case PortType.String:
       case PortType.Number:
@@ -143,24 +143,24 @@ export class PortValueSerializer {
   /**
    * Deserialize a value based on port configuration
    */
-  public deserialize<T extends PortTypeConfig>(
-    config: PortConfig<T>,
+  public deserialize(
+    config: PortConfig,
     serializedValue: unknown,
-  ): PortValueType<T> {
+  ): unknown {
     try {
       switch (config.type) {
         case PortType.String:
         case PortType.Number:
         case PortType.Boolean:
-          return serializedValue as PortValueType<T>
+          return serializedValue
 
         case PortType.Array:
           if (Array.isArray(serializedValue)) {
             return serializedValue.map(item =>
               this.deserialize(config.elementConfig, item),
-            ) as PortValueType<T>
+            )
           }
-          return serializedValue as PortValueType<T>
+          return serializedValue
 
         case PortType.Object:
           if (typeof serializedValue === 'object' && serializedValue !== null) {
@@ -171,19 +171,19 @@ export class PortValueSerializer {
                 result[key] = this.deserialize(propConfig, propValue)
               }
             }
-            return result as PortValueType<T>
+            return result
           }
-          return serializedValue as PortValueType<T>
+          return serializedValue
 
         case PortType.Enum:
-          return serializedValue as PortValueType<T>
+          return serializedValue
 
         case PortType.Stream:
         case PortType.Any:
           if (this.isSerializedData(serializedValue)) {
-            return this.registry.deserialize(serializedValue) as PortValueType<T>
+            return this.registry.deserialize(serializedValue)
           }
-          return serializedValue as PortValueType<T>
+          return serializedValue
 
         default:
           throw new SerializationError(

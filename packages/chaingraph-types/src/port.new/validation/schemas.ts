@@ -1,4 +1,5 @@
-import type { ObjectSchema, PortConfig } from '../config/types'
+import type { ObjectSchema } from '@chaingraph/types'
+import type { PortConfig } from '../config/types'
 import { z } from 'zod'
 import { PortDirection, PortType } from '../config/constants'
 
