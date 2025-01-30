@@ -64,7 +64,7 @@ export const objectPortSchema = basePortSchema.extend({
  */
 export const enumPortSchema = basePortSchema.extend({
   type: z.literal(PortType.Enum),
-  options: z.array(z.string()),
+  options: z.array(z.lazy(() => portConfigSchema)),
   defaultValue: z.string().optional(),
 })
 

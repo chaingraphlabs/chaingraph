@@ -93,7 +93,7 @@ export const portConfigSchema: z.ZodType<PortConfig> = z.lazy(() =>
     // Enum port
     basePortConfigSchema.extend({
       type: z.literal(PortType.Enum),
-      options: z.array(z.string()),
+      options: z.array(z.lazy(() => portConfigSchema)),
       defaultValue: z.string().optional(),
     }),
 
@@ -155,7 +155,7 @@ export type PortConfig = {
   }
   | {
     type: PortType.Enum
-    options: string[]
+    options: PortConfig[]
     defaultValue?: string
   }
   | {
