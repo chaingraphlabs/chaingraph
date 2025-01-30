@@ -1,9 +1,10 @@
-import type { IPort, SerializedPortData } from '../base/port.interface'
+import type { IEventPort, SerializedPortData } from '../base/port.interface'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import { z } from 'zod'
 import { Port } from '../base/port.base'
-import { PortDirection, PortType } from '../config/constants'
+import { PortType } from '../config/constants'
 import { type BasePortConstructor, type BasePortSerializer, type BasePortValidator, PortFactory } from '../registry/port-factory'
+import { arrayConfigSchema } from '../schemas'
 
 /**
  * Array port implementation
@@ -14,42 +15,7 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Array>> {
-    return z.object({
-      type: z.literal(PortType.Array),
-      elementConfig: z.object({
-        type: z.nativeEnum(PortType),
-        validation: z.object({
-          min: z.number().optional(),
-          max: z.number().optional(),
-          minLength: z.number().int().min(0).optional(),
-          maxLength: z.number().int().min(0).optional(),
-          integer: z.boolean().optional(),
-        }).optional(),
-      }).passthrough().refine((config) => {
-        if (config.validation) {
-          if (typeof config.validation.min === 'number' && typeof config.validation.max === 'number') {
-            if (config.validation.max < config.validation.min) {
-              return false
-            }
-          }
-          if (typeof config.validation.minLength === 'number' && typeof config.validation.maxLength === 'number') {
-            if (config.validation.maxLength < config.validation.minLength) {
-              return false
-            }
-          }
-        }
-        return true
-      }, {
-        message: 'Invalid validation: max/maxLength must be greater than or equal to min/minLength',
-      }),
-      defaultValue: z.array(z.unknown()).optional(),
-      id: z.string().optional(),
-      title: z.string().optional(),
-      description: z.string().optional(),
-      direction: z.nativeEnum(PortDirection).optional(),
-      optional: z.boolean().optional(),
-      metadata: z.record(z.unknown()).optional(),
-    }) as z.ZodType<ConfigFromPortType<PortType.Array>>
+    return arrayConfigSchema as z.ZodType<ConfigFromPortType<PortType.Array>>
   }
 
   getValueSchema(): z.ZodType<T[]> {
@@ -84,8 +50,8 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
     return serialized
   }
 
-  override deserialize(data: SerializedPortData): IPort<ConfigFromPortType<PortType.Array>, T[]> {
-    const port = super.deserialize(data)
+  override deserialize(data: SerializedPortData): IEventPort<ConfigFromPortType<PortType.Array>, T[]> {
+    const port = super.deserialize(data) as IEventPort<ConfigFromPortType<PortType.Array>, T[]>
 
     if (data.value) {
       const value = data.value as unknown[]
@@ -100,33 +66,6 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
 
   toString(): string {
     return `ArrayPort(${this.hasValue() ? JSON.stringify(this.getValue()) : 'undefined'})`
-  }
-
-  validateConfig(config: unknown): config is ConfigFromPortType<PortType.Array> {
-    try {
-      const schema = this.getConfigSchema()
-      schema.parse(config)
-
-      // Additional validation for elementConfig
-      const typedConfig = config as ConfigFromPortType<PortType.Array>
-      if (!typedConfig.elementConfig) {
-        throw new TypeError('elementConfig is required for array port')
-      }
-
-      // Validate element config
-      try {
-        PortFactory.getSchema(typedConfig.elementConfig)
-      } catch (error) {
-        throw new TypeError(`Invalid elementConfig: ${error instanceof Error ? error.message : 'unknown error'}`)
-      }
-
-      return true
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new TypeError(`Invalid array port configuration: ${error.errors.map(e => e.message).join(', ')}`)
-      }
-      throw error
-    }
   }
 }
 
