@@ -1,10 +1,15 @@
-import type { IPort, SerializedPortData } from '../base/port.interface'
+import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
-import { z } from 'zod'
 import { Port } from '../base/port.base'
-import { PortDirection, PortType } from '../config/constants'
+import { PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
+import {
+  applyRangeValidation,
+  hasRangeValidation,
+  numberConfigSchema,
+  numberValueSchema,
+} from '../schemas'
 
 /**
  * Number port implementation
@@ -15,45 +20,22 @@ export class NumberPort extends Port<ConfigFromPortType<PortType.Number>, number
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Number>> {
-    return z.object({
-      type: z.literal(PortType.Number),
-      validation: z.object({
-        min: z.number().optional(),
-        max: z.number().optional(),
-        integer: z.boolean().optional(),
-      }).optional(),
-      defaultValue: z.number().optional(),
-      id: z.string().optional(),
-      title: z.string().optional(),
-      description: z.string().optional(),
-      direction: z.nativeEnum(PortDirection).optional(),
-      optional: z.boolean().optional(),
-      metadata: z.record(z.unknown()).optional(),
-    }) as z.ZodType<ConfigFromPortType<PortType.Number>>
+    return numberConfigSchema as z.ZodType<ConfigFromPortType<PortType.Number>>
   }
 
   getValueSchema(): z.ZodType<number> {
-    let schema = z.number()
+    let schema = numberValueSchema
 
-    if (this.config.validation) {
-      const { min, max, integer } = this.config.validation
-      if (typeof min === 'number') {
-        schema = schema.min(min)
-      }
-      if (typeof max === 'number') {
-        schema = schema.max(max)
-      }
-      if (integer) {
-        schema = schema.int()
-      }
+    if (hasRangeValidation(this.config)) {
+      schema = applyRangeValidation(schema, this.config.validation)
     }
 
     return schema
   }
 
   setValue(value: number): void {
-    if (typeof value !== 'number' || Number.isNaN(value)) {
-      throw new TypeError('Value must be a valid number')
+    if (typeof value !== 'number') {
+      throw new TypeError('Value must be a number')
     }
 
     const schema = this.getValueSchema()
@@ -67,7 +49,7 @@ export class NumberPort extends Port<ConfigFromPortType<PortType.Number>, number
   }
 
   toString(): string {
-    return `NumberPort(${this.hasValue() ? this.getValue().toString() : 'undefined'})`
+    return `NumberPort(${this.hasValue() ? this.getValue() : 'undefined'})`
   }
 }
 
@@ -86,7 +68,7 @@ const numberPortValidator: BasePortValidator = {
     if (config.type !== PortType.Number) {
       return false
     }
-    if (typeof value !== 'number' || Number.isNaN(value)) {
+    if (typeof value !== 'number') {
       return false
     }
     const port = new NumberPort(config)
@@ -107,8 +89,8 @@ const numberPortSerializer: BasePortSerializer = {
     if (config.type !== PortType.Number) {
       throw new TypeError('Invalid config type')
     }
-    if (typeof value !== 'number' || Number.isNaN(value)) {
-      throw new TypeError('Value must be a valid number')
+    if (typeof value !== 'number') {
+      throw new TypeError('Value must be a number')
     }
     return value
   },
@@ -116,8 +98,8 @@ const numberPortSerializer: BasePortSerializer = {
     if (config.type !== PortType.Number) {
       throw new TypeError('Invalid config type')
     }
-    if (typeof value !== 'number' || Number.isNaN(value)) {
-      throw new TypeError('Value must be a valid number')
+    if (typeof value !== 'number') {
+      throw new TypeError('Value must be a number')
     }
     return value
   },
