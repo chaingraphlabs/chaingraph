@@ -3,7 +3,8 @@ import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
 import { z } from 'zod'
 import { Port } from '../base/port.base'
-import { PortDirection, PortType } from '../config/constants'
+import { PortType } from '../config/constants'
+import { portConfigSchema } from '../config/types'
 import { PortFactory } from '../registry/port-factory'
 
 /**
@@ -11,15 +12,13 @@ import { PortFactory } from '../registry/port-factory'
  */
 export class ObjectPort<T extends Record<string, unknown> = Record<string, unknown>> extends Port<ConfigFromPortType<PortType.Object>, T> {
   constructor(config: ConfigFromPortType<PortType.Object>) {
+    // Validate object-specific configuration
     if (!config.schema || !config.schema.properties) {
       throw new TypeError('Object port requires schema with properties')
     }
 
-    // Validate property types before calling super
+    // Additional validation for property types through PortFactory
     for (const [key, propertyConfig] of Object.entries(config.schema.properties)) {
-      if (!propertyConfig.type || !Object.values(PortType).includes(propertyConfig.type)) {
-        throw new TypeError(`Invalid property type for "${key}"`)
-      }
       try {
         PortFactory.getSchema(propertyConfig)
       } catch (error) {
@@ -31,21 +30,10 @@ export class ObjectPort<T extends Record<string, unknown> = Record<string, unkno
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Object>> {
-    return z.object({
-      type: z.literal(PortType.Object),
-      schema: z.object({
-        properties: z.record(z.object({
-          type: z.nativeEnum(PortType),
-        }).passthrough()),
-      }),
-      defaultValue: z.record(z.unknown()).optional(),
-      id: z.string().optional(),
-      title: z.string().optional(),
-      description: z.string().optional(),
-      direction: z.nativeEnum(PortDirection).optional(),
-      optional: z.boolean().optional(),
-      metadata: z.record(z.unknown()).optional(),
-    }) as z.ZodType<ConfigFromPortType<PortType.Object>>
+    return portConfigSchema.refine(
+      (config): config is ConfigFromPortType<PortType.Object> => config.type === PortType.Object,
+      { message: 'Invalid port type' },
+    ) as z.ZodType<ConfigFromPortType<PortType.Object>>
   }
 
   getValueSchema(): z.ZodType<T> {
@@ -128,14 +116,14 @@ const objectPortValidator: BasePortValidator = {
     if (config.type !== PortType.Object) {
       throw new TypeError('Invalid config type')
     }
-    const port = new ObjectPort(config)
+    const port = new ObjectPort(config as ConfigFromPortType<PortType.Object>)
     return port.getValueSchema()
   },
   validate: (value: unknown, config: PortConfig) => {
     if (config.type !== PortType.Object) {
       return false
     }
-    const port = new ObjectPort(config)
+    const port = new ObjectPort(config as ConfigFromPortType<PortType.Object>)
     try {
       port.setValue(value as Record<string, unknown>)
       return true
@@ -153,7 +141,7 @@ const objectPortSerializer: BasePortSerializer = {
     if (config.type !== PortType.Object) {
       throw new TypeError('Invalid config type')
     }
-    const port = new ObjectPort(config)
+    const port = new ObjectPort(config as ConfigFromPortType<PortType.Object>)
     port.setValue(value as Record<string, unknown>)
     return port.serialize().value
   },
@@ -161,7 +149,7 @@ const objectPortSerializer: BasePortSerializer = {
     if (config.type !== PortType.Object) {
       throw new TypeError('Invalid config type')
     }
-    const port = new ObjectPort(config)
+    const port = new ObjectPort(config as ConfigFromPortType<PortType.Object>)
     return port.deserialize({ config, value }).getValue()
   },
 }
