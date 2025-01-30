@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Port } from '../base/port.base'
 import { PortType } from '../config/constants'
 import { type BasePortConstructor, type BasePortSerializer, type BasePortValidator, PortFactory } from '../registry/port-factory'
-import { arrayConfigSchema } from '../schemas'
+import { arrayPortSchema, validatePortConfigType } from '../validation/schemas'
 
 /**
  * Array port implementation
@@ -12,10 +12,20 @@ import { arrayConfigSchema } from '../schemas'
 export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Array>, T[]> {
   constructor(config: ConfigFromPortType<PortType.Array>) {
     super(config)
+
+    // Validate array-specific configuration using validatePortConfigType
+    validatePortConfigType(config, PortType.Array)
+
+    // Additional validation for elementConfig through PortFactory
+    try {
+      PortFactory.getSchema(config.elementConfig)
+    } catch (error) {
+      throw new TypeError(`Invalid elementConfig: ${error instanceof Error ? error.message : 'unknown error'}`)
+    }
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Array>> {
-    return arrayConfigSchema as z.ZodType<ConfigFromPortType<PortType.Array>>
+    return arrayPortSchema as z.ZodType<ConfigFromPortType<PortType.Array>>
   }
 
   getValueSchema(): z.ZodType<T[]> {
