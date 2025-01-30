@@ -4,24 +4,25 @@ import {
   BaseNode,
   type ExecutionContext,
   Input,
+  MultiChannel,
   Node,
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  Port,
   PortKind,
+  PortStreamOutput,
   PortString,
 } from '@chaingraph/types'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
 
 @Node({
-  title: 'LLM Prompt',
-  description: 'Sends prompt to Language Model and returns response',
+  title: 'LLM Stream',
+  description: 'Sends prompt to Language Model and streams response',
   category: NODE_CATEGORIES.AI,
   tags: ['ai', 'llm', 'prompt', 'gpt'],
 }, nodeRegistry)
-export class LLMPromptNode extends BaseNode {
+export class LLMStreamNode extends BaseNode {
   @Input()
   @PortString({
     title: 'Prompt',
@@ -30,14 +31,13 @@ export class LLMPromptNode extends BaseNode {
   prompt: string = ''
 
   @Output()
-  // @PortString({
-  //   title: 'Response',
-  //   description: 'Language model response',
-  // })
-  @Port({
-    kind: PortKind.String,
+  @PortStreamOutput({
+    valueType: {
+      kind: PortKind.String,
+      defaultValue: '',
+    },
   })
-  response: string = ''
+  outputStream: MultiChannel<string> = new MultiChannel<string>()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Mock implementation
@@ -53,15 +53,41 @@ export class LLMPromptNode extends BaseNode {
       new HumanMessage(this.prompt),
     ]
 
-    const result = await llm.invoke(messages)
+    const stream = await llm.stream(messages, {
+      signal: context.abortSignal,
+    })
 
-    this.response = result.content.toString()
+    // Start streaming in the background
+    const streamingPromise = (async () => {
+      try {
+        for await (const chunk of stream) {
+          console.log('Chunk:', chunk)
+          // Check if execution was aborted
+          if (context.abortSignal.aborted) {
+            this.outputStream.close()
+            return
+          }
+
+          // Send chunk content to the output stream
+          if (chunk.content) {
+            this.outputStream.send(chunk.content.toString())
+          }
+        }
+
+        // Close the stream when finished
+        this.outputStream.close()
+      } catch (error) {
+        // Handle any errors and close the stream
+        console.error('Streaming error:', error)
+        this.outputStream.close()
+      }
+    })()
 
     return {
       status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
-      outputs: new Map([['response', this.response]]),
+      outputs: new Map(),
     }
   }
 }

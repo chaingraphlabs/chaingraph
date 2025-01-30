@@ -171,14 +171,3 @@ sample({
   ],
   target: resetAutoStart,
 })
-
-// Debug logging in development
-if (process.env.NODE_ENV === 'development') {
-  $autoStartConditions.watch((conditions) => {
-    console.log('Auto-start conditions:', conditions)
-  })
-
-  startExecution.watch((executionId) => {
-    console.log('Auto-starting execution:', executionId)
-  })
-}

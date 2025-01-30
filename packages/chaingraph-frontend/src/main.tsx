@@ -1,12 +1,7 @@
 import type { INode, IPort, JSONValue } from '@chaingraph/types'
 import { initializeStores } from '@/store/init.ts'
 import { nodeRegistry } from '@chaingraph/nodes'
-import {
-  Edge,
-  registerFlowTransformers,
-  registerNodeTransformers,
-  registerPortTransformers,
-} from '@chaingraph/types'
+import { Edge, MultiChannel, registerFlowTransformers, registerNodeTransformers, registerPortTransformers } from '@chaingraph/types'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import superjson from 'superjson'
@@ -59,6 +54,23 @@ superjson.registerCustom<Edge, JSONValue>(
     },
   },
   Edge.name,
+)
+
+superjson.registerCustom<MultiChannel<any>, JSONValue>(
+  {
+    // isApplicable: (v): v is MultiChannel<any> => v instanceof MultiChannel,
+    isApplicable: (v): v is MultiChannel<any> => {
+      return v instanceof MultiChannel
+    },
+    serialize: (v) => {
+      return v.serialize()
+    },
+    deserialize: (v) => {
+      debugger
+      return MultiChannel.deserialize(v)
+    },
+  },
+  MultiChannel.name,
 )
 
 // Execution event data

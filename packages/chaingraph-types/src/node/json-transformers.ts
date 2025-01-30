@@ -7,7 +7,7 @@ import superjson from 'superjson'
 /**
  * Registers node transformers with SuperJSON
  */
-export function registerNodeTransformers2(nodeRegistry?: NodeRegistry): void {
+export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
   // Register base node transformer
 
   if (nodeRegistry === undefined) {
@@ -35,19 +35,29 @@ export function registerNodeTransformers2(nodeRegistry?: NodeRegistry): void {
 
           // serialize only ports values instead of all ports
           // for better performance and smaller payload
-          return superjson.serialize({
-            id: v.id,
-            metadata: v.metadata,
-            status: v.status,
-            portsValues,
-          }) as unknown as JSONValue
+
+          try {
+            const res = superjson.serialize({
+              id: v.id,
+              metadata: v.metadata,
+              status: v.status,
+              portsValues,
+            }) as unknown as JSONValue
+            console.log('res', res)
+
+            return res
+          } catch (e) {
+            console.error(e)
+          }
         },
         deserialize: (v) => {
-          const nodeData = superjson.deserialize<INode>(v as any as SuperJSONResult)
+          const nodeData = superjson.deserialize(v as any as SuperJSONResult) as any
 
+          // const metadata = superjson.deserialize(nodeData.metadata)
+          const metadata = nodeData.metadata
           const nodeDataParsed = SerializedNodeSchema.parse({
             id: nodeData.id,
-            metadata: nodeData.metadata,
+            metadata,
             status: nodeData.status,
           })
 
@@ -58,7 +68,7 @@ export function registerNodeTransformers2(nodeRegistry?: NodeRegistry): void {
           )
 
           const portsConfig = new Map<string, PortConfig>()
-          for (const [portId, portConfig] of nodeData.metadata?.portsConfig?.entries() || []) {
+          for (const [portId, portConfig] of ((metadata as any).portsConfig as any).entries() || []) {
             portsConfig.set(portId, parsePortConfig(portConfig))
           }
 
@@ -114,7 +124,7 @@ export function registerNodeTransformers2(nodeRegistry?: NodeRegistry): void {
 //     'CategorizedNodes',
 //   )
 }
-export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
+export function registerNodeTransformers3(nodeRegistry?: NodeRegistry): void {
   // Register base node transformer
 
   if (nodeRegistry === undefined) {
@@ -135,17 +145,17 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
         // for better performance and smaller payload
         return superjson.serialize({
           id: v.id,
-          metadata: v.metadata,
+          metadata: superjson.serialize(v.metadata),
           status: v.status,
           portsValues,
         }) as unknown as JSONValue
       },
       deserialize: (v) => {
-        const nodeData = superjson.deserialize<BaseNode>(v as any as SuperJSONResult)
+        const nodeData = superjson.deserialize(v as any as SuperJSONResult) as any
 
         const nodeDataParsed = SerializedNodeSchema.parse({
           id: nodeData.id,
-          metadata: nodeData.metadata,
+          metadata: superjson.deserialize(nodeData.metadata),
           status: nodeData.status,
         })
 
