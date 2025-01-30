@@ -3,6 +3,7 @@ import { registerArrayPort } from '../ports/array.port'
 import { registerBooleanPort } from '../ports/boolean.port'
 import { registerNumberPort } from '../ports/number.port'
 import { registerObjectPort } from '../ports/object.port'
+import { registerStreamPort } from '../ports/stream.port'
 import { registerStringPort } from '../ports/string.port'
 import { PortFactory } from './port-factory'
 
@@ -21,6 +22,7 @@ export function registerAllPorts(): void {
   registerBooleanPort()
   registerObjectPort()
   registerArrayPort()
+  registerStreamPort()
 }
 
 /**
@@ -37,6 +39,7 @@ export function registerTestPorts(...types: PortType[]): void {
     [PortType.Boolean]: registerBooleanPort,
     [PortType.Object]: registerObjectPort,
     [PortType.Array]: registerArrayPort,
+    [PortType.Stream]: registerStreamPort,
   }
 
   // Register only the specified types

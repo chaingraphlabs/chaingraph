@@ -1,4 +1,3 @@
-import type { SerializedPortData } from '../base/port.interface'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
 import { z } from 'zod'
@@ -59,46 +58,6 @@ export class ObjectPort<T extends Record<string, unknown> = Record<string, unkno
     }
 
     super.setValue(value)
-  }
-
-  serialize(): SerializedPortData {
-    const serialized = super.serialize()
-
-    if (serialized.value) {
-      const value = serialized.value as T
-      const serializedValue: Record<string, unknown> = {}
-
-      for (const [key, propertyValue] of Object.entries(value)) {
-        const propertyConfig = this.config.schema.properties[key]
-        if (propertyConfig && propertyValue !== undefined) {
-          serializedValue[key] = PortFactory.serialize(propertyValue, propertyConfig)
-        }
-      }
-
-      serialized.value = serializedValue
-    }
-
-    return serialized
-  }
-
-  deserialize(data: SerializedPortData): ObjectPort<T> {
-    const port = super.deserialize(data) as ObjectPort<T>
-
-    if (data.value) {
-      const value = data.value as Record<string, unknown>
-      const deserializedValue: Record<string, unknown> = {}
-
-      for (const [key, propertyValue] of Object.entries(value)) {
-        const propertyConfig = this.config.schema.properties[key]
-        if (propertyConfig && propertyValue !== undefined) {
-          deserializedValue[key] = PortFactory.deserialize(propertyValue, propertyConfig)
-        }
-      }
-
-      port.setValue(deserializedValue as T)
-    }
-
-    return port
   }
 
   toString(): string {

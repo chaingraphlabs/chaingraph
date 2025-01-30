@@ -1,4 +1,3 @@
-import type { IEventPort, SerializedPortData } from '../base/port.interface'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import { z } from 'zod'
 import { Port } from '../base/port.base'
@@ -48,33 +47,6 @@ export class ArrayPort<T = unknown> extends Port<ConfigFromPortType<PortType.Arr
     })
 
     super.setValue(value)
-  }
-
-  serialize(): SerializedPortData {
-    const serialized = super.serialize()
-
-    if (serialized.value) {
-      const value = serialized.value as T[]
-      serialized.value = value.map(item =>
-        PortFactory.serialize(item, this.config.elementConfig),
-      )
-    }
-
-    return serialized
-  }
-
-  override deserialize(data: SerializedPortData): IEventPort<ConfigFromPortType<PortType.Array>, T[]> {
-    const port = super.deserialize(data) as IEventPort<ConfigFromPortType<PortType.Array>, T[]>
-
-    if (data.value) {
-      const value = data.value as unknown[]
-      const deserializedValue = value.map(item =>
-        PortFactory.deserialize(item, this.config.elementConfig),
-      )
-      port.setValue(deserializedValue as T[])
-    }
-
-    return port
   }
 
   toString(): string {
