@@ -32,6 +32,7 @@
     "@trpc/next": "^11.0.0-rc.730",
     "@trpc/react-query": "^11.0.0-rc.730",
     "@trpc/server": "^11.0.0-rc.730",
+    "@types/ws": "^8.5.14",
     "decimal.js": "^10.4.3",
     "devalue": "^5.1.1",
     "loglevel": "^1.9.2",
@@ -40,6 +41,7 @@
     "ts-node": "^10.9.2",
     "tslog": "^4.9.3",
     "uuid": "^11.0.4",
+    "ws": "^8.18.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

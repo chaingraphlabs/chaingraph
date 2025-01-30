@@ -59,15 +59,29 @@ sample({
 })
 
 // Handle debug operations
-sample({
-  clock: addBreakpoint,
-  target: addBreakpointFx,
-})
+// sample({
+//   clock: addBreakpoint,
+//   target: addBreakpointFx,
+// })
+//
+// sample({
+//   clock: removeBreakpoint,
+//   target: removeBreakpointFx,
+// })
 
-sample({
-  clock: removeBreakpoint,
-  target: removeBreakpointFx,
-})
+$executionState
+  .on(addBreakpoint, (state, { nodeId }) => ({
+    ...state,
+    breakpoints: new Set([...state.breakpoints, nodeId]),
+  }))
+  .on(removeBreakpoint, (state, { nodeId }) => {
+    const newBreakpoints = new Set(state.breakpoints)
+    newBreakpoints.delete(nodeId)
+    return {
+      ...state,
+      breakpoints: newBreakpoints,
+    }
+  })
 
 sample({
   clock: stepExecution,

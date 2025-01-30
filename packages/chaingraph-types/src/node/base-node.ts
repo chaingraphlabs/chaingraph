@@ -13,7 +13,9 @@ import type {
 } from '@chaingraph/types/node/types'
 import type { PortConfig } from '@chaingraph/types/port'
 import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import { NodeEventType } from '@chaingraph/types/node/events'
+import {
+  NodeEventType,
+} from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
 import { ObjectPort, PortFactory } from '@chaingraph/types/port'
 import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
@@ -327,6 +329,30 @@ export abstract class BaseNode implements INode {
     this.emit(this.createEvent(NodeEventType.UIPositionChange, {
       oldPosition,
       newPosition: { ...position },
+    }))
+  }
+
+  setNodeParent(position: Position, parentNodeId?: string, emitEvent?: boolean): void {
+    const oldParent = this._metadata?.parentNodeId ?? undefined
+    const oldPosition = this._metadata?.ui?.position
+
+    this._metadata.parentNodeId = parentNodeId
+    if (!this._metadata.ui) {
+      this._metadata.ui = { position }
+    } else {
+      this._metadata.ui.position = position
+    }
+
+    if (!emitEvent) {
+      return
+    }
+
+    this.incrementVersion()
+    this.emit(this.createEvent(NodeEventType.ParentChange, {
+      oldParentNodeId: oldParent,
+      newParentNodeId: parentNodeId,
+      oldPosition,
+      newPosition: position,
     }))
   }
 

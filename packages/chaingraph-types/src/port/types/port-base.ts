@@ -10,7 +10,7 @@ import { PortFactory } from '../registry'
 export type PortConstructor<C extends PortConfig> = new (config: C) => IPort<C>
 
 // export abstract class PortBase<C extends PortConfig> implements IPort<C> {
-export abstract class PortBase<C extends PortConfig> implements IPort<C> {
+export abstract class PortBase<C extends PortConfig = PortConfig> implements IPort<C> {
   abstract readonly config: C
   abstract value: PortValueFromConfig<C>
 

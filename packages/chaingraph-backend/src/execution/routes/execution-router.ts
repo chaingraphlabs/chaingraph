@@ -19,6 +19,7 @@ export const executionRouter = router({
           flowTimeoutMs: z.number().optional(),
         }).optional(),
         debug: z.boolean().optional(),
+        breakpoints: z.array(z.string()).optional(),
       }).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -31,6 +32,13 @@ export const executionRouter = router({
       }
 
       const instance = await ctx.executionService.createExecution(flow, input.options)
+
+      if (input.options?.breakpoints) {
+        for (const nodeId of input.options.breakpoints) {
+          await ctx.executionService.addBreakpoint(instance.id, nodeId)
+        }
+      }
+
       return {
         executionId: instance.id,
       }

@@ -9,7 +9,6 @@
     "directory": "./packages/chaingraph-backend"
   },
   "exports": {
-    ".": "./src/index.ts",
     "./trpc": "./src/trpc.ts",
     "./procedures": "./src/procedures/index.ts",
     "./router": "./src/router.ts"

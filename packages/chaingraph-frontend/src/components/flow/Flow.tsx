@@ -32,6 +32,7 @@ import {
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
+import GroupNode from './nodes/GroupNode/GroupNode'
 import '@xyflow/react/dist/style.css'
 
 // Configuration constants
@@ -47,7 +48,7 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 
 const nodeTypes: NodeTypes = {
   chaingraphNode: ChaingraphNode,
-  // chaingraphNodeTest: ChaingraphCustomNode,
+  groupNode: GroupNode,
 }
 
 function ExecutionComponent() {
@@ -108,6 +109,7 @@ function Flow() {
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStop,
   } = useFlowCallbacks()
 
   // Register node types
@@ -283,6 +285,7 @@ function Flow() {
         // onReconnectStart={onReconnectStart}
         // onReconnectEnd={onReconnectEnd}
         // onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
         onViewportChange={onViewportChange}
         fitView
         preventScrolling

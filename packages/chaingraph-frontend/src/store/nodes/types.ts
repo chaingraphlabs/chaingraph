@@ -43,3 +43,11 @@ export interface UpdateNodePosition {
   position: Position
   version: number
 }
+
+export interface UpdateNodeParent {
+  flowId: string
+  nodeId: string
+  parentNodeId?: string
+  position: Position
+  version: number
+}

@@ -8,6 +8,7 @@ export const NODE_CATEGORIES = {
   FLOW: 'flow',
   UTILITIES: 'utilities',
   OTHER: 'other',
+  GROUP: 'group',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -160,5 +161,26 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 6,
+  },
+  [NODE_CATEGORIES.GROUP]: {
+    id: NODE_CATEGORIES.GROUP,
+    label: 'Group',
+    description: 'Group nodes',
+    icon: 'Grid',
+    style: {
+      light: {
+        primary: '#F5F5F5', // Soft gray
+        secondary: '#FAFAFA',
+        background: '#FFFFFF',
+        text: '#616161', // Darker gray
+      },
+      dark: {
+        primary: '#2C2C2C',
+        secondary: '#1F1F1F',
+        background: '#1C1C1C',
+        text: '#BDBDBD',
+      },
+    },
+    order: 7,
   },
 }

@@ -1,5 +1,5 @@
 import type { INode } from '@chaingraph/types'
-import { clearActiveFlow } from '@/store'
+import { clearActiveFlow, updateNodeParent } from '@/store'
 import { combine, createStore } from 'effector'
 import {
   addNodeToFlowFx,
@@ -144,6 +144,28 @@ $nodes
       ui: {
         ...node.metadata.ui,
         position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
+
+// updateNodeParent
+$nodes
+  .on(updateNodeParent, (state, { flowId, nodeId, parentNodeId, position, version }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      parentNodeId,
+      ui: {
+        ...node.metadata.ui,
+        // position,
       },
     })
 

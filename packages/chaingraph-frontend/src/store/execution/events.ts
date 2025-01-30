@@ -16,8 +16,8 @@ export const stopExecution = createEvent<string>() // executionId
 
 // Debug events
 export const toggleDebugMode = createEvent<boolean>()
-export const addBreakpoint = createEvent<{ executionId: string, nodeId: string }>()
-export const removeBreakpoint = createEvent<{ executionId: string, nodeId: string }>()
+export const addBreakpoint = createEvent<{ nodeId: string }>()
+export const removeBreakpoint = createEvent<{ nodeId: string }>()
 export const stepExecution = createEvent<string>() // executionId
 
 // State events

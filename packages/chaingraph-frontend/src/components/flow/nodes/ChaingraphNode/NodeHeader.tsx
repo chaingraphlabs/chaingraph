@@ -1,22 +1,30 @@
 import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
-import type { CategoryStyle } from '@chaingraph/types'
+import type { CategoryStyle, INode } from '@chaingraph/types'
 import { cn } from '@/lib/utils'
 import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
 import { Cross1Icon } from '@radix-ui/react-icons'
 import { useCallback } from 'react'
 
 interface NodeHeaderProps {
-  title: string
+  // title: string
+  node: INode
   icon: CategoryIconName
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
+
+  debugMode: boolean
+  isBreakpointSet: boolean
+  onBreakpointToggle: () => void
 }
 
 export function NodeHeader({
-  title,
+  node,
   icon,
   style,
   onDelete,
+  debugMode,
+  isBreakpointSet,
+  onBreakpointToggle,
 }: NodeHeaderProps) {
   const Icon = getCategoryIcon(icon)
 
@@ -48,21 +56,26 @@ export function NodeHeader({
             style={{ color: style.text }}
           />
         </div>
+
         <h3
           className="font-medium text-sm truncate"
           style={{ color: style.text }}
         >
-          {title}
+          {node.metadata.title}
         </h3>
       </div>
 
-      <button
-        className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-        style={{ color: style.text }}
-        onClick={handleDelete}
-      >
-        <Cross1Icon className="w-3 h-3" />
-      </button>
+      {/* Controls */}
+      <div className="flex items-center gap-1">
+
+        <button
+          className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+          style={{ color: style.text }}
+          onClick={handleDelete}
+        >
+          <Cross1Icon className="w-3 h-3" />
+        </button>
+      </div>
     </div>
   )
 }

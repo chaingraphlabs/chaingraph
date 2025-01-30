@@ -1,18 +1,16 @@
-import { createContext, initializeContext } from '@chaingraph/backend/context'
+import { initializeContext } from '@chaingraph/backend/context'
 import {
   ExecutionService,
   InMemoryExecutionStore,
 } from '@chaingraph/backend/execution'
 import { InMemoryFlowStore } from '@chaingraph/backend/stores/flowStore'
+import { wsServer } from '@chaingraph/backend/ws-server'
 import { NodeCatalog, nodeRegistry } from '@chaingraph/nodes'
 import {
   registerFlowTransformers,
   registerNodeTransformers,
   registerPortTransformers,
 } from '@chaingraph/types'
-import { createHTTPServer } from '@trpc/server/adapters/standalone'
-import cors from 'cors'
-import { appRouter } from './router'
 import './setup'
 
 registerPortTransformers()
@@ -72,11 +70,13 @@ initializeContext(
 // const metricsCollector = new MetricsCollector(flowStore)
 // metricsCollector.startMonitoring()
 
-const server = createHTTPServer({
-  middleware: cors(),
-  router: appRouter,
-  createContext,
-})
+// const server = createHTTPServer({
+//   middleware: cors(),
+//   router: appRouter,
+//   createContext,
+// })
+//
+// server.listen(3000)
+// console.log('Server running on http://localhost:3000')
 
-server.listen(3000)
-console.log('Server running on http://localhost:3000')
+wsServer()

@@ -111,6 +111,26 @@
   @apply transition-shadow duration-200;
 }
 
+/* Group Node specific styles */
+.react-flow__node-groupNode {
+  @apply z-[-1]; /* Keep groups behind regular nodes */
+  background: transparent !important; /* Remove default node background */
+  border: none !important; /* Remove default node border */
+  padding: 0 !important; /* Remove default padding */
+  border-radius: 0 !important; /* Remove default border radius */
+}
+
+.react-flow__node-groupNode.selected {
+  @apply z-[0]; /* Bring selected groups above other groups */
+  background: transparent !important;
+}
+
+/* Ensure resize handle is properly positioned */
+.react-flow__node-groupNode .react-flow__resize-control.handle {
+  border: none !important;
+  background: transparent !important;
+}
+
 .react-flow__handle {
   @apply w-3 h-3 rounded-full;
   @apply border-2 border-background;
@@ -163,60 +183,10 @@
   animation: flow-edge 1s linear infinite;
 }
 
-/* Edge Types */
-.react-flow__edge.edge-execute .react-flow__edge-path {
-  stroke: hsl(var(--flow-execute) / var(--edge-opacity));
-}
-
-.react-flow__edge.edge-execute:hover .react-flow__edge-path {
-  stroke: hsl(var(--flow-execute) / var(--edge-hover-opacity));
-}
-
-.react-flow__edge.edge-data .react-flow__edge-path {
-  stroke: hsl(var(--flow-data) / var(--edge-opacity));
-}
-
-.react-flow__edge.edge-data:hover .react-flow__edge-path {
-  stroke: hsl(var(--flow-data) / var(--edge-hover-opacity));
-}
-
-.react-flow__edge.edge-stream .react-flow__edge-path {
-  stroke: hsl(var(--flow-stream) / var(--edge-opacity));
-}
-
-.react-flow__edge.edge-stream:hover .react-flow__edge-path {
-  stroke: hsl(var(--flow-stream) / var(--edge-hover-opacity));
-}
-
-/* Node Types */
-.node-execute {
-  @apply border-[hsl(var(--flow-execute))];
-}
-
-.node-data {
-  @apply border-[hsl(var(--flow-data))];
-}
-
-.node-stream {
-  @apply border-[hsl(var(--flow-stream))];
-}
-
 .react-flow__node.selected {
   @apply border-[hsl(var(--flow-execute))];
   --glow-color: var(--glow-execute-rgb);
   @apply shadow-node-selected dark:shadow-node-selected-dark;
-}
-
-.node-execute.selected {
-  --glow-color: var(--glow-execute-rgb);
-}
-
-.node-data.selected {
-  --glow-color: var(--glow-data-rgb);
-}
-
-.node-stream.selected {
-  --glow-color: var(--glow-stream-rgb);
 }
 
 /* Selection */

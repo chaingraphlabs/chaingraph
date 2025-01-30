@@ -101,6 +101,8 @@ export function useExecutionSubscription() {
 
     [ExecutionEventEnum.DEBUG_BREAKPOINT_HIT]: (data) => {
       console.log('Debug breakpoint hit:', data.node.id)
+
+      setExecutionStatus(ExecutionStatus.PAUSED)
     },
   }), [])
 

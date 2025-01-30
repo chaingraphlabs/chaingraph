@@ -16,6 +16,7 @@ export interface NodeMetadata {
   icon?: string
   tags?: string[]
   author?: string
+  parentNodeId?: string
   metadata?: { [key: string]: unknown }
   portsConfig?: Map<string, PortConfig>
   ui?: NodeUIMetadata

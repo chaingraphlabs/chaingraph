@@ -4,6 +4,7 @@ import type {
   AddNodeEvent,
   NodeState,
   UpdateNodeEvent,
+  UpdateNodeParent,
   UpdateNodePosition,
   UpdateNodeUIEvent,
 } from './types'
@@ -15,6 +16,7 @@ export const updateNode = createEvent<UpdateNodeEvent>()
 export const removeNode = createEvent<string>()
 export const setNodeMetadata = createEvent<{ id: string, metadata: NodeState['metadata'] }>()
 export const setNodeVersion = createEvent<{ id: string, version: number }>()
+export const updateNodeParent = createEvent<UpdateNodeParent>()
 
 // Backend operation events
 export const addNodeToFlow = createEvent<AddNodeEvent>()

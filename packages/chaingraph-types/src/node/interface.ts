@@ -127,6 +127,14 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   setDimensions: (dimensions: Dimensions, emitEvent?: boolean) => void
 
   /**
+   * Set the node parent
+   * @param parentNodeId New parent node ID
+   * @param position Position relative to the parent node
+   * @param emitEvent Emit event
+   */
+  setNodeParent: (position: Position, parentNodeId?: string, emitEvent?: boolean) => void
+
+  /**
    * Set the node UI state
    * @param state New state
    * @param emitEvent Emit event

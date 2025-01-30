@@ -1,7 +1,7 @@
 import type { ExecutionEventData } from '@chaingraph/types'
 import type { ExecutionState, ExecutionSubscriptionState, NodeExecutionState } from './types'
 
-import { createExecutionFx } from '@/store/execution/effects.ts'
+import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects.ts'
 import { ExecutionEventEnum } from '@chaingraph/types'
 import { combine, createStore } from 'effector'
 import {
@@ -61,14 +61,19 @@ export const $executionState = createStore<ExecutionState>(initialState)
 //   ...state,
 //   status: ExecutionStatus.PAUSED,
 // }))
-// .on(resumeExecutionFx.done, state => ({
-//   ...state,
-//   status: ExecutionStatus.RUNNING,
-// }))
-// .on(stopExecutionFx.done, state => ({
-//   ...state,
-//   status: ExecutionStatus.STOPPED,
-// }))
+//   .on(resumeExecutionFx.done, state => ({
+//     ...state,
+//     status: ExecutionStatus.RUNNING,
+//   }))
+  .on(stopExecutionFx.done, (state) => {
+    return {
+      ...state,
+      status: ExecutionStatus.STOPPED,
+      events: [],
+      nodeStates: new Map(),
+      error: null,
+    }
+  })
 
   // Handle debug mode
   .on(toggleDebugMode, (state, debugMode) => ({

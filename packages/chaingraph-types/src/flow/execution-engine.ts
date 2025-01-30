@@ -53,6 +53,7 @@ export class ExecutionEngine {
     private readonly flow: Flow,
     private readonly context: ExecutionContext,
     private readonly options?: ExecutionEngineOptions,
+    onBreakpointHit?: (node: INode) => void,
   ) {
     this.readyQueue = new AsyncQueue<INode>()
     this.completedQueue = new AsyncQueue<INode>()
@@ -69,6 +70,7 @@ export class ExecutionEngine {
           this.eventQueue.publish(
             this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node }),
           )
+          onBreakpointHit?.(node)
         },
       )
     }

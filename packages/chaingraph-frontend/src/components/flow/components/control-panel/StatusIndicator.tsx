@@ -46,7 +46,7 @@ export function StatusIndicator({ status, debugMode }: StatusIndicatorProps) {
   const config = statusConfig[status]
 
   return (
-    <div className="flex items-center gap-2 px-2">
+    <div className="flex items-center gap-2 px-2 py-2">
       <div className="relative">
         <div className={cn(
           'w-2 h-2 rounded-full',

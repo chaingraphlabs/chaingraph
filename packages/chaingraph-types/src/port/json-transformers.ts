@@ -1,9 +1,11 @@
-import type { JSONValue } from 'superjson/dist/types'
+import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
 import type { IPort, PortConfig } from './types'
+import { PortFactory } from '@chaingraph/types/port/registry'
+import { parsePortConfig } from '@chaingraph/types/port/types/port-config-parsing.zod'
 import Decimal from 'decimal.js'
 import SuperJSON from 'superjson'
 import { MultiChannel } from './channel'
-import { PortRegistry } from './registry'
+import { PortBase } from './types'
 
 /**
  * Registers all default port transformers with superjson
@@ -36,9 +38,31 @@ export function registerPortTransformers() {
     MultiChannel.name,
   )
 
-  PortRegistry.getRegisteredPorts().forEach((port) => {
-    registerPortTransformer(port)
-  })
+  // PortRegistry.getRegisteredPorts().forEach((port) => {
+  //   registerPortTransformer(port)
+  // })
+
+  SuperJSON.registerCustom<PortBase, JSONValue>(
+    {
+      isApplicable: (v): v is PortBase => v instanceof PortBase,
+      serialize: v => v.serializePort(),
+      deserialize: (v) => {
+        const deserializedPort = SuperJSON.deserialize<{
+          config: any
+          value: any
+        }>(v as unknown as SuperJSONResult)
+
+        // validate config
+        const portConfig = parsePortConfig(deserializedPort.config)
+
+        const port = PortFactory.create(portConfig)
+        port.setValue(deserializedPort.value as never)
+
+        return port as PortBase
+      },
+    },
+    PortBase.name,
+  )
 }
 
 /**

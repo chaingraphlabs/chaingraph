@@ -1,15 +1,23 @@
+import type { INode } from '@chaingraph/types'
 import type { Position } from '@chaingraph/types/node/node-ui.ts'
-import type { Connection, Edge, EdgeChange, HandleType, NodeChange } from '@xyflow/react'
+import type { Connection, Edge, EdgeChange, HandleType, Node, NodeChange } from '@xyflow/react'
+import {
+  getNodePositionInFlow,
+  getNodePositionInsideParent,
+} from '@/components/flow/utils/node-position.ts'
+// import Node from '@xyflow/react/dist/types/Node'
 import {
   $activeFlowMetadata,
   $nodes,
   requestAddEdge,
   requestRemoveEdge,
   setNodeMetadata,
+  updateNodeParent,
   updateNodePosition,
   updateNodeUI,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
+import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'
 
@@ -20,6 +28,7 @@ export function useFlowCallbacks() {
   // const { flow } = useFlow()
   const activeFlow = useUnit($activeFlowMetadata)
   const nodes = useUnit($nodes)
+  const { getNode, getNodes } = useReactFlow()
 
   // Ref to track edge reconnection state
   const reconnectSuccessful = useRef(false)
@@ -45,6 +54,8 @@ export function useFlowCallbacks() {
             if (isSamePosition) {
               return
             }
+
+            console.log('111111111')
 
             positionInterpolator.clearNodeState(node.id)
 
@@ -227,6 +238,143 @@ export function useFlowCallbacks() {
     reconnectSuccessful.current = false
   }, [activeFlow?.id])
 
+  // Handle node drag end
+  const onNodeDragStop = useCallback((
+    event: React.MouseEvent,
+    nodesDrag: Node,
+    nodesDragStop: Node[],
+  ) => {
+    // check if nodesDrag in nodesDragStop if not add it
+    if (!nodesDragStop.find(node => node.id === nodesDrag.id)) {
+      nodesDragStop.push(nodesDrag)
+    }
+
+    for (const nodeDragStop of nodesDragStop) {
+      if (!activeFlow?.id || !nodeDragStop)
+        continue
+
+      const flowNode = nodes[nodeDragStop.id]
+
+      if (!flowNode || flowNode.metadata.category === 'group')
+        continue
+
+      // Get current parent group if exists
+      const currentParentId = flowNode.metadata.parentNodeId
+      const currentParent = currentParentId ? nodes[currentParentId] : undefined
+
+      const groupNodes = Object.entries(nodes).filter(([_, n]) =>
+        n.metadata.category === 'group',
+      )
+
+      let newParentId: string | undefined
+      let targetGroupNode: INode | undefined
+
+      // Calculate absolute position of the node
+      const absoluteNodePosition = currentParentId && currentParent
+        ? getNodePositionInFlow(
+            nodeDragStop.position,
+            currentParent.metadata.ui!.position!,
+          )
+        : nodeDragStop.position
+
+      // Find if node is inside any group
+      for (const [_, groupNode] of groupNodes) {
+        if (!groupNode.metadata.ui?.dimensions?.width || !groupNode.metadata.ui?.dimensions?.height || !groupNode.metadata.ui?.position)
+          continue
+
+        const groupBounds = {
+          x: groupNode.metadata.ui.position.x,
+          y: groupNode.metadata.ui.position.y,
+          width: groupNode.metadata.ui.dimensions.width,
+          height: groupNode.metadata.ui.dimensions.height,
+        }
+
+        // Use absolute position for checking containment
+        const nodeCenter = {
+          x: absoluteNodePosition.x + (nodeDragStop.width || 0) / 2,
+          y: absoluteNodePosition.y + (nodeDragStop.height || 0) / 2,
+        }
+
+        if (
+          nodeCenter.x >= groupBounds.x
+          && nodeCenter.x <= groupBounds.x + groupBounds.width
+          && nodeCenter.y >= groupBounds.y
+          && nodeCenter.y <= groupBounds.y + groupBounds.height
+        ) {
+          newParentId = groupNode.id
+          targetGroupNode = groupNode
+          break
+        }
+      }
+
+      // If node was in a group and is now not inside any group
+      if (currentParentId && !newParentId && currentParentId !== newParentId) {
+        if (!absoluteNodePosition || !absoluteNodePosition.x || !absoluteNodePosition.y) {
+          console.log(`[useFlowCallbacks] Invalid absolute position for node ${nodeDragStop.id}: ${JSON.stringify(absoluteNodePosition)} parent: ${JSON.stringify(currentParent)}`)
+          continue
+        }
+
+        // Moving out of group - use absolute position
+        updateNodePosition({
+          flowId: activeFlow.id!,
+          nodeId: nodeDragStop.id,
+          position: absoluteNodePosition as Position,
+          version: flowNode.getVersion(),
+        })
+
+        updateNodeParent({
+          flowId: activeFlow.id,
+          nodeId: nodeDragStop.id,
+          parentNodeId: undefined,
+          position: absoluteNodePosition as Position,
+          version: flowNode.getVersion() + 1,
+        })
+
+        // updateNodePosition({
+        //   flowId: activeFlow.id!,
+        //   nodeId: nodeDragStop.id,
+        //   position: absoluteNodePosition as Position,
+        //   version: flowNode.getVersion(),
+        // })
+      } else if (newParentId && newParentId !== currentParentId) {
+        // Moving into a new group - calculate relative position
+        const newPosition = getNodePositionInsideParent(
+          absoluteNodePosition,
+          targetGroupNode!.metadata.ui!.position!,
+        )
+
+        if (!newPosition || !newPosition.x || !newPosition.y) {
+          console.log(`[useFlowCallbacks] Invalid new position for node ${nodeDragStop.id} in group ${newParentId}`)
+          continue
+        }
+
+        console.log(`[useFlowCallbacks] Moving node ${nodeDragStop.id} into group ${newParentId}, new position:`, newPosition)
+
+        updateNodePosition({
+          flowId: activeFlow.id!,
+          nodeId: nodeDragStop.id,
+          position: newPosition as Position,
+          version: flowNode.getVersion(),
+        })
+
+        updateNodeParent({
+          flowId: activeFlow.id,
+          nodeId: nodeDragStop.id,
+          parentNodeId: newParentId,
+          position: newPosition as Position,
+          version: flowNode.getVersion() + 1,
+        })
+
+        // updateNodePosition({
+        //   flowId: activeFlow.id!,
+        //   nodeId: nodeDragStop.id,
+        //   position: newPosition as Position,
+        //   version: flowNode.getVersion(),
+        // })
+      }
+    }
+  }, [activeFlow?.id, nodes])
+
   return {
     onNodesChange,
     onEdgesChange,
@@ -234,5 +382,6 @@ export function useFlowCallbacks() {
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStop,
   }
 }

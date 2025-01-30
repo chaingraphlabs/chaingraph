@@ -172,12 +172,12 @@ export class ExecutionService {
       })
     }
 
-    if (instance.status !== ExecutionStatus.Paused) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: `Cannot resume execution in ${instance.status} status`,
-      })
-    }
+    // if (instance.status !== ExecutionStatus.Paused) {
+    //   throw new TRPCError({
+    //     code: 'BAD_REQUEST',
+    //     message: `Cannot resume execution in ${instance.status} status`,
+    //   })
+    // }
 
     const dbg = instance.engine.getDebugger()
     if (!dbg) {
@@ -267,12 +267,12 @@ export class ExecutionService {
       })
     }
 
-    if (instance.status !== ExecutionStatus.Paused) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Execution must be paused to step',
-      })
-    }
+    // if (instance.status !== ExecutionStatus.Paused) {
+    //   throw new TRPCError({
+    //     code: 'BAD_REQUEST',
+    //     message: `Execution must be paused to step, current status is: ${instance.status}`,
+    //   })
+    // }
 
     const dbg = instance.engine.getDebugger()
     if (!dbg) {

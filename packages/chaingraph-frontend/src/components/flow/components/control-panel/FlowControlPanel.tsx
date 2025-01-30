@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import {
   $executionState,
   $executionSubscriptionState,
+  clearExecutionState,
   createExecution,
   ExecutionStatus,
   isTerminalStatus,
@@ -22,7 +23,6 @@ import {
 } from '@/store/execution'
 import { $activeFlowMetadata } from '@/store/flow'
 import {
-  PauseIcon,
   PlayIcon,
   ReloadIcon,
   StopIcon,
@@ -72,6 +72,10 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
       stopExecution(executionId)
     }
   }, [executionId])
+
+  const handleReset = useCallback(() => {
+    clearExecutionState()
+  }, [])
 
   const handleDebugToggle = useCallback(() => {
     toggleDebugMode(!debugMode)
@@ -128,14 +132,14 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
               'p-1 flex items-center gap-1',
             )}
           >
-            {/* Play/Pause Button */}
+            {/* Play Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <MotionButton
                   variant="ghost"
                   size="icon"
-                  onClick={executionStatus === ExecutionStatus.RUNNING ? handlePause : handlePlay}
-                  disabled={!activeFlow?.id}
+                  onClick={handlePlay}
+                  disabled={!activeFlow?.id || executionStatus === ExecutionStatus.RUNNING}
                   className={cn(
                     'relative rounded-full',
                     executionStatus === ExecutionStatus.RUNNING && 'text-primary',
@@ -145,15 +149,13 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={executionStatus === ExecutionStatus.RUNNING ? 'pause' : 'play'}
+                      key="play"
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.8, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {executionStatus === ExecutionStatus.RUNNING
-                        ? <PauseIcon className="w-4 h-4" />
-                        : <PlayIcon className="w-4 h-4" />}
+                      <PlayIcon className="w-4 h-4" />
                     </motion.div>
                   </AnimatePresence>
 
@@ -175,7 +177,9 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                 </MotionButton>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                {executionStatus === ExecutionStatus.RUNNING ? 'Pause Flow' : 'Start Flow'}
+                {executionStatus === ExecutionStatus.PAUSED
+                  ? 'Resume Flow'
+                  : 'Start Flow'}
               </TooltipContent>
             </Tooltip>
 
@@ -215,8 +219,8 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                       <MotionButton
                         variant="ghost"
                         size="icon"
-                        onClick={handleStop}
-                        disabled={!canControl}
+                        onClick={handleReset}
+                        // disabled={!canControl}
                         className="rounded-full"
                         whileHover={{ rotate: 180 }}
                         whileTap={{ scale: 0.9 }}
@@ -225,7 +229,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                       </MotionButton>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
-                      Reset Flow State
+                      Reset Flow
                     </TooltipContent>
                   </Tooltip>
                 </motion.div>

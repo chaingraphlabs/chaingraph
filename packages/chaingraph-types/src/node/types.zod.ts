@@ -37,6 +37,7 @@ export const NodeMetadataSchema = z.object({
   icon: z.string().optional(),
   tags: z.array(z.string()).optional(),
   author: z.string().optional(),
+  parentNodeId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   portsConfig: z.map(z.string(), BasePortConfigSchema).optional(),
   ui: NodeUIMetadataSchema.optional(),

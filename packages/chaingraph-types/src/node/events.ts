@@ -8,6 +8,8 @@ export enum NodeEventType {
   // Status events
   StatusChange = 'node:status-change',
 
+  ParentChange = 'node:parent-change',
+
   // UI events
   UIPositionChange = 'node:ui:position-change',
   UIDimensionsChange = 'node:ui:dimensions-change',
@@ -23,6 +25,17 @@ export interface NodeEventBase {
   nodeId: string
   timestamp: Date
   version: number
+}
+
+/**
+ * Event emitted when node parent changes
+ */
+export interface NodeParentChangeEvent extends NodeEventBase {
+  type: NodeEventType.ParentChange
+  oldParentNodeId?: string
+  newParentNodeId?: string
+  oldPosition?: Position
+  newPosition: Position
 }
 
 /**
@@ -76,6 +89,7 @@ export interface NodeUIStyleChangeEvent extends NodeEventBase {
 export type NodeEvent =
   | NodeEventBase
   | NodeStatusChangeEvent
+  | NodeParentChangeEvent
   | NodeUIPositionChangeEvent
   | NodeUIDimensionsChangeEvent
   | NodeUIStateChangeEvent
@@ -83,6 +97,7 @@ export type NodeEvent =
 
 export interface EventTypeToInterface {
   [NodeEventType.StatusChange]: NodeStatusChangeEvent
+  [NodeEventType.ParentChange]: NodeParentChangeEvent
   [NodeEventType.UIPositionChange]: NodeUIPositionChangeEvent
   [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent
   [NodeEventType.UIStateChange]: NodeUIStateChangeEvent
