@@ -1,9 +1,10 @@
+import type { z } from 'zod'
 import type { ConfigFromPortType, PortConfig } from '../config/types'
 import type { BasePortConstructor, BasePortSerializer, BasePortValidator } from '../registry/port-factory'
-import { z } from 'zod'
 import { Port } from '../base/port.base'
-import { PortDirection, PortType } from '../config/constants'
+import { PortType } from '../config/constants'
 import { PortFactory } from '../registry/port-factory'
+import { applyLengthValidation, hasLengthValidation, stringConfigSchema, stringValueSchema } from '../schemas'
 
 /**
  * String port implementation
@@ -14,33 +15,14 @@ export class StringPort extends Port<ConfigFromPortType<PortType.String>, string
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.String>> {
-    return z.object({
-      type: z.literal(PortType.String),
-      validation: z.object({
-        minLength: z.number().int().min(0).optional(),
-        maxLength: z.number().int().min(0).optional(),
-      }).optional(),
-      defaultValue: z.string().optional(),
-      id: z.string().optional(),
-      title: z.string().optional(),
-      description: z.string().optional(),
-      direction: z.nativeEnum(PortDirection).optional(),
-      optional: z.boolean().optional(),
-      metadata: z.record(z.unknown()).optional(),
-    }) as z.ZodType<ConfigFromPortType<PortType.String>>
+    return stringConfigSchema as z.ZodType<ConfigFromPortType<PortType.String>>
   }
 
   getValueSchema(): z.ZodType<string> {
-    let schema = z.string()
+    let schema = stringValueSchema
 
-    if (this.config.validation) {
-      const { minLength, maxLength } = this.config.validation
-      if (typeof minLength === 'number') {
-        schema = schema.min(minLength)
-      }
-      if (typeof maxLength === 'number') {
-        schema = schema.max(maxLength)
-      }
+    if (hasLengthValidation(this.config)) {
+      schema = applyLengthValidation(schema, this.config.validation)
     }
 
     return schema
