@@ -38,7 +38,15 @@ export const NodeMetadataSchema = z.object({
   author: z.string().optional(),
   parentNodeId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-  portsConfig: z.map(z.string(), z.unknown()).optional(),
+  portsConfig: z.union([
+    z.map(z.string(), z.unknown()),
+    z.array(z.tuple([z.string(), z.unknown()])),
+  ]).transform((val) => {
+    if (Array.isArray(val)) {
+      return new Map(val)
+    }
+    return val
+  }).optional(),
   ui: NodeUIMetadataSchema.optional(),
   version: z.number().optional(),
 })

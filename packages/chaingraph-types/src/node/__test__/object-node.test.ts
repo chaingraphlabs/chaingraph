@@ -1,40 +1,44 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKind, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
+import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { PortType } from '@chaingraph/types/port.new'
+import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
+
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
-@PortObjectSchema({
-  description: 'Address schema',
-})
-class Address {
-  @PortString()
+class Address implements Record<string, unknown> {
+  [key: string]: unknown;
+
   street: string = 'Main Street'
-
-  @PortString()
   city: string = 'Anytown'
-
-  @PortString()
   country: string = 'Country'
+
+  constructor() {
+    // Initialize index signature properties
+    this.street = this.street
+    this.city = this.city
+    this.country = this.country
+  }
 }
 
-@PortObjectSchema({
-  description: 'User schema',
-})
-class User {
-  @PortString()
+class User implements Record<string, unknown> {
+  [key: string]: unknown;
+
   username: string = 'user'
-
-  @PortNumber()
   age: number = 30
-
-  @PortObject({
-    schema: Address,
-  })
   address: Address = new Address()
+
+  constructor() {
+    // Initialize index signature properties
+    this.username = this.username
+    this.age = this.age
+    this.address = this.address
+  }
 }
 
 @Node({
@@ -43,8 +47,16 @@ class User {
 })
 class ObjectNode extends BaseNode {
   @Input()
-  @PortObject({
-    schema: Address,
+  @Port({
+    type: PortType.Object,
+    schema: {
+      properties: {
+        street: { type: PortType.String, defaultValue: 'Main Street' },
+        city: { type: PortType.String, defaultValue: 'Anytown' },
+        country: { type: PortType.String, defaultValue: 'Country' },
+      },
+    },
+    defaultValue: new Address(),
   })
   address: Address = new Address()
 
@@ -64,8 +76,26 @@ class ObjectNode extends BaseNode {
 })
 class NestedObjectNode extends BaseNode {
   @Input()
-  @PortObject({
-    schema: User,
+  @Port({
+    type: PortType.Object,
+    schema: {
+      properties: {
+        username: { type: PortType.String, defaultValue: 'user' },
+        age: { type: PortType.Number, defaultValue: 30 },
+        address: {
+          type: PortType.Object,
+          schema: {
+            properties: {
+              street: { type: PortType.String, defaultValue: 'Main Street' },
+              city: { type: PortType.String, defaultValue: 'Anytown' },
+              country: { type: PortType.String, defaultValue: 'Country' },
+            },
+          },
+          defaultValue: new Address(),
+        },
+      },
+    },
+    defaultValue: new User(),
   })
   user: User = new User()
 
@@ -85,23 +115,41 @@ class NestedObjectNode extends BaseNode {
 })
 class ComplexNode extends BaseNode {
   @Input()
-  @PortArray({
+  @Port({
+    type: PortType.Array,
     defaultValue: [],
     elementConfig: {
-      kind: PortKind.Object,
-      schema: User,
+      type: PortType.Object,
+      schema: {
+        properties: {
+          username: { type: PortType.String, defaultValue: 'user' },
+          age: { type: PortType.Number, defaultValue: 30 },
+          address: {
+            type: PortType.Object,
+            schema: {
+              properties: {
+                street: { type: PortType.String, defaultValue: 'Main Street' },
+                city: { type: PortType.String, defaultValue: 'Anytown' },
+                country: { type: PortType.String, defaultValue: 'Country' },
+              },
+            },
+            defaultValue: new Address(),
+          },
+        },
+      },
       defaultValue: new User(),
     },
   })
   userList: User[] = [new User(), new User()]
 
   @Input()
-  @PortArray({
+  @Port({
+    type: PortType.Array,
     elementConfig: {
-      kind: PortKind.Array,
+      type: PortType.Array,
       defaultValue: [],
       elementConfig: {
-        kind: PortKind.Number,
+        type: PortType.Number,
         defaultValue: 0,
       },
     },
@@ -123,7 +171,8 @@ class ComplexNode extends BaseNode {
 
 describe('object node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register all port types
+    registerAllPorts()
     registerNodeTransformers()
   })
 

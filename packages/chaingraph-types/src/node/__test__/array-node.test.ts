@@ -1,10 +1,13 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKind, registerPortTransformers } from '@chaingraph/types'
-
+import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
+import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import { findPort } from '@chaingraph/types/node/ports-traverser'
+import { PortType } from '@chaingraph/types/port.new'
+import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
+
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -16,10 +19,11 @@ import 'reflect-metadata'
 })
 class ArrayNode extends BaseNode {
   @Input()
-  @PortArray({
+  @Port({
+    type: PortType.Array,
     defaultValue: [],
     elementConfig: {
-      kind: PortKind.Number,
+      type: PortType.Number,
       defaultValue: 0,
     },
   })
@@ -37,7 +41,8 @@ class ArrayNode extends BaseNode {
 
 describe('array node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register all port types
+    registerAllPorts()
     registerNodeTransformers()
   })
 

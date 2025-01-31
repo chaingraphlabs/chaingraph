@@ -2,6 +2,7 @@ import type { NodeMetadata } from '@chaingraph/types/node'
 import type { ConfigFromPortType, ObjectSchema, PortConfig } from '@chaingraph/types/port.new'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
 import { PortDirection, PortType } from '@chaingraph/types/port.new'
+import { portConfigSchema } from '@chaingraph/types/port.new/config/types'
 
 import 'reflect-metadata'
 
@@ -32,49 +33,22 @@ export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
     }
 
     const inferSchema = (config: PortConfig): PortConfig => {
-      // if (config) {
-      //   if (config.schema && config.schema.properties) {
-      //     // user provided the schema directly just return it
-      //     return config
-      //   }
-      //
-      //   if (config.schema && typeof config.schema === 'function') {
-      //     // user provided the schema as a class, create the schema from the class
-      //     config.schema = createObjectSchemaFromMetadata(
-      //       getOrCreateNodeMetadata(config.schema),
-      //     )
-      //   } else {
-      //     // try to infer the schema from the field value or type or class
-      //     const designType = Reflect.getMetadata('design:type', target, propertyKey)
-      //     if (!designType) {
-      //       throw new Error(`Can not infer object port schema from ${JSON.stringify(config)}, design:type is missing`)
-      //     }
-      //     config.schema = createObjectSchemaFromMetadata(
-      //       getOrCreateNodeMetadata(designType),
-      //     )
-      //   }
-      // } else
-
       if (config.type === PortType.Array) {
         if (!config?.elementConfig) {
           throw new Error(`Can not infer array port schema from ${JSON.stringify(config)}, elementConfig is missing`)
-        } else {
-          config.elementConfig = inferSchema(config.elementConfig)
         }
+        config.elementConfig = inferSchema(config.elementConfig)
       } else if (config.type === PortType.Enum) {
-        for (const key in Object.keys(config.options)) {
-          config.options[key] = inferSchema(config.options[key])
+        if (!config.options) {
+          throw new Error(`Can not infer enum port schema from ${JSON.stringify(config)}, options is missing`)
         }
+        config.options = config.options.map(option => inferSchema(option))
       } else if (config.type === PortType.Stream) {
         if (!config.valueType) {
           throw new Error(`Can not infer stream port schema from ${JSON.stringify(config)}, valueType is missing`)
         }
         config.valueType = inferSchema(config.valueType)
       } else if (typeof config.type === 'function') {
-        // Found the function type in the config
-        // Check if the function is a class and if so, get the metadata from Reflect
-        // and create the schema for the object
-
         const type = (config as any).type
         const classMetadata = getOrCreateNodeMetadata(type.prototype)
         Object.assign(config, {
@@ -83,7 +57,8 @@ export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
         })
       }
 
-      return config
+      // Validate the config using Zod schema
+      return portConfigSchema.parse(config)
     }
 
     const inferredConfig = inferSchema(config as PortConfig)
@@ -92,7 +67,6 @@ export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
     if (!existsPortConfig) {
       metadata.portsConfig.set(propertyKey, {
         ...inferredConfig,
-        // id: inferredConfig?.id ?? propertyKey,
         key: inferredConfig?.key ?? propertyKey,
         title: inferredConfig?.title ?? propertyKey,
       })
@@ -107,7 +81,6 @@ export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
 
 function createObjectSchemaFromMetadata(metadata: NodeMetadata): ObjectSchema {
   if (!metadata || !metadata.portsConfig) {
-    // throw new Error(`Port type class ${JSON.stringify(config)} does not have any ports defined`)
     throw new Error(`Can not infer object port schema from ${JSON.stringify(metadata)}, portsConfig is missing`)
   }
 
@@ -137,7 +110,7 @@ export function updatePortConfig(
 
   const existingConfig = metadata.portsConfig.get(propertyKey) || {} as PortConfig
   updater(existingConfig)
-  metadata.portsConfig.set(propertyKey, existingConfig)
+  metadata.portsConfig.set(propertyKey, portConfigSchema.parse(existingConfig))
 }
 
 function createPortDecorator<K extends PortType>(type: K) {
@@ -155,15 +128,15 @@ export function Input() {
 
     const portConfig = metadata.portsConfig.get(propertyKey)
     if (!portConfig) {
-      metadata.portsConfig.set(propertyKey, {
+      metadata.portsConfig.set(propertyKey, portConfigSchema.parse({
         type: PortType.Any,
         direction: PortDirection.Input,
-      })
+      }))
     } else {
-      metadata.portsConfig.set(propertyKey, {
+      metadata.portsConfig.set(propertyKey, portConfigSchema.parse({
         ...portConfig,
         direction: PortDirection.Input,
-      })
+      }))
     }
   }
 }
@@ -177,21 +150,21 @@ export function Output() {
 
     const portConfig = metadata.portsConfig.get(propertyKey)
     if (!portConfig) {
-      metadata.portsConfig.set(propertyKey, {
+      metadata.portsConfig.set(propertyKey, portConfigSchema.parse({
         type: PortType.Any,
         direction: PortDirection.Output,
-      })
+      }))
     } else {
-      metadata.portsConfig.set(propertyKey, {
+      metadata.portsConfig.set(propertyKey, portConfigSchema.parse({
         ...portConfig,
         direction: PortDirection.Output,
-      })
+      }))
     }
   }
 }
 
 /**
- * @see ObjectPort
+ * @see StringPort
  */
 export const PortString = createPortDecorator(PortType.String)
 

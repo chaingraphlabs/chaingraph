@@ -1,8 +1,12 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortEnumFromNative, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
+import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { PortType } from '@chaingraph/types/port.new'
+import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
+
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
@@ -19,7 +23,30 @@ enum Color {
 })
 class EnumNode extends BaseNode {
   @Input()
-  @PortEnumFromNative(Color)
+  @Port({
+    type: PortType.Enum,
+    options: [
+      {
+        id: Color.Red,
+        type: PortType.String,
+        title: 'Red',
+        defaultValue: Color.Red,
+      },
+      {
+        id: Color.Green,
+        type: PortType.String,
+        title: 'Green',
+        defaultValue: Color.Green,
+      },
+      {
+        id: Color.Blue,
+        type: PortType.String,
+        title: 'Blue',
+        defaultValue: Color.Blue,
+      },
+    ],
+    defaultValue: Color.Red,
+  })
   favoriteColor: Color = Color.Red
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
@@ -34,7 +61,8 @@ class EnumNode extends BaseNode {
 
 describe('enum node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register all port types
+    registerAllPorts()
     registerNodeTransformers()
   })
 

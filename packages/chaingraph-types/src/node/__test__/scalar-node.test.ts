@@ -1,8 +1,12 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortBoolean, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
+import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { PortType } from '@chaingraph/types/port.new'
+import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
+
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
@@ -13,19 +17,31 @@ import 'reflect-metadata'
 })
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString({
+  @Port({
+    type: PortType.String,
     defaultValue: 'default string',
+    validation: {
+      minLength: 1,
+      maxLength: 100,
+    },
   })
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber({
+  @Port({
+    type: PortType.Number,
     defaultValue: 42,
+    validation: {
+      min: 0,
+      max: 100,
+      integer: true,
+    },
   })
   numInput: number = 42
 
   @Input()
-  @PortBoolean({
+  @Port({
+    type: PortType.Boolean,
     defaultValue: true,
   })
   boolInput: boolean = true
@@ -42,7 +58,8 @@ class ScalarNode extends BaseNode {
 
 describe('scalar node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register ports from the new system
+    registerAllPorts()
     registerNodeTransformers()
   })
 
@@ -60,5 +77,10 @@ describe('scalar node serialization', () => {
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(scalarNode.metadata)
     expect(parsed.status).toEqual(scalarNode.status)
+
+    // Verify port values
+    expect(parsed.strInput).toBe('default string')
+    expect(parsed.numInput).toBe(42)
+    expect(parsed.boolInput).toBe(true)
   })
 })

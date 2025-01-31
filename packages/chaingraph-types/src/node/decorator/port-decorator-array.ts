@@ -1,206 +1,255 @@
-import type { PortConfigWithTypeClass } from '@chaingraph/types/node'
-import type { ConfigFromPortType } from '@chaingraph/types/port.new'
+import type { ConfigFromPortType, ObjectSchema, PortConfig, PortDirection } from '@chaingraph/types/port.new'
 import { PortArray } from '@chaingraph/types/node'
 import { PortType } from '@chaingraph/types/port.new'
 
-/**
- * Type definition for array port configurations used in decorators.
- * Extends the partial `ArrayPortConfig` and ensures that the `type` is `PortType.Array`.
- */
-// export type DecoratorArrayPortConfig = Partial<ConfigFromPortType<PortType.Array>>
+interface BasePortFields {
+  id?: string
+  title?: string
+  key?: string
+  description?: string
+  direction?: PortDirection
+  optional?: boolean
+  metadata?: Record<string, unknown>
+  defaultValue?: unknown[]
+  parentId?: string
+  nodeId?: string
+}
 
 /**
  * Decorator for defining a port that represents an array of strings.
  *
- * This decorator simplifies the creation of array ports where the elements are strings.
- * It configures the port with the necessary `elementConfig` and allows optional customization.
- *
- * **Features:**
- * - **Simplified Syntax:** Easily define string array ports without verbose configurations.
- * - **Customization:** Optionally provide additional configuration such as `id`, `name`, `description`, and `defaultValue`.
- * - **Default Value:** Each element in the array defaults to an empty string `''` if not specified.
- *
- * **Usage Examples:**
+ * @example
  * ```typescript
  * // Basic usage
- * @Output()
+ * @Input()
  * @PortStringArray()
- * stringArray?: string[]
+ * strings: string[] = []
  *
- * // With additional configuration
+ * // With validation
  * @Input()
  * @PortStringArray({
- *   id: 'myStringArray',
- *   name: 'My String Array',
- *   description: 'An array of strings with default values',
- *   defaultValue: ['hello', 'world'],
+ *   elementConfig: {
+ *     validation: {
+ *       minLength: 2,
+ *       maxLength: 10
+ *     }
+ *   }
  * })
- * configuredStringArray?: string[]
+ * validatedStrings: string[] = []
  * ```
- *
- * @param config - Optional configuration to customize the array port.
- * @returns A decorator function that applies the array port configuration.
  */
-export function PortStringArray(config?: DecoratorArrayPortConfig) {
-  return PortArray({
-    defaultValue: config?.defaultValue || [],
-    ...config,
-    elementConfig: {
-      defaultValue: '',
-      ...(config?.elementConfig || {}),
-      type: PortType.String,
-    } as ConfigFromPortType<PortType.String>,
-  })
+export function PortStringArray(config?: BasePortFields & {
+  elementConfig?: Omit<ConfigFromPortType<PortType.String>, 'type'>
+}) {
+  const elementConfig: ConfigFromPortType<PortType.String> = {
+    type: PortType.String,
+    defaultValue: '',
+    ...config?.elementConfig,
+  }
+
+  const arrayConfig: ConfigFromPortType<PortType.Array> = {
+    type: PortType.Array,
+    elementConfig,
+    defaultValue: [],
+    ...(config
+      ? {
+          id: config.id,
+          title: config.title,
+          key: config.key,
+          description: config.description,
+          direction: config.direction,
+          optional: config.optional,
+          metadata: config.metadata,
+          parentId: config.parentId,
+          nodeId: config.nodeId,
+        }
+      : {}),
+  }
+
+  return PortArray(arrayConfig)
 }
 
 /**
  * Decorator for defining a port that represents an array of numbers.
  *
- * This decorator simplifies the creation of array ports where the elements are numbers.
- * It sets up the necessary `elementConfig` and allows optional customization.
- *
- * **Features:**
- * - **Simplified Syntax:** Easily define number array ports without verbose configurations.
- * - **Customization:** Optionally provide additional configuration such as `id`, `name`, `description`, and `defaultValue`.
- * - **Default Value:** Each element in the array defaults to `0` if not specified.
- *
- * **Usage Examples:**
+ * @example
  * ```typescript
  * // Basic usage
- * @Output()
- * @PortNumberArray()
- * numberArray?: number[]
- *
- * // With additional configuration
  * @Input()
- * @PortNumberArray({
- *   id: 'myNumberArray',
- *   name: 'My Number Array',
- *   description: 'An array of numbers with default values',
- *   defaultValue: [1, 2, 3],
- * })
- * configuredNumberArray?: number[]
- * ```
+ * @PortArrayNumber()
+ * numbers: number[] = []
  *
- * @param config - Optional configuration to customize the array port.
- * @returns A decorator function that applies the array port configuration.
+ * // With validation
+ * @Input()
+ * @PortArrayNumber({
+ *   elementConfig: {
+ *     validation: {
+ *       min: 0,
+ *       max: 100
+ *     }
+ *   }
+ * })
+ * validatedNumbers: number[] = []
+ * ```
  */
-export function PortArrayNumber(config?: PortConfigWithTypeClass) {
-  return PortArray({
+export function PortArrayNumber(config?: BasePortFields & {
+  elementConfig?: Omit<ConfigFromPortType<PortType.Number>, 'type'>
+}) {
+  const elementConfig: ConfigFromPortType<PortType.Number> = {
+    type: PortType.Number,
+    defaultValue: 0,
+    ...config?.elementConfig,
+  }
+
+  const arrayConfig: ConfigFromPortType<PortType.Array> = {
+    type: PortType.Array,
+    elementConfig,
     defaultValue: [],
-    ...config,
-    elementConfig: {
-      ...(config?.elementConfig || {}),
-      defaultValue: 0,
-      type: PortType.Number,
-    } as ConfigFromPortType<PortType.Number>,
-  })
+    ...(config
+      ? {
+          id: config.id,
+          title: config.title,
+          key: config.key,
+          description: config.description,
+          direction: config.direction,
+          optional: config.optional,
+          metadata: config.metadata,
+          parentId: config.parentId,
+          nodeId: config.nodeId,
+        }
+      : {}),
+  }
+
+  return PortArray(arrayConfig)
 }
 
 /**
  * Decorator for defining a port that represents an array of objects.
  *
- * This decorator allows you to create array ports where the elements are instances of a specified class.
- * The class should be appropriately decorated with port configurations for its properties.
- *
- * **Features:**
- * - **Flexible Element Type:** Specify any class as the element type.
- * - **Customization:** Optionally provide additional configuration such as `id`, `name`, `description`, and `defaultValue`.
- *
- * **Usage Examples:**
+ * @example
  * ```typescript
- * // Assuming TestUserObject is a class decorated with port configurations
- * @Output()
- * @PortObjectArray(TestUserObject)
- * userArray?: TestUserObject[]
- *
- * // With additional configuration
+ * // Basic usage
  * @Input()
- * @PortObjectArray(TestUserObject, {
- *   id: 'myUserArray',
- *   name: 'My User Array',
- *   description: 'An array of user objects',
+ * @PortArrayObject(UserProfile)
+ * users: UserProfile[] = []
+ *
+ * // With configuration
+ * @Input()
+ * @PortArrayObject(UserProfile, {
+ *   description: 'List of user profiles',
+ *   optional: true
  * })
- * configuredUserArray?: TestUserObject[]
+ * optionalUsers: UserProfile[] = []
  * ```
- *
- * **Special Considerations:**
- * - Ensure that the `objectType` class is decorated with port configurations for its properties using decorators like `@PortString`, `@PortNumber`, etc.
- *
- * @param objectType - The class constructor of the object type for the array elements.
- * @param config - Optional configuration to customize the array port.
- * @returns A decorator function that applies the array port configuration.
  */
-export function PortArrayObject<T>(objectType: new () => T, config?: PortConfigWithTypeClass) {
-  return PortArray({
+export function PortArrayObject<T>(
+  objectType: new () => T,
+  config?: BasePortFields & {
+    elementConfig?: Omit<ConfigFromPortType<PortType.Object>, 'type' | 'schema'>
+  },
+) {
+  const schema: ObjectSchema = {
+    properties: {},
+    type: objectType.name,
+  }
+
+  const elementConfig: ConfigFromPortType<PortType.Object> = {
+    type: PortType.Object,
+    schema,
+    defaultValue: {},
+    ...config?.elementConfig,
+  }
+
+  const arrayConfig: ConfigFromPortType<PortType.Array> = {
+    type: PortType.Array,
+    elementConfig,
     defaultValue: [],
-    ...config,
-    elementConfig: {
-      defaultValue: {},
-      type: objectType,
-      ...(config?.elementConfig || {}),
-    },
-  })
+    ...(config
+      ? {
+          id: config.id,
+          title: config.title,
+          key: config.key,
+          description: config.description,
+          direction: config.direction,
+          optional: config.optional,
+          metadata: config.metadata,
+          parentId: config.parentId,
+          nodeId: config.nodeId,
+        }
+      : {}),
+  }
+
+  return PortArray(arrayConfig)
 }
 
 /**
  * Decorator for defining a port that represents a nested (multi-dimensional) array.
  *
- * This decorator allows you to create arrays of arbitrary nesting depth with specified element configurations.
- *
- * **Features:**
- * - **Arbitrary Depth:** Create arrays nested to any depth by specifying the `depth` parameter.
- * - **Flexible Element Type:** Define the element configuration for the innermost elements.
- *
- * **Usage Examples:**
+ * @example
  * ```typescript
- * // Creating a 2D array of strings
- * @Output()
+ * // 2D array of numbers
+ * @Input()
  * @PortArrayNested(2, {
- *   type: PortTypeEnum.String,
- *   defaultValue: '',
+ *   type: PortType.Number,
+ *   defaultValue: 0
  * })
- * string2DArray?: string[][]
+ * matrix: number[][] = []
  *
- * // Creating a 3D array of numbers
- * @Output()
+ * // 3D array of strings
+ * @Input()
  * @PortArrayNested(3, {
- *   type: PortTypeEnum.Number,
- *   defaultValue: 0,
+ *   type: PortType.String,
+ *   defaultValue: ''
  * })
- * number3DArray?: number[][][]
- *
- * // Creating a nested array of objects
- * @Output()
- * @PortArrayNested(2, {
- *   type: TestUserObject,
- * })
- * user2DArray?: TestUserObject[][]
+ * cube: string[][][] = []
  * ```
- *
- * **Special Considerations:**
- * - **Depth Parameter:** The `depth` must be an integer greater than or equal to 1.
- * - **Element Configuration:** The `elementConfig` specifies the configuration for the innermost elements in the nested array.
- * - **Custom Configurations:** You can pass additional configuration options within the `elementConfig`.
- *
- * @param depth - The number of nesting levels (e.g., `2` for a 2D array).
- * @param elementConfig - The port configuration for the innermost array elements.
- * @returns A decorator function that applies the nested array port configuration.
  */
-export function PortArrayNested(depth: number, elementConfig: PortConfigWithTypeClass): (target: any, propertyKey: string) => void {
-  const createNestedConfig = (level: number): any => {
+export function PortArrayNested(
+  depth: number,
+  elementConfig: PortConfig,
+  config?: BasePortFields,
+) {
+  const createNestedConfig = (level: number): ConfigFromPortType<PortType.Array> => {
     if (level === 0) {
-      return elementConfig
+      return {
+        type: PortType.Array,
+        elementConfig,
+        defaultValue: [],
+        ...(config
+          ? {
+              id: config.id,
+              title: config.title,
+              key: config.key,
+              description: config.description,
+              direction: config.direction,
+              optional: config.optional,
+              metadata: config.metadata,
+              parentId: config.parentId,
+              nodeId: config.nodeId,
+            }
+          : {}),
+      }
     }
+
     return {
       type: PortType.Array,
-      defaultValue: [],
       elementConfig: createNestedConfig(level - 1),
+      defaultValue: [],
+      ...(config
+        ? {
+            id: config.id,
+            title: config.title,
+            key: config.key,
+            description: config.description,
+            direction: config.direction,
+            optional: config.optional,
+            metadata: config.metadata,
+            parentId: config.parentId,
+            nodeId: config.nodeId,
+          }
+        : {}),
     }
   }
 
-  return PortArray({
-    defaultValue: [],
-    elementConfig: createNestedConfig(depth - 1),
-  })
+  return PortArray(createNestedConfig(depth - 1))
 }

@@ -38,14 +38,14 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
             ports.set(portId, port.serialize())
           }
 
-          // serialize only ports values instead of all ports
-          // for better performance and smaller payload
+          // Convert portsConfig Map to array of entries for serialization
+          const portsConfigEntries = Array.from(v.metadata.portsConfig?.entries() || [])
 
           return superjson.serialize({
             id: v.id,
             metadata: {
               ...v.metadata,
-              portsConfig: {}, // exclude ports config because it's already in the ports
+              portsConfig: portsConfigEntries, // Serialize as array of entries
             },
             status: v.status,
             ports,
@@ -54,8 +54,15 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
         deserialize: (v) => {
           const nodeData = superjson.deserialize(v as any as SuperJSONResult) as any
 
-          // const metadata = superjson.deserialize(nodeData.metadata)
-          const metadata = nodeData.metadata
+          // Convert portsConfig entries back to Map
+          const portsConfigEntries = nodeData.metadata.portsConfig || []
+          const portsConfig = new Map(portsConfigEntries)
+
+          const metadata = {
+            ...nodeData.metadata,
+            portsConfig,
+          }
+
           const nodeDataParsed = SerializedNodeSchema.parse({
             id: nodeData.id,
             metadata,
@@ -69,7 +76,6 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
           )
 
           const ports = new Map<string, IPortAny>()
-          const portsConfig = new Map<string, PortConfig>()
           const serializedPorts = nodeData.ports as Map<string, SerializedPortData>
           for (const [portId, serializedPort] of serializedPorts.entries()) {
             const port = PortFactory
@@ -77,10 +83,8 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
               .deserialize(serializedPort)
 
             ports.set(portId, port)
-            portsConfig.set(portId, port.config)
           }
 
-          node.setMetadata({ ...node.metadata, portsConfig })
           node.setPorts(ports)
           node.setStatus((nodeData as any).status, false)
 
