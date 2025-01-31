@@ -68,10 +68,10 @@ export function Metadata(key: string, value: any) {
   }
 }
 
-export function Validation(validationRules: any) {
-  return function (target: any, propertyKey: string) {
-    updatePortConfig(target, propertyKey, (config) => {
-      config.validation = validationRules
-    })
-  }
-}
+// export function Validation(validationRules: any) {
+//   return function (target: any, propertyKey: string) {
+//     updatePortConfig(target, propertyKey, (config) => {
+//       config.validation = validationRules
+//     })
+//   }
+// }

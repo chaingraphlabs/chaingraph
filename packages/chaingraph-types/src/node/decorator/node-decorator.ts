@@ -1,7 +1,6 @@
 import type { NodeMetadata } from '@chaingraph/types/node/types'
 
-import type { PortConfig } from '@chaingraph/types/port'
-
+import type { PortConfig } from '@chaingraph/types/port.new'
 import { NodeRegistry } from '@chaingraph/types/node/registry'
 import 'reflect-metadata'
 

@@ -1,4 +1,4 @@
-import type { ObjectSchema } from '@chaingraph/types/port'
+import type { ObjectSchema } from '@chaingraph/types/port.new'
 import type { INode } from './interface'
 import {
   getOrCreateNodeMetadata,

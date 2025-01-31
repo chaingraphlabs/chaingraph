@@ -22,7 +22,6 @@ export * from './config/types'
 // Re-export commonly used types
 export type {
   PortConfig,
-  SerializedPort,
   ValidationResult,
 } from './config/types'
 

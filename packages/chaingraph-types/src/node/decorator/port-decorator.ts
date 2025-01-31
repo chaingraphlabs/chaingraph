@@ -1,83 +1,84 @@
 import type { NodeMetadata } from '@chaingraph/types/node'
-import type { ObjectSchema, PortConfig, PortConfigByKind } from '@chaingraph/types/port'
-import type { BasePortConfig } from '@chaingraph/types/port/types/port-config'
+import type { ConfigFromPortType, ObjectSchema, PortConfig } from '@chaingraph/types/port.new'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
-import { ArrayPort, EnumPort, ObjectPort, StreamInputPort, StreamOutputPort } from '@chaingraph/types/port'
-import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
-import { PortKind } from '@chaingraph/types/port/types/port-kind'
+import { PortDirection, PortType } from '@chaingraph/types/port.new'
 
 import 'reflect-metadata'
 
 const PORT_METADATA_KEY = Symbol('port:metadata')
 
-export type PortConfigWithClassKind = PortConfig | Omit<PortConfig, 'kind'> & {
-  kind: Function
+export type PortConfigWithTypeClass = ConfigFromPortType<any> | Omit<ConfigFromPortType<any>, 'type'> & {
+  type: Function
 }
 
-export type PartialPortConfig<K extends PortKind> = Omit<
-  PortConfigByKind<K>,
-  'kind' | 'schema' | 'elementConfig' | 'valueType'
+export type PartialPortConfig<K extends PortType> = Omit<
+  ConfigFromPortType<K>,
+  'type' | 'schema' | 'elementConfig' | 'valueType'
 > & {
+  type?: K | Function
+  defaultValue?: any
   schema?: any // For ObjectPortConfig
-  elementConfig?: PortConfigWithClassKind // For ArrayPortConfig
-  valueType?: PortConfigWithClassKind // For StreamOutputPortConfig, StreamInputPortConfig
+  elementConfig?: PortConfigWithTypeClass // For ArrayPortConfig
+  valueType?: PortConfigWithTypeClass // For StreamOutputPortConfig, StreamInputPortConfig
 }
 
-export type PortDecoratorConfig<K extends PortKind> = PartialPortConfig<K> & { kind: K | Function }
+export type PortDecoratorConfig<K extends PortType> = PartialPortConfig<K> & { type: K | Function }
 
-export function Port<K extends PortKind>(config: PortDecoratorConfig<K>) {
+export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
   return function (target: any, propertyKey: string) {
     const metadata = getOrCreateNodeMetadata(target)
     if (!metadata.portsConfig) {
       metadata.portsConfig = new Map<string, PortConfig>()
     }
 
-    const inferSchema = (config: BasePortConfig<any>): BasePortConfig<any> => {
-      if (ObjectPort.isObjectPortConfig(config)) {
-        if (config.schema && config.schema.properties) {
-          // user provided the schema directly just return it
-          return config
-        }
+    const inferSchema = (config: PortConfig): PortConfig => {
+      // if (config) {
+      //   if (config.schema && config.schema.properties) {
+      //     // user provided the schema directly just return it
+      //     return config
+      //   }
+      //
+      //   if (config.schema && typeof config.schema === 'function') {
+      //     // user provided the schema as a class, create the schema from the class
+      //     config.schema = createObjectSchemaFromMetadata(
+      //       getOrCreateNodeMetadata(config.schema),
+      //     )
+      //   } else {
+      //     // try to infer the schema from the field value or type or class
+      //     const designType = Reflect.getMetadata('design:type', target, propertyKey)
+      //     if (!designType) {
+      //       throw new Error(`Can not infer object port schema from ${JSON.stringify(config)}, design:type is missing`)
+      //     }
+      //     config.schema = createObjectSchemaFromMetadata(
+      //       getOrCreateNodeMetadata(designType),
+      //     )
+      //   }
+      // } else
 
-        if (config.schema && typeof config.schema === 'function') {
-          // user provided the schema as a class, create the schema from the class
-          config.schema = createObjectSchemaFromMetadata(
-            getOrCreateNodeMetadata(config.schema),
-          )
-        } else {
-          // try to infer the schema from the field value or type or class
-          const designType = Reflect.getMetadata('design:type', target, propertyKey)
-          if (!designType) {
-            throw new Error(`Can not infer object port schema from ${JSON.stringify(config)}, design:type is missing`)
-          }
-          config.schema = createObjectSchemaFromMetadata(
-            getOrCreateNodeMetadata(designType),
-          )
-        }
-      } else if (ArrayPort.isArrayPortConfig(config)) {
+      if (config.type === PortType.Array) {
         if (!config?.elementConfig) {
           throw new Error(`Can not infer array port schema from ${JSON.stringify(config)}, elementConfig is missing`)
         } else {
           config.elementConfig = inferSchema(config.elementConfig)
         }
-      } else if (EnumPort.isEnumPortConfig(config)) {
+      } else if (config.type === PortType.Enum) {
         for (const key in Object.keys(config.options)) {
           config.options[key] = inferSchema(config.options[key])
         }
-      } else if (StreamInputPort.isStreamInputPortConfig(config) || StreamOutputPort.isStreamOutputPortConfig(config)) {
+      } else if (config.type === PortType.Stream) {
         if (!config.valueType) {
           throw new Error(`Can not infer stream port schema from ${JSON.stringify(config)}, valueType is missing`)
         }
         config.valueType = inferSchema(config.valueType)
-      } else if (typeof config.kind === 'function') {
-        // Found the function kind in the config
+      } else if (typeof config.type === 'function') {
+        // Found the function type in the config
         // Check if the function is a class and if so, get the metadata from Reflect
         // and create the schema for the object
 
-        const kind = (config as any).kind
-        const classMetadata = getOrCreateNodeMetadata(kind.prototype)
+        const type = (config as any).type
+        const classMetadata = getOrCreateNodeMetadata(type.prototype)
         Object.assign(config, {
-          kind: PortKind.Object,
+          type: PortType.Object,
           schema: createObjectSchemaFromMetadata(classMetadata),
         })
       }
@@ -99,14 +100,14 @@ export function Port<K extends PortKind>(config: PortDecoratorConfig<K>) {
       metadata.portsConfig.set(propertyKey, {
         ...existsPortConfig,
         ...inferredConfig,
-      })
+      } as PortConfig)
     }
   }
 }
 
 function createObjectSchemaFromMetadata(metadata: NodeMetadata): ObjectSchema {
   if (!metadata || !metadata.portsConfig) {
-    // throw new Error(`Port kind class ${JSON.stringify(config)} does not have any ports defined`)
+    // throw new Error(`Port type class ${JSON.stringify(config)} does not have any ports defined`)
     throw new Error(`Can not infer object port schema from ${JSON.stringify(metadata)}, portsConfig is missing`)
   }
 
@@ -139,9 +140,9 @@ export function updatePortConfig(
   metadata.portsConfig.set(propertyKey, existingConfig)
 }
 
-function createPortDecorator<K extends PortKind>(kind: K) {
+function createPortDecorator<K extends PortType>(type: K) {
   return (config?: PartialPortConfig<K>) => {
-    return Port<K>({ ...(config || {} as PartialPortConfig<K>), kind })
+    return Port<K>({ ...(config || {} as PartialPortConfig<K>), type })
   }
 }
 
@@ -155,7 +156,7 @@ export function Input() {
     const portConfig = metadata.portsConfig.get(propertyKey)
     if (!portConfig) {
       metadata.portsConfig.set(propertyKey, {
-        kind: PortKind.Any,
+        type: PortType.Any,
         direction: PortDirection.Input,
       })
     } else {
@@ -177,7 +178,7 @@ export function Output() {
     const portConfig = metadata.portsConfig.get(propertyKey)
     if (!portConfig) {
       metadata.portsConfig.set(propertyKey, {
-        kind: PortKind.Any,
+        type: PortType.Any,
         direction: PortDirection.Output,
       })
     } else {
@@ -191,54 +192,40 @@ export function Output() {
 
 /**
  * @see ObjectPort
- * @see ObjectPortConfig
  */
-export const PortString = createPortDecorator(PortKind.String)
+export const PortString = createPortDecorator(PortType.String)
 
 /**
  * @see NumberPort
- * @see NumberPortConfig
  */
-export const PortNumber = createPortDecorator(PortKind.Number)
+export const PortNumber = createPortDecorator(PortType.Number)
 
 /**
  * @see BooleanPort
- * @see BooleanPortConfig
  */
-export const PortBoolean = createPortDecorator(PortKind.Boolean)
+export const PortBoolean = createPortDecorator(PortType.Boolean)
 
 /**
  * @see ArrayPort
- * @see ArrayPortConfig
  */
-export const PortArray = createPortDecorator(PortKind.Array)
+export const PortArray = createPortDecorator(PortType.Array)
 
 /**
  * @see ObjectPort
- * @see ObjectPortConfig
  */
-export const PortObject = createPortDecorator(PortKind.Object)
+export const PortObject = createPortDecorator(PortType.Object)
 
 /**
  * @see AnyPort
- * @see AnyPortConfig
  */
-export const PortAny = createPortDecorator(PortKind.Any)
+export const PortAny = createPortDecorator(PortType.Any)
 
 /**
  * @see EnumPort
- * @see EnumPortConfig
  */
-export const PortEnum = createPortDecorator(PortKind.Enum)
+export const PortEnum = createPortDecorator(PortType.Enum)
 
 /**
- * @see StreamOutputPort
- * @see StreamOutputPortConfig
+ * @see StreamPort
  */
-export const PortStreamOutput = createPortDecorator(PortKind.StreamOutput)
-
-/**
- * @see StreamInputPort
- * @see StreamInputPortConfig
- */
-export const PortStreamInput = createPortDecorator(PortKind.StreamInput)
+export const PortStream = createPortDecorator(PortType.Stream)

@@ -1,11 +1,12 @@
-import type { INode, IPort } from '@chaingraph/types'
+import type { INode } from '@chaingraph/types'
+import type { IPortAny } from '@chaingraph/types/port.new'
 
 /**
  * Traverse all ports of a node
  * @param node Node to traverse
  * @param visitor Visitor function
  */
-export function portsTraverser(node: INode, visitor: (port: IPort) => void | Promise<void>) {
+export function portsTraverser(node: INode, visitor: (port: IPortAny) => void | Promise<void>) {
   for (const port of node.ports.values()) {
     visitor(port)
   }
@@ -17,8 +18,8 @@ export function portsTraverser(node: INode, visitor: (port: IPort) => void | Pro
  * @param predicate Predicate function
  * @returns Filtered ports
  */
-export function filterPorts(node: INode, predicate: (port: IPort) => boolean): IPort[] {
-  const ports: IPort[] = []
+export function filterPorts(node: INode, predicate: (port: IPortAny) => boolean): IPortAny[] {
+  const ports: IPortAny[] = []
   portsTraverser(node, (port) => {
     if (predicate(port)) {
       ports.push(port)
@@ -33,8 +34,8 @@ export function filterPorts(node: INode, predicate: (port: IPort) => boolean): I
  * @param predicate Predicate function
  * @returns Found port or undefined
  */
-export function findPort(node: INode, predicate: (port: IPort) => boolean): IPort | undefined {
-  let foundPort: IPort | undefined
+export function findPort(node: INode, predicate: (port: IPortAny) => boolean): IPortAny | undefined {
+  let foundPort: IPortAny | undefined
   portsTraverser(node, (port) => {
     if (predicate(port)) {
       foundPort = port
@@ -49,8 +50,8 @@ export function findPort(node: INode, predicate: (port: IPort) => boolean): IPor
  * @param mapper Mapper function
  * @returns Mapped ports
  */
-export function mapPorts(node: INode, mapper: (port: IPort) => IPort): IPort[] {
-  const mappedPorts: IPort[] = []
+export function mapPorts(node: INode, mapper: (port: IPortAny) => IPortAny): IPortAny[] {
+  const mappedPorts: IPortAny[] = []
   portsTraverser(node, (port) => {
     mappedPorts.push(mapper(port))
   })
@@ -64,7 +65,7 @@ export function mapPorts(node: INode, mapper: (port: IPort) => IPort): IPort[] {
  * @param initialValue Initial value
  * @returns Reduced value
  */
-export function reducePorts<T>(node: INode, reducer: (accumulator: T, port: IPort) => T, initialValue: T): T {
+export function reducePorts<T>(node: INode, reducer: (accumulator: T, port: IPortAny) => T, initialValue: T): T {
   let accumulator = initialValue
   portsTraverser(node, (port) => {
     accumulator = reducer(accumulator, port)

@@ -31,25 +31,6 @@ describe('stream port', () => {
       expect(port.hasValue()).toBe(false)
     })
 
-    it('should handle default value', () => {
-      const channel = new MultiChannel<number>()
-      channel.send(1)
-      channel.send(2)
-      channel.send(3)
-
-      const config: ConfigFromPortType<PortType.Stream> = {
-        type: PortType.Stream,
-        mode: 'input',
-        valueType: { type: PortType.Number },
-        defaultValue: channel,
-      }
-
-      const port = new StreamPort(config)
-      expect(port.hasValue()).toBe(true)
-      expect(port.getValue()).toBe(channel)
-      expect(port.getValue().getBuffer()).toEqual([1, 2, 3])
-    })
-
     it('should set and get value', async () => {
       const port = new StreamPort<number>({
         type: PortType.Stream,

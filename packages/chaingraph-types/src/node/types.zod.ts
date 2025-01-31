@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { BasePortConfigSchema } from '../port'
 import { NodeExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**
@@ -39,7 +38,7 @@ export const NodeMetadataSchema = z.object({
   author: z.string().optional(),
   parentNodeId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-  portsConfig: z.map(z.string(), BasePortConfigSchema).optional(),
+  portsConfig: z.map(z.string(), z.unknown()).optional(),
   ui: NodeUIMetadataSchema.optional(),
   version: z.number().optional(),
 })

@@ -1,20 +1,13 @@
-import type {
-  ArrayPortConfig,
-  PortConfigWithClassKind,
-} from '@chaingraph/types'
-
-import {
-  PortArray,
-  PortKind,
-} from '@chaingraph/types'
+import type { PortConfigWithTypeClass } from '@chaingraph/types/node'
+import type { ConfigFromPortType } from '@chaingraph/types/port.new'
+import { PortArray } from '@chaingraph/types/node'
+import { PortType } from '@chaingraph/types/port.new'
 
 /**
  * Type definition for array port configurations used in decorators.
- * Extends the partial `ArrayPortConfig` and ensures that the `kind` is `PortKindEnum.Array`.
+ * Extends the partial `ArrayPortConfig` and ensures that the `type` is `PortType.Array`.
  */
-export type DecoratorArrayPortConfig = Partial<ArrayPortConfig<any>> & {
-  kind: PortKind.Array
-}
+// export type DecoratorArrayPortConfig = Partial<ConfigFromPortType<PortType.Array>>
 
 /**
  * Decorator for defining a port that represents an array of strings.
@@ -53,10 +46,10 @@ export function PortStringArray(config?: DecoratorArrayPortConfig) {
     defaultValue: config?.defaultValue || [],
     ...config,
     elementConfig: {
-      kind: PortKind.String,
       defaultValue: '',
       ...(config?.elementConfig || {}),
-    },
+      type: PortType.String,
+    } as ConfigFromPortType<PortType.String>,
   })
 }
 
@@ -92,15 +85,15 @@ export function PortStringArray(config?: DecoratorArrayPortConfig) {
  * @param config - Optional configuration to customize the array port.
  * @returns A decorator function that applies the array port configuration.
  */
-export function PortArrayNumber(config?: DecoratorArrayPortConfig) {
+export function PortArrayNumber(config?: PortConfigWithTypeClass) {
   return PortArray({
     defaultValue: [],
     ...config,
     elementConfig: {
-      kind: PortKind.Number,
-      defaultValue: 0,
       ...(config?.elementConfig || {}),
-    },
+      defaultValue: 0,
+      type: PortType.Number,
+    } as ConfigFromPortType<PortType.Number>,
   })
 }
 
@@ -138,13 +131,13 @@ export function PortArrayNumber(config?: DecoratorArrayPortConfig) {
  * @param config - Optional configuration to customize the array port.
  * @returns A decorator function that applies the array port configuration.
  */
-export function PortArrayObject<T>(objectType: new () => T, config?: DecoratorArrayPortConfig) {
+export function PortArrayObject<T>(objectType: new () => T, config?: PortConfigWithTypeClass) {
   return PortArray({
     defaultValue: [],
     ...config,
     elementConfig: {
       defaultValue: {},
-      kind: objectType,
+      type: objectType,
       ...(config?.elementConfig || {}),
     },
   })
@@ -164,7 +157,7 @@ export function PortArrayObject<T>(objectType: new () => T, config?: DecoratorAr
  * // Creating a 2D array of strings
  * @Output()
  * @PortArrayNested(2, {
- *   kind: PortKindEnum.String,
+ *   type: PortTypeEnum.String,
  *   defaultValue: '',
  * })
  * string2DArray?: string[][]
@@ -172,7 +165,7 @@ export function PortArrayObject<T>(objectType: new () => T, config?: DecoratorAr
  * // Creating a 3D array of numbers
  * @Output()
  * @PortArrayNested(3, {
- *   kind: PortKindEnum.Number,
+ *   type: PortTypeEnum.Number,
  *   defaultValue: 0,
  * })
  * number3DArray?: number[][][]
@@ -180,7 +173,7 @@ export function PortArrayObject<T>(objectType: new () => T, config?: DecoratorAr
  * // Creating a nested array of objects
  * @Output()
  * @PortArrayNested(2, {
- *   kind: TestUserObject,
+ *   type: TestUserObject,
  * })
  * user2DArray?: TestUserObject[][]
  * ```
@@ -194,13 +187,13 @@ export function PortArrayObject<T>(objectType: new () => T, config?: DecoratorAr
  * @param elementConfig - The port configuration for the innermost array elements.
  * @returns A decorator function that applies the nested array port configuration.
  */
-export function PortArrayNested(depth: number, elementConfig: PortConfigWithClassKind): (target: any, propertyKey: string) => void {
+export function PortArrayNested(depth: number, elementConfig: PortConfigWithTypeClass): (target: any, propertyKey: string) => void {
   const createNestedConfig = (level: number): any => {
     if (level === 0) {
       return elementConfig
     }
     return {
-      kind: PortKind.Array,
+      type: PortType.Array,
       defaultValue: [],
       elementConfig: createNestedConfig(level - 1),
     }

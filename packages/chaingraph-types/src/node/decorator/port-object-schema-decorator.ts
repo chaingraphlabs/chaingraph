@@ -1,6 +1,4 @@
-import type {
-  PortConfig,
-} from '@chaingraph/types'
+import type { PortConfig } from '@chaingraph/types/port.new'
 import {
   getOrCreateNodeMetadata,
   NodeRegistry,

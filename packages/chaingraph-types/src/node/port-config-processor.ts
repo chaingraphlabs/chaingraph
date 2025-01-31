@@ -73,10 +73,8 @@ export class PortConfigProcessor {
       portConfig = this.processEnumPortConfig(portConfig, context)
     } else if (portConfig.type === PortType.Any) {
       portConfig = this.processAnyPortConfig(portConfig, context)
-    } else if (portConfig.type === PortType.Stream && portConfig.mode === 'input') {
-      portConfig = this.processStreamInputPortConfig(portConfig, context)
-    } else if (portConfig.type === PortType.Stream && portConfig.mode === 'output') {
-      portConfig = this.processStreamOutputPortConfig(portConfig, context)
+    } else if (portConfig.type === PortType.Stream) {
+      portConfig = this.processStreamPortConfig(portConfig, context)
     } else if (
       portConfig.type === PortType.String
       || portConfig.type === PortType.Number
@@ -337,9 +335,9 @@ export class PortConfigProcessor {
    * @returns A new processed EnumPortConfig.
    */
   private processEnumPortConfig(
-    portConfig: EnumPortConfig<any>,
+    portConfig: ConfigFromPortType<PortType.Enum>,
     context: Context,
-  ): EnumPortConfig<any> {
+  ): ConfigFromPortType<PortType.Enum> {
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
 
     if (newPortConfig.options && newPortConfig.options.length > 0) {
@@ -374,15 +372,15 @@ export class PortConfigProcessor {
    * @returns The processed AnyPortConfig.
    */
   private processAnyPortConfig(
-    portConfig: AnyPortConfig,
+    portConfig: ConfigFromPortType<PortType.Any>,
     context: Context,
-  ): AnyPortConfig {
+  ): ConfigFromPortType<PortType.Any> {
     const newPortConfig = { ...portConfig }
 
     // If connectedPortConfig is defined, process it
-    if (newPortConfig.connectedPortConfig) {
-      newPortConfig.connectedPortConfig = this.processPortConfig(
-        { ...newPortConfig.connectedPortConfig },
+    if (newPortConfig.internalType) {
+      newPortConfig.internalType = this.processPortConfig(
+        { ...newPortConfig.internalType },
         {
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
@@ -401,43 +399,14 @@ export class PortConfigProcessor {
    * @param context The processing context.
    * @returns The processed StreamInputPortConfig.
    */
-  private processStreamInputPortConfig(
-    portConfig: StreamInputPortConfig<any>,
+  private processStreamPortConfig(
+    portConfig: ConfigFromPortType<PortType.Stream>,
     context: Context,
-  ): StreamInputPortConfig<any> {
+  ): ConfigFromPortType<PortType.Stream> {
     const newPortConfig = { ...portConfig }
 
     if (!newPortConfig.valueType) {
       throw new Error(`StreamInputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
-    }
-
-    newPortConfig.valueType = this.processPortConfig(
-      { ...newPortConfig.valueType },
-      {
-        nodeId: context.nodeId,
-        parentPortConfig: newPortConfig,
-        propertyKey: 'value',
-        propertyValue: null,
-      },
-    )
-
-    return newPortConfig
-  }
-
-  /**
-   * Processes a StreamOutputPortConfig.
-   * @param portConfig The StreamOutputPortConfig to process.
-   * @param context The processing context.
-   * @returns The processed StreamOutputPortConfig.
-   */
-  private processStreamOutputPortConfig(
-    portConfig: StreamOutputPortConfig<any>,
-    context: Context,
-  ): StreamOutputPortConfig<any> {
-    const newPortConfig = { ...portConfig }
-
-    if (!newPortConfig.valueType) {
-      throw new Error(`StreamOutputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
     }
 
     newPortConfig.valueType = this.processPortConfig(

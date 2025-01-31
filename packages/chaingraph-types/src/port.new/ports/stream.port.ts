@@ -25,7 +25,10 @@ export class StreamPort<T = unknown> extends Port<ConfigFromPortType<PortType.St
       throw new TypeError(`Invalid valueType: ${error instanceof Error ? error.message : 'unknown error'}`)
     }
 
-    super(config)
+    super({
+      ...config,
+      defaultValue: undefined,
+    })
   }
 
   getConfigSchema(): z.ZodType<ConfigFromPortType<PortType.Stream>> {

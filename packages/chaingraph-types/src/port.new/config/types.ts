@@ -1,4 +1,3 @@
-import type { MultiChannel } from '@chaingraph/types/port.new/channel'
 import { z } from 'zod'
 import { PortDirection, PortType } from './constants'
 
@@ -151,7 +150,6 @@ export type PortConfig = {
     valueType: PortConfig
     mode: 'input' | 'output'
     bufferSize?: number
-    defaultValue?: MultiChannel<unknown>
   }
   | {
     type: PortType.Enum
