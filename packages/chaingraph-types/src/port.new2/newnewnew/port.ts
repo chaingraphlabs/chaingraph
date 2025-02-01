@@ -14,11 +14,14 @@ export type BasePortConfig = EnsureJSONSerializable<{
 /*
   FullPort: A generic port ties together a configuration and a value.
   Both must carry the same literal "type" (from PortTypeEnum).
+
+  The type parameter D is constrained to be a specific literal from PortTypeEnum,
+  and both Config and Value must have a 'type' property matching that literal.
 */
 export interface FullPort<
   D extends PortTypeEnum,
-  Config extends { type: D },
-  Value extends { type: D },
+  Config extends BasePortConfig & { type: D },
+  Value extends { type: D, value: any },
 > {
   config: Config
   value: Value

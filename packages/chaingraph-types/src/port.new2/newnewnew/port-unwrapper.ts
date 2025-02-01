@@ -1,4 +1,4 @@
-import type { PortUnion } from '@chaingraph/types/port.new2/newnewnew/port-full'
+import type { PortUnion } from './port-full'
 import { PortTypeEnum } from './port-types.enum'
 import { FullPortSchema } from './zod-full-port'
 
@@ -21,17 +21,12 @@ function validatePort<P extends PortUnion>(port: P): P {
  * for objects, it maps over each key.
  */
 export type UnwrapPortValue<T> =
-// Scalars and enum
   T extends { type: PortTypeEnum.String, value: infer V } ? V :
     T extends { type: PortTypeEnum.Number, value: infer V } ? V :
       T extends { type: PortTypeEnum.Boolean, value: infer V } ? V :
         T extends { type: PortTypeEnum.Enum, value: infer V } ? V :
-          // Array: recursively unwrap each element of the array
-          T extends { type: PortTypeEnum.Array, value: infer Arr } ?
-            Arr extends Array<infer U> ? Array<UnwrapPortValue<U>> : never :
-            // Object: recursively unwrap each field of the object
-            T extends { type: PortTypeEnum.Object, value: infer O } ?
-                { [K in keyof O]: UnwrapPortValue<O[K]> } :
+          T extends { type: PortTypeEnum.Array, value: Array<infer U> } ? Array<UnwrapPortValue<U>> :
+            T extends { type: PortTypeEnum.Object, value: infer O } ? { [K in keyof O]: UnwrapPortValue<O[K]> } :
               never
 
 /**
@@ -211,7 +206,12 @@ function createMutableProxy<T>(obj: any): T {
           if (expectedType === PortTypeEnum.Object && typeof newVal === 'object') {
             return Reflect.set(target, prop, wrapObject(current, newVal), receiver)
           } else if (expectedType === PortTypeEnum.Array && Array.isArray(newVal)) {
-            return Reflect.set(target, prop, { type: expectedType, value: newVal.map((el: any) => createMutableProxy(el)) }, receiver)
+            return Reflect.set(
+              target,
+              prop,
+              { type: expectedType, value: newVal.map((el: any) => createMutableProxy(el)) },
+              receiver,
+            )
           } else {
             return Reflect.set(target, prop, { type: expectedType, value: newVal }, receiver)
           }
@@ -224,7 +224,7 @@ function createMutableProxy<T>(obj: any): T {
 }
 
 /**
- * getMutableValue returns a recursively proxied version of the port's internal "value"
+ * unwrapMutableValue returns a recursively proxied version of the port's internal "value"
  * so that reading yields unwrapped values and writing sets underlying wrappers appropriately.
  * Validates the port structure using Zod before unwrapping.
  *

@@ -1,6 +1,5 @@
 import type { ZodType } from 'zod'
 import type { InferredFullPort } from './port-full'
-import { z } from 'zod'
 import { FullPortSchema } from './zod-full-port'
 
 /**
@@ -10,6 +9,7 @@ import { FullPortSchema } from './zod-full-port'
  *
  * @param port - A port object conforming to the InferredFullPort type.
  * @returns JSON string representation of the port.
+ * @throws If validation fails or port structure is invalid.
  */
 export function serializePort(port: InferredFullPort): string {
   // Validate the port object using Zod
@@ -25,13 +25,20 @@ export function serializePort(port: InferredFullPort): string {
  *
  * @param json - A JSON string representing a port.
  * @returns A validated port object (full union type).
- * @throws An error if the JSON cannot be parsed or if it fails validation.
+ * @throws If JSON parsing fails or validation fails.
  */
 export function deserializePort(json: string): InferredFullPort {
-  // Parse JSON string to get a plain object
-  const parsed = JSON.parse(json)
-  // Validate and return the port object using FullPortSchema
-  return FullPortSchema.parse(parsed)
+  try {
+    // Parse JSON string to get a plain object
+    const parsed = JSON.parse(json)
+    // Validate and return the port object using FullPortSchema
+    return FullPortSchema.parse(parsed)
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new TypeError(`Invalid JSON format: ${error.message}`)
+    }
+    throw error
+  }
 }
 
 /**
@@ -49,11 +56,19 @@ export function deserializePort(json: string): InferredFullPort {
  * @param json - The JSON string representing a port.
  * @param schema - Optional Zod schema that defines the expected port type.
  * @returns A validated port object of the expected type.
+ * @throws If JSON parsing fails, validation fails, or type constraints are not met.
  */
 export function deserializePortAs<T extends InferredFullPort = InferredFullPort>(
   json: string,
   schema?: ZodType<T>,
 ): T {
-  const parsed = JSON.parse(json)
-  return (schema ?? FullPortSchema as ZodType<T>).parse(parsed)
+  try {
+    const parsed = JSON.parse(json)
+    return (schema ?? FullPortSchema as ZodType<T>).parse(parsed)
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new TypeError(`Invalid JSON format: ${error.message}`)
+    }
+    throw error
+  }
 }

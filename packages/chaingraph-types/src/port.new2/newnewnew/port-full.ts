@@ -21,7 +21,7 @@ import type {
 import type { FullPortSchema } from './zod-full-port'
 
 /**
- * Specialized ports:
+ * Specialized ports with strict type constraints:
  */
 export type StringPort = FullPort<PortTypeEnum.String, IStringPortConfig, IStringPortValue>
 export type NumberPort = FullPort<PortTypeEnum.Number, INumberPortConfig, INumberPortValue>

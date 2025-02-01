@@ -1,79 +1,42 @@
 import { z } from 'zod'
+import { BasePortConfigSchema, createPortConfigSchema, JSONValueSchema } from './common/portConfigSchema'
 import { PortTypeEnum } from './port-types.enum'
 
-// Define the recursive type structure
-interface BasePortFields {
-  id?: string
-  name?: string
-  metadata?: Record<string, unknown>
-}
-
-type PortConfigType = BasePortFields & ({
-  type: PortTypeEnum.String
-} | {
-  type: PortTypeEnum.Number
-} | {
-  type: PortTypeEnum.Boolean
-} | {
-  type: PortTypeEnum.Enum
-  options: PortConfigType[]
-} | {
-  type: PortTypeEnum.Array
-  itemConfig: PortConfigType
-} | {
-  type: PortTypeEnum.Object
-  schema: Record<string, PortConfigType>
-})
-
-// Create a const assertion for the schema to avoid the let binding issue
-function createPortConfigUnionSchema() {
-  // Base schema for all port configurations
-  const BasePortConfigSchema = z.object({
-    id: z.string().optional(),
-    name: z.string().optional(),
-    metadata: z.record(z.unknown()).optional(),
-  })
-
-  // String Port Config
-  const StringPortConfigSchema = BasePortConfigSchema.extend({
-    type: z.literal(PortTypeEnum.String),
-  })
-
-  // Number Port Config
-  const NumberPortConfigSchema = BasePortConfigSchema.extend({
-    type: z.literal(PortTypeEnum.Number),
-  })
-
-  // Boolean Port Config
-  const BooleanPortConfigSchema = BasePortConfigSchema.extend({
-    type: z.literal(PortTypeEnum.Boolean),
-  })
+// Create a function to handle the circular dependencies
+function createPortConfigSchemas() {
+  // Using an empty extra schema for port types that do not require extra fields.
+  const EmptyExtra = z.object({})
 
   // Forward reference for recursive schemas
-  let PortConfigUnionSchema: z.ZodType<PortConfigType>
+  let PortConfigUnionSchema: z.ZodType<any>
 
   // Helper function for recursion
-  function getPortConfigUnion(): z.ZodType<PortConfigType> {
+  function getPortConfigUnion() {
     return PortConfigUnionSchema
   }
 
-  // Enum Port Config
-  const EnumPortConfigSchema = BasePortConfigSchema.extend({
-    type: z.literal(PortTypeEnum.Enum),
+  // Extra schema for Enum port config (contains "options")
+  const EnumExtra = z.object({
     options: z.array(z.lazy(() => getPortConfigUnion())),
   })
 
-  // Array Port Config
-  const ArrayPortConfigSchema = BasePortConfigSchema.extend({
-    type: z.literal(PortTypeEnum.Array),
+  // Extra schema for Array port config (contains "itemConfig")
+  const ArrayExtra = z.object({
     itemConfig: z.lazy(() => getPortConfigUnion()),
   })
 
-  // Object Port Config
-  const ObjectPortConfigSchema = BasePortConfigSchema.extend({
-    type: z.literal(PortTypeEnum.Object),
+  // Extra schema for Object port config (contains "schema")
+  const ObjectExtra = z.object({
     schema: z.record(z.lazy(() => getPortConfigUnion())),
   })
+
+  // Create individual port config schemas using our generic helper
+  const StringPortConfigSchema = createPortConfigSchema(PortTypeEnum.String, EmptyExtra)
+  const NumberPortConfigSchema = createPortConfigSchema(PortTypeEnum.Number, EmptyExtra)
+  const BooleanPortConfigSchema = createPortConfigSchema(PortTypeEnum.Boolean, EmptyExtra)
+  const EnumPortConfigSchema = createPortConfigSchema(PortTypeEnum.Enum, EnumExtra)
+  const ArrayPortConfigSchema = createPortConfigSchema(PortTypeEnum.Array, ArrayExtra)
+  const ObjectPortConfigSchema = createPortConfigSchema(PortTypeEnum.Object, ObjectExtra)
 
   // Define the union schema
   PortConfigUnionSchema = z.discriminatedUnion('type', [
@@ -83,10 +46,9 @@ function createPortConfigUnionSchema() {
     EnumPortConfigSchema,
     ArrayPortConfigSchema,
     ObjectPortConfigSchema,
-  ]) as z.ZodType<PortConfigType>
+  ])
 
   return {
-    BasePortConfigSchema,
     StringPortConfigSchema,
     NumberPortConfigSchema,
     BooleanPortConfigSchema,
@@ -99,7 +61,6 @@ function createPortConfigUnionSchema() {
 
 // Export all schemas
 const {
-  BasePortConfigSchema,
   StringPortConfigSchema,
   NumberPortConfigSchema,
   BooleanPortConfigSchema,
@@ -107,13 +68,14 @@ const {
   ArrayPortConfigSchema,
   ObjectPortConfigSchema,
   PortConfigUnionSchema,
-} = createPortConfigUnionSchema()
+} = createPortConfigSchemas()
 
 export {
   ArrayPortConfigSchema,
   BasePortConfigSchema,
   BooleanPortConfigSchema,
   EnumPortConfigSchema,
+  JSONValueSchema,
   NumberPortConfigSchema,
   ObjectPortConfigSchema,
   PortConfigUnionSchema,
@@ -121,11 +83,11 @@ export {
 }
 
 // Export inferred types
+export type ArrayPortConfig = z.infer<typeof ArrayPortConfigSchema>
 export type BasePortConfig = z.infer<typeof BasePortConfigSchema>
-export type StringPortConfig = z.infer<typeof StringPortConfigSchema>
-export type NumberPortConfig = z.infer<typeof NumberPortConfigSchema>
 export type BooleanPortConfig = z.infer<typeof BooleanPortConfigSchema>
 export type EnumPortConfig = z.infer<typeof EnumPortConfigSchema>
-export type ArrayPortConfig = z.infer<typeof ArrayPortConfigSchema>
+export type NumberPortConfig = z.infer<typeof NumberPortConfigSchema>
 export type ObjectPortConfig = z.infer<typeof ObjectPortConfigSchema>
 export type PortConfig = z.infer<typeof PortConfigUnionSchema>
+export type StringPortConfig = z.infer<typeof StringPortConfigSchema>

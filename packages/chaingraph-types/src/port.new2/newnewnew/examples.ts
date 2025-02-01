@@ -8,6 +8,7 @@ import { unwrapMutableValue } from './port-unwrapper'
  * Example 1: Basic port serialization and deserialization
  */
 function basicSerializationExample() {
+  // Create a string port with proper type safety
   const stringPort: StringPort = {
     config: {
       id: 'str1',
@@ -20,7 +21,7 @@ function basicSerializationExample() {
     },
   }
 
-  // Serialize to JSON
+  // Serialize to JSON (includes validation)
   const json = serializePort(stringPort)
   console.log('Serialized port:', json)
 
@@ -35,9 +36,10 @@ function basicSerializationExample() {
 }
 
 /**
- * Example 2: Type-safe array port deserialization
+ * Example 2: Array port with type-safe elements
  */
 function arrayPortExample() {
+  // Create an array port containing boolean values
   const arrayPort: ArrayPort<StringPort['config']> = {
     config: {
       id: 'arr1',
@@ -67,7 +69,7 @@ function arrayPortExample() {
 }
 
 /**
- * Example 3: Type-safe number port handling
+ * Example 3: Number port with type-safe operations
  */
 function numberPortExample() {
   const numberPort: NumberPort = {

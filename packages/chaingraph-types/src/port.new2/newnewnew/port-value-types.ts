@@ -9,6 +9,7 @@ import type {
   IPortConfigUnion,
   IStringPortConfig,
 } from './port-configs'
+import type { PortTypeEnum } from './port-types.enum'
 import type {
   ArrayPortValueSchema,
   BooleanPortValueSchema,
@@ -20,16 +21,28 @@ import type {
 } from './zod-port-values'
 
 /** String port value. */
-export type IStringPortValue = z.infer<typeof StringPortValueSchema>
+export interface IStringPortValue {
+  type: PortTypeEnum.String
+  value: string
+}
 
 /** Number port value. */
-export type INumberPortValue = z.infer<typeof NumberPortValueSchema>
+export interface INumberPortValue {
+  type: PortTypeEnum.Number
+  value: number
+}
 
 /** Boolean port value. */
-export type IBooleanPortValue = z.infer<typeof BooleanPortValueSchema>
+export interface IBooleanPortValue {
+  type: PortTypeEnum.Boolean
+  value: boolean
+}
 
 /** Enum port value. */
-export type IEnumPortValue = z.infer<typeof EnumPortValueSchema>
+export interface IEnumPortValue {
+  type: PortTypeEnum.Enum
+  value: string
+}
 
 /**
  * Mapping type: Given a port config T, derive its corresponding port value.
@@ -48,7 +61,8 @@ export type MapPortConfigToValue<T extends IPortConfigUnion> =
  * Generic Array Port Value.
  * The "value" property is an array of port values derived from the itemConfig.
  */
-export type IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> = z.infer<typeof ArrayPortValueSchema> & {
+export interface IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> {
+  type: PortTypeEnum.Array
   value: Array<MapPortConfigToValue<ItemConfig>>
 }
 
@@ -57,9 +71,18 @@ export type IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> = z.infe
  * The "value" property is an object whose keys are the schema's keys and whose values
  * are derived from the corresponding port config.
  */
-export type IGenericObjectPortValue<Schema extends { [key: string]: IPortConfigUnion }> = z.infer<typeof ObjectPortValueSchema> & {
+export interface IGenericObjectPortValue<Schema extends { [key: string]: IPortConfigUnion }> {
+  type: PortTypeEnum.Object
   value: { [K in keyof Schema]: MapPortConfigToValue<Schema[K]> }
 }
+
+// Export Zod-inferred types
+export type StringPortValue = z.infer<typeof StringPortValueSchema>
+export type NumberPortValue = z.infer<typeof NumberPortValueSchema>
+export type BooleanPortValue = z.infer<typeof BooleanPortValueSchema>
+export type EnumPortValue = z.infer<typeof EnumPortValueSchema>
+export type ArrayPortValue = z.infer<typeof ArrayPortValueSchema>
+export type ObjectPortValue = z.infer<typeof ObjectPortValueSchema>
 
 /**
  * The final PortValue union.
