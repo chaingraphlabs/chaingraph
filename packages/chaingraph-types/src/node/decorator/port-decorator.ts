@@ -1,8 +1,11 @@
 import type { NodeMetadata } from '@chaingraph/types/node'
 import type { ConfigFromPortType, ObjectSchema, PortConfig } from '@chaingraph/types/port.new'
+import { NodeRegistry } from '@chaingraph/types'
 import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
 import { PortDirection, PortType } from '@chaingraph/types/port.new'
 import { portConfigSchema } from '@chaingraph/types/port.new/config/types'
+import { processPortConfig } from './instance-converter'
+import { getObjectSchema, isObjectSchema } from './port-object-schema-decorator'
 
 import 'reflect-metadata'
 
@@ -25,6 +28,18 @@ export type PartialPortConfig<K extends PortType> = Omit<
 
 export type PortDecoratorConfig<K extends PortType> = PartialPortConfig<K> & { type: K | Function }
 
+type LegacyPortConfig = Omit<PortConfig, 'type'> & {
+  type?: PortType | Function
+  kind?: PortType | Function
+  elementConfig?: LegacyPortConfig
+  valueType?: LegacyPortConfig
+  options?: LegacyPortConfig[]
+}
+
+function isConstructor(type: any): type is { prototype: any } {
+  return typeof type === 'function' && type.prototype !== undefined
+}
+
 export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
   return function (target: any, propertyKey: string) {
     const metadata = getOrCreateNodeMetadata(target)
@@ -32,36 +47,52 @@ export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
       metadata.portsConfig = new Map<string, PortConfig>()
     }
 
-    const inferSchema = (config: PortConfig): PortConfig => {
-      if (config.type === PortType.Array) {
-        if (!config?.elementConfig) {
-          throw new Error(`Can not infer array port schema from ${JSON.stringify(config)}, elementConfig is missing`)
-        }
-        config.elementConfig = inferSchema(config.elementConfig)
-      } else if (config.type === PortType.Enum) {
-        if (!config.options) {
-          throw new Error(`Can not infer enum port schema from ${JSON.stringify(config)}, options is missing`)
-        }
-        config.options = config.options.map(option => inferSchema(option))
-      } else if (config.type === PortType.Stream) {
-        if (!config.valueType) {
-          throw new Error(`Can not infer stream port schema from ${JSON.stringify(config)}, valueType is missing`)
-        }
-        config.valueType = inferSchema(config.valueType)
-      } else if (typeof config.type === 'function') {
-        const type = (config as any).type
-        const classMetadata = getOrCreateNodeMetadata(type.prototype)
-        Object.assign(config, {
-          type: PortType.Object,
-          schema: createObjectSchemaFromMetadata(classMetadata),
-        })
+    const inferSchema = (portConfig: LegacyPortConfig): PortConfig => {
+      const config = { ...portConfig } as LegacyPortConfig
+
+      // Convert 'kind' to 'type' for backward compatibility
+      if (config.kind && !config.type) {
+        config.type = config.kind
+        delete config.kind
       }
 
-      // Validate the config using Zod schema
-      return portConfigSchema.parse(config)
+      // Handle class type
+      if (config.type && isConstructor(config.type)) {
+        const classType = config.type
+        if (isObjectSchema(classType)) {
+          const schema = getObjectSchema(classType)
+          if (schema) {
+            const objectConfig = {
+              ...config,
+              type: PortType.Object,
+              schema,
+            } as ConfigFromPortType<PortType.Object>
+            return processPortConfig(objectConfig)
+          }
+        }
+      }
+
+      // Handle array with class type in elementConfig
+      if (config.type === PortType.Array && config.elementConfig) {
+        config.elementConfig = inferSchema(config.elementConfig)
+      }
+
+      // Handle enum with class types in options
+      if (config.type === PortType.Enum && config.options) {
+        config.options = config.options.map(option => inferSchema(option))
+      }
+
+      // Handle stream with class type in valueType
+      if (config.type === PortType.Stream && config.valueType) {
+        config.valueType = inferSchema(config.valueType)
+      }
+
+      // Process any class instances in default values
+      const parsedConfig = portConfigSchema.parse(config)
+      return processPortConfig(parsedConfig)
     }
 
-    const inferredConfig = inferSchema(config as PortConfig)
+    const inferredConfig = inferSchema(config as LegacyPortConfig)
 
     const existsPortConfig = metadata.portsConfig.get(propertyKey)
     if (!existsPortConfig) {
@@ -79,25 +110,6 @@ export function Port<K extends PortType>(config: PortDecoratorConfig<K>) {
   }
 }
 
-function createObjectSchemaFromMetadata(metadata: NodeMetadata): ObjectSchema {
-  if (!metadata || !metadata.portsConfig) {
-    throw new Error(`Can not infer object port schema from ${JSON.stringify(metadata)}, portsConfig is missing`)
-  }
-
-  const objectSchema: ObjectSchema = {
-    id: metadata?.id ? (metadata.id as string) : '',
-    type: metadata?.type ? (metadata.type as string) : '',
-    description: metadata?.description ? (metadata.description as string) : '',
-    properties: {},
-  }
-
-  for (const [nestedPropertyKey, nestedPortConfig] of metadata.portsConfig.entries()) {
-    objectSchema.properties[nestedPropertyKey] = nestedPortConfig
-  }
-
-  return objectSchema
-}
-
 export function updatePortConfig(
   target: any,
   propertyKey: string,
@@ -110,7 +122,8 @@ export function updatePortConfig(
 
   const existingConfig = metadata.portsConfig.get(propertyKey) || {} as PortConfig
   updater(existingConfig)
-  metadata.portsConfig.set(propertyKey, portConfigSchema.parse(existingConfig))
+  const parsedConfig = portConfigSchema.parse(existingConfig)
+  metadata.portsConfig.set(propertyKey, processPortConfig(parsedConfig))
 }
 
 function createPortDecorator<K extends PortType>(type: K) {
@@ -202,3 +215,27 @@ export const PortEnum = createPortDecorator(PortType.Enum)
  * @see StreamPort
  */
 export const PortStream = createPortDecorator(PortType.Stream)
+
+/**
+ * Specialized decorator for input stream ports
+ */
+export function PortStreamInput(config?: Omit<PartialPortConfig<PortType.Stream>, 'direction' | 'mode'>) {
+  return Port<PortType.Stream>({
+    ...(config || {}),
+    type: PortType.Stream,
+    direction: PortDirection.Input,
+    mode: 'input',
+  } as PortDecoratorConfig<PortType.Stream>)
+}
+
+/**
+ * Specialized decorator for output stream ports
+ */
+export function PortStreamOutput(config?: Omit<PartialPortConfig<PortType.Stream>, 'direction' | 'mode'>) {
+  return Port<PortType.Stream>({
+    ...(config || {}),
+    type: PortType.Stream,
+    direction: PortDirection.Output,
+    mode: 'output',
+  } as PortDecoratorConfig<PortType.Stream>)
+}

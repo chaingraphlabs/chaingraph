@@ -1,76 +1,126 @@
-import type { IArrayPortConfig, IBooleanPortConfig, IStringPortConfig } from './port-configs'
-import type { ArrayPort, StringPort } from './port-full'
+import type { ArrayPort, NumberPort, ObjectPort, StringPort } from './port-full'
+import type { PortConfig } from './zod-port-configs'
 import { PortTypeEnum } from './port-types.enum'
+import { unwrapMutableValue, unwrapValue } from './port-unwrapper'
+import { FullPortSchema } from './zod-full-port'
 
-const stringPort: StringPort = {
-  config: {
-    id: 'string1',
-    type: PortTypeEnum.String,
-  },
-  value: {
-    type: PortTypeEnum.String,
-    value: 'Hello, World!',
-  },
-}
-
-const stringArrayPort: ArrayPort<IStringPortConfig> = {
-  config: {
-    id: 'array1',
-    type: PortTypeEnum.Array,
-    itemConfig: {
-      id: 'stringItem',
+/**
+ * Example 1: Creating and validating a simple string port
+ */
+function stringPortExample() {
+  const stringPort: StringPort = {
+    config: {
+      id: 'str1',
       type: PortTypeEnum.String,
+      name: 'Example String Port',
     },
-  },
-  value: {
-    type: PortTypeEnum.Array,
-    value: [
-      { type: PortTypeEnum.String, value: 'Hello' },
-      { type: PortTypeEnum.String, value: 'World' },
-    ],
-  },
+    value: {
+      type: PortTypeEnum.String,
+      value: 'Hello, World!',
+    },
+  }
+
+  // Validate using Zod schema
+  const validated = FullPortSchema.parse(stringPort)
+  console.log('Validated string port:', validated)
+
+  // Unwrap with runtime validation
+  const unwrapped = unwrapValue(stringPort)
+  console.log('Unwrapped value:', unwrapped) // "Hello, World!"
 }
 
-// Define a 2D array as an array whose element config is itself an array config of booleans.
-type BooleanArrayConfig = IArrayPortConfig<IBooleanPortConfig>
-
-const bool2DArrayPort: ArrayPort<BooleanArrayConfig> = {
-  config: {
-    id: '2dArray',
-    type: PortTypeEnum.Array,
-    itemConfig: {
-      id: 'innerArray',
+/**
+ * Example 2: Array port with validation
+ */
+function arrayPortExample() {
+  const arrayPort: ArrayPort<StringPort['config']> = {
+    config: {
+      id: 'arr1',
       type: PortTypeEnum.Array,
       itemConfig: {
-        id: 'boolItem',
-        type: PortTypeEnum.Boolean,
+        type: PortTypeEnum.String,
       },
     },
-  },
-  value: {
-    type: PortTypeEnum.Array,
-    value: [
-      {
-        type: PortTypeEnum.Array,
-        value: [
-          { type: PortTypeEnum.Boolean, value: true },
-          { type: PortTypeEnum.Boolean, value: false },
-        ],
-      },
-      {
-        type: PortTypeEnum.Array,
-        value: [
-          { type: PortTypeEnum.Boolean, value: true },
-          { type: PortTypeEnum.Boolean, value: false },
-        ],
-      },
-      {
-        type: PortTypeEnum.Array,
-        value: [
-          { type: PortTypeEnum.Boolean, value: false },
-          { type: PortTypeEnum.Boolean, value: true },
-        ],
-      },
-    ],
-  },
+    value: {
+      type: PortTypeEnum.Array,
+      value: [
+        { type: PortTypeEnum.String, value: 'first' },
+        { type: PortTypeEnum.String, value: 'second' },
+      ],
+    },
+  }
+
+  // Validate using Zod schema
+  const validated = FullPortSchema.parse(arrayPort)
+  console.log('Validated array port:', validated)
+
+  // Get mutable proxy with validation
+  const mutable = unwrapMutableValue(arrayPort)
+  mutable.push('third') // Automatically wraps in correct structure
+  console.log('Updated array:', arrayPort.value.value)
 }
+
+/**
+ * Example 3: Object port with nested structure
+ */
+function objectPortExample() {
+  interface PersonSchema extends Record<string, PortConfig> {
+    name: StringPort['config']
+    age: NumberPort['config']
+  }
+
+  const personPort: ObjectPort<PersonSchema> = {
+    config: {
+      id: 'person1',
+      type: PortTypeEnum.Object,
+      schema: {
+        name: { type: PortTypeEnum.String },
+        age: { type: PortTypeEnum.Number },
+      },
+    },
+    value: {
+      type: PortTypeEnum.Object,
+      value: {
+        name: { type: PortTypeEnum.String, value: 'John' },
+        age: { type: PortTypeEnum.Number, value: 30 },
+      },
+    },
+  }
+
+  // Validate using Zod schema
+  const validated = FullPortSchema.parse(personPort)
+  console.log('Validated object port:', validated)
+
+  // Get mutable proxy with validation
+  const mutable = unwrapMutableValue(personPort)
+  mutable.name = 'Jane' // Automatically maintains wrapper structure
+  console.log('Updated person:', personPort.value.value)
+}
+
+/**
+ * Example 4: Handling validation errors
+ */
+function validationErrorExample() {
+  const invalidPort = {
+    config: {
+      id: 'invalid1',
+      type: 'invalid_type', // Invalid type
+    },
+    value: {
+      type: PortTypeEnum.String,
+      value: 42, // Wrong value type for string port
+    },
+  }
+
+  try {
+    FullPortSchema.parse(invalidPort)
+  } catch (error) {
+    console.error('Validation error:', error)
+  }
+}
+
+// Run examples
+stringPortExample()
+arrayPortExample()
+objectPortExample()
+validationErrorExample()

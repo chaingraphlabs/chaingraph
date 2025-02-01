@@ -8,13 +8,13 @@ import {
 } from '@chaingraph/types'
 import { PortFactory } from '@chaingraph/types/port.new'
 import superjson from 'superjson'
+import { processPortConfig } from './decorator/instance-converter'
 
 /**
  * Registers node transformers with SuperJSON
  */
 export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
   // Register base node transformer
-
   if (nodeRegistry === undefined) {
     nodeRegistry = NodeRegistry.getInstance()
   }
@@ -33,19 +33,32 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
           return v instanceof nodeInstance.constructor
         },
         serialize: (v) => {
+          // Process ports and their configurations
           const ports = new Map<string, SerializedPortData>()
           for (const [portId, port] of v.ports.entries()) {
-            ports.set(portId, port.serialize())
+            // Process the port configuration to convert any class instances
+            const processedConfig = processPortConfig(port.config)
+            // Create a new port with the processed config
+            const processedPort = PortFactory.create(processedConfig)
+            processedPort.setValue(port.getValue())
+            // Serialize the processed port
+            ports.set(portId, processedPort.serialize())
+          }
+
+          // Process portsConfig in metadata
+          const processedPortsConfig = new Map<string, PortConfig>()
+          for (const [key, config] of v.metadata.portsConfig?.entries() || []) {
+            processedPortsConfig.set(key, processPortConfig(config))
           }
 
           // Convert portsConfig Map to array of entries for serialization
-          const portsConfigEntries = Array.from(v.metadata.portsConfig?.entries() || [])
+          const portsConfigEntries = Array.from(processedPortsConfig.entries())
 
           return superjson.serialize({
             id: v.id,
             metadata: {
               ...v.metadata,
-              portsConfig: portsConfigEntries, // Serialize as array of entries
+              portsConfig: portsConfigEntries,
             },
             status: v.status,
             ports,

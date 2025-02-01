@@ -179,6 +179,15 @@ export interface ObjectSchema {
  */
 export type ConfigFromPortType<T extends PortType> = Extract<PortConfig, { type: T }>
 
+export type StringPortConfig = ConfigFromPortType<PortType.String>
+export type NumberPortConfig = ConfigFromPortType<PortType.Number>
+export type BooleanPortConfig = ConfigFromPortType<PortType.Boolean>
+export type ArrayPortConfig = ConfigFromPortType<PortType.Array>
+export type ObjectPortConfig = ConfigFromPortType<PortType.Object>
+export type StreamPortConfig = ConfigFromPortType<PortType.Stream>
+export type EnumPortConfig = ConfigFromPortType<PortType.Enum>
+export type AnyPortConfig = ConfigFromPortType<PortType.Any>
+
 /**
  * Validation result type
  */
