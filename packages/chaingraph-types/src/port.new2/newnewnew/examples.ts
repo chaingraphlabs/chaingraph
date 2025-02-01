@@ -1,13 +1,13 @@
-import type { ArrayPort, NumberPort, ObjectPort, StringPort } from './port-full'
-import type { PortConfig } from './zod-port-configs'
+import type { ArrayPort, NumberPort, StringPort } from './port-full'
+import { NumberPortSchema, StringPortSchema } from './custom-schemas'
+import { deserializePort, deserializePortAs, serializePort } from './port-serializer'
 import { PortTypeEnum } from './port-types.enum'
-import { unwrapMutableValue, unwrapValue } from './port-unwrapper'
-import { FullPortSchema } from './zod-full-port'
+import { unwrapMutableValue } from './port-unwrapper'
 
 /**
- * Example 1: Creating and validating a simple string port
+ * Example 1: Basic port serialization and deserialization
  */
-function stringPortExample() {
+function basicSerializationExample() {
   const stringPort: StringPort = {
     config: {
       id: 'str1',
@@ -20,17 +20,22 @@ function stringPortExample() {
     },
   }
 
-  // Validate using Zod schema
-  const validated = FullPortSchema.parse(stringPort)
-  console.log('Validated string port:', validated)
+  // Serialize to JSON
+  const json = serializePort(stringPort)
+  console.log('Serialized port:', json)
 
-  // Unwrap with runtime validation
-  const unwrapped = unwrapValue(stringPort)
-  console.log('Unwrapped value:', unwrapped) // "Hello, World!"
+  // Basic deserialization (returns InferredFullPort)
+  const basicDeserialized = deserializePort(json)
+  console.log('Basic deserialized port:', basicDeserialized)
+
+  // Type-safe deserialization as StringPort
+  const typedStringPort = deserializePortAs<StringPort>(json, StringPortSchema)
+  // TypeScript now knows this is a string
+  console.log('String value:', typedStringPort.value.value.toUpperCase())
 }
 
 /**
- * Example 2: Array port with validation
+ * Example 2: Type-safe array port deserialization
  */
 function arrayPortExample() {
   const arrayPort: ArrayPort<StringPort['config']> = {
@@ -50,77 +55,63 @@ function arrayPortExample() {
     },
   }
 
-  // Validate using Zod schema
-  const validated = FullPortSchema.parse(arrayPort)
-  console.log('Validated array port:', validated)
+  const json = serializePort(arrayPort)
 
   // Get mutable proxy with validation
   const mutable = unwrapMutableValue(arrayPort)
   mutable.push('third') // Automatically wraps in correct structure
-  console.log('Updated array:', arrayPort.value.value)
+
+  // Deserialize with type safety
+  const deserializedArray = deserializePort(json)
+  console.log('Updated array:', deserializedArray.value.value)
 }
 
 /**
- * Example 3: Object port with nested structure
+ * Example 3: Type-safe number port handling
  */
-function objectPortExample() {
-  interface PersonSchema extends Record<string, PortConfig> {
-    name: StringPort['config']
-    age: NumberPort['config']
-  }
-
-  const personPort: ObjectPort<PersonSchema> = {
+function numberPortExample() {
+  const numberPort: NumberPort = {
     config: {
-      id: 'person1',
-      type: PortTypeEnum.Object,
-      schema: {
-        name: { type: PortTypeEnum.String },
-        age: { type: PortTypeEnum.Number },
-      },
+      id: 'num1',
+      type: PortTypeEnum.Number,
     },
     value: {
-      type: PortTypeEnum.Object,
-      value: {
-        name: { type: PortTypeEnum.String, value: 'John' },
-        age: { type: PortTypeEnum.Number, value: 30 },
-      },
+      type: PortTypeEnum.Number,
+      value: 42.5,
     },
   }
 
-  // Validate using Zod schema
-  const validated = FullPortSchema.parse(personPort)
-  console.log('Validated object port:', validated)
+  const json = serializePort(numberPort)
 
-  // Get mutable proxy with validation
-  const mutable = unwrapMutableValue(personPort)
-  mutable.name = 'Jane' // Automatically maintains wrapper structure
-  console.log('Updated person:', personPort.value.value)
+  // Type-safe deserialization as NumberPort
+  const typedNumberPort = deserializePortAs<NumberPort>(json, NumberPortSchema)
+  // TypeScript knows this is a number
+  console.log('Number value plus 10:', typedNumberPort.value.value + 10)
 }
 
 /**
- * Example 4: Handling validation errors
+ * Example 4: Error handling with invalid data
  */
-function validationErrorExample() {
-  const invalidPort = {
-    config: {
-      id: 'invalid1',
-      type: 'invalid_type', // Invalid type
-    },
-    value: {
-      type: PortTypeEnum.String,
-      value: 42, // Wrong value type for string port
-    },
+function errorHandlingExample() {
+  const invalidJson = '{"config": {"id": "x", "type": "invalid"}, "value": {"type": "string", "value": 42}}'
+
+  try {
+    // This will throw due to invalid type
+    deserializePort(invalidJson)
+  } catch (error) {
+    console.error('Validation error:', error)
   }
 
   try {
-    FullPortSchema.parse(invalidPort)
+    // This will throw due to schema mismatch
+    deserializePortAs<StringPort>(invalidJson, StringPortSchema)
   } catch (error) {
-    console.error('Validation error:', error)
+    console.error('Type-safe deserialization error:', error)
   }
 }
 
 // Run examples
-stringPortExample()
+basicSerializationExample()
 arrayPortExample()
-objectPortExample()
-validationErrorExample()
+numberPortExample()
+errorHandlingExample()

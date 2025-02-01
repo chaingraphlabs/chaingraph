@@ -37,11 +37,6 @@ export type UnwrapPortValue<T> =
 /**
  * UnwrappedPort takes a full port P (which must have a "value" field)
  * and returns its unwrapped (plain) value type.
- *
- * For example, if P.value is of type:
- *    { type: PortTypeEnum.Object, value: { field1: { type: PortTypeEnum.String, value: string } } }
- * then UnwrappedPort<P> will be:
- *    { field1: string }
  */
 export type UnwrappedPort<P> =
   P extends { value: infer V } ? UnwrapPortValue<V> : never
@@ -66,7 +61,6 @@ function wrapObject(expected: any, newObj: any): any {
       && 'type' in expected.value[key]
     ) {
       const expectedField = expected.value[key]
-
       // If expected field is an object, recursively rewrap.
       if (expectedField.type === PortTypeEnum.Object && typeof newObj[key] === 'object') {
         wrapped[key] = wrapObject(expectedField, newObj[key])
@@ -94,7 +88,6 @@ function wrapObject(expected: any, newObj: any): any {
 export function unwrapValue<P extends PortUnion>(port: P): UnwrappedPort<P> {
   // Validate port structure before unwrapping
   const validatedPort = validatePort(port)
-
   function unwrap<T>(obj: any): any {
     if (obj && typeof obj === 'object' && 'type' in obj && 'value' in obj) {
       if (obj.type === PortTypeEnum.Array) {
@@ -131,17 +124,14 @@ function createMutableProxy<T>(obj: any): T {
   ) {
     return obj.value
   }
-
   if (obj.type === PortTypeEnum.Array) {
     // Determine fallback expected type (if array not empty, use first element)
     const fallbackType: PortTypeEnum | undefined
       = (obj.value.length > 0 && typeof obj.value[0] === 'object' && 'type' in obj.value[0])
         ? obj.value[0].type
         : undefined
-
     return new Proxy(obj.value, {
       get(target, prop, receiver) {
-        // Intercept mutative methods like push
         if (prop === 'push') {
           return function (...args: any[]) {
             const wrappedArgs = args.map((arg) => {
@@ -168,7 +158,6 @@ function createMutableProxy<T>(obj: any): T {
             return Reflect.apply(target.unshift, target, wrappedArgs)
           }
         }
-
         if (prop === 'pop') {
           return function () {
             const popped = Reflect.apply(target.pop, target, [])
@@ -181,7 +170,6 @@ function createMutableProxy<T>(obj: any): T {
             return createMutableProxy(shifted)
           }
         }
-
         const val = Reflect.get(target, prop, receiver)
         return createMutableProxy(val)
       },
@@ -210,11 +198,9 @@ function createMutableProxy<T>(obj: any): T {
       },
     })
   }
-
   if (obj.type === PortTypeEnum.Object) {
     return new Proxy(obj.value, {
       get(target, prop, receiver) {
-        // For property access, recursively proxy the value.
         const val = Reflect.get(target, prop, receiver)
         return createMutableProxy(val)
       },
@@ -241,9 +227,13 @@ function createMutableProxy<T>(obj: any): T {
  * getMutableValue returns a recursively proxied version of the port's internal "value"
  * so that reading yields unwrapped values and writing sets underlying wrappers appropriately.
  * Validates the port structure using Zod before unwrapping.
+ *
+ * IMPORTANT: To ensure that mutations update the original port object, we now validate
+ * the port without replacing its reference and then use the original port.value.
  */
 export function unwrapMutableValue<P extends PortUnion>(port: P): UnwrappedPort<P> {
-  // Validate port structure before unwrapping
-  const validatedPort = validatePort(port)
-  return createMutableProxy(validatedPort.value)
+  // Validate port structure (throws if invalid) but DO NOT use the returned copy.
+  FullPortSchema.parse(port)
+  // Use the original port.value so that mutations update the original object.
+  return createMutableProxy(port.value)
 }

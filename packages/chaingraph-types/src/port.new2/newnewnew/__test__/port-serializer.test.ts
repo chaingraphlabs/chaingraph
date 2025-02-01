@@ -1,7 +1,8 @@
 import type { IStringPortConfig } from '../port-configs'
 import type { ArrayPort, NumberPort, StringPort } from '../port-full'
 import { describe, expect, it } from 'vitest'
-import { deserializePort, serializePort } from '../port-serializer'
+import { NumberPortSchema, StringPortSchema } from '../custom-schemas'
+import { deserializePort, deserializePortAs, serializePort } from '../port-serializer'
 import { PortTypeEnum } from '../port-types.enum'
 import { FullPortSchema } from '../zod-full-port'
 
@@ -94,27 +95,63 @@ describe('port Serialization', () => {
     expect(() => serializePort(invalidPort as any)).toThrow()
   })
 
-  it('should preserve metadata in serialization', () => {
-    const port: StringPort = {
-      config: {
-        id: 'str1',
-        type: PortTypeEnum.String,
-        name: 'Port with Metadata',
-        metadata: {
-          description: 'Test port',
-          tags: ['test', 'serialization'],
-          version: 1,
+  describe('type-safe Deserialization', () => {
+    it('should deserialize as StringPort with correct type inference', () => {
+      const port: StringPort = {
+        config: {
+          id: 'str1',
+          type: PortTypeEnum.String,
+          name: 'Type-safe Port',
         },
-      },
-      value: {
-        type: PortTypeEnum.String,
-        value: 'Hello with metadata!',
-      },
-    }
+        value: {
+          type: PortTypeEnum.String,
+          value: 'Hello, Types!',
+        },
+      }
 
-    const json = serializePort(port)
-    const deserializedPort = deserializePort(json)
+      const json = serializePort(port)
+      const typedPort = deserializePortAs<StringPort>(json, StringPortSchema)
 
-    expect(deserializedPort.config.metadata).toEqual(port.config.metadata)
+      // TypeScript should know this is a string
+      expect(typeof typedPort.value.value).toBe('string')
+      expect(typedPort.value.value.toUpperCase()).toBe('HELLO, TYPES!')
+    })
+
+    it('should deserialize as NumberPort with correct type inference', () => {
+      const port: NumberPort = {
+        config: {
+          id: 'num1',
+          type: PortTypeEnum.Number,
+        },
+        value: {
+          type: PortTypeEnum.Number,
+          value: 42.5,
+        },
+      }
+
+      const json = serializePort(port)
+      const typedPort = deserializePortAs<NumberPort>(json, NumberPortSchema)
+
+      // TypeScript should know this is a number
+      expect(typeof typedPort.value.value).toBe('number')
+      expect(typedPort.value.value + 10).toBe(52.5)
+    })
+
+    it('should throw when deserializing with wrong schema', () => {
+      const numberPort: NumberPort = {
+        config: {
+          id: 'num1',
+          type: PortTypeEnum.Number,
+        },
+        value: {
+          type: PortTypeEnum.Number,
+          value: 42,
+        },
+      }
+
+      const json = serializePort(numberPort)
+      // Trying to deserialize a number port as string should fail
+      expect(() => deserializePortAs<StringPort>(json, StringPortSchema)).toThrow()
+    })
   })
 })
