@@ -1,5 +1,7 @@
+import type { EnsureJSONSerializable } from '@chaingraph/types/port.new2/newnewnew/json'
 import { z } from 'zod'
 import { PortTypeEnum } from './port-types.enum'
+import { StreamPortValueSchema } from './stream-port-schemas'
 
 // Create a function to handle the circular dependencies
 function createPortValueSchemas() {
@@ -51,6 +53,7 @@ function createPortValueSchemas() {
     EnumPortValueSchema,
     ArrayPortValueSchema,
     ObjectPortValueSchema,
+    StreamPortValueSchema,
   ])
 
   return {
@@ -59,8 +62,9 @@ function createPortValueSchemas() {
     EnumPortValueSchema,
     NumberPortValueSchema,
     ObjectPortValueSchema,
-    PortValueUnionSchema,
     StringPortValueSchema,
+    StreamPortValueSchema,
+    PortValueUnionSchema,
   } as const
 }
 
@@ -71,8 +75,9 @@ const {
   EnumPortValueSchema,
   NumberPortValueSchema,
   ObjectPortValueSchema,
-  PortValueUnionSchema,
   StringPortValueSchema,
+  PortValueUnionSchema,
+  StreamPortValueSchema,
 } = createPortValueSchemas()
 
 export {
@@ -82,6 +87,7 @@ export {
   NumberPortValueSchema,
   ObjectPortValueSchema,
   PortValueUnionSchema,
+  StreamPortValueSchema,
   StringPortValueSchema,
 }
 
@@ -91,5 +97,5 @@ export type BooleanPortValue = z.infer<typeof BooleanPortValueSchema>
 export type EnumPortValue = z.infer<typeof EnumPortValueSchema>
 export type NumberPortValue = z.infer<typeof NumberPortValueSchema>
 export type ObjectPortValue = z.infer<typeof ObjectPortValueSchema>
-export type PortValue = z.infer<typeof PortValueUnionSchema>
 export type StringPortValue = z.infer<typeof StringPortValueSchema>
+export type PortValue = EnsureJSONSerializable<z.infer<typeof PortValueUnionSchema>>

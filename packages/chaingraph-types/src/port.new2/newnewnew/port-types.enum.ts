@@ -5,6 +5,7 @@ export enum PortTypeEnum {
   Array = 'array',
   Object = 'object',
   Enum = 'enum',
+  Stream = 'stream',
 }
 
 export type PortType =
@@ -14,3 +15,4 @@ export type PortType =
   | PortTypeEnum.Array
   | PortTypeEnum.Object
   | PortTypeEnum.Enum
+  | PortTypeEnum.Stream

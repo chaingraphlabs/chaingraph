@@ -1,74 +1,61 @@
 import type { ZodType } from 'zod'
+import type { EnsureJSONSerializable } from './json'
 import type { InferredFullPort } from './port-full'
+import { parseJson, stringify } from './basic-json-serializer'
+import { recursiveSerialize } from './safe-json-serializer'
 import { FullPortSchema } from './zod-full-port'
 
 /**
- * Serialize a port to a JSON string.
- * This function validates the port using FullPortSchema,
- * then returns the stringified JSON.
+ * Serializes a port to a JSONValue.
+ * First, validates the port against FullPortSchema, then applies recursiveSerialize.
  *
  * @param port - A port object conforming to the InferredFullPort type.
- * @returns JSON string representation of the port.
- * @throws If validation fails or port structure is invalid.
+ * @returns A JSONValue representing the port.
  */
-export function serializePort(port: InferredFullPort): string {
-  // Validate the port object using Zod
+export function serializePortToJSONValue(port: InferredFullPort): EnsureJSONSerializable<InferredFullPort> {
   const validated = FullPortSchema.parse(port)
-  // Stringify the valid object to JSON
-  return JSON.stringify(validated)
+  return recursiveSerialize(validated) as EnsureJSONSerializable<InferredFullPort>
 }
 
 /**
- * Deserialize a JSON string to a port object.
- * This function parses the JSON, then validates it using FullPortSchema.
- * It returns a port object of type InferredFullPort.
+ * Serializes a port to a JSON string.
+ * (Uses serializePortToJSONValue then stringifies the result.)
+ *
+ * @param port - A port object conforming to the InferredFullPort type.
+ * @returns A string containing the JSON representation.
+ */
+export function serializePortToString(port: InferredFullPort): string {
+  const jsonValue = serializePortToJSONValue(port)
+  return stringify(jsonValue)
+}
+
+/**
+ * Deserializes a JSON string into a port.
+ * Parses the string into a JSONValue then validates with FullPortSchema.
  *
  * @param json - A JSON string representing a port.
- * @returns A validated port object (full union type).
- * @throws If JSON parsing fails or validation fails.
+ * @returns A port object of type InferredFullPort.
  */
-export function deserializePort(json: string): InferredFullPort {
-  try {
-    // Parse JSON string to get a plain object
-    const parsed = JSON.parse(json)
-    // Validate and return the port object using FullPortSchema
-    return FullPortSchema.parse(parsed)
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new TypeError(`Invalid JSON format: ${error.message}`)
-    }
-    throw error
-  }
+export function deserializePortFromString(json: string): InferredFullPort {
+  const jsonValue = parseJson(json)
+  return FullPortSchema.parse(jsonValue)
 }
 
 /**
- * Generic deserialization function that allows restoring a specific port type.
- * If you have a Zod schema that narrows the type (e.g. to StringPort), pass it as the second argument.
- * Otherwise, it defaults to FullPortSchema.
- *
- * Usage examples:
- *   // Restore complete port union
- *   const restored1 = deserializePortAs(json)
- *
- *   // Restore as a StringPort type (when you have a custom schema for string ports)
- *   const restored2 = deserializePortAs<StringPort>(json, StringPortSchema)
+ * Generic deserialization that allows restoring a specific port type.
  *
  * @param json - The JSON string representing a port.
  * @param schema - Optional Zod schema that defines the expected port type.
- * @returns A validated port object of the expected type.
- * @throws If JSON parsing fails, validation fails, or type constraints are not met.
+ * @returns A validated port object of the specified type.
  */
 export function deserializePortAs<T extends InferredFullPort = InferredFullPort>(
   json: string,
   schema?: ZodType<T>,
 ): T {
-  try {
-    const parsed = JSON.parse(json)
-    return (schema ?? FullPortSchema as ZodType<T>).parse(parsed)
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new TypeError(`Invalid JSON format: ${error.message}`)
-    }
-    throw error
-  }
+  const jsonValue = parseJson(json)
+  return (schema ?? FullPortSchema as ZodType<T>).parse(jsonValue)
 }
+
+// For backward compatibility
+export const serializePort = serializePortToString
+export const deserializePort = deserializePortFromString

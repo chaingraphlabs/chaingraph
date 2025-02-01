@@ -28,7 +28,8 @@ export type UnwrapPortValue<T extends PortValue> =
         T extends { type: PortTypeEnum.Enum, value: infer V } ? V :
           T extends { type: PortTypeEnum.Array, value: Array<infer U> } ? Array<UnwrapPortValue<U & PortValue>> :
             T extends { type: PortTypeEnum.Object, value: infer O } ? { [K in keyof O]: UnwrapPortValue<O[K] & PortValue> } :
-              never
+              T extends { type: PortTypeEnum.Stream, value: infer V } ? V :
+                never
 
 /**
  * UnwrappedPort takes a full port P (which must have a "value" field)
@@ -94,6 +95,7 @@ export function unwrapValue<P extends PortUnion>(port: P): UnwrappedPort<P> {
         }
         return result
       }
+
       return obj.value
     }
     return obj

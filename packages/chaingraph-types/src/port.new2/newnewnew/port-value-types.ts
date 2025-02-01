@@ -1,5 +1,4 @@
 import type { z } from 'zod'
-import type { EnsureJSONSerializable } from './json'
 import type { IPortConfigUnion } from './port-configs'
 import type { PortTypeEnum } from './port-types.enum'
 import type { PortValueUnionSchema } from './zod-port-values'
@@ -8,7 +7,7 @@ import type { PortValueUnionSchema } from './zod-port-values'
   Instead of manually writing interfaces for each port value type,
   we define a unified PortValue type from the PortValueUnionSchema.
 */
-export type PortValue = EnsureJSONSerializable<z.infer<typeof PortValueUnionSchema>>
+export type PortValue = z.infer<typeof PortValueUnionSchema>
 
 /*
   Specialized value types using Extract.
@@ -39,6 +38,8 @@ export type IGenericObjectPortValue<Schema extends { [key: string]: IPortConfigU
   }
 >
 
+export type IStreamPortValue = Extract<PortValue, { type: PortTypeEnum.Stream }>
+
 /*
   Helper type to map from a config type to its corresponding value type.
   This maintains the type relationships while using the unified schema.
@@ -52,13 +53,15 @@ export type MapPortConfigToValue<T extends IPortConfigUnion> = T extends { type:
         ? IBooleanPortValue
         : Type extends PortTypeEnum.Enum
           ? IEnumPortValue
-          : Type extends PortTypeEnum.Array
-            ? T extends { itemConfig: infer ItemConfig }
-              ? IGenericArrayPortValue<ItemConfig & IPortConfigUnion>
-              : never
-            : Type extends PortTypeEnum.Object
-              ? T extends { schema: infer Schema }
-                ? IGenericObjectPortValue<Schema & { [key: string]: IPortConfigUnion }>
+          : Type extends PortTypeEnum.Stream
+            ? IStreamPortValue
+            : Type extends PortTypeEnum.Array
+              ? T extends { itemConfig: infer ItemConfig }
+                ? IGenericArrayPortValue<ItemConfig & IPortConfigUnion>
                 : never
-              : never
+              : Type extends PortTypeEnum.Object
+                ? T extends { schema: infer Schema }
+                  ? IGenericObjectPortValue<Schema & { [key: string]: IPortConfigUnion }>
+                  : never
+                : never
   : never

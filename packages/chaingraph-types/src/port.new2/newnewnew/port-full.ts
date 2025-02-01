@@ -7,6 +7,7 @@ import type {
   INumberPortConfig,
   IObjectPortConfig,
   IPortConfigUnion,
+  IStreamPortConfig,
   IStringPortConfig,
 } from './port-configs'
 import type { PortTypeEnum } from './port-types.enum'
@@ -16,6 +17,7 @@ import type {
   IGenericArrayPortValue,
   IGenericObjectPortValue,
   INumberPortValue,
+  IStreamPortValue,
   IStringPortValue,
 } from './port-value-types'
 import type { FullPortSchema } from './zod-full-port'
@@ -48,6 +50,8 @@ export type ObjectPort<Schema extends { [key: string]: IPortConfigUnion }> = Ful
   IGenericObjectPortValue<Schema>
 >
 
+export type StreamPort = FullPort<PortTypeEnum.Stream, IStreamPortConfig, IStreamPortValue>
+
 /**
  * Union of all full ports.
  * (This union is useful for aggregate operations.)
@@ -59,6 +63,7 @@ export type PortUnion =
   | EnumPort
   | ArrayPort<IPortConfigUnion>
   | ObjectPort<{ [key: string]: IPortConfigUnion }>
+  | StreamPort
 
 /**
  * Full port type inferred from Zod schema.

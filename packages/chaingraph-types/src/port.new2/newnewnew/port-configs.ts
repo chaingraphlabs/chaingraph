@@ -24,3 +24,7 @@ export type IObjectPortConfig<Schema extends Record<string, IPortConfigUnion> = 
   IPortConfigUnion,
   { type: PortTypeEnum.Object, schema: Schema }
 >
+export type IStreamPortConfig<ItemConfig extends IPortConfigUnion = IPortConfigUnion> = Extract<
+  IPortConfigUnion,
+  { type: PortTypeEnum.Stream, mode: 'input' | 'output', itemConfig: ItemConfig }
+>

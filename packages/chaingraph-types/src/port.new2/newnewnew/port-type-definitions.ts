@@ -1,5 +1,9 @@
 import { PortTypeEnum } from './port-types.enum'
 import {
+  StreamPortConfigSchema,
+  StreamPortValueSchema,
+} from './stream-port-schemas'
+import {
   ArrayPortConfigSchema,
   BooleanPortConfigSchema,
   EnumPortConfigSchema,
@@ -46,6 +50,10 @@ export const portTypeDefinitions = {
   [PortTypeEnum.Object]: {
     configSchema: ObjectPortConfigSchema,
     valueSchema: ObjectPortValueSchema,
+  },
+  [PortTypeEnum.Stream]: {
+    configSchema: StreamPortConfigSchema,
+    valueSchema: StreamPortValueSchema,
   },
 } as const
 

@@ -30,6 +30,11 @@ function createPortConfigSchemas() {
     schema: z.record(z.lazy(() => getPortConfigUnion())),
   })
 
+  const StreamExtra = z.object({
+    mode: z.union([z.literal('input'), z.literal('output')]),
+    itemConfig: z.lazy(() => getPortConfigUnion()),
+  })
+
   // Create individual port config schemas using our generic helper
   const StringPortConfigSchema = createPortConfigSchema(PortTypeEnum.String, EmptyExtra)
   const NumberPortConfigSchema = createPortConfigSchema(PortTypeEnum.Number, EmptyExtra)
@@ -37,6 +42,7 @@ function createPortConfigSchemas() {
   const EnumPortConfigSchema = createPortConfigSchema(PortTypeEnum.Enum, EnumExtra)
   const ArrayPortConfigSchema = createPortConfigSchema(PortTypeEnum.Array, ArrayExtra)
   const ObjectPortConfigSchema = createPortConfigSchema(PortTypeEnum.Object, ObjectExtra)
+  const StreamPortConfigSchema = createPortConfigSchema(PortTypeEnum.Stream, StreamExtra)
 
   // Define the union schema
   PortConfigUnionSchema = z.discriminatedUnion('type', [
@@ -46,6 +52,7 @@ function createPortConfigSchemas() {
     EnumPortConfigSchema,
     ArrayPortConfigSchema,
     ObjectPortConfigSchema,
+    StreamPortConfigSchema,
   ])
 
   return {
@@ -55,6 +62,7 @@ function createPortConfigSchemas() {
     EnumPortConfigSchema,
     ArrayPortConfigSchema,
     ObjectPortConfigSchema,
+    StreamPortConfigSchema,
     PortConfigUnionSchema,
   } as const
 }
@@ -67,6 +75,7 @@ const {
   EnumPortConfigSchema,
   ArrayPortConfigSchema,
   ObjectPortConfigSchema,
+  StreamPortConfigSchema,
   PortConfigUnionSchema,
 } = createPortConfigSchemas()
 
@@ -79,6 +88,7 @@ export {
   NumberPortConfigSchema,
   ObjectPortConfigSchema,
   PortConfigUnionSchema,
+  StreamPortConfigSchema,
   StringPortConfigSchema,
 }
 
@@ -89,5 +99,7 @@ export type BooleanPortConfig = z.infer<typeof BooleanPortConfigSchema>
 export type EnumPortConfig = z.infer<typeof EnumPortConfigSchema>
 export type NumberPortConfig = z.infer<typeof NumberPortConfigSchema>
 export type ObjectPortConfig = z.infer<typeof ObjectPortConfigSchema>
-export type PortConfig = z.infer<typeof PortConfigUnionSchema>
 export type StringPortConfig = z.infer<typeof StringPortConfigSchema>
+export type StreamPortConfig = z.infer<typeof StreamPortConfigSchema>
+
+export type PortConfig = z.infer<typeof PortConfigUnionSchema>
