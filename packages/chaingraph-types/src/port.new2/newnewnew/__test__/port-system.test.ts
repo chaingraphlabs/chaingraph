@@ -2,6 +2,7 @@ import type {
   IArrayPortConfig,
   IBooleanPortConfig,
   INumberPortConfig,
+  IObjectPortConfig,
   IPortConfigUnion,
   IStringPortConfig,
 } from '../port-configs'
@@ -14,6 +15,7 @@ import type {
   ObjectPort,
   StringPort,
 } from '../port-full'
+import { getValue } from '@chaingraph/types/port.new2/newnewnew/port-unwrapper'
 import { describe, expect, it } from 'vitest'
 // Import our exported port types:
 import { PortTypeEnum } from '../port-types.enum'
@@ -218,18 +220,28 @@ describe('generic Array Port', () => {
 describe('generic Object Port', () => {
   it('should create a valid ObjectPort with a defined schema', () => {
     // Define a schema with two fields: field1 (string) and field2 (number).
+    interface MySchema2 extends Record<string, IPortConfigUnion> {
+      color: IStringPortConfig
+    }
+
     interface MySchema extends Record<string, IPortConfigUnion> {
       field1: IStringPortConfig
       field2: INumberPortConfig
+      field3: IObjectPortConfig<MySchema2>
     }
 
     const op: ObjectPort<MySchema> = {
       config: {
-        id: 'obj1',
         type: PortTypeEnum.Object,
         schema: {
-          field1: { id: 'f1', type: PortTypeEnum.String },
-          field2: { id: 'f2', type: PortTypeEnum.Number },
+          field1: { type: PortTypeEnum.String },
+          field2: { type: PortTypeEnum.Number },
+          field3: {
+            type: PortTypeEnum.Object,
+            schema: {
+              color: { type: PortTypeEnum.String },
+            },
+          },
         },
       },
       value: {
@@ -237,13 +249,24 @@ describe('generic Object Port', () => {
         value: {
           field1: { type: PortTypeEnum.String, value: 'TestValue' },
           field2: { type: PortTypeEnum.Number, value: 789 },
+          field3: {
+            type: PortTypeEnum.Object,
+            value: {
+              color: { type: PortTypeEnum.String, value: 'red' },
+            },
+          },
         },
       },
     }
 
-    op.value.value.field1.value
-
     expect(op.value.value.field1.value).toBe('TestValue')
     expect(op.value.value.field2.value).toBe(789)
+    expect(op.value.value.field3.value.color.value).toBe('red')
+
+    const unwrapped = getValue(op)
+    expect(unwrapped.field3.color).toBe('red')
+
+    unwrapped.field3.color = 'blue'
+    expect(op.value.value.field3.value.color.value).toBe('blue')
   })
 })
