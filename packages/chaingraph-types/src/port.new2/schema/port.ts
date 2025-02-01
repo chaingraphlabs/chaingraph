@@ -1,5 +1,6 @@
 // File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port.ts
 import type { EnsureJSONSerializable, JSONValue } from './json'
+import type { GenericArrayPort } from './port-array-generic'
 import type { IPortConfigUnion } from './port-configs'
 import type { PortTypeEnum } from './port-types.enum'
 import type { IPortValueUnion } from './port-value-types'
@@ -24,7 +25,7 @@ export interface FullPort<D extends PortTypeEnum> {
 }
 
 /**
- * The union of all possible ports.
+ * The union of all possible ports, including specialized generic array ports.
  */
 export type PortUnion =
   | FullPort<PortTypeEnum.String>
@@ -33,3 +34,9 @@ export type PortUnion =
   | FullPort<PortTypeEnum.Enum>
   | FullPort<PortTypeEnum.Array>
   | FullPort<PortTypeEnum.Object>
+  | GenericArrayPort<PortTypeEnum.String> // specialized array-of-string port
+  | GenericArrayPort<PortTypeEnum.Enum> // specialized array-of-string port
+  | GenericArrayPort<PortTypeEnum.Number> // specialized array-of-number port
+  | GenericArrayPort<PortTypeEnum.Boolean> // specialized array-of-boolean port
+  | GenericArrayPort<PortTypeEnum.Object> // specialized array-of-object port
+  | GenericArrayPort<PortTypeEnum.Array> // specialized array-of-array port
