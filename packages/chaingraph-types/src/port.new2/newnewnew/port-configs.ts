@@ -1,4 +1,3 @@
-// File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port-configs.ts
 import type { BasePortConfig } from './port'
 import type { PortTypeEnum } from './port-types.enum'
 
@@ -24,23 +23,16 @@ export interface IBooleanPortConfig extends BasePortConfig {
 }
 
 /**
- * Enum Port Config
+ * Enum Port Config, with an "options" field that is an array of full port configs.
  */
 export interface IEnumPortConfig extends BasePortConfig {
   type: PortTypeEnum.Enum
-  options: PortEnumOption[]
-}
-
-/**
- * Object Port Config
- */
-export interface IObjectPortConfig extends BasePortConfig {
-  type: PortTypeEnum.Object
+  options: IPortConfigUnion[]
 }
 
 /**
  * Generic Array Port Config – parameterized by ItemConfig.
- * itemConfig fully describes the config of each element in the array.
+ * The "itemConfig" field fully describes the configuration for each array element.
  */
 export interface IArrayPortConfig<ItemConfig extends IPortConfigUnion> extends BasePortConfig {
   type: PortTypeEnum.Array
@@ -48,19 +40,22 @@ export interface IArrayPortConfig<ItemConfig extends IPortConfigUnion> extends B
 }
 
 /**
- * Represents an option inside an enum port.
+ * Generic Object Port Config – parameterized by Schema.
+ * "schema" is a record mapping field names to port configurations.
  */
-export interface PortEnumOption {
-  port: PortUnion
+export interface IObjectPortConfig<Schema extends { [key: string]: IPortConfigUnion }> extends BasePortConfig {
+  type: PortTypeEnum.Object
+  schema: Schema
 }
 
 /**
- * The union of all possible config interfaces.
+ * The union of all possible port configuration types.
+ * (For IArrayPortConfig and IObjectPortConfig we use a generic form.)
  */
 export type IPortConfigUnion =
   | IStringPortConfig
   | INumberPortConfig
   | IBooleanPortConfig
   | IEnumPortConfig
-  | IObjectPortConfig
   | IArrayPortConfig<IPortConfigUnion>
+  | IObjectPortConfig<{ [key: string]: IPortConfigUnion }>

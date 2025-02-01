@@ -1,11 +1,8 @@
 // File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port-value-types.ts
 import type { EnsureJSONSerializable } from './json'
+import type { IPortConfigUnion } from './port-configs'
+import type { MapItemConfigToValue } from './port-mappings'
 import type { PortTypeEnum } from './port-types.enum'
-
-/*
-  Each "I<X>PortValue" is an interface describing one variant.
-  We avoid type aliases here to reduce the risk of circular references.
-*/
 
 /** String port value. */
 export interface IStringPortValue {
@@ -25,28 +22,26 @@ export interface IBooleanPortValue {
   value: boolean
 }
 
-/** Enum port value – stores a single selected option's identifier. */
+/** Enum port value. */
 export interface IEnumPortValue {
   type: PortTypeEnum.Enum
   value: string
 }
 
-/** Array port value – each element of the array is another PortValue. */
-export interface IArrayPortValue {
-  type: PortTypeEnum.Array
-  value: IPortValueUnion[] // reference the union below
-}
-
-/** Object port value – each property is another PortValue. */
+/** Object port value. */
 export interface IObjectPortValue {
   type: PortTypeEnum.Object
   value: { [key: string]: IPortValueUnion }
 }
 
-/*
-  1) Define IPortValueUnion as the union of all subinterfaces.
-  2) Then apply EnsureJSONSerializable to that union for the final PortValue type.
-*/
+/**
+ * Generic Array Port Value definition.
+ * The property "value" is an array of elements whose type is MapItemConfigToValue<ItemConfig>.
+ */
+export interface IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> {
+  type: PortTypeEnum.Array
+  value: Array<MapItemConfigToValue<ItemConfig>>
+}
 
 /** The raw union of all possible port value variants. */
 export type IPortValueUnion =
@@ -54,8 +49,8 @@ export type IPortValueUnion =
   | INumberPortValue
   | IBooleanPortValue
   | IEnumPortValue
-  | IArrayPortValue
   | IObjectPortValue
+  | IGenericArrayPortValue<IPortConfigUnion>
 
 /**
  * The final PortValue type used throughout the system.

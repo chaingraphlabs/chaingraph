@@ -1,9 +1,16 @@
 // File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port.ts
 import type { EnsureJSONSerializable, JSONValue } from './json'
-import type { GenericArrayPort } from './port-array-generic'
+import type {
+  ArrayOfArrayStringPort,
+  ArrayOfBooleanPort,
+  ArrayOfNumberPort,
+  ArrayOfObjectPort,
+  ArrayOfStringPort,
+  ArrayPort,
+} from './port-array-generic'
 import type { IPortConfigUnion } from './port-configs'
 import type { PortTypeEnum } from './port-types.enum'
-import type { IPortValueUnion } from './port-value-types'
+import type { IPortValueUnion, PortValue } from './port-value-types'
 
 /*
   Base Port configuration – every port should have an id, and may have a name and metadata.
@@ -32,11 +39,12 @@ export type PortUnion =
   | FullPort<PortTypeEnum.Number>
   | FullPort<PortTypeEnum.Boolean>
   | FullPort<PortTypeEnum.Enum>
-  | FullPort<PortTypeEnum.Array>
   | FullPort<PortTypeEnum.Object>
-  | GenericArrayPort<PortTypeEnum.String> // specialized array-of-string port
-  | GenericArrayPort<PortTypeEnum.Enum> // specialized array-of-string port
-  | GenericArrayPort<PortTypeEnum.Number> // specialized array-of-number port
-  | GenericArrayPort<PortTypeEnum.Boolean> // specialized array-of-boolean port
-  | GenericArrayPort<PortTypeEnum.Object> // specialized array-of-object port
-  | GenericArrayPort<PortTypeEnum.Array> // specialized array-of-array port
+  | ArrayOfStringPort // specialized array-of-string port
+  | ArrayOfNumberPort // specialized array-of-number port
+  | ArrayOfBooleanPort // specialized array-of-boolean port
+  | ArrayOfObjectPort // specialized array-of-object port
+  | ArrayOfArrayStringPort // specialized array-of-array-of-string port
+
+// Re-export for use in other files
+export { ArrayPort }
