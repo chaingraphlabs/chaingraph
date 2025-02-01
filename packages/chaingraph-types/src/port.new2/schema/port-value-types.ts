@@ -1,27 +1,65 @@
+// File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port-value-types.ts
 import type { EnsureJSONSerializable } from './json'
+import type { PortTypeEnum } from './port-types.enum'
 
 /*
-  A generic base for Port values.
-  It assigns a specific discriminant (valueType) and the actual value (V).
-  Wrapped in EnsureJSONSerializable to enforce JSON serialization at compile time.
+  Each "I<X>PortValue" is an interface describing one variant.
+  We avoid type aliases here to reduce the risk of circular references.
 */
-export type PortValueBase<D extends string, V> = EnsureJSONSerializable<{
-  valueType: D
-  value: V
-}>
+
+/** String port value. */
+export interface IStringPortValue {
+  type: PortTypeEnum.String
+  value: string
+}
+
+/** Number port value. */
+export interface INumberPortValue {
+  type: PortTypeEnum.Number
+  value: number
+}
+
+/** Boolean port value. */
+export interface IBooleanPortValue {
+  type: PortTypeEnum.Boolean
+  value: boolean
+}
+
+/** Enum port value – stores a single selected option's identifier. */
+export interface IEnumPortValue {
+  type: PortTypeEnum.Enum
+  value: string
+}
+
+/** Array port value – each element of the array is another PortValue. */
+export interface IArrayPortValue {
+  type: PortTypeEnum.Array
+  value: IPortValueUnion[] // reference the union below
+}
+
+/** Object port value – each property is another PortValue. */
+export interface IObjectPortValue {
+  type: PortTypeEnum.Object
+  value: { [key: string]: IPortValueUnion }
+}
 
 /*
-  Scalar Port Value definitions.
-  These are defined once so that they can be reused.
+  1) Define IPortValueUnion as the union of all subinterfaces.
+  2) Then apply EnsureJSONSerializable to that union for the final PortValue type.
 */
-export type PortValueString = PortValueBase<'string', string>
-export type PortValueNumber = PortValueBase<'number', number>
-export type PortValueBoolean = PortValueBase<'boolean', boolean>
 
-/*
-  The union of all built‑in scalar port values.
-*/
-export type RawScalarPortValue =
-  | PortValueString
-  | PortValueNumber
-  | PortValueBoolean
+/** The raw union of all possible port value variants. */
+export type IPortValueUnion =
+  | IStringPortValue
+  | INumberPortValue
+  | IBooleanPortValue
+  | IEnumPortValue
+  | IArrayPortValue
+  | IObjectPortValue
+
+/**
+ * The final PortValue type used throughout the system.
+ * This is safely recursive because TypeScript can handle
+ * interface-based unions referencing themselves.
+ */
+export type PortValue = EnsureJSONSerializable<IPortValueUnion>

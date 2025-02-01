@@ -1,13 +1,16 @@
 import type { BasePortConfig, Port } from '../port'
-import type { PortValueBoolean } from '../port-value-types'
+// File: chaingraph/packages/chaingraph-types/src/port.new2/schema/scalar/port-scalar-boolean.ts
+import type { PortTypeEnum } from '../port-types.enum'
+import type { IBooleanPortValue } from '../port-value-types'
 
 /*
   Scalar (boolean) Port configuration.
-  Extending BasePortConfig with a literal type 'boolean'.
+  Extending BasePortConfig with a literal type PortTypeEnum.Boolean.
 */
-export type ScalarBooleanPortConfig = BasePortConfig & { type: 'boolean' }
+export type ScalarBooleanPortConfig = BasePortConfig & { type: PortTypeEnum.Boolean }
 
 /*
   Final Scalar Boolean Port type.
+  Now the "value" is just IBooleanPortValue, not a separate alias.
 */
-export type ScalarBooleanPort = Port<'boolean', ScalarBooleanPortConfig, PortValueBoolean>
+export type ScalarBooleanPort = Port<PortTypeEnum.Boolean, ScalarBooleanPortConfig, IBooleanPortValue>

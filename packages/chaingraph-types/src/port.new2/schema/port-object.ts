@@ -1,25 +1,15 @@
-import type { EnsureJSONSerializable } from './json'
+// File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port-object.ts
 import type { BasePortConfig, Port } from './port'
+import type { PortTypeEnum } from './port-types.enum'
+import type { IObjectPortValue } from './port-value-types'
 
 /*
-  Define the PortValueObject type.
-  It wraps an object (with keys mapping to port values) in a JSON serializable container,
-  with the discriminant 'object'.
+  Object Port configuration: extends BasePortConfig with type set to PortTypeEnum.Object.
 */
-export type PortValueObject<T extends Record<string, unknown>> = EnsureJSONSerializable<{
-  valueType: 'object'
-  value: T
-}>
-
-/*
-  Object Port configuration.
-  It extends BasePortConfig by adding a literal property type set to 'object'.
-*/
-export type ObjectPortConfig = BasePortConfig & { type: 'object' }
+export type ObjectPortConfig = BasePortConfig & { type: PortTypeEnum.Object }
 
 /*
   Final definition for an Object Port.
-  The generic parameter T is used to specify the structure of the object.
-  Value is enforced to have valueType equal to 'object'.
+  Now the "value" is just IObjectPortValue, not a separate alias.
 */
-export type ObjectPort<T extends Record<string, unknown>> = Port<'object', ObjectPortConfig, PortValueObject<T>>
+export type ObjectPort = Port<PortTypeEnum.Object, ObjectPortConfig, IObjectPortValue>

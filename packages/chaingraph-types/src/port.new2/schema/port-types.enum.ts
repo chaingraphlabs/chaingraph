@@ -1,6 +1,7 @@
+// File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port-types.enum.ts
 /*
   Global enumeration for port types used as discriminators in our system.
-  Using a TypeScript enum for clarity.
+  Using a TypeScript enum for clarity and strict type checking.
 */
 export enum PortTypeEnum {
   String = 'string',
@@ -12,7 +13,7 @@ export enum PortTypeEnum {
 }
 
 /*
-  If a union of literal strings is preferred, you can use the following.
+  If a union of literal strings is preferred in some areas, you can use:
 */
 export type PortType =
   | PortTypeEnum.String
