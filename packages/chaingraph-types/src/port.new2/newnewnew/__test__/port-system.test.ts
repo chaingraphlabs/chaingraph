@@ -15,7 +15,7 @@ import type {
   ObjectPort,
   StringPort,
 } from '../port-full'
-import { getValue } from '@chaingraph/types/port.new2/newnewnew/port-unwrapper'
+import { unwrapMutableValue, unwrapValue } from '@chaingraph/types/port.new2/newnewnew/port-unwrapper'
 import { describe, expect, it } from 'vitest'
 // Import our exported port types:
 import { PortTypeEnum } from '../port-types.enum'
@@ -36,6 +36,9 @@ describe('scalar Port Types', () => {
       },
     }
     expect(sp.value.value).toBe('Hello, world!')
+
+    const unwrapped = unwrapValue(sp)
+    expect(unwrapped).toBe('Hello, world!')
   })
 
   it('should create a valid NumberPort', () => {
@@ -50,6 +53,9 @@ describe('scalar Port Types', () => {
       },
     }
     expect(np.value.value).toBe(123)
+
+    const unwrapped = unwrapValue(np)
+    expect(unwrapped).toBe(123)
   })
 
   it('should create a valid BooleanPort', () => {
@@ -64,6 +70,9 @@ describe('scalar Port Types', () => {
       },
     }
     expect(bp.value.value).toBe(true)
+
+    const unwrapped = unwrapValue(bp)
+    expect(unwrapped).toBe(true)
   })
 })
 
@@ -86,6 +95,9 @@ describe('enum Port Type', () => {
       },
     }
     expect(ep.value.value).toBe('opt1')
+
+    const unwrapped = unwrapValue(ep)
+    expect(unwrapped).toBe('opt1')
   })
 })
 
@@ -114,6 +126,44 @@ describe('generic Array Port', () => {
 
     expect(Array.isArray(asp.value.value)).toBe(true)
     expect(asp.value.value[0].value).toBe('A')
+
+    const unwrapped = unwrapValue(asp)
+    expect(unwrapped[0]).toBe('A')
+    unwrapped[0] = 'C'
+    expect(asp.value.value[0].value).toBe('A')
+
+    const mutable = unwrapMutableValue(asp)
+    mutable[0] = 'C'
+    expect(asp.value.value[0].value).toBe('C')
+
+    mutable[1] = 'D'
+    expect(asp.value.value[1].value).toBe('D')
+
+    mutable.push('E')
+    expect(asp.value.value[2].value).toBe('E')
+
+    mutable.unshift('B')
+    expect(asp.value.value[0].value).toBe('B')
+
+    const mapped = mutable.map((el, i) => el + i.toString())
+    expect(mapped[0]).toBe('B0')
+    expect(mapped[1]).toBe('C1')
+    expect(mapped[2]).toBe('D2')
+    expect(mapped[3]).toBe('E3')
+
+    // pop
+    const popped = mutable.pop()
+    expect(popped).toBe('E')
+    expect(asp.value.value.length).toBe(3)
+    // shift
+    const shifted = mutable.shift()
+    expect(shifted).toBe('B')
+    expect(asp.value.value.length).toBe(2)
+    // push x3
+    mutable.push('E')
+    mutable.push('F')
+    mutable.push('G')
+    expect(asp.value.value.length).toBe(5)
   })
 
   it('should create a valid 2D ArrayPort of booleans', () => {
@@ -156,6 +206,15 @@ describe('generic Array Port', () => {
     expect(Array.isArray(arr2d.value.value)).toBe(true)
     // Check first inner array first element:
     expect(arr2d.value.value[0].value[0].value).toBe(true)
+
+    const unwrapped = unwrapValue(arr2d)
+    expect(unwrapped[0][0]).toBe(true)
+    unwrapped[0][0] = false
+    expect(arr2d.value.value[0].value[0].value).toBe(true)
+
+    const mutable = unwrapMutableValue(arr2d)
+    mutable[0][0] = false
+    expect(arr2d.value.value[0].value[0].value).toBe(false)
   })
 
   it('should create a valid 3D ArrayPort of numbers', () => {
@@ -212,6 +271,15 @@ describe('generic Array Port', () => {
 
     // Verify nested structure:
     expect(arr3d.value.value[0].value[0].value[0].value).toBe(1)
+
+    const unwrapped = unwrapValue(arr3d)
+    expect(unwrapped[0][0][0]).toBe(1)
+    unwrapped[0][0][0] = 5
+    expect(arr3d.value.value[0].value[0].value[0].value).toBe(1)
+
+    const mutable = unwrapMutableValue(arr3d)
+    mutable[0][0][0] = 5
+    expect(arr3d.value.value[0].value[0].value[0].value).toBe(5)
   })
 })
 
@@ -219,15 +287,27 @@ describe('generic Array Port', () => {
 
 describe('generic Object Port', () => {
   it('should create a valid ObjectPort with a defined schema', () => {
-    // Define a schema with two fields: field1 (string) and field2 (number).
-    interface MySchema2 extends Record<string, IPortConfigUnion> {
+    interface ColorSchema extends Record<string, IPortConfigUnion> {
       color: IStringPortConfig
+    }
+
+    interface ColorSchemaTwo extends Record<string, IPortConfigUnion> {
+      schema: IObjectPortConfig<ColorSchema>
+      other: IStringPortConfig
+    }
+
+    interface ColorSchemaThree extends Record<string, IPortConfigUnion> {
+      internal: IObjectPortConfig<ColorSchemaTwo>
+      root: IStringPortConfig
+      parent: IObjectPortConfig<ColorSchema>
     }
 
     interface MySchema extends Record<string, IPortConfigUnion> {
       field1: IStringPortConfig
       field2: INumberPortConfig
-      field3: IObjectPortConfig<MySchema2>
+      field3: IObjectPortConfig<ColorSchema>
+      field4: IObjectPortConfig<ColorSchemaTwo>
+      field5: IObjectPortConfig<ColorSchemaThree>
     }
 
     const op: ObjectPort<MySchema> = {
@@ -240,6 +320,42 @@ describe('generic Object Port', () => {
             type: PortTypeEnum.Object,
             schema: {
               color: { type: PortTypeEnum.String },
+            },
+          },
+          field4: {
+            type: PortTypeEnum.Object,
+            schema: {
+              schema: {
+                type: PortTypeEnum.Object,
+                schema: {
+                  color: { type: PortTypeEnum.String },
+                },
+              },
+              other: { type: PortTypeEnum.String },
+            },
+          },
+          field5: {
+            type: PortTypeEnum.Object,
+            schema: {
+              internal: {
+                type: PortTypeEnum.Object,
+                schema: {
+                  schema: {
+                    type: PortTypeEnum.Object,
+                    schema: {
+                      color: { type: PortTypeEnum.String },
+                    },
+                  },
+                  other: { type: PortTypeEnum.String },
+                },
+              },
+              root: { type: PortTypeEnum.String },
+              parent: {
+                type: PortTypeEnum.Object,
+                schema: {
+                  color: { type: PortTypeEnum.String },
+                },
+              },
             },
           },
         },
@@ -255,6 +371,43 @@ describe('generic Object Port', () => {
               color: { type: PortTypeEnum.String, value: 'red' },
             },
           },
+          field4: {
+            type: PortTypeEnum.Object,
+            value: {
+              schema: {
+                type: PortTypeEnum.Object,
+                value: {
+                  color: { type: PortTypeEnum.String, value: 'red' },
+                },
+              },
+              other: { type: PortTypeEnum.String, value: 'Test' },
+            },
+          },
+
+          field5: {
+            type: PortTypeEnum.Object,
+            value: {
+              internal: {
+                type: PortTypeEnum.Object,
+                value: {
+                  schema: {
+                    type: PortTypeEnum.Object,
+                    value: {
+                      color: { type: PortTypeEnum.String, value: 'red' },
+                    },
+                  },
+                  other: { type: PortTypeEnum.String, value: 'Test' },
+                },
+              },
+              root: { type: PortTypeEnum.String, value: 'Root' },
+              parent: {
+                type: PortTypeEnum.Object,
+                value: {
+                  color: { type: PortTypeEnum.String, value: 'red' },
+                },
+              },
+            },
+          },
         },
       },
     }
@@ -263,10 +416,51 @@ describe('generic Object Port', () => {
     expect(op.value.value.field2.value).toBe(789)
     expect(op.value.value.field3.value.color.value).toBe('red')
 
-    const unwrapped = getValue(op)
+    const unwrapped = unwrapValue(op)
     expect(unwrapped.field3.color).toBe('red')
-
     unwrapped.field3.color = 'blue'
+    expect(op.value.value.field3.value.color.value).toBe('red')
+
+    const mutable = unwrapMutableValue(op)
+
+    mutable.field3.color = 'blue'
     expect(op.value.value.field3.value.color.value).toBe('blue')
+
+    mutable.field3 = { color: 'green' }
+    expect(op.value.value.field3.value.color.value).toBe('green')
+
+    mutable.field4.schema.color = 'blue'
+    expect(op.value.value.field4.value.schema.value.color.value).toBe('blue')
+
+    mutable.field4.other = 'Other'
+    expect(op.value.value.field4.value.other.value).toBe('Other')
+
+    mutable.field4 = { schema: { color: 'green' }, other: 'Another' }
+    expect(op.value.value.field4.value.schema.value.color.value).toBe('green')
+    expect(op.value.value.field4.value.other.value).toBe('Another')
+
+    mutable.field5.internal.other = 'Another'
+    expect(op.value.value.field5.value.internal.value.other.value).toBe('Another')
+
+    mutable.field5.internal = { schema: { color: 'green' }, other: 'Another' }
+    expect(op.value.value.field5.value.internal.value.schema.value.color.value).toBe('green')
+    expect(op.value.value.field5.value.internal.value.other.value).toBe('Another')
+
+    mutable.field5.parent.color = 'blue'
+    expect(op.value.value.field5.value.parent.value.color.value).toBe('blue')
+
+    mutable.field5.root = 'Root2'
+    expect(op.value.value.field5.value.root.value).toBe('Root2')
+
+    mutable.field5 = {
+      internal: { schema: { color: 'green' }, other: 'Another' },
+      root: 'Root3',
+      parent: { color: 'blue' },
+    }
+
+    expect(op.value.value.field5.value.internal.value.schema.value.color.value).toBe('green')
+    expect(op.value.value.field5.value.internal.value.other.value).toBe('Another')
+    expect(op.value.value.field5.value.root.value).toBe('Root3')
+    expect(op.value.value.field5.value.parent.value.color.value).toBe('blue')
   })
 })
