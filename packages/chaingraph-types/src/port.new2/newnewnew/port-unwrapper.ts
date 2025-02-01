@@ -1,5 +1,17 @@
 import type { PortUnion } from '@chaingraph/types/port.new2/newnewnew/port-full'
 import { PortTypeEnum } from './port-types.enum'
+import { FullPortSchema } from './zod-full-port'
+
+/**
+ * Helper function to validate a port using Zod schema
+ */
+function validatePort<P extends PortUnion>(port: P): P {
+  try {
+    return FullPortSchema.parse(port) as P
+  } catch (error) {
+    throw new Error(`Invalid port structure: ${error}`)
+  }
+}
 
 /**
  * UnwrapPortValue recursively strips the "wrapper" (i.e. the { type, value } construct)
@@ -77,9 +89,12 @@ function wrapObject(expected: any, newObj: any): any {
 
 /**
  * A helper function that recursively unwraps a port value.
- * (This is one possible runtime implementation; you may tweak it as needed.)
+ * Validates the port structure using Zod before unwrapping.
  */
 export function unwrapValue<P extends PortUnion>(port: P): UnwrappedPort<P> {
+  // Validate port structure before unwrapping
+  const validatedPort = validatePort(port)
+
   function unwrap<T>(obj: any): any {
     if (obj && typeof obj === 'object' && 'type' in obj && 'value' in obj) {
       if (obj.type === PortTypeEnum.Array) {
@@ -96,13 +111,14 @@ export function unwrapValue<P extends PortUnion>(port: P): UnwrappedPort<P> {
     }
     return obj
   }
-  return unwrap((port as any).value)
+  return unwrap((validatedPort as any).value)
 }
 
 /**
  * Recursively unwraps a port value with mutable access.
  * For scalars, returns the inner value.
  * For arrays and objects, returns a Proxy that intercepts gets and sets.
+ * Validates the port structure using Zod before unwrapping.
  */
 function createMutableProxy<T>(obj: any): T {
   if (!obj || typeof obj !== 'object' || !('type' in obj) || !('value' in obj))
@@ -224,7 +240,10 @@ function createMutableProxy<T>(obj: any): T {
 /**
  * getMutableValue returns a recursively proxied version of the port's internal "value"
  * so that reading yields unwrapped values and writing sets underlying wrappers appropriately.
+ * Validates the port structure using Zod before unwrapping.
  */
 export function unwrapMutableValue<P extends PortUnion>(port: P): UnwrappedPort<P> {
-  return createMutableProxy(port.value)
+  // Validate port structure before unwrapping
+  const validatedPort = validatePort(port)
+  return createMutableProxy(validatedPort.value)
 }

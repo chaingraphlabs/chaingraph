@@ -1,41 +1,39 @@
-import type { BasePortConfig } from './port'
-import type { PortTypeEnum } from './port-types.enum'
+import type { z } from 'zod'
+import type {
+  ArrayPortConfigSchema,
+  BooleanPortConfigSchema,
+  EnumPortConfigSchema,
+  NumberPortConfigSchema,
+  ObjectPortConfigSchema,
+  PortConfigUnionSchema,
+  StringPortConfigSchema,
+} from './zod-port-configs'
 
 /**
  * String Port Config
  */
-export interface IStringPortConfig extends BasePortConfig {
-  type: PortTypeEnum.String
-}
+export type IStringPortConfig = z.infer<typeof StringPortConfigSchema>
 
 /**
  * Number Port Config
  */
-export interface INumberPortConfig extends BasePortConfig {
-  type: PortTypeEnum.Number
-}
+export type INumberPortConfig = z.infer<typeof NumberPortConfigSchema>
 
 /**
  * Boolean Port Config
  */
-export interface IBooleanPortConfig extends BasePortConfig {
-  type: PortTypeEnum.Boolean
-}
+export type IBooleanPortConfig = z.infer<typeof BooleanPortConfigSchema>
 
 /**
  * Enum Port Config, with an "options" field that is an array of full port configs.
  */
-export interface IEnumPortConfig extends BasePortConfig {
-  type: PortTypeEnum.Enum
-  options: IPortConfigUnion[]
-}
+export type IEnumPortConfig = z.infer<typeof EnumPortConfigSchema>
 
 /**
  * Generic Array Port Config – parameterized by ItemConfig.
  * The "itemConfig" field fully describes the configuration for each array element.
  */
-export interface IArrayPortConfig<ItemConfig extends IPortConfigUnion> extends BasePortConfig {
-  type: PortTypeEnum.Array
+export type IArrayPortConfig<ItemConfig extends IPortConfigUnion> = z.infer<typeof ArrayPortConfigSchema> & {
   itemConfig: ItemConfig
 }
 
@@ -43,8 +41,7 @@ export interface IArrayPortConfig<ItemConfig extends IPortConfigUnion> extends B
  * Generic Object Port Config – parameterized by Schema.
  * "schema" is a record mapping field names to port configurations.
  */
-export interface IObjectPortConfig<Schema extends { [key: string]: IPortConfigUnion }> extends BasePortConfig {
-  type: PortTypeEnum.Object
+export type IObjectPortConfig<Schema extends { [key: string]: IPortConfigUnion }> = z.infer<typeof ObjectPortConfigSchema> & {
   schema: Schema
 }
 
@@ -52,10 +49,4 @@ export interface IObjectPortConfig<Schema extends { [key: string]: IPortConfigUn
  * The union of all possible port configuration types.
  * (For IArrayPortConfig and IObjectPortConfig we use a generic form.)
  */
-export type IPortConfigUnion =
-  | IStringPortConfig
-  | INumberPortConfig
-  | IBooleanPortConfig
-  | IEnumPortConfig
-  | IArrayPortConfig<IPortConfigUnion>
-  | IObjectPortConfig<{ [key: string]: IPortConfigUnion }>
+export type IPortConfigUnion = z.infer<typeof PortConfigUnionSchema>

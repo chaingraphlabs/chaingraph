@@ -3,10 +3,8 @@ import type {
   IBooleanPortConfig,
   INumberPortConfig,
   IObjectPortConfig,
-  IPortConfigUnion,
   IStringPortConfig,
 } from '../port-configs'
-
 import type {
   ArrayPort,
   BooleanPort,
@@ -15,10 +13,11 @@ import type {
   ObjectPort,
   StringPort,
 } from '../port-full'
-import { unwrapMutableValue, unwrapValue } from '@chaingraph/types/port.new2/newnewnew/port-unwrapper'
+import type { PortConfig } from '../zod-port-configs'
 import { describe, expect, it } from 'vitest'
-// Import our exported port types:
 import { PortTypeEnum } from '../port-types.enum'
+import { unwrapMutableValue, unwrapValue } from '../port-unwrapper'
+import { FullPortSchema } from '../zod-full-port'
 
 // ────── Scalar Ports ───────────────────────────────────────────
 
@@ -35,6 +34,9 @@ describe('scalar Port Types', () => {
         value: 'Hello, world!',
       },
     }
+
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(sp)).not.toThrow()
     expect(sp.value.value).toBe('Hello, world!')
 
     const unwrapped = unwrapValue(sp)
@@ -52,6 +54,9 @@ describe('scalar Port Types', () => {
         value: 123,
       },
     }
+
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(np)).not.toThrow()
     expect(np.value.value).toBe(123)
 
     const unwrapped = unwrapValue(np)
@@ -69,10 +74,28 @@ describe('scalar Port Types', () => {
         value: true,
       },
     }
+
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(bp)).not.toThrow()
     expect(bp.value.value).toBe(true)
 
     const unwrapped = unwrapValue(bp)
     expect(unwrapped).toBe(true)
+  })
+
+  it('should reject invalid port structures', () => {
+    const invalidPort = {
+      config: {
+        id: 'invalid1',
+        type: 'invalid_type' as PortTypeEnum,
+      },
+      value: {
+        type: PortTypeEnum.String,
+        value: 42, // Wrong value type for string port
+      },
+    }
+
+    expect(() => FullPortSchema.parse(invalidPort)).toThrow()
   })
 })
 
@@ -94,6 +117,9 @@ describe('enum Port Type', () => {
         value: 'opt1',
       },
     }
+
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(ep)).not.toThrow()
     expect(ep.value.value).toBe('opt1')
 
     const unwrapped = unwrapValue(ep)
@@ -105,7 +131,6 @@ describe('enum Port Type', () => {
 
 describe('generic Array Port', () => {
   it('should create a valid ArrayPort of strings', () => {
-    // Here the generic parameter is IStringPortConfig so that each element is inferred as IStringPortValue.
     const asp: ArrayPort<IStringPortConfig> = {
       config: {
         id: 'arr1',
@@ -124,15 +149,20 @@ describe('generic Array Port', () => {
       },
     }
 
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(asp)).not.toThrow()
     expect(Array.isArray(asp.value.value)).toBe(true)
     expect(asp.value.value[0].value).toBe('A')
 
     const unwrapped = unwrapValue(asp)
+    const mutable = unwrapMutableValue(asp)
+
+    // Test immutable operations
     expect(unwrapped[0]).toBe('A')
     unwrapped[0] = 'C'
     expect(asp.value.value[0].value).toBe('A')
 
-    const mutable = unwrapMutableValue(asp)
+    // Test mutable operations
     mutable[0] = 'C'
     expect(asp.value.value[0].value).toBe('C')
 
@@ -167,7 +197,6 @@ describe('generic Array Port', () => {
   })
 
   it('should create a valid 2D ArrayPort of booleans', () => {
-    // A 2D array: the outer array’s item is itself an array of booleans.
     type BooleanArrayConfig = IArrayPortConfig<IBooleanPortConfig>
     const arr2d: ArrayPort<BooleanArrayConfig> = {
       config: {
@@ -203,22 +232,25 @@ describe('generic Array Port', () => {
       },
     }
 
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(arr2d)).not.toThrow()
     expect(Array.isArray(arr2d.value.value)).toBe(true)
-    // Check first inner array first element:
     expect(arr2d.value.value[0].value[0].value).toBe(true)
 
     const unwrapped = unwrapValue(arr2d)
+    const mutable = unwrapMutableValue(arr2d)
+
+    // Test immutable operations
     expect(unwrapped[0][0]).toBe(true)
     unwrapped[0][0] = false
     expect(arr2d.value.value[0].value[0].value).toBe(true)
 
-    const mutable = unwrapMutableValue(arr2d)
+    // Test mutable operations
     mutable[0][0] = false
     expect(arr2d.value.value[0].value[0].value).toBe(false)
   })
 
   it('should create a valid 3D ArrayPort of numbers', () => {
-    // For a 3D array: each element is an array whose item is an array of numbers.
     type Number2DArrayConfig = IArrayPortConfig<INumberPortConfig>
     type Number3DArrayConfig = IArrayPortConfig<Number2DArrayConfig>
     const arr3d: ArrayPort<Number3DArrayConfig> = {
@@ -269,15 +301,19 @@ describe('generic Array Port', () => {
       },
     }
 
-    // Verify nested structure:
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(arr3d)).not.toThrow()
     expect(arr3d.value.value[0].value[0].value[0].value).toBe(1)
 
     const unwrapped = unwrapValue(arr3d)
+    const mutable = unwrapMutableValue(arr3d)
+
+    // Test immutable operations
     expect(unwrapped[0][0][0]).toBe(1)
     unwrapped[0][0][0] = 5
     expect(arr3d.value.value[0].value[0].value[0].value).toBe(1)
 
-    const mutable = unwrapMutableValue(arr3d)
+    // Test mutable operations
     mutable[0][0][0] = 5
     expect(arr3d.value.value[0].value[0].value[0].value).toBe(5)
   })
@@ -287,22 +323,22 @@ describe('generic Array Port', () => {
 
 describe('generic Object Port', () => {
   it('should create a valid ObjectPort with a defined schema', () => {
-    interface ColorSchema extends Record<string, IPortConfigUnion> {
+    interface ColorSchema extends Record<string, PortConfig> {
       color: IStringPortConfig
     }
 
-    interface ColorSchemaTwo extends Record<string, IPortConfigUnion> {
+    interface ColorSchemaTwo extends Record<string, PortConfig> {
       schema: IObjectPortConfig<ColorSchema>
       other: IStringPortConfig
     }
 
-    interface ColorSchemaThree extends Record<string, IPortConfigUnion> {
+    interface ColorSchemaThree extends Record<string, PortConfig> {
       internal: IObjectPortConfig<ColorSchemaTwo>
       root: IStringPortConfig
       parent: IObjectPortConfig<ColorSchema>
     }
 
-    interface MySchema extends Record<string, IPortConfigUnion> {
+    interface MySchema extends Record<string, PortConfig> {
       field1: IStringPortConfig
       field2: INumberPortConfig
       field3: IObjectPortConfig<ColorSchema>
@@ -383,7 +419,6 @@ describe('generic Object Port', () => {
               other: { type: PortTypeEnum.String, value: 'Test' },
             },
           },
-
           field5: {
             type: PortTypeEnum.Object,
             value: {
@@ -412,17 +447,21 @@ describe('generic Object Port', () => {
       },
     }
 
+    // Validate using Zod schema
+    expect(() => FullPortSchema.parse(op)).not.toThrow()
     expect(op.value.value.field1.value).toBe('TestValue')
     expect(op.value.value.field2.value).toBe(789)
     expect(op.value.value.field3.value.color.value).toBe('red')
 
     const unwrapped = unwrapValue(op)
+    const mutable = unwrapMutableValue(op)
+
+    // Test immutable operations
     expect(unwrapped.field3.color).toBe('red')
     unwrapped.field3.color = 'blue'
     expect(op.value.value.field3.value.color.value).toBe('red')
 
-    const mutable = unwrapMutableValue(op)
-
+    // Test mutable operations
     mutable.field3.color = 'blue'
     expect(op.value.value.field3.value.color.value).toBe('blue')
 

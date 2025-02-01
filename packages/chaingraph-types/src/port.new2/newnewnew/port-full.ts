@@ -1,3 +1,4 @@
+import type { z } from 'zod'
 import type { FullPort } from './port'
 import type {
   IArrayPortConfig,
@@ -9,7 +10,15 @@ import type {
   IStringPortConfig,
 } from './port-configs'
 import type { PortTypeEnum } from './port-types.enum'
-import type { IBooleanPortValue, IEnumPortValue, IGenericArrayPortValue, IGenericObjectPortValue, INumberPortValue, IStringPortValue } from './port-value-types'
+import type {
+  IBooleanPortValue,
+  IEnumPortValue,
+  IGenericArrayPortValue,
+  IGenericObjectPortValue,
+  INumberPortValue,
+  IStringPortValue,
+} from './port-value-types'
+import type { FullPortSchema } from './zod-full-port'
 
 /**
  * Specialized ports:
@@ -50,3 +59,9 @@ export type PortUnion =
   | EnumPort
   | ArrayPort<IPortConfigUnion>
   | ObjectPort<{ [key: string]: IPortConfigUnion }>
+
+/**
+ * Full port type inferred from Zod schema.
+ * This can be used as an alternative to the PortUnion type.
+ */
+export type InferredFullPort = z.infer<typeof FullPortSchema>

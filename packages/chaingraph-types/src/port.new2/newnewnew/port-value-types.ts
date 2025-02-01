@@ -1,30 +1,35 @@
+import type { z } from 'zod'
 import type { EnsureJSONSerializable } from './json'
-import type { IArrayPortConfig, IBooleanPortConfig, IEnumPortConfig, INumberPortConfig, IObjectPortConfig, IPortConfigUnion, IStringPortConfig } from './port-configs'
-import type { PortTypeEnum } from './port-types.enum'
+import type {
+  IArrayPortConfig,
+  IBooleanPortConfig,
+  IEnumPortConfig,
+  INumberPortConfig,
+  IObjectPortConfig,
+  IPortConfigUnion,
+  IStringPortConfig,
+} from './port-configs'
+import type {
+  ArrayPortValueSchema,
+  BooleanPortValueSchema,
+  EnumPortValueSchema,
+  NumberPortValueSchema,
+  ObjectPortValueSchema,
+  PortValueUnionSchema,
+  StringPortValueSchema,
+} from './zod-port-values'
 
 /** String port value. */
-export interface IStringPortValue {
-  type: PortTypeEnum.String
-  value: string
-}
+export type IStringPortValue = z.infer<typeof StringPortValueSchema>
 
 /** Number port value. */
-export interface INumberPortValue {
-  type: PortTypeEnum.Number
-  value: number
-}
+export type INumberPortValue = z.infer<typeof NumberPortValueSchema>
 
 /** Boolean port value. */
-export interface IBooleanPortValue {
-  type: PortTypeEnum.Boolean
-  value: boolean
-}
+export type IBooleanPortValue = z.infer<typeof BooleanPortValueSchema>
 
 /** Enum port value. */
-export interface IEnumPortValue {
-  type: PortTypeEnum.Enum
-  value: string
-}
+export type IEnumPortValue = z.infer<typeof EnumPortValueSchema>
 
 /**
  * Mapping type: Given a port config T, derive its corresponding port value.
@@ -43,8 +48,7 @@ export type MapPortConfigToValue<T extends IPortConfigUnion> =
  * Generic Array Port Value.
  * The "value" property is an array of port values derived from the itemConfig.
  */
-export interface IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> {
-  type: PortTypeEnum.Array
+export type IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> = z.infer<typeof ArrayPortValueSchema> & {
   value: Array<MapPortConfigToValue<ItemConfig>>
 }
 
@@ -53,8 +57,7 @@ export interface IGenericArrayPortValue<ItemConfig extends IPortConfigUnion> {
  * The "value" property is an object whose keys are the schema's keys and whose values
  * are derived from the corresponding port config.
  */
-export interface IGenericObjectPortValue<Schema extends { [key: string]: IPortConfigUnion }> {
-  type: PortTypeEnum.Object
+export type IGenericObjectPortValue<Schema extends { [key: string]: IPortConfigUnion }> = z.infer<typeof ObjectPortValueSchema> & {
   value: { [K in keyof Schema]: MapPortConfigToValue<Schema[K]> }
 }
 
@@ -62,11 +65,4 @@ export interface IGenericObjectPortValue<Schema extends { [key: string]: IPortCo
  * The final PortValue union.
  * We wrap the union in EnsureJSONSerializable.
  */
-export type PortValue = EnsureJSONSerializable<
-  IStringPortValue |
-  INumberPortValue |
-  IBooleanPortValue |
-  IEnumPortValue |
-  IGenericArrayPortValue<IPortConfigUnion> |
-  IGenericObjectPortValue<{ [key: string]: IPortConfigUnion }>
->
+export type PortValue = EnsureJSONSerializable<z.infer<typeof PortValueUnionSchema>>
