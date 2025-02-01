@@ -1,6 +1,11 @@
-import type { ArrayPortConfig } from './port-array'
-import type { EnumPortConfig } from './port-enum'
-import type { ObjectPortConfig } from './port-object'
+import type {
+  IArrayPortConfig,
+  IBooleanPortConfig,
+  IEnumPortConfig,
+  INumberPortConfig,
+  IObjectPortConfig,
+  IStringPortConfig,
+} from './port-configs'
 // File: chaingraph/packages/chaingraph-types/src/port.new2/schema/port-mappings.ts
 import type { PortTypeEnum } from './port-types.enum'
 import type {
@@ -11,11 +16,6 @@ import type {
   IObjectPortValue,
   IStringPortValue,
 } from './port-value-types'
-import type {
-  ScalarBooleanPortConfig,
-  ScalarNumberPortConfig,
-  ScalarStringPortConfig,
-} from './scalar'
 
 /*
   Mapping for Port Values based on the discriminator.
@@ -33,12 +33,12 @@ export type PortValueMapping<T extends PortTypeEnum> =
   Mapping for Port Configurations based on the discriminator.
 */
 export type PortConfigMapping<T extends PortTypeEnum> =
-  T extends PortTypeEnum.String ? ScalarStringPortConfig :
-    T extends PortTypeEnum.Number ? ScalarNumberPortConfig :
-      T extends PortTypeEnum.Boolean ? ScalarBooleanPortConfig :
-        T extends PortTypeEnum.Array ? ArrayPortConfig :
-          T extends PortTypeEnum.Object ? ObjectPortConfig :
-            T extends PortTypeEnum.Enum ? EnumPortConfig :
+  T extends PortTypeEnum.String ? IStringPortConfig :
+    T extends PortTypeEnum.Number ? INumberPortConfig :
+      T extends PortTypeEnum.Boolean ? IBooleanPortConfig :
+        T extends PortTypeEnum.Array ? IArrayPortConfig :
+          T extends PortTypeEnum.Object ? IObjectPortConfig :
+            T extends PortTypeEnum.Enum ? IEnumPortConfig :
               never
 
 /*
