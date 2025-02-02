@@ -5,6 +5,7 @@ import type {
   IPortValue,
   NumberPortConfig,
   NumberPortValue,
+  ObjectPortConfig,
   PortType,
   StringPortConfig,
   StringPortValue,
@@ -13,10 +14,10 @@ import { z } from 'zod'
 import {
   isArrayPortConfig,
   isNumberPortConfig,
+  isObjectPortConfig,
   isStringPortConfig,
-  PortError,
-  PortErrorType,
 } from '../base/types'
+import { validateObjectValue } from '../plugins/ObjectPortPlugin'
 import { portRegistry } from '../registry/PortRegistry'
 
 /**
@@ -121,6 +122,58 @@ export class PortValidator {
       if (value.type === 'array') {
         this.validateArray(config, value, path, errors)
       }
+    } else if (isObjectPortConfig(config)) {
+      if (value.type === 'object') {
+        this.validateObject(config, value, path, errors)
+      }
+    }
+  }
+
+  /**
+   * Validate object-specific constraints
+   */
+  private validateObject(
+    config: ObjectPortConfig,
+    value: IPortValue,
+    path: (string | number)[],
+    errors: ValidationErrorDetails[],
+  ): void {
+    // Use ObjectPortPlugin's validateObjectValue
+    const objectErrors = validateObjectValue(value, config)
+
+    // Convert error messages to ValidationErrorDetails
+    objectErrors.forEach((errorMessage) => {
+      // Extract field path from error message if it exists
+      const fieldMatch = errorMessage.match(/field: ([^:]+):?/)
+      const fieldPath = fieldMatch ? fieldMatch[1].split('.') : []
+
+      errors.push({
+        path: [...path, ...fieldPath],
+        message: errorMessage,
+        code: z.ZodIssueCode.custom,
+      })
+    })
+
+    // Recursively validate nested fields
+    if ('fields' in config && 'value' in value) {
+      const objectValue = value.value as Record<string, IPortValue>
+      const objectConfig = config.fields
+
+      // Validate each field
+      Object.entries(objectConfig).forEach(([key, fieldConfig]) => {
+        const fieldValue = objectValue[key]
+        if (fieldValue) {
+          const fieldResult = this.validatePort(fieldConfig, fieldValue)
+          if (!fieldResult.success) {
+            errors.push(
+              ...fieldResult.errors.map(err => ({
+                ...err,
+                path: [...path, 'value', key, ...err.path],
+              })),
+            )
+          }
+        }
+      })
     }
   }
 
