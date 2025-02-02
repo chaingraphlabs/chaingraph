@@ -21,6 +21,20 @@ import { validateObjectValue } from '../plugins/ObjectPortPlugin'
 import { portRegistry } from '../registry/PortRegistry'
 
 /**
+ * Helper function to map Zod errors to ValidationErrorDetails format
+ */
+function mapZodErrors(
+  issues: ReadonlyArray<z.ZodIssue>,
+  basePath: (string | number)[] = [],
+): { path: (string | number)[], message: string, code: z.ZodIssueCode }[] {
+  return issues.map(issue => ({
+    path: [...basePath, ...(issue.path as (string | number)[])],
+    message: issue.message,
+    code: issue.code,
+  }))
+}
+
+/**
  * Validation error details
  */
 interface ValidationErrorDetails {
@@ -57,7 +71,7 @@ export class PortValidator {
       return { success: false, errors }
     }
 
-    // Get plugin for this type
+    // Get plugin for validation
     const plugin = portRegistry.getPlugin(config.type as PortType)
     if (!plugin) {
       errors.push({
@@ -92,8 +106,18 @@ export class PortValidator {
       )
     }
 
-    // Type-specific validations
-    this.validateTypeSpecific(config, value, [], errors)
+    // Use plugin's validate method if available, otherwise fall back to type-specific validation
+    if ('validate' in plugin && typeof plugin.validate === 'function') {
+      const pluginErrors = plugin.validate(value as any, config as any)
+      errors.push(...pluginErrors.map((err: string) => ({
+        path: ['value'],
+        message: err,
+        code: z.ZodIssueCode.custom,
+      })))
+    } else {
+      // Fallback to type-specific validations if plugin doesn't have validate method
+      this.validateTypeSpecific(config, value, [], errors)
+    }
 
     return {
       success: errors.length === 0,

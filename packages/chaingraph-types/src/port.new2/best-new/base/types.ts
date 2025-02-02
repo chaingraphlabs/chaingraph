@@ -180,6 +180,7 @@ export interface IPortPlugin<T extends PortType> {
   valueSchema: z.ZodType<ValueTypeMap[T]>
   serializeValue: (value: ValueTypeMap[T]) => unknown
   deserializeValue: (data: unknown) => ValueTypeMap[T]
+  validate?: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => string[]
 }
 
 /**
