@@ -39,9 +39,40 @@ function isArrayPortConfig(value: IPortConfig): value is ArrayPortConfig {
 }
 
 /**
- * Validate a single port value against its config
+ * Validate array length constraints
  */
-function validateSingleValue(value: IPortValue<any>, config: IPortConfig, path: (string | number)[]): z.ZodIssue[] {
+function validateArrayLength(value: IPortValue<any>[], config: ArrayPortConfig, path: (string | number)[]): z.ZodIssue[] {
+  const issues: z.ZodIssue[] = []
+
+  if (config.minLength !== undefined && value.length < config.minLength) {
+    issues.push({
+      code: z.ZodIssueCode.too_small,
+      message: `Array must have at least ${config.minLength} items`,
+      minimum: config.minLength,
+      type: 'array',
+      inclusive: true,
+      path: [...path, 'value'],
+    })
+  }
+
+  if (config.maxLength !== undefined && value.length > config.maxLength) {
+    issues.push({
+      code: z.ZodIssueCode.too_big,
+      message: `Array must have at most ${config.maxLength} items`,
+      maximum: config.maxLength,
+      type: 'array',
+      inclusive: true,
+      path: [...path, 'value'],
+    })
+  }
+
+  return issues
+}
+
+/**
+ * Validate a port value against its config, including nested validation
+ */
+function validatePortValue(value: IPortValue<any>, config: IPortConfig, path: (string | number)[]): z.ZodIssue[] {
   const plugin = portRegistry.getPlugin(config.type)
   if (!plugin) {
     return [{
@@ -60,48 +91,68 @@ function validateSingleValue(value: IPortValue<any>, config: IPortConfig, path: 
     }]
   }
 
-  // Validate value using plugin's schema
-  const result = plugin.valueSchema.safeParse(value)
-  if (!result.success) {
-    return result.error.errors.map(err => ({
-      ...err,
-      path: [...path, ...(err.path as (string | number)[])],
-    }))
-  }
+  const issues: z.ZodIssue[] = []
 
-  return []
-}
-
-/**
- * Recursively validate a port value against its config
- */
-function validatePortValue(value: IPortValue<any>, config: IPortConfig, path: (string | number)[]): z.ZodIssue[] {
-  const issues = validateSingleValue(value, config, path)
-  if (issues.length > 0) {
-    return issues
-  }
-
-  // For array types, recursively validate items
-  if (isArrayPortConfig(config) && value.type === 'array') {
-    const arrayValue = value as ArrayPortValue
-    const itemIssues: z.ZodIssue[] = []
-
-    arrayValue.value.forEach((item, index) => {
-      const itemPath = [...path, 'value', index]
-      const itemValidation = validateSingleValue(item, config.itemConfig, itemPath)
-      itemIssues.push(...itemValidation)
-
-      // If this is also an array, recursively validate its items
-      if (isArrayPortConfig(config.itemConfig) && item.type === 'array') {
-        const nestedIssues = validatePortValue(item, config.itemConfig, itemPath)
-        itemIssues.push(...nestedIssues)
+  // Create a validation schema that combines config and value validation
+  const validationSchema = z.object({
+    config: plugin.configSchema,
+    value: plugin.valueSchema,
+  }).superRefine((data, ctx) => {
+    // For string ports
+    if (data.config.type === 'string' && data.value.type === 'string') {
+      if (data.config.minLength !== undefined && data.value.value.length < data.config.minLength) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_small,
+          message: `String must be at least ${data.config.minLength} characters long`,
+          minimum: data.config.minLength,
+          type: 'string',
+          inclusive: true,
+          path: [...path, 'value'],
+        })
       }
-    })
+    } else if (data.config.type === 'number' && data.value.type === 'number') { // For number ports
+      if (data.config.min !== undefined && data.value.value < data.config.min) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_small,
+          message: `Value is less than the minimum allowed (${data.config.min})`,
+          minimum: data.config.min,
+          type: 'number',
+          inclusive: true,
+          path: [...path, 'value'],
+        })
+      }
+      if (data.config.max !== undefined && data.value.value > data.config.max) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_big,
+          message: `Value is greater than the maximum allowed (${data.config.max})`,
+          maximum: data.config.max,
+          type: 'number',
+          inclusive: true,
+          path: [...path, 'value'],
+        })
+      }
+    } else if (isArrayPortConfig(data.config) && data.value.type === 'array') { // For array types, recursively validate items
+      const arrayValue = data.value as ArrayPortValue
 
-    return itemIssues
+      // Validate array length constraints
+      const lengthIssues = validateArrayLength(arrayValue.value, data.config, path)
+      lengthIssues.forEach(issue => ctx.addIssue(issue))
+
+      // Recursively validate each item
+      arrayValue.value.forEach((item, index) => {
+        const itemPath = [...path, 'value', index]
+        const itemIssues = validatePortValue(item, data.config.itemConfig, itemPath)
+        itemIssues.forEach(issue => ctx.addIssue(issue))
+      })
+    }
+  })
+
+  const result = validationSchema.safeParse({ config, value })
+  if (!result.success) {
+    issues.push(...result.error.errors)
   }
 
-  return []
+  return issues
 }
 
 // Create base schemas with type assertions
@@ -159,32 +210,14 @@ const validationSchema = z.object({
   const { config, value } = data
 
   // Validate array length constraints
-  if (config.minLength !== undefined && value.value.length < config.minLength) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.too_small,
-      message: `Array must have at least ${config.minLength} items`,
-      minimum: config.minLength,
-      type: 'array',
-      inclusive: true,
-      path: ['value', 'value'],
-    })
-  }
-
-  if (config.maxLength !== undefined && value.value.length > config.maxLength) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.too_big,
-      message: `Array must have at most ${config.maxLength} items`,
-      maximum: config.maxLength,
-      type: 'array',
-      inclusive: true,
-      path: ['value', 'value'],
-    })
-  }
+  const lengthIssues = validateArrayLength(value.value, config, [])
+  lengthIssues.forEach(issue => ctx.addIssue(issue))
 
   // Validate each array item against the itemConfig
   value.value.forEach((item, index) => {
-    const issues = validatePortValue(item, config.itemConfig, ['value', 'value', index])
-    issues.forEach(issue => ctx.addIssue(issue))
+    const itemPath = ['value', 'value', index]
+    const itemIssues = validatePortValue(item, config.itemConfig, itemPath)
+    itemIssues.forEach(issue => ctx.addIssue(issue))
   })
 })
 
@@ -214,8 +247,6 @@ export const ArrayPortPlugin: IPortPlugin<ArrayPortConfig, ArrayPortValue> = {
       throw new TypeError('Expected array value for deserialization')
     }
 
-    // For deserialization, we need the itemConfig to know how to deserialize each item
-    // This will be provided through the config when validating
     return {
       type: 'array',
       value: data,

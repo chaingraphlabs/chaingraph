@@ -141,6 +141,179 @@ describe('array port plugin', () => {
       expect(invalidResult.some(err => err.includes('less than'))).toBe(true)
       expect(invalidResult.some(err => err.includes('does not match config type'))).toBe(true)
     })
+
+    it('should validate 3D array structure', () => {
+      // Array of arrays of arrays of numbers
+      const config = {
+        type: 'array' as const,
+        itemConfig: {
+          type: 'array' as const,
+          itemConfig: {
+            type: 'array' as const,
+            itemConfig: {
+              type: 'number' as const,
+              min: 0,
+              max: 10,
+            },
+            minLength: 2, // Each inner array must have at least 2 numbers
+          },
+          minLength: 1, // Each middle array must have at least 1 inner array
+        },
+        minLength: 1, // Outer array must have at least 1 middle array
+      }
+
+      const validValue = {
+        type: 'array' as const,
+        value: [
+          {
+            type: 'array',
+            value: [
+              {
+                type: 'array',
+                value: [
+                  { type: 'number', value: 1 },
+                  { type: 'number', value: 2 },
+                ],
+              },
+              {
+                type: 'array',
+                value: [
+                  { type: 'number', value: 3 },
+                  { type: 'number', value: 4 },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      const invalidValue = {
+        type: 'array' as const,
+        value: [
+          {
+            type: 'array',
+            value: [
+              {
+                type: 'array',
+                value: [
+                  { type: 'number', value: -1 }, // Less than min
+                  { type: 'string', value: 'abc' }, // Wrong type
+                ],
+              },
+              {
+                type: 'array',
+                value: [ // Only one number, violates minLength: 2
+                  { type: 'number', value: 5 },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      const validResult = validateArrayValue(validValue.value, config)
+      expect(validResult).toHaveLength(0)
+
+      const invalidResult = validateArrayValue(invalidValue.value, config)
+      expect(invalidResult.length).toBeGreaterThan(0)
+      expect(invalidResult.some(err => err.includes('less than'))).toBe(true)
+      expect(invalidResult.some(err => err.includes('does not match config type'))).toBe(true)
+      expect(invalidResult.some(err => err.includes('must have at least 2 items'))).toBe(true)
+    })
+
+    it('should validate 4D array structure', () => {
+      // Array of arrays of arrays of arrays of numbers
+      const config = {
+        type: 'array' as const,
+        itemConfig: {
+          type: 'array' as const,
+          itemConfig: {
+            type: 'array' as const,
+            itemConfig: {
+              type: 'array' as const,
+              itemConfig: {
+                type: 'number' as const,
+                min: 0,
+                max: 10,
+              },
+              minLength: 2, // Each inner array must have at least 2 numbers
+            },
+            minLength: 1, // Each middle array must have at least 1 inner array
+          },
+          minLength: 1, // Each outer array must have at least 1 middle array
+        },
+        minLength: 1, // Outermost array must have at least 1 outer array
+      }
+
+      const validValue = {
+        type: 'array' as const,
+        value: [
+          {
+            type: 'array',
+            value: [
+              {
+                type: 'array',
+                value: [
+                  {
+                    type: 'array',
+                    value: [
+                      { type: 'number', value: 1 },
+                      { type: 'number', value: 2 },
+                    ],
+                  },
+                  {
+                    type: 'array',
+                    value: [
+                      { type: 'number', value: 3 },
+                      { type: 'number', value: 4 },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      const invalidValue = {
+        type: 'array' as const,
+        value: [
+          {
+            type: 'array',
+            value: [
+              {
+                type: 'array',
+                value: [
+                  {
+                    type: 'array',
+                    value: [
+                      { type: 'number', value: -1 }, // Less than min
+                      { type: 'string', value: 'abc' }, // Wrong type
+                    ],
+                  },
+                  {
+                    type: 'array',
+                    value: [ // Only one number, violates minLength: 2
+                      { type: 'number', value: 5 },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      const validResult = validateArrayValue(validValue.value, config)
+      expect(validResult).toHaveLength(0)
+
+      const invalidResult = validateArrayValue(invalidValue.value, config)
+      expect(invalidResult.length).toBeGreaterThan(0)
+
+      expect(invalidResult.some(err => err.includes('less than'))).toBe(true)
+      expect(invalidResult.some(err => err.includes('does not match config type'))).toBe(true)
+      expect(invalidResult.some(err => err.includes('must have at least 2 items'))).toBe(true)
+    })
   })
 
   describe('serialization', () => {
