@@ -137,55 +137,86 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         )
       }
 
+      const serializedElements = value.value.map((item, index) => {
+        const plugin = portRegistry.getPlugin(item.type as PortType)
+        if (!plugin) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `No plugin found for type "${item.type}" at index ${index}`,
+          )
+        }
+        // Вызываем serializeValue для элемента
+        return plugin.serializeValue(item)
+      })
+
       return {
         type: 'array',
-        value: value.value.map((item, index) => {
-          if (!('type' in item) || !('value' in item)) {
-            throw new PortError(
-              PortErrorType.SerializationError,
-              `Invalid array item structure at index ${index}`,
-            )
-          }
-          return item
-        }),
+        value: serializedElements,
       }
     } catch (error) {
+      if (error instanceof Error)
+        throw error
       throw new PortError(
         PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during array serialization',
+        'Unknown error during array serialization',
       )
     }
   },
   deserializeValue: (data: unknown) => {
     try {
-      if (!isArrayValue(data)) {
+      if (typeof data !== 'object' || data === null) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid array value for deserialization',
+          'Invalid serialized data: expected an object',
         )
       }
 
+      const dataObj = data as { type?: unknown, value?: unknown }
+
+      if (dataObj.type !== 'array') {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          `Invalid serialized data: expected type "array", got "${dataObj.type}"`,
+        )
+      }
+
+      if (!Array.isArray(dataObj.value)) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid serialized data: "value" field must be an array',
+        )
+      }
+
+      const serializedElements = dataObj.value as unknown[]
+
+      const deserializedElements = serializedElements.map((item, index) => {
+        if (typeof item !== 'object' || item === null || !('type' in item)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Invalid item structure at index ${index}`,
+          )
+        }
+        const itemType = (item as any).type as string
+        const plugin = portRegistry.getPlugin(itemType as PortType)
+        if (!plugin) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `No plugin found for type "${itemType}" at index ${index}`,
+          )
+        }
+        return plugin.deserializeValue(item)
+      })
+
       return {
         type: 'array',
-        value: data.value.map((item, index) => {
-          if (
-            typeof item !== 'object'
-            || item === null
-            || !('type' in item)
-            || !('value' in item)
-          ) {
-            throw new PortError(
-              PortErrorType.SerializationError,
-              `Invalid array item structure at index ${index}`,
-            )
-          }
-          return item as IPortValue
-        }),
+        value: deserializedElements,
       }
     } catch (error) {
+      if (error instanceof Error)
+        throw error
       throw new PortError(
         PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during array deserialization',
+        'Unknown error during array deserialization',
       )
     }
   },

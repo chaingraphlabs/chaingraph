@@ -50,7 +50,6 @@ export class MultiChannel<T> {
     this.subscribers.delete(subscriber)
   }
 
-  // Getter methods to access private properties for testing
   public getSubscriberCount(): number {
     return this.subscribers.size
   }

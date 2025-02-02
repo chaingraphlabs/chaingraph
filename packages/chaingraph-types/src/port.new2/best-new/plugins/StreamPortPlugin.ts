@@ -102,73 +102,129 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
   valueSchema,
   serializeValue: (value: StreamPortValue) => {
     try {
-      if (!isStreamPortValue(value)) {
+      if (
+        typeof value !== 'object'
+        || value === null
+        || value.type !== 'stream'
+        || typeof value.channel !== 'object'
+      ) {
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid stream value structure',
         )
       }
 
-      // Get the buffer and serialize each item
-      const buffer = value.channel.getBuffer()
-      const serializedBuffer = buffer.map(item => item)
+      const channel = value.channel
+      const buffer = channel.getBuffer()
+
+      const serializedBuffer = buffer.map((item, index) => {
+        if (
+          typeof item !== 'object'
+          || item === null
+          || !('type' in item)
+          || typeof (item as any).type !== 'string'
+        ) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Invalid serialized item structure at index ${index}`,
+          )
+        }
+        const itemType = (item as any).type as string
+        const plugin = portRegistry.getPlugin(itemType as any)
+        if (!plugin) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `No plugin found for type "${itemType}" at index ${index}`,
+          )
+        }
+        return plugin.serializeValue(item)
+      })
 
       return {
         type: 'stream',
         buffer: serializedBuffer,
-        isClosed: value.channel.isChannelClosed(),
+        isClosed: channel.isChannelClosed(),
       }
     } catch (error) {
+      if (error instanceof Error)
+        throw error
       throw new PortError(
         PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during stream serialization',
+        'Unknown error during stream serialization',
       )
     }
   },
   deserializeValue: (data: unknown) => {
     try {
-      // Basic structure validation
-      if (
-        typeof data !== 'object'
-        || data === null
-        || !('type' in data)
-        || data.type !== 'stream'
-        || !('buffer' in data)
-        || !Array.isArray((data as any).buffer)
-        || !('isClosed' in data)
-        || typeof (data as any).isClosed !== 'boolean'
-      ) {
+      if (typeof data !== 'object' || data === null) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid stream data structure',
+          'Invalid serialized data: expected an object',
         )
       }
 
-      const { buffer, isClosed } = data as {
-        buffer: IPortValue[]
-        isClosed: boolean
+      const dataObj = data as { type?: unknown, buffer?: unknown, isClosed?: unknown }
+      if (dataObj.type !== 'stream') {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          `Invalid serialized data: expected type "stream", got "${dataObj.type}"`,
+        )
       }
+
+      if (!Array.isArray(dataObj.buffer)) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid serialized data: "buffer" field must be an array',
+        )
+      }
+
+      if (typeof dataObj.isClosed !== 'boolean') {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid serialized data: "isClosed" field must be a boolean',
+        )
+      }
+
+      const deserializedBuffer = dataObj.buffer.map((serializedItem, index) => {
+        if (
+          typeof serializedItem !== 'object'
+          || serializedItem === null
+          || !('type' in serializedItem)
+          || typeof (serializedItem as any).type !== 'string'
+        ) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Invalid serialized item structure at index ${index}`,
+          )
+        }
+        const itemType = (serializedItem as any).type as string
+        const plugin = portRegistry.getPlugin(itemType as any)
+        if (!plugin) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `No plugin found for type "${itemType}" at index ${index}`,
+          )
+        }
+        return plugin.deserializeValue(serializedItem)
+      })
 
       const channel = new MultiChannel<IPortValue>()
-
-      // Add items to buffer without validation
-      if (buffer.length > 0) {
-        channel.sendBatch(buffer)
+      if (deserializedBuffer.length > 0) {
+        channel.sendBatch(deserializedBuffer)
       }
-
-      // Close channel if it was closed before serialization
-      if (isClosed) {
+      if (dataObj.isClosed) {
         channel.close()
       }
-
       return {
         type: 'stream',
         channel,
       }
     } catch (error) {
+      if (error instanceof Error)
+        throw error
       throw new PortError(
         PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during stream deserialization',
+        'Unknown error during stream deserialization',
       )
     }
   },
