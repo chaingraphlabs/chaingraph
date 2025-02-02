@@ -1,4 +1,5 @@
 import type {
+  ConfigTypeMap,
   IPortConfig,
   IPortPlugin,
   IPortValue,
@@ -141,6 +142,34 @@ export class PortRegistry {
       )
     }
     return plugin.deserializeValue(data)
+  }
+
+  /**
+   * Serialize a port configuration
+   */
+  serializeConfig<T extends PortType>(config: ConfigTypeMap[T]): unknown {
+    const plugin = this.getPlugin(config.type as T)
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        `No plugin found for type "${config.type}"`,
+      )
+    }
+    return plugin.serializeConfig(config)
+  }
+
+  /**
+   * Deserialize a port configuration
+   */
+  deserializeConfig<T extends PortType>(type: T, data: unknown): ConfigTypeMap[T] {
+    const plugin = this.getPlugin(type)
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        `No plugin found for type "${type}"`,
+      )
+    }
+    return plugin.deserializeConfig(data)
   }
 }
 

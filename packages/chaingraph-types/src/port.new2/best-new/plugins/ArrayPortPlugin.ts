@@ -10,6 +10,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { portRegistry } from '../registry/PortRegistry'
 
 /**
  * Type guard for array value
@@ -155,6 +156,50 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
       throw new PortError(
         PortErrorType.SerializationError,
         error instanceof Error ? error.message : 'Unknown error during array deserialization',
+      )
+    }
+  },
+  serializeConfig: (config: ArrayPortConfig) => {
+    try {
+      // Serialize the nested itemConfig using the registry
+      return {
+        ...config,
+        itemConfig: portRegistry.serializeConfig(config.itemConfig),
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during array config serialization',
+      )
+    }
+  },
+  deserializeConfig: (data: unknown) => {
+    try {
+      const result = configSchema.safeParse(data)
+      if (!result.success) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid array configuration for deserialization',
+          result.error,
+        )
+      }
+
+      // Deserialize the nested itemConfig using the registry
+      const config = result.data
+      if (typeof config.itemConfig === 'object' && config.itemConfig !== null && 'type' in config.itemConfig) {
+        config.itemConfig = portRegistry.deserializeConfig(config.itemConfig.type, config.itemConfig)
+      } else {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid itemConfig structure in array configuration',
+        )
+      }
+
+      return config
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during array config deserialization',
       )
     }
   },

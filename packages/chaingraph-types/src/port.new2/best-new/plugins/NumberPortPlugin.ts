@@ -194,6 +194,36 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       )
     }
   },
+  serializeConfig: (config: NumberPortConfig) => {
+    try {
+      // For number port, we can simply return the config as is
+      // since it doesn't contain any non-serializable parts
+      return config
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during number config serialization',
+      )
+    }
+  },
+  deserializeConfig: (data: unknown) => {
+    try {
+      const result = configSchema.safeParse(data)
+      if (!result.success) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid number configuration for deserialization',
+          result.error,
+        )
+      }
+      return result.data
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during number config deserialization',
+      )
+    }
+  },
   validate: (value: NumberPortValue, config: NumberPortConfig): string[] => {
     const errors: string[] = []
 

@@ -198,6 +198,8 @@ export interface IPortPlugin<T extends PortType> {
   valueSchema: z.ZodType<ValueTypeMap[T]>
   serializeValue: (value: ValueTypeMap[T]) => unknown
   deserializeValue: (data: unknown) => ValueTypeMap[T]
+  serializeConfig: (config: ConfigTypeMap[T]) => unknown
+  deserializeConfig: (data: unknown) => ConfigTypeMap[T]
   validate?: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => string[]
 }
 
@@ -210,6 +212,8 @@ export interface RegistryPlugin {
   valueSchema: z.ZodType<IPortValue>
   serializeValue: (value: IPortValue) => unknown
   deserializeValue: (data: unknown) => IPortValue
+  serializeConfig: (config: IPortConfig) => unknown
+  deserializeConfig: (data: unknown) => IPortConfig
   validate?: (value: IPortValue, config: IPortConfig) => string[]
 }
 
@@ -223,6 +227,8 @@ export function asRegistryPlugin<T extends PortType>(plugin: IPortPlugin<T>): Re
     valueSchema: plugin.valueSchema as z.ZodType<IPortValue>,
     serializeValue: plugin.serializeValue as (value: IPortValue) => unknown,
     deserializeValue: plugin.deserializeValue as (data: unknown) => IPortValue,
+    serializeConfig: plugin.serializeConfig as (config: IPortConfig) => unknown,
+    deserializeConfig: plugin.deserializeConfig as (data: unknown) => IPortConfig,
   }
 
   if (plugin.validate) {
@@ -387,23 +393,4 @@ export function isBooleanPortValue(value: unknown): value is BooleanPortValue {
     && 'value' in value
     && typeof (value as any).value === 'boolean'
   )
-}
-
-/**
- * Helper function to create a plugin for a specific type
- */
-export function createPortPlugin<T extends PortType>(
-  typeIdentifier: T,
-  configSchema: z.ZodType<ConfigTypeMap[T]>,
-  valueSchema: z.ZodType<ValueTypeMap[T]>,
-  serializeValue: (value: ValueTypeMap[T]) => unknown,
-  deserializeValue: (data: unknown) => ValueTypeMap[T],
-): IPortPlugin<T> {
-  return {
-    typeIdentifier,
-    configSchema,
-    valueSchema,
-    serializeValue,
-    deserializeValue,
-  }
 }

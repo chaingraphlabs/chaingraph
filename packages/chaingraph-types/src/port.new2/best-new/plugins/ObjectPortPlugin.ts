@@ -325,6 +325,67 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       )
     }
   },
+  serializeConfig: (config: ObjectPortConfig) => {
+    try {
+      // We need to serialize each field's config using its corresponding plugin
+      const serializedFields: Record<string, unknown> = {}
+      for (const [key, fieldConfig] of Object.entries(config.fields)) {
+        const plugin = portRegistry.getPlugin(fieldConfig.type)
+        if (!plugin) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Unknown field type: ${fieldConfig.type}`,
+          )
+        }
+        serializedFields[key] = plugin.serializeConfig(fieldConfig)
+      }
+
+      return {
+        ...config,
+        fields: serializedFields,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during object config serialization',
+      )
+    }
+  },
+  deserializeConfig: (data: unknown) => {
+    try {
+      const result = configSchema.safeParse(data)
+      if (!result.success) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid object configuration for deserialization',
+          result.error,
+        )
+      }
+
+      // We need to deserialize each field's config using its corresponding plugin
+      const deserializedFields: Record<string, IPortConfig> = {}
+      for (const [key, fieldConfig] of Object.entries(result.data.fields)) {
+        const plugin = portRegistry.getPlugin(fieldConfig.type)
+        if (!plugin) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Unknown field type: ${fieldConfig.type}`,
+          )
+        }
+        deserializedFields[key] = plugin.deserializeConfig(fieldConfig)
+      }
+
+      return {
+        ...result.data,
+        fields: deserializedFields,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during object config deserialization',
+      )
+    }
+  },
   validate: (value: ObjectPortValue, config: ObjectPortConfig): string[] => {
     return validateObjectValue(value, config)
   },

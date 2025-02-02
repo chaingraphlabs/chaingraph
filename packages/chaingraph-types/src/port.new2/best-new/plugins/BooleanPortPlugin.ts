@@ -92,6 +92,36 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
       )
     }
   },
+  serializeConfig: (config: BooleanPortConfig) => {
+    try {
+      // For boolean port, we can simply return the config as is
+      // since it doesn't contain any non-serializable parts
+      return config
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during boolean config serialization',
+      )
+    }
+  },
+  deserializeConfig: (data: unknown) => {
+    try {
+      const result = configSchema.safeParse(data)
+      if (!result.success) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid boolean configuration for deserialization',
+          result.error,
+        )
+      }
+      return result.data
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during boolean config deserialization',
+      )
+    }
+  },
   validate: (value: BooleanPortValue, _config: BooleanPortConfig): string[] => {
     const errors: string[] = []
 

@@ -210,6 +210,36 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
       )
     }
   },
+  serializeConfig: (config: StringPortConfig) => {
+    try {
+      // For string port, we can simply return the config as is
+      // since it doesn't contain any non-serializable parts
+      return config
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during string config serialization',
+      )
+    }
+  },
+  deserializeConfig: (data: unknown) => {
+    try {
+      const result = configSchema.safeParse(data)
+      if (!result.success) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid string configuration for deserialization',
+          result.error,
+        )
+      }
+      return result.data
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during string config deserialization',
+      )
+    }
+  },
   validate: (value: StringPortValue, config: StringPortConfig): string[] => {
     const errors: string[] = []
 
