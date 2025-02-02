@@ -88,6 +88,14 @@ export interface StreamPortConfig extends BasePortConfig {
 }
 
 /**
+ * Boolean port configuration
+ */
+export interface BooleanPortConfig extends BasePortConfig {
+  type: 'boolean'
+  defaultValue?: boolean
+}
+
+/**
  * String port value
  */
 export interface StringPortValue {
@@ -128,6 +136,14 @@ export interface StreamPortValue {
 }
 
 /**
+ * Boolean port value
+ */
+export interface BooleanPortValue {
+  type: 'boolean'
+  value: boolean
+}
+
+/**
  * Union type of all port configurations
  */
 export type IPortConfig =
@@ -136,6 +152,7 @@ export type IPortConfig =
   | ArrayPortConfig
   | ObjectPortConfig
   | StreamPortConfig
+  | BooleanPortConfig
 
 /**
  * Union type of all port values
@@ -146,6 +163,7 @@ export type IPortValue =
   | ArrayPortValue
   | ObjectPortValue
   | StreamPortValue
+  | BooleanPortValue
 
 /**
  * Type mapping for configs
@@ -155,7 +173,7 @@ export interface ConfigTypeMap {
   number: NumberPortConfig
   array: ArrayPortConfig
   object: ObjectPortConfig
-  boolean: never
+  boolean: BooleanPortConfig
   stream: StreamPortConfig
 }
 
@@ -167,7 +185,7 @@ export interface ValueTypeMap {
   number: NumberPortValue
   array: ArrayPortValue
   object: ObjectPortValue
-  boolean: never
+  boolean: BooleanPortValue
   stream: StreamPortValue
 }
 
@@ -192,13 +210,26 @@ export interface RegistryPlugin {
   valueSchema: z.ZodType<IPortValue>
   serializeValue: (value: IPortValue) => unknown
   deserializeValue: (data: unknown) => IPortValue
+  validate?: (value: IPortValue, config: IPortConfig) => string[]
 }
 
 /**
  * Helper function to convert a typed plugin to a registry plugin
  */
 export function asRegistryPlugin<T extends PortType>(plugin: IPortPlugin<T>): RegistryPlugin {
-  return plugin as unknown as RegistryPlugin
+  const registryPlugin: RegistryPlugin = {
+    typeIdentifier: plugin.typeIdentifier,
+    configSchema: plugin.configSchema as z.ZodType<IPortConfig>,
+    valueSchema: plugin.valueSchema as z.ZodType<IPortValue>,
+    serializeValue: plugin.serializeValue as (value: IPortValue) => unknown,
+    deserializeValue: plugin.deserializeValue as (data: unknown) => IPortValue,
+  }
+
+  if (plugin.validate) {
+    registryPlugin.validate = plugin.validate as (value: IPortValue, config: IPortConfig) => string[]
+  }
+
+  return registryPlugin
 }
 
 /**
@@ -279,6 +310,15 @@ export function isStreamPortConfig(value: unknown): value is StreamPortConfig {
   )
 }
 
+export function isBooleanPortConfig(value: unknown): value is BooleanPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'boolean'
+  )
+}
+
 /**
  * Type guards for port values
  */
@@ -335,6 +375,17 @@ export function isStreamPortValue(value: unknown): value is StreamPortValue {
     && value.type === 'stream'
     && 'channel' in value
     && value.channel instanceof MultiChannel
+  )
+}
+
+export function isBooleanPortValue(value: unknown): value is BooleanPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'boolean'
+    && 'value' in value
+    && typeof (value as any).value === 'boolean'
   )
 }
 
