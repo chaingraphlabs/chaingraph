@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { MultiChannel } from '../channel/multi-channel'
 
 /**
  * Port error types
@@ -27,7 +28,7 @@ export class PortError extends Error {
 /**
  * Port type literals
  */
-export const PORT_TYPES = ['string', 'number', 'array', 'object', 'boolean'] as const
+export const PORT_TYPES = ['string', 'number', 'array', 'object', 'boolean', 'stream'] as const
 export type PortType = (typeof PORT_TYPES)[number]
 
 /**
@@ -79,6 +80,14 @@ export interface ObjectPortConfig extends BasePortConfig {
 }
 
 /**
+ * Stream port configuration
+ */
+export interface StreamPortConfig extends BasePortConfig {
+  type: 'stream'
+  itemConfig: IPortConfig
+}
+
+/**
  * String port value
  */
 export interface StringPortValue {
@@ -111,14 +120,32 @@ export interface ObjectPortValue {
 }
 
 /**
+ * Stream port value
+ */
+export interface StreamPortValue {
+  type: 'stream'
+  channel: MultiChannel<IPortValue>
+}
+
+/**
  * Union type of all port configurations
  */
-export type IPortConfig = StringPortConfig | NumberPortConfig | ArrayPortConfig | ObjectPortConfig
+export type IPortConfig =
+  | StringPortConfig
+  | NumberPortConfig
+  | ArrayPortConfig
+  | ObjectPortConfig
+  | StreamPortConfig
 
 /**
  * Union type of all port values
  */
-export type IPortValue = StringPortValue | NumberPortValue | ArrayPortValue | ObjectPortValue
+export type IPortValue =
+  | StringPortValue
+  | NumberPortValue
+  | ArrayPortValue
+  | ObjectPortValue
+  | StreamPortValue
 
 /**
  * Type mapping for configs
@@ -129,6 +156,7 @@ export interface ConfigTypeMap {
   array: ArrayPortConfig
   object: ObjectPortConfig
   boolean: never
+  stream: StreamPortConfig
 }
 
 /**
@@ -140,6 +168,7 @@ export interface ValueTypeMap {
   array: ArrayPortValue
   object: ObjectPortValue
   boolean: never
+  stream: StreamPortValue
 }
 
 /**
@@ -238,6 +267,17 @@ export function isObjectPortConfig(value: unknown): value is ObjectPortConfig {
   )
 }
 
+export function isStreamPortConfig(value: unknown): value is StreamPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'stream'
+    && 'itemConfig' in value
+    && typeof value.itemConfig === 'object'
+  )
+}
+
 /**
  * Type guards for port values
  */
@@ -283,6 +323,17 @@ export function isObjectPortValue(value: unknown): value is ObjectPortValue {
     && 'value' in value
     && typeof (value as any).value === 'object'
     && (value as any).value !== null
+  )
+}
+
+export function isStreamPortValue(value: unknown): value is StreamPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'stream'
+    && 'channel' in value
+    && value.channel instanceof MultiChannel
   )
 }
 
