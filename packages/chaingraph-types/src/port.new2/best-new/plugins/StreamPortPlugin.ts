@@ -96,80 +96,98 @@ const valueSchema: z.ZodType<StreamPortValue> = z.object({
 /**
  * Stream port plugin implementation
  */
-export const StreamPortPlugin = createPortPlugin(
-  'stream',
-  configSchema,
-  valueSchema,
-  (value: StreamPortValue) => {
-    try {
-      if (!isStreamPortValue(value)) {
+export const StreamPortPlugin = {
+  ...createPortPlugin(
+    'stream',
+    configSchema,
+    valueSchema,
+    (value: StreamPortValue) => {
+      try {
+        if (!isStreamPortValue(value)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid stream value structure',
+          )
+        }
+
+        // Get the buffer and serialize each item
+        const buffer = value.channel.getBuffer()
+        const serializedBuffer = buffer.map(item => item)
+
+        return {
+          type: 'stream',
+          buffer: serializedBuffer,
+          isClosed: value.channel.isChannelClosed(),
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid stream value structure',
+          error instanceof Error ? error.message : 'Unknown error during stream serialization',
         )
       }
+    },
+    (data: unknown) => {
+      try {
+        // Basic structure validation
+        if (
+          typeof data !== 'object'
+          || data === null
+          || !('type' in data)
+          || data.type !== 'stream'
+          || !('buffer' in data)
+          || !Array.isArray((data as any).buffer)
+          || !('isClosed' in data)
+          || typeof (data as any).isClosed !== 'boolean'
+        ) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid stream data structure',
+          )
+        }
 
-      // Get the buffer and serialize each item
-      const buffer = value.channel.getBuffer()
-      const serializedBuffer = buffer.map(item => item)
+        const { buffer, isClosed } = data as {
+          buffer: IPortValue[]
+          isClosed: boolean
+        }
 
-      return {
-        type: 'stream',
-        buffer: serializedBuffer,
-        isClosed: value.channel.isChannelClosed(),
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during stream serialization',
-      )
-    }
-  },
-  (data: unknown) => {
-    try {
-      // Basic structure validation
-      if (
-        typeof data !== 'object'
-        || data === null
-        || !('type' in data)
-        || data.type !== 'stream'
-        || !('buffer' in data)
-        || !Array.isArray((data as any).buffer)
-        || !('isClosed' in data)
-        || typeof (data as any).isClosed !== 'boolean'
-      ) {
+        const channel = new MultiChannel<IPortValue>()
+
+        // Add items to buffer without validation
+        if (buffer.length > 0) {
+          channel.sendBatch(buffer)
+        }
+
+        // Close channel if it was closed before serialization
+        if (isClosed) {
+          channel.close()
+        }
+
+        return {
+          type: 'stream',
+          channel,
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid stream data structure',
+          error instanceof Error ? error.message : 'Unknown error during stream deserialization',
         )
       }
+    },
+  ),
+  validate: (value: StreamPortValue, config: StreamPortConfig): string[] => {
+    const errors: string[] = []
 
-      const { buffer, isClosed } = data as {
-        buffer: IPortValue[]
-        isClosed: boolean
-      }
-
-      const channel = new MultiChannel<IPortValue>()
-
-      // Add items to buffer without validation
-      if (buffer.length > 0) {
-        channel.sendBatch(buffer)
-      }
-
-      // Close channel if it was closed before serialization
-      if (isClosed) {
-        channel.close()
-      }
-
-      return {
-        type: 'stream',
-        channel,
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during stream deserialization',
-      )
+    // Basic structure check
+    if (!isStreamPortValue(value)) {
+      errors.push('Invalid stream value structure')
+      return errors
     }
+
+    // Check that channel is a valid MultiChannel instance
+    if (!(value.channel instanceof MultiChannel)) {
+      errors.push('Invalid channel: must be a MultiChannel instance')
+    }
+
+    return errors
   },
-)
+}
