@@ -4,6 +4,7 @@ import type {
   StringPortValue,
 } from '../base/types'
 import { z } from 'zod'
+import { type JSONValue, JSONValueSchema } from '../base/json'
 import {
   PortError,
   PortErrorType,
@@ -91,7 +92,7 @@ const configSchema = z.object({
   type: z.literal('string'),
   id: z.string().optional(),
   name: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), JSONValueSchema).optional(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
   pattern: z.string().optional(),
@@ -172,7 +173,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
   typeIdentifier: 'string',
   configSchema,
   valueSchema,
-  serializeValue: (value: StringPortValue) => {
+  serializeValue: (value: StringPortValue): JSONValue => {
     try {
       if (!isStringValue(value)) {
         throw new PortError(
@@ -191,7 +192,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
       )
     }
   },
-  deserializeValue: (data: unknown) => {
+  deserializeValue: (data: JSONValue) => {
     try {
       if (!isStringValue(data)) {
         throw new PortError(
@@ -210,7 +211,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
       )
     }
   },
-  serializeConfig: (config: StringPortConfig) => {
+  serializeConfig: (config: StringPortConfig): JSONValue => {
     try {
       // For string port, we can simply return the config as is
       // since it doesn't contain any non-serializable parts
@@ -222,7 +223,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
       )
     }
   },
-  deserializeConfig: (data: unknown) => {
+  deserializeConfig: (data: JSONValue) => {
     try {
       const result = configSchema.safeParse(data)
       if (!result.success) {

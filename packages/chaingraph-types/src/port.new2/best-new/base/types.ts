@@ -1,3 +1,4 @@
+import type { JSONObject, JSONValue } from './json'
 import { z } from 'zod'
 import { MultiChannel } from '../channel/multi-channel'
 
@@ -34,10 +35,10 @@ export type PortType = (typeof PORT_TYPES)[number]
 /**
  * Base interface for all port configurations
  */
-export interface BasePortConfig {
+export interface BasePortConfig extends JSONObject {
   id?: string
   name?: string
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, JSONValue>
 }
 
 /**
@@ -196,10 +197,10 @@ export interface IPortPlugin<T extends PortType> {
   typeIdentifier: T
   configSchema: z.ZodType<ConfigTypeMap[T]>
   valueSchema: z.ZodType<ValueTypeMap[T]>
-  serializeValue: (value: ValueTypeMap[T]) => unknown
-  deserializeValue: (data: unknown) => ValueTypeMap[T]
-  serializeConfig: (config: ConfigTypeMap[T]) => unknown
-  deserializeConfig: (data: unknown) => ConfigTypeMap[T]
+  serializeValue: (value: ValueTypeMap[T]) => JSONValue
+  deserializeValue: (data: JSONValue) => ValueTypeMap[T]
+  serializeConfig: (config: ConfigTypeMap[T]) => JSONValue
+  deserializeConfig: (data: JSONValue) => ConfigTypeMap[T]
   validate?: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => string[]
 }
 
