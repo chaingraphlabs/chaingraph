@@ -4,6 +4,7 @@ import type {
   IPortPlugin,
 } from '../base/types'
 import { z } from 'zod'
+import { type JSONValue, JSONValueSchema } from '../base/json'
 import {
   isBooleanPortValue,
   PortError,
@@ -37,7 +38,7 @@ const configSchema = z.object({
   type: z.literal('boolean'),
   id: z.string().optional(),
   name: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), JSONValueSchema).optional(),
   defaultValue: z.boolean().optional(),
 }).passthrough()
 
@@ -56,7 +57,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
   typeIdentifier: 'boolean',
   configSchema,
   valueSchema,
-  serializeValue: (value: BooleanPortValue) => {
+  serializeValue: (value: BooleanPortValue): JSONValue => {
     try {
       if (!isBooleanPortValue(value)) {
         throw new PortError(
@@ -75,16 +76,18 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
       )
     }
   },
-  deserializeValue: (data: unknown) => {
+  deserializeValue: (data: JSONValue) => {
     try {
-      const result = valueSchema.safeParse(data)
-      if (!result.success) {
+      if (!isBooleanPortValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid boolean value for deserialization',
         )
       }
-      return result.data
+      return {
+        type: 'boolean',
+        value: data.value,
+      }
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -92,7 +95,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
       )
     }
   },
-  serializeConfig: (config: BooleanPortConfig) => {
+  serializeConfig: (config: BooleanPortConfig): JSONValue => {
     try {
       // For boolean port, we can simply return the config as is
       // since it doesn't contain any non-serializable parts
@@ -104,7 +107,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
       )
     }
   },
-  deserializeConfig: (data: unknown) => {
+  deserializeConfig: (data: JSONValue) => {
     try {
       const result = configSchema.safeParse(data)
       if (!result.success) {

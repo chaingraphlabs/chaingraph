@@ -4,6 +4,7 @@ import type {
   NumberPortValue,
 } from '../base/types'
 import { z } from 'zod'
+import { type JSONValue, JSONValueSchema } from '../base/json'
 import {
   PortError,
   PortErrorType,
@@ -70,7 +71,7 @@ const configSchema = z.object({
   type: z.literal('number'),
   id: z.string().optional(),
   name: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), JSONValueSchema).optional(),
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().positive().optional(),
@@ -156,7 +157,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   typeIdentifier: 'number',
   configSchema,
   valueSchema,
-  serializeValue: (value: NumberPortValue) => {
+  serializeValue: (value: NumberPortValue): JSONValue => {
     try {
       if (!isNumberValue(value)) {
         throw new PortError(
@@ -175,7 +176,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       )
     }
   },
-  deserializeValue: (data: unknown) => {
+  deserializeValue: (data: JSONValue) => {
     try {
       if (!isNumberValue(data)) {
         throw new PortError(
@@ -194,7 +195,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       )
     }
   },
-  serializeConfig: (config: NumberPortConfig) => {
+  serializeConfig: (config: NumberPortConfig): JSONValue => {
     try {
       // For number port, we can simply return the config as is
       // since it doesn't contain any non-serializable parts
@@ -206,7 +207,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       )
     }
   },
-  deserializeConfig: (data: unknown) => {
+  deserializeConfig: (data: JSONValue) => {
     try {
       const result = configSchema.safeParse(data)
       if (!result.success) {
@@ -225,37 +226,6 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
     }
   },
   validate: (value: NumberPortValue, config: NumberPortConfig): string[] => {
-    const errors: string[] = []
-
-    // Type validation
-    if (!isNumberValue(value)) {
-      errors.push('Invalid number value structure')
-      return errors
-    }
-
-    const numValue = value.value
-
-    // Range validation
-    if (config.min !== undefined && numValue < config.min) {
-      errors.push(`Value must be greater than or equal to ${config.min}`)
-    }
-
-    if (config.max !== undefined && numValue > config.max) {
-      errors.push(`Value must be less than or equal to ${config.max}`)
-    }
-
-    // Step validation
-    if (config.step !== undefined) {
-      if (!isAlignedWithStep(numValue, config.step, config.min)) {
-        errors.push(`Value must be aligned with step ${config.step}`)
-      }
-    }
-
-    // Integer validation
-    if (config.integer === true && !Number.isInteger(numValue)) {
-      errors.push('Value must be an integer')
-    }
-
-    return errors
+    return validateNumberValue(value, config)
   },
 }
