@@ -7,6 +7,7 @@ import type {
   PortType,
 } from '../base/types'
 import { z } from 'zod'
+import { type JSONValue, JSONValueSchema } from '../base/json'
 import {
   isObjectPortValue,
   PortError,
@@ -193,7 +194,7 @@ const configSchema: z.ZodType<ObjectPortConfig> = z.lazy(() =>
     type: z.literal('object'),
     id: z.string().optional(),
     name: z.string().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), JSONValueSchema).optional(),
     fields: z.record(z.custom<IPortConfig>((val) => {
       if (
         typeof val !== 'object'
@@ -244,7 +245,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
   typeIdentifier: 'object',
   configSchema,
   valueSchema,
-  serializeValue: (value: ObjectPortValue) => {
+  serializeValue: (value: ObjectPortValue): JSONValue => {
     try {
       if (!isObjectPortValue(value)) {
         throw new PortError(
@@ -254,7 +255,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       }
 
       // Serialize each field value using its corresponding plugin
-      const serializedFields: Record<string, unknown> = {}
+      const serializedFields: Record<string, JSONValue> = {}
       for (const [key, fieldValue] of Object.entries(value.value)) {
         if (!isValidFieldValue(fieldValue)) {
           throw new PortError(
@@ -284,7 +285,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       )
     }
   },
-  deserializeValue: (data: unknown) => {
+  deserializeValue: (data: JSONValue): ObjectPortValue => {
     try {
       if (!isObjectPortValue(data)) {
         throw new PortError(
@@ -325,10 +326,10 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       )
     }
   },
-  serializeConfig: (config: ObjectPortConfig) => {
+  serializeConfig: (config: ObjectPortConfig): JSONValue => {
     try {
-      // We need to serialize each field's config using its corresponding plugin
-      const serializedFields: Record<string, unknown> = {}
+      // Serialize each field's config using its corresponding plugin
+      const serializedFields: Record<string, JSONValue> = {}
       for (const [key, fieldConfig] of Object.entries(config.fields)) {
         const plugin = portRegistry.getPlugin(fieldConfig.type)
         if (!plugin) {
@@ -351,7 +352,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       )
     }
   },
-  deserializeConfig: (data: unknown) => {
+  deserializeConfig: (data: JSONValue): ObjectPortConfig => {
     try {
       const result = configSchema.safeParse(data)
       if (!result.success) {
@@ -362,7 +363,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         )
       }
 
-      // We need to deserialize each field's config using its corresponding plugin
+      // Deserialize each field's config using its corresponding plugin
       const deserializedFields: Record<string, IPortConfig> = {}
       for (const [key, fieldConfig] of Object.entries(result.data.fields)) {
         const plugin = portRegistry.getPlugin(fieldConfig.type)
