@@ -71,6 +71,14 @@ export interface ArrayPortConfig extends BasePortConfig {
 }
 
 /**
+ * Object port configuration
+ */
+export interface ObjectPortConfig extends BasePortConfig {
+  type: 'object'
+  fields: Record<string, IPortConfig>
+}
+
+/**
  * String port value
  */
 export interface StringPortValue {
@@ -95,14 +103,22 @@ export interface ArrayPortValue {
 }
 
 /**
+ * Object port value
+ */
+export interface ObjectPortValue {
+  type: 'object'
+  value: Record<string, IPortValue>
+}
+
+/**
  * Union type of all port configurations
  */
-export type IPortConfig = StringPortConfig | NumberPortConfig | ArrayPortConfig
+export type IPortConfig = StringPortConfig | NumberPortConfig | ArrayPortConfig | ObjectPortConfig
 
 /**
  * Union type of all port values
  */
-export type IPortValue = StringPortValue | NumberPortValue | ArrayPortValue
+export type IPortValue = StringPortValue | NumberPortValue | ArrayPortValue | ObjectPortValue
 
 /**
  * Type mapping for configs
@@ -111,7 +127,7 @@ export interface ConfigTypeMap {
   string: StringPortConfig
   number: NumberPortConfig
   array: ArrayPortConfig
-  object: never
+  object: ObjectPortConfig
   boolean: never
 }
 
@@ -122,7 +138,7 @@ export interface ValueTypeMap {
   string: StringPortValue
   number: NumberPortValue
   array: ArrayPortValue
-  object: never
+  object: ObjectPortValue
   boolean: never
 }
 
@@ -182,31 +198,92 @@ export function buildUnion<T extends z.ZodTypeAny>(
 /**
  * Type guards for port configurations
  */
-export function isStringPortConfig(config: IPortConfig): config is StringPortConfig {
-  return config.type === 'string'
+export function isStringPortConfig(value: unknown): value is StringPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'string'
+  )
 }
 
-export function isNumberPortConfig(config: IPortConfig): config is NumberPortConfig {
-  return config.type === 'number'
+export function isNumberPortConfig(value: unknown): value is NumberPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'number'
+  )
 }
 
-export function isArrayPortConfig(config: IPortConfig): config is ArrayPortConfig {
-  return config.type === 'array'
+export function isArrayPortConfig(value: unknown): value is ArrayPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'array'
+    && 'itemConfig' in value
+    && typeof value.itemConfig === 'object'
+  )
+}
+
+export function isObjectPortConfig(value: unknown): value is ObjectPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'object'
+    && 'fields' in value
+    && typeof (value as any).fields === 'object'
+  )
 }
 
 /**
  * Type guards for port values
  */
-export function isStringPortValue(value: IPortValue): value is StringPortValue {
-  return value.type === 'string'
+export function isStringPortValue(value: unknown): value is StringPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'string'
+    && 'value' in value
+    && typeof (value as any).value === 'string'
+  )
 }
 
-export function isNumberPortValue(value: IPortValue): value is NumberPortValue {
-  return value.type === 'number'
+export function isNumberPortValue(value: unknown): value is NumberPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'number'
+    && 'value' in value
+    && typeof (value as any).value === 'number'
+  )
 }
 
-export function isArrayPortValue(value: IPortValue): value is ArrayPortValue {
-  return value.type === 'array'
+export function isArrayPortValue(value: unknown): value is ArrayPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'array'
+    && 'value' in value
+    && Array.isArray((value as any).value)
+  )
+}
+
+export function isObjectPortValue(value: unknown): value is ObjectPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'object'
+    && 'value' in value
+    && typeof (value as any).value === 'object'
+    && (value as any).value !== null
+  )
 }
 
 /**
