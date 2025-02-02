@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { z } from 'zod'
-import { PortError, PortErrorType } from '../base/types'
-import { StringPortPlugin, validateStringValue } from '../plugins/StringPortPlugin'
+import { PortError } from '../base/types'
+import { createStringValue, StringPortPlugin, validateStringValue } from '../plugins/StringPortPlugin'
 import { portRegistry } from '../registry/PortRegistry'
 
 describe('port system', () => {
@@ -83,10 +82,10 @@ describe('port system', () => {
         }
 
         const validations = [
-          validateStringValue('abc', config),
-          validateStringValue('a', config),
-          validateStringValue('abcdef', config),
-          validateStringValue('123', config),
+          validateStringValue(createStringValue('abc'), config),
+          validateStringValue(createStringValue('a'), config),
+          validateStringValue(createStringValue('abcdef'), config),
+          validateStringValue(createStringValue('123'), config),
         ]
 
         expect(validations[0]).toHaveLength(0) // valid
@@ -102,18 +101,21 @@ describe('port system', () => {
           type: 'string' as const,
           value: 'test',
         }
-        expect(StringPortPlugin.serializeValue!(value)).toBe('test')
+        expect(StringPortPlugin.serializeValue!(value)).toStrictEqual(createStringValue('test'))
       })
 
       it('should deserialize to string value', () => {
-        expect(StringPortPlugin.deserializeValue!('test')).toEqual({
+        expect(StringPortPlugin.deserializeValue!({
+          type: 'string',
+          value: 'test',
+        })).toEqual({
           type: 'string',
           value: 'test',
         })
       })
 
       it('should throw on invalid deserialization input', () => {
-        expect(() => StringPortPlugin.deserializeValue!(123)).toThrow(TypeError)
+        expect(() => StringPortPlugin.deserializeValue!(123)).toThrow('Invalid string value for deserialization')
       })
     })
   })

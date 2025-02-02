@@ -1,255 +1,151 @@
-import type { IPortPlugin } from '../base/types'
+import type {
+  IPortConfig,
+  IPortPlugin,
+  IPortValue,
+  PortType,
+  RegistryPlugin,
+} from '../base/types'
 import { z } from 'zod'
-import { PortError, PortErrorType } from '../base/types'
+import {
+  asRegistryPlugin,
+  buildUnion,
+  PortError,
+  PortErrorType,
+} from '../base/types'
 
-type DiscriminatedSchema = z.ZodObject<{
-  type: z.ZodLiteral<string>
-  [key: string]: z.ZodTypeAny
-}>
+// Create default schemas that match the expected types but never validate
+const defaultConfigSchema = z.object({
+  type: z.literal('string'),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+}).transform(() => {
+  throw new Error('Default schema should never match')
+}) as z.ZodType<IPortConfig>
 
-type UnionSchemas = z.ZodDiscriminatedUnion<'type', [DiscriminatedSchema, ...DiscriminatedSchema[]]>
-
-interface ValidationError {
-  path: (string | number)[]
-  message: string
-  code: z.ZodIssueCode
-}
+const defaultValueSchema = z.object({
+  type: z.literal('string'),
+  value: z.string(),
+}).transform(() => {
+  throw new Error('Default schema should never match')
+}) as z.ZodType<IPortValue>
 
 /**
- * Registry for managing port plugins
+ * Registry for port plugins
  */
 export class PortRegistry {
-  private static instance: PortRegistry
-  private plugins = new Map<string, IPortPlugin>()
-  private unionSchemas: {
-    config: UnionSchemas | null
-    value: UnionSchemas | null
-  } = {
-      config: null,
-      value: null,
-    }
-
-  private constructor() {
-    // Private constructor to enforce singleton
-    // Bind methods to ensure 'this' context
-    this.isZodObject = this.isZodObject.bind(this)
-    this.hasTypeLiteral = this.hasTypeLiteral.bind(this)
-  }
+  private plugins = new Map<PortType, RegistryPlugin>()
 
   /**
-   * Get the singleton instance of PortRegistry
+   * Register a plugin for a specific port type
    */
-  public static getInstance(): PortRegistry {
-    if (!PortRegistry.instance) {
-      PortRegistry.instance = new PortRegistry()
-    }
-    return PortRegistry.instance
-  }
-
-  /**
-   * Register a new port plugin
-   * @throws {PortError} if plugin with same typeIdentifier already exists
-   */
-  public register(plugin: IPortPlugin): void {
+  register<T extends PortType>(plugin: IPortPlugin<T>): void {
     if (this.plugins.has(plugin.typeIdentifier)) {
       throw new PortError(
         PortErrorType.RegistryError,
-        `Plugin with typeIdentifier "${plugin.typeIdentifier}" is already registered`,
+        `Plugin for type "${plugin.typeIdentifier}" is already registered`,
       )
     }
-
-    // Validate plugin has required schemas
-    if (!plugin.configSchema || !plugin.valueSchema) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        `Plugin "${plugin.typeIdentifier}" must provide both configSchema and valueSchema`,
-      )
-    }
-
-    // Check if schemas are ZodObject type (either directly or through metadata)
-    if (!this.isZodObject(plugin.configSchema)) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        `Plugin "${plugin.typeIdentifier}" config schema must be a ZodObject`,
-      )
-    }
-
-    if (!this.isZodObject(plugin.valueSchema)) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        `Plugin "${plugin.typeIdentifier}" value schema must be a ZodObject`,
-      )
-    }
-
-    // Validate schemas have the correct shape
-    if (!this.hasTypeLiteral(plugin.configSchema)) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        `Plugin "${plugin.typeIdentifier}" config schema must have a 'type' literal field`,
-      )
-    }
-
-    if (!this.hasTypeLiteral(plugin.valueSchema)) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        `Plugin "${plugin.typeIdentifier}" value schema must have a 'type' literal field`,
-      )
-    }
-
-    this.plugins.set(plugin.typeIdentifier, plugin)
-
-    // Reset cached union schemas since we have a new plugin
-    this.unionSchemas.config = null
-    this.unionSchemas.value = null
-  }
-
-  private isZodObject(schema: z.ZodTypeAny): schema is z.ZodObject<any> {
-    // Check if it's directly a ZodObject
-    if (schema instanceof z.ZodObject) {
-      return true
-    }
-
-    // Handle refined schemas
-    if (schema instanceof z.ZodEffects && schema._def.schema instanceof z.ZodObject) {
-      return true
-    }
-
-    return false
-  }
-
-  private getBaseSchema(schema: z.ZodTypeAny): z.ZodObject<any> | null {
-    if (schema instanceof z.ZodObject) {
-      return schema
-    }
-
-    // Handle refined schemas
-    if (schema instanceof z.ZodEffects && schema._def.schema instanceof z.ZodObject) {
-      return schema._def.schema
-    }
-
-    return null
-  }
-
-  private hasTypeLiteral(schema: z.ZodTypeAny): boolean {
-    const baseSchema = this.getBaseSchema(schema)
-    if (!baseSchema)
-      return false
-
-    return 'shape' in baseSchema
-      && 'type' in baseSchema.shape
-      && baseSchema.shape.type instanceof z.ZodLiteral
+    this.plugins.set(plugin.typeIdentifier, asRegistryPlugin(plugin))
   }
 
   /**
-   * Build a discriminated union schema from a list of plugins
-   * @param schemas List of Zod schemas to build union from
-   * @returns Discriminated union schema
-   * @throws {PortError} if no valid schemas are provided
+   * Get a plugin for a specific port type
    */
-  private buildUnionSchema(schemas: z.ZodTypeAny[]): UnionSchemas {
-    const validSchemas = schemas
-      .filter(this.isZodObject)
-      .filter(this.hasTypeLiteral)
-      .map(schema => this.getBaseSchema(schema))
-      .filter((schema): schema is z.ZodObject<any> => schema !== null)
-
-    if (validSchemas.length === 0) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        'No valid schemas provided - cannot create union schema',
-      )
-    }
-
-    const [first, ...rest] = validSchemas
-    return z.discriminatedUnion('type', [first, ...rest]) as UnionSchemas
-  }
-
-  /**
-   * Get a plugin by its type identifier
-   */
-  public getPlugin(typeIdentifier: string): IPortPlugin | undefined {
-    return this.plugins.get(typeIdentifier)
+  getPlugin(type: PortType): RegistryPlugin | undefined {
+    return this.plugins.get(type)
   }
 
   /**
    * Get all registered plugins
    */
-  public getAllPlugins(): IPortPlugin[] {
+  getAllPlugins(): RegistryPlugin[] {
     return Array.from(this.plugins.values())
   }
 
   /**
-   * Build discriminated union schema for all registered plugin configs
-   * @throws {PortError} if no plugins are registered
+   * Clear all registered plugins (for testing)
    */
-  public getConfigUnionSchema(): UnionSchemas {
-    if (!this.unionSchemas.config) {
-      const schemas = Array.from(this.plugins.values())
-        .map(p => p.configSchema)
-      this.unionSchemas.config = this.buildUnionSchema(schemas)
-    }
-    return this.unionSchemas.config
+  clear(): void {
+    this.plugins.clear()
   }
 
   /**
-   * Build discriminated union schema for all registered plugin values
-   * @throws {PortError} if no plugins are registered
+   * Get a union schema for all registered config types
    */
-  public getValueUnionSchema(): UnionSchemas {
-    if (!this.unionSchemas.value) {
-      const schemas = Array.from(this.plugins.values())
-        .map(p => p.valueSchema)
-      this.unionSchemas.value = this.buildUnionSchema(schemas)
-    }
-    return this.unionSchemas.value
+  getConfigUnionSchema(): z.ZodType<IPortConfig> {
+    const schemas = this.getAllPlugins().map(plugin => plugin.configSchema)
+    return buildUnion(schemas, defaultConfigSchema)
   }
 
   /**
-   * Convert Zod validation errors to our ValidationError format
+   * Get a union schema for all registered value types
    */
-  private formatValidationErrors(errors: z.ZodError): ValidationError[] {
-    return errors.errors.map(err => ({
-      path: err.path,
-      message: err.message,
-      code: err.code,
-    }))
+  getValueUnionSchema(): z.ZodType<IPortValue> {
+    const schemas = this.getAllPlugins().map(plugin => plugin.valueSchema)
+    return buildUnion(schemas, defaultValueSchema)
   }
 
   /**
    * Validate a port configuration
-   * @param config Port configuration to validate
-   * @returns Array of validation errors, empty if valid
    */
-  public validateConfig(config: unknown): ValidationError[] {
+  validateConfig(config: unknown): IPortConfig {
     const result = this.getConfigUnionSchema().safeParse(config)
     if (!result.success) {
-      return this.formatValidationErrors(result.error)
+      throw new PortError(
+        PortErrorType.ValidationError,
+        'Invalid port configuration',
+        result.error,
+      )
     }
-    return []
+    return result.data
   }
 
   /**
    * Validate a port value
-   * @param value Port value to validate
-   * @returns Array of validation errors, empty if valid
    */
-  public validateValue(value: unknown): ValidationError[] {
+  validateValue(value: unknown): IPortValue {
     const result = this.getValueUnionSchema().safeParse(value)
     if (!result.success) {
-      return this.formatValidationErrors(result.error)
+      throw new PortError(
+        PortErrorType.ValidationError,
+        'Invalid port value',
+        result.error,
+      )
     }
-    return []
+    return result.data
   }
 
   /**
-   * Clear all registered plugins and cached schemas
+   * Serialize a port value
    */
-  public clear(): void {
-    this.plugins.clear()
-    this.unionSchemas.config = null
-    this.unionSchemas.value = null
+  serializeValue<T extends PortType>(value: IPortValue & { type: T }): unknown {
+    const plugin = this.getPlugin(value.type)
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        `No plugin found for type "${value.type}"`,
+      )
+    }
+    return plugin.serializeValue(value)
+  }
+
+  /**
+   * Deserialize a port value
+   */
+  deserializeValue<T extends PortType>(type: T, data: unknown): IPortValue & { type: T } {
+    const plugin = this.getPlugin(type)
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        `No plugin found for type "${type}"`,
+      )
+    }
+    return plugin.deserializeValue(data) as IPortValue & { type: T }
   }
 }
 
-// Export a singleton instance
-export const portRegistry = PortRegistry.getInstance()
+/**
+ * Global port registry instance
+ */
+export const portRegistry = new PortRegistry()

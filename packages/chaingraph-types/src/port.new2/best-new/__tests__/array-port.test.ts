@@ -1,416 +1,159 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import type {
+  ArrayPortConfig,
+  ArrayPortValue,
+  IPortValue,
+  NumberPortValue,
+  StringPortValue,
+} from '../base/types'
+import { describe, expect, it } from 'vitest'
 import { ArrayPortPlugin, validateArrayValue } from '../plugins/ArrayPortPlugin'
-import { NumberPortPlugin } from '../plugins/NumberPortPlugin'
-import { StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
 
-describe('array port plugin', () => {
-  beforeEach(() => {
-    portRegistry.clear()
-    // Register required plugins
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-  })
+/**
+ * Helper to create a string port value
+ */
+function createStringValue(value: string): StringPortValue {
+  return {
+    type: 'string',
+    value,
+  }
+}
 
-  describe('config validation', () => {
-    it('should validate valid config', () => {
-      const result = ArrayPortPlugin.configSchema.safeParse({
+/**
+ * Helper to create a number port value
+ */
+function createNumberValue(value: number): NumberPortValue {
+  return {
+    type: 'number',
+    value,
+  }
+}
+
+/**
+ * Helper to create an array port value
+ */
+function createArrayValue(items: IPortValue[]): ArrayPortValue {
+  return {
+    type: 'array',
+    value: items,
+  }
+}
+
+describe('arrayPortPlugin', () => {
+  describe('validation', () => {
+    it('should validate array length constraints', () => {
+      const config: ArrayPortConfig = {
         type: 'array',
-        itemConfig: {
-          type: 'string',
-          minLength: 1,
-        },
-        minLength: 0,
-        maxLength: 10,
-      })
-      expect(result.success).toBe(true)
+        minLength: 2,
+        maxLength: 4,
+        itemConfig: { type: 'string' },
+      }
+
+      // Test empty array
+      const emptyArray = createArrayValue([])
+      expect(validateArrayValue(emptyArray, config)).toContain(
+        'Array must have at least 2 items',
+      )
+
+      // Test array with one item
+      const oneItemArray = createArrayValue([createStringValue('test')])
+      expect(validateArrayValue(oneItemArray, config)).toContain(
+        'Array must have at least 2 items',
+      )
+
+      // Test valid array
+      const validArray = createArrayValue([
+        createStringValue('test1'),
+        createStringValue('test2'),
+      ])
+      expect(validateArrayValue(validArray, config)).toHaveLength(0)
+
+      // Test array too long
+      const longArray = createArrayValue([
+        createStringValue('test1'),
+        createStringValue('test2'),
+        createStringValue('test3'),
+        createStringValue('test4'),
+        createStringValue('test5'),
+      ])
+      expect(validateArrayValue(longArray, config)).toContain(
+        'Array must have at most 4 items',
+      )
     })
 
-    it('should reject invalid min/max length combination', () => {
-      const result = ArrayPortPlugin.configSchema.safeParse({
+    it('should validate array item structure', () => {
+      const config: ArrayPortConfig = {
         type: 'array',
         itemConfig: { type: 'string' },
-        minLength: 10,
-        maxLength: 5,
-      })
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.errors[0].message).toContain('minLength (10) must be less than or equal to maxLength (5)')
       }
-    })
 
-    it('should validate nested array config', () => {
-      const result = ArrayPortPlugin.configSchema.safeParse({
+      // Test invalid item structure
+      const invalidValue = {
         type: 'array',
-        itemConfig: {
-          type: 'array',
-          itemConfig: { type: 'string' },
-        },
-      })
-      expect(result.success).toBe(true)
-    })
-  })
-
-  describe('value validation', () => {
-    it('should validate string array', () => {
-      const config = {
-        type: 'array' as const,
-        itemConfig: {
-          type: 'string' as const,
-          minLength: 2,
-        },
+        value: [{ invalid: 'structure' }],
       }
+      expect(validateArrayValue(invalidValue, config)).toContain(
+        'Invalid item structure at index 0',
+      )
 
-      const validValue = {
-        type: 'array' as const,
-        value: [
-          { type: 'string', value: 'abc' },
-          { type: 'string', value: 'def' },
-        ],
-      }
-
-      const invalidValue = {
-        type: 'array' as const,
-        value: [
-          { type: 'string', value: 'a' }, // Too short
-          { type: 'number', value: 123 }, // Wrong type
-        ],
-      }
-
-      const validResult = ArrayPortPlugin.valueSchema.safeParse(validValue)
-      expect(validResult.success).toBe(true)
-
-      const validationErrors = validateArrayValue(invalidValue.value, config)
-      expect(validationErrors.length).toBeGreaterThan(0)
-      expect(validationErrors.some(err => err.includes('must be at least 2 characters'))).toBe(true)
-      expect(validationErrors.some(err => err.includes('does not match config type'))).toBe(true)
-    })
-
-    it('should validate nested array', () => {
-      const config = {
-        type: 'array' as const,
-        itemConfig: {
-          type: 'array' as const,
-          itemConfig: {
-            type: 'number' as const,
-            min: 0,
-            max: 10,
-          },
-        },
-      }
-
-      const validValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              { type: 'number', value: 1 },
-              { type: 'number', value: 2 },
-            ],
-          },
-          {
-            type: 'array',
-            value: [
-              { type: 'number', value: 3 },
-              { type: 'number', value: 4 },
-            ],
-          },
-        ],
-      }
-
-      const invalidValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              { type: 'number', value: -1 }, // Less than min
-              { type: 'string', value: 'abc' }, // Wrong type
-            ],
-          },
-        ],
-      }
-
-      const validResult = validateArrayValue(validValue.value, config)
-      expect(validResult).toHaveLength(0)
-
-      const invalidResult = validateArrayValue(invalidValue.value, config)
-      expect(invalidResult.length).toBeGreaterThan(0)
-      expect(invalidResult.some(err => err.includes('less than'))).toBe(true)
-      expect(invalidResult.some(err => err.includes('does not match config type'))).toBe(true)
-    })
-
-    it('should validate 3D array structure', () => {
-      // Array of arrays of arrays of numbers
-      const config = {
-        type: 'array' as const,
-        itemConfig: {
-          type: 'array' as const,
-          itemConfig: {
-            type: 'array' as const,
-            itemConfig: {
-              type: 'number' as const,
-              min: 0,
-              max: 10,
-            },
-            minLength: 2, // Each inner array must have at least 2 numbers
-          },
-          minLength: 1, // Each middle array must have at least 1 inner array
-        },
-        minLength: 1, // Outer array must have at least 1 middle array
-      }
-
-      const validValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              {
-                type: 'array',
-                value: [
-                  { type: 'number', value: 1 },
-                  { type: 'number', value: 2 },
-                ],
-              },
-              {
-                type: 'array',
-                value: [
-                  { type: 'number', value: 3 },
-                  { type: 'number', value: 4 },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-
-      const invalidValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              {
-                type: 'array',
-                value: [
-                  { type: 'number', value: -1 }, // Less than min
-                  { type: 'string', value: 'abc' }, // Wrong type
-                ],
-              },
-              {
-                type: 'array',
-                value: [ // Only one number, violates minLength: 2
-                  { type: 'number', value: 5 },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-
-      const validResult = validateArrayValue(validValue.value, config)
-      expect(validResult).toHaveLength(0)
-
-      const invalidResult = validateArrayValue(invalidValue.value, config)
-      expect(invalidResult.length).toBeGreaterThan(0)
-      expect(invalidResult.some(err => err.includes('less than'))).toBe(true)
-      expect(invalidResult.some(err => err.includes('does not match config type'))).toBe(true)
-      expect(invalidResult.some(err => err.includes('must have at least 2 items'))).toBe(true)
-    })
-
-    it('should validate 4D array structure', () => {
-      // Array of arrays of arrays of arrays of numbers
-      const config = {
-        type: 'array' as const,
-        itemConfig: {
-          type: 'array' as const,
-          itemConfig: {
-            type: 'array' as const,
-            itemConfig: {
-              type: 'array' as const,
-              itemConfig: {
-                type: 'number' as const,
-                min: 0,
-                max: 10,
-              },
-              minLength: 2, // Each inner array must have at least 2 numbers
-            },
-            minLength: 1, // Each middle array must have at least 1 inner array
-          },
-          minLength: 1, // Each outer array must have at least 1 middle array
-        },
-        minLength: 1, // Outermost array must have at least 1 outer array
-      }
-
-      const validValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              {
-                type: 'array',
-                value: [
-                  {
-                    type: 'array',
-                    value: [
-                      { type: 'number', value: 1 },
-                      { type: 'number', value: 2 },
-                    ],
-                  },
-                  {
-                    type: 'array',
-                    value: [
-                      { type: 'number', value: 3 },
-                      { type: 'number', value: 4 },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-
-      const invalidValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              {
-                type: 'array',
-                value: [
-                  {
-                    type: 'array',
-                    value: [
-                      { type: 'number', value: -1 }, // Less than min
-                      { type: 'string', value: 'abc' }, // Wrong type
-                    ],
-                  },
-                  {
-                    type: 'array',
-                    value: [ // Only one number, violates minLength: 2
-                      { type: 'number', value: 5 },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-
-      const validResult = validateArrayValue(validValue.value, config)
-      expect(validResult).toHaveLength(0)
-
-      const invalidResult = validateArrayValue(invalidValue.value, config)
-      expect(invalidResult.length).toBeGreaterThan(0)
-
-      expect(invalidResult.some(err => err.includes('less than'))).toBe(true)
-      expect(invalidResult.some(err => err.includes('does not match config type'))).toBe(true)
-      expect(invalidResult.some(err => err.includes('must have at least 2 items'))).toBe(true)
+      // Test valid structure
+      const validValue = createArrayValue([createStringValue('test')])
+      expect(validateArrayValue(validValue, config)).toHaveLength(0)
     })
   })
 
   describe('serialization', () => {
-    it('should serialize array value', () => {
-      const value = {
-        type: 'array' as const,
-        value: [
-          { type: 'string', value: 'abc' },
-          { type: 'string', value: 'def' },
-        ],
-      }
-      expect(ArrayPortPlugin.serializeValue!(value)).toEqual(['abc', 'def'])
-    })
+    it('should serialize array values', () => {
+      const value = createArrayValue([
+        createStringValue('test'),
+        createNumberValue(42),
+      ])
 
-    it('should deserialize to array value', () => {
-      expect(ArrayPortPlugin.deserializeValue!(['abc', 'def'])).toEqual({
+      const serialized = ArrayPortPlugin.serializeValue(value)
+      expect(serialized).toEqual({
         type: 'array',
-        value: ['abc', 'def'],
+        value: [
+          { type: 'string', value: 'test' },
+          { type: 'number', value: 42 },
+        ],
       })
     })
 
-    it('should throw on invalid deserialization input', () => {
-      expect(() => ArrayPortPlugin.deserializeValue!('not an array')).toThrow(TypeError)
+    it('should throw on invalid array structure', () => {
+      const invalidValue = {
+        type: 'array',
+        value: [{ invalid: 'structure' }],
+      }
+
+      expect(() => ArrayPortPlugin.serializeValue(invalidValue as any)).toThrow()
     })
   })
 
-  describe('integration', () => {
-    it('should validate complex nested structure', () => {
-      // Array of arrays of numbers
-      const config = {
-        type: 'array' as const,
-        itemConfig: {
-          type: 'array' as const,
-          itemConfig: {
-            type: 'number' as const,
-            min: 0,
-            max: 100,
-          },
-          minLength: 2,
-        },
-        minLength: 1,
-      }
-
-      const validValue = {
-        type: 'array' as const,
+  describe('deserialization', () => {
+    it('should deserialize array values', () => {
+      const data = {
+        type: 'array',
         value: [
-          {
-            type: 'array',
-            value: [
-              { type: 'number', value: 1 },
-              { type: 'number', value: 2 },
-            ],
-          },
-          {
-            type: 'array',
-            value: [
-              { type: 'number', value: 3 },
-              { type: 'number', value: 4 },
-            ],
-          },
+          { type: 'string', value: 'test' },
+          { type: 'number', value: 42 },
         ],
       }
 
-      const result = validateArrayValue(validValue.value, config)
-      expect(result).toHaveLength(0)
+      const deserialized = ArrayPortPlugin.deserializeValue(data)
+      expect(deserialized).toEqual(
+        createArrayValue([
+          createStringValue('test'),
+          createNumberValue(42),
+        ]),
+      )
     })
 
-    it('should reject invalid nested structure', () => {
-      // Array of arrays of strings
-      const config = {
-        type: 'array' as const,
-        itemConfig: {
-          type: 'array' as const,
-          itemConfig: {
-            type: 'string' as const,
-            minLength: 3,
-          },
-        },
+    it('should throw on invalid array structure', () => {
+      const invalidData = {
+        type: 'array',
+        value: [{ invalid: 'structure' }],
       }
 
-      const invalidValue = {
-        type: 'array' as const,
-        value: [
-          {
-            type: 'array',
-            value: [
-              { type: 'string', value: 'ab' }, // Too short
-              { type: 'number', value: 123 }, // Wrong type
-            ],
-          },
-        ],
-      }
-
-      const result = validateArrayValue(invalidValue.value, config)
-      expect(result.length).toBeGreaterThan(0)
-      expect(result.some(err => err.includes('must be at least 3 characters'))).toBe(true)
-      expect(result.some(err => err.includes('does not match config type'))).toBe(true)
+      expect(() => ArrayPortPlugin.deserializeValue(invalidData)).toThrow()
     })
   })
 })

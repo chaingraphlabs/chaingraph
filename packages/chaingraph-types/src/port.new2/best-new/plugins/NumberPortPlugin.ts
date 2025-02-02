@@ -1,32 +1,76 @@
-import type { IPortConfig, IPortPlugin, IPortValue } from '../base/types'
+import type {
+  NumberPortConfig,
+  NumberPortValue,
+} from '../base/types'
 import { z } from 'zod'
+import {
+  createPortPlugin,
+  PortError,
+  PortErrorType,
+} from '../base/types'
 
 /**
- * Configuration schema for number ports
+ * Type guard for number value
  */
-interface NumberPortConfig extends IPortConfig {
-  type: 'number'
-  defaultValue?: number
-  min?: number
-  max?: number
-  step?: number
-  integer?: boolean
+export function isNumberValue(value: unknown): value is NumberPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'number'
+    && 'value' in value
+    && typeof (value as NumberPortValue).value === 'number'
+  )
 }
 
 /**
- * Value schema for number ports
+ * Type guard for number config
  */
-interface NumberPortValue extends IPortValue<number> {
-  type: 'number'
+export function isNumberPortConfig(config: unknown): config is NumberPortConfig {
+  return (
+    typeof config === 'object'
+    && config !== null
+    && 'type' in config
+    && config.type === 'number'
+  )
 }
 
-// Create base schemas first
+/**
+ * Helper to create a number port value
+ */
+export function createNumberValue(value: number): NumberPortValue {
+  return {
+    type: 'number',
+    value,
+  }
+}
+
+/**
+ * Helper to create a number port config
+ */
+export function createNumberConfig(options: Partial<Omit<NumberPortConfig, 'type'>> = {}): NumberPortConfig {
+  return {
+    type: 'number',
+    ...options,
+  }
+}
+
+/**
+ * Check if a number aligns with a step value
+ */
+function isAlignedWithStep(value: number, step: number, min = 0): boolean {
+  const offset = value - min
+  return Math.abs(offset % step) < Number.EPSILON
+}
+
+/**
+ * Number port configuration schema
+ */
 const configSchema = z.object({
   type: z.literal('number'),
   id: z.string().optional(),
   name: z.string().optional(),
   metadata: z.record(z.unknown()).optional(),
-  defaultValue: z.number().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().positive().optional(),
@@ -43,7 +87,7 @@ const configSchema = z.object({
     }
   }
 
-  // Validate step is compatible with min/max range
+  // Validate step is compatible with range
   if (data.step !== undefined && data.min !== undefined && data.max !== undefined) {
     const range = data.max - data.min
     if (range % data.step !== 0) {
@@ -54,131 +98,100 @@ const configSchema = z.object({
       })
     }
   }
-
-  // Validate defaultValue against constraints
-  if (data.defaultValue !== undefined) {
-    if (data.min !== undefined && data.defaultValue < data.min) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Default value (${data.defaultValue}) is less than min (${data.min})`,
-        path: ['defaultValue'],
-      })
-    }
-    if (data.max !== undefined && data.defaultValue > data.max) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Default value (${data.defaultValue}) is greater than max (${data.max})`,
-        path: ['defaultValue'],
-      })
-    }
-    if (data.step !== undefined) {
-      const offset = data.min !== undefined ? data.defaultValue - data.min : data.defaultValue
-      if (offset % data.step !== 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Default value (${data.defaultValue}) must be aligned with step (${data.step})`,
-          path: ['defaultValue'],
-        })
-      }
-    }
-    if (data.integer === true && !Number.isInteger(data.defaultValue)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Default value must be an integer',
-        path: ['defaultValue'],
-      })
-    }
-  }
 })
 
+/**
+ * Number port value schema
+ */
 const valueSchema = z.object({
   type: z.literal('number'),
   value: z.number(),
 }).passthrough()
 
-// Schema for validating value against config
-const validationSchema = z.object({
-  config: configSchema,
-  value: valueSchema,
-}).superRefine((data, ctx) => {
-  const { config, value } = data
+/**
+ * Validate number value against config
+ */
+export function validateNumberValue(
+  value: unknown,
+  config: NumberPortConfig,
+): string[] {
+  const errors: string[] = []
 
-  // Validate value against constraints
-  if (config.min !== undefined && value.value < config.min) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.too_small,
-      message: `Number must be greater than or equal to ${config.min}`,
-      minimum: config.min,
-      type: 'number',
-      inclusive: true,
-      path: ['value', 'value'],
-    })
+  // Type validation
+  if (!isNumberValue(value)) {
+    errors.push('Invalid number value structure')
+    return errors
   }
 
-  if (config.max !== undefined && value.value > config.max) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.too_big,
-      message: `Number must be less than or equal to ${config.max}`,
-      maximum: config.max,
-      type: 'number',
-      inclusive: true,
-      path: ['value', 'value'],
-    })
+  const numValue = value.value
+
+  // Range validation
+  if (config.min !== undefined && numValue < config.min) {
+    errors.push(`Value must be greater than or equal to ${config.min}`)
   }
 
+  if (config.max !== undefined && numValue > config.max) {
+    errors.push(`Value must be less than or equal to ${config.max}`)
+  }
+
+  // Step validation
   if (config.step !== undefined) {
-    const offset = config.min !== undefined ? value.value - config.min : value.value
-    if (offset % config.step !== 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Value must be aligned with step ${config.step}`,
-        path: ['value', 'value'],
-      })
+    if (!isAlignedWithStep(numValue, config.step, config.min)) {
+      errors.push(`Value must be aligned with step ${config.step}`)
     }
   }
 
-  if (config.integer === true && !Number.isInteger(value.value)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Value must be an integer',
-      path: ['value', 'value'],
-    })
+  // Integer validation
+  if (config.integer === true && !Number.isInteger(numValue)) {
+    errors.push('Value must be an integer')
   }
-})
+
+  return errors
+}
 
 /**
- * Plugin implementation for number ports
+ * Number port plugin implementation
  */
-export const NumberPortPlugin: IPortPlugin<NumberPortConfig, NumberPortValue> = {
-  typeIdentifier: 'number',
+export const NumberPortPlugin = createPortPlugin(
+  'number',
   configSchema,
   valueSchema,
-  serializeValue: (value: NumberPortValue) => value.value,
-  deserializeValue: (data: unknown) => {
-    if (typeof data !== 'number' || !Number.isFinite(data)) {
-      throw new TypeError('Expected finite number value for deserialization')
-    }
-    return {
-      type: 'number',
-      value: data,
+  (value: NumberPortValue) => {
+    try {
+      if (!isNumberValue(value)) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid number value structure',
+        )
+      }
+      return {
+        type: 'number',
+        value: value.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during number serialization',
+      )
     }
   },
-}
-
-/**
- * Helper function for number validation
- */
-function validateNumberValue(value: number, config: NumberPortConfig): string[] {
-  const result = validationSchema.safeParse({
-    config,
-    value: { type: 'number', value },
-  })
-  if (!result.success) {
-    return result.error.errors
-      .filter(err => err.path[0] === 'value') // Only return value-related errors
-      .map(err => err.message)
-  }
-  return []
-}
-
-export { validateNumberValue }
+  (data: unknown) => {
+    try {
+      if (!isNumberValue(data)) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid number value for deserialization',
+        )
+      }
+      return {
+        type: 'number',
+        value: data.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during number deserialization',
+      )
+    }
+  },
+)
