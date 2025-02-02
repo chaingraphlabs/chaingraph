@@ -53,9 +53,8 @@ describe('string port plugin', () => {
       const invalidConfig = createStringConfig({
         pattern: '[', // Invalid regex
       })
-      expect(validateStringValue(createStringValue('test'), invalidConfig)).toContain(
-        'Invalid pattern',
-      )
+      const errors = validateStringValue(createStringValue('test'), invalidConfig)
+      expect(errors[0]).toMatch(/Invalid pattern: Invalid regular expression:.*/)
 
       // Test non-matching string
       expect(validateStringValue(createStringValue('123'), config)).toContain(
@@ -64,6 +63,33 @@ describe('string port plugin', () => {
 
       // Test matching string
       expect(validateStringValue(createStringValue('abc'), config)).toHaveLength(0)
+    })
+
+    it('should validate value structure', () => {
+      const config = createStringConfig()
+
+      // Test invalid value structure
+      expect(validateStringValue({ invalid: 'structure' }, config)).toContain(
+        'Invalid string value structure',
+      )
+
+      // Test missing value field
+      expect(validateStringValue({ type: 'string' }, config)).toContain(
+        'Invalid string value structure',
+      )
+
+      // Test wrong type field
+      expect(validateStringValue({ type: 'number', value: '123' }, config)).toContain(
+        'Invalid string value structure',
+      )
+
+      // Test wrong value type
+      expect(validateStringValue({ type: 'string', value: 123 }, config)).toContain(
+        'Invalid string value structure',
+      )
+
+      // Test valid structure
+      expect(validateStringValue(createStringValue('test'), config)).toHaveLength(0)
     })
   })
 
@@ -118,7 +144,7 @@ describe('string port plugin', () => {
       }
 
       expect(() => StringPortPlugin.deserializeValue(invalidData)).toThrow(
-        'Invalid string value structure',
+        'Invalid string value for deserialization',
       )
     })
 
@@ -129,7 +155,7 @@ describe('string port plugin', () => {
       }
 
       expect(() => StringPortPlugin.deserializeValue(invalidData)).toThrow(
-        'Invalid string value structure',
+        'Invalid string value for deserialization',
       )
     })
   })

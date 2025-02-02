@@ -61,12 +61,14 @@ export function createStringConfig(options: Partial<Omit<StringPortConfig, 'type
 function validateRegexPattern(pattern: string): { valid: boolean, error?: string } {
   try {
     // Store the result to avoid using RegExp constructor for side effects
-    const regex = new RegExp(pattern)
+    // eslint-disable-next-line no-new
+    new RegExp(pattern)
     return { valid: true }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Invalid regex pattern'
     return {
       valid: false,
-      error: error instanceof Error ? error.message : 'Invalid regex pattern',
+      error: `Invalid regular expression: ${errorMessage}`,
     }
   }
 }
