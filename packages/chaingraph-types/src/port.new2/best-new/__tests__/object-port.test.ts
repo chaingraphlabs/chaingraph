@@ -222,4 +222,137 @@ describe('object port plugin', () => {
       expect(invalidResult.success).toBe(false)
     })
   })
+
+  describe('config serialization', () => {
+    it('should serialize config with all fields', () => {
+      const config = createObjectConfig(
+        {
+          name: createStringConfig({ minLength: 2 }),
+          age: createNumberConfig({ min: 0, max: 150 }),
+          settings: createObjectConfig(
+            {
+              theme: createStringConfig(),
+              fontSize: createNumberConfig({ min: 8, max: 32 }),
+            },
+          ),
+        },
+        {
+          name: 'test',
+          id: 'test-id',
+          metadata: { custom: 'value' },
+        },
+      )
+
+      const serialized = ObjectPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'object',
+        name: 'test',
+        id: 'test-id',
+        fields: {
+          name: { type: 'string', minLength: 2 },
+          age: { type: 'number', min: 0, max: 150 },
+          settings: {
+            type: 'object',
+            fields: {
+              theme: { type: 'string' },
+              fontSize: { type: 'number', min: 8, max: 32 },
+            },
+          },
+        },
+        metadata: { custom: 'value' },
+      })
+    })
+
+    it('should serialize minimal config', () => {
+      const config = createObjectConfig({
+        name: createStringConfig(),
+      })
+      const serialized = ObjectPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'object',
+        fields: {
+          name: { type: 'string' },
+        },
+      })
+    })
+
+    it('should deserialize config with all fields', () => {
+      const data = {
+        type: 'object',
+        name: 'test',
+        id: 'test-id',
+        fields: {
+          name: { type: 'string', minLength: 2 },
+          age: { type: 'number', min: 0, max: 150 },
+          settings: {
+            type: 'object',
+            fields: {
+              theme: { type: 'string' },
+              fontSize: { type: 'number', min: 8, max: 32 },
+            },
+          },
+        },
+        metadata: { custom: 'value' },
+      }
+
+      const deserialized = ObjectPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should deserialize minimal config', () => {
+      const data = {
+        type: 'object',
+        fields: {
+          name: { type: 'string' },
+        },
+      }
+
+      const deserialized = ObjectPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should throw on invalid config deserialization input', () => {
+      expect(() => ObjectPortPlugin.deserializeConfig({
+        type: 'object',
+        fields: {
+          invalid: { type: 'unknown' },
+        },
+      })).toThrow()
+
+      expect(() => ObjectPortPlugin.deserializeConfig({
+        type: 'string',
+      })).toThrow()
+
+      expect(() => ObjectPortPlugin.deserializeConfig({
+        type: 'object',
+        fields: {
+          name: { type: 'string' },
+        },
+        unknownField: true,
+      })).not.toThrow() // passthrough allows extra fields
+    })
+
+    it('should maintain metadata types during serialization roundtrip', () => {
+      const config = createObjectConfig(
+        {
+          name: createStringConfig(),
+        },
+        {
+          metadata: {
+            number: 42,
+            string: 'test',
+            boolean: true,
+            array: [1, 2, 3],
+            object: { nested: 'value' },
+          },
+        },
+      )
+
+      const serialized = ObjectPortPlugin.serializeConfig(config)
+      const deserialized = ObjectPortPlugin.deserializeConfig(serialized)
+
+      expect(deserialized).toStrictEqual(config)
+      expect(deserialized.metadata).toStrictEqual(config.metadata)
+    })
+  })
 })

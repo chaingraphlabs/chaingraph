@@ -138,6 +138,127 @@ describe('stream port plugin', () => {
     })
   })
 
+  describe('config serialization', () => {
+    it('should serialize config with all fields', () => {
+      const config = createStreamConfig(
+        StringPortPlugin.configSchema.parse({
+          type: 'string',
+          minLength: 2,
+          maxLength: 10,
+          pattern: '^[a-z]+$',
+        }),
+        {
+          name: 'test',
+          id: 'test-id',
+          metadata: { custom: 'value' },
+        },
+      )
+
+      const serialized = StreamPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'stream',
+        name: 'test',
+        id: 'test-id',
+        itemConfig: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 10,
+          pattern: '^[a-z]+$',
+        },
+        metadata: { custom: 'value' },
+      })
+    })
+
+    it('should serialize minimal config', () => {
+      const config = createStreamConfig(
+        StringPortPlugin.configSchema.parse({
+          type: 'string',
+        }),
+      )
+      const serialized = StreamPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'stream',
+        itemConfig: {
+          type: 'string',
+        },
+      })
+    })
+
+    it('should deserialize config with all fields', () => {
+      const data = {
+        type: 'stream',
+        name: 'test',
+        id: 'test-id',
+        itemConfig: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 10,
+          pattern: '^[a-z]+$',
+        },
+        metadata: { custom: 'value' },
+      }
+
+      const deserialized = StreamPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should deserialize minimal config', () => {
+      const data = {
+        type: 'stream',
+        itemConfig: {
+          type: 'string',
+        },
+      }
+
+      const deserialized = StreamPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should throw on invalid config deserialization input', () => {
+      expect(() => StreamPortPlugin.deserializeConfig({
+        type: 'stream',
+        itemConfig: {
+          type: 'unknown',
+        },
+      })).toThrow()
+
+      expect(() => StreamPortPlugin.deserializeConfig({
+        type: 'string',
+      })).toThrow()
+
+      expect(() => StreamPortPlugin.deserializeConfig({
+        type: 'stream',
+        itemConfig: {
+          type: 'string',
+        },
+        unknownField: true,
+      })).not.toThrow() // passthrough allows extra fields
+    })
+
+    it('should maintain metadata types during serialization roundtrip', () => {
+      const config = createStreamConfig(
+        StringPortPlugin.configSchema.parse({
+          type: 'string',
+        }),
+        {
+          metadata: {
+            number: 42,
+            string: 'test',
+            boolean: true,
+            array: [1, 2, 3],
+            object: { nested: 'value' },
+          },
+        },
+      )
+
+      const serialized = StreamPortPlugin.serializeConfig(config)
+      const deserialized = StreamPortPlugin.deserializeConfig(serialized)
+
+      expect(deserialized).toStrictEqual(config)
+      expect(deserialized.metadata).toStrictEqual(config.metadata)
+    })
+  })
+
   describe('channel functionality', () => {
     it('should support multiple subscribers', async () => {
       const channel = new MultiChannel<IPortValue>()

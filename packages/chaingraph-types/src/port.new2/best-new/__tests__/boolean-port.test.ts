@@ -1,8 +1,14 @@
+import type { BooleanPortConfig } from '../base/types'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { BooleanPortPlugin, createBooleanValue } from '../plugins/BooleanPortPlugin'
+import { BooleanPortPlugin, createBooleanConfig, createBooleanValue } from '../plugins/BooleanPortPlugin'
 import { portRegistry } from '../registry/PortRegistry'
 
 describe('boolean port plugin', () => {
+  beforeEach(() => {
+    portRegistry.clear()
+    portRegistry.register(BooleanPortPlugin)
+  })
+
   describe('config validation', () => {
     it('should validate valid config', () => {
       const result = BooleanPortPlugin.configSchema.safeParse({
@@ -54,19 +60,22 @@ describe('boolean port plugin', () => {
     })
 
     it('should validate using validate method', () => {
-      const config = {
+      const config: BooleanPortConfig = {
         type: 'boolean' as const,
       }
 
       const validValue = createBooleanValue(true)
       const invalidValue = { type: 'boolean', value: 'true' }
 
-      expect(BooleanPortPlugin.validate(validValue, config)).toHaveLength(0)
-      expect(BooleanPortPlugin.validate(invalidValue as any, config)).toHaveLength(1)
+      // Get plugin and assert it exists and has the correct type
+      const plugin = portRegistry.getPlugin('boolean')
+
+      expect(plugin!.validate!(validValue, config)).toHaveLength(0)
+      expect(plugin!.validate!(invalidValue as any, config)).toHaveLength(1)
     })
   })
 
-  describe('serialization', () => {
+  describe('value serialization', () => {
     it('should serialize boolean value', () => {
       const value = createBooleanValue(true)
       expect(BooleanPortPlugin.serializeValue(value)).toStrictEqual({
@@ -100,12 +109,91 @@ describe('boolean port plugin', () => {
     })
   })
 
-  describe('integration', () => {
-    beforeEach(() => {
-      portRegistry.clear()
-      portRegistry.register(BooleanPortPlugin)
+  describe('config serialization', () => {
+    it('should serialize config with all fields', () => {
+      const config = createBooleanConfig({
+        name: 'test',
+        id: 'test-id',
+        defaultValue: true,
+        metadata: { custom: 'value' },
+      })
+
+      const serialized = BooleanPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'boolean',
+        name: 'test',
+        id: 'test-id',
+        defaultValue: true,
+        metadata: { custom: 'value' },
+      })
     })
 
+    it('should serialize minimal config', () => {
+      const config = createBooleanConfig()
+      const serialized = BooleanPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'boolean',
+      })
+    })
+
+    it('should deserialize config with all fields', () => {
+      const data = {
+        type: 'boolean',
+        name: 'test',
+        id: 'test-id',
+        defaultValue: true,
+        metadata: { custom: 'value' },
+      }
+
+      const deserialized = BooleanPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should deserialize minimal config', () => {
+      const data = {
+        type: 'boolean',
+      }
+
+      const deserialized = BooleanPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should throw on invalid config deserialization input', () => {
+      expect(() => BooleanPortPlugin.deserializeConfig({
+        type: 'boolean',
+        defaultValue: 'not-a-boolean',
+      })).toThrow()
+
+      expect(() => BooleanPortPlugin.deserializeConfig({
+        type: 'string',
+      })).toThrow()
+
+      expect(() => BooleanPortPlugin.deserializeConfig({
+        type: 'boolean',
+        unknownField: true,
+      })).not.toThrow() // passthrough allows extra fields
+    })
+
+    it('should maintain metadata types during serialization roundtrip', () => {
+      const config = createBooleanConfig({
+        metadata: {
+          number: 42,
+          string: 'test',
+          boolean: true,
+          array: [1, 2, 3],
+          object: { nested: 'value' },
+        },
+      })
+
+      const serialized = BooleanPortPlugin.serializeConfig(config)
+      const deserialized = BooleanPortPlugin.deserializeConfig(serialized)
+
+      expect(deserialized).toStrictEqual(config)
+      expect(deserialized.metadata).toStrictEqual(config.metadata)
+    })
+  })
+
+  describe('integration', () => {
     it('should validate full port object', () => {
       const port = {
         config: {
@@ -142,6 +230,18 @@ describe('boolean port plugin', () => {
 
       expect(configResult.success).toBe(true)
       expect(valueResult.success).toBe(false)
+    })
+
+    it('should handle config serialization through registry', () => {
+      const config = createBooleanConfig({
+        name: 'test',
+        defaultValue: true,
+      })
+
+      const serialized = portRegistry.serializeConfig(config)
+      const deserialized = portRegistry.deserializeConfig('boolean', serialized)
+
+      expect(deserialized).toStrictEqual(config)
     })
   })
 })

@@ -212,4 +212,97 @@ describe('number port plugin', () => {
       }
     })
   })
+
+  describe('config serialization', () => {
+    it('should serialize config with all fields', () => {
+      const config = createNumberConfig({
+        name: 'test',
+        id: 'test-id',
+        min: 0,
+        max: 10,
+        step: 2,
+        integer: true,
+        metadata: { custom: 'value' },
+      })
+
+      const serialized = NumberPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'number',
+        name: 'test',
+        id: 'test-id',
+        min: 0,
+        max: 10,
+        step: 2,
+        integer: true,
+        metadata: { custom: 'value' },
+      })
+    })
+
+    it('should serialize minimal config', () => {
+      const config = createNumberConfig()
+      const serialized = NumberPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'number',
+      })
+    })
+
+    it('should deserialize config with all fields', () => {
+      const data = {
+        type: 'number',
+        name: 'test',
+        id: 'test-id',
+        min: 0,
+        max: 10,
+        step: 2,
+        integer: true,
+        metadata: { custom: 'value' },
+      }
+
+      const deserialized = NumberPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should deserialize minimal config', () => {
+      const data = {
+        type: 'number',
+      }
+
+      const deserialized = NumberPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should throw on invalid config deserialization input', () => {
+      expect(() => NumberPortPlugin.deserializeConfig({
+        type: 'number',
+        min: 'not-a-number',
+      })).toThrow()
+
+      expect(() => NumberPortPlugin.deserializeConfig({
+        type: 'string',
+      })).toThrow()
+
+      expect(() => NumberPortPlugin.deserializeConfig({
+        type: 'number',
+        unknownField: true,
+      })).not.toThrow() // passthrough allows extra fields
+    })
+
+    it('should maintain metadata types during serialization roundtrip', () => {
+      const config = createNumberConfig({
+        metadata: {
+          number: 42,
+          string: 'test',
+          boolean: true,
+          array: [1, 2, 3],
+          object: { nested: 'value' },
+        },
+      })
+
+      const serialized = NumberPortPlugin.serializeConfig(config)
+      const deserialized = NumberPortPlugin.deserializeConfig(serialized)
+
+      expect(deserialized).toStrictEqual(config)
+      expect(deserialized.metadata).toStrictEqual(config.metadata)
+    })
+  })
 })

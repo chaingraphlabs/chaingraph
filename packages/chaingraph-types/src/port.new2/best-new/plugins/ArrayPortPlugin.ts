@@ -4,6 +4,7 @@ import type {
   IPortConfig,
   IPortPlugin,
   IPortValue,
+  PortType,
 } from '../base/types'
 import { z } from 'zod'
 import {
@@ -67,7 +68,24 @@ const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
     id: z.string().optional(),
     name: z.string().optional(),
     metadata: z.record(z.unknown()).optional(),
-    itemConfig: z.custom<IPortConfig>(),
+    itemConfig: z.custom<IPortConfig>((val) => {
+      if (
+        typeof val !== 'object'
+        || val === null
+        || !('type' in val)
+        || typeof (val as any).type !== 'string'
+      ) {
+        return false
+      }
+      // Retrieve the corresponding plugin from the registry
+      const plugin = portRegistry.getPlugin((val as any).type as PortType)
+      if (!plugin) {
+        return false
+      }
+      // Validate the itemConfig using the plugin's own configSchema
+      const result = plugin.configSchema.safeParse(val)
+      return result.success
+    }, { message: 'Invalid itemConfig: must be a valid port configuration' }),
     minLength: z.number().int().min(0).optional(),
     maxLength: z.number().int().min(1).optional(),
   }).passthrough().superRefine((data, ctx) => {
@@ -87,7 +105,19 @@ const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
 const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
   z.object({
     type: z.literal('array'),
-    value: z.array(z.custom<IPortValue>()),
+    value: z.array(
+      z.custom<IPortValue>((val) => {
+        if (typeof val !== 'object' || val === null)
+          return false
+        if (!('type' in val) || typeof (val as any).type !== 'string')
+          return false
+        const plugin = portRegistry.getPlugin((val as any).type as PortType)
+        if (!plugin)
+          return false
+        const result = plugin.valueSchema.safeParse(val)
+        return result.success
+      }, { message: 'Invalid item in array value. Must be valid IPortValue according to its plugin.' }),
+    ),
   }).passthrough(),
 )
 

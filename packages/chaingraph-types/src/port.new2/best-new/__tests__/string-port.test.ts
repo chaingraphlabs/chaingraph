@@ -188,4 +188,94 @@ describe('string port plugin', () => {
       }
     })
   })
+
+  describe('config serialization', () => {
+    it('should serialize config with all fields', () => {
+      const config = createStringConfig({
+        name: 'test',
+        id: 'test-id',
+        minLength: 3,
+        maxLength: 10,
+        pattern: '^[a-z]+$',
+        metadata: { custom: 'value' },
+      })
+
+      const serialized = StringPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'string',
+        name: 'test',
+        id: 'test-id',
+        minLength: 3,
+        maxLength: 10,
+        pattern: '^[a-z]+$',
+        metadata: { custom: 'value' },
+      })
+    })
+
+    it('should serialize minimal config', () => {
+      const config = createStringConfig()
+      const serialized = StringPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'string',
+      })
+    })
+
+    it('should deserialize config with all fields', () => {
+      const data = {
+        type: 'string',
+        name: 'test',
+        id: 'test-id',
+        minLength: 3,
+        maxLength: 10,
+        pattern: '^[a-z]+$',
+        metadata: { custom: 'value' },
+      }
+
+      const deserialized = StringPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should deserialize minimal config', () => {
+      const data = {
+        type: 'string',
+      }
+
+      const deserialized = StringPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should throw on invalid config deserialization input', () => {
+      expect(() => StringPortPlugin.deserializeConfig({
+        type: 'string',
+        minLength: 'not-a-number',
+      })).toThrow()
+
+      expect(() => StringPortPlugin.deserializeConfig({
+        type: 'number',
+      })).toThrow()
+
+      expect(() => StringPortPlugin.deserializeConfig({
+        type: 'string',
+        unknownField: true,
+      })).not.toThrow() // passthrough allows extra fields
+    })
+
+    it('should maintain metadata types during serialization roundtrip', () => {
+      const config = createStringConfig({
+        metadata: {
+          number: 42,
+          string: 'test',
+          boolean: true,
+          array: [1, 2, 3],
+          object: { nested: 'value' },
+        },
+      })
+
+      const serialized = StringPortPlugin.serializeConfig(config)
+      const deserialized = StringPortPlugin.deserializeConfig(serialized)
+
+      expect(deserialized).toStrictEqual(config)
+      expect(deserialized.metadata).toStrictEqual(config.metadata)
+    })
+  })
 })

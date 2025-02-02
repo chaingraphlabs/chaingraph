@@ -5,8 +5,11 @@ import type {
   NumberPortValue,
   StringPortValue,
 } from '../base/types'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { ArrayPortPlugin, validateArrayValue } from '../plugins/ArrayPortPlugin'
+import { NumberPortPlugin } from '../plugins/NumberPortPlugin'
+import { StringPortPlugin } from '../plugins/StringPortPlugin'
+import { portRegistry } from '../registry/PortRegistry'
 
 /**
  * Helper to create a string port value
@@ -39,6 +42,13 @@ function createArrayValue(items: IPortValue[]): ArrayPortValue {
 }
 
 describe('arrayPortPlugin', () => {
+  beforeAll(() => {
+    // Register required plugins
+    portRegistry.register(StringPortPlugin)
+    portRegistry.register(NumberPortPlugin)
+    portRegistry.register(ArrayPortPlugin)
+  })
+
   describe('validation', () => {
     it('should validate array length constraints', () => {
       const config: ArrayPortConfig = {
@@ -154,6 +164,163 @@ describe('arrayPortPlugin', () => {
       }
 
       expect(() => ArrayPortPlugin.deserializeValue(invalidData)).toThrow()
+    })
+  })
+
+  describe('schema validation', () => {
+    it('should validate config schema', () => {
+      const result = ArrayPortPlugin.configSchema.safeParse({
+        type: 'array',
+        itemConfig: { type: 'string' },
+        minLength: 1,
+        maxLength: 5,
+      })
+      expect(result.success).toBe(true)
+
+      const invalidResult = ArrayPortPlugin.configSchema.safeParse({
+        type: 'array',
+        itemConfig: { type: 'unknown' },
+      })
+      expect(invalidResult.success).toBe(false)
+
+      const invalidLengthResult = ArrayPortPlugin.configSchema.safeParse({
+        type: 'array',
+        itemConfig: { type: 'string' },
+        minLength: 5,
+        maxLength: 3,
+      })
+      expect(invalidLengthResult.success).toBe(false)
+    })
+
+    it('should validate value schema', () => {
+      const result = ArrayPortPlugin.valueSchema.safeParse({
+        type: 'array',
+        value: [
+          { type: 'string', value: 'test' },
+          { type: 'number', value: 42 },
+        ],
+      })
+      expect(result.success).toBe(true)
+
+      const invalidResult = ArrayPortPlugin.valueSchema.safeParse({
+        type: 'array',
+        value: [{ type: 'unknown', value: 'test' }],
+      })
+      expect(invalidResult.success).toBe(false)
+    })
+  })
+
+  describe('config serialization', () => {
+    it('should serialize config with all fields', () => {
+      const config: ArrayPortConfig = {
+        type: 'array',
+        name: 'test',
+        id: 'test-id',
+        itemConfig: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 10,
+          pattern: '^[a-z]+$',
+        },
+        minLength: 1,
+        maxLength: 5,
+        metadata: { custom: 'value' },
+      }
+
+      const serialized = ArrayPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'array',
+        name: 'test',
+        id: 'test-id',
+        itemConfig: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 10,
+          pattern: '^[a-z]+$',
+        },
+        minLength: 1,
+        maxLength: 5,
+        metadata: { custom: 'value' },
+      })
+    })
+
+    it('should serialize minimal config', () => {
+      const config: ArrayPortConfig = {
+        type: 'array',
+        itemConfig: { type: 'string' },
+      }
+      const serialized = ArrayPortPlugin.serializeConfig(config)
+      expect(serialized).toStrictEqual({
+        type: 'array',
+        itemConfig: { type: 'string' },
+      })
+    })
+
+    it('should deserialize config with all fields', () => {
+      const data = {
+        type: 'array',
+        name: 'test',
+        id: 'test-id',
+        itemConfig: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 10,
+          pattern: '^[a-z]+$',
+        },
+        minLength: 1,
+        maxLength: 5,
+        metadata: { custom: 'value' },
+      }
+
+      const deserialized = ArrayPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should deserialize minimal config', () => {
+      const data = {
+        type: 'array',
+        itemConfig: { type: 'string' },
+      }
+
+      const deserialized = ArrayPortPlugin.deserializeConfig(data)
+      expect(deserialized).toStrictEqual(data)
+    })
+
+    it('should throw on invalid config deserialization input', () => {
+      expect(() => ArrayPortPlugin.deserializeConfig({
+        type: 'array',
+        itemConfig: { type: 'unknown' },
+      })).toThrow()
+
+      expect(() => ArrayPortPlugin.deserializeConfig({
+        type: 'string',
+      })).toThrow()
+
+      expect(() => ArrayPortPlugin.deserializeConfig({
+        type: 'array',
+        itemConfig: { type: 'string' },
+        unknownField: true,
+      })).not.toThrow() // passthrough allows extra fields
+    })
+
+    it('should maintain metadata types during serialization roundtrip', () => {
+      const config: ArrayPortConfig = {
+        type: 'array',
+        itemConfig: { type: 'string' },
+        metadata: {
+          number: 42,
+          string: 'test',
+          boolean: true,
+          array: [1, 2, 3],
+          object: { nested: 'value' },
+        },
+      }
+
+      const serialized = ArrayPortPlugin.serializeConfig(config)
+      const deserialized = ArrayPortPlugin.deserializeConfig(serialized)
+
+      expect(deserialized).toStrictEqual(config)
+      expect(deserialized.metadata).toStrictEqual(config.metadata)
     })
   })
 })
