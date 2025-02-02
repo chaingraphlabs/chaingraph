@@ -1,10 +1,10 @@
 import type {
+  IPortPlugin,
   StringPortConfig,
   StringPortValue,
 } from '../base/types'
 import { z } from 'zod'
 import {
-  createPortPlugin,
   PortError,
   PortErrorType,
 } from '../base/types'
@@ -168,50 +168,48 @@ export function validateStringValue(
 /**
  * String port plugin implementation
  */
-export const StringPortPlugin = {
-  ...createPortPlugin(
-    'string',
-    configSchema,
-    valueSchema,
-    (value: StringPortValue) => {
-      try {
-        if (!isStringValue(value)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid string value structure',
-          )
-        }
-        return {
-          type: 'string',
-          value: value.value,
-        }
-      } catch (error) {
+export const StringPortPlugin: IPortPlugin<'string'> = {
+  typeIdentifier: 'string',
+  configSchema,
+  valueSchema,
+  serializeValue: (value: StringPortValue) => {
+    try {
+      if (!isStringValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during string serialization',
+          'Invalid string value structure',
         )
       }
-    },
-    (data: unknown) => {
-      try {
-        if (!isStringValue(data)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid string value for deserialization',
-          )
-        }
-        return {
-          type: 'string',
-          value: data.value,
-        }
-      } catch (error) {
+      return {
+        type: 'string',
+        value: value.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during string serialization',
+      )
+    }
+  },
+  deserializeValue: (data: unknown) => {
+    try {
+      if (!isStringValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during string deserialization',
+          'Invalid string value for deserialization',
         )
       }
-    },
-  ),
+      return {
+        type: 'string',
+        value: data.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during string deserialization',
+      )
+    }
+  },
   validate: (value: StringPortValue, config: StringPortConfig): string[] => {
     const errors: string[] = []
 

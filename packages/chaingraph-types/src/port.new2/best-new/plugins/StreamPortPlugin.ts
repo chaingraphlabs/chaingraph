@@ -1,12 +1,12 @@
 import type {
   IPortConfig,
+  IPortPlugin,
   IPortValue,
   StreamPortConfig,
   StreamPortValue,
 } from '../base/types'
 import { z } from 'zod'
 import {
-  createPortPlugin,
   isStreamPortValue,
   PortError,
   PortErrorType,
@@ -96,85 +96,83 @@ const valueSchema: z.ZodType<StreamPortValue> = z.object({
 /**
  * Stream port plugin implementation
  */
-export const StreamPortPlugin = {
-  ...createPortPlugin(
-    'stream',
-    configSchema,
-    valueSchema,
-    (value: StreamPortValue) => {
-      try {
-        if (!isStreamPortValue(value)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid stream value structure',
-          )
-        }
-
-        // Get the buffer and serialize each item
-        const buffer = value.channel.getBuffer()
-        const serializedBuffer = buffer.map(item => item)
-
-        return {
-          type: 'stream',
-          buffer: serializedBuffer,
-          isClosed: value.channel.isChannelClosed(),
-        }
-      } catch (error) {
+export const StreamPortPlugin: IPortPlugin<'stream'> = {
+  typeIdentifier: 'stream',
+  configSchema,
+  valueSchema,
+  serializeValue: (value: StreamPortValue) => {
+    try {
+      if (!isStreamPortValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during stream serialization',
+          'Invalid stream value structure',
         )
       }
-    },
-    (data: unknown) => {
-      try {
-        // Basic structure validation
-        if (
-          typeof data !== 'object'
-          || data === null
-          || !('type' in data)
-          || data.type !== 'stream'
-          || !('buffer' in data)
-          || !Array.isArray((data as any).buffer)
-          || !('isClosed' in data)
-          || typeof (data as any).isClosed !== 'boolean'
-        ) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid stream data structure',
-          )
-        }
 
-        const { buffer, isClosed } = data as {
-          buffer: IPortValue[]
-          isClosed: boolean
-        }
+      // Get the buffer and serialize each item
+      const buffer = value.channel.getBuffer()
+      const serializedBuffer = buffer.map(item => item)
 
-        const channel = new MultiChannel<IPortValue>()
-
-        // Add items to buffer without validation
-        if (buffer.length > 0) {
-          channel.sendBatch(buffer)
-        }
-
-        // Close channel if it was closed before serialization
-        if (isClosed) {
-          channel.close()
-        }
-
-        return {
-          type: 'stream',
-          channel,
-        }
-      } catch (error) {
+      return {
+        type: 'stream',
+        buffer: serializedBuffer,
+        isClosed: value.channel.isChannelClosed(),
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during stream serialization',
+      )
+    }
+  },
+  deserializeValue: (data: unknown) => {
+    try {
+      // Basic structure validation
+      if (
+        typeof data !== 'object'
+        || data === null
+        || !('type' in data)
+        || data.type !== 'stream'
+        || !('buffer' in data)
+        || !Array.isArray((data as any).buffer)
+        || !('isClosed' in data)
+        || typeof (data as any).isClosed !== 'boolean'
+      ) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during stream deserialization',
+          'Invalid stream data structure',
         )
       }
-    },
-  ),
-  validate: (value: StreamPortValue, config: StreamPortConfig): string[] => {
+
+      const { buffer, isClosed } = data as {
+        buffer: IPortValue[]
+        isClosed: boolean
+      }
+
+      const channel = new MultiChannel<IPortValue>()
+
+      // Add items to buffer without validation
+      if (buffer.length > 0) {
+        channel.sendBatch(buffer)
+      }
+
+      // Close channel if it was closed before serialization
+      if (isClosed) {
+        channel.close()
+      }
+
+      return {
+        type: 'stream',
+        channel,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during stream deserialization',
+      )
+    }
+  },
+  validate: (value: StreamPortValue, _config: StreamPortConfig): string[] => {
     const errors: string[] = []
 
     // Basic structure check

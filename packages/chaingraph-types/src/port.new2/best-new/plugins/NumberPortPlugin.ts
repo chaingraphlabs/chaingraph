@@ -1,10 +1,10 @@
 import type {
+  IPortPlugin,
   NumberPortConfig,
   NumberPortValue,
 } from '../base/types'
 import { z } from 'zod'
 import {
-  createPortPlugin,
   PortError,
   PortErrorType,
 } from '../base/types'
@@ -152,50 +152,48 @@ export function validateNumberValue(
 /**
  * Number port plugin implementation
  */
-export const NumberPortPlugin = {
-  ...createPortPlugin(
-    'number',
-    configSchema,
-    valueSchema,
-    (value: NumberPortValue) => {
-      try {
-        if (!isNumberValue(value)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid number value structure',
-          )
-        }
-        return {
-          type: 'number',
-          value: value.value,
-        }
-      } catch (error) {
+export const NumberPortPlugin: IPortPlugin<'number'> = {
+  typeIdentifier: 'number',
+  configSchema,
+  valueSchema,
+  serializeValue: (value: NumberPortValue) => {
+    try {
+      if (!isNumberValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during number serialization',
+          'Invalid number value structure',
         )
       }
-    },
-    (data: unknown) => {
-      try {
-        if (!isNumberValue(data)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid number value for deserialization',
-          )
-        }
-        return {
-          type: 'number',
-          value: data.value,
-        }
-      } catch (error) {
+      return {
+        type: 'number',
+        value: value.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during number serialization',
+      )
+    }
+  },
+  deserializeValue: (data: unknown) => {
+    try {
+      if (!isNumberValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during number deserialization',
+          'Invalid number value for deserialization',
         )
       }
-    },
-  ),
+      return {
+        type: 'number',
+        value: data.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during number deserialization',
+      )
+    }
+  },
   validate: (value: NumberPortValue, config: NumberPortConfig): string[] => {
     const errors: string[] = []
 

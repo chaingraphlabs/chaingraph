@@ -2,11 +2,11 @@ import type {
   ArrayPortConfig,
   ArrayPortValue,
   IPortConfig,
+  IPortPlugin,
   IPortValue,
 } from '../base/types'
 import { z } from 'zod'
 import {
-  createPortPlugin,
   PortError,
   PortErrorType,
 } from '../base/types'
@@ -93,73 +93,71 @@ const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
 /**
  * Plugin implementation for array ports
  */
-export const ArrayPortPlugin = {
-  ...createPortPlugin(
-    'array',
-    configSchema,
-    valueSchema,
-    (value: ArrayPortValue) => {
-      try {
-        if (!isArrayValue(value)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid array value structure',
-          )
-        }
-
-        return {
-          type: 'array',
-          value: value.value.map((item, index) => {
-            if (!('type' in item) || !('value' in item)) {
-              throw new PortError(
-                PortErrorType.SerializationError,
-                `Invalid array item structure at index ${index}`,
-              )
-            }
-            return item
-          }),
-        }
-      } catch (error) {
+export const ArrayPortPlugin: IPortPlugin<'array'> = {
+  typeIdentifier: 'array',
+  configSchema,
+  valueSchema,
+  serializeValue: (value: ArrayPortValue) => {
+    try {
+      if (!isArrayValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during array serialization',
+          'Invalid array value structure',
         )
       }
-    },
-    (data: unknown) => {
-      try {
-        if (!isArrayValue(data)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid array value for deserialization',
-          )
-        }
 
-        return {
-          type: 'array',
-          value: data.value.map((item, index) => {
-            if (
-              typeof item !== 'object'
-              || item === null
-              || !('type' in item)
-              || !('value' in item)
-            ) {
-              throw new PortError(
-                PortErrorType.SerializationError,
-                `Invalid array item structure at index ${index}`,
-              )
-            }
-            return item as IPortValue
-          }),
-        }
-      } catch (error) {
+      return {
+        type: 'array',
+        value: value.value.map((item, index) => {
+          if (!('type' in item) || !('value' in item)) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Invalid array item structure at index ${index}`,
+            )
+          }
+          return item
+        }),
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during array serialization',
+      )
+    }
+  },
+  deserializeValue: (data: unknown) => {
+    try {
+      if (!isArrayValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during array deserialization',
+          'Invalid array value for deserialization',
         )
       }
-    },
-  ),
+
+      return {
+        type: 'array',
+        value: data.value.map((item, index) => {
+          if (
+            typeof item !== 'object'
+            || item === null
+            || !('type' in item)
+            || !('value' in item)
+          ) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Invalid array item structure at index ${index}`,
+            )
+          }
+          return item as IPortValue
+        }),
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during array deserialization',
+      )
+    }
+  },
   validate: (value: ArrayPortValue, config: ArrayPortConfig): string[] => {
     const errors: string[] = []
 

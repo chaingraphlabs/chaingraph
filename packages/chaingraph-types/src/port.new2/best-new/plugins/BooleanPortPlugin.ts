@@ -1,10 +1,10 @@
 import type {
   BooleanPortConfig,
   BooleanPortValue,
+  IPortPlugin,
 } from '../base/types'
 import { z } from 'zod'
 import {
-  createPortPlugin,
   isBooleanPortValue,
   PortError,
   PortErrorType,
@@ -52,54 +52,51 @@ const valueSchema = z.object({
 /**
  * Boolean port plugin implementation
  */
-export const BooleanPortPlugin = {
-  ...createPortPlugin(
-    'boolean',
-    configSchema,
-    valueSchema,
-    (value: BooleanPortValue) => {
-      try {
-        if (!isBooleanPortValue(value)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid boolean value structure',
-          )
-        }
-        return {
-          type: 'boolean',
-          value: value.value,
-        }
-      } catch (error) {
+export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
+  typeIdentifier: 'boolean',
+  configSchema,
+  valueSchema,
+  serializeValue: (value: BooleanPortValue) => {
+    try {
+      if (!isBooleanPortValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during boolean serialization',
+          'Invalid boolean value structure',
         )
       }
-    },
-    (data: unknown) => {
-      try {
-        const result = valueSchema.safeParse(data)
-        if (!result.success) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            'Invalid boolean value for deserialization',
-          )
-        }
-        return result.data
-      } catch (error) {
+      return {
+        type: 'boolean',
+        value: value.value,
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during boolean serialization',
+      )
+    }
+  },
+  deserializeValue: (data: unknown) => {
+    try {
+      const result = valueSchema.safeParse(data)
+      if (!result.success) {
         throw new PortError(
           PortErrorType.SerializationError,
-          error instanceof Error ? error.message : 'Unknown error during boolean deserialization',
+          'Invalid boolean value for deserialization',
         )
       }
-    },
-  ),
-  validate: (value: BooleanPortValue, config: BooleanPortConfig): string[] => {
+      return result.data
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during boolean deserialization',
+      )
+    }
+  },
+  validate: (value: BooleanPortValue, _config: BooleanPortConfig): string[] => {
     const errors: string[] = []
 
     if (!isBooleanPortValue(value)) {
       errors.push('Invalid boolean value structure')
-      return errors
     }
 
     return errors
