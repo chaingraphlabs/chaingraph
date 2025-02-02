@@ -9,7 +9,6 @@ import {
 } from '../plugins/ObjectPortPlugin'
 import { createStringConfig, createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
 import { portRegistry } from '../registry/PortRegistry'
-import { portValidator } from '../validation/port-validator'
 
 describe('objectPortPlugin: tricky nested test', () => {
   beforeAll(() => {
@@ -61,22 +60,16 @@ describe('objectPortPlugin: tricky nested test', () => {
     expect(pluginErrors.length).toEqual(5) // Expected number of unique error types
 
     // Check the portValidator-level
-    const validatorResult = portValidator.validatePort(rootObjectConfig, rootObjectValue)
-    expect(validatorResult.success).toBe(false)
-
-    // Get all error messages
-    const fullErrorMessages = validatorResult.errors.map(e => e.message)
-
-    // Log errors for debugging
-    console.log('Validation errors:', fullErrorMessages)
+    const errors = validateObjectValue(rootObjectValue, rootObjectConfig)
+    expect(errors.length).toBeGreaterThan(0)
 
     // Check for presence of each error type
-    expect(fullErrorMessages.some(msg => msg.includes('2 characters'))).toBe(true)
-    expect(fullErrorMessages.some(msg => msg.includes('Missing required field'))).toBe(true)
-    expect(fullErrorMessages.some(msg => msg.includes('expected type string'))).toBe(true)
-    expect(fullErrorMessages.some(msg => msg.includes('Unexpected field'))).toBe(true)
+    expect(errors.some(msg => msg.includes('2 characters'))).toBe(true)
+    expect(errors.some(msg => msg.includes('Missing required field'))).toBe(true)
+    expect(errors.some(msg => msg.includes('expected type string'))).toBe(true)
+    expect(errors.some(msg => msg.includes('Unexpected field'))).toBe(true)
 
     // We expect around 14 errors due to validation at different levels
-    expect(fullErrorMessages.length).toBe(5)
+    expect(errors.length).toBe(5)
   })
 })

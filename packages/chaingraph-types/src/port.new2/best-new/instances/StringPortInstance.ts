@@ -5,6 +5,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { portRegistry } from '../registry/PortRegistry'
 
 /**
  * Concrete implementation of IPort for string values.
@@ -59,6 +60,25 @@ export class StringPortInstance implements IPort<StringPortConfig, StringPortVal
       )
     }
 
+    // Validate config using plugin
+    const plugin = portRegistry.getPlugin('string')
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.RegistryError,
+        'String port plugin not found',
+      )
+    }
+
+    try {
+      plugin.configSchema.parse(newConfig)
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.ValidationError,
+        'Invalid string port configuration',
+        error,
+      )
+    }
+
     // Store the current value
     const currentValue = this.value
 
@@ -67,7 +87,8 @@ export class StringPortInstance implements IPort<StringPortConfig, StringPortVal
 
     // If there was a value, validate it against the new configuration
     if (currentValue !== undefined) {
-      if (!this.validateValue(currentValue)) {
+      const plugin = portRegistry.getPlugin('string')
+      if (!plugin || (plugin.validate && plugin.validate(currentValue, newConfig).length > 0)) {
         // If the current value is invalid under the new config, reset it
         this.value = undefined
       }
@@ -97,11 +118,34 @@ export class StringPortInstance implements IPort<StringPortConfig, StringPortVal
       )
     }
 
-    if (!this.validateValue(newValue)) {
+    const plugin = portRegistry.getPlugin('string')
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.RegistryError,
+        'String port plugin not found',
+      )
+    }
+
+    // Validate value using plugin
+    try {
+      plugin.valueSchema.parse(newValue)
+    } catch (error) {
       throw new PortError(
         PortErrorType.ValidationError,
-        `Invalid string value: ${newValue.value}`,
+        'Invalid string value format',
+        error,
       )
+    }
+
+    // Validate against config constraints
+    if (plugin.validate) {
+      const errors = plugin.validate(newValue, this.config)
+      if (errors.length > 0) {
+        throw new PortError(
+          PortErrorType.ValidationError,
+          errors.join('; '),
+        )
+      }
     }
 
     this.value = newValue
@@ -116,6 +160,7 @@ export class StringPortInstance implements IPort<StringPortConfig, StringPortVal
 
   /**
    * Serializes both the port's configuration and current value into a single object.
+   * Uses the string port plugin to serialize the value.
    *
    * Example serialized output:
    * {
@@ -132,19 +177,29 @@ export class StringPortInstance implements IPort<StringPortConfig, StringPortVal
    * }
    *
    * @returns A JSON-serializable object containing both config and value
+   * @throws {PortError} If serialization fails or plugin is not found
    */
   serialize(): {
     config: StringPortConfig
     value: StringPortValue | undefined
   } {
+    const plugin = portRegistry.getPlugin('string')
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.RegistryError,
+        'String port plugin not found',
+      )
+    }
+
     return {
       config: this.config,
-      value: this.value,
+      value: this.value ? plugin.serializeValue(this.value) as StringPortValue : undefined,
     }
   }
 
   /**
    * Deserializes both configuration and value from a previously serialized object.
+   * Uses the string port plugin to deserialize the value.
    *
    * Example input format:
    * {
@@ -189,79 +244,62 @@ export class StringPortInstance implements IPort<StringPortConfig, StringPortVal
 
     // Then set the value if provided
     if (value !== undefined) {
-      if (typeof value !== 'object' || value === null) {
+      const plugin = portRegistry.getPlugin('string')
+      if (!plugin) {
         throw new PortError(
-          PortErrorType.SerializationError,
-          'Invalid serialized data: invalid value format',
+          PortErrorType.RegistryError,
+          'String port plugin not found',
         )
       }
-      this.setValue(value as StringPortValue)
+
+      try {
+        const deserializedValue = plugin.deserializeValue(value) as StringPortValue
+        this.setValue(deserializedValue)
+      } catch (error) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Failed to deserialize string value',
+          error,
+        )
+      }
     } else {
       this.reset()
     }
   }
 
   /**
-   * Validates both the current configuration and value.
+   * Validates both the current configuration and value using the string port plugin.
    *
    * @returns true if both config and value are valid, false otherwise
    */
   validate(): boolean {
-    // First validate the configuration
-    if (!isStringPortConfig(this.config)) {
+    const plugin = portRegistry.getPlugin('string')
+    if (!plugin) {
       return false
     }
 
-    // If no value is set, validation always passes
-    if (this.value === undefined) {
-      return true
-    }
+    try {
+      // Validate config
+      plugin.configSchema.parse(this.config)
 
-    // Validate the current value
-    return this.validateValue(this.value)
-  }
-
-  /**
-   * Validates a string port value against the current configuration.
-   *
-   * @param value - The value to validate
-   * @returns true if the value is valid according to the configuration
-   */
-  private validateValue(value: StringPortValue): boolean {
-    if (value.type !== 'string') {
-      return false
-    }
-
-    const str = value.value
-
-    // Basic string validation
-    if (typeof str !== 'string') {
-      return false
-    }
-
-    // Check length constraints
-    const { minLength, maxLength, pattern } = this.config
-    if (minLength !== undefined && str.length < minLength) {
-      return false
-    }
-    if (maxLength !== undefined && str.length > maxLength) {
-      return false
-    }
-
-    // Check pattern if specified
-    if (pattern !== undefined) {
-      try {
-        const regex = new RegExp(pattern)
-        if (!regex.test(str)) {
-          return false
-        }
-      } catch {
-        // Invalid regex pattern in config
-        return false
+      // If no value is set, validation passes
+      if (this.value === undefined) {
+        return true
       }
-    }
 
-    return true
+      // Validate value format
+      plugin.valueSchema.parse(this.value)
+
+      // Validate value against config constraints
+      if (plugin.validate) {
+        const errors = plugin.validate(this.value, this.config)
+        return errors.length === 0
+      }
+
+      return true
+    } catch {
+      return false
+    }
   }
 
   /**
