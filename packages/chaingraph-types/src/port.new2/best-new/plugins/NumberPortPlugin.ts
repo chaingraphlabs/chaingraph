@@ -152,46 +152,82 @@ export function validateNumberValue(
 /**
  * Number port plugin implementation
  */
-export const NumberPortPlugin = createPortPlugin(
-  'number',
-  configSchema,
-  valueSchema,
-  (value: NumberPortValue) => {
-    try {
-      if (!isNumberValue(value)) {
+export const NumberPortPlugin = {
+  ...createPortPlugin(
+    'number',
+    configSchema,
+    valueSchema,
+    (value: NumberPortValue) => {
+      try {
+        if (!isNumberValue(value)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid number value structure',
+          )
+        }
+        return {
+          type: 'number',
+          value: value.value,
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid number value structure',
+          error instanceof Error ? error.message : 'Unknown error during number serialization',
         )
       }
-      return {
-        type: 'number',
-        value: value.value,
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during number serialization',
-      )
-    }
-  },
-  (data: unknown) => {
-    try {
-      if (!isNumberValue(data)) {
+    },
+    (data: unknown) => {
+      try {
+        if (!isNumberValue(data)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid number value for deserialization',
+          )
+        }
+        return {
+          type: 'number',
+          value: data.value,
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid number value for deserialization',
+          error instanceof Error ? error.message : 'Unknown error during number deserialization',
         )
       }
-      return {
-        type: 'number',
-        value: data.value,
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during number deserialization',
-      )
+    },
+  ),
+  validate: (value: NumberPortValue, config: NumberPortConfig): string[] => {
+    const errors: string[] = []
+
+    // Type validation
+    if (!isNumberValue(value)) {
+      errors.push('Invalid number value structure')
+      return errors
     }
+
+    const numValue = value.value
+
+    // Range validation
+    if (config.min !== undefined && numValue < config.min) {
+      errors.push(`Value must be greater than or equal to ${config.min}`)
+    }
+
+    if (config.max !== undefined && numValue > config.max) {
+      errors.push(`Value must be less than or equal to ${config.max}`)
+    }
+
+    // Step validation
+    if (config.step !== undefined) {
+      if (!isAlignedWithStep(numValue, config.step, config.min)) {
+        errors.push(`Value must be aligned with step ${config.step}`)
+      }
+    }
+
+    // Integer validation
+    if (config.integer === true && !Number.isInteger(numValue)) {
+      errors.push('Value must be an integer')
+    }
+
+    return errors
   },
-)
+}

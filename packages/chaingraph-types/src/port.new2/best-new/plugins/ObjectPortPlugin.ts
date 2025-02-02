@@ -240,89 +240,94 @@ const valueSchema: z.ZodType<ObjectPortValue> = z.lazy(() =>
 /**
  * Object port plugin implementation
  */
-export const ObjectPortPlugin = createPortPlugin(
-  'object',
-  configSchema,
-  valueSchema,
-  (value: ObjectPortValue) => {
-    try {
-      if (!isObjectPortValue(value)) {
+export const ObjectPortPlugin = {
+  ...createPortPlugin(
+    'object',
+    configSchema,
+    valueSchema,
+    (value: ObjectPortValue) => {
+      try {
+        if (!isObjectPortValue(value)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid object value structure',
+          )
+        }
+
+        // Serialize each field value using its corresponding plugin
+        const serializedFields: Record<string, unknown> = {}
+        for (const [key, fieldValue] of Object.entries(value.value)) {
+          if (!isValidFieldValue(fieldValue)) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Unknown field type: ${(fieldValue as any)?.type || 'undefined'}`,
+            )
+          }
+
+          const plugin = portRegistry.getPlugin(fieldValue.type as PortType)
+          if (!plugin) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Unknown field type: ${fieldValue.type}`,
+            )
+          }
+          serializedFields[key] = plugin.serializeValue(fieldValue)
+        }
+
+        return {
+          type: 'object',
+          value: serializedFields,
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid object value structure',
+          error instanceof Error ? error.message : 'Unknown error during object serialization',
         )
       }
-
-      // Serialize each field value using its corresponding plugin
-      const serializedFields: Record<string, unknown> = {}
-      for (const [key, fieldValue] of Object.entries(value.value)) {
-        if (!isValidFieldValue(fieldValue)) {
+    },
+    (data: unknown) => {
+      try {
+        if (!isObjectPortValue(data)) {
           throw new PortError(
             PortErrorType.SerializationError,
-            `Unknown field type: ${(fieldValue as any)?.type || 'undefined'}`,
+            'Invalid object value structure',
           )
         }
 
-        const plugin = portRegistry.getPlugin(fieldValue.type as PortType)
-        if (!plugin) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `Unknown field type: ${fieldValue.type}`,
-          )
-        }
-        serializedFields[key] = plugin.serializeValue(fieldValue)
-      }
+        // Deserialize each field value using its corresponding plugin
+        const deserializedFields: Record<string, IPortValue> = {}
 
-      return {
-        type: 'object',
-        value: serializedFields,
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during object serialization',
-      )
-    }
-  },
-  (data: unknown) => {
-    try {
-      if (!isObjectPortValue(data)) {
+        for (const [key, fieldValue] of Object.entries(data.value)) {
+          if (!isValidFieldValue(fieldValue)) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Invalid field value structure for field ${key}`,
+            )
+          }
+
+          const plugin = portRegistry.getPlugin(fieldValue.type as PortType)
+          if (!plugin) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Unknown field type: ${fieldValue.type}`,
+            )
+          }
+          deserializedFields[key] = plugin.deserializeValue(fieldValue)
+        }
+
+        return {
+          type: 'object',
+          value: deserializedFields,
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid object value structure',
+          error instanceof Error ? error.message : 'Unknown error during object deserialization',
         )
       }
-
-      // Deserialize each field value using its corresponding plugin
-      const deserializedFields: Record<string, IPortValue> = {}
-
-      for (const [key, fieldValue] of Object.entries(data.value)) {
-        if (!isValidFieldValue(fieldValue)) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `Invalid field value structure for field ${key}`,
-          )
-        }
-
-        const plugin = portRegistry.getPlugin(fieldValue.type as PortType)
-        if (!plugin) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `Unknown field type: ${fieldValue.type}`,
-          )
-        }
-        deserializedFields[key] = plugin.deserializeValue(fieldValue)
-      }
-
-      return {
-        type: 'object',
-        value: deserializedFields,
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during object deserialization',
-      )
-    }
+    },
+  ),
+  validate: (value: ObjectPortValue, config: ObjectPortConfig): string[] => {
+    return validateObjectValue(value, config)
   },
-)
+}

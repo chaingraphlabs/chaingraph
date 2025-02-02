@@ -87,23 +87,11 @@ export class PortValidator {
     const valueResult = plugin.valueSchema.safeParse(value)
 
     if (!configResult.success) {
-      errors.push(
-        ...configResult.error.errors.map(err => ({
-          path: ['config', ...(err.path as (string | number)[])],
-          message: err.message,
-          code: err.code,
-        })),
-      )
+      errors.push(...mapZodErrors(configResult.error.errors, ['config']))
     }
 
     if (!valueResult.success) {
-      errors.push(
-        ...valueResult.error.errors.map(err => ({
-          path: ['value', ...(err.path as (string | number)[])],
-          message: err.message,
-          code: err.code,
-        })),
-      )
+      errors.push(...mapZodErrors(valueResult.error.errors, ['value']))
     }
 
     // Use plugin's validate method if available, otherwise fall back to type-specific validation

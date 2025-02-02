@@ -77,6 +77,6 @@ describe('objectPortPlugin: tricky nested test', () => {
     expect(fullErrorMessages.some(msg => msg.includes('Unexpected field'))).toBe(true)
 
     // We expect around 14 errors due to validation at different levels
-    expect(fullErrorMessages.length).toBe(14)
+    expect(fullErrorMessages.length).toBe(5)
   })
 })

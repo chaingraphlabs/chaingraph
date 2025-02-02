@@ -93,69 +93,98 @@ const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
 /**
  * Plugin implementation for array ports
  */
-export const ArrayPortPlugin = createPortPlugin(
-  'array',
-  configSchema,
-  valueSchema,
-  (value: ArrayPortValue) => {
-    try {
-      if (!isArrayValue(value)) {
+export const ArrayPortPlugin = {
+  ...createPortPlugin(
+    'array',
+    configSchema,
+    valueSchema,
+    (value: ArrayPortValue) => {
+      try {
+        if (!isArrayValue(value)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid array value structure',
+          )
+        }
+
+        return {
+          type: 'array',
+          value: value.value.map((item, index) => {
+            if (!('type' in item) || !('value' in item)) {
+              throw new PortError(
+                PortErrorType.SerializationError,
+                `Invalid array item structure at index ${index}`,
+              )
+            }
+            return item
+          }),
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid array value structure',
+          error instanceof Error ? error.message : 'Unknown error during array serialization',
         )
       }
+    },
+    (data: unknown) => {
+      try {
+        if (!isArrayValue(data)) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid array value for deserialization',
+          )
+        }
 
-      return {
-        type: 'array',
-        value: value.value.map((item, index) => {
-          if (!('type' in item) || !('value' in item)) {
-            throw new PortError(
-              PortErrorType.SerializationError,
-              `Invalid array item structure at index ${index}`,
-            )
-          }
-          return item
-        }),
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during array serialization',
-      )
-    }
-  },
-  (data: unknown) => {
-    try {
-      if (!isArrayValue(data)) {
+        return {
+          type: 'array',
+          value: data.value.map((item, index) => {
+            if (
+              typeof item !== 'object'
+              || item === null
+              || !('type' in item)
+              || !('value' in item)
+            ) {
+              throw new PortError(
+                PortErrorType.SerializationError,
+                `Invalid array item structure at index ${index}`,
+              )
+            }
+            return item as IPortValue
+          }),
+        }
+      } catch (error) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid array value for deserialization',
+          error instanceof Error ? error.message : 'Unknown error during array deserialization',
         )
       }
+    },
+  ),
+  validate: (value: ArrayPortValue, config: ArrayPortConfig): string[] => {
+    const errors: string[] = []
 
-      return {
-        type: 'array',
-        value: data.value.map((item, index) => {
-          if (
-            typeof item !== 'object'
-            || item === null
-            || !('type' in item)
-            || !('value' in item)
-          ) {
-            throw new PortError(
-              PortErrorType.SerializationError,
-              `Invalid array item structure at index ${index}`,
-            )
-          }
-          return item as IPortValue
-        }),
-      }
-    } catch (error) {
-      throw new PortError(
-        PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during array deserialization',
-      )
+    // Type validation
+    if (!isArrayValue(value)) {
+      errors.push('Invalid array value structure')
+      return errors
     }
+
+    // Validate array length constraints
+    if (config.minLength !== undefined && value.value.length < config.minLength) {
+      errors.push(`Array must have at least ${config.minLength} items`)
+    }
+
+    if (config.maxLength !== undefined && value.value.length > config.maxLength) {
+      errors.push(`Array must have at most ${config.maxLength} items`)
+    }
+
+    // Validate array items
+    value.value.forEach((item, index) => {
+      if (!('type' in item) || !('value' in item)) {
+        errors.push(`Invalid item structure at index ${index}`)
+      }
+    })
+
+    return errors
   },
-)
+}
