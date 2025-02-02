@@ -1,116 +1,260 @@
-import type { NumberPortConfig } from '../base/number-port-config'
-import { BasePort } from '../base/port-instance'
+import type { IPort } from '../base/IPort'
+import type { NumberPortConfig, NumberPortValue } from '../base/types'
+import {
+  isNumberPortConfig,
+  PortError,
+  PortErrorType,
+} from '../base/types'
 
 /**
- * Concrete implementation of BasePort for number values.
+ * Concrete implementation of IPort for number values.
  * Handles validation, serialization, and value management for number ports,
  * including constraints like min/max values, step increments, and integer requirements.
+ *
+ * Example usage:
+ * ```typescript
+ * const port = new NumberPortInstance({
+ *   type: 'number',
+ *   id: 'age',
+ *   min: 0,
+ *   max: 120,
+ *   integer: true
+ * });
+ *
+ * port.setValue({ type: 'number', value: 25 });
+ * const value = port.getValue(); // { type: 'number', value: 25 }
+ * ```
  */
-export class NumberPortInstance extends BasePort<number> {
+export class NumberPortInstance implements IPort<NumberPortConfig, NumberPortValue> {
   /** The current value of the port */
-  private value?: number
+  private value?: NumberPortValue
 
   /** The port configuration with number-specific options */
-  protected readonly config: NumberPortConfig
+  private config: NumberPortConfig
 
   constructor(config: NumberPortConfig) {
-    super(config)
     this.config = config
-    // Initialize with default value if provided
-    if (config.defaultValue !== undefined) {
-      this.value = config.defaultValue
+  }
+
+  /**
+   * Returns the port's configuration object.
+   *
+   * @returns The strongly typed number port configuration
+   */
+  getConfig(): NumberPortConfig {
+    return this.config
+  }
+
+  /**
+   * Updates the port's configuration.
+   * This will validate the new configuration and ensure the current value
+   * remains valid under the new configuration.
+   *
+   * @param newConfig - The new configuration to apply
+   * @throws {PortError} If the configuration is invalid or incompatible
+   */
+  setConfig(newConfig: NumberPortConfig): void {
+    if (!isNumberPortConfig(newConfig)) {
+      throw new PortError(
+        PortErrorType.ValidationError,
+        'Invalid number port configuration',
+      )
+    }
+
+    // Store the current value
+    const currentValue = this.value
+
+    // Update the configuration
+    this.config = newConfig
+
+    // If there was a value, validate it against the new configuration
+    if (currentValue !== undefined) {
+      if (!this.validateValue(currentValue)) {
+        // If the current value is invalid under the new config, reset it
+        this.value = undefined
+      }
     }
   }
 
   /**
    * Returns the current number value of the port.
-   * If no value is set, returns the default value from config.
    *
-   * @returns The current number value, or undefined if no value or default is set
+   * @returns The current NumberPortValue, or undefined if no value is set
    */
-  getValue(): number | undefined {
-    return this.value ?? this.config.defaultValue
+  getValue(): NumberPortValue | undefined {
+    return this.value
   }
 
   /**
    * Sets a new number value for the port after validation.
-   * Validates against min/max bounds, step increments, and integer constraints.
    *
-   * @param newValue - The new number value to set
-   * @throws {Error} If the value is invalid or fails validation
+   * @param newValue - The new NumberPortValue to set
+   * @throws {PortError} If the value is invalid according to the configuration
    */
-  setValue(newValue: number): void {
-    if (!this.validate(newValue)) {
-      throw new Error(`Invalid number value: ${newValue}`)
+  setValue(newValue: NumberPortValue): void {
+    if (newValue.type !== 'number') {
+      throw new PortError(
+        PortErrorType.TypeError,
+        `Expected number value, got ${newValue.type}`,
+      )
     }
+
+    if (!this.validateValue(newValue)) {
+      throw new PortError(
+        PortErrorType.ValidationError,
+        `Invalid number value: ${newValue.value}`,
+      )
+    }
+
     this.value = newValue
   }
 
   /**
-   * Resets the port value to its default state.
-   * If a default value is configured, the port will be reset to that value.
-   * Otherwise, the value will be set to undefined.
+   * Resets the port value to undefined.
    */
   reset(): void {
-    this.value = this.config.defaultValue
+    this.value = undefined
   }
 
   /**
-   * Serializes the current number value.
-   * For number ports, this returns the number directly as it's already JSON-serializable.
+   * Serializes both the port's configuration and current value into a single object.
    *
-   * @returns The serialized number value, or null if no value is set
+   * Example serialized output:
+   * {
+   *   config: {
+   *     type: "number",
+   *     id: "age",
+   *     min: 0,
+   *     max: 120,
+   *     integer: true
+   *   },
+   *   value: {
+   *     type: "number",
+   *     value: 25
+   *   }
+   * }
+   *
+   * @returns A JSON-serializable object containing both config and value
    */
-  serialize(): unknown {
-    return this.getValue() ?? null
+  serialize(): {
+    config: NumberPortConfig
+    value: NumberPortValue | undefined
+  } {
+    return {
+      config: this.config,
+      value: this.value,
+    }
   }
 
   /**
-   * Deserializes and sets a previously serialized number value.
+   * Deserializes both configuration and value from a previously serialized object.
    *
-   * @param serialized - The serialized value to deserialize
-   * @throws {Error} If the serialized value is not a valid number or fails validation
+   * Example input format:
+   * {
+   *   config: {
+   *     type: "number",
+   *     id: "age",
+   *     min: 0,
+   *     max: 120,
+   *     integer: true
+   *   },
+   *   value: {
+   *     type: "number",
+   *     value: 25
+   *   }
+   * }
+   *
+   * @param data - The serialized port data containing both config and value
+   * @throws {PortError} If the data is invalid or cannot be deserialized
    */
-  deserialize(serialized: unknown): void {
-    if (serialized === null || serialized === undefined) {
-      this.value = undefined
-      return
+  deserialize(data: unknown): void {
+    if (!data || typeof data !== 'object') {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        'Invalid serialized data: expected an object',
+      )
     }
 
-    const num = typeof serialized === 'string' ? Number.parseFloat(serialized) : serialized
-
-    if (!this.validate(num)) {
-      throw new Error(`Invalid serialized number value: ${String(serialized)}`)
+    const { config, value } = data as {
+      config?: unknown
+      value?: unknown
     }
 
-    this.value = num
+    // Config is required
+    if (!config || typeof config !== 'object') {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        'Invalid serialized data: missing or invalid config',
+      )
+    }
+
+    // Update configuration first
+    this.setConfig(config as NumberPortConfig)
+
+    // Then set the value if provided
+    if (value !== undefined) {
+      if (typeof value !== 'object' || value === null) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid serialized data: invalid value format',
+        )
+      }
+      this.setValue(value as NumberPortValue)
+    } else {
+      this.reset()
+    }
   }
 
   /**
-   * Validates whether a given value is a valid number for this port.
-   * Checks type, min/max bounds, step increments, and integer constraints.
+   * Validates both the current configuration and value.
+   *
+   * @returns true if both config and value are valid, false otherwise
+   */
+  validate(): boolean {
+    // First validate the configuration
+    if (!isNumberPortConfig(this.config)) {
+      return false
+    }
+
+    // If no value is set, validation always passes
+    if (this.value === undefined) {
+      return true
+    }
+
+    // Validate the current value
+    return this.validateValue(this.value)
+  }
+
+  /**
+   * Validates a number port value against the current configuration.
    *
    * @param value - The value to validate
-   * @returns true if the value is a valid number meeting all constraints
+   * @returns true if the value is valid according to the configuration
    */
-  validate(value: unknown): value is number {
-    // Basic number type check
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
+  private validateValue(value: NumberPortValue): boolean {
+    if (value.type !== 'number') {
+      return false
+    }
+
+    const num = value.value
+
+    // Basic number validation
+    if (typeof num !== 'number' || !Number.isFinite(num)) {
       return false
     }
 
     const { min, max, step, integer } = this.config
 
     // Check integer constraint
-    if (integer && !Number.isInteger(value)) {
+    if (integer && !Number.isInteger(num)) {
       return false
     }
 
     // Check min/max bounds
-    if (min !== undefined && value < min) {
+    if (min !== undefined && num < min) {
       return false
     }
-    if (max !== undefined && value > max) {
+    if (max !== undefined && num > max) {
       return false
     }
 
@@ -118,10 +262,10 @@ export class NumberPortInstance extends BasePort<number> {
     if (step !== undefined && step > 0) {
       // For integer steps, the value must be divisible by the step
       if (integer) {
-        return Number.isInteger(value / step)
+        return Number.isInteger(num / step)
       }
       // For floating point steps, check if the value is within a small epsilon of a step
-      const steps = value / step
+      const steps = num / step
       const roundedSteps = Math.round(steps)
       const epsilon = 1e-10 // Small number to account for floating point imprecision
       return Math.abs(steps - roundedSteps) < epsilon

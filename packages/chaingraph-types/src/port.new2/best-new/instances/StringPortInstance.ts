@@ -1,105 +1,265 @@
-import type { PortConfig } from '../base/new-port-config'
-import { BasePort } from '../base/port-instance'
+import type { IPort } from '../base/IPort'
+import type { StringPortConfig, StringPortValue } from '../base/types'
+import {
+  isStringPortConfig,
+  PortError,
+  PortErrorType,
+} from '../base/types'
 
 /**
- * Concrete implementation of BasePort for string values.
+ * Concrete implementation of IPort for string values.
  * Handles validation, serialization, and value management for string ports.
+ *
+ * Example usage:
+ * ```typescript
+ * const port = new StringPortInstance({
+ *   type: 'string',
+ *   id: 'name',
+ *   minLength: 3,
+ *   maxLength: 50
+ * });
+ *
+ * port.setValue({ type: 'string', value: 'John Doe' });
+ * const value = port.getValue(); // { type: 'string', value: 'John Doe' }
+ * ```
  */
-export class StringPortInstance extends BasePort<string> {
+export class StringPortInstance implements IPort<StringPortConfig, StringPortValue> {
   /** The current value of the port */
-  private value?: string
+  private value?: StringPortValue
 
-  constructor(config: PortConfig<string>) {
-    super(config)
-    // Initialize with default value if provided
-    if (config.defaultValue !== undefined) {
-      this.value = config.defaultValue
+  /** The port configuration with string-specific options */
+  private config: StringPortConfig
+
+  constructor(config: StringPortConfig) {
+    this.config = config
+  }
+
+  /**
+   * Returns the port's configuration object.
+   *
+   * @returns The strongly typed string port configuration
+   */
+  getConfig(): StringPortConfig {
+    return this.config
+  }
+
+  /**
+   * Updates the port's configuration.
+   * This will validate the new configuration and ensure the current value
+   * remains valid under the new configuration.
+   *
+   * @param newConfig - The new configuration to apply
+   * @throws {PortError} If the configuration is invalid or incompatible
+   */
+  setConfig(newConfig: StringPortConfig): void {
+    if (!isStringPortConfig(newConfig)) {
+      throw new PortError(
+        PortErrorType.ValidationError,
+        'Invalid string port configuration',
+      )
+    }
+
+    // Store the current value
+    const currentValue = this.value
+
+    // Update the configuration
+    this.config = newConfig
+
+    // If there was a value, validate it against the new configuration
+    if (currentValue !== undefined) {
+      if (!this.validateValue(currentValue)) {
+        // If the current value is invalid under the new config, reset it
+        this.value = undefined
+      }
     }
   }
 
   /**
    * Returns the current string value of the port.
-   * If no value is set, returns the default value from config.
    *
-   * @returns The current string value, or undefined if no value or default is set
+   * @returns The current StringPortValue, or undefined if no value is set
    */
-  getValue(): string | undefined {
-    return this.value ?? this.config.defaultValue
+  getValue(): StringPortValue | undefined {
+    return this.value
   }
 
   /**
    * Sets a new string value for the port after validation.
    *
-   * @param newValue - The new string value to set
-   * @throws {Error} If the value is invalid or validation fails
+   * @param newValue - The new StringPortValue to set
+   * @throws {PortError} If the value is invalid according to the configuration
    */
-  setValue(newValue: string): void {
-    if (!this.validate(newValue)) {
-      throw new Error(`Invalid string value: ${newValue}`)
+  setValue(newValue: StringPortValue): void {
+    if (newValue.type !== 'string') {
+      throw new PortError(
+        PortErrorType.TypeError,
+        `Expected string value, got ${newValue.type}`,
+      )
     }
+
+    if (!this.validateValue(newValue)) {
+      throw new PortError(
+        PortErrorType.ValidationError,
+        `Invalid string value: ${newValue.value}`,
+      )
+    }
+
     this.value = newValue
   }
 
   /**
-   * Resets the port value to its default state.
-   * If a default value is configured, the port will be reset to that value.
-   * Otherwise, the value will be set to undefined.
+   * Resets the port value to undefined.
    */
   reset(): void {
-    this.value = this.config.defaultValue
+    this.value = undefined
   }
 
   /**
-   * Serializes the current string value.
-   * For string ports, this is straightforward as strings are already JSON-serializable.
+   * Serializes both the port's configuration and current value into a single object.
    *
-   * @returns The serialized string value, or null if no value is set
+   * Example serialized output:
+   * {
+   *   config: {
+   *     type: "string",
+   *     id: "name",
+   *     minLength: 3,
+   *     maxLength: 50
+   *   },
+   *   value: {
+   *     type: "string",
+   *     value: "John Doe"
+   *   }
+   * }
+   *
+   * @returns A JSON-serializable object containing both config and value
    */
-  serialize(): unknown {
-    return this.getValue() ?? null
+  serialize(): {
+    config: StringPortConfig
+    value: StringPortValue | undefined
+  } {
+    return {
+      config: this.config,
+      value: this.value,
+    }
   }
 
   /**
-   * Deserializes and sets a previously serialized string value.
+   * Deserializes both configuration and value from a previously serialized object.
    *
-   * @param serialized - The serialized value to deserialize
-   * @throws {Error} If the serialized value is not a valid string
+   * Example input format:
+   * {
+   *   config: {
+   *     type: "string",
+   *     id: "name",
+   *     minLength: 3,
+   *     maxLength: 50
+   *   },
+   *   value: {
+   *     type: "string",
+   *     value: "John Doe"
+   *   }
+   * }
+   *
+   * @param data - The serialized port data containing both config and value
+   * @throws {PortError} If the data is invalid or cannot be deserialized
    */
-  deserialize(serialized: unknown): void {
-    if (serialized === null || serialized === undefined) {
-      this.value = undefined
-      return
+  deserialize(data: unknown): void {
+    if (!data || typeof data !== 'object') {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        'Invalid serialized data: expected an object',
+      )
     }
 
-    if (!this.validate(serialized)) {
-      throw new Error(`Invalid serialized string value: ${String(serialized)}`)
+    const { config, value } = data as {
+      config?: unknown
+      value?: unknown
     }
 
-    this.value = serialized
+    // Config is required
+    if (!config || typeof config !== 'object') {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        'Invalid serialized data: missing or invalid config',
+      )
+    }
+
+    // Update configuration first
+    this.setConfig(config as StringPortConfig)
+
+    // Then set the value if provided
+    if (value !== undefined) {
+      if (typeof value !== 'object' || value === null) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid serialized data: invalid value format',
+        )
+      }
+      this.setValue(value as StringPortValue)
+    } else {
+      this.reset()
+    }
   }
 
   /**
-   * Validates whether a given value is a valid string for this port.
+   * Validates both the current configuration and value.
+   *
+   * @returns true if both config and value are valid, false otherwise
+   */
+  validate(): boolean {
+    // First validate the configuration
+    if (!isStringPortConfig(this.config)) {
+      return false
+    }
+
+    // If no value is set, validation always passes
+    if (this.value === undefined) {
+      return true
+    }
+
+    // Validate the current value
+    return this.validateValue(this.value)
+  }
+
+  /**
+   * Validates a string port value against the current configuration.
    *
    * @param value - The value to validate
-   * @returns true if the value is a valid string, false otherwise
+   * @returns true if the value is valid according to the configuration
    */
-  validate(value: unknown): value is string {
+  private validateValue(value: StringPortValue): boolean {
+    if (value.type !== 'string') {
+      return false
+    }
+
+    const str = value.value
+
     // Basic string validation
-    if (typeof value !== 'string') {
+    if (typeof str !== 'string') {
       return false
     }
 
-    // If the port is not optional, empty strings are invalid
-    if (!this.config.optional && value.trim() === '') {
+    // Check length constraints
+    const { minLength, maxLength, pattern } = this.config
+    if (minLength !== undefined && str.length < minLength) {
+      return false
+    }
+    if (maxLength !== undefined && str.length > maxLength) {
       return false
     }
 
-    // Additional validation could be added here:
-    // - Pattern matching
-    // - Length restrictions
-    // - Character set validation
-    // etc.
+    // Check pattern if specified
+    if (pattern !== undefined) {
+      try {
+        const regex = new RegExp(pattern)
+        if (!regex.test(str)) {
+          return false
+        }
+      } catch {
+        // Invalid regex pattern in config
+        return false
+      }
+    }
 
     return true
   }

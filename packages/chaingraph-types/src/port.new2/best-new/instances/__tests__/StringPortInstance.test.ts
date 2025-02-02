@@ -1,24 +1,22 @@
-import type { PortConfig } from '../../base/new-port-config'
+import type { StringPortConfig, StringPortValue } from '../../base/types'
 import { describe, expect, it } from 'vitest'
 import { StringPortInstance } from '../StringPortInstance'
 
 describe('stringPortInstance', () => {
-  const createConfig = (overrides?: Partial<PortConfig<string>>): PortConfig<string> => ({
+  const createConfig = (overrides?: Partial<StringPortConfig>): StringPortConfig => ({
     type: 'string',
     id: 'test-port',
-    title: 'Test Port',
-    optional: false,
+    name: 'Test Port',
     ...overrides,
   })
 
-  describe('constructor', () => {
-    it('initializes with default value from config', () => {
-      const config = createConfig({ defaultValue: 'default' })
-      const port = new StringPortInstance(config)
-      expect(port.getValue()).toBe('default')
-    })
+  const createValue = (str: string): StringPortValue => ({
+    type: 'string',
+    value: str,
+  })
 
-    it('initializes without value when no default provided', () => {
+  describe('constructor', () => {
+    it('initializes with empty value', () => {
       const port = new StringPortInstance(createConfig())
       expect(port.getValue()).toBeUndefined()
     })
@@ -27,101 +25,123 @@ describe('stringPortInstance', () => {
   describe('getValue', () => {
     it('returns current value when set', () => {
       const port = new StringPortInstance(createConfig())
-      port.setValue('test')
-      expect(port.getValue()).toBe('test')
-    })
-
-    it('returns default value when no value is set', () => {
-      const port = new StringPortInstance(createConfig({ defaultValue: 'default' }))
-      expect(port.getValue()).toBe('default')
+      port.setValue(createValue('test'))
+      expect(port.getValue()).toEqual(createValue('test'))
     })
   })
 
   describe('setValue', () => {
     it('sets valid string value', () => {
       const port = new StringPortInstance(createConfig())
-      port.setValue('test')
-      expect(port.getValue()).toBe('test')
+      port.setValue(createValue('test'))
+      expect(port.getValue()).toEqual(createValue('test'))
     })
 
-    it('throws error for empty string when port is not optional', () => {
-      const port = new StringPortInstance(createConfig({ optional: false }))
-      expect(() => port.setValue('')).toThrow()
+    it('validates string length constraints', () => {
+      const port = new StringPortInstance(createConfig({
+        minLength: 3,
+        maxLength: 5,
+      }))
+
+      port.setValue(createValue('test')) // Valid: length 4
+      expect(() => port.setValue(createValue('ab'))).toThrow() // Too short
+      expect(() => port.setValue(createValue('too long'))).toThrow() // Too long
     })
 
-    it('allows empty string when port is optional', () => {
-      const port = new StringPortInstance(createConfig({ optional: true }))
-      port.setValue('')
-      expect(port.getValue()).toBe('')
+    it('validates pattern constraint', () => {
+      const port = new StringPortInstance(createConfig({
+        pattern: '^[A-Z][a-z]+$', // Capitalized word
+      }))
+
+      port.setValue(createValue('Hello')) // Valid
+      expect(() => port.setValue(createValue('hello'))).toThrow() // Invalid: not capitalized
+      expect(() => port.setValue(createValue('HELLO'))).toThrow() // Invalid: all caps
+    })
+
+    it('throws error for invalid value type', () => {
+      const port = new StringPortInstance(createConfig())
+      expect(() => port.setValue({ type: 'number', value: 42 } as any)).toThrow()
     })
   })
 
   describe('reset', () => {
-    it('resets to default value when available', () => {
-      const port = new StringPortInstance(createConfig({ defaultValue: 'default' }))
-      port.setValue('test')
-      port.reset()
-      expect(port.getValue()).toBe('default')
-    })
-
-    it('resets to undefined when no default value', () => {
+    it('resets to undefined', () => {
       const port = new StringPortInstance(createConfig())
-      port.setValue('test')
+      port.setValue(createValue('test'))
       port.reset()
       expect(port.getValue()).toBeUndefined()
     })
   })
 
   describe('serialize/deserialize', () => {
-    it('serializes current value', () => {
-      const port = new StringPortInstance(createConfig())
-      port.setValue('test')
-      expect(port.serialize()).toBe('test')
+    it('serializes current value and config', () => {
+      const config = createConfig()
+      const port = new StringPortInstance(config)
+      const value = createValue('test')
+      port.setValue(value)
+      expect(port.serialize()).toEqual({
+        config,
+        value,
+      })
     })
 
-    it('serializes to null when no value set', () => {
-      const port = new StringPortInstance(createConfig())
-      expect(port.serialize()).toBeNull()
+    it('serializes with undefined value when no value set', () => {
+      const config = createConfig()
+      const port = new StringPortInstance(config)
+      expect(port.serialize()).toEqual({
+        config,
+        value: undefined,
+      })
     })
 
-    it('deserializes valid string value', () => {
-      const port = new StringPortInstance(createConfig())
-      port.deserialize('test')
-      expect(port.getValue()).toBe('test')
+    it('deserializes valid data', () => {
+      const config = createConfig()
+      const value = createValue('test')
+      const port = new StringPortInstance(config)
+
+      port.deserialize({
+        config,
+        value,
+      })
+
+      expect(port.getValue()).toEqual(value)
     })
 
-    it('throws error when deserializing invalid value', () => {
+    it('throws error when deserializing invalid data', () => {
       const port = new StringPortInstance(createConfig())
-      expect(() => port.deserialize(123)).toThrow()
-    })
-
-    it('handles null/undefined in deserialization', () => {
-      const port = new StringPortInstance(createConfig())
-      port.setValue('test')
-      port.deserialize(null)
-      expect(port.getValue()).toBeUndefined()
+      expect(() => port.deserialize('not an object')).toThrow()
+      expect(() => port.deserialize({})).toThrow()
+      expect(() => port.deserialize({ config: null, value: null })).toThrow()
     })
   })
 
   describe('validate', () => {
-    it('returns true for valid strings', () => {
+    it('validates configuration', () => {
       const port = new StringPortInstance(createConfig())
-      expect(port.validate('test')).toBe(true)
+      expect(port.validate()).toBe(true)
     })
 
-    it('returns false for non-string values', () => {
+    it('validates with valid value', () => {
       const port = new StringPortInstance(createConfig())
-      expect(port.validate(123)).toBe(false)
-      expect(port.validate({})).toBe(false)
-      expect(port.validate([])).toBe(false)
+      port.setValue(createValue('test'))
+      expect(port.validate()).toBe(true)
     })
 
-    it('validates empty strings based on optional flag', () => {
-      const requiredPort = new StringPortInstance(createConfig({ optional: false }))
-      const optionalPort = new StringPortInstance(createConfig({ optional: true }))
+    it('validates with constraints', () => {
+      const port = new StringPortInstance(createConfig({
+        minLength: 3,
+        maxLength: 5,
+        pattern: '^[A-Z][a-z]+$',
+      }))
 
-      expect(requiredPort.validate('')).toBe(false)
-      expect(optionalPort.validate('')).toBe(true)
+      port.setValue(createValue('Test'))
+      expect(port.validate()).toBe(true)
+
+      // Reset and try invalid values
+      port.reset()
+      expect(() => port.setValue(createValue('ab'))).toThrow() // Too short
+      expect(() => port.setValue(createValue('too long'))).toThrow() // Too long
+      expect(() => port.setValue(createValue('test'))).toThrow() // Not capitalized
     })
   })
 
@@ -130,6 +150,8 @@ describe('stringPortInstance', () => {
       const port = new StringPortInstance(createConfig())
       expect(StringPortInstance.isStringPortInstance(port)).toBe(true)
       expect(StringPortInstance.isStringPortInstance({})).toBe(false)
+      expect(StringPortInstance.isStringPortInstance(null)).toBe(false)
+      expect(StringPortInstance.isStringPortInstance(undefined)).toBe(false)
     })
   })
 })
