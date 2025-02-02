@@ -172,6 +172,59 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       )
     }
   },
+  serializeConfig: (config: StreamPortConfig) => {
+    try {
+      // We need to serialize the itemConfig using its corresponding plugin
+      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      if (!plugin) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          `Unknown item config type: ${config.itemConfig.type}`,
+        )
+      }
+
+      return {
+        ...config,
+        itemConfig: plugin.serializeConfig(config.itemConfig),
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during stream config serialization',
+      )
+    }
+  },
+  deserializeConfig: (data: unknown) => {
+    try {
+      const result = configSchema.safeParse(data)
+      if (!result.success) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid stream configuration for deserialization',
+          result.error,
+        )
+      }
+
+      // We need to deserialize the itemConfig using its corresponding plugin
+      const plugin = portRegistry.getPlugin(result.data.itemConfig.type)
+      if (!plugin) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          `Unknown item config type: ${result.data.itemConfig.type}`,
+        )
+      }
+
+      return {
+        ...result.data,
+        itemConfig: plugin.deserializeConfig(result.data.itemConfig),
+      }
+    } catch (error) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        error instanceof Error ? error.message : 'Unknown error during stream config deserialization',
+      )
+    }
+  },
   validate: (value: StreamPortValue, _config: StreamPortConfig): string[] => {
     const errors: string[] = []
 
