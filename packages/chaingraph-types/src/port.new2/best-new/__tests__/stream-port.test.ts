@@ -103,7 +103,7 @@ describe('stream port plugin', () => {
       expect(() => StreamPortPlugin.deserializeValue({
         type: 'stream',
         invalid: true,
-      })).toThrow('Invalid serialized data: "buffer" field must be an array')
+      })).toThrow('Invalid stream value structure')
     })
   })
 
