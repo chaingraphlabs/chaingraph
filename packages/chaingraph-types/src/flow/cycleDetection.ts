@@ -1,4 +1,4 @@
-import type { IEdge, INode } from '@chaingraph/types'
+import type { INode } from '@chaingraph/types'
 
 /**
  * Minimal data to represent an edge between two nodes
@@ -18,7 +18,7 @@ interface Edge {
  * @param edges the set of flow's edges.
  * @param edge if present, assume this edge is in the flow, without adding it to avoid side effects.
  */
-export function hasCycle(nodes: Iterable<INode>, edges: Iterable<Edge>, edge?: IEdge): boolean {
+export function hasCycle(nodes: Iterable<INode>, edges: Iterable<Edge>, edge?: Edge): boolean {
   const allEdges = Array.from(edges)
 
   const inDegree: Record<string, number> = Object.fromEntries(
