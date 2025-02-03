@@ -12,10 +12,10 @@ import type {
   NodeMetadata,
   NodeValidationResult,
 } from '@chaingraph/types/node/types'
-import type { IPortAny, PortConfig } from '@chaingraph/types/port.new'
+import type { IPort, IPortConfig } from '@chaingraph/types/port-new/base'
 import { NodeEventType } from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { PortFactory, PortType } from '@chaingraph/types/port.new'
+import { PortFactory } from '@chaingraph/types/port-new/factory'
 import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
 import { getOrCreateNodeMetadata } from './decorator/node-decorator'
@@ -26,7 +26,7 @@ export abstract class BaseNode implements INode {
   protected readonly _id: string
   protected _metadata: NodeMetadata
   protected _status: NodeStatus = NodeStatus.Idle
-  protected _ports: Map<string, IPortAny> = new Map()
+  protected _ports: Map<string, IPort> = new Map()
 
   protected eventQueue = new EventQueue<NodeEvent>()
   private eventsDisabled = false
@@ -84,7 +84,7 @@ export abstract class BaseNode implements INode {
     }
   }
 
-  protected initializePort(objectValue: object, portConfig: PortConfig, parentPortId?: string): void {
+  protected initializePort(objectValue: object, portConfig: IPortConfig, parentPortId?: string): void {
     // Create the port instance
     const port = PortFactory.create(portConfig)
 

@@ -4,6 +4,7 @@ import type {
   ArrayPortConfigUIType,
   BasePortConfigUIType,
   BooleanPortConfigUIType,
+  EnumPortConfigUIType,
   NumberPortConfigUIType,
   ObjectPortConfigUIType,
   StreamPortConfigUIType,
@@ -147,7 +148,7 @@ export interface EnumPortConfig extends BasePortConfig {
   type: 'enum'
   options: IPortConfig[]
   defaultValue?: EnumPortValue
-  ui?: BasePortConfigUIType
+  ui?: BasePortConfigUIType & EnumPortConfigUIType
 }
 
 /**

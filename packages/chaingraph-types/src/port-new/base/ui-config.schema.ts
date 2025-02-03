@@ -67,6 +67,8 @@ export const streamPortConfigUISchema = basePortConfigUISchema.passthrough()
  */
 export const booleanPortConfigUISchema = basePortConfigUISchema.passthrough()
 
+export const enumPortConfigUISchema = basePortConfigUISchema.passthrough()
+
 /**
  * Helper types to extract the inferred types from the UI schemas
  */
@@ -77,3 +79,4 @@ export type ArrayPortConfigUIType = z.infer<typeof arrayPortConfigUISchema>
 export type ObjectPortConfigUIType = z.infer<typeof objectPortConfigUISchema>
 export type StreamPortConfigUIType = z.infer<typeof streamPortConfigUISchema>
 export type BooleanPortConfigUIType = z.infer<typeof booleanPortConfigUISchema>
+export type EnumPortConfigUIType = z.infer<typeof enumPortConfigUISchema>

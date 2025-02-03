@@ -12,6 +12,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { enumPortConfigUISchema } from '../base/ui-config.schema'
 import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
@@ -80,10 +81,7 @@ const enumSpecificSchema = z.object({
     return result.success
   }, { message: 'Invalid option configuration' })),
   defaultValue: valueSchema.optional(),
-  ui: z.object({
-    bgColor: z.string().optional(),
-    borderColor: z.string().optional(),
-  }).optional(),
+  ui: enumPortConfigUISchema.optional(),
 }).passthrough()
 
 // Merge base schema with enum-specific schema
@@ -249,7 +247,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
     // Validate that options have unique ids
     const ids = config.options
       .map(option => option.id)
-      .filter((id): id is string => typeof id !== undefined)
+      .filter((id): id is string => typeof id !== 'undefined')
     const uniqueIds = new Set(ids)
     if (uniqueIds.size !== ids.length) {
       errors.push('Option ids must be unique')

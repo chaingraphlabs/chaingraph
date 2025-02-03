@@ -1,5 +1,6 @@
 export * from './ArrayPort'
 export * from './BooleanPort'
+export * from './EnumPort'
 export * from './NumberPort'
 export * from './ObjectPort'
 export * from './StreamPort'
