@@ -201,9 +201,9 @@ export type IPortValue =
 export interface ConfigTypeMap {
   string: StringPortConfig
   number: NumberPortConfig
+  boolean: BooleanPortConfig
   array: ArrayPortConfig<any>
   object: ObjectPortConfig<any>
-  boolean: BooleanPortConfig
   stream: StreamPortConfig<any>
 }
 
