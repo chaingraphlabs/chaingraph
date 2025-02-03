@@ -26,7 +26,7 @@ const defaultValueSchema = z.object({
 /**
  * Registry for port plugins
  */
-export class PortRegistry {
+export class PortPluginRegistry {
   private plugins = new Map<PortType, IPortPlugin<any>>()
 
   /**
@@ -169,4 +169,4 @@ export class PortRegistry {
 /**
  * Global port registry instance
  */
-export const portRegistry = new PortRegistry()
+export const portRegistry = new PortPluginRegistry()

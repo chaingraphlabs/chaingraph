@@ -8,7 +8,7 @@ import type {
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createObjectPortConfig, createObjectSchema, ObjectPort } from '../instances/ObjectPort'
 import { ArrayPortPlugin, createObjectValue, NumberPortPlugin, ObjectPortPlugin, StringPortPlugin } from '../plugins'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('objectPort Instance', () => {
   beforeEach(() => {

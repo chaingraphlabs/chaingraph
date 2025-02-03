@@ -17,7 +17,7 @@ import {
   PortErrorType,
 } from '../base/types'
 import { objectPortConfigUISchema } from '../base/ui-config.schema'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 import { validateNumberValue } from './NumberPortPlugin'
 import { validateStringValue } from './StringPortPlugin'
 

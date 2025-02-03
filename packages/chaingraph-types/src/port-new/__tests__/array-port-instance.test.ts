@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { ArrayPort } from '../instances/ArrayPort'
 import { ArrayPortPlugin, validateArrayValue } from '../plugins/ArrayPortPlugin'
 import { createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
  * Helper function to create an array port value.

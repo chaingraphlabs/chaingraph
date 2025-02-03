@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { createNumberConfig, createNumberValue, NumberPortPlugin } from '../plugins/NumberPortPlugin'
 import { createObjectConfig, createObjectValue, ObjectPortPlugin, validateObjectValue } from '../plugins/ObjectPortPlugin'
 import { createStringConfig, createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('object port plugin', () => {
   beforeAll(() => {

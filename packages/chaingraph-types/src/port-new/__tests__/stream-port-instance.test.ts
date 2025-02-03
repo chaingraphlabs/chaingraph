@@ -8,7 +8,7 @@ import { ArrayPortPlugin } from '../plugins/ArrayPortPlugin'
 import { createNumberValue, NumberPortPlugin } from '../plugins/NumberPortPlugin'
 import { createStreamValue, StreamPortPlugin } from '../plugins/StreamPortPlugin'
 import { createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('streamPort Instance', () => {
   beforeEach(() => {

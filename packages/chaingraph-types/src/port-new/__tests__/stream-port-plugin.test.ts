@@ -9,7 +9,7 @@ import {
   validateStreamValue,
 } from '../plugins/StreamPortPlugin'
 import { createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('stream port plugin', () => {
   beforeAll(() => {

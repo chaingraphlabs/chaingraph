@@ -8,7 +8,7 @@ import {
   validateObjectValue,
 } from '../plugins/ObjectPortPlugin'
 import { createStringConfig, createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('objectPortPlugin: tricky nested test', () => {
   beforeAll(() => {

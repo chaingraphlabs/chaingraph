@@ -1,7 +1,7 @@
 import type { BooleanPortConfig } from '../base/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { BooleanPortPlugin, createBooleanConfig, createBooleanValue } from '../plugins/BooleanPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('boolean port plugin', () => {
   beforeEach(() => {

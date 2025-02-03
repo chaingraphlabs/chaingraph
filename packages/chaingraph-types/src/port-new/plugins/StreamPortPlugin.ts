@@ -8,7 +8,6 @@ import type {
 } from '../base/types'
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
-import { JSONValueSchema } from '../base/json'
 import {
   isStreamPortValue,
   PortError,
@@ -16,7 +15,7 @@ import {
 } from '../base/types'
 import { streamPortConfigUISchema } from '../base/ui-config.schema'
 import { MultiChannel } from '../channel/multi-channel'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
  * Helper to create a stream port value

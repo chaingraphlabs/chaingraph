@@ -9,7 +9,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { ArrayPortPlugin, validateArrayValue } from '../plugins/ArrayPortPlugin'
 import { NumberPortPlugin } from '../plugins/NumberPortPlugin'
 import { StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
  * Helper to create a string port value

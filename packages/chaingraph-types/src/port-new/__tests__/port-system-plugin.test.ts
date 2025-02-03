@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { PortError } from '../base/types'
 import { createStringValue, StringPortPlugin, validateStringValue } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 describe('port system', () => {
   beforeEach(() => {

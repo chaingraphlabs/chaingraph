@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
 import { PortError, PortErrorType } from '../base/types'
 import { arrayPortConfigUISchema } from '../base/ui-config.schema'
-import { portRegistry } from '../registry/PortRegistry'
+import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
  * Type guard for array value
