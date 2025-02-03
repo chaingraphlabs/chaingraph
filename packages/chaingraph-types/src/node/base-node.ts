@@ -86,7 +86,7 @@ export abstract class BaseNode implements INode {
 
   protected initializePort(objectValue: object, portConfig: IPortConfig, parentPortId?: string): void {
     // Create the port instance
-    const port = PortFactory.create(portConfig)
+    const port = PortFactory.createFromConfig(portConfig)
 
     // Generate a unique port ID if it doesn't exist
     const portId = portConfig.id || `${parentPortId || ''}.${portConfig.key}`

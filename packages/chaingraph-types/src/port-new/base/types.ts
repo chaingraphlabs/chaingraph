@@ -4,7 +4,6 @@ import type {
   ArrayPortConfigUIType,
   BasePortConfigUIType,
   BooleanPortConfigUIType,
-  EnumPortConfigUIType,
   NumberPortConfigUIType,
   ObjectPortConfigUIType,
   StreamPortConfigUIType,
@@ -41,13 +40,28 @@ export class PortError extends Error {
 /**
  * Port type literals
  */
-export const PORT_TYPES = ['string', 'number', 'array', 'object', 'boolean', 'stream', 'enum'] as const
+export const PORT_TYPES = [
+  'string',
+  'number',
+  'array',
+  'object',
+  'boolean',
+  'stream',
+  'enum',
+  'any',
+] as const
 export type PortType = (typeof PORT_TYPES)[number]
+
+export enum PortDirection {
+  Input = 'input',
+  Output = 'output',
+}
 
 /**
  * Base interface for all port configurations
  */
 export interface BasePortConfig extends JSONObject {
+  type: PortType
   id?: string
   name?: string
   metadata?: Record<string, JSONValue>
@@ -57,7 +71,7 @@ export interface BasePortConfig extends JSONObject {
   key?: string
   title?: string
   description?: string
-  direction?: 'input' | 'output'
+  direction?: PortDirection
   ui?: BasePortConfigUIType
 }
 
@@ -148,7 +162,17 @@ export interface EnumPortConfig extends BasePortConfig {
   type: 'enum'
   options: IPortConfig[]
   defaultValue?: EnumPortValue
-  ui?: BasePortConfigUIType & EnumPortConfigUIType
+  ui?: BasePortConfigUIType
+}
+
+/**
+ * Any port configuration
+ */
+export interface AnyPortConfig extends BasePortConfig {
+  type: 'any'
+  underlyingType?: IPortConfig
+  defaultValue?: AnyPortValue
+  ui?: BasePortConfigUIType
 }
 
 /**
@@ -217,6 +241,14 @@ export interface EnumPortValue {
 }
 
 /**
+ * Any port value
+ */
+export interface AnyPortValue {
+  type: 'any'
+  value?: IPortValue
+}
+
+/**
  * Union type of all port configurations
  */
 export type IPortConfig =
@@ -227,6 +259,7 @@ export type IPortConfig =
   | ObjectPortConfig<any>
   | StreamPortConfig<any>
   | EnumPortConfig
+  | AnyPortConfig
 
 /**
  * Union type of all port values
@@ -239,6 +272,7 @@ export type IPortValue =
   | ObjectPortValue<any>
   | StreamPortValue<any>
   | EnumPortValue
+  | AnyPortValue
 
 /**
  * Type mapping for configs
@@ -251,6 +285,7 @@ export interface ConfigTypeMap {
   object: ObjectPortConfig<any>
   stream: StreamPortConfig<any>
   enum: EnumPortConfig
+  any: AnyPortConfig
 }
 
 /**
@@ -264,6 +299,7 @@ export interface ValueTypeMap {
   object: ObjectPortValue<any>
   stream: StreamPortValue<any>
   enum: EnumPortValue
+  any: AnyPortValue
 }
 
 /**
@@ -307,7 +343,8 @@ export type ExtractValue<C extends IPortConfig> =
             C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
               C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
                 C extends EnumPortConfig ? EnumPortValue :
-                  never
+                  C extends AnyPortConfig ? AnyPortValue :
+                    never
 
 /**
  * Helper function to convert a typed plugin to a registry plugin
@@ -426,6 +463,17 @@ export function isEnumPortConfig(value: unknown): value is EnumPortConfig {
   )
 }
 
+export function isAnyPortConfig(value: unknown): value is AnyPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'any'
+    && 'underlyingType' in value
+    && typeof value.underlyingType === 'object'
+  )
+}
+
 /**
  * Type guards for port values
  */
@@ -504,5 +552,16 @@ export function isEnumPortValue(value: unknown): value is EnumPortValue {
     && value.type === 'enum'
     && 'value' in value
     && typeof (value as any).value === 'string'
+  )
+}
+
+export function isAnyPortValue(value: unknown): value is AnyPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'any'
+    && 'value' in value
+    && typeof value.value === 'object'
   )
 }

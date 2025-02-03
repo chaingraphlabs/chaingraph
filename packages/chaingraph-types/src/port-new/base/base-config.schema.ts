@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { JSONValueSchema } from './json'
+import { PortDirection } from './types'
 import { basePortConfigUISchema } from './ui-config.schema'
 
 /**
@@ -17,7 +18,7 @@ export const basePortConfigSchema = z.object({
   key: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
-  direction: z.enum(['input', 'output']).optional(),
+  direction: z.nativeEnum(PortDirection).optional(),
   ui: basePortConfigUISchema.optional(),
 }).passthrough()
 

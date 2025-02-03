@@ -1,4 +1,5 @@
 import type {
+  AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
@@ -9,8 +10,10 @@ import type {
   StreamPortConfig,
   StringPortConfig,
 } from '../base/types'
-import { PortError, PortErrorType } from '../base/types'
+import { PortError, PortErrorType, PortType,
+} from '../base/types'
 
+import { AnyPort } from '../instances/AnyPort'
 import { ArrayPort } from '../instances/ArrayPort'
 import { BooleanPort } from '../instances/BooleanPort'
 import { EnumPort } from '../instances/EnumPort'
@@ -27,6 +30,7 @@ export type SupportedPortInstance =
   | ObjectPort
   | StreamPort
   | EnumPort
+  | AnyPort
 
 export type PortInstanceFromConfig<T extends IPortConfig> =
   T extends StringPortConfig ? StringPort :
@@ -36,7 +40,8 @@ export type PortInstanceFromConfig<T extends IPortConfig> =
           T extends ObjectPortConfig<infer S> ? ObjectPort<S> :
             T extends StreamPortConfig<infer V> ? StreamPort<V> :
               T extends EnumPortConfig ? EnumPort :
-                never
+                T extends AnyPortConfig ? AnyPort :
+                  never
 
 export class PortFactory {
   /**
@@ -56,26 +61,29 @@ export class PortFactory {
       )
     }
     switch (config.type) {
-      case 'string': {
+      case PortType.String: {
         return new StringPort(config as StringPortConfig) as PortInstanceFromConfig<T>
       }
-      case 'number': {
+      case PortType.Number: {
         return new NumberPort(config as NumberPortConfig) as PortInstanceFromConfig<T>
       }
-      case 'boolean': {
+      case PortType.Boolean: {
         return new BooleanPort(config as BooleanPortConfig) as PortInstanceFromConfig<T>
       }
-      case 'array': {
+      case PortType.Array: {
         return new ArrayPort(config as ArrayPortConfig) as PortInstanceFromConfig<T>
       }
-      case 'object': {
+      case PortType.Object: {
         return new ObjectPort(config as ObjectPortConfig) as PortInstanceFromConfig<T>
       }
-      case 'stream': {
+      case PortType.Stream: {
         return new StreamPort(config as StreamPortConfig) as PortInstanceFromConfig<T>
       }
-      case 'enum': {
+      case PortType.Enum: {
         return new EnumPort(config as EnumPortConfig) as PortInstanceFromConfig<T>
+      }
+      case PortType.Any: {
+        return new AnyPort(config as AnyPortConfig) as PortInstanceFromConfig<T>
       }
       default:
         throw new PortError(
@@ -123,5 +131,9 @@ export class PortFactory {
 
   static createEnumPort(config: EnumPortConfig): EnumPort {
     return new EnumPort(config)
+  }
+
+  static createAnyPort(config: AnyPortConfig): AnyPort {
+    return new AnyPort(config)
   }
 }
