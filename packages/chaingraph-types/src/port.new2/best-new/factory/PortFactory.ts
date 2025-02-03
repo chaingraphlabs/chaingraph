@@ -15,7 +15,6 @@ import { BooleanPort } from '../instances/BooleanPort'
 import { NumberPort } from '../instances/NumberPort'
 import { ObjectPort } from '../instances/ObjectPort'
 import { StreamPort } from '../instances/StreamPort'
-// Import concrete port instance classes
 import { StringPort } from '../instances/StringPort'
 
 export type SupportedPortInstance =
@@ -25,6 +24,15 @@ export type SupportedPortInstance =
   | ArrayPort
   | ObjectPort
   | StreamPort
+
+export type PortInstanceFromConfig<T extends IPortConfig> =
+  T extends StringPortConfig ? StringPort :
+    T extends NumberPortConfig ? NumberPort :
+      T extends BooleanPortConfig ? BooleanPort :
+        T extends ArrayPortConfig<infer I> ? ArrayPort<I> :
+          T extends ObjectPortConfig<infer S> ? ObjectPort<S> :
+            T extends StreamPortConfig<infer V> ? StreamPort<V> :
+              never
 
 export class PortFactory {
   /**
@@ -36,7 +44,7 @@ export class PortFactory {
    * full generic type information (for example, for object ports), use the specific
    * convenience methods (for example, createObjectPort) below.
    */
-  static create(config: IPortConfig): SupportedPortInstance {
+  static create<T extends IPortConfig>(config: T): PortInstanceFromConfig<T> {
     if (!config || typeof config !== 'object') {
       throw new PortError(
         PortErrorType.ValidationError,
@@ -45,22 +53,22 @@ export class PortFactory {
     }
     switch (config.type) {
       case 'string': {
-        return new StringPort(config as StringPortConfig)
+        return new StringPort(config as StringPortConfig) as PortInstanceFromConfig<T>
       }
       case 'number': {
-        return new NumberPort(config as NumberPortConfig)
+        return new NumberPort(config as NumberPortConfig) as PortInstanceFromConfig<T>
       }
       case 'boolean': {
-        return new BooleanPort(config as BooleanPortConfig)
+        return new BooleanPort(config as BooleanPortConfig) as PortInstanceFromConfig<T>
       }
       case 'array': {
-        return new ArrayPort(config as ArrayPortConfig)
+        return new ArrayPort(config as ArrayPortConfig) as PortInstanceFromConfig<T>
       }
       case 'object': {
-        return new ObjectPort(config as ObjectPortConfig)
+        return new ObjectPort(config as ObjectPortConfig) as PortInstanceFromConfig<T>
       }
       case 'stream': {
-        return new StreamPort(config as StreamPortConfig)
+        return new StreamPort(config as StreamPortConfig) as PortInstanceFromConfig<T>
       }
       default:
         throw new PortError(
@@ -91,18 +99,18 @@ export class PortFactory {
     return new BooleanPort(config)
   }
 
-  static createArrayPort(config: ArrayPortConfig): ArrayPort {
-    return new ArrayPort(config)
+  static createArrayPort<I extends IPortConfig>(config: ArrayPortConfig<I>): ArrayPort<I> {
+    return new ArrayPort<I>(config)
   }
 
   // For an object port, if you use your helper functions (like createObjectSchema
   // and createObjectPortConfig) so that config carries a detailed schema,
   // the following method should preserve that detail:
   static createObjectPort<S extends ObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S> {
-    return new ObjectPort(config)
+    return new ObjectPort<S>(config)
   }
 
-  static createStreamPort(config: StreamPortConfig): StreamPort {
-    return new StreamPort(config)
+  static createStreamPort<I extends IPortConfig>(config: StreamPortConfig<I>): StreamPort<I> {
+    return new StreamPort<I>(config)
   }
 }

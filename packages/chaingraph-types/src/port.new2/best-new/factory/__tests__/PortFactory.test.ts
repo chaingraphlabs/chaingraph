@@ -57,7 +57,7 @@ describe('portFactory', () => {
         type: 'string',
         minLength: 2,
       }
-      const config: ArrayPortConfig = {
+      const config: ArrayPortConfig<StringPortConfig> = {
         type: 'array',
         itemConfig,
         minLength: 1,
@@ -68,10 +68,59 @@ describe('portFactory', () => {
         },
       }
       const port = PortFactory.create(config)
+
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual({
         type: 'array',
         value: [{ type: 'string', value: 'item1' }],
+      })
+    })
+
+    it('should create an object port with proper configuration', () => {
+      const config = createObjectPortConfig({
+        type: 'object',
+        schema: createObjectSchema({
+          name: { type: 'string', minLength: 2 },
+          age: { type: 'number', min: 18 },
+          address: createObjectPortConfig({
+            type: 'object',
+            schema: createObjectSchema({
+              street: { type: 'string' },
+              city: { type: 'string' },
+            }),
+          }),
+        }),
+        defaultValue: {
+          type: 'object',
+          value: {
+            name: { type: 'string', value: 'John' },
+            age: { type: 'number', value: 30 },
+            address: {
+              type: 'object',
+              value: {
+                street: { type: 'string', value: '123 Main St' },
+                city: { type: 'string', value: 'Springfield' },
+              },
+            },
+          },
+        },
+      })
+      const port = PortFactory.create(config)
+
+      expect(port.getConfig()).toEqual(config)
+      expect(port.getValue()).toEqual({
+        type: 'object',
+        value: {
+          name: { type: 'string', value: 'John' },
+          age: { type: 'number', value: 30 },
+          address: {
+            type: 'object',
+            value: {
+              street: { type: 'string', value: '123 Main St' },
+              city: { type: 'string', value: 'Springfield' },
+            },
+          },
+        },
       })
     })
 
