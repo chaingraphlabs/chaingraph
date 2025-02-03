@@ -28,7 +28,7 @@ import { StringPortPlugin } from '../plugins/StringPortPlugin'
  * port.setValue({ type: 'string', value: 'John Doe' })
  * console.log(port.getValue()) // => { type: 'string', value: 'John Doe' }
  */
-export class StringPort extends BasePort<StringPortConfig, StringPortValue> {
+export class StringPort extends BasePort<StringPortConfig> {
   /**
    * Returns the default value using the plugin's helper.
    * If the configuration includes a defaultValue, we call createStringValue

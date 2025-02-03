@@ -1,28 +1,11 @@
 import type { IPort } from './IPort'
 import type { JSONValue } from './json'
-import type { IPortConfig, IPortValue } from './types'
+import type { ExtractValue, IPortConfig } from './types'
 import { PortError, PortErrorType } from './types'
 
-/**
- * BasePort is an abstract class that implements IPort.
- * It provides generic implementations for common methods:
- *
- * - getConfig, getValue, setConfig, reset, serialize, deserialize, and validate.
- *
- * The abstract class leaves the following methods to concrete subclasses:
- *
- * • getDefaultValue – returns a default value for the port (if applicable).
- * • validateValue – validates a port value T according to specific plugin or port constraints.
- * • validateConfig – validates the port configuration.
- * • serializeConfig, serializeValue – methods to convert config and value to JSONValue.
- * • deserializeConfig, deserializeValue – methods to convert JSONValue back to types C and T.
- *
- * @template C - A type extending IPortConfig.
- * @template T - A type extending IPortValue.
- */
-export abstract class BasePort<C extends IPortConfig, T extends IPortValue> implements IPort<C, T> {
+export abstract class BasePort<C extends IPortConfig> implements IPort<C> {
   protected config: C
-  protected value?: T
+  protected value?: ExtractValue<C>
 
   constructor(config: C) {
     this.config = config
@@ -39,11 +22,11 @@ export abstract class BasePort<C extends IPortConfig, T extends IPortValue> impl
     this.config = newConfig
   }
 
-  getValue(): T | undefined {
+  getValue(): ExtractValue<C> | undefined {
     return this.value
   }
 
-  setValue(newValue: T): void {
+  setValue(newValue: ExtractValue<C>): void {
     if (!this.validateValue(newValue)) {
       throw new PortError(
         PortErrorType.ValidationError,
@@ -73,7 +56,7 @@ export abstract class BasePort<C extends IPortConfig, T extends IPortValue> impl
    * Deserializes the given JSONValue (expected to hold { config, value })
    * and updates both the config and current value.
    */
-  deserialize(data: JSONValue): IPort<C, T> {
+  deserialize(data: JSONValue): IPort<C> {
     if (typeof data !== 'object' || data === null) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -109,13 +92,13 @@ export abstract class BasePort<C extends IPortConfig, T extends IPortValue> impl
    * Returns the default value.
    * Concrete implementations can use a default provided by the configuration.
    */
-  protected abstract getDefaultValue(): T | undefined
+  protected abstract getDefaultValue(): ExtractValue<C> | undefined
 
   /**
    * Validates the port value.
    * Must return true if the value is valid, false otherwise.
    */
-  protected abstract validateValue(value: T): boolean
+  protected abstract validateValue(value: ExtractValue<C>): boolean
 
   /**
    * Validates the port configuration.
@@ -131,7 +114,7 @@ export abstract class BasePort<C extends IPortConfig, T extends IPortValue> impl
   /**
    * Serializes the port value (of type T) to a JSONValue.
    */
-  protected abstract serializeValue(value: T): JSONValue
+  protected abstract serializeValue(value: ExtractValue<C>): JSONValue
 
   /**
    * Deserializes a JSONValue into a configuration object of type C.
@@ -141,5 +124,5 @@ export abstract class BasePort<C extends IPortConfig, T extends IPortValue> impl
   /**
    * Deserializes a JSONValue into a port value of type T.
    */
-  protected abstract deserializeValue(data: JSONValue): T
+  protected abstract deserializeValue(data: JSONValue): ExtractValue<C>
 }

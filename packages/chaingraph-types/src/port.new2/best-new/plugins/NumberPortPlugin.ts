@@ -3,6 +3,7 @@ import type {
   NumberPortConfig,
   NumberPortValue,
 } from '../base/types'
+import Decimal from 'decimal.js'
 import { z } from 'zod'
 import { type JSONValue, JSONValueSchema } from '../base/json'
 import {
@@ -57,11 +58,19 @@ export function createNumberConfig(options: Partial<Omit<NumberPortConfig, 'type
 }
 
 /**
- * Check if a number aligns with a step value
+ * Check if a Decimal value is aligned with a given step.
+ * @param value - The value to check.
+ * @param step - The step size.
+ * @param min - The minimum value (default 0).
  */
-function isAlignedWithStep(value: number, step: number, min = 0): boolean {
-  const offset = value - min
-  return Math.abs(offset % step) < Number.EPSILON
+function isAlignedWithStep(
+  value: Decimal,
+  step: Decimal,
+  min: Decimal = new Decimal(0),
+): boolean {
+  const offset = value.sub(min)
+  // The remainder of offset divided by step must equal zero.
+  return offset.mod(step).equals(0)
 }
 
 /**
@@ -86,9 +95,10 @@ const configSchema = z.object({
   step: z.number().positive().optional(),
   integer: z.boolean().optional(),
 }).passthrough().superRefine((data, ctx) => {
-  // Validate min/max relationship
   if (data.min !== undefined && data.max !== undefined) {
-    if (data.min > data.max) {
+    const minDec = new Decimal(data.min)
+    const maxDec = new Decimal(data.max)
+    if (minDec.gt(maxDec)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `min (${data.min}) must be less than or equal to max (${data.max})`,
@@ -96,14 +106,15 @@ const configSchema = z.object({
       })
     }
   }
-
-  // Validate step is compatible with range
   if (data.step !== undefined && data.min !== undefined && data.max !== undefined) {
-    const range = data.max - data.min
-    if (range % data.step !== 0) {
+    const minDec = new Decimal(data.min)
+    const maxDec = new Decimal(data.max)
+    const stepDec = new Decimal(data.step)
+    const range = maxDec.sub(minDec)
+    if (!range.mod(stepDec).equals(0)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `step (${data.step}) must divide range (${range}) evenly`,
+        message: `step (${data.step}) must divide range (${range.toNumber()}) evenly`,
         path: ['step'],
       })
     }
@@ -111,7 +122,7 @@ const configSchema = z.object({
 })
 
 /**
- * Validate number value against config
+ * Validates a number port value against its configuration using Decimal.js.
  */
 export function validateNumberValue(
   value: unknown,
@@ -119,32 +130,42 @@ export function validateNumberValue(
 ): string[] {
   const errors: string[] = []
 
-  // Type validation
   if (!isNumberValue(value)) {
     errors.push('Invalid number value structure')
     return errors
   }
 
-  const numValue = value.value
-
-  // Range validation
-  if (config.min !== undefined && numValue < config.min) {
-    errors.push(`Value must be greater than or equal to ${config.min}`)
+  let decimalValue: Decimal
+  try {
+    decimalValue = new Decimal(value.value)
+  } catch (err) {
+    errors.push('Failed to convert value to Decimal')
+    return errors
   }
 
-  if (config.max !== undefined && numValue > config.max) {
-    errors.push(`Value must be less than or equal to ${config.max}`)
+  if (config.min !== undefined) {
+    const minDec = new Decimal(config.min)
+    if (decimalValue.lt(minDec)) {
+      errors.push(`Value must be greater than or equal to ${config.min}`)
+    }
   }
 
-  // Step validation
+  if (config.max !== undefined) {
+    const maxDec = new Decimal(config.max)
+    if (decimalValue.gt(maxDec)) {
+      errors.push(`Value must be less than or equal to ${config.max}`)
+    }
+  }
+
   if (config.step !== undefined) {
-    if (!isAlignedWithStep(numValue, config.step, config.min)) {
+    const stepDec = new Decimal(config.step)
+    const minDec = config.min !== undefined ? new Decimal(config.min) : new Decimal(0)
+    if (!isAlignedWithStep(decimalValue, stepDec, minDec)) {
       errors.push(`Value must be aligned with step ${config.step}`)
     }
   }
 
-  // Integer validation
-  if (config.integer === true && !Number.isInteger(numValue)) {
+  if (config.integer === true && !decimalValue.isInteger()) {
     errors.push('Value must be an integer')
   }
 
