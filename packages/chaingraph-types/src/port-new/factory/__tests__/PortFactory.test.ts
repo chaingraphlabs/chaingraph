@@ -8,7 +8,7 @@ import type {
 import {
   createObjectPortConfig,
   createObjectSchema,
-} from '@chaingraph/types/port.new2/best-new/instances/ObjectPort'
+} from '@chaingraph/types/port-new/instances/ObjectPort'
 import { describe, expect, it } from 'vitest'
 import { PortFactory } from '../PortFactory'
 
