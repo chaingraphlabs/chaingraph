@@ -40,7 +40,7 @@ export class PortError extends Error {
 /**
  * Port type literals
  */
-export const PORT_TYPES = ['string', 'number', 'array', 'object', 'boolean', 'stream'] as const
+export const PORT_TYPES = ['string', 'number', 'array', 'object', 'boolean', 'stream', 'enum'] as const
 export type PortType = (typeof PORT_TYPES)[number]
 
 /**
@@ -141,6 +141,16 @@ export interface BooleanPortConfig extends BasePortConfig {
 }
 
 /**
+ * Enum port configuration
+ */
+export interface EnumPortConfig extends BasePortConfig {
+  type: 'enum'
+  options: IPortConfig[]
+  defaultValue?: EnumPortValue
+  ui?: BasePortConfigUIType
+}
+
+/**
  * String port value
  */
 export interface StringPortValue {
@@ -198,6 +208,14 @@ export interface BooleanPortValue {
 }
 
 /**
+ * Enum port value
+ */
+export interface EnumPortValue {
+  type: 'enum'
+  value: string
+}
+
+/**
  * Union type of all port configurations
  */
 export type IPortConfig =
@@ -207,6 +225,7 @@ export type IPortConfig =
   | ArrayPortConfig<any>
   | ObjectPortConfig<any>
   | StreamPortConfig<any>
+  | EnumPortConfig
 
 /**
  * Union type of all port values
@@ -218,6 +237,7 @@ export type IPortValue =
   | ArrayPortValue<any>
   | ObjectPortValue<any>
   | StreamPortValue<any>
+  | EnumPortValue
 
 /**
  * Type mapping for configs
@@ -229,6 +249,7 @@ export interface ConfigTypeMap {
   array: ArrayPortConfig<any>
   object: ObjectPortConfig<any>
   stream: StreamPortConfig<any>
+  enum: EnumPortConfig
 }
 
 /**
@@ -241,6 +262,7 @@ export interface ValueTypeMap {
   array: ArrayPortValue<any>
   object: ObjectPortValue<any>
   stream: StreamPortValue<any>
+  enum: EnumPortValue
 }
 
 /**
@@ -283,7 +305,8 @@ export type ExtractValue<C extends IPortConfig> =
           C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
             C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
               C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
-                never
+                C extends EnumPortConfig ? EnumPortValue :
+                  never
 
 /**
  * Helper function to convert a typed plugin to a registry plugin
@@ -391,6 +414,17 @@ export function isBooleanPortConfig(value: unknown): value is BooleanPortConfig 
   )
 }
 
+export function isEnumPortConfig(value: unknown): value is EnumPortConfig {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'enum'
+    && 'options' in value
+    && Array.isArray((value as EnumPortConfig).options)
+  )
+}
+
 /**
  * Type guards for port values
  */
@@ -458,5 +492,16 @@ export function isBooleanPortValue(value: unknown): value is BooleanPortValue {
     && value.type === 'boolean'
     && 'value' in value
     && typeof (value as any).value === 'boolean'
+  )
+}
+
+export function isEnumPortValue(value: unknown): value is EnumPortValue {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'enum'
+    && 'value' in value
+    && typeof (value as any).value === 'string'
   )
 }

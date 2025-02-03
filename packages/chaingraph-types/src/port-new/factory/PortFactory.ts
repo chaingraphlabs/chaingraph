@@ -1,6 +1,7 @@
 import type {
   ArrayPortConfig,
   BooleanPortConfig,
+  EnumPortConfig,
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
@@ -12,6 +13,7 @@ import { PortError, PortErrorType } from '../base/types'
 
 import { ArrayPort } from '../instances/ArrayPort'
 import { BooleanPort } from '../instances/BooleanPort'
+import { EnumPort } from '../instances/EnumPort'
 import { NumberPort } from '../instances/NumberPort'
 import { ObjectPort } from '../instances/ObjectPort'
 import { StreamPort } from '../instances/StreamPort'
@@ -24,6 +26,7 @@ export type SupportedPortInstance =
   | ArrayPort
   | ObjectPort
   | StreamPort
+  | EnumPort
 
 export type PortInstanceFromConfig<T extends IPortConfig> =
   T extends StringPortConfig ? StringPort :
@@ -32,7 +35,8 @@ export type PortInstanceFromConfig<T extends IPortConfig> =
         T extends ArrayPortConfig<infer I> ? ArrayPort<I> :
           T extends ObjectPortConfig<infer S> ? ObjectPort<S> :
             T extends StreamPortConfig<infer V> ? StreamPort<V> :
-              never
+              T extends EnumPortConfig ? EnumPort :
+                never
 
 export class PortFactory {
   /**
@@ -69,6 +73,9 @@ export class PortFactory {
       }
       case 'stream': {
         return new StreamPort(config as StreamPortConfig) as PortInstanceFromConfig<T>
+      }
+      case 'enum': {
+        return new EnumPort(config as EnumPortConfig) as PortInstanceFromConfig<T>
       }
       default:
         throw new PortError(
@@ -112,5 +119,9 @@ export class PortFactory {
 
   static createStreamPort<I extends IPortConfig>(config: StreamPortConfig<I>): StreamPort<I> {
     return new StreamPort<I>(config)
+  }
+
+  static createEnumPort(config: EnumPortConfig): EnumPort {
+    return new EnumPort(config)
   }
 }
