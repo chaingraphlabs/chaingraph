@@ -185,19 +185,24 @@ describe('object port plugin', () => {
 
   describe('schema validation', () => {
     it('should validate config schema', () => {
+      // Note: the new config uses a "schema" key with "properties"
       const result = ObjectPortPlugin.configSchema.safeParse({
         type: 'object',
-        fields: {
-          name: { type: 'string' },
-          age: { type: 'number', min: 0 },
+        schema: {
+          properties: {
+            name: { type: 'string' },
+            age: { type: 'number', min: 0 },
+          },
         },
       })
       expect(result.success).toBe(true)
 
       const invalidResult = ObjectPortPlugin.configSchema.safeParse({
         type: 'object',
-        fields: {
-          invalid: { type: 'unknown' },
+        schema: {
+          properties: {
+            invalid: { type: 'unknown' },
+          },
         },
       })
       expect(invalidResult.success).toBe(false)
@@ -229,12 +234,10 @@ describe('object port plugin', () => {
         {
           name: createStringConfig({ minLength: 2 }),
           age: createNumberConfig({ min: 0, max: 150 }),
-          settings: createObjectConfig(
-            {
-              theme: createStringConfig(),
-              fontSize: createNumberConfig({ min: 8, max: 32 }),
-            },
-          ),
+          settings: createObjectConfig({
+            theme: createStringConfig(),
+            fontSize: createNumberConfig({ min: 8, max: 32 }),
+          }),
         },
         {
           name: 'test',
@@ -248,18 +251,22 @@ describe('object port plugin', () => {
         type: 'object',
         name: 'test',
         id: 'test-id',
-        fields: {
-          name: { type: 'string', minLength: 2 },
-          age: { type: 'number', min: 0, max: 150 },
-          settings: {
-            type: 'object',
-            fields: {
-              theme: { type: 'string' },
-              fontSize: { type: 'number', min: 8, max: 32 },
+        metadata: { custom: 'value' },
+        schema: {
+          properties: {
+            name: { type: 'string', minLength: 2 },
+            age: { type: 'number', min: 0, max: 150 },
+            settings: {
+              type: 'object',
+              schema: {
+                properties: {
+                  theme: { type: 'string' },
+                  fontSize: { type: 'number', min: 8, max: 32 },
+                },
+              },
             },
           },
         },
-        metadata: { custom: 'value' },
       })
     })
 
@@ -270,8 +277,10 @@ describe('object port plugin', () => {
       const serialized = ObjectPortPlugin.serializeConfig(config)
       expect(serialized).toStrictEqual({
         type: 'object',
-        fields: {
-          name: { type: 'string' },
+        schema: {
+          properties: {
+            name: { type: 'string' },
+          },
         },
       })
     })
@@ -281,18 +290,22 @@ describe('object port plugin', () => {
         type: 'object',
         name: 'test',
         id: 'test-id',
-        fields: {
-          name: { type: 'string', minLength: 2 },
-          age: { type: 'number', min: 0, max: 150 },
-          settings: {
-            type: 'object',
-            fields: {
-              theme: { type: 'string' },
-              fontSize: { type: 'number', min: 8, max: 32 },
+        metadata: { custom: 'value' },
+        schema: {
+          properties: {
+            name: { type: 'string', minLength: 2 },
+            age: { type: 'number', min: 0, max: 150 },
+            settings: {
+              type: 'object',
+              schema: {
+                properties: {
+                  theme: { type: 'string' },
+                  fontSize: { type: 'number', min: 8, max: 32 },
+                },
+              },
             },
           },
         },
-        metadata: { custom: 'value' },
       }
 
       const deserialized = ObjectPortPlugin.deserializeConfig(data)
@@ -302,8 +315,10 @@ describe('object port plugin', () => {
     it('should deserialize minimal config', () => {
       const data = {
         type: 'object',
-        fields: {
-          name: { type: 'string' },
+        schema: {
+          properties: {
+            name: { type: 'string' },
+          },
         },
       }
 
@@ -314,8 +329,10 @@ describe('object port plugin', () => {
     it('should throw on invalid config deserialization input', () => {
       expect(() => ObjectPortPlugin.deserializeConfig({
         type: 'object',
-        fields: {
-          invalid: { type: 'unknown' },
+        schema: {
+          properties: {
+            invalid: { type: 'unknown' },
+          },
         },
       })).toThrow()
 
@@ -325,8 +342,10 @@ describe('object port plugin', () => {
 
       expect(() => ObjectPortPlugin.deserializeConfig({
         type: 'object',
-        fields: {
-          name: { type: 'string' },
+        schema: {
+          properties: {
+            name: { type: 'string' },
+          },
         },
         unknownField: true,
       })).not.toThrow() // passthrough allows extra fields

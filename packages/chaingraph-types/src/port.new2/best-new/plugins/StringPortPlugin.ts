@@ -86,6 +86,14 @@ function testRegexPattern(value: string, pattern: string): boolean {
 }
 
 /**
+ * String port value schema
+ */
+const valueSchema = z.object({
+  type: z.literal('string'),
+  value: z.string(),
+}).passthrough()
+
+/**
  * String port configuration schema
  */
 const configSchema = z.object({
@@ -93,6 +101,7 @@ const configSchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
   metadata: z.record(z.string(), JSONValueSchema).optional(),
+  defaultValue: valueSchema.optional(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
   pattern: z.string().optional(),
@@ -120,14 +129,6 @@ const configSchema = z.object({
     }
   }
 })
-
-/**
- * String port value schema
- */
-const valueSchema = z.object({
-  type: z.literal('string'),
-  value: z.string(),
-}).passthrough()
 
 /**
  * Validate string value against config
@@ -241,7 +242,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
       )
     }
   },
-  validate: (value: StringPortValue, config: StringPortConfig): string[] => {
+  validateValue: (value: StringPortValue, config: StringPortConfig): string[] => {
     const errors: string[] = []
 
     if (typeof config.minLength === 'number' && value.value.length < config.minLength) {
@@ -264,5 +265,13 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
     }
 
     return errors
+  },
+  validateConfig: (config: StringPortConfig): string[] => {
+    const parseResult = configSchema.safeParse(config)
+    if (!parseResult.success) {
+      return parseResult.error.errors.map(issue => issue.message)
+    }
+    // Optionally, add additional checks (e.g., custom logic for default values, etc.)
+    return []
   },
 }

@@ -70,8 +70,8 @@ describe('boolean port plugin', () => {
       // Get plugin and assert it exists and has the correct type
       const plugin = portRegistry.getPlugin('boolean')
 
-      expect(plugin!.validate!(validValue, config)).toHaveLength(0)
-      expect(plugin!.validate!(invalidValue as any, config)).toHaveLength(1)
+      expect(plugin!.validateValue!(validValue, config)).toHaveLength(0)
+      expect(plugin!.validateValue!(invalidValue as any, config)).toHaveLength(1)
     })
   })
 

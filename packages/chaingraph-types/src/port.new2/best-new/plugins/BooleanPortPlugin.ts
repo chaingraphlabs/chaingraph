@@ -125,7 +125,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
       )
     }
   },
-  validate: (value: BooleanPortValue, _config: BooleanPortConfig): string[] => {
+  validateValue: (value: BooleanPortValue, _config: BooleanPortConfig): string[] => {
     const errors: string[] = []
 
     if (!isBooleanPortValue(value)) {
@@ -133,5 +133,12 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
     }
 
     return errors
+  },
+  validateConfig: (config: BooleanPortConfig): string[] => {
+    const result = configSchema.safeParse(config)
+    if (!result.success) {
+      return result.error.errors.map(issue => issue.message)
+    }
+    return []
   },
 }

@@ -62,6 +62,25 @@ export function validateArrayValue(
   return errors
 }
 
+const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
+  z.object({
+    type: z.literal('array'),
+    value: z.array(
+      z.custom<IPortValue>((val) => {
+        if (typeof val !== 'object' || val === null)
+          return false
+        if (!('type' in val) || typeof (val as any).type !== 'string')
+          return false
+        const plugin = portRegistry.getPlugin((val as any).type as PortType)
+        if (!plugin)
+          return false
+        const result = plugin.valueSchema.safeParse(val)
+        return result.success
+      }, { message: 'Invalid item in array value. Must be valid IPortValue according to its plugin.' }),
+    ),
+  }).passthrough(),
+)
+
 // Create lazy schemas for recursive types
 const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
   z.object({
@@ -69,6 +88,7 @@ const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
     id: z.string().optional(),
     name: z.string().optional(),
     metadata: z.record(z.string(), JSONValueSchema).optional(),
+    defaultValue: valueSchema.optional(),
     itemConfig: z.custom<IPortConfig>((val) => {
       if (
         typeof val !== 'object'
@@ -101,25 +121,6 @@ const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
       }
     }
   }),
-)
-
-const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
-  z.object({
-    type: z.literal('array'),
-    value: z.array(
-      z.custom<IPortValue>((val) => {
-        if (typeof val !== 'object' || val === null)
-          return false
-        if (!('type' in val) || typeof (val as any).type !== 'string')
-          return false
-        const plugin = portRegistry.getPlugin((val as any).type as PortType)
-        if (!plugin)
-          return false
-        const result = plugin.valueSchema.safeParse(val)
-        return result.success
-      }, { message: 'Invalid item in array value. Must be valid IPortValue according to its plugin.' }),
-    ),
-  }).passthrough(),
 )
 
 /**
@@ -258,7 +259,16 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
       )
     }
   },
-  validate: (value: ArrayPortValue, config: ArrayPortConfig): string[] => {
+  validateValue: (value: ArrayPortValue, config: ArrayPortConfig): string[] => {
     return validateArrayValue(value, config)
+  },
+  validateConfig: (config: ArrayPortConfig): string[] => {
+    // Validate the configuration using the Zod schema.
+    const result = configSchema.safeParse(config)
+    if (!result.success) {
+      return result.error.errors.map(issue => issue.message)
+    }
+
+    return []
   },
 }

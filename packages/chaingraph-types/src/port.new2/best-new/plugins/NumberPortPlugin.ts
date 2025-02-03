@@ -65,12 +65,21 @@ function isAlignedWithStep(value: number, step: number, min = 0): boolean {
 }
 
 /**
+ * Number port value schema
+ */
+const valueSchema = z.object({
+  type: z.literal('number'),
+  value: z.number(),
+}).passthrough()
+
+/**
  * Number port configuration schema
  */
 const configSchema = z.object({
   type: z.literal('number'),
   id: z.string().optional(),
   name: z.string().optional(),
+  defaultValue: valueSchema.optional(),
   metadata: z.record(z.string(), JSONValueSchema).optional(),
   min: z.number().optional(),
   max: z.number().optional(),
@@ -100,14 +109,6 @@ const configSchema = z.object({
     }
   }
 })
-
-/**
- * Number port value schema
- */
-const valueSchema = z.object({
-  type: z.literal('number'),
-  value: z.number(),
-}).passthrough()
 
 /**
  * Validate number value against config
@@ -225,7 +226,17 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       )
     }
   },
-  validate: (value: NumberPortValue, config: NumberPortConfig): string[] => {
+  validateValue: (value: NumberPortValue, config: NumberPortConfig): string[] => {
     return validateNumberValue(value, config)
+  },
+  validateConfig: (config: NumberPortConfig): string[] => {
+  // Use the Zod config schema to validate the configuration first.
+    const result = configSchema.safeParse(config)
+    if (!result.success) {
+    // Map over Zod's error issues and return the error messages.
+      return result.error.errors.map(issue => issue.message)
+    }
+
+    return []
   },
 }

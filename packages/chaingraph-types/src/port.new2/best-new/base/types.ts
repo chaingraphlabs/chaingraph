@@ -1,4 +1,4 @@
-import type { JSONObject, JSONValue } from './json'
+import type { JSONValue } from './json'
 import { z } from 'zod'
 import { MultiChannel } from '../channel/multi-channel'
 
@@ -35,10 +35,11 @@ export type PortType = (typeof PORT_TYPES)[number]
 /**
  * Base interface for all port configurations
  */
-export interface BasePortConfig extends JSONObject {
+export interface BasePortConfig {
   id?: string
   name?: string
   metadata?: Record<string, JSONValue>
+  required?: boolean
 }
 
 /**
@@ -46,6 +47,7 @@ export interface BasePortConfig extends JSONObject {
  */
 export interface StringPortConfig extends BasePortConfig {
   type: 'string'
+  defaultValue?: StringPortValue
   minLength?: number
   maxLength?: number
   pattern?: string
@@ -56,6 +58,7 @@ export interface StringPortConfig extends BasePortConfig {
  */
 export interface NumberPortConfig extends BasePortConfig {
   type: 'number'
+  defaultValue?: NumberPortValue
   min?: number
   max?: number
   step?: number
@@ -65,9 +68,12 @@ export interface NumberPortConfig extends BasePortConfig {
 /**
  * Array port configuration
  */
-export interface ArrayPortConfig extends BasePortConfig {
+export interface ArrayPortConfig<
+  Item extends IPortConfig = IPortConfig,
+> extends BasePortConfig {
   type: 'array'
-  itemConfig: IPortConfig
+  defaultValue?: ArrayPortValue<Item>
+  itemConfig: Item
   minLength?: number
   maxLength?: number
 }
@@ -75,9 +81,23 @@ export interface ArrayPortConfig extends BasePortConfig {
 /**
  * Object port configuration
  */
-export interface ObjectPortConfig extends BasePortConfig {
+export interface ObjectPortConfig<S extends ObjectSchema = ObjectSchema> extends BasePortConfig {
   type: 'object'
-  fields: Record<string, IPortConfig>
+  // fields: Record<string, IPortConfig>
+  schema: S
+  defaultValue?: ObjectPortValue<S>
+}
+
+/**
+ * Object port schema definition
+ */
+export interface ObjectSchema<T extends Record<string, IPortConfig> = Record<string, IPortConfig>> {
+  properties: T
+  id?: string
+  type?: string
+  description?: string
+  category?: string
+  isObjectSchema?: boolean
 }
 
 /**
@@ -115,17 +135,24 @@ export interface NumberPortValue {
 /**
  * Array port value
  */
-export interface ArrayPortValue {
+export interface ArrayPortValue<Item extends IPortConfig = IPortConfig> {
   type: 'array'
-  value: IPortValue[]
+  value: ExtractValue<Item>[]
 }
 
 /**
  * Object port value
  */
-export interface ObjectPortValue {
+export interface ObjectPortValue<S extends ObjectSchema = ObjectSchema> {
   type: 'object'
-  value: Record<string, IPortValue>
+  value: ObjectPortValueFromSchema<S>
+}
+
+/**
+ * Object port value from schema
+ */
+export type ObjectPortValueFromSchema<S extends ObjectSchema<any>> = {
+  [K in keyof S['properties']]: ExtractValue<S['properties'][K]>
 }
 
 /**
@@ -150,8 +177,8 @@ export interface BooleanPortValue {
 export type IPortConfig =
   | StringPortConfig
   | NumberPortConfig
-  | ArrayPortConfig
-  | ObjectPortConfig
+  | ArrayPortConfig<any>
+  | ObjectPortConfig<any>
   | StreamPortConfig
   | BooleanPortConfig
 
@@ -184,8 +211,8 @@ export interface ConfigTypeMap {
 export interface ValueTypeMap {
   string: StringPortValue
   number: NumberPortValue
-  array: ArrayPortValue
-  object: ObjectPortValue
+  array: ArrayPortValue<any>
+  object: ObjectPortValue<any>
   boolean: BooleanPortValue
   stream: StreamPortValue
 }
@@ -201,7 +228,8 @@ export interface IPortPlugin<T extends PortType> {
   deserializeValue: (data: JSONValue) => ValueTypeMap[T]
   serializeConfig: (config: ConfigTypeMap[T]) => JSONValue
   deserializeConfig: (data: JSONValue) => ConfigTypeMap[T]
-  validate?: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => string[]
+  validateValue: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => string[]
+  validateConfig: (config: ConfigTypeMap[T]) => string[]
 }
 
 /**
@@ -219,6 +247,18 @@ export interface RegistryPlugin {
 }
 
 /**
+ * Extract the value type from a port config
+ */
+export type ExtractValue<C extends IPortConfig> =
+  C extends StringPortConfig ? StringPortValue :
+    C extends NumberPortConfig ? NumberPortValue :
+      C extends BooleanPortConfig ? BooleanPortValue :
+        C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
+          C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
+            C extends StreamPortConfig ? StreamPortValue :
+              never
+
+/**
  * Helper function to convert a typed plugin to a registry plugin
  */
 export function asRegistryPlugin<T extends PortType>(plugin: IPortPlugin<T>): RegistryPlugin {
@@ -232,8 +272,8 @@ export function asRegistryPlugin<T extends PortType>(plugin: IPortPlugin<T>): Re
     deserializeConfig: plugin.deserializeConfig as (data: unknown) => IPortConfig,
   }
 
-  if (plugin.validate) {
-    registryPlugin.validate = plugin.validate as (value: IPortValue, config: IPortConfig) => string[]
+  if (plugin.validateValue) {
+    registryPlugin.validate = plugin.validateValue as (value: IPortValue, config: IPortConfig) => string[]
   }
 
   return registryPlugin
@@ -301,8 +341,10 @@ export function isObjectPortConfig(value: unknown): value is ObjectPortConfig {
     && value !== null
     && 'type' in value
     && value.type === 'object'
-    && 'fields' in value
-    && typeof (value as any).fields === 'object'
+    && 'schema' in value
+    && typeof (value as any).schema === 'object'
+    && 'properties' in (value as any).schema
+    && typeof (value as any).schema.properties === 'object'
   )
 }
 

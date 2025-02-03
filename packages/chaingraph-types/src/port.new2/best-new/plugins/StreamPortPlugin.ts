@@ -5,6 +5,7 @@ import type {
   StreamPortConfig,
   StreamPortValue,
 } from '../base/types'
+
 import { z } from 'zod'
 import { type JSONValue, JSONValueSchema } from '../base/json'
 import {
@@ -264,7 +265,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       )
     }
   },
-  validate: (value: StreamPortValue, _config: StreamPortConfig): string[] => {
+  validateValue: (value: StreamPortValue, _config: StreamPortConfig): string[] => {
     const errors: string[] = []
 
     // Basic structure check
@@ -279,5 +280,13 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
     }
 
     return errors
+  },
+  validateConfig: (config: StreamPortConfig): string[] => {
+    const result = configSchema.safeParse(config)
+    if (!result.success) {
+      return ['Invalid stream configuration structure']
+    }
+
+    return []
   },
 }

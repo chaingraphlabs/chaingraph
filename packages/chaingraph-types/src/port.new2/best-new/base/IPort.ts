@@ -1,30 +1,18 @@
+import type { JSONValue } from './json'
 import type { IPortConfig, IPortValue } from './types'
 
 /**
- * Interface representing a complete port instance that includes both
- * configuration and value handling. This interface serves as the main
- * external API for the port system.
+ * IPort interface represents a complete port instance that includes both
+ * configuration and value handling. Both the configuration (C) and port value (T)
+ * must be serializable to JSON. To facilitate that, our serialization methods work
+ * with the type JSONValue.
  *
- * @template C - The type of port configuration, which must extend IPortConfig.
- *               This ensures that each port has a strongly typed configuration
- *               (e.g., StringPortConfig, NumberPortConfig, etc.).
- * @template T - The type of port value, which must extend IPortValue.
- *               This ensures that all port values conform to our type system
- *               (e.g., StringPortValue, NumberPortValue, etc.).
- *
- * Example usage:
- * ```typescript
- * // String port with specific config and value types
- * const stringPort: IPort<StringPortConfig, StringPortValue> = ...
- *
- * // Number port with specific config and value types
- * const numberPort: IPort<NumberPortConfig, NumberPortValue> = ...
- * ```
+ * @template C - A type extending IPortConfig.
+ * @template T - A type extending IPortValue.
  */
 export interface IPort<C extends IPortConfig, T extends IPortValue> {
   /**
    * Retrieves the port's configuration object.
-   * This includes all metadata and validation rules.
    *
    * @returns The port's strongly typed configuration object
    */
@@ -44,8 +32,7 @@ export interface IPort<C extends IPortConfig, T extends IPortValue> {
    * If no value has been set and a default value exists in the config,
    * returns the default value.
    *
-   * @returns The current value of the port (of type T extending IPortValue),
-   *          or undefined if no value is set
+   * @returns The current value of the port (of type T) or undefined if no value is set
    */
   getValue: () => T | undefined
 
@@ -53,89 +40,47 @@ export interface IPort<C extends IPortConfig, T extends IPortValue> {
    * Updates the port's value.
    * The new value will be validated against the port's configuration.
    *
-   * @param newValue - The new value to set (must conform to type T extending IPortValue)
+   * @param newValue - The new value to set (must conform to type T)
    * @throws {PortError} If the value is invalid according to the configuration
    */
   setValue: (newValue: T) => void
 
   /**
    * Resets the port to its initial state.
-   * If a default value is specified in the config, the port will be reset to that value.
-   * Otherwise, the value will be set to undefined.
+   * If a default value is specified in the configuration, the port is reset to that value.
+   * Otherwise, the value is set to undefined.
    */
   reset: () => void
 
   /**
-   * Serializes both the port's configuration and current value into a single object.
-   * This is useful for persistence and network transmission.
+   * Serializes both the port's configuration and its current value into a single object.
+   * The resulting data is expected to be completely JSON–serializable, i.e. using JSONValue.
    *
-   * Example serialized output for a string port:
+   * Example serialized output:
    * {
-   *   config: {
-   *     type: "string",
-   *     id: "name",
-   *     minLength: 3,
-   *     maxLength: 50,
-   *     defaultValue: "John"
-   *   },
-   *   value: {
-   *     type: "string",
-   *     value: "John Doe"
-   *   }
+   *   config: { type: "string", id: "name", minLength: 3, maxLength: 50 },
+   *   value: { type: "string", value: "John Doe" }
    * }
    *
-   * Example serialized output for a number port:
-   * {
-   *   config: {
-   *     type: "number",
-   *     id: "age",
-   *     min: 0,
-   *     max: 120,
-   *     defaultValue: 18
-   *   },
-   *   value: {
-   *     type: "number",
-   *     value: 25
-   *   }
-   * }
-   *
-   * @returns A JSON-serializable object containing both config and value
+   * @returns An object with the port's configuration and value as JSONValue.
    */
-  serialize: () => {
-    config: C
-    value: T | undefined
-  }
+  serialize: () => JSONValue
 
   /**
-   * Deserializes both configuration and value from a previously serialized object.
-   * This will update both the port's configuration and its value.
+   * Deserializes the port using previously serialized JSON–compatible data.
+   * The object provided should contain both a configuration (config) and a value (value).
+   * After successful deserialization, both the port's configuration and its current value
+   * are updated accordingly.
    *
-   * Example input format for a string port:
-   * {
-   *   config: {
-   *     type: "string",
-   *     id: "name",
-   *     minLength: 3,
-   *     maxLength: 50,
-   *     defaultValue: "John"
-   *   },
-   *   value: {
-   *     type: "string",
-   *     value: "John Doe"
-   *   }
-   * }
-   *
-   * @param data - The serialized port data containing both config and value
-   * @throws {PortError} If the data is invalid or cannot be deserialized
+   * @param data - The JSONValue containing the serialized port data.
+   * @throws {PortError} If the data is invalid or cannot be deserialized.
    */
-  deserialize: (data: unknown) => void
+  deserialize: (data: JSONValue) => IPort<C, T>
 
   /**
-   * Validates both the current configuration and value.
-   * This ensures that both the configuration is valid and the current value
-   * satisfies all constraints defined in the configuration.
+   * Validates both the current configuration and value of the port.
    *
-   * @returns true if both config and value are valid, false otherwise
+   * @returns true if both configuration and value are valid; otherwise, false.
    */
   validate: () => boolean
 }
