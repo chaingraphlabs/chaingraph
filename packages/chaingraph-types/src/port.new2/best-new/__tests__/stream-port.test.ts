@@ -64,11 +64,11 @@ describe('stream port plugin', () => {
       // Deserialize
       const deserialized = StreamPortPlugin.deserializeValue(serialized)
       expect(deserialized.type).toBe('stream')
-      expect(deserialized.channel.getBuffer()).toEqual([
+      expect(deserialized.value.getBuffer()).toEqual([
         createStringValue('hello'),
         createNumberValue(42),
       ])
-      expect(deserialized.channel.isChannelClosed()).toBe(false)
+      expect(deserialized.value.isChannelClosed()).toBe(false)
     })
 
     it('should handle closed channels', () => {
@@ -87,7 +87,7 @@ describe('stream port plugin', () => {
 
       // Deserialize
       const deserialized = StreamPortPlugin.deserializeValue(serialized)
-      expect(deserialized.channel.isChannelClosed()).toBe(true)
+      expect(deserialized.value.isChannelClosed()).toBe(true)
     })
 
     it('should handle invalid serialization input', () => {
@@ -126,7 +126,7 @@ describe('stream port plugin', () => {
       const channel = new MultiChannel<IPortValue>()
       const result = StreamPortPlugin.valueSchema.safeParse({
         type: 'stream',
-        channel,
+        value: channel,
       })
       expect(result.success).toBe(true)
 
@@ -269,13 +269,13 @@ describe('stream port plugin', () => {
       const subscriber2Values: IPortValue[] = []
 
       const subscriber1 = (async () => {
-        for await (const item of value.channel) {
+        for await (const item of value.value) {
           subscriber1Values.push(item)
         }
       })()
 
       const subscriber2 = (async () => {
-        for await (const item of value.channel) {
+        for await (const item of value.value) {
           subscriber2Values.push(item)
         }
       })()
@@ -310,7 +310,7 @@ describe('stream port plugin', () => {
       ]
 
       channel.sendBatch(items)
-      expect(value.channel.getBuffer()).toEqual(items)
+      expect(value.value.getBuffer()).toEqual(items)
     })
   })
 })

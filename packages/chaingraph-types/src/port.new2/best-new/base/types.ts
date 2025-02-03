@@ -1,4 +1,4 @@
-import type { JSONValue } from './json'
+import type { JSONObject, JSONValue } from './json'
 import { z } from 'zod'
 import { MultiChannel } from '../channel/multi-channel'
 
@@ -35,7 +35,7 @@ export type PortType = (typeof PORT_TYPES)[number]
 /**
  * Base interface for all port configurations
  */
-export interface BasePortConfig {
+export interface BasePortConfig extends JSONObject {
   id?: string
   name?: string
   metadata?: Record<string, JSONValue>
@@ -113,7 +113,7 @@ export interface StreamPortConfig extends BasePortConfig {
  */
 export interface BooleanPortConfig extends BasePortConfig {
   type: 'boolean'
-  defaultValue?: boolean
+  defaultValue?: BooleanPortValue
 }
 
 /**
@@ -160,7 +160,7 @@ export type ObjectPortValueFromSchema<S extends ObjectSchema<any>> = {
  */
 export interface StreamPortValue {
   type: 'stream'
-  channel: MultiChannel<IPortValue>
+  value: MultiChannel<IPortValue>
 }
 
 /**
@@ -422,8 +422,8 @@ export function isStreamPortValue(value: unknown): value is StreamPortValue {
     && value !== null
     && 'type' in value
     && value.type === 'stream'
-    && 'channel' in value
-    && value.channel instanceof MultiChannel
+    && 'value' in value
+    && value.value instanceof MultiChannel
   )
 }
 

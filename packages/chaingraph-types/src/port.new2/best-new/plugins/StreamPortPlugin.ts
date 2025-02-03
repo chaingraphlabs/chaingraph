@@ -22,7 +22,7 @@ import { portRegistry } from '../registry/PortRegistry'
 export function createStreamValue(channel: MultiChannel<IPortValue>): StreamPortValue {
   return {
     type: 'stream',
-    channel,
+    value: channel,
   }
 }
 
@@ -88,7 +88,7 @@ const configSchema: z.ZodType<StreamPortConfig> = z.object({
  */
 const valueSchema: z.ZodType<StreamPortValue> = z.object({
   type: z.literal('stream'),
-  channel: z.custom<MultiChannel<IPortValue>>((val) => {
+  value: z.custom<MultiChannel<IPortValue>>((val) => {
     return val instanceof MultiChannel
   }, {
     message: 'Invalid channel type',
@@ -111,7 +111,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         )
       }
 
-      const channel = value.channel
+      const channel = value.value
       const buffer = channel.getBuffer()
 
       // Serialize each item in the buffer using its corresponding plugin
@@ -203,7 +203,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
 
       return {
         type: 'stream',
-        channel,
+        value: channel,
       }
     } catch (error) {
       throw new PortError(
@@ -275,7 +275,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
     }
 
     // Check that channel is a valid MultiChannel instance
-    if (!(value.channel instanceof MultiChannel)) {
+    if (!(value.value instanceof MultiChannel)) {
       errors.push('Invalid channel: must be a MultiChannel instance')
     }
 

@@ -21,7 +21,7 @@ import { StringPortPlugin } from '../plugins/StringPortPlugin'
  *   minLength: 3,
  *   maxLength: 50,
  *   pattern: '^[A-Za-z ]+$',
- *   defaultValue: 'Hello'
+ *   defaultValue: { type: 'string', value: 'Hello' },
  * }
  *
  * const port = new StringPort(config)
@@ -31,8 +31,6 @@ import { StringPortPlugin } from '../plugins/StringPortPlugin'
 export class StringPort extends BasePort<StringPortConfig> {
   /**
    * Returns the default value using the plugin's helper.
-   * If the configuration includes a defaultValue, we call createStringValue
-   * from the plugin to produce a valid StringPortValue.
    */
   protected getDefaultValue(): StringPortValue | undefined {
     return this.config.defaultValue
@@ -40,8 +38,7 @@ export class StringPort extends BasePort<StringPortConfig> {
 
   /**
    * Validates the string port value.
-   * Delegates to the StringPortPlugin.validate method if it exists.
-   * If not, one could perform basic checks here.
+   * Delegates to the StringPortPlugin.validateValue method
    */
   protected validateValue(value: StringPortValue): boolean {
     const errors = StringPortPlugin.validateValue(value, this.config)
@@ -50,8 +47,6 @@ export class StringPort extends BasePort<StringPortConfig> {
 
   /**
    * Validates the string port configuration.
-   * Here we perform simple checks (e.g. minLength should be less than or equal to maxLength,
-   * and if a pattern is provided, it must compile as valid RegExp).
    */
   protected validateConfig(config: StringPortConfig): boolean {
     const errors = StringPortPlugin.validateConfig(config)

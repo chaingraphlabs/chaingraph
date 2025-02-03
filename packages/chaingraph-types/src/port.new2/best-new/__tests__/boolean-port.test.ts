@@ -14,7 +14,7 @@ describe('boolean port plugin', () => {
       const result = BooleanPortPlugin.configSchema.safeParse({
         type: 'boolean',
         name: 'test',
-        defaultValue: true,
+        defaultValue: { type: 'boolean', value: true },
       })
       expect(result.success).toBe(true)
     })
@@ -141,7 +141,7 @@ describe('boolean port plugin', () => {
         type: 'boolean',
         name: 'test',
         id: 'test-id',
-        defaultValue: true,
+        defaultValue: { type: 'boolean', value: true },
         metadata: { custom: 'value' },
       }
 
@@ -199,7 +199,7 @@ describe('boolean port plugin', () => {
         config: {
           type: 'boolean' as const,
           name: 'test',
-          defaultValue: true,
+          defaultValue: { type: 'boolean', value: true },
         },
         value: {
           type: 'boolean' as const,
@@ -235,7 +235,7 @@ describe('boolean port plugin', () => {
     it('should handle config serialization through registry', () => {
       const config = createBooleanConfig({
         name: 'test',
-        defaultValue: true,
+        defaultValue: { type: 'boolean', value: true },
       })
 
       const serialized = portRegistry.serializeConfig(config)

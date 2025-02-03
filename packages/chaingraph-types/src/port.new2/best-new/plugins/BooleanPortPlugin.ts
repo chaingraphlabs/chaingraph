@@ -32,6 +32,14 @@ export function createBooleanConfig(options: Partial<Omit<BooleanPortConfig, 'ty
 }
 
 /**
+ * Boolean port value schema
+ */
+const valueSchema = z.object({
+  type: z.literal('boolean'),
+  value: z.boolean(),
+}).passthrough()
+
+/**
  * Boolean port configuration schema
  */
 const configSchema = z.object({
@@ -39,15 +47,7 @@ const configSchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
   metadata: z.record(z.string(), JSONValueSchema).optional(),
-  defaultValue: z.boolean().optional(),
-}).passthrough()
-
-/**
- * Boolean port value schema
- */
-const valueSchema = z.object({
-  type: z.literal('boolean'),
-  value: z.boolean(),
+  defaultValue: valueSchema.optional(),
 }).passthrough()
 
 /**
