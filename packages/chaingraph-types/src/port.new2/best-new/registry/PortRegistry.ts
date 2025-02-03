@@ -6,8 +6,10 @@ import type {
   PortType,
   ValueTypeMap,
 } from '../base/types'
-import { basePortConfigUISchema } from '@chaingraph/types/port.new2/best-new/base/base-config.schema'
 import { z } from 'zod'
+import {
+  basePortConfigSchema,
+} from '../base'
 import {
   buildUnion,
   PortError,
@@ -66,7 +68,7 @@ export class PortRegistry {
    */
   getConfigUnionSchema(): z.ZodType<IPortConfig> {
     const schemas = this.getAllPlugins().map(plugin => plugin.configSchema)
-    return buildUnion(schemas, basePortConfigUISchema)
+    return buildUnion(schemas, basePortConfigSchema)
   }
 
   /**

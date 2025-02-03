@@ -1,4 +1,5 @@
 export * from './ArrayPortPlugin'
+export * from './BooleanPortPlugin'
 export * from './NumberPortPlugin'
 export * from './ObjectPortPlugin'
 export * from './StreamPortPlugin'
