@@ -1,6 +1,15 @@
 import type { IEdge, INode } from '@chaingraph/types'
 
 /**
+ * Minimal data to represent an edge between two nodes
+ * from point of view of {@link hasCycle} function.
+ */
+interface Edge {
+  targetNode: INode
+  sourceNode: INode
+}
+
+/**
  * Detect if a given flow has a cycle between its nodes.
  *
  * This function implements Kahn's topological sorting to detect a cycle in a directed graph.
@@ -9,7 +18,7 @@ import type { IEdge, INode } from '@chaingraph/types'
  * @param edges the set of flow's edges.
  * @param edge if present, assume this edge is in the flow, without adding it to avoid side effects.
  */
-export function hasCycle(nodes: Iterable<INode>, edges: Iterable<IEdge>, edge?: IEdge): boolean {
+export function hasCycle(nodes: Iterable<INode>, edges: Iterable<Edge>, edge?: IEdge): boolean {
   const allEdges = Array.from(edges)
 
   const inDegree: Record<string, number> = Object.fromEntries(
