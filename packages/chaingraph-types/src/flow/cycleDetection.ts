@@ -1,23 +1,26 @@
-import type { IEdge, IFlow } from '@chaingraph/types'
+import type { IEdge, INode } from '@chaingraph/types'
 
 /**
  * Detect if a given flow has a cycle between its nodes.
  *
  * This function implements Kahn's topological sorting to detect a cycle in a directed graph.
  *
- * @param flow a flow to check.
+ * @param nodes the set of flow's nodes.
+ * @param edges the set of flow's edges.
  * @param edge if present, assume this edge is in the flow, without adding it to avoid side effects.
  */
-export function hasCycle(flow: IFlow, edge?: IEdge): boolean {
+export function hasCycle(nodes: Iterable<INode>, edges: Iterable<IEdge>, edge?: IEdge): boolean {
+  const allEdges = Array.from(edges)
+
   const inDegree: Record<string, number> = Object.fromEntries(
-    flow.nodes.keys().map(id => [id, 0]),
+    Iterator.from(nodes).map(node => [node.id, 0]),
   )
 
   if (edge) {
     inDegree[edge.targetNode.id]++
   }
 
-  for (const [, edge] of flow.edges) {
+  for (const edge of allEdges) {
     inDegree[edge.targetNode.id]++
   }
 
@@ -30,12 +33,12 @@ export function hasCycle(flow: IFlow, edge?: IEdge): boolean {
     const node = queue.shift()!
     visited++
 
-    const edges = [...flow.edges.values().filter(edge => edge.sourceNode.id === node)]
+    const outgoingEdges = [...allEdges.filter(edge => edge.sourceNode.id === node)]
     if (edge && node === edge.sourceNode.id) {
-      edges.push(edge)
+      outgoingEdges.push(edge)
     }
 
-    for (const edge of edges) {
+    for (const edge of outgoingEdges) {
       const degree = --inDegree[edge.targetNode.id]
       if (degree === 0) {
         queue.push(edge.targetNode.id)
@@ -43,5 +46,5 @@ export function hasCycle(flow: IFlow, edge?: IEdge): boolean {
     }
   }
 
-  return visited !== flow.nodes.size
+  return visited !== Object.keys(inDegree).length
 }

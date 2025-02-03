@@ -19,32 +19,32 @@ describe('detect cycle', () => {
   it('shouldn\'t detect cycle in an empty graph', () => {
     const flow = parseFlow('')
 
-    expect(hasCycle(flow)).toBe(false)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(false)
   })
 
   it('shouldn\'t detect cycle in a single node graph', () => {
     const flow = parseFlow('node1')
 
-    expect(hasCycle(flow)).toBe(false)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(false)
   })
 
   it('should detect cycle in a single node with self-loop', () => {
     const flow = parseFlow('node1 -> node1')
 
-    expect(hasCycle(flow)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(true)
   })
 
   it('should detect cycle in a single node with candidate edge for a self-loop', () => {
     const flow = parseFlow('node1')
 
     const edge = new Edge('1 -> 1', flow.nodes.get('node1')!, port, flow.nodes.get('node1')!, port)
-    expect(hasCycle(flow, edge)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values(), edge)).toBe(true)
   })
 
   it('shouldn\'t detect cycle in a two node linear graph', () => {
     const flow = parseFlow('node1 -> node2')
 
-    expect(hasCycle(flow)).toBe(false)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(false)
   })
 
   it('shouldn\'t detect cycle in a two node linear graph reverse', () => {
@@ -52,28 +52,28 @@ describe('detect cycle', () => {
 node2
 node2 -> node1`)
 
-    expect(hasCycle(flow)).toBe(false)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(false)
   })
 
   it('should detect cycle in a two node bidirectional graph', () => {
     const flow = parseFlow(`node1 -> node2
 node2 -> node1`)
 
-    expect(hasCycle(flow)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(true)
   })
 
   it('should detect cycle in a two node bidirectional graph through a candidate edge', () => {
     const flow = parseFlow('node1 -> node2')
 
     const edge = new Edge('2 -> 1', flow.nodes.get('node2')!, port, flow.nodes.get('node1')!, port)
-    expect(hasCycle(flow, edge)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values(), edge)).toBe(true)
   })
 
   it('shouldn\'t detect cycle in a three node linear graph', () => {
     const flow = parseFlow(`node1 -> node2
 node2 -> node3`)
 
-    expect(hasCycle(flow)).toBe(false)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(false)
   })
 
   it('should detect cycle in a three node triangle graph', () => {
@@ -81,7 +81,7 @@ node2 -> node3`)
 node2 -> node3
 node3 -> node1`)
 
-    expect(hasCycle(flow)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(true)
   })
 
   it('shouldn\'t detect cycle in a rhombus graph', () => {
@@ -90,7 +90,7 @@ node1 -> node3
 node2 -> node4
 node3 -> node4`)
 
-    expect(hasCycle(flow)).toBe(false)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(false)
   })
 
   it('should detect cycle in a disconnected two node bidirectional subgraph', () => {
@@ -98,7 +98,7 @@ node3 -> node4`)
 node3 -> node4
 node4 -> node3`)
 
-    expect(hasCycle(flow)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(true)
   })
 
   it('should detect some cycle in a graph with multiple cycles', () => {
@@ -112,7 +112,7 @@ node5 -> node6
 node6 -> node3
 `)
 
-    expect(hasCycle(flow)).toBe(true)
+    expect(hasCycle(flow.nodes.values(), flow.edges.values())).toBe(true)
   })
 })
 
