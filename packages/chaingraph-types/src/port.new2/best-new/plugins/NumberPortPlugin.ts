@@ -11,6 +11,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { numberPortConfigUISchema } from '../base/ui-config.schema'
 
 /**
  * Schemas for number port validation
@@ -30,6 +31,7 @@ const numberSpecificSchema = z.object({
   max: z.number().optional(),
   step: z.number().positive().optional(),
   integer: z.boolean().optional(),
+  ui: numberPortConfigUISchema.optional(),
 }).passthrough()
 
 // Merge base schema with number-specific schema to create the final config schema
@@ -257,10 +259,10 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
     return validateNumberValue(value, config)
   },
   validateConfig: (config: NumberPortConfig): string[] => {
-  // Use the Zod config schema to validate the configuration first.
+    // Use the Zod config schema to validate the configuration first.
     const result = configSchema.safeParse(config)
     if (!result.success) {
-    // Map over Zod's error issues and return the error messages.
+      // Map over Zod's error issues and return the error messages.
       return result.error.errors.map(issue => issue.message)
     }
 

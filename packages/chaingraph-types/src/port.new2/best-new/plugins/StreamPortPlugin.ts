@@ -14,6 +14,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { streamPortConfigUISchema } from '../base/ui-config.schema'
 import { MultiChannel } from '../channel/multi-channel'
 import { portRegistry } from '../registry/PortRegistry'
 
@@ -92,6 +93,7 @@ const streamSpecificSchema = z.object({
   }, {
     message: 'Invalid item config type',
   }),
+  ui: streamPortConfigUISchema.optional(),
 }).passthrough()
 
 /**

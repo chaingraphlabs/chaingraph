@@ -11,6 +11,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { booleanPortConfigUISchema } from '../base/ui-config.schema'
 
 /**
  * Schemas for boolean port validation
@@ -26,6 +27,7 @@ const valueSchema: z.ZodType<BooleanPortValue> = z.object({
 const booleanSpecificSchema = z.object({
   type: z.literal('boolean'),
   defaultValue: valueSchema.optional(),
+  ui: booleanPortConfigUISchema.optional(),
 }).passthrough()
 
 // Merge base schema with boolean-specific schema to create the final config schema

@@ -10,6 +10,7 @@ import type {
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
 import { PortError, PortErrorType } from '../base/types'
+import { arrayPortConfigUISchema } from '../base/ui-config.schema'
 import { portRegistry } from '../registry/PortRegistry'
 
 /**
@@ -108,6 +109,7 @@ const arraySpecificSchema = z.object({
   }, { message: 'Invalid itemConfig: must be a valid port configuration' }),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
+  ui: arrayPortConfigUISchema.optional(),
 }).passthrough()
 
 // Merge base schema with array-specific schema to create the final config schema

@@ -10,6 +10,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base/types'
+import { stringPortConfigUISchema } from '../base/ui-config.schema'
 
 /**
  * Type guard for string value
@@ -104,6 +105,7 @@ const stringSpecificSchema = z.object({
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
   pattern: z.string().optional(),
+  ui: stringPortConfigUISchema.optional(),
 }).passthrough()
 
 // Merge base schema with string-specific schema
@@ -273,7 +275,6 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
     if (!parseResult.success) {
       return parseResult.error.errors.map(issue => issue.message)
     }
-    // Optionally, add additional checks (e.g., custom logic for default values, etc.)
     return []
   },
 }
