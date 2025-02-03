@@ -19,6 +19,10 @@ describe('portFactory', () => {
         type: 'string',
         minLength: 3,
         defaultValue: { type: 'string', value: 'default' },
+        ui: {
+          bgColor: '#e70d0d',
+          borderColor: '#460707',
+        },
       }
       const port = PortFactory.create(config)
 
@@ -33,6 +37,10 @@ describe('portFactory', () => {
         min: 0,
         max: 10,
         defaultValue: { type: 'number', value: 5 },
+        ui: {
+          bgColor: '#1f5eec',
+          borderColor: '#0c2454',
+        },
       }
       const port = PortFactory.create(config)
       expect(port.getConfig()).toEqual(config)
@@ -43,6 +51,10 @@ describe('portFactory', () => {
       const config: BooleanPortConfig = {
         type: 'boolean',
         defaultValue: { type: 'boolean', value: true },
+        ui: {
+          bgColor: '#63f54d',
+          borderColor: '#1e4b18',
+        },
       }
       const port = PortFactory.create(config)
       expect(port.getConfig()).toEqual(config)
@@ -65,6 +77,10 @@ describe('portFactory', () => {
         defaultValue: {
           type: 'array',
           value: [{ type: 'string', value: 'item1' }],
+        },
+        ui: {
+          bgColor: '#63f54d',
+          borderColor: '#1e4b18',
         },
       }
       const port = PortFactory.create(config)
@@ -104,6 +120,10 @@ describe('portFactory', () => {
             },
           },
         },
+        ui: {
+          bgColor: '#63f54d',
+          borderColor: '#1e4b18',
+        },
       })
       const port = PortFactory.create(config)
 
@@ -136,6 +156,10 @@ describe('portFactory', () => {
         type: 'string',
         minLength: 3,
         defaultValue: { type: 'string', value: 'hello' },
+        ui: {
+          bgColor: '#e70d0d',
+          borderColor: '#460707',
+        },
       }
       const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
@@ -148,6 +172,10 @@ describe('portFactory', () => {
         min: 0,
         max: 100,
         defaultValue: { type: 'number', value: 42 },
+        ui: {
+          bgColor: '#1f5eec',
+          borderColor: '#0c2454',
+        },
       }
       const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
@@ -161,6 +189,10 @@ describe('portFactory', () => {
         type: 'string',
         minLength: 4,
         defaultValue: { type: 'string', value: 'test' },
+        ui: {
+          bgColor: '#e70d0d',
+          borderColor: '#460707',
+        },
       }
       const port = PortFactory.createStringPort(config)
 
@@ -174,6 +206,10 @@ describe('portFactory', () => {
         min: 1,
         max: 50,
         defaultValue: { type: 'number', value: 25 },
+        ui: {
+          bgColor: '#1f5eec',
+          borderColor: '#0c2454',
+        },
       }
       const port = PortFactory.createNumberPort(config)
       expect(port.getConfig()).toEqual(config)
@@ -211,6 +247,10 @@ describe('portFactory', () => {
             },
           },
         },
+      },
+      ui: {
+        bgColor: '#63f54d',
+        borderColor: '#1e4b18',
       },
     })
     const port = PortFactory.createObjectPort(config)
