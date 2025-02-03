@@ -22,6 +22,9 @@ export class Flow implements IFlow {
   readonly metadata: FlowMetadata
   readonly nodes: Map<string, INode>
   readonly edges: Map<string, IEdge>
+
+  // TODO: store nodes as adjacency list
+
   // TODO: add known object types schemas
 
   // private eventEmitter = new EventEmitter()

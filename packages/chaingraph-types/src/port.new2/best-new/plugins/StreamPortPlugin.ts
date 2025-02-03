@@ -1,3 +1,4 @@
+import type { JSONObject, JSONValue } from '../base/json'
 import type {
   IPortConfig,
   IPortPlugin,
@@ -5,9 +6,8 @@ import type {
   StreamPortConfig,
   StreamPortValue,
 } from '../base/types'
-
 import { z } from 'zod'
-import { type JSONValue, JSONValueSchema } from '../base/json'
+import { JSONValueSchema } from '../base/json'
 import {
   isStreamPortValue,
   PortError,
@@ -59,6 +59,18 @@ export function validateStreamValue(
 }
 
 /**
+ * Stream port value schema
+ */
+const valueSchema: z.ZodType<StreamPortValue> = z.object({
+  type: z.literal('stream'),
+  value: z.custom<MultiChannel<IPortValue>>((val) => {
+    return val instanceof MultiChannel
+  }, {
+    message: 'Invalid channel type',
+  }),
+}).passthrough()
+
+/**
  * Stream port configuration schema
  */
 const configSchema: z.ZodType<StreamPortConfig> = z.object({
@@ -66,6 +78,7 @@ const configSchema: z.ZodType<StreamPortConfig> = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
   metadata: z.record(z.string(), JSONValueSchema).optional(),
+  defaultValue: valueSchema.optional(),
   itemConfig: z.custom<IPortConfig>((val) => {
     if (
       typeof val !== 'object'
@@ -80,18 +93,6 @@ const configSchema: z.ZodType<StreamPortConfig> = z.object({
     return plugin !== undefined
   }, {
     message: 'Invalid item config type',
-  }),
-}).passthrough()
-
-/**
- * Stream port value schema
- */
-const valueSchema: z.ZodType<StreamPortValue> = z.object({
-  type: z.literal('stream'),
-  value: z.custom<MultiChannel<IPortValue>>((val) => {
-    return val instanceof MultiChannel
-  }, {
-    message: 'Invalid channel type',
   }),
 }).passthrough()
 
@@ -212,9 +213,13 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       )
     }
   },
+  /**
+   * Serialize the stream port configuration into a JSON-compatible object.
+   * In particular, it serializes the nested itemConfig using its plugin, and if a
+   * defaultValue is present, it is also serialized using the stream port value serialization.
+   */
   serializeConfig: (config: StreamPortConfig): JSONValue => {
     try {
-      // Serialize the itemConfig using its corresponding plugin
       const plugin = portRegistry.getPlugin(config.itemConfig.type)
       if (!plugin) {
         throw new PortError(
@@ -222,11 +227,16 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
           `Unknown item config type: ${config.itemConfig.type}`,
         )
       }
-
-      return {
+      const serialized: JSONObject = {
         ...config,
+        // Serialize the nested item configuration.
         itemConfig: plugin.serializeConfig(config.itemConfig),
       }
+      // If a default value is provided, serialize it as well.
+      if (config.defaultValue) {
+        serialized.defaultValue = StreamPortPlugin.serializeValue(config.defaultValue)
+      }
+      return serialized
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -234,9 +244,19 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       )
     }
   },
+  /**
+   * Deserialize the stream port configuration from a JSON-compatible object.
+   * This function uses the configSchema to parse the input, then deserializes the nested itemConfig
+   * and the defaultValue (if present) so that they are in their proper form.
+   */
   deserializeConfig: (data: JSONValue): StreamPortConfig => {
     try {
-      const result = configSchema.safeParse(data)
+      const copy = { ...(data as any) }
+      if (copy.defaultValue !== undefined) {
+        copy.defaultValue = StreamPortPlugin.deserializeValue(copy.defaultValue)
+      }
+
+      const result = configSchema.safeParse(copy)
       if (!result.success) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -245,19 +265,21 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         )
       }
 
-      // Deserialize the itemConfig using its corresponding plugin
-      const plugin = portRegistry.getPlugin(result.data.itemConfig.type)
+      const parsedData = result.data as any
+
+      const plugin = portRegistry.getPlugin(parsedData.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
-          `Unknown item config type: ${result.data.itemConfig.type}`,
+          `Unknown item config type: ${parsedData.itemConfig.type}`,
         )
       }
-
-      return {
-        ...result.data,
-        itemConfig: plugin.deserializeConfig(result.data.itemConfig),
+      const deserializedConfig: any = {
+        ...parsedData,
+        itemConfig: plugin.deserializeConfig(parsedData.itemConfig),
       }
+
+      return deserializedConfig as StreamPortConfig
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

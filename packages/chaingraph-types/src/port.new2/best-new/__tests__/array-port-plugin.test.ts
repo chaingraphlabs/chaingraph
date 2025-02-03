@@ -38,7 +38,7 @@ function createArrayValue(items: IPortValue[]): ArrayPortValue {
   return {
     type: 'array',
     value: items,
-  }
+  } as ArrayPortValue<any>
 }
 
 describe('arrayPortPlugin', () => {

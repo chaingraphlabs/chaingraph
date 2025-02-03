@@ -83,7 +83,6 @@ export interface ArrayPortConfig<
  */
 export interface ObjectPortConfig<S extends ObjectSchema = ObjectSchema> extends BasePortConfig {
   type: 'object'
-  // fields: Record<string, IPortConfig>
   schema: S
   defaultValue?: ObjectPortValue<S>
 }
@@ -103,9 +102,10 @@ export interface ObjectSchema<T extends Record<string, IPortConfig> = Record<str
 /**
  * Stream port configuration
  */
-export interface StreamPortConfig extends BasePortConfig {
+export interface StreamPortConfig<Item extends IPortConfig = IPortConfig> extends BasePortConfig {
   type: 'stream'
-  itemConfig: IPortConfig
+  itemConfig: Item
+  defaultValue?: StreamPortValue<Item>
 }
 
 /**
@@ -137,7 +137,7 @@ export interface NumberPortValue {
  */
 export interface ArrayPortValue<Item extends IPortConfig = IPortConfig> {
   type: 'array'
-  value: ExtractValue<Item>[]
+  value: Array<ExtractValue<Item>>
 }
 
 /**
@@ -155,12 +155,14 @@ export type ObjectPortValueFromSchema<S extends ObjectSchema<any>> = {
   [K in keyof S['properties']]: ExtractValue<S['properties'][K]>
 }
 
+type MultiChannelTyped<T extends IPortConfig = IPortConfig> = MultiChannel<ExtractValue<T>>
+
 /**
  * Stream port value
  */
-export interface StreamPortValue {
+export interface StreamPortValue<T extends IPortConfig = IPortConfig> {
   type: 'stream'
-  value: MultiChannel<IPortValue>
+  value: MultiChannelTyped<T>
 }
 
 /**
@@ -177,10 +179,10 @@ export interface BooleanPortValue {
 export type IPortConfig =
   | StringPortConfig
   | NumberPortConfig
+  | BooleanPortConfig
   | ArrayPortConfig<any>
   | ObjectPortConfig<any>
-  | StreamPortConfig
-  | BooleanPortConfig
+  | StreamPortConfig<any>
 
 /**
  * Union type of all port values
@@ -188,10 +190,10 @@ export type IPortConfig =
 export type IPortValue =
   | StringPortValue
   | NumberPortValue
-  | ArrayPortValue
-  | ObjectPortValue
-  | StreamPortValue
   | BooleanPortValue
+  | ArrayPortValue<any>
+  | ObjectPortValue<any>
+  | StreamPortValue<any>
 
 /**
  * Type mapping for configs
@@ -199,10 +201,10 @@ export type IPortValue =
 export interface ConfigTypeMap {
   string: StringPortConfig
   number: NumberPortConfig
-  array: ArrayPortConfig
-  object: ObjectPortConfig
+  array: ArrayPortConfig<any>
+  object: ObjectPortConfig<any>
   boolean: BooleanPortConfig
-  stream: StreamPortConfig
+  stream: StreamPortConfig<any>
 }
 
 /**
@@ -211,10 +213,10 @@ export interface ConfigTypeMap {
 export interface ValueTypeMap {
   string: StringPortValue
   number: NumberPortValue
+  boolean: BooleanPortValue
   array: ArrayPortValue<any>
   object: ObjectPortValue<any>
-  boolean: BooleanPortValue
-  stream: StreamPortValue
+  stream: StreamPortValue<any>
 }
 
 /**
@@ -239,44 +241,41 @@ export interface RegistryPlugin {
   typeIdentifier: PortType
   configSchema: z.ZodType<IPortConfig>
   valueSchema: z.ZodType<IPortValue>
-  serializeValue: (value: IPortValue) => unknown
-  deserializeValue: (data: unknown) => IPortValue
-  serializeConfig: (config: IPortConfig) => unknown
-  deserializeConfig: (data: unknown) => IPortConfig
-  validate?: (value: IPortValue, config: IPortConfig) => string[]
+  serializeValue: (value: IPortValue) => JSONValue
+  deserializeValue: (data: JSONValue) => IPortValue
+  serializeConfig: (config: IPortConfig) => JSONValue
+  deserializeConfig: (data: JSONValue) => IPortConfig
+  validateValue: (value: IPortValue, config: IPortConfig) => string[]
+  validateConfig: (config: IPortConfig) => string[]
 }
 
 /**
  * Extract the value type from a port config
  */
 export type ExtractValue<C extends IPortConfig> =
-  C extends StringPortConfig ? StringPortValue :
-    C extends NumberPortConfig ? NumberPortValue :
-      C extends BooleanPortConfig ? BooleanPortValue :
-        C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
-          C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
-            C extends StreamPortConfig ? StreamPortValue :
-              never
+    C extends StringPortConfig ? StringPortValue :
+      C extends NumberPortConfig ? NumberPortValue :
+        C extends BooleanPortConfig ? BooleanPortValue :
+          C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
+            C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
+              C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
+                never
 
 /**
  * Helper function to convert a typed plugin to a registry plugin
  */
 export function asRegistryPlugin<T extends PortType>(plugin: IPortPlugin<T>): RegistryPlugin {
-  const registryPlugin: RegistryPlugin = {
+  return {
     typeIdentifier: plugin.typeIdentifier,
     configSchema: plugin.configSchema as z.ZodType<IPortConfig>,
     valueSchema: plugin.valueSchema as z.ZodType<IPortValue>,
-    serializeValue: plugin.serializeValue as (value: IPortValue) => unknown,
-    deserializeValue: plugin.deserializeValue as (data: unknown) => IPortValue,
-    serializeConfig: plugin.serializeConfig as (config: IPortConfig) => unknown,
-    deserializeConfig: plugin.deserializeConfig as (data: unknown) => IPortConfig,
+    serializeValue: plugin.serializeValue as (value: IPortValue) => JSONValue,
+    deserializeValue: plugin.deserializeValue as (data: JSONValue) => IPortValue,
+    serializeConfig: plugin.serializeConfig as (config: IPortConfig) => JSONValue,
+    deserializeConfig: plugin.deserializeConfig as (data: JSONValue) => IPortConfig,
+    validateValue: plugin.validateValue as (value: IPortValue, config: IPortConfig) => string[],
+    validateConfig: plugin.validateConfig as (config: IPortConfig) => string[],
   }
-
-  if (plugin.validateValue) {
-    registryPlugin.validate = plugin.validateValue as (value: IPortValue, config: IPortConfig) => string[]
-  }
-
-  return registryPlugin
 }
 
 /**

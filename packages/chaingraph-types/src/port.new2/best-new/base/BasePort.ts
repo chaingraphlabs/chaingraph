@@ -3,7 +3,7 @@ import type { JSONValue } from './json'
 import type { ExtractValue, IPortConfig } from './types'
 import { PortError, PortErrorType } from './types'
 
-export abstract class BasePort<C extends IPortConfig> implements IPort<C> {
+export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {
   protected config: C
   protected value?: ExtractValue<C>
 
@@ -65,7 +65,7 @@ export abstract class BasePort<C extends IPortConfig> implements IPort<C> {
     }
     const obj = data as { config: JSONValue, value?: JSONValue }
     const config = this.deserializeConfig(obj.config)
-    const value = obj.value !== undefined ? this.deserializeValue(obj.value) : undefined
+    const value = this.deserializeValue(obj.value)
 
     return {
       ...this,
@@ -81,7 +81,8 @@ export abstract class BasePort<C extends IPortConfig> implements IPort<C> {
   validate(): boolean {
     try {
       const configValid = this.validateConfig(this.config)
-      const valueValid = this.value === undefined ? true : this.validateValue(this.value)
+      const value = this.getValue()
+      const valueValid = value === undefined ? true : this.validateValue(value)
       return configValid && valueValid
     } catch (error) {
       return false

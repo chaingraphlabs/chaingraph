@@ -24,7 +24,15 @@ import { ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
  *   // Using the helper functions to build a schema and config:
  *   const userSchema = createObjectSchema({
  *     name: { type: 'string', minLength: 2 },
- *     age: { type: 'number', min: 21 }
+ *     age: { type: 'number', min: 21 },
+ *     address: {
+ *       type: 'object',
+ *       schema: createObjectSchema({
+ *         street: { type: 'string' },
+ *         city: { type: 'string' },
+ *         state: { type: 'string' },
+ *       }),
+ *     },
  *   })
  *
  *   const userConfig = createObjectPortConfig({
@@ -34,15 +42,24 @@ import { ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
  *       type: 'object',
  *       value: {
  *         name: { type: 'string', value: 'Alice' },
- *         age: { type: 'number', value: 30 }
- *       }
- *     }
+ *         age: { type: 'number', value: 30 },
+ *         address: {
+ *           type: 'object',
+ *           value: {
+ *             street: { type: 'string', value: '123 Main St' },
+ *             city: { type: 'string', value: 'Springfield' },
+ *             state: { type: 'string', value: 'IL' },
+ *           },
+ *         },
+ *       },
+ *     },
  *   })
  *
  *   const userPort = new ObjectPort(userConfig)
  *   // The IDE now knows that userPort.getValue() returns an object
  *   // whose "value" property has both "name" and "age" with proper types.
- *   console.log(userPort.getValue()?.value.name.value)  // 'Alice'
+ *   console.log(userPort.getValue()?.value.name.value) // 'Alice'
+ *   console.log(userPort.getValue()?.value.address.value.state.value) // 'IL'
  *
  * @template S - The object schema type (extending ObjectSchema) used in the configuration.
  */
@@ -60,7 +77,7 @@ export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<
    * @returns The current port value.
    */
   getValue(): ObjectPortValue<S> | undefined {
-    return super.getValue()
+    return super.getValue() as ObjectPortValue<S> | undefined
   }
 
   /**

@@ -19,7 +19,7 @@ import type { ExtractValue, IPortConfig } from './types'
  *
  * @template C - The configuration type which extends IPortConfig.
  */
-export interface IPort<C extends IPortConfig> {
+export interface IPort<C extends IPortConfig = IPortConfig> {
   /**
    * Retrieves the current port configuration.
    *
@@ -40,6 +40,7 @@ export interface IPort<C extends IPortConfig> {
    * @returns The port value, or undefined if none is set.
    */
   getValue: () => ExtractValue<C> | undefined
+  // getValue: () => IPortValue | undefined
 
   /**
    * Sets or updates the port value.
@@ -48,6 +49,7 @@ export interface IPort<C extends IPortConfig> {
    * @param newValue - The new value to set for the port.
    */
   setValue: (newValue: ExtractValue<C>) => void
+  // setValue: (newValue: IPortValue) => void
 
   /**
    * Resets the port’s current value.
