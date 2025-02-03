@@ -21,6 +21,16 @@ import { BooleanPortPlugin } from '../plugins/BooleanPortPlugin'
  *   console.log(booleanPort.getValue()) // => { type: 'boolean', value: false }
  */
 export class BooleanPort extends BasePort<BooleanPortConfig> {
+  constructor(config: BooleanPortConfig) {
+    const defaultUi = {
+      bgColor: '#63f54d',
+      borderColor: '#1e4b18',
+    }
+
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * Retrieves the default value from the configuration.
    * If a defaultValue is provided in the config, it returns that;

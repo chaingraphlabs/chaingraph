@@ -29,6 +29,16 @@ import { StringPortPlugin } from '../plugins/StringPortPlugin'
  * console.log(port.getValue()) // => { type: 'string', value: 'John Doe' }
  */
 export class StringPort extends BasePort<StringPortConfig> {
+  constructor(config: StringPortConfig) {
+    const defaultUi = {
+      bgColor: '#e70d0d',
+      borderColor: '#460707',
+    }
+
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * Returns the default value using the plugin's helper.
    */

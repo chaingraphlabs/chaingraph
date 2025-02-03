@@ -25,6 +25,15 @@ import { NumberPortPlugin } from '../plugins/NumberPortPlugin'
  *   console.log(numberPort.getValue()) // => { type: 'number', value: 50 }
  */
 export class NumberPort extends BasePort<NumberPortConfig> {
+  constructor(config: NumberPortConfig) {
+    const defaultUi = {
+      bgColor: '#1f5eec',
+      borderColor: '#0c2454',
+    }
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * Retrieves the default value from the configuration.
    *

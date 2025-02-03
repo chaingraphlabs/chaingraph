@@ -40,6 +40,16 @@ import { StreamPortPlugin } from '../plugins/StreamPortPlugin'
  * @returns A fully functional Stream Port instance.
  */
 export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort<StreamPortConfig<Item>> {
+  constructor(config: StreamPortConfig<Item>) {
+    const defaultUi = {
+      bgColor: '#ffa047',
+      borderColor: '#4b2e12',
+    }
+
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * Retrieves the default value from the configuration.
    * If a defaultValue is provided in config, it is returned;

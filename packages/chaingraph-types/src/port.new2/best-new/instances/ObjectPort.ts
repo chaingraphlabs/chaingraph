@@ -64,6 +64,16 @@ import { ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
  * @template S - The object schema type (extending ObjectSchema) used in the configuration.
  */
 export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<ObjectPortConfig<S>> {
+  constructor(config: ObjectPortConfig<S>) {
+    const defaultUi = {
+      bgColor: '#e44df5',
+      borderColor: '#541e5d',
+    }
+
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * Retrieves the default value from the configuration.
    * @returns The default ObjectPortValue if specified; otherwise undefined.

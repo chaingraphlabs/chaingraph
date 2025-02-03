@@ -37,6 +37,16 @@ import { ArrayPortPlugin } from '../plugins/ArrayPortPlugin'
  *   console.log(arrayPort.getValue()?.value[0].value) // => 'one'
  */
 export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<ArrayPortConfig<Item>> {
+  constructor(config: ArrayPortConfig<Item>) {
+    const defaultUi = {
+      bgColor: '#1acbe8',
+      borderColor: '#0f4852',
+    }
+
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * Retrieves the default value from the configuration.
    * If a defaultValue is provided in the config, it is returned;
