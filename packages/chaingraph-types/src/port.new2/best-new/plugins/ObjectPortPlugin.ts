@@ -25,10 +25,10 @@ import { validateStringValue } from './StringPortPlugin'
  * Helper to create an object port value.
  * (Uses the "schema.properties" field for nested values)
  */
-export function createObjectValue(value: Record<string, IPortValue>): ObjectPortValue {
+export function createObjectValue<S extends ObjectSchema = ObjectSchema>(value: Record<string, IPortValue>): ObjectPortValue {
   return {
     type: 'object',
-    value: value as ObjectPortValueFromSchema<ObjectSchema<Record<string, IPortConfig>>>,
+    value: value as ObjectPortValueFromSchema<S>,
   }
 }
 

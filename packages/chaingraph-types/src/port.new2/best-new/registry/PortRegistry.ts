@@ -6,22 +6,13 @@ import type {
   PortType,
   ValueTypeMap,
 } from '../base/types'
+import { basePortConfigUISchema } from '@chaingraph/types/port.new2/best-new/base/base-config.schema'
 import { z } from 'zod'
 import {
   buildUnion,
   PortError,
   PortErrorType,
 } from '../base/types'
-
-// Create default schemas that match the expected types but never validate
-const defaultConfigSchema = z.object({
-  type: z.literal('string'),
-  id: z.string().optional(),
-  name: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
-}).transform(() => {
-  throw new Error('Default schema should never match')
-}) as z.ZodType<IPortConfig>
 
 const defaultValueSchema = z.object({
   type: z.literal('string'),
@@ -75,7 +66,7 @@ export class PortRegistry {
    */
   getConfigUnionSchema(): z.ZodType<IPortConfig> {
     const schemas = this.getAllPlugins().map(plugin => plugin.configSchema)
-    return buildUnion(schemas, defaultConfigSchema)
+    return buildUnion(schemas, basePortConfigUISchema)
   }
 
   /**
