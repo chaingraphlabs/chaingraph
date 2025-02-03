@@ -1,3 +1,4 @@
+import type { JSONValue } from '../base/json'
 import type {
   ArrayPortConfig,
   ArrayPortValue,
@@ -7,11 +8,8 @@ import type {
   PortType,
 } from '../base/types'
 import { z } from 'zod'
-import { type JSONValue, JSONValueSchema } from '../base/json'
-import {
-  PortError,
-  PortErrorType,
-} from '../base/types'
+import { basePortConfigSchema } from '../base/base-config.schema'
+import { PortError, PortErrorType } from '../base/types'
 import { portRegistry } from '../registry/PortRegistry'
 
 /**
@@ -62,6 +60,11 @@ export function validateArrayValue(
   return errors
 }
 
+/**
+ * Schemas for array port validation
+ */
+
+// Value schema for array ports
 const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
   z.object({
     type: z.literal('array'),
@@ -81,35 +84,36 @@ const valueSchema: z.ZodType<ArrayPortValue> = z.lazy(() =>
   }).passthrough(),
 )
 
-// Create lazy schemas for recursive types
-const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
-  z.object({
-    type: z.literal('array'),
-    id: z.string().optional(),
-    name: z.string().optional(),
-    metadata: z.record(z.string(), JSONValueSchema).optional(),
-    defaultValue: valueSchema.optional(),
-    itemConfig: z.custom<IPortConfig>((val) => {
-      if (
-        typeof val !== 'object'
-        || val === null
-        || !('type' in val)
-        || typeof (val as any).type !== 'string'
-      ) {
-        return false
-      }
-      // Retrieve the corresponding plugin from the registry
-      const plugin = portRegistry.getPlugin((val as any).type as PortType)
-      if (!plugin) {
-        return false
-      }
-      // Validate the itemConfig using the plugin's own configSchema
-      const result = plugin.configSchema.safeParse(val)
-      return result.success
-    }, { message: 'Invalid itemConfig: must be a valid port configuration' }),
-    minLength: z.number().int().min(0).optional(),
-    maxLength: z.number().int().min(1).optional(),
-  }).passthrough().superRefine((data, ctx) => {
+// Array-specific schema
+const arraySpecificSchema = z.object({
+  type: z.literal('array'),
+  defaultValue: valueSchema.optional(),
+  itemConfig: z.custom<IPortConfig>((val) => {
+    if (
+      typeof val !== 'object'
+      || val === null
+      || !('type' in val)
+      || typeof (val as any).type !== 'string'
+    ) {
+      return false
+    }
+    // Retrieve the corresponding plugin from the registry
+    const plugin = portRegistry.getPlugin((val as any).type as PortType)
+    if (!plugin) {
+      return false
+    }
+    // Validate the itemConfig using the plugin's own configSchema
+    const result = plugin.configSchema.safeParse(val)
+    return result.success
+  }, { message: 'Invalid itemConfig: must be a valid port configuration' }),
+  minLength: z.number().int().min(0).optional(),
+  maxLength: z.number().int().min(1).optional(),
+}).passthrough()
+
+// Merge base schema with array-specific schema to create the final config schema
+const configSchema: z.ZodType<ArrayPortConfig> = basePortConfigSchema
+  .merge(arraySpecificSchema)
+  .superRefine((data, ctx) => {
     // Validate minLength/maxLength relationship
     if (data.minLength !== undefined && data.maxLength !== undefined) {
       if (data.minLength > data.maxLength) {
@@ -120,8 +124,7 @@ const configSchema: z.ZodType<ArrayPortConfig> = z.lazy(() =>
         })
       }
     }
-  }),
-)
+  })
 
 /**
  * Plugin implementation for array ports
@@ -266,7 +269,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
     // Validate the configuration using the Zod schema.
     const result = configSchema.safeParse(config)
     if (!result.success) {
-      return result.error.errors.map(issue => issue.message)
+      return result.error.errors.map((issue: z.ZodIssue) => issue.message)
     }
 
     return []

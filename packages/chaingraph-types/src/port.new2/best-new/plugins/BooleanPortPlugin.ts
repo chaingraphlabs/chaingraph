@@ -1,15 +1,36 @@
+import type { JSONValue } from '../base/json'
 import type {
   BooleanPortConfig,
   BooleanPortValue,
   IPortPlugin,
 } from '../base/types'
 import { z } from 'zod'
-import { type JSONValue, JSONValueSchema } from '../base/json'
+import { basePortConfigSchema } from '../base/base-config.schema'
 import {
   isBooleanPortValue,
   PortError,
   PortErrorType,
 } from '../base/types'
+
+/**
+ * Schemas for boolean port validation
+ */
+
+// Value schema for boolean ports
+const valueSchema: z.ZodType<BooleanPortValue> = z.object({
+  type: z.literal('boolean'),
+  value: z.boolean(),
+}).passthrough()
+
+// Boolean-specific schema
+const booleanSpecificSchema = z.object({
+  type: z.literal('boolean'),
+  defaultValue: valueSchema.optional(),
+}).passthrough()
+
+// Merge base schema with boolean-specific schema to create the final config schema
+const configSchema: z.ZodType<BooleanPortConfig> = basePortConfigSchema
+  .merge(booleanSpecificSchema)
 
 /**
  * Helper to create a boolean port value
@@ -30,25 +51,6 @@ export function createBooleanConfig(options: Partial<Omit<BooleanPortConfig, 'ty
     ...options,
   }
 }
-
-/**
- * Boolean port value schema
- */
-const valueSchema = z.object({
-  type: z.literal('boolean'),
-  value: z.boolean(),
-}).passthrough()
-
-/**
- * Boolean port configuration schema
- */
-const configSchema = z.object({
-  type: z.literal('boolean'),
-  id: z.string().optional(),
-  name: z.string().optional(),
-  metadata: z.record(z.string(), JSONValueSchema).optional(),
-  defaultValue: valueSchema.optional(),
-}).passthrough()
 
 /**
  * Boolean port plugin implementation
@@ -137,7 +139,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
   validateConfig: (config: BooleanPortConfig): string[] => {
     const result = configSchema.safeParse(config)
     if (!result.success) {
-      return result.error.errors.map(issue => issue.message)
+      return result.error.errors.map((issue: z.ZodIssue) => issue.message)
     }
     return []
   },

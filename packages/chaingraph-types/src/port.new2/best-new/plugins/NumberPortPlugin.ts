@@ -1,3 +1,4 @@
+import type { JSONValue } from '../base/json'
 import type {
   IPortPlugin,
   NumberPortConfig,
@@ -5,11 +6,64 @@ import type {
 } from '../base/types'
 import Decimal from 'decimal.js'
 import { z } from 'zod'
-import { type JSONValue, JSONValueSchema } from '../base/json'
+import { basePortConfigSchema } from '../base/base-config.schema'
 import {
   PortError,
   PortErrorType,
 } from '../base/types'
+
+/**
+ * Schemas for number port validation
+ */
+
+// Value schema for number ports
+const valueSchema: z.ZodType<NumberPortValue> = z.object({
+  type: z.literal('number'),
+  value: z.number(),
+}).passthrough()
+
+// Number-specific schema
+const numberSpecificSchema = z.object({
+  type: z.literal('number'),
+  defaultValue: valueSchema.optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  step: z.number().positive().optional(),
+  integer: z.boolean().optional(),
+}).passthrough()
+
+// Merge base schema with number-specific schema to create the final config schema
+const configSchema: z.ZodType<NumberPortConfig> = basePortConfigSchema
+  .merge(numberSpecificSchema)
+  .superRefine((data, ctx) => {
+    // Validate min/max relationship
+    if (data.min !== undefined && data.max !== undefined) {
+      const minDec = new Decimal(data.min)
+      const maxDec = new Decimal(data.max)
+      if (minDec.gt(maxDec)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `min (${data.min}) must be less than or equal to max (${data.max})`,
+          path: ['min'],
+        })
+      }
+    }
+
+    // Validate step alignment with range
+    if (data.step !== undefined && data.min !== undefined && data.max !== undefined) {
+      const minDec = new Decimal(data.min)
+      const maxDec = new Decimal(data.max)
+      const stepDec = new Decimal(data.step)
+      const range = maxDec.sub(minDec)
+      if (!range.mod(stepDec).equals(0)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `step (${data.step}) must divide range (${range.toNumber()}) evenly`,
+          path: ['step'],
+        })
+      }
+    }
+  })
 
 /**
  * Type guard for number value
@@ -72,54 +126,6 @@ function isAlignedWithStep(
   // The remainder of offset divided by step must equal zero.
   return offset.mod(step).equals(0)
 }
-
-/**
- * Number port value schema
- */
-const valueSchema = z.object({
-  type: z.literal('number'),
-  value: z.number(),
-}).passthrough()
-
-/**
- * Number port configuration schema
- */
-const configSchema = z.object({
-  type: z.literal('number'),
-  id: z.string().optional(),
-  name: z.string().optional(),
-  defaultValue: valueSchema.optional(),
-  metadata: z.record(z.string(), JSONValueSchema).optional(),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  step: z.number().positive().optional(),
-  integer: z.boolean().optional(),
-}).passthrough().superRefine((data, ctx) => {
-  if (data.min !== undefined && data.max !== undefined) {
-    const minDec = new Decimal(data.min)
-    const maxDec = new Decimal(data.max)
-    if (minDec.gt(maxDec)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `min (${data.min}) must be less than or equal to max (${data.max})`,
-        path: ['min'],
-      })
-    }
-  }
-  if (data.step !== undefined && data.min !== undefined && data.max !== undefined) {
-    const minDec = new Decimal(data.min)
-    const maxDec = new Decimal(data.max)
-    const stepDec = new Decimal(data.step)
-    const range = maxDec.sub(minDec)
-    if (!range.mod(stepDec).equals(0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `step (${data.step}) must divide range (${range.toNumber()}) evenly`,
-        path: ['step'],
-      })
-    }
-  }
-})
 
 /**
  * Validates a number port value against its configuration using Decimal.js.

@@ -1,10 +1,11 @@
+import type { JSONValue } from '../base/json'
 import type {
   IPortPlugin,
   StringPortConfig,
   StringPortValue,
 } from '../base/types'
 import { z } from 'zod'
-import { type JSONValue, JSONValueSchema } from '../base/json'
+import { basePortConfigSchema } from '../base/base-config.schema'
 import {
   PortError,
   PortErrorType,
@@ -96,16 +97,17 @@ const valueSchema = z.object({
 /**
  * String port configuration schema
  */
-const configSchema = z.object({
+// String-specific schema
+const stringSpecificSchema = z.object({
   type: z.literal('string'),
-  id: z.string().optional(),
-  name: z.string().optional(),
-  metadata: z.record(z.string(), JSONValueSchema).optional(),
   defaultValue: valueSchema.optional(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
   pattern: z.string().optional(),
-}).passthrough().superRefine((data, ctx) => {
+}).passthrough()
+
+// Merge base schema with string-specific schema
+const configSchema = basePortConfigSchema.merge(stringSpecificSchema).superRefine((data, ctx) => {
   // Validate minLength/maxLength relationship
   if (data.minLength !== undefined && data.maxLength !== undefined) {
     if (data.minLength > data.maxLength) {

@@ -7,6 +7,7 @@ import type {
   StreamPortValue,
 } from '../base/types'
 import { z } from 'zod'
+import { basePortConfigSchema } from '../base/base-config.schema'
 import { JSONValueSchema } from '../base/json'
 import {
   isStreamPortValue,
@@ -71,13 +72,10 @@ const valueSchema: z.ZodType<StreamPortValue> = z.object({
 }).passthrough()
 
 /**
- * Stream port configuration schema
+ * Stream-specific schema
  */
-const configSchema: z.ZodType<StreamPortConfig> = z.object({
+const streamSpecificSchema = z.object({
   type: z.literal('stream'),
-  id: z.string().optional(),
-  name: z.string().optional(),
-  metadata: z.record(z.string(), JSONValueSchema).optional(),
   defaultValue: valueSchema.optional(),
   itemConfig: z.custom<IPortConfig>((val) => {
     if (
@@ -95,6 +93,11 @@ const configSchema: z.ZodType<StreamPortConfig> = z.object({
     message: 'Invalid item config type',
   }),
 }).passthrough()
+
+/**
+ * Merge base schema with stream-specific schema to create the final config schema
+ */
+const configSchema: z.ZodType<StreamPortConfig> = basePortConfigSchema.merge(streamSpecificSchema)
 
 /**
  * Stream port plugin implementation
@@ -306,7 +309,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
   validateConfig: (config: StreamPortConfig): string[] => {
     const result = configSchema.safeParse(config)
     if (!result.success) {
-      return ['Invalid stream configuration structure']
+      return result.error.errors.map((issue: z.ZodIssue) => issue.message)
     }
 
     return []

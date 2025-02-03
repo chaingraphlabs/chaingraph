@@ -40,6 +40,31 @@ export interface BasePortConfig extends JSONObject {
   name?: string
   metadata?: Record<string, JSONValue>
   required?: boolean
+  parentId?: string
+  nodeId?: string
+  key?: string
+  title?: string
+  description?: string
+  direction?: 'input' | 'output'
+  ui?: BasePortConfigUI
+}
+
+export interface BasePortConfigUI extends JSONObject {
+  // hide the port in the UI
+  hidden?: boolean
+
+  // disable the editor
+  disabled?: boolean
+
+  // hide the editor
+  hideEditor?: boolean
+
+  // hide the port circle
+  hidePort?: boolean
+
+  // color for the port circle
+  bgColor?: string
+  borderColor?: string
 }
 
 /**
@@ -51,6 +76,12 @@ export interface StringPortConfig extends BasePortConfig {
   minLength?: number
   maxLength?: number
   pattern?: string
+  ui?: BasePortConfigUI & StringPortConfigUI
+}
+
+export interface StringPortConfigUI {
+  isTextArea?: boolean
+  isPassword?: boolean
 }
 
 /**
@@ -63,6 +94,13 @@ export interface NumberPortConfig extends BasePortConfig {
   max?: number
   step?: number
   integer?: boolean
+  ui?: BasePortConfigUI & NumberPortConfigUI
+}
+
+export interface NumberPortConfigUI {
+  isSlider?: boolean
+  leftSliderLabel?: string
+  rightSliderLabel?: string
 }
 
 /**
@@ -76,6 +114,24 @@ export interface ArrayPortConfig<
   defaultValue?: ArrayPortValue<Item>
   minLength?: number
   maxLength?: number
+  ui?: BasePortConfigUI & ArrayPortConfigUI
+}
+
+export interface ArrayPortConfigUI {
+  // needs to show an add item form
+  addItemFormHidden?: boolean
+
+  // spoiler state for the add item form
+  // true: form is hidden
+  // false: form is shown
+  addItemFormSpoilerState?: boolean
+
+  // if the items are deletable through the UI
+  itemDeletable?: boolean
+
+  // enumValues is an array of possible values for
+  // the array if the itemConfig is not provided yet
+  enumValues?: PortType[]
 }
 
 /**
@@ -85,6 +141,20 @@ export interface ObjectPortConfig<S extends ObjectSchema = ObjectSchema> extends
   type: 'object'
   schema: S
   defaultValue?: ObjectPortValue<S>
+  ui?: BasePortConfigUI & ObjectPortConfigUI
+}
+
+export interface ObjectPortConfigUI {
+  // needs to show an add key form
+  addKeyFormHidden?: boolean
+
+  // spoiler state for the add key form
+  // true: form is hidden
+  // false: form is shown
+  addKeyFormSpoilerState?: boolean
+
+  // if the keys are deletable through the UI
+  keyDeletable?: boolean
 }
 
 /**
@@ -106,6 +176,11 @@ export interface StreamPortConfig<Item extends IPortConfig = IPortConfig> extend
   type: 'stream'
   itemConfig: Item
   defaultValue?: StreamPortValue<Item>
+  ui?: BasePortConfigUI & StreamPortConfigUI
+}
+
+export interface StreamPortConfigUI {
+  // nothing yet
 }
 
 /**
@@ -114,6 +189,11 @@ export interface StreamPortConfig<Item extends IPortConfig = IPortConfig> extend
 export interface BooleanPortConfig extends BasePortConfig {
   type: 'boolean'
   defaultValue?: BooleanPortValue
+  ui?: BasePortConfigUI & BooleanPortConfigUI
+}
+
+export interface BooleanPortConfigUI {
+  // nothing yet
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { JSONValue } from '../base/json'
 import type {
   IPortConfig,
   IPortPlugin,
@@ -9,7 +10,7 @@ import type {
   PortType,
 } from '../base/types'
 import { z } from 'zod'
-import { type JSONValue, JSONValueSchema } from '../base/json'
+import { basePortConfigSchema } from '../base/base-config.schema'
 import {
   isObjectPortValue,
   PortError,
@@ -21,7 +22,7 @@ import { validateStringValue } from './StringPortPlugin'
 
 /**
  * Helper to create an object port value.
- * (Uses the “schema.properties” field for nested values)
+ * (Uses the "schema.properties" field for nested values)
  */
 export function createObjectValue(value: Record<string, IPortValue>): ObjectPortValue {
   return {
@@ -32,7 +33,7 @@ export function createObjectValue(value: Record<string, IPortValue>): ObjectPort
 
 /**
  * Helper to create an object port config.
- * Instead of passing “fields”, provide a record of properties that becomes the schema.
+ * Instead of passing "fields", provide a record of properties that becomes the schema.
  */
 export function createObjectConfig(
   properties: Record<string, IPortConfig>,
@@ -65,7 +66,7 @@ function isValidFieldValue(value: unknown): value is IPortValue {
 
 /**
  * Validate field value against its config.
- * When a field is of type "object", we now use the “schema.properties” property
+ * When a field is of type "object", we now use the "schema.properties" property
  * for the nested fields.
  */
 function validateField(
@@ -106,7 +107,7 @@ function validateField(
         }
         break
       case 'object': {
-        // For object port type, we now check the “schema” property.
+        // For object port type, we now check the "schema" property.
         if (fieldValue.type === fieldConfig.type && 'schema' in fieldConfig) {
           const objectConfig = fieldConfig as ObjectPortConfig
           const objectValue = fieldValue as ObjectPortValue
@@ -138,7 +139,7 @@ function validateField(
       }
       default:
         {
-        // For other port types, use the plugin’s Zod schema validation.
+        // For other port types, use the plugin's Zod schema validation.
           const schemaResult = plugin.valueSchema.safeParse(fieldValue)
           if (!schemaResult.success) {
             for (const issue of schemaResult.error.errors) {
@@ -195,37 +196,6 @@ export function validateObjectValue(
 }
 
 /**
- * Object port configuration schema using Zod.
- * Notice that the object’s config is now defined with a “schema” property having “properties”.
- */
-const configSchema: z.ZodType<ObjectPortConfig> = z.lazy(() =>
-  z.object({
-    type: z.literal('object'),
-    id: z.string().optional(),
-    name: z.string().optional(),
-    metadata: z.record(z.string(), JSONValueSchema).optional(),
-    schema: z.object({
-      properties: z.record(z.custom<IPortConfig>((val) => {
-        if (
-          typeof val !== 'object'
-          || val === null
-          || !('type' in val)
-          || typeof (val as { type: unknown }).type !== 'string'
-        ) {
-          return false
-        }
-        const plugin = portRegistry.getPlugin((val as { type: string }).type as PortType)
-        if (!plugin) {
-          return false
-        }
-        const result = plugin.configSchema.safeParse(val)
-        return result.success
-      })),
-    }).passthrough(),
-  }).passthrough(),
-)
-
-/**
  * Object port value schema using Zod.
  */
 const valueSchema: z.ZodType<ObjectPortValue> = z.lazy(() =>
@@ -246,6 +216,37 @@ const valueSchema: z.ZodType<ObjectPortValue> = z.lazy(() =>
     })),
   }).passthrough(),
 )
+
+/**
+ * Object-specific schema
+ */
+const objectSpecificSchema = z.object({
+  type: z.literal('object'),
+  schema: z.object({
+    properties: z.record(z.custom<IPortConfig>((val) => {
+      if (
+        typeof val !== 'object'
+        || val === null
+        || !('type' in val)
+        || typeof (val as { type: unknown }).type !== 'string'
+      ) {
+        return false
+      }
+      const plugin = portRegistry.getPlugin((val as { type: string }).type as PortType)
+      if (!plugin) {
+        return false
+      }
+      const result = plugin.configSchema.safeParse(val)
+      return result.success
+    })),
+  }).passthrough(),
+  defaultValue: valueSchema.optional(),
+}).passthrough()
+
+/**
+ * Merge base schema with object-specific schema to create the final config schema
+ */
+const configSchema: z.ZodType<ObjectPortConfig> = basePortConfigSchema.merge(objectSpecificSchema)
 
 /**
  * Object port plugin implementation.
@@ -334,7 +335,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
   },
   serializeConfig: (config: ObjectPortConfig): JSONValue => {
     try {
-      // Serialize each field’s config using its corresponding plugin.
+      // Serialize each field's config using its corresponding plugin.
       const serializedFields: Record<string, JSONValue> = {}
       for (const [key, fieldConfig] of Object.entries(config.schema.properties)) {
         const plugin = portRegistry.getPlugin(fieldConfig.type)
@@ -372,7 +373,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         )
       }
 
-      // Deserialize each field’s config using its corresponding plugin,
+      // Deserialize each field's config using its corresponding plugin,
       // iterating over the schema.properties.
       const deserializedFields: Record<string, IPortConfig> = {}
       for (const [key, fieldConfig] of Object.entries(result.data.schema.properties)) {
@@ -409,7 +410,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
     // Validate the overall object config using the Zod schema.
     const result = configSchema.safeParse(config)
     if (!result.success) {
-      errors.push(...result.error.errors.map(issue => issue.message))
+      errors.push(...result.error.errors.map((issue: z.ZodIssue) => issue.message))
     }
 
     // Validate each field's configuration by delegating to the plugin's own config validation (if available).
