@@ -107,8 +107,10 @@ export function validateEnumValue(
     .map(option => option.id)
     .filter((id): id is string => typeof id === 'string')
 
-  if (!validOptionIds.includes(value.value)) {
-    errors.push(`Value must be one of the valid option ids: ${validOptionIds.join(', ')}`)
+  if (value.value !== undefined) {
+    if (!validOptionIds.includes(value.value)) {
+      errors.push(`Value must be one of the valid option ids: ${validOptionIds.join(', ')}`)
+    }
   }
 
   return errors

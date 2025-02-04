@@ -1,3 +1,4 @@
+import type { IPort } from '@chaingraph/types/port-new/base'
 import type {
   AnyPortConfig,
   ArrayPortConfig,
@@ -10,9 +11,9 @@ import type {
   StreamPortConfig,
   StringPortConfig,
 } from '../base/types'
-import { PortError, PortErrorType, PortType,
-} from '../base/types'
 
+import { PortError, PortErrorType,
+} from '../base/types'
 import { AnyPort } from '../instances/AnyPort'
 import { ArrayPort } from '../instances/ArrayPort'
 import { BooleanPort } from '../instances/BooleanPort'
@@ -61,28 +62,28 @@ export class PortFactory {
       )
     }
     switch (config.type) {
-      case PortType.String: {
+      case 'string': {
         return new StringPort(config as StringPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Number: {
+      case 'number': {
         return new NumberPort(config as NumberPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Boolean: {
+      case 'boolean': {
         return new BooleanPort(config as BooleanPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Array: {
+      case 'array': {
         return new ArrayPort(config as ArrayPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Object: {
+      case 'object': {
         return new ObjectPort(config as ObjectPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Stream: {
+      case 'stream': {
         return new StreamPort(config as StreamPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Enum: {
+      case 'enum': {
         return new EnumPort(config as EnumPortConfig) as PortInstanceFromConfig<T>
       }
-      case PortType.Any: {
+      case 'any': {
         return new AnyPort(config as AnyPortConfig) as PortInstanceFromConfig<T>
       }
       default:
@@ -96,8 +97,8 @@ export class PortFactory {
   /**
    * For dynamic or legacy code – create a port instance from an untyped configuration.
    */
-  static createFromConfig(config: IPortConfig): SupportedPortInstance {
-    return PortFactory.create(config)
+  static createFromConfig(config: IPortConfig): IPort {
+    return PortFactory.create(config) as IPort
   }
 
   // –– Convenience methods preserve the more specific types ––

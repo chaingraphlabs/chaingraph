@@ -5,6 +5,7 @@ import type {
   StringPortConfig,
   StringPortValue,
 } from '../base/types'
+import { mutableUnwrapPortValue } from '@chaingraph/types/port-new/base'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createObjectPortConfig, createObjectSchema, ObjectPort } from '../instances/ObjectPort'
 import { ArrayPortPlugin, createObjectValue, NumberPortPlugin, ObjectPortPlugin, StringPortPlugin } from '../plugins'
@@ -73,6 +74,138 @@ describe('objectPort Instance', () => {
   })
 
   describe('nested Structures', () => {
+    it('should validate a complex object port with nested object fields and infer types', () => {
+      // Build the tag schema and config:
+      const tagSchema = createObjectSchema({
+        lol: { type: 'string' } as StringPortConfig,
+        kek: { type: 'string' } as StringPortConfig,
+      })
+
+      const tagConfig = createObjectPortConfig<typeof tagSchema>({
+        type: 'object',
+        schema: tagSchema,
+        defaultValue: {
+          type: 'object',
+          value: {
+            lol: { type: 'string', value: 'lol' },
+            kek: { type: 'string', value: 'kek' },
+          },
+        },
+      })
+
+      // Build user schema and config with nested objects and an array of tags:
+      const userSchema = createObjectSchema({
+        name: { type: 'string', minLength: 2 },
+        age: { type: 'number', min: 21 },
+        address: {
+          type: 'object',
+          schema: createObjectSchema({
+            street: { type: 'string' },
+            city: { type: 'string' },
+            state: { type: 'string' },
+            tags: {
+              type: 'array',
+              itemConfig: tagConfig,
+            } as ArrayPortConfig<typeof tagConfig>,
+          }),
+        },
+      })
+
+      const userConfig = createObjectPortConfig({
+        type: 'object',
+        schema: userSchema,
+        defaultValue: {
+          type: 'object',
+          value: {
+            name: { type: 'string', value: 'Alice' },
+            age: { type: 'number', value: 30 },
+            address: {
+              type: 'object',
+              value: {
+                street: { type: 'string', value: '123 Main St' },
+                city: { type: 'string', value: 'Springfield' },
+                state: { type: 'string', value: 'IL' },
+                tags: {
+                  type: 'array',
+                  value: [
+                    {
+                      type: 'object',
+                      value: {
+                        lol: { type: 'string', value: 'lol' },
+                        kek: { type: 'string', value: 'kek' },
+                      },
+                    },
+                    {
+                      type: 'object',
+                      value: {
+                        lol: { type: 'string', value: 'lol2' },
+                        kek: { type: 'string', value: 'kek2' },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      })
+
+      const userPort = new ObjectPort(userConfig)
+      // We still log some raw access for demonstration.
+      console.log(userPort.getValue()?.value.name.value) // 'Alice'
+      console.log(userPort.getValue()?.value.address.value.state.value) // 'IL'
+
+      // IMPORTANT: Use the original port structure (userPort.getValue()) with mutableUnwrapPortValue.
+      const mutableUnwrappedValue = mutableUnwrapPortValue(userPort.getValue())
+      if (!mutableUnwrappedValue) {
+        throw new Error('Expected mutable unwrapped value to be defined')
+      }
+
+      // Update nested field via the mutable proxy.
+      mutableUnwrappedValue.address.tags[0].lol = 'new value lol'
+
+      // Expect that the underlying port structure has been updated.
+      expect(userPort.getValue()?.value.address.value.tags.value[0].value.lol.value).toBe('new value lol')
+
+      // replace whole array item
+      mutableUnwrappedValue.address.tags[0] = {
+        lol: 'check this one lol',
+        kek: 'check this one kek',
+      }
+
+      // Expect that the underlying port structure has been updated.
+      expect(userPort.getValue()?.value.address.value.tags.value[0].value.lol.value).toBe('check this one lol')
+
+      // replace whole array
+      mutableUnwrappedValue.address.tags = [
+        {
+          lol: 'new lol',
+          kek: 'new kek',
+        },
+      ]
+      expect(userPort.getValue()?.value.address.value.tags.value[0].value.lol.value).toBe('new lol')
+      expect(userPort.getValue()?.value.address.value.tags.value[0].value.kek.value).toBe('new kek')
+
+      // replace whole object
+      mutableUnwrappedValue.address = {
+        street: 'new street',
+        city: 'new city',
+        state: 'new state',
+        tags: [
+          {
+            lol: 'new lol replaced',
+            kek: 'new kek replaced',
+          },
+        ],
+      }
+
+      expect(userPort.getValue()?.value.address.value.street.value).toBe('new street')
+      expect(userPort.getValue()?.value.address.value.city.value).toBe('new city')
+      expect(userPort.getValue()?.value.address.value.state.value).toBe('new state')
+      expect(userPort.getValue()?.value.address.value.tags.value[0].value.lol.value).toBe('new lol replaced')
+      expect(userPort.getValue()?.value.address.value.tags.value[0].value.kek.value).toBe('new kek replaced')
+    })
+
     it('should validate a complex object port with nested object fields', () => {
       // Create a nested schema: the "address" field itself is an object.
       const addressSchema = createObjectSchema({
@@ -89,22 +222,31 @@ describe('objectPort Instance', () => {
         }),
       })
 
-      const config = createObjectPortConfig({
+      const config = createObjectPortConfig<typeof schema>({
         type: 'object',
         schema,
-        defaultValue: createObjectValue({
-          name: { type: 'string', value: 'Charlie' },
-          age: { type: 'number', value: 30 },
-          address: createObjectValue({
-            street: { type: 'string', value: '123 Main St' },
-            city: { type: 'string', value: 'New York' },
-          }),
-        }),
+        defaultValue: {
+          type: 'object',
+          value: {
+            name: { type: 'string', value: 'Charlie' },
+            age: { type: 'number', value: 30 },
+            address: {
+              type: 'object',
+              value: {
+                street: { type: 'string', value: '123 Main St' },
+                city: { type: 'string', value: 'New York' },
+              },
+            },
+          },
+        },
       })
 
-      const port = new ObjectPort(config)
+      const port = new ObjectPort<typeof schema>(config)
       const errors = ObjectPortPlugin.validateValue(port.getValue()!, config)
       expect(errors).toHaveLength(0)
+
+      expect(port.getValue()?.value.address.value.city.value, 'New York')
+      expect(port.getValue()?.value.address.value.street.value, '123 Main St')
 
       // Now introduce an error inside the nested object:
       // Use a too-short city name.

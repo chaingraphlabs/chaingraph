@@ -1,4 +1,4 @@
-import type { JSONObject, JSONValue } from './json'
+import type { JSONValue } from './json'
 
 import type {
   ArrayPortConfigUIType,
@@ -60,8 +60,7 @@ export enum PortDirection {
 /**
  * Base interface for all port configurations
  */
-export interface BasePortConfig extends JSONObject {
-  type: PortType
+export interface BasePortConfig { // extends JSONObject
   id?: string
   name?: string
   metadata?: Record<string, JSONValue>
@@ -107,7 +106,7 @@ export interface ArrayPortConfig<
   Item extends IPortConfig = IPortConfig,
 > extends BasePortConfig {
   type: 'array'
-  itemConfig: Item
+  itemConfig: IPortConfig
   defaultValue?: ArrayPortValue<Item>
   minLength?: number
   maxLength?: number
@@ -273,6 +272,8 @@ export type IPortValue =
   | StreamPortValue<any>
   | EnumPortValue
   | AnyPortValue
+
+export type PortConfigByType<T extends PortType> = ConfigTypeMap[T]
 
 /**
  * Type mapping for configs
