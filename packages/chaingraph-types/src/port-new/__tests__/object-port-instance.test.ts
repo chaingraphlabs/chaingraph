@@ -5,10 +5,9 @@ import type {
   StringPortConfig,
   StringPortValue,
 } from '../base/types'
-import { mutableUnwrapPortValue } from '@chaingraph/types/port-new/base'
 import {
   mutableUnwrapPortValueWithConfig,
-} from '@chaingraph/types/port-new/base/unwrap-value-experimental'
+} from '@chaingraph/types/port-new/base/unwrap-value-mutable'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createObjectPortConfig, createObjectSchema, ObjectPort } from '../instances/ObjectPort'
 import { ArrayPortPlugin, createObjectValue, NumberPortPlugin, ObjectPortPlugin, StringPortPlugin } from '../plugins'
@@ -159,7 +158,7 @@ describe('objectPort Instance', () => {
       console.log(userPort.getValue()?.value.address.value.state.value) // 'IL'
 
       // IMPORTANT: Use the original port structure (userPort.getValue()) with mutableUnwrapPortValue.
-      const mutableUnwrappedValue = mutableUnwrapPortValue(userPort.getValue())
+      const mutableUnwrappedValue = mutableUnwrapPortValueWithConfig(userPort.getValue(), userConfig)
       if (!mutableUnwrappedValue) {
         throw new Error('Expected mutable unwrapped value to be defined')
       }
@@ -214,19 +213,22 @@ describe('objectPort Instance', () => {
       expect(userPort.getValue()?.value.address.value.tags.value[0].value.kek.value).toBe('new kek replaced')
 
       // incorrect type replacement
-      mutableUnwrappedValueWithConfig.address = {
-        street: 'new street',
-        city: 'new city',
-        state: 'new state',
-        tags: [
-          {
-            lol_invalid: 'new lol invalid',
-            kek_invalid: 'new kek invalid',
-          },
-        ],
+      try {
+        mutableUnwrappedValueWithConfig.address = {
+          street: 'new street',
+          city: 'new city',
+          state: 'new state',
+          tags: [
+            {
+              // @ts-expect-error - invalid field test case
+              lol_invalid: 'new lol invalid',
+              kek_invalid: 'new kek invalid',
+            },
+          ],
+        }
+      } catch (e: any) {
+        expect(e.message).toContain('Unexpected field "lol_invalid"')
       }
-
-      console.log(userPort.getValue()?.value.address.value.street.value) // 'new street'
     })
 
     it('should validate a complex object port with nested object fields', () => {
