@@ -6,6 +6,9 @@ import type {
   StringPortValue,
 } from '../base/types'
 import { mutableUnwrapPortValue } from '@chaingraph/types/port-new/base'
+import {
+  mutableUnwrapPortValueWithConfig,
+} from '@chaingraph/types/port-new/base/unwrap-value-experimental'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createObjectPortConfig, createObjectSchema, ObjectPort } from '../instances/ObjectPort'
 import { ArrayPortPlugin, createObjectValue, NumberPortPlugin, ObjectPortPlugin, StringPortPlugin } from '../plugins'
@@ -186,8 +189,13 @@ describe('objectPort Instance', () => {
       expect(userPort.getValue()?.value.address.value.tags.value[0].value.lol.value).toBe('new lol')
       expect(userPort.getValue()?.value.address.value.tags.value[0].value.kek.value).toBe('new kek')
 
+      const mutableUnwrappedValueWithConfig = mutableUnwrapPortValueWithConfig(userPort.getValue(), userConfig)
+      if (!mutableUnwrappedValueWithConfig) {
+        throw new Error('Expected mutable unwrapped value to be defined')
+      }
+
       // replace whole object
-      mutableUnwrappedValue.address = {
+      mutableUnwrappedValueWithConfig.address = {
         street: 'new street',
         city: 'new city',
         state: 'new state',
@@ -204,6 +212,21 @@ describe('objectPort Instance', () => {
       expect(userPort.getValue()?.value.address.value.state.value).toBe('new state')
       expect(userPort.getValue()?.value.address.value.tags.value[0].value.lol.value).toBe('new lol replaced')
       expect(userPort.getValue()?.value.address.value.tags.value[0].value.kek.value).toBe('new kek replaced')
+
+      // incorrect type replacement
+      mutableUnwrappedValueWithConfig.address = {
+        street: 'new street',
+        city: 'new city',
+        state: 'new state',
+        tags: [
+          {
+            lol_invalid: 'new lol invalid',
+            kek_invalid: 'new kek invalid',
+          },
+        ],
+      }
+
+      console.log(userPort.getValue()?.value.address.value.street.value) // 'new street'
     })
 
     it('should validate a complex object port with nested object fields', () => {
