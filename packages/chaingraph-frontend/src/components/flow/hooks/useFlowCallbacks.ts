@@ -2,6 +2,7 @@ import type { Position } from '@chaingraph/types/node/node-ui.ts'
 import type { Connection, Edge, EdgeChange, HandleType, NodeChange } from '@xyflow/react'
 import {
   $activeFlowMetadata,
+  $edges,
   $nodes,
   requestAddEdge,
   requestRemoveEdge,
@@ -10,6 +11,7 @@ import {
   updateNodeUI,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
+import { hasCycle } from '@chaingraph/types/flow/cycleDetection.ts'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'
 
@@ -20,6 +22,12 @@ export function useFlowCallbacks() {
   // const { flow } = useFlow()
   const activeFlow = useUnit($activeFlowMetadata)
   const nodes = useUnit($nodes)
+  const edges = useUnit($edges)
+
+  const edgeViews = edges.map(edge => ({
+    sourceNode: nodes[edge.sourceNodeId],
+    targetNode: nodes[edge.targetNodeId],
+  }))
 
   // Ref to track edge reconnection state
   const reconnectSuccessful = useRef(false)
@@ -31,34 +39,32 @@ export function useFlowCallbacks() {
     // Handle node changes (position, selection, etc)
     changes.forEach((change, i) => {
       switch (change.type) {
-        case 'position':
-          {
-            const node = nodes[change.id]
-            if (!node || !change.position || !change.position.x || !change.position.y) {
-              return
-            }
-            // check if the position is the same
-            const isSamePosition
-              = node.metadata.ui?.position?.x === change.position.x
+        case 'position': {
+          const node = nodes[change.id]
+          if (!node || !change.position || !change.position.x || !change.position.y) {
+            return
+          }
+          // check if the position is the same
+          const isSamePosition
+            = node.metadata.ui?.position?.x === change.position.x
               && node.metadata.ui?.position?.y === change.position.y
 
-            if (isSamePosition) {
-              return
-            }
-
-            positionInterpolator.clearNodeState(node.id)
-
-            updateNodePosition({
-              flowId: activeFlow.id!,
-              nodeId: change.id,
-              position: change.position as Position,
-              version: node.getVersion(),
-            })
+          if (isSamePosition) {
+            return
           }
+
+          positionInterpolator.clearNodeState(node.id)
+
+          updateNodePosition({
+            flowId: activeFlow.id!,
+            nodeId: change.id,
+            position: change.position as Position,
+            version: node.getVersion(),
+          })
+        }
           break
 
-        case 'dimensions':
-        {
+        case 'dimensions': {
           const node = nodes[change.id]
           if (!node)
             return
@@ -70,7 +76,7 @@ export function useFlowCallbacks() {
 
           const isSameDimensions
             = node.metadata.ui?.dimensions?.width === change.dimensions.width
-            && node.metadata.ui?.dimensions?.height === change.dimensions.height
+              && node.metadata.ui?.dimensions?.height === change.dimensions.height
 
           if (isSameDimensions) {
             return
@@ -100,31 +106,30 @@ export function useFlowCallbacks() {
           break
         }
 
-        case 'select':
-          {
-            const node = nodes[change.id]
-            if (!node)
-              return
+        case 'select': {
+          const node = nodes[change.id]
+          if (!node)
+            return
 
-            // check if the selection state is the same
-            const isSameSelection = node.metadata.ui?.state?.isSelected === change.selected
-            if (isSameSelection)
-              return
+          // check if the selection state is the same
+          const isSameSelection = node.metadata.ui?.state?.isSelected === change.selected
+          if (isSameSelection)
+            return
 
-            setNodeMetadata({
-              id: change.id,
-              metadata: {
-                ...node.metadata,
-                ui: {
-                  ...node.metadata.ui,
-                  state: {
-                    ...node.metadata.ui?.state,
-                    isSelected: change.selected,
-                  },
+          setNodeMetadata({
+            id: change.id,
+            metadata: {
+              ...node.metadata,
+              ui: {
+                ...node.metadata.ui,
+                state: {
+                  ...node.metadata.ui?.state,
+                  isSelected: change.selected,
                 },
               },
-            })
-          }
+            },
+          })
+        }
           break
 
         default:
@@ -161,6 +166,14 @@ export function useFlowCallbacks() {
     if (!activeFlow?.id || !connection.source || !connection.target)
       return
 
+    if (hasCycle(Object.values(nodes), edgeViews, {
+      sourceNode: nodes[connection.source],
+      targetNode: nodes[connection.target],
+    })) {
+      console.warn('Cycle detected')
+      return
+    }
+
     requestAddEdge({
       flowId: activeFlow.id,
       sourceNodeId: connection.source,
@@ -169,7 +182,7 @@ export function useFlowCallbacks() {
       targetPortId: connection.targetHandle!,
       metadata: {},
     })
-  }, [activeFlow?.id])
+  }, [activeFlow?.id, nodes, edgeViews])
 
   /**
    * Called when user starts dragging an edge handle
@@ -197,16 +210,9 @@ export function useFlowCallbacks() {
 
     // Create new edge if we have valid connection points
     if (newConnection.source && newConnection.target) {
-      requestAddEdge({
-        flowId: activeFlow.id,
-        sourceNodeId: newConnection.source,
-        sourcePortId: newConnection.sourceHandle!,
-        targetNodeId: newConnection.target,
-        targetPortId: newConnection.targetHandle!,
-        metadata: {},
-      })
+      onConnect(newConnection)
     }
-  }, [activeFlow?.id])
+  }, [activeFlow?.id, onConnect])
 
   /**
    * Called when edge reconnection interaction ends
