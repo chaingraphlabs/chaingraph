@@ -1,6 +1,11 @@
+import type { UnwrapPortValue } from '@chaingraph/types/port-new/base/unwrap-value'
 import type { IPort } from './IPort'
 import type { JSONValue } from './json'
 import type { ExtractValue, IPortConfig } from './types'
+import { unwrapPortValue } from '@chaingraph/types/port-new/base/unwrap-value'
+import {
+  mutableUnwrapPortValueWithConfig,
+} from '@chaingraph/types/port-new/base/unwrap-value-mutable'
 import { PortError, PortErrorType } from './types'
 
 export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {
@@ -24,6 +29,15 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
 
   getValue(): ExtractValue<C> | undefined {
     return this.value
+  }
+
+  plainValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
+    const value = this.getValue()
+    return value !== undefined ? unwrapPortValue(value) : undefined
+  }
+
+  mutableValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
+    return mutableUnwrapPortValueWithConfig(this.getValue(), this.config)
   }
 
   setValue(newValue: ExtractValue<C>): void {

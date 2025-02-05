@@ -1,10 +1,12 @@
+import type { IPortValue } from '@chaingraph/types/port-new/base/types'
+
 export type UnwrapPortValue<T> =
   T extends { value: infer V } ? UnwrapPortValue<V> :
     T extends Array<infer U> ? Array<UnwrapPortValue<U>> :
       T extends object ? { [K in keyof T]: UnwrapPortValue<T[K]> } :
         T
 
-export function unwrapPortValue<T>(portValue: T): UnwrapPortValue<T> {
+export function unwrapPortValue<T extends IPortValue>(portValue: T): UnwrapPortValue<T> {
   if (portValue && typeof portValue === 'object') {
     if ('value' in portValue) {
       // recursively unwrap if object has "value"

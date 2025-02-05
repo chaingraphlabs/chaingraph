@@ -30,7 +30,7 @@ export function unwrapPortValue<T>(portValue: T): UnwrapPortValue<T> {
 // -----------------------------------------------------------------------------
 // Wrapping helper functions (unchanged from previous refactor)
 
-function wrapPlainValueWithConfig(plain: any, cfg?: IPortConfig): any {
+export function wrapPlainValueWithConfig(plain: any, cfg?: IPortConfig): any {
   if (cfg) {
     switch (cfg.type) {
       case 'object':
@@ -51,7 +51,7 @@ function wrapPlainValueWithConfig(plain: any, cfg?: IPortConfig): any {
   }
 }
 
-function wrapPlainObjectWithConfig(obj: any, cfg?: IPortConfig): any {
+export function wrapPlainObjectWithConfig(obj: any, cfg?: IPortConfig): any {
   const result: any = {}
   if (cfg && cfg.type === 'object' && (cfg as any).schema && (cfg as any).schema.properties) {
     validatePlainObjectAgainstConfig(obj, cfg)
@@ -72,7 +72,7 @@ function wrapPlainObjectWithConfig(obj: any, cfg?: IPortConfig): any {
   return result
 }
 
-function wrapPlainArrayWithConfig(arr: any[], cfg: IPortConfig): any[] {
+export function wrapPlainArrayWithConfig(arr: any[], cfg: IPortConfig): any[] {
   const itemCfg = (cfg as any).itemConfig || undefined
   return arr.map(item => wrapPlainValueWithConfig(item, itemCfg))
 }
@@ -107,11 +107,15 @@ function createObjectTrap(cfg: IPortConfig) {
       } else if (cfg.type === 'array') {
         childCfg = (cfg as any).itemConfig
       }
-      if (!childCfg) {
-        throw new Error(`Invalid child config for property "${prop}"`)
-      }
+      // if (!childCfg) {
+      //   throw new Error(`Invalid child config for property "${prop}"`)
+      // }
 
       const result = inner[prop]
+      if (!childCfg) {
+        return result
+      }
+
       return createMutableProxyWithConfig(result, childCfg)
     },
     set(target: any, prop: any, newValue: any, receiver: any) {
