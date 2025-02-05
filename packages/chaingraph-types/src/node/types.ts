@@ -58,4 +58,5 @@ export interface NodeExecutionResult {
   outputs?: Map<string, unknown>
   error?: Error
   metadata?: { [key: string]: unknown }
+  backgroundActions?: (() => Promise<void>)[]
 }

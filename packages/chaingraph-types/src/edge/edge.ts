@@ -51,6 +51,7 @@ export class Edge implements IEdge {
     if (this.sourcePort.getConfig().direction !== PortDirection.Output) {
       throw new Error(`Source port ${this.sourcePort.id} is not an output port.`)
     }
+
     if (this.targetPort.getConfig().direction !== PortDirection.Input) {
       throw new Error(`Target port ${this.targetPort.id} is not an input port.`)
     }
