@@ -2,19 +2,11 @@ import type { INode, JSONValue } from '@chaingraph/types'
 import type { IPort } from '@chaingraph/types/port/base'
 import { initializeStores } from '@/store/init.ts'
 import { nodeRegistry } from '@chaingraph/nodes'
-import { Edge, registerFlowTransformers, registerNodeTransformers } from '@chaingraph/types'
+import { BaseNode, Edge, registerFlowTransformers } from '@chaingraph/types'
 import { BasePort } from '@chaingraph/types/port/base'
 import { MultiChannel } from '@chaingraph/types/port/channel'
 import { PortFactory } from '@chaingraph/types/port/factory'
-import {
-  ArrayPortPlugin,
-  EnumPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { portRegistry } from '@chaingraph/types/port/registry/PortPluginRegistry.ts'
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import superjson from 'superjson'
@@ -25,28 +17,18 @@ import './reflect'
 
 console.log('main.tsx')
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
-
-registerNodeTransformers(nodeRegistry)
+// registerNodeTransformers(nodeRegistry)
 registerFlowTransformers()
 
 superjson.registerCustom<IPort, JSONValue>(
   {
     isApplicable: (v): v is IPort => {
-      debugger
       return v instanceof BasePort
     },
     serialize: (v) => {
-      debugger
       return v.serialize() as unknown as JSONValue
     },
     deserialize: (v) => {
-      debugger
       const port = PortFactory.createFromConfig((v as any).config)
       port.deserialize(v)
       return port
@@ -111,6 +93,37 @@ superjson.registerCustom<MultiChannel<any>, JSONValue>(
     },
   },
   MultiChannel.name,
+)
+
+superjson.registerCustom<INode, JSONValue>(
+  {
+    isApplicable: (v): v is INode => {
+      return v instanceof BaseNode
+    },
+    serialize: (v) => {
+      return v.serialize() as unknown as JSONValue
+    },
+    deserialize: (v) => {
+      const nodeData = v as any
+      const nodeMetadata = nodeData.metadata as any
+
+      const node = nodeRegistry.createNode(
+        nodeMetadata.type,
+        nodeData.id ?? nodeMetadata.id ?? '',
+        nodeMetadata,
+      )
+
+      try {
+        node.deserialize(nodeData)
+      } catch (e) {
+        debugger
+        console.error(e)
+      }
+
+      return node
+    },
+  },
+  BaseNode.name,
 )
 
 initializeStores().catch(console.error)

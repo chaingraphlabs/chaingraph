@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
 import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
-import { PortDirection } from '@chaingraph/types'
+import { PortDirection } from '@chaingraph/types/port/base'
 import { useEffect, useMemo, useState } from 'react'
 
 interface NodePreviewProps {

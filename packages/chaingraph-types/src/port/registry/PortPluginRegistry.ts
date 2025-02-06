@@ -7,6 +7,14 @@ import type {
   ValueTypeMap,
 } from '../base/types'
 
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port/plugins'
 import { z } from 'zod'
 import {
   basePortConfigSchema,
@@ -49,7 +57,15 @@ export class PortPluginRegistry {
    * Get all registered plugins
    */
   getAllPlugins(): IPortPlugin<any>[] {
-    return Array.from(this.plugins.values())
+    // return Array.from(this.plugins.values())
+    return [
+      StringPortPlugin,
+      NumberPortPlugin,
+      ArrayPortPlugin,
+      ObjectPortPlugin,
+      EnumPortPlugin,
+      StreamPortPlugin,
+    ]
   }
 
   /**

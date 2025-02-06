@@ -11,7 +11,7 @@ import type {
 } from './ui-config.schema'
 
 import { z } from 'zod'
-import { MultiChannel } from '../channel/multi-channel'
+import { MultiChannel, MultiChannelSchema } from '../channel/multi-channel'
 
 /**
  * Port error types
@@ -478,7 +478,7 @@ export function isObjectPortValue(value: unknown): value is ObjectPortValue {
 }
 
 export function isStreamPortValue(value: unknown): value is StreamPortValue {
-  return value instanceof MultiChannel
+  return value instanceof MultiChannel || MultiChannelSchema.safeParse(value).success
 }
 
 export function isBooleanPortValue(value: unknown): value is BooleanPortValue {

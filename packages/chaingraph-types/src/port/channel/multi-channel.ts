@@ -1,4 +1,4 @@
-import type { JSONArray, JSONValue } from 'superjson/dist/types'
+import type { JSONArray, JSONValue } from '@chaingraph/types/port/base'
 import { z } from 'zod'
 
 export const MultiChannelSchema = z.object({

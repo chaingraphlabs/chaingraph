@@ -145,6 +145,10 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
     }
   },
   deserializeValue: (data: JSONValue, config: StreamPortConfig): StreamPortValue => {
+    if (data instanceof MultiChannel) {
+      return data
+    }
+
     try {
       if (
         typeof data !== 'object'
@@ -256,7 +260,10 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       }
 
       if (deserializedConfig.defaultValue !== undefined) {
-        copy.defaultValue = StreamPortPlugin.deserializeValue(copy.defaultValue, deserializedConfig)
+        deserializedConfig.defaultValue = StreamPortPlugin.deserializeValue(
+          deserializedConfig.defaultValue,
+          deserializedConfig,
+        )
       }
 
       return deserializedConfig as StreamPortConfig
@@ -277,9 +284,13 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
     }
 
     // Check that channel is a valid MultiChannel instance
-    if (!(value instanceof MultiChannel)) {
-      errors.push('Invalid channel: must be a MultiChannel instance')
-    }
+    // if (!(value instanceof MultiChannel)) {
+    //   errors.push('Invalid channel: must be a MultiChannel instance')
+    // }
+
+    // if (val instanceof MultiChannel) {
+    //   return val
+    // }
 
     return errors
   },

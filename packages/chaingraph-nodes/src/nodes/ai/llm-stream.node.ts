@@ -38,6 +38,15 @@ export class LLMStreamNode extends BaseNode {
   })
   outputStream: MultiChannel<string> = new MultiChannel<string>()
 
+  @Input()
+  @PortStream({
+    itemConfig: {
+      type: 'string',
+      defaultValue: '',
+    },
+  })
+  inputStream: MultiChannel<string> = new MultiChannel<string>()
+
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Mock implementation
 

@@ -6,12 +6,12 @@
     "outDir": "./dist"
   },
   "references": [
-    {
-      "path": "../chaingraph-types"
-    },
-    {
-      "path": "../chaingraph-nodes"
-    }
+    //    {
+    //      "path": "../chaingraph-types"
+    //    },
+    //    {
+    //      "path": "../chaingraph-nodes"
+    //    }
   ],
   "include": ["./src/**/*"]
 }

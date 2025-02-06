@@ -1,8 +1,8 @@
+import type { JSONValue } from '@chaingraph/types'
 import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
 import type { IPort } from '@chaingraph/types/port/base'
 import type { SuperJSONResult } from 'superjson'
-import type { JSONValue } from 'superjson/dist/types'
-import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@chaingraph/types'
+import { Edge, Flow, NodeRegistry } from '@chaingraph/types'
 import { registerEdgeTransformers } from '@chaingraph/types/edge/json-transformers'
 import { BasePort } from '@chaingraph/types/port/base'
 import { PortFactory } from '@chaingraph/types/port/factory'
@@ -15,15 +15,12 @@ export function registerFlowTransformers() {
   SuperJSON.registerCustom<IPort, JSONValue>(
     {
       isApplicable: (v): v is IPort => {
-        debugger
         return v instanceof BasePort
       },
       serialize: (v) => {
-        debugger
         return v.serialize() as unknown as JSONValue
       },
       deserialize: (v) => {
-        debugger
         const port = PortFactory.createFromConfig((v as any).config)
         port.deserialize(v)
         return port
@@ -36,7 +33,6 @@ export function registerFlowTransformers() {
   SuperJSON.registerCustom<Flow, JSONValue>(
     {
       isApplicable: (v): v is Flow => {
-        debugger
         return v instanceof Flow
       },
       serialize: (v) => {
@@ -53,10 +49,17 @@ export function registerFlowTransformers() {
           })
         }
 
+        const nodes: SerializedFlow['nodes'] = []
+        if (v.nodes) {
+          for (const node of v.nodes.values()) {
+            nodes.push(node.serialize() as any)
+          }
+        }
+
         const serializedFlow: SerializedFlow = {
           id: v.id,
           metadata: v.metadata,
-          nodes: Array.from(v.nodes.values().map(node => node.serialize())) as SerializedFlow['nodes'],
+          nodes,
           edges: serializedEdges,
         }
 
@@ -127,38 +130,38 @@ export function registerFlowTransformers() {
   )
 
   // Execution event data
-  SuperJSON.registerCustom<ExecutionEventImpl, JSONValue>(
-    {
-      isApplicable: (v): v is ExecutionEventImpl<any> => {
-        return v instanceof ExecutionEventImpl
-      },
-      serialize: (v) => {
-        return SuperJSON.serialize({
-          index: v.index,
-          type: v.type,
-          timestamp: v.timestamp,
-          data: SuperJSON.serialize(v.data),
-        }) as unknown as JSONValue
-      },
-      deserialize: (v) => {
-        const eventData = SuperJSON.deserialize(v as any) as any
-
-        if (!eventData) {
-          throw new Error('Invalid execution event data')
-        }
-
-        const data = SuperJSON.deserialize(eventData.data)
-
-        return new ExecutionEventImpl(
-          eventData.index,
-          eventData.type,
-          eventData.timestamp,
-          data,
-        )
-      },
-    },
-    ExecutionEventImpl.name,
-  )
+  // SuperJSON.registerCustom<ExecutionEventImpl, JSONValue>(
+  //   {
+  //     isApplicable: (v): v is ExecutionEventImpl<any> => {
+  //       return v instanceof ExecutionEventImpl
+  //     },
+  //     serialize: (v) => {
+  //       return SuperJSON.serialize({
+  //         index: v.index,
+  //         type: v.type,
+  //         timestamp: v.timestamp,
+  //         data: SuperJSON.serialize(v.data),
+  //       }) as unknown as JSONValue
+  //     },
+  //     deserialize: (v) => {
+  //       const eventData = SuperJSON.deserialize(v as any) as any
+  //
+  //       if (!eventData) {
+  //         throw new Error('Invalid execution event data')
+  //       }
+  //
+  //       const data = SuperJSON.deserialize(eventData.data)
+  //
+  //       return new ExecutionEventImpl(
+  //         eventData.index,
+  //         eventData.type,
+  //         eventData.timestamp,
+  //         data,
+  //       )
+  //     },
+  //   },
+  //   ExecutionEventImpl.name,
+  // )
 
   registerEdgeTransformers()
 }
