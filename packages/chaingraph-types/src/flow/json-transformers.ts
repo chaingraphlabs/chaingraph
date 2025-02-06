@@ -1,18 +1,42 @@
 import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
+import type { IPort } from '@chaingraph/types/port/base'
 import type { SuperJSONResult } from 'superjson'
 import type { JSONValue } from 'superjson/dist/types'
 import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@chaingraph/types'
 import { registerEdgeTransformers } from '@chaingraph/types/edge/json-transformers'
+import { BasePort } from '@chaingraph/types/port/base'
+import { PortFactory } from '@chaingraph/types/port/factory'
 import SuperJSON from 'superjson'
 
 /**
  * Registers flow transformers with SuperJSON
  */
 export function registerFlowTransformers() {
+  SuperJSON.registerCustom<IPort, JSONValue>(
+    {
+      isApplicable: (v): v is IPort => {
+        debugger
+        return v instanceof BasePort
+      },
+      serialize: (v) => {
+        debugger
+        return v.serialize() as unknown as JSONValue
+      },
+      deserialize: (v) => {
+        debugger
+        const port = PortFactory.createFromConfig((v as any).config)
+        port.deserialize(v)
+        return port
+      },
+    },
+    BasePort.name,
+  )
+
   // Flow
   SuperJSON.registerCustom<Flow, JSONValue>(
     {
       isApplicable: (v): v is Flow => {
+        debugger
         return v instanceof Flow
       },
       serialize: (v) => {

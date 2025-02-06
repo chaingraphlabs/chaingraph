@@ -3,7 +3,9 @@ import type { IPort } from '@chaingraph/types/port/base'
 import { initializeStores } from '@/store/init.ts'
 import { nodeRegistry } from '@chaingraph/nodes'
 import { Edge, registerFlowTransformers, registerNodeTransformers } from '@chaingraph/types'
+import { BasePort } from '@chaingraph/types/port/base'
 import { MultiChannel } from '@chaingraph/types/port/channel'
+import { PortFactory } from '@chaingraph/types/port/factory'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -21,6 +23,8 @@ import { RootProvider } from './providers/RootProvider.tsx'
 import './index.css'
 import './reflect'
 
+console.log('main.tsx')
+
 portRegistry.register(StringPortPlugin)
 portRegistry.register(NumberPortPlugin)
 portRegistry.register(ArrayPortPlugin)
@@ -30,6 +34,26 @@ portRegistry.register(StreamPortPlugin)
 
 registerNodeTransformers(nodeRegistry)
 registerFlowTransformers()
+
+superjson.registerCustom<IPort, JSONValue>(
+  {
+    isApplicable: (v): v is IPort => {
+      debugger
+      return v instanceof BasePort
+    },
+    serialize: (v) => {
+      debugger
+      return v.serialize() as unknown as JSONValue
+    },
+    deserialize: (v) => {
+      debugger
+      const port = PortFactory.createFromConfig((v as any).config)
+      port.deserialize(v)
+      return port
+    },
+  },
+  BasePort.name,
+)
 
 superjson.registerCustom<Edge, JSONValue>(
   {
@@ -88,43 +112,6 @@ superjson.registerCustom<MultiChannel<any>, JSONValue>(
   },
   MultiChannel.name,
 )
-
-// Execution event data
-// SuperJSON.registerCustom<ExecutionEventImpl, JSONValue>(
-//   {
-//     isApplicable: (v): v is ExecutionEventImpl<any> => {
-//       return v instanceof ExecutionEventImpl
-//     },
-//     serialize: (v) => {
-//       return SuperJSON.serialize({
-//         index: v.index,
-//         type: v.type,
-//         timestamp: v.timestamp,
-//         data: SuperJSON.serialize(v.data),
-//       }) as unknown as JSONValue
-//     },
-//     deserialize: (v) => {
-//       debugger
-//       const eventData = SuperJSON.deserialize(v as any) as any
-//
-//       if (!eventData) {
-//         throw new Error('Invalid execution event data')
-//       }
-//
-//       const data = SuperJSON.deserialize(eventData.data)
-//
-//       console.log('!!!!!!!!!Deserializing execution event:', data)
-//
-//       return new ExecutionEventImpl(
-//         eventData.index,
-//         eventData.type,
-//         eventData.timestamp,
-//         data,
-//       )
-//     },
-//   },
-//   ExecutionEventImpl.name,
-// )
 
 initializeStores().catch(console.error)
 
