@@ -1,14 +1,42 @@
-import type { NodeExecutionResult } from '@chaingraph/types'
-import { BaseNode, ExecutionContext, ExecutionEngine, ExecutionEventEnum, ExecutionStoppedByDebugger, Flow, NumberPort, PortDirection, PortKind } from '@chaingraph/types'
+import type {
+  NodeExecutionResult,
+} from '@chaingraph/types'
+import type { IPort } from '@chaingraph/types/port-new/base'
+import {
+  BaseNode,
+  ExecutionContext,
+  ExecutionEngine,
+  ExecutionEventEnum,
+  ExecutionStoppedByDebugger,
+  Flow,
+} from '@chaingraph/types'
 import { createExecutionEventHandler } from '@chaingraph/types/flow/execution-handlers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { PortDirection } from '@chaingraph/types/port-new/base'
+import { NumberPort } from '@chaingraph/types/port-new/instances'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
+
 class AddNode extends BaseNode {
-  inputA: NumberPort<Decimal>
-  inputB: NumberPort<Decimal>
-  output: NumberPort<Decimal>
+  inputA: NumberPort
+  inputB: NumberPort
+  output: NumberPort
 
   constructor(id: string) {
     super(id, {
@@ -19,31 +47,31 @@ class AddNode extends BaseNode {
 
     this.inputA = new NumberPort({
       id: 'inputA',
-      kind: PortKind.Number,
+      type: 'number',
       direction: PortDirection.Input,
     })
 
     this.inputB = new NumberPort({
       id: 'inputB',
-      kind: PortKind.Number,
+      type: 'number',
       direction: PortDirection.Input,
     })
 
     this.output = new NumberPort({
       id: 'output',
-      kind: PortKind.Number,
+      type: 'number',
       direction: PortDirection.Output,
     })
 
-    this.ports.set('inputA', this.inputA)
-    this.ports.set('inputB', this.inputB)
-    this.ports.set('output', this.output)
+    this.ports.set('inputA', this.inputA as IPort)
+    this.ports.set('inputB', this.inputB as IPort)
+    this.ports.set('output', this.output as IPort)
   }
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const a = this.inputA.getValue()?.toNumber() ?? 0
+    const a = this.inputA.getValue() ?? 0
 
-    const b = this.inputB.getValue()?.toNumber() ?? 0
+    const b = this.inputB.getValue() ?? 0
     const result = a + b
     this.output.setValue(result)
 
@@ -96,8 +124,8 @@ describe('flow Execution', () => {
     await executionEngine.execute()
 
     // Verify results
-    const resultNode1 = node1.output.getValue().toNumber()
-    const resultNode2 = node2.output.getValue().toNumber()
+    const resultNode1 = node1.output.getValue()
+    const resultNode2 = node2.output.getValue()
 
     expect(resultNode1).toBe(15)
     expect(resultNode2).toBe(35)
@@ -169,11 +197,11 @@ describe('flow Execution', () => {
     await executionEngine.execute()
 
     // Verify results
-    expect(sourceNode1.output.getValue().toNumber()).toBe(15) // 5 + 10
-    expect(sourceNode2.output.getValue().toNumber()).toBe(10) // 3 + 7
-    expect(intermediateNode1.output.getValue().toNumber()).toBe(25) // 15 + 10
-    expect(intermediateNode2.output.getValue().toNumber()).toBe(30) // 10 + 20
-    expect(finalNode.output.getValue().toNumber()).toBe(55) // 25 + 30
+    expect(sourceNode1.output.getValue()).toBe(15) // 5 + 10
+    expect(sourceNode2.output.getValue()).toBe(10) // 3 + 7
+    expect(intermediateNode1.output.getValue()).toBe(25) // 15 + 10
+    expect(intermediateNode2.output.getValue()).toBe(30) // 10 + 20
+    expect(finalNode.output.getValue()).toBe(55) // 25 + 30
   })
 
   it('should pause execution at breakpoint and continue', async () => {
@@ -252,9 +280,9 @@ describe('flow Execution', () => {
     expect(breakpointHits).toEqual(['source1']) // Only source1 should hit breakpoint
 
     // Verify results
-    expect(sourceNode1.output.getValue().toNumber()).toBe(15) // 5 + 10
-    expect(sourceNode2.output.getValue().toNumber()).toBe(10) // 3 + 7
-    expect(finalNode.output.getValue().toNumber()).toBe(25) // 15 + 10
+    expect(sourceNode1.output.getValue()).toBe(15) // 5 + 10
+    expect(sourceNode2.output.getValue()).toBe(10) // 3 + 7
+    expect(finalNode.output.getValue()).toBe(25) // 15 + 10
   })
 
   it('should step through execution', async () => {
@@ -335,8 +363,8 @@ describe('flow Execution', () => {
       ])
 
       // Verify results
-      expect(sourceNode.output.getValue().toNumber()).toBe(15) // 5 + 10
-      expect(finalNode.output.getValue().toNumber()).toBe(20) // 15 + 5
+      expect(sourceNode.output.getValue()).toBe(15) // 5 + 10
+      expect(finalNode.output.getValue()).toBe(20) // 15 + 5
     } finally {
       unsubscribe()
     }
@@ -438,7 +466,7 @@ describe('flow Execution', () => {
           event: 'completed',
           nodeId: data.node.id,
           outputs: new Map(
-            data.node.getOutputs().map(port => [port.config.id, port.getValue()]),
+            data.node.getOutputs().map(port => [port.id, port.getValue()]),
           ),
         })
       },
@@ -479,13 +507,13 @@ describe('flow Execution', () => {
       })
 
       // Verify final results
-      expect(source1.output.getValue().toNumber()).toBe(15) // 5 + 10
-      expect(source2.output.getValue().toNumber()).toBe(10) // 3 + 7
-      expect(source3.output.getValue().toNumber()).toBe(10) // 8 + 2
-      expect(source4.output.getValue().toNumber()).toBe(20) // 15 + 5
-      expect(merger1.output.getValue().toNumber()).toBe(25) // 15 + 10
-      expect(merger2.output.getValue().toNumber()).toBe(30) // 10 + 20
-      expect(final.output.getValue().toNumber()).toBe(55) // 25 + 30
+      expect(source1.output.getValue()).toBe(15) // 5 + 10
+      expect(source2.output.getValue()).toBe(10) // 3 + 7
+      expect(source3.output.getValue()).toBe(10) // 8 + 2
+      expect(source4.output.getValue()).toBe(20) // 15 + 5
+      expect(merger1.output.getValue()).toBe(25) // 15 + 10
+      expect(merger2.output.getValue()).toBe(30) // 10 + 20
+      expect(final.output.getValue()).toBe(55) // 25 + 30
 
       // Verify that we have the correct number of execution steps
       // For each node we expect: started, paused, completed = 3 events

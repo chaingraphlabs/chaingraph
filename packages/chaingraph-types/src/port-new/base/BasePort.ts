@@ -15,6 +15,10 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     this.value = deepCopy(this.getDefaultValue())
   }
 
+  get id(): string {
+    return this.config.id ?? ''
+  }
+
   getConfig(): C {
     return this.config
   }

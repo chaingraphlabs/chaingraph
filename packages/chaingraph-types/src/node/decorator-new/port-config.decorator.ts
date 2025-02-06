@@ -11,7 +11,7 @@ import 'reflect-metadata'
 export function Name(portName: string): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
     // Update the port metadata with the provided name value.
-    updatePortMetadata(target, propertyKey, { name: portName })
+    updatePortMetadata(target.constructor, propertyKey, { name: portName })
   }
 }
 
@@ -24,7 +24,7 @@ export function Name(portName: string): PropertyDecorator {
 export function Description(portDescription: string): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
     // Update the port metadata with the provided description value.
-    updatePortMetadata(target, propertyKey, { description: portDescription })
+    updatePortMetadata(target.constructor, propertyKey, { description: portDescription })
   }
 }
 
@@ -33,7 +33,7 @@ export function Description(portDescription: string): PropertyDecorator {
  */
 export function Input(): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortMetadata(target, propertyKey, { direction: PortDirection.Input })
+    updatePortMetadata(target.constructor, propertyKey, { direction: PortDirection.Input })
   }
 }
 
@@ -42,7 +42,7 @@ export function Input(): PropertyDecorator {
  */
 export function Output(): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortMetadata(target, propertyKey, { direction: PortDirection.Output })
+    updatePortMetadata(target.constructor, propertyKey, { direction: PortDirection.Output })
   }
 }
 
@@ -54,7 +54,7 @@ export function Output(): PropertyDecorator {
  */
 export function DefaultValue<T>(value: T): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortMetadata(target, propertyKey, { defaultValue: value })
+    updatePortMetadata(target.constructor, propertyKey, { defaultValue: value })
   }
 }
 
@@ -66,7 +66,7 @@ export function DefaultValue<T>(value: T): PropertyDecorator {
  */
 export function Id(portId: string): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortMetadata(target, propertyKey, { id: portId })
+    updatePortMetadata(target.constructor, propertyKey, { id: portId })
   }
 }
 
@@ -78,7 +78,7 @@ export function Id(portId: string): PropertyDecorator {
  */
 export function Title(title: string): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortMetadata(target, propertyKey, { title })
+    updatePortMetadata(target.constructor, propertyKey, { title })
   }
 }
 
@@ -95,6 +95,6 @@ export function Metadata(key: string, value: any): PropertyDecorator {
     const currentMeta = getPortMetadata(target.constructor, propertyKey)?.metadata || {}
     // Merge with the provided key/value
     const updatedMeta = { ...currentMeta, [key]: value }
-    updatePortMetadata(target, propertyKey, { metadata: updatedMeta })
+    updatePortMetadata(target.constructor, propertyKey, { metadata: updatedMeta })
   }
 }

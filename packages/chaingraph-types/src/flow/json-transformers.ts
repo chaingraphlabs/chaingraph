@@ -1,8 +1,7 @@
-import type { INode } from '@chaingraph/types'
 import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
 import type { SuperJSONResult } from 'superjson'
 import type { JSONValue } from 'superjson/dist/types'
-import { Edge, ExecutionEventImpl, Flow } from '@chaingraph/types'
+import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@chaingraph/types'
 import { registerEdgeTransformers } from '@chaingraph/types/edge/json-transformers'
 import SuperJSON from 'superjson'
 
@@ -24,16 +23,16 @@ export function registerFlowTransformers() {
             metadata: edge.metadata,
             status: edge.status,
             sourceNodeId: edge.sourceNode.id,
-            sourcePortId: edge.sourcePort.config.id,
+            sourcePortId: edge.sourcePort.getConfig().id!,
             targetNodeId: edge.targetNode.id,
-            targetPortId: edge.targetPort.config.id,
+            targetPortId: edge.targetPort.getConfig().id!,
           })
         }
 
         const serializedFlow: SerializedFlow = {
           id: v.id,
           metadata: v.metadata,
-          nodes: Array.from(v.nodes.values()),
+          nodes: Array.from(v.nodes.values().map(node => node.serialize())) as SerializedFlow['nodes'],
           edges: serializedEdges,
         }
 
@@ -46,8 +45,17 @@ export function registerFlowTransformers() {
 
         const flow = new Flow(flowData.metadata)
 
-        for (const node of flowData.nodes) {
-          flow.addNode(node as INode)
+        for (const nodeData of flowData.nodes) {
+          const nodeMetadata = nodeData.metadata as any
+
+          const node = NodeRegistry.getInstance().createNode(
+            nodeMetadata.type,
+            nodeData.id ?? nodeMetadata.id ?? '',
+            nodeMetadata,
+          )
+          node.deserialize(nodeData)
+
+          flow.addNode(node)
         }
 
         for (const edgeData of flowData.edges) {

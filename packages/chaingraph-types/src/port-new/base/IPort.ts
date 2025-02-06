@@ -21,6 +21,11 @@ import type { ExtractValue, IPortConfig } from './types'
  */
 export interface IPort<C extends IPortConfig = IPortConfig> {
   /**
+   * The unique identifier of the port.
+   */
+  get id(): string
+
+  /**
    * Retrieves the current port configuration.
    *
    * @returns The port configuration of type C.

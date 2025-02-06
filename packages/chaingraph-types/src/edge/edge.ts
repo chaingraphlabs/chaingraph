@@ -41,10 +41,10 @@ export class Edge implements IEdge {
     const targetPortKind = this.targetPort.getConfig().type
 
     if (this.sourcePort.getConfig().direction !== PortDirection.Output) {
-      throw new Error(`Source port ${this.sourcePort.getConfig().id} is not an output port.`)
+      throw new Error(`Source port ${this.sourcePort.id} is not an output port.`)
     }
     if (this.targetPort.getConfig().direction !== PortDirection.Input) {
-      throw new Error(`Target port ${this.targetPort.getConfig().id} is not an input port.`)
+      throw new Error(`Target port ${this.targetPort.id} is not an input port.`)
     }
 
     // TODO: Add other validation checks here for example for AnyPort, StreamInputPort, StreamOutputPort, etc.

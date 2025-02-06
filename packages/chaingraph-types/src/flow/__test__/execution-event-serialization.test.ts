@@ -4,22 +4,37 @@ import {
   Input,
   Node,
   NodeExecutionStatus,
-  PortString,
   registerNodeTransformers,
-  registerPortTransformers,
+  String,
 } from '@chaingraph/types'
 import { ExecutionContext } from '@chaingraph/types/flow/execution-context'
 import { ExecutionEventEnum, ExecutionEventImpl } from '@chaingraph/types/flow/execution-events'
 import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
 import { BaseNode } from '@chaingraph/types/node/base-node'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 describe('executionEventImpl Serialization', () => {
   beforeAll(() => {
     // Register the necessary transformers
-    registerPortTransformers()
+    // registerPortTransformers()
     registerNodeTransformers()
     registerFlowTransformers()
   })
@@ -91,7 +106,7 @@ describe('executionEventImpl Serialization', () => {
     @Node(mockNodeMetadata)
     class MockNode extends BaseNode {
       @Input()
-      @PortString()
+      @String()
       a: string = 'test'
 
       async execute(context: ExecutionContext): Promise<NodeExecutionResult> {

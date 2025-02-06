@@ -3,14 +3,40 @@ import type {
   NodeExecutionResult,
 } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Flow, Id, Input, Node, NodeRegistry, Output, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
+import {
+  BaseNode,
+  Flow,
+  Id,
+  Input,
+  Node,
+  NodeRegistry,
+  Number,
+  Output,
+  String,
+} from '@chaingraph/types'
 
 import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import { findPort } from '@chaingraph/types/node/traverse-ports'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 // Simple test nodes
 @Node({
@@ -18,12 +44,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 })
 class SourceNode extends BaseNode {
   @Input()
-  @PortString()
+  @String()
   @Id('input')
   input: string = 'test'
 
   @Output()
-  @PortString()
+  @String()
   @Id('output')
   output: string = ''
 
@@ -43,12 +69,12 @@ class SourceNode extends BaseNode {
 })
 class TargetNode extends BaseNode {
   @Input()
-  @PortString()
+  @String()
   @Id('textInput')
   textInput: string = ''
 
   @Input()
-  @PortNumber()
+  @Number()
   @Id('numberInput')
   numberInput: number = 0
 
@@ -65,7 +91,7 @@ class TargetNode extends BaseNode {
 describe('flow Serialization', () => {
   beforeAll(() => {
     // Register all necessary transformers
-    registerPortTransformers()
+    // registerPortTransformers()
     registerNodeTransformers()
     registerFlowTransformers()
   })
@@ -95,11 +121,11 @@ describe('flow Serialization', () => {
 
     const sourcePort = findPort(
       sourceNode,
-      port => port.config.key === 'output',
+      port => port.getConfig().key === 'output',
     )
     const targetPort = findPort(
       targetNode,
-      port => port.config.key === 'textInput',
+      port => port.getConfig().key === 'textInput',
     )
 
     expect(sourcePort).toBeDefined()
@@ -111,9 +137,9 @@ describe('flow Serialization', () => {
     // Connect nodes
     await flow.connectPorts(
       sourceNode.id,
-      sourcePort?.config.id ?? '',
+      sourcePort?.id ?? '',
       targetNode.id,
-      targetPort?.config.id ?? '',
+      targetPort?.id ?? '',
     )
 
     await flow.validate()
@@ -153,8 +179,8 @@ describe('flow Serialization', () => {
     const edge = Array.from(deserialized.edges.values())[0]
     expect(edge.sourceNode.id).toBe(sourceNode.id)
     expect(edge.targetNode.id).toBe(targetNode.id)
-    expect(edge.sourcePort.config.id).toBe('output')
-    expect(edge.targetPort.config.id).toBe('textInput')
+    expect(edge.sourcePort.id).toBe('output')
+    expect(edge.targetPort.id).toBe('textInput')
   })
 
   it('should handle flow with multiple connected nodes', async () => {
@@ -228,22 +254,22 @@ describe('flow Serialization', () => {
     expect(edges.some(e =>
       e.sourceNode.id === 'source-1'
       && e.targetNode.id === 'target-1'
-      && e.sourcePort.config.id === 'output'
-      && e.targetPort.config.id === 'textInput',
+      && e.sourcePort.id === 'output'
+      && e.targetPort.id === 'textInput',
     )).toBe(true)
 
     expect(edges.some(e =>
       e.sourceNode.id === 'source-1'
       && e.targetNode.id === 'target-2'
-      && e.sourcePort.config.id === 'output'
-      && e.targetPort.config.id === 'textInput',
+      && e.sourcePort.id === 'output'
+      && e.targetPort.id === 'textInput',
     )).toBe(true)
 
     expect(edges.some(e =>
       e.sourceNode.id === 'source-2'
       && e.targetNode.id === 'target-2'
-      && e.sourcePort.config.id === 'output'
-      && e.targetPort.config.id === 'textInput',
+      && e.sourcePort.id === 'output'
+      && e.targetPort.id === 'textInput',
     )).toBe(true)
   })
 
