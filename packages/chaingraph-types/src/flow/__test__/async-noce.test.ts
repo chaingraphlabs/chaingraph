@@ -1,5 +1,5 @@
 import type { NodeExecutionResult } from '@chaingraph/types'
-import { BaseNode, ExecutionContext, ExecutionEngine, Flow, MultiChannel, Node, PortDirection, PortKind, PortStreamInput, PortStreamOutput } from '@chaingraph/types'
+import { BaseNode, ExecutionContext, ExecutionEngine, Flow, MultiChannel, Node, NodeStatus, PortDirection, PortKind, PortStreamInput, PortStreamOutput } from '@chaingraph/types'
 import { describe, expect, it } from 'vitest'
 
 @Node({})
@@ -83,6 +83,26 @@ class MergerNode extends BaseNode {
   }
 }
 
+@Node({})
+class FailingNode extends BaseNode {
+  async execute(): Promise<NodeExecutionResult> {
+    return {
+      backgroundActions: [
+        this.reject,
+        this.resolve,
+      ],
+    }
+  }
+
+  private async resolve(): Promise<void> {
+    return Promise.resolve()
+  }
+
+  private async reject(): Promise<void> {
+    throw new Error('Simulated failure')
+  }
+}
+
 describe('flow with async nodes', () => {
   it('supports background actions', async () => {
     const flow = new Flow()
@@ -146,5 +166,19 @@ describe('flow with async nodes', () => {
     const actual = await Array.fromAsync(mergerNode.output)
     expect(actual).toEqual(expect.arrayContaining(evenNumbers))
     expect(actual).toEqual(expect.arrayContaining(oddNumbers))
+  })
+
+  it('sets node status to error for an exception in background action', async () => {
+    const flow = new Flow()
+
+    const node = new FailingNode('failing-node')
+    flow.addNode(node)
+
+    const abortController = new AbortController()
+    const context = new ExecutionContext(flow.id, abortController)
+    const executionEngine = new ExecutionEngine(flow, context)
+
+    await expect(executionEngine.execute.bind(executionEngine)).rejects.toThrow('Simulated failure')
+    expect(node.status).toBe(NodeStatus.Error)
   })
 })

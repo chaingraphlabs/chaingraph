@@ -362,7 +362,9 @@ export class ExecutionEngine {
 
       if (backgroundActions) {
         for (const action of backgroundActions) {
-          this.readyQueue.enqueue(action)
+          this.readyQueue.enqueue(
+            () => action().catch(e => this.setNodeError(node, e, nodeStartTime)),
+          )
         }
       }
 
@@ -374,17 +376,22 @@ export class ExecutionEngine {
 
       this.completedQueue.enqueue(node)
     } catch (error) {
-      node.setStatus(NodeStatus.Error, true)
-
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
-        node,
-        error: error as Error,
-        executionTime: Date.now() - nodeStartTime,
-      }))
-      throw error
+      this.setNodeError(node, error, nodeStartTime)
     } finally {
       cancel()
     }
+  }
+
+  private setNodeError(node: INode, error: unknown, nodeStartTime: number) {
+    node.setStatus(NodeStatus.Error, true)
+
+    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
+      node,
+      error: error as Error,
+      executionTime: Date.now() - nodeStartTime,
+    }))
+
+    throw error
   }
 
   public getDebugger(): DebuggerController | null {
