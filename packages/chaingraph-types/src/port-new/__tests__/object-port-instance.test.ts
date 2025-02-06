@@ -61,7 +61,7 @@ describe('objectPort Instance', () => {
       // Object schema with required fields "name" and "age".
       const schema = createObjectSchema({
         name: { type: 'string', minLength: 2 },
-        age: { type: 'number', min: 18 },
+        age: { type: 'number', min: 18, required: true },
       })
 
       const config = createObjectPortConfig({
