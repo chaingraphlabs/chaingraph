@@ -6,7 +6,7 @@ import type {
   ObjectPortConfig,
   ObjectSchema,
   StreamPortConfig,
-} from '@chaingraph/types/port-new/base'
+} from '@chaingraph/types/port/base'
 
 import type { INode } from './interface'
 import {

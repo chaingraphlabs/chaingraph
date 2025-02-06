@@ -1,5 +1,5 @@
-import type { StringPortConfig } from '@chaingraph/types/port-new/base'
-import { createStringValue } from '@chaingraph/types/port-new/plugins'
+import type { StringPortConfig } from '@chaingraph/types/port/base'
+import { createStringValue } from '@chaingraph/types/port/plugins'
 import { describe, expect, it } from 'vitest'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'

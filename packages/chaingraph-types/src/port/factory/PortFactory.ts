@@ -1,4 +1,4 @@
-import type { IPort } from '@chaingraph/types/port-new/base'
+import type { IPort } from '@chaingraph/types/port/base'
 import type {
   AnyPortConfig,
   ArrayPortConfig,

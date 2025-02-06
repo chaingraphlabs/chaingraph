@@ -8,7 +8,7 @@ import {
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -19,14 +19,14 @@ import {
 }, nodeRegistry)
 export class CreateMessageNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Content',
     description: 'Message content to be sent',
   })
   content: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Message',
     description: 'Created message object',
   })

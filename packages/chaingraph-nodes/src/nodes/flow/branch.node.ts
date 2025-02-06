@@ -8,7 +8,7 @@ import {
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -19,14 +19,14 @@ import {
 }, nodeRegistry)
 export class BranchNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Condition',
     description: 'Condition to evaluate',
   })
   condition: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Result',
     description: 'Branch result',
   })

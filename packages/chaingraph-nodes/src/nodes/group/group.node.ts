@@ -7,7 +7,7 @@ import {
   Node,
   type NodeExecutionResult,
   NodeExecutionStatus,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -18,7 +18,7 @@ import {
 }, nodeRegistry)
 export class GroupNode extends BaseNode {
   @Input()
-  @PortString()
+  @String()
   a: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {

@@ -26,8 +26,8 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port-new/plugins'
-import { portRegistry } from '@chaingraph/types/port-new/registry'
+} from '@chaingraph/types/port/plugins'
+import { portRegistry } from '@chaingraph/types/port/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 

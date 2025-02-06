@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { PortDirection } from '@chaingraph/types'
+import { PortDirection } from '@chaingraph/types/port/base'
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
 import { ArrowRightIcon } from 'lucide-react'

@@ -9,8 +9,7 @@ import {
   NodeExecutionStatus,
   Output,
   Port,
-  PortKind,
-  PortString,
+  String,
 } from '@chaingraph/types'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
@@ -23,7 +22,7 @@ import { ChatOpenAI } from '@langchain/openai'
 }, nodeRegistry)
 export class LLMPromptNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Prompt',
     description: 'Input prompt for the language model',
   })
@@ -35,7 +34,7 @@ export class LLMPromptNode extends BaseNode {
   //   description: 'Language model response',
   // })
   @Port({
-    kind: PortKind.String,
+    type: 'string',
   })
   response: string = ''
 

@@ -1,15 +1,15 @@
 import { nodeRegistry } from '@chaingraph/nodes/registry'
 import {
   BaseNode,
+  Boolean,
   type ExecutionContext,
   Input,
   Node,
   type NodeExecutionResult,
   NodeExecutionStatus,
+  Number,
   Output,
-  PortBoolean,
-  PortNumber,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -18,25 +18,25 @@ import {
 }, nodeRegistry)
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     defaultValue: 'default string',
   })
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber({
+  @ Number({
     defaultValue: 42,
   })
   numInput: number = 42
 
   @Input()
-  @PortBoolean({
+  @Boolean({
     defaultValue: true,
   })
   boolInput: boolean = true
 
   @Output()
-  @PortString()
+  @String()
   strOutput: string = 'output string'
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {

@@ -1,7 +1,7 @@
 import type {
   ObjectSchema as IObjectSchema,
   IPortConfig,
-} from '@chaingraph/types/port-new/base'
+} from '@chaingraph/types/port/base'
 import {
   getObjectSchemaMetadata,
   getPortsMetadata,

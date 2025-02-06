@@ -7,7 +7,7 @@ import {
   Node,
   type NodeExecutionResult,
   NodeExecutionStatus,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -18,7 +18,7 @@ import {
 }, nodeRegistry)
 export class DebugLogNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Message',
     description: 'Message to log',
   })

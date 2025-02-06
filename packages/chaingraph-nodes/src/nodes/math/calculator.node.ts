@@ -8,7 +8,7 @@ import {
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -19,14 +19,14 @@ import {
 }, nodeRegistry)
 export class CalculatorNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Expression',
     description: 'Mathematical expression to evaluate',
   })
   expression: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Result',
     description: 'Calculation result',
   })

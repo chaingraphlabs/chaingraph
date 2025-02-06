@@ -1,4 +1,4 @@
-import { MultiChannel } from '@chaingraph/types/port-new/channel'
+import { MultiChannel } from '@chaingraph/types/port/channel'
 import Decimal from 'decimal.js'
 
 export function deepCopy(obj: any): any {

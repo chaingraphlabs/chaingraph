@@ -8,7 +8,7 @@ import {
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -19,14 +19,14 @@ import {
 }, nodeRegistry)
 export class WebhookNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'URL',
     description: 'Webhook URL',
   })
   url: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Response',
     description: 'Webhook response',
   })

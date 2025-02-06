@@ -3,7 +3,7 @@ import type {
   IPortConfig,
   NumberPortConfig,
   StringPortConfig,
-} from '@chaingraph/types/port-new/base'
+} from '@chaingraph/types/port/base'
 import { getObjectSchema } from '@chaingraph/types/node'
 import { Port } from './port.decorator'
 

@@ -1,4 +1,4 @@
-import type { ObjectSchema as IObjectSchema, IPortConfig } from '@chaingraph/types/port-new/base'
+import type { ObjectSchema as IObjectSchema, IPortConfig } from '@chaingraph/types/port/base'
 import { resolveObjectSchema } from '@chaingraph/types'
 
 /**

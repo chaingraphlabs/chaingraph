@@ -12,18 +12,18 @@ import type {
   NodeMetadata,
   NodeValidationResult,
 } from '@chaingraph/types/node/types'
-import type { IPort, IPortConfig, JSONValue } from '@chaingraph/types/port-new/base'
+import type { IPort, IPortConfig, JSONValue } from '@chaingraph/types/port/base'
 import {
   getOrCreateNodeMetadata,
 } from '@chaingraph/types/node/decorator-new/getOrCreateNodeMetadata'
 import { NodeEventType } from '@chaingraph/types/node/events'
 import { NodeStatus } from '@chaingraph/types/node/node-enums'
 import { SerializedNodeSchema } from '@chaingraph/types/node/types.zod'
-import { PortDirection } from '@chaingraph/types/port-new/base'
-import { PortFactory } from '@chaingraph/types/port-new/factory'
+import { PortDirection } from '@chaingraph/types/port/base'
+import { PortFactory } from '@chaingraph/types/port/factory'
+import { portRegistry } from '@chaingraph/types/port/registry'
 import { deepCopy } from '@chaingraph/types/utils/deep-copy'
 import { EventQueue } from '@chaingraph/types/utils/event-queue'
-import { portRegistry } from '../port-new/registry'
 import { PortConfigProcessor } from './port-config-processor'
 import 'reflect-metadata'
 

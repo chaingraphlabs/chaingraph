@@ -5,15 +5,15 @@ import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 
-import { MultiChannel } from '@chaingraph/types/port-new/channel'
+import { MultiChannel } from '@chaingraph/types/port/channel'
 import {
   ArrayPortPlugin,
   NumberPortPlugin,
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port-new/plugins'
-import { portRegistry } from '@chaingraph/types/port-new/registry'
+} from '@chaingraph/types/port/plugins'
+import { portRegistry } from '@chaingraph/types/port/registry'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'

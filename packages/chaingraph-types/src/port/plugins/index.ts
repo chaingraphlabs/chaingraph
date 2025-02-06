@@ -1,3 +1,4 @@
+export * from './AnyPortPlugin'
 export * from './ArrayPortPlugin'
 export * from './BooleanPortPlugin'
 export * from './EnumPortPlugin'

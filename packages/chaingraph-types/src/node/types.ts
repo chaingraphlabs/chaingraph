@@ -1,6 +1,6 @@
 import type { NodeCategory } from '@chaingraph/types/node/category'
 import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
-import type { IPortConfig } from '@chaingraph/types/port-new/base'
+import type { IPortConfig } from '@chaingraph/types/port/base'
 import type { NodeExecutionStatus, ValidationMessageType } from './node-enums'
 
 /**

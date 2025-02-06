@@ -1,5 +1,5 @@
-import type { IPortConfig as OriginalIPortConfig } from '@chaingraph/types/port-new/base'
-import type { ConfigTypeMap, ObjectSchema as IObjectSchema, PortType } from '@chaingraph/types/port-new/base/types'
+import type { IPortConfig as OriginalIPortConfig } from '@chaingraph/types/port/base'
+import type { ConfigTypeMap, ObjectSchema as IObjectSchema, PortType } from '@chaingraph/types/port/base/types'
 
 // For the decorator API we “widen” the configuration type only if needed,
 // but in our new design for object and array ports we no longer support shorthand.

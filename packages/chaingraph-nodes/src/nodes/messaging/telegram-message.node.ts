@@ -8,7 +8,7 @@ import {
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  PortString,
+  String,
 } from '@chaingraph/types'
 
 @Node({
@@ -19,14 +19,14 @@ import {
 }, nodeRegistry)
 export class TelegramMessageNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Message',
     description: 'Message to send to Telegram',
   })
   message: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Result',
     description: 'Sending result status',
   })

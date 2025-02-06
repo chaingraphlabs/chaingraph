@@ -6,12 +6,12 @@ import {
   NumberPortPlugin,
   ObjectPortPlugin,
   StreamPortPlugin,
-} from '@chaingraph/types/port-new/plugins'
-import { AnyPortPlugin } from '@chaingraph/types/port-new/plugins/AnyPortPlugin'
+} from '@chaingraph/types/port/plugins'
+import { AnyPortPlugin } from '@chaingraph/types/port/plugins/AnyPortPlugin'
 import {
   StringPortPlugin,
-} from '@chaingraph/types/port-new/plugins/StringPortPlugin'
-import { portRegistry } from '@chaingraph/types/port-new/registry'
+} from '@chaingraph/types/port/plugins/StringPortPlugin'
+import { portRegistry } from '@chaingraph/types/port/registry'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'

@@ -1,7 +1,7 @@
 import type { PortDecoratorOptions } from '@chaingraph/types/node'
 import type {
   PortType,
-} from '@chaingraph/types/port-new/base/types'
+} from '@chaingraph/types/port/base/types'
 import { resolveObjectSchema } from '@chaingraph/types/node/decorator-new/object-schema.decorator'
 
 import { getPortsMetadata, setPortMetadata } from './metadata-storage'

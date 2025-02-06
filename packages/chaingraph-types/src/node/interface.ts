@@ -8,7 +8,7 @@ import type {
   NodeUIStyle,
   Position,
 } from '@chaingraph/types/node/node-ui'
-import type { IPort, JSONValue } from '@chaingraph/types/port-new/base'
+import type { IPort, JSONValue } from '@chaingraph/types/port/base'
 import type {
   NodeExecutionResult,
   NodeMetadata,
