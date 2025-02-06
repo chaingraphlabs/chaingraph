@@ -5,7 +5,7 @@
     "target": "ESNext",
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM"],
-    "baseUrl": ".",
+    "rootDir": "../../",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
@@ -23,6 +23,9 @@
     "skipLibCheck": true
   },
   "references": [
+    {
+      "path": "../chaingraph-types"
+    }
   ],
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "../chaingraph-types/src/**/*"]
 }

@@ -20,17 +20,30 @@
       "@chaingraph/nodes/*": ["packages/chaingraph-nodes/src/*"]
     },
     "resolveJsonModule": true,
-    "types": ["bun-types"], // Added Bun types
+    "types": ["bun-types"],
     "allowJs": true,
     "strict": true,
     "strictNullChecks": true,
-    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noEmit": false,
+    "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["packages/*/src/**/*"],
-  "exclude": ["node_modules"]
+  "references": [
+    {
+      "path": "packages/chaingraph-types"
+    },
+    {
+      "path": "packages/chaingraph-nodes"
+    },
+    {
+      "path": "packages/chaingraph-backend"
+    }
+  ],
+  "exclude": ["**/node_modules", "**/dist", "**/__tests__"]
 }

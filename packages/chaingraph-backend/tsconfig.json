@@ -3,15 +3,20 @@
   "compilerOptions": {
     "composite": true,
     "rootDir": "../../",
-    "outDir": "./dist"
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "skipLibCheck": true
   },
   "references": [
-    //    {
-    //      "path": "../chaingraph-types"
-    //    },
-    //    {
-    //      "path": "../chaingraph-nodes"
-    //    }
+    {
+      "path": "../chaingraph-types"
+    },
+    {
+      "path": "../chaingraph-nodes"
+    }
   ],
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*"],
+  "exclude": ["**/__tests__/**"]
 }
