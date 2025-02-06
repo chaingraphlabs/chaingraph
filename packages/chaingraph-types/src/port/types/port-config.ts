@@ -42,6 +42,7 @@ export interface BasePortConfig<K extends PortKind> {
  */
 
 export interface StringPortConfig extends BasePortConfig<PortKind.String> {
+  t: 'hello wolrd'
   defaultValue?: string
   validation?: StringPortValidation
 }

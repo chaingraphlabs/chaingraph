@@ -1,5 +1,8 @@
-import type { CategoryMetadata, INode } from '@chaingraph/types'
-import type { Node } from '@xyflow/react'
+import type { CategoryMetadata, INode, IPort, PortConfig, PortKind } from '@chaingraph/types'
+import type { Node, NodeTypes } from '@xyflow/react'
+import type { ReactNode } from 'react'
+import { StringInputPort } from './ports/StringPort/StringInputPort'
+import { StringOutputPort } from './ports/StringPort/StringOutputPort'
 
 // export type ChaingraphNode = Node<{
 //   node: INode
