@@ -29,6 +29,9 @@ export class TemplateNode extends BaseNode {
   @String({
     title: 'Result',
     description: 'Processed template',
+    ui: {
+      hideEditor: false,
+    },
   })
   result: string = ''
 

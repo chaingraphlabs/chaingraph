@@ -92,15 +92,15 @@ The `OptimisticUpdate` object serves as the core data structure for managing opt
 
 ```typescript
 interface OptimisticUpdate<T, P = any> {
-  id: string;
-  type: string;
-  payload: P;
-  tempId?: string;
-  previousState: T;
-  timestamp: number;
-  status: 'pending' | 'completed' | 'failed';
-  apply: (state: T) => T;
-  rollback: (state: T) => T;
+  id: string
+  type: string
+  payload: P
+  tempId?: string
+  previousState: T
+  timestamp: number
+  status: 'pending' | 'completed' | 'failed'
+  apply: (state: T) => T
+  rollback: (state: T) => T
 }
 ```
 
@@ -111,12 +111,12 @@ An Effector store, `$optimisticUpdates`, holds the current optimistic updates. I
 **Example:**
 
 ```typescript
-const $optimisticUpdates = createStore<Map<string, OptimisticUpdate<any>>>(new Map());
+const $optimisticUpdates = createStore<Map<string, OptimisticUpdate<any>>>(new Map())
 
-const $pendingUpdates = $optimisticUpdates.map(updates => 
+const $pendingUpdates = $optimisticUpdates.map(updates =>
   new Map(Array.from(updates.entries())
     .filter(([_, update]) => update.status === 'pending'))
-);
+)
 ```
 
 ### 3.3 Operation Factory
@@ -140,7 +140,7 @@ const addNodeOperation = createOptimisticOperation<NodeState, AddNodeEvent>({
   type: 'node/add',
   store: $nodes,
   apply: (state, payload) => {
-    const tempId = generateTemporaryId();
+    const tempId = generateTemporaryId()
     const node: NodeState = {
       id: tempId,
       ...payload,
@@ -148,19 +148,19 @@ const addNodeOperation = createOptimisticOperation<NodeState, AddNodeEvent>({
         ...payload.metadata,
         id: tempId,
       },
-    };
-    return { ...state, [tempId]: node };
+    }
+    return { ...state, [tempId]: node }
   },
   rollback: (state, payload, tempId) => {
-    const { [tempId]: _, ...rest } = state;
-    return rest;
+    const { [tempId]: _, ...rest } = state
+    return rest
   },
   effect: addNodeToFlowFx,
   onServerResponse: (response, tempId) => {
     // Replace tempId with real ID in state and related entities
-    replaceTemporaryId(tempId, response.realId);
+    replaceTemporaryId(tempId, response.realId)
   },
-});
+})
 ```
 
 ### 3.4 Temporary IDs Implementation

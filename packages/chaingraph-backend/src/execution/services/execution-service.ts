@@ -5,9 +5,7 @@ import type {
   ExecutionState,
 } from '@chaingraph/backend/execution/types'
 import type { ExecutionEvent, ExecutionEventImpl, Flow } from '@chaingraph/types'
-import type {
-  ExecutionEventHandler,
-} from '@chaingraph/types/flow/execution-handlers'
+import type { ExecutionEventHandler } from '@chaingraph/types/flow/execution-handlers'
 import { CleanupService } from '@chaingraph/backend/execution/services/cleanup-service'
 import { ExecutionContext, ExecutionEngine, ExecutionEventEnum } from '@chaingraph/types'
 import {
@@ -351,7 +349,7 @@ export class ExecutionService {
 
     const eventHandler = this.createEventHandlers(instance)
     const unsubscribe = instance.engine.onAll((event) => {
-      eventHandler(event, instance.context)
+      eventHandler(event)
       // Publish event to queue for subscribers
       eventQueue.publish(event)
     })

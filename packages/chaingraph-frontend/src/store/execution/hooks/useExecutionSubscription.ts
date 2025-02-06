@@ -14,7 +14,6 @@ import {
   $executionSubscriptionState,
   ExecutionStatus,
   ExecutionSubscriptionStatus,
-  isTerminalStatus,
   newExecutionEvent,
   setExecutionError,
   setExecutionStatus,
@@ -28,6 +27,9 @@ export function useExecutionSubscription() {
 
   // Create event handlers map
   const eventHandlers: ExecutionEventHandlerMap = useMemo(() => ({
+    [ExecutionEventEnum.FLOW_SUBSCRIBED]: (data) => {
+      console.log('Flow subscribed:', data.flow.id)
+    },
     [ExecutionEventEnum.FLOW_STARTED]: (data) => {
       // Handle flow started
       console.log('Flow started:', data.flow.id)
@@ -41,6 +43,7 @@ export function useExecutionSubscription() {
     },
 
     [ExecutionEventEnum.FLOW_FAILED]: (data) => {
+      debugger
       console.log('Flow failed:', data.flow.id, data.error)
       setExecutionError({
         message: data.error.message,
@@ -119,7 +122,8 @@ export function useExecutionSubscription() {
 
   // Subscribe to execution events using tRPC
   const subscription = trpc.execution.subscribeToEvents.useSubscription(
-    executionId && !isTerminalStatus(executionStatus)
+    // executionId && !isTerminalStatus(executionStatus)
+    executionId
       ? {
           executionId,
           lastEventId: null,
@@ -135,6 +139,7 @@ export function useExecutionSubscription() {
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.CONNECTING)
       },
       onData: async (trackedData) => {
+        debugger
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
 
         if (trackedData.type !== ExecutionEventEnum.NODE_STATUS_CHANGED) {
@@ -143,6 +148,7 @@ export function useExecutionSubscription() {
         await handleEvent(trackedData)
       },
       onError: (error) => {
+        debugger
         console.error('Error subscribing to execution events:', error)
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.ERROR)
         setExecutionSubscriptionError({

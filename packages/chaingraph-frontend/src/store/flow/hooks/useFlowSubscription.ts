@@ -50,7 +50,6 @@ export function useFlowSubscription() {
     },
 
     [FlowEventType.NodeAdded]: (data) => {
-      debugger
       console.log('[NodeAdded] Received node:', data.node)
       addNode(data.node)
     },

@@ -2,7 +2,7 @@ import type { INode, JSONValue } from '@chaingraph/types'
 import type { IPort } from '@chaingraph/types/port/base'
 import { initializeStores } from '@/store/init.ts'
 import { nodeRegistry } from '@chaingraph/nodes'
-import { BaseNode, Edge, registerFlowTransformers } from '@chaingraph/types'
+import { BaseNode, Edge, ExecutionEventImpl, registerFlowTransformers } from '@chaingraph/types'
 import { BasePort } from '@chaingraph/types/port/base'
 import { MultiChannel } from '@chaingraph/types/port/channel'
 import { PortFactory } from '@chaingraph/types/port/factory'
@@ -17,7 +17,7 @@ import './reflect'
 
 console.log('main.tsx')
 
-// registerNodeTransformers(nodeRegistry)
+registerNodeTransformers(nodeRegistry)
 registerFlowTransformers()
 
 superjson.registerCustom<IPort, JSONValue>(
@@ -124,6 +124,46 @@ superjson.registerCustom<INode, JSONValue>(
     },
   },
   BaseNode.name,
+)
+
+// Execution event data
+superjson.registerCustom<ExecutionEventImpl, JSONValue>(
+  {
+    isApplicable: (v): v is ExecutionEventImpl<any> => {
+      return v instanceof ExecutionEventImpl
+    },
+    serialize: (v) => {
+      return superjson.serialize({
+        index: v.index,
+        type: v.type,
+        timestamp: v.timestamp,
+        data: superjson.serialize(v.data),
+      }) as unknown as JSONValue
+    },
+    deserialize: (v) => {
+      const eventData = superjson.deserialize(v as any) as any
+
+      if (!eventData) {
+        throw new Error('Invalid execution event data')
+      }
+
+      try {
+        const data = superjson.deserialize(eventData.data)
+
+        return new ExecutionEventImpl(
+          eventData.index,
+          eventData.type,
+          eventData.timestamp,
+          data,
+        )
+      } catch (e: any) {
+        console.error(e)
+        debugger
+        throw new Error('Invalid execution event data')
+      }
+    },
+  },
+  ExecutionEventImpl.name,
 )
 
 initializeStores().catch(console.error)
