@@ -1,5 +1,18 @@
 import type { NodeExecutionResult } from '@chaingraph/types'
-import { BaseNode, ExecutionContext, ExecutionEngine, Flow, MultiChannel, Node, NodeStatus, PortDirection, PortKind, PortStreamInput, PortStreamOutput } from '@chaingraph/types'
+import {
+  BaseNode,
+  ExecutionContext,
+  ExecutionEngine,
+  ExecutionEventEnum,
+  Flow,
+  MultiChannel,
+  Node,
+  NodeStatus,
+  PortDirection,
+  PortKind,
+  PortStreamInput,
+  PortStreamOutput,
+} from '@chaingraph/types'
 import { describe, expect, it } from 'vitest'
 
 @Node({})
@@ -103,6 +116,32 @@ class FailingNode extends BaseNode {
   }
 }
 
+@Node({})
+class ManualResolveNode extends BaseNode {
+  get resolve1(): () => void {
+    return this._resolve1
+  }
+
+  private _resolve1!: () => void
+
+  get resolve2(): () => void {
+    return this._resolve2
+  }
+
+  private _resolve2!: () => void
+
+  async execute(): Promise<NodeExecutionResult> {
+    return {
+      backgroundActions: [
+        () =>
+          new Promise(resolve => this._resolve1 = resolve),
+        () =>
+          new Promise(resolve => this._resolve2 = resolve),
+      ],
+    }
+  }
+}
+
 describe('flow with async nodes', () => {
   it('supports background actions', async () => {
     const flow = new Flow()
@@ -180,5 +219,53 @@ describe('flow with async nodes', () => {
 
     await expect(executionEngine.execute.bind(executionEngine)).rejects.toThrow('Simulated failure')
     expect(node.status).toBe(NodeStatus.Error)
+  })
+
+  it(`has ${NodeStatus.Backgrounding} status, and then ${NodeStatus.Completed} after`, async () => {
+    const flow = new Flow()
+
+    const node = new ManualResolveNode('manual-resolve-node')
+    flow.addNode(node)
+
+    const abortController = new AbortController()
+    const context = new ExecutionContext(flow.id, abortController)
+    const executionEngine = new ExecutionEngine(flow, context)
+    const executionPromise = executionEngine.execute()
+
+    await expect.poll(() => node.status).toBe(NodeStatus.Backgrounding)
+
+    node.resolve1()
+    expect(node.status).toBe(NodeStatus.Backgrounding)
+
+    node.resolve2()
+    await expect.poll(() => node.status).toBe(NodeStatus.Completed)
+
+    await expect(executionPromise).resolves.not.toThrow()
+  })
+
+  it(`emits events when node status transitions to ${NodeStatus.Backgrounding}`, async () => {
+    const flow = new Flow()
+
+    const node = new AsyncNode('async-node', () => Array.from({ length: 100 })
+      .map((_, i) => i))
+
+    flow.addNode(node)
+
+    const abortController = new AbortController()
+    const context = new ExecutionContext(flow.id, abortController)
+    const executionEngine = new ExecutionEngine(flow, context)
+
+    const transitionToBackground = new Promise((resolve) => {
+      executionEngine.on(ExecutionEventEnum.NODE_BACKGROUNDED, resolve)
+    })
+
+    const transitionToCompleted = new Promise((resolve) => {
+      executionEngine.on(ExecutionEventEnum.NODE_COMPLETED, resolve)
+    })
+
+    await expect(executionEngine.execute()).resolves.not.toThrow()
+
+    await expect(transitionToBackground).resolves.not.toThrow()
+    await expect(transitionToCompleted).resolves.not.toThrow()
   })
 })

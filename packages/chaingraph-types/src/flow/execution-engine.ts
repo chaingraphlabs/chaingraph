@@ -360,19 +360,32 @@ export class ExecutionEngine {
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
 
-      if (backgroundActions) {
+      const hasBackgroundActions = backgroundActions && backgroundActions.length > 0
+      if (hasBackgroundActions) {
+        let completedActions = 0
         for (const action of backgroundActions) {
           this.readyQueue.enqueue(
-            () => action().catch(e => this.setNodeError(node, e, nodeStartTime)),
+            () => action()
+              .then(() => {
+                if (node.status !== NodeStatus.Backgrounding) {
+                  return
+                }
+
+                if (++completedActions === backgroundActions.length) {
+                  this.setNodeCompleted(node, nodeStartTime)
+                }
+              })
+              .catch(e => this.setNodeError(node, e, nodeStartTime)),
           )
         }
-      }
 
-      node.setStatus(NodeStatus.Completed, true)
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
-        node,
-        executionTime: Date.now() - nodeStartTime,
-      }))
+        node.setStatus(NodeStatus.Backgrounding, true)
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
+          node,
+        }))
+      } else {
+        this.setNodeCompleted(node, nodeStartTime)
+      }
 
       this.completedQueue.enqueue(node)
     } catch (error) {
@@ -380,6 +393,14 @@ export class ExecutionEngine {
     } finally {
       cancel()
     }
+  }
+
+  private setNodeCompleted(node: INode, nodeStartTime: number) {
+    node.setStatus(NodeStatus.Completed, true)
+    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
+      node,
+      executionTime: Date.now() - nodeStartTime,
+    }))
   }
 
   private setNodeError(node: INode, error: unknown, nodeStartTime: number) {

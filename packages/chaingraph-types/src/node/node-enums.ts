@@ -15,6 +15,10 @@ export enum NodeStatus {
   Ready = 'ready',
   Pending = 'pending',
   Executing = 'executing',
+  /**
+   * Node is currently executing one or mode background actions.
+   */
+  Backgrounding = 'backgrounding',
   Completed = 'completed',
   Error = 'error',
   Disposed = 'disposed',
