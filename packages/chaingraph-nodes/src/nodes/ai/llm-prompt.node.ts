@@ -6,14 +6,13 @@ import { BaseNode, Input, Node, NodeExecutionStatus, Output, Port, String } from
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'LLM Prompt',
   description: 'Sends prompt to Language Model and returns response',
   category: NODE_CATEGORIES.AI,
   tags: ['ai', 'llm', 'prompt', 'gpt'],
-}, nodeRegistry)
+})
 export class LLMPromptNode extends BaseNode {
   @Input()
   @String({

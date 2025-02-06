@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Telegram Message',
   description: 'Sends a message to Telegram',
   category: NODE_CATEGORIES.MESSAGING,
   tags: ['telegram', 'message', 'social'],
-}, nodeRegistry)
+})
 export class TelegramMessageNode extends BaseNode {
   @Input()
   @String({

@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Template',
   description: 'Processes text template with variables',
   category: NODE_CATEGORIES.DATA,
   tags: ['template', 'text', 'transform'],
-}, nodeRegistry)
+})
 export class TemplateNode extends BaseNode {
   @Input()
   @String({

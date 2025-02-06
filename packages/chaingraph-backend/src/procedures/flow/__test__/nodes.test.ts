@@ -1,6 +1,7 @@
 import type {
   ExecutionContext,
   NodeExecutionResult,
+  NodeMetadata,
 } from '@badaitech/chaingraph-types'
 import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
 import {
@@ -83,7 +84,7 @@ describe('flow Node Procedures', () => {
     expect(types.length).toBeGreaterThan(0)
 
     // Find ScalarNode type
-    const scalarNodeType = types.find(t => t.title === 'Scalar Node')
+    const scalarNodeType = types.find((t: NodeMetadata) => t.title === 'Scalar Node')
     expect(scalarNodeType).toBeDefined()
 
     return { caller, flow, nodeType: scalarNodeType!.type }

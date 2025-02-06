@@ -15,14 +15,13 @@ import {
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'LLM Stream',
   description: 'Sends prompt to Language Model and streams response',
   category: NODE_CATEGORIES.AI,
   tags: ['ai', 'llm', 'prompt', 'gpt'],
-}, nodeRegistry)
+})
 export class LLMStreamNode extends BaseNode {
   @Input()
   @String({

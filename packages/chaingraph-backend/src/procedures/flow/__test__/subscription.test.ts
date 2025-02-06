@@ -1,6 +1,7 @@
 import type {
   ExecutionContext,
   NodeExecutionResult,
+  NodeMetadata,
 } from '@badaitech/chaingraph-types'
 import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
 import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeExecutionStatus, NodeRegistry, Number, Output, String } from '@badaitech/chaingraph-types'
@@ -72,7 +73,7 @@ describe('flow Event Subscription', () => {
     expect(types.length).toBeGreaterThan(0)
 
     // Find ScalarNode type
-    const scalarNodeType = types.find(t => t.title === 'Scalar Node')
+    const scalarNodeType = types.find((t: NodeMetadata) => t.title === 'Scalar Node')
     expect(scalarNodeType).toBeDefined()
 
     return { caller, flow, nodeType: scalarNodeType!.type }

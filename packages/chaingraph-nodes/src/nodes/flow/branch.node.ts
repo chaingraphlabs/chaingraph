@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Branch',
   description: 'Controls flow based on condition',
   category: NODE_CATEGORIES.FLOW,
   tags: ['flow', 'condition', 'branch'],
-}, nodeRegistry)
+})
 export class BranchNode extends BaseNode {
   @Input()
   @String({

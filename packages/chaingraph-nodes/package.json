@@ -9,9 +9,18 @@
     "directory": "./packages/chaingraph-nodes"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./icons": "./dist/icons/index.js",
-    "./categories/*": "./dist/categories/*.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "default": "./dist/registry.js"
+    },
+    "./node-catalog": {
+      "types": "./dist/node-catalog.d.ts",
+      "default": "./dist/node-catalog.js"
+    }
   },
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -26,7 +35,8 @@
     "@badaitech/chaingraph-types": "workspace:*",
     "@langchain/openai": "^0.4.2",
     "langchain": "^0.3.15",
-    "lucide-react": "^0.279.0"
+    "lucide-react": "^0.279.0",
+    "superjson": "^2.2.1"
   },
   "devDependencies": {
     "@svgr/core": "^8.0.0",

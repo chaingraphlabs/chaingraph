@@ -1,12 +1,12 @@
 import type { INode, JSONValue } from '@chaingraph/types'
 import type { IPort } from '@chaingraph/types/port/base'
 import { initializeStores } from '@/store/init.ts'
-import { nodeRegistry } from '@chaingraph/nodes'
-import { BaseNode, Edge, ExecutionEventImpl, registerFlowTransformers } from '@chaingraph/types'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { BaseNode, Edge, ExecutionEventImpl, registerFlowTransformers, registerNodeTransformers } from '@chaingraph/types'
 import { BasePort } from '@chaingraph/types/port/base'
 import { MultiChannel } from '@chaingraph/types/port/channel'
-import { PortFactory } from '@chaingraph/types/port/factory'
 
+import { PortFactory } from '@chaingraph/types/port/factory'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import superjson from 'superjson'
@@ -17,7 +17,7 @@ import './reflect'
 
 console.log('main.tsx')
 
-registerNodeTransformers(nodeRegistry)
+registerNodeTransformers(NodeRegistry.getInstance())
 registerFlowTransformers()
 
 superjson.registerCustom<IPort, JSONValue>(
@@ -107,7 +107,7 @@ superjson.registerCustom<INode, JSONValue>(
       const nodeData = v as any
       const nodeMetadata = nodeData.metadata as any
 
-      const node = nodeRegistry.createNode(
+      const node = NodeRegistry.getInstance().createNode(
         nodeMetadata.type,
         nodeData.id ?? nodeMetadata.id ?? '',
         nodeMetadata,

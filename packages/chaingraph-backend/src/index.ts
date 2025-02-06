@@ -1,5 +1,9 @@
-import { NodeCatalog, nodeRegistry } from '@badaitech/chaingraph-nodes/dist'
-import { registerFlowTransformers, registerNodeTransformers } from '@badaitech/chaingraph-types'
+import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
+import {
+  NodeRegistry,
+  registerFlowTransformers,
+  registerNodeTransformers,
+} from '@badaitech/chaingraph-types'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -22,7 +26,7 @@ portRegistry.register(ObjectPortPlugin)
 portRegistry.register(EnumPortPlugin)
 portRegistry.register(StreamPortPlugin)
 
-registerNodeTransformers(nodeRegistry)
+registerNodeTransformers(NodeRegistry.getInstance())
 registerFlowTransformers()
 
 // Execution event data
@@ -63,13 +67,13 @@ registerFlowTransformers()
 
 // Initialize stores and context
 const flowStore = new InMemoryFlowStore()
-const nodesCatalog = new NodeCatalog(nodeRegistry)
+const nodesCatalog = new NodeCatalog(NodeRegistry.getInstance())
 const executionStore = new InMemoryExecutionStore()
 const executionService = new ExecutionService(executionStore)
 
 initializeContext(
   flowStore,
-  nodeRegistry,
+  NodeRegistry.getInstance(),
   nodesCatalog,
   executionService,
   executionStore,

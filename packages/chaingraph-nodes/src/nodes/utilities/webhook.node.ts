@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Webhook',
   description: 'Sends HTTP requests to external services',
   category: NODE_CATEGORIES.UTILITIES,
   tags: ['http', 'webhook', 'request'],
-}, nodeRegistry)
+})
 export class WebhookNode extends BaseNode {
   @Input()
   @String({

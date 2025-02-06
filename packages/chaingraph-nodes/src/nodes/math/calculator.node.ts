@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Calculator',
   description: 'Performs basic mathematical operations',
   category: NODE_CATEGORIES.MATH,
   tags: ['math', 'calculation', 'arithmetic'],
-}, nodeRegistry)
+})
 export class CalculatorNode extends BaseNode {
   @Input()
   @String({

@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Group',
   description: 'Group nodes',
   category: NODE_CATEGORIES.GROUP,
   tags: ['group'],
-}, nodeRegistry)
+})
 export class GroupNode extends BaseNode {
   @Input()
   @String()

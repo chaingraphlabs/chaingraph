@@ -4,14 +4,13 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
-import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Create Message',
   description: 'Creates a new message with specified content',
   category: NODE_CATEGORIES.MESSAGING,
   tags: ['message', 'create', 'content'],
-}, nodeRegistry)
+})
 export class CreateMessageNode extends BaseNode {
   @Input()
   @String({

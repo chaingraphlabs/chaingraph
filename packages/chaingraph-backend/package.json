@@ -25,7 +25,8 @@
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "superjson": "^2.2.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

@@ -12,12 +12,11 @@ import {
   Output,
   String,
 } from '@badaitech/chaingraph-types'
-import { nodeRegistry } from '../registry'
 
 @Node({
   title: 'Scalar Node',
   description: 'Node with scalar ports',
-}, nodeRegistry)
+})
 class ScalarNode extends BaseNode {
   @Input()
   @String({

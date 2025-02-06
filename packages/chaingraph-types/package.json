@@ -13,33 +13,21 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./port/channel": {
-      "types": "./dist/port/channel/index.d.ts",
-      "default": "./dist/port/channel/index.js"
+    "./port/*": {
+      "types": "./dist/port/*.d.ts",
+      "default": "./dist/port/*.js"
     },
-    "./port/base": {
-      "types": "./dist/port/base/index.d.ts",
-      "default": "./dist/port/base/index.js"
+    "./node/*": {
+      "types": "./dist/node/*.d.ts",
+      "default": "./dist/node/*.js"
     },
-    "./port/plugins": {
-      "types": "./dist/port/plugins/index.d.ts",
-      "default": "./dist/port/plugins/index.js"
+    "./flow/*": {
+      "types": "./dist/flow/*.d.ts",
+      "default": "./dist/flow/*.js"
     },
-    "./port/registry": {
-      "types": "./dist/port/registry/index.d.ts",
-      "default": "./dist/port/registry/index.js"
-    },
-    "./node": {
-      "types": "./dist/node/index.d.ts",
-      "default": "./dist/node/index.js"
-    },
-    "./flow": {
-      "types": "./dist/flow/index.d.ts",
-      "default": "./dist/flow/index.js"
-    },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "default": "./dist/utils/*.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -50,7 +38,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "superjson": "^2.2.1"
+    "reflect-metadata": "^0.2.1",
+    "type-fest": "^4.10.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",

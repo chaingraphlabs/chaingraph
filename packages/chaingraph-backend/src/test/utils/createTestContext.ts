@@ -1,7 +1,7 @@
-import type { NodeRegistry } from '@badaitech/chaingraph-types'
 import type { AppContext } from '../../context'
 import type { IFlowStore } from '../../stores/flowStore'
-import { NodeCatalog, nodeRegistry } from '@badaitech/chaingraph-nodes/dist'
+import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { InMemoryFlowStore } from '../../stores/flowStore'
 
 /**
@@ -12,11 +12,13 @@ export function createTestContext(
   nodesCatalog?: NodeCatalog,
   flowStore?: IFlowStore,
 ): AppContext {
+  const nodeRegistry = _nodeRegistry ?? NodeRegistry.getInstance()
+
   return {
     session: {
       userId: 'test_user_id',
     },
-    nodeRegistry: _nodeRegistry ?? nodeRegistry,
+    nodeRegistry,
     nodesCatalog: nodesCatalog ?? new NodeCatalog(nodeRegistry),
     flowStore: flowStore ?? new InMemoryFlowStore(),
     executionService: null as any,

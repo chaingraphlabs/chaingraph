@@ -23,7 +23,7 @@ import {
   useFlowSubscription,
 } from '@/store'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
-import { nodeRegistry } from '@chaingraph/nodes'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
 import {
   Background,
   ReactFlow,
@@ -237,7 +237,7 @@ function Flow() {
       y: contextMenu.y,
     })
 
-    const node = nodeRegistry.createNode(nodeMeta.type, 'new')
+    const node = NodeRegistry.getInstance().createNode(nodeMeta.type, 'new')
 
     // Dispatch addNodeToFlow event
     addNodeToFlow({
