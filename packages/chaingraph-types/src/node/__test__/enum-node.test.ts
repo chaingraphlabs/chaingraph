@@ -4,12 +4,25 @@ import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
 import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { PortType } from '@chaingraph/types/port.new'
-import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
 
+import { findPort } from '@chaingraph/types/node/traverse-ports'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
 
 enum Color {
   Red = 'Red',
@@ -24,28 +37,27 @@ enum Color {
 class EnumNode extends BaseNode {
   @Input()
   @Port({
-    type: PortType.Enum,
+    type: 'enum',
     options: [
       {
         id: Color.Red,
-        type: PortType.String,
+        type: 'string',
         title: 'Red',
         defaultValue: Color.Red,
       },
       {
         id: Color.Green,
-        type: PortType.String,
+        type: 'string',
         title: 'Green',
         defaultValue: Color.Green,
       },
       {
         id: Color.Blue,
-        type: PortType.String,
+        type: 'string',
         title: 'Blue',
         defaultValue: Color.Blue,
       },
     ],
-    defaultValue: Color.Red,
   })
   favoriteColor: Color = Color.Red
 
@@ -62,7 +74,6 @@ class EnumNode extends BaseNode {
 describe('enum node serialization', () => {
   beforeAll(() => {
     // Register all port types
-    registerAllPorts()
     registerNodeTransformers()
   })
 
@@ -80,5 +91,16 @@ describe('enum node serialization', () => {
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(enumNode.metadata)
     expect(parsed.status).toEqual(enumNode.status)
+
+    const colorPort = findPort(enumNode, port => port.getConfig().key === 'favoriteColor')
+    enumNode.favoriteColor = Color.Green
+    expect(colorPort?.getValue()).toBe(Color.Green)
+
+    try {
+      // @ts-expect-error invalid value test
+      enumNode.favoriteColor = 'invalid'
+    } catch (e: any) {
+      expect(e.message).toBe('Value validation failed in setValue.')
+    }
   })
 })

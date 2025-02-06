@@ -5,14 +5,22 @@ import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import { findPort } from '@chaingraph/types/node/traverse-ports'
-import { createNumberValue } from '@chaingraph/types/port-new/plugins'
-import { PortType } from '@chaingraph/types/port.new'
-
-import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
-import Decimal from 'decimal.js'
+import {
+  ArrayPortPlugin,
+  createNumberValue,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
 
 @Node({
   title: 'Array Node',
@@ -21,14 +29,13 @@ import 'reflect-metadata'
 class ArrayNode extends BaseNode {
   @Input()
   @Port({
-    type: PortType.Array,
-    defaultValue: [],
+    type: 'array',
     itemConfig: {
-      type: PortType.Number,
+      type: 'number',
       defaultValue: createNumberValue(0),
     },
   })
-  numArray: Decimal[] = [new Decimal(1), new Decimal(2), new Decimal(3)]
+  numArray: number[] = [1, 2, 3]
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
@@ -43,7 +50,7 @@ class ArrayNode extends BaseNode {
 describe('array node serialization', () => {
   beforeAll(() => {
     // Register all port types
-    registerAllPorts()
+    // registerAllPorts()
     registerNodeTransformers()
   })
 
@@ -55,13 +62,13 @@ describe('array node serialization', () => {
     const arrayNode = new ArrayNode('array-node')
     await arrayNode.initialize()
 
-    const numArrayPort = await findPort(
+    const numArrayPort = findPort(
       arrayNode,
-      port => port.config.key === 'numArray',
+      port => port.getConfig().key === 'numArray',
     )
 
     expect(numArrayPort).toBeDefined()
-    expect(numArrayPort?.getValue()).toEqual([new Decimal(1), new Decimal(2), new Decimal(3)])
+    expect(numArrayPort?.getValue()).toEqual([1, 2, 3])
 
     const json = superjson.serialize(arrayNode)
     const parsed = superjson.deserialize(json as any as SuperJSONResult) as ArrayNode

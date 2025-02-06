@@ -1,10 +1,11 @@
+import { MultiChannel } from '@chaingraph/types/port-new/channel'
 import Decimal from 'decimal.js'
 
 export function deepCopy(obj: any): any {
   let copy
 
   // Handle the 3 simple types, and null or undefined
-  if (obj == null || typeof obj != 'object')
+  if (obj == null || typeof obj != 'object' || obj === undefined)
     return obj
 
   // Handle Date
@@ -25,6 +26,10 @@ export function deepCopy(obj: any): any {
 
   if (Decimal.isDecimal(obj)) {
     return new Decimal(obj)
+  }
+
+  if (obj instanceof MultiChannel) {
+    return obj.clone()
   }
 
   if (typeof obj === 'number') {

@@ -38,9 +38,9 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
           const nodeMetadata = nodeData.metadata as any
 
           const node = nodeRegistry.createNode(
-            nodeMetadata.metadata.type,
-            nodeMetadata.id,
-            nodeMetadata.metadata,
+            nodeMetadata.type,
+            nodeData.id ?? nodeMetadata.id ?? '',
+            nodeMetadata,
           )
 
           node.deserialize(nodeData)

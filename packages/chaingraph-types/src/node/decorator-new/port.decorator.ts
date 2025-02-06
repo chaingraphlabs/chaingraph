@@ -3,9 +3,17 @@ import type {
 } from '@chaingraph/types/port-new/base/types'
 import type { PortDecoratorOptions } from './port-decorator.types'
 import { resolveObjectSchema } from '@chaingraph/types/node/decorator-new/object-schema.decorator'
-import { ensurePortKey } from './port-decorator.utils'
-
+import { getPortsMetadata, setPortMetadata } from './metadata-storage'
 import 'reflect-metadata'
+
+/**
+ * Helper function to ensure a port configuration has a key.
+ */
+function ensurePortKey(propertyKey: string | symbol, config: { key?: string }) {
+  if (!config.key) {
+    config.key = propertyKey.toString()
+  }
+}
 
 /**
  * Port decorator that stores port configuration for a property.
@@ -21,8 +29,7 @@ export function Port<T extends PortType>(
     const ctor = target.constructor
 
     // Retrieve existing ports metadata, if any
-    const existingPorts: Map<string | symbol, any>
-      = Reflect.getMetadata('chaingraph:ports-config', ctor) || new Map()
+    const existingPorts = getPortsMetadata(ctor)
 
     // Merge with any existing config
     const existingConfig = existingPorts.get(propertyKey)
@@ -63,6 +70,6 @@ export function Port<T extends PortType>(
     }
 
     existingPorts.set(propertyKey, config)
-    Reflect.defineMetadata('chaingraph:ports-config', existingPorts, ctor)
+    setPortMetadata(ctor, propertyKey, config)
   }
 }

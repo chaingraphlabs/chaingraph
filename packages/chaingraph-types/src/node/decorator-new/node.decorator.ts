@@ -1,5 +1,5 @@
-import type { NodeMetadata, NodeRegistry } from '@chaingraph/types/node'
-import { getOrCreateNodeMetadata } from '@chaingraph/types/node'
+import type { NodeConstructor, NodeMetadata } from '@chaingraph/types/node'
+import { getNodeMetadata, getOrCreateNodeMetadata, NodeRegistry, setNodeMetadata } from '@chaingraph/types/node'
 
 import 'reflect-metadata'
 
@@ -9,10 +9,6 @@ import 'reflect-metadata'
  */
 export function Node(config: Omit<NodeMetadata, 'type'>, nodeRegistry?: NodeRegistry | null): ClassDecorator {
   return function (target: Function) {
-    // if (!config.type) {
-    //   config.type = target.name
-    // }
-
     const metadata = getOrCreateNodeMetadata(target.prototype)
     Object.assign(metadata, config)
 
@@ -22,6 +18,14 @@ export function Node(config: Omit<NodeMetadata, 'type'>, nodeRegistry?: NodeRegi
       metadata.id = config.id
     }
 
-    Reflect.defineMetadata('chaingraph:node-config', metadata, target)
+    setNodeMetadata(target, metadata)
+
+    const checkMeta = getNodeMetadata(target)
+
+    if (nodeRegistry) {
+      nodeRegistry.registerNode(target as NodeConstructor)
+    } else {
+      NodeRegistry.getInstance().registerNode(target as NodeConstructor)
+    }
   }
 }

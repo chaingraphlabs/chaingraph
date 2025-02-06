@@ -1,15 +1,28 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, MultiChannel, Node, NodeRegistry, Output } from '@chaingraph/types'
+import { BaseNode, Input, Node, NodeRegistry, Output } from '@chaingraph/types'
 import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { PortType } from '@chaingraph/types/port.new'
-import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
 
+import { MultiChannel } from '@chaingraph/types/port-new/channel'
+import {
+  ArrayPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 @Node({
   title: 'Stream Node',
@@ -18,25 +31,23 @@ import 'reflect-metadata'
 class StreamNode extends BaseNode {
   @Input()
   @Port({
-    type: PortType.Stream,
-    mode: 'input',
-    valueType: {
-      type: PortType.String,
+    type: 'stream',
+    // mode: 'input',
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
-    defaultValue: new MultiChannel<string>(),
   })
   inputStream: MultiChannel<string> = new MultiChannel<string>()
 
   @Output()
   @Port({
-    type: PortType.Stream,
-    mode: 'output',
-    valueType: {
-      type: PortType.String,
+    type: 'stream',
+    // mode: 'output',
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
-    defaultValue: new MultiChannel<string>(),
   })
   outputStream: MultiChannel<string> = new MultiChannel<string>()
 
@@ -58,7 +69,7 @@ class StreamNode extends BaseNode {
 describe('stream node serialization', () => {
   beforeAll(() => {
     // Register all port types
-    registerAllPorts()
+    // registerAllPorts()
     registerNodeTransformers()
   })
 
@@ -88,12 +99,15 @@ describe('stream node serialization', () => {
 
     // Serialize and deserialize
     const json = superjson.serialize(streamNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as StreamNode
+    const jsonString = JSON.stringify(json)
+    const parsedJson = JSON.parse(jsonString)
+    const parsed = superjson.deserialize(parsedJson as any as SuperJSONResult) as StreamNode
     await parsed.initialize()
 
     // Send data through input stream
     parsed.inputStream.send('test1')
     parsed.inputStream.send('test2')
+    parsed.inputStream.close()
 
     // Execute to process the stream
     await parsed.execute({

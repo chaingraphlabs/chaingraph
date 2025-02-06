@@ -39,7 +39,7 @@ export function Node(config: Omit<NodeMetadata, 'type'>, nodeRegistry?: NodeRegi
 
 export function getOrCreateNodeMetadata(target: any): NodeMetadata {
   // if (!target || !target.constructor) {
-  //   throw new Error('Node decorator.old can only be applied to classes')
+  //   throw new Error('Node decorator can only be applied to classes')
   // }
 
   if (!Reflect.hasMetadata(NODE_METADATA_KEY, target)) {

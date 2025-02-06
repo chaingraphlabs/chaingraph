@@ -1,6 +1,6 @@
 import { PortDirection } from '@chaingraph/types/port-new/base'
-import { updatePortDirection } from './port-decorator.utils'
 
+import { updatePortMetadata } from './metadata-storage'
 import 'reflect-metadata'
 
 /**
@@ -8,7 +8,7 @@ import 'reflect-metadata'
  */
 export function Input(): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortDirection(target, propertyKey, PortDirection.Input)
+    updatePortMetadata(target, propertyKey, { direction: PortDirection.Input })
   }
 }
 
@@ -17,6 +17,6 @@ export function Input(): PropertyDecorator {
  */
 export function Output(): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    updatePortDirection(target, propertyKey, PortDirection.Output)
+    updatePortMetadata(target, propertyKey, { direction: PortDirection.Output })
   }
 }

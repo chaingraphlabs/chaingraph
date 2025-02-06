@@ -1,5 +1,6 @@
 import type { NodeMetadata } from '@chaingraph/types/node/types'
-// NodeConfig — тип конфигурации ноды (например, тип, title, category, description)
+import { getNodeMetadata, getPortsMetadata } from './metadata-storage'
+
 import 'reflect-metadata'
 
 /**
@@ -8,17 +9,12 @@ import 'reflect-metadata'
  * (stored under 'chaingraph:ports-config') into the metadata.
  */
 export function getOrCreateNodeMetadata(target: any): NodeMetadata {
-  // Try to read node configuration metadata from class constructor.
-  let nodeMeta: Partial<NodeMetadata> = Reflect.getMetadata('chaingraph:node-config', target.constructor)
+  let nodeMeta: Partial<NodeMetadata> = getNodeMetadata(target.constructor)
   if (!nodeMeta) {
-    // If no node config exists, use an empty object with a default type value
     nodeMeta = { type: 'undefined' }
   }
+  const portsConfig: Record<string | symbol, any> = getPortsMetadata(target.constructor)
 
-  // Retrieve ports configuration (a Map) from the constructor.
-  const portsConfig: Record<string | symbol, any> = Reflect.getMetadata('chaingraph:ports-config', target.constructor) || new Map()
-
-  // Ensure that the returned metadata has a portsConfig property.
   return {
     ...nodeMeta,
     portsConfig,

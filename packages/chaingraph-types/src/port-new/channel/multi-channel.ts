@@ -69,6 +69,15 @@ export class MultiChannel<T> {
     }
   }
 
+  public clone(): MultiChannel<T> {
+    const chan = new MultiChannel<T>()
+    chan.sendBatch(this.getBuffer())
+    if (this.isChannelClosed()) {
+      chan.close()
+    }
+    return chan
+  }
+
   public static deserialize(value: JSONValue): MultiChannel<any> {
     const parsed = MultiChannelSchema.parse(value)
     const chan = new MultiChannel()

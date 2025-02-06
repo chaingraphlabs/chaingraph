@@ -1,5 +1,10 @@
 import type { ObjectSchema as IObjectSchema, IPortConfig } from '@chaingraph/types/port-new/base'
 
+import {
+  getObjectSchemaMetadata,
+  getPortsMetadata,
+  setObjectSchemaMetadata,
+} from '@chaingraph/types/node'
 import 'reflect-metadata'
 
 /**
@@ -78,7 +83,7 @@ export function resolveObjectSchema(
   schemaOrConstructor: IObjectSchema | Function,
 ): IObjectSchema {
   if (typeof schemaOrConstructor === 'function') {
-    const schema = Reflect.getMetadata('chaingraph:object-schema', schemaOrConstructor)
+    const schema = getObjectSchema(schemaOrConstructor)
     if (!schema) {
       throw new Error(
         `Class ${schemaOrConstructor.name} is not decorated with @ObjectSchema`,
@@ -99,8 +104,7 @@ export function ObjectSchema(
 ): ClassDecorator {
   return (target: any) => {
     // Retrieve all port configurations stored by the @Port decorator.
-    const portsConfig: Map<string | symbol, IPortConfig>
-      = Reflect.getMetadata('chaingraph:ports-config', target) || new Map()
+    const portsConfig = getPortsMetadata(target)
 
     const properties: Record<string, IPortConfig> = {}
 
@@ -120,7 +124,7 @@ export function ObjectSchema(
 
     // Normalize the full object schema before storing it.
     const normalizedSchema = normalizeSchema(schema)
-    Reflect.defineMetadata('chaingraph:object-schema', normalizedSchema, target)
+    setObjectSchemaMetadata(target, normalizedSchema)
   }
 }
 
@@ -128,5 +132,5 @@ export function ObjectSchema(
  * Helper function to retrieve the stored object schema from a decorated class.
  */
 export function getObjectSchema(target: any): IObjectSchema | undefined {
-  return Reflect.getMetadata('chaingraph:object-schema', target)
+  return getObjectSchemaMetadata(target)
 }

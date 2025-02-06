@@ -14,7 +14,7 @@ import {
   PortErrorType,
 } from '../base/types'
 import { streamPortConfigUISchema } from '../base/ui-config.schema'
-import { MultiChannel } from '../channel/multi-channel'
+import { MultiChannel, MultiChannelSchema } from '../channel/multi-channel'
 import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
@@ -60,9 +60,15 @@ export function validateStreamValue(
  * Stream port value schema
  */
 const valueSchema: z.ZodType<StreamPortValue> = z.custom<MultiChannel<IPortValue>>((val) => {
-  return val instanceof MultiChannel
+  return val instanceof MultiChannel || MultiChannelSchema.safeParse(val).success
 }, {
   message: 'Invalid channel type',
+}).transform((val) => {
+  if (val instanceof MultiChannel) {
+    return val
+  }
+
+  return MultiChannel.deserialize(val)
 })
 
 /**

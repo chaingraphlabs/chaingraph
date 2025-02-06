@@ -12,7 +12,7 @@ import type { INode } from './interface'
 import {
   getOrCreateNodeMetadata,
 } from '@chaingraph/types/node/decorator-new/getOrCreateNodeMetadata'
-import Decimal from 'decimal.js'
+import { deepCopy } from '@chaingraph/types/utils/deep-copy'
 import { v7 as uuidv7 } from 'uuid'
 
 export interface Context {
@@ -36,12 +36,12 @@ export class PortConfigProcessor {
       for (const [propertyKey, portConfig] of nodeMetadata.portsConfig.entries()) {
         const processedPortConfig = this.processPortConfig(
           // { ...portConfig }, // Clone to avoid mutating original
-          this.deepCopy(portConfig), // Clone to avoid mutating original
+          deepCopy(portConfig), // Clone to avoid mutating original
           {
             nodeId,
             parentPortConfig: null,
             propertyKey,
-            propertyValue: this.deepCopy((node as any)[propertyKey]),
+            propertyValue: deepCopy((node as any)[propertyKey]),
           },
         )
 
@@ -83,7 +83,7 @@ export class PortConfigProcessor {
       // For primitive port configs, no further processing is needed
       // All necessary fields have been assigned in 'assignBasicFields'
     } else {
-      throw new Error(`PortConfigProcessor: unsupported port kind: ${(portConfig as any).kind}`)
+      throw new Error(`PortConfigProcessor: unsupported port kind: ${(portConfig as any).type}`)
     }
 
     return portConfig
@@ -135,18 +135,13 @@ export class PortConfigProcessor {
     // Assign defaultValue
     // TODO: assign defaultValue
     // if (newPortConfig.defaultValue === undefined && propertyKey && propertyValue !== undefined) {
-    //   newPortConfig.defaultValue = this.deepCopy(propertyValue)
+    //   newPortConfig.defaultValue = deepCopy(propertyValue)
     // }
 
     // If the node field has an explicit value, override the defaultValue from the config.
     if (propertyValue !== undefined) {
       // Log warning if needed (optional)
-      if (newPortConfig.defaultValue !== undefined) {
-        console.warn(
-          `Conflicting default value for port '${propertyKey}': using node field value (${propertyValue}) over config value (${newPortConfig.defaultValue}).`,
-        )
-      }
-      newPortConfig.defaultValue = this.deepCopy(propertyValue)
+      newPortConfig.defaultValue = deepCopy(propertyValue)
     }
 
     // Assign parentId
@@ -173,52 +168,6 @@ export class PortConfigProcessor {
     // }
 
     return newPortConfig
-  }
-
-  private deepCopy(obj: any): any {
-    let copy
-
-    // Handle the 3 simple types, and null or undefined
-    if (obj == null || typeof obj != 'object')
-      return obj
-
-    // Handle Date
-    if (obj instanceof Date) {
-      copy = new Date()
-      copy.setTime(obj.getTime())
-      return copy
-    }
-
-    // Handle Array
-    if (Array.isArray(obj)) {
-      copy = []
-      for (let i = 0, len = obj.length; i < len; i++) {
-        copy[i] = this.deepCopy(obj[i])
-      }
-      return copy
-    }
-
-    if (Decimal.isDecimal(obj)) {
-      return new Decimal(obj)
-    }
-
-    if (typeof obj === 'number') {
-      return obj
-    }
-
-    // Handle Object
-    if (obj instanceof Object) {
-      copy = {}
-      for (const attr in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, attr))
-          (copy as any)[attr] = this.deepCopy(obj[attr])
-      }
-
-      // Copy type information
-      return copy
-    }
-
-    throw new Error('Unable to copy obj! Its type isn\'t supported.')
   }
 
   /**
@@ -273,11 +222,11 @@ export class PortConfigProcessor {
         nodeId,
         parentPortConfig: newPortConfig,
         propertyKey: key,
-        propertyValue: this.deepCopy(propertyValue?.[key]),
+        propertyValue: deepCopy(propertyValue?.[key]),
       }
 
       if (nestedPortConfig.type === 'object') {
-        propertyContext.propertyValue = this.deepCopy(portConfig.defaultValue?.[key])
+        propertyContext.propertyValue = deepCopy(portConfig.defaultValue?.[key])
       }
 
       processedProperties[key] = this.processPortConfig(
@@ -316,7 +265,7 @@ export class PortConfigProcessor {
 
     if (typeof itemConfig === 'object') {
       const processedElementConfig = this.processPortConfig(
-        // this.deepCopy(elementConfig),
+        // deepCopy(elementConfig),
         itemConfig,
         {
           nodeId: context.nodeId,
@@ -325,7 +274,7 @@ export class PortConfigProcessor {
           // propertyKey: itemConfig.id ? `${newPortConfig.key}.[{${itemConfig.id}}]` : `[{i}]`,
           // propertyKey: itemConfig.id ?? this.generateSortableUUID(),
           propertyKey: itemConfig.key ?? newPortConfig.key ?? itemConfig.id ?? this.generateSortableUUID(),
-          propertyValue: this.deepCopy(newPortConfig.itemConfig?.defaultValue),
+          propertyValue: deepCopy(newPortConfig.itemConfig?.defaultValue),
         },
       )
 
@@ -364,7 +313,7 @@ export class PortConfigProcessor {
               id: '',
             },
             propertyKey: option.id || this.generateSortableUUID(),
-            propertyValue: this.deepCopy(option),
+            propertyValue: deepCopy(option.defaultValue),
           },
         )
       })
@@ -428,7 +377,7 @@ export class PortConfigProcessor {
         nodeId: context.nodeId,
         parentPortConfig: newPortConfig,
         propertyKey: 'value',
-        propertyValue: null,
+        propertyValue: newPortConfig.itemConfig.defaultValue,
       },
     )
 

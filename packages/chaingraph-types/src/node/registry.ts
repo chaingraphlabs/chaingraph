@@ -1,8 +1,6 @@
 import type { ObjectSchema } from '../port-new/base'
 import type { INode } from './interface'
-import {
-  getOrCreateNodeMetadata,
-} from '@chaingraph/types/node/decorator.old/node-decorator'
+import { getNodeMetadata, getOrCreateNodeMetadata } from '@chaingraph/types/node/decorator-new'
 
 export type NodeConstructor = new (...args: any[]) => INode
 
@@ -28,7 +26,7 @@ export class NodeRegistry {
    * @param nodeClass Constructor of the node
    */
   registerNode(nodeClass: NodeConstructor): void {
-    const metadata = getOrCreateNodeMetadata(nodeClass)
+    const metadata = getNodeMetadata(nodeClass)
     if (metadata) {
       this.nodesConstructors.set(metadata.type, nodeClass)
     } else {
