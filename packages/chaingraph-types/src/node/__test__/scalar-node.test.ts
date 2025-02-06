@@ -1,14 +1,18 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
-import { Port } from '@chaingraph/types/node'
+import { BaseNode, NodeRegistry } from '@chaingraph/types'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { PortType } from '@chaingraph/types/port.new'
-import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
 
+import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import {
+  createBooleanValue,
+  createNumberValue,
+  createStringValue,
+} from '@chaingraph/types/port-new/plugins'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { Input, Node } from '../decorator-new'
+import { Port } from '../decorator-new/port.decorator'
 import 'reflect-metadata'
 
 @Node({
@@ -18,31 +22,27 @@ import 'reflect-metadata'
 class ScalarNode extends BaseNode {
   @Input()
   @Port({
-    type: PortType.String,
-    defaultValue: 'default string',
-    validation: {
-      minLength: 1,
-      maxLength: 100,
-    },
+    type: 'string',
+    defaultValue: createStringValue('default string'),
+    minLength: 1,
+    maxLength: 100,
   })
   strInput: string = 'default string'
 
   @Input()
   @Port({
-    type: PortType.Number,
-    defaultValue: 42,
-    validation: {
-      min: 0,
-      max: 100,
-      integer: true,
-    },
+    type: 'number',
+    defaultValue: createNumberValue(42),
+    min: 0,
+    max: 100,
+    integer: true,
   })
   numInput: number = 42
 
   @Input()
   @Port({
-    type: PortType.Boolean,
-    defaultValue: true,
+    type: 'boolean',
+    defaultValue: createBooleanValue(true),
   })
   boolInput: boolean = true
 
@@ -59,7 +59,7 @@ class ScalarNode extends BaseNode {
 describe('scalar node serialization', () => {
   beforeAll(() => {
     // Register ports from the new system
-    registerAllPorts()
+    // registerAllPorts()
     registerNodeTransformers()
   })
 

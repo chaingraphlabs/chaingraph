@@ -113,7 +113,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @returns The serialized value.
    */
   protected serializeValue(value: StreamPortValue<Item>): JSONValue {
-    return StreamPortPlugin.serializeValue(value)
+    return StreamPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -135,7 +135,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @returns The deserialized port value.
    */
   protected deserializeValue(data: JSONValue): StreamPortValue<Item> {
-    return StreamPortPlugin.deserializeValue(data) as StreamPortValue<Item>
+    return StreamPortPlugin.deserializeValue(data, this.config) as StreamPortValue<Item>
   }
 }
 

@@ -126,10 +126,11 @@ export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<
    * Serializes the object port value.
    * Delegates to ObjectPortPlugin.serializeValue.
    * @param value - The object port value.
+   * @param config - The object port configuration.
    * @returns The serialized value.
    */
   protected serializeValue(value: ObjectPortValue<S>): JSONValue {
-    return ObjectPortPlugin.serializeValue(value)
+    return ObjectPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -146,10 +147,11 @@ export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<
    * Deserializes JSON data into an ObjectPortValue.
    * Delegates to ObjectPortPlugin.deserializeValue.
    * @param data - The JSON data.
+   * @param config - The object port configuration.
    * @returns The deserialized port value.
    */
   protected deserializeValue(data: JSONValue): ObjectPortValue<S> {
-    return ObjectPortPlugin.deserializeValue(data) as ObjectPortValue<S>
+    return ObjectPortPlugin.deserializeValue(data, this.config)
   }
 }
 

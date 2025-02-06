@@ -16,27 +16,10 @@ import { enumPortConfigUISchema } from '../base/ui-config.schema'
 import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
- * Type guard for enum value
- */
-export function isEnumValue(value: unknown): value is EnumPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'enum'
-    && 'value' in value
-    && typeof (value as EnumPortValue).value === 'string'
-  )
-}
-
-/**
  * Helper to create an enum port value
  */
 export function createEnumValue(value: string): EnumPortValue {
-  return {
-    type: 'enum',
-    value,
-  }
+  return value
 }
 
 /**
@@ -53,10 +36,7 @@ export function createEnumConfig(options: IPortConfig[], configOptions: Partial<
 /**
  * Enum port value schema
  */
-const valueSchema = z.object({
-  type: z.literal('enum'),
-  value: z.string(),
-}).passthrough()
+const valueSchema: z.ZodType<EnumPortValue> = z.string()
 
 /**
  * Enum port configuration schema
@@ -97,7 +77,7 @@ export function validateEnumValue(
   const errors: string[] = []
 
   // Type validation
-  if (!isEnumValue(value)) {
+  if (!isEnumPortValue(value)) {
     errors.push('Invalid enum value structure')
     return errors
   }
@@ -107,8 +87,8 @@ export function validateEnumValue(
     .map(option => option.id)
     .filter((id): id is string => typeof id === 'string')
 
-  if (value.value !== undefined) {
-    if (!validOptionIds.includes(value.value)) {
+  if (value !== undefined) {
+    if (!validOptionIds.includes(value)) {
       errors.push(`Value must be one of the valid option ids: ${validOptionIds.join(', ')}`)
     }
   }
@@ -131,10 +111,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
           'Invalid enum value structure',
         )
       }
-      return {
-        type: 'enum',
-        value: value.value,
-      }
+      return value
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -150,10 +127,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
           'Invalid enum value for deserialization',
         )
       }
-      return {
-        type: 'enum',
-        value: data.value,
-      }
+      return data
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

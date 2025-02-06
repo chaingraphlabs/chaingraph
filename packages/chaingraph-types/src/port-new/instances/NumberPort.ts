@@ -86,7 +86,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @returns The serialized value as a JSONValue.
    */
   protected serializeValue(value: NumberPortValue): JSONValue {
-    return NumberPortPlugin.serializeValue(value)
+    return NumberPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -108,6 +108,6 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @returns The deserialized NumberPortValue.
    */
   protected deserializeValue(data: JSONValue): NumberPortValue {
-    return NumberPortPlugin.deserializeValue(data)
+    return NumberPortPlugin.deserializeValue(data, this.config)
   }
 }

@@ -6,6 +6,7 @@ import type {
   PortType,
   ValueTypeMap,
 } from '../base/types'
+
 import { z } from 'zod'
 import {
   basePortConfigSchema,
@@ -16,12 +17,7 @@ import {
   PortErrorType,
 } from '../base/types'
 
-const defaultValueSchema = z.object({
-  type: z.literal('string'),
-  value: z.string(),
-}).transform(() => {
-  throw new Error('Default schema should never match')
-}) as z.ZodType<IPortValue>
+const defaultValueSchema = z.string()
 
 /**
  * Registry for port plugins
@@ -33,12 +29,12 @@ export class PortPluginRegistry {
    * Register a plugin for a specific port type
    */
   register<T extends PortType>(plugin: IPortPlugin<T>): void {
-    if (this.plugins.has(plugin.typeIdentifier)) {
-      throw new PortError(
-        PortErrorType.RegistryError,
-        `Plugin for type "${plugin.typeIdentifier}" is already registered`,
-      )
-    }
+    // if (this.plugins.has(plugin.typeIdentifier)) {
+    //   throw new PortError(
+    //     PortErrorType.RegistryError,
+    //     `Plugin for type "${plugin.typeIdentifier}" is already registered`,
+    //   )
+    // }
     this.plugins.set(plugin.typeIdentifier, plugin)
   }
 
@@ -112,7 +108,7 @@ export class PortPluginRegistry {
   /**
    * Serialize a port value
    */
-  serializeValue<T extends PortType>(value: ValueTypeMap[T]): unknown {
+  serializeValue<T extends PortType>(value: ValueTypeMap[T], config: ConfigTypeMap[T]): unknown {
     const plugin = this.getPlugin(value.type as T)
     if (!plugin) {
       throw new PortError(
@@ -120,13 +116,13 @@ export class PortPluginRegistry {
         `No plugin found for type "${value.type}"`,
       )
     }
-    return plugin.serializeValue(value)
+    return plugin.serializeValue(value, config)
   }
 
   /**
    * Deserialize a port value
    */
-  deserializeValue<T extends PortType>(type: T, data: unknown): ValueTypeMap[T] {
+  deserializeValue<T extends PortType>(type: T, data: unknown, config: ConfigTypeMap[T]): ValueTypeMap[T] {
     const plugin = this.getPlugin(type)
     if (!plugin) {
       throw new PortError(
@@ -134,7 +130,7 @@ export class PortPluginRegistry {
         `No plugin found for type "${type}"`,
       )
     }
-    return plugin.deserializeValue(data)
+    return plugin.deserializeValue(data, config)
   }
 
   /**

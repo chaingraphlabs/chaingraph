@@ -1,6 +1,4 @@
-import type {
-  EnumPortConfig,
-} from '../base/types'
+import type { EnumPortConfig } from '../base/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { EnumPort } from '../instances/EnumPort'
 import { EnumPortPlugin, validateEnumValue } from '../plugins/EnumPortPlugin'
@@ -9,13 +7,14 @@ import { createStringConfig, StringPortPlugin } from '../plugins/StringPortPlugi
 import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
- * Helper function to create an enum port value
+ * Helper function to create an enum port value.
+ * Now simply returns a plain string.
  */
-function createEnumValue(value: string): { type: 'enum', value: string } {
-  return { type: 'enum', value }
+function createEnumValue(value: string): string {
+  return value
 }
 
-describe('enumPort Instance', () => {
+describe('enumPort Instance (plain values)', () => {
   beforeEach(() => {
     // Reset the registry and register required plugins
     portRegistry.clear()
@@ -26,7 +25,7 @@ describe('enumPort Instance', () => {
 
   describe('basic Validation', () => {
     it('should validate an enum port with valid option selection', () => {
-      // Create an EnumPortConfig with string and number options
+      // Create an EnumPortConfig with string and number options.
       const config: EnumPortConfig = {
         type: 'enum',
         options: [
@@ -35,10 +34,10 @@ describe('enumPort Instance', () => {
         ],
       }
 
-      // Create a valid enum value selecting the first option
+      // Create a valid enum value (plain string) selecting the first option.
       const validValue = createEnumValue('str1')
 
-      // Use the plugin validation function
+      // Use the plugin validation function.
       const errors = validateEnumValue(validValue, config)
       expect(errors).toHaveLength(0)
     })
@@ -52,14 +51,14 @@ describe('enumPort Instance', () => {
         ],
       }
 
-      // Try to select a non-existent option
+      // Try to select a non-existent option.
       const invalidValue = createEnumValue('invalid_id')
       const errors = validateEnumValue(invalidValue, config)
       expect(errors).toContain('Value must be one of the valid option ids: opt1, opt2')
     })
 
     it('should validate option configurations', () => {
-      // Create config with invalid option (string with negative minLength)
+      // Create config with an invalid option (for instance, string config with negative minLength)
       const config: EnumPortConfig = {
         type: 'enum',
         options: [
@@ -85,6 +84,7 @@ describe('enumPort Instance', () => {
 
       const port = new EnumPort(config)
       const value = port.getValue()
+      // Expect plain value "opt1"
       expect(value).toEqual(config.defaultValue)
     })
 
@@ -100,7 +100,7 @@ describe('enumPort Instance', () => {
       const port = new EnumPort(config)
       const newValue = createEnumValue('opt2')
 
-      // setValue should not throw and then return the updated value
+      // setValue should not throw and then return the updated value (plain string)
       port.setValue(newValue)
       expect(port.getValue()).toEqual(newValue)
     })
@@ -135,13 +135,13 @@ describe('enumPort Instance', () => {
       const port = new EnumPort(config)
       const originalValue = port.getValue()
 
-      // Serialize the enum value
-      const serialized = EnumPortPlugin.serializeValue(originalValue!)
-      // Simulate a JSON roundtrip
+      // Serialize the enum value. Since values are plain, expect a plain string.
+      const serialized = EnumPortPlugin.serializeValue(originalValue!, config)
+      // Simulate a JSON roundtrip.
       const jsonString = JSON.stringify(serialized)
       const parsedData = JSON.parse(jsonString)
-      // Deserialize the value
-      const deserialized = EnumPortPlugin.deserializeValue(parsedData)
+      // Deserialize the value.
+      const deserialized = EnumPortPlugin.deserializeValue(parsedData, config)
       expect(deserialized).toEqual(originalValue)
     })
 
@@ -155,22 +155,22 @@ describe('enumPort Instance', () => {
         defaultValue: createEnumValue('opt1'),
       }
 
-      // Serialize config
+      // Serialize the config.
       const serialized = EnumPortPlugin.serializeConfig(originalConfig)
-      // Simulate JSON roundtrip
+      // Simulate a JSON roundtrip.
       const jsonString = JSON.stringify(serialized)
       const parsedData = JSON.parse(jsonString)
-      // Deserialize config
+      // Deserialize the config.
       const deserialized = EnumPortPlugin.deserializeConfig(parsedData)
       expect(deserialized).toEqual(originalConfig)
     })
 
     it('should throw during serialization if the enum value structure is invalid', () => {
       const badValue: any = {
-        type: 'enum',
+        // Missing expected plain string value (for enum, a plain string is expected)
         invalid: true,
       }
-      expect(() => EnumPortPlugin.serializeValue(badValue)).toThrow()
+      expect(() => EnumPortPlugin.serializeValue(badValue, {} as any)).toThrow()
     })
   })
 
@@ -185,7 +185,6 @@ describe('enumPort Instance', () => {
 
       const port = new EnumPort(config)
       const portConfig = port.getConfig()
-
       expect(portConfig.ui?.bgColor).toBe('#eedf3c')
       expect(portConfig.ui?.borderColor).toBe('#443f17')
     })
@@ -204,7 +203,6 @@ describe('enumPort Instance', () => {
 
       const port = new EnumPort(config)
       const portConfig = port.getConfig()
-
       expect(portConfig.ui?.bgColor).toBe('#custom')
       expect(portConfig.ui?.borderColor).toBe('#custom-border')
     })

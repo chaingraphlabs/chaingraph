@@ -74,7 +74,7 @@ export class StringPort extends BasePort<StringPortConfig> {
    * Serializes the string port value by delegating to the StringPortPlugin.serializeValue.
    */
   protected serializeValue(value: StringPortValue): JSONValue {
-    return StringPortPlugin.serializeValue(value)
+    return StringPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -88,6 +88,6 @@ export class StringPort extends BasePort<StringPortConfig> {
    * Deserializes the string port value using the StringPortPlugin.deserializeValue.
    */
   protected deserializeValue(data: JSONValue): StringPortValue {
-    return StringPortPlugin.deserializeValue(data)
+    return StringPortPlugin.deserializeValue(data, this.config)
   }
 }

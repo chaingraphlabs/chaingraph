@@ -101,7 +101,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @returns The serialized value as a JSONValue.
    */
   protected serializeValue(value: ArrayPortValue<Item>): JSONValue {
-    return ArrayPortPlugin.serializeValue(value)
+    return ArrayPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -123,7 +123,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @returns The deserialized ArrayPortValue.
    */
   protected deserializeValue(data: JSONValue): ArrayPortValue {
-    return ArrayPortPlugin.deserializeValue(data)
+    return ArrayPortPlugin.deserializeValue(data, this.config)
   }
 }
 

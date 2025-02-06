@@ -177,34 +177,38 @@ export interface AnyPortConfig extends BasePortConfig {
 /**
  * String port value
  */
-export interface StringPortValue {
-  type: 'string'
-  value: string
-}
+// export interface StringPortValue {
+//   type: 'string'
+//   value: string
+// }
+export type StringPortValue = string
 
 /**
  * Number port value
  */
-export interface NumberPortValue {
-  type: 'number'
-  value: number
-}
+// export interface NumberPortValue {
+//   type: 'number'
+//   value: number
+// }
+export type NumberPortValue = number
 
 /**
  * Array port value
  */
-export interface ArrayPortValue<Item extends IPortConfig = IPortConfig> {
-  type: 'array'
-  value: Array<ExtractValue<Item>>
-}
+// export interface ArrayPortValue<Item extends IPortConfig = IPortConfig> {
+//   type: 'array'
+//   value: Array<ExtractValue<Item>>
+// }
+export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<ExtractValue<Item>>
 
 /**
  * Object port value
  */
-export interface ObjectPortValue<S extends ObjectSchema = ObjectSchema> {
-  type: 'object'
-  value: ObjectPortValueFromSchema<S>
-}
+// export interface ObjectPortValue<S extends ObjectSchema = ObjectSchema> {
+//   type: 'object'
+//   value: ObjectPortValueFromSchema<S>
+// }
+export type ObjectPortValue<S extends ObjectSchema = ObjectSchema> = ObjectPortValueFromSchema<S>
 
 /**
  * Object port value from schema
@@ -218,34 +222,30 @@ type MultiChannelTyped<T extends IPortConfig = IPortConfig> = MultiChannel<Extra
 /**
  * Stream port value
  */
-export interface StreamPortValue<T extends IPortConfig = IPortConfig> {
-  type: 'stream'
-  value: MultiChannelTyped<T>
-}
+// export interface StreamPortValue<T extends IPortConfig = IPortConfig> {
+//   type: 'stream'
+//   value: MultiChannelTyped<T>
+// }
+export type StreamPortValue<T extends IPortConfig = IPortConfig> = MultiChannelTyped<T>
 
 /**
  * Boolean port value
  */
-export interface BooleanPortValue {
-  type: 'boolean'
-  value: boolean
-}
+// export interface BooleanPortValue {
+//   type: 'boolean'
+//   value: boolean
+// }
+export type BooleanPortValue = boolean
 
 /**
  * Enum port value
  */
-export interface EnumPortValue {
-  type: 'enum'
-  value: string
-}
+export type EnumPortValue = string
 
 /**
  * Any port value
  */
-export interface AnyPortValue {
-  type: 'any'
-  value?: IPortValue
-}
+export type AnyPortValue = any
 
 /**
  * Union type of all port configurations
@@ -310,8 +310,8 @@ export interface IPortPlugin<T extends PortType> {
   typeIdentifier: T
   configSchema: z.ZodType<ConfigTypeMap[T]>
   valueSchema: z.ZodType<ValueTypeMap[T]>
-  serializeValue: (value: ValueTypeMap[T]) => JSONValue
-  deserializeValue: (data: JSONValue) => ValueTypeMap[T]
+  serializeValue: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => JSONValue
+  deserializeValue: (data: JSONValue, config: ConfigTypeMap[T]) => ValueTypeMap[T]
   serializeConfig: (config: ConfigTypeMap[T]) => JSONValue
   deserializeConfig: (data: JSONValue) => ConfigTypeMap[T]
   validateValue: (value: ValueTypeMap[T], config: ConfigTypeMap[T]) => string[]
@@ -325,8 +325,8 @@ export interface RegistryPlugin {
   typeIdentifier: PortType
   configSchema: z.ZodType<IPortConfig>
   valueSchema: z.ZodType<IPortValue>
-  serializeValue: (value: IPortValue) => JSONValue
-  deserializeValue: (data: JSONValue) => IPortValue
+  serializeValue: (value: IPortValue, config: IPortConfig) => JSONValue
+  deserializeValue: (data: JSONValue, config: IPortConfig) => IPortValue
   serializeConfig: (config: IPortConfig) => JSONValue
   deserializeConfig: (data: JSONValue) => IPortConfig
   validateValue: (value: IPortValue, config: IPortConfig) => string[]
@@ -346,23 +346,6 @@ export type ExtractValue<C extends IPortConfig> =
                 C extends EnumPortConfig ? EnumPortValue :
                   C extends AnyPortConfig ? AnyPortValue :
                     never
-
-/**
- * Helper function to convert a typed plugin to a registry plugin
- */
-export function asRegistryPlugin<T extends PortType>(plugin: IPortPlugin<T>): RegistryPlugin {
-  return {
-    typeIdentifier: plugin.typeIdentifier,
-    configSchema: plugin.configSchema as z.ZodType<IPortConfig>,
-    valueSchema: plugin.valueSchema as z.ZodType<IPortValue>,
-    serializeValue: plugin.serializeValue as (value: IPortValue) => JSONValue,
-    deserializeValue: plugin.deserializeValue as (data: JSONValue) => IPortValue,
-    serializeConfig: plugin.serializeConfig as (config: IPortConfig) => JSONValue,
-    deserializeConfig: plugin.deserializeConfig as (data: JSONValue) => IPortConfig,
-    validateValue: plugin.validateValue as (value: IPortValue, config: IPortConfig) => string[],
-    validateConfig: plugin.validateConfig as (config: IPortConfig) => string[],
-  }
-}
 
 /**
  * Helper function to build a union schema
@@ -479,90 +462,33 @@ export function isAnyPortConfig(value: unknown): value is AnyPortConfig {
  * Type guards for port values
  */
 export function isStringPortValue(value: unknown): value is StringPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'string'
-    && 'value' in value
-    && typeof (value as any).value === 'string'
-  )
+  return typeof value === 'string'
 }
 
 export function isNumberPortValue(value: unknown): value is NumberPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'number'
-    && 'value' in value
-    && typeof (value as any).value === 'number'
-  )
+  return typeof value === 'number' && !Number.isNaN(value)
 }
 
 export function isArrayPortValue(value: unknown): value is ArrayPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'array'
-    && 'value' in value
-    && Array.isArray((value as any).value)
-  )
+  return Array.isArray(value)
 }
 
 export function isObjectPortValue(value: unknown): value is ObjectPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'object'
-    && 'value' in value
-    && typeof (value as any).value === 'object'
-    && (value as any).value !== null
-  )
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export function isStreamPortValue(value: unknown): value is StreamPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'stream'
-    && 'value' in value
-    && value.value instanceof MultiChannel
-  )
+  return value instanceof MultiChannel
 }
 
 export function isBooleanPortValue(value: unknown): value is BooleanPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'boolean'
-    && 'value' in value
-    && typeof (value as any).value === 'boolean'
-  )
+  return typeof value === 'boolean'
 }
 
 export function isEnumPortValue(value: unknown): value is EnumPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'enum'
-    && 'value' in value
-    && typeof (value as any).value === 'string'
-  )
+  return typeof value === 'string'
 }
 
 export function isAnyPortValue(value: unknown): value is AnyPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'any'
-    && 'value' in value
-    && typeof value.value === 'object'
-  )
+  return true
 }

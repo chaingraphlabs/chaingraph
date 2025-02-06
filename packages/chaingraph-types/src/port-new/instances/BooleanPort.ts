@@ -85,7 +85,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @returns The serialized value as a JSONValue.
    */
   protected serializeValue(value: BooleanPortValue): JSONValue {
-    return BooleanPortPlugin.serializeValue(value)
+    return BooleanPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -107,6 +107,6 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @returns The deserialized BooleanPortValue.
    */
   protected deserializeValue(data: JSONValue): BooleanPortValue {
-    return BooleanPortPlugin.deserializeValue(data)
+    return BooleanPortPlugin.deserializeValue(data, this.config)
   }
 }

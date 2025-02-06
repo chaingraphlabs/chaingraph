@@ -9,7 +9,7 @@ import type {
  */
 export type ExecutionEventHandler<T extends ExecutionEventEnum> = (
   data: ExecutionEventData[T],
-  context: ExecutionEventImpl<T>['context']
+  // context: ExecutionEventImpl<T>['context']
 ) => void | Promise<void>
 
 /**
@@ -66,7 +66,8 @@ export async function handleExecutionEvent<T extends ExecutionEventEnum>(
     return
 
   try {
-    await handler(event.data, event.context)
+    // await handler(event.data, event.context)
+    await handler(event.data)
   } catch (error) {
     if (options.onError) {
       options.onError(error as Error, event)

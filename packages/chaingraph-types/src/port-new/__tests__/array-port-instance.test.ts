@@ -12,8 +12,8 @@ import { portRegistry } from '../registry/PortPluginRegistry'
  * Helper function to create an array port value.
  * (Typically one would use a factory; here we wrap it for convenience.)
  */
-function createArrayValue(items: any[]): { type: 'array', value: any[] } {
-  return { type: 'array', value: items }
+function createArrayValue(items: any[]): any[] {
+  return items
 }
 
 describe('arrayPort Instance', () => {
@@ -148,22 +148,13 @@ describe('arrayPort Instance', () => {
       const originalValue = port.getValue()
 
       // Serialize the array value
-      const serialized = ArrayPortPlugin.serializeValue(originalValue!)
+      const serialized = ArrayPortPlugin.serializeValue(originalValue!, config)
       // Simulate a JSON roundtrip by converting to a JSON string and back
       const jsonString = JSON.stringify(serialized)
       const parsedData = JSON.parse(jsonString)
       // Deserialize the value
-      const deserialized = ArrayPortPlugin.deserializeValue(parsedData)
+      const deserialized = ArrayPortPlugin.deserializeValue(parsedData, config)
       expect(deserialized).toEqual(originalValue)
-    })
-
-    it('should throw during serialization if the array value structure is invalid', () => {
-      // Create an invalid array value (e.g. missing "value" property)
-      const badValue: any = {
-        type: 'array',
-        invalid: true,
-      }
-      expect(() => ArrayPortPlugin.serializeValue(badValue)).toThrow()
     })
   })
 })

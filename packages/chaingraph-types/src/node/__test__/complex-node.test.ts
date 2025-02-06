@@ -150,7 +150,7 @@ export class TestUserObject {
   @PortArray({
     title: 'Emails',
     description: 'Emails of the user',
-    elementConfig: {
+    itemConfig: {
       type: PortType.String,
       defaultValue: '',
     },
@@ -202,14 +202,14 @@ export class UserProfileNode extends BaseNode {
   })
   user4?: TestUserObject
 
-  // Case for infer schema from decorator default value
+  // Case for infer schema from decorator.old default value
   @Input() @PortObject({
     schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
   user5?: TestUserObject
 
-  // Case for infer schema from decorator default value
+  // Case for infer schema from decorator.old default value
   @Input() @PortObject({
     schema: TestUserObject,
     defaultValue: new TestUserAddress(),
@@ -218,7 +218,7 @@ export class UserProfileNode extends BaseNode {
 
   @Input() @PortArray({
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       type: TestUserObject,
       defaultValue: new TestUserObject(),
     },
@@ -227,7 +227,7 @@ export class UserProfileNode extends BaseNode {
 
   @Input() @PortArray({
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       type: PortType.Number,
       defaultValue: 0,
     },
@@ -236,7 +236,7 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       type: PortType.String,
       defaultValue: '',
     },
@@ -245,10 +245,10 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       defaultValue: [],
       type: PortType.Array,
-      elementConfig: {
+      itemConfig: {
         type: PortType.Number,
         defaultValue: 0,
       },
@@ -258,17 +258,17 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
-    elementConfig: {
+    itemConfig: {
       id: 'z',
       key: 'Z',
       type: PortType.Array,
       defaultValue: [],
-      elementConfig: {
+      itemConfig: {
         id: 'y',
         key: 'Y',
         type: PortType.Array,
         defaultValue: [],
-        elementConfig: {
+        itemConfig: {
           id: 'x',
           key: 'X',
           type: PortType.Number,
@@ -281,10 +281,10 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       type: PortType.Array,
       defaultValue: [],
-      elementConfig: {
+      itemConfig: {
         type: TestUserObject,
         defaultValue: new TestUserObject(),
       },
@@ -346,7 +346,7 @@ export class UserProfileNode extends BaseNode {
     valueType: {
       type: PortType.Array,
       defaultValue: [],
-      elementConfig: {
+      itemConfig: {
         type: PortType.String,
         defaultValue: '',
       },

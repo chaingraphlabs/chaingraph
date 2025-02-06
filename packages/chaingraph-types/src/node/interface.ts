@@ -8,7 +8,7 @@ import type {
   NodeUIStyle,
   Position,
 } from '@chaingraph/types/node/node-ui'
-import type { IPortAny } from '@chaingraph/types/port.new'
+import type { IPort, JSONValue } from '@chaingraph/types/port-new/base'
 import type {
   NodeExecutionResult,
   NodeMetadata,
@@ -22,7 +22,7 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   get id(): string
   get metadata(): NodeMetadata
   get status(): NodeStatus
-  get ports(): Map<string, IPortAny>
+  get ports(): Map<string, IPort>
 
   /**
    * Initialize the node
@@ -62,13 +62,13 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Add a port to the node
    * @param port Port to add
    */
-  addPort: (port: IPortAny) => IPortAny
+  addPort: (port: IPort) => IPort
 
   /**
    * Set the node ports
    * @param ports Map of ports
    */
-  setPorts: (ports: Map<string, IPortAny>) => void
+  setPorts: (ports: Map<string, IPort>) => void
 
   /**
    * Remove a port from the node
@@ -80,17 +80,17 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Get a port by ID
    * @param portId ID of the port
    */
-  getPort: (portId: string) => IPortAny | undefined
+  getPort: (portId: string) => IPort | undefined
 
   /**
    * Get all input ports
    */
-  getInputs: () => IPortAny[]
+  getInputs: () => IPort[]
 
   /**
    * Get all output ports
    */
-  getOutputs: () => IPortAny[]
+  getOutputs: () => IPort[]
 
   /**
    * Set the node status
@@ -179,4 +179,15 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Get the node version
    */
   getVersion: () => number
+
+  /**
+   * Serializes the node into a JSON-compatible value.
+   */
+  serialize: () => JSONValue
+
+  /**
+   * Deserializes the given JSON-compatible value into the node.
+   * The method returns the updated node instance.
+   */
+  deserialize: (data: JSONValue) => this
 }

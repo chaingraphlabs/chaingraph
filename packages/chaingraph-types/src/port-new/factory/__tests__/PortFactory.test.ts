@@ -18,7 +18,7 @@ describe('portFactory', () => {
       const config: StringPortConfig = {
         type: 'string',
         minLength: 3,
-        defaultValue: { type: 'string', value: 'default' },
+        defaultValue: 'default',
         ui: {
           bgColor: '#e70d0d',
           borderColor: '#460707',
@@ -28,7 +28,7 @@ describe('portFactory', () => {
 
       expect(port.getConfig()).toEqual(config)
       // Optionally, if the port automatically picks the default value
-      expect(port.getValue()).toEqual({ type: 'string', value: 'default' })
+      expect(port.getValue()).toEqual('default')
     })
 
     it('should create a number port with proper configuration and default value', () => {
@@ -36,7 +36,7 @@ describe('portFactory', () => {
         type: 'number',
         min: 0,
         max: 10,
-        defaultValue: { type: 'number', value: 5 },
+        defaultValue: 5,
         ui: {
           bgColor: '#1f5eec',
           borderColor: '#0c2454',
@@ -44,13 +44,13 @@ describe('portFactory', () => {
       }
       const port = PortFactory.create(config)
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({ type: 'number', value: 5 })
+      expect(port.getValue()).toEqual(5)
     })
 
     it('should create a boolean port with proper configuration and default value', () => {
       const config: BooleanPortConfig = {
         type: 'boolean',
-        defaultValue: { type: 'boolean', value: true },
+        defaultValue: true,
         ui: {
           bgColor: '#63f54d',
           borderColor: '#1e4b18',
@@ -58,7 +58,7 @@ describe('portFactory', () => {
       }
       const port = PortFactory.create(config)
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({ type: 'boolean', value: true })
+      expect(port.getValue()).toEqual(true)
     })
 
     // You can add similar tests for array, object, and stream ports.
@@ -74,10 +74,7 @@ describe('portFactory', () => {
         itemConfig,
         minLength: 1,
         maxLength: 3,
-        defaultValue: {
-          type: 'array',
-          value: [{ type: 'string', value: 'item1' }],
-        },
+        defaultValue: ['item1'],
         ui: {
           bgColor: '#63f54d',
           borderColor: '#1e4b18',
@@ -86,10 +83,7 @@ describe('portFactory', () => {
       const port = PortFactory.create(config)
 
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({
-        type: 'array',
-        value: [{ type: 'string', value: 'item1' }],
-      })
+      expect(port.getValue()).toEqual(['item1'])
     })
 
     it('should create an object port with proper configuration', () => {
@@ -107,17 +101,11 @@ describe('portFactory', () => {
           }),
         }),
         defaultValue: {
-          type: 'object',
-          value: {
-            name: { type: 'string', value: 'John' },
-            age: { type: 'number', value: 30 },
-            address: {
-              type: 'object',
-              value: {
-                street: { type: 'string', value: '123 Main St' },
-                city: { type: 'string', value: 'Springfield' },
-              },
-            },
+          name: 'John',
+          age: 30,
+          address: {
+            street: '123 Main St',
+            city: 'Springfield',
           },
         },
         ui: {
@@ -129,17 +117,11 @@ describe('portFactory', () => {
 
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual({
-        type: 'object',
-        value: {
-          name: { type: 'string', value: 'John' },
-          age: { type: 'number', value: 30 },
-          address: {
-            type: 'object',
-            value: {
-              street: { type: 'string', value: '123 Main St' },
-              city: { type: 'string', value: 'Springfield' },
-            },
-          },
+        name: 'John',
+        age: 30,
+        address: {
+          street: '123 Main St',
+          city: 'Springfield',
         },
       })
     })
@@ -155,7 +137,7 @@ describe('portFactory', () => {
       const config: StringPortConfig = {
         type: 'string',
         minLength: 3,
-        defaultValue: { type: 'string', value: 'hello' },
+        defaultValue: 'hello',
         ui: {
           bgColor: '#e70d0d',
           borderColor: '#460707',
@@ -163,7 +145,7 @@ describe('portFactory', () => {
       }
       const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({ type: 'string', value: 'hello' })
+      expect(port.getValue()).toEqual('hello')
     })
 
     it('should create a number port from a generic configuration', () => {
@@ -171,7 +153,7 @@ describe('portFactory', () => {
         type: 'number',
         min: 0,
         max: 100,
-        defaultValue: { type: 'number', value: 42 },
+        defaultValue: 42,
         ui: {
           bgColor: '#1f5eec',
           borderColor: '#0c2454',
@@ -179,7 +161,7 @@ describe('portFactory', () => {
       }
       const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({ type: 'number', value: 42 })
+      expect(port.getValue()).toEqual(42)
     })
   })
 
@@ -188,7 +170,7 @@ describe('portFactory', () => {
       const config: StringPortConfig = {
         type: 'string',
         minLength: 4,
-        defaultValue: { type: 'string', value: 'test' },
+        defaultValue: 'test',
         ui: {
           bgColor: '#e70d0d',
           borderColor: '#460707',
@@ -197,7 +179,7 @@ describe('portFactory', () => {
       const port = PortFactory.createStringPort(config)
 
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({ type: 'string', value: 'test' })
+      expect(port.getValue()).toEqual('test')
     })
 
     it('should create a number port using createNumberPort', () => {
@@ -205,7 +187,7 @@ describe('portFactory', () => {
         type: 'number',
         min: 1,
         max: 50,
-        defaultValue: { type: 'number', value: 25 },
+        defaultValue: 25,
         ui: {
           bgColor: '#1f5eec',
           borderColor: '#0c2454',
@@ -213,7 +195,7 @@ describe('portFactory', () => {
       }
       const port = PortFactory.createNumberPort(config)
       expect(port.getConfig()).toEqual(config)
-      expect(port.getValue()).toEqual({ type: 'number', value: 25 })
+      expect(port.getValue()).toEqual(25)
     })
 
     // Similar tests can be added for createBooleanPort, createArrayPort,
@@ -235,17 +217,11 @@ describe('portFactory', () => {
         }),
       }),
       defaultValue: {
-        type: 'object',
-        value: {
-          name: { type: 'string', value: 'John' },
-          age: { type: 'number', value: 30 },
-          address: {
-            type: 'object',
-            value: {
-              street: { type: 'string', value: '123 Main St' },
-              city: { type: 'string', value: 'Springfield' },
-            },
-          },
+        name: 'John',
+        age: 30,
+        address: {
+          street: '123 Main St',
+          city: 'Springfield',
         },
       },
       ui: {
@@ -257,17 +233,11 @@ describe('portFactory', () => {
 
     expect(port.getConfig()).toEqual(config)
     expect(port.getValue()).toEqual({
-      type: 'object',
-      value: {
-        name: { type: 'string', value: 'John' },
-        age: { type: 'number', value: 30 },
-        address: {
-          type: 'object',
-          value: {
-            street: { type: 'string', value: '123 Main St' },
-            city: { type: 'string', value: 'Springfield' },
-          },
-        },
+      name: 'John',
+      age: 30,
+      address: {
+        street: '123 Main St',
+        city: 'Springfield',
       },
     })
   })

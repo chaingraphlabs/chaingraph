@@ -1,11 +1,8 @@
-import type { UnwrapPortValue } from '@chaingraph/types/port-new/base/unwrap-value'
 import type { IPort } from './IPort'
 import type { JSONValue } from './json'
 import type { ExtractValue, IPortConfig } from './types'
-import { unwrapPortValue } from '@chaingraph/types/port-new/base/unwrap-value'
-import {
-  mutableUnwrapPortValueWithConfig,
-} from '@chaingraph/types/port-new/base/unwrap-value-mutable'
+
+import { deepCopy } from '@chaingraph/types/utils/deep-copy'
 import { PortError, PortErrorType } from './types'
 
 export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {
@@ -15,7 +12,7 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
   constructor(config: C) {
     this.config = config
     // Optionally initialize with a default value if provided in config
-    this.value = this.getDefaultValue()
+    this.value = deepCopy(this.getDefaultValue())
   }
 
   getConfig(): C {
@@ -31,14 +28,14 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     return this.value
   }
 
-  plainValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
-    const value = this.getValue()
-    return value !== undefined ? unwrapPortValue(value) : undefined
-  }
-
-  mutableValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
-    return mutableUnwrapPortValueWithConfig(this.getValue(), this.config)
-  }
+  // plainValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
+  //   const value = this.getValue()
+  //   return value !== undefined ? unwrapPortValue(value) : undefined
+  // }
+  //
+  // mutableValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
+  //   return mutableUnwrapPortValueWithConfig(this.getValue(), this.config)
+  // }
 
   setValue(newValue: ExtractValue<C>): void {
     if (!this.validateValue(newValue)) {

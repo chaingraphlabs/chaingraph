@@ -96,7 +96,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @returns The serialized value.
    */
   protected serializeValue(value: AnyPortValue): JSONValue {
-    return AnyPortPlugin.serializeValue(value)
+    return AnyPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -118,7 +118,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @returns The deserialized port value.
    */
   protected deserializeValue(data: JSONValue): AnyPortValue {
-    return AnyPortPlugin.deserializeValue(data)
+    return AnyPortPlugin.deserializeValue(data, this.config)
   }
 }
 

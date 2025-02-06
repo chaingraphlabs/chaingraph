@@ -1,27 +1,27 @@
-import type { ArrayPortConfig, ArrayPortValue, NumberPortValue, StringPortValue } from '../base/types'
+import type { ArrayPortConfig, ArrayPortValue, IPortConfig } from '../base/types'
+import { AnyPortPlugin } from '@chaingraph/types/port-new/plugins/AnyPortPlugin'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { MultiChannel } from '../channel/multi-channel'
-// Note: For the ObjectPort and its helpers, we import from the instances folder.
+// For object port helpers, import from the instances folder.
 import { createObjectPortConfig, createObjectSchema } from '../instances/ObjectPort'
+// Note: createObjectValue now simply returns the plain value.
 import { createObjectValue, ObjectPortPlugin } from '../plugins'
 import { ArrayPortPlugin } from '../plugins/ArrayPortPlugin'
-import { createNumberValue, NumberPortPlugin } from '../plugins/NumberPortPlugin'
 import { createStreamValue, StreamPortPlugin } from '../plugins/StreamPortPlugin'
-import { createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
 import { portRegistry } from '../registry/PortPluginRegistry'
 
-describe('streamPort Instance', () => {
+describe('streamPort Instance (plain value storage)', () => {
   beforeEach(() => {
-    // Reset the registry and register all needed plugins.
+    // Clear the registry and register needed plugins.
     portRegistry.clear()
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
     portRegistry.register(StreamPortPlugin)
+    portRegistry.register(ArrayPortPlugin)
+    portRegistry.register(ObjectPortPlugin)
+    portRegistry.register(AnyPortPlugin)
+    // (Other plugins used as itemConfig could be registered as needed.)
   })
 
-  // Helper function to drain values from a MultiChannel using async iteration.
+  // Helper to drain values via async iteration.
   async function drainChannel<T>(channel: MultiChannel<T>): Promise<T[]> {
     const results: T[] = []
     for await (const item of channel) {
@@ -32,38 +32,32 @@ describe('streamPort Instance', () => {
 
   describe('basic Streaming and Subscription', () => {
     it('should stream number values', async () => {
-      const channel = new MultiChannel<NumberPortValue>()
-      // Send a couple of number port values.
-      channel.send(createNumberValue(42))
-      channel.send(createNumberValue(100))
+      const channel = new MultiChannel<number>()
+      // Send plain numbers.
+      channel.send(42)
+      channel.send(100)
       channel.close()
 
       const streamValue = createStreamValue(channel)
-
-      // Collect values using async iteration.
-      const received = await drainChannel(streamValue.value)
-      expect(received).toEqual([
-        createNumberValue(42),
-        createNumberValue(100),
-      ])
+      const received = await drainChannel(streamValue)
+      // Expect plain numbers.
+      expect(received).toEqual([42, 100])
     })
 
     it('should stream string values', async () => {
-      const channel = new MultiChannel<StringPortValue>()
-      channel.send(createStringValue('hello'))
-      channel.send(createStringValue('world'))
+      const channel = new MultiChannel<string>()
+      // Send plain string values.
+      channel.send('hello')
+      channel.send('world')
       channel.close()
 
       const streamValue = createStreamValue(channel)
-      const received = await drainChannel(streamValue.value)
-      expect(received).toEqual([
-        createStringValue('hello'),
-        createStringValue('world'),
-      ])
+      const received = await drainChannel(streamValue)
+      expect(received).toEqual(['hello', 'world'])
     })
 
     it('should stream object values', async () => {
-      // Create an object port value.
+      // Create an object port value using plain objects.
       const objSchema = createObjectSchema({
         name: { type: 'string', minLength: 2 },
         age: { type: 'number', min: 0 },
@@ -73,14 +67,14 @@ describe('streamPort Instance', () => {
         schema: objSchema,
       })
 
-      // Create two different object port values.
+      // Instead of wrapped objects, we use plain (unwrapped) objects.
       const objValue1 = createObjectValue({
-        name: { type: 'string', value: 'Alice' },
-        age: { type: 'number', value: 30 },
+        name: 'Alice',
+        age: 30,
       })
       const objValue2 = createObjectValue({
-        name: { type: 'string', value: 'Bob' },
-        age: { type: 'number', value: 40 },
+        name: 'Bob',
+        age: 40,
       })
 
       const channel = new MultiChannel<typeof objValue1>()
@@ -89,13 +83,12 @@ describe('streamPort Instance', () => {
       channel.close()
 
       const streamValue = createStreamValue(channel)
-      const received = await drainChannel(streamValue.value)
+      const received = await drainChannel(streamValue)
       expect(received).toEqual([objValue1, objValue2])
     })
 
     it('should stream arrays of objects', async () => {
-      // Here we simulate an array port value whose items are objects.
-      // Define a simple item object schema.
+      // Define an item object schema.
       const itemObjSchema = createObjectSchema({
         id: { type: 'number', min: 1 },
         title: { type: 'string', minLength: 3 },
@@ -111,92 +104,83 @@ describe('streamPort Instance', () => {
         maxLength: 5,
       }
 
-      // Create two array values:
-      const arrValue1: ArrayPortValue = {
-        type: 'array',
-        value: [
-          // Each element is an object port value.
-          createObjectValue({
-            id: { type: 'number', value: 1 },
-            title: { type: 'string', value: 'First' },
-          }),
-          createObjectValue({
-            id: { type: 'number', value: 2 },
-            title: { type: 'string', value: 'Second' },
-          }),
-        ],
-      }
-      const arrValue2: ArrayPortValue = {
-        type: 'array',
-        value: [
-          createObjectValue({
-            id: { type: 'number', value: 3 },
-            title: { type: 'string', value: 'Third' },
-          }),
-        ],
-      }
+      // Create two plain array values – note that the array port value is now a plain array.
+      const arrValue1: ArrayPortValue = [
+        createObjectValue({
+          id: 1,
+          title: 'First',
+        }),
+        createObjectValue({
+          id: 2,
+          title: 'Second',
+        }),
+      ]
+      const arrValue2: ArrayPortValue = [
+        createObjectValue({
+          id: 3,
+          title: 'Third',
+        }),
+      ]
 
-      // For this test, we register the ArrayPortPlugin already.
-      const channel = new MultiChannel<typeof arrValue1>()
+      const channel = new MultiChannel<ArrayPortValue>()
       channel.send(arrValue1)
       channel.send(arrValue2)
       channel.close()
 
       const streamValue = createStreamValue(channel)
-      const received = await drainChannel(streamValue.value)
+      const received = await drainChannel(streamValue)
       expect(received).toEqual([arrValue1, arrValue2])
     })
   })
 
   describe('serialization and Deserialization', () => {
-    it('should correctly serialize and deserialize the stream port value containing various element types', async () => {
-      // Create a stream channel and push a mix of elements.
+    it('should correctly serialize and deserialize a stream port value containing various element types', async () => {
+      // Create a channel and push a mix of plain elements: a number, a string, an object, and an array.
       const channel = new MultiChannel<any>()
-      // We'll send a number, a string, an object, and an array of objects.
-      channel.send(createNumberValue(123))
-      channel.send(createStringValue('test string'))
+      channel.send(123)
+      channel.send('test string')
 
-      // Create an object value.
+      // Create a plain object value.
       const objSchema = createObjectSchema({
         key: { type: 'string', minLength: 2 },
         value: { type: 'number', min: 0 },
       })
       const objValue = createObjectValue({
-        key: { type: 'string', value: 'abc' },
-        value: { type: 'number', value: 456 },
+        key: 'abc',
+        value: 456,
       })
       channel.send(objValue)
 
-      // Create an array value of objects.
+      // Create an array value whose items are plain objects.
       const itemSchema = createObjectSchema({
         prop: { type: 'string', minLength: 1 },
       })
-      const arrayValue = {
-        type: 'array',
-        value: [
-          createObjectValue<typeof itemSchema>({ prop: { type: 'string', value: 'one' } }),
-          createObjectValue<typeof itemSchema>({ prop: { type: 'string', value: 'two' } }),
-        ],
-      }
+      const arrayValue = [
+        createObjectValue({ prop: 'one' }),
+        createObjectValue({ prop: 'two' }),
+      ]
       channel.send(arrayValue)
 
       channel.close()
 
-      // Create the stream port value.
       const originalStreamValue = createStreamValue(channel)
-
       // Serialize the stream port value.
-      const serialized = StreamPortPlugin.serializeValue(originalStreamValue) as any
-      // Simulate full roundtrip using JSON stringification.
+      const serialized = StreamPortPlugin.serializeValue(originalStreamValue, {
+        type: 'stream',
+        itemConfig: { type: 'any' } as IPortConfig, // You may adjust the itemConfig as needed.
+      })
+      // Simulate a roundtrip via JSON.
       const jsonString = JSON.stringify(serialized)
       const parsed = JSON.parse(jsonString)
-      const deserializedStreamValue = StreamPortPlugin.deserializeValue(parsed)
+      const deserializedStreamValue = StreamPortPlugin.deserializeValue(parsed, {
+        type: 'stream',
+        itemConfig: { type: 'any' } as IPortConfig,
+      })
 
-      // Since MultiChannel does not compare by reference, we collect the buffers.
-      const originalBuffer = originalStreamValue.value.getBuffer()
-      const deserializedBuffer = deserializedStreamValue.value.getBuffer()
+      // Compare the buffers from the original and deserialized stream values.
+      const originalBuffer = originalStreamValue.getBuffer()
+      const deserializedBuffer = deserializedStreamValue.getBuffer()
 
-      expect(deserializedStreamValue.type).toBe('stream')
       expect(deserializedBuffer).toEqual(originalBuffer)
     })
   })

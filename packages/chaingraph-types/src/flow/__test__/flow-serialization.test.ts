@@ -8,7 +8,7 @@ import { BaseNode, Flow, Id, Input, Node, NodeRegistry, Output, PortNumber, Port
 import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { findPort } from '@chaingraph/types/node/ports-traverser'
+import { findPort } from '@chaingraph/types/node/traverse-ports'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 

@@ -7,10 +7,7 @@ import type {
 import Decimal from 'decimal.js'
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
-import {
-  PortError,
-  PortErrorType,
-} from '../base/types'
+import { isNumberPortValue, PortError, PortErrorType } from '../base/types'
 import { numberPortConfigUISchema } from '../base/ui-config.schema'
 
 /**
@@ -18,10 +15,7 @@ import { numberPortConfigUISchema } from '../base/ui-config.schema'
  */
 
 // Value schema for number ports
-const valueSchema: z.ZodType<NumberPortValue> = z.object({
-  type: z.literal('number'),
-  value: z.number(),
-}).passthrough()
+const valueSchema: z.ZodType<NumberPortValue> = z.number()
 
 // Number-specific schema
 const numberSpecificSchema = z.object({
@@ -68,39 +62,10 @@ const configSchema: z.ZodType<NumberPortConfig> = basePortConfigSchema
   })
 
 /**
- * Type guard for number value
- */
-export function isNumberValue(value: unknown): value is NumberPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'number'
-    && 'value' in value
-    && typeof (value as NumberPortValue).value === 'number'
-  )
-}
-
-/**
- * Type guard for number config
- */
-export function isNumberPortConfig(config: unknown): config is NumberPortConfig {
-  return (
-    typeof config === 'object'
-    && config !== null
-    && 'type' in config
-    && config.type === 'number'
-  )
-}
-
-/**
  * Helper to create a number port value
  */
 export function createNumberValue(value: number): NumberPortValue {
-  return {
-    type: 'number',
-    value,
-  }
+  return value
 }
 
 /**
@@ -138,14 +103,14 @@ export function validateNumberValue(
 ): string[] {
   const errors: string[] = []
 
-  if (!isNumberValue(value)) {
+  if (!isNumberPortValue(value)) {
     errors.push('Invalid number value structure')
     return errors
   }
 
   let decimalValue: Decimal
   try {
-    decimalValue = new Decimal(value.value)
+    decimalValue = new Decimal(value)
   } catch (err) {
     errors.push('Failed to convert value to Decimal')
     return errors
@@ -189,16 +154,13 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   valueSchema,
   serializeValue: (value: NumberPortValue): JSONValue => {
     try {
-      if (!isNumberValue(value)) {
+      if (!isNumberPortValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid number value structure',
         )
       }
-      return {
-        type: 'number',
-        value: value.value,
-      }
+      return value
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -208,16 +170,13 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   },
   deserializeValue: (data: JSONValue) => {
     try {
-      if (!isNumberValue(data)) {
+      if (!isNumberPortValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid number value for deserialization',
         )
       }
-      return {
-        type: 'number',
-        value: data.value,
-      }
+      return data
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

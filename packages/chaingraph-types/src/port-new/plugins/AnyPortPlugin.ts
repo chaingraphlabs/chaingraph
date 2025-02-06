@@ -5,41 +5,19 @@ import type {
   IPortConfig,
   IPortPlugin,
   IPortValue,
-
   PortType,
 } from '../base/types'
 import { basePortConfigUISchema } from '@chaingraph/types/port-new/base'
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
-import {
-  isAnyPortValue,
-  PortError,
-  PortErrorType,
-} from '../base/types'
+import { isAnyPortValue, PortError, PortErrorType } from '../base/types'
 import { portRegistry } from '../registry/PortPluginRegistry'
-
-/**
- * Type guard for any value
- */
-export function isAnyValue(value: unknown): value is AnyPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'any'
-    && 'value' in value
-    && typeof value.value === 'object'
-  )
-}
 
 /**
  * Helper to create an any port value
  */
 export function createAnyValue(value: IPortValue): AnyPortValue {
-  return {
-    type: 'any',
-    value,
-  }
+  return value
 }
 
 /**
@@ -59,30 +37,10 @@ export function createAnyConfig(
 /**
  * Any port value schema
  */
-const valueSchema = z.object({
-  type: z.literal('any'),
-  value: z.custom<IPortValue>((val) => {
-    if (
-      typeof val !== 'object'
-      || val === null
-      || !('type' in val)
-      || typeof (val as any).type !== 'string'
-    ) {
-      return false
-    }
-    const plugin = portRegistry.getPlugin((val as any).type as PortType)
-    if (!plugin) {
-      return false
-    }
-
-    if ((val as any)?.value === undefined) {
-      return true
-    }
-
-    const result = plugin.valueSchema.safeParse(val)
-    return result.success
-  }, { message: 'Invalid AnyPort value' }).optional(),
-}).passthrough()
+const valueSchema = z.custom<IPortValue>((val) => {
+  const result = portRegistry.getValueUnionSchema().safeParse(val)
+  return result.success
+}, { message: 'Invalid AnyPort value' }).optional()
 
 /**
  * Any port configuration schema
@@ -122,7 +80,7 @@ export function validateAnyValue(
   const errors: string[] = []
 
   // Type validation
-  if (!isAnyValue(value)) {
+  if (!isAnyPortValue(value)) {
     errors.push('Invalid any value structure')
     return errors
   }
@@ -136,8 +94,8 @@ export function validateAnyValue(
     }
 
     // Validate the inner value using the underlying plugin
-    if (value.value !== undefined) {
-      const innerErrors = plugin.validateValue(value.value, config.underlyingType)
+    if (value !== undefined) {
+      const innerErrors = plugin.validateValue(value, config.underlyingType)
       errors.push(...innerErrors)
     }
   }
@@ -152,7 +110,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
   typeIdentifier: 'any',
   configSchema,
   valueSchema,
-  serializeValue: (value: AnyPortValue): JSONValue => {
+  serializeValue: (value: AnyPortValue, config: AnyPortConfig): JSONValue => {
     try {
       if (!isAnyPortValue(value)) {
         throw new PortError(
@@ -161,29 +119,26 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         )
       }
 
-      if (value.value === undefined) {
-        return {
-          type: 'any',
-          value: undefined,
-        }
+      if (value === undefined) {
+        return undefined
+      }
+
+      if (config.underlyingType === undefined || config.underlyingType === null) {
+        // just return raw value because we don't know how to serialize it
+        return value
       }
 
       // Get the plugin for the inner value's type
-      const plugin = portRegistry.getPlugin(value.value.type)
+      const plugin = portRegistry.getPlugin(config.underlyingType.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
-          `Unknown value type: ${value.value.type}`,
+          `Unknown value type: ${value.type}`,
         )
       }
 
       // Serialize the inner value using its plugin
-      const serializedInnerValue = plugin.serializeValue(value.value)
-
-      return {
-        type: 'any',
-        value: serializedInnerValue,
-      }
+      return plugin.serializeValue(value, config.underlyingType)
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -191,36 +146,16 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       )
     }
   },
-  deserializeValue: (data: JSONValue): AnyPortValue => {
+  deserializeValue: (data: JSONValue, config: AnyPortConfig): AnyPortValue => {
     try {
-      if (
-        typeof data !== 'object'
-        || data === null
-        || !('type' in data)
-        || data.type !== 'any'
-        || !('value' in data)
-      ) {
-        throw new PortError(
-          PortErrorType.SerializationError,
-          'Invalid any value structure',
-        )
-      }
-
-      const innerValue = data.value
-      if (
-        typeof innerValue !== 'object'
-        || innerValue === null
-        || !('type' in innerValue)
-        || typeof (innerValue as any).type !== 'string'
-      ) {
-        throw new PortError(
-          PortErrorType.SerializationError,
-          'Invalid inner value structure',
-        )
+      const innerValue = data
+      if (innerValue === undefined || config.underlyingType === undefined || config.underlyingType === null) {
+        // just return raw value because we don't know how to deserialize it
+        return data
       }
 
       // Get the plugin for the inner value's type
-      const plugin = portRegistry.getPlugin((innerValue as any).type as PortType)
+      const plugin = portRegistry.getPlugin(config.underlyingType.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -229,12 +164,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       }
 
       // Deserialize the inner value using its plugin
-      const deserializedInnerValue = plugin.deserializeValue(innerValue)
-
-      return {
-        type: 'any',
-        value: deserializedInnerValue,
-      }
+      return plugin.deserializeValue(innerValue, config.underlyingType)
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -261,18 +191,18 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         underlyingTypeSerialized = plugin.serializeConfig(config.underlyingType)
       }
 
-      if (config.defaultValue !== undefined) {
+      if (config.defaultValue !== undefined && config.underlyingType !== null && config.underlyingType !== undefined) {
         // Get the plugin for the default value's type
-        const plugin = portRegistry.getPlugin(config.defaultValue.type)
+        const plugin = portRegistry.getPlugin(config.underlyingType.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
-            `Unknown default value type: ${config.defaultValue.type}`,
+            `Unknown default value type: ${config.defaultValue}`,
           )
         }
 
         // Serialize the default value using its plugin
-        defaultValueSerialized = plugin.serializeValue(config.defaultValue)
+        defaultValueSerialized = plugin.serializeValue(config.defaultValue, config.underlyingType)
       }
 
       return {
@@ -319,7 +249,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         return {
           ...result.data,
           underlyingType: deserializedUnderlyingType,
-          defaultValue: result.data.defaultValue,
+          defaultValue: plugin.deserializeValue(result.data.defaultValue, deserializedUnderlyingType),
         }
       }
 

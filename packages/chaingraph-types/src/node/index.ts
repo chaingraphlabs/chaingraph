@@ -1,6 +1,6 @@
 export * from './base-node'
 export * from './category'
-export * from './decorator'
+export * from './decorator-new'
 export * from './events'
 export * from './interface'
 export * from './json-transformers'

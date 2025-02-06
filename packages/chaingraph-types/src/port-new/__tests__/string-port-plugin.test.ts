@@ -1,28 +1,14 @@
-import type { StringPortConfig, StringPortValue } from '../base/types'
 import { describe, expect, it } from 'vitest'
-import { StringPortPlugin, validateStringValue } from '../plugins/StringPortPlugin'
+import {
+  createStringConfig,
+  createStringValue,
+  StringPortPlugin,
+  validateStringValue,
+} from '../plugins/StringPortPlugin'
 
-/**
- * Helper to create a string port value
- */
-function createStringValue(value: string): StringPortValue {
-  return {
-    type: 'string',
-    value,
-  }
-}
+// Note: Now createStringValue returns a plain string.
 
-/**
- * Helper to create a string port config
- */
-function createStringConfig(options: Partial<Omit<StringPortConfig, 'type'>> = {}): StringPortConfig {
-  return {
-    type: 'string',
-    ...options,
-  }
-}
-
-describe('string port plugin', () => {
+describe('string port plugin (plain values)', () => {
   describe('validation', () => {
     it('should validate string length constraints', () => {
       const config = createStringConfig({
@@ -49,7 +35,7 @@ describe('string port plugin', () => {
         pattern: '^[a-z]+$',
       })
 
-      // Test invalid pattern
+      // Test invalid regex pattern in config
       const invalidConfig = createStringConfig({
         pattern: '[', // Invalid regex
       })
@@ -68,23 +54,13 @@ describe('string port plugin', () => {
     it('should validate value structure', () => {
       const config = createStringConfig()
 
-      // Test invalid value structure
-      expect(validateStringValue({ invalid: 'structure' }, config)).toContain(
+      // Test invalid value structure – now simply not a string.
+      expect(validateStringValue({ invalid: 'structure' } as any, config)).toContain(
         'Invalid string value structure',
       )
 
-      // Test missing value field
-      expect(validateStringValue({ type: 'string' }, config)).toContain(
-        'Invalid string value structure',
-      )
-
-      // Test wrong type field
-      expect(validateStringValue({ type: 'number', value: '123' }, config)).toContain(
-        'Invalid string value structure',
-      )
-
-      // Test wrong value type
-      expect(validateStringValue({ type: 'string', value: 123 }, config)).toContain(
+      // Test wrong type field – for instance a number.
+      expect(validateStringValue(123 as any, config)).toContain(
         'Invalid string value structure',
       )
 
@@ -96,31 +72,23 @@ describe('string port plugin', () => {
   describe('serialization', () => {
     it('should serialize string values', () => {
       const value = createStringValue('test')
-      const serialized = StringPortPlugin.serializeValue(value)
-      expect(serialized).toEqual({
-        type: 'string',
-        value: 'test',
-      })
+      // Expect the serialization to yield a plain string.
+      const serialized = StringPortPlugin.serializeValue(value, {} as any)
+      expect(serialized).toEqual('test')
     })
 
     it('should throw on invalid string structure', () => {
-      const invalidValue = {
-        type: 'string',
-        // Missing value field
-      }
-
-      expect(() => StringPortPlugin.serializeValue(invalidValue as any)).toThrow(
+      // An "invalid" value here is one that is not a string.
+      // For example, passing an object instead of a string.
+      const invalidValue = { not: 'a string' }
+      expect(() => StringPortPlugin.serializeValue(invalidValue as any, {} as any)).toThrow(
         'Invalid string value structure',
       )
     })
 
     it('should throw on wrong type', () => {
-      const invalidValue = {
-        type: 'number',
-        value: '123',
-      }
-
-      expect(() => StringPortPlugin.serializeValue(invalidValue as any)).toThrow(
+      const invalidValue = 123
+      expect(() => StringPortPlugin.serializeValue(invalidValue as any, {} as any)).toThrow(
         'Invalid string value structure',
       )
     })
@@ -128,33 +96,24 @@ describe('string port plugin', () => {
 
   describe('deserialization', () => {
     it('should deserialize string values', () => {
-      const data = {
-        type: 'string',
-        value: 'test',
-      }
-
-      const deserialized = StringPortPlugin.deserializeValue(data)
+      // Here data is expected to be a plain string.
+      const data = 'test'
+      const deserialized = StringPortPlugin.deserializeValue(data, {} as any)
       expect(deserialized).toEqual(createStringValue('test'))
     })
 
     it('should throw on invalid string structure', () => {
-      const invalidData = {
-        type: 'string',
-        // Missing value field
-      }
-
-      expect(() => StringPortPlugin.deserializeValue(invalidData)).toThrow(
+      // Passing an object instead of a plain string.
+      const invalidData = { not: 'a string' }
+      expect(() => StringPortPlugin.deserializeValue(invalidData as any, {} as any)).toThrow(
         'Invalid string value for deserialization',
       )
     })
 
     it('should throw on wrong type', () => {
-      const invalidData = {
-        type: 'number',
-        value: '123',
-      }
-
-      expect(() => StringPortPlugin.deserializeValue(invalidData)).toThrow(
+      // Passing a number instead of a string.
+      const invalidData = 123
+      expect(() => StringPortPlugin.deserializeValue(invalidData as any, {} as any)).toThrow(
         'Invalid string value for deserialization',
       )
     })
@@ -177,11 +136,7 @@ describe('string port plugin', () => {
     })
 
     it('should validate value schema', () => {
-      const result = StringPortPlugin.valueSchema.safeParse({
-        type: 'string',
-        value: 42, // Wrong type for value
-      })
-
+      const result = StringPortPlugin.valueSchema.safeParse(123)
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.error.errors[0].code).toBe('invalid_type')
@@ -239,25 +194,31 @@ describe('string port plugin', () => {
       const data = {
         type: 'string',
       }
-
       const deserialized = StringPortPlugin.deserializeConfig(data)
       expect(deserialized).toStrictEqual(data)
     })
 
     it('should throw on invalid config deserialization input', () => {
-      expect(() => StringPortPlugin.deserializeConfig({
-        type: 'string',
-        minLength: 'not-a-number',
-      })).toThrow()
+      expect(() =>
+        StringPortPlugin.deserializeConfig({
+          type: 'string',
+          minLength: 'not-a-number',
+        }),
+      ).toThrow()
 
-      expect(() => StringPortPlugin.deserializeConfig({
-        type: 'number',
-      })).toThrow()
+      expect(() =>
+        StringPortPlugin.deserializeConfig({
+          type: 'number',
+        }),
+      ).toThrow()
 
-      expect(() => StringPortPlugin.deserializeConfig({
-        type: 'string',
-        unknownField: true,
-      })).not.toThrow() // passthrough allows extra fields
+      // Extra fields are allowed via passthrough.
+      expect(() =>
+        StringPortPlugin.deserializeConfig({
+          type: 'string',
+          unknownField: true,
+        }),
+      ).not.toThrow()
     })
 
     it('should maintain metadata types during serialization roundtrip', () => {
@@ -270,10 +231,8 @@ describe('string port plugin', () => {
           object: { nested: 'value' },
         },
       })
-
       const serialized = StringPortPlugin.serializeConfig(config)
       const deserialized = StringPortPlugin.deserializeConfig(serialized)
-
       expect(deserialized).toStrictEqual(config)
       expect(deserialized.metadata).toStrictEqual(config.metadata)
     })

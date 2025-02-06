@@ -1,8 +1,8 @@
-import type { ObjectSchema } from '@chaingraph/types/port.new'
+import type { ObjectSchema } from '../port-new/base'
 import type { INode } from './interface'
 import {
   getOrCreateNodeMetadata,
-} from '@chaingraph/types/node/decorator/node-decorator'
+} from '@chaingraph/types/node/decorator.old/node-decorator'
 
 export type NodeConstructor = new (...args: any[]) => INode
 
@@ -32,7 +32,7 @@ export class NodeRegistry {
     if (metadata) {
       this.nodesConstructors.set(metadata.type, nodeClass)
     } else {
-      throw new Error('Node metadata missing. Ensure @Node decorator is used.')
+      throw new Error('Node metadata missing. Ensure @Node decorator.old is used.')
     }
   }
 

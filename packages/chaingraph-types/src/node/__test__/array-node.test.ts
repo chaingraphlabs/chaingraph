@@ -4,10 +4,11 @@ import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
 import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { findPort } from '@chaingraph/types/node/ports-traverser'
+import { findPort } from '@chaingraph/types/node/traverse-ports'
+import { createNumberValue } from '@chaingraph/types/port-new/plugins'
 import { PortType } from '@chaingraph/types/port.new'
-import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
 
+import { registerAllPorts } from '@chaingraph/types/port.new/registry/register-ports'
 import Decimal from 'decimal.js'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -22,9 +23,9 @@ class ArrayNode extends BaseNode {
   @Port({
     type: PortType.Array,
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       type: PortType.Number,
-      defaultValue: 0,
+      defaultValue: createNumberValue(0),
     },
   })
   numArray: Decimal[] = [new Decimal(1), new Decimal(2), new Decimal(3)]

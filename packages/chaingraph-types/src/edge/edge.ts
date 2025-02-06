@@ -1,21 +1,24 @@
-import type { EdgeMetadata, IEdge, INode, IPort } from '@chaingraph/types'
-import { EdgeStatus, PortDirection } from '@chaingraph/types'
+import type { IPort } from '@chaingraph/types/port-new/base'
+import type { EdgeMetadata, IEdge } from '.'
+import type { INode } from '../node'
+import { PortDirection } from '@chaingraph/types/port-new/base'
+import { EdgeStatus } from '.'
 
 export class Edge implements IEdge {
   readonly id: string
   readonly sourceNode: INode
-  readonly sourcePort: IPort<any>
+  readonly sourcePort: IPort
   readonly targetNode: INode
-  readonly targetPort: IPort<any>
+  readonly targetPort: IPort
   readonly metadata: EdgeMetadata
   status: EdgeStatus = EdgeStatus.Inactive
 
   constructor(
     id: string,
     sourceNode: INode,
-    sourcePort: IPort<any>,
+    sourcePort: IPort,
     targetNode: INode,
-    targetPort: IPort<any>,
+    targetPort: IPort,
     metadata: EdgeMetadata = {},
   ) {
     this.id = id
@@ -34,14 +37,14 @@ export class Edge implements IEdge {
 
   async validate(): Promise<boolean> {
     // Ensure ports are compatible
-    const sourcePortKind = this.sourcePort.config.kind
-    const targetPortKind = this.targetPort.config.kind
+    const sourcePortKind = this.sourcePort.getConfig().type
+    const targetPortKind = this.targetPort.getConfig().type
 
-    if (this.sourcePort.config.direction !== PortDirection.Output) {
-      throw new Error(`Source port ${this.sourcePort.config.id} is not an output port.`)
+    if (this.sourcePort.getConfig().direction !== PortDirection.Output) {
+      throw new Error(`Source port ${this.sourcePort.getConfig().id} is not an output port.`)
     }
-    if (this.targetPort.config.direction !== PortDirection.Input) {
-      throw new Error(`Target port ${this.targetPort.config.id} is not an input port.`)
+    if (this.targetPort.getConfig().direction !== PortDirection.Input) {
+      throw new Error(`Target port ${this.targetPort.getConfig().id} is not an input port.`)
     }
 
     // TODO: Add other validation checks here for example for AnyPort, StreamInputPort, StreamOutputPort, etc.
@@ -54,7 +57,12 @@ export class Edge implements IEdge {
 
   async transfer(): Promise<void> {
     // Transfer data from the source port to the target port
-    const data = this.sourcePort.getValue()
+    const data = this.sourcePort.getValue() ?? this.sourcePort.getConfig().defaultValue
+    if (data === undefined) {
+      console.error(`Source port ${this.sourcePort.getConfig().id} has no data to transfer.`)
+      return
+      // throw new Error(`Source port ${this.sourcePort.getConfig().id} has no data to transfer.`)
+    }
     this.targetPort.setValue(data)
   }
 

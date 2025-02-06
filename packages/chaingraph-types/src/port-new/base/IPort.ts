@@ -1,4 +1,3 @@
-import type { UnwrapPortValue } from '@chaingraph/types/port-new/base/unwrap-value'
 import type { JSONValue } from './json'
 import type { ExtractValue, IPortConfig } from './types'
 
@@ -49,30 +48,6 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
    * @param newValue - The new value to set for the port.
    */
   setValue: (newValue: ExtractValue<C>) => void
-
-  /**
-   * Returns a read-only, fully unwrapped view of the port’s value.
-   *
-   * This property removes all the nested { value: ... } wrappers so that you can
-   * access inner fields directly without having to chain multiple “.value” accesses.
-   *
-   * Note: The returned object is a plain (immutable) representation of the port’s value;
-   * any modifications made to it will NOT be propagated back to the port.
-   */
-  plainValue: () => UnwrapPortValue<ExtractValue<C>> | undefined
-
-  /**
-   * Returns a mutable, fully unwrapped proxy view of the port’s value.
-   *
-   * This property provides a proxy that recursively unwraps nested { value: ... }
-   * wrappers so that you can easily read and modify inner fields without additional
-   * “.value” chaining. Write operations (such as property assignments or array push)
-   * performed on this proxy are automatically applied to the underlying port value,
-   * while preserving the wrapper structure.
-   *
-   * Use this property when you need to update the port value in a more natural way.
-   */
-  mutableValue: () => UnwrapPortValue<ExtractValue<C>> | undefined
 
   /**
    * Resets the port’s current value.

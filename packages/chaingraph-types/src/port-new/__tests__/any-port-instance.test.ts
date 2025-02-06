@@ -11,8 +11,8 @@ import { portRegistry } from '../registry/PortPluginRegistry'
 /**
  * Helper function to create an any port value
  */
-function createAnyValue(value: any): { type: 'any', value: any } {
-  return { type: 'any', value }
+function createAnyValue(value: any): any {
+  return value
 }
 
 describe('anyPort Instance', () => {
@@ -129,12 +129,12 @@ describe('anyPort Instance', () => {
       const originalValue = port.getValue()
 
       // Serialize the any value
-      const serialized = AnyPortPlugin.serializeValue(originalValue!)
+      const serialized = AnyPortPlugin.serializeValue(originalValue!, config)
       // Simulate a JSON roundtrip
       const jsonString = JSON.stringify(serialized)
       const parsedData = JSON.parse(jsonString)
       // Deserialize the value
-      const deserialized = AnyPortPlugin.deserializeValue(parsedData)
+      const deserialized = AnyPortPlugin.deserializeValue(parsedData, config)
       expect(deserialized).toEqual(originalValue)
     })
 
@@ -153,14 +153,6 @@ describe('anyPort Instance', () => {
       // Deserialize config
       const deserialized = AnyPortPlugin.deserializeConfig(parsedData)
       expect(deserialized).toEqual(originalConfig)
-    })
-
-    it('should throw during serialization if the any value structure is invalid', () => {
-      const badValue: any = {
-        type: 'any',
-        invalid: true,
-      }
-      expect(() => AnyPortPlugin.serializeValue(badValue)).toThrow()
     })
   })
 

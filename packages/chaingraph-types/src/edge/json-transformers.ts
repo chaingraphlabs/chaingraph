@@ -18,6 +18,7 @@ export function registerEdgeTransformers() {
           id: v.id,
           status: v.status,
           metadata: v.metadata,
+          // TODO:!!!!
           sourceNode: superjson.serialize(v.sourceNode),
           sourcePort: superjson.serialize(v.sourcePort),
           targetNode: superjson.serialize(v.targetNode),
@@ -25,8 +26,6 @@ export function registerEdgeTransformers() {
         }) as unknown as JSONValue
       },
       deserialize: (v) => {
-        debugger
-
         const edgeData = superjson.deserialize(
           v as any as SuperJSONResult,
         ) as any

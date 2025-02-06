@@ -6,46 +6,14 @@ import type {
 } from '../base/types'
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
-import {
-  PortError,
-  PortErrorType,
-} from '../base/types'
+import { isStringPortValue, PortError, PortErrorType } from '../base/types'
 import { stringPortConfigUISchema } from '../base/ui-config.schema'
-
-/**
- * Type guard for string value
- */
-export function isStringValue(value: unknown): value is StringPortValue {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'type' in value
-    && value.type === 'string'
-    && 'value' in value
-    && typeof (value as StringPortValue).value === 'string'
-  )
-}
-
-/**
- * Type guard for string config
- */
-export function isStringPortConfig(config: unknown): config is StringPortConfig {
-  return (
-    typeof config === 'object'
-    && config !== null
-    && 'type' in config
-    && config.type === 'string'
-  )
-}
 
 /**
  * Helper to create a string port value
  */
 export function createStringValue(value: string): StringPortValue {
-  return {
-    type: 'string',
-    value,
-  }
+  return value
 }
 
 /**
@@ -90,10 +58,7 @@ function testRegexPattern(value: string, pattern: string): boolean {
 /**
  * String port value schema
  */
-const valueSchema = z.object({
-  type: z.literal('string'),
-  value: z.string(),
-}).passthrough()
+const valueSchema = z.string()
 
 /**
  * String port configuration schema
@@ -144,17 +109,17 @@ export function validateStringValue(
   const errors: string[] = []
 
   // Type validation
-  if (!isStringValue(value)) {
+  if (!isStringPortValue(value)) {
     errors.push('Invalid string value structure')
     return errors
   }
 
   // Length validation
-  if (config.minLength !== undefined && value.value.length < config.minLength) {
+  if (config.minLength !== undefined && value.length < config.minLength) {
     errors.push(`String must be at least ${config.minLength} characters long`)
   }
 
-  if (config.maxLength !== undefined && value.value.length > config.maxLength) {
+  if (config.maxLength !== undefined && value.length > config.maxLength) {
     errors.push(`String must be at most ${config.maxLength} characters long`)
   }
 
@@ -163,7 +128,7 @@ export function validateStringValue(
     const validation = validateRegexPattern(config.pattern)
     if (!validation.valid) {
       errors.push(`Invalid pattern: ${validation.error}`)
-    } else if (!testRegexPattern(value.value, config.pattern)) {
+    } else if (!testRegexPattern(value, config.pattern)) {
       errors.push(`String must match pattern: ${config.pattern}`)
     }
   }
@@ -180,16 +145,13 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
   valueSchema,
   serializeValue: (value: StringPortValue): JSONValue => {
     try {
-      if (!isStringValue(value)) {
+      if (!isStringPortValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid string value structure',
         )
       }
-      return {
-        type: 'string',
-        value: value.value,
-      }
+      return value
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -199,16 +161,13 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
   },
   deserializeValue: (data: JSONValue) => {
     try {
-      if (!isStringValue(data)) {
+      if (!isStringPortValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid string value for deserialization',
         )
       }
-      return {
-        type: 'string',
-        value: data.value,
-      }
+      return data
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -247,20 +206,24 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
     }
   },
   validateValue: (value: StringPortValue, config: StringPortConfig): string[] => {
+    if (!isStringPortValue(value)) {
+      return ['Invalid string value structure']
+    }
+
     const errors: string[] = []
 
-    if (typeof config.minLength === 'number' && value.value.length < config.minLength) {
+    if (typeof config.minLength === 'number' && value.length < config.minLength) {
       errors.push(`String must be at least ${config.minLength} characters long`)
     }
 
-    if (typeof config.maxLength === 'number' && value.value.length > config.maxLength) {
+    if (typeof config.maxLength === 'number' && value.length > config.maxLength) {
       errors.push(`String must be at most ${config.maxLength} characters long`)
     }
 
     if (typeof config.pattern === 'string') {
       try {
         const regex = new RegExp(config.pattern)
-        if (!regex.test(value.value)) {
+        if (!regex.test(value)) {
           errors.push(`String must match pattern: ${config.pattern}`)
         }
       } catch (error) {

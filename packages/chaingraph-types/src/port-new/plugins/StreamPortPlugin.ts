@@ -21,10 +21,7 @@ import { portRegistry } from '../registry/PortPluginRegistry'
  * Helper to create a stream port value
  */
 export function createStreamValue(channel: MultiChannel<IPortValue>): StreamPortValue {
-  return {
-    type: 'stream',
-    value: channel,
-  }
+  return channel
 }
 
 /**
@@ -62,14 +59,11 @@ export function validateStreamValue(
 /**
  * Stream port value schema
  */
-const valueSchema: z.ZodType<StreamPortValue> = z.object({
-  type: z.literal('stream'),
-  value: z.custom<MultiChannel<IPortValue>>((val) => {
-    return val instanceof MultiChannel
-  }, {
-    message: 'Invalid channel type',
-  }),
-}).passthrough()
+const valueSchema: z.ZodType<StreamPortValue> = z.custom<MultiChannel<IPortValue>>((val) => {
+  return val instanceof MultiChannel
+}, {
+  message: 'Invalid channel type',
+})
 
 /**
  * Stream-specific schema
@@ -107,7 +101,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
   typeIdentifier: 'stream',
   configSchema,
   valueSchema,
-  serializeValue: (value: StreamPortValue): JSONValue => {
+  serializeValue: (value: StreamPortValue, config: StreamPortConfig): JSONValue => {
     try {
       if (!isStreamPortValue(value)) {
         throw new PortError(
@@ -116,31 +110,20 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         )
       }
 
-      const channel = value.value
+      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      if (!plugin) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          `No plugin found for type "${config.itemConfig.type}"`,
+        )
+      }
+
+      const channel = value
       const buffer = channel.getBuffer()
 
       // Serialize each item in the buffer using its corresponding plugin
       const serializedBuffer = buffer.map((item, index) => {
-        if (
-          typeof item !== 'object'
-          || item === null
-          || !('type' in item)
-          || typeof item.type !== 'string'
-        ) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `Invalid serialized item structure at index ${index}`,
-          )
-        }
-
-        const plugin = portRegistry.getPlugin(item.type)
-        if (!plugin) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `No plugin found for type "${item.type}" at index ${index}`,
-          )
-        }
-        return plugin.serializeValue(item)
+        return plugin.serializeValue(item, config.itemConfig)
       })
 
       return {
@@ -155,7 +138,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       )
     }
   },
-  deserializeValue: (data: JSONValue): StreamPortValue => {
+  deserializeValue: (data: JSONValue, config: StreamPortConfig): StreamPortValue => {
     try {
       if (
         typeof data !== 'object'
@@ -173,28 +156,17 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         )
       }
 
+      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      if (!plugin) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          `No plugin found for type "${config.itemConfig.type}"`,
+        )
+      }
+
       // Deserialize each item in the buffer using its corresponding plugin
       const deserializedBuffer = data.buffer.map((serializedItem, index) => {
-        if (
-          typeof serializedItem !== 'object'
-          || serializedItem === null
-          || !('type' in serializedItem)
-          || typeof serializedItem.type !== 'string'
-        ) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `Invalid serialized item structure at index ${index}`,
-          )
-        }
-
-        const plugin = portRegistry.getPlugin(serializedItem.type)
-        if (!plugin) {
-          throw new PortError(
-            PortErrorType.SerializationError,
-            `No plugin found for type "${serializedItem.type}" at index ${index}`,
-          )
-        }
-        return plugin.deserializeValue(serializedItem)
+        return plugin.deserializeValue(serializedItem, config.itemConfig)
       })
 
       // Create a new channel and populate it
@@ -206,10 +178,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         channel.close()
       }
 
-      return {
-        type: 'stream',
-        value: channel,
-      }
+      return channel
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -238,7 +207,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
       }
       // If a default value is provided, serialize it as well.
       if (config.defaultValue) {
-        serialized.defaultValue = StreamPortPlugin.serializeValue(config.defaultValue)
+        serialized.defaultValue = StreamPortPlugin.serializeValue(config.defaultValue, config)
       }
       return serialized
     } catch (error) {
@@ -256,9 +225,6 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
   deserializeConfig: (data: JSONValue): StreamPortConfig => {
     try {
       const copy = { ...(data as any) }
-      if (copy.defaultValue !== undefined) {
-        copy.defaultValue = StreamPortPlugin.deserializeValue(copy.defaultValue)
-      }
 
       const result = configSchema.safeParse(copy)
       if (!result.success) {
@@ -283,6 +249,10 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         itemConfig: plugin.deserializeConfig(parsedData.itemConfig),
       }
 
+      if (deserializedConfig.defaultValue !== undefined) {
+        copy.defaultValue = StreamPortPlugin.deserializeValue(copy.defaultValue, deserializedConfig)
+      }
+
       return deserializedConfig as StreamPortConfig
     } catch (error) {
       throw new PortError(
@@ -301,7 +271,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
     }
 
     // Check that channel is a valid MultiChannel instance
-    if (!(value.value instanceof MultiChannel)) {
+    if (!(value instanceof MultiChannel)) {
       errors.push('Invalid channel: must be a MultiChannel instance')
     }
 

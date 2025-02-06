@@ -118,7 +118,7 @@ class ComplexNode extends BaseNode {
   @Port({
     type: PortType.Array,
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       type: PortType.Object,
       schema: {
         properties: {
@@ -145,10 +145,10 @@ class ComplexNode extends BaseNode {
   @Input()
   @Port({
     type: PortType.Array,
-    elementConfig: {
+    itemConfig: {
       type: PortType.Array,
       defaultValue: [],
-      elementConfig: {
+      itemConfig: {
         type: PortType.Number,
         defaultValue: 0,
       },

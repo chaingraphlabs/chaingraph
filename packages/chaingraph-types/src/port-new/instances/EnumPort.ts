@@ -86,7 +86,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @returns The serialized value.
    */
   protected serializeValue(value: EnumPortValue): JSONValue {
-    return EnumPortPlugin.serializeValue(value)
+    return EnumPortPlugin.serializeValue(value, this.config)
   }
 
   /**
@@ -106,7 +106,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @returns The deserialized port value.
    */
   protected deserializeValue(data: JSONValue): EnumPortValue {
-    return EnumPortPlugin.deserializeValue(data)
+    return EnumPortPlugin.deserializeValue(data, this.config)
   }
 }
 

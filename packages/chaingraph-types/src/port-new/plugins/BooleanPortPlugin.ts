@@ -18,10 +18,7 @@ import { booleanPortConfigUISchema } from '../base/ui-config.schema'
  */
 
 // Value schema for boolean ports
-const valueSchema: z.ZodType<BooleanPortValue> = z.object({
-  type: z.literal('boolean'),
-  value: z.boolean(),
-}).passthrough()
+const valueSchema: z.ZodType<BooleanPortValue> = z.boolean()
 
 // Boolean-specific schema
 const booleanSpecificSchema = z.object({
@@ -38,10 +35,7 @@ const configSchema: z.ZodType<BooleanPortConfig> = basePortConfigSchema
  * Helper to create a boolean port value
  */
 export function createBooleanValue(value: boolean): BooleanPortValue {
-  return {
-    type: 'boolean',
-    value,
-  }
+  return value
 }
 
 /**
@@ -69,10 +63,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
           'Invalid boolean value structure',
         )
       }
-      return {
-        type: 'boolean',
-        value: value.value,
-      }
+      return value
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -88,10 +79,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
           'Invalid boolean value for deserialization',
         )
       }
-      return {
-        type: 'boolean',
-        value: data.value,
-      }
+      return data
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
