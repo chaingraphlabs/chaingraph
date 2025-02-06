@@ -1,10 +1,15 @@
-import type { ExecutionContext, ExecutionEventImpl, INode } from '@chaingraph/types'
-import type { NodeExecutionResult } from '@chaingraph/types/node/types'
-import { ExecutionStatus } from '@chaingraph/backend/execution'
-import { BaseNode, ExecutionEventEnum, Flow, Node, NodeExecutionStatus } from '@chaingraph/types'
+import type {
+  ExecutionContext,
+  ExecutionEventImpl,
+  INode,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionEventEnum, Flow, Node, NodeExecutionStatus,
+} from '@badaitech/chaingraph-types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ExecutionService } from '../services/execution-service'
 import { InMemoryExecutionStore } from '../store/execution-store'
+import { ExecutionStatus } from '../types'
 
 // Simple test node for flow execution
 @Node({

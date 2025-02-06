@@ -1,8 +1,8 @@
-import { appRouter } from '@chaingraph/backend/router'
-import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { createTestFlowMetadata } from '@chaingraph/backend/test/utils/testHelpers'
-import { createCallerFactory } from '@chaingraph/backend/trpc'
 import { describe, expect, it } from 'vitest'
+import { appRouter } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
+import { createTestFlowMetadata } from '../../../test/utils/testHelpers'
+import { createCallerFactory } from '../../../trpc'
 
 describe('flow Procedures', () => {
   // Create caller factory once

@@ -1,22 +1,12 @@
-import { createCaller } from '@chaingraph/backend/router'
-import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { NodeCatalog } from '@chaingraph/nodes'
-import {
-  BaseNode,
-  Boolean,
-  type ExecutionContext,
-  Id,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  NodeExecutionStatus,
-  NodeRegistry,
-  Number,
-  Output,
-  String,
-} from '@chaingraph/types'
-import { FlowEventType } from '@chaingraph/types/flow/events'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
+import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeExecutionStatus, NodeRegistry, Number, Output, String } from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { createCaller } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
 
 @Node({
   title: 'Scalar Node',

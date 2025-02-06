@@ -1,12 +1,8 @@
-import type { Context } from '@chaingraph/backend/context'
-import type {
-  IExecutionStore,
-} from '@chaingraph/backend/execution/store/execution-store'
-import type { ExecutionOptions } from '@chaingraph/backend/execution/types'
-import { ExecutionService } from '@chaingraph/backend/execution/services/execution-service'
-import {
-  InMemoryExecutionStore,
-} from '@chaingraph/backend/execution/store/execution-store'
+import type { Context } from '../context'
+import type { IExecutionStore } from './store/execution-store'
+import type { ExecutionOptions } from './types'
+import { ExecutionService } from './services/execution-service'
+import { InMemoryExecutionStore } from './store/execution-store'
 
 export interface ExecutionContext extends Context {
   executionStore: IExecutionStore

@@ -1,19 +1,21 @@
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
-import { nodeRegistry } from '@chaingraph/nodes/registry'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  type ExecutionContext,
   Input,
+  MultiChannel,
   Node,
-  type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
   PortStream,
   String,
-} from '@chaingraph/types'
-import { MultiChannel } from '@chaingraph/types/port/channel'
+} from '@badaitech/chaingraph-types'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
+import { NODE_CATEGORIES } from '../../categories/constants'
+import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'LLM Stream',

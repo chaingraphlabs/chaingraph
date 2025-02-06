@@ -5,20 +5,21 @@
     "target": "ESNext",
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM"],
-    "rootDir": "../../",
+    "rootDir": "./src",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
       "@chaingraph/types": ["../chaingraph-types/src"],
+      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
       "@chaingraph/nodes/*": ["./src/*"]
     },
-    "allowImportingTsExtensions": true,
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "declaration": true,
+    "declarationMap": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist",
+    "sourceMap": true,
     "isolatedModules": true,
     "skipLibCheck": true
   },
@@ -27,5 +28,6 @@
       "path": "../chaingraph-types"
     }
   ],
-  "include": ["./src/**/*", "../chaingraph-types/src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["**/__tests__/**", "**/node_modules/**"]
 }

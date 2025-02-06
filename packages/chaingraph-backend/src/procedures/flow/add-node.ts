@@ -1,6 +1,6 @@
-import { publicProcedure } from '@chaingraph/backend/trpc'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
+import { publicProcedure } from '../../trpc'
 
 // Input schema for node position
 const NodePositionSchema = z.object({

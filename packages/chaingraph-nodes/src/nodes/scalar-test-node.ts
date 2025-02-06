@@ -1,16 +1,18 @@
-import { nodeRegistry } from '@chaingraph/nodes/registry'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Boolean,
-  type ExecutionContext,
   Input,
   Node,
-  type NodeExecutionResult,
   NodeExecutionStatus,
   Number,
   Output,
   String,
-} from '@chaingraph/types'
+} from '@badaitech/chaingraph-types'
+import { nodeRegistry } from '../registry'
 
 @Node({
   title: 'Scalar Node',
@@ -24,7 +26,7 @@ class ScalarNode extends BaseNode {
   strInput: string = 'default string'
 
   @Input()
-  @ Number({
+  @Number({
     defaultValue: 42,
   })
   numInput: number = 42

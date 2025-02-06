@@ -1,6 +1,4 @@
-import type { CategorizedNodes, INode, NodeRegistry } from '@chaingraph/types'
-import type { NodeCategory } from '@chaingraph/types/node/category'
-
+import type { CategorizedNodes, INode, NodeCategory, NodeRegistry } from '@badaitech/chaingraph-types'
 import {
   CATEGORY_METADATA,
   NODE_CATEGORIES,

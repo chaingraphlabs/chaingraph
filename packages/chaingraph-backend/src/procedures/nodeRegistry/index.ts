@@ -1,6 +1,6 @@
-import type { CategorizedNodes } from '@chaingraph/types'
-import { publicProcedure, router } from '@chaingraph/backend/trpc'
+import type { CategorizedNodes } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
+import { publicProcedure, router } from '../../trpc'
 
 export const nodeRegistryProcedures = router({
   // Get all nodes grouped by categories

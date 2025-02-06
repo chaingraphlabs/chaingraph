@@ -1,6 +1,6 @@
-import { publicProcedure } from '@chaingraph/backend/trpc'
-import { NodeUIMetadataSchema } from '@chaingraph/types'
+import { NodeUIMetadataSchema } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
+import { publicProcedure } from '../../trpc'
 
 export const updateNodeUI = publicProcedure
   .input(z.object({

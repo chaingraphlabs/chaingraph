@@ -9,15 +9,51 @@
     "directory": "./packages/chaingraph-types"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./port/channel": {
+      "types": "./dist/port/channel/index.d.ts",
+      "default": "./dist/port/channel/index.js"
+    },
+    "./port/base": {
+      "types": "./dist/port/base/index.d.ts",
+      "default": "./dist/port/base/index.js"
+    },
+    "./port/plugins": {
+      "types": "./dist/port/plugins/index.d.ts",
+      "default": "./dist/port/plugins/index.js"
+    },
+    "./port/registry": {
+      "types": "./dist/port/registry/index.d.ts",
+      "default": "./dist/port/registry/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    },
+    "./flow": {
+      "types": "./dist/flow/index.d.ts",
+      "default": "./dist/flow/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./dist/utils/index.js"
+    }
   },
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
-    "build": "bun build src/index.ts --outdir dist",
+    "dev": "tsc --watch",
+    "build": "tsc -b",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "superjson": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3"
+  }
 }

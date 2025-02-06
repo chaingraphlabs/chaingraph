@@ -1,24 +1,34 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 
 export default defineConfig({
-  plugins: [
-    svgr({
-      include: ['**/*.svg'],
-      svgrOptions: {
-        icon: true,
-        typescript: true,
-        ref: true,
-      },
-    }),
-  ],
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: resolve(__dirname, 'src/index.ts'),
+      name: 'chaingraph-nodes',
       formats: ['es'],
+      fileName: 'index',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'lucide-react'],
+      external: [
+        'react',
+        '@chaingraph/types',
+        '@chaingraph/types/*',
+        '@langchain/openai',
+        'langchain',
+        'lucide-react',
+        /^@chaingraph\/types\/.*/, // Для обработки всех глубоких импортов из types
+      ],
+      output: {
+        preserveModules: true,
+        preserveModulesRoot: 'src',
+      },
     },
+    sourcemap: true,
+    outDir: 'dist',
   },
+  plugins: [
+    svgr(),
+  ],
 })

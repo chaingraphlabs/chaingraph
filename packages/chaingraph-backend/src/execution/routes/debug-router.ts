@@ -1,6 +1,6 @@
-import { publicProcedure, router } from '@chaingraph/backend/trpc'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
+import { publicProcedure, router } from '../../trpc'
 
 export const debugRouter = router({
   // Add breakpoint

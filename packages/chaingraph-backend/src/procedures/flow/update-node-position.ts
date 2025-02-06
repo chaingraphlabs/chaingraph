@@ -1,6 +1,6 @@
-import { publicProcedure } from '@chaingraph/backend/trpc'
-import { DefaultPosition } from '@chaingraph/types/node/node-ui'
+import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
+import { publicProcedure } from '../../trpc'
 
 export const updateNodePosition = publicProcedure
   .input(z.object({

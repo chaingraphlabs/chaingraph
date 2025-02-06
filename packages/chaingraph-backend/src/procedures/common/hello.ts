@@ -1,4 +1,4 @@
-import { publicProcedure } from '@chaingraph/backend/trpc'
+import { publicProcedure } from '../../trpc'
 
 export const hello = publicProcedure.query(() => {
   return 'Hello, World!'

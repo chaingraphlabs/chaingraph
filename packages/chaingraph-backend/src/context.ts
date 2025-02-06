@@ -1,7 +1,7 @@
-import type { ExecutionService, IExecutionStore } from '@chaingraph/backend/execution'
-import type { IFlowStore } from '@chaingraph/backend/stores/flowStore'
-import type { NodeCatalog } from '@chaingraph/nodes'
-import type { NodeRegistry } from '@chaingraph/types'
+import type { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
+import type { NodeRegistry } from '@badaitech/chaingraph-types'
+import type { ExecutionService, IExecutionStore } from './execution'
+import type { IFlowStore } from './stores/flowStore'
 
 export interface Session {
   userId: string

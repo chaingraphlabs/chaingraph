@@ -1,23 +1,24 @@
-import { appRouter } from '@chaingraph/backend/router'
-import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { createCallerFactory } from '@chaingraph/backend/trpc'
-import { NodeCatalog } from '@chaingraph/nodes'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
 import {
   BaseNode,
   Boolean,
-  type ExecutionContext,
   Id,
   Input,
   Node,
-  type NodeExecutionResult,
   NodeExecutionStatus,
   NodeRegistry,
   Number,
   Output,
-
   String,
-} from '@chaingraph/types'
+} from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { appRouter } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
+import { createCallerFactory } from '../../../trpc'
 
 @Node({
   title: 'Scalar Node',

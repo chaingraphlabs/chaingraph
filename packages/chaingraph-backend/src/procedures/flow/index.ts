@@ -1,13 +1,13 @@
-import { addNode } from '@chaingraph/backend/procedures/flow/add-node'
-import { connectPorts } from '@chaingraph/backend/procedures/flow/connect-ports'
-import { removeEdge } from '@chaingraph/backend/procedures/flow/remove-edge'
-import { removeNode } from '@chaingraph/backend/procedures/flow/remove-node'
-import { subscribeToEvents } from '@chaingraph/backend/procedures/flow/subscriptions'
-import { updateNodeParent } from '@chaingraph/backend/procedures/flow/update-node-parent'
-import { updateNodePosition } from '@chaingraph/backend/procedures/flow/update-node-position'
-import { updateNodeUI } from '@chaingraph/backend/procedures/flow/update-node-ui'
-import { publicProcedure, router } from '@chaingraph/backend/trpc'
 import { z } from 'zod'
+import { publicProcedure, router } from '../../trpc'
+import { addNode } from './add-node'
+import { connectPorts } from './connect-ports'
+import { removeEdge } from './remove-edge'
+import { removeNode } from './remove-node'
+import { subscribeToEvents } from './subscriptions'
+import { updateNodeParent } from './update-node-parent'
+import { updateNodePosition } from './update-node-position'
+import { updateNodeUI } from './update-node-ui'
 
 export const flowProcedures = router({
   create: publicProcedure

@@ -1,4 +1,4 @@
-import type { CategoryMetadata } from '@chaingraph/types/node/category'
+import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 
 export const NODE_CATEGORIES = {
   MESSAGING: 'messaging',

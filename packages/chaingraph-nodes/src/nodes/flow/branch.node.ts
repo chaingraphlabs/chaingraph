@@ -1,15 +1,10 @@
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
-import { nodeRegistry } from '@chaingraph/nodes/registry'
-import {
-  BaseNode,
-  type ExecutionContext,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  NodeExecutionStatus,
-  Output,
-  String,
-} from '@chaingraph/types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
+import { NODE_CATEGORIES } from '../../categories/constants'
+import { nodeRegistry } from '../../registry'
 
 @Node({
   title: 'Branch',

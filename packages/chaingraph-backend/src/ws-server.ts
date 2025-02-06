@@ -1,8 +1,8 @@
 import process from 'node:process'
-import { createContext } from '@chaingraph/backend/context'
-import { appRouter } from '@chaingraph/backend/router'
 import { applyWSSHandler } from '@trpc/server/adapters/ws'
 import ws from 'ws'
+import { createContext } from './context'
+import { appRouter } from './router'
 
 export function wsServer() {
   const wss = new ws.Server({

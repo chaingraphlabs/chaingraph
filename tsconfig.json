@@ -20,13 +20,12 @@
       "@chaingraph/nodes/*": ["packages/chaingraph-nodes/src/*"]
     },
     "resolveJsonModule": true,
-    "types": ["bun-types"],
+    "types": ["node", "bun-types"],
     "allowJs": true,
     "strict": true,
     "strictNullChecks": true,
     "declaration": true,
     "declarationMap": true,
-    "noEmit": false,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -43,7 +42,21 @@
     },
     {
       "path": "packages/chaingraph-backend"
+    },
+    {
+      "path": "packages/chaingraph-frontend"
     }
   ],
-  "exclude": ["**/node_modules", "**/dist", "**/__tests__"]
+  "exclude": [
+    "**/node_modules",
+    "**/dist",
+    "**/__tests__",
+    "**/coverage",
+    "**/*.config.js",
+    "**/*.config.mjs",
+    "**/vite.config.ts",
+    "**/eslint.config.mjs",
+    "**/postcss.config.js",
+    "**/tailwind.config.js"
+  ]
 }

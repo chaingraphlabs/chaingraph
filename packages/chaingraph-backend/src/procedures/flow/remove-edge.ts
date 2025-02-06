@@ -1,5 +1,5 @@
-import { publicProcedure } from '@chaingraph/backend/trpc'
 import { z } from 'zod'
+import { publicProcedure } from '../../trpc'
 
 export const removeEdge = publicProcedure
   .input(z.object({

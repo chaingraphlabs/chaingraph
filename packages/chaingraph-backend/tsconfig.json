@@ -2,11 +2,20 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "rootDir": "../../",
+    "rootDir": "./src",
     "moduleResolution": "node",
+    "paths": {
+      "@chaingraph/types": ["../chaingraph-types/src"],
+      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
+      "@chaingraph/nodes": ["../chaingraph-nodes/src"],
+      "@chaingraph/nodes/*": ["../chaingraph-nodes/src/*"]
+    },
+    "strict": true,
+    "noImplicitAny": true,
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
+    "sourceMap": true,
     "skipLibCheck": true
   },
   "references": [
@@ -17,6 +26,6 @@
       "path": "../chaingraph-nodes"
     }
   ],
-  "include": ["./src/**/*"],
-  "exclude": ["**/__tests__/**"]
+  "include": ["src/**/*"],
+  "exclude": ["**/__tests__/**", "**/node_modules/**", "dist"]
 }

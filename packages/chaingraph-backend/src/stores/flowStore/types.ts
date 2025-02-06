@@ -1,4 +1,4 @@
-import type { Flow, FlowMetadata, INode } from '@chaingraph/types'
+import type { Flow, FlowMetadata, INode } from '@badaitech/chaingraph-types'
 
 /**
  * Interface for flow storage implementations

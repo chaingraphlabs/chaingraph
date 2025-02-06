@@ -1,6 +1,6 @@
-import type { IFlowStore } from '@chaingraph/backend/stores/flowStore/types'
-import type { FlowMetadata, INode } from '@chaingraph/types'
-import { Flow } from '@chaingraph/types'
+import type { FlowMetadata, INode } from '@badaitech/chaingraph-types'
+import type { IFlowStore } from './types'
+import { Flow } from '@badaitech/chaingraph-types'
 
 /**
  * In-memory implementation of flow storage

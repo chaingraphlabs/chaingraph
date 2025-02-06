@@ -14,13 +14,13 @@
     "node": "22.12.0"
   },
   "scripts": {
-    "dev": "bun run --cwd packages/chaingraph-backend dev",
-    "start": "bun run --cwd packages/chaingraph-backend start",
-    "build": "bun run --cwd packages/chaingraph-backend build",
-    "tsx-backend": "tsx --cwd packages/chaingraph-backend",
+    "clean": "make clean",
+    "build": "make build",
+    "rebuild": "make rebuild",
+    "dev": "make dev",
+    "test": "make test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"

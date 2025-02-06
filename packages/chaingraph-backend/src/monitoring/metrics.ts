@@ -1,4 +1,4 @@
-import type { IFlowStore } from '@chaingraph/backend/stores/flowStore'
+import type { IFlowStore } from '../stores/flowStore'
 
 export interface ApplicationMetrics {
   timestamp: number

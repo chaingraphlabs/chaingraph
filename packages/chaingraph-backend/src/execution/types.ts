@@ -4,7 +4,7 @@ import type {
   ExecutionEventEnum,
   ExecutionEventImpl,
   Flow,
-} from '@chaingraph/types'
+} from '@badaitech/chaingraph-types'
 
 export enum ExecutionStatus {
   Created = 'created',

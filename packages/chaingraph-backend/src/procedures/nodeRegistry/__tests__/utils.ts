@@ -1,5 +1,5 @@
-import type { INode, NodeMetadata } from '@chaingraph/types'
-import { BaseNode, Input, Node, NodeRegistry, String } from '@chaingraph/types'
+import type { INode, NodeMetadata } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeRegistry, String } from '@badaitech/chaingraph-types'
 import { v4 as uuidv4 } from 'uuid'
 
 /**

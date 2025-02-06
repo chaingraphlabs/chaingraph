@@ -1,8 +1,8 @@
-import type { AppContext } from '@chaingraph/backend/context'
-import type { IFlowStore } from '@chaingraph/backend/stores/flowStore'
-import type { NodeRegistry } from '@chaingraph/types'
-import { InMemoryFlowStore } from '@chaingraph/backend/stores/flowStore'
-import { NodeCatalog, nodeRegistry } from '@chaingraph/nodes'
+import type { NodeRegistry } from '@badaitech/chaingraph-types'
+import type { AppContext } from '../../context'
+import type { IFlowStore } from '../../stores/flowStore'
+import { NodeCatalog, nodeRegistry } from '@badaitech/chaingraph-nodes/dist'
+import { InMemoryFlowStore } from '../../stores/flowStore'
 
 /**
  * Creates test context with in-memory stores
@@ -19,5 +19,7 @@ export function createTestContext(
     nodeRegistry: _nodeRegistry ?? nodeRegistry,
     nodesCatalog: nodesCatalog ?? new NodeCatalog(nodeRegistry),
     flowStore: flowStore ?? new InMemoryFlowStore(),
+    executionService: null as any,
+    executionStore: null as any,
   }
 }
