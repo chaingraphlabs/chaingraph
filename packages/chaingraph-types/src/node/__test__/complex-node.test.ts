@@ -12,7 +12,6 @@ import {
   Metadata,
   Name,
   Node,
-  NodeRegistry,
   Number,
   NumberEnum,
   ObjectSchema,
@@ -45,7 +44,7 @@ import {
 } from '@chaingraph/types/port-new/plugins'
 import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 portRegistry.register(StringPortPlugin)
@@ -460,10 +459,6 @@ export class AdvancedNode extends BaseNode {
 describe('complex node', () => {
   beforeAll(() => {
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('instantiates a user profile node', async () => {

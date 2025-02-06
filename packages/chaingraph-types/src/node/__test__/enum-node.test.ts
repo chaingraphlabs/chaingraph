@@ -1,6 +1,6 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
+import { BaseNode, Input, Node } from '@chaingraph/types'
 import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
@@ -15,7 +15,7 @@ import {
 } from '@chaingraph/types/port-new/plugins'
 import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 portRegistry.register(StringPortPlugin)
@@ -75,10 +75,6 @@ describe('enum node serialization', () => {
   beforeAll(() => {
     // Register all port types
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('serializes and deserializes a node with an enum port', async () => {

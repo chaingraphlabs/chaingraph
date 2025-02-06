@@ -136,7 +136,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
 
       // Serialize each array item using its corresponding plugin
       return value.map((item, index) => {
-        return plugin.serializeValue(item, config) as JSONValue
+        return plugin.serializeValue(item, config.itemConfig) as JSONValue
       })
     } catch (error) {
       throw new PortError(
@@ -164,7 +164,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
 
       // Deserialize each array item using its corresponding plugin
       return data.map((item, index) => {
-        return plugin.deserializeValue(item, config) as IPortValue
+        return plugin.deserializeValue(item, config.itemConfig) as IPortValue
       })
     } catch (error) {
       throw new PortError(

@@ -1,24 +1,28 @@
 import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry } from '@chaingraph/types'
+import { BaseNode, Input, Node } from '@chaingraph/types'
 import { Port } from '@chaingraph/types/node'
 import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import {
   ArrayPortPlugin,
+  EnumPortPlugin,
   NumberPortPlugin,
   ObjectPortPlugin,
+  StreamPortPlugin,
   StringPortPlugin,
 } from '@chaingraph/types/port-new/plugins'
 import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
 portRegistry.register(StringPortPlugin)
 portRegistry.register(NumberPortPlugin)
 portRegistry.register(ArrayPortPlugin)
 portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 class Address implements Record<string, unknown> {
   [key: string]: unknown;
@@ -168,10 +172,6 @@ describe('object node serialization', () => {
   beforeAll(() => {
     // Register all port types
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('serializes and deserializes a node with an object port', async () => {

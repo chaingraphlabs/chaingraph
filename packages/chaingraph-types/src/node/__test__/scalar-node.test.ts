@@ -5,15 +5,29 @@ import { registerNodeTransformers } from '@chaingraph/types/node/json-transforme
 
 import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
 import {
+  ArrayPortPlugin,
   createBooleanValue,
   createNumberValue,
   createStringValue,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
 } from '@chaingraph/types/port-new/plugins'
+import { portRegistry } from '@chaingraph/types/port-new/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node } from '../decorator-new'
 import { Port } from '../decorator-new/port.decorator'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 @Node({
   title: 'Scalar Node',
