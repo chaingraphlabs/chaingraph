@@ -1,10 +1,10 @@
-import type { PortConfig, PortValue } from '@chaingraph/types'
+import type { IPortConfig, IPortValue } from '@chaingraph/types/port/base'
 
 export interface PortState {
   id: string
   nodeId: string
-  config: PortConfig
-  value: PortValue
+  config: IPortConfig
+  value: IPortValue
   parentPortId?: string // For nested ports
 }
 

@@ -23,9 +23,9 @@ export function registerFlowTransformers() {
             metadata: edge.metadata,
             status: edge.status,
             sourceNodeId: edge.sourceNode.id,
-            sourcePortId: edge.sourcePort.getConfig().id!,
+            sourcePortId: edge.sourcePort.id!,
             targetNodeId: edge.targetNode.id,
-            targetPortId: edge.targetPort.getConfig().id!,
+            targetPortId: edge.targetPort.id!,
           })
         }
 

@@ -1,10 +1,10 @@
-import type { IPort } from '@chaingraph/types'
+import type { IPort } from '@chaingraph/types/port/base'
 import { cn } from '@/lib/utils'
 import { Handle, Position } from '@xyflow/react'
 
 interface NodeBodyProps {
-  inputs: IPort<any>[]
-  outputs: IPort<any>[]
+  inputs: IPort[]
+  outputs: IPort[]
 }
 
 export function NodeBody({ inputs, outputs }: NodeBodyProps) {
@@ -14,11 +14,11 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
         {/* Input Ports */}
         {inputs.map(port => (
           <div
-            key={port.config.id}
+            key={port.id}
             className="relative flex items-center gap-2 group/port"
           >
             <Handle
-              id={port.config.id}
+              id={port.id}
               type="target"
               position={Position.Left}
               className={cn(
@@ -30,7 +30,7 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
               )}
             />
             <span className="text-xs truncate text-foreground">
-              {port.config.title || port.config.key}
+              {port.getConfig().title || port.getConfig().key}
             </span>
           </div>
         ))}
@@ -38,14 +38,14 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
         {/* Output Ports */}
         {outputs.map(port => (
           <div
-            key={port.config.id}
+            key={port.id}
             className="relative flex items-center justify-end gap-2 group/port"
           >
             <span className="text-xs truncate text-foreground">
-              {port.config.title || port.config.key}
+              {port.getConfig().title || port.getConfig().key}
             </span>
             <Handle
-              id={port.config.id}
+              id={port.id}
               type="source"
               position={Position.Right}
               className={cn(

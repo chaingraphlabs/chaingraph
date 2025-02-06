@@ -9,11 +9,25 @@ import { NodeCatalog, nodeRegistry } from '@chaingraph/nodes'
 import {
   registerFlowTransformers,
   registerNodeTransformers,
-  registerPortTransformers,
 } from '@chaingraph/types'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port/plugins'
+import { portRegistry } from '@chaingraph/types/port/registry'
 import './setup'
 
-registerPortTransformers()
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
+
 registerNodeTransformers(nodeRegistry)
 registerFlowTransformers()
 

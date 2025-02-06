@@ -1,7 +1,18 @@
-import type { INode, IPort, JSONValue } from '@chaingraph/types'
+import type { INode, JSONValue } from '@chaingraph/types'
+import type { IPort } from '@chaingraph/types/port/base'
 import { initializeStores } from '@/store/init.ts'
 import { nodeRegistry } from '@chaingraph/nodes'
-import { Edge, MultiChannel, registerFlowTransformers, registerNodeTransformers, registerPortTransformers } from '@chaingraph/types'
+import { Edge, registerFlowTransformers, registerNodeTransformers } from '@chaingraph/types'
+import { MultiChannel } from '@chaingraph/types/port/channel'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@chaingraph/types/port/plugins'
+import { portRegistry } from '@chaingraph/types/port/registry/PortPluginRegistry.ts'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import superjson from 'superjson'
@@ -10,7 +21,13 @@ import { RootProvider } from './providers/RootProvider.tsx'
 import './index.css'
 import './reflect'
 
-registerPortTransformers()
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
+
 registerNodeTransformers(nodeRegistry)
 registerFlowTransformers()
 
@@ -66,7 +83,6 @@ superjson.registerCustom<MultiChannel<any>, JSONValue>(
       return v.serialize()
     },
     deserialize: (v) => {
-      debugger
       return MultiChannel.deserialize(v)
     },
   },

@@ -277,11 +277,11 @@ export abstract class BaseNode implements INode {
   }
 
   addPort(port: IPort): IPort {
-    if (!port.getConfig().id) {
+    if (!port.id) {
       throw new Error('Port ID is required.')
     }
 
-    this._ports.set(port.getConfig().id!, port)
+    this._ports.set(port.id!, port)
 
     // TODO: add event and version update
 

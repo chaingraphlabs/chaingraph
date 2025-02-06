@@ -3,6 +3,7 @@ import { createTestContext } from '@chaingraph/backend/test/utils/createTestCont
 import { NodeCatalog } from '@chaingraph/nodes'
 import {
   BaseNode,
+  Boolean,
   type ExecutionContext,
   Id,
   Input,
@@ -10,10 +11,9 @@ import {
   type NodeExecutionResult,
   NodeExecutionStatus,
   NodeRegistry,
+  Number,
   Output,
-  PortBoolean,
-  PortNumber,
-  PortString,
+  String,
 } from '@chaingraph/types'
 import { FlowEventType } from '@chaingraph/types/flow/events'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -24,28 +24,28 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 }, null)
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     defaultValue: 'default string',
   })
   @Id('strInput')
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber({
+  @Number({
     defaultValue: 42,
   })
   @Id('numInput')
   numInput: number = 42
 
   @Input()
-  @PortBoolean({
+  @Boolean({
     defaultValue: true,
   })
   @Id('boolInput')
   boolInput: boolean = true
 
   @Id('strOutput')
-  @PortString()
+  @String()
   @Output()
   strOutput: string = ''
 

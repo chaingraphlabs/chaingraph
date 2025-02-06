@@ -1,12 +1,12 @@
-import type { PortState } from '@/store/ports/types.ts'
-import type { IPort } from '@chaingraph/types'
-
 // Helpers for converting between live ports and their state representation
-export function portToState(port: IPort<any>): PortState {
+import type { PortState } from '@/store/ports/types.ts'
+import type { IPort } from '@chaingraph/types/port/base'
+
+export function portToState(port: IPort): PortState {
   return {
-    id: port.config.id!,
-    nodeId: port.config.nodeId!,
-    config: port.config,
+    id: port.id!,
+    nodeId: port.getConfig().nodeId!,
+    config: port.getConfig(),
     value: port.getValue(),
   }
 }

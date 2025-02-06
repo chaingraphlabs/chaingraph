@@ -23,12 +23,12 @@ export const $ports = createStore<PortsStore>(initialState)
     ...state,
     ports: {
       ...state.ports,
-      [port.config.id!]: {
-        id: port.config.id!,
-        nodeId: port.config.nodeId!,
-        config: port.config,
+      [port.id!]: {
+        id: port.id!,
+        nodeId: port.getConfig().nodeId!,
+        config: port.getConfig(),
         value: port.getValue(),
-        parentPortId: port.config.parentPortId,
+        parentPortId: port.getConfig().parentPortId,
       },
     },
   }))

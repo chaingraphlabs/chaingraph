@@ -71,9 +71,9 @@ export const subscribeToEvents = publicProcedure
           yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgeAdded, {
             edgeId: edge.id,
             sourceNodeId: edge.sourceNode.id,
-            sourcePortId: edge.sourcePort.config.id,
+            sourcePortId: edge.sourcePort.id,
             targetNodeId: edge.targetNode.id,
-            targetPortId: edge.targetPort.config.id,
+            targetPortId: edge.targetPort.id,
             metadata: edge.metadata,
           }))
         }

@@ -59,9 +59,9 @@ export class Edge implements IEdge {
     // Transfer data from the source port to the target port
     const data = this.sourcePort.getValue() ?? this.sourcePort.getConfig().defaultValue
     if (data === undefined) {
-      console.error(`Source port ${this.sourcePort.getConfig().id} has no data to transfer.`)
+      console.error(`Source port ${this.sourcePort.id} has no data to transfer.`)
       return
-      // throw new Error(`Source port ${this.sourcePort.getConfig().id} has no data to transfer.`)
+      // throw new Error(`Source port ${this.sourcePort.id} has no data to transfer.`)
     }
     this.targetPort.setValue(data)
   }

@@ -4,15 +4,14 @@ import {
   BaseNode,
   type ExecutionContext,
   Input,
-  MultiChannel,
   Node,
   type NodeExecutionResult,
   NodeExecutionStatus,
   Output,
-  PortKind,
-  PortStreamOutput,
-  PortString,
+  PortStream,
+  String,
 } from '@chaingraph/types'
+import { MultiChannel } from '@chaingraph/types/port/channel'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
 
@@ -24,16 +23,16 @@ import { ChatOpenAI } from '@langchain/openai'
 }, nodeRegistry)
 export class LLMStreamNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Prompt',
     description: 'Input prompt for the language model',
   })
   prompt: string = ''
 
   @Output()
-  @PortStreamOutput({
-    valueType: {
-      kind: PortKind.String,
+  @PortStream({
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
   })
@@ -58,7 +57,7 @@ export class LLMStreamNode extends BaseNode {
     })
 
     // Start streaming in the background
-    const streamingPromise = (async () => {
+    const streamingPromise = async () => {
       try {
         for await (const chunk of stream) {
           console.log('Chunk:', chunk)
@@ -81,13 +80,14 @@ export class LLMStreamNode extends BaseNode {
         console.error('Streaming error:', error)
         this.outputStream.close()
       }
-    })()
+    }
 
     return {
       status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
-      outputs: new Map(),
+      // outputs: this.getOutputs(),
+      // backgroundTasks: [streamingPromise],
     }
   }
 }
