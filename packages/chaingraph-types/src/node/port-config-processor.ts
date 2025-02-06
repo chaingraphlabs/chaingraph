@@ -187,7 +187,8 @@ export class PortConfigProcessor {
 
     if (!newPortConfig.schema || !newPortConfig.schema.properties) {
       // Infer schema from the object's properties decorated with PortDecorator
-      const objectInstance = propertyValue
+      // const objectInstance = propertyValue ?? (newPortConfig.defaultValue ?? {})
+      const objectInstance = propertyValue ?? (newPortConfig.defaultValue)
       if (!objectInstance) {
         throw new Error(`Object instance for property '${context.propertyKey}' is not available on the node.`)
       }

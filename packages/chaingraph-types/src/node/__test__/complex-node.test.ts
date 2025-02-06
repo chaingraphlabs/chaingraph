@@ -191,7 +191,7 @@ export class UserProfileNode extends BaseNode {
     defaultValue: new TestUserObject(),
     schema: TestUserObject,
   })
-  user2?: TestUserObject
+  user2?: TestUserObject = new TestUserObject()
 
   // Case for infer schema from type field
   @Input() @Port({
@@ -199,14 +199,14 @@ export class UserProfileNode extends BaseNode {
     schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
-  user4?: TestUserObject
+  user4?: TestUserObject = new TestUserObject()
 
   // Case for infer schema from decorator default value
   @Input() @PortObject({
     schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
-  user5?: TestUserObject
+  user5?: TestUserObject = new TestUserObject()
 
   // Case for infer schema from decorator default value
   @Input() @PortObject({
@@ -223,7 +223,7 @@ export class UserProfileNode extends BaseNode {
       defaultValue: new TestUserObject(),
     },
   })
-  friends?: TestUserObject[]
+  friends?: TestUserObject[] = []
 
   @Input() @PortArray({
     defaultValue: [],

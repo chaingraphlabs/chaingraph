@@ -403,7 +403,7 @@ export function isArrayPortConfig(value: unknown): value is ArrayPortConfig {
   )
 }
 
-export function isObjectPortConfig(value: unknown): value is ObjectPortConfig {
+export function isObjectPortConfig(value: unknown, schemaType = 'object'): value is ObjectPortConfig {
   return (
     typeof value === 'object'
     && value !== null
