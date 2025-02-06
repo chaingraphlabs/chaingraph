@@ -59,12 +59,12 @@ export function Port<T extends PortType>(
       // Process the itemConfig: if the user provided a class (constructor) in the "type" field
       // then convert it into an object port configuration.
       const itemConf = config.itemConfig
-      if (typeof itemConf.type === 'function') {
+      if (itemConf.type === 'object' && typeof itemConf.schema === 'function') {
         config.itemConfig = {
           ...itemConf,
           // Force the type to be 'object' and resolve the schema from the provided class.
           type: 'object',
-          schema: resolveObjectSchema(itemConf.type),
+          schema: resolveObjectSchema(itemConf.schema),
         }
       }
     }

@@ -97,14 +97,14 @@ export abstract class BaseNode implements INode {
     // Generate a unique port ID if it doesn't exist
     const portId = portConfig.id || `${parentPortId || ''}.${portConfig.key}`
 
-    const connectInternalFields = () => {
+    const connectInternalFields = (val: object) => {
       if (portConfig.type === 'object') {
         // for the object port, initialize its nested ports recursively
         const nestedPorts = portConfig.schema?.properties
         if (nestedPorts) {
           for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
             this.initializePort(
-              port.getValue() as object,
+              val,
               nestedPortConfig as IPortConfig,
               portId,
             )
@@ -127,7 +127,7 @@ export abstract class BaseNode implements INode {
         },
         set: (newValue: any) => {
           port.setValue(newValue)
-          connectInternalFields()
+          connectInternalFields(port.getValue() as object)
         },
         configurable: true,
         enumerable: true,
@@ -139,7 +139,7 @@ export abstract class BaseNode implements INode {
       this._ports.set(portId, port)
     }
 
-    connectInternalFields()
+    connectInternalFields(port.getValue() as object)
     // if (portConfig.type === 'object') {
     //   // for the object port, initialize its nested ports recursively
     //   const nestedPorts = portConfig.schema?.properties

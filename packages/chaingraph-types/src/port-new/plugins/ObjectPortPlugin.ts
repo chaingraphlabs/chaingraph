@@ -101,8 +101,10 @@ function validateField(
           // Validate each nested field found in schema.properties.
           for (const [key, nestedConfig] of Object.entries(objectConfig.schema.properties)) {
             const nestedValue = objectValue[key]
-            if (!nestedValue) {
-              errors.push(`Missing required field: ${fieldPath}.${key}`)
+            if (nestedValue === undefined) {
+              if (nestedConfig.required) {
+                errors.push(`Missing required field: ${fieldPath}.${key}`)
+              }
               continue
             }
 
@@ -185,8 +187,10 @@ export function validateObjectValue(
   // Validate each field defined in the schema.
   for (const [key, fieldConfig] of Object.entries(config.schema.properties)) {
     const fieldValue = value[key]
-    if (!fieldValue) {
-      errors.push(`Missing required field: ${key}`)
+    if (fieldValue === undefined) {
+      if (fieldConfig.required) {
+        errors.push(`Missing required field: ${key}`)
+      }
       continue
     }
     const fieldErrors = validateField(fieldValue, fieldConfig, key)
@@ -356,7 +360,8 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       if (config.defaultValue !== undefined) {
         // Serialize the default value using the ObjectPortPlugin’s own serializeValue,
         // passing in the config so that nested fields are serialized according to their settings.
-        serializedConfig.defaultValue = ObjectPortPlugin.serializeValue(config.defaultValue, config)
+        const serializedDefaultValue = ObjectPortPlugin.serializeValue(config.defaultValue, config)
+        serializedConfig.defaultValue = serializedDefaultValue
       }
 
       return serializedConfig

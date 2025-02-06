@@ -83,7 +83,7 @@ export class PortConfigProcessor {
       // For primitive port configs, no further processing is needed
       // All necessary fields have been assigned in 'assignBasicFields'
     } else {
-      throw new Error(`PortConfigProcessor: unsupported port kind: ${(portConfig as any).type}`)
+      throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
     }
 
     return portConfig

@@ -192,16 +192,17 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         )
       }
 
-      let defaultValueSerialized: ArrayPortValue | undefined
-      if (config.defaultValue !== undefined) {
-        defaultValueSerialized = plugin.serializeValue(config.defaultValue, config) as ArrayPortValue
-      }
-
-      return {
+      const serializedConfig = {
         ...config,
         itemConfig: pluginItem.serializeConfig(config.itemConfig),
-        defaultValue: defaultValueSerialized,
       }
+
+      let defaultValueSerialized: ArrayPortValue | undefined
+      if (config.defaultValue !== undefined) {
+        serializedConfig.defaultValue = plugin.serializeValue(config.defaultValue, config) as ArrayPortValue
+      }
+
+      return serializedConfig
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
