@@ -1,121 +1,203 @@
-# ChainGraph
+![ChainGraph logo](./docs/images/dark_bg2.png#gh-dark-mode-only)
+![ChainGraph logo](./docs/images/light_bg2.png#gh-light-mode-only)
 
-![dark_bg2.png](docs/images/dark_bg2.png)
+# ChainGraph v2
 
-ChainGraph is a source-available flow-based programming platform that redefines how complex AI systems are built. Primarily aimed at developing AI LLM agents with elaborate logical flows, this framework combines a graph-based design with a strong emphasis on type safety—thanks to modern TypeScript features. Whether you’re crafting custom nodes or orchestrating dynamic, multi-step agent interactions, ChainGraph’s modular architecture supports your efforts with rigorous compile-time assurances and enhanced developer ergonomics.
+ChainGraph is an open–source, flow–based programming framework that empowers developers to visually design, execute, and manage complex computational graphs. Whether you are building custom AI agents, data processing pipelines, or collaborative automation systems, ChainGraph’s modular architecture, strong type–safety guarantees, and real–time features help you build robust workflows efficiently.
 
 > **Disclaimer:** This version is intended for demonstration and experimentation purposes only. The API and internal architecture are still evolving, and breaking changes may occur as new features are added and improvements are made.
 
----
+## Table of Contents
 
-## Features
+- [Key Features](#key-features)
+- [Architecture & Technologies](#architecture--technologies)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Running in Development Mode](#running-in-development-mode)
+- [Building for Production](#building-for-production)
+- [Docker & Docker-compose](#docker--docker-compose)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
 
-- **Type-Safe Port System:** Supports a rich variety of port types including primitive (string, number, boolean) and complex (array, object, stream) with configurable validations.
-- **Modular Node Architecture:** Create nodes with flexible decorators and metadata that make it simple to design, reuse, and extend custom nodes.
-- **Dynamic Flow Execution:** Manage data propagation between nodes with a built-in execution engine that supports concurrent execution, debugging, and event subscriptions.
-- **Real-Time API:** Powerful, end-to-end typesafe API built with tRPC, enabling real-time subscriptions and live updates.
-- **Modern Tools & Runtime:** Leverages Bun for optimum performance and modern build tools, along with Zod for runtime validation and SuperJSON for serialization.
+## Key Features
 
----
+- **Type–Safe Port System:**  
+  Supports a rich set of port types including primitives (string, number, boolean) and complex types (arrays, objects, streams, enums). Each port is defined with its own configuration and runtime validation (via Zod and SuperJSON) and employs both lazy instantiation and caching for optimal memory usage.
 
-## Project Structure
+- **Modular and Extensible Nodes:**  
+  Create custom nodes using decorators and metadata. Nodes feature multiple input and output ports and integrate seamlessly into the flow builder, enabling rapid development of complex workflows.
 
-The repository is organized as a monorepo with multiple packages:
+- **Visual Flow Editor:**  
+  Build flows graphically with a React- and XYFlow–based frontend. Enjoy features like drag-and-drop layout, zoom and pan, resizing, contextual menus, and live previews.
 
-- **packages/chaingraph-types:** Contains shared types, interfaces, and utilities for ports, nodes, flows, edges, and more.
-- **packages/chaingraph-nodes:** A collection of sample nodes and node categories demonstrating how to build custom functionality.
-- **packages/chaingraph-backend:** The backend service implementing API endpoints using tRPC, flow execution management, and WebSocket support.
-- **packages/chaingraph-frontend:** The front-end interface built with React, Vite, and Tailwind CSS to visualize and control flows.
+- **Robust Execution Engine & Debugging Tools:**  
+  A backend execution engine supports concurrent execution of flows with real-time event subscriptions, plus debugging features such as breakpoints, step–over, and detailed event logging for effective troubleshooting.
 
----
+- **Real–Time Synchronization & Optimistic Updates:**  
+  Integrated with TRPC and Effector for end-to–end type safety, the system provides real-time updates (via WebSockets) and supports optimistic UI updates—ensuring an interactive and responsive user experience.
+
+- **Docker and Cloud Compatibility:**  
+  Easily build, deploy, and scale both the backend and frontend using Docker and docker-compose. Containerized deployment simplifies the setup process and enhances portability.
+
+## Architecture & Technologies
+
+ChainGraph is built with modern web technologies, aiming at a robust and type-safe development experience:
+
+- **TypeScript:**  
+  Uses advanced TypeScript features (generics, decorators, conditional types) for compile–time safety and robustness.
+
+- **Effector:**  
+  A reactive state management library that powers both frontend and backend state handling and simplifies the implementation of optimistic updates and subscriptions.
+
+- **TRPC:**  
+  Facilitates end-to-end type–safe API communication between the frontend and backend, minimizing runtime errors and ensuring consistency in data handling.
+
+- **Zod & SuperJSON:**  
+  Zod is used for runtime schema validation, while SuperJSON manages complex data serialization, ensuring that data remains consistent across the client and server boundaries.
+
+- **Bun:**  
+  Employed as the chosen runtime for its superior performance and modern build capabilities, Bun enhances development speed and production performance.
+
+- **XYFlow:**  
+  A visual flow library used on the frontend to render and manage the drag-and-drop canvas, enabling users to compose workflows visually.
+
+- **WebSockets:**  
+  Real-time subscriptions using WebSocket (via tRPC’s adapter) keep the client in constant sync with backend state and execution events.
 
 ## Getting Started
 
-### Prerequisites
+ChainGraph provides a complete development environment with hot module reloading, integrated testing, and containerized deployment options. This guide covers local installation and Docker-based setups.
 
-- **Node.js v22.12.0** (as defined in the `.nvmrc`)
-- **Bun:** Used as the primary runtime and package manager.
-- **Git:** For cloning the repository.
+## Installation
 
-### Installation
+Clone the repository and install dependencies:
 
-1. **Clone the Repository:**
+```bash
+git clone https://github.com/badaitech/chaingraph.git
+cd chaingraph
+make install
+```
 
-   ```sh
-   git clone https://github.com/badaitech/chaingraph.git
-   cd chaingraph
-   ```
+Alternatively, you can use Bun directly:
 
-2. **Install Dependencies:**
+```bash
+bun install
+```
 
-   Use the provided Makefile target (this will install dependencies for all packages):
+## Running in Development Mode
 
-   ```sh
-   make install
-   ```
+To start the development environment (both frontend and backend), run:
 
-   Alternatively, you can use Bun directly from the repository root:
-
-   ```sh
-   bun install
-   ```
-
-### Running in Development Mode
-
-The project provides a unified development command that starts both the backend and frontend.
-
-```sh
+```bash
 make dev
 ```
 
-This command launches the frontend development server and the backend in watch mode. If needed, you can also run individual package scripts:
+This command launches:
+- The frontend development server (with hot reloading)
+- The backend development process (watch mode)
 
-- **Backend:**
-  ```sh
-  bun run --cwd packages/chaingraph-backend dev
-  ```
-- **Frontend:**
-  ```sh
-  bun run --cwd packages/chaingraph-frontend dev
-  ```
+You can also run each package individually if desired:
+- **Backend:**  
+  `bun run --cwd packages/chaingraph-backend dev`
+- **Frontend:**  
+  `bun run --cwd packages/chaingraph-frontend dev`
 
-### Running Tests
+## Building for Production
 
-To run tests across all packages:
+To build the entire project with a clean installation, execute:
 
-```sh
-make test
-```
-
-For a test with code coverage:
-
-```sh
-make test:coverage
-```
-
-### Building for Production
-
-Build the entire project with:
-
-```sh
+```bash
 make build
 ```
 
-For a full rebuild (cleaning up previous artifacts first):
+For a full rebuild that first cleans previous builds:
 
-```sh
+```bash
 make rebuild
 ```
 
----
+## Docker & Docker-compose
 
-## Important Files
+ChainGraph can also be built and run using Docker. The repository includes Dockerfiles for both the backend and frontend, along with a docker-compose configuration for orchestrating the containers.
 
-- **Makefile:** Contains scripts for cleaning, installing dependencies, building packages, running tests, and starting the development environment.
-- **.nvmrc:** Specifies the Node.js version (v22.12.0) required for the project.
-- **.gitignore:** Lists files and directories to be ignored by Git.
+### Building Docker Images
 
----
+You can build Docker images for individual components using the Makefile targets:
+
+- **Build backend image:**
+
+  ```bash
+  make docker-build-backend
+  ```
+
+- **Build frontend image:**
+
+  ```bash
+  make docker-build-frontend
+  ```
+
+- **Build both images:**
+
+  ```bash
+  make docker-build-all
+  ```
+
+Alternatively, you can build them manually using Docker commands. For example, to build the backend image manually use:
+
+```bash
+docker build -t chaingraph-backend -f packages/chaingraph-backend/Dockerfile .
+```
+
+And likewise for the frontend:
+
+```bash
+docker build -t chaingraph-frontend -f packages/chaingraph-frontend/Dockerfile .
+```
+
+### Running with Docker-compose
+
+Use docker-compose to launch both containers concurrently. In the repository root, run:
+
+```bash
+make docker-compose-up
+```
+
+This command will start the backend on port 3001 and the frontend (serving on port 80 inside the container, mapped to 5173 on your host). To stop and remove containers, run:
+
+```bash
+make docker-compose-down
+```
+
+You can also run these commands manually:
+
+```bash
+docker-compose up -d      # Start containers in the background
+docker-compose down       # Stop and remove containers
+```
+
+## Project Structure
+
+- **packages/chaingraph-types:**  
+  Contains shared type definitions, interfaces, port implementations, node/event models, and utilities ensuring end-to-end type safety.
+
+- **packages/chaingraph-nodes:**  
+  A collection of pre-built node implementations and category definitions, serving as examples and reusable components for extensibility.
+
+- **packages/chaingraph-backend:**  
+  The backend service that implements a TRPC API router, flow execution logic, in-memory storage for flows and nodes, and WebSocket-based real-time subscriptions.
+
+- **packages/chaingraph-frontend:**  
+  A React+Vite frontend that utilizes XYFlow for a graphical flow editor, Effector for state management, and TRPC to interact with the backend.
+
+## Contributing
+
+Contributions to ChainGraph are welcome! If you wish to submit changes:
+- Fork the repository and create a feature or bugfix branch.
+- Ensure your changes follow the project’s style guidelines and that tests pass.
+- Update documentation as necessary.
+- Open a pull request with a detailed description of your enhancements.
+
+Feel free to open issues for bugs, suggestions, or questions.
 
 ## Current Limitations & Work-In-Progress
 
