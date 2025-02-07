@@ -1,5 +1,4 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, Input, Node, Output } from '@badaitech/chaingraph-types'
 import { Port } from '@badaitech/chaingraph-types/node'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
@@ -82,7 +81,7 @@ describe('stream node serialization', () => {
     streamNode.outputStream.send('world')
 
     const json = superjson.serialize(streamNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as StreamNode
+    const parsed = superjson.deserialize(json) as StreamNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(streamNode.metadata)
@@ -97,7 +96,7 @@ describe('stream node serialization', () => {
     const json = superjson.serialize(streamNode)
     const jsonString = JSON.stringify(json)
     const parsedJson = JSON.parse(jsonString)
-    const parsed = superjson.deserialize(parsedJson as any as SuperJSONResult) as StreamNode
+    const parsed = superjson.deserialize(parsedJson) as StreamNode
     await parsed.initialize()
 
     // Send data through input stream

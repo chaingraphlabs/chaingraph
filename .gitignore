@@ -10,3 +10,5 @@ coverage
 **/dist/**/*
 #**/__test__/**/*
 #**/__tests__/**/*
+**/*.tsbuildinfo
+

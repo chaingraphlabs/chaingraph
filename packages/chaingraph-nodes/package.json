@@ -12,16 +12,21 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./categories/*": {
+      "types": "./dist/categories/*.d.ts",
+      "default": "./dist/categories/*.js"
+    },
+    "./nodes/*": {
+      "types": "./dist/nodes/*.d.ts",
+      "default": "./dist/nodes/*.js"
     }
   },
   "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b",
     "test": "vitest"
-  },
-  "peerDependencies": {
-    "react": "^18.0.0"
   },
   "dependencies": {
     "@badaitech/chaingraph-types": "workspace:*",

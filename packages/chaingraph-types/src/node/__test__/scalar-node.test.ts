@@ -1,5 +1,4 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, NodeRegistry } from '@badaitech/chaingraph-types'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
 
@@ -86,7 +85,7 @@ describe('scalar node serialization', () => {
     await scalarNode.initialize()
 
     const json = superjson.serialize(scalarNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ScalarNode
+    const parsed = superjson.deserialize(json) as ScalarNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(scalarNode.metadata)

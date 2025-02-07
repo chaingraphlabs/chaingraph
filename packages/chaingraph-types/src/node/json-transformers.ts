@@ -21,6 +21,7 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
         return v.serialize() as unknown as JSONValue
       },
       deserialize: (v) => {
+        debugger
         const nodeData = v as any
         const nodeMetadata = nodeData.metadata as any
 

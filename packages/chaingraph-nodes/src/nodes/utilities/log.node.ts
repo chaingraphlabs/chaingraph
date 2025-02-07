@@ -3,7 +3,7 @@ import type {
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, String } from '@badaitech/chaingraph-types'
-import { NODE_CATEGORIES } from '../../categories/constants'
+import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
   title: 'Debug Log',

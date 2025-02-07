@@ -1,5 +1,4 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
 import { Port } from '@badaitech/chaingraph-types/node'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
@@ -71,7 +70,7 @@ describe('array node serialization', () => {
     expect(numArrayPort?.getValue()).toEqual([1, 2, 3])
 
     const json = superjson.serialize(arrayNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ArrayNode
+    const parsed = superjson.deserialize(json) as ArrayNode
 
     expect(parsed).toBeDefined()
     expect(parsed.numArray).toEqual(arrayNode.numArray)

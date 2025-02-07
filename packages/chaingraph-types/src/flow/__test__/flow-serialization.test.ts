@@ -2,7 +2,6 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import {
   BaseNode,
   Flow,
@@ -148,7 +147,7 @@ describe('flow Serialization', () => {
     const serialized = superjson.serialize(flow)
 
     // Deserialize the flow
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
 
     await deserialized.validate()
 
@@ -221,7 +220,7 @@ describe('flow Serialization', () => {
     await flow.validate()
 
     // Deserialize
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
     await deserialized.validate()
 
     // Verify structure
@@ -286,7 +285,7 @@ describe('flow Serialization', () => {
 
     // Serialize and deserialize
     const serialized = superjson.serialize(flow)
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
 
     // Get the deserialized node
     const deserializedSource = deserialized.nodes.get('source') as SourceNode
@@ -302,7 +301,7 @@ describe('flow Serialization', () => {
     })
 
     const serialized = superjson.serialize(flow)
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
 
     expect(deserialized.nodes.size).toBe(0)
     expect(deserialized.edges.size).toBe(0)

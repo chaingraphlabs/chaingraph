@@ -1,7 +1,6 @@
 import type { AppContext } from '../../context'
 import type { IFlowStore } from '../../stores/flowStore'
-import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
-import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import { InMemoryFlowStore } from '../../stores/flowStore'
 
 /**
@@ -19,7 +18,7 @@ export function createTestContext(
       userId: 'test_user_id',
     },
     nodeRegistry,
-    nodesCatalog: nodesCatalog ?? new NodeCatalog(nodeRegistry),
+    nodesCatalog: nodesCatalog ?? new NodeCatalog(),
     flowStore: flowStore ?? new InMemoryFlowStore(),
     executionService: null as any,
     executionStore: null as any,

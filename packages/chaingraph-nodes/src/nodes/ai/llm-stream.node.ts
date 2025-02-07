@@ -14,7 +14,7 @@ import {
 } from '@badaitech/chaingraph-types'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
-import { NODE_CATEGORIES } from '../../categories/constants'
+import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
   title: 'LLM Stream',

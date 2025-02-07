@@ -3,7 +3,7 @@ import type {
   NodeExecutionResult,
   NodeMetadata,
 } from '@badaitech/chaingraph-types'
-import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
+import { NodeCatalog } from '@badaitech/chaingraph-nodes'
 import {
   BaseNode,
   Boolean,

@@ -1,9 +1,14 @@
-import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
+import type {
+  CategoryMetadata,
+} from '@badaitech/chaingraph-types'
+import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
 import {
+  NodeCatalog,
   NodeRegistry,
   registerFlowTransformers,
   registerNodeTransformers,
 } from '@badaitech/chaingraph-types'
+
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -11,8 +16,8 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@badaitech/chaingraph-types/dist/port/plugins'
-import { portRegistry } from 'packages/chaingraph-types/src/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { initializeContext } from './context'
 import { ExecutionService, InMemoryExecutionStore } from './execution'
 import { CleanupService } from './execution/services/cleanup-service'
@@ -68,10 +73,21 @@ registerFlowTransformers()
 
 // Initialize stores and context
 const flowStore = new InMemoryFlowStore()
-const nodesCatalog = new NodeCatalog(NodeRegistry.getInstance())
+const nodesCatalog = new NodeCatalog()
 const executionStore = new InMemoryExecutionStore()
 const executionService = new ExecutionService(executionStore)
 const executionCleanup = new CleanupService(executionStore, executionService)
+
+// register categories
+getCategoriesMetadata().forEach((metadata: CategoryMetadata) => {
+  nodesCatalog.registerCategory(metadata.id, metadata)
+})
+
+// register nodes
+NodeRegistry.getInstance().getNodeTypes().forEach((type) => {
+  const node = NodeRegistry.getInstance().createNode(type, `${type}-catalog`)
+  nodesCatalog.registerNode(type, node)
+})
 
 initializeContext(
   flowStore,

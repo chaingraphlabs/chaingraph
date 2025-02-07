@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
+    "useDefineForClassFields": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "rootDir": "./src",
@@ -13,5 +14,5 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["**/__tests__/**", "**/node_modules/**"]
+  "exclude": ["**/__tests__/**", "**/__test__/**", "**/node_modules/**", "dist", "coverage"]
 }

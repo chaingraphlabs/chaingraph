@@ -3,8 +3,8 @@ import type {
   NodeExecutionResult,
   NodeMetadata,
 } from '@badaitech/chaingraph-types'
-import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
-import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeExecutionStatus, NodeRegistry, Number, Output, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeCatalog, NodeExecutionStatus, NodeRegistry, Number, Output, String,
+} from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createCaller } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
@@ -64,7 +64,7 @@ describe('flow Event Subscription', () => {
   async function setupTestFlow() {
     const ctx = createTestContext(
       NodeRegistry.getInstance(),
-      new NodeCatalog(NodeRegistry.getInstance()),
+      new NodeCatalog(),
     )
 
     const caller = createCaller(ctx)

@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "reflect-metadata": "^0.2.1",
+    "superjson": "^2.2.2",
     "type-fest": "^4.10.1",
     "zod": "^3.22.4"
   },

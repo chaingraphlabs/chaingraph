@@ -16,7 +16,7 @@
   },
   "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "tsc --watch",
+    "dev": "bun --watch run src/index.ts",
     "build": "tsc -b",
     "start": "node dist/index.js",
     "test": "vitest",

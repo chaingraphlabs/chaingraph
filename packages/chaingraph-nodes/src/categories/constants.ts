@@ -184,3 +184,7 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     order: 7,
   },
 }
+
+export function getCategoriesMetadata(): CategoryMetadata[] {
+  return Object.values(CATEGORY_METADATA).sort((a, b) => a.order - b.order)
+}

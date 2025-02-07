@@ -1,5 +1,5 @@
 import type { INode, NodeMetadata } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, NodeRegistry } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeRegistry, String } from '@badaitech/chaingraph-types'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -25,14 +25,12 @@ export class TestNode extends BaseNode {
   description: 'Another test node',
 })
 export class AnotherTestNode extends BaseNode {
-  // @Input()
-  // @String({
-  //   title: 'Input port',
-  //   description: 'Input port for testing',
-  //   defaultValue: '',
-  // })
-
   @Input()
+  @String({
+    title: 'Input port',
+    description: 'Input port for testing',
+    defaultValue: '',
+  })
   inputPort: string = ''
 
   // constructor(id: string, metadata?: NodeMetadata) {

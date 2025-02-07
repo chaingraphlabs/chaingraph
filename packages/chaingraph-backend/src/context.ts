@@ -1,5 +1,4 @@
-import type { NodeCatalog } from '@badaitech/chaingraph-nodes'
-import type { NodeRegistry } from '@badaitech/chaingraph-types'
+import type { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import type { ExecutionService, IExecutionStore } from './execution'
 import type { IFlowStore } from './stores/flowStore'
 

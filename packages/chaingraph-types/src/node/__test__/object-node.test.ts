@@ -1,5 +1,4 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
 import { Port } from '@badaitech/chaingraph-types/node'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
@@ -179,7 +178,7 @@ describe('object node serialization', () => {
     await objectNode.initialize()
 
     const json = superjson.serialize(objectNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ObjectNode
+    const parsed = superjson.deserialize(json) as ObjectNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(objectNode.metadata)
@@ -191,7 +190,7 @@ describe('object node serialization', () => {
     await nestedObjectNode.initialize()
 
     const json = superjson.serialize(nestedObjectNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as NestedObjectNode
+    const parsed = superjson.deserialize(json) as NestedObjectNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(nestedObjectNode.metadata)
@@ -203,7 +202,7 @@ describe('object node serialization', () => {
     await complexNode.initialize()
 
     const json = superjson.serialize(complexNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ComplexNode
+    const parsed = superjson.deserialize(json) as ComplexNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(complexNode.metadata)

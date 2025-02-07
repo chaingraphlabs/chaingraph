@@ -1,7 +1,7 @@
 import type { INode } from '@badaitech/chaingraph-types'
 import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import { initializeStores } from '@/store/init.ts'
-import { BaseNode, Edge, ExecutionEventImpl, NodeRegistry, registerFlowTransformers, registerNodeTransformers } from '@badaitech/chaingraph-types'
+import { BaseNode, Edge, ExecutionEventImpl, NodeRegistry, registerFlowTransformers } from '@badaitech/chaingraph-types'
 import { BasePort } from '@badaitech/chaingraph-types/port/base'
 import { MultiChannel } from '@badaitech/chaingraph-types/port/channel'
 
@@ -13,10 +13,11 @@ import App from './App.tsx'
 import { RootProvider } from './providers/RootProvider.tsx'
 import './index.css'
 import './reflect'
+import '@badaitech/chaingraph-nodes'
 
 console.log('main.tsx')
 
-registerNodeTransformers(NodeRegistry.getInstance())
+// registerNodeTransformers(NodeRegistry.getInstance())
 registerFlowTransformers()
 
 superjson.registerCustom<IPort, any>(
@@ -106,20 +107,20 @@ superjson.registerCustom<INode, any>(
       const nodeData = v as any
       const nodeMetadata = nodeData.metadata as any
 
-      const node = NodeRegistry.getInstance().createNode(
-        nodeMetadata.type,
-        nodeData.id ?? nodeMetadata.id ?? '',
-        nodeMetadata,
-      )
-
       try {
+        const node = NodeRegistry.getInstance().createNode(
+          nodeMetadata.type,
+          nodeData.id ?? nodeMetadata.id ?? '',
+          nodeMetadata,
+        )
+
         node.deserialize(nodeData)
+        return node
       } catch (e) {
         debugger
-        console.error(e)
+        console.error('Error deserializing node:', e)
+        throw e
       }
-
-      return node
     },
   },
   BaseNode.name,

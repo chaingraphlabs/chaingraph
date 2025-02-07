@@ -20,7 +20,7 @@
       "@badaitech/chaingraph-backend": ["packages/chaingraph-backend/src"],
       "@badaitech/chaingraph-backend/*": ["packages/chaingraph-backend/src/*"],
       "@badaitech/chaingraph-frontend/*": ["packages/chaingraph-frontend/src/*"],
-      "@badaitech/chaingraph-frontend": ["packages/chaingraph-backend/src"]
+      "@badaitech/chaingraph-frontend": ["packages/chaingraph-frontend/src"]
     },
 
     "types": ["vite/client"],

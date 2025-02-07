@@ -1,5 +1,4 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
 import { Port } from '@badaitech/chaingraph-types/node'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
@@ -82,7 +81,7 @@ describe('enum node serialization', () => {
     await enumNode.initialize()
 
     const json = superjson.serialize(enumNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as EnumNode
+    const parsed = superjson.deserialize(json) as EnumNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(enumNode.metadata)

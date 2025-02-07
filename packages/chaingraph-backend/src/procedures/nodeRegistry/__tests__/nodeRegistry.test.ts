@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
 import { createCallerFactory } from '../../../trpc'
-import { cleanupTestNodes, registerTestNodes } from './utils'
+import { cleanupTestNodes, registerTestNodes } from '../utils'
 
 describe('node Registry Procedures', () => {
   const createCaller = createCallerFactory(appRouter)

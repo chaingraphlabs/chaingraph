@@ -43,7 +43,6 @@ export function useExecutionSubscription() {
     },
 
     [ExecutionEventEnum.FLOW_FAILED]: (data) => {
-      debugger
       console.log('Flow failed:', data.flow.id, data.error)
       setExecutionError({
         message: data.error.message,
@@ -139,7 +138,6 @@ export function useExecutionSubscription() {
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.CONNECTING)
       },
       onData: async (trackedData) => {
-        debugger
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
 
         if (trackedData.type !== ExecutionEventEnum.NODE_STATUS_CHANGED) {

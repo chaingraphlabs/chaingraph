@@ -2,7 +2,6 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson/dist/types'
 import {
   BaseNode,
   DefaultValue,
@@ -466,7 +465,7 @@ describe('complex node', () => {
     await testNode.initialize()
 
     const json = superjson.serialize(testNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as UserProfileNode
+    const parsed = superjson.deserialize(json) as UserProfileNode
 
     expect(parsed).toBeDefined()
 
