@@ -6,7 +6,14 @@ import { Badge } from '@badaitech/chaingraph-frontend/components/ui/badge'
 import { ExecutionEventEnum, type ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRightCircle, ChevronDownIcon, Timer } from 'lucide-react'
-import { Fragment, useState } from 'react'
+import React, { Fragment, useState } from 'react'
+import {
+  collapseAllNested,
+  darkStyles,
+  defaultStyles,
+  JsonView,
+} from 'react-json-view-lite'
+import 'react-json-view-lite/dist/index.css'
 
 interface EventCardProps {
   event: ExecutionEventImpl
@@ -18,7 +25,7 @@ export function EventCard({ event, index }: EventCardProps) {
   const { theme: themeMode } = useTheme()
   const eventTheme = eventThemes[event.type]
 
-  // Helper function to convert Tailwind color class to CSS variable
+  // Helper function to convert a Tailwind color class to a CSS variable
   const getColorFromTheme = (colorClass: string) => {
     // Extract color name and weight from Tailwind class
     const [_, color, weight] = colorClass.split('-')
@@ -33,12 +40,11 @@ export function EventCard({ event, index }: EventCardProps) {
     >
       <Card
         className={cn(
-          'relative overflow-hidden cursor-pointer transition-all duration-200',
+          'relative overflow-hidden transition-all duration-200',
           'hover:shadow-md dark:hover:shadow-accent/10',
           'border dark:border-border/50',
           isExpanded ? 'mb-2' : 'mb-1',
         )}
-        onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Color indicator strip */}
         <div
@@ -53,8 +59,11 @@ export function EventCard({ event, index }: EventCardProps) {
         />
 
         <div className="p-3 pl-5">
-          {/* Header */}
-          <div className="flex items-center gap-2">
+          {/* Header - clicking here toggles expansion */}
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
             <eventTheme.icon
               className={cn(
                 'w-4 h-4',
@@ -68,10 +77,7 @@ export function EventCard({ event, index }: EventCardProps) {
               {new Date(event.timestamp).toLocaleTimeString()}
             </time>
             <ChevronDownIcon
-              className={cn(
-                'w-4 h-4 transition-transform',
-                isExpanded ? 'rotate-180' : '',
-              )}
+              className={cn('w-4 h-4 transition-transform', isExpanded ? 'rotate-180' : '')}
             />
           </div>
 
@@ -87,10 +93,10 @@ export function EventCard({ event, index }: EventCardProps) {
           )}
         </div>
 
-        {/* Hover state background */}
+        {/* Hover state background - pointer-events disabled so as not to block clicks */}
         <div
           className={cn(
-            'absolute inset-0 opacity-0 transition-opacity duration-200',
+            'absolute inset-0 opacity-0 transition-opacity duration-200 pointer-events-none',
             'hover:opacity-5 dark:hover:opacity-10',
             themeMode === 'dark' ? eventTheme.bgColor.dark : eventTheme.bgColor.light,
           )}
@@ -164,11 +170,7 @@ function EventTitle({ event }: { event: ExecutionEventImpl }) {
       )
 
     case ExecutionEventEnum.FLOW_RESUMED:
-      return (
-        <span>
-          Flow resumed
-        </span>
-      )
+      return <span>Flow resumed</span>
 
     // Node Events
     case ExecutionEventEnum.NODE_STARTED:
@@ -236,8 +238,7 @@ function EventTitle({ event }: { event: ExecutionEventImpl }) {
       )
 
     // Edge Events
-    case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
-    {
+    case ExecutionEventEnum.EDGE_TRANSFER_STARTED: {
       const edge = (event.data as any).edge
       return (
         <span className="flex items-center gap-1">
@@ -248,8 +249,7 @@ function EventTitle({ event }: { event: ExecutionEventImpl }) {
       )
     }
 
-    case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
-    {
+    case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED: {
       const edge = (event.data as any).edge
       return (
         <span className="flex items-center gap-2">
@@ -263,8 +263,7 @@ function EventTitle({ event }: { event: ExecutionEventImpl }) {
       )
     }
 
-    case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
-    {
+    case ExecutionEventEnum.EDGE_TRANSFER_FAILED: {
       const edge = (event.data as any).edge
       return (
         <span className="flex items-center gap-2">
@@ -293,27 +292,39 @@ function EventTitle({ event }: { event: ExecutionEventImpl }) {
 }
 
 function EventDetails({ event }: { event: ExecutionEventImpl }) {
+  const { theme } = useTheme()
+
   return (
-    <div className="text-sm space-y-1">
-      <div className="grid grid-cols-3 gap-1">
-        <div className="text-muted-foreground">Event Type</div>
-        <div className="col-span-2">{event.type}</div>
-
-        <div className="text-muted-foreground">Index</div>
-        <div className="col-span-2">{event.index}</div>
-
-        {/* Show event-specific data */}
-        {Object.entries(event.data).map(([key, value]) => (
-          <Fragment key={key}>
-            <div className="text-muted-foreground">{key}</div>
-            <div className="col-span-2">
-              {typeof value === 'object'
-                ? <pre className="text-xs bg-accent/50 p-1 rounded">{JSON.stringify(value, null, 2)}</pre>
-                : String(value)}
-            </div>
-          </Fragment>
-        ))}
+    <div className="text-sm space-y-4 width-[calc(100%-1rem)]">
+      <div>
+        <div className="text-muted-foreground mb-1">Event Type</div>
+        <div>{event.type}</div>
       </div>
+      <div>
+        <div className="text-muted-foreground mb-1">Index</div>
+        <div>{event.index}</div>
+      </div>
+      {Object.entries(event.data).map(([key, value]) => (
+        <div key={key}>
+          <div className="text-muted-foreground mb-1">{key}</div>
+          <div>
+            {typeof value === 'object'
+              ? (
+                  <Fragment>
+                    <JsonView
+                      data={value}
+                      shouldExpandNode={collapseAllNested}
+                      clickToExpandNode
+                      style={theme === 'light' ? defaultStyles : darkStyles}
+                    />
+                  </Fragment>
+                )
+              : (
+                  String(value)
+                )}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
