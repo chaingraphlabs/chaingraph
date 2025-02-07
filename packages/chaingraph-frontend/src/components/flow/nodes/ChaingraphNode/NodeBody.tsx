@@ -1,6 +1,7 @@
 import type { PortOnChangeParam } from './Port'
+import { updatePortValue } from '@badaitech/chaingraph-frontend/store/ports/events'
 import { type ExtractValue, type IPort, type IPortConfig, PortDirection } from '@badaitech/chaingraph-types'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Port } from './Port'
 
 interface NodeBodyProps {
@@ -27,17 +28,27 @@ function initInputsStates(inputs: IPort[]) {
 export function NodeBody({ inputs, outputs }: NodeBodyProps) {
   const [inputsStates, setInputsStates] = useState(initInputsStates(inputs))
 
+  // TODO: remove it and subscribe on changes from backend
+  useEffect(() => {
+    setInputsStates(initInputsStates(inputs))
+  }, [inputs])
+
   const createChangeInputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+    let isValid = true
     try {
       port.setValue(value)
     } catch (error) {
+      isValid = false
       console.error(error)
     }
 
+    //  it's overhead to have this state. we should use only one store
     setInputsStates(states => ({ ...states, [port.id]: {
       value,
-      isValid: port.validate(),
+      isValid,
     } }))
+
+    updatePortValue({ id: port.id, value })
   }
 
   return (

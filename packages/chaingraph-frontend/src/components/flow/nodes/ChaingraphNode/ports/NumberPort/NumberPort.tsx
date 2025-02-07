@@ -1,9 +1,7 @@
 import type { ExtractValue, IPort, NumberPortConfig } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils.ts'
-import { Input } from '@badaitech/chaingraph-frontend/components/ui/input'
 import { NumberInput } from '@badaitech/chaingraph-frontend/components/ui/number-input'
 import { Slider } from '@badaitech/chaingraph-frontend/components/ui/slider'
-import { NumericFormat } from 'react-number-format'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -13,10 +11,11 @@ export interface NumberPortProps {
   port: IPort<NumberPortConfig>
   value?: ExtractValue<NumberPortConfig>
   onChange?: (param: NumberOnChangeParam) => void
+  errorMessage?: string
 }
 
 export function NumberPort(props: NumberPortProps) {
-  const { port, value, onChange } = props
+  const { port, value, onChange, errorMessage } = props
   const config = port.getConfig()
   const title = config.title || config.key
 
@@ -39,6 +38,7 @@ export function NumberPort(props: NumberPortProps) {
           <PortTitle>{title}</PortTitle>
 
           <NumberInput
+            className={errorMessage && 'border-red-500'}
             value={value}
             min={config.min}
             max={config.max}
