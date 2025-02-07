@@ -24,7 +24,7 @@ export enum ValidationMessageType {
 /**
  * Represents possible node execution result statuses
  */
-export enum ExecutionStatus {
+export enum NodeExecutionStatus {
   Completed = 'completed',
   Error = 'error',
 }

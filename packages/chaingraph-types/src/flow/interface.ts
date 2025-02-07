@@ -1,6 +1,6 @@
-import type { Edge, IEdge } from '@chaingraph/types/edge'
-import type { FlowEvent } from '@chaingraph/types/flow/events'
-import type { INode } from '@chaingraph/types/node'
+import type { Edge, IEdge } from '@badaitech/chaingraph-types/edge'
+import type { FlowEvent } from '@badaitech/chaingraph-types/flow/events'
+import type { INode } from '@badaitech/chaingraph-types/node'
 import type { FlowMetadata } from './types'
 
 /**

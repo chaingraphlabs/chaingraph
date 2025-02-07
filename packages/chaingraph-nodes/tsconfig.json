@@ -2,34 +2,29 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "target": "ESNext",
-    "jsx": "react-jsx",
-    "lib": ["ESNext", "DOM"],
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "baseUrl": ".",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "rootDir": "./src",
+    "moduleResolution": "node",
     "paths": {
-      "@chaingraph/backend/*": ["../chaingraph-backend/src/*"],
-      "@chaingraph/backend": ["../chaingraph-backend/src"],
-      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
-      "@chaingraph/types": ["../chaingraph-types/src"],
-      "@chaingraph/frontend": ["../chaingraph-frontend/src"],
-      "@chaingraph/frontend/*": ["../chaingraph-frontend/src/*"],
-      "@chaingraph/nodes/*": ["./src/*"]
+      "@badaitech/chaingraph-types": ["../chaingraph-types/src"],
+      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"]
     },
-    "allowImportingTsExtensions": true,
     "strict": true,
-    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
     "declaration": true,
-    "emitDeclarationOnly": true,
+    "declarationMap": true,
     "outDir": "./dist",
-    "isolatedModules": true,
+    "sourceMap": true,
     "skipLibCheck": true
   },
   "references": [
-    { "path": "../chaingraph-types" },
-    { "path": "../chaingraph-frontend" },
-    { "path": "../chaingraph-backend" }
+    {
+      "path": "../chaingraph-types"
+    }
   ],
-  "include": ["./src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["**/__tests__/**", "**/__test__/**", "**/node_modules/**", "dist", "coverage"]
 }

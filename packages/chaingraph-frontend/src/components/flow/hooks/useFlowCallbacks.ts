@@ -1,17 +1,25 @@
-import type { Position } from '@chaingraph/types/node/node-ui.ts'
-import type { Connection, Edge, EdgeChange, HandleType, NodeChange } from '@xyflow/react'
+import type { INode } from '@badaitech/chaingraph-types'
+import type { Position } from '@badaitech/chaingraph-types/node/node-ui.ts'
+import type { Connection, Edge, EdgeChange, HandleType, Node, NodeChange } from '@xyflow/react'
+import {
+  getNodePositionInFlow,
+  getNodePositionInsideParent,
+} from '@/components/flow/utils/node-position.ts'
 import {
   $activeFlowMetadata,
   $edges,
   $nodes,
+  removeNodeFromFlow,
   requestAddEdge,
   requestRemoveEdge,
   setNodeMetadata,
+  updateNodeParent,
   updateNodePosition,
   updateNodeUI,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
-import { hasCycle } from '@chaingraph/types/flow/cycleDetection.ts'
+import { hasCycle } from '@badaitech/chaingraph-types/flow/cycleDetection'
+import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'
 
@@ -22,6 +30,7 @@ export function useFlowCallbacks() {
   // const { flow } = useFlow()
   const activeFlow = useUnit($activeFlowMetadata)
   const nodes = useUnit($nodes)
+  const { getNode, getNodes } = useReactFlow()
   const edges = useUnit($edges)
 
   const edgeViews = edges.map(edge => ({
@@ -39,32 +48,39 @@ export function useFlowCallbacks() {
     // Handle node changes (position, selection, etc)
     changes.forEach((change, i) => {
       switch (change.type) {
-        case 'position': {
-          const node = nodes[change.id]
-          if (!node || !change.position || !change.position.x || !change.position.y) {
-            return
-          }
-          // check if the position is the same
-          const isSamePosition
-            = node.metadata.ui?.position?.x === change.position.x
+        case 'position':
+          {
+            if (!change.dragging)
+              return
+
+            const node = nodes[change.id]
+            if (!node || !change.position || !change.position.x || !change.position.y) {
+              return
+            }
+            // check if the position is the same
+            const isSamePosition
+              = node.metadata.ui?.position?.x === change.position.x
               && node.metadata.ui?.position?.y === change.position.y
 
-          if (isSamePosition) {
-            return
+            if (isSamePosition) {
+              return
+            }
+
+            console.log('111111111')
+
+            positionInterpolator.clearNodeState(node.id)
+
+            updateNodePosition({
+              flowId: activeFlow.id!,
+              nodeId: change.id,
+              position: change.position as Position,
+              version: node.getVersion(),
+            })
           }
-
-          positionInterpolator.clearNodeState(node.id)
-
-          updateNodePosition({
-            flowId: activeFlow.id!,
-            nodeId: change.id,
-            position: change.position as Position,
-            version: node.getVersion(),
-          })
-        }
           break
 
-        case 'dimensions': {
+        case 'dimensions':
+        {
           const node = nodes[change.id]
           if (!node)
             return
@@ -76,7 +92,7 @@ export function useFlowCallbacks() {
 
           const isSameDimensions
             = node.metadata.ui?.dimensions?.width === change.dimensions.width
-              && node.metadata.ui?.dimensions?.height === change.dimensions.height
+            && node.metadata.ui?.dimensions?.height === change.dimensions.height
 
           if (isSameDimensions) {
             return
@@ -92,44 +108,49 @@ export function useFlowCallbacks() {
             },
             version: node.getVersion(),
           })
-          // setNodeMetadata({
-          //   id: change.id,
-          //   metadata: {
-          //     ...node.metadata,
-          //     ui: {
-          //       ...node.metadata.ui,
-          //       dimensions: change.dimensions,
-          //     },
-          //   },
-          // })
 
           break
         }
 
-        case 'select': {
-          const node = nodes[change.id]
-          if (!node)
-            return
+        case 'select':
+          {
+            const node = nodes[change.id]
+            if (!node)
+              return
 
-          // check if the selection state is the same
-          const isSameSelection = node.metadata.ui?.state?.isSelected === change.selected
-          if (isSameSelection)
-            return
+            // check if the selection state is the same
+            const isSameSelection = node.metadata.ui?.state?.isSelected === change.selected
+            if (isSameSelection)
+              return
 
-          setNodeMetadata({
-            id: change.id,
-            metadata: {
-              ...node.metadata,
-              ui: {
-                ...node.metadata.ui,
-                state: {
-                  ...node.metadata.ui?.state,
-                  isSelected: change.selected,
+            setNodeMetadata({
+              id: change.id,
+              metadata: {
+                ...node.metadata,
+                ui: {
+                  ...node.metadata.ui,
+                  state: {
+                    ...node.metadata.ui?.state,
+                    isSelected: change.selected,
+                  },
                 },
               },
-            },
-          })
-        }
+            })
+          }
+          break
+
+        case 'remove':
+          {
+            const node = nodes[change.id]
+            if (!node)
+              return
+
+            // Remove node from flow
+            removeNodeFromFlow({
+              flowId: activeFlow.id!,
+              nodeId: change.id,
+            })
+          }
           break
 
         default:
@@ -233,6 +254,171 @@ export function useFlowCallbacks() {
     reconnectSuccessful.current = false
   }, [activeFlow?.id])
 
+  // Handle node drag end
+  const onNodeDragStop = useCallback((
+    event: React.MouseEvent,
+    nodesDrag: Node,
+    nodesDragStop: Node[],
+  ) => {
+    // Validate position helper
+    const isValidPosition = (pos: any): pos is { x: number, y: number } => {
+      return pos
+        && typeof pos.x === 'number'
+        && typeof pos.y === 'number'
+        && !Number.isNaN(pos.x)
+        && !Number.isNaN(pos.y)
+        && Number.isFinite(pos.x)
+        && Number.isFinite(pos.y)
+    }
+
+    // Check all nodes in nodesDragStop
+    const validNodes = nodesDragStop.filter(node =>
+      node.position && isValidPosition(node.position),
+    )
+
+    // Ensure dragged node is in the array
+    if (!nodesDragStop.find(node => node.id === nodesDrag.id)
+      && isValidPosition(nodesDrag.position)) {
+      nodesDragStop.push(nodesDrag)
+    }
+
+    for (const nodeDragStop of nodesDragStop) {
+      if (!activeFlow?.id || !nodeDragStop || !isValidPosition(nodeDragStop.position)) {
+        console.warn('Invalid node or position:', {
+          node: nodeDragStop?.id,
+          position: nodeDragStop?.position,
+        })
+        continue
+      }
+
+      const flowNode = nodes[nodeDragStop.id]
+
+      if (!flowNode || flowNode.metadata.category === 'group')
+        continue
+
+      const currentParentId = flowNode.metadata.parentNodeId
+      const currentParent = currentParentId ? nodes[currentParentId] : undefined
+
+      // Validate current parent
+      if (currentParentId && (!currentParent || !isValidPosition(currentParent.metadata.ui?.position))) {
+        console.warn('Invalid parent node or position:', {
+          parentId: currentParentId,
+          parentPosition: currentParent?.metadata.ui?.position,
+        })
+        continue
+      }
+
+      // Calculate absolute position
+      const absoluteNodePosition = currentParentId && currentParent
+        ? getNodePositionInFlow(
+            nodeDragStop.position,
+            currentParent.metadata.ui!.position!,
+          )
+        : { ...nodeDragStop.position } // Create new object to avoid mutations
+
+      // Validate absolute position
+      if (!isValidPosition(absoluteNodePosition)) {
+        console.warn('Invalid absolute position calculated:', {
+          node: nodeDragStop.id,
+          original: nodeDragStop.position,
+          calculated: absoluteNodePosition,
+        })
+        continue
+      }
+
+      // Find potential parent group
+      const groupNodes = Object.entries(nodes).filter(([_, n]) =>
+        n.metadata.category === 'group'
+        && n.metadata.ui?.position
+        && isValidPosition(n.metadata.ui.position)
+        && n.metadata.ui.dimensions
+        && typeof n.metadata.ui.dimensions.width === 'number'
+        && typeof n.metadata.ui.dimensions.height === 'number',
+      )
+
+      let newParentId: string | undefined
+      let targetGroupNode: INode | undefined
+
+      // Check if node is inside any group
+      for (const [_, groupNode] of groupNodes) {
+        const groupBounds = {
+          x: groupNode.metadata.ui!.position!.x,
+          y: groupNode.metadata.ui!.position!.y,
+          width: groupNode.metadata.ui!.dimensions!.width,
+          height: groupNode.metadata.ui!.dimensions!.height,
+        }
+
+        const nodeCenter = {
+          x: absoluteNodePosition.x + (nodeDragStop.width || 0) / 2,
+          y: absoluteNodePosition.y + (nodeDragStop.height || 0) / 2,
+        }
+
+        if (
+          nodeCenter.x >= groupBounds.x
+          && nodeCenter.x <= groupBounds.x + groupBounds.width
+          && nodeCenter.y >= groupBounds.y
+          && nodeCenter.y <= groupBounds.y + groupBounds.height
+        ) {
+          newParentId = groupNode.id
+          targetGroupNode = groupNode
+          break
+        }
+      }
+
+      // Handle moving out of group
+      if (currentParentId && !newParentId && currentParentId !== newParentId) {
+        if (!isValidPosition(absoluteNodePosition)) {
+          console.warn('Invalid position when moving out of group')
+          continue
+        }
+
+        updateNodePosition({
+          flowId: activeFlow.id,
+          nodeId: nodeDragStop.id,
+          position: absoluteNodePosition as Position,
+          version: flowNode.getVersion(),
+        })
+
+        updateNodeParent({
+          flowId: activeFlow.id,
+          nodeId: nodeDragStop.id,
+          parentNodeId: undefined,
+          position: absoluteNodePosition as Position,
+          version: flowNode.getVersion() + 1,
+        })
+      } else if (newParentId && targetGroupNode && newParentId !== currentParentId) {
+        const newPosition = getNodePositionInsideParent(
+          absoluteNodePosition,
+          targetGroupNode.metadata.ui!.position!,
+        )
+
+        if (!isValidPosition(newPosition)) {
+          console.warn('Invalid position when moving into group:', {
+            absolute: absoluteNodePosition,
+            calculated: newPosition,
+            targetGroup: targetGroupNode.id,
+          })
+          continue
+        }
+
+        updateNodePosition({
+          flowId: activeFlow.id,
+          nodeId: nodeDragStop.id,
+          position: newPosition as Position,
+          version: flowNode.getVersion(),
+        })
+
+        updateNodeParent({
+          flowId: activeFlow.id,
+          nodeId: nodeDragStop.id,
+          parentNodeId: newParentId,
+          position: newPosition as Position,
+          version: flowNode.getVersion() + 1,
+        })
+      }
+    }
+  }, [activeFlow?.id, nodes])
+
   return {
     onNodesChange,
     onEdgesChange,
@@ -240,5 +426,18 @@ export function useFlowCallbacks() {
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStop,
   }
+}
+
+// Utility functions
+function isPointInBounds(point: { x: number, y: number }, bounds: { x: number, y: number, width: number, height: number }) {
+  return point.x >= bounds.x
+    && point.x <= bounds.x + bounds.width
+    && point.y >= bounds.y
+    && point.y <= bounds.y + bounds.height
+}
+
+function isValidPosition(pos: any): pos is { x: number, y: number } {
+  return pos && typeof pos.x === 'number' && typeof pos.y === 'number'
 }

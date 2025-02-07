@@ -1,4 +1,4 @@
-// import { currentTime } from '@chaingraph/backend/procedures/subscriptions'
+// import { currentTime } from '@badaitech/chaingraph-backend/procedures/subscriptions'
 
 export const procedures = {
   // hello,

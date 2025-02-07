@@ -1,6 +1,6 @@
-import type { CategorizedNodes } from '@chaingraph/types'
-import { publicProcedure, router } from '@chaingraph/backend/trpc'
+import type { CategorizedNodes } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
+import { publicProcedure, router } from '../../trpc'
 
 export const nodeRegistryProcedures = router({
   // Get all nodes grouped by categories
@@ -53,6 +53,6 @@ export const nodeRegistryProcedures = router({
   // Legacy procedure for backward compatibility
   listAvailableTypes: publicProcedure
     .query(async ({ ctx }) => {
-      return ctx.nodesCatalog.getAllNodes().flatMap(category => category.nodes)
+      return ctx.nodesCatalog.getAllNodes().flatMap((category: CategorizedNodes) => category.nodes)
     }),
 })

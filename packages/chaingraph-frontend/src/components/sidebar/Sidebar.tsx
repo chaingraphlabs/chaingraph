@@ -1,3 +1,4 @@
+import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel.tsx'
 import { FlowList } from '@/components/sidebar/tabs/flow/FlowList.tsx'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,7 @@ import {
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { LayersIcon } from 'lucide-react'
+import { Bug, LayersIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { EventList } from './tabs/EventList'
 import { Help } from './tabs/Help'
@@ -61,6 +62,12 @@ const tabs = [
     content: <VariableList />,
   },
   {
+    id: 'debug',
+    icon: <Bug />,
+    label: 'Debug',
+    content: <DebugPanel />,
+  },
+  {
     id: 'settings',
     icon: <GearIcon />,
     label: 'Settings',
@@ -75,7 +82,6 @@ const tabs = [
 ] as const
 
 export function Sidebar() {
-  // State management остается тем же
   const [activeTab, setActiveTab] = useState<string | null>(() => {
     return localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB)
   })
@@ -88,13 +94,12 @@ export function Sidebar() {
     return Number(localStorage.getItem(STORAGE_KEYS.WIDTH)) || DEFAULT_WIDTH
   })
 
-  // Refs для resize функционала
+  // Refs for resize handlers
   const isResizing = useRef(false)
   const initialX = useRef(0)
   const initialWidth = useRef(0)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
-  // Эффекты для localStorage остаются теми же
   useEffect(() => {
     if (activeTab)
       localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, activeTab)
@@ -105,7 +110,6 @@ export function Sidebar() {
     localStorage.setItem(STORAGE_KEYS.WIDTH, String(width))
   }, [activeTab, isExpanded, width])
 
-  // Handlers остаются теми же
   const handleTabClick = (tabId: string) => {
     if (activeTab === tabId) {
       setIsExpanded(false)
@@ -116,7 +120,6 @@ export function Sidebar() {
     }
   }
 
-  // Resize handlers остаются теми же
   const handleResizeMove = (e: MouseEvent) => {
     if (!isResizing.current)
       return

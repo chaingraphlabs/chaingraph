@@ -1,4 +1,4 @@
-import type { Context } from '@chaingraph/backend/context'
+import type { Context } from './context'
 import { initTRPC, TRPCError } from '@trpc/server'
 import SuperJSON from 'superjson'
 import { ZodError } from 'zod'

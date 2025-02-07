@@ -1,17 +1,34 @@
-import type { INode } from '@chaingraph/types'
-import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
-import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
-import { Edge, Flow } from '@chaingraph/types'
-import superjson from 'superjson'
+import type { SerializedFlow } from '@badaitech/chaingraph-types/flow/types.zod'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
+import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@badaitech/chaingraph-types'
+import { registerEdgeTransformers } from '@badaitech/chaingraph-types/edge/json-transformers'
+import { BasePort } from '@badaitech/chaingraph-types/port/base'
+import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
+import SuperJSON from 'superjson'
 
 /**
  * Registers flow transformers with SuperJSON
  */
 export function registerFlowTransformers() {
-  // registerEdgeTransformers()
+  SuperJSON.registerCustom<IPort, any>(
+    {
+      isApplicable: (v): v is IPort => {
+        return v instanceof BasePort
+      },
+      serialize: (v) => {
+        return v.serialize()
+      },
+      deserialize: (v) => {
+        const port = PortFactory.createFromConfig(v.config)
+        port.deserialize(v)
+        return port
+      },
+    },
+    BasePort.name,
+  )
 
   // Flow
-  superjson.registerCustom<Flow, JSONValue>(
+  SuperJSON.registerCustom<Flow, any>(
     {
       isApplicable: (v): v is Flow => {
         return v instanceof Flow
@@ -24,30 +41,44 @@ export function registerFlowTransformers() {
             metadata: edge.metadata,
             status: edge.status,
             sourceNodeId: edge.sourceNode.id,
-            sourcePortId: edge.sourcePort.config.id,
+            sourcePortId: edge.sourcePort.id!,
             targetNodeId: edge.targetNode.id,
-            targetPortId: edge.targetPort.config.id,
+            targetPortId: edge.targetPort.id!,
           })
+        }
+
+        const nodes: SerializedFlow['nodes'] = []
+        if (v.nodes) {
+          for (const node of v.nodes.values()) {
+            nodes.push(node.serialize() as any)
+          }
         }
 
         const serializedFlow: SerializedFlow = {
           id: v.id,
           metadata: v.metadata,
-          nodes: Array.from(v.nodes.values()),
+          nodes,
           edges: serializedEdges,
         }
 
-        return superjson.serialize(serializedFlow) as unknown as JSONValue
+        return SuperJSON.serialize(serializedFlow)
       },
       deserialize: (v) => {
-        const flowData = superjson.deserialize<SerializedFlow>(
-          v as any as SuperJSONResult,
-        )
+        const flowData = SuperJSON.deserialize<SerializedFlow>(v)
 
         const flow = new Flow(flowData.metadata)
 
-        for (const node of flowData.nodes) {
-          flow.addNode(node as INode)
+        for (const nodeData of flowData.nodes) {
+          const nodeMetadata = nodeData.metadata as any
+
+          const node = NodeRegistry.getInstance().createNode(
+            nodeMetadata.type,
+            nodeData.id ?? nodeMetadata.id ?? '',
+            nodeMetadata,
+          )
+          node.deserialize(nodeData)
+
+          flow.addNode(node)
         }
 
         for (const edgeData of flowData.edges) {
@@ -93,4 +124,40 @@ export function registerFlowTransformers() {
     },
     Flow.name,
   )
+
+  // Execution event data
+  SuperJSON.registerCustom<ExecutionEventImpl, any>(
+    {
+      isApplicable: (v): v is ExecutionEventImpl<any> => {
+        return v instanceof ExecutionEventImpl
+      },
+      serialize: (v) => {
+        return SuperJSON.serialize({
+          index: v.index,
+          type: v.type,
+          timestamp: v.timestamp,
+          data: SuperJSON.serialize(v.data),
+        })
+      },
+      deserialize: (v) => {
+        const eventData = SuperJSON.deserialize(v) as any
+
+        if (!eventData) {
+          throw new Error('Invalid execution event data')
+        }
+
+        const data = SuperJSON.deserialize(eventData.data)
+
+        return new ExecutionEventImpl(
+          eventData.index,
+          eventData.type,
+          eventData.timestamp,
+          data,
+        )
+      },
+    },
+    ExecutionEventImpl.name,
+  )
+
+  registerEdgeTransformers()
 }

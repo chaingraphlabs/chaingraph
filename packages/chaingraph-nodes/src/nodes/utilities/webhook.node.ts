@@ -1,32 +1,26 @@
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
-import { nodeRegistry } from '@chaingraph/nodes/registry'
-import {
-  BaseNode,
-  type ExecutionContext,
-  ExecutionStatus,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  Output,
-  PortString,
-} from '@chaingraph/types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
+import { NODE_CATEGORIES } from '../../categories/constants'
 
 @Node({
   title: 'Webhook',
   description: 'Sends HTTP requests to external services',
   category: NODE_CATEGORIES.UTILITIES,
   tags: ['http', 'webhook', 'request'],
-}, nodeRegistry)
+})
 export class WebhookNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'URL',
     description: 'Webhook URL',
   })
   url: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Response',
     description: 'Webhook response',
   })
@@ -37,7 +31,7 @@ export class WebhookNode extends BaseNode {
     this.response = `Webhook called: ${this.url}`
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['response', this.response]]),

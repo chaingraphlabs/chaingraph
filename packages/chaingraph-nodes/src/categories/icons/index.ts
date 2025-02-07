@@ -1,6 +1,15 @@
 import type { ComponentType, SVGProps } from 'react'
-import { CustomIcon } from '@chaingraph/nodes/categories/icons/components/CustomIcon.tsx'
-import { Brain, Calculator, Database, GitBranch, MessageSquare, Package, Wrench } from 'lucide-react'
+import {
+  Brain,
+  Calculator,
+  Database,
+  GitBranch,
+  Grid,
+  MessageSquare,
+  Package,
+  Wrench,
+} from 'lucide-react'
+import { CustomIcon } from './components/CustomIcon'
 
 // Define type for icon props
 export type IconProps = SVGProps<SVGSVGElement>
@@ -18,6 +27,7 @@ export const CategoryIcons: Record<string, IconComponent> = {
   GitBranch,
   Wrench,
   Package,
+  Grid,
 
   // Custom icons
   CustomIcon,

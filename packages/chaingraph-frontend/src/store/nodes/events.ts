@@ -1,9 +1,10 @@
-import type { INode } from '@chaingraph/types'
-import type { Position } from '@chaingraph/types/node/node-ui'
+import type { INode } from '@badaitech/chaingraph-types'
+import type { Position } from '@badaitech/chaingraph-types/node/node-ui'
 import type {
   AddNodeEvent,
   NodeState,
   UpdateNodeEvent,
+  UpdateNodeParent,
   UpdateNodePosition,
   UpdateNodeUIEvent,
 } from './types'
@@ -15,6 +16,7 @@ export const updateNode = createEvent<UpdateNodeEvent>()
 export const removeNode = createEvent<string>()
 export const setNodeMetadata = createEvent<{ id: string, metadata: NodeState['metadata'] }>()
 export const setNodeVersion = createEvent<{ id: string, version: number }>()
+export const updateNodeParent = createEvent<UpdateNodeParent>()
 
 // Backend operation events
 export const addNodeToFlow = createEvent<AddNodeEvent>()

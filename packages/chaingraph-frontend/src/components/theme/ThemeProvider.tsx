@@ -1,5 +1,5 @@
 import { Theme } from '@radix-ui/themes'
-import { type PropsWithChildren, useEffect, useState } from 'react'
+import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react'
 import { ThemeContext, type ThemeMode } from './ThemeContext'
 
 export function ThemeProvider({ children }: PropsWithChildren) {
@@ -19,12 +19,14 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     localStorage.setItem('theme', theme)
   }, [theme])
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
-  }
+  }, [])
+
+  const themeProviderValue = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme])
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={themeProviderValue}>
       <Theme appearance={theme}>
         {children}
       </Theme>

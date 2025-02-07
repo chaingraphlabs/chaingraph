@@ -1,5 +1,10 @@
-import type { FlowEventHandlerMap } from '@chaingraph/types/flow/eventHandlers'
+import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types/flow/eventHandlers'
 import { trpc } from '@/api/trpc/client'
+
+import {
+  getNodePositionInFlow,
+  getNodePositionInsideParent,
+} from '@/components/flow/utils/node-position.ts'
 import {
   $nodes,
   FlowSubscriptionStatus,
@@ -16,9 +21,9 @@ import {
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
-import { createEventHandler } from '@chaingraph/types/flow/eventHandlers'
-import { FlowEventType } from '@chaingraph/types/flow/events'
-import { DefaultPosition } from '@chaingraph/types/node/node-ui.ts'
+import { createEventHandler } from '@badaitech/chaingraph-types/flow/eventHandlers'
+import { FlowEventType } from '@badaitech/chaingraph-types/flow/events'
+import { DefaultPosition } from '@badaitech/chaingraph-types/node/node-ui.ts'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { useEffect, useMemo } from 'react'
@@ -45,7 +50,7 @@ export function useFlowSubscription() {
     },
 
     [FlowEventType.NodeAdded]: (data) => {
-      console.log('Adding node: version:', data.node.metadata.version)
+      console.log('[NodeAdded] Received node:', data.node)
       addNode(data.node)
     },
 
@@ -73,6 +78,58 @@ export function useFlowSubscription() {
       })
     },
 
+    [FlowEventType.NodeParentUpdated]: (data) => {
+      const node = nodes[data.nodeId]
+      if (!node)
+        return
+
+      const currentVersion = node.getVersion()
+      const currentParent = node.metadata.parentNodeId ? nodes[node.metadata.parentNodeId] : undefined
+      const newParent = data.newParentNodeId ? nodes[data.newParentNodeId] : undefined
+
+      if ((!currentParent && !newParent) || (currentParent?.id === newParent?.id)) {
+        return
+      }
+
+      let currentPosition = data.oldPosition || node.metadata.ui?.position || DefaultPosition
+      const newPosition = data.newPosition || currentPosition
+
+      if (currentParent && newParent === undefined) {
+        currentPosition = getNodePositionInFlow(
+          currentPosition,
+          currentParent.metadata.ui!.position!,
+        )
+      }
+
+      if (currentParent === undefined && newParent) {
+        currentPosition = getNodePositionInsideParent(
+          currentPosition,
+          newParent.metadata.ui!.position!,
+        )
+      }
+
+      // log old and new versions to
+      if (data.version && data.version <= currentVersion) {
+        // positionInterpolator.clearNodeState(data.nodeId)
+        return
+      }
+
+      console.log(`[NodeParentUpdated] currentParent: ${currentParent?.id}, newParent: ${newParent?.id}, currentPosition: ${JSON.stringify(currentPosition)}, newPosition: ${JSON.stringify(newPosition)} currentVersion: ${currentVersion}, data.version: ${data.version}`)
+
+      setNodeVersion({
+        id: data.nodeId,
+        version: data.version,
+      })
+
+      node.setMetadata({
+        ...node.metadata,
+        parentNodeId: data.newParentNodeId,
+      })
+
+      positionInterpolator.clearNodeState(data.nodeId)
+      positionInterpolator.addState(data.nodeId, newPosition, currentPosition)
+    },
+
     [FlowEventType.NodeUIPositionChanged]: (data) => {
       const currentNode = nodes[data.nodeId]
       if (!currentNode)
@@ -86,8 +143,7 @@ export function useFlowSubscription() {
         return
       }
 
-      // console.log(`[NOT SKIP] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
-
+      console.log(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
       setNodeVersion({
         id: data.nodeId,
         version: data.version,

@@ -50,4 +50,6 @@ export interface NodeUIMetadata {
    * Node UI state
    */
   state?: NodeUIState
+
+  [key: string]: any
 }

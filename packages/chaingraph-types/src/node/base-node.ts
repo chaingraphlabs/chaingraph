@@ -1,24 +1,29 @@
-import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
+import type { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
+import type { EventReturnType, NodeEvent, NodeEventDataType } from '@badaitech/chaingraph-types/node/events'
+import type { INode } from '@badaitech/chaingraph-types/node/interface'
 import type {
-  EventReturnType,
-  NodeEvent,
-  NodeEventDataType,
-} from '@chaingraph/types/node/events'
-import type { INode } from '@chaingraph/types/node/interface'
-import type { Dimensions, NodeUIMetadata, NodeUIStyle, Position } from '@chaingraph/types/node/node-ui'
+  Dimensions,
+  NodeUIMetadata,
+  NodeUIStyle,
+  Position,
+} from '@badaitech/chaingraph-types/node/node-ui'
 import type {
   NodeExecutionResult,
   NodeMetadata,
   NodeValidationResult,
-} from '@chaingraph/types/node/types'
-import type { PortConfig } from '@chaingraph/types/port'
-import type { IPort } from '@chaingraph/types/port/types/port-interface'
-import { NodeEventType } from '@chaingraph/types/node/events'
-import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { ObjectPort, PortFactory } from '@chaingraph/types/port'
-import { PortDirection } from '@chaingraph/types/port/types/port-direction-union'
-import { EventQueue } from '@chaingraph/types/utils/event-queue'
-import { getOrCreateNodeMetadata } from './decorator/node-decorator'
+} from '@badaitech/chaingraph-types/node/types'
+import type { IPort, IPortConfig, JSONValue } from '@badaitech/chaingraph-types/port/base'
+import {
+  getOrCreateNodeMetadata,
+} from '@badaitech/chaingraph-types/node/decorator-new/getOrCreateNodeMetadata'
+import { NodeEventType } from '@badaitech/chaingraph-types/node/events'
+import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
+import { PortDirection } from '@badaitech/chaingraph-types/port/base'
+import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
+import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
+import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { PortConfigProcessor } from './port-config-processor'
 import 'reflect-metadata'
 
@@ -26,7 +31,7 @@ export abstract class BaseNode implements INode {
   protected readonly _id: string
   protected _metadata: NodeMetadata
   protected _status: NodeStatus = NodeStatus.Idle
-  protected _ports: Map<string, IPort<any>> = new Map()
+  protected _ports: Map<string, IPort> = new Map()
 
   protected eventQueue = new EventQueue<NodeEvent>()
   private eventsDisabled = false
@@ -79,23 +84,40 @@ export abstract class BaseNode implements INode {
       return
     }
 
-    for (const [portId, portConfig] of ports) {
+    for (const [portId, portConfig] of ports.entries()) {
       this.initializePort(this, portConfig)
     }
   }
 
-  protected initializePort(objectValue: object, portConfig: PortConfig, parentPortId?: string): void {
+  protected initializePort(objectValue: object, portConfig: IPortConfig, parentPortId?: string): void {
     // Create the port instance
-    const port = PortFactory.create(portConfig)
+    const existsPort = portConfig.id ? this._ports.get(portConfig.id) : undefined
+    const port = existsPort ?? PortFactory.createFromConfig(portConfig)
 
     // Generate a unique port ID if it doesn't exist
     const portId = portConfig.id || `${parentPortId || ''}.${portConfig.key}`
+
+    const connectInternalFields = (val: object) => {
+      if (portConfig.type === 'object') {
+        // for the object port, initialize its nested ports recursively
+        const nestedPorts = portConfig.schema?.properties
+        if (nestedPorts) {
+          for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
+            this.initializePort(
+              val,
+              nestedPortConfig as IPortConfig,
+              portId,
+            )
+          }
+        }
+      }
+    }
 
     // check if the node has a field with the same key as the port
     if (portConfig.key && Object.prototype.hasOwnProperty.call(objectValue, portConfig.key)) {
       const value = (objectValue as any)[portConfig.key]
       if (value) {
-        port.setValue(value)
+        port.setValue(deepCopy(value))
       }
 
       // set up a getter and setter for the field
@@ -105,6 +127,7 @@ export abstract class BaseNode implements INode {
         },
         set: (newValue: any) => {
           port.setValue(newValue)
+          connectInternalFields(port.getValue() as object)
         },
         configurable: true,
         enumerable: true,
@@ -112,21 +135,24 @@ export abstract class BaseNode implements INode {
     }
 
     // Store the port in the _ports Map
-    this._ports.set(portId, port)
-
-    if (ObjectPort.isObjectPortConfig(portConfig)) {
-      // for the object port, initialize its nested ports recursively
-      const nestedPorts = portConfig.schema?.properties
-      if (nestedPorts) {
-        for (const [nestedPortId, nestedPortConfig] of Object.entries(nestedPorts)) {
-          this.initializePort(
-            port.value,
-            nestedPortConfig,
-            portId,
-          )
-        }
-      }
+    if (!existsPort) {
+      this._ports.set(portId, port)
     }
+
+    connectInternalFields(port.getValue() as object)
+    // if (portConfig.type === 'object') {
+    //   // for the object port, initialize its nested ports recursively
+    //   const nestedPorts = portConfig.schema?.properties
+    //   if (nestedPorts) {
+    //     for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
+    //       this.initializePort(
+    //         port.getValue() as object,
+    //         nestedPortConfig as IPortConfig,
+    //         portId,
+    //       )
+    //     }
+    //   }
+    // }
   }
 
   /**
@@ -153,7 +179,7 @@ export abstract class BaseNode implements INode {
   /**
    * Get the node inputs
    */
-  get ports(): Map<string, IPort<any>> {
+  get ports(): Map<string, IPort> {
     return this._ports
   }
 
@@ -179,7 +205,7 @@ export abstract class BaseNode implements INode {
     this.setStatus(NodeStatus.Disposed, false)
   }
 
-  getPort(portId: string): IPort<any> | undefined {
+  getPort(portId: string): IPort | undefined {
     return this._ports.get(portId)
   }
 
@@ -187,18 +213,18 @@ export abstract class BaseNode implements INode {
     return this._ports.has(portId)
   }
 
-  getInputs(): IPort<any>[] {
+  getInputs(): IPort[] {
     return Array.from(
       this._ports
         .values()
-        .filter(port => port.config.direction === PortDirection.Input),
+        .filter(port => port.getConfig().direction === PortDirection.Input),
     )
   }
 
-  getOutputs(): IPort<any>[] {
+  getOutputs(): IPort[] {
     return Array.from(
       this._ports.values()
-        .filter(port => port.config.direction === PortDirection.Output),
+        .filter(port => port.getConfig().direction === PortDirection.Output),
     )
   }
 
@@ -232,9 +258,9 @@ export abstract class BaseNode implements INode {
    * Emit an event to all subscribers.
    * @param event - The event object.
    */
-  protected emit<T extends NodeEvent>(event: T): Promise<Awaited<void>[]> {
+  protected emit<T extends NodeEvent>(event: T): Promise<void> {
     if (this.eventsDisabled) {
-      return Promise.resolve([])
+      return Promise.resolve()
     }
 
     return this.eventQueue.publish(event)
@@ -250,16 +276,20 @@ export abstract class BaseNode implements INode {
     return this
   }
 
-  addPort(port: IPort<any>): IPort<any> {
-    if (!port.config.id) {
+  addPort(port: IPort): IPort {
+    if (!port.id) {
       throw new Error('Port ID is required.')
     }
 
-    this._ports.set(port.config.id, port)
+    this._ports.set(port.id!, port)
 
     // TODO: add event and version update
 
     return port
+  }
+
+  setPorts(ports: Map<string, IPort>): void {
+    this._ports = ports
   }
 
   removePort(portId: string): void {
@@ -327,6 +357,30 @@ export abstract class BaseNode implements INode {
     this.emit(this.createEvent(NodeEventType.UIPositionChange, {
       oldPosition,
       newPosition: { ...position },
+    }))
+  }
+
+  setNodeParent(position: Position, parentNodeId?: string, emitEvent?: boolean): void {
+    const oldParent = this._metadata?.parentNodeId ?? undefined
+    const oldPosition = this._metadata?.ui?.position
+
+    this._metadata.parentNodeId = parentNodeId
+    if (!this._metadata.ui) {
+      this._metadata.ui = { position }
+    } else {
+      this._metadata.ui.position = position
+    }
+
+    if (!emitEvent) {
+      return
+    }
+
+    this.incrementVersion()
+    this.emit(this.createEvent(NodeEventType.ParentChange, {
+      oldParentNodeId: oldParent,
+      newParentNodeId: parentNodeId,
+      oldPosition,
+      newPosition: position,
     }))
   }
 
@@ -442,5 +496,114 @@ export abstract class BaseNode implements INode {
       version: this.getVersion(),
       ...data,
     } as EventReturnType<T>
+  }
+
+  /**
+   * Serializes the node into a JSON-compatible object.
+   * In this implementation we only serialize the port values (reducing object size).
+   */
+  serialize(): JSONValue {
+    // Helper: serialize the ports configuration from metadata.
+    const serializedPortsConfig: Record<string, JSONValue> = {}
+    if (this._metadata.portsConfig) {
+      for (const [key, config] of this._metadata.portsConfig.entries()) {
+        const plugin = portRegistry.getPlugin(config.type)
+        serializedPortsConfig[key.toString()] = plugin
+          ? plugin.serializeConfig(config)
+          : config
+      }
+    }
+
+    // Serialize ports values only.
+    const serializedPortsValues: Record<string, JSONValue> = {}
+    for (const [portId, port] of this._ports.entries()) {
+      const serializedPort = port.serialize()
+      // If the serialized port appears to include a "value" property, extract it.
+      if (typeof serializedPort === 'object' && serializedPort && 'value' in serializedPort) {
+        serializedPortsValues[portId] = (serializedPort as any).value
+      } else {
+        serializedPortsValues[portId] = serializedPort
+      }
+    }
+
+    return {
+      id: this._id,
+      metadata: {
+        ...this._metadata,
+        portsConfig: serializedPortsConfig,
+      },
+      status: this._status,
+      ports_values: serializedPortsValues,
+    }
+  }
+
+  /**
+   * Deserializes the given JSON data into the node.
+   * This implementation uses the PortFactory to re-create each port instance,
+   * then uses the appropriate port plugin to set the port value from the serialized data.
+   */
+  deserialize(data: JSONValue): this {
+    // Validate incoming data using the Zod schema.
+    const obj = SerializedNodeSchema.parse(data)
+
+    // Update node status (id is typically immutable).
+    this._status = obj.status
+
+    // Deserialize metadata and portsConfig.
+    const metadataFromData = obj.metadata || {}
+    const deserializedPortsConfig: Map<string, IPortConfig> = new Map()
+    if (metadataFromData.portsConfig && typeof metadataFromData.portsConfig === 'object') {
+      for (const key in metadataFromData.portsConfig) {
+        const configData = metadataFromData.portsConfig[key]
+        if (configData && typeof configData === 'object' && 'type' in configData) {
+          const plugin = portRegistry.getPlugin(configData.type)
+
+          deserializedPortsConfig.set(
+            key,
+            plugin
+              ? plugin.deserializeConfig(configData)
+              : configData,
+          )
+        }
+      }
+    }
+    this._metadata = {
+      ...this._metadata,
+      ...metadataFromData,
+      portsConfig: deserializedPortsConfig,
+    }
+
+    // Clear current ports map.
+    this._ports.clear()
+
+    // Initialize the node and ports from config.
+    this.initialize()
+
+    // We now use the "ports_values" field (instead of "ports") from the serialized object.
+    const portsValues = obj.ports_values || {} as Record<string, JSONValue>
+
+    // For each key in ports_values we recreate the port.
+    for (const portId in portsValues) {
+      const portValue = portsValues[portId]
+      if (portValue === undefined) {
+        continue
+      }
+
+      const port = this.getPort(portId)
+      if (!port) {
+        console.warn(`Port with ID ${portId} not found in node ${this.id}.`)
+        continue
+      }
+
+      const plugin = portRegistry.getPlugin(port.getConfig().type)
+      if (plugin) {
+        const deserializedValue = plugin.deserializeValue(portValue, port.getConfig())
+        port.setValue(deserializedValue)
+      } else {
+        port.setValue(portValue)
+      }
+    }
+
+    return this
   }
 }

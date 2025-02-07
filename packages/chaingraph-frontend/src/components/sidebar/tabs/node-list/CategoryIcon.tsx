@@ -1,6 +1,6 @@
-import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
+import type { CategoryIconName } from '@badaitech/chaingraph-nodes/categories/icons'
 import { cn } from '@/lib/utils.ts'
-import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
+import { getCategoryIcon } from '@badaitech/chaingraph-nodes/categories/icons'
 
 interface CategoryIconProps {
   name: CategoryIconName

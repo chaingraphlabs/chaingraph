@@ -1,32 +1,26 @@
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
-import { nodeRegistry } from '@chaingraph/nodes/registry'
-import {
-  BaseNode,
-  type ExecutionContext,
-  ExecutionStatus,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  Output,
-  PortString,
-} from '@chaingraph/types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
+import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
   title: 'Telegram Message',
   description: 'Sends a message to Telegram',
   category: NODE_CATEGORIES.MESSAGING,
   tags: ['telegram', 'message', 'social'],
-}, nodeRegistry)
+})
 export class TelegramMessageNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Message',
     description: 'Message to send to Telegram',
   })
   message: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Result',
     description: 'Sending result status',
   })
@@ -36,8 +30,11 @@ export class TelegramMessageNode extends BaseNode {
     // Mock implementation
     this.result = `Telegram message sent: ${this.message}`
 
+    // delay 3 sec + 2 sec random time
+    await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000))
+
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['result', this.result]]),

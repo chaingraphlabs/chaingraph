@@ -8,7 +8,7 @@ export function ThemeToggle() {
   return (
     <motion.button
       onClick={toggleTheme}
-      className="fixed top-4 right-4 p-2 rounded-full bg-surface-light dark:bg-surface-dark
+      className="fixed bottom-3 left-1 p-2 rounded-full bg-surface-light dark:bg-surface-dark
                  border border-gray-200 dark:border-gray-700 shadow-lg
                  hover:scale-110 active:scale-95 transition-transform"
       whileHover={{ y: -2 }}
@@ -18,7 +18,7 @@ export function ThemeToggle() {
       }}
       transition={{ duration: 0.2, type: 'spring' }}
     >
-      <div className="relative w-6 h-6">
+      <div className="relative w-5 h-5">
         <motion.div
           initial={false}
           animate={{
@@ -26,10 +26,10 @@ export function ThemeToggle() {
             scale: theme === 'dark' ? 0 : 1,
             rotate: theme === 'dark' ? -45 : 0,
           }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.4 }}
           className="absolute inset-0 flex items-center justify-center"
         >
-          <SunIcon className="w-5 h-5 text-yellow-500" />
+          <SunIcon className="w-4 h-4 text-yellow-500" />
         </motion.div>
 
         <motion.div
@@ -39,7 +39,7 @@ export function ThemeToggle() {
             scale: theme === 'dark' ? 1 : 0,
             rotate: theme === 'dark' ? 0 : 45,
           }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.4 }}
           className="absolute inset-0 flex items-center justify-center"
         >
           <MoonIcon className="w-5 h-5 text-blue-400" />

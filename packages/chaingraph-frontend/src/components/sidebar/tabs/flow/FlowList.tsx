@@ -1,4 +1,4 @@
-import type { FlowMetadata } from '@chaingraph/types'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { useFlowSearch } from '@/components/sidebar/tabs/flow/hooks/useFlowSearch'
 import { useFlowSort } from '@/components/sidebar/tabs/flow/hooks/useFlowSort'
 import { ErrorMessage } from '@/components/ui/error-message.tsx'

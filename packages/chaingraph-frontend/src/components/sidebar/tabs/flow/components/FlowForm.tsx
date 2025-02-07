@@ -1,5 +1,5 @@
 import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store'
-import type { FlowMetadata } from '@chaingraph/types'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'

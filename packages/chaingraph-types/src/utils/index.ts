@@ -1,4 +1,7 @@
 export * from './async-queue'
+export * from './deep-copy'
+export * from './event-queue'
 export * from './semaphore'
 export * from './serializable'
 export * from './timeout'
+export * from './versioned'

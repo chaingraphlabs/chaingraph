@@ -1,5 +1,5 @@
-// import { timeEmitter } from '@chaingraph/backend/services/events/timeEmitter'
-// import { publicProcedure } from '@chaingraph/backend/trpc'
+// import { timeEmitter } from '@badaitech/chaingraph-backend/services/events/timeEmitter'
+// import { publicProcedure } from '@badaitech/chaingraph-backend/trpc'
 // import { tracked } from '@trpc/server'
 // import { z } from 'zod'
 // import { zAsyncIterable } from './utils/zAsyncIterable'

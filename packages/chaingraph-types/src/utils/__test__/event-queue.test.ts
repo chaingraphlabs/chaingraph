@@ -1,4 +1,4 @@
-import { createQueueIterator, EventQueue } from '@chaingraph/types/utils/event-queue'
+import { createQueueIterator, EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Define a test event interface
@@ -325,8 +325,12 @@ describe('eventQueue', () => {
     ]
     const receivedEvents: TestEvent[] = []
 
+    let errorTriggered = false
     // Subscribe with a handler that throws an error on a specific event
-    const onErrorMock = vi.fn()
+    const onErrorMock = (_: any) => {
+      // Should not be called
+      errorTriggered = true
+    }
     queue.subscribe(
       async (event) => {
         if (event.type === 'error') {
@@ -347,8 +351,7 @@ describe('eventQueue', () => {
 
     // Verify that subscriber received events and errors are handled
     expect(receivedEvents).toEqual([{ type: 'event1' }, { type: 'event3' }])
-    // The error should not cause onError to be called, as it's handled internally
-    expect(onErrorMock).not.toHaveBeenCalled()
+    expect(errorTriggered).toBe(true)
   })
 
   it('should support unsubscribing within the event handler', async () => {
@@ -443,7 +446,10 @@ describe('eventQueue', () => {
   })
 
   it('should handle subscribers that throw unhandled exceptions', async () => {
-    const onErrorMock = vi.fn()
+    let errorTriggered = false
+    const onErrorMock = (_: any) => {
+      errorTriggered = true
+    }
 
     // Subscribe with a handler that throws an unhandled exception
     queue.subscribe(
@@ -462,8 +468,7 @@ describe('eventQueue', () => {
     // Wait to ensure event is processed
     await new Promise(resolve => setTimeout(resolve, 10))
 
-    // Verify that onError was not called
-    expect(onErrorMock).not.toHaveBeenCalled()
+    expect(errorTriggered).toBe(true)
   })
 
   it('should not accept new subscribers after the queue is closed', async () => {

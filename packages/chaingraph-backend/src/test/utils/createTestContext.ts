@@ -1,23 +1,32 @@
-import type { AppContext } from '@chaingraph/backend/context'
-import type { IFlowStore } from '@chaingraph/backend/stores/flowStore'
-import type { NodeRegistry } from '@chaingraph/types'
-import { InMemoryFlowStore } from '@chaingraph/backend/stores/flowStore'
-import { NodeCatalog, nodeRegistry } from '@chaingraph/nodes'
+import type { AppContext } from '../../context'
+import type { IFlowStore } from '../../stores/flowStore'
+import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
+import { InMemoryFlowStore } from '../../stores/flowStore'
 
 /**
  * Creates test context with in-memory stores
  */
 export function createTestContext(
   _nodeRegistry?: NodeRegistry,
-  nodesCatalog?: NodeCatalog,
+  _nodesCatalog?: NodeCatalog,
   flowStore?: IFlowStore,
 ): AppContext {
+  const nodeRegistry = _nodeRegistry ?? NodeRegistry.getInstance()
+  const nodesCatalog = _nodesCatalog ?? new NodeCatalog()
+
+  nodeRegistry.getNodeTypes().forEach((type) => {
+    const node = nodeRegistry.createNode(type, `${type}-catalog`)
+    nodesCatalog.registerNode(type, node)
+  })
+
   return {
     session: {
       userId: 'test_user_id',
     },
-    nodeRegistry: _nodeRegistry ?? nodeRegistry,
-    nodesCatalog: nodesCatalog ?? new NodeCatalog(nodeRegistry),
+    nodeRegistry,
+    nodesCatalog,
     flowStore: flowStore ?? new InMemoryFlowStore(),
+    executionService: null as any,
+    executionStore: null as any,
   }
 }

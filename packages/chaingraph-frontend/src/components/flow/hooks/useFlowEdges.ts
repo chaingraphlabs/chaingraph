@@ -1,3 +1,4 @@
+import type { Edge } from '@xyflow/react'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
 import { $edges } from '@/store'
 import { useUnit } from 'effector-react'
@@ -36,7 +37,6 @@ export function useFlowEdges() {
   const reactFlowEdges = useMemo(() => {
     return edges
       .filter((edge) => {
-        // Проверяем валидность нод и их позиций
         const sourceNode = nodes.find(n => n.id === edge.sourceNodeId)
         const targetNode = nodes.find(n => n.id === edge.targetNodeId)
 
@@ -45,15 +45,19 @@ export function useFlowEdges() {
           && !Number.isNaN(sourceNode.position.x) && !Number.isNaN(sourceNode.position.y)
           && !Number.isNaN(targetNode.position.x) && !Number.isNaN(targetNode.position.y)
       })
-      .map(edge => ({
-        id: edge.edgeId,
-        source: edge.sourceNodeId,
-        target: edge.targetNodeId,
-        sourceHandle: edge.sourcePortId,
-        targetHandle: edge.targetPortId,
-        type: 'default', // Используем простой тип edge
-        style: { stroke: 'currentColor', strokeWidth: 2 },
-      }))
+      .map((edge) => {
+        const rfEdge: Edge = {
+          id: edge.edgeId,
+          source: edge.sourceNodeId,
+          target: edge.targetNodeId,
+          sourceHandle: edge.sourcePortId,
+          targetHandle: edge.targetPortId,
+          type: 'default',
+          style: { stroke: 'currentColor', strokeWidth: 2 },
+        }
+
+        return rfEdge
+      })
   }, [edges, nodes])
 
   return reactFlowEdges

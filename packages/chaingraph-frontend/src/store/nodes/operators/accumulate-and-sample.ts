@@ -11,7 +11,7 @@ import { createEvent, createStore, sample } from 'effector'
 interface AccumulateAndSampleConfig<T> {
   timeout: number
   getKey: (payload: T) => string
-  source: Event<T>
+  source: Event<T>[]
 }
 
 /**

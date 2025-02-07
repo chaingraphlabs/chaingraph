@@ -1,10 +1,16 @@
-import type { FlowEvent } from '@chaingraph/types/flow/events'
-import { zAsyncIterable } from '@chaingraph/backend/procedures/subscriptions/utils/zAsyncIterable'
-import { publicProcedure } from '@chaingraph/backend/trpc'
-import { FlowEventType, newEvent } from '@chaingraph/types/flow/events'
-import { createQueueIterator, EventQueue } from '@chaingraph/types/utils/event-queue'
+import type {
+  FlowEvent,
+} from '@badaitech/chaingraph-types'
+import {
+  createQueueIterator,
+  EventQueue,
+  FlowEventType,
+  newEvent,
+} from '@badaitech/chaingraph-types'
 import { tracked } from '@trpc/server'
 import { z } from 'zod'
+import { publicProcedure } from '../../trpc'
+import { zAsyncIterable } from '../subscriptions/utils/zAsyncIterable'
 
 function isAcceptedEventType(eventTypes: FlowEventType[] | undefined, type: FlowEventType) {
   return !eventTypes || eventTypes.length === 0 || eventTypes.includes(type)
@@ -59,7 +65,6 @@ export const subscribeToEvents = publicProcedure
       // 2. Existing nodes
       if (isAcceptedEventType(eventTypes, FlowEventType.NodeAdded)) {
         for (const node of flow.nodes.values()) {
-          console.log('NodeAdded with version:', node.getVersion())
           yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
             node,
           }))
@@ -72,9 +77,9 @@ export const subscribeToEvents = publicProcedure
           yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgeAdded, {
             edgeId: edge.id,
             sourceNodeId: edge.sourceNode.id,
-            sourcePortId: edge.sourcePort.config.id,
+            sourcePortId: edge.sourcePort.id,
             targetNodeId: edge.targetNode.id,
-            targetPortId: edge.targetPort.config.id,
+            targetPortId: edge.targetPort.id,
             metadata: edge.metadata,
           }))
         }

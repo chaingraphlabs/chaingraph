@@ -1,7 +1,7 @@
-import type { IPort, NodeExecutionResult } from '@chaingraph/types'
-import { BaseNode, Edge, Flow } from '@chaingraph/types'
-import { hasCycle } from '@chaingraph/types/flow/cycleDetection'
+import type { IPort, NodeExecutionResult } from '../..'
 import { describe, expect, it } from 'vitest'
+import { BaseNode, Edge, Flow } from '../..'
+import { hasCycle } from '../cycleDetection'
 
 class Node extends BaseNode {
   constructor(id: string) {

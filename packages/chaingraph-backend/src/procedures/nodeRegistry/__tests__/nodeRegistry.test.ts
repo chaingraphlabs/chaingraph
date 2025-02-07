@@ -1,13 +1,9 @@
-import {
-  cleanupTestNodes,
-  registerTestNodes,
-} from '@chaingraph/backend/procedures/nodeRegistry/__tests__/utils'
-import { appRouter } from '@chaingraph/backend/router'
-import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { createCallerFactory } from '@chaingraph/backend/trpc'
-import { NodeCatalog } from '@chaingraph/nodes'
-import { NodeRegistry } from '@chaingraph/types'
+import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { appRouter } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
+import { createCallerFactory } from '../../../trpc'
+import { cleanupTestNodes, registerTestNodes } from '../utils'
 
 describe('node Registry Procedures', () => {
   const createCaller = createCallerFactory(appRouter)
@@ -17,7 +13,7 @@ describe('node Registry Procedures', () => {
   beforeAll(() => {
     nodeRegistry = NodeRegistry.getInstance()
     registerTestNodes()
-    nodeCatalog = NodeCatalog.getInstance(nodeRegistry)
+    nodeCatalog = new NodeCatalog()
   })
 
   afterAll(() => {

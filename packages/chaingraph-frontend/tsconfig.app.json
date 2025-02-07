@@ -15,22 +15,20 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "paths": {
-      "@chaingraph/types": ["../chaingraph-types/src"],
-      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
-      "@chaingraph/nodes": ["../chaingraph-nodes/src"],
-      "@chaingraph/nodes/*": ["../chaingraph-nodes/src/*"],
-      "@chaingraph/backend": ["../chaingraph-backend/src"],
-      "@chaingraph/backend/*": ["../chaingraph-backend/src/*"],
-      "@chaingraph/frontend/*": ["./src/*"],
+      "@badaitech/chaingraph-types": ["../chaingraph-types/src"],
+      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
+      "@badaitech/chaingraph-nodes": ["../chaingraph-nodes/src"],
+      "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
+      "@badaitech/chaingraph-backend": ["../chaingraph-backend/src"],
+      "@badaitech/chaingraph-backend/*": ["../chaingraph-backend/src/*"],
+      "@badaitech/chaingraph-frontend/*": ["./src/*"],
       "@/*": ["./src/*"]
     },
 
     "types": [
       "reflect-metadata",
       "vite/client",
-      "@badaitech/chaingraph-types",
-      "@badaitech/chaingraph-nodes",
-      "@badaitech/chaingraph-backend"
+      "superjson"
     ],
     "allowImportingTsExtensions": true,
 

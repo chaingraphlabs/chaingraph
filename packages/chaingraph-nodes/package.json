@@ -9,20 +9,39 @@
     "directory": "./packages/chaingraph-nodes"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./icons": "./src/icons/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./categories/*": {
+      "types": "./dist/categories/*.d.ts",
+      "default": "./dist/categories/*.js"
+    },
+    "./nodes/*": {
+      "types": "./dist/nodes/*.d.ts",
+      "default": "./dist/nodes/*.js"
+    }
   },
-  "peerDependencies": {
-    "react": "^18.0.0"
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc -b",
+    "test": "vitest"
   },
   "dependencies": {
-    "lucide-react": "^0.279.0"
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@langchain/openai": "^0.4.2",
+    "langchain": "^0.3.15",
+    "lucide-react": "^0.279.0",
+    "superjson": "^2.2.1"
   },
   "devDependencies": {
     "@svgr/core": "^8.0.0",
     "@svgr/plugin-jsx": "^8.0.1",
     "@svgr/plugin-svgo": "^8.0.1",
+    "@types/node": "^20.11.16",
     "@types/react": "^18.3.18",
+    "typescript": "^5.3.3",
     "vite": "^4.4.9",
     "vite-plugin-svgr": "^3.2.0"
   }

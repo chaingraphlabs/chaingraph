@@ -1,5 +1,5 @@
-import { SerializedEdgeSchema } from '@chaingraph/types/edge/types.zod'
-import { SerializedNodeSchema } from '@chaingraph/types/node/types.zod'
+import { SerializedEdgeSchema } from '@badaitech/chaingraph-types/edge/types.zod'
+import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
 import { z } from 'zod'
 
 export const SerializedFlowMetadataSchema = z.object({

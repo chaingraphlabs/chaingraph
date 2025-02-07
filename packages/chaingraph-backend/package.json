@@ -9,22 +9,28 @@
     "directory": "./packages/chaingraph-backend"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./trpc": "./src/trpc.ts",
-    "./procedures": "./src/procedures/index.ts",
-    "./router": "./src/router.ts"
+    ".": "./dist/index.js",
+    "./trpc": "./dist/trpc.js",
+    "./procedures": "./dist/procedures/index.js",
+    "./router": "./dist/router.js"
   },
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
-    "build": "bun build src/index.ts --outdir dist",
+    "dev": "bun --watch run src/index.ts",
+    "build": "tsc -b",
+    "start": "node dist/index.js",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "cors": "^2.8.5"
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "cors": "^2.8.5",
+    "superjson": "^2.2.1"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17"
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3"
   }
 }

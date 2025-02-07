@@ -1,11 +1,27 @@
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
-import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortEnumFromNative, registerPortTransformers } from '@chaingraph/types'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
+import { Port } from '@badaitech/chaingraph-types/node'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+
+import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
 
 enum Color {
   Red = 'Red',
@@ -19,12 +35,34 @@ enum Color {
 })
 class EnumNode extends BaseNode {
   @Input()
-  @PortEnumFromNative(Color)
+  @Port({
+    type: 'enum',
+    options: [
+      {
+        id: Color.Red,
+        type: 'string',
+        title: 'Red',
+        defaultValue: Color.Red,
+      },
+      {
+        id: Color.Green,
+        type: 'string',
+        title: 'Green',
+        defaultValue: Color.Green,
+      },
+      {
+        id: Color.Blue,
+        type: 'string',
+        title: 'Blue',
+        defaultValue: Color.Blue,
+      },
+    ],
+  })
   favoriteColor: Color = Color.Red
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -34,12 +72,8 @@ class EnumNode extends BaseNode {
 
 describe('enum node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register all port types
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('serializes and deserializes a node with an enum port', async () => {
@@ -47,10 +81,21 @@ describe('enum node serialization', () => {
     await enumNode.initialize()
 
     const json = superjson.serialize(enumNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as EnumNode
+    const parsed = superjson.deserialize(json) as EnumNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(enumNode.metadata)
     expect(parsed.status).toEqual(enumNode.status)
+
+    const colorPort = findPort(enumNode, port => port.getConfig().key === 'favoriteColor')
+    enumNode.favoriteColor = Color.Green
+    expect(colorPort?.getValue()).toBe(Color.Green)
+
+    try {
+      // @ts-expect-error invalid value test
+      enumNode.favoriteColor = 'invalid'
+    } catch (e: any) {
+      expect(e.message).toBe('Value validation failed in setValue.')
+    }
   })
 })

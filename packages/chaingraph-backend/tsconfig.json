@@ -2,8 +2,25 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "rootDir": "../../",
-    "outDir": "./dist"
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "rootDir": "./src",
+    "moduleResolution": "node",
+    "paths": {
+      "@badaitech/chaingraph-types": ["../chaingraph-types/src"],
+      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
+      "@badaitech/chaingraph-nodes": ["../chaingraph-nodes/src"],
+      "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"]
+    },
+    "strict": true,
+    "noImplicitAny": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "sourceMap": true,
+    "skipLibCheck": true
   },
   "references": [
     {
@@ -13,5 +30,6 @@
       "path": "../chaingraph-nodes"
     }
   ],
-  "include": ["./src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["**/__tests__/**", "**/__test__/**", "**/node_modules/**", "dist", "coverage"]
 }

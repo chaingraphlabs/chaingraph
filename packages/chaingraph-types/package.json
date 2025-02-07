@@ -9,15 +9,46 @@
     "directory": "./packages/chaingraph-types"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./edge/*": {
+      "types": "./dist/edge/*.d.ts",
+      "default": "./dist/edge/*.js"
+    },
+    "./port/*": {
+      "types": "./dist/port/*.d.ts",
+      "default": "./dist/port/*.js"
+    },
+    "./node/*": {
+      "types": "./dist/node/*.d.ts",
+      "default": "./dist/node/*.js"
+    },
+    "./flow/*": {
+      "types": "./dist/flow/*.d.ts",
+      "default": "./dist/flow/*.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "default": "./dist/utils/*.js"
+    }
   },
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
-    "build": "bun build src/index.ts --outdir dist",
+    "dev": "tsc --watch",
+    "build": "tsc -b",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "reflect-metadata": "^0.2.1",
+    "superjson": "^2.2.2",
+    "type-fest": "^4.10.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3"
+  }
 }

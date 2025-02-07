@@ -1,7 +1,8 @@
 import type { Node } from '@xyflow/react'
 import { $nodes } from '@/store'
 import { useCategories } from '@/store/categories'
-import { DefaultPosition } from '@chaingraph/types/node/node-ui.ts'
+import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes/categories/constants.ts'
+import { DefaultPosition } from '@badaitech/chaingraph-types/node/node-ui.ts'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 
@@ -19,17 +20,35 @@ export function useFlowNodes() {
       return []
     }
 
-    return Object.values(nodes).map((node): Node => {
+    // sort nodes to have groups first and then chaingraph nodes
+    const sortedNodes = Object.values(nodes).sort((a, b) => {
+      if (a.metadata.category === NODE_CATEGORIES.GROUP) {
+        return -1
+      }
+      if (b.metadata.category === NODE_CATEGORIES.GROUP) {
+        return 1
+      }
+      return 0
+    })
+
+    return sortedNodes.map((node): Node => {
       const categoryMetadata = getCategoryMetadata(node.metadata.category!)
+
+      const nodeType
+        = node.metadata.category === NODE_CATEGORIES.GROUP
+          ? 'groupNode'
+          : 'chaingraphNode'
 
       const reactflowNode: Node = {
         id: node.id,
-        type: 'chaingraphNode',
+        type: nodeType,
         position: node.metadata.ui?.position ?? DefaultPosition,
+        zIndex: nodeType === 'groupNode' ? -1 : 0,
         data: {
           node,
           categoryMetadata,
         },
+        parentId: node.metadata.parentNodeId,
         selected: node.metadata.ui?.state?.isSelected ?? false,
       }
 

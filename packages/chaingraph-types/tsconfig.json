@@ -1,8 +1,17 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "rootDir": "./src",
-    "outDir": "./dist"
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "sourceMap": true,
+    "skipLibCheck": true
   },
-  "include": ["./src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["**/__tests__/**", "**/__test__/**", "**/node_modules/**", "dist", "coverage"]
 }

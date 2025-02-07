@@ -1,6 +1,6 @@
-import { publicProcedure } from '@chaingraph/backend/trpc'
-import { DefaultPosition } from '@chaingraph/types/node/node-ui'
+import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
+import { publicProcedure } from '../../trpc'
 
 export const updateNodePosition = publicProcedure
   .input(z.object({
@@ -14,6 +14,7 @@ export const updateNodePosition = publicProcedure
   }))
   .mutation(async ({ input, ctx }) => {
     // TODO: create nodes store
+    const startTime = Date.now()
 
     const flow = await ctx.flowStore.getFlow(input.flowId)
     if (!flow)
@@ -49,6 +50,9 @@ export const updateNodePosition = publicProcedure
     }
 
     node.setPosition(input.position, true)
+
+    const duration = Date.now() - startTime
+    console.log(`[FLOW] Updated position for node ${input.nodeId} in ${duration}ms`)
 
     return {
       flowId: input.flowId,

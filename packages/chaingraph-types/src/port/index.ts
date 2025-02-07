@@ -1,10 +1,18 @@
-export * from './any'
-export * from './array'
+// Re-export everything from each module
+// Core types and interfaces
+export * from './base'
+
+// Channel functionality
 export * from './channel'
-export * from './enum'
-export * from './json-transformers'
-export * from './object'
+
+// Factory implementation
+export * from './factory'
+
+// Port instances
+export * from './instances'
+
+// Port plugins
+export * from './plugins'
+
+// Registry
 export * from './registry'
-export * from './scalar'
-export * from './stream'
-export * from './types'

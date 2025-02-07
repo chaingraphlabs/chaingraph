@@ -1,22 +1,24 @@
-import { appRouter } from '@chaingraph/backend/router'
-import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { createCallerFactory } from '@chaingraph/backend/trpc'
-import { NodeCatalog } from '@chaingraph/nodes'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+  NodeMetadata,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  type ExecutionContext,
-  ExecutionStatus,
+  Boolean,
   Id,
   Input,
   Node,
-  type NodeExecutionResult,
+  NodeExecutionStatus,
   NodeRegistry,
+  Number,
   Output,
-  PortBoolean,
-  PortNumber,
-  PortString,
-} from '@chaingraph/types'
+  String,
+} from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { appRouter } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
+import { createCallerFactory } from '../../../trpc'
 
 @Node({
   title: 'Scalar Node',
@@ -24,34 +26,34 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 }, null)
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     defaultValue: 'default string',
   })
   @Id('strInput')
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber({
+  @Number({
     defaultValue: 42,
   })
   @Id('numInput')
   numInput: number = 42
 
   @Input()
-  @PortBoolean({
+  @Boolean({
     defaultValue: true,
   })
   @Id('boolInput')
   boolInput: boolean = true
 
   @Id('strOutput')
-  @PortString()
+  @String()
   @Output()
   strOutput: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -72,7 +74,6 @@ describe('flow Node Procedures', () => {
   async function setupTestFlow() {
     const ctx = createTestContext(
       NodeRegistry.getInstance(),
-      new NodeCatalog(NodeRegistry.getInstance()),
     )
 
     const caller = createCallerFactory(appRouter)(ctx)
@@ -81,7 +82,7 @@ describe('flow Node Procedures', () => {
     expect(types.length).toBeGreaterThan(0)
 
     // Find ScalarNode type
-    const scalarNodeType = types.find(t => t.title === 'Scalar Node')
+    const scalarNodeType = types.find((t: NodeMetadata) => t.title === 'Scalar Node')
     expect(scalarNodeType).toBeDefined()
 
     return { caller, flow, nodeType: scalarNodeType!.type }

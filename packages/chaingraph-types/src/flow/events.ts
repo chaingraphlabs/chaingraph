@@ -1,4 +1,4 @@
-import type { Dimensions, Position } from '@chaingraph/types/node/node-ui'
+import type { Dimensions, Position } from '@badaitech/chaingraph-types/node/node-ui'
 import type { EdgeMetadata } from '../edge'
 import type { INode } from '../node'
 import type { IFlow } from './interface'
@@ -17,6 +17,7 @@ export enum FlowEventType {
   NodeAdded = 'flow:node:added',
   NodeRemoved = 'flow:node:removed',
   NodeUpdated = 'flow:node:updated',
+  NodeParentUpdated = 'flow:node:parent-updated',
 
   // Edge events
   EdgeAdded = 'flow:edge:added',
@@ -75,6 +76,16 @@ export interface EdgeUpdatedEventData {
   metadata: EdgeMetadata
 }
 
+/** Data for NodeParentUpdated event */
+export interface NodeParentUpdatedEventData {
+  nodeId: string
+  oldParentNodeId?: string
+  newParentNodeId?: string
+  oldPosition?: Position
+  newPosition: Position
+  version: number
+}
+
 /** Data for Node UI events */
 export interface NodeUIEventData {
   nodeId: string
@@ -129,6 +140,7 @@ export interface EventDataMap {
   [FlowEventType.EdgeAdded]: EdgeAddedEventData
   [FlowEventType.EdgeRemoved]: EdgeRemovedEventData
   // [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData
+  [FlowEventType.NodeParentUpdated]: NodeParentUpdatedEventData
   [FlowEventType.NodeUIPositionChanged]: NodeUIPositionChangedEventData
   [FlowEventType.NodeUIDimensionsChanged]: NodeUIDimensionsChangedEventData
   [FlowEventType.NodeUIStyleChanged]: NodeUIEventData

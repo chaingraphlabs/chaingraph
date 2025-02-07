@@ -1,11 +1,32 @@
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
-import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortBoolean, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, NodeRegistry } from '@badaitech/chaingraph-types'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import {
+  ArrayPortPlugin,
+  createBooleanValue,
+  createNumberValue,
+  createStringValue,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { Input, Node } from '../decorator-new'
+import { Port } from '../decorator-new/port.decorator'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 @Node({
   title: 'Scalar Node',
@@ -13,26 +34,34 @@ import 'reflect-metadata'
 })
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString({
-    defaultValue: 'default string',
+  @Port({
+    type: 'string',
+    defaultValue: createStringValue('default string'),
+    minLength: 1,
+    maxLength: 100,
   })
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber({
-    defaultValue: 42,
+  @Port({
+    type: 'number',
+    defaultValue: createNumberValue(42),
+    min: 0,
+    max: 100,
+    integer: true,
   })
   numInput: number = 42
 
   @Input()
-  @PortBoolean({
-    defaultValue: true,
+  @Port({
+    type: 'boolean',
+    defaultValue: createBooleanValue(true),
   })
   boolInput: boolean = true
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -42,7 +71,8 @@ class ScalarNode extends BaseNode {
 
 describe('scalar node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register ports from the new system
+    // registerAllPorts()
     registerNodeTransformers()
   })
 
@@ -55,10 +85,15 @@ describe('scalar node serialization', () => {
     await scalarNode.initialize()
 
     const json = superjson.serialize(scalarNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ScalarNode
+    const parsed = superjson.deserialize(json) as ScalarNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(scalarNode.metadata)
     expect(parsed.status).toEqual(scalarNode.status)
+
+    // Verify port values
+    expect(parsed.strInput).toBe('default string')
+    expect(parsed.numInput).toBe(42)
+    expect(parsed.boolInput).toBe(true)
   })
 })

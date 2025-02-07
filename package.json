@@ -14,13 +14,13 @@
     "node": "22.12.0"
   },
   "scripts": {
-    "dev": "bun run --cwd packages/chaingraph-backend dev",
-    "start": "bun run --cwd packages/chaingraph-backend start",
-    "build": "bun run --cwd packages/chaingraph-backend build",
-    "tsx-backend": "tsx --cwd packages/chaingraph-backend",
+    "clean": "make clean",
+    "build": "make build",
+    "rebuild": "make rebuild",
+    "dev": "make dev",
+    "test": "make test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"
@@ -28,10 +28,11 @@
   "dependencies": {
     "@tanstack/react-query": "^5.64.2",
     "@tanstack/react-query-devtools": "^5.64.2",
-    "@trpc/client": "^11.0.0-rc.700",
-    "@trpc/next": "^11.0.0-rc.700",
-    "@trpc/react-query": "^11.0.0-rc.700",
-    "@trpc/server": "^11.0.0-rc.700",
+    "@trpc/client": "^11.0.0-rc.730",
+    "@trpc/next": "^11.0.0-rc.730",
+    "@trpc/react-query": "^11.0.0-rc.730",
+    "@trpc/server": "^11.0.0-rc.730",
+    "@types/ws": "^8.5.14",
     "decimal.js": "^10.4.3",
     "devalue": "^5.1.1",
     "loglevel": "^1.9.2",
@@ -40,6 +41,7 @@
     "ts-node": "^10.9.2",
     "tslog": "^4.9.3",
     "uuid": "^11.0.4",
+    "ws": "^8.18.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

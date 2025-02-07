@@ -1,4 +1,4 @@
-import type { IPort } from '@chaingraph/types'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type { PortState } from './types'
 import { createEvent } from 'effector'
 

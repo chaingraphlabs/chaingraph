@@ -1,4 +1,4 @@
-import type { Flow } from '@chaingraph/types'
+import type { Flow } from '@badaitech/chaingraph-types'
 import { v4 as uuidv4 } from 'uuid'
 
 /**

@@ -1,16 +1,41 @@
 import type {
   ExecutionContext,
   NodeExecutionResult,
-} from '@chaingraph/types'
-import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Flow, Id, Input, Node, NodeRegistry, Output, PortNumber, PortString, registerPortTransformers } from '@chaingraph/types'
+} from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  Flow,
+  Id,
+  Input,
+  Node,
+  NodeRegistry,
+  Number,
+  Output,
+  String,
+} from '@badaitech/chaingraph-types'
 
-import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { findPort } from '@chaingraph/types/node/ports-traverser'
+import { registerFlowTransformers } from '@badaitech/chaingraph-types/flow/json-transformers'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 // Simple test nodes
 @Node({
@@ -18,19 +43,19 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 })
 class SourceNode extends BaseNode {
   @Input()
-  @PortString()
+  @String()
   @Id('input')
   input: string = 'test'
 
   @Output()
-  @PortString()
+  @String()
   @Id('output')
   output: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     this.output = this.input
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['output', this.output]]),
@@ -43,18 +68,18 @@ class SourceNode extends BaseNode {
 })
 class TargetNode extends BaseNode {
   @Input()
-  @PortString()
+  @String()
   @Id('textInput')
   textInput: string = ''
 
   @Input()
-  @PortNumber()
+  @Number()
   @Id('numberInput')
   numberInput: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -65,7 +90,7 @@ class TargetNode extends BaseNode {
 describe('flow Serialization', () => {
   beforeAll(() => {
     // Register all necessary transformers
-    registerPortTransformers()
+    // registerPortTransformers()
     registerNodeTransformers()
     registerFlowTransformers()
   })
@@ -95,11 +120,11 @@ describe('flow Serialization', () => {
 
     const sourcePort = findPort(
       sourceNode,
-      port => port.config.key === 'output',
+      port => port.getConfig().key === 'output',
     )
     const targetPort = findPort(
       targetNode,
-      port => port.config.key === 'textInput',
+      port => port.getConfig().key === 'textInput',
     )
 
     expect(sourcePort).toBeDefined()
@@ -111,9 +136,9 @@ describe('flow Serialization', () => {
     // Connect nodes
     await flow.connectPorts(
       sourceNode.id,
-      sourcePort?.config.id ?? '',
+      sourcePort?.id ?? '',
       targetNode.id,
-      targetPort?.config.id ?? '',
+      targetPort?.id ?? '',
     )
 
     await flow.validate()
@@ -122,7 +147,7 @@ describe('flow Serialization', () => {
     const serialized = superjson.serialize(flow)
 
     // Deserialize the flow
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
 
     await deserialized.validate()
 
@@ -153,8 +178,8 @@ describe('flow Serialization', () => {
     const edge = Array.from(deserialized.edges.values())[0]
     expect(edge.sourceNode.id).toBe(sourceNode.id)
     expect(edge.targetNode.id).toBe(targetNode.id)
-    expect(edge.sourcePort.config.id).toBe('output')
-    expect(edge.targetPort.config.id).toBe('textInput')
+    expect(edge.sourcePort.id).toBe('output')
+    expect(edge.targetPort.id).toBe('textInput')
   })
 
   it('should handle flow with multiple connected nodes', async () => {
@@ -195,7 +220,7 @@ describe('flow Serialization', () => {
     await flow.validate()
 
     // Deserialize
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
     await deserialized.validate()
 
     // Verify structure
@@ -228,22 +253,22 @@ describe('flow Serialization', () => {
     expect(edges.some(e =>
       e.sourceNode.id === 'source-1'
       && e.targetNode.id === 'target-1'
-      && e.sourcePort.config.id === 'output'
-      && e.targetPort.config.id === 'textInput',
+      && e.sourcePort.id === 'output'
+      && e.targetPort.id === 'textInput',
     )).toBe(true)
 
     expect(edges.some(e =>
       e.sourceNode.id === 'source-1'
       && e.targetNode.id === 'target-2'
-      && e.sourcePort.config.id === 'output'
-      && e.targetPort.config.id === 'textInput',
+      && e.sourcePort.id === 'output'
+      && e.targetPort.id === 'textInput',
     )).toBe(true)
 
     expect(edges.some(e =>
       e.sourceNode.id === 'source-2'
       && e.targetNode.id === 'target-2'
-      && e.sourcePort.config.id === 'output'
-      && e.targetPort.config.id === 'textInput',
+      && e.sourcePort.id === 'output'
+      && e.targetPort.id === 'textInput',
     )).toBe(true)
   })
 
@@ -260,7 +285,7 @@ describe('flow Serialization', () => {
 
     // Serialize and deserialize
     const serialized = superjson.serialize(flow)
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
 
     // Get the deserialized node
     const deserializedSource = deserialized.nodes.get('source') as SourceNode
@@ -276,7 +301,7 @@ describe('flow Serialization', () => {
     })
 
     const serialized = superjson.serialize(flow)
-    const deserialized = superjson.deserialize<Flow>(serialized as SuperJSONResult)
+    const deserialized = superjson.deserialize<Flow>(serialized)
 
     expect(deserialized.nodes.size).toBe(0)
     expect(deserialized.edges.size).toBe(0)

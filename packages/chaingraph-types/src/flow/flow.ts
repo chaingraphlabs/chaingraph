@@ -1,19 +1,20 @@
-import type { IEdge, INode, NodeEvent } from '@chaingraph/types'
+import type { IEdge, INode, NodeEvent } from '@badaitech/chaingraph-types'
 import type {
   FlowEvent,
+  NodeParentUpdatedEventData,
   NodeUIDimensionsChangedEventData,
   NodeUIEventData,
   NodeUIPositionChangedEventData,
-} from '@chaingraph/types/flow/events'
+} from '@badaitech/chaingraph-types/flow/events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
-import { Edge, NodeEventType } from '@chaingraph/types'
+import { Edge, NodeEventType } from '@badaitech/chaingraph-types'
 import {
   FlowEventType,
   newEvent,
-} from '@chaingraph/types/flow/events'
+} from '@badaitech/chaingraph-types/flow/events'
 
-import { EventQueue } from '@chaingraph/types/utils/event-queue'
+import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { v4 as uuidv4 } from 'uuid'
 
 export class Flow implements IFlow {
@@ -21,6 +22,9 @@ export class Flow implements IFlow {
   readonly metadata: FlowMetadata
   readonly nodes: Map<string, INode>
   readonly edges: Map<string, IEdge>
+
+  // TODO: store nodes as adjacency list
+
   // TODO: add known object types schemas
 
   // private eventEmitter = new EventEmitter()
@@ -247,7 +251,7 @@ export class Flow implements IFlow {
    * Emit a flow event
    * @param event The event to emit
    */
-  private emitEvent<T extends FlowEvent>(event: T): Promise<Awaited<void>[]> {
+  private emitEvent<T extends FlowEvent>(event: T): Promise<void> {
     return this.eventQueue.publish(event)
   }
 
@@ -290,6 +294,26 @@ export class Flow implements IFlow {
             this.id,
             this.mapNodeUIEventToFlowEvent(nodeEvent.type),
             nodeUIPositionEventData,
+          )
+        }
+        break
+
+      case NodeEventType.ParentChange:
+        {
+          const nodeUpdatedEventData: NodeParentUpdatedEventData = {
+            nodeId: node.id,
+            oldParentNodeId: (nodeEvent as any).oldParentNodeId,
+            newParentNodeId: (nodeEvent as any).newParentNodeId,
+            oldPosition: (nodeEvent as any).oldPosition,
+            newPosition: (nodeEvent as any).newPosition,
+            version: nodeEvent.version,
+          }
+
+          flowEvent = newEvent(
+            this.getNextEventIndex(),
+            this.id,
+            this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+            nodeUpdatedEventData,
           )
         }
         break
@@ -349,6 +373,8 @@ export class Flow implements IFlow {
    */
   private mapNodeUIEventToFlowEvent(nodeEventType: NodeEventType): FlowEventType {
     switch (nodeEventType) {
+      case NodeEventType.ParentChange:
+        return FlowEventType.NodeParentUpdated
       case NodeEventType.UIPositionChange:
         return FlowEventType.NodeUIPositionChanged
       case NodeEventType.UIDimensionsChange:

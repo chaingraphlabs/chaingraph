@@ -1,4 +1,4 @@
-import type { EdgeMetadata } from '@chaingraph/types'
+import type { EdgeMetadata } from '@badaitech/chaingraph-types'
 
 export interface EdgeData {
   flowId: string

@@ -2,23 +2,22 @@ import type {
   AnyPortConfig,
   ArrayPortConfig,
   EnumPortConfig,
+  IObjectSchema,
+  IPortConfig,
   ObjectPortConfig,
-  ObjectSchema,
-  PortConfig,
-  StreamInputPortConfig,
-  StreamOutputPortConfig,
-} from '@chaingraph/types'
-import type { INode } from './interface'
-import { AnyPort, ArrayPort, BooleanPort, EnumPort, getOrCreateNodeMetadata, NumberPort, ObjectPort, StreamInputPort, StreamOutputPort, StringPort,
-} from '@chaingraph/types'
+  StreamPortConfig,
+} from '@badaitech/chaingraph-types/port/base'
 
-import Decimal from 'decimal.js'
-// For generating UUIDs.
+import type { INode } from './interface'
+import {
+  getOrCreateNodeMetadata,
+} from '@badaitech/chaingraph-types/node/decorator-new/getOrCreateNodeMetadata'
+import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
 import { v7 as uuidv7 } from 'uuid'
 
 export interface Context {
   nodeId: string
-  parentPortConfig: PortConfig | null
+  parentPortConfig: IPortConfig | null
   propertyKey: string
   propertyValue: any
 }
@@ -37,12 +36,12 @@ export class PortConfigProcessor {
       for (const [propertyKey, portConfig] of nodeMetadata.portsConfig.entries()) {
         const processedPortConfig = this.processPortConfig(
           // { ...portConfig }, // Clone to avoid mutating original
-          this.deepCopy(portConfig), // Clone to avoid mutating original
+          deepCopy(portConfig), // Clone to avoid mutating original
           {
             nodeId,
             parentPortConfig: null,
             propertyKey,
-            propertyValue: (node as any)[propertyKey],
+            propertyValue: deepCopy((node as any)[propertyKey]),
           },
         )
 
@@ -59,34 +58,32 @@ export class PortConfigProcessor {
    * @returns The processed port configuration.
    */
   private processPortConfig(
-    portConfig: PortConfig,
+    portConfig: IPortConfig,
     context: Context,
-  ): PortConfig {
+  ): IPortConfig {
     // Assign basic fields and get a new portConfig
     portConfig = this.assignBasicFields(portConfig, context)
 
     // Process nested configurations based on port kind
-    if (ObjectPort.isObjectPortConfig(portConfig)) {
+    if (portConfig.type === 'object') {
       portConfig = this.processObjectPortConfig(portConfig, context)
-    } else if (ArrayPort.isArrayPortConfig(portConfig)) {
+    } else if (portConfig.type === 'array') {
       portConfig = this.processArrayPortConfig(portConfig, context)
-    } else if (EnumPort.isEnumPortConfig(portConfig)) {
+    } else if (portConfig.type === 'enum') {
       portConfig = this.processEnumPortConfig(portConfig, context)
-    } else if (AnyPort.isAnyPortConfig(portConfig)) {
+    } else if (portConfig.type === 'any') {
       portConfig = this.processAnyPortConfig(portConfig, context)
-    } else if (StreamInputPort.isStreamInputPortConfig(portConfig)) {
-      portConfig = this.processStreamInputPortConfig(portConfig, context)
-    } else if (StreamOutputPort.isStreamOutputPortConfig(portConfig)) {
-      portConfig = this.processStreamOutputPortConfig(portConfig, context)
+    } else if (portConfig.type === 'stream') {
+      portConfig = this.processStreamPortConfig(portConfig, context)
     } else if (
-      StringPort.isStringPortConfig(portConfig)
-      || NumberPort.isNumberPortConfig(portConfig)
-      || BooleanPort.isBooleanPortConfig(portConfig)
+      portConfig.type === 'string'
+      || portConfig.type === 'number'
+      || portConfig.type === 'boolean'
     ) {
       // For primitive port configs, no further processing is needed
       // All necessary fields have been assigned in 'assignBasicFields'
     } else {
-      throw new Error(`PortConfigProcessor: unsupported port kind: ${(portConfig as any).kind}`)
+      throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
     }
 
     return portConfig
@@ -99,9 +96,9 @@ export class PortConfigProcessor {
    * @returns A new port configuration with basic fields assigned.
    */
   private assignBasicFields(
-    portConfig: PortConfig,
+    portConfig: IPortConfig,
     context: Context,
-  ): PortConfig {
+  ): IPortConfig {
     const { nodeId, parentPortConfig, propertyKey, propertyValue } = context
 
     // Create a new object to avoid mutation
@@ -132,12 +129,19 @@ export class PortConfigProcessor {
 
     // Assign key
     if (!newPortConfig.key) {
-      newPortConfig.key = newPortConfig.title || newPortConfig.id
+      newPortConfig.key = propertyKey ?? newPortConfig.title ?? newPortConfig.id
     }
 
     // Assign defaultValue
-    if (newPortConfig.defaultValue === undefined && propertyKey && propertyValue !== undefined) {
-      newPortConfig.defaultValue = this.deepCopy(propertyValue)
+    // TODO: assign defaultValue
+    // if (newPortConfig.defaultValue === undefined && propertyKey && propertyValue !== undefined) {
+    //   newPortConfig.defaultValue = deepCopy(propertyValue)
+    // }
+
+    // If the node field has an explicit value, override the defaultValue from the config.
+    if (propertyValue !== undefined) {
+      // Log warning if needed (optional)
+      newPortConfig.defaultValue = deepCopy(propertyValue)
     }
 
     // Assign parentId
@@ -159,57 +163,11 @@ export class PortConfigProcessor {
     }
 
     // Assign optional
-    if (newPortConfig.optional === undefined && newPortConfig.defaultValue === undefined) {
-      newPortConfig.optional = true
-    }
+    // if (newPortConfig.optional === undefined && newPortConfig.defaultValue === undefined) {
+    //   newPortConfig.optional = true
+    // }
 
     return newPortConfig
-  }
-
-  private deepCopy(obj: any): any {
-    let copy
-
-    // Handle the 3 simple types, and null or undefined
-    if (obj == null || typeof obj != 'object')
-      return obj
-
-    // Handle Date
-    if (obj instanceof Date) {
-      copy = new Date()
-      copy.setTime(obj.getTime())
-      return copy
-    }
-
-    // Handle Array
-    if (Array.isArray(obj)) {
-      copy = []
-      for (let i = 0, len = obj.length; i < len; i++) {
-        copy[i] = this.deepCopy(obj[i])
-      }
-      return copy
-    }
-
-    if (Decimal.isDecimal(obj)) {
-      return new Decimal(obj)
-    }
-
-    if (typeof obj === 'number') {
-      return obj
-    }
-
-    // Handle Object
-    if (obj instanceof Object) {
-      copy = {}
-      for (const attr in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, attr))
-          (copy as any)[attr] = this.deepCopy(obj[attr])
-      }
-
-      // Copy type information
-      return copy
-    }
-
-    throw new Error('Unable to copy obj! Its type isn\'t supported.')
   }
 
   /**
@@ -220,19 +178,17 @@ export class PortConfigProcessor {
    * @returns A new processed ObjectPortConfig.
    */
   private processObjectPortConfig(
-    portConfig: ObjectPortConfig<any>,
+    portConfig: ObjectPortConfig,
     context: Context,
-  ): ObjectPortConfig<any> {
-    if (!ObjectPort.isObjectPortConfig(portConfig)) {
-      throw new Error(`Invalid object port configuration for property '${context.propertyKey}'.`)
-    }
+  ): ObjectPortConfig {
     const { propertyValue, nodeId } = context
 
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
 
     if (!newPortConfig.schema || !newPortConfig.schema.properties) {
       // Infer schema from the object's properties decorated with PortDecorator
-      const objectInstance = propertyValue
+      // const objectInstance = propertyValue ?? (newPortConfig.defaultValue ?? {})
+      const objectInstance = propertyValue ?? (newPortConfig.defaultValue)
       if (!objectInstance) {
         throw new Error(`Object instance for property '${context.propertyKey}' is not available on the node.`)
       }
@@ -243,10 +199,10 @@ export class PortConfigProcessor {
       }
 
       // Build the object schema
-      const schema: ObjectSchema = {
+      const schema: IObjectSchema = {
         id: objectMetadata?.id ? (objectMetadata.id as string) : this.generateSortableUUID(),
         type: objectMetadata.type,
-        properties: {} as { [key: string]: PortConfig },
+        properties: {} as Record<string, IPortConfig>,
       }
 
       for (const [nestedPropertyKey, nestedPortConfig] of objectMetadata.portsConfig.entries()) {
@@ -260,18 +216,18 @@ export class PortConfigProcessor {
     }
 
     // Process each property in the schema
-    const processedProperties: { [key: string]: PortConfig } = {}
+    const processedProperties: { [key: string]: IPortConfig } = {}
 
     for (const [key, nestedPortConfig] of Object.entries(newPortConfig.schema.properties)) {
       const propertyContext: Context = {
         nodeId,
         parentPortConfig: newPortConfig,
         propertyKey: key,
-        propertyValue: propertyValue?.[key],
+        propertyValue: deepCopy(propertyValue?.[key]),
       }
 
-      if (ObjectPort.isObjectPortConfig(nestedPortConfig)) {
-        propertyContext.propertyValue = this.deepCopy(portConfig.defaultValue?.[key])
+      if (nestedPortConfig.type === 'object') {
+        propertyContext.propertyValue = deepCopy(portConfig.defaultValue?.[key])
       }
 
       processedProperties[key] = this.processPortConfig(
@@ -298,33 +254,34 @@ export class PortConfigProcessor {
    * @returns A new processed ArrayPortConfig.
    */
   private processArrayPortConfig(
-    portConfig: ArrayPortConfig<any>,
+    portConfig: ArrayPortConfig,
     context: Context,
-  ): ArrayPortConfig<any> {
-    let newPortConfig = { ...portConfig } // Clone to avoid mutation
+  ): ArrayPortConfig {
+    let newPortConfig: ArrayPortConfig = { ...portConfig } as ArrayPortConfig // Clone to avoid mutation
 
-    const elementConfig = newPortConfig.elementConfig
-    if (!elementConfig || !elementConfig.kind) {
+    const itemConfig = newPortConfig.itemConfig
+    if (!itemConfig || !itemConfig.type) {
       throw new Error(`Element kind or config for array port '${context.propertyKey}' is not defined.`)
     }
 
-    if (typeof elementConfig === 'object') {
+    if (typeof itemConfig === 'object') {
       const processedElementConfig = this.processPortConfig(
-        // this.deepCopy(elementConfig),
-        elementConfig,
+        // deepCopy(elementConfig),
+        itemConfig,
         {
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
           // TODO: needs to decide how to handle id!!!
-          // propertyKey: elementConfig.id ? `[{${elementConfig.id}}]` : `[{i}]`,
-          propertyKey: elementConfig.id,
-          propertyValue: newPortConfig.elementConfig,
+          // propertyKey: itemConfig.id ? `${newPortConfig.key}.[{${itemConfig.id}}]` : `[{i}]`,
+          // propertyKey: itemConfig.id ?? this.generateSortableUUID(),
+          propertyKey: itemConfig.key ?? newPortConfig.key ?? itemConfig.id ?? this.generateSortableUUID(),
+          propertyValue: deepCopy(newPortConfig.itemConfig?.defaultValue),
         },
       )
 
       newPortConfig = {
         ...newPortConfig,
-        elementConfig: processedElementConfig,
+        itemConfig: processedElementConfig,
       }
     } else {
       throw new TypeError(`Invalid elementConfig for array port '${context.propertyKey}'.`)
@@ -341,9 +298,9 @@ export class PortConfigProcessor {
    * @returns A new processed EnumPortConfig.
    */
   private processEnumPortConfig(
-    portConfig: EnumPortConfig<any>,
+    portConfig: EnumPortConfig,
     context: Context,
-  ): EnumPortConfig<any> {
+  ): EnumPortConfig {
     let newPortConfig = { ...portConfig } // Clone to avoid mutation
 
     if (newPortConfig.options && newPortConfig.options.length > 0) {
@@ -357,7 +314,7 @@ export class PortConfigProcessor {
               id: '',
             },
             propertyKey: option.id || this.generateSortableUUID(),
-            propertyValue: option,
+            propertyValue: deepCopy(option.defaultValue),
           },
         )
       })
@@ -384,9 +341,9 @@ export class PortConfigProcessor {
     const newPortConfig = { ...portConfig }
 
     // If connectedPortConfig is defined, process it
-    if (newPortConfig.connectedPortConfig) {
-      newPortConfig.connectedPortConfig = this.processPortConfig(
-        { ...newPortConfig.connectedPortConfig },
+    if (newPortConfig.underlyingType) {
+      newPortConfig.underlyingType = this.processPortConfig(
+        { ...newPortConfig.underlyingType },
         {
           nodeId: context.nodeId,
           parentPortConfig: newPortConfig,
@@ -405,52 +362,23 @@ export class PortConfigProcessor {
    * @param context The processing context.
    * @returns The processed StreamInputPortConfig.
    */
-  private processStreamInputPortConfig(
-    portConfig: StreamInputPortConfig<any>,
+  private processStreamPortConfig(
+    portConfig: StreamPortConfig,
     context: Context,
-  ): StreamInputPortConfig<any> {
+  ): StreamPortConfig {
     const newPortConfig = { ...portConfig }
 
-    if (!newPortConfig.valueType) {
+    if (!newPortConfig.itemConfig) {
       throw new Error(`StreamInputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
     }
 
-    newPortConfig.valueType = this.processPortConfig(
-      { ...newPortConfig.valueType },
+    newPortConfig.itemConfig = this.processPortConfig(
+      { ...newPortConfig.itemConfig },
       {
         nodeId: context.nodeId,
         parentPortConfig: newPortConfig,
         propertyKey: 'value',
-        propertyValue: null,
-      },
-    )
-
-    return newPortConfig
-  }
-
-  /**
-   * Processes a StreamOutputPortConfig.
-   * @param portConfig The StreamOutputPortConfig to process.
-   * @param context The processing context.
-   * @returns The processed StreamOutputPortConfig.
-   */
-  private processStreamOutputPortConfig(
-    portConfig: StreamOutputPortConfig<any>,
-    context: Context,
-  ): StreamOutputPortConfig<any> {
-    const newPortConfig = { ...portConfig }
-
-    if (!newPortConfig.valueType) {
-      throw new Error(`StreamOutputPortConfig must have a valueType defined for port '${context.propertyKey}'.`)
-    }
-
-    newPortConfig.valueType = this.processPortConfig(
-      { ...newPortConfig.valueType },
-      {
-        nodeId: context.nodeId,
-        parentPortConfig: newPortConfig,
-        propertyKey: 'value',
-        propertyValue: null,
+        propertyValue: newPortConfig.itemConfig.defaultValue,
       },
     )
 

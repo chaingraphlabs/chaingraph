@@ -1,4 +1,5 @@
 import type { EdgeData, EdgeError } from './types'
+import { clearActiveFlow } from '@/store'
 import { combine, createStore } from 'effector'
 import { addEdgeFx, removeEdgeFx } from './effects'
 import {
@@ -21,6 +22,7 @@ export const $edges = createStore<EdgeData[]>([])
     edge => edge.edgeId !== event.edgeId,
   ))
   .reset(resetEdges)
+  .reset(clearActiveFlow)
 
 // Loading state
 export const $isEdgesLoading = createStore(false)

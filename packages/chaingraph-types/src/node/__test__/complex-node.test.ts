@@ -1,48 +1,57 @@
-import type { SuperJSONResult } from 'superjson/dist/types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   DefaultValue,
   Description,
-  type ExecutionContext,
   Id,
   Input,
   Metadata,
-  MultiChannel,
   Name,
   Node,
-  type NodeExecutionResult,
-  NodeRegistry,
-  Optional,
+  Number,
+  NumberEnum,
+  ObjectSchema,
   Output,
   Port,
   PortArray,
   PortArrayNested,
   PortArrayNumber,
   PortArrayObject,
+  PortArrayString,
   PortEnum,
   PortEnumFromNative,
   PortEnumFromObject,
-  PortKind,
-  PortNumber,
-  PortNumberEnum,
   PortObject,
-  PortObjectSchema,
-  PortStreamInput,
-  PortStreamOutput,
-  PortString,
-  PortStringArray,
-  PortStringEnum,
-  Required,
+  PortStream,
+  String,
+  StringEnum,
   Title,
-} from '@chaingraph/types'
-
-import { registerPortTransformers } from '@chaingraph/types'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
-import Decimal from 'decimal.js'
+} from '@badaitech/chaingraph-types'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { MultiChannel } from '@badaitech/chaingraph-types/port/channel'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 enum Direction {
   Up = 'Up',
@@ -51,15 +60,19 @@ enum Direction {
   Right = 'Right',
 }
 
-@PortObjectSchema()
+@ObjectSchema()
 export class UserStatus {
-  @PortString({
-    defaultValue: '',
-  })
+  @String()
   status: string = ''
 
   constructor(status: string = '') {
     this.status = status
+  }
+
+  toJSON() {
+    return {
+      status: this.status,
+    }
   }
 }
 
@@ -73,30 +86,35 @@ const userStatusOptions = {
 // Create a mapping from ids to option values
 type UserStatusOptionId = keyof typeof userStatusOptions
 
-@PortObjectSchema({
+@ObjectSchema({
   description: 'Test user address schema',
 })
 export class TestUserAddress {
-  @PortString({
+  @String({
     description: 'Street of the address',
-    defaultValue: '',
   })
   street?: string = ''
 
-  @PortString({
+  @String({
     description: 'City of the address',
-    defaultValue: '',
   })
-  city?: string
+  city?: string = ''
 
-  @PortString({
+  @String({
     description: 'State of the address',
-    defaultValue: '',
   })
   country?: string = 'EU'
+
+  toJSON() {
+    return {
+      street: this.street,
+      city: this.city,
+      country: this.country,
+    }
+  }
 }
 
-@PortObjectSchema({
+@ObjectSchema({
   description: 'Test user object schema',
 })
 export class TestUserObject {
@@ -106,27 +124,25 @@ export class TestUserObject {
     }
   }
 
-  @PortString({
+  @String({
     description: 'Username of the user',
   })
   username: string = ''
 
-  @PortString({
+  @String({
     description: 'Name of the user',
   })
   name: string = ''
 
-  @PortNumber({
+  @Number({
     description: 'Age of the user',
-    isNumber: true,
   })
   age: number = 0
 
-  @PortNumber({
+  @Number({
     description: 'Age of the user decimal',
-    isNumber: false,
   })
-  ageDecimal: Decimal = new Decimal(0)
+  ageDecimal: number = 0
 
   @PortObject({
     description: 'Address of the user',
@@ -138,12 +154,23 @@ export class TestUserObject {
   @PortArray({
     title: 'Emails',
     description: 'Emails of the user',
-    elementConfig: {
-      kind: PortKind.String,
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
   })
   emails: string[] = []
+
+  toJSON() {
+    return {
+      username: this.username,
+      name: this.name,
+      age: this.age,
+      ageDecimal: this.ageDecimal,
+      address: this.address,
+      emails: this.emails,
+    }
+  }
 }
 
 @Node({
@@ -154,7 +181,6 @@ export class UserProfileNode extends BaseNode {
   // Case for infer schema from field value
   @Input() @PortObject({
     schema: TestUserObject,
-    defaultValue: new TestUserObject(),
   })
   user1: TestUserObject = new TestUserObject()
 
@@ -163,49 +189,44 @@ export class UserProfileNode extends BaseNode {
     defaultValue: new TestUserObject(),
     schema: TestUserObject,
   })
-  user2?: TestUserObject
+  user2?: TestUserObject = new TestUserObject()
 
-  // Case for infer schema from shema class
-  @Input() @PortObject({
-    schema: TestUserObject,
-    defaultValue: new TestUserObject(),
-  })
-  user3?: TestUserObject
-
-  // Case for infer schema from kind field
+  // Case for infer schema from type field
   @Input() @Port({
-    kind: TestUserObject,
+    type: 'object',
+    schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
-  user4?: TestUserObject
+  user4?: TestUserObject = new TestUserObject()
 
   // Case for infer schema from decorator default value
   @Input() @PortObject({
     schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
-  user5?: TestUserObject
+  user5?: TestUserObject = new TestUserObject()
 
   // Case for infer schema from decorator default value
   @Input() @PortObject({
-    schema: TestUserObject,
+    schema: TestUserAddress,
     defaultValue: new TestUserAddress(),
   })
-  address?: TestUserAddress
+  address?: TestUserAddress = new TestUserAddress()
 
   @Input() @PortArray({
     defaultValue: [],
-    elementConfig: {
-      kind: TestUserObject,
+    itemConfig: {
+      type: 'object',
+      schema: TestUserObject,
       defaultValue: new TestUserObject(),
     },
   })
-  friends?: TestUserObject[]
+  friends?: TestUserObject[] = []
 
   @Input() @PortArray({
     defaultValue: [],
-    elementConfig: {
-      kind: PortKind.Number,
+    itemConfig: {
+      type: 'number',
       defaultValue: 0,
     },
   })
@@ -213,8 +234,8 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [],
-    elementConfig: {
-      kind: PortKind.String,
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
   })
@@ -222,11 +243,11 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [],
-    elementConfig: {
+    itemConfig: {
       defaultValue: [],
-      kind: PortKind.Array,
-      elementConfig: {
-        kind: PortKind.Number,
+      type: 'array',
+      itemConfig: {
+        type: 'number',
         defaultValue: 0,
       },
     },
@@ -235,20 +256,20 @@ export class UserProfileNode extends BaseNode {
 
   @Output() @PortArray({
     defaultValue: [[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
-    elementConfig: {
+    itemConfig: {
       id: 'z',
       key: 'Z',
-      kind: PortKind.Array,
+      type: 'array',
       defaultValue: [],
-      elementConfig: {
+      itemConfig: {
         id: 'y',
         key: 'Y',
-        kind: PortKind.Array,
+        type: 'array',
         defaultValue: [],
-        elementConfig: {
+        itemConfig: {
           id: 'x',
           key: 'X',
-          kind: PortKind.Number,
+          type: 'number',
           defaultValue: 0,
         },
       },
@@ -257,12 +278,12 @@ export class UserProfileNode extends BaseNode {
   numbers3d: number[][][] = []
 
   @Output() @PortArray({
-    defaultValue: [],
-    elementConfig: {
-      kind: PortKind.Array,
+    itemConfig: {
+      type: 'array',
       defaultValue: [],
-      elementConfig: {
-        kind: TestUserObject,
+      itemConfig: {
+        type: 'object',
+        schema: TestUserObject,
         defaultValue: new TestUserObject(),
       },
     },
@@ -272,59 +293,71 @@ export class UserProfileNode extends BaseNode {
   @PortEnum({
     defaultValue: 'red',
     options: [
-      { kind: PortKind.String, id: 'red', defaultValue: 'Red' },
-      { kind: PortKind.String, id: 'green', defaultValue: 'Green' },
-      { kind: PortKind.String, id: 'blue', defaultValue: 'Blue' },
+      { type: 'string', id: 'red', defaultValue: 'Red' },
+      { type: 'string', id: 'green', defaultValue: 'Green' },
+      { type: 'string', id: 'blue', defaultValue: 'Blue' },
     ],
   })
   @Output()
   enumColors = 'red'
 
   @Output()
-  @Output() @PortEnum({
+  @PortEnum({
     defaultValue: 'john',
     options: [
-      { kind: TestUserObject, id: 'john', defaultValue: new TestUserObject({ username: 'john' }) },
-      { kind: TestUserObject, id: 'jane', defaultValue: new TestUserObject({ username: 'jane' }) },
-      { kind: TestUserObject, id: 'bob', defaultValue: new TestUserObject({ username: 'bob' }) },
+      {
+        type: 'object',
+        schema: TestUserObject,
+        id: 'john',
+        defaultValue: new TestUserObject({ username: 'john' }),
+      },
+      {
+        type: 'object',
+        schema: TestUserObject,
+        id: 'jane',
+        defaultValue: new TestUserObject({ username: 'jane' }),
+      },
+      {
+        type: 'object',
+        schema: TestUserObject,
+        id: 'bob',
+        defaultValue: new TestUserObject({ username: 'bob' }),
+      },
     ],
   })
   enumUsers = 'john'
 
-  @Input() @PortStreamInput({
-    defaultValue: new MultiChannel<string>(),
-    valueType: {
-      kind: PortKind.String,
+  @Input() @PortStream({
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
   })
   inputStream: MultiChannel<string> = new MultiChannel<string>()
 
-  @Output() @PortStreamOutput({
-    defaultValue: new MultiChannel<string>(),
-    valueType: {
-      kind: PortKind.String,
+  @Output() @PortStream({
+    itemConfig: {
+      type: 'string',
       defaultValue: '',
     },
   })
   outputStream: MultiChannel<string> = new MultiChannel<string>()
 
-  @Output() @PortStreamOutput({
-    defaultValue: new MultiChannel<TestUserObject>(),
-    valueType: {
-      kind: TestUserObject,
+  @Output() @PortStream({
+    itemConfig: {
+      type: 'object',
+      schema: TestUserObject,
       defaultValue: new TestUserObject(),
     },
   })
   outputStreamUsers: MultiChannel<TestUserObject> = new MultiChannel<TestUserObject>()
 
-  @Output() @PortStreamOutput({
-    defaultValue: new MultiChannel<string[]>(),
-    valueType: {
-      kind: PortKind.Array,
+  @Output() @PortStream({
+    itemConfig: {
+      type: 'array',
       defaultValue: [],
-      elementConfig: {
-        kind: PortKind.String,
+      itemConfig: {
+        type: 'string',
         defaultValue: '',
       },
     },
@@ -332,7 +365,7 @@ export class UserProfileNode extends BaseNode {
   outputStreamBuffered = new MultiChannel<string[]>()
 
   @Output()
-  @PortStringArray()
+  @PortArrayString()
   simpleArray?: string[]
 
   @Output()
@@ -340,33 +373,31 @@ export class UserProfileNode extends BaseNode {
   numberArray?: number[]
 
   @Output()
-  @PortArrayObject(TestUserObject, {
-    kind: PortKind.Array,
-    defaultValue: [],
-  })
-  simpleObjectArray?: TestUserObject[]
+  @PortArrayObject(TestUserObject)
+  simpleObjectArray?: TestUserObject[] = []
 
   @Output()
-  @PortArrayNested(2, { kind: PortKind.String, defaultValue: '' })
+  @PortArrayNested(2, { type: 'string', defaultValue: '' })
   simple2dArray?: string[][]
 
   @Output()
-  @PortArrayNested(3, { kind: PortKind.Number, defaultValue: 0 })
+  @PortArrayNested(3, { type: 'number', defaultValue: 0 })
   numbers3d_2?: number[][][]
 
   @Output()
   @PortArrayNested(2, {
-    kind: TestUserObject,
+    type: 'object',
+    schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })
   user2DArray?: TestUserObject[][]
 
   @Output()
-  @PortStringEnum(['Red', 'Green', 'Blue'])
+  @StringEnum(['Red', 'Green', 'Blue'])
   colorEnum: string = 'Red' // This will hold the selected id of the option
 
   @Output()
-  @PortNumberEnum([1, 2, 3])
+  @NumberEnum([1, 2, 3])
   numberEnum: string = '1' // Holds the id (string) of the selected option
 
   @Output()
@@ -381,7 +412,7 @@ export class UserProfileNode extends BaseNode {
     this.colorEnum = '12'
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -394,37 +425,29 @@ export class UserProfileNode extends BaseNode {
 })
 export class AdvancedNode extends BaseNode {
   @Input()
-  @Required()
   @Name('Username')
   @Description('Enter your username')
-  @PortString({
-    defaultValue: '',
-  })
+  @String({})
   username: string = ''
 
   @Input()
-  @Optional()
   @Name('Password')
   @Description('Enter your password')
-  @PortString({
+  @String({
     defaultValue: '',
   })
   password?: string
 
   @Input()
   @DefaultValue(0)
-  @PortNumber({
-    defaultValue: 0,
-  })
+  @Number({})
   progress: number = 0
 
   @Output()
   @Id('user_status')
   @Title('User Status')
   @Metadata('ui:widget', 'status-indicator')
-  @PortString({
-    defaultValue: 'active',
-  })
+  @String({})
   userStatus: string = 'active'
 
   execute(context: ExecutionContext): Promise<NodeExecutionResult> {
@@ -434,21 +457,15 @@ export class AdvancedNode extends BaseNode {
 
 describe('complex node', () => {
   beforeAll(() => {
-    registerPortTransformers()
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('instantiates a user profile node', async () => {
     const testNode = new UserProfileNode('test-node')
     await testNode.initialize()
 
-    // const json = superjson.stringify(testNode)
     const json = superjson.serialize(testNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as UserProfileNode
+    const parsed = superjson.deserialize(json) as UserProfileNode
 
     expect(parsed).toBeDefined()
 
@@ -456,7 +473,7 @@ describe('complex node', () => {
     for (const [key, value] of testNode.metadata.portsConfig!.entries()) {
       const config = parsed.metadata.portsConfig!.get(key)
       expect(config).toBeDefined()
-      expect(config).toEqual(value)
+      expect(config).toStrictEqual(value)
     }
 
     expect(parsed.metadata).toEqual(testNode.metadata)

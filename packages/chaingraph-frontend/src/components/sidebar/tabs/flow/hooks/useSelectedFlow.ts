@@ -1,5 +1,5 @@
-import type { FlowMetadata } from '@chaingraph/types'
-import { trpc } from '@chaingraph/frontend/api/trpc/client'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import { trpc } from '@badaitech/chaingraph-frontend/api/trpc/client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'chaingraph:selected-flow'

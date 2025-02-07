@@ -1,5 +1,5 @@
 import type { FlowSubscriptionError, FlowSubscriptionStatus } from '@/store'
-import type { FlowMetadata } from '@chaingraph/types'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { createEvent } from 'effector'
 
 // Flow list events

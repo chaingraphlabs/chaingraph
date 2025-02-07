@@ -1,43 +1,55 @@
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
-import { nodeRegistry } from '@chaingraph/nodes/registry'
-import {
-  BaseNode,
-  type ExecutionContext,
-  ExecutionStatus,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  Output,
-  PortString,
-} from '@chaingraph/types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeExecutionStatus, Output, Port, String } from '@badaitech/chaingraph-types'
+import { HumanMessage, SystemMessage } from '@langchain/core/messages'
+import { ChatOpenAI } from '@langchain/openai'
+import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
   title: 'LLM Prompt',
   description: 'Sends prompt to Language Model and returns response',
   category: NODE_CATEGORIES.AI,
   tags: ['ai', 'llm', 'prompt', 'gpt'],
-}, nodeRegistry)
+})
 export class LLMPromptNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Prompt',
     description: 'Input prompt for the language model',
   })
   prompt: string = ''
 
   @Output()
-  @PortString({
-    title: 'Response',
-    description: 'Language model response',
+  // @PortString({
+  //   title: 'Response',
+  //   description: 'Language model response',
+  // })
+  @Port({
+    type: 'string',
   })
   response: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Mock implementation
-    this.response = `AI Response to: ${this.prompt}`
+
+    const llm = new ChatOpenAI({
+      model: 'gpt-4o-mini',
+      temperature: 0,
+    })
+
+    const messages = [
+      new SystemMessage('Translate the following from English into Italian'),
+      new HumanMessage(this.prompt),
+    ]
+
+    const result = await llm.invoke(messages)
+
+    this.response = result.content.toString()
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['response', this.response]]),

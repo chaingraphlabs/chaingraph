@@ -1,28 +1,38 @@
-import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import type {
   DefaultEdgeOptions,
   NodeTypes,
 } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
 import { useDnd } from '@/components/dnd'
-import { NodeContextMenu } from '@/components/flow/context-menu/NodeContextMenu.tsx'
+import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeContextMenu.tsx'
+import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel.tsx'
+import { StyledControls } from '@/components/flow/components/controls/StyledControls.tsx'
+import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState.tsx'
+import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus.tsx'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks.ts'
 import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges.ts'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop.ts'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
 import { ZoomContext } from '@/providers/ZoomProvider'
-import { $activeFlowMetadata, addNodeToFlow, useFlowSubscription } from '@/store'
-import { nodeRegistry } from '@chaingraph/nodes'
+import {
+  $activeFlowMetadata,
+  $flowSubscriptionState,
+  addNodeToFlow,
+  useFlowSubscription,
+} from '@/store'
+import { $executionState, useExecutionSubscription } from '@/store/execution'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
 import {
   Background,
-  Controls,
   ReactFlow,
   useReactFlow,
 } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
+import GroupNode from './nodes/GroupNode/GroupNode'
 import '@xyflow/react/dist/style.css'
 
 // Configuration constants
@@ -38,7 +48,33 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 
 const nodeTypes: NodeTypes = {
   chaingraphNode: ChaingraphNode,
-  // chaingraphNodeTest: ChaingraphCustomNode,
+  groupNode: GroupNode,
+}
+
+function ExecutionComponent() {
+  const { status: executionStatus } = useUnit($executionState)
+  const { isSubscribed, isConnecting, status: subscriptionStatus, error } = useExecutionSubscription()
+
+  return (
+    <div>
+      <p>
+        Execution Status:
+        {executionStatus}
+      </p>
+      <p>
+        Subscription Status:
+        {subscriptionStatus}
+      </p>
+      {isSubscribed && <p>Subscription is active</p>}
+      {isConnecting && <p>Connecting...</p>}
+      {error && (
+        <p>
+          Error:
+          {error.message}
+        </p>
+      )}
+    </div>
+  )
 }
 
 function Flow() {
@@ -58,6 +94,7 @@ function Flow() {
   const nodes = useFlowNodes()
   const edges = useFlowEdges()
   const activeFlow = useUnit($activeFlowMetadata)
+  const subscriptionState = useUnit($flowSubscriptionState)
 
   // const edges = useFlowEdges()
 
@@ -72,6 +109,7 @@ function Flow() {
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStop,
   } = useFlowCallbacks()
 
   // Register node types
@@ -173,6 +211,9 @@ function Flow() {
 
   // Handle context menu
   const onContextMenu = useCallback((event: React.MouseEvent) => {
+    if (!activeFlow) {
+      return
+    }
     // Prevent default context menu
     event.preventDefault()
 
@@ -184,7 +225,7 @@ function Flow() {
 
     console.log('Context menu opening at:', position)
     setContextMenu(position)
-  }, [])
+  }, [activeFlow])
 
   // Handle node selection
   const handleNodeSelect = useCallback((nodeMeta: NodeMetadata, categoryMetadata: CategoryMetadata) => {
@@ -196,7 +237,7 @@ function Flow() {
       y: contextMenu.y,
     })
 
-    const node = nodeRegistry.createNode(nodeMeta.type, 'new')
+    const node = NodeRegistry.getInstance().createNode(nodeMeta.type, 'new')
 
     // Dispatch addNodeToFlow event
     addNodeToFlow({
@@ -220,6 +261,13 @@ function Flow() {
       ref={reactFlowWrapper}
       onContextMenu={onContextMenu}
     >
+      <div className="absolute top-4 right-4 z-50">
+        <SubscriptionStatus
+          status={subscriptionState.status}
+          className="shadow-lg"
+        />
+      </div>
+
       <ReactFlow
         nodes={nodes}
         nodeTypes={nodeTypes}
@@ -237,6 +285,7 @@ function Flow() {
         // onReconnectStart={onReconnectStart}
         // onReconnectEnd={onReconnectEnd}
         // onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
         onViewportChange={onViewportChange}
         fitView
         preventScrolling
@@ -247,12 +296,21 @@ function Flow() {
         maxZoom={2}
       >
         <Background />
-        <Controls position="bottom-right" />
+        {/* <Controls position="bottom-right" /> */}
+        <StyledControls position="bottom-right" />
+
+        {activeFlow && (
+          <FlowControlPanel />
+        )}
+
+        <div className="absolute top-4 left-4 z-50">
+          <ExecutionComponent />
+        </div>
       </ReactFlow>
 
       {/* Context Menu */}
       <AnimatePresence>
-        {contextMenu && (
+        {(activeFlow && contextMenu) && (
           <NodeContextMenu
             position={contextMenu}
             onSelect={handleNodeSelect}
@@ -260,6 +318,9 @@ function Flow() {
           />
         )}
       </AnimatePresence>
+
+      {/* Show empty state when no flow is selected */}
+      {!activeFlow && <FlowEmptyState />}
     </div>
   )
 }

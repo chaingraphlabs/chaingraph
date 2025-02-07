@@ -1,0 +1,22 @@
+import type { NodeMetadata } from '@badaitech/chaingraph-types/node/types'
+import { getNodeMetadata, getPortsMetadata } from './metadata-storage'
+
+import 'reflect-metadata'
+
+/**
+ * Retrieves node metadata from the target using new decorators.
+ * It reads the node config stored under 'chaingraph:node-config' and merges port configurations
+ * (stored under 'chaingraph:ports-config') into the metadata.
+ */
+export function getOrCreateNodeMetadata(target: any): NodeMetadata {
+  let nodeMeta: Partial<NodeMetadata> = getNodeMetadata(target.constructor)
+  if (!nodeMeta) {
+    nodeMeta = { type: 'undefined' }
+  }
+  const portsConfig: Record<string | symbol, any> = getPortsMetadata(target.constructor)
+
+  return {
+    ...nodeMeta,
+    portsConfig,
+  } as NodeMetadata
+}

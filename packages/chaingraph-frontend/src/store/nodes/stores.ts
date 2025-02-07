@@ -1,4 +1,5 @@
-import type { INode } from '@chaingraph/types'
+import type { INode } from '@badaitech/chaingraph-types'
+import { clearActiveFlow, updateNodeParent } from '@/store'
 import { combine, createStore } from 'effector'
 import {
   addNodeToFlowFx,
@@ -41,6 +42,7 @@ export const $nodes = createStore<Record<string, INode>>({})
     }
   })
   .reset(clearNodes)
+  .reset(clearActiveFlow)
   .on(setNodeVersion, (state, { id, version }) => {
     const node = state[id]
     if (!node)
@@ -142,6 +144,28 @@ $nodes
       ui: {
         ...node.metadata.ui,
         position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
+
+// updateNodeParent
+$nodes
+  .on(updateNodeParent, (state, { flowId, nodeId, parentNodeId, position, version }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      parentNodeId,
+      ui: {
+        ...node.metadata.ui,
+        // position,
       },
     })
 

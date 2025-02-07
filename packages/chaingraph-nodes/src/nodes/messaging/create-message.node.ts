@@ -1,32 +1,26 @@
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants'
-import { nodeRegistry } from '@chaingraph/nodes/registry'
-import {
-  BaseNode,
-  type ExecutionContext,
-  ExecutionStatus,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  Output,
-  PortString,
-} from '@chaingraph/types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
+import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
   title: 'Create Message',
   description: 'Creates a new message with specified content',
   category: NODE_CATEGORIES.MESSAGING,
   tags: ['message', 'create', 'content'],
-}, nodeRegistry)
+})
 export class CreateMessageNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     title: 'Content',
     description: 'Message content to be sent',
   })
   content: string = ''
 
   @Output()
-  @PortString({
+  @String({
     title: 'Message',
     description: 'Created message object',
   })
@@ -37,7 +31,7 @@ export class CreateMessageNode extends BaseNode {
     this.message = `Message created: ${this.content}`
 
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['message', this.message]]),

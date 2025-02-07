@@ -1,4 +1,4 @@
-import type { JSONArray, JSONValue } from 'superjson/dist/types'
+import type { JSONArray, JSONValue } from '@badaitech/chaingraph-types/port/base'
 import { z } from 'zod'
 
 export const MultiChannelSchema = z.object({
@@ -50,7 +50,6 @@ export class MultiChannel<T> {
     this.subscribers.delete(subscriber)
   }
 
-  // Getter methods to access private properties for testing
   public getSubscriberCount(): number {
     return this.subscribers.size
   }
@@ -68,6 +67,15 @@ export class MultiChannel<T> {
       buffer: this.getBuffer() as JSONArray,
       isClosed: this.isChannelClosed(),
     }
+  }
+
+  public clone(): MultiChannel<T> {
+    const chan = new MultiChannel<T>()
+    chan.sendBatch(this.getBuffer())
+    if (this.isChannelClosed()) {
+      chan.close()
+    }
+    return chan
   }
 
   public static deserialize(value: JSONValue): MultiChannel<any> {

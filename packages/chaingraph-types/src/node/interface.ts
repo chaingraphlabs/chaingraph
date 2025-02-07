@@ -1,14 +1,14 @@
-import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { NodeEvent } from '@chaingraph/types/node/events'
-import type { NodeStatus } from '@chaingraph/types/node/node-enums'
+import type { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
+import type { NodeEvent } from '@badaitech/chaingraph-types/node/events'
+import type { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import type {
   Dimensions,
   NodeUIMetadata,
   NodeUIState,
   NodeUIStyle,
   Position,
-} from '@chaingraph/types/node/node-ui'
-import type { IPort } from '@chaingraph/types/port'
+} from '@badaitech/chaingraph-types/node/node-ui'
+import type { IPort, JSONValue } from '@badaitech/chaingraph-types/port/base'
 import type {
   NodeExecutionResult,
   NodeMetadata,
@@ -22,7 +22,7 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   get id(): string
   get metadata(): NodeMetadata
   get status(): NodeStatus
-  get ports(): Map<string, IPort<any>>
+  get ports(): Map<string, IPort>
 
   /**
    * Initialize the node
@@ -62,7 +62,13 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Add a port to the node
    * @param port Port to add
    */
-  addPort: (port: IPort<any>) => IPort<any>
+  addPort: (port: IPort) => IPort
+
+  /**
+   * Set the node ports
+   * @param ports Map of ports
+   */
+  setPorts: (ports: Map<string, IPort>) => void
 
   /**
    * Remove a port from the node
@@ -74,17 +80,17 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Get a port by ID
    * @param portId ID of the port
    */
-  getPort: (portId: string) => IPort<any> | undefined
+  getPort: (portId: string) => IPort | undefined
 
   /**
    * Get all input ports
    */
-  getInputs: () => IPort<any>[]
+  getInputs: () => IPort[]
 
   /**
    * Get all output ports
    */
-  getOutputs: () => IPort<any>[]
+  getOutputs: () => IPort[]
 
   /**
    * Set the node status
@@ -127,6 +133,14 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   setDimensions: (dimensions: Dimensions, emitEvent?: boolean) => void
 
   /**
+   * Set the node parent
+   * @param parentNodeId New parent node ID
+   * @param position Position relative to the parent node
+   * @param emitEvent Emit event
+   */
+  setNodeParent: (position: Position, parentNodeId?: string, emitEvent?: boolean) => void
+
+  /**
    * Set the node UI state
    * @param state New state
    * @param emitEvent Emit event
@@ -165,4 +179,15 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Get the node version
    */
   getVersion: () => number
+
+  /**
+   * Serializes the node into a JSON-compatible value.
+   */
+  serialize: () => JSONValue
+
+  /**
+   * Deserializes the given JSON-compatible value into the node.
+   * The method returns the updated node instance.
+   */
+  deserialize: (data: JSONValue) => this
 }

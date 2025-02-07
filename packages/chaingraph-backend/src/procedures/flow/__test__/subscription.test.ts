@@ -1,57 +1,48 @@
-import { createCaller } from '@chaingraph/backend/router'
-import { createTestContext } from '@chaingraph/backend/test/utils/createTestContext'
-import { NodeCatalog } from '@chaingraph/nodes'
-import {
-  BaseNode,
-  type ExecutionContext,
-  ExecutionStatus,
-  Id,
-  Input,
-  Node,
-  type NodeExecutionResult,
-  NodeRegistry,
-  Output,
-  PortBoolean,
-  PortNumber,
-  PortString,
-} from '@chaingraph/types'
-import { FlowEventType } from '@chaingraph/types/flow/events'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+  NodeMetadata,
+} from '@badaitech/chaingraph-types'
+import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeCatalog, NodeExecutionStatus, NodeRegistry, Number, Output, String,
+} from '@badaitech/chaingraph-types'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { createCaller } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
 
 @Node({
   title: 'Scalar Node',
   description: 'Node with scalar ports',
-}, null)
+})
 class ScalarNode extends BaseNode {
   @Input()
-  @PortString({
+  @String({
     defaultValue: 'default string',
   })
   @Id('strInput')
   strInput: string = 'default string'
 
   @Input()
-  @PortNumber({
+  @Number({
     defaultValue: 42,
   })
   @Id('numInput')
   numInput: number = 42
 
   @Input()
-  @PortBoolean({
+  @Boolean({
     defaultValue: true,
   })
   @Id('boolInput')
   boolInput: boolean = true
 
   @Id('strOutput')
-  @PortString()
+  @String()
   @Output()
   strOutput: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -61,19 +52,19 @@ class ScalarNode extends BaseNode {
 
 describe('flow Event Subscription', () => {
   beforeAll(() => {
-    NodeRegistry.getInstance().clear()
+    // NodeRegistry.getInstance().clear()
     NodeRegistry.getInstance().registerNode(ScalarNode)
   })
 
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
-  })
+  // afterAll(() => {
+  //   NodeRegistry.getInstance().clear()
+  // })
 
   // Helper function to setup test environment
   async function setupTestFlow() {
     const ctx = createTestContext(
       NodeRegistry.getInstance(),
-      new NodeCatalog(NodeRegistry.getInstance()),
+      new NodeCatalog(),
     )
 
     const caller = createCaller(ctx)
@@ -82,7 +73,7 @@ describe('flow Event Subscription', () => {
     expect(types.length).toBeGreaterThan(0)
 
     // Find ScalarNode type
-    const scalarNodeType = types.find(t => t.title === 'Scalar Node')
+    const scalarNodeType = types.find((t: NodeMetadata) => t.title === 'Scalar Node')
     expect(scalarNodeType).toBeDefined()
 
     return { caller, flow, nodeType: scalarNodeType!.type }

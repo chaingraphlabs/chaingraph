@@ -1,12 +1,15 @@
-import type { AppRouter } from '@chaingraph/backend/router.ts'
+import type { AppRouter } from '@badaitech/chaingraph-backend/router.ts'
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query'
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
 import { QueryClient } from '@tanstack/react-query'
 import {
+  createTRPCClient,
+  createWSClient,
   loggerLink,
   splitLink,
   unstable_httpBatchStreamLink,
   unstable_httpSubscriptionLink,
+  wsLink,
 } from '@trpc/client'
 import { createTRPCReact } from '@trpc/react-query'
 import superjson from 'superjson'
@@ -37,11 +40,13 @@ export const queryClient = new QueryClient({
   },
 })
 
-export const trpcClient = trpc.createClient({
+export const _trpcClient = trpc.createClient({
   // transformer: superjson,
   links: [
     // adds pretty logs to your console in development and logs errors in production
-    loggerLink(),
+    loggerLink({
+      withContext: true,
+    }),
 
     splitLink({
       // uses the httpSubscriptionLink for subscriptions
@@ -56,4 +61,16 @@ export const trpcClient = trpc.createClient({
       }),
     }),
   ],
+})
+
+// create persistent WebSocket connection
+export const wsClient = createWSClient({
+  url: `ws://localhost:3001`,
+})
+// configure TRPCClient to use WebSockets transport
+export const trpcClient = createTRPCClient<AppRouter>({
+  links: [wsLink<AppRouter>({
+    transformer: superjson,
+    client: wsClient,
+  })],
 })

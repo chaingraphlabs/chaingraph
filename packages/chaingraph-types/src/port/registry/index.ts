@@ -1,2 +1,1 @@
-export * from './port-factory'
-export * from './port-registry'
+export * from './PortPluginRegistry'

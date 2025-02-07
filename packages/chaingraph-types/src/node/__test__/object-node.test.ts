@@ -1,39 +1,41 @@
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
-import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKind, PortNumber, PortObject, PortObjectSchema, PortString, registerPortTransformers } from '@chaingraph/types'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
+import { Port } from '@badaitech/chaingraph-types/node'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
-@PortObjectSchema({
-  description: 'Address schema',
-})
-class Address {
-  @PortString()
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
+
+class Address implements Record<string, unknown> {
+  [key: string]: unknown;
+
   street: string = 'Main Street'
-
-  @PortString()
   city: string = 'Anytown'
-
-  @PortString()
   country: string = 'Country'
 }
 
-@PortObjectSchema({
-  description: 'User schema',
-})
-class User {
-  @PortString()
+class User implements Record<string, unknown> {
+  [key: string]: unknown;
+
   username: string = 'user'
-
-  @PortNumber()
   age: number = 30
-
-  @PortObject({
-    schema: Address,
-  })
   address: Address = new Address()
 }
 
@@ -43,14 +45,22 @@ class User {
 })
 class ObjectNode extends BaseNode {
   @Input()
-  @PortObject({
-    schema: Address,
+  @Port({
+    type: 'object',
+    schema: {
+      properties: {
+        street: { type: 'string', defaultValue: 'Main Street' },
+        city: { type: 'string', defaultValue: 'Anytown' },
+        country: { type: 'string', defaultValue: 'Country' },
+      },
+    },
+    defaultValue: new Address(),
   })
   address: Address = new Address()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -64,14 +74,32 @@ class ObjectNode extends BaseNode {
 })
 class NestedObjectNode extends BaseNode {
   @Input()
-  @PortObject({
-    schema: User,
+  @Port({
+    type: 'object',
+    schema: {
+      properties: {
+        username: { type: 'string', defaultValue: 'user' },
+        age: { type: 'number', defaultValue: 30 },
+        address: {
+          type: 'object',
+          schema: {
+            properties: {
+              street: { type: 'string', defaultValue: 'Main Street' },
+              city: { type: 'string', defaultValue: 'Anytown' },
+              country: { type: 'string', defaultValue: 'Country' },
+            },
+          },
+          defaultValue: new Address(),
+        },
+      },
+    },
+    defaultValue: new User(),
   })
   user: User = new User()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -85,23 +113,41 @@ class NestedObjectNode extends BaseNode {
 })
 class ComplexNode extends BaseNode {
   @Input()
-  @PortArray({
+  @Port({
+    type: 'array',
     defaultValue: [],
-    elementConfig: {
-      kind: PortKind.Object,
-      schema: User,
+    itemConfig: {
+      type: 'object',
+      schema: {
+        properties: {
+          username: { type: 'string', defaultValue: 'user' },
+          age: { type: 'number', defaultValue: 30 },
+          address: {
+            type: 'object',
+            schema: {
+              properties: {
+                street: { type: 'string', defaultValue: 'Main Street' },
+                city: { type: 'string', defaultValue: 'Anytown' },
+                country: { type: 'string', defaultValue: 'Country' },
+              },
+            },
+            defaultValue: new Address(),
+          },
+        },
+      },
       defaultValue: new User(),
     },
   })
   userList: User[] = [new User(), new User()]
 
   @Input()
-  @PortArray({
-    elementConfig: {
-      kind: PortKind.Array,
+  @Port({
+    type: 'array',
+    itemConfig: {
+      type: 'array',
       defaultValue: [],
-      elementConfig: {
-        kind: PortKind.Number,
+      itemConfig: {
+        type: 'number',
         defaultValue: 0,
       },
     },
@@ -113,7 +159,7 @@ class ComplexNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -123,12 +169,8 @@ class ComplexNode extends BaseNode {
 
 describe('object node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register all port types
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('serializes and deserializes a node with an object port', async () => {
@@ -136,7 +178,7 @@ describe('object node serialization', () => {
     await objectNode.initialize()
 
     const json = superjson.serialize(objectNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ObjectNode
+    const parsed = superjson.deserialize(json) as ObjectNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(objectNode.metadata)
@@ -148,7 +190,7 @@ describe('object node serialization', () => {
     await nestedObjectNode.initialize()
 
     const json = superjson.serialize(nestedObjectNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as NestedObjectNode
+    const parsed = superjson.deserialize(json) as NestedObjectNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(nestedObjectNode.metadata)
@@ -160,7 +202,7 @@ describe('object node serialization', () => {
     await complexNode.initialize()
 
     const json = superjson.serialize(complexNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ComplexNode
+    const parsed = superjson.deserialize(json) as ComplexNode
 
     expect(parsed).toBeDefined()
     expect(parsed.metadata).toEqual(complexNode.metadata)

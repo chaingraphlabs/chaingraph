@@ -1,14 +1,29 @@
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
-import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, NodeRegistry, PortArray, PortKind, registerPortTransformers } from '@chaingraph/types'
-
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { ExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { findPort } from '@chaingraph/types/node/ports-traverser'
-import Decimal from 'decimal.js'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
+import { Port } from '@badaitech/chaingraph-types/node'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
+import {
+  ArrayPortPlugin,
+  createNumberValue,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(EnumPortPlugin)
+portRegistry.register(StreamPortPlugin)
 
 @Node({
   title: 'Array Node',
@@ -16,18 +31,18 @@ import 'reflect-metadata'
 })
 class ArrayNode extends BaseNode {
   @Input()
-  @PortArray({
-    defaultValue: [],
-    elementConfig: {
-      kind: PortKind.Number,
-      defaultValue: 0,
+  @Port({
+    type: 'array',
+    itemConfig: {
+      type: 'number',
+      defaultValue: createNumberValue(0),
     },
   })
-  numArray: Decimal[] = [new Decimal(1), new Decimal(2), new Decimal(3)]
+  numArray: number[] = [1, 2, 3]
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     return {
-      status: ExecutionStatus.Completed,
+      status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map(),
@@ -37,28 +52,25 @@ class ArrayNode extends BaseNode {
 
 describe('array node serialization', () => {
   beforeAll(() => {
-    registerPortTransformers()
+    // Register all port types
+    // registerAllPorts()
     registerNodeTransformers()
-  })
-
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
   })
 
   it('serializes and deserializes a node with an array port', async () => {
     const arrayNode = new ArrayNode('array-node')
     await arrayNode.initialize()
 
-    const numArrayPort = await findPort(
+    const numArrayPort = findPort(
       arrayNode,
-      port => port.config.key === 'numArray',
+      port => port.getConfig().key === 'numArray',
     )
 
     expect(numArrayPort).toBeDefined()
-    expect(numArrayPort?.getValue()).toEqual([new Decimal(1), new Decimal(2), new Decimal(3)])
+    expect(numArrayPort?.getValue()).toEqual([1, 2, 3])
 
     const json = superjson.serialize(arrayNode)
-    const parsed = superjson.deserialize(json as any as SuperJSONResult) as ArrayNode
+    const parsed = superjson.deserialize(json) as ArrayNode
 
     expect(parsed).toBeDefined()
     expect(parsed.numArray).toEqual(arrayNode.numArray)

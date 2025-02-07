@@ -1,7 +1,7 @@
-import type { NodeCategory } from '@chaingraph/types/node/category'
-import type { NodeUIMetadata } from '@chaingraph/types/node/node-ui'
-import type { PortConfig } from '@chaingraph/types/port/types/port-config'
-import type { ExecutionStatus, ValidationMessageType } from './node-enums'
+import type { NodeCategory } from '@badaitech/chaingraph-types/node/category'
+import type { NodeUIMetadata } from '@badaitech/chaingraph-types/node/node-ui'
+import type { IPortConfig } from '@badaitech/chaingraph-types/port/base'
+import type { NodeExecutionStatus, ValidationMessageType } from './node-enums'
 
 /**
  * Type definition for node metadata
@@ -16,8 +16,9 @@ export interface NodeMetadata {
   icon?: string
   tags?: string[]
   author?: string
-  metadata?: { [key: string]: unknown }
-  portsConfig?: Map<string, PortConfig>
+  parentNodeId?: string
+  metadata?: Record<string, unknown>
+  portsConfig?: Map<string, IPortConfig>
   ui?: NodeUIMetadata
 }
 
@@ -43,7 +44,7 @@ export interface NodeValidationResult {
  * Type definition for node execution result
  */
 export interface NodeExecutionResult {
-  status?: ExecutionStatus
+  status?: NodeExecutionStatus
   startTime?: Date
   endTime?: Date
   outputs?: Map<string, unknown>

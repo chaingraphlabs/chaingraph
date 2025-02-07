@@ -1,5 +1,5 @@
-import type { INode } from '@chaingraph/types/node'
-import type { IPort } from '@chaingraph/types/port'
+import type { INode } from '@badaitech/chaingraph-types/node'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type { EdgeMetadata, EdgeStatus } from './types'
 
 /**
@@ -17,11 +17,11 @@ export interface IEdge {
 
   /** Source node and port */
   readonly sourceNode: INode
-  readonly sourcePort: IPort<any>
+  readonly sourcePort: IPort
 
   /** Target node and port */
   readonly targetNode: INode
-  readonly targetPort: IPort<any>
+  readonly targetPort: IPort
 
   /**
    * Initialize the edge connection
