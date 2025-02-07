@@ -11,7 +11,7 @@
     "paths": {
       "@chaingraph/types": ["../chaingraph-types/src"],
       "@chaingraph/types/*": ["../chaingraph-types/src/*"],
-      "@chaingraph/nodes/*": ["./src/*"]
+      "@chaingraph/nodes/*": ["./*"]
     },
     "strict": true,
     "noFallthroughCasesInSwitch": true,

@@ -15,6 +15,7 @@ import {
 import { portRegistry } from 'packages/chaingraph-types/src/port/registry'
 import { initializeContext } from './context'
 import { ExecutionService, InMemoryExecutionStore } from './execution'
+import { CleanupService } from './execution/services/cleanup-service'
 import { InMemoryFlowStore } from './stores/flowStore'
 import { wsServer } from './ws-server'
 import './setup'
@@ -70,6 +71,7 @@ const flowStore = new InMemoryFlowStore()
 const nodesCatalog = new NodeCatalog(NodeRegistry.getInstance())
 const executionStore = new InMemoryExecutionStore()
 const executionService = new ExecutionService(executionStore)
+const executionCleanup = new CleanupService(executionStore, executionService)
 
 initializeContext(
   flowStore,
@@ -78,6 +80,8 @@ initializeContext(
   executionService,
   executionStore,
 )
+
+executionCleanup.start()
 
 // const metricsCollector = new MetricsCollector(flowStore)
 // metricsCollector.startMonitoring()

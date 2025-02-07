@@ -12,14 +12,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./registry": {
-      "types": "./dist/registry.d.ts",
-      "default": "./dist/registry.js"
-    },
-    "./node-catalog": {
-      "types": "./dist/node-catalog.d.ts",
-      "default": "./dist/node-catalog.js"
     }
   },
   "types": "./dist/index.d.ts",

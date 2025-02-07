@@ -1,5 +1,4 @@
-import type { INode } from '@chaingraph/types'
-import type { JSONValue } from 'superjson/dist/types'
+import type { INode, JSONValue } from '@chaingraph/types'
 import { BaseNode, NodeRegistry } from '@chaingraph/types'
 
 import superjson from 'superjson'

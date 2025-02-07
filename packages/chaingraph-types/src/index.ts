@@ -12,4 +12,3 @@ export * from './port'
 export { MultiChannel } from './port/channel/multi-channel'
 
 export * from './utils'
-export type { JSONValue } from 'superjson/dist/types'

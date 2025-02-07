@@ -28,9 +28,6 @@
     "types": [
       "reflect-metadata",
       "vite/client",
-      "@badaitech/chaingraph-types",
-      "@badaitech/chaingraph-nodes",
-      "@badaitech/chaingraph-backend",
       "superjson"
     ],
     "allowImportingTsExtensions": true,

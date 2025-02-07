@@ -11,22 +11,14 @@ import {
 import { TRPCError } from '@trpc/server'
 import { v4 as uuidv4 } from 'uuid'
 import { ExecutionStatus } from '../types'
-import { CleanupService } from './cleanup-service'
 
 export class ExecutionService {
   // Keep track of event queues per execution
   private eventQueues: Map<string, EventQueue<ExecutionEventImpl>> = new Map()
-  private readonly cleanupService: CleanupService
 
   constructor(
     private readonly store: IExecutionStore,
-    options?: ExecutionOptions,
-  ) {
-    this.cleanupService = new CleanupService(store, this, options?.cleanup)
-
-    // Start cleanup service
-    this.cleanupService.start()
-  }
+  ) {}
 
   async createExecution(
     flow: Flow,
@@ -52,10 +44,6 @@ export class ExecutionService {
 
   async getInstance(id: string): Promise<ExecutionInstance | null> {
     return this.store.get(id)
-  }
-
-  getCleanupService(): CleanupService {
-    return this.cleanupService
   }
 
   async startExecution(id: string): Promise<void> {
@@ -369,8 +357,6 @@ export class ExecutionService {
   }
 
   async shutdown(): Promise<void> {
-    this.cleanupService.stop()
-
     // Cleanup all active executions
     const executions = await this.store.list()
     await Promise.all(

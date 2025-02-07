@@ -1,4 +1,4 @@
-import type { INode, JSONValue } from '@chaingraph/types'
+import type { INode } from '@chaingraph/types'
 import type { IPort } from '@chaingraph/types/port/base'
 import { initializeStores } from '@/store/init.ts'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
@@ -20,13 +20,13 @@ console.log('main.tsx')
 registerNodeTransformers(NodeRegistry.getInstance())
 registerFlowTransformers()
 
-superjson.registerCustom<IPort, JSONValue>(
+superjson.registerCustom<IPort, any>(
   {
     isApplicable: (v): v is IPort => {
       return v instanceof BasePort
     },
     serialize: (v) => {
-      return v.serialize() as unknown as JSONValue
+      return v.serialize()
     },
     deserialize: (v) => {
       const port = PortFactory.createFromConfig((v as any).config)
@@ -37,7 +37,7 @@ superjson.registerCustom<IPort, JSONValue>(
   BasePort.name,
 )
 
-superjson.registerCustom<Edge, JSONValue>(
+superjson.registerCustom<Edge, any>(
   {
     isApplicable: (v): v is Edge => {
       return v instanceof Edge
@@ -51,7 +51,7 @@ superjson.registerCustom<Edge, JSONValue>(
         sourcePort: superjson.serialize(v.sourcePort),
         targetNode: superjson.serialize(v.targetNode),
         targetPort: superjson.serialize(v.targetPort),
-      }) as unknown as JSONValue
+      })
     },
     deserialize: (v) => {
       const edgeData = superjson.deserialize(
@@ -79,7 +79,7 @@ superjson.registerCustom<Edge, JSONValue>(
   Edge.name,
 )
 
-superjson.registerCustom<MultiChannel<any>, JSONValue>(
+superjson.registerCustom<MultiChannel<any>, any>(
   {
     // isApplicable: (v): v is MultiChannel<any> => v instanceof MultiChannel,
     isApplicable: (v): v is MultiChannel<any> => {
@@ -95,13 +95,13 @@ superjson.registerCustom<MultiChannel<any>, JSONValue>(
   MultiChannel.name,
 )
 
-superjson.registerCustom<INode, JSONValue>(
+superjson.registerCustom<INode, any>(
   {
     isApplicable: (v): v is INode => {
       return v instanceof BaseNode
     },
     serialize: (v) => {
-      return v.serialize() as unknown as JSONValue
+      return v.serialize()
     },
     deserialize: (v) => {
       const nodeData = v as any
@@ -127,7 +127,7 @@ superjson.registerCustom<INode, JSONValue>(
 )
 
 // Execution event data
-superjson.registerCustom<ExecutionEventImpl, JSONValue>(
+superjson.registerCustom<ExecutionEventImpl, any>(
   {
     isApplicable: (v): v is ExecutionEventImpl<any> => {
       return v instanceof ExecutionEventImpl
@@ -138,7 +138,7 @@ superjson.registerCustom<ExecutionEventImpl, JSONValue>(
         type: v.type,
         timestamp: v.timestamp,
         data: superjson.serialize(v.data),
-      }) as unknown as JSONValue
+      })
     },
     deserialize: (v) => {
       const eventData = superjson.deserialize(v as any) as any

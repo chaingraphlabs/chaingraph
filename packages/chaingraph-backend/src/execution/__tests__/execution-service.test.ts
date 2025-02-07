@@ -7,6 +7,7 @@ import type {
 import { BaseNode, ExecutionEventEnum, Flow, Node, NodeExecutionStatus,
 } from '@badaitech/chaingraph-types'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { CleanupService } from '../services/cleanup-service'
 import { ExecutionService } from '../services/execution-service'
 import { InMemoryExecutionStore } from '../store/execution-store'
 import { ExecutionStatus } from '../types'
@@ -32,6 +33,7 @@ class TestNode extends BaseNode {
 describe('executionService', () => {
   let executionService: ExecutionService
   let store: InMemoryExecutionStore
+  let cleanupService: CleanupService
   let flow: Flow
   let testNode: INode
 
@@ -39,6 +41,7 @@ describe('executionService', () => {
     // Setup fresh instances for each test
     store = new InMemoryExecutionStore()
     executionService = new ExecutionService(store)
+    cleanupService = new CleanupService(store, executionService)
     flow = new Flow({ name: 'Test Flow' })
     testNode = new TestNode('test-node-1')
     testNode.initialize()
@@ -141,7 +144,7 @@ describe('executionService', () => {
       instance1.completedAt = oldDate
 
       // Trigger cleanup
-      await executionService.getCleanupService().cleanup()
+      await cleanupService.cleanup()
 
       // Verify cleanup
       const remainingExecutions = await store.list()
