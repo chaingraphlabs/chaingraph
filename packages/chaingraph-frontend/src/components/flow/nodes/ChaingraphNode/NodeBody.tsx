@@ -1,10 +1,7 @@
-import type { ExtractValue, IPort, IPortConfig } from '@badaitech/chaingraph-types'
-import type { InputPortOnChangeParam, InputPortProps } from './InputPort'
-import { Fragment, type ReactNode, useState } from 'react'
-import { InputPort } from './InputPort'
-import { BooleanOutputPort } from './ports/BooleanPort/BooleanOutputPort'
-import { StringOutputPort } from './ports/StringPort/StringOutputPort'
-import { StubPort } from './ports/StubPort/StubPort'
+import type { PortOnChangeParam } from './Port'
+import { type ExtractValue, type IPort, type IPortConfig, PortDirection } from '@badaitech/chaingraph-types'
+import { useState } from 'react'
+import { Port } from './Port'
 
 interface NodeBodyProps {
   inputs: IPort[]
@@ -13,7 +10,7 @@ interface NodeBodyProps {
 
 interface PortState< C extends IPortConfig = IPortConfig> {
   value: ExtractValue<C>
-  isValid: boolean,
+  isValid: boolean
 }
 
 function initInputsStates(inputs: IPort[]) {
@@ -30,8 +27,13 @@ function initInputsStates(inputs: IPort[]) {
 export function NodeBody({ inputs, outputs }: NodeBodyProps) {
   const [inputsStates, setInputsStates] = useState(initInputsStates(inputs))
 
-  const createChangeInputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: InputPortOnChangeParam<C>) => {
-    port.setValue(value)
+  const createChangeInputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+    try {
+      port.setValue(value)
+    } catch (error) {
+      console.error(error)
+    }
+
     setInputsStates(states => ({ ...states, [port.id]: {
       value,
       isValid: port.validate(),
@@ -47,7 +49,7 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
           const { value, isValid } = inputsStates[port.id]
 
           return (
-            <InputPort
+            <Port
               key={port.id}
               port={port}
               value={value}
@@ -59,32 +61,9 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
 
         {/* Output Ports */}
         {outputs.map((port) => {
-          return <Fragment key={port.id}>{renderOutputPort(port)}</Fragment>
+          return <Port key={port.id} port={port} />
         })}
       </div>
     </div>
   )
-}
-
-function renderOutputPort(port: IPort): ReactNode {
-  const config = port.getConfig()
-  switch (config.type) {
-    case 'string': {
-      return <StringOutputPort config={config} />
-    }
-    case 'boolean': {
-      return <BooleanOutputPort config={config} />
-    }
-    case 'number':
-    case 'enum':
-    case 'array':
-    case 'object':
-    case 'stream':
-    case 'any': {
-      return <StubPort config={config} />
-    }
-    default: {
-      throw new Error(`Unhandled config.type case: ${config}`)
-    }
-  }
 }

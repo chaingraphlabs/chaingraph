@@ -1,11 +1,14 @@
-import type { IPortConfig } from '@badaitech/chaingraph-types'
+import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils.ts'
 import { Handle, Position } from '@xyflow/react'
 import React from 'react'
+import { PortTitle } from '../ui/PortTitle'
 
-export function StubPort(props: { config: IPortConfig }) {
-  const { config } = props
+export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
+  const { port } = props
+  const config = port.getConfig()
   const bgColor = config.ui?.bgColor || null
+  const title = config.title || config.key
 
   return (
     <div
@@ -16,9 +19,7 @@ export function StubPort(props: { config: IPortConfig }) {
       )}
     >
       {config.direction === 'output' && (
-        <span className="text-xs truncate text-foreground">
-          {config.title || config.key}
-        </span>
+        <PortTitle>{title}</PortTitle>
       )}
 
       <Handle
@@ -37,9 +38,7 @@ export function StubPort(props: { config: IPortConfig }) {
       />
 
       {config.direction === 'input' && (
-        <span className="text-xs truncate text-foreground">
-          {config.title || config.key}
-        </span>
+        <PortTitle>{title}</PortTitle>
       )}
     </div>
   )

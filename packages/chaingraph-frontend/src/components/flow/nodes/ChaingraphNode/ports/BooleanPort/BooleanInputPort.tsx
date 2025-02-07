@@ -1,20 +1,22 @@
-import type { BooleanPortConfig, IPortConfig } from '@badaitech/chaingraph-types'
+import type { BooleanPortConfig, IPort } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils.ts'
 import { Switch } from '@badaitech/chaingraph-frontend/components/ui/switch'
-import { Handle, Position } from '@xyflow/react'
+import { PortHandle } from '../ui/PortHandle'
+import { PortTitle } from '../ui/PortTitle'
 
-export interface BooleanInputPortProps {
+export interface BooleanPortProps {
+  port: IPort<BooleanPortConfig>
   value: boolean
   onChange: (param: { value: boolean }) => void
-  config: BooleanPortConfig
   errorMessage?: string
 }
 
-export function BooleanInputPort(props: BooleanInputPortProps) {
-  const { config, onChange, value, errorMessage } = props
-  const bgColor = config.ui?.bgColor || null
-
+export function BooleanPort(props: BooleanPortProps) {
+  const { port, onChange, value } = props
+  const config = port.getConfig()
   const ui = config.ui
+
+  const title = config.title || config.key
 
   return (
     <div
@@ -24,32 +26,19 @@ export function BooleanInputPort(props: BooleanInputPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      <Handle
-        id={config.id}
-        type={config.direction === 'input' ? 'target' : 'source'}
-        position={config.direction === 'input' ? Position.Left : Position.Right}
-        style={bgColor ? { backgroundColor: bgColor } : undefined}
-        className={cn(
-          'w-2 h-2 rounded-full top-2',
-          'border-2 border-background',
-          'transition-shadow duration-200',
-          'data-[connected=true]:shadow-port-connected',
-          config.direction === 'input' ? '-ml-4' : '-mr-4',
-          !bgColor && 'bg-flow-data',
-        )}
-      />
+      {config.direction === 'output' && (
+        <PortTitle>{title}</PortTitle>
+      )}
+      <PortHandle port={port} />
 
       {config.direction === 'input' && (
         <div className="flex flex-col">
-          <span className="text-xs truncate text-foreground">
-            {config.title || config.key}
-          </span>
+          <PortTitle>{title}</PortTitle>
 
           <Switch
             disabled={ui?.disabled}
             checked={value}
             onCheckedChange={checked => onChange({ value: checked })}
-            className="mt-1"
           />
         </div>
       )}
