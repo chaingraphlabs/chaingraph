@@ -1,9 +1,9 @@
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, NodeRegistry } from '@chaingraph/types'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
+import { BaseNode, NodeRegistry } from '@badaitech/chaingraph-types'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
 
-import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import {
   ArrayPortPlugin,
   createBooleanValue,
@@ -14,8 +14,8 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node } from '../decorator-new'

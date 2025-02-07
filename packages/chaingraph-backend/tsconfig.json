@@ -5,10 +5,10 @@
     "rootDir": "./src",
     "moduleResolution": "node",
     "paths": {
-      "@chaingraph/types": ["../chaingraph-types/src"],
-      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
-      "@chaingraph/nodes": ["../chaingraph-nodes/src"],
-      "@chaingraph/nodes/*": ["../chaingraph-nodes/src/*"]
+      "@badaitech/chaingraph-types": ["../chaingraph-types/src"],
+      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
+      "@badaitech/chaingraph-nodes": ["../chaingraph-nodes/src"],
+      "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"]
     },
     "strict": true,
     "noImplicitAny": true,

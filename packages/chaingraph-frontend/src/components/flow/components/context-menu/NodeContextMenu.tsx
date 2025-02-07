@@ -1,4 +1,4 @@
-import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon.tsx'
 import { useTheme } from '@/components/theme/hooks/useTheme.ts'
 import { Button } from '@/components/ui/button.tsx'

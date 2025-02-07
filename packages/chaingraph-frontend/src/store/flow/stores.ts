@@ -1,5 +1,5 @@
 import type { FlowSubscriptionError } from '@/store'
-import type { FlowMetadata } from '@chaingraph/types'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import {
   deleteFlow,
   FlowSubscriptionStatus,

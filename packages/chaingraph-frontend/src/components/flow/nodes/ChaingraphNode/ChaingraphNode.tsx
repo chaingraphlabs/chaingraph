@@ -13,7 +13,7 @@ import {
   $executionState,
   addBreakpoint,
   removeBreakpoint,
-} from '@chaingraph/frontend/store/execution'
+} from '@badaitech/chaingraph-frontend/store/execution'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'

@@ -1,4 +1,4 @@
-import type { Dimensions, Position } from '@chaingraph/types/node/node-ui'
+import type { Dimensions, Position } from '@badaitech/chaingraph-types/node/node-ui'
 import type { EdgeMetadata } from '../edge'
 import type { INode } from '../node'
 import type { IFlow } from './interface'

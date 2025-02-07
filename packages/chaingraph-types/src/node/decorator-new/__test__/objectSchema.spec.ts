@@ -1,4 +1,4 @@
-import { isObjectPortConfig } from '@chaingraph/types/port/base'
+import { isObjectPortConfig } from '@badaitech/chaingraph-types/port/base'
 import { describe, expect, it } from 'vitest'
 import { getObjectSchema, ObjectSchema } from '../object-schema.decorator'
 import { Port } from '../port.decorator'

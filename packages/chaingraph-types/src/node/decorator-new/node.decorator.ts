@@ -1,5 +1,5 @@
-import type { NodeConstructor, NodeMetadata } from '@chaingraph/types/node'
-import { getNodeMetadata, getOrCreateNodeMetadata, NodeRegistry, setNodeMetadata } from '@chaingraph/types/node'
+import type { NodeConstructor, NodeMetadata } from '@badaitech/chaingraph-types/node'
+import { getNodeMetadata, getOrCreateNodeMetadata, NodeRegistry, setNodeMetadata } from '@badaitech/chaingraph-types/node'
 
 import 'reflect-metadata'
 

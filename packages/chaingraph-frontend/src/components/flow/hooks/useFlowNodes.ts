@@ -1,8 +1,8 @@
 import type { Node } from '@xyflow/react'
 import { $nodes } from '@/store'
 import { useCategories } from '@/store/categories'
-import { NODE_CATEGORIES } from '@chaingraph/nodes/categories/constants.ts'
-import { DefaultPosition } from '@chaingraph/types/node/node-ui.ts'
+import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes/categories/constants.ts'
+import { DefaultPosition } from '@badaitech/chaingraph-types/node/node-ui.ts'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 

@@ -1,10 +1,10 @@
-import type { PortDecoratorOptions } from '@chaingraph/types/node'
+import type { PortDecoratorOptions } from '@badaitech/chaingraph-types/node'
 import type {
   IPortConfig,
   NumberPortConfig,
   StringPortConfig,
-} from '@chaingraph/types/port/base'
-import { getObjectSchema } from '@chaingraph/types/node'
+} from '@badaitech/chaingraph-types/port/base'
+import { getObjectSchema } from '@badaitech/chaingraph-types/node'
 import { Port } from './port.decorator'
 
 /**

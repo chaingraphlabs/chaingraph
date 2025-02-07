@@ -1,4 +1,4 @@
-import type { Position } from '@chaingraph/types/node/node-ui'
+import type { Position } from '@badaitech/chaingraph-types/node/node-ui'
 
 export function getNodePositionInsideParent(
   flowPosition: Position,

@@ -1,4 +1,4 @@
-import { cn } from '@chaingraph/frontend/lib/utils.ts'
+import { cn } from '@badaitech/chaingraph-frontend/lib/utils.ts'
 import { PlusIcon, Share1Icon } from '@radix-ui/react-icons'
 import { Button } from '@radix-ui/themes'
 import { motion } from 'framer-motion'

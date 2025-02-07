@@ -1,4 +1,4 @@
-import type { INode } from '@chaingraph/types'
+import type { INode } from '@badaitech/chaingraph-types'
 import type { DebuggerCommand, DebuggerController, DebuggerState } from './debugger-types'
 
 export class FlowDebugger implements DebuggerController {

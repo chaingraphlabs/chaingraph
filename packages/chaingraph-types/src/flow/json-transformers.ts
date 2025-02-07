@@ -1,11 +1,11 @@
-import type { JSONValue } from '@chaingraph/types'
-import type { SerializedFlow } from '@chaingraph/types/flow/types.zod'
-import type { IPort } from '@chaingraph/types/port/base'
+import type { JSONValue } from '@badaitech/chaingraph-types'
+import type { SerializedFlow } from '@badaitech/chaingraph-types/flow/types.zod'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type { SuperJSONResult } from 'superjson'
-import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@chaingraph/types'
-import { registerEdgeTransformers } from '@chaingraph/types/edge/json-transformers'
-import { BasePort } from '@chaingraph/types/port/base'
-import { PortFactory } from '@chaingraph/types/port/factory'
+import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@badaitech/chaingraph-types'
+import { registerEdgeTransformers } from '@badaitech/chaingraph-types/edge/json-transformers'
+import { BasePort } from '@badaitech/chaingraph-types/port/base'
+import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
 import SuperJSON from 'superjson'
 
 /**

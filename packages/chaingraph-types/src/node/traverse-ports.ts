@@ -1,5 +1,5 @@
-import type { INode } from '@chaingraph/types'
-import type { IPort } from '@chaingraph/types/port/base'
+import type { INode } from '@badaitech/chaingraph-types'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 
 /**
  * Traverse all ports of a node

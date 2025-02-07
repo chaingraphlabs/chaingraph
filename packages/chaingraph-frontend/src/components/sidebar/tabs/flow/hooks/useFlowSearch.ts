@@ -1,4 +1,4 @@
-import type { FlowMetadata } from '@chaingraph/types'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { useMemo, useState } from 'react'
 
 export function useFlowSearch(flows: FlowMetadata[] | undefined) {

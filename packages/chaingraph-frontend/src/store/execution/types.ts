@@ -1,4 +1,4 @@
-import type { ExecutionEventImpl } from '@chaingraph/types'
+import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 
 export enum ExecutionStatus {
   IDLE = 'IDLE',

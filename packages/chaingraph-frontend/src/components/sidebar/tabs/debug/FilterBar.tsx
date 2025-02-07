@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils.ts'
-import { ExecutionEventEnum } from '@chaingraph/types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 
 interface FilterBarProps {

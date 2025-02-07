@@ -13,12 +13,12 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'react',
-        '@chaingraph/types',
-        '@chaingraph/types/*',
+        '@badaitech/chaingraph-types',
+        '@badaitech/chaingraph-types/*',
         '@langchain/openai',
         'langchain',
         'lucide-react',
-        /^@chaingraph\/types\/.*/, // Для обработки всех глубоких импортов из types
+        /^@chaingraph\/types\/.*/,
       ],
       output: {
         preserveModules: true,

@@ -1,6 +1,6 @@
 // Helpers for converting between live ports and their state representation
 import type { PortState } from '@/store/ports/types.ts'
-import type { IPort } from '@chaingraph/types/port/base'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 
 export function portToState(port: IPort): PortState {
   return {

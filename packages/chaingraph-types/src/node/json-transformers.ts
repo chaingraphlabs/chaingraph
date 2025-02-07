@@ -1,5 +1,5 @@
-import type { INode, JSONValue } from '@chaingraph/types'
-import { BaseNode, NodeRegistry } from '@chaingraph/types'
+import type { INode, JSONValue } from '@badaitech/chaingraph-types'
+import { BaseNode, NodeRegistry } from '@badaitech/chaingraph-types'
 
 import superjson from 'superjson'
 

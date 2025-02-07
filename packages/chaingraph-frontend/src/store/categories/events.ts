@@ -1,5 +1,5 @@
 import type { FetchCategoriesError } from '@/store/categories/types.ts'
-import type { CategorizedNodes, CategoryMetadata } from '@chaingraph/types'
+import type { CategorizedNodes, CategoryMetadata } from '@badaitech/chaingraph-types'
 import { createEvent } from 'effector'
 
 // Data events

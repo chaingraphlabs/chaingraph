@@ -1,12 +1,12 @@
 import type {
   ObjectSchema as IObjectSchema,
   IPortConfig,
-} from '@chaingraph/types/port/base'
+} from '@badaitech/chaingraph-types/port/base'
 import {
   getObjectSchemaMetadata,
   getPortsMetadata,
   setObjectSchemaMetadata,
-} from '@chaingraph/types/node/decorator-new/metadata-storage'
+} from '@badaitech/chaingraph-types/node/decorator-new/metadata-storage'
 
 import { normalizeSchema } from './recursive-normalization'
 import 'reflect-metadata'

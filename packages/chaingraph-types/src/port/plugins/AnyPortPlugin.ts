@@ -7,7 +7,7 @@ import type {
   IPortValue,
   PortType,
 } from '../base/types'
-import { basePortConfigUISchema } from '@chaingraph/types/port/base'
+import { basePortConfigUISchema } from '@badaitech/chaingraph-types/port/base'
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
 import { isAnyPortValue, PortError, PortErrorType } from '../base/types'

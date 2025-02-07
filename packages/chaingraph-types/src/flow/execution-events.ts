@@ -1,4 +1,4 @@
-import type { IEdge, IFlow, INode, NodeStatus } from '@chaingraph/types'
+import type { IEdge, IFlow, INode, NodeStatus } from '@badaitech/chaingraph-types'
 
 export enum ExecutionEventEnum {
   // Flow events

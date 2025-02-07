@@ -1,4 +1,4 @@
-import { createQueueIterator, EventQueue } from '@chaingraph/types/utils/event-queue'
+import { createQueueIterator, EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Define a test event interface

@@ -1,4 +1,4 @@
-import type { IPortConfig, IPortValue } from '@chaingraph/types/port/base'
+import type { IPortConfig, IPortValue } from '@badaitech/chaingraph-types/port/base'
 
 export interface PortState {
   id: string

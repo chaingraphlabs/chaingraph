@@ -1,19 +1,19 @@
-import type { ExecutionContext, NodeExecutionResult } from '@chaingraph/types'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import type { SuperJSONResult } from 'superjson/dist/types'
-import { BaseNode, Input, Node, Output } from '@chaingraph/types'
-import { Port } from '@chaingraph/types/node'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
+import { BaseNode, Input, Node, Output } from '@badaitech/chaingraph-types'
+import { Port } from '@badaitech/chaingraph-types/node'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
 
-import { MultiChannel } from '@chaingraph/types/port/channel'
+import { MultiChannel } from '@badaitech/chaingraph-types/port/channel'
 import {
   ArrayPortPlugin,
   NumberPortPlugin,
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'

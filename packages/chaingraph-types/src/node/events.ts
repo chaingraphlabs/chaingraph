@@ -1,5 +1,5 @@
-import type { NodeStatus } from '@chaingraph/types/node/node-enums'
-import type { NodeUIMetadata, Position } from '@chaingraph/types/node/node-ui'
+import type { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import type { NodeUIMetadata, Position } from '@badaitech/chaingraph-types/node/node-ui'
 
 /**
  * Enum for all possible node events

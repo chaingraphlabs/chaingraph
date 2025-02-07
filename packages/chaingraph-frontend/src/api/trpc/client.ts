@@ -1,4 +1,4 @@
-import type { AppRouter } from '@chaingraph/backend/router.ts'
+import type { AppRouter } from '@badaitech/chaingraph-backend/router.ts'
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query'
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
 import { QueryClient } from '@tanstack/react-query'

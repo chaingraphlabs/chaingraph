@@ -1,7 +1,7 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { $activeFlowMetadata } from '@/store'
 import { $executionState } from '@/store/execution'
-import { ExecutionEventEnum } from '@chaingraph/types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
 import { ExecutionTimeline } from './ExecutionTimeline'

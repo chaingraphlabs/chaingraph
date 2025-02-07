@@ -1,5 +1,5 @@
 import type { ArrayPortConfig, ArrayPortValue, IPortConfig } from '../base/types'
-import { AnyPortPlugin } from '@chaingraph/types/port/plugins/AnyPortPlugin'
+import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { MultiChannel } from '../channel/multi-channel'
 // For object port helpers, import from the instances folder.

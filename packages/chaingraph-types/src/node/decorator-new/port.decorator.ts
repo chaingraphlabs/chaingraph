@@ -1,8 +1,8 @@
-import type { PortDecoratorOptions } from '@chaingraph/types/node'
+import type { PortDecoratorOptions } from '@badaitech/chaingraph-types/node'
 import type {
   PortType,
-} from '@chaingraph/types/port/base/types'
-import { resolveObjectSchema } from '@chaingraph/types/node/decorator-new/object-schema.decorator'
+} from '@badaitech/chaingraph-types/port/base/types'
+import { resolveObjectSchema } from '@badaitech/chaingraph-types/node/decorator-new/object-schema.decorator'
 
 import { getPortsMetadata, setPortMetadata } from './metadata-storage'
 import { processEnumOptions, processItemConfig } from './recursive-normalization'

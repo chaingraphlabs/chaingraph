@@ -1,4 +1,4 @@
-import { EdgeStatus } from '@chaingraph/types'
+import { EdgeStatus } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 
 export const SerializedEdgeSchema = z.object({

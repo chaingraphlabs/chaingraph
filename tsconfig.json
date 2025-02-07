@@ -10,14 +10,14 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "paths": {
-      "@chaingraph/backend/*": ["packages/chaingraph-backend/src/*"],
-      "@chaingraph/backend": ["packages/chaingraph-backend/src"],
-      "@chaingraph/types/*": ["packages/chaingraph-types/src/*"],
-      "@chaingraph/types": ["packages/chaingraph-types/src"],
-      "@chaingraph/frontend": ["packages/chaingraph-frontend/src"],
-      "@chaingraph/frontend/*": ["packages/chaingraph-frontend/src/*"],
-      "@chaingraph/nodes": ["packages/chaingraph-nodes/src"],
-      "@chaingraph/nodes/*": ["packages/chaingraph-nodes/src/*"]
+      "@badaitech/chaingraph-backend/*": ["packages/chaingraph-backend/src/*"],
+      "@badaitech/chaingraph-backend": ["packages/chaingraph-backend/src"],
+      "@badaitech/chaingraph-types/*": ["packages/chaingraph-types/src/*"],
+      "@badaitech/chaingraph-types": ["packages/chaingraph-types/src"],
+      "@badaitech/chaingraph-frontend": ["packages/chaingraph-frontend/src"],
+      "@badaitech/chaingraph-frontend/*": ["packages/chaingraph-frontend/src/*"],
+      "@badaitech/chaingraph-nodes": ["packages/chaingraph-nodes/src"],
+      "@badaitech/chaingraph-nodes/*": ["packages/chaingraph-nodes/src/*"]
     },
     "resolveJsonModule": true,
     "types": ["node", "bun-types"],

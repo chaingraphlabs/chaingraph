@@ -1,4 +1,4 @@
-import type { ExecutionEventImpl } from '@chaingraph/types'
+import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type {
   CreateExecutionOptions,
   ExecutionError,

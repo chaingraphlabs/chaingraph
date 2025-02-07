@@ -1,4 +1,4 @@
-import type { ExecutionEventEnum, ExecutionEventImpl } from '@chaingraph/types'
+import type { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { EventCard } from './EventCard'
 
 interface ExecutionTimelineProps {

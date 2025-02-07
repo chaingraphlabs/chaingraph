@@ -1,11 +1,11 @@
 import type {
   ExecutionEventHandlerMap,
-} from '@chaingraph/types/flow/execution-handlers.ts'
+} from '@badaitech/chaingraph-types/flow/execution-handlers.ts'
 import { trpc } from '@/api/trpc/client'
-import { ExecutionEventEnum } from '@chaingraph/types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import {
   createExecutionEventHandler,
-} from '@chaingraph/types/flow/execution-handlers.ts'
+} from '@badaitech/chaingraph-types/flow/execution-handlers.ts'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'

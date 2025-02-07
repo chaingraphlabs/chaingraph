@@ -1,4 +1,4 @@
-import type { CategoryMetadata, INode } from '@chaingraph/types'
+import type { CategoryMetadata, INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
 
 export type GroupNode = Node<{

@@ -1,17 +1,17 @@
-import type { DebuggerController } from '@chaingraph/types/flow/debugger-types'
+import type { DebuggerController } from '@badaitech/chaingraph-types/flow/debugger-types'
 import type {
   ExecutionEventData,
-} from '@chaingraph/types/flow/execution-events'
+} from '@badaitech/chaingraph-types/flow/execution-events'
 import type { INode, NodeStatusChangeEvent } from '../node'
 import type { ExecutionContext } from './execution-context'
 import type { Flow } from './flow'
-import { FlowDebugger } from '@chaingraph/types/flow/debugger'
+import { FlowDebugger } from '@badaitech/chaingraph-types/flow/debugger'
 import {
   ExecutionEventEnum,
   ExecutionEventImpl,
-} from '@chaingraph/types/flow/execution-events'
-import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { EventQueue } from '@chaingraph/types/utils/event-queue'
+} from '@badaitech/chaingraph-types/flow/execution-events'
+import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { NodeEventType } from '../node'
 import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'

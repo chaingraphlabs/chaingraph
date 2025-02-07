@@ -1,7 +1,7 @@
-import type { IPort } from '@chaingraph/types/port/base'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type { EdgeMetadata, IEdge } from '.'
 import type { INode } from '../node'
-import { PortDirection } from '@chaingraph/types/port/base'
+import { PortDirection } from '@badaitech/chaingraph-types/port/base'
 import { EdgeStatus } from '.'
 
 export class Edge implements IEdge {

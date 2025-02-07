@@ -1,14 +1,14 @@
-import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { NodeEvent } from '@chaingraph/types/node/events'
-import type { NodeStatus } from '@chaingraph/types/node/node-enums'
+import type { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
+import type { NodeEvent } from '@badaitech/chaingraph-types/node/events'
+import type { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import type {
   Dimensions,
   NodeUIMetadata,
   NodeUIState,
   NodeUIStyle,
   Position,
-} from '@chaingraph/types/node/node-ui'
-import type { IPort, JSONValue } from '@chaingraph/types/port/base'
+} from '@badaitech/chaingraph-types/node/node-ui'
+import type { IPort, JSONValue } from '@badaitech/chaingraph-types/port/base'
 import type {
   NodeExecutionResult,
   NodeMetadata,

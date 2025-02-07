@@ -1,4 +1,4 @@
-import type { INode } from '@chaingraph/types'
+import type { INode } from '@badaitech/chaingraph-types'
 import { clearActiveFlow, updateNodeParent } from '@/store'
 import { combine, createStore } from 'effector'
 import {

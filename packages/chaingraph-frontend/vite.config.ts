@@ -27,14 +27,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@chaingraph/types': resolve(__dirname, '../chaingraph-types/src'),
-      '@chaingraph/nodes': resolve(__dirname, '../chaingraph-nodes/src'),
-      '@chaingraph/backend': resolve(__dirname, '../chaingraph-backend/src'),
+      '@badaitech/chaingraph-types': resolve(__dirname, '../chaingraph-types/src'),
+      '@badaitech/chaingraph-nodes': resolve(__dirname, '../chaingraph-nodes/src'),
+      '@badaitech/chaingraph-backend': resolve(__dirname, '../chaingraph-backend/src'),
       '@': resolve(__dirname, 'src'),
     },
   },
   optimizeDeps: {
-    include: ['@chaingraph/types', '@chaingraph/nodes', '@chaingraph/backend', 'superjson'],
+    include: ['@badaitech/chaingraph-types', '@badaitech/chaingraph-nodes', '@badaitech/chaingraph-backend', 'superjson'],
     exclude: ['reflect-metadata'],
   },
   build: {

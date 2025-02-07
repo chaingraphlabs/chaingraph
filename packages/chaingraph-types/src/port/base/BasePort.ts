@@ -2,7 +2,7 @@ import type { IPort } from './IPort'
 import type { JSONValue } from './json'
 import type { ExtractValue, IPortConfig } from './types'
 
-import { deepCopy } from '@chaingraph/types/utils/deep-copy'
+import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
 import { PortError, PortErrorType } from './types'
 
 export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {

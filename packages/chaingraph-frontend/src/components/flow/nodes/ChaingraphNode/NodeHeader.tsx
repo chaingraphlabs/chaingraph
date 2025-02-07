@@ -1,7 +1,7 @@
-import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
-import type { CategoryStyle, INode } from '@chaingraph/types'
+import type { CategoryIconName } from '@badaitech/chaingraph-nodes/categories/icons'
+import type { CategoryStyle, INode } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
-import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
+import { getCategoryIcon } from '@badaitech/chaingraph-nodes/categories/icons'
 import { Cross1Icon } from '@radix-ui/react-icons'
 import { useCallback } from 'react'
 

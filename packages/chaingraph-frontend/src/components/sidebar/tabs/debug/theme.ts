@@ -1,7 +1,7 @@
 import type {
   LucideIcon,
 } from 'lucide-react'
-import { ExecutionEventEnum } from '@chaingraph/types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import {
   AlertOctagon,
   AlertTriangle,

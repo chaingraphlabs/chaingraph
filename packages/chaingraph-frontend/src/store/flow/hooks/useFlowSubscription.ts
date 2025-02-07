@@ -1,4 +1,4 @@
-import type { FlowEventHandlerMap } from '@chaingraph/types/flow/eventHandlers'
+import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types/flow/eventHandlers'
 import { trpc } from '@/api/trpc/client'
 
 import {
@@ -21,9 +21,9 @@ import {
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
-import { createEventHandler } from '@chaingraph/types/flow/eventHandlers'
-import { FlowEventType } from '@chaingraph/types/flow/events'
-import { DefaultPosition } from '@chaingraph/types/node/node-ui.ts'
+import { createEventHandler } from '@badaitech/chaingraph-types/flow/eventHandlers'
+import { FlowEventType } from '@badaitech/chaingraph-types/flow/events'
+import { DefaultPosition } from '@badaitech/chaingraph-types/node/node-ui.ts'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { useEffect, useMemo } from 'react'

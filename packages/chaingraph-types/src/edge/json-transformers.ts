@@ -1,7 +1,7 @@
 // import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
-import type { JSONValue } from '@chaingraph/types'
+import type { JSONValue } from '@badaitech/chaingraph-types'
 import type { SuperJSONResult } from 'superjson'
-import { Edge } from '@chaingraph/types'
+import { Edge } from '@badaitech/chaingraph-types'
 import superjson from 'superjson'
 
 /**

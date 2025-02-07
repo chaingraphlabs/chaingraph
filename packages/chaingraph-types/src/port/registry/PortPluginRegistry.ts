@@ -14,7 +14,7 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
+} from '@badaitech/chaingraph-types/port/plugins'
 import { z } from 'zod'
 import {
   basePortConfigSchema,

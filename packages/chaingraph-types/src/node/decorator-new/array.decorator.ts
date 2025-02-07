@@ -1,4 +1,4 @@
-import type { ObjectPortSchemaInput, PortDecoratorOptions } from '@chaingraph/types/node'
+import type { ObjectPortSchemaInput, PortDecoratorOptions } from '@badaitech/chaingraph-types/node'
 import { Port } from './port.decorator'
 
 /**

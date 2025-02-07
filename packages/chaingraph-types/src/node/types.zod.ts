@@ -1,4 +1,4 @@
-import { portRegistry } from '@chaingraph/types/port/registry'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { z } from 'zod'
 import { NodeExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 

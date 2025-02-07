@@ -1,17 +1,17 @@
-import { BaseNode } from '@chaingraph/types/node/base-node'
-import { findPort } from '@chaingraph/types/node/traverse-ports'
+import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
+import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
   NumberPortPlugin,
   ObjectPortPlugin,
   StreamPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { AnyPortPlugin } from '@chaingraph/types/port/plugins/AnyPortPlugin'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
 import {
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins/StringPortPlugin'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins/StringPortPlugin'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'

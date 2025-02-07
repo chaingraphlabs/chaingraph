@@ -9,9 +9,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@chaingraph/types": ["../chaingraph-types/src"],
-      "@chaingraph/types/*": ["../chaingraph-types/src/*"],
-      "@chaingraph/nodes/*": ["./*"]
+      "@badaitech/chaingraph-types": ["../chaingraph-types/src"],
+      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
+      "@badaitech/chaingraph-nodes/*": ["./*"]
     },
     "strict": true,
     "noFallthroughCasesInSwitch": true,

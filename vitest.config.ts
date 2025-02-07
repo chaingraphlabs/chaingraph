@@ -7,10 +7,10 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['reflect-metadata'],
     alias: {
-      '@chaingraph/types': resolve(__dirname, './packages/chaingraph-types/src'),
-      '@chaingraph/backend': resolve(__dirname, './packages/chaingraph-backend/src'),
-      '@chaingraph/frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
-      '@chaingraph/nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
+      '@badaitech/chaingraph-types': resolve(__dirname, './packages/chaingraph-types/src'),
+      '@badaitech/chaingraph-backend': resolve(__dirname, './packages/chaingraph-backend/src'),
+      '@badaitech/chaingraph-frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
+      '@badaitech/chaingraph-nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
     },
     typecheck: {
       enabled: true,
@@ -29,10 +29,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@chaingraph/types': resolve(__dirname, './packages/chaingraph-types/src'),
-      '@chaingraph/backend': resolve(__dirname, './packages/chaingraph-backend/src'),
-      '@chaingraph/frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
-      '@chaingraph/nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
+      '@badaitech/chaingraph-types': resolve(__dirname, './packages/chaingraph-types/src'),
+      '@badaitech/chaingraph-backend': resolve(__dirname, './packages/chaingraph-backend/src'),
+      '@badaitech/chaingraph-frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
+      '@badaitech/chaingraph-nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
     },
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },

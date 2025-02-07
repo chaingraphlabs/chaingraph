@@ -1,4 +1,4 @@
-import type { IPort } from '@chaingraph/types/port/base'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import { cn } from '@/lib/utils'
 import { Handle, Position } from '@xyflow/react'
 

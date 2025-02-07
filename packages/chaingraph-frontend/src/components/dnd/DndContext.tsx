@@ -1,4 +1,4 @@
-import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { createContext } from 'react'
 
 export interface NodeDropEvent {

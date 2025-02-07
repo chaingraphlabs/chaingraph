@@ -1,4 +1,4 @@
-import type { Position } from '@chaingraph/types/node/node-ui'
+import type { Position } from '@badaitech/chaingraph-types/node/node-ui'
 import { NODE_POSITION_DEBOUNCE_MS } from '@/store/nodes/constants.ts'
 
 // Interpolation modes

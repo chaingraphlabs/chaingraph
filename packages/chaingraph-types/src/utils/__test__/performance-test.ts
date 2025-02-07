@@ -1,4 +1,4 @@
-import { EventQueue } from '@chaingraph/types/utils/event-queue'
+import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 
 async function runPerformanceTest() {
   console.log('Starting EventQueue Performance Test\n')

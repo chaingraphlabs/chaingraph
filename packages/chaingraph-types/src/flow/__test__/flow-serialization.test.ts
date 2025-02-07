@@ -1,7 +1,7 @@
 import type {
   ExecutionContext,
   NodeExecutionResult,
-} from '@chaingraph/types'
+} from '@badaitech/chaingraph-types'
 import type { SuperJSONResult } from 'superjson/dist/types'
 import {
   BaseNode,
@@ -13,12 +13,12 @@ import {
   Number,
   Output,
   String,
-} from '@chaingraph/types'
+} from '@badaitech/chaingraph-types'
 
-import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
-import { registerNodeTransformers } from '@chaingraph/types/node/json-transformers'
-import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { findPort } from '@chaingraph/types/node/traverse-ports'
+import { registerFlowTransformers } from '@badaitech/chaingraph-types/flow/json-transformers'
+import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -26,8 +26,8 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 

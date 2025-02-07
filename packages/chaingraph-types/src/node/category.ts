@@ -1,4 +1,4 @@
-import type { NodeMetadata } from '@chaingraph/types/node/types'
+import type { NodeMetadata } from '@badaitech/chaingraph-types/node/types'
 
 /**
  * Base type for node category identifier

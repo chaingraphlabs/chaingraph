@@ -1,4 +1,4 @@
-import { PortDirection } from '@chaingraph/types/port/base'
+import { PortDirection } from '@badaitech/chaingraph-types/port/base'
 import { getPortMetadata, updatePortMetadata } from './metadata-storage'
 import 'reflect-metadata'
 

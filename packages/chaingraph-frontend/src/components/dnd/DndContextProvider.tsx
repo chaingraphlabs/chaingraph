@@ -1,4 +1,4 @@
-import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import type { NodeDropEvent } from './DndContext'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { DndContext } from './DndContext'

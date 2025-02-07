@@ -1,5 +1,5 @@
-import type { INode } from '@chaingraph/types/node'
-import type { IPort } from '@chaingraph/types/port/base'
+import type { INode } from '@badaitech/chaingraph-types/node'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type { EdgeMetadata, EdgeStatus } from './types'
 
 /**

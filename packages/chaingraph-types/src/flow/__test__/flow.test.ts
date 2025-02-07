@@ -1,7 +1,7 @@
 import type {
   NodeExecutionResult,
-} from '@chaingraph/types'
-import type { IPort } from '@chaingraph/types/port/base'
+} from '@badaitech/chaingraph-types'
+import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import {
   BaseNode,
   ExecutionContext,
@@ -9,11 +9,11 @@ import {
   ExecutionEventEnum,
   ExecutionStoppedByDebugger,
   Flow,
-} from '@chaingraph/types'
-import { createExecutionEventHandler } from '@chaingraph/types/flow/execution-handlers'
-import { NodeExecutionStatus } from '@chaingraph/types/node/node-enums'
-import { PortDirection } from '@chaingraph/types/port/base'
-import { NumberPort } from '@chaingraph/types/port/instances'
+} from '@badaitech/chaingraph-types'
+import { createExecutionEventHandler } from '@badaitech/chaingraph-types/flow/execution-handlers'
+import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { PortDirection } from '@badaitech/chaingraph-types/port/base'
+import { NumberPort } from '@badaitech/chaingraph-types/port/instances'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -21,8 +21,8 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 

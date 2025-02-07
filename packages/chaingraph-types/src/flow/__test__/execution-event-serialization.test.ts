@@ -1,4 +1,4 @@
-import type { NodeExecutionResult, NodeMetadata } from '@chaingraph/types/node/types'
+import type { NodeExecutionResult, NodeMetadata } from '@badaitech/chaingraph-types/node/types'
 import {
   Flow,
   Input,
@@ -6,12 +6,12 @@ import {
   NodeExecutionStatus,
   registerNodeTransformers,
   String,
-} from '@chaingraph/types'
-import { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import { ExecutionEventEnum, ExecutionEventImpl } from '@chaingraph/types/flow/execution-events'
-import { registerFlowTransformers } from '@chaingraph/types/flow/json-transformers'
-import { BaseNode } from '@chaingraph/types/node/base-node'
-import { NodeStatus } from '@chaingraph/types/node/node-enums'
+} from '@badaitech/chaingraph-types'
+import { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
+import { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types/flow/execution-events'
+import { registerFlowTransformers } from '@badaitech/chaingraph-types/flow/json-transformers'
+import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
+import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -19,8 +19,8 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 

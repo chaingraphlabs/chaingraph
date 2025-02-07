@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from 'react'
 import { DndContextProvider } from '@/components/dnd'
 import { ZoomProvider } from '@/providers/ZoomProvider'
-import { TrpcProvider } from '@chaingraph/frontend/api/trpc/provider.tsx'
-import { DndProvider } from '@chaingraph/frontend/components/dnd/DndProvider.tsx'
-import { ThemeProvider } from '@chaingraph/frontend/components/theme/ThemeProvider.tsx'
+import { TrpcProvider } from '@badaitech/chaingraph-frontend/api/trpc/provider.tsx'
+import { DndProvider } from '@badaitech/chaingraph-frontend/components/dnd/DndProvider.tsx'
+import { ThemeProvider } from '@badaitech/chaingraph-frontend/components/theme/ThemeProvider.tsx'
 import { ReactFlowProvider } from '@xyflow/react'
 import { MenuPositionProvider } from 'src/components/flow/components/context-menu'
 

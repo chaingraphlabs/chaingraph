@@ -1,11 +1,11 @@
-import type { CategoryIconName } from '@chaingraph/nodes/categories/icons'
-import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
+import type { CategoryIconName } from '@badaitech/chaingraph-nodes/categories/icons'
+import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
-import { getCategoryIcon } from '@chaingraph/nodes/categories/icons'
-import { PortDirection } from '@chaingraph/types/port/base'
+import { getCategoryIcon } from '@badaitech/chaingraph-nodes/categories/icons'
+import { PortDirection } from '@badaitech/chaingraph-types/port/base'
 import { useEffect, useMemo, useState } from 'react'
 
 interface NodePreviewProps {

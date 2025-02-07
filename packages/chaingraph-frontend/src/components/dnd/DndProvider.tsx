@@ -1,4 +1,4 @@
-import type { CategoryMetadata, NodeMetadata } from '@chaingraph/types'
+import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { useDnd } from '@/components/dnd/useDnd'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {

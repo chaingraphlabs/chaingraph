@@ -1,29 +1,29 @@
-import type { ExecutionContext } from '@chaingraph/types/flow/execution-context'
-import type { EventReturnType, NodeEvent, NodeEventDataType } from '@chaingraph/types/node/events'
-import type { INode } from '@chaingraph/types/node/interface'
+import type { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
+import type { EventReturnType, NodeEvent, NodeEventDataType } from '@badaitech/chaingraph-types/node/events'
+import type { INode } from '@badaitech/chaingraph-types/node/interface'
 import type {
   Dimensions,
   NodeUIMetadata,
   NodeUIStyle,
   Position,
-} from '@chaingraph/types/node/node-ui'
+} from '@badaitech/chaingraph-types/node/node-ui'
 import type {
   NodeExecutionResult,
   NodeMetadata,
   NodeValidationResult,
-} from '@chaingraph/types/node/types'
-import type { IPort, IPortConfig, JSONValue } from '@chaingraph/types/port/base'
+} from '@badaitech/chaingraph-types/node/types'
+import type { IPort, IPortConfig, JSONValue } from '@badaitech/chaingraph-types/port/base'
 import {
   getOrCreateNodeMetadata,
-} from '@chaingraph/types/node/decorator-new/getOrCreateNodeMetadata'
-import { NodeEventType } from '@chaingraph/types/node/events'
-import { NodeStatus } from '@chaingraph/types/node/node-enums'
-import { SerializedNodeSchema } from '@chaingraph/types/node/types.zod'
-import { PortDirection } from '@chaingraph/types/port/base'
-import { PortFactory } from '@chaingraph/types/port/factory'
-import { portRegistry } from '@chaingraph/types/port/registry'
-import { deepCopy } from '@chaingraph/types/utils/deep-copy'
-import { EventQueue } from '@chaingraph/types/utils/event-queue'
+} from '@badaitech/chaingraph-types/node/decorator-new/getOrCreateNodeMetadata'
+import { NodeEventType } from '@badaitech/chaingraph-types/node/events'
+import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
+import { PortDirection } from '@badaitech/chaingraph-types/port/base'
+import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
+import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
+import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { PortConfigProcessor } from './port-config-processor'
 import 'reflect-metadata'
 

@@ -5,9 +5,9 @@ import {
   ObjectPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@chaingraph/types/port/plugins'
-import { AnyPortPlugin } from '@chaingraph/types/port/plugins/AnyPortPlugin'
-import { portRegistry } from '@chaingraph/types/port/registry'
+} from '@badaitech/chaingraph-types/port/plugins'
+import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
+import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ObjectSchema } from '..'
 import { BaseNode } from '../../base-node'

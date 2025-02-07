@@ -1,20 +1,20 @@
-import type { IEdge, INode, NodeEvent } from '@chaingraph/types'
+import type { IEdge, INode, NodeEvent } from '@badaitech/chaingraph-types'
 import type {
   FlowEvent,
   NodeParentUpdatedEventData,
   NodeUIDimensionsChangedEventData,
   NodeUIEventData,
   NodeUIPositionChangedEventData,
-} from '@chaingraph/types/flow/events'
+} from '@badaitech/chaingraph-types/flow/events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
-import { Edge, NodeEventType } from '@chaingraph/types'
+import { Edge, NodeEventType } from '@badaitech/chaingraph-types'
 import {
   FlowEventType,
   newEvent,
-} from '@chaingraph/types/flow/events'
+} from '@badaitech/chaingraph-types/flow/events'
 
-import { EventQueue } from '@chaingraph/types/utils/event-queue'
+import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { v4 as uuidv4 } from 'uuid'
 
 export class Flow implements IFlow {

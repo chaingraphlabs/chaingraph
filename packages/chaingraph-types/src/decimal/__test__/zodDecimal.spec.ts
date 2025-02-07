@@ -1,4 +1,4 @@
-import { ZodDecimal } from '@chaingraph/types/decimal/zodDecimal'
+import { ZodDecimal } from '@badaitech/chaingraph-types/decimal/zodDecimal'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
