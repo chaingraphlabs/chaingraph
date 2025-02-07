@@ -18,6 +18,9 @@ export function BooleanPort(props: BooleanPortProps) {
 
   const title = config.title || config.key
 
+  if (ui?.hidePort)
+    return null
+
   return (
     <div
       key={config.id}
@@ -35,11 +38,14 @@ export function BooleanPort(props: BooleanPortProps) {
         <div className="flex flex-col">
           <PortTitle>{title}</PortTitle>
 
-          <Switch
-            disabled={ui?.disabled}
-            checked={value}
-            onCheckedChange={checked => onChange({ value: checked })}
-          />
+          {!ui?.hideEditor && (
+            <Switch
+              disabled={ui?.disabled}
+              checked={value}
+              onCheckedChange={checked => onChange({ value: checked })}
+            />
+          )}
+
         </div>
       )}
     </div>

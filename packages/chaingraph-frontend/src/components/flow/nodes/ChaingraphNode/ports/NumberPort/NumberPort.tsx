@@ -17,7 +17,11 @@ export interface NumberPortProps {
 export function NumberPort(props: NumberPortProps) {
   const { port, value, onChange, errorMessage } = props
   const config = port.getConfig()
+  const ui = config.ui
   const title = config.title || config.key
+
+  if (ui?.hidePort)
+    return null
 
   return (
     <div
@@ -37,28 +41,35 @@ export function NumberPort(props: NumberPortProps) {
         <div className="flex flex-col">
           <PortTitle>{title}</PortTitle>
 
-          <NumberInput
-            className={errorMessage && 'border-red-500'}
-            value={value}
-            min={config.min}
-            max={config.max}
-            step={config.step}
-            onValueChange={({ floatValue }) => {
-              const val = floatValue ?? Number.NaN
+          {!ui?.hideEditor && (
+            <>
+              <NumberInput
+                disabled={ui?.disabled}
+                className={errorMessage && 'border-red-500'}
+                value={value}
+                min={config.min}
+                max={config.max}
+                step={config.step}
+                onValueChange={({ floatValue }) => {
+                  const val = floatValue ?? Number.NaN
 
-              onChange?.({ value: Number.isNaN(val) ? '' : val })
-            }}
-          />
-          <Slider
-            className="mt-0.5"
-            value={[value ?? 0]}
-            min={config.min}
-            max={config.max}
-            step={config.step}
-            onValueChange={(values) => {
-              onChange?.({ value: values[0] })
-            }}
-          />
+                  onChange?.({ value: Number.isNaN(val) ? '' : val })
+                }}
+              />
+              <Slider
+                className="mt-0.5"
+                disabled={ui?.disabled}
+                value={[value ?? 0]}
+                min={config.min}
+                max={config.max}
+                step={config.step}
+                onValueChange={(values) => {
+                  onChange?.({ value: values[0] })
+                }}
+              />
+            </>
+          )}
+
         </div>
       )}
     </div>
