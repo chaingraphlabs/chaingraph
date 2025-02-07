@@ -90,13 +90,4 @@ export class StringPort extends BasePort<StringPortConfig> {
   protected deserializeValue(data: JSONValue): StringPortValue {
     return StringPortPlugin.deserializeValue(data, this.config)
   }
-
-  validate(): boolean {
-    const isConfigValid = this.validateConfig(this.config)
-    const value = this.getValue()
-    // TODO: Is it correct to have true here when value === undefined
-    const isValueValid = value ? this.validateValue(value) : true
-
-    return isConfigValid && isValueValid
-  }
 }
