@@ -8,6 +8,7 @@ import {
 // import Node from '@xyflow/react/dist/types/Node'
 import {
   $activeFlowMetadata,
+  $edges,
   $nodes,
   removeNodeFromFlow,
   requestAddEdge,
@@ -18,6 +19,7 @@ import {
   updateNodeUI,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
+import { hasCycle } from '@chaingraph/types/flow/cycleDetection.ts'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'
@@ -30,6 +32,12 @@ export function useFlowCallbacks() {
   const activeFlow = useUnit($activeFlowMetadata)
   const nodes = useUnit($nodes)
   const { getNode, getNodes } = useReactFlow()
+  const edges = useUnit($edges)
+
+  const edgeViews = edges.map(edge => ({
+    sourceNode: nodes[edge.sourceNodeId],
+    targetNode: nodes[edge.targetNodeId],
+  }))
 
   // Ref to track edge reconnection state
   const reconnectSuccessful = useRef(false)
@@ -180,6 +188,14 @@ export function useFlowCallbacks() {
     if (!activeFlow?.id || !connection.source || !connection.target)
       return
 
+    if (hasCycle(Object.values(nodes), edgeViews, {
+      sourceNode: nodes[connection.source],
+      targetNode: nodes[connection.target],
+    })) {
+      console.warn('Cycle detected')
+      return
+    }
+
     requestAddEdge({
       flowId: activeFlow.id,
       sourceNodeId: connection.source,
@@ -188,7 +204,7 @@ export function useFlowCallbacks() {
       targetPortId: connection.targetHandle!,
       metadata: {},
     })
-  }, [activeFlow?.id])
+  }, [activeFlow?.id, nodes, edgeViews])
 
   /**
    * Called when user starts dragging an edge handle
@@ -216,16 +232,9 @@ export function useFlowCallbacks() {
 
     // Create new edge if we have valid connection points
     if (newConnection.source && newConnection.target) {
-      requestAddEdge({
-        flowId: activeFlow.id,
-        sourceNodeId: newConnection.source,
-        sourcePortId: newConnection.sourceHandle!,
-        targetNodeId: newConnection.target,
-        targetPortId: newConnection.targetHandle!,
-        metadata: {},
-      })
+      onConnect(newConnection)
     }
-  }, [activeFlow?.id])
+  }, [activeFlow?.id, onConnect])
 
   /**
    * Called when edge reconnection interaction ends
