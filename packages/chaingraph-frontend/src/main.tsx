@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
 import type { INode } from '@badaitech/chaingraph-types'
 import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import { initializeStores } from '@/store/init.ts'
@@ -117,6 +125,7 @@ superjson.registerCustom<INode, any>(
         node.deserialize(nodeData)
         return node
       } catch (e) {
+        // eslint-disable-next-line no-debugger
         debugger
         console.error('Error deserializing node:', e)
         throw e
@@ -158,6 +167,7 @@ superjson.registerCustom<ExecutionEventImpl, any>(
         )
       } catch (e: any) {
         console.error(e)
+        // eslint-disable-next-line no-debugger
         debugger
         throw new Error('Invalid execution event data')
       }

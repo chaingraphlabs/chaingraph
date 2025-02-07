@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
 import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 
 async function runPerformanceTest() {
@@ -20,6 +28,7 @@ async function runPerformanceTest() {
         // Simulate some light processing
         await Promise.resolve()
       },
+      // eslint-disable-next-line node/handle-callback-err
       (error) => {
         // Silent error handling for test
       },
