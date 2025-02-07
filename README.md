@@ -1,10 +1,8 @@
 # ChainGraph
 
-
 ![dark_bg2.png](docs/images/dark_bg2.png)
 
-
-ChainGraph is an open-source flow-based programming platform that redefines how complex AI systems are built. Primarily aimed at developing AI LLM agents with elaborate logical flows, this framework combines a graph-based design with a strong emphasis on type safety—thanks to modern TypeScript features. Whether you’re crafting custom nodes or orchestrating dynamic, multi-step agent interactions, ChainGraph’s modular architecture supports your efforts with rigorous compile-time assurances and enhanced developer ergonomics.
+ChainGraph is a source-available flow-based programming platform that redefines how complex AI systems are built. Primarily aimed at developing AI LLM agents with elaborate logical flows, this framework combines a graph-based design with a strong emphasis on type safety—thanks to modern TypeScript features. Whether you’re crafting custom nodes or orchestrating dynamic, multi-step agent interactions, ChainGraph’s modular architecture supports your efforts with rigorous compile-time assurances and enhanced developer ergonomics.
 
 > **Disclaimer:** This version is intended for demonstration and experimentation purposes only. The API and internal architecture are still evolving, and breaking changes may occur as new features are added and improvements are made.
 
@@ -130,5 +128,17 @@ make rebuild
 ## Contributing
 
 Contributions are welcome! If you would like to help improve ChainGraph:
+
 - Please open issues or pull requests with suggestions, bug reports, or improvements.
 - Make sure to update or add documentation where necessary.
+
+---
+
+## License
+
+ChainGraph is licensed under a [Business Source License 1.1 (BUSL-1.1)](LICENSE.txt).
+
+Since version 1.0 refer to a table below showing a conversion dates for each version:
+
+| ChainGraph Version | License  | Converts to Apache 2.0 |
+|--------------------|----------|------------------------|
