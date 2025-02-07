@@ -8,17 +8,23 @@ import { InMemoryFlowStore } from '../../stores/flowStore'
  */
 export function createTestContext(
   _nodeRegistry?: NodeRegistry,
-  nodesCatalog?: NodeCatalog,
+  _nodesCatalog?: NodeCatalog,
   flowStore?: IFlowStore,
 ): AppContext {
   const nodeRegistry = _nodeRegistry ?? NodeRegistry.getInstance()
+  const nodesCatalog = _nodesCatalog ?? new NodeCatalog()
+
+  nodeRegistry.getNodeTypes().forEach((type) => {
+    const node = nodeRegistry.createNode(type, `${type}-catalog`)
+    nodesCatalog.registerNode(type, node)
+  })
 
   return {
     session: {
       userId: 'test_user_id',
     },
     nodeRegistry,
-    nodesCatalog: nodesCatalog ?? new NodeCatalog(),
+    nodesCatalog,
     flowStore: flowStore ?? new InMemoryFlowStore(),
     executionService: null as any,
     executionStore: null as any,

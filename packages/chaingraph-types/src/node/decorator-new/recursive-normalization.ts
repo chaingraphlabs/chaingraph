@@ -1,4 +1,4 @@
-import type { ObjectSchema as IObjectSchema, IPortConfig } from '@badaitech/chaingraph-types/port/base'
+import type { IObjectSchema, IPortConfig } from '@badaitech/chaingraph-types/port/base'
 import { resolveObjectSchema } from '.'
 
 /**
@@ -13,8 +13,10 @@ import { resolveObjectSchema } from '.'
 export function normalizeArrayItemConfig(itemConfig: IPortConfig): any {
   if (typeof itemConfig === 'object' && itemConfig !== null) {
     if (itemConfig.type === 'object' && itemConfig.schema) {
-      // If schema is a function it will be later resolved by resolveObjectSchema.
-      return { ...itemConfig }
+      return {
+        ...itemConfig,
+        schema: resolveObjectSchema(itemConfig.schema),
+      }
     } else if (itemConfig.type === 'array' && itemConfig.itemConfig) {
       return {
         ...itemConfig,
@@ -41,6 +43,11 @@ export function normalizeSchema(schema: IObjectSchema): IObjectSchema {
         ...prop,
         itemConfig: normalizeArrayItemConfig(prop.itemConfig),
       }
+    } else if (prop.type === 'object' && prop.schema) {
+      normalized.properties[key] = {
+        ...prop,
+        schema: resolveObjectSchema(prop.schema),
+      }
     } else {
       normalized.properties[key] = prop
     }
@@ -62,7 +69,6 @@ export function processItemConfig(itemConf: IPortConfig): IPortConfig {
     return {
       ...itemConf,
       type: 'object',
-      // The caller (e.g. the Port decorator) will call resolveObjectSchema on it.
       schema: resolveObjectSchema(itemConf.schema),
     }
   } else if (itemConf.type === 'array' && itemConf.itemConfig) {

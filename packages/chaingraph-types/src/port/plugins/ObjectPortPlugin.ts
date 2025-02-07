@@ -2,18 +2,23 @@ import type { JSONObject, JSONValue } from '../base/json'
 import type {
   ArrayPortConfig,
   ArrayPortValue,
+  IObjectSchema,
   IPortConfig,
   IPortPlugin,
   IPortValue,
   ObjectPortConfig,
   ObjectPortValue,
   ObjectPortValueFromSchema,
-  ObjectSchema,
   PortType,
 } from '../base/types'
 import { z } from 'zod'
 import { basePortConfigSchema } from '../base/base-config.schema'
-import { isArrayPortValue, isObjectPortValue, isStringPortValue, PortError, PortErrorType,
+import {
+  isArrayPortValue,
+  isObjectPortValue,
+  isStringPortValue,
+  PortError,
+  PortErrorType,
 } from '../base/types'
 import { objectPortConfigUISchema } from '../base/ui-config.schema'
 import { portRegistry } from '../registry/PortPluginRegistry'
@@ -24,7 +29,7 @@ import { validateStringValue } from './StringPortPlugin'
  * Helper to create an object port value.
  * (Uses the "schema.properties" field for nested values)
  */
-export function createObjectValue<S extends ObjectSchema = ObjectSchema>(value: Record<string, IPortValue>): ObjectPortValue {
+export function createObjectValue<S extends IObjectSchema = IObjectSchema>(value: Record<string, IPortValue>): ObjectPortValue {
   return value as ObjectPortValueFromSchema<S>
 }
 

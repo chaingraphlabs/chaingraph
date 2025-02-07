@@ -13,6 +13,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./edge/*": {
+      "types": "./dist/edge/*.d.ts",
+      "default": "./dist/edge/*.js"
+    },
     "./port/*": {
       "types": "./dist/port/*.d.ts",
       "default": "./dist/port/*.js"

@@ -1,5 +1,5 @@
 import type {
-  ObjectSchema as IObjectSchema,
+  IObjectSchema,
   IPortConfig,
 } from '@badaitech/chaingraph-types/port/base'
 import {
@@ -29,11 +29,12 @@ export function resolveObjectSchema(
     }
     return schema
   }
+
   return normalizeSchema(schemaOrConstructor as IObjectSchema)
 }
 
 /**
- * The @ObjectSchema decorator collects all properties decorated with @Port
+ * The @ObjectSchemaDecorator decorator collects all properties decorated with @Port
  * (via its metadata) and builds an explicit object schema. It then normalizes the schema
  * recursively.
  *

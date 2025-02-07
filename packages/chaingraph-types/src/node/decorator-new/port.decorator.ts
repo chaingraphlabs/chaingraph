@@ -14,6 +14,7 @@ import 'reflect-metadata'
  *
  * @param propertyKey - The property key.
  * @param config - The port configuration.
+ * @param config.key - The key to ensure.
  */
 function ensurePortKey(propertyKey: string | symbol, config: { key?: string }) {
   if (!config.key) {
@@ -50,9 +51,7 @@ export function Port<T extends PortType>(
       if (!('schema' in config)) {
         throw new Error(`Port [${propertyKey.toString()}] of type "object" must provide a "schema".`)
       }
-      if (typeof config.schema === 'function') {
-        config.schema = resolveObjectSchema(config.schema)
-      }
+      config.schema = resolveObjectSchema(config.schema)
     }
 
     // Process array ports.

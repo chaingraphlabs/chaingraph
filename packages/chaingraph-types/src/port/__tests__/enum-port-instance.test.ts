@@ -1,10 +1,15 @@
-import type { EnumPortConfig } from '../base/types'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { EnumPort } from '../instances/EnumPort'
-import { EnumPortPlugin, validateEnumValue } from '../plugins/EnumPortPlugin'
-import { createNumberConfig, NumberPortPlugin } from '../plugins/NumberPortPlugin'
-import { createStringConfig, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortPluginRegistry'
+import type { EnumPortConfig } from '../base'
+import { describe, expect, it } from 'vitest'
+import { EnumPort } from '../instances'
+import {
+  createNumberConfig,
+  createStringConfig,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  StringPortPlugin,
+  validateEnumValue,
+} from '../plugins'
+import { portRegistry } from '../registry'
 
 /**
  * Helper function to create an enum port value.
@@ -14,15 +19,11 @@ function createEnumValue(value: string): string {
   return value
 }
 
-describe('enumPort Instance (plain values)', () => {
-  beforeEach(() => {
-    // Reset the registry and register required plugins
-    portRegistry.clear()
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(EnumPortPlugin)
-  })
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(EnumPortPlugin)
 
+describe('enumPort Instance (plain values)', () => {
   describe('basic Validation', () => {
     it('should validate an enum port with valid option selection', () => {
       // Create an EnumPortConfig with string and number options.

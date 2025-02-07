@@ -37,6 +37,10 @@ export class PortPluginRegistry {
    * Register a plugin for a specific port type
    */
   register<T extends PortType>(plugin: IPortPlugin<T>): void {
+    if (!plugin || !plugin.typeIdentifier) {
+      console.warn('Plugin does not have a type identifier', plugin)
+      return
+    }
     // if (this.plugins.has(plugin.typeIdentifier)) {
     //   throw new PortError(
     //     PortErrorType.RegistryError,

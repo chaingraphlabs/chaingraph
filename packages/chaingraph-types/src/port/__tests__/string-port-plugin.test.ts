@@ -4,9 +4,7 @@ import {
   createStringValue,
   StringPortPlugin,
   validateStringValue,
-} from '../plugins/StringPortPlugin'
-
-// Note: Now createStringValue returns a plain string.
+} from '../plugins'
 
 describe('string port plugin (plain values)', () => {
   describe('validation', () => {

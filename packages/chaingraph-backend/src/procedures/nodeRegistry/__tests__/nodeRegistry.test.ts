@@ -1,5 +1,4 @@
-import { NodeCatalog } from '@badaitech/chaingraph-nodes/dist'
-import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
@@ -14,7 +13,7 @@ describe('node Registry Procedures', () => {
   beforeAll(() => {
     nodeRegistry = NodeRegistry.getInstance()
     registerTestNodes()
-    nodeCatalog = NodeCatalog.getInstance(nodeRegistry)
+    nodeCatalog = new NodeCatalog()
   })
 
   afterAll(() => {

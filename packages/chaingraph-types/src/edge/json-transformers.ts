@@ -1,6 +1,3 @@
-// import type { JSONValue, SuperJSONResult } from 'superjson/dist/types'
-import type { JSONValue } from '@badaitech/chaingraph-types'
-import type { SuperJSONResult } from 'superjson'
 import { Edge } from '@badaitech/chaingraph-types'
 import superjson from 'superjson'
 
@@ -10,7 +7,7 @@ import superjson from 'superjson'
 export function registerEdgeTransformers() {
   // const edge = new Edge('', {} as INode, {} as any, {} as INode, {} as any, {})
 
-  superjson.registerCustom<Edge, JSONValue>(
+  superjson.registerCustom<Edge, any>(
     {
       isApplicable: (v): v is Edge => {
         return v instanceof Edge
@@ -25,12 +22,10 @@ export function registerEdgeTransformers() {
           sourcePort: superjson.serialize(v.sourcePort),
           targetNode: superjson.serialize(v.targetNode),
           targetPort: superjson.serialize(v.targetPort),
-        }) as unknown as JSONValue
+        })
       },
       deserialize: (v) => {
-        const edgeData = superjson.deserialize(
-          v as any as SuperJSONResult,
-        ) as any
+        const edgeData = superjson.deserialize(v) as any
 
         // todo: validate edgeData
         return new Edge(

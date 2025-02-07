@@ -3,7 +3,6 @@ import type {
   NodeExecutionResult,
   NodeMetadata,
 } from '@badaitech/chaingraph-types'
-import { NodeCatalog } from '@badaitech/chaingraph-nodes'
 import {
   BaseNode,
   Boolean,
@@ -75,7 +74,6 @@ describe('flow Node Procedures', () => {
   async function setupTestFlow() {
     const ctx = createTestContext(
       NodeRegistry.getInstance(),
-      new NodeCatalog(NodeRegistry.getInstance()),
     )
 
     const caller = createCallerFactory(appRouter)(ctx)

@@ -1,26 +1,23 @@
-import type { ArrayPortConfig, ArrayPortValue, IPortConfig } from '../base/types'
-import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { MultiChannel } from '../channel/multi-channel'
-// For object port helpers, import from the instances folder.
-import { createObjectPortConfig, createObjectSchema } from '../instances/ObjectPort'
-// Note: createObjectValue now simply returns the plain value.
-import { createObjectValue, ObjectPortPlugin } from '../plugins'
-import { ArrayPortPlugin } from '../plugins/ArrayPortPlugin'
-import { createStreamValue, StreamPortPlugin } from '../plugins/StreamPortPlugin'
-import { portRegistry } from '../registry/PortPluginRegistry'
+import type { ArrayPortConfig, ArrayPortValue, IPortConfig } from '../base'
+import { describe, expect, it } from 'vitest'
+import { MultiChannel } from '../channel'
+import { createObjectPortConfig, createObjectSchema } from '../instances'
+import {
+  AnyPortPlugin,
+  ArrayPortPlugin,
+  createObjectValue,
+  createStreamValue,
+  ObjectPortPlugin,
+  StreamPortPlugin,
+} from '../plugins'
+import { portRegistry } from '../registry'
+
+portRegistry.register(StreamPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
+portRegistry.register(AnyPortPlugin)
 
 describe('streamPort Instance (plain value storage)', () => {
-  beforeEach(() => {
-    // Clear the registry and register needed plugins.
-    portRegistry.clear()
-    portRegistry.register(StreamPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(AnyPortPlugin)
-    // (Other plugins used as itemConfig could be registered as needed.)
-  })
-
   // Helper to drain values via async iteration.
   async function drainChannel<T>(channel: MultiChannel<T>): Promise<T[]> {
     const results: T[] = []

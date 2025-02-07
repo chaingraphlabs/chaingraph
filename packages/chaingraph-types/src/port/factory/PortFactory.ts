@@ -4,10 +4,10 @@ import type {
   ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
+  IObjectSchema,
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
-  ObjectSchema,
   StreamPortConfig,
   StringPortConfig,
 } from '../base/types'
@@ -122,7 +122,7 @@ export class PortFactory {
   // For an object port, if you use your helper functions (like createObjectSchema
   // and createObjectPortConfig) so that config carries a detailed schema,
   // the following method should preserve that detail:
-  static createObjectPort<S extends ObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S> {
+  static createObjectPort<S extends IObjectSchema>(config: ObjectPortConfig<S>): ObjectPort<S> {
     return new ObjectPort<S>(config)
   }
 

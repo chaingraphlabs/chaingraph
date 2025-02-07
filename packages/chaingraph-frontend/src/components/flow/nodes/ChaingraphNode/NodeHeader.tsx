@@ -72,6 +72,8 @@ export function NodeHeader({
           className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
           style={{ color: style.text }}
           onClick={handleDelete}
+          title="Delete"
+          type="button"
         >
           <Cross1Icon className="w-3 h-3" />
         </button>

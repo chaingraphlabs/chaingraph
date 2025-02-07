@@ -159,6 +159,7 @@ describe('executionService', () => {
       @Node({ title: 'Failing Node' })
       class FailingNode extends BaseNode {
         async execute(): Promise<NodeExecutionResult> {
+          // Throw an error to simulate failure
           throw new Error('Test error')
         }
       }

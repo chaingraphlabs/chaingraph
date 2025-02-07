@@ -2,14 +2,13 @@ import type {
   ArrayPortConfig,
   NumberPortConfig,
   StringPortConfig,
-} from '../base/types'
-
-import { beforeEach, describe, expect, it } from 'vitest'
+} from '../base'
+import { describe, expect, it } from 'vitest'
 import {
   createObjectPortConfig,
   createObjectSchema,
   ObjectPort,
-} from '../instances/ObjectPort'
+} from '../instances'
 import {
   ArrayPortPlugin,
   // Note: Adjust createObjectValue so that it returns plain values,
@@ -19,18 +18,14 @@ import {
   ObjectPortPlugin,
   StringPortPlugin,
 } from '../plugins'
-import { portRegistry } from '../registry/PortPluginRegistry'
+import { portRegistry } from '../registry'
+
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
+portRegistry.register(ArrayPortPlugin)
+portRegistry.register(ObjectPortPlugin)
 
 describe('objectPort Instance', () => {
-  beforeEach(() => {
-    // Clear registry before each test and register the needed plugins.
-    portRegistry.clear()
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(ArrayPortPlugin) // for nested arrays if needed
-  })
-
   describe('basic Validation', () => {
     it('should validate a correct object port value', () => {
       // Create a simple object schema with two fields: name and age.

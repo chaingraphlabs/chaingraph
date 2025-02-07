@@ -1,12 +1,12 @@
 import type {
   AnyPortConfig,
-} from '../base/types'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { AnyPort } from '../instances/AnyPort'
+} from '../base'
+import { describe, expect, it } from 'vitest'
+import { AnyPort } from '../instances'
 import { AnyPortPlugin, validateAnyValue } from '../plugins/AnyPortPlugin'
 import { createNumberConfig, createNumberValue, NumberPortPlugin } from '../plugins/NumberPortPlugin'
 import { createStringConfig, createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortPluginRegistry'
+import { portRegistry } from '../registry'
 
 /**
  * Helper function to create an any port value
@@ -15,15 +15,11 @@ function createAnyValue(value: any): any {
   return value
 }
 
-describe('anyPort Instance', () => {
-  beforeEach(() => {
-    // Reset the registry and register required plugins
-    portRegistry.clear()
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(AnyPortPlugin)
-  })
+portRegistry.register(AnyPortPlugin)
+portRegistry.register(StringPortPlugin)
+portRegistry.register(NumberPortPlugin)
 
+describe('anyPort Instance', () => {
   describe('basic validation', () => {
     it('should validate an any port with string underlying type', () => {
       // Create an AnyPortConfig with string underlying type

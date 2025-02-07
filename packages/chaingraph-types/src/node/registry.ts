@@ -1,4 +1,4 @@
-import type { ObjectSchema } from '../port/base'
+import type { IObjectSchema } from '../port/base'
 import type { INode } from './interface'
 import { getNodeMetadata, getOrCreateNodeMetadata } from './decorator-new'
 
@@ -10,7 +10,7 @@ export type NodeConstructor = new (...args: any[]) => INode
 export class NodeRegistry {
   private static instance: NodeRegistry
   private nodesConstructors: Map<string, NodeConstructor> = new Map()
-  private objectSchema: Map<string, ObjectSchema> = new Map()
+  private objectSchema: Map<string, IObjectSchema> = new Map()
 
   constructor() {}
 
@@ -70,7 +70,7 @@ export class NodeRegistry {
    * @param id Object schema identifier
    * @param schema Object schema
    */
-  registerObjectSchema(id: string, schema: ObjectSchema): void {
+  registerObjectSchema(id: string, schema: IObjectSchema): void {
     this.objectSchema.set(id, {
       ...schema,
     })
@@ -80,14 +80,14 @@ export class NodeRegistry {
    * Get the object schema
    * @param id Object schema identifier
    */
-  getObjectSchema(id: string): ObjectSchema | undefined {
+  getObjectSchema(id: string): IObjectSchema | undefined {
     return this.objectSchema.get(id)
   }
 
   /**
    * Get all registered object schemas
    */
-  getObjectSchemas(): Map<string, ObjectSchema> {
+  getObjectSchemas(): Map<string, IObjectSchema> {
     return this.objectSchema
   }
 

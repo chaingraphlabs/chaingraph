@@ -2,9 +2,9 @@ import type {
   AnyPortConfig,
   ArrayPortConfig,
   EnumPortConfig,
+  IObjectSchema,
   IPortConfig,
   ObjectPortConfig,
-  ObjectSchema,
   StreamPortConfig,
 } from '@badaitech/chaingraph-types/port/base'
 
@@ -199,7 +199,7 @@ export class PortConfigProcessor {
       }
 
       // Build the object schema
-      const schema: ObjectSchema = {
+      const schema: IObjectSchema = {
         id: objectMetadata?.id ? (objectMetadata.id as string) : this.generateSortableUUID(),
         type: objectMetadata.type,
         properties: {} as Record<string, IPortConfig>,

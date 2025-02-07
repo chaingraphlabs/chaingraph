@@ -116,7 +116,7 @@ export interface ArrayPortConfig<
 /**
  * Object port configuration
  */
-export interface ObjectPortConfig<S extends ObjectSchema = ObjectSchema> extends BasePortConfig {
+export interface ObjectPortConfig<S extends IObjectSchema = IObjectSchema> extends BasePortConfig {
   type: 'object'
   schema: S
   defaultValue?: ObjectPortValue<S>
@@ -126,7 +126,7 @@ export interface ObjectPortConfig<S extends ObjectSchema = ObjectSchema> extends
 /**
  * Object port schema definition
  */
-export interface ObjectSchema<T extends Record<string, IPortConfig> = Record<string, IPortConfig>> {
+export interface IObjectSchema<T extends Record<string, IPortConfig> = Record<string, IPortConfig>> {
   properties: T
   id?: string
   type?: string
@@ -208,12 +208,12 @@ export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<Extra
 //   type: 'object'
 //   value: ObjectPortValueFromSchema<S>
 // }
-export type ObjectPortValue<S extends ObjectSchema = ObjectSchema> = ObjectPortValueFromSchema<S>
+export type ObjectPortValue<S extends IObjectSchema = IObjectSchema> = ObjectPortValueFromSchema<S>
 
 /**
  * Object port value from schema
  */
-export type ObjectPortValueFromSchema<S extends ObjectSchema<any>> = {
+export type ObjectPortValueFromSchema<S extends IObjectSchema<any>> = {
   [K in keyof S['properties']]: ExtractValue<S['properties'][K]>
 }
 

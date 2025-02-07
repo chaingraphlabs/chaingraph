@@ -543,8 +543,6 @@ export abstract class BaseNode implements INode {
    * then uses the appropriate port plugin to set the port value from the serialized data.
    */
   deserialize(data: JSONValue): this {
-    debugger
-
     // Validate incoming data using the Zod schema.
     const obj = SerializedNodeSchema.parse(data)
 

@@ -1,9 +1,9 @@
 import type { JSONValue } from '../base/json'
 import type {
+  IObjectSchema,
   IPortConfig,
   ObjectPortConfig,
   ObjectPortValue,
-  ObjectSchema,
 } from '../base/types'
 import { BasePort } from '../base/BasePort'
 import { ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
@@ -63,7 +63,7 @@ import { ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
  *
  * @template S - The object schema type (extending ObjectSchema) used in the configuration.
  */
-export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<ObjectPortConfig<S>> {
+export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePort<ObjectPortConfig<S>> {
   constructor(config: ObjectPortConfig<S>) {
     const defaultUi = {
       bgColor: '#e44df5',
@@ -126,7 +126,6 @@ export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<
    * Serializes the object port value.
    * Delegates to ObjectPortPlugin.serializeValue.
    * @param value - The object port value.
-   * @param config - The object port configuration.
    * @returns The serialized value.
    */
   protected serializeValue(value: ObjectPortValue<S>): JSONValue {
@@ -147,7 +146,6 @@ export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<
    * Deserializes JSON data into an ObjectPortValue.
    * Delegates to ObjectPortPlugin.deserializeValue.
    * @param data - The JSON data.
-   * @param config - The object port configuration.
    * @returns The deserialized port value.
    */
   protected deserializeValue(data: JSONValue): ObjectPortValue<S> {
@@ -172,7 +170,7 @@ export class ObjectPort<S extends ObjectSchema = ObjectSchema> extends BasePort<
  */
 export function createObjectSchema<T extends Record<string, IPortConfig>>(
   properties: T,
-): ObjectSchema<T> {
+): IObjectSchema<T> {
   return { properties }
 }
 
@@ -201,7 +199,7 @@ export function createObjectSchema<T extends Record<string, IPortConfig>>(
  * @param config - The object port configuration.
  * @returns The same configuration with its generic parameter inferred.
  */
-export function createObjectPortConfig<S extends ObjectSchema>(
+export function createObjectPortConfig<S extends IObjectSchema>(
   config: ObjectPortConfig<S>,
 ): ObjectPortConfig<S> {
   return config

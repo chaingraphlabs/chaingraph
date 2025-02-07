@@ -1,12 +1,11 @@
 import type {
   ArrayPortConfig,
   StringPortConfig,
-} from '../base/types'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { ArrayPort } from '../instances/ArrayPort'
-import { ArrayPortPlugin, validateArrayValue } from '../plugins/ArrayPortPlugin'
-import { createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry/PortPluginRegistry'
+} from '../base'
+import { describe, expect, it } from 'vitest'
+import { ArrayPort } from '../instances'
+import { ArrayPortPlugin, createStringValue, StringPortPlugin, validateArrayValue } from '../plugins'
+import { portRegistry } from '../registry'
 
 /**
  * Helper function to create an array port value.
@@ -16,15 +15,10 @@ function createArrayValue(items: any[]): any[] {
   return items
 }
 
-describe('arrayPort Instance', () => {
-  beforeEach(() => {
-    // Reset the registry and register required plugins so that the itemConfig
-    // (in this case, a string port config) can be properly validated.
-    portRegistry.clear()
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-  })
+portRegistry.register(StringPortPlugin)
+portRegistry.register(ArrayPortPlugin)
 
+describe('arrayPort Instance', () => {
   describe('basic Validation', () => {
     it('should validate an array port with sufficient items', () => {
       // Create an ArrayPortConfig with item type "string" and a minimum length of 2

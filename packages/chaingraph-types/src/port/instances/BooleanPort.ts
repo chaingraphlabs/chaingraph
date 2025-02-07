@@ -1,7 +1,7 @@
 import type { JSONValue } from '../base/json'
 import type { BooleanPortConfig, BooleanPortValue } from '../base/types'
-import { BasePort } from '../base/BasePort'
-import { BooleanPortPlugin } from '../plugins/BooleanPortPlugin'
+import { BasePort } from '../base/'
+import { BooleanPortPlugin } from '../plugins/'
 
 /**
  * Concrete implementation of a Boolean Port.

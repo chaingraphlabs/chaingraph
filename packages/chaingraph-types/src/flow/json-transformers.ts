@@ -1,7 +1,5 @@
-import type { JSONValue } from '@badaitech/chaingraph-types'
 import type { SerializedFlow } from '@badaitech/chaingraph-types/flow/types.zod'
 import type { IPort } from '@badaitech/chaingraph-types/port/base'
-import type { SuperJSONResult } from 'superjson'
 import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@badaitech/chaingraph-types'
 import { registerEdgeTransformers } from '@badaitech/chaingraph-types/edge/json-transformers'
 import { BasePort } from '@badaitech/chaingraph-types/port/base'
@@ -12,16 +10,16 @@ import SuperJSON from 'superjson'
  * Registers flow transformers with SuperJSON
  */
 export function registerFlowTransformers() {
-  SuperJSON.registerCustom<IPort, JSONValue>(
+  SuperJSON.registerCustom<IPort, any>(
     {
       isApplicable: (v): v is IPort => {
         return v instanceof BasePort
       },
       serialize: (v) => {
-        return v.serialize() as unknown as JSONValue
+        return v.serialize()
       },
       deserialize: (v) => {
-        const port = PortFactory.createFromConfig((v as any).config)
+        const port = PortFactory.createFromConfig(v.config)
         port.deserialize(v)
         return port
       },
@@ -30,7 +28,7 @@ export function registerFlowTransformers() {
   )
 
   // Flow
-  SuperJSON.registerCustom<Flow, JSONValue>(
+  SuperJSON.registerCustom<Flow, any>(
     {
       isApplicable: (v): v is Flow => {
         return v instanceof Flow
@@ -63,12 +61,10 @@ export function registerFlowTransformers() {
           edges: serializedEdges,
         }
 
-        return SuperJSON.serialize(serializedFlow) as unknown as JSONValue
+        return SuperJSON.serialize(serializedFlow)
       },
       deserialize: (v) => {
-        const flowData = SuperJSON.deserialize<SerializedFlow>(
-          v as any as SuperJSONResult,
-        )
+        const flowData = SuperJSON.deserialize<SerializedFlow>(v)
 
         const flow = new Flow(flowData.metadata)
 
@@ -130,7 +126,7 @@ export function registerFlowTransformers() {
   )
 
   // Execution event data
-  SuperJSON.registerCustom<ExecutionEventImpl, JSONValue>(
+  SuperJSON.registerCustom<ExecutionEventImpl, any>(
     {
       isApplicable: (v): v is ExecutionEventImpl<any> => {
         return v instanceof ExecutionEventImpl
@@ -141,10 +137,10 @@ export function registerFlowTransformers() {
           type: v.type,
           timestamp: v.timestamp,
           data: SuperJSON.serialize(v.data),
-        }) as unknown as JSONValue
+        })
       },
       deserialize: (v) => {
-        const eventData = SuperJSON.deserialize(v as any) as any
+        const eventData = SuperJSON.deserialize(v) as any
 
         if (!eventData) {
           throw new Error('Invalid execution event data')

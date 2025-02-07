@@ -5,14 +5,14 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeCatalog, NodeExecutionStatus, NodeRegistry, Number, Output, String,
 } from '@badaitech/chaingraph-types'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { createCaller } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
 
 @Node({
   title: 'Scalar Node',
   description: 'Node with scalar ports',
-}, null)
+})
 class ScalarNode extends BaseNode {
   @Input()
   @String({
@@ -52,13 +52,13 @@ class ScalarNode extends BaseNode {
 
 describe('flow Event Subscription', () => {
   beforeAll(() => {
-    NodeRegistry.getInstance().clear()
+    // NodeRegistry.getInstance().clear()
     NodeRegistry.getInstance().registerNode(ScalarNode)
   })
 
-  afterAll(() => {
-    NodeRegistry.getInstance().clear()
-  })
+  // afterAll(() => {
+  //   NodeRegistry.getInstance().clear()
+  // })
 
   // Helper function to setup test environment
   async function setupTestFlow() {
