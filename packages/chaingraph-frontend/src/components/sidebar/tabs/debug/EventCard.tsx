@@ -14,6 +14,7 @@ import {
   JsonView,
 } from 'react-json-view-lite'
 import 'react-json-view-lite/dist/index.css'
+import './style/json.css'
 
 interface EventCardProps {
   event: ExecutionEventImpl
@@ -315,7 +316,9 @@ function EventDetails({ event }: { event: ExecutionEventImpl }) {
                       data={value}
                       shouldExpandNode={collapseAllNested}
                       clickToExpandNode
-                      style={theme === 'light' ? defaultStyles : darkStyles}
+                      style={theme === 'light'
+                        ? defaultStyles
+                        : darkStyles}
                     />
                   </Fragment>
                 )
