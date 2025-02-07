@@ -1,4 +1,4 @@
-import type { INode } from '@chaingraph/types'
+import type { INode } from '@badaitech/chaingraph-types'
 
 /**
  * Minimal data to represent an edge between two nodes

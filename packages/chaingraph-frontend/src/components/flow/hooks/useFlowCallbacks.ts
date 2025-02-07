@@ -5,7 +5,6 @@ import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
 } from '@/components/flow/utils/node-position.ts'
-// import Node from '@xyflow/react/dist/types/Node'
 import {
   $activeFlowMetadata,
   $edges,
@@ -19,7 +18,7 @@ import {
   updateNodeUI,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
-import { hasCycle } from '@chaingraph/types/flow/cycleDetection.ts'
+import { hasCycle } from '@badaitech/chaingraph-types/flow/cycleDetection'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'

@@ -1,5 +1,5 @@
-import type { StringPortConfig } from '@chaingraph/types'
-import { cn } from '@chaingraph/frontend/lib/utils'
+import type { StringPortConfig } from '@badaitech/chaingraph-types'
+import { cn } from '@/lib/utils.ts'
 import { Handle, Position } from '@xyflow/react'
 
 interface Props {
@@ -8,6 +8,8 @@ interface Props {
 
 export function StringOutputPort(props: Props) {
   const { config } = props
+  const bgColor = config.ui?.bgColor || null
+
   return (
     <div
       key={config.id}
@@ -20,12 +22,13 @@ export function StringOutputPort(props: Props) {
         id={config.id}
         type="source"
         position={Position.Right}
+        style={bgColor ? { backgroundColor: bgColor } : undefined}
         className={cn(
-          'w-3 h-3 rounded-full -mr-4',
+          'w-2 h-2 rounded-full -mr-4',
           'border-2 border-background dark:border-[#1E1E1E]',
           'transition-shadow duration-200',
           'data-[connected=true]:shadow-port-connected',
-          'bg-flow-data',
+          !bgColor && 'bg-flow-data',
         )}
       />
     </div>

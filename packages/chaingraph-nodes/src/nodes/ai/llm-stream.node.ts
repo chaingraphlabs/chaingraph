@@ -52,7 +52,6 @@ export class LLMStreamNode extends BaseNode {
     // Mock implementation
 
     const llm = new ChatOpenAI({
-      apiKey: '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',
       model: 'gpt-4o-mini',
       temperature: 0,
     })
