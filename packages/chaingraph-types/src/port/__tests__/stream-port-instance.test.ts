@@ -10,14 +10,11 @@ import type { ArrayPortConfig, ArrayPortValue, IPortConfig } from '../base'
 import { describe, expect, it } from 'vitest'
 import { MultiChannel } from '../channel'
 import { createObjectPortConfig, createObjectSchema } from '../instances'
-import {
-  AnyPortPlugin,
-  ArrayPortPlugin,
-  createObjectValue,
-  createStreamValue,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-} from '../plugins'
+
+import { AnyPortPlugin } from '../plugins/AnyPortPlugin'
+import { ArrayPortPlugin } from '../plugins/ArrayPortPlugin'
+import { createObjectValue, ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
+import { createStreamValue, StreamPortPlugin } from '../plugins/StreamPortPlugin'
 import { portRegistry } from '../registry'
 
 portRegistry.register(StreamPortPlugin)

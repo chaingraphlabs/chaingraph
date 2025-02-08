@@ -35,7 +35,7 @@ dev:
 
 # Запуск тестов
 test:
-	vitest run
+	vitest
 
 # Полная пересборка
 rebuild: clean build
