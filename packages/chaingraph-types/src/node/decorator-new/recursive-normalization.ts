@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IObjectSchema, IPortConfig } from '@badaitech/chaingraph-types/port/base'
-import { resolveObjectSchema } from '.'
+import type { IObjectSchema, IPortConfig } from '@badaitech/chaingraph-types'
+import { resolveObjectSchema } from '@badaitech/chaingraph-types'
 
 /**
  * Recursively normalizes an array port item configuration.
