@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge, INode, NodeEvent } from '@badaitech/chaingraph-types'
+import type { IEdge, INode, NodeEvent, PortUpdatedEventData } from '@badaitech/chaingraph-types'
 import type {
   FlowEvent,
   NodeParentUpdatedEventData,
@@ -365,6 +365,21 @@ export class Flow implements IFlow {
       }
 
       // Handle other node events if needed
+
+      case NodeEventType.PortUpdate: {
+        const portUpdateEventData: PortUpdatedEventData = {
+          port: (nodeEvent as any).port,
+          nodeVersion: nodeEvent.version,
+        }
+
+        flowEvent = newEvent(
+          this.getNextEventIndex(),
+          this.id,
+          FlowEventType.PortUpdated,
+          portUpdateEventData,
+        )
+        break
+      }
 
       default:
         // Ignore other events

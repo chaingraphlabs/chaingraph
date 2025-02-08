@@ -128,7 +128,7 @@ export function NumberEnum(
  */
 export function PortEnumFromObject<T extends Record<string, any>>(
   options: T,
-  config?: Omit<PortDecoratorOptions<'enum'>, 'type'>,
+  config?: Omit<PortDecoratorOptions<'enum'>, 'type' | 'options'>,
 ): PropertyDecorator {
   // Create enum option configurations by iterating over the entries of the provided options.
   const optionConfigs = Object.entries(options).map(([id, value]) => {

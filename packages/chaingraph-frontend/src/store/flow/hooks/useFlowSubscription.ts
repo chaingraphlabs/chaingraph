@@ -35,6 +35,7 @@ import { DefaultPosition } from '@badaitech/chaingraph-types/node/node-ui.ts'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { useEffect, useMemo } from 'react'
+import { updatePort } from '../../ports/events'
 
 export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)
@@ -64,6 +65,42 @@ export function useFlowSubscription() {
 
     [FlowEventType.NodeRemoved]: (data) => {
       removeNode(data.nodeId)
+    },
+
+    [FlowEventType.PortUpdated]: (data) => {
+      if (!data.port.getConfig().nodeId) {
+        console.error(`Port ${data.port.id} has no node ID`)
+        return
+      }
+
+      const node = nodes[data.port.getConfig().nodeId!]
+      if (!node) {
+        console.error(`Node ${data.port.getConfig().nodeId} not found`)
+        return
+      }
+
+      if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
+        // console.log(`[PortUpdated] Received outdated port update event for node ${data.port.getConfig().nodeId}, local version: ${node.metadata.version}, event version: ${data.nodeVersion}`)
+        return
+      }
+
+      // log the current node version and from the event
+      console.log(`[PortUpdated] current node version: ${nodes[data.port.getConfig().nodeId!]?.getVersion()}, event version: ${data.nodeVersion}`)
+
+      // setNodeVersion({
+      //   id: data.port.getConfig().nodeId!,
+      //   version: data.nodeVersion,
+      // })
+
+      updatePort({
+        id: data.port.id,
+        data: {
+          id: data.port.id,
+          config: data.port.getConfig(),
+          value: data.port.getValue(),
+        },
+        nodeVersion: data.nodeVersion ?? 1,
+      })
     },
 
     [FlowEventType.EdgeAdded]: (data) => {
@@ -246,7 +283,7 @@ export function useFlowSubscription() {
       onData: async (trackedData) => {
         // Set status to SUBSCRIBED on first data received
         setFlowSubscriptionStatus(FlowSubscriptionStatus.SUBSCRIBED)
-        console.log('Received event:', trackedData.data)
+        // console.log('Received event:', trackedData.data)
         await handleEvent(trackedData.data)
       },
       onError: (error) => {

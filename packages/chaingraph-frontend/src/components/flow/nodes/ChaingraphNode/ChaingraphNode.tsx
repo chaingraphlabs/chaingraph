@@ -39,6 +39,7 @@ function ChaingraphNodeComponent({
   const [style, setStyle] = useState(
     theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
   )
+
   const [inputs, setInputs] = useState(data.node.getInputs())
   const [outputs, setOutputs] = useState(data.node.getOutputs())
 
@@ -135,6 +136,7 @@ function ChaingraphNodeComponent({
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
         position="right"
+        minWidth={100}
         style={{
           background: 'transparent',
           border: 'none',

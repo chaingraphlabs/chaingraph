@@ -67,16 +67,23 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   dispose: () => Promise<void>
 
   /**
-   * Add a port to the node
+   * Set a port to the node
    * @param port Port to add
    */
-  addPort: (port: IPort) => IPort
+  setPort: (port: IPort) => IPort
 
   /**
    * Set the node ports
    * @param ports Map of ports
    */
   setPorts: (ports: Map<string, IPort>) => void
+
+  /**
+   * Update a port in the node
+   * @param portId ID of the port to update
+   * @param port New port data
+   */
+  updatePort: (portId: string, port: IPort) => void
 
   /**
    * Remove a port from the node

@@ -13,6 +13,7 @@ import './nodes/init'
 import './categories/init'
 import './edges/init'
 import './execution/init'
+import './ports/init'
 
 /**
  * Initialize all stores and load initial data
