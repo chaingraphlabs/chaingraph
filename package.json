@@ -1,5 +1,6 @@
 {
   "name": "@badaitech/chaingraph",
+  "license": "BUSL-1.1",
   "type": "module",
   "version": "0.0.1",
   "private": true,

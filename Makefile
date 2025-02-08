@@ -35,10 +35,7 @@ dev:
 
 # Запуск тестов
 test:
-	bun run --cwd packages/chaingraph-types test & \
-	bun run --cwd packages/chaingraph-nodes test & \
-	bun run --cwd packages/chaingraph-backend test & \
-	bun run --cwd packages/chaingraph-frontend test
+	vitest run
 
 # Полная пересборка
 rebuild: clean build
