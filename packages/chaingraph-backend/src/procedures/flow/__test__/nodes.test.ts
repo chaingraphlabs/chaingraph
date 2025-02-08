@@ -12,6 +12,7 @@ import type {
   NodeMetadata,
 } from '@badaitech/chaingraph-types'
 import {
+  BaseNode,
   Boolean,
   Id,
   Input,
@@ -22,7 +23,6 @@ import {
   Output,
   String,
 } from '@badaitech/chaingraph-types'
-import { BaseNode } from '@badaitech/chaingraph-types/node'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'

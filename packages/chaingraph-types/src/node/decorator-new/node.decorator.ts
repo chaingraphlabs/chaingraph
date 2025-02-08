@@ -7,7 +7,9 @@
  */
 
 import type { NodeConstructor, NodeMetadata } from '@badaitech/chaingraph-types/node'
-import { getNodeMetadata, getOrCreateNodeMetadata, NodeRegistry, setNodeMetadata } from '@badaitech/chaingraph-types/node'
+import { NodeRegistry } from '@badaitech/chaingraph-types/node'
+import { getOrCreateNodeMetadata } from './getOrCreateNodeMetadata'
+import { getNodeMetadata, setNodeMetadata } from './metadata-storage'
 
 import 'reflect-metadata'
 

@@ -7,7 +7,7 @@
  */
 
 import type { IObjectSchema, IPortConfig } from '@badaitech/chaingraph-types'
-import { resolveObjectSchema } from '@badaitech/chaingraph-types'
+import { resolveObjectSchema } from './object-schema.decorator'
 
 /**
  * Recursively normalizes an array port item configuration.
