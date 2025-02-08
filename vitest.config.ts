@@ -12,6 +12,7 @@ export default defineConfig({
       '@badaitech/chaingraph-frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
       '@badaitech/chaingraph-nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
     },
+    isolate: true,
     typecheck: {
       enabled: true,
       tsconfig: './tsconfig.json',
@@ -19,7 +20,7 @@ export default defineConfig({
     pool: 'threads',
     poolOptions: {
       threads: {
-        isolate: false,
+        isolate: true,
       },
     },
   },

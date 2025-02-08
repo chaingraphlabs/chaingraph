@@ -44,7 +44,7 @@ export interface ExecutionEngineOptions {
 }
 
 export class ExecutionEngine {
-  private readonly readyQueue: AsyncQueue<INode>
+  private readonly readyQueue: AsyncQueue<() => Promise<void>>
   private readonly completedQueue: AsyncQueue<INode>
   private readonly executingNodes: Set<string>
   private readonly completedNodes: Set<string>
@@ -63,7 +63,7 @@ export class ExecutionEngine {
     private readonly options?: ExecutionEngineOptions,
     onBreakpointHit?: (node: INode) => void,
   ) {
-    this.readyQueue = new AsyncQueue<INode>()
+    this.readyQueue = new AsyncQueue()
     this.completedQueue = new AsyncQueue<INode>()
     this.executingNodes = new Set()
     this.completedNodes = new Set()
@@ -173,7 +173,7 @@ export class ExecutionEngine {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
           this.executingNodes.add(node.id)
-          this.readyQueue.enqueue(node)
+          this.readyQueue.enqueue(this.executeNode.bind(this, node))
         }
       }
     }
@@ -274,32 +274,22 @@ export class ExecutionEngine {
       if (remainingDeps === 0) {
         // Node is ready for execution
         this.executingNodes.add(dependentNode.id)
-        this.readyQueue.enqueue(dependentNode)
+        this.readyQueue.enqueue(this.executeNode.bind(this, dependentNode))
       }
     }
   }
 
   private async workerLoop(): Promise<void> {
     while (!this.context.abortSignal.aborted) {
-      // Wait for a node to become available
-      const node = await this.readyQueue.dequeue(this.context.abortSignal)
-      if (!node)
+      // Wait for a workload to become available
+      const workload = await this.readyQueue.dequeue(this.context.abortSignal)
+      if (!workload) {
         break // Queue closed or execution aborted
-
-      const onStatusChange = (event: NodeStatusChangeEvent) => {
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-          node,
-          oldStatus: event.oldStatus,
-          newStatus: event.newStatus,
-        }))
       }
-      const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
       try {
         await this.semaphore.acquire()
-        await this.executeNode(node)
-        // Add to completed queue
-        this.completedQueue.enqueue(node)
+        await workload()
       } catch (error) {
         // Release semaphore on error
         if (this.context.abortSignal.aborted && !(this.context.abortSignal.reason instanceof Error)) {
@@ -309,7 +299,6 @@ export class ExecutionEngine {
         throw error
       } finally {
         this.semaphore.release()
-        cancel()
       }
     }
   }
@@ -319,6 +308,15 @@ export class ExecutionEngine {
       throw new Error(this.context.abortSignal.reason || 'Execution cancelled')
     }
     const nodeStartTime = Date.now()
+
+    const onStatusChange = (event: NodeStatusChangeEvent) => {
+      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+        node,
+        oldStatus: event.oldStatus,
+        newStatus: event.newStatus,
+      }))
+    }
+    const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
     try {
       this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node }))
@@ -356,27 +354,65 @@ export class ExecutionEngine {
       }
 
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
-      await withTimeout(
+      const { backgroundActions } = await withTimeout(
         node.execute(this.context),
         nodeTimeoutMs,
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
 
-      node.setStatus(NodeStatus.Completed, true)
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
-        node,
-        executionTime: Date.now() - nodeStartTime,
-      }))
-    } catch (error) {
-      node.setStatus(NodeStatus.Error, true)
+      const hasBackgroundActions = backgroundActions && backgroundActions.length > 0
+      if (hasBackgroundActions) {
+        let completedActions = 0
+        for (const action of backgroundActions) {
+          this.readyQueue.enqueue(
+            () => action()
+              .then(() => {
+                if (node.status !== NodeStatus.Backgrounding) {
+                  return
+                }
 
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
-        node,
-        error: error as Error,
-        executionTime: Date.now() - nodeStartTime,
-      }))
-      throw error
+                if (++completedActions === backgroundActions.length) {
+                  this.setNodeCompleted(node, nodeStartTime)
+                }
+              })
+              .catch(e => this.setNodeError(node, e, nodeStartTime)),
+          )
+        }
+
+        node.setStatus(NodeStatus.Backgrounding, true)
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
+          node,
+        }))
+      } else {
+        this.setNodeCompleted(node, nodeStartTime)
+      }
+
+      this.completedQueue.enqueue(node)
+    } catch (error) {
+      this.setNodeError(node, error, nodeStartTime)
+    } finally {
+      cancel()
     }
+  }
+
+  private setNodeCompleted(node: INode, nodeStartTime: number) {
+    node.setStatus(NodeStatus.Completed, true)
+    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
+      node,
+      executionTime: Date.now() - nodeStartTime,
+    }))
+  }
+
+  private setNodeError(node: INode, error: unknown, nodeStartTime: number) {
+    node.setStatus(NodeStatus.Error, true)
+
+    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
+      node,
+      error: error as Error,
+      executionTime: Date.now() - nodeStartTime,
+    }))
+
+    throw error
   }
 
   public getDebugger(): DebuggerController | null {

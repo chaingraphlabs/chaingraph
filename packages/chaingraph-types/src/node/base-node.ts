@@ -21,9 +21,7 @@ import type {
   NodeValidationResult,
 } from '@badaitech/chaingraph-types/node/types'
 import type { IPort, IPortConfig, JSONValue } from '@badaitech/chaingraph-types/port/base'
-import {
-  getOrCreateNodeMetadata,
-} from '@badaitech/chaingraph-types'
+
 import { NodeEventType } from '@badaitech/chaingraph-types/node/events'
 import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
@@ -32,6 +30,7 @@ import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
 import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
 import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
+import { getOrCreateNodeMetadata } from './decorator-new/getOrCreateNodeMetadata'
 import { PortConfigProcessor } from './port-config-processor'
 import 'reflect-metadata'
 

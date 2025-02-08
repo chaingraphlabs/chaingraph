@@ -21,6 +21,8 @@ export class AsyncQueue<T> {
    * Adds an item to the queue.
    * If there are waiting consumers, the item is immediately delivered.
    * Otherwise, it's added to the queue.
+   *
+   * @throws Error if this queue is closed.
    */
   enqueue(item: T): void {
     if (this._closed)
