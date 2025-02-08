@@ -284,14 +284,12 @@ export abstract class BaseNode implements INode {
     return this
   }
 
-  addPort(port: IPort): IPort {
+  setPort(port: IPort): IPort {
     if (!port.id) {
       throw new Error('Port ID is required.')
     }
 
     this._ports.set(port.id!, port)
-
-    // TODO: add event and version update
 
     return port
   }
@@ -307,6 +305,19 @@ export abstract class BaseNode implements INode {
     } else {
       throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)
     }
+  }
+
+  updatePort(portId: string, port: IPort): void {
+    if (!this._ports.has(portId)) {
+      throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)
+    }
+
+    this.incrementVersion()
+    this._ports.set(portId, port)
+    this.emit(this.createEvent(NodeEventType.PortUpdate, {
+      portId,
+      port,
+    }))
   }
 
   /**

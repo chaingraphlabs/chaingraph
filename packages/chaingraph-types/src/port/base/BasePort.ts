@@ -90,11 +90,10 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     const config = this.deserializeConfig(obj.config)
     const value = this.deserializeValue(obj.value)
 
-    return {
-      ...this,
-      config,
-      value,
-    }
+    this.setConfig(config)
+    this.setValue(value)
+
+    return this
   }
 
   /**

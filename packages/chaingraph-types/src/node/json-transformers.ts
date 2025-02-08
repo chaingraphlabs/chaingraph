@@ -38,9 +38,7 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
           nodeMetadata,
         )
 
-        node.deserialize(nodeData)
-
-        return node
+        return node.deserialize(nodeData)
       },
     },
     BaseNode.name,

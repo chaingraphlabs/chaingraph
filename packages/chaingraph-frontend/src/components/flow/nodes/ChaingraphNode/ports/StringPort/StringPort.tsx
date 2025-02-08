@@ -1,9 +1,9 @@
 import type { ExtractValue, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
-import type { ChangeEvent, PropsWithChildren } from 'react'
 import { cn } from '@/lib/utils.ts'
+import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort.ts'
 import { Input } from '@badaitech/chaingraph-frontend/components/ui/input'
 import { Textarea } from '@badaitech/chaingraph-frontend/components/ui/textarea'
-import { Handle, Position } from '@xyflow/react'
+import { type ChangeEvent, type PropsWithChildren, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -22,11 +22,20 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
   const { port, onChange, value, errorMessage } = props
   const config = port.getConfig()
   const { ui } = config
+  const connectedEdges = useEdgesForPort(port.id)
 
   const handleChange = <Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
+    if (!e.nativeEvent.isTrusted) {
+      return
+    }
+
     const value = e.target.value
     onChange({ value })
   }
+
+  const needRenderEditor = useMemo(() => {
+    return !ui?.hideEditor && connectedEdges.length === 0
+  }, [ui, connectedEdges])
 
   if (ui?.hidePort)
     return null
@@ -36,7 +45,10 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
   return (
     <div
       key={config.id}
-      className="relative flex gap-2 group/port justify-start"
+      className={cn(
+        'relative flex gap-2 group/port',
+        config.direction === 'output' ? 'justify-end' : 'justify-start',
+      )}
     >
       {config.direction === 'output' && <PortTitle>{title}</PortTitle>}
 
@@ -46,11 +58,28 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
         <div className="flex flex-col">
           <PortTitle>{title}</PortTitle>
 
-          {!ui?.isTextArea && !ui?.hideEditor && (
-            <Input value={value} onChange={handleChange} className={cn('resize-none shadow-none text-xs p-1', errorMessage && 'border-red-500')} placeholder="String" type={ui?.isPassword ? 'password' : undefined} />
+          {!ui?.isTextArea && needRenderEditor && (
+            <Input
+              value={value}
+              onChange={handleChange}
+              className={cn(
+                'resize-none shadow-none text-xs p-1',
+                'w-full',
+                errorMessage && 'border-red-500',
+              )}
+              placeholder={port.getConfig().title ?? 'Text'}
+              type={ui?.isPassword ? 'password' : undefined}
+              data-1p-ignore
+              disabled={ui?.disabled ?? false}
+            />
           )}
-          {ui?.isTextArea && !ui?.hideEditor && (
-            <Textarea value={value} onChange={handleChange} className="resize-none shadow-none text-xs p-1" placeholder="String" />
+          {ui?.isTextArea && needRenderEditor && (
+            <Textarea
+              value={value}
+              onChange={handleChange}
+              className="shadow-none text-xs p-1 resize"
+              placeholder="String"
+            />
           )}
         </div>
       )}

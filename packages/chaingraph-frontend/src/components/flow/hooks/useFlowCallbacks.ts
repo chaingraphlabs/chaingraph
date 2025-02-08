@@ -74,8 +74,6 @@ export function useFlowCallbacks() {
               return
             }
 
-            console.log('111111111')
-
             positionInterpolator.clearNodeState(node.id)
 
             updateNodePosition({

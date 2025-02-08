@@ -1,9 +1,9 @@
 {
   "name": "@badaitech/chaingraph-frontend",
-  "license": "BUSL-1.1",
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",
@@ -61,7 +61,8 @@
     "reflect-metadata": "^0.2.2",
     "superjson": "^2.2.2",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod-to-json-schema": "^3.24.1"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.25.9",

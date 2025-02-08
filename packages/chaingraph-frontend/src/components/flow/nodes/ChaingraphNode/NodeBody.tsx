@@ -1,3 +1,4 @@
+import type { ExtractValue, IPort, IPortConfig } from '@badaitech/chaingraph-types'
 /*
  * Copyright (c) 2025 BadLabs
  *
@@ -6,8 +7,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { PortOnChangeParam } from './Port'
-import { updatePortValue } from '@badaitech/chaingraph-frontend/store/ports/events'
-import { type ExtractValue, type IPort, type IPortConfig, PortDirection } from '@badaitech/chaingraph-types'
+import { requestUpdatePortValue } from '@badaitech/chaingraph-frontend/store/ports/events'
 import { useEffect, useState } from 'react'
 import { Port } from './Port'
 
@@ -55,7 +55,7 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
       isValid,
     } }))
 
-    updatePortValue({ id: port.id, value })
+    requestUpdatePortValue({ id: port.id, value })
   }
 
   return (
