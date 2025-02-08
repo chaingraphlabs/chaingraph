@@ -8,6 +8,7 @@
 
 import type { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import type { NodeUIMetadata, Position } from '@badaitech/chaingraph-types/node/node-ui'
+import type { IPort } from '@badaitech/chaingraph-types/port'
 
 /**
  * Enum for all possible node events
@@ -23,6 +24,9 @@ export enum NodeEventType {
   UIDimensionsChange = 'node:ui:dimensions-change',
   UIStateChange = 'node:ui:state-change',
   UIStyleChange = 'node:ui:style-change',
+
+  // Port events
+  PortUpdate = 'node:port-update',
 }
 
 /**
@@ -92,6 +96,15 @@ export interface NodeUIStyleChangeEvent extends NodeEventBase {
 }
 
 /**
+ * Event emitted when a port is updated
+ */
+export interface PortUpdateEvent extends NodeEventBase {
+  type: NodeEventType.PortUpdate
+  portId: string
+  port: IPort
+}
+
+/**
  * Union type of all possible node events
  */
 export type NodeEvent =
@@ -102,6 +115,7 @@ export type NodeEvent =
   | NodeUIDimensionsChangeEvent
   | NodeUIStateChangeEvent
   | NodeUIStyleChangeEvent
+  | PortUpdateEvent
 
 export interface EventTypeToInterface {
   [NodeEventType.StatusChange]: NodeStatusChangeEvent
@@ -110,6 +124,7 @@ export interface EventTypeToInterface {
   [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent
   [NodeEventType.UIStateChange]: NodeUIStateChangeEvent
   [NodeEventType.UIStyleChange]: NodeUIStyleChangeEvent
+  [NodeEventType.PortUpdate]: PortUpdateEvent
 }
 
 export type NodeEventDataType<T extends NodeEventType> = Omit<

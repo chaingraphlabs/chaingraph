@@ -28,8 +28,7 @@ export function registerFlowTransformers() {
       },
       deserialize: (v) => {
         const port = PortFactory.createFromConfig(v.config)
-        port.deserialize(v)
-        return port
+        return port.deserialize(v)
       },
     },
     BasePort.name,
@@ -83,8 +82,7 @@ export function registerFlowTransformers() {
             nodeMetadata.type,
             nodeData.id ?? nodeMetadata.id ?? '',
             nodeMetadata,
-          )
-          node.deserialize(nodeData)
+          ).deserialize(nodeData)
 
           flow.addNode(node)
         }

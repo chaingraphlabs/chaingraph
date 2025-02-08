@@ -16,6 +16,7 @@ import { subscribeToEvents } from './subscriptions'
 import { updateNodeParent } from './update-node-parent'
 import { updateNodePosition } from './update-node-position'
 import { updateNodeUI } from './update-node-ui'
+import { updatePortValue } from './update-port-value'
 
 export const flowProcedures = router({
   create: publicProcedure
@@ -112,4 +113,5 @@ export const flowProcedures = router({
   updateNodeUI,
   updateNodePosition,
   updateNodeParent,
+  updatePortValue,
 })

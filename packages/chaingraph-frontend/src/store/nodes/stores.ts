@@ -7,24 +7,10 @@
  */
 
 import type { INode } from '@badaitech/chaingraph-types'
-import { clearActiveFlow, updateNodeParent } from '@/store'
+import { addNode, addNodeToFlowFx, clearActiveFlow, clearNodes, removeNode, removeNodeFromFlowFx, setNodeMetadata, setNodes, setNodesLoading, setNodeVersion, updateNodeParent, updateNodePositionInterpolated, updateNodePositionLocal, updateNodeUILocal } from '@/store'
+import { updatePort } from '@/store/ports/events.ts'
+import { NodeRegistry, PortFactory } from '@badaitech/chaingraph-types'
 import { combine, createStore } from 'effector'
-import {
-  addNodeToFlowFx,
-  removeNodeFromFlowFx,
-} from './effects'
-import {
-  addNode,
-  clearNodes,
-  removeNode,
-  setNodeMetadata,
-  setNodes,
-  setNodesLoading,
-  setNodeVersion,
-  updateNodePositionInterpolated,
-  updateNodePositionLocal,
-  updateNodeUILocal,
-} from './events'
 
 // Store for nodes
 export const $nodes = createStore<Record<string, INode>>({})
@@ -56,7 +42,7 @@ export const $nodes = createStore<Record<string, INode>>({})
     if (!node)
       return state
 
-    // console.log(`Setting version for node ${id} to ${version}`)
+    console.log(`Setting version for node ${id} to ${version}`)
 
     node.setMetadata({
       ...node.metadata,
@@ -66,6 +52,47 @@ export const $nodes = createStore<Record<string, INode>>({})
     return {
       ...state,
       [id]: node,
+    }
+  })
+  .on(updatePort, (state, { id, data, nodeVersion }) => {
+    if (!data || !data.config)
+      return state
+
+    const nodeId = data.config?.nodeId
+    if (!nodeId)
+      return state
+
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    const port = node.getPort(id)
+    if (!port)
+      return state
+
+    const newPort = PortFactory.createFromConfig(data.config)
+
+    try {
+      newPort.setConfig(data.config)
+      newPort.setValue(data.value)
+    } catch (e: any) {
+      console.error('Error updating port value:', e)
+    }
+
+    const newNode = NodeRegistry.getInstance().createNode(
+      node.metadata.type,
+      node.id,
+      {
+        ...node.metadata,
+        version: nodeVersion,
+      },
+    )
+    newNode.setPorts(node.ports) // set existing ports
+    newNode.setPort(newPort) // set new port
+
+    return {
+      ...state,
+      [nodeId]: newNode,
     }
   })
 
