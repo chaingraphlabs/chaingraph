@@ -22,9 +22,5 @@ export default defineConfig({
         isolate: false,
       },
     },
-    deps: {
-      optimizer: {
-      },
-    },
   },
 })

@@ -23,7 +23,7 @@ import type {
 import type { IPort, IPortConfig, JSONValue } from '@badaitech/chaingraph-types/port/base'
 import {
   getOrCreateNodeMetadata,
-} from '@badaitech/chaingraph-types/node/decorator-new/getOrCreateNodeMetadata'
+} from '@badaitech/chaingraph-types'
 import { NodeEventType } from '@badaitech/chaingraph-types/node/events'
 import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
