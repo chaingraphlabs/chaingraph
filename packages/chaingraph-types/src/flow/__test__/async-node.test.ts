@@ -1,26 +1,13 @@
-import type { NodeExecutionResult } from '@chaingraph/types'
-import {
-  BaseNode,
-  ExecutionContext,
-  ExecutionEngine,
-  ExecutionEventEnum,
-  Flow,
-  MultiChannel,
-  Node,
-  NodeStatus,
-  PortDirection,
-  PortKind,
-  PortStreamInput,
-  PortStreamOutput,
-} from '@chaingraph/types'
+import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionContext, ExecutionEngine, ExecutionEventEnum, Flow, MultiChannel, Node, NodeStatus, PortDirection, PortStream } from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
 
 @Node({})
 class AsyncNode extends BaseNode {
-  @PortStreamOutput({
+  @PortStream({
     direction: PortDirection.Output,
-    valueType: {
-      kind: PortKind.Number,
+    itemConfig: {
+      type: 'number',
     },
   })
   numbers: MultiChannel<number> = new MultiChannel()
@@ -47,26 +34,26 @@ class AsyncNode extends BaseNode {
 
 @Node({})
 class MergerNode extends BaseNode {
-  @PortStreamInput({
+  @PortStream({
     direction: PortDirection.Input,
-    valueType: {
-      kind: PortKind.Number,
+    itemConfig: {
+      type: 'number',
     },
   })
   inputA: MultiChannel<number> = new MultiChannel<number>()
 
-  @PortStreamInput({
+  @PortStream({
     direction: PortDirection.Input,
-    valueType: {
-      kind: PortKind.Number,
+    itemConfig: {
+      type: 'number',
     },
   })
   inputB: MultiChannel<number> = new MultiChannel<number>()
 
-  @PortStreamOutput({
+  @PortStream({
     direction: PortDirection.Output,
-    valueType: {
-      kind: PortKind.Number,
+    itemConfig: {
+      type: 'number',
     },
   })
   output: MultiChannel<number> = new MultiChannel()
@@ -185,16 +172,16 @@ describe('flow with async nodes', () => {
 
     await flow.connectPorts(
       evenNode.id,
-      evenNode.getOutputs()[0].config.id,
+      evenNode.getOutputs()[0].id,
       mergerNode.id,
-      mergerNode.getInputs()[0].config.id,
+      mergerNode.getInputs()[0].id,
     )
 
     await flow.connectPorts(
       oddNode.id,
-      oddNode.getOutputs()[0].config.id,
+      oddNode.getOutputs()[0].id,
       mergerNode.id,
-      mergerNode.getInputs()[1].config.id,
+      mergerNode.getInputs()[1].id,
     )
 
     const abortController = new AbortController()

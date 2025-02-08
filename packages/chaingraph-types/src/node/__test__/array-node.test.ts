@@ -7,8 +7,8 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node } from '@badaitech/chaingraph-types'
-import { Port } from '@badaitech/chaingraph-types/node'
+import { Input, Node } from '@badaitech/chaingraph-types'
+import { BaseNode, Port } from '@badaitech/chaingraph-types/node'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
 import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'

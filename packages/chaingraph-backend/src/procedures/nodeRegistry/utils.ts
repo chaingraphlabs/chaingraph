@@ -7,7 +7,8 @@
  */
 
 import type { INode, NodeMetadata } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, NodeRegistry, String } from '@badaitech/chaingraph-types'
+import { Input, Node, NodeRegistry, String } from '@badaitech/chaingraph-types'
+import { BaseNode } from '@badaitech/chaingraph-types/node'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
