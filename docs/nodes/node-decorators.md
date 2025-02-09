@@ -8,56 +8,40 @@ ChainGraph uses decorators to attach metadata to your node class definitions. Th
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-    - [Overview of Nodes and Decorators](#overview-of-nodes-and-decorators)
-    - [Purpose of Decorator-Based Node Definitions](#purpose-of-decorator-based-node-definitions)
-    - [Benefits for Type–Safety and Readability](#benefits-for-type-safety-and-readability)
+1. [Introduction](#1-introduction)  
+  1.1. [Overview of Nodes and Decorators](#11-overview-of-nodes-and-decorators)  
+  1.2. [Purpose of Decorator-Based Node Definitions](#12-purpose-of-decorator-based-node-definitions)  
+  1.3. [Benefits for Type–Safety and Readability](#13-benefits-for-typesafety-and-readability)
 
-2. [Basic Concepts](#basic-concepts)
-    - [What Is a Node?](#what-is-a-node)
-    - [Understanding Ports (Inputs/Outputs)](#understanding-ports-inputs-outputs)
-    - [Overview of the Decorators Provided](#overview-of-the-decorators-provided)
+2. [Basic Concepts](#2-basic-concepts)  
+  2.1. [What Is a Node?](#21-what-is-a-node)  
+  2.2. [Understanding Ports (Inputs/Outputs)](#22-understanding-ports-inputsoutputs)  
+  2.3. [Overview of the Decorators Provided](#23-overview-of-the-decorators-provided)
 
-3. [Getting Started with Node Decorators](#getting-started-with-node-decorators)
-    - [The @Node Decorator](#the-node-decorator)
-        - Purpose and basic usage
-        - Required metadata fields (e.g. title, description, category)
-    - [Defining Simple Scalar Nodes](#defining-simple-scalar-nodes)
-        - Declaring a basic node class with @Node
-        - Using simple decorators (e.g. @Input, @Output)
-        - Example: A node with string, number, and boolean ports
+3. [Getting Started with Node Decorators](#3-getting-started-with-node-decorators)  
+  3.1. [The @Node Decorator](#31-the-node-decorator)  
+    - [Purpose and basic usage](#purpose-and-basic-usage)  
+    - [Required metadata fields](#required-metadata-fields)  
+  3.2. [Defining Simple Scalar Nodes](#32-defining-simple-scalar-nodes)  
+    - [Declaring a basic node class with @Node](#declaring-a-basic-node-class-with-node)  
+    - [Using simple decorators (@Input, @Output)](#using-simple-decorators-input-and-output)  
+    - [Example: A node with string, number, and boolean ports](#example-a-node-with-string-number-and-boolean-ports)
 
-4. [Defining Port Decorators](#defining-port-decorators)
-    - [The @Port Decorator](#the-port-decorator)
-        - How it binds a property to a port configuration
-        - Default behaviors and key assignments
-    - [Scalar Port Decorators](#scalar-port-decorators)
-        - @String, @Number, and @Boolean decorators
-        - How to set default value and validation properties
-    - [Complex Port Decorators](#complex-port-decorators)
-        - @PortArray, @PortObject, and @PortStream decorators
-        - Explanation of itemConfig for array and stream ports
-        - Example: A node with an object port and nested array port
+4. [Defining Port Decorators](#4-defining-port-decorators)  
+  4.1. [The @Port Decorator](#41-the-port-decorator)  
+  4.2. [Scalar Port Decorators](#42-scalar-port-decorators)  
+  4.3. [Complex Port Decorators](#43-complex-port-decorators)
 
-5. [Advanced Port Configuration with Decorators](#advanced-port-configuration-with-decorators)
-    - [Enum Port Decorators](#enum-port-decorators)
-        - @PortEnum, @StringEnum, and @NumberEnum
-        - Configuring options and default values
-        - Example: Enum selection for a node property
-    - [Object Schema Decorators](#object-schema-decorators)
-        - Using @ObjectSchema to annotate classes as schemas
-        - The @PortObject decorator to bind object schema properties
-        - Example: A node that accepts complex objects
-    - [Nested Structures and Array of Objects](#nested-structures-and-array-of-objects)
-        - Using @PortArray and @PortArrayNested decorators
-        - How to nest arrays or objects within array ports
-        - Examples and edge–cases
+5. [Advanced Port Configuration with Decorators](#5-advanced-port-configuration-with-decorators)  
+  5.1. [Enum Port Decorators](#51-enum-port-decorators)  
+  5.2. [Object Schema Decorators](#52-object-schema-decorators)  
+  5.3. [Nested Structures and Array of Objects](#53-nested-structures-and-array-of-objects)
 
-6. [Combining Decorators for Complex Nodes](#combining-decorators-for-complex-nodes)
-    - [Creating Composite Nodes with Multiple Port Types](#creating-composite-nodes-with-multiple-port-types)
-    - [Inheriting and Overriding Port Configurations](#inheriting-and-overriding-port-configurations)
-    - [Leveraging Metadata and Type Inference for Nested Structures](#leveraging-metadata-and-type-inference-for-nested-structures)
-    - [Example: A Full–Featured Node with Scalar, Object, Array, and Enum Ports](#example-a-full-featured-node-with-scalar-object-array-and-enum-ports)
+6. [Combining Decorators for Complex Nodes](#6-combining-decorators-for-complex-nodes)  
+  6.1. [Creating Composite Nodes with Multiple Port Types](#61-creating-composite-nodes-with-multiple-port-types)  
+  6.2. [Inheriting and Overriding Port Configurations](#62-inheriting-and-overriding-port-configurations)  
+  6.3. [Leveraging Metadata and Type Inference for Nested Structures](#63-leveraging-metadata-and-type-inference-for-nested-structures)  
+  6.4. [Example: A Full–Featured Node with Scalar, Object, Array, and Enum Ports](#64-example-a-fullfeatured-node-with-scalar-object-array-and-enum-ports)
 
 ---
 
