@@ -27,11 +27,15 @@
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "cors": "^2.8.5",
+    "drizzle-orm": "^0.39.2",
+    "pg": "^8.13.1",
     "superjson": "^2.2.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/node": "^20.11.16",
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.30.4",
     "typescript": "^5.3.3"
   }
 }
