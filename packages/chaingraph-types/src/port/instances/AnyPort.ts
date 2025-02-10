@@ -6,10 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
-import type { AnyPortConfig, AnyPortValue } from '../base/types'
-import { BasePort } from '../base/BasePort'
-import { AnyPortPlugin } from '../plugins/AnyPortPlugin'
+import type { AnyPortConfig, AnyPortValue } from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import { AnyPortPlugin, BasePort } from '@badaitech/chaingraph-types/port'
 
 /**
  * Concrete implementation of an Any Port.

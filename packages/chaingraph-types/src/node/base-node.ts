@@ -6,32 +6,21 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
-import type { EventReturnType, NodeEvent, NodeEventDataType } from '@badaitech/chaingraph-types/node/events'
-import type { INode } from '@badaitech/chaingraph-types/node/interface'
-import type {
-  Dimensions,
-  NodeUIMetadata,
-  NodeUIStyle,
-  Position,
-} from '@badaitech/chaingraph-types/node/node-ui'
-import type {
-  NodeExecutionResult,
-  NodeMetadata,
-  NodeValidationResult,
-} from '@badaitech/chaingraph-types/node/types'
-import type { IPort, IPortConfig, JSONValue } from '@badaitech/chaingraph-types/port/base'
-
-import { NodeEventType } from '@badaitech/chaingraph-types/node/events'
-import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
-import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
-import { PortDirection } from '@badaitech/chaingraph-types/port/base'
-import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
-import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
-import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
-import { getOrCreateNodeMetadata } from './decorator-new/getOrCreateNodeMetadata'
-import { PortConfigProcessor } from './port-config-processor'
+import type { ExecutionContext } from '../execution'
+import type { EventReturnType, NodeEvent, NodeEventDataType } from '../node/events'
+import type { INode } from '../node/interface'
+import type { Dimensions, NodeUIMetadata, NodeUIStyle, Position } from '../node/node-ui'
+import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
+import type { IPort, IPortConfig } from '../port'
+import type { JSONValue } from '../utils/json'
+import { portRegistry } from '..'
+import { getOrCreateNodeMetadata } from '../decorator'
+import { NodeEventType } from '../node/events'
+import { NodeStatus } from '../node/node-enums'
+import { PortConfigProcessor } from '../node/port-config-processor'
+import { SerializedNodeSchema } from '../node/types.zod'
+import { PortDirection, PortFactory } from '../port'
+import { deepCopy, EventQueue } from '../utils'
 import 'reflect-metadata'
 
 export abstract class BaseNode implements INode {
@@ -274,13 +263,9 @@ export abstract class BaseNode implements INode {
   }
 
   clone(): INode {
-    // Create a new instance of the node with the same configuration
-    // const clonedNode = Object.create(Object.getPrototypeOf(this), Object.getOwnPropertyDescriptors(this))
-    // clonedNode.id = `${this._id}_clone` // Optionally, assign a new ID
-    // If there are nested objects, you might need a deep clone
-
-    // TODO: Implement deep clone
-    return this
+    const serialized = this.serialize()
+    const node = new (this.constructor as any)(this.id) as INode
+    return node.deserialize(serialized)
   }
 
   setPort(port: IPort): IPort {
@@ -576,12 +561,13 @@ export abstract class BaseNode implements INode {
         if (configData && typeof configData === 'object' && 'type' in configData) {
           const plugin = portRegistry.getPlugin(configData.type)
 
-          deserializedPortsConfig.set(
-            key,
-            plugin
-              ? plugin.deserializeConfig(configData)
-              : configData,
-          )
+          if (!plugin) {
+            throw new Error(`No plugin found for port type "${configData.type}"`)
+          }
+
+          const deserializedConfig = plugin.deserializeConfig(configData)
+
+          deserializedPortsConfig.set(key, deserializedConfig)
         }
       }
     }

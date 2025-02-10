@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryIconName } from '@badaitech/chaingraph-nodes/categories/icons'
+import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
-import { getCategoryIcon } from '@badaitech/chaingraph-nodes/categories/icons'
-import { PortDirection } from '@badaitech/chaingraph-types/port/base'
+import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
+import { PortDirection } from '@badaitech/chaingraph-types'
 import { useEffect, useMemo, useState } from 'react'
 
 interface NodePreviewProps {

@@ -6,12 +6,20 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Port } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  findPort,
+  Input,
+  Node,
+  Port,
+} from '@badaitech/chaingraph-types'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
 import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
 
-import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,

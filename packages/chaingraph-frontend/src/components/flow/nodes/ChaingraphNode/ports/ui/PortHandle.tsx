@@ -1,5 +1,5 @@
 import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
-import { cn } from '@badaitech/chaingraph-frontend/lib/utils'
+import { cn } from '@/lib/utils'
 import { Handle, Position } from '@xyflow/react'
 
 interface Props<C extends IPortConfig> {

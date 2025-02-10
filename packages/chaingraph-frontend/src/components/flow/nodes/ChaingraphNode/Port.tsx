@@ -1,7 +1,9 @@
 import type { ExtractValue, IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import type { BooleanPortProps } from './ports/BooleanPort/BooleanPort'
+import type { EnumPortProps } from './ports/EnumPort/EnumPort'
 import type { NumberPortProps } from './ports/NumberPort/NumberPort'
 import type { StringPortProps } from './ports/StringPort/StringPort'
+import { EnumPort } from '@/components/flow/nodes/ChaingraphNode/ports/EnumPort/EnumPort.tsx'
 import { BooleanPort } from './ports/BooleanPort/BooleanPort'
 import { NumberPort } from './ports/NumberPort/NumberPort'
 import { StringPort } from './ports/StringPort/StringPort'
@@ -30,7 +32,9 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
     case 'number': {
       return <NumberPort {...props as unknown as NumberPortProps} />
     }
-    case 'enum':
+    case 'enum': {
+      return <EnumPort {...props as unknown as EnumPortProps} />
+    }
     case 'array':
     case 'object':
     case 'stream':

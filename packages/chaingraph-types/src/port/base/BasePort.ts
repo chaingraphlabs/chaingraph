@@ -6,12 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPort } from './IPort'
-import type { JSONValue } from './json'
-import type { ExtractValue, IPortConfig } from './types'
-
-import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
-import { PortError, PortErrorType } from './types'
+import type { ExtractValue, IPort, IPortConfig } from '../../port'
+import type { JSONValue } from '../../utils/json'
+import { deepCopy } from '../..//utils/deep-copy'
+import { PortError, PortErrorType } from '../../port'
 
 export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {
   protected config: C
@@ -39,15 +37,6 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
   getValue(): ExtractValue<C> | undefined {
     return this.value
   }
-
-  // plainValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
-  //   const value = this.getValue()
-  //   return value !== undefined ? unwrapPortValue(value) : undefined
-  // }
-  //
-  // mutableValue(): UnwrapPortValue<ExtractValue<C>> | undefined {
-  //   return mutableUnwrapPortValueWithConfig(this.getValue(), this.config)
-  // }
 
   setValue(newValue: ExtractValue<C>): void {
     if (!this.validateValue(newValue)) {

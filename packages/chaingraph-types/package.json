@@ -1,9 +1,9 @@
 {
   "name": "@badaitech/chaingraph-types",
-  "license": "BUSL-1.1",
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",
@@ -38,7 +38,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc -b",
+    "build": "bun build ./src/index.ts --outdir ./dist",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },

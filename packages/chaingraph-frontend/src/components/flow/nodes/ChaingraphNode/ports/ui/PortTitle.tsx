@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { cn } from '@badaitech/chaingraph-frontend/lib/utils'
+import { cn } from '@/lib/utils'
 
 export function PortTitle({ className, ...props }: ComponentProps<'span'>) {
   return (

@@ -49,7 +49,7 @@ describe('flow Procedures', () => {
       expect(result.id).toBeDefined()
 
       // Verify flow was created correctly
-      const flow = await caller.flow.get(result.id)
+      const flow = await caller.flow.get(result.id!)
       expect(flow.metadata.name).toBe(metadata.name)
       expect(flow.metadata.description).toBe(metadata.description)
       expect(flow.metadata.tags).toEqual(metadata.tags)
@@ -73,7 +73,7 @@ describe('flow Procedures', () => {
       // Get created flow
       expect(flow).toBeDefined()
       expect(flow.id).toBe(flow.id)
-      expect(flow.metadata.name).toBe('Test Flow')
+      expect(flow.name).toBe('Test Flow')
     })
 
     it('should throw error for non-existent flow', async () => {
@@ -125,11 +125,11 @@ describe('flow Procedures', () => {
       }
 
       // Delete flow
-      const result = await caller.flow.delete(flow.id)
+      const result = await caller.flow.delete(flow.id!)
       expect(result.success).toBe(true)
 
       // Verify flow was deleted
-      await expect(caller.flow.get(flow.id)).rejects.toThrow()
+      await expect(caller.flow.get(flow.id!)).rejects.toThrow()
     })
 
     it('should return success false for non-existent flow', async () => {

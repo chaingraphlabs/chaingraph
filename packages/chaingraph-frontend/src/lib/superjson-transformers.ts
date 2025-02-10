@@ -1,90 +1,138 @@
-import type { INode, SerializedFlow } from '@badaitech/chaingraph-types'
-import type { IPort } from '@badaitech/chaingraph-types/port/base'
-import { BaseNode, Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@badaitech/chaingraph-types'
-import { BasePort } from '@badaitech/chaingraph-types/port/base'
-import { MultiChannel } from '@badaitech/chaingraph-types/port/channel'
+import type { IFlow, INode, IPort } from '@badaitech/chaingraph-types'
+import {
+  AnyPortPlugin,
+  ArrayPortPlugin,
+  BaseNode,
+  BasePort,
+  Edge,
+  EnumPortPlugin,
+  ExecutionEventImpl,
+  Flow,
+  MultiChannel,
+  NodeRegistry,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortFactory,
+  portRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types'
+import SuperJSON from 'superjson'
 
-import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
-import superjson from 'superjson'
+export function initializeJsonTransformers() {
+  portRegistry.register(StringPortPlugin)
+  portRegistry.register(NumberPortPlugin)
+  portRegistry.register(AnyPortPlugin)
+  portRegistry.register(StreamPortPlugin)
+  portRegistry.register(ArrayPortPlugin)
+  portRegistry.register(ObjectPortPlugin)
+  portRegistry.register(EnumPortPlugin)
 
-superjson.registerCustom<Flow, any>(
-  {
-    isApplicable: (v): v is Flow => {
-      return v instanceof Flow
+  // Execution event data
+  SuperJSON.registerCustom<ExecutionEventImpl, any>(
+    {
+      isApplicable: (v): v is ExecutionEventImpl => {
+        return v instanceof ExecutionEventImpl
+      },
+      serialize: (v) => {
+        return {
+          index: v.index,
+          type: v.type,
+          timestamp: v.timestamp,
+          data: SuperJSON.stringify(v.data),
+        }
+      },
+      deserialize: (v) => {
+        try {
+          const data = SuperJSON.parse(v.data)
+
+          return new ExecutionEventImpl(
+            v.index,
+            v.type,
+            v.timestamp,
+            data,
+          )
+        } catch (e) {
+          debugger
+          console.error('Failed to deserialize execution event', e)
+          throw e
+        }
+      },
     },
-    serialize: (v) => {
-      const serializedEdges = [] as SerializedFlow['edges']
-      for (const edge of v.edges.values()) {
-        serializedEdges.push({
-          id: edge.id,
-          metadata: edge.metadata,
-          status: edge.status,
-          sourceNodeId: edge.sourceNode.id,
-          sourcePortId: edge.sourcePort.id!,
-          targetNodeId: edge.targetNode.id,
-          targetPortId: edge.targetPort.id!,
+    'ExecutionEventImpl',
+  )
+
+  SuperJSON.registerCustom<IFlow, any>(
+    {
+      isApplicable: (v): v is IFlow => {
+        return v instanceof Flow
+      },
+      serialize: (v) => {
+        return SuperJSON.serialize(v.serialize())
+      },
+      deserialize: (v) => {
+        try {
+          // Deserialize flow from JSON string
+          return Flow.deserialize(SuperJSON.deserialize(v)) as Flow
+        } catch (e) {
+          console.error('Failed to deserialize flow', e)
+          debugger
+          throw e
+        }
+      },
+    },
+    'Flow',
+  )
+
+  SuperJSON.registerCustom<IPort, any>(
+    {
+      isApplicable: (v): v is IPort => {
+        return v instanceof BasePort
+      },
+      serialize: (v) => {
+        return v.serialize()
+      },
+      deserialize: (v) => {
+        try {
+          const port = PortFactory.createFromConfig((v as any).config)
+          return port.deserialize(v)
+        } catch (e) {
+          debugger
+          console.error('Error deserializing port:', e)
+          throw e
+        }
+      },
+    },
+    'BasePort',
+  )
+
+  SuperJSON.registerCustom<Edge, any>(
+    {
+      isApplicable: (v): v is Edge => {
+        return v instanceof Edge
+      },
+      serialize: (v) => {
+        return SuperJSON.serialize({
+          id: v.id,
+          status: v.status,
+          metadata: v.metadata,
+          sourceNode: SuperJSON.serialize(v.sourceNode),
+          sourcePort: SuperJSON.serialize(v.sourcePort),
+          targetNode: SuperJSON.serialize(v.targetNode),
+          targetPort: SuperJSON.serialize(v.targetPort),
         })
-      }
+      },
+      deserialize: (v) => {
+        const edgeData = SuperJSON.deserialize(
+          v as any,
+        ) as any
 
-      const nodes: SerializedFlow['nodes'] = []
-      if (v.nodes) {
-        for (const node of v.nodes.values()) {
-          nodes.push(node.serialize() as any)
-        }
-      }
+        const sourceNode = SuperJSON.deserialize<INode>(edgeData.sourceNode)
+        const sourcePort = SuperJSON.deserialize<IPort>(edgeData.sourcePort)
+        const targetNode = SuperJSON.deserialize<INode>(edgeData.targetNode)
+        const targetPort = SuperJSON.deserialize<IPort>(edgeData.targetPort)
 
-      const serializedFlow: SerializedFlow = {
-        id: v.id,
-        metadata: v.metadata,
-        nodes,
-        edges: serializedEdges,
-      }
-
-      return superjson.serialize(serializedFlow)
-    },
-    deserialize: (v) => {
-      const flowData = superjson.deserialize<SerializedFlow>(v)
-
-      const flow = new Flow(flowData.metadata)
-
-      for (const nodeData of flowData.nodes) {
-        const nodeMetadata = nodeData.metadata as any
-
-        const node = NodeRegistry.getInstance().createNode(
-          nodeMetadata.type,
-          nodeData.id ?? nodeMetadata.id ?? '',
-          nodeMetadata,
-        ).deserialize(nodeData)
-
-        flow.addNode(node)
-      }
-
-      for (const edgeData of flowData.edges) {
-        const sourceNode = flow.nodes.get(edgeData.sourceNodeId)
-        const targetNode = flow.nodes.get(edgeData.targetNodeId)
-
-        if (!sourceNode) {
-          throw new Error(`Source node with ID ${edgeData.sourceNodeId} does not exist.`)
-        }
-        if (!targetNode) {
-          throw new Error(`Target node with ID ${edgeData.targetNodeId} does not exist.`)
-        }
-
-        const sourcePort = sourceNode.getPort(edgeData.sourcePortId)
-        const targetPort = targetNode.getPort(edgeData.targetPortId)
-
-        if (!sourcePort) {
-          throw new Error(
-            `Source port with ID ${edgeData.sourcePortId} does not exist on node ${edgeData.sourceNodeId}.`,
-          )
-        }
-
-        if (!targetPort) {
-          throw new Error(
-            `Target port with ID ${edgeData.targetPortId} does not exist on node ${edgeData.targetNodeId}.`,
-          )
-        }
-
+        // todo: validate edgeData
         const edge = new Edge(
           edgeData.id,
           sourceNode,
@@ -94,157 +142,56 @@ superjson.registerCustom<Flow, any>(
           edgeData.metadata,
         )
 
-        flow.addEdge(edge)
-      }
-
-      return flow
+        return edge
+      },
     },
-  },
-  Flow.name,
-)
+    'Edge',
+  )
 
-superjson.registerCustom<IPort, any>(
-  {
-    isApplicable: (v): v is IPort => {
-      return v instanceof BasePort
-    },
-    serialize: (v) => {
-      return v.serialize()
-    },
-    deserialize: (v) => {
-      const port = PortFactory.createFromConfig((v as any).config)
-      return port.deserialize(v)
-    },
-  },
-  BasePort.name,
-)
-
-superjson.registerCustom<Edge, any>(
-  {
-    isApplicable: (v): v is Edge => {
-      return v instanceof Edge
-    },
-    serialize: (v) => {
-      return superjson.serialize({
-        id: v.id,
-        status: v.status,
-        metadata: v.metadata,
-        sourceNode: superjson.serialize(v.sourceNode),
-        sourcePort: superjson.serialize(v.sourcePort),
-        targetNode: superjson.serialize(v.targetNode),
-        targetPort: superjson.serialize(v.targetPort),
-      })
-    },
-    deserialize: (v) => {
-      const edgeData = superjson.deserialize(
-        v as any,
-      ) as any
-
-      const sourceNode = superjson.deserialize<INode>(edgeData.sourceNode)
-      const sourcePort = superjson.deserialize<IPort>(edgeData.sourcePort)
-      const targetNode = superjson.deserialize<INode>(edgeData.targetNode)
-      const targetPort = superjson.deserialize<IPort>(edgeData.targetPort)
-
-      // todo: validate edgeData
-      const edge = new Edge(
-        edgeData.id,
-        sourceNode,
-        sourcePort,
-        targetNode,
-        targetPort,
-        edgeData.metadata,
-      )
-
-      return edge
-    },
-  },
-  Edge.name,
-)
-
-superjson.registerCustom<MultiChannel<any>, any>(
-  {
+  SuperJSON.registerCustom<MultiChannel<any>, any>(
+    {
     // isApplicable: (v): v is MultiChannel<any> => v instanceof MultiChannel,
-    isApplicable: (v): v is MultiChannel<any> => {
-      return v instanceof MultiChannel
+      isApplicable: (v): v is MultiChannel<any> => {
+        return v instanceof MultiChannel
+      },
+      serialize: (v) => {
+        return v.serialize()
+      },
+      deserialize: (v) => {
+        return MultiChannel.deserialize(v)
+      },
     },
-    serialize: (v) => {
-      return v.serialize()
-    },
-    deserialize: (v) => {
-      return MultiChannel.deserialize(v)
-    },
-  },
-  MultiChannel.name,
-)
+    'MultiChannel',
+  )
 
-superjson.registerCustom<INode, any>(
-  {
-    isApplicable: (v): v is INode => {
-      return v instanceof BaseNode
-    },
-    serialize: (v) => {
-      return v.serialize()
-    },
-    deserialize: (v) => {
-      const nodeData = v as any
-      const nodeMetadata = nodeData.metadata as any
+  SuperJSON.registerCustom<INode, any>(
+    {
+      isApplicable: (v): v is INode => {
+        return v instanceof BaseNode
+      },
+      serialize: (v) => {
+        return v.serialize()
+      },
+      deserialize: (v) => {
+        const nodeData = v as any
+        const nodeMetadata = nodeData.metadata as any
 
-      try {
-        const node = NodeRegistry.getInstance().createNode(
-          nodeMetadata.type,
-          nodeData.id ?? nodeMetadata.id ?? '',
-          nodeMetadata,
-        )
+        try {
+          const node = NodeRegistry.getInstance().createNode(
+            nodeMetadata.type,
+            nodeData.id ?? nodeMetadata.id ?? '',
+            nodeMetadata,
+          )
 
-        return node.deserialize(nodeData)
-      } catch (e) {
-        // eslint-disable-next-line no-debugger
-        debugger
-        console.error('Error deserializing node:', e)
-        throw e
-      }
+          return node.deserialize(nodeData)
+        } catch (e) {
+          // eslint-disable-next-line no-debugger
+          debugger
+          console.error('Error deserializing node:', e)
+          throw e
+        }
+      },
     },
-  },
-  BaseNode.name,
-)
-
-// Execution event data
-superjson.registerCustom<ExecutionEventImpl, any>(
-  {
-    isApplicable: (v): v is ExecutionEventImpl<any> => {
-      return v instanceof ExecutionEventImpl
-    },
-    serialize: (v) => {
-      return superjson.serialize({
-        index: v.index,
-        type: v.type,
-        timestamp: v.timestamp,
-        data: superjson.serialize(v.data),
-      })
-    },
-    deserialize: (v) => {
-      const eventData = superjson.deserialize(v as any) as any
-
-      if (!eventData) {
-        throw new Error('Invalid execution event data')
-      }
-
-      try {
-        const data = superjson.deserialize(eventData.data)
-
-        return new ExecutionEventImpl(
-          eventData.index,
-          eventData.type,
-          eventData.timestamp,
-          data,
-        )
-      } catch (e: any) {
-        console.error(e)
-        // eslint-disable-next-line no-debugger
-        debugger
-        throw new Error('Invalid execution event data')
-      }
-    },
-  },
-  ExecutionEventImpl.name,
-)
+    'BaseNode',
+  )
+}

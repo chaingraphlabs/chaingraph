@@ -1,7 +1,7 @@
 import type { BooleanPortConfig, IPort } from '@badaitech/chaingraph-types'
-import { cn } from '@/lib/utils.ts'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort.ts'
-import { Switch } from '@badaitech/chaingraph-frontend/components/ui/switch'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
+import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
 import { useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -31,29 +31,29 @@ export function BooleanPort(props: BooleanPortProps) {
     <div
       key={config.id}
       className={cn(
-        'relative flex items-center gap-2 group/port',
+        'relative flex gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {config.direction === 'output' && (
+      {config.direction === 'input' && <PortHandle port={port} />}
+
+      <div className={cn(
+        'flex flex-col',
+        config.direction === 'output' ? 'items-end' : 'items-start',
+      )}
+      >
         <PortTitle>{title}</PortTitle>
-      )}
-      <PortHandle port={port} />
 
-      {config.direction === 'input' && (
-        <div className="flex flex-col">
-          <PortTitle>{title}</PortTitle>
+        {needRenderEditor && (
+          <Switch
+            disabled={ui?.disabled}
+            checked={value}
+            onCheckedChange={checked => onChange({ value: checked })}
+          />
+        )}
+      </div>
 
-          {needRenderEditor && (
-            <Switch
-              disabled={ui?.disabled}
-              checked={value}
-              onCheckedChange={checked => onChange({ value: checked })}
-            />
-          )}
-
-        </div>
-      )}
+      {config.direction === 'output' && <PortHandle port={port} />}
     </div>
   )
 }

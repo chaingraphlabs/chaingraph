@@ -6,10 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
-import type { BooleanPortConfig, BooleanPortValue } from '../base/types'
-import { BasePort } from '../base/'
-import { BooleanPortPlugin } from '../plugins/'
+import type { BooleanPortConfig, BooleanPortValue } from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import { BasePort, BooleanPortPlugin } from '@badaitech/chaingraph-types/port'
 
 /**
  * Concrete implementation of a Boolean Port.

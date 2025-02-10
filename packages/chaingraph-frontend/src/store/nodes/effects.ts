@@ -52,7 +52,6 @@ export const updateNodeParentFx = createEffect(async (params: UpdateNodeParent):
 })
 
 export const baseUpdateNodePositionFx = createEffect(async (params: UpdateNodePosition) => {
-  console.log('POSITION FX:', params)
   return trpcClient.flow.updateNodePosition.mutate({
     ...params,
     version: params.version,

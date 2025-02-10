@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryIconName } from '@badaitech/chaingraph-nodes/categories/icons'
+import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryStyle, INode } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
-import { getCategoryIcon } from '@badaitech/chaingraph-nodes/categories/icons'
+import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { Cross1Icon } from '@radix-ui/react-icons'
 import { useCallback } from 'react'
 

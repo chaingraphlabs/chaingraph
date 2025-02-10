@@ -7,12 +7,7 @@
  */
 
 import { createEffect, sample } from 'effector'
-import {
-  createFlowFx,
-  deleteFlowFx,
-  editFlowFx,
-  loadFlowsListFx,
-} from './effects'
+import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from './effects'
 import {
   clearActiveFlow,
   createFlow,
@@ -26,11 +21,7 @@ import {
   setFlowSubscriptionStatus,
   updateFlow,
 } from './events'
-import {
-  $activeFlowId,
-  $flowSubscriptionError,
-  $flowSubscriptionStatus,
-} from './stores'
+import { $activeFlowId, $flowSubscriptionError, $flowSubscriptionStatus } from './stores'
 
 export const initializeFlowsFx = createEffect(async () => {
   const flows = await loadFlowsListFx()
@@ -54,7 +45,7 @@ sample({
 })
 sample({
   clock: createFlowFx.doneData,
-  fn: response => response.metadata,
+  fn: response => response,
   target: setFlowMetadata,
 })
 

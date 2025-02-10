@@ -7,14 +7,14 @@
  */
 
 import type { FlowSubscriptionStatus } from '@/store'
-import { useTheme } from '@/components/theme/hooks/useTheme.ts'
+import { useTheme } from '@/components/theme/hooks/useTheme'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip.tsx'
-import { cn } from '@/lib/utils.ts'
+import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 
 interface SubscriptionStatusProps {

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AppRouter } from '@badaitech/chaingraph-backend/router.ts'
+import type { AppRouter } from '@badaitech/chaingraph-backend/router'
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query'
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
 import { QueryClient } from '@tanstack/react-query'
@@ -74,6 +74,9 @@ export const _trpcClient = trpc.createClient({
 // create persistent WebSocket connection
 export const wsClient = createWSClient({
   url: `ws://localhost:3001`,
+  onError: (err) => {
+    console.error('WebSocket error:', err)
+  },
 })
 // configure TRPCClient to use WebSockets transport
 export const trpcClient = createTRPCClient<AppRouter>({

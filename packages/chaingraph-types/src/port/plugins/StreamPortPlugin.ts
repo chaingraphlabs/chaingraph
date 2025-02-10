@@ -6,24 +6,30 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONObject, JSONValue } from '../base/json'
 import type {
   IPortConfig,
   IPortPlugin,
   IPortValue,
   StreamPortConfig,
   StreamPortValue,
-} from '../base/types'
-import { z } from 'zod'
-import { basePortConfigSchema } from '../base/base-config.schema'
+} from '@badaitech/chaingraph-types/port'
+import type {
+  JSONObject,
+  JSONValue,
+} from '@badaitech/chaingraph-types/utils/json'
 import {
+  basePortConfigSchema,
   isStreamPortValue,
   PortError,
   PortErrorType,
-} from '../base/types'
-import { streamPortConfigUISchema } from '../base/ui-config.schema'
-import { MultiChannel, MultiChannelSchema } from '../channel/multi-channel'
-import { portRegistry } from '../registry/PortPluginRegistry'
+  portRegistry,
+  streamPortConfigUISchema,
+} from '@badaitech/chaingraph-types/port'
+import {
+  MultiChannel,
+  MultiChannelSchema,
+} from '@badaitech/chaingraph-types/utils'
+import { z } from 'zod'
 
 /**
  * Helper to create a stream port value

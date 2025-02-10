@@ -6,24 +6,24 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge, INode, NodeEvent, PortUpdatedEventData } from '@badaitech/chaingraph-types'
+import type { IEdge } from '@badaitech/chaingraph-types/edge'
+import type { IFlow } from '@badaitech/chaingraph-types/flow/interface'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
 import type {
   FlowEvent,
   NodeParentUpdatedEventData,
   NodeUIDimensionsChangedEventData,
   NodeUIEventData,
   NodeUIPositionChangedEventData,
-} from '@badaitech/chaingraph-types/flow/events'
-import type { IFlow } from './interface'
+  PortUpdatedEventData,
+} from './events'
 import type { FlowMetadata } from './types'
-import { Edge, NodeEventType } from '@badaitech/chaingraph-types'
-import {
-  FlowEventType,
-  newEvent,
-} from '@badaitech/chaingraph-types/flow/events'
-
-import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
+import { NodeRegistry } from '@badaitech/chaingraph-types/decorator/registry'
+import { Edge } from '@badaitech/chaingraph-types/edge'
+import { type INode, type NodeEvent, NodeEventType } from '@badaitech/chaingraph-types/node'
+import { EventQueue } from '@badaitech/chaingraph-types/utils'
 import { v4 as uuidv4 } from 'uuid'
+import { FlowEventType, newEvent } from './events'
 
 export class Flow implements IFlow {
   readonly id: string
@@ -62,7 +62,7 @@ export class Flow implements IFlow {
     this.edges = new Map()
   }
 
-  addNode(node: INode): INode {
+  addNode(node: INode, disableEvents?: boolean): INode {
     if (this.nodes.has(node.id)) {
       throw new Error(`Node with ID ${node.id} already exists in the flow.`)
     }
@@ -77,12 +77,14 @@ export class Flow implements IFlow {
     this.nodeEventHandlersCancel.set(node.id, cancel)
 
     // Emit NodeAdded event
-    this.emitEvent(newEvent(
-      this.getNextEventIndex(),
-      this.id,
-      FlowEventType.NodeAdded,
-      { node },
-    ))
+    if (!disableEvents) {
+      this.emitEvent(newEvent(
+        this.getNextEventIndex(),
+        this.id,
+        FlowEventType.NodeAdded,
+        { node },
+      ))
+    }
 
     return node
   }
@@ -409,5 +411,117 @@ export class Flow implements IFlow {
       default:
         throw new Error(`Unsupported node event type: ${nodeEventType}`)
     }
+  }
+
+  public clone(): IFlow {
+    const newFlow = new Flow({ ...this.metadata })
+
+    // Clone nodes
+    for (const node of this.nodes.values()) {
+      const clonedNode = node.clone()
+      newFlow.addNode(clonedNode, true)
+    }
+
+    // Clone edges
+    for (const edge of this.edges.values()) {
+      // Find the source and target nodes in the new flow
+      const sourceNode = newFlow.nodes.get(edge.sourceNode.id)
+      const targetNode = newFlow.nodes.get(edge.targetNode.id)
+      if (!sourceNode || !targetNode) {
+        throw new Error(`Failed to clone edge ${edge.id}: source or target node not found.`)
+      }
+
+      // Find the source and target ports in the new flow
+      const sourcePort = sourceNode.getPort(edge.sourcePort.id)
+      const targetPort = targetNode.getPort(edge.targetPort.id)
+
+      if (!sourcePort || !targetPort) {
+        throw new Error(`Failed to clone edge ${edge.id}: source or target port not found.`)
+      }
+
+      const clonedEdge = new Edge(
+        edge.id,
+        sourceNode,
+        sourcePort,
+        targetNode,
+        targetPort,
+        { ...edge.metadata },
+      )
+
+      newFlow.addEdge(clonedEdge)
+    }
+
+    return newFlow as IFlow
+  }
+
+  public serialize() {
+    const nodes = Array.from(this.nodes.values()).map(
+      node => node.serialize(),
+    )
+    const edges: JSONValue[] = []
+    for (const edge of this.edges.values()) {
+      edges.push({
+        id: edge.id,
+        sourceNodeId: edge.sourceNode.id,
+        sourcePortId: edge.sourcePort.id,
+        targetNodeId: edge.targetNode.id,
+        targetPortId: edge.targetPort.id,
+        metadata: edge.metadata,
+      })
+    }
+
+    return {
+      id: this.id,
+      metadata: this.metadata,
+      nodes,
+      edges,
+    }
+  }
+
+  public deserialize(data: JSONValue): IFlow {
+    const flowData = data as any
+    const flow = new Flow(flowData.metadata)
+
+    for (const nodeData of flowData.nodes) {
+      const node = NodeRegistry.getInstance().createNode(
+        nodeData.metadata.type,
+        nodeData.id,
+        nodeData.metadata,
+      )
+      flow.addNode(node.deserialize(nodeData), true)
+    }
+
+    for (const edgeData of flowData.edges) {
+      const sourceNode = flow.nodes.get(edgeData.sourceNodeId)
+      const targetNode = flow.nodes.get(edgeData.targetNodeId)
+
+      if (!sourceNode || !targetNode) {
+        throw new Error('Failed to deserialize flow: source or target node not found.')
+      }
+
+      const sourcePort = sourceNode.getPort(edgeData.sourcePortId)
+      const targetPort = targetNode.getPort(edgeData.targetPortId)
+
+      if (!sourcePort || !targetPort) {
+        throw new Error('Failed to deserialize flow: source or target port not found.')
+      }
+
+      const edge = new Edge(
+        edgeData.id,
+        sourceNode,
+        sourcePort,
+        targetNode,
+        targetPort,
+        edgeData.metadata,
+      )
+      flow.addEdge(edge)
+    }
+
+    return flow as IFlow
+  }
+
+  static deserialize(data: JSONValue): IFlow {
+    const flow = new Flow()
+    return flow.deserialize(data)
   }
 }

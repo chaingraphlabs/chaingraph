@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
+import type { INode } from '../node'
 import type { DebuggerCommand, DebuggerController, DebuggerState } from './debugger-types'
 
 export class FlowDebugger implements DebuggerController {

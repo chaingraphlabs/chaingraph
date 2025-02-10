@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { z } from 'zod'
 import { NodeExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 
@@ -47,7 +46,8 @@ export const NodeMetadataSchema = z.lazy(() => z.object({
   author: z.string().optional(),
   parentNodeId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-  portsConfig: z.record(z.string(), portRegistry.getConfigUnionSchema()).optional(),
+  // portsConfig: z.record(z.string(), portRegistry.getConfigUnionSchema()).optional(),
+  portsConfig: z.record(z.string(), z.any()).optional(),
   ui: NodeUIMetadataSchema.optional(),
   version: z.number().optional(),
 }).passthrough())

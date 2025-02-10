@@ -10,9 +10,6 @@
 // Core types and interfaces
 export * from './base'
 
-// Channel functionality
-export * from './channel'
-
 // Factory implementation
 export * from './factory'
 

@@ -1,5 +1,16 @@
 import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, ExecutionContext, ExecutionEngine, ExecutionEventEnum, Flow, MultiChannel, Node, NodeStatus, PortDirection, PortStream } from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  ExecutionContext,
+  ExecutionEngine,
+  ExecutionEventEnum,
+  Flow,
+  MultiChannel,
+  Node,
+  NodeStatus,
+  PortDirection,
+  PortStream,
+} from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
 
 @Node({})

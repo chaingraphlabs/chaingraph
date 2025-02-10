@@ -15,7 +15,7 @@ import {
   registerNodeTransformers,
   String,
 } from '@badaitech/chaingraph-types'
-import { ExecutionContext } from '@badaitech/chaingraph-types/flow/execution-context'
+import { ExecutionContext } from '@badaitech/chaingraph-types/execution/execution-context'
 import { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types/flow/execution-events'
 import { registerFlowTransformers } from '@badaitech/chaingraph-types/flow/json-transformers'
 import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'

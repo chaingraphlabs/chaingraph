@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
-import type { IPort } from '@badaitech/chaingraph-types/port/base'
+import type { IPort } from '@badaitech/chaingraph-types/port'
+import type { INode } from './interface'
 
 /**
  * Traverse all ports of a node

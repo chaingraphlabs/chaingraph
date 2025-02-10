@@ -7,12 +7,12 @@
  */
 
 import type { INode } from '@badaitech/chaingraph-types'
-import type { Position } from '@badaitech/chaingraph-types/node/node-ui.ts'
+import type { Position } from '@badaitech/chaingraph-types/node/node-ui'
 import type { Connection, Edge, EdgeChange, HandleType, Node, NodeChange } from '@xyflow/react'
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
-} from '@/components/flow/utils/node-position.ts'
+} from '@/components/flow/utils/node-position'
 import {
   $activeFlowMetadata,
   $edges,
@@ -25,7 +25,7 @@ import {
   updateNodePosition,
   updateNodeUI,
 } from '@/store'
-import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced.ts'
+import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { hasCycle } from '@badaitech/chaingraph-types/flow/cycleDetection'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
@@ -104,7 +104,7 @@ export function useFlowCallbacks() {
             return
           }
 
-          console.log(`[useFlowCallbacks] Setting dimensions for node ${change.id} to:`, change.dimensions)
+          // console.log(`[useFlowCallbacks] Setting dimensions for node ${change.id} to:`, change.dimensions)
 
           updateNodeUI({
             flowId: activeFlow.id!,

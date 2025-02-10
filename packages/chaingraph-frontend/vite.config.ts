@@ -7,6 +7,9 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
+  server: {
+    port: 3004,
+  },
   plugins: [
     react({
       babel: {
@@ -38,6 +41,8 @@ export default defineConfig({
     exclude: ['reflect-metadata'],
   },
   build: {
+    sourcemap: true,
+    outDir: 'dist',
     commonjsOptions: {
       transformMixedEsModules: true,
     },

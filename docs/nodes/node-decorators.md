@@ -8,39 +8,39 @@ ChainGraph uses decorators to attach metadata to your node class definitions. Th
 
 ## Table of Contents
 
-1. [Introduction](#1-introduction)  
-  1.1. [Overview of Nodes and Decorators](#11-overview-of-nodes-and-decorators)  
-  1.2. [Purpose of Decorator-Based Node Definitions](#12-purpose-of-decorator-based-node-definitions)  
+1. [Introduction](#1-introduction)
+  1.1. [Overview of Nodes and Decorators](#11-overview-of-nodes-and-decorators)
+  1.2. [Purpose of Decorator-Based Node Definitions](#12-purpose-of-decorator-based-node-definitions)
   1.3. [Benefits for Type–Safety and Readability](#13-benefits-for-typesafety-and-readability)
 
-2. [Basic Concepts](#2-basic-concepts)  
-  2.1. [What Is a Node?](#21-what-is-a-node)  
-  2.2. [Understanding Ports (Inputs/Outputs)](#22-understanding-ports-inputsoutputs)  
+2. [Basic Concepts](#2-basic-concepts)
+  2.1. [What Is a Node?](#21-what-is-a-node)
+  2.2. [Understanding Ports (Inputs/Outputs)](#22-understanding-ports-inputsoutputs)
   2.3. [Overview of the Decorators Provided](#23-overview-of-the-decorators-provided)
 
-3. [Getting Started with Node Decorators](#3-getting-started-with-node-decorators)  
-  3.1. [The @Node Decorator](#31-the-node-decorator)  
-    - [Purpose and basic usage](#purpose-and-basic-usage)  
-    - [Required metadata fields](#required-metadata-fields)  
-  3.2. [Defining Simple Scalar Nodes](#32-defining-simple-scalar-nodes)  
-    - [Declaring a basic node class with @Node](#declaring-a-basic-node-class-with-node)  
-    - [Using simple decorators (@Input, @Output)](#using-simple-decorators-input-and-output)  
+3. [Getting Started with Node Decorators](#3-getting-started-with-node-decorators)
+  3.1. [The @Node Decorator](#31-the-node-decorator)
+    - [Purpose and basic usage](#purpose-and-basic-usage)
+    - [Required metadata fields](#required-metadata-fields)
+  3.2. [Defining Simple Scalar Nodes](#32-defining-simple-scalar-nodes)
+    - [Declaring a basic node class with @Node](#declaring-a-basic-node-class-with-node)
+    - [Using simple decorators (@Input, @Output)](#using-simple-decorators-input-and-output)
     - [Example: A node with string, number, and boolean ports](#example-a-node-with-string-number-and-boolean-ports)
 
-4. [Defining Port Decorators](#4-defining-port-decorators)  
-  4.1. [The @Port Decorator](#41-the-port-decorator)  
-  4.2. [Scalar Port Decorators](#42-scalar-port-decorators)  
+4. [Defining Port Decorators](#4-defining-port-decorators)
+  4.1. [The @Port Decorator](#41-the-port-decorator)
+  4.2. [Scalar Port Decorators](#42-scalar-port-decorators)
   4.3. [Complex Port Decorators](#43-complex-port-decorators)
 
-5. [Advanced Port Configuration with Decorators](#5-advanced-port-configuration-with-decorators)  
-  5.1. [Enum Port Decorators](#51-enum-port-decorators)  
-  5.2. [Object Schema Decorators](#52-object-schema-decorators)  
+5. [Advanced Port Configuration with Decorators](#5-advanced-port-configuration-with-decorators)
+  5.1. [Enum Port Decorators](#51-enum-port-decorators)
+  5.2. [Object Schema Decorators](#52-object-schema-decorators)
   5.3. [Nested Structures and Array of Objects](#53-nested-structures-and-array-of-objects)
 
-6. [Combining Decorators for Complex Nodes](#6-combining-decorators-for-complex-nodes)  
-  6.1. [Creating Composite Nodes with Multiple Port Types](#61-creating-composite-nodes-with-multiple-port-types)  
-  6.2. [Inheriting and Overriding Port Configurations](#62-inheriting-and-overriding-port-configurations)  
-  6.3. [Leveraging Metadata and Type Inference for Nested Structures](#63-leveraging-metadata-and-type-inference-for-nested-structures)  
+6. [Combining Decorators for Complex Nodes](#6-combining-decorators-for-complex-nodes)
+  6.1. [Creating Composite Nodes with Multiple Port Types](#61-creating-composite-nodes-with-multiple-port-types)
+  6.2. [Inheriting and Overriding Port Configurations](#62-inheriting-and-overriding-port-configurations)
+  6.3. [Leveraging Metadata and Type Inference for Nested Structures](#63-leveraging-metadata-and-type-inference-for-nested-structures)
   6.4. [Example: A Full–Featured Node with Scalar, Object, Array, and Enum Ports](#64-example-a-fullfeatured-node-with-scalar-object-array-and-enum-ports)
 
 ---
@@ -72,13 +72,13 @@ The primary aim of using decorators for node definitions is to:
 ### 1.3 Benefits for Type–Safety and Readability
 
 Using decorators for node definitions in ChainGraph offers multiple benefits:
-- **Type–Safety:**  
+- **Type–Safety:**
   With strong TypeScript types and Zod schema validation, the system minimizes runtime errors. You get compile–time feedback when the node’s data or configuration does not match the expected format.
-- **Enhanced Readability:**  
+- **Enhanced Readability:**
   By directly annotating the class properties, the configuration is co–located with the business logic. This leads to cleaner code and easier maintenance.
-- **Modularity and Reusability:**  
+- **Modularity and Reusability:**
   Decorators allow you to create reusable components. Once decorated, a node becomes a self–contained entity that can be instantiated in multiple flows.
-- **Simplified Debugging:**  
+- **Simplified Debugging:**
   Metadata information (like versioning information and UI hints) embedded via decorators helps in debugging and understanding the node’s intended behavior.
 
 ---
@@ -98,7 +98,7 @@ A **node** is a single unit of functionality within a flow. Each node:
 Nodes are declared as TypeScript classes and decorated with the `@Node` decorator, which registers them within ChainGraph. For example:
 
 ```ts
-import { BaseNode, Node, Input, Output, String, Number } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Number, Output, String } from '@badaitech/chaingraph-types'
 
 @Node({
   title: 'Simple Calculator',
@@ -154,10 +154,10 @@ This declares an input port “greeting” that is a string with validation (min
 
 ChainGraph’s decorator library provides several decorators, each serving a specific purpose. Common decorators include:
 
-- **@Node(config)**  
+- **@Node(config)**
   Apply to a class to mark it as a node. The config specifies metadata such as title, description, category, tags, etc.
 
-- **@Input() and @Output()**  
+- **@Input() and @Output()**
   Indicate whether a class property is an input or an output port. These decorators help configure the port connection direction.
 
 - **Scalar Port Decorators**
@@ -190,10 +190,10 @@ The `@Node` decorator marks a class as a node within your flow. When you apply i
 
 #### Purpose and Basic Usage
 
-- **Purpose:**  
+- **Purpose:**
   The `@Node` decorator registers your class as a node type and attaches metadata such as title, description, category, tags, etc. This metadata becomes part of the runtime configuration and is used to render nodes visually.
 
-- **Basic Usage:**  
+- **Basic Usage:**
   To use the `@Node` decorator, simply import it from your node package and annotate your class. For example:
 
   ```ts
@@ -233,10 +233,10 @@ A basic node class is simply a TypeScript class decorated with `@Node` that exte
 
 #### Using Simple Decorators (`@Input` and `@Output`)
 
-- **`@Input`**  
+- **`@Input`**
   Annotate a property with `@Input` to denote that it is a port that receives data.
 
-- **`@Output`**  
+- **`@Output`**
   Annotate a property with `@Output` to indicate that it is a port that sends data out from the node.
 
 These decorators work together with type–specific decorators such as `@String`, `@Number`, or `@Boolean` to define what type of data is expected.
@@ -246,7 +246,7 @@ These decorators work together with type–specific decorators such as `@String`
 The following example demonstrates a basic scalar node that receives a string, a number, and a boolean input, then produces an output string.
 
 ```ts
-import { BaseNode, ExecutionContext, ExecutionEventEnum, ExecutionEventImpl, NodeExecutionResult, NodeExecutionStatus, Node, Input, Output, String, Number, Boolean } from '@badaitech/chaingraph-types'
+import { BaseNode, Boolean, ExecutionContext, ExecutionEventEnum, ExecutionEventImpl, Input, Node, NodeExecutionResult, NodeExecutionStatus, Number, Output, String } from '@badaitech/chaingraph-types'
 
 @Node({
   title: 'Scalar Node',
@@ -296,7 +296,7 @@ class ScalarNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Basic logic: repeat greeting by multiplier
     this.result = this.greeting.repeat(this.multiplier)
-    
+
     // Optionally log output if enabled
     if (this.enableLog) {
       console.log(`Node [${this.metadata.title}]: ${this.result}`)
@@ -323,17 +323,17 @@ Ports are defined by annotating class properties using decorators that bind thos
 
 The `@Port` decorator is the fundamental decorator for binding a class property to a port configuration. It accepts a configuration object that must include at least the `type` field. This configuration is then stored as metadata associated with that property and later used by the node initialization process.
 
-- **How it Binds a Property to a Port Configuration:**  
+- **How it Binds a Property to a Port Configuration:**
   When you add the `@Port` decorator to a property, it gathers configuration options—in fields such as `type`, `defaultValue`, `ui`, etc.—and registers these with a metadata storage (using Reflect metadata under the hood). Later, when `node.initialize()` is called, the port configuration is read and used to instantiate the appropriate port instance.
 
-- **Default Behaviors and Key Assignments:**  
+- **Default Behaviors and Key Assignments:**
   If you do not specify a unique key in the configuration, the decorator automatically assigns the property name as the key. It also auto–generates an identifier, if not provided, based on the property name or using a generated UUID. This ensures that each port is uniquely addressable within the node.
 
 ### 4.2. Scalar Port Decorators
 
 For simple (scalar) data types, ChainGraph provides dedicated decorators to simplify port declaration:
 
-- **`@String`:**  
+- **`@String`:**
   Declares a port for string values. The configuration can include validation rules like minimum and maximum length as well as a regular expression pattern. For example:
 
   ```ts
@@ -348,7 +348,7 @@ For simple (scalar) data types, ChainGraph provides dedicated decorators to simp
   message: string = 'Hello'
   ```
 
-- **`@Number`:**  
+- **`@Number`:**
   Declares a port that accepts numeric values. You can configure properties such as `min`, `max`, `step`, and whether the value must be an integer.
 
   ```ts
@@ -362,7 +362,7 @@ For simple (scalar) data types, ChainGraph provides dedicated decorators to simp
   quantity: number = 1
   ```
 
-- **`@Boolean`:**  
+- **`@Boolean`:**
   Declares a port for boolean values. This decorator can set a default boolean value and may include UI hints.
 
   ```ts
@@ -381,7 +381,7 @@ These decorators automatically set the port's type to the appropriate scalar typ
 
 For more advanced data types, such as arrays and objects, specialized decorators are provided.
 
-- **`@PortArray`:**  
+- **`@PortArray`:**
   Declares a port that holds an array. In addition to the standard configuration fields, it requires an `itemConfig` property that defines the configuration for each element in the array.
 
   ```ts
@@ -395,12 +395,12 @@ For more advanced data types, such as arrays and objects, specialized decorators
   stringList: string[] = ['item1', 'item2']
   ```
 
-- **`@PortObject`:**  
+- **`@PortObject`:**
   Declares an object port. For an object port you must provide a `schema` which describes the expected object structure. The schema can be defined explicitly or be inferred from a class decorated with `@ObjectSchema`.
 
   ```ts
   import { ObjectSchema, PortObject } from '@badaitech/chaingraph-types'
-  
+
   // Define an object schema class
   @ObjectSchema({
     description: 'User Profile Schema',
@@ -408,11 +408,11 @@ For more advanced data types, such as arrays and objects, specialized decorators
   class UserProfile {
     @String({ defaultValue: 'John Doe' })
     name: string = 'John Doe'
-  
+
     @Number({ defaultValue: 30, min: 1 })
     age: number = 30
   }
-  
+
   // Use the schema in a node property
   class UserNode extends BaseNode {
     @Input()
@@ -421,7 +421,7 @@ For more advanced data types, such as arrays and objects, specialized decorators
   }
   ```
 
-- **`@PortStream`:**  
+- **`@PortStream`:**
   Declares a stream port which represents a continuous data channel (wrapping a MultiChannel). It requires an `itemConfig` property to indicate the data type for the streamed items.
 
   ```ts
@@ -452,15 +452,15 @@ import {
   BaseNode,
   ExecutionContext,
   ExecutionEventEnum,
+  Input,
   Node,
   NodeExecutionStatus,
-  Input,
-  Output,
-  String,
   Number,
-  PortObject,
-  PortArray,
   ObjectSchema,
+  Output,
+  PortArray,
+  PortObject,
+  String,
 } from '@badaitech/chaingraph-types'
 
 // Define a user profile schema using an object schema decorator
@@ -473,7 +473,7 @@ class UserProfile {
 
   @Number({ defaultValue: 18, min: 18 })
   age: number = 18
-    
+
   constructor(name: string, age: number) {
     this.name = name
     this.age = age
@@ -536,8 +536,8 @@ Enum port decorators allow you to restrict a port’s allowed values to a predef
 
 #### @PortEnum, @StringEnum, and @NumberEnum
 
-- **@PortEnum:**  
-  Use this decorator when you want to manually specify the list of options. Each option is defined as an object containing an identifier (`id`), a default value, a title, and optionally, extra configuration.  
+- **@PortEnum:**
+  Use this decorator when you want to manually specify the list of options. Each option is defined as an object containing an identifier (`id`), a default value, a title, and optionally, extra configuration.
   *Example:*
   ```ts
   @Input()
@@ -554,8 +554,8 @@ Enum port decorators allow you to restrict a port’s allowed values to a predef
   model: string = 'gpt4'
   ```
 
-- **@StringEnum:**  
-  A helper decorator for enum ports when all options are strings. Simply pass an array of strings; the decorator will automatically build proper options.  
+- **@StringEnum:**
+  A helper decorator for enum ports when all options are strings. Simply pass an array of strings; the decorator will automatically build proper options.
   *Example:*
   ```ts
   @Input()
@@ -563,8 +563,8 @@ Enum port decorators allow you to restrict a port’s allowed values to a predef
   size: string = 'medium'
   ```
 
-- **@NumberEnum:**  
-  Similar to @StringEnum except using number options.  
+- **@NumberEnum:**
+  Similar to @StringEnum except using number options.
   *Example:*
   ```ts
   @Input()
@@ -577,7 +577,7 @@ Enum port decorators allow you to restrict a port’s allowed values to a predef
 Each enum port decorator accepts a configuration object where you can specify:
 - **options:** A list of allowed values.
 - **defaultValue:** The id of the default option (typically provided as a plain string).
-- **UI hints:** Optionally, provide custom UI styling (via the `ui` field).  
+- **UI hints:** Optionally, provide custom UI styling (via the `ui` field).
   This ensures that only valid, pre–configured values can be assigned to the port.
 
 #### Example: Enum Selection for a Node Property
@@ -585,7 +585,7 @@ Each enum port decorator accepts a configuration object where you can specify:
 Below is an example node using an enum port to select among different language models:
 
 ```ts
-import { BaseNode, ExecutionContext, Node, NodeExecutionStatus, Input, PortEnum } from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionContext, Input, Node, NodeExecutionStatus, PortEnum } from '@badaitech/chaingraph-types'
 
 @Node({
   title: 'LLM Selector',
@@ -627,7 +627,7 @@ The `@ObjectSchema` decorator marks a class as an object schema. All class prope
 *Example:*
 
 ```ts
-import { ObjectSchema, PortObject, String, Number } from '@badaitech/chaingraph-types'
+import { Number, ObjectSchema, PortObject, String } from '@badaitech/chaingraph-types'
 
 @ObjectSchema({
   description: 'User Profile Schema',
@@ -662,7 +662,7 @@ class UserNode extends BaseNode {
 Below is an example node that accepts a complex user profile object:
 
 ```ts
-import { BaseNode, ExecutionContext, ExecutionEventEnum, Node, NodeExecutionStatus, Input, Output, String, Number, PortObject, ObjectSchema } from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionContext, ExecutionEventEnum, Input, Node, NodeExecutionStatus, Number, ObjectSchema, Output, PortObject, String } from '@badaitech/chaingraph-types'
 
 // Define the user profile schema
 @ObjectSchema({
@@ -710,7 +710,7 @@ In many cases, you’ll need to work with data that is nested or even an array o
 
 #### Using `@PortArray` and `@PortArrayNested` Decorators
 
-- **@PortArray:**  
+- **@PortArray:**
   Use this decorator to declare a port whose value is an array. In addition to general properties, you must provide an `itemConfig` property which describes the configuration for each item in the array.
 
   *Example:*
@@ -725,10 +725,10 @@ In many cases, you’ll need to work with data that is nested or even an array o
   keywords: string[] = ['alpha', 'beta']
   ```
 
-- **@PortArrayNested:**  
+- **@PortArrayNested:**
   When you need arrays nested within arrays (for example, a 2D array or an array of arrays of objects), `@PortArrayNested` helps wrap your configuration recursively.
 
-  *Example:*  
+  *Example:*
   To define a 2D array of strings:
   ```ts
   @Input()
@@ -743,7 +743,7 @@ For arrays of objects, you can combine `@PortArray` with `@PortObject`. First, d
 *Example:*
 
 ```ts
-import { ObjectSchema, PortObject, PortArray, String, Number } from '@badaitech/chaingraph-types'
+import { Number, ObjectSchema, PortArray, PortObject, String } from '@badaitech/chaingraph-types'
 
 // Define an item schema for an array of products.
 @ObjectSchema({
@@ -782,11 +782,11 @@ class ProductListNode extends BaseNode {
 
 #### Examples and Edge–Cases
 
-- **Edge Case – Empty Array:**  
+- **Edge Case – Empty Array:**
   When an array port’s defaultValue is not provided, ensure that your logic handles an undefined or empty value properly.
-- **Edge Case – Nested Arrays:**  
+- **Edge Case – Nested Arrays:**
   When using `@PortArrayNested`, the itemConfig is wrapped multiple times. Make sure you supply all required configuration at the innermost level.
-- **Validation Across Nested Structures:**  
+- **Validation Across Nested Structures:**
   Each nested element is recursively validated against its configuration. If a nested value fails validation (e.g., a string too short), an error is generated indicating the position within the nested structure.
 
 ---
@@ -871,18 +871,18 @@ Below is a comprehensive example that combines multiple port decorators to creat
 ```ts
 import {
   BaseNode,
+  Boolean,
   ExecutionContext,
   ExecutionEventEnum,
   ExecutionEventImpl,
+  Input,
   Node,
   NodeExecutionStatus,
-  Input,
-  Output,
-  String,
   Number,
-  Boolean,
-  PortObject,
+  Output,
   PortArray,
+  PortObject,
+  String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
 
@@ -978,4 +978,3 @@ In this comprehensive example:
 - The output port is a simple string port which outputs a summary composed from all the inputs.
 
 Each decorator automatically manages the underlying metadata and runtime validation, ensuring that the node behaves as expected when executed.
-

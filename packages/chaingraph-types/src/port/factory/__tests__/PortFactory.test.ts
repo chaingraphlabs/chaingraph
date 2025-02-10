@@ -13,12 +13,9 @@ import type {
   NumberPortConfig,
   StringPortConfig,
 } from '../../base/types'
-import {
-  createObjectPortConfig,
-  createObjectSchema,
-} from '@badaitech/chaingraph-types/port/instances/ObjectPort'
 import { describe, expect, it } from 'vitest'
-import { PortFactory } from '../PortFactory'
+import { PortFactory } from '../'
+import { createObjectPortConfig, createObjectSchema } from '../../instances/ObjectPort'
 
 describe('portFactory', () => {
   describe('create (typed) method', () => {

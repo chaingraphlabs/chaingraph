@@ -6,10 +6,18 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './async-queue'
-export * from './deep-copy'
-export * from './event-queue'
-export * from './semaphore'
-export * from './serializable'
-export * from './timeout'
-export * from './versioned'
+export {
+  AsyncQueue,
+} from './async-queue'
+export {
+  deepCopy,
+} from './deep-copy'
+export {
+  createQueueIterator,
+  EventQueue,
+} from './event-queue'
+export { MultiChannel, MultiChannelSchema } from './multi-channel'
+export { Semaphore } from './semaphore'
+export {
+  withTimeout,
+} from './timeout'

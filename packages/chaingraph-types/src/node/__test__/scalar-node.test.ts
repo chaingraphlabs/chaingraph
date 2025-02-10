@@ -7,27 +7,26 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, NodeRegistry } from '@badaitech/chaingraph-types'
-import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
-
-import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
+import superjson from 'superjson'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   ArrayPortPlugin,
+  BaseNode,
   createBooleanValue,
   createNumberValue,
   createStringValue,
   EnumPortPlugin,
+  Input,
+  Node,
+  NodeExecutionStatus,
+  NodeRegistry,
   NumberPortPlugin,
   ObjectPortPlugin,
+  Port,
+  portRegistry,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
-import superjson from 'superjson'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { Input, Node } from '../decorator-new'
-import { Port } from '../decorator-new/port.decorator'
-import 'reflect-metadata'
+} from '../..'
 
 portRegistry.register(StringPortPlugin)
 portRegistry.register(NumberPortPlugin)
@@ -81,7 +80,14 @@ describe('scalar node serialization', () => {
   beforeAll(() => {
     // Register ports from the new system
     // registerAllPorts()
-    registerNodeTransformers()
+
+    // registerNodeTransformers(NodeRegistry.getInstance())
+    portRegistry.register(StringPortPlugin)
+    portRegistry.register(NumberPortPlugin)
+    portRegistry.register(ArrayPortPlugin)
+    portRegistry.register(ObjectPortPlugin)
+    portRegistry.register(EnumPortPlugin)
+    portRegistry.register(StreamPortPlugin)
   })
 
   afterAll(() => {

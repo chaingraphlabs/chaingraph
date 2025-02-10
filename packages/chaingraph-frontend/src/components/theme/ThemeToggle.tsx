@@ -8,7 +8,7 @@
 
 import { MoonIcon, SunIcon } from '@radix-ui/react-icons'
 import { motion } from 'framer-motion'
-import { useTheme } from './hooks/useTheme.ts'
+import { useTheme } from './hooks/useTheme'
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()

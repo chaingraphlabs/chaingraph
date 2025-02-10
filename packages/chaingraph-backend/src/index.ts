@@ -6,17 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  CategoryMetadata,
-} from '@badaitech/chaingraph-types'
+import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
 import {
+  AnyPortPlugin,
   NodeCatalog,
-  NodeRegistry,
   registerFlowTransformers,
   registerNodeTransformers,
 } from '@badaitech/chaingraph-types'
 
+import { NodeRegistry } from '@badaitech/chaingraph-types/decorator/registry'
 import {
   ArrayPortPlugin,
   EnumPortPlugin,
@@ -39,6 +38,7 @@ portRegistry.register(ArrayPortPlugin)
 portRegistry.register(ObjectPortPlugin)
 portRegistry.register(EnumPortPlugin)
 portRegistry.register(StreamPortPlugin)
+portRegistry.register(AnyPortPlugin)
 
 registerNodeTransformers(NodeRegistry.getInstance())
 registerFlowTransformers()

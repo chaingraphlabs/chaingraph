@@ -6,24 +6,18 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { DebuggerController } from '@badaitech/chaingraph-types/flow/debugger-types'
-import type {
-  ExecutionEventData,
-} from '@badaitech/chaingraph-types/flow/execution-events'
+import type { ExecutionContext } from '../execution/execution-context'
 import type { INode, NodeStatusChangeEvent } from '../node'
-import type { ExecutionContext } from './execution-context'
+import type { DebuggerController } from './debugger-types'
+import type { ExecutionEventData } from './execution-events'
 import type { Flow } from './flow'
-import { FlowDebugger } from '@badaitech/chaingraph-types/flow/debugger'
-import {
-  ExecutionEventEnum,
-  ExecutionEventImpl,
-} from '@badaitech/chaingraph-types/flow/execution-events'
-import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
-import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
-import { NodeEventType } from '../node'
+import { NodeEventType, NodeStatus } from '../node'
+import { EventQueue } from '../utils'
 import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'
 import { withTimeout } from '../utils/timeout'
+import { FlowDebugger } from './debugger'
+import { ExecutionEventEnum, ExecutionEventImpl } from './execution-events'
 
 const DEFAULT_MAX_CONCURRENCY = 10
 const DEFAULT_NODE_TIMEOUT_MS = 60000

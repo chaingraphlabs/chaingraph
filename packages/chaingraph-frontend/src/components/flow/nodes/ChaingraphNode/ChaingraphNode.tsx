@@ -6,22 +6,18 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode/types.ts'
+import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode/types'
 import type { NodeProps } from '@xyflow/react'
 import { NodeBody } from '@/components/flow/nodes/ChaingraphNode/NodeBody.tsx'
 import { NodeHeader } from '@/components/flow/nodes/ChaingraphNode/NodeHeader.tsx'
 import { BreakpointButton } from '@/components/flow/nodes/debug/BreakpointButton.tsx'
-import { useTheme } from '@/components/theme/hooks/useTheme.ts'
+import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card.tsx'
-import { cn } from '@/lib/utils.ts'
+import { cn } from '@/lib/utils'
 import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
-import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint.ts'
-import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution.ts'
-import {
-  $executionState,
-  addBreakpoint,
-  removeBreakpoint,
-} from '@badaitech/chaingraph-frontend/store/execution'
+import { $executionState, addBreakpoint, removeBreakpoint } from '@/store/execution'
+import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
+import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'

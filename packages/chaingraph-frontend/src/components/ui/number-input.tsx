@@ -1,5 +1,5 @@
 import type { NumericFormatProps } from 'react-number-format'
-import { cn } from '@badaitech/chaingraph-frontend/lib/utils'
+import { cn } from '@/lib/utils'
 import React from 'react'
 import { NumericFormat } from 'react-number-format'
 

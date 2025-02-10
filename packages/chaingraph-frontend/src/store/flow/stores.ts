@@ -16,7 +16,7 @@ import {
   setFlowsList,
   setFlowsLoading,
 } from '@/store'
-import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from '@/store/flow/effects.ts'
+import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from '@/store/flow/effects'
 import { combine, createStore } from 'effector'
 
 // Store for all flows list

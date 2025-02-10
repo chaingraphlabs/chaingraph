@@ -15,6 +15,7 @@ export const NODE_CATEGORIES = {
   DATA: 'data',
   FLOW: 'flow',
   UTILITIES: 'utilities',
+  BASIC_VALUES: 'basic-values',
   OTHER: 'other',
   GROUP: 'group',
 } as const
@@ -149,6 +150,27 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     },
     order: 5,
   },
+  [NODE_CATEGORIES.BASIC_VALUES]: {
+    id: NODE_CATEGORIES.BASIC_VALUES,
+    label: 'Basic Values',
+    description: 'Nodes that provide simple constant values like text, numbers, and booleans',
+    icon: 'Type',
+    style: {
+      light: {
+        primary: '#E0F2F1',
+        secondary: '#F1F9F9',
+        background: '#FFFFFF',
+        text: '#00796B',
+      },
+      dark: {
+        primary: '#1C3D3A',
+        secondary: '#102524',
+        background: '#1C1C1C',
+        text: '#80CBC4',
+      },
+    },
+    order: 6,
+  },
   [NODE_CATEGORIES.OTHER]: {
     id: 'other',
     label: 'Other',
@@ -168,7 +190,7 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
         text: '#BDBDBD',
       },
     },
-    order: 6,
+    order: 7,
   },
   [NODE_CATEGORIES.GROUP]: {
     id: NODE_CATEGORIES.GROUP,
@@ -189,7 +211,7 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
         text: '#BDBDBD',
       },
     },
-    order: 7,
+    order: 8,
   },
 }
 

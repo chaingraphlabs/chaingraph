@@ -6,10 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-// Config schemas with explicit re-exports to avoid ambiguity
 export * from './base-config.schema'
 export * from './BasePort'
 export * from './IPort'
-export * from './json'
 export * from './types'
-export * from './ui-config.schema'

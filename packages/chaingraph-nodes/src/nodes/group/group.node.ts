@@ -6,10 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeExecutionStatus, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -19,7 +16,7 @@ import { NODE_CATEGORIES } from '../../categories'
   category: NODE_CATEGORIES.GROUP,
   tags: ['group'],
 })
-export class GroupNode extends BaseNode {
+class GroupNode extends BaseNode {
   @Input()
   @String()
   a: string = ''
@@ -33,3 +30,5 @@ export class GroupNode extends BaseNode {
     }
   }
 }
+
+export default GroupNode

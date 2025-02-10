@@ -6,14 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionEventHandlerMap,
-} from '@badaitech/chaingraph-types/flow/execution-handlers.ts'
+import type { ExecutionEventHandlerMap } from '@badaitech/chaingraph-types'
 import { trpc } from '@/api/trpc/client'
-import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import {
-  createExecutionEventHandler,
-} from '@badaitech/chaingraph-types/flow/execution-handlers.ts'
+import { createExecutionEventHandler, ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'

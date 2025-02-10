@@ -7,7 +7,7 @@
  */
 
 import type { NodeMetadata, NodeStatus } from '@badaitech/chaingraph-types'
-import type { NodeUIMetadata, Position } from '@badaitech/chaingraph-types/node/node-ui.ts'
+import type { NodeUIMetadata, Position } from '@badaitech/chaingraph-types/node/node-ui'
 
 // State types
 export interface NodeState {

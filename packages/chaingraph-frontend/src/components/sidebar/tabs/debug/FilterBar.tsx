@@ -7,7 +7,7 @@
  */
 
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils.ts'
+import { cn } from '@/lib/utils'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 

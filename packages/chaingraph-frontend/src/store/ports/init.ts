@@ -1,15 +1,21 @@
 import type {
+  UpdatePortUIInput,
+} from '@badaitech/chaingraph-backend/procedures/flow/update-port-ui.ts'
+import type {
   UpdatePortValueInput,
-} from '@badaitech/chaingraph-backend/procedures/flow/update-port-value.ts'
+} from '@badaitech/chaingraph-backend/procedures/flow/update-port-value'
 import { setNodeVersion } from '@/store'
 import { $activeFlowId } from '@/store/flow/stores'
-import { NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants.ts'
-import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample.ts'
+import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants'
+import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample'
 import { $nodes } from '@/store/nodes/stores'
+import { baseUpdatePortUIFx, baseUpdatePortValueFx } from '@/store/ports/effects'
 import { combine, createEffect, sample } from 'effector'
-import { baseUpdatePortValueFx } from './effects'
-import { requestUpdatePortValue } from './events'
+import { requestUpdatePortUI, requestUpdatePortValue, updatePortUI } from './events'
 
+//
+// Update port value
+//
 export const preBaseUpdatePortValueFx = createEffect(async (params: UpdatePortValueInput) => {
   setNodeVersion({
     id: params.nodeId,
@@ -23,14 +29,6 @@ const throttledRequestUpdatePortValue = accumulateAndSample({
   getKey: update => update.id,
 })
 
-/*
-   Sample explanation:
-   - Clock: the event requestUpdatePortValue fires with { id, value }
-   - Source: combine data from $activeFlowId and $nodes
-   - fn: lookup the node that contains the port with the specified id.
-         Throw an error if no active flow is selected or no node is found.
-   - Target: baseUpdatePortValueFx is then called with the complete payload.
-*/
 sample({
   clock: throttledRequestUpdatePortValue,
   source: combine({
@@ -41,12 +39,8 @@ sample({
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
-    // Search for the node that contains the port with the given id.
-    // It is assumed that each node has a 'ports' property which is a Map or an object.
     const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
       return node.ports && node.ports.has(id)
-      // If node.ports is an object, you might instead use:
-      // return node.ports && Object.keys(node.ports).includes(id);
     })
     if (!nodeEntry) {
       throw new Error(`Node for port id '${id}' not found`)
@@ -63,5 +57,63 @@ sample({
   target: [
     preBaseUpdatePortValueFx,
     baseUpdatePortValueFx,
+  ],
+})
+
+//
+// Update port UI with throttling
+//
+export const preBaseUpdatePortUiFx = createEffect(async (params: UpdatePortUIInput) => {
+  setNodeVersion({
+    id: params.nodeId,
+    version: params.nodeVersion,
+  })
+})
+
+const throttledLocalRequestUpdatePortUi = accumulateAndSample({
+  source: [requestUpdatePortUI],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.id,
+})
+
+sample({
+  clock: throttledLocalRequestUpdatePortUi,
+  target: [updatePortUI],
+})
+
+const throttledRequestUpdatePortUi = accumulateAndSample({
+  source: [requestUpdatePortUI],
+  timeout: NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.id,
+})
+
+sample({
+  clock: throttledRequestUpdatePortUi,
+  source: combine({
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  }),
+  fn: ({ activeFlowId, nodes }, { id, ui }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
+      return node.ports && node.ports.has(id)
+    })
+    if (!nodeEntry) {
+      throw new Error(`Node for port id '${id}' not found`)
+    }
+    const [nodeId] = nodeEntry
+    return {
+      flowId: activeFlowId,
+      nodeId,
+      portId: id,
+      ui,
+      nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
+    }
+  },
+  target: [
+    preBaseUpdatePortUiFx,
+    baseUpdatePortUIFx,
   ],
 })

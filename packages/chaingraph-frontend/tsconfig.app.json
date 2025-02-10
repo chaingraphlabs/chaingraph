@@ -21,6 +21,7 @@
       "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
       "@badaitech/chaingraph-backend": ["../chaingraph-backend/src"],
       "@badaitech/chaingraph-backend/*": ["../chaingraph-backend/src/*"],
+      "@badaitech/chaingraph-frontend": ["./src"],
       "@badaitech/chaingraph-frontend/*": ["./src/*"],
       "@/*": ["./src/*"]
     },

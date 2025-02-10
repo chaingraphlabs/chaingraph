@@ -6,22 +6,22 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
+import type { JSONValue } from '../../utils/json'
 import type {
   EnumPortConfig,
   EnumPortValue,
   IPortConfig,
   IPortPlugin,
-} from '../base/types'
+} from '../base'
 import { z } from 'zod'
-import { basePortConfigSchema } from '../base/base-config.schema'
 import {
+  basePortConfigSchema,
+  enumPortConfigUISchema,
   isEnumPortValue,
   PortError,
   PortErrorType,
-} from '../base/types'
-import { enumPortConfigUISchema } from '../base/ui-config.schema'
-import { portRegistry } from '../registry/PortPluginRegistry'
+} from '../base'
+import { portRegistry } from '../registry'
 
 /**
  * Helper to create an enum port value

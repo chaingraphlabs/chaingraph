@@ -6,10 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Dimensions, Position } from '@badaitech/chaingraph-types/node/node-ui'
-import type { IPort } from '@badaitech/chaingraph-types/port'
 import type { EdgeMetadata } from '../edge'
-import type { INode } from '../node'
+import type { Dimensions, INode, Position } from '../node'
+import type { IPort } from '../port'
 import type { IFlow } from './interface'
 
 /**
