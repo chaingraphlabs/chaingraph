@@ -19,6 +19,7 @@ import {
   NodeRegistry,
   Number,
   Output,
+  PortPluginRegistry,
   String,
 } from '@badaitech/chaingraph-types'
 
@@ -34,16 +35,15 @@ import {
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 // Simple test nodes
 @Node({

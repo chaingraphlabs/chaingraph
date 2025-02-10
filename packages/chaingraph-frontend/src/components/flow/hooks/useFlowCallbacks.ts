@@ -100,7 +100,12 @@ export function useFlowCallbacks() {
             = node.metadata.ui?.dimensions?.width === change.dimensions.width
             && node.metadata.ui?.dimensions?.height === change.dimensions.height
 
-          if (isSameDimensions) {
+          const isNodeDimensionInitialized
+              = node.metadata.ui?.dimensions !== undefined
+              && node.metadata.ui?.dimensions?.width !== undefined
+              && node.metadata.ui?.dimensions?.height !== undefined
+
+          if (isSameDimensions || !isNodeDimensionInitialized) {
             return
           }
 

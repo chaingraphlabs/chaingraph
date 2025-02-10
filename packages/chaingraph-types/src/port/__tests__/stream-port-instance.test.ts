@@ -11,16 +11,16 @@ import { describe, expect, it } from 'vitest'
 import { MultiChannel } from '../../utils/multi-channel'
 
 import { createObjectPortConfig, createObjectSchema } from '../instances'
+import { PortPluginRegistry } from '../plugins'
 import { AnyPortPlugin } from '../plugins/AnyPortPlugin'
 import { ArrayPortPlugin } from '../plugins/ArrayPortPlugin'
 import { createObjectValue, ObjectPortPlugin } from '../plugins/ObjectPortPlugin'
 import { createStreamValue, StreamPortPlugin } from '../plugins/StreamPortPlugin'
-import { portRegistry } from '../registry'
 
-portRegistry.register(StreamPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(AnyPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(AnyPortPlugin)
 
 describe('streamPort Instance (plain value storage)', () => {
   // Helper to drain values via async iteration.

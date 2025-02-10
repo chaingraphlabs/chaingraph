@@ -17,8 +17,9 @@ import type {
   ObjectPortValue,
   ObjectPortValueFromSchema,
   PortType,
-} from '@badaitech/chaingraph-types/port'
-import type { JSONObject, JSONValue } from '@badaitech/chaingraph-types/utils/json'
+} from '..'
+import type { JSONObject, JSONValue } from '../../utils/json'
+import { z } from 'zod'
 import {
   basePortConfigSchema,
   isArrayPortValue,
@@ -27,11 +28,10 @@ import {
   objectPortConfigUISchema,
   PortError,
   PortErrorType,
-  portRegistry,
+  PortPluginRegistry,
   validateNumberValue,
   validateStringValue,
-} from '@badaitech/chaingraph-types/port'
-import { z } from 'zod'
+} from '..'
 
 /**
  * Helper to create an object port value.
@@ -61,7 +61,7 @@ export function createObjectConfig(
  */
 function isValidFieldValue(value: unknown): value is IPortValue {
   try {
-    portRegistry.validateValue(value)
+    PortPluginRegistry.getInstance().validateValue(value)
     return true
   } catch {
     return false
@@ -86,7 +86,7 @@ function validateField(
   //   return errors
   // }
 
-  const plugin = portRegistry.getPlugin(fieldConfig.type)
+  const plugin = PortPluginRegistry.getInstance().getPlugin(fieldConfig.type)
   if (!plugin) {
     errors.push(`Unknown field type: ${fieldConfig.type} for field ${fieldPath}`)
     return errors
@@ -240,7 +240,7 @@ const objectSpecificSchema = z.object({
       ) {
         return false
       }
-      const plugin = portRegistry.getPlugin((val as { type: string }).type as PortType)
+      const plugin = PortPluginRegistry.getInstance().getPlugin((val as { type: string }).type as PortType)
       if (!plugin) {
         return false
       }
@@ -286,7 +286,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
           continue
         }
         // Retrieve the plugin using the field configuration's type.
-        const plugin = portRegistry.getPlugin(fieldConfig.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(fieldConfig.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -310,10 +310,12 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
     try {
       // Expecting an object with a "value" property that contains the serialized fields.
       if (typeof data !== 'object' || data === null) {
-        throw new PortError(
-          PortErrorType.SerializationError,
-          'Invalid object value structure for deserialization',
-        )
+        if (config.required) {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            'Invalid object value structure for deserialization',
+          )
+        }
       }
 
       const serializedFields = data as Record<string, JSONValue>
@@ -327,7 +329,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
           // For now, we simply continue to the next field.
           continue
         }
-        const plugin = portRegistry.getPlugin(fieldConfig.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(fieldConfig.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -352,7 +354,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       // Serialize each field's config using its corresponding plugin.
       const serializedFields: Record<string, JSONValue> = {}
       for (const [key, fieldConfig] of Object.entries(config.schema.properties)) {
-        const plugin = portRegistry.getPlugin(fieldConfig.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(fieldConfig.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -400,7 +402,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       // iterating over the schema.properties.
       const deserializedFields: Record<string, IPortConfig> = {}
       for (const [key, fieldConfig] of Object.entries(result.data.schema.properties)) {
-        const plugin = portRegistry.getPlugin(fieldConfig.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(fieldConfig.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -448,7 +450,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
 
     // Validate each field's configuration by delegating to the plugin's own config validation (if available).
     for (const [fieldName, fieldConfig] of Object.entries(config.schema.properties)) {
-      const plugin = portRegistry.getPlugin(fieldConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(fieldConfig.type)
       if (plugin && plugin.validateConfig) {
         const fieldErrors = plugin.validateConfig(fieldConfig)
         if (fieldErrors.length > 0) {

@@ -46,7 +46,7 @@ export const NodeMetadataSchema = z.lazy(() => z.object({
   author: z.string().optional(),
   parentNodeId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-  // portsConfig: z.record(z.string(), portRegistry.getConfigUnionSchema()).optional(),
+  // portsConfig: z.record(z.string(), PortPluginRegistry.getInstance().getConfigUnionSchema()).optional(),
   portsConfig: z.record(z.string(), z.any()).optional(),
   ui: NodeUIMetadataSchema.optional(),
   version: z.number().optional(),
@@ -90,8 +90,8 @@ export const SerializedNodeSchema = z.lazy(() => z.object({
   metadata: NodeMetadataSchema,
   status: z.nativeEnum(NodeStatus),
   // ports: z.record(z.string(), z.object({
-  //   config: portRegistry.getConfigUnionSchema(),
-  //   value: portRegistry.getValueUnionSchema(),
+  //   config: PortPluginRegistry.getInstance().getConfigUnionSchema(),
+  //   value: PortPluginRegistry.getInstance().getValueUnionSchema(),
   // })).optional(),
 
   ports_values: z.record(z.string(), z.any()).optional(),

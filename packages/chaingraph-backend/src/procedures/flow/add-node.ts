@@ -42,7 +42,8 @@ export const addNode = publicProcedure
 
     // Create node instance
     const nodeId = uuidv7()
-    const node = ctx.nodeRegistry.createNode(nodeType, `${nodeType}:${nodeId}`)
+    const newNode = ctx.nodeRegistry.createNode(nodeType, `${nodeType}:${nodeId}`)
+    const node = newNode.clone()
 
     // Initialize node
     node.initialize()
@@ -57,7 +58,7 @@ export const addNode = publicProcedure
     }
 
     // Set position
-    node.setPosition(position)
+    node.setPosition(position, true)
 
     // Add node to flow
     return await ctx.flowStore.addNode(flowId, node)

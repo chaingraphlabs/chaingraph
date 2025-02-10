@@ -29,7 +29,7 @@ describe('portFactory', () => {
           borderColor: '#460707',
         },
       }
-      const port = PortFactory.create(config)
+      const port = PortFactory.createFromConfig(config)
 
       expect(port.getConfig()).toEqual(config)
       // Optionally, if the port automatically picks the default value
@@ -47,7 +47,7 @@ describe('portFactory', () => {
           borderColor: '#0c2454',
         },
       }
-      const port = PortFactory.create(config)
+      const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual(5)
     })
@@ -61,7 +61,7 @@ describe('portFactory', () => {
           borderColor: '#1e4b18',
         },
       }
-      const port = PortFactory.create(config)
+      const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual(true)
     })
@@ -85,7 +85,7 @@ describe('portFactory', () => {
           borderColor: '#1e4b18',
         },
       }
-      const port = PortFactory.create(config)
+      const port = PortFactory.createFromConfig(config)
 
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual(['item1'])
@@ -181,7 +181,7 @@ describe('portFactory', () => {
           borderColor: '#460707',
         },
       }
-      const port = PortFactory.createStringPort(config)
+      const port = PortFactory.createFromConfig(config)
 
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual('test')
@@ -198,7 +198,7 @@ describe('portFactory', () => {
           borderColor: '#0c2454',
         },
       }
-      const port = PortFactory.createNumberPort(config)
+      const port = PortFactory.createFromConfig(config)
       expect(port.getConfig()).toEqual(config)
       expect(port.getValue()).toEqual(25)
     })

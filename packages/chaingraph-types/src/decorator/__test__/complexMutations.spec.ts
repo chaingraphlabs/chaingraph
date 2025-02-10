@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { PortPluginRegistry } from '@badaitech/chaingraph-types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { BaseNode } from '../../node/base-node'
 import { findPort } from '../../node/traverse-ports'
@@ -18,17 +19,16 @@ import {
   StringPortPlugin,
 } from '../../port/plugins'
 import { AnyPortPlugin } from '../../port/plugins/AnyPortPlugin'
-import { portRegistry } from '../../port/registry'
 import { ObjectSchema } from '../index'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'
 import 'reflect-metadata'
 
 // Register basic port plugins for testing mutations
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
 
 /**
  * In this test we want to verify complex mutation scenarios.
@@ -104,13 +104,13 @@ class TestNode extends BaseNode {
 
 describe('advanced Field Mutations Tests', () => {
   beforeEach(() => {
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(AnyPortPlugin)
-    portRegistry.register(StreamPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(EnumPortPlugin)
+    PortPluginRegistry.getInstance().register(StringPortPlugin)
+    PortPluginRegistry.getInstance().register(NumberPortPlugin)
+    PortPluginRegistry.getInstance().register(AnyPortPlugin)
+    PortPluginRegistry.getInstance().register(StreamPortPlugin)
+    PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+    PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+    PortPluginRegistry.getInstance().register(EnumPortPlugin)
 
     // Initialize both parent node and the child component.
   })

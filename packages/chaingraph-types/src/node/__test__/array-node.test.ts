@@ -6,7 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import {
   ArrayPortPlugin,
   BaseNode,
@@ -19,7 +22,7 @@ import {
   NumberPortPlugin,
   ObjectPortPlugin,
   Port,
-  portRegistry,
+  PortPluginRegistry,
   registerNodeTransformers,
   StreamPortPlugin,
   StringPortPlugin,
@@ -28,12 +31,12 @@ import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
   title: 'Array Node',

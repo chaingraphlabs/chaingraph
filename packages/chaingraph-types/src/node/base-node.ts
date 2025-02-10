@@ -13,13 +13,12 @@ import type { Dimensions, NodeUIMetadata, NodeUIStyle, Position } from '../node/
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
 import type { IPort, IPortConfig } from '../port'
 import type { JSONValue } from '../utils/json'
-import { portRegistry } from '..'
 import { getOrCreateNodeMetadata } from '../decorator'
 import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
 import { PortConfigProcessor } from '../node/port-config-processor'
 import { SerializedNodeSchema } from '../node/types.zod'
-import { PortDirection, PortFactory } from '../port'
+import { PortDirection, PortFactory, PortPluginRegistry } from '../port'
 import { deepCopy, EventQueue } from '../utils'
 import 'reflect-metadata'
 
@@ -69,7 +68,7 @@ export abstract class BaseNode implements INode {
 
   initialize(): void {
     // Process PortConfigs using PortConfigProcessor
-    (new PortConfigProcessor()).processNodePorts(this)
+    this._metadata = (new PortConfigProcessor()).processNodePorts(this)
     this.initializePorts()
     this.setStatus(NodeStatus.Initialized, false)
   }
@@ -510,7 +509,7 @@ export abstract class BaseNode implements INode {
     const serializedPortsConfig: Record<string, JSONValue> = {}
     if (this._metadata.portsConfig) {
       for (const [key, config] of this._metadata.portsConfig.entries()) {
-        const plugin = portRegistry.getPlugin(config.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(config.type)
         serializedPortsConfig[key.toString()] = plugin
           ? plugin.serializeConfig(config)
           : config
@@ -518,15 +517,11 @@ export abstract class BaseNode implements INode {
     }
 
     // Serialize ports values only.
-    const serializedPortsValues: Record<string, JSONValue> = {}
+    // const serializedPortsValues: Record<string, JSONValue> = {}
+    const serializedPorts: Record<string, JSONValue> = {}
     for (const [portId, port] of this._ports.entries()) {
       const serializedPort = port.serialize()
-      // If the serialized port appears to include a "value" property, extract it.
-      if (typeof serializedPort === 'object' && serializedPort && 'value' in serializedPort) {
-        serializedPortsValues[portId] = (serializedPort as any).value
-      } else {
-        serializedPortsValues[portId] = serializedPort
-      }
+      serializedPorts[portId] = serializedPort
     }
 
     return {
@@ -536,7 +531,7 @@ export abstract class BaseNode implements INode {
         portsConfig: serializedPortsConfig,
       },
       status: this._status,
-      ports_values: serializedPortsValues,
+      ports: serializedPorts,
     }
   }
 
@@ -559,14 +554,13 @@ export abstract class BaseNode implements INode {
       for (const key in metadataFromData.portsConfig) {
         const configData = metadataFromData.portsConfig[key]
         if (configData && typeof configData === 'object' && 'type' in configData) {
-          const plugin = portRegistry.getPlugin(configData.type)
+          const plugin = PortPluginRegistry.getInstance().getPlugin(configData.type)
 
           if (!plugin) {
             throw new Error(`No plugin found for port type "${configData.type}"`)
           }
 
           const deserializedConfig = plugin.deserializeConfig(configData)
-
           deserializedPortsConfig.set(key, deserializedConfig)
         }
       }
@@ -580,33 +574,29 @@ export abstract class BaseNode implements INode {
     // Clear current ports map.
     this._ports.clear()
 
-    // Initialize the node and ports from config.
-    this.initialize()
-
     // We now use the "ports_values" field (instead of "ports") from the serialized object.
-    const portsValues = obj.ports_values || {} as Record<string, JSONValue>
+    const ports = obj.ports as Record<string, any>
 
     // For each key in ports_values we recreate the port.
-    for (const portId in portsValues) {
-      const portValue = portsValues[portId]
-      if (portValue === undefined) {
+    for (const portId in ports) {
+      const serializedPort = ports[portId]
+      if (serializedPort === undefined || serializedPort === null || !('config' in serializedPort)) {
         continue
       }
 
-      const port = this.getPort(portId)
-      if (!port) {
-        console.warn(`Port with ID ${portId} not found in node ${this.id}.`)
-        continue
-      }
+      const newPort = PortFactory.create(serializedPort.config)
+      newPort.deserialize(serializedPort)
 
-      const plugin = portRegistry.getPlugin(port.getConfig().type)
-      if (plugin) {
-        const deserializedValue = plugin.deserializeValue(portValue, port.getConfig())
-        port.setValue(deserializedValue)
-      } else {
-        port.setValue(portValue)
+      const portConfig = newPort.getConfig()
+
+      // check if the node has a field with the same key as the port then set the port value to the node field
+      if (portConfig.key && Object.prototype.hasOwnProperty.call(this, portConfig.key)) {
+        (this as any)[portConfig.key] = newPort.getValue()
       }
     }
+
+    // this.initialize()
+    this.initializePorts()
 
     return this
   }

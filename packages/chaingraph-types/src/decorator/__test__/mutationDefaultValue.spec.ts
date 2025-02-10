@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { PortPluginRegistry } from '@badaitech/chaingraph-types'
 import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
 import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
 import {
@@ -16,10 +17,7 @@ import {
   StreamPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins'
 import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
-import {
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins/StringPortPlugin'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
+import { StringPortPlugin } from '@badaitech/chaingraph-types/port/plugins/StringPortPlugin'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'
@@ -58,13 +56,13 @@ class DummyNode extends BaseNode {
 
 describe('port mutation Test', () => {
   beforeAll(() => {
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(AnyPortPlugin)
-    portRegistry.register(StreamPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(EnumPortPlugin)
+    PortPluginRegistry.getInstance().register(StringPortPlugin)
+    PortPluginRegistry.getInstance().register(NumberPortPlugin)
+    PortPluginRegistry.getInstance().register(AnyPortPlugin)
+    PortPluginRegistry.getInstance().register(StreamPortPlugin)
+    PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+    PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+    PortPluginRegistry.getInstance().register(EnumPortPlugin)
   })
 
   it('should keep original default value due mutation current one', () => {

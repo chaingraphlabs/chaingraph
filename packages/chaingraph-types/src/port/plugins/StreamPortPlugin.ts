@@ -13,22 +13,16 @@ import type {
   StreamPortConfig,
   StreamPortValue,
 } from '@badaitech/chaingraph-types/port'
-import type {
-  JSONObject,
-  JSONValue,
-} from '@badaitech/chaingraph-types/utils/json'
+import type { JSONObject, JSONValue } from '@badaitech/chaingraph-types/utils/json'
 import {
   basePortConfigSchema,
   isStreamPortValue,
   PortError,
   PortErrorType,
-  portRegistry,
+  PortPluginRegistry,
   streamPortConfigUISchema,
 } from '@badaitech/chaingraph-types/port'
-import {
-  MultiChannel,
-  MultiChannelSchema,
-} from '@badaitech/chaingraph-types/utils'
+import { MultiChannel, MultiChannelSchema } from '@badaitech/chaingraph-types/utils'
 import { z } from 'zod'
 
 /**
@@ -101,7 +95,7 @@ const streamSpecificSchema = z.object({
       return false
     }
 
-    const plugin = portRegistry.getPlugin(val.type)
+    const plugin = PortPluginRegistry.getInstance().getPlugin(val.type)
     return plugin !== undefined
   }, {
     message: 'Invalid item config type',
@@ -130,7 +124,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         )
       }
 
-      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -180,7 +174,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
         )
       }
 
-      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -217,7 +211,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
    */
   serializeConfig: (config: StreamPortConfig): JSONValue => {
     try {
-      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -261,7 +255,7 @@ export const StreamPortPlugin: IPortPlugin<'stream'> = {
 
       const parsedData = result.data as any
 
-      const plugin = portRegistry.getPlugin(parsedData.itemConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(parsedData.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,

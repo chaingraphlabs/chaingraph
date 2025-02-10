@@ -6,7 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import {
+  PortPluginRegistry,
+} from '@badaitech/chaingraph-types'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
@@ -23,17 +29,16 @@ import {
   NumberPortPlugin,
   ObjectPortPlugin,
   Port,
-  portRegistry,
   StreamPortPlugin,
   StringPortPlugin,
 } from '../..'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
   title: 'Scalar Node',
@@ -82,12 +87,12 @@ describe('scalar node serialization', () => {
     // registerAllPorts()
 
     // registerNodeTransformers(NodeRegistry.getInstance())
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(EnumPortPlugin)
-    portRegistry.register(StreamPortPlugin)
+    PortPluginRegistry.getInstance().register(StringPortPlugin)
+    PortPluginRegistry.getInstance().register(NumberPortPlugin)
+    PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+    PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+    PortPluginRegistry.getInstance().register(EnumPortPlugin)
+    PortPluginRegistry.getInstance().register(StreamPortPlugin)
   })
 
   afterAll(() => {

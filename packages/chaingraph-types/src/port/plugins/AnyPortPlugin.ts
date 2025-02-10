@@ -21,7 +21,7 @@ import {
   isAnyPortValue,
   PortError,
   PortErrorType,
-  portRegistry,
+  PortPluginRegistry,
 } from '@badaitech/chaingraph-types/port'
 import { z } from 'zod'
 
@@ -50,7 +50,7 @@ export function createAnyConfig(
  * Any port value schema
  */
 const valueSchema = z.custom<IPortValue>((val) => {
-  const result = portRegistry.getValueUnionSchema().safeParse(val)
+  const result = PortPluginRegistry.getInstance().getValueUnionSchema().safeParse(val)
   return result.success
 }, { message: 'Invalid AnyPort value' }).optional()
 
@@ -68,7 +68,7 @@ const anySpecificSchema = z.object({
     ) {
       return false
     }
-    const plugin = portRegistry.getPlugin((val as any).type as PortType)
+    const plugin = PortPluginRegistry.getInstance().getPlugin((val as any).type as PortType)
     if (!plugin) {
       return false
     }
@@ -99,7 +99,7 @@ export function validateAnyValue(
 
   if (config.underlyingType !== undefined && config.underlyingType !== null) {
     // Get the plugin for the underlying type
-    const plugin = portRegistry.getPlugin(config.underlyingType.type)
+    const plugin = PortPluginRegistry.getInstance().getPlugin(config.underlyingType.type)
     if (!plugin) {
       errors.push(`Unknown underlying type: ${config.underlyingType.type}`)
       return errors
@@ -141,7 +141,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       }
 
       // Get the plugin for the inner value's type
-      const plugin = portRegistry.getPlugin(config.underlyingType.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.underlyingType.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -167,7 +167,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       }
 
       // Get the plugin for the inner value's type
-      const plugin = portRegistry.getPlugin(config.underlyingType.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.underlyingType.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -191,7 +191,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
 
       if (config.underlyingType !== undefined && config.underlyingType !== null) {
         // Get the plugin for the underlying type
-        const plugin = portRegistry.getPlugin(config.underlyingType.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(config.underlyingType.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -205,7 +205,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
 
       if (config.defaultValue !== undefined && config.underlyingType !== null && config.underlyingType !== undefined) {
         // Get the plugin for the default value's type
-        const plugin = portRegistry.getPlugin(config.underlyingType.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(config.underlyingType.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -247,7 +247,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         && 'type' in result.data.underlyingType
       ) {
         // Get the plugin for the underlying type
-        const plugin = portRegistry.getPlugin(result.data.underlyingType.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(result.data.underlyingType.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -287,7 +287,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
 
     if (config.underlyingType !== undefined && config.underlyingType !== null) {
       // Get the plugin for the underlying type
-      const plugin = portRegistry.getPlugin(config.underlyingType.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.underlyingType.type)
       if (!plugin) {
         errors.push(`Unknown underlying type: ${config.underlyingType.type}`)
         return errors

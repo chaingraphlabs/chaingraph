@@ -77,10 +77,19 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     }
     const obj = data as { config: JSONValue, value?: JSONValue }
     const config = this.deserializeConfig(obj.config)
-    const value = this.deserializeValue(obj.value)
-
     this.setConfig(config)
-    this.setValue(value)
+
+    if (obj.value === undefined) {
+      if (config.required) {
+        throw new PortError(
+          PortErrorType.SerializationError,
+          'Invalid serialized data: missing required value.',
+        )
+      }
+    } else {
+      const value = this.deserializeValue(obj.value)
+      this.setValue(value)
+    }
 
     return this
   }

@@ -70,6 +70,7 @@ export class PortFactory {
         'Invalid port configuration: expected an object',
       )
     }
+
     switch (config.type) {
       case 'string': {
         return new StringPort(config as StringPortConfig) as PortInstanceFromConfig<T>

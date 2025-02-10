@@ -7,12 +7,8 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type {
-  EnumPortConfig,
-  EnumPortValue,
-  IPortConfig,
-  IPortPlugin,
-} from '../base'
+import type { EnumPortConfig, EnumPortValue, IPortConfig, IPortPlugin } from '../base'
+import { PortPluginRegistry } from '@badaitech/chaingraph-types/port'
 import { z } from 'zod'
 import {
   basePortConfigSchema,
@@ -21,7 +17,6 @@ import {
   PortError,
   PortErrorType,
 } from '../base'
-import { portRegistry } from '../registry'
 
 /**
  * Helper to create an enum port value
@@ -61,7 +56,7 @@ const enumSpecificSchema = z.object({
       return false
     }
     // Validate each option using its corresponding plugin
-    const plugin = portRegistry.getPlugin((val as any).type)
+    const plugin = PortPluginRegistry.getInstance().getPlugin((val as any).type)
     if (!plugin) {
       return false
     }
@@ -147,7 +142,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
     try {
       // Serialize each option using its corresponding plugin
       const serializedOptions = config.options.map((option) => {
-        const plugin = portRegistry.getPlugin(option.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(option.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -181,7 +176,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
 
       // Deserialize each option using its corresponding plugin
       const deserializedOptions = result.data.options.map((option) => {
-        const plugin = portRegistry.getPlugin(option.type)
+        const plugin = PortPluginRegistry.getInstance().getPlugin(option.type)
         if (!plugin) {
           throw new PortError(
             PortErrorType.SerializationError,
@@ -216,7 +211,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
 
     // Validate each option using its corresponding plugin
     config.options.forEach((option, index) => {
-      const plugin = portRegistry.getPlugin(option.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(option.type)
       if (!plugin) {
         errors.push(`Invalid option type at index ${index}: ${option.type}`)
         return

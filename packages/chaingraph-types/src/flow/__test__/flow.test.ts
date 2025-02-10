@@ -6,17 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
+import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
 import type { IPort } from '@badaitech/chaingraph-types/port/base'
-import {
-  BaseNode,
-  ExecutionContext,
-  ExecutionEngine,
-  ExecutionEventEnum,
-  Flow,
-} from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionContext, ExecutionEngine, ExecutionEventEnum, Flow, PortPluginRegistry } from '@badaitech/chaingraph-types'
 import { createExecutionEventHandler } from '@badaitech/chaingraph-types/flow/execution-handlers'
 import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
 import { PortDirection } from '@badaitech/chaingraph-types/port/base'
@@ -29,16 +21,15 @@ import {
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 class AddNode extends BaseNode {
   inputA: NumberPort

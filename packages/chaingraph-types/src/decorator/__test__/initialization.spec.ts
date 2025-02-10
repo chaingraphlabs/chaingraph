@@ -12,6 +12,7 @@ import {
   Input,
   type NodeExecutionResult,
   Output,
+  PortPluginRegistry,
   String,
 } from '@badaitech/chaingraph-types'
 import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
@@ -28,7 +29,6 @@ import {
   createStringValue,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins/StringPortPlugin'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'
@@ -106,13 +106,13 @@ class DummyNode extends BaseNode {
 
 describe('port Initialization Test', () => {
   beforeAll(() => {
-    portRegistry.register(StringPortPlugin)
-    portRegistry.register(NumberPortPlugin)
-    portRegistry.register(AnyPortPlugin)
-    portRegistry.register(StreamPortPlugin)
-    portRegistry.register(ArrayPortPlugin)
-    portRegistry.register(ObjectPortPlugin)
-    portRegistry.register(EnumPortPlugin)
+    PortPluginRegistry.getInstance().register(StringPortPlugin)
+    PortPluginRegistry.getInstance().register(NumberPortPlugin)
+    PortPluginRegistry.getInstance().register(AnyPortPlugin)
+    PortPluginRegistry.getInstance().register(StreamPortPlugin)
+    PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+    PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+    PortPluginRegistry.getInstance().register(EnumPortPlugin)
   })
 
   it('should initialize ports on node initialization', () => {
