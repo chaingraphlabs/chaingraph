@@ -7,11 +7,10 @@
  */
 
 import type { PropsWithChildren } from 'react'
-import { DndContextProvider } from '@/components/dnd'
+import { TrpcProvider } from '@/api/trpc/provider.tsx'
+import { DndContextProvider, DndProvider } from '@/components/dnd'
+import { ThemeProvider } from '@/components/theme/ThemeProvider.tsx'
 import { ZoomProvider } from '@/providers/ZoomProvider'
-import { TrpcProvider } from '@badaitech/chaingraph-frontend/api/trpc/provider.tsx'
-import { DndProvider } from '@badaitech/chaingraph-frontend/components/dnd/DndProvider.tsx'
-import { ThemeProvider } from '@badaitech/chaingraph-frontend/components/theme/ThemeProvider.tsx'
 import { ReactFlowProvider } from '@xyflow/react'
 import { MenuPositionProvider } from 'src/components/flow/components/context-menu'
 

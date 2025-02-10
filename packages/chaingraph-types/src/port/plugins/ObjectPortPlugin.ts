@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONObject, JSONValue } from '../base/json'
 import type {
   ArrayPortConfig,
   ArrayPortValue,
@@ -18,20 +17,21 @@ import type {
   ObjectPortValue,
   ObjectPortValueFromSchema,
   PortType,
-} from '../base/types'
-import { z } from 'zod'
-import { basePortConfigSchema } from '../base/base-config.schema'
+} from '@badaitech/chaingraph-types/port'
+import type { JSONObject, JSONValue } from '@badaitech/chaingraph-types/utils/json'
 import {
+  basePortConfigSchema,
   isArrayPortValue,
   isObjectPortValue,
   isStringPortValue,
+  objectPortConfigUISchema,
   PortError,
   PortErrorType,
-} from '../base/types'
-import { objectPortConfigUISchema } from '../base/ui-config.schema'
-import { portRegistry } from '../registry/PortPluginRegistry'
-import { validateNumberValue } from './NumberPortPlugin'
-import { validateStringValue } from './StringPortPlugin'
+  portRegistry,
+  validateNumberValue,
+  validateStringValue,
+} from '@badaitech/chaingraph-types/port'
+import { z } from 'zod'
 
 /**
  * Helper to create an object port value.

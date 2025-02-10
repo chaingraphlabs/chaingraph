@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from './json'
-import type { ExtractValue, IPortConfig } from './types'
+import type { ExtractValue, IPortConfig } from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
 
 /**
  * IPort interface

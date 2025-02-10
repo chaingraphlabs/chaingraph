@@ -6,7 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge, IFlow, INode, NodeStatus } from '@badaitech/chaingraph-types'
+import type { IEdge } from '../edge'
+import type { INode, NodeStatus } from '../node'
+import type { IFlow } from './interface'
 
 export enum ExecutionEventEnum {
   // Flow events

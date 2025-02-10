@@ -11,7 +11,19 @@ import type {
   NodeExecutionResult,
   NodeMetadata,
 } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, FlowEventType, Id, Input, Node, NodeCatalog, NodeExecutionStatus, NodeRegistry, Number, Output, String,
+import {
+  BaseNode,
+  Boolean,
+  FlowEventType,
+  Id,
+  Input,
+  Node,
+  NodeCatalog,
+  NodeExecutionStatus,
+  NodeRegistry,
+  Number,
+  Output,
+  String,
 } from '@badaitech/chaingraph-types'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createCaller } from '../../../router'
@@ -99,7 +111,7 @@ describe('flow Event Subscription', () => {
 
     // Create subscription to flow events
     const eventsGenerator = await caller.flow.subscribeToEvents({
-      flowId: flow.id,
+      flowId: flow.id!,
       eventTypes: [], // just any event
     })
 
@@ -114,13 +126,13 @@ describe('flow Event Subscription', () => {
 
     // Add two nodes to trigger events
     await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 0, y: 0 },
     })
 
     await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 100, y: 100 },
     })
@@ -190,7 +202,7 @@ describe('flow Event Subscription', () => {
     const receivedEvents: any[] = []
 
     const eventsGenerator = await caller.flow.subscribeToEvents({
-      flowId: flow.id,
+      flowId: flow.id!,
       eventTypes: [
         FlowEventType.NodeAdded,
         FlowEventType.NodeRemoved,
@@ -222,7 +234,7 @@ describe('flow Event Subscription', () => {
 
     // Add first node and wait for event
     const node1 = await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 0, y: 0 },
     })
@@ -230,7 +242,7 @@ describe('flow Event Subscription', () => {
 
     // Add second node and wait for event
     const node2 = await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 100, y: 100 },
     })
@@ -238,7 +250,7 @@ describe('flow Event Subscription', () => {
 
     // Connect nodes and wait for event
     await caller.flow.connectPorts({
-      flowId: flow.id,
+      flowId: flow.id!,
       sourceNodeId: node1.id,
       sourcePortId: 'strOutput',
       targetNodeId: node2.id,
@@ -248,7 +260,7 @@ describe('flow Event Subscription', () => {
 
     // Remove first node and wait for events (both node and edge removal)
     await caller.flow.removeNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeId: node2.id,
     })
 
@@ -288,7 +300,7 @@ describe('flow Event Subscription', () => {
     const receivedEvents: any[] = []
 
     const eventsGenerator = await caller.flow.subscribeToEvents({
-      flowId: flow.id,
+      flowId: flow.id!,
       eventTypes: [FlowEventType.NodeAdded],
     })
 
@@ -318,7 +330,7 @@ describe('flow Event Subscription', () => {
     const addedNodes = [] as any[]
     for (let i = 0; i < nodesToAdd; i++) {
       const node = await caller.flow.addNode({
-        flowId: flow.id,
+        flowId: flow.id!,
         nodeType,
         position: { x: i * 100, y: i * 100 },
       })
@@ -356,7 +368,7 @@ describe('flow Event Subscription', () => {
     const receivedEvents: any[] = []
 
     const eventsGenerator = await caller.flow.subscribeToEvents({
-      flowId: flow.id,
+      flowId: flow.id!,
       eventTypes: [
         FlowEventType.NodeAdded,
         FlowEventType.EdgeAdded,
@@ -387,20 +399,20 @@ describe('flow Event Subscription', () => {
 
     // Create source and target nodes
     const sourceNode = await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 0, y: 0 },
     })
 
     const targetNode = await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 200, y: 0 },
     })
 
     // Connect nodes
     await caller.flow.connectPorts({
-      flowId: flow.id,
+      flowId: flow.id!,
       sourceNodeId: sourceNode.id,
       targetNodeId: targetNode.id,
       sourcePortId: 'strOutput',
@@ -449,7 +461,7 @@ describe('flow Event Subscription', () => {
     const receivedEvents: any[] = []
 
     const eventsGenerator = await caller.flow.subscribeToEvents({
-      flowId: flow.id,
+      flowId: flow.id!,
       eventTypes: [
         FlowEventType.NodeAdded,
         FlowEventType.NodeRemoved,
@@ -482,20 +494,20 @@ describe('flow Event Subscription', () => {
 
     // Create source and target nodes
     const source = await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 0, y: 0 },
     })
 
     const target = await caller.flow.addNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeType,
       position: { x: 100, y: 0 },
     })
 
     // Connect nodes
     await caller.flow.connectPorts({
-      flowId: flow.id,
+      flowId: flow.id!,
       sourceNodeId: source.id,
       sourcePortId: 'strOutput',
       targetNodeId: target.id,
@@ -504,7 +516,7 @@ describe('flow Event Subscription', () => {
 
     // Remove with force
     await caller.flow.removeNode({
-      flowId: flow.id,
+      flowId: flow.id!,
       nodeId: source.id,
     })
 

@@ -7,7 +7,7 @@
  */
 
 import type { Edge } from '@xyflow/react'
-import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
+import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
 import { $edges } from '@/store'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'

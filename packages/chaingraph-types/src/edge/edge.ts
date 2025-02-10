@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type { EdgeMetadata, IEdge } from '.'
 import type { INode } from '../node'
-import { PortDirection } from '@badaitech/chaingraph-types/port/base'
+import type { IPort } from '../port'
 import { EdgeStatus } from '.'
+import { PortDirection } from '../port'
 
 export class Edge implements IEdge {
   readonly id: string
@@ -83,4 +83,15 @@ export class Edge implements IEdge {
     // Clean up resources if necessary
     this.status = EdgeStatus.Inactive
   }
+
+  // clone(): IEdge {
+  //   return new Edge(
+  //     this.id,
+  //     this.sourceNode.clone(),
+  //     this.sourcePort.clone(),
+  //     this.targetNode.clone(),
+  //     this.targetPort.clone(),
+  //     deepCopy(this.metadata),
+  //   )
+  // }
 }

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { MultiChannel } from '@badaitech/chaingraph-types/port/channel'
+import { MultiChannel } from '@badaitech/chaingraph-types/utils/multi-channel'
 import Decimal from 'decimal.js'
 
 export function deepCopy(obj: any): any {

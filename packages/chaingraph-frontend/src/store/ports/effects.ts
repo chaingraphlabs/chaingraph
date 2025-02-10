@@ -6,12 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { UpdatePortUIInput } from '@badaitech/chaingraph-backend/procedures/flow/update-port-ui.ts'
 import type {
   UpdatePortValueInput,
-} from '@badaitech/chaingraph-backend/procedures/flow/update-port-value.ts'
-import { trpcClient } from '@badaitech/chaingraph-frontend/api/trpc/client'
+} from '@badaitech/chaingraph-backend/procedures/flow/update-port-value'
+import { trpcClient } from '@/api/trpc/client'
 import { createEffect } from 'effector'
 
 export const baseUpdatePortValueFx = createEffect(async (params: UpdatePortValueInput) => {
   return trpcClient.flow.updatePortValue.mutate(params)
+})
+
+export const baseUpdatePortUIFx = createEffect(async (params: UpdatePortUIInput) => {
+  return trpcClient.flow.updatePortUI.mutate(params)
 })

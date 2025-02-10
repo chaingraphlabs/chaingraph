@@ -7,7 +7,7 @@
  */
 
 import type { CreateFlowEvent, UpdateFlowEvent } from '@/store'
-import { trpcClient } from '@/api/trpc/client.ts'
+import { trpcClient } from '@/api/trpc/client'
 import { createEffect } from 'effector'
 
 // Effect for loading flows list

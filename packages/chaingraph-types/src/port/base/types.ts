@@ -6,8 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from './json'
-
+import type { JSONValue } from '../../utils/json'
 import type {
   ArrayPortConfigUIType,
   BasePortConfigUIType,
@@ -16,10 +15,9 @@ import type {
   ObjectPortConfigUIType,
   StreamPortConfigUIType,
   StringPortConfigUIType,
-} from './ui-config.schema'
-
+} from '../base'
 import { z } from 'zod'
-import { MultiChannel, MultiChannelSchema } from '../channel/multi-channel'
+import { MultiChannel, MultiChannelSchema } from '../..//utils/multi-channel'
 
 /**
  * Port error types
@@ -60,10 +58,12 @@ export const PORT_TYPES = [
 ] as const
 export type PortType = (typeof PORT_TYPES)[number]
 
-export enum PortDirection {
-  Input = 'input',
-  Output = 'output',
-}
+export const PortDirection = {
+  Input: 'input',
+  Output: 'output',
+} as const
+
+export type PortDirectionEnum = (typeof PortDirection)[keyof typeof PortDirection]
 
 /**
  * Base interface for all port configurations
@@ -78,7 +78,7 @@ export interface BasePortConfig { // extends JSONObject
   key?: string
   title?: string
   description?: string
-  direction?: PortDirection
+  direction?: PortDirectionEnum
   ui?: BasePortConfigUIType
 }
 

@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeCategory } from '@badaitech/chaingraph-types/node/category'
-import type { NodeUIMetadata } from '@badaitech/chaingraph-types/node/node-ui'
-import type { IPortConfig } from '@badaitech/chaingraph-types/port/base'
+import type { IPortConfig } from '@badaitech/chaingraph-types/port'
+import type { NodeCategory } from './category'
 import type { NodeExecutionStatus, ValidationMessageType } from './node-enums'
+import type { NodeUIMetadata } from './node-ui'
 
 /**
  * Type definition for node metadata

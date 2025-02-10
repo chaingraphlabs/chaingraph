@@ -1,9 +1,9 @@
 {
   "name": "@badaitech/chaingraph-backend",
-  "license": "BUSL-1.1",
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",

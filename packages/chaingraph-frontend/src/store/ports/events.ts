@@ -16,5 +16,13 @@ export const updatePort = createEvent<{
   nodeVersion: number
 }>()
 
+export const updatePortUI = createEvent<{
+  id: string
+  ui: any
+}>()
+
 // Value updates
 export const requestUpdatePortValue = createEvent<{ id: string, value: any }>()
+
+// UI updates
+export const requestUpdatePortUI = createEvent<{ id: string, ui: any }>()

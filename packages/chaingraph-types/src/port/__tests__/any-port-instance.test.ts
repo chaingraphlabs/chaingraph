@@ -6,15 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  AnyPortConfig,
-} from '../base'
+import type { AnyPortConfig } from '../base'
 import { describe, expect, it } from 'vitest'
 import { AnyPort } from '../instances'
 import { AnyPortPlugin, validateAnyValue } from '../plugins/AnyPortPlugin'
-import { createNumberConfig, createNumberValue, NumberPortPlugin } from '../plugins/NumberPortPlugin'
-import { createStringConfig, createStringValue, StringPortPlugin } from '../plugins/StringPortPlugin'
-import { portRegistry } from '../registry'
+import { createNumberConfig, createNumberValue } from '../plugins/NumberPortPlugin'
+import { createStringConfig, createStringValue } from '../plugins/StringPortPlugin'
 
 /**
  * Helper function to create an any port value
@@ -23,9 +20,9 @@ function createAnyValue(value: any): any {
   return value
 }
 
-portRegistry.register(AnyPortPlugin)
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
+// portRegistry.register(AnyPortPlugin)
+// portRegistry.register(StringPortPlugin)
+// portRegistry.register(NumberPortPlugin)
 
 describe('anyPort Instance', () => {
   describe('basic validation', () => {

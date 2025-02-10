@@ -6,17 +6,21 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
 import type {
   IPortPlugin,
   NumberPortConfig,
   NumberPortValue,
-} from '../base/types'
+} from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import {
+  basePortConfigSchema,
+  isNumberPortValue,
+  numberPortConfigUISchema,
+  PortError,
+  PortErrorType,
+} from '@badaitech/chaingraph-types/port'
 import Decimal from 'decimal.js'
 import { z } from 'zod'
-import { basePortConfigSchema } from '../base/base-config.schema'
-import { isNumberPortValue, PortError, PortErrorType } from '../base/types'
-import { numberPortConfigUISchema } from '../base/ui-config.schema'
 
 /**
  * Schemas for number port validation

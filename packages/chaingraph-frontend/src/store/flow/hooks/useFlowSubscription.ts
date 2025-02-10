@@ -8,11 +8,11 @@
 
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types/flow/eventHandlers'
 import { trpc } from '@/api/trpc/client'
-
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
-} from '@/components/flow/utils/node-position.ts'
+} from '@/components/flow/utils/node-position'
+
 import {
   $nodes,
   FlowSubscriptionStatus,
@@ -29,9 +29,7 @@ import {
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
 import { addNode, removeNode } from '@/store/nodes/events'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
-import { createEventHandler } from '@badaitech/chaingraph-types/flow/eventHandlers'
-import { FlowEventType } from '@badaitech/chaingraph-types/flow/events'
-import { DefaultPosition } from '@badaitech/chaingraph-types/node/node-ui.ts'
+import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { useEffect, useMemo } from 'react'
@@ -86,11 +84,6 @@ export function useFlowSubscription() {
 
       // log the current node version and from the event
       console.log(`[PortUpdated] current node version: ${nodes[data.port.getConfig().nodeId!]?.getVersion()}, event version: ${data.nodeVersion}`)
-
-      // setNodeVersion({
-      //   id: data.port.getConfig().nodeId!,
-      //   version: data.nodeVersion,
-      // })
 
       updatePort({
         id: data.port.id,
@@ -213,6 +206,8 @@ export function useFlowSubscription() {
       if (!data.newDimensions || !data.newDimensions.width || !data.newDimensions.height) {
         return
       }
+
+      console.log(`[NOT SKIP] Received dimensions change newDimensions: ${JSON.stringify(data.newDimensions)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
       setNodeVersion({
         id: data.nodeId,

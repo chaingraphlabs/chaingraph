@@ -6,13 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { SerializedFlow } from '@badaitech/chaingraph-types/flow/types.zod'
-import type { IPort } from '@badaitech/chaingraph-types/port/base'
-import { Edge, ExecutionEventImpl, Flow, NodeRegistry } from '@badaitech/chaingraph-types'
-import { registerEdgeTransformers } from '@badaitech/chaingraph-types/edge/json-transformers'
-import { BasePort } from '@badaitech/chaingraph-types/port/base'
-import { PortFactory } from '@badaitech/chaingraph-types/port/factory'
+import type { IPort } from '../port'
 import SuperJSON from 'superjson'
+import { registerEdgeTransformers } from '../edge'
+import { BasePort, PortFactory } from '../port'
+import { ExecutionEventImpl } from './execution-events'
+import { Flow } from './flow'
 
 /**
  * Registers flow transformers with SuperJSON
@@ -31,7 +30,7 @@ export function registerFlowTransformers() {
         return port.deserialize(v)
       },
     },
-    BasePort.name,
+    'BasePort',
   )
 
   // Flow
@@ -41,94 +40,20 @@ export function registerFlowTransformers() {
         return v instanceof Flow
       },
       serialize: (v) => {
-        const serializedEdges = [] as SerializedFlow['edges']
-        for (const edge of v.edges.values()) {
-          serializedEdges.push({
-            id: edge.id,
-            metadata: edge.metadata,
-            status: edge.status,
-            sourceNodeId: edge.sourceNode.id,
-            sourcePortId: edge.sourcePort.id!,
-            targetNodeId: edge.targetNode.id,
-            targetPortId: edge.targetPort.id!,
-          })
-        }
-
-        const nodes: SerializedFlow['nodes'] = []
-        if (v.nodes) {
-          for (const node of v.nodes.values()) {
-            nodes.push(node.serialize() as any)
-          }
-        }
-
-        const serializedFlow: SerializedFlow = {
-          id: v.id,
-          metadata: v.metadata,
-          nodes,
-          edges: serializedEdges,
-        }
-
-        return SuperJSON.serialize(serializedFlow)
+        return SuperJSON.serialize(v.serialize())
       },
       deserialize: (v) => {
-        const flowData = SuperJSON.deserialize<SerializedFlow>(v)
-
-        const flow = new Flow(flowData.metadata)
-
-        for (const nodeData of flowData.nodes) {
-          const nodeMetadata = nodeData.metadata as any
-
-          const node = NodeRegistry.getInstance().createNode(
-            nodeMetadata.type,
-            nodeData.id ?? nodeMetadata.id ?? '',
-            nodeMetadata,
-          ).deserialize(nodeData)
-
-          flow.addNode(node)
+        try {
+          // Deserialize flow from JSON string
+          return Flow.deserialize(SuperJSON.deserialize(v)) as Flow
+        } catch (e) {
+          console.error('Failed to deserialize flow', e)
+          debugger
+          throw e
         }
-
-        for (const edgeData of flowData.edges) {
-          const sourceNode = flow.nodes.get(edgeData.sourceNodeId)
-          const targetNode = flow.nodes.get(edgeData.targetNodeId)
-
-          if (!sourceNode) {
-            throw new Error(`Source node with ID ${edgeData.sourceNodeId} does not exist.`)
-          }
-          if (!targetNode) {
-            throw new Error(`Target node with ID ${edgeData.targetNodeId} does not exist.`)
-          }
-
-          const sourcePort = sourceNode.getPort(edgeData.sourcePortId)
-          const targetPort = targetNode.getPort(edgeData.targetPortId)
-
-          if (!sourcePort) {
-            throw new Error(
-              `Source port with ID ${edgeData.sourcePortId} does not exist on node ${edgeData.sourceNodeId}.`,
-            )
-          }
-
-          if (!targetPort) {
-            throw new Error(
-              `Target port with ID ${edgeData.targetPortId} does not exist on node ${edgeData.targetNodeId}.`,
-            )
-          }
-
-          const edge = new Edge(
-            edgeData.id,
-            sourceNode,
-            sourcePort,
-            targetNode,
-            targetPort,
-            edgeData.metadata,
-          )
-
-          flow.addEdge(edge)
-        }
-
-        return flow
       },
     },
-    Flow.name,
+    'Flow',
   )
 
   // Execution event data
@@ -138,31 +63,25 @@ export function registerFlowTransformers() {
         return v instanceof ExecutionEventImpl
       },
       serialize: (v) => {
-        return SuperJSON.serialize({
+        return {
           index: v.index,
           type: v.type,
           timestamp: v.timestamp,
-          data: SuperJSON.serialize(v.data),
-        })
+          data: SuperJSON.stringify(v.data),
+        }
       },
       deserialize: (v) => {
-        const eventData = SuperJSON.deserialize(v) as any
-
-        if (!eventData) {
-          throw new Error('Invalid execution event data')
-        }
-
-        const data = SuperJSON.deserialize(eventData.data)
+        const data = SuperJSON.parse(v.data)
 
         return new ExecutionEventImpl(
-          eventData.index,
-          eventData.type,
-          eventData.timestamp,
+          v.index,
+          v.type,
+          v.timestamp,
           data,
         )
       },
     },
-    ExecutionEventImpl.name,
+    'ExecutionEventImpl',
   )
 
   registerEdgeTransformers()

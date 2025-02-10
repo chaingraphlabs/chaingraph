@@ -13,25 +13,22 @@ import type {
   IPortValue,
   PortType,
   ValueTypeMap,
-} from '../base/types'
+} from '@badaitech/chaingraph-types/port/base'
 
 import {
+  AnyPortPlugin,
   ArrayPortPlugin,
+  basePortConfigSchema,
+  buildUnion,
   EnumPortPlugin,
   NumberPortPlugin,
   ObjectPortPlugin,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
-import { z } from 'zod'
-import {
-  basePortConfigSchema,
-} from '../base'
-import {
-  buildUnion,
   PortError,
   PortErrorType,
-} from '../base/types'
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types/port'
+import { z } from 'zod'
 
 const defaultValueSchema = z.string()
 
@@ -62,7 +59,17 @@ export class PortPluginRegistry {
    * Get a plugin for a specific port type
    */
   getPlugin<T extends PortType>(type: T): IPortPlugin<T> | undefined {
-    return this.plugins.get(type) as IPortPlugin<T> | undefined
+    const registeredPlugin = this.plugins.get(type) as IPortPlugin<T> | undefined
+    if (!registeredPlugin) {
+      // check from all plugins
+      const plugin = this.getAllPlugins().find(p => p.typeIdentifier === type)
+      if (plugin) {
+        this.register(plugin)
+        return plugin
+      }
+    }
+
+    return registeredPlugin
   }
 
   /**
@@ -77,6 +84,7 @@ export class PortPluginRegistry {
       ObjectPortPlugin,
       EnumPortPlugin,
       StreamPortPlugin,
+      AnyPortPlugin,
     ]
   }
 

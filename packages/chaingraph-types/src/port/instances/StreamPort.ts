@@ -6,10 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
-import type { IPortConfig, StreamPortConfig, StreamPortValue } from '../base/types'
-import { BasePort } from '../base/BasePort'
-import { StreamPortPlugin } from '../plugins/StreamPortPlugin'
+import type { IPortConfig, StreamPortConfig, StreamPortValue } from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import { BasePort, StreamPortPlugin } from '@badaitech/chaingraph-types/port'
 
 /**
  * Concrete implementation of a Stream Port.

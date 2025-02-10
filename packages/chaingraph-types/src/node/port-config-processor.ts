@@ -14,12 +14,9 @@ import type {
   IPortConfig,
   ObjectPortConfig,
   StreamPortConfig,
-} from '@badaitech/chaingraph-types/port/base'
-
+} from '@badaitech/chaingraph-types/port'
 import type { INode } from './interface'
-import {
-  getOrCreateNodeMetadata,
-} from '@badaitech/chaingraph-types/node/decorator-new/getOrCreateNodeMetadata'
+import { getOrCreateNodeMetadata } from '@badaitech/chaingraph-types/decorator'
 import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
 import { v7 as uuidv7 } from 'uuid'
 

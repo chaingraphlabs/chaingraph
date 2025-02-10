@@ -6,11 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  Input,
+  Node,
+  NodeExecutionStatus,
+  Output,
+  String,
 } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -19,7 +23,7 @@ import { NODE_CATEGORIES } from '../../categories'
   category: NODE_CATEGORIES.MESSAGING,
   tags: ['telegram', 'message', 'social'],
 })
-export class TelegramMessageNode extends BaseNode {
+class TelegramMessageNode extends BaseNode {
   @Input()
   @String({
     title: 'Message',
@@ -49,3 +53,5 @@ export class TelegramMessageNode extends BaseNode {
     }
   }
 }
+
+export default TelegramMessageNode

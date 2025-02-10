@@ -9,7 +9,7 @@
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon.tsx'
 import {
   useExpandedCategories,
-} from '@/components/sidebar/tabs/node-list/hooks/useExpandedCategories.ts'
+} from '@/components/sidebar/tabs/node-list/hooks/useExpandedCategories'
 import {
   Accordion,
   AccordionContent,

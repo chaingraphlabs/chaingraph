@@ -6,21 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { eventThemes } from '@/components/sidebar/tabs/debug/theme.ts'
-import { useTheme } from '@/components/theme/hooks/useTheme.ts'
+import { eventThemes } from '@/components/sidebar/tabs/debug/theme'
+import { useTheme } from '@/components/theme/hooks/useTheme'
+import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { Badge } from '@badaitech/chaingraph-frontend/components/ui/badge'
 import { ExecutionEventEnum, type ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRightCircle, ChevronDownIcon, Timer } from 'lucide-react'
 import React, { Fragment, useState } from 'react'
-import {
-  collapseAllNested,
-  darkStyles,
-  defaultStyles,
-  JsonView,
-} from 'react-json-view-lite'
+import { collapseAllNested, darkStyles, defaultStyles, JsonView } from 'react-json-view-lite'
 import 'react-json-view-lite/dist/index.css'
 import './style/json.css'
 

@@ -6,16 +6,20 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
 import type {
   IPortPlugin,
   StringPortConfig,
   StringPortValue,
-} from '../base/types'
+} from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import {
+  basePortConfigSchema,
+  isStringPortValue,
+  PortError,
+  PortErrorType,
+  stringPortConfigUISchema,
+} from '@badaitech/chaingraph-types/port'
 import { z } from 'zod'
-import { basePortConfigSchema } from '../base/base-config.schema'
-import { isStringPortValue, PortError, PortErrorType } from '../base/types'
-import { stringPortConfigUISchema } from '../base/ui-config.schema'
 
 /**
  * Helper to create a string port value

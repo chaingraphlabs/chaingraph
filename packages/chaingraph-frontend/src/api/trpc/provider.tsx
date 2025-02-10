@@ -11,7 +11,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
-import { queryClient, trpc, trpcClient } from './client.ts'
+import { queryClient, trpc, trpcClient } from './client'
 
 interface TrpcProviderProps {
   children: React.ReactNode

@@ -23,11 +23,11 @@ export function wsServer() {
     createContext,
     // Enable heartbeat messages to keep connection open (disabled by default)
     keepAlive: {
-      enabled: true,
+      enabled: false,
       // server ping message interval in milliseconds
-      pingMs: 30000,
+      pingMs: 3000,
       // connection is terminated if pong message is not received in this many milliseconds
-      pongWaitMs: 5000,
+      pongWaitMs: 10000,
     },
   })
   wss.on('connection', (ws) => {
@@ -35,6 +35,9 @@ export function wsServer() {
     ws.once('close', () => {
       console.log(`➖➖ Connection (${wss.clients.size})`)
     })
+  })
+  wss.on('error', (err) => {
+    console.error('WebSocket Server Error:', err)
   })
   console.log('WebSocket Server listening on ws://localhost:3001')
   process.on('SIGTERM', () => {

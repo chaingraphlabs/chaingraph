@@ -6,9 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Edge, IEdge } from '@badaitech/chaingraph-types/edge'
-import type { FlowEvent } from '@badaitech/chaingraph-types/flow/events'
-import type { INode } from '@badaitech/chaingraph-types/node'
+import type { Edge, IEdge } from '../edge'
+import type { INode } from '../node'
+import type { JSONValue } from '../utils/json'
+import type { FlowEvent } from './events'
 import type { FlowMetadata } from './types'
 
 /**
@@ -31,7 +32,7 @@ export interface IFlow {
    * Adds a node to the flow.
    * @param node The node to add.
    */
-  addNode: (node: INode) => INode
+  addNode: (node: INode, disableEvents?: boolean) => INode
 
   /**
    * Removes a node from the flow.
@@ -82,4 +83,22 @@ export interface IFlow {
    */
   onEvent: (handler: (event: FlowEvent) => void) => () => void
 
+  /**
+   * Clone the flow
+   * @returns A new instance of the flow
+   */
+  clone: () => IFlow
+
+  /**
+   * Serialize the flow to JSON
+   * @returns JSON representation of the flow
+   */
+  serialize: () => JSONValue
+
+  /**
+   * Deserialize the flow from JSON
+   * @param data JSON data to deserialize
+   * @returns Deserialized flow instance
+   */
+  deserialize: (data: JSONValue) => IFlow
 }

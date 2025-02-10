@@ -22,47 +22,47 @@ ChainGraph is an open–source, flow–based programming framework that empowers
 
 ## Key Features
 
-- **Type–Safe Port System:**  
+- **Type–Safe Port System:**
   Supports a rich set of port types including primitives (string, number, boolean) and complex types (arrays, objects, streams, enums). Each port is defined with its own configuration and runtime validation (via Zod and SuperJSON) and employs both lazy instantiation and caching for optimal memory usage.
 
-- **Modular and Extensible Nodes:**  
+- **Modular and Extensible Nodes:**
   Create custom nodes using decorators and metadata. Nodes feature multiple input and output ports and integrate seamlessly into the flow builder, enabling rapid development of complex workflows.
 
-- **Visual Flow Editor:**  
+- **Visual Flow Editor:**
   Build flows graphically with a React- and XYFlow–based frontend. Enjoy features like drag-and-drop layout, zoom and pan, resizing, contextual menus, and live previews.
 
-- **Robust Execution Engine & Debugging Tools:**  
+- **Robust Execution Engine & Debugging Tools:**
   A backend execution engine supports concurrent execution of flows with real-time event subscriptions, plus debugging features such as breakpoints, step–over, and detailed event logging for effective troubleshooting.
 
-- **Real–Time Synchronization & Optimistic Updates:**  
+- **Real–Time Synchronization & Optimistic Updates:**
   Integrated with TRPC and Effector for end-to–end type safety, the system provides real-time updates (via WebSockets) and supports optimistic UI updates—ensuring an interactive and responsive user experience.
 
-- **Docker and Cloud Compatibility:**  
+- **Docker and Cloud Compatibility:**
   Easily build, deploy, and scale both the backend and frontend using Docker and docker-compose. Containerized deployment simplifies the setup process and enhances portability.
 
 ## Architecture & Technologies
 
 ChainGraph is built with modern web technologies, aiming at a robust and type-safe development experience:
 
-- **TypeScript:**  
+- **TypeScript:**
   Uses advanced TypeScript features (generics, decorators, conditional types) for compile–time safety and robustness.
 
-- **Effector:**  
+- **Effector:**
   A reactive state management library that powers both frontend and backend state handling and simplifies the implementation of optimistic updates and subscriptions.
 
-- **TRPC:**  
+- **TRPC:**
   Facilitates end-to-end type–safe API communication between the frontend and backend, minimizing runtime errors and ensuring consistency in data handling.
 
-- **Zod & SuperJSON:**  
+- **Zod & SuperJSON:**
   Zod is used for runtime schema validation, while SuperJSON manages complex data serialization, ensuring that data remains consistent across the client and server boundaries.
 
-- **Bun:**  
+- **Bun:**
   Employed as the chosen runtime for its superior performance and modern build capabilities, Bun enhances development speed and production performance.
 
-- **XYFlow:**  
+- **XYFlow:**
   A visual flow library used on the frontend to render and manage the drag-and-drop canvas, enabling users to compose workflows visually.
 
-- **WebSockets:**  
+- **WebSockets:**
   Real-time subscriptions using WebSocket (via tRPC’s adapter) keep the client in constant sync with backend state and execution events.
 
 ## Getting Started
@@ -98,9 +98,9 @@ This command launches:
 - The backend development process (watch mode)
 
 You can also run each package individually if desired:
-- **Backend:**  
+- **Backend:**
   `bun run --cwd packages/chaingraph-backend dev`
-- **Frontend:**  
+- **Frontend:**
   `bun run --cwd packages/chaingraph-frontend dev`
 
 ## Building for Production
@@ -178,16 +178,16 @@ docker-compose down       # Stop and remove containers
 
 ## Project Structure
 
-- **packages/chaingraph-types:**  
+- **packages/chaingraph-types:**
   Contains shared type definitions, interfaces, port implementations, node/event models, and utilities ensuring end-to-end type safety.
 
-- **packages/chaingraph-nodes:**  
+- **packages/chaingraph-nodes:**
   A collection of pre-built node implementations and category definitions, serving as examples and reusable components for extensibility.
 
-- **packages/chaingraph-backend:**  
+- **packages/chaingraph-backend:**
   The backend service that implements a TRPC API router, flow execution logic, in-memory storage for flows and nodes, and WebSocket-based real-time subscriptions.
 
-- **packages/chaingraph-frontend:**  
+- **packages/chaingraph-frontend:**
   A React+Vite frontend that utilizes XYFlow for a graphical flow editor, Effector for state management, and TRPC to interact with the backend.
 
 ## Contributing
@@ -220,7 +220,6 @@ Contributions are welcome! If you would like to help improve ChainGraph:
 ## Developer Documentation
 
 For more details on how to create custom nodes using decorators, please refer to our [Node Decorators Documentation](./docs/nodes/node-decorators.md). This guide provides in-depth explanations and examples on using decorators to define node inputs, outputs, and complex configurations, ensuring type-safety and a more maintainable codebase.
-
 
 ---
 

@@ -7,7 +7,7 @@ import type { ExtractValue, IPort, IPortConfig } from '@badaitech/chaingraph-typ
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { PortOnChangeParam } from './Port'
-import { requestUpdatePortValue } from '@badaitech/chaingraph-frontend/store/ports/events'
+import { requestUpdatePortValue } from '@/store/ports/events'
 import { useEffect, useState } from 'react'
 import { Port } from './Port'
 
@@ -21,11 +21,12 @@ interface PortState< C extends IPortConfig = IPortConfig> {
   isValid: boolean
 }
 
-function initInputsStates(inputs: IPort[]) {
-  return inputs.reduce<Record<string, PortState>>((acc, input) => {
-    acc[input.id] = {
-      value: input.getValue(),
-      isValid: input.validate(),
+function initPortsStates(ports: IPort[]) {
+  return ports.reduce<Record<string, PortState>>((acc, port) => {
+    const isValid = port.validate()
+    acc[port.id] = {
+      value: port.getValue(),
+      isValid: port.validate(),
     }
 
     return acc
@@ -33,12 +34,17 @@ function initInputsStates(inputs: IPort[]) {
 }
 
 export function NodeBody({ inputs, outputs }: NodeBodyProps) {
-  const [inputsStates, setInputsStates] = useState(initInputsStates(inputs))
+  const [inputsStates, setInputsStates] = useState(initPortsStates(inputs))
+  const [outputStates, setOutputStates] = useState(initPortsStates(outputs))
 
   // TODO: remove it and subscribe on changes from backend
   useEffect(() => {
-    setInputsStates(initInputsStates(inputs))
+    setInputsStates(initPortsStates(inputs))
   }, [inputs])
+
+  useEffect(() => {
+    setOutputStates(initPortsStates(outputs))
+  }, [outputs])
 
   const createChangeInputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
     let isValid = true
@@ -51,6 +57,24 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
 
     //  it's overhead to have this state. we should use only one store
     setInputsStates(states => ({ ...states, [port.id]: {
+      value,
+      isValid,
+    } }))
+
+    requestUpdatePortValue({ id: port.id, value })
+  }
+
+  const createChangeOutputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+    let isValid = true
+    try {
+      port.setValue(value)
+    } catch (error) {
+      isValid = false
+      console.error(error)
+    }
+
+    //  it's overhead to have this state. we should use only one store
+    setOutputStates(states => ({ ...states, [port.id]: {
       value,
       isValid,
     } }))
@@ -79,7 +103,17 @@ export function NodeBody({ inputs, outputs }: NodeBodyProps) {
 
         {/* Output Ports */}
         {outputs.map((port) => {
-          return <Port key={port.id} port={port} />
+          const { value, isValid } = outputStates[port.id]
+
+          return (
+            <Port
+              key={port.id}
+              port={port}
+              value={value}
+              errorMessage={isValid ? undefined : 'invalid'}
+              onChange={createChangeOutputPortHandler(port)}
+            />
+          )
         })}
       </div>
     </div>

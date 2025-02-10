@@ -6,10 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
-import { BaseNode, NodeRegistry } from '@badaitech/chaingraph-types'
-
+import type { INode } from './interface'
 import superjson from 'superjson'
+import { BaseNode, NodeRegistry } from '..'
 
 /**
  * Registers node transformers with SuperJSON
@@ -41,6 +40,6 @@ export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
         return node.deserialize(nodeData)
       },
     },
-    BaseNode.name,
+    'BaseNode',
   )
 }

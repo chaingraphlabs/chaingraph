@@ -6,30 +6,31 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPort } from '@badaitech/chaingraph-types/port/base'
 import type {
   AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
   IObjectSchema,
+  IPort,
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
   StreamPortConfig,
   StringPortConfig,
-} from '../base/types'
-
-import { PortError, PortErrorType,
-} from '../base/types'
-import { AnyPort } from '../instances/AnyPort'
-import { ArrayPort } from '../instances/ArrayPort'
-import { BooleanPort } from '../instances/BooleanPort'
-import { EnumPort } from '../instances/EnumPort'
-import { NumberPort } from '../instances/NumberPort'
-import { ObjectPort } from '../instances/ObjectPort'
-import { StreamPort } from '../instances/StreamPort'
-import { StringPort } from '../instances/StringPort'
+} from '../../port'
+import {
+  AnyPort,
+  ArrayPort,
+  BooleanPort,
+  EnumPort,
+  NumberPort,
+  ObjectPort,
+  PortError,
+  PortErrorType,
+  StreamPort,
+  StringPort,
+} from '../../port'
 
 export type SupportedPortInstance =
   | StringPort

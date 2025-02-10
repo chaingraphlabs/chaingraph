@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
 import type {
   ArrayPortConfig,
   ArrayPortValue,
@@ -14,12 +13,17 @@ import type {
   IPortPlugin,
   IPortValue,
   PortType,
-} from '../base/types'
+} from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import {
+  arrayPortConfigUISchema,
+  basePortConfigSchema,
+  isArrayPortValue,
+  PortError,
+  PortErrorType,
+  portRegistry,
+} from '@badaitech/chaingraph-types/port'
 import { z } from 'zod'
-import { basePortConfigSchema } from '../base/base-config.schema'
-import { isArrayPortValue, PortError, PortErrorType } from '../base/types'
-import { arrayPortConfigUISchema } from '../base/ui-config.schema'
-import { portRegistry } from '../registry/PortPluginRegistry'
 
 /**
  * Helper to create an array port value

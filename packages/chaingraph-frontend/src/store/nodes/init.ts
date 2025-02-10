@@ -6,22 +6,21 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $nodes, updateNodeParentFx, updateNodeUIFx } from '@/store'
-import { NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants.ts'
-import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample.ts'
-import { sample } from 'effector'
+import { $nodes, updateNodeParentFx, updateNodePositionLocal, updateNodeUIFx } from '@/store'
 import {
-  addNodeToFlowFx,
-  baseUpdateNodePositionFx,
-  removeNodeFromFlowFx,
-} from './effects'
+  LOCAL_NODE_UI_DEBOUNCE_MS,
+  NODE_POSITION_DEBOUNCE_MS,
+  NODE_UI_DEBOUNCE_MS,
+} from '@/store/nodes/constants'
+import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample'
+import { sample } from 'effector'
+import { addNodeToFlowFx, baseUpdateNodePositionFx, removeNodeFromFlowFx } from './effects'
 import {
   addNodeToFlow,
   removeNodeFromFlow,
   setNodeVersion,
   updateNodeParent,
   updateNodePosition,
-  updateNodePositionLocal,
   updateNodeUI,
   updateNodeUILocal,
 } from './events'
@@ -45,10 +44,16 @@ sample({
 // Position operations
 // * * * * * * * * * * * * * * *
 
-// Update local position immediately
+// Update local position immediately ~ 30 FPS
+const throttledupdateNodePositionLocal = accumulateAndSample({
+  source: [updateNodePosition],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS, // 30 FPS
+  getKey: update => update.nodeId,
+})
+
 sample({
-  clock: updateNodePosition,
-  target: updateNodePositionLocal,
+  clock: throttledupdateNodePositionLocal,
+  target: [updateNodePositionLocal],
 })
 
 // throttled node position updates
@@ -80,7 +85,8 @@ sample({
   source: $nodes,
   fn: (nodes, params) => ({
     ...params,
-    version: (nodes[params.nodeId]?.metadata.version ?? 0) + 1,
+    id: params.nodeId,
+    version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
   }),
   target: [setNodeVersion, updateNodeParentFx],
 })
@@ -90,9 +96,15 @@ sample({
 // * * * * * * * * * * * * * * *
 
 // Handle optimistic updates
+const throttledUpdateNodeUILocal = accumulateAndSample({
+  source: [updateNodeUI],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS, // 30 FPS
+  getKey: update => update.nodeId,
+})
+
 sample({
-  clock: updateNodeUI,
-  target: updateNodeUILocal, // Update local state immediately
+  clock: throttledUpdateNodeUILocal,
+  target: [updateNodeUILocal],
 })
 
 const throttledUIUpdate = accumulateAndSample({
@@ -105,9 +117,12 @@ const throttledUIUpdate = accumulateAndSample({
 sample({
   clock: throttledUIUpdate,
   source: $nodes,
-  fn: (nodes, params) => ({
-    ...params,
-    version: (nodes[params.nodeId]?.metadata.version ?? 0) + 1,
-  }),
+  fn: (nodes, params) => {
+    return {
+      ...params,
+      id: params.nodeId,
+      version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
+    }
+  },
   target: [setNodeVersion, updateNodeUIFx],
 })

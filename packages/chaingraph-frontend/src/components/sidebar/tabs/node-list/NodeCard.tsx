@@ -8,13 +8,9 @@
 
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { PortDirection } from '@badaitech/chaingraph-types/port/base'
+import { PortDirection } from '@badaitech/chaingraph-types'
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
 import { ArrowRightIcon } from 'lucide-react'

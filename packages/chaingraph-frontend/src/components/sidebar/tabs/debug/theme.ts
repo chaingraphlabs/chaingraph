@@ -180,6 +180,17 @@ export const eventThemes: Record<ExecutionEventEnum, EventTheme> = {
       dark: 'bg-violet-500/10',
     },
   },
+  [ExecutionEventEnum.NODE_BACKGROUNDED]: {
+    icon: CircleDot,
+    color: {
+      light: 'text-violet-700',
+      dark: 'text-violet-300',
+    },
+    bgColor: {
+      light: 'bg-violet-50',
+      dark: 'bg-violet-500/10',
+    },
+  },
 
   // Edge Events
   [ExecutionEventEnum.EDGE_TRANSFER_STARTED]: {

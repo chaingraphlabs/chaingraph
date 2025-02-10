@@ -38,8 +38,6 @@ export const updateNodeUI = publicProcedure
       }
     }
 
-    node.incrementVersion()
-
     // Update dimensions if present
     const hasInputDimensions
       = input.ui.dimensions
@@ -57,6 +55,8 @@ export const updateNodeUI = publicProcedure
 
     if (hasDimensionsChanged) {
       node.setDimensions(input.ui.dimensions!, true)
+    } else {
+      node.incrementVersion()
     }
 
     // Update metadata

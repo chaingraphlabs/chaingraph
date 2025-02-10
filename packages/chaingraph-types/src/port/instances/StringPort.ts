@@ -6,11 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '../base/json'
-import type { StringPortConfig, StringPortValue } from '../base/types'
-import { BasePort } from '../base/BasePort'
-
-import { StringPortPlugin } from '../plugins/StringPortPlugin'
+import type { StringPortConfig, StringPortValue } from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import { BasePort, StringPortPlugin } from '@badaitech/chaingraph-types/port'
 
 /**
  * Concrete StringPort implementation that extends BasePort.

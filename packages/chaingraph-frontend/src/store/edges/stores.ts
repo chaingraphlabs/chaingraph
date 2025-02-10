@@ -7,17 +7,18 @@
  */
 
 import type { EdgeData, EdgeError } from './types'
-import { clearActiveFlow } from '@/store'
-import { combine, createStore } from 'effector'
-import { addEdgeFx, removeEdgeFx } from './effects'
 import {
+  addEdgeFx,
+  clearActiveFlow,
   removeEdge,
+  removeEdgeFx,
   resetEdges,
   setEdge,
   setEdges,
   setEdgesError,
   setEdgesLoading,
-} from './events'
+} from '@/store'
+import { combine, createStore } from 'effector'
 
 // Main edges store
 export const $edges = createStore<EdgeData[]>([])

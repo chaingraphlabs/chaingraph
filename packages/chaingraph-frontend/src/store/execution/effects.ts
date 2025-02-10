@@ -8,8 +8,8 @@
 
 import type { CreateExecutionOptions, ExecutionStatus } from './types'
 import { trpcClient } from '@/api/trpc/client'
-import { $executionState } from '@/store/execution/stores.ts'
 import { createEffect } from 'effector'
+import { $executionState } from './stores'
 import { isTerminalStatus } from './types'
 
 // Control effects
@@ -23,7 +23,7 @@ export const createExecutionFx = createEffect(
         debug,
         breakpoints: debug ? Array.from(breakpoints) : [],
         execution: {
-          maxConcurrency: 2,
+          maxConcurrency: 10,
           nodeTimeoutMs: 90000,
           flowTimeoutMs: 300000,
         },

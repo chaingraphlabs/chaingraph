@@ -18,11 +18,11 @@ import {
   Input,
   Node,
   NodeExecutionStatus,
-  NodeRegistry,
   Number,
   Output,
   String,
 } from '@badaitech/chaingraph-types'
+import { NodeRegistry } from '@badaitech/chaingraph-types/decorator/registry'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
@@ -102,7 +102,7 @@ describe('flow Node Procedures', () => {
 
       // Add node to flow
       const node = await caller.flow.addNode({
-        flowId: flow.id,
+        flowId: flow.id!,
         nodeType,
         position: { x: 100, y: 100 },
       })
@@ -113,7 +113,7 @@ describe('flow Node Procedures', () => {
       expect(node.metadata.title).toBe('Scalar Node')
 
       // Verify node exists in flow
-      const fetchedFlow = await caller.flow.get(flow.id)
+      const fetchedFlow = await caller.flow.get(flow.id!)
       expect(fetchedFlow.nodes).toHaveLength(1)
       expect(Array.from(fetchedFlow.nodes.values())[0].id).toBe(node.id)
     })

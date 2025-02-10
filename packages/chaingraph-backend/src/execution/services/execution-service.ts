@@ -6,7 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEvent, ExecutionEventHandler, ExecutionEventImpl, Flow } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionEvent,
+  ExecutionEventHandler,
+  ExecutionEventImpl,
+  Flow,
+} from '@badaitech/chaingraph-types'
 import type { IExecutionStore } from '../store/execution-store'
 import type { ExecutionInstance, ExecutionOptions, ExecutionState } from '../types'
 import {
@@ -32,16 +37,18 @@ export class ExecutionService {
     flow: Flow,
     options?: ExecutionOptions,
   ): Promise<ExecutionInstance> {
+    const clonedFlow = flow.clone() as Flow
+
     const id = uuidv4()
     const abortController = new AbortController()
-    const context = new ExecutionContext(flow.id, abortController)
-    const engine = new ExecutionEngine(flow, context, options)
+    const context = new ExecutionContext(clonedFlow.id, abortController)
+    const engine = new ExecutionEngine(clonedFlow, context, options)
 
     const instance: ExecutionInstance = {
       id,
       context,
       engine,
-      flow,
+      flow: clonedFlow,
       status: ExecutionStatus.Created,
       createdAt: new Date(),
     }

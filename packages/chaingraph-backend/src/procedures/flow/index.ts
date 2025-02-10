@@ -16,6 +16,7 @@ import { subscribeToEvents } from './subscriptions'
 import { updateNodeParent } from './update-node-parent'
 import { updateNodePosition } from './update-node-position'
 import { updateNodeUI } from './update-node-ui'
+import { updatePortUI } from './update-port-ui'
 import { updatePortValue } from './update-port-value'
 
 export const flowProcedures = router({
@@ -26,13 +27,15 @@ export const flowProcedures = router({
       tags: z.array(z.string()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      return await ctx.flowStore.createFlow({
+      const flow = await ctx.flowStore.createFlow({
         name: input.name,
         description: input.description,
         createdAt: new Date(),
         updatedAt: new Date(),
         tags: input.tags,
       })
+
+      return flow.metadata
     }),
 
   get: publicProcedure
@@ -42,6 +45,7 @@ export const flowProcedures = router({
       if (!flow) {
         throw new Error(`Flow ${flowId} not found`)
       }
+
       return flow
     }),
 
@@ -114,4 +118,5 @@ export const flowProcedures = router({
   updateNodePosition,
   updateNodeParent,
   updatePortValue,
+  updatePortUI,
 })
