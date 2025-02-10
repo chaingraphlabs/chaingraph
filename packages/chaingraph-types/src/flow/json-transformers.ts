@@ -40,12 +40,12 @@ export function registerFlowTransformers() {
         return v instanceof Flow
       },
       serialize: (v) => {
-        return SuperJSON.serialize(v.serialize())
+        return v.serialize()
       },
       deserialize: (v) => {
         try {
           // Deserialize flow from JSON string
-          return Flow.deserialize(SuperJSON.deserialize(v)) as Flow
+          return Flow.deserialize(v) as Flow
         } catch (e) {
           console.error('Failed to deserialize flow', e)
           debugger

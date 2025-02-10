@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { isObjectPortConfig } from '@badaitech/chaingraph-types/port/base'
 import { describe, expect, it } from 'vitest'
+import { isObjectPortConfig } from '../../port'
 import { getObjectSchema, ObjectSchema } from '../object-schema.decorator'
 import { Port } from '../port.decorator'
 import 'reflect-metadata'

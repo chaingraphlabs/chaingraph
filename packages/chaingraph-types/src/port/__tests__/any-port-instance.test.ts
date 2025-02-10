@@ -20,9 +20,9 @@ function createAnyValue(value: any): any {
   return value
 }
 
-// portRegistry.register(AnyPortPlugin)
-// portRegistry.register(StringPortPlugin)
-// portRegistry.register(NumberPortPlugin)
+// PortPluginRegistry.getInstance().register(AnyPortPlugin)
+// PortPluginRegistry.getInstance().register(StringPortPlugin)
+// PortPluginRegistry.getInstance().register(NumberPortPlugin)
 
 describe('anyPort Instance', () => {
   describe('basic validation', () => {

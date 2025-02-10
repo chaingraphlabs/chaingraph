@@ -17,6 +17,7 @@ import {
   Node,
   Output,
   Port,
+  PortPluginRegistry,
 } from '@badaitech/chaingraph-types'
 import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
 import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
@@ -28,16 +29,15 @@ import {
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import 'reflect-metadata'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
   title: 'Stream Node',

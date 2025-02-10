@@ -18,6 +18,3 @@ export * from './instances'
 
 // Port plugins
 export * from './plugins'
-
-// Registry
-export * from './registry'

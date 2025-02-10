@@ -6,14 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ArrayPortConfig,
-  StringPortConfig,
-} from '../base'
+import type { ArrayPortConfig, StringPortConfig } from '../base'
 import { describe, expect, it } from 'vitest'
 import { ArrayPort } from '../instances'
-import { ArrayPortPlugin, createStringValue, StringPortPlugin, validateArrayValue } from '../plugins'
-import { portRegistry } from '../registry'
+import {
+  ArrayPortPlugin,
+  createStringValue,
+  PortPluginRegistry,
+  StringPortPlugin,
+  validateArrayValue,
+} from '../plugins'
 
 /**
  * Helper function to create an array port value.
@@ -23,8 +25,8 @@ function createArrayValue(items: any[]): any[] {
   return items
 }
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
 
 describe('arrayPort Instance', () => {
   describe('basic Validation', () => {

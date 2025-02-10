@@ -14,10 +14,10 @@ import {
   createStringConfig,
   EnumPortPlugin,
   NumberPortPlugin,
+  PortPluginRegistry,
   StringPortPlugin,
   validateEnumValue,
 } from '../plugins'
-import { portRegistry } from '../registry'
 
 /**
  * Helper function to create an enum port value.
@@ -27,9 +27,9 @@ function createEnumValue(value: string): string {
   return value
 }
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
 
 describe('enumPort Instance (plain values)', () => {
   describe('basic Validation', () => {

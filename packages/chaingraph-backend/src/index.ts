@@ -6,11 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata } from '@badaitech/chaingraph-types'
+import type {
+  CategoryMetadata,
+} from '@badaitech/chaingraph-types'
 import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
 import {
   AnyPortPlugin,
+  BooleanPortPlugin,
   NodeCatalog,
+  PortPluginRegistry,
   registerFlowTransformers,
   registerNodeTransformers,
 } from '@badaitech/chaingraph-types'
@@ -24,7 +28,6 @@ import {
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import { initializeContext } from './context'
 import { ExecutionService, InMemoryExecutionStore } from './execution'
 import { CleanupService } from './execution/services/cleanup-service'
@@ -32,13 +35,14 @@ import { InMemoryFlowStore } from './stores/flowStore'
 import { wsServer } from './ws-server'
 import './setup'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
-portRegistry.register(AnyPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(AnyPortPlugin)
+PortPluginRegistry.getInstance().register(BooleanPortPlugin)
 
 registerNodeTransformers(NodeRegistry.getInstance())
 registerFlowTransformers()
@@ -86,6 +90,14 @@ const executionStore = new InMemoryExecutionStore()
 const executionService = new ExecutionService(executionStore)
 const executionCleanup = new CleanupService(executionStore, executionService)
 
+initializeContext(
+  flowStore,
+  NodeRegistry.getInstance(),
+  nodesCatalog,
+  executionService,
+  executionStore,
+)
+
 // register categories
 getCategoriesMetadata().forEach((metadata: CategoryMetadata) => {
   nodesCatalog.registerCategory(metadata.id, metadata)
@@ -96,14 +108,6 @@ NodeRegistry.getInstance().getNodeTypes().forEach((type) => {
   const node = NodeRegistry.getInstance().createNode(type, `${type}-catalog`)
   nodesCatalog.registerNode(type, node)
 })
-
-initializeContext(
-  flowStore,
-  NodeRegistry.getInstance(),
-  nodesCatalog,
-  executionService,
-  executionStore,
-)
 
 executionCleanup.start()
 

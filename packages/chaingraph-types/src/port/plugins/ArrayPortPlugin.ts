@@ -21,7 +21,7 @@ import {
   isArrayPortValue,
   PortError,
   PortErrorType,
-  portRegistry,
+  PortPluginRegistry,
 } from '@badaitech/chaingraph-types/port'
 import { z } from 'zod'
 
@@ -56,7 +56,7 @@ export function validateArrayValue(
     errors.push(`Array must have at most ${config.maxLength} items`)
   }
 
-  const elementPlugin = portRegistry.getPlugin(config.itemConfig.type)
+  const elementPlugin = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
   if (!elementPlugin) {
     errors.push(`Unknown item config type: ${config.itemConfig.type}`)
     return errors
@@ -93,7 +93,7 @@ const arraySpecificSchema = z.object({
       return false
     }
     // Retrieve the corresponding plugin from the registry
-    const plugin = portRegistry.getPlugin((val as any).type as PortType)
+    const plugin = PortPluginRegistry.getInstance().getPlugin((val as any).type as PortType)
     if (!plugin) {
       return false
     }
@@ -138,12 +138,20 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         )
       }
 
-      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
           `Unknown item config type: ${config.itemConfig.type}`,
         )
+      }
+
+      if (value.length === 0) {
+        return []
+      }
+
+      if (value === undefined) {
+        return []
       }
 
       // Serialize each array item using its corresponding plugin
@@ -166,7 +174,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         )
       }
 
-      const plugin = portRegistry.getPlugin(config.itemConfig.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -175,7 +183,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
       }
 
       // Deserialize each array item using its corresponding plugin
-      return data.map((item, index) => {
+      return (data as any[]).map((item, index) => {
         return plugin.deserializeValue(item, config.itemConfig) as IPortValue
       })
     } catch (error) {
@@ -188,7 +196,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
   serializeConfig: (config: ArrayPortConfig): JSONValue => {
     try {
       // Serialize the nested itemConfig using its corresponding plugin
-      const plugin = portRegistry.getPlugin(config.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -196,7 +204,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         )
       }
 
-      const pluginItem = portRegistry.getPlugin(config.itemConfig.type)
+      const pluginItem = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!pluginItem) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -234,7 +242,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
       }
 
       // Deserialize the nested itemConfig using its corresponding plugin
-      const itemPlugin = portRegistry.getPlugin(result.data.itemConfig.type)
+      const itemPlugin = PortPluginRegistry.getInstance().getPlugin(result.data.itemConfig.type)
       if (!itemPlugin) {
         throw new PortError(
           PortErrorType.SerializationError,
@@ -247,7 +255,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         itemConfig: itemPlugin.deserializeConfig(result.data.itemConfig),
       }
 
-      const plugin = portRegistry.getPlugin(config.type)
+      const plugin = PortPluginRegistry.getInstance().getPlugin(config.type)
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,

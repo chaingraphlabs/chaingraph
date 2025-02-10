@@ -13,12 +13,14 @@ import type {
   IPortValue,
   PortType,
   ValueTypeMap,
-} from '@badaitech/chaingraph-types/port/base'
+} from '../../port/base'
 
+import { z } from 'zod'
 import {
   AnyPortPlugin,
   ArrayPortPlugin,
   basePortConfigSchema,
+  BooleanPortPlugin,
   buildUnion,
   EnumPortPlugin,
   NumberPortPlugin,
@@ -27,8 +29,7 @@ import {
   PortErrorType,
   StreamPortPlugin,
   StringPortPlugin,
-} from '@badaitech/chaingraph-types/port'
-import { z } from 'zod'
+} from '../../port'
 
 const defaultValueSchema = z.string()
 
@@ -36,7 +37,18 @@ const defaultValueSchema = z.string()
  * Registry for port plugins
  */
 export class PortPluginRegistry {
+  // singleton instance
+  private static instance: PortPluginRegistry
+
   private plugins = new Map<PortType, IPortPlugin<any>>()
+
+  // singleton instance getter
+  static getInstance(): PortPluginRegistry {
+    if (!PortPluginRegistry.instance) {
+      PortPluginRegistry.instance = new PortPluginRegistry()
+    }
+    return PortPluginRegistry.instance
+  }
 
   /**
    * Register a plugin for a specific port type
@@ -62,10 +74,12 @@ export class PortPluginRegistry {
     const registeredPlugin = this.plugins.get(type) as IPortPlugin<T> | undefined
     if (!registeredPlugin) {
       // check from all plugins
-      const plugin = this.getAllPlugins().find(p => p.typeIdentifier === type)
+      const plugin = this.getAllPlugins().find(p => p && p.typeIdentifier === type)
       if (plugin) {
         this.register(plugin)
         return plugin
+      } else {
+        return undefined
       }
     }
 
@@ -85,6 +99,7 @@ export class PortPluginRegistry {
       EnumPortPlugin,
       StreamPortPlugin,
       AnyPortPlugin,
+      BooleanPortPlugin,
     ]
   }
 
@@ -183,6 +198,18 @@ export class PortPluginRegistry {
     return plugin.serializeConfig(config)
   }
 
+  cloneConfig<T extends PortType>(config: ConfigTypeMap[T]): ConfigTypeMap[T] {
+    const plugin = this.getPlugin(config.type as T)
+    if (!plugin) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        `No plugin found for type "${config.type}"`,
+      )
+    }
+    const serialized = this.serializeConfig(config)
+    return this.deserializeConfig(config.type, serialized) as ConfigTypeMap[T]
+  }
+
   /**
    * Deserialize a port configuration
    */
@@ -201,4 +228,4 @@ export class PortPluginRegistry {
 /**
  * Global port registry instance
  */
-export const portRegistry = new PortPluginRegistry()
+export const portRegistry = PortPluginRegistry.getInstance()

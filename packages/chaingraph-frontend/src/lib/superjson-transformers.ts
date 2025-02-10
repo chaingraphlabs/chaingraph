@@ -1,4 +1,4 @@
-import type { IFlow, INode, IPort } from '@badaitech/chaingraph-types'
+import type { INode, IPort } from '@badaitech/chaingraph-types'
 import {
   AnyPortPlugin,
   ArrayPortPlugin,
@@ -13,20 +13,20 @@ import {
   NumberPortPlugin,
   ObjectPortPlugin,
   PortFactory,
-  portRegistry,
+  PortPluginRegistry,
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types'
 import SuperJSON from 'superjson'
 
 export function initializeJsonTransformers() {
-  portRegistry.register(StringPortPlugin)
-  portRegistry.register(NumberPortPlugin)
-  portRegistry.register(AnyPortPlugin)
-  portRegistry.register(StreamPortPlugin)
-  portRegistry.register(ArrayPortPlugin)
-  portRegistry.register(ObjectPortPlugin)
-  portRegistry.register(EnumPortPlugin)
+  PortPluginRegistry.getInstance().register(StringPortPlugin)
+  PortPluginRegistry.getInstance().register(NumberPortPlugin)
+  PortPluginRegistry.getInstance().register(AnyPortPlugin)
+  PortPluginRegistry.getInstance().register(StreamPortPlugin)
+  PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+  PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+  PortPluginRegistry.getInstance().register(EnumPortPlugin)
 
   // Execution event data
   SuperJSON.registerCustom<ExecutionEventImpl, any>(
@@ -62,18 +62,18 @@ export function initializeJsonTransformers() {
     'ExecutionEventImpl',
   )
 
-  SuperJSON.registerCustom<IFlow, any>(
+  SuperJSON.registerCustom<Flow, any>(
     {
-      isApplicable: (v): v is IFlow => {
+      isApplicable: (v): v is Flow => {
         return v instanceof Flow
       },
       serialize: (v) => {
-        return SuperJSON.serialize(v.serialize())
+        return v.serialize()
       },
       deserialize: (v) => {
         try {
           // Deserialize flow from JSON string
-          return Flow.deserialize(SuperJSON.deserialize(v)) as Flow
+          return Flow.deserialize(v) as Flow
         } catch (e) {
           console.error('Failed to deserialize flow', e)
           debugger

@@ -16,7 +16,9 @@ import type {
   StreamPortConfig,
 } from '@badaitech/chaingraph-types/port'
 import type { INode } from './interface'
+import type { NodeMetadata } from './types'
 import { getOrCreateNodeMetadata } from '@badaitech/chaingraph-types/decorator'
+import { PortPluginRegistry } from '@badaitech/chaingraph-types/port'
 import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
 import { v7 as uuidv7 } from 'uuid'
 
@@ -32,8 +34,9 @@ export class PortConfigProcessor {
    * Processes all port configurations of a node, ensuring they are fully specified.
    * @param node The node whose ports are to be processed.
    */
-  processNodePorts(node: INode): void {
-    const nodeMetadata = getOrCreateNodeMetadata(node)
+  processNodePorts(node: INode): NodeMetadata {
+    // const nodeMetadata = this.cloneNodeMetadata(getOrCreateNodeMetadata(node))
+    const nodeMetadata = node.metadata
     const nodeId = node.id
 
     if (nodeMetadata.portsConfig) {
@@ -54,6 +57,24 @@ export class PortConfigProcessor {
         nodeMetadata.portsConfig.set(propertyKey, processedPortConfig)
       }
     }
+
+    return nodeMetadata
+  }
+
+  cloneNodeMetadata(nodeMetadata: NodeMetadata): NodeMetadata {
+    const clonedNodeMetadata: NodeMetadata = {
+      ...nodeMetadata,
+      portsConfig: new Map(),
+    }
+
+    if (nodeMetadata.portsConfig) {
+      for (const [key, portConfig] of nodeMetadata.portsConfig.entries()) {
+        const newConfig = PortPluginRegistry.getInstance().cloneConfig(portConfig)
+        clonedNodeMetadata.portsConfig!.set(key, newConfig)
+      }
+    }
+
+    return clonedNodeMetadata
   }
 
   /**

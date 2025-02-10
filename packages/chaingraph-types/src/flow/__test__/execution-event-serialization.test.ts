@@ -12,11 +12,15 @@ import {
   Input,
   Node,
   NodeExecutionStatus,
+  PortPluginRegistry,
   registerNodeTransformers,
   String,
 } from '@badaitech/chaingraph-types'
 import { ExecutionContext } from '@badaitech/chaingraph-types/execution/execution-context'
-import { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types/flow/execution-events'
+import {
+  ExecutionEventEnum,
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types/flow/execution-events'
 import { registerFlowTransformers } from '@badaitech/chaingraph-types/flow/json-transformers'
 import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
 import { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
@@ -28,16 +32,15 @@ import {
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types/port/plugins'
-import { portRegistry } from '@badaitech/chaingraph-types/port/registry'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 
-portRegistry.register(StringPortPlugin)
-portRegistry.register(NumberPortPlugin)
-portRegistry.register(ArrayPortPlugin)
-portRegistry.register(ObjectPortPlugin)
-portRegistry.register(EnumPortPlugin)
-portRegistry.register(StreamPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(ArrayPortPlugin)
+PortPluginRegistry.getInstance().register(ObjectPortPlugin)
+PortPluginRegistry.getInstance().register(EnumPortPlugin)
+PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 describe('executionEventImpl Serialization', () => {
   beforeAll(() => {
