@@ -6,9 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NumberPortConfig, NumberPortValue } from '@badaitech/chaingraph-types/port'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
-import { BasePort, NumberPortPlugin } from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '../../utils/json'
+import type { NumberPortConfig, NumberPortValue } from '../base'
+import { BasePort } from '../base'
+import { NumberPortPlugin } from '../plugins'
 
 /**
  * Concrete implementation of a Number Port.

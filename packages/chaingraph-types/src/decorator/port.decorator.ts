@@ -6,12 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  PortType,
-} from '@badaitech/chaingraph-types/port/base/types'
+import type { PortType } from '../port'
 import type { PortDecoratorOptions } from './port.decorator.types'
-import { getPortsMetadata, setPortMetadata } from './metadata-storage'
 
+import { getPortsMetadata, setPortMetadata } from './metadata-storage'
 import { resolveObjectSchema } from './object-schema.decorator'
 import { processEnumOptions, processItemConfig } from './recursive-normalization'
 import 'reflect-metadata'

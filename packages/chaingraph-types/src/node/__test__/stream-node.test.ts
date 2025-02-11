@@ -6,31 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
-  Input,
-  MultiChannel,
-  Node,
-  Output,
-  Port,
-  PortPluginRegistry,
-} from '@badaitech/chaingraph-types'
-import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
-import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
-
-import {
-  ArrayPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { Input, Node, Output, Port } from '../../decorator'
+import { ArrayPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { MultiChannel } from '../../utils'
+import { BaseNode } from '../base-node'
+import { registerNodeTransformers } from '../json-transformers'
+import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -46,7 +31,7 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 class StreamNode extends BaseNode {
   @Input()
   @Port({
-    type: 'stream',
+    type: 'stream' as const,
     // mode: 'input',
     itemConfig: {
       type: 'string',
@@ -57,7 +42,7 @@ class StreamNode extends BaseNode {
 
   @Output()
   @Port({
-    type: 'stream',
+    type: 'stream' as const,
     // mode: 'output',
     itemConfig: {
       type: 'string',

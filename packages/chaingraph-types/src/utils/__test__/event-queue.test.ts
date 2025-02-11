@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { createQueueIterator, EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createQueueIterator, EventQueue } from '../event-queue'
 
 // Define a test event interface
 interface TestEvent {

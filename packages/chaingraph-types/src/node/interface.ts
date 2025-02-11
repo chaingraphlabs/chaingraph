@@ -6,18 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext } from '@badaitech/chaingraph-types/execution'
-import type { NodeEvent } from '@badaitech/chaingraph-types/node/events'
-import type { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
-import type {
-  Dimensions,
-  NodeUIMetadata,
-  NodeUIState,
-  NodeUIStyle,
-  Position,
-} from '@badaitech/chaingraph-types/node/node-ui'
-import type { IPort } from '@badaitech/chaingraph-types/port'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import type { ExecutionContext } from '../execution'
+import type { IPort } from '../port'
+import type { JSONValue } from '../utils/json'
+import type { NodeEvent } from './events'
+import type { NodeStatus } from './node-enums'
+import type { Dimensions, NodeUIMetadata, NodeUIState, NodeUIStyle, Position } from './node-ui'
 import type {
   NodeExecutionResult,
   NodeMetadata,

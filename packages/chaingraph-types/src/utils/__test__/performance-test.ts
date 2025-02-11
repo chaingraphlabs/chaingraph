@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { EventQueue } from '@badaitech/chaingraph-types/utils/event-queue'
+import { EventQueue } from '../event-queue'
 
 async function runPerformanceTest() {
   console.log('Starting EventQueue Performance Test\n')

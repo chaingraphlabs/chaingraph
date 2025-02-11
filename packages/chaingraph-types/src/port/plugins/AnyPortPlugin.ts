@@ -6,24 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  AnyPortConfig,
-  AnyPortValue,
-  IPortConfig,
-  IPortPlugin,
-  IPortValue,
-  PortType,
-} from '@badaitech/chaingraph-types/port'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
-import {
-  basePortConfigSchema,
-  basePortConfigUISchema,
-  isAnyPortValue,
-  PortError,
-  PortErrorType,
-  PortPluginRegistry,
-} from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '../../utils/json'
+import type { AnyPortConfig, AnyPortValue, IPortConfig, IPortPlugin, IPortValue, PortType } from '../base'
 import { z } from 'zod'
+import { basePortConfigSchema, basePortConfigUISchema, isAnyPortValue, PortError, PortErrorType } from '../base'
+import { PortPluginRegistry } from './PortPluginRegistry'
 
 /**
  * Helper to create an any port value

@@ -30,7 +30,7 @@ export function hasCycle(nodes: Iterable<INode>, edges: Iterable<Edge>, edge?: E
   const allEdges = Array.from(edges)
 
   const inDegree: Record<string, number> = Object.fromEntries(
-    Iterator.from(nodes).map(node => [node.id, 0]),
+    Array.from(nodes).map(node => [node.id, 0]),
   )
 
   if (edge) {

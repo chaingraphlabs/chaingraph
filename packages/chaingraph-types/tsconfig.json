@@ -1,22 +1,10 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
-    "composite": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": "./",
     "rootDir": "./src",
-    "moduleResolution": "bundler",
-    "paths": {
-      "@badaitech/chaingraph-types/*": ["./src/*"]
-    },
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist",
-    "sourceMap": true,
-    "skipLibCheck": true
+    "outDir": "dist"
   },
-  "include": ["./src/**/*"],
-  "exclude": ["**/__tests__/**", "**/__test__/**", "**/node_modules/**", "dist", "coverage"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

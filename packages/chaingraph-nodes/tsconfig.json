@@ -1,31 +1,10 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
-    "composite": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "useDefineForClassFields": false,
-    "emitDecoratorMetadata": true,
+    "jsx": "react-jsx",
     "experimentalDecorators": true,
-    "baseUrl": ".",
-    "rootDir": "./src",
-    "moduleResolution": "node",
-    "paths": {
-      "@badaitech/chaingraph-types": ["../chaingraph-types/src"],
-      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"]
-    },
-    "strict": true,
-    "noImplicitAny": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist",
-    "sourceMap": true,
-    "skipLibCheck": true
+    "outDir": "dist"
   },
-  "references": [
-    {
-      "path": "../chaingraph-types"
-    }
-  ],
-  "include": ["src/**/*"],
-  "exclude": ["**/__tests__/**", "**/__test__/**", "**/node_modules/**", "dist", "coverage"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

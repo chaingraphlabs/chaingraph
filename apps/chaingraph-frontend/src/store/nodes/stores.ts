@@ -1,0 +1,260 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
+import type { INode } from '@badaitech/chaingraph-types'
+import {
+  addNode,
+  addNodeToFlowFx,
+  clearActiveFlow,
+  clearNodes,
+  removeNode,
+  removeNodeFromFlowFx,
+  setNodeMetadata,
+  setNodes,
+  setNodesLoading,
+  setNodeVersion,
+  updateNodeParent,
+  updateNodePositionInterpolated,
+  updateNodePositionLocal,
+  updateNodeUILocal,
+} from '@/store'
+import { updatePort, updatePortUI } from '@/store/ports/events'
+import { NodeRegistry, PortFactory } from '@badaitech/chaingraph-types'
+import { combine, createStore } from 'effector'
+
+// Store for nodes
+export const $nodes = createStore<Record<string, INode>>({})
+  .on(setNodes, (_, nodes) => ({ ...nodes }))
+  .on(addNode, (state, node) => ({
+    ...state,
+    [node.id]: node,
+  }))
+  .on(removeNode, (state, id) => {
+    const { [id]: _, ...rest } = state
+    return rest
+  })
+  .on(setNodeMetadata, (state, { id, metadata }) => {
+    const node = state[id]
+    if (!node)
+      return state
+
+    node.setMetadata(metadata)
+
+    return {
+      ...state,
+      [id]: node,
+    }
+  })
+  .reset(clearNodes)
+  .reset(clearActiveFlow)
+  .on(setNodeVersion, (state, { id, version }) => {
+    const node = state[id]
+    if (!node) {
+      console.error(`Node ${id} not found in store`)
+      return state
+    }
+
+    console.log(`Setting version for node ${id} to ${version}`)
+
+    node.setMetadata({
+      ...node.metadata,
+      version,
+    })
+
+    return {
+      ...state,
+      [id]: node,
+    }
+  })
+  .on(updatePort, (state, { id, data, nodeVersion }) => {
+    if (!data || !data.config)
+      return state
+
+    const nodeId = data.config?.nodeId
+    if (!nodeId)
+      return state
+
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    const port = node.getPort(id)
+    if (!port)
+      return state
+
+    const newPort = PortFactory.createFromConfig(data.config)
+
+    try {
+      newPort.setConfig(data.config)
+      newPort.setValue(data.value)
+    } catch (e: any) {
+      console.error('Error updating port value:', e)
+    }
+
+    const newNode = NodeRegistry.getInstance().createNode(
+      node.metadata.type,
+      node.id,
+      {
+        ...node.metadata,
+        version: nodeVersion,
+      },
+    )
+    newNode.setPorts(node.ports) // set existing ports
+    newNode.setPort(newPort) // set new port
+
+    return {
+      ...state,
+      [nodeId]: newNode,
+    }
+  })
+  .on(updatePortUI, (state, { id, ui }) => {
+    const node = Object.values(state).find(node => node.ports.has(id)) // TODO: optimize
+    if (!node)
+      return state
+
+    const port = node.getPort(id)
+    if (!port)
+      return state
+
+    const newPort = PortFactory.createFromConfig(port.getConfig())
+    newPort.setConfig({
+      ...port.getConfig(),
+      ui: {
+        ...port.getConfig().ui,
+        ...ui,
+      },
+    })
+    newPort.setValue(port.getValue())
+
+    const newNode = NodeRegistry.getInstance().createNode(
+      node.metadata.type,
+      node.id,
+      node.metadata,
+    )
+    newNode.setPorts(node.ports) // set existing ports
+    newNode.setPort(newPort) // set new port
+
+    return {
+      ...state,
+      [node.id]: newNode,
+    }
+  })
+
+// Update nodes store to handle UI updates
+$nodes
+  .on(updateNodeUILocal, (state, { nodeId, ui }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...node.metadata.ui,
+        ...ui,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
+  .on(updateNodePositionLocal, (state, { flowId, nodeId, position }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    // console.log(`[LOCAL] Updating node position for node ${nodeId}, position:`, position)
+
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...node.metadata.ui,
+        position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
+
+// Loading states
+export const $isNodesLoading = createStore(false)
+  .on(setNodesLoading, (_, isLoading) => isLoading)
+  .on(addNodeToFlowFx.pending, (_, isPending) => isPending)
+  .on(removeNodeFromFlowFx.pending, (_, isPending) => isPending)
+
+// Error states
+export const $addNodeError = createStore<Error | null>(null)
+  .on(addNodeToFlowFx.failData, (_, error) => error)
+  .reset(addNodeToFlowFx.done)
+
+export const $removeNodeError = createStore<Error | null>(null)
+  .on(removeNodeFromFlowFx.failData, (_, error) => error)
+  .reset(removeNodeFromFlowFx.done)
+
+// Combined error store
+export const $nodesError = combine(
+  $addNodeError,
+  $removeNodeError,
+  (addError, removeError) => addError || removeError,
+)
+
+// Computed stores
+// export const $nodesList = $nodesWithVersions.map(
+//   nodes => Object.values(nodes),
+// )
+// export const $nodesCount = $nodesWithVersions.map(
+//   nodes => Object.keys(nodes).length,
+// )
+
+// Update store to handle interpolated positions
+$nodes
+  .on(updateNodePositionInterpolated, (state, { nodeId, position }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...node.metadata.ui,
+        position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })
+
+// updateNodeParent
+$nodes
+  .on(updateNodeParent, (state, { nodeId, parentNodeId }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    node.setMetadata({
+      ...node.metadata,
+      parentNodeId,
+      ui: {
+        ...node.metadata.ui,
+        // position,
+      },
+    })
+
+    return {
+      ...state,
+      [nodeId]: node,
+    }
+  })

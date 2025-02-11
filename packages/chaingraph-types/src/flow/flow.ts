@@ -6,9 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge } from '@badaitech/chaingraph-types/edge'
-import type { IFlow } from '@badaitech/chaingraph-types/flow/interface'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import type { JSONValue } from '../utils/json'
 import type {
   FlowEvent,
   NodeParentUpdatedEventData,
@@ -17,12 +15,13 @@ import type {
   NodeUIPositionChangedEventData,
   PortUpdatedEventData,
 } from './events'
+import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
-import { NodeRegistry } from '@badaitech/chaingraph-types/decorator/registry'
-import { Edge } from '@badaitech/chaingraph-types/edge'
-import { type INode, type NodeEvent, NodeEventType } from '@badaitech/chaingraph-types/node'
-import { EventQueue } from '@badaitech/chaingraph-types/utils'
 import { v4 as uuidv4 } from 'uuid'
+import { NodeRegistry } from '../decorator'
+import { Edge, type IEdge } from '../edge'
+import { type INode, type NodeEvent, NodeEventType } from '../node'
+import { EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
 
 export class Flow implements IFlow {
@@ -105,7 +104,7 @@ export class Flow implements IFlow {
     this.nodes.delete(nodeId)
 
     // Remove any edges connected to this node
-    const edgesToRemove = []
+    const edgesToRemove: string[] = []
     for (const [edgeId, edge] of this.edges.entries()) {
       if (edge.sourceNode.id === nodeId || edge.targetNode.id === nodeId) {
         edgesToRemove.push(edgeId)
