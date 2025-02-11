@@ -44,7 +44,7 @@ async function runPerformanceTest() {
 
   // Publish in batches to avoid memory issues
   for (let batch = 0; batch < EVENTS_COUNT / BATCH_SIZE; batch++) {
-    const promises = []
+    const promises: Promise<void>[] = []
     for (let i = 0; i < BATCH_SIZE; i++) {
       promises.push(queue.publish(batch * BATCH_SIZE + i))
     }

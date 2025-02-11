@@ -19,10 +19,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc -b",
     "test": "vitest",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc -b"
   },
   "dependencies": {
     "@langchain/core": "^0.3.39",

@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@10.3.0+sha256.24dd5c65d86c7d0710aba16699fbc46d74fc9acf2b419f4945207f2de9e57e23",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
@@ -16,17 +17,18 @@
   },
   "scripts": {
     "clean": "make clean",
-    "build": "make build",
-    "rebuild": "make rebuild",
-    "dev": "make dev",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "build:front": "turbo run build --filter=@badaitech/chaingraph-frontend",
+    "dev:front": "turbo run dev --filter=@badaitech/chaingraph-frontend",
+    "build:back": "turbo run build --filter=@badaitech/chaingraph-backend",
+    "dev:back": "turbo run dev --filter=@badaitech/chaingraph-backend",
     "test": "make test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "dev:front": "pnpm --filter chaingraph-frontend run dev",
-    "dev:back": "pnpm --filter chaingraph-backend run dev"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.64.2",
@@ -73,6 +75,7 @@
     "prettier-plugin-organize-imports": "4.1.0",
     "prettier-plugin-packagejson": "2.5.6",
     "prettier-plugin-sort-json": "4.0.0",
+    "turbo": "^2.4.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.0",
     "unplugin-auto-import": "^0.19.0",
