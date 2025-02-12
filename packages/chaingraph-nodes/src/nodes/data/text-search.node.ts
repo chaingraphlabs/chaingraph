@@ -19,12 +19,12 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  title: 'Search Text',
+  title: 'Text Search',
   description: 'Search for a string in the source text (case-insensitive)',
   category: NODE_CATEGORIES.DATA,
   tags: ['text', 'search'],
 })
-class SearchTextNode extends BaseNode {
+class TextSearchNode extends BaseNode {
   @Input()
   @String({
     title: 'Source Text',
@@ -60,4 +60,4 @@ class SearchTextNode extends BaseNode {
   }
 }
 
-export default SearchTextNode
+export default TextSearchNode

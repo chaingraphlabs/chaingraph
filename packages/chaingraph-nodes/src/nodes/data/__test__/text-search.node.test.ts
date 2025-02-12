@@ -9,7 +9,7 @@
 import { ExecutionContext, NodeExecutionStatus } from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
 
-import SearchTextNode from '../text-search.node'
+import TextSearchNode from '../text-search.node'
 
 function getTestContext() {
   const abortController = new AbortController()
@@ -18,7 +18,7 @@ function getTestContext() {
 
 describe('search text node', () => {
   it('should return true if a given string is in the text', async () => {
-    const node = new SearchTextNode('search-text-node')
+    const node = new TextSearchNode('search-text-node')
 
     // Set inputs
     node.sourceText = 'Hello, World!'
@@ -32,7 +32,7 @@ describe('search text node', () => {
   })
 
   it('should return true if a given lowercase string is in the text with a different case', async () => {
-    const node = new SearchTextNode('search-text-node')
+    const node = new TextSearchNode('search-text-node')
 
     // Set inputs
     node.sourceText = 'I AM UPPERCASE'
@@ -46,7 +46,7 @@ describe('search text node', () => {
   })
 
   it('should return false if the search string is not found in the text', async () => {
-    const node = new SearchTextNode('search-text-node')
+    const node = new TextSearchNode('search-text-node')
 
     // Set inputs
     node.sourceText = 'Hello, World!'
@@ -60,7 +60,7 @@ describe('search text node', () => {
   })
 
   it('should return true if the search string is empty', async () => {
-    const node = new SearchTextNode('search-text-node')
+    const node = new TextSearchNode('search-text-node')
 
     // Set inputs
     node.sourceText = 'Hello, World!'
@@ -74,7 +74,7 @@ describe('search text node', () => {
   })
 
   it('should return false if the source string is empty', async () => {
-    const node = new SearchTextNode('search-text-node')
+    const node = new TextSearchNode('search-text-node')
 
     // Set inputs
     node.sourceText = ''
