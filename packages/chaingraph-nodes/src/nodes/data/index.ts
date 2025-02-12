@@ -8,3 +8,4 @@
 
 export * from './srteam-buffer.node'
 export * from './template.node'
+export * from './text-search.node'
