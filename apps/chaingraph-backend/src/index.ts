@@ -9,7 +9,7 @@
 import type {
   CategoryMetadata,
 } from '@badaitech/chaingraph-types'
-import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes/categories/constants'
+import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
 import {
   AnyPortPlugin,
   ArrayPortPlugin,

@@ -10,5 +10,7 @@ import { trpcClient } from '@badaitech/chaingraph-backend/client'
 import { createEffect } from 'effector'
 
 export const fetchCategorizedNodesFx = createEffect(async () => {
-  return trpcClient.nodeRegistry.getCategorizedNodes.query()
+  const response = await trpcClient.nodeRegistry.getCategorizedNodes.query()
+
+  return response
 })

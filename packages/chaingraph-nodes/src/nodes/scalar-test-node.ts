@@ -25,7 +25,6 @@ import {
   title: 'Scalar Node',
   description: 'Node with scalar ports',
 })
-
 export class ScalarNode extends BaseNode {
   @Input()
   @String({

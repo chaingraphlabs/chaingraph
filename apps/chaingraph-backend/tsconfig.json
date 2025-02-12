@@ -1,6 +1,7 @@
 {
   "extends": "@badaitech/typescript-config/trpc.json",
   "compilerOptions": {
+    "rootDir": ".",
     "module": "ESNext",
     "moduleResolution": "bundler"
   },

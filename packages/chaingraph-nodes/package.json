@@ -10,11 +10,7 @@
     "directory": "./packages/chaingraph-nodes"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./categories/constants": {
-      "types": "./src/categories/constants.ts",
-      "default": "./src/categories/constants.ts"
-    }
+    ".": "./src/index.ts"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
