@@ -9,12 +9,12 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
+  Boolean,
   Input,
   Node,
   NodeExecutionStatus,
   Output,
   String,
-  Boolean,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -49,7 +49,7 @@ class SearchTextNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Mock implementation
-    this.result = this.sourceText.toLowerCase().includes(this.searchText.toLowerCase());
+    this.result = this.sourceText.toLowerCase().includes(this.searchText.toLowerCase())
 
     return {
       status: NodeExecutionStatus.Completed,
