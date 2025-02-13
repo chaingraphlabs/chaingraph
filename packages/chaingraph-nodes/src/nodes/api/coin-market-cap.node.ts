@@ -132,7 +132,11 @@ class CoinMarketCapNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
-    const cryptos = this.cryptoList.split(',').map((c) => c.trim()).join(',')
+    const cryptos = this.cryptoList
+  .split(',')
+  .map((c) => c.trim())
+  .filter((c) => c !== '')
+  .join(',');
     const url = `${CMC_API_URL}?symbol=${cryptos}`
 
     const response = await fetch(url, {
@@ -152,10 +156,13 @@ class CoinMarketCapNode extends BaseNode {
 
     for (const symbol of Object.keys(data.data)) {
       const crypto = data.data[symbol]
-      const contractAddresses: ContractAddress[] = Object.entries(crypto.platform || {}).map(([blockchain, address]) => ({
-        blockchain,
-        address: address as string,
-      }))
+      const contractAddresses: ContractAddress[] = 
+      crypto.platform 
+        ? Object.entries(crypto.platform).map(([blockchain, address]) => ({
+            blockchain,
+            address: address as string,
+          }))
+        : [];
       
 
       const cryptoData: CryptoData = {
@@ -165,13 +172,13 @@ class CoinMarketCapNode extends BaseNode {
         website: crypto.urls?.website?.[0] || "",
         contractAddresses: contractAddresses,
         financials: {
-          ath: crypto.quote.USD.ath || 0,
-          price: crypto.quote.USD.price || 0,
-          volume_24h: crypto.quote.USD.volume_24h || 0,
-          change_24h: crypto.quote.USD.percent_change_24h || 0,
-          market_cap: crypto.quote.USD.market_cap || 0,
-          total_supply: crypto.total_supply || 0,
-          circulating_supply: crypto.circulating_supply || 0,
+          ath: crypto.quote?.USD?.ath ?? 0,
+          price: crypto.quote?.USD?.price ?? 0,
+          volume_24h: crypto.quote?.USD?.volume_24h ?? 0,
+          change_24h: crypto.quote?.USD?.percent_change_24h ?? 0,
+          market_cap: crypto.quote?.USD?.market_cap ?? 0,
+          total_supply: crypto.total_supply ?? 0,
+          circulating_supply: crypto.circulating_supply ?? 0,
         },
       }
 
