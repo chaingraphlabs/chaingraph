@@ -13,43 +13,48 @@ import {
   Node,
   NodeExecutionStatus,
   Output,
-  String,
+  Number,
 } from '@badaitech/chaingraph-types';
 import { NODE_CATEGORIES } from '../../categories';
 
 @Node({
-  title: 'RandomNumber',
+  title: 'Random Number',
   description: 'Generate a random integer within a given range',
   category: NODE_CATEGORIES.MATH,
   tags: ['math', 'random', 'number'],
 })
 class RandomNode extends BaseNode {
   @Input()
-  @String({
+  @Number({
     title: 'Range From',
-    description: 'Minimum value for the random number (as a string)',
+    description: 'Minimum value for the random number',
   })
-  rangeFrom: string = '0';
+  rangeFrom: number = 0;
 
   @Input()
-  @String({
+  @Number({
     title: 'Range To',
-    description: 'Maximum value for the random number (as a string)',
+    description: 'Maximum value for the random number',
   })
-  rangeTo: string = '100';
+  rangeTo: number = 100;
 
   @Output()
-  @String({
+  @Number({
     title: 'Result Number',
-    description: 'Generated random integer (as a string)',
+    description: 'Generated random integer',
   })
-  result: string = '0';
+  result: number = 0;
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const min = parseInt(this.rangeFrom, 10) || 0;
-    const max = parseInt(this.rangeTo, 10) || 100;
+    const min = isFinite(this.rangeFrom) ? this.rangeFrom : 0;
+    const max = isFinite(this.rangeTo) ? this.rangeTo : 100;
+    
+    if (min > max) {
+      throw new Error('Invalid range: Range From must be less than or equal to Range To.');
+    }
+
     const randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
-    this.result = randomValue.toString();
+    this.result = randomValue;
 
     console.log(`Generated random number: ${this.result}`);
 
