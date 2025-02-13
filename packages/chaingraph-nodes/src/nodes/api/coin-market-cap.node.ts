@@ -16,25 +16,28 @@ import {
   String,
   ObjectSchema,
   Number,
+  PortObject,
+  PortArray,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
+const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
+
 @ObjectSchema({
-  description: 'Structured data for cryptocurrency information',
+  description: 'Asset contract addresses, containing blockchain and address pairs',
 })
-class CryptoData {
-  @String({ title: 'Name', description: 'Cryptocurrency name' })
-  name: string = ''
+class ContractAddress {
+  @String({ title: 'Blockchain', description: 'Blockchain name' })
+  blockchain: string = ''
 
-  @String({ title: 'Ticker', description: 'Cryptocurrency ticker symbol' })
-  ticker: string = ''
+  @String({ title: 'Address', description: 'Contract address' })
+  address: string = ''
+}
 
-  @String({ title: 'Description', description: 'Brief description of the cryptocurrency' })
-  description: string = ''
-
-  @String({ title: 'Website', description: 'Official website URL' })
-  website: string = ''
-
+@ObjectSchema({
+  description: 'Financial information for a cryptocurrency',
+})
+class Financials {
   @Number({ title: 'ATH', description: 'All-time high price' })
   ath: number = 0
 
@@ -55,6 +58,29 @@ class CryptoData {
 
   @Number({ title: 'Circulating Supply', description: 'Currently circulating supply' })
   circulating_supply: number = 0
+}
+
+@ObjectSchema({
+  description: 'Structured data for cryptocurrency information',
+})
+class CryptoData {
+  @String({ title: 'Name', description: 'Cryptocurrency name' })
+  name: string = ''
+
+  @String({ title: 'Ticker', description: 'Cryptocurrency ticker symbol' })
+  ticker: string = ''
+
+  @String({ title: 'Description', description: 'Brief description of the cryptocurrency' })
+  description: string = ''
+
+  @String({ title: 'Website', description: 'Official website URL' })
+  website: string = ''
+
+  @PortArray({ title: 'Contract Addresses', description: 'List of blockchain-address pairs', itemConfig: { type: 'object', schema: ContractAddress } })
+  contractAddresses: ContractAddress[] = []
+
+  @PortObject({ schema: Financials })
+  financials: Financials = new Financials()
 }
 
 @Node({
@@ -94,6 +120,11 @@ class CoinMarketCapNode extends BaseNode {
   apiKey: string = ''
 
   @Output()
+  @PortArray({
+    title: 'Result',
+    description: 'List of cryptocurrency data objects',
+    itemConfig: { type: 'object', schema: CryptoData },
+  })
   result: CryptoData[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
@@ -101,25 +132,54 @@ class CoinMarketCapNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
-    const cryptos = this.cryptoList.split(',').map((c) => c.trim())
-    
-    // Mock API request - replace with actual API call
-    this.result = cryptos.map((crypto) => ({
-      name: crypto,
-      ticker: crypto.toUpperCase(),
-      description: `Sample data for ${crypto}`,
-      website: `https://coinmarketcap.com/currencies/${crypto.toLowerCase()}`,
-      ath: Math.random() * 100000,
-      price: Math.random() * 1000,
-      volume_24h: Math.random() * 1000000,
-      change_24h: Math.random() * 20 - 10,
-      market_cap: Math.random() * 1000000000,
-      total_supply: Math.random() * 10000000,
-      circulating_supply: Math.random() * 5000000,
-    }))
+    const cryptos = this.cryptoList.split(',').map((c) => c.trim()).join(',')
+    const url = `${CMC_API_URL}?symbol=${cryptos}`
 
-    console.log('result', this.result)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-CMC_PRO_API_KEY': this.apiKey,
+        'Accept': 'application/json',
+      },
+    })
 
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data from CoinMarketCap: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    const results: CryptoData[] = []
+
+    for (const symbol of Object.keys(data.data)) {
+      const crypto = data.data[symbol]
+      const contractAddresses: ContractAddress[] = Object.entries(crypto.platform || {}).map(([blockchain, address]) => ({
+        blockchain,
+        address: address as string,
+      }))
+      
+
+      const cryptoData: CryptoData = {
+        name: crypto.name,
+        ticker: crypto.symbol,
+        description: crypto.description || 'No description available',
+        website: crypto.urls?.website?.[0] || "",
+        contractAddresses: contractAddresses,
+        financials: {
+          ath: crypto.quote.USD.ath || 0,
+          price: crypto.quote.USD.price || 0,
+          volume_24h: crypto.quote.USD.volume_24h || 0,
+          change_24h: crypto.quote.USD.percent_change_24h || 0,
+          market_cap: crypto.quote.USD.market_cap || 0,
+          total_supply: crypto.total_supply || 0,
+          circulating_supply: crypto.circulating_supply || 0,
+        },
+      }
+
+      results.push(cryptoData)
+    }
+
+    this.result = results
+    console.log('res', this.result)
     return {
       status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
