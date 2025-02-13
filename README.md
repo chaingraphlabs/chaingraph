@@ -192,6 +192,9 @@ docker-compose down       # Stop and remove containers
 
 ## Contributing
 
+Before submitting a contribution, you must agree to our [Contributor License Agreement](CLA.md).
+By submitting a contribution (e.g., a pull request), you confirm that you accept its terms.
+
 Contributions to ChainGraph are welcome! If you wish to submit changes:
 - Fork the repository and create a feature or bugfix branch.
 - Ensure your changes follow the project’s style guidelines and that tests pass.
@@ -205,15 +208,6 @@ Feel free to open issues for bugs, suggestions, or questions.
 - **Unstable API:** Because ChainGraph is still in active development, many aspects of the API may change and documentation might be updated accordingly.
 - **Incomplete Features:** Some advanced features are still under development.
 - **Experimental Design:** The current version is primarily for demonstration and evaluation purposes. It is not yet ready for production use.
-
----
-
-## Contributing
-
-Contributions are welcome! If you would like to help improve ChainGraph:
-
-- Please open issues or pull requests with suggestions, bug reports, or improvements.
-- Make sure to update or add documentation where necessary.
 
 ---
 
