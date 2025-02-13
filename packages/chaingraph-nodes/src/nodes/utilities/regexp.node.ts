@@ -11,7 +11,7 @@ import { BaseNode, Input, Node, NodeExecutionStatus, Output, String } from '@bad
 import { NODE_CATEGORIES } from '../../categories';
 
 @Node({
-  title: 'RegExp Filter',
+  title: 'Regular Expression Filter',
   description: 'Filters input text using a regular expression',
   category: NODE_CATEGORIES.UTILITIES,
   tags: ['regex', 'filter', 'text'],
@@ -40,12 +40,16 @@ class RegExpNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     try {
+      if (!this.pattern) {
+        throw new Error('RegExp pattern is required.');
+      }
+      
       const regex = new RegExp(this.pattern, 'g');
       const matches = this.sourceText.match(regex);
       this.result = matches ? matches.join(' ') : '';
-    } catch (error) {
+    } catch (error:any) {
       console.error('RegExpNode error:', error);
-      this.result = '';
+      throw new Error(`RegExpNode execution failed: ${error.message}`);
     }
 
     return {
