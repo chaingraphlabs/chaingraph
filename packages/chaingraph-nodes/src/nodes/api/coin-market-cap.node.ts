@@ -14,8 +14,48 @@ import {
   NodeExecutionStatus,
   Output,
   String,
+  ObjectSchema,
+  Number,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+
+@ObjectSchema({
+  description: 'Structured data for cryptocurrency information',
+})
+class CryptoData {
+  @String({ title: 'Name', description: 'Cryptocurrency name' })
+  name: string = ''
+
+  @String({ title: 'Ticker', description: 'Cryptocurrency ticker symbol' })
+  ticker: string = ''
+
+  @String({ title: 'Description', description: 'Brief description of the cryptocurrency' })
+  description: string = ''
+
+  @String({ title: 'Website', description: 'Official website URL' })
+  website: string = ''
+
+  @Number({ title: 'ATH', description: 'All-time high price' })
+  ath: number = 0
+
+  @Number({ title: 'Price', description: 'Current price' })
+  price: number = 0
+
+  @Number({ title: '24h Volume', description: 'Trading volume in the last 24 hours' })
+  volume_24h: number = 0
+
+  @Number({ title: '24h Change', description: 'Price change in the last 24 hours' })
+  change_24h: number = 0
+
+  @Number({ title: 'Market Cap', description: 'Total market capitalization' })
+  market_cap: number = 0
+
+  @Number({ title: 'Total Supply', description: 'Total available supply of the cryptocurrency' })
+  total_supply: number = 0
+
+  @Number({ title: 'Circulating Supply', description: 'Currently circulating supply' })
+  circulating_supply: number = 0
+}
 
 @Node({
   title: 'CoinMarketCap Price Fetcher',
@@ -54,11 +94,7 @@ class CoinMarketCapNode extends BaseNode {
   apiKey: string = ''
 
   @Output()
-  @String({
-    title: 'Result',
-    description: 'Fetched cryptocurrency data',
-  })
-  result: string = ''
+  result: CryptoData[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.apiKey) {
@@ -66,27 +102,21 @@ class CoinMarketCapNode extends BaseNode {
     }
 
     const cryptos = this.cryptoList.split(',').map((c) => c.trim())
-    const blockchains = this.blockchain ? this.blockchain.split(',').map((b) => b.trim()) : []
     
     // Mock API request - replace with actual API call
-    const data = cryptos.map((crypto) => ({
+    this.result = cryptos.map((crypto) => ({
       name: crypto,
       ticker: crypto.toUpperCase(),
       description: `Sample data for ${crypto}`,
       website: `https://coinmarketcap.com/currencies/${crypto.toLowerCase()}`,
-      contractAddresses: blockchains.map((chain) => ({ blockchain: chain, address: '0x123...' })),
-      financials: {
-        ath: Math.random() * 100000,
-        price: Math.random() * 1000,
-        volume_24h: Math.random() * 1000000,
-        change_24h: Math.random() * 20 - 10,
-        market_cap: Math.random() * 1000000000,
-        total_supply: Math.random() * 10000000,
-        circulating_supply: Math.random() * 5000000,
-      },
+      ath: Math.random() * 100000,
+      price: Math.random() * 1000,
+      volume_24h: Math.random() * 1000000,
+      change_24h: Math.random() * 20 - 10,
+      market_cap: Math.random() * 1000000000,
+      total_supply: Math.random() * 10000000,
+      circulating_supply: Math.random() * 5000000,
     }))
-
-    this.result = JSON.stringify(data, null, 2)
 
     console.log('result', this.result)
 
