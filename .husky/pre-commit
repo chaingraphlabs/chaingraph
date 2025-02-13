@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Copyright (c) 2025 BadLabs
+#
+# Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+#
+# As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+#
+
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js|tsx|jsx|css)$' | grep -vE '\.config\.(ts|js|mjs)$')
+
+for file in $files; do
+    if ! grep -q "Copyright (c)" "$file"; then
+        echo "❌ Error: Missing license header in $file"
+        exit 1
+    fi
+done
+
+exit 0
