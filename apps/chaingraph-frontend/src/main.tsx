@@ -14,6 +14,7 @@ import App from './App.tsx'
 import { RootProvider } from './providers/RootProvider.tsx'
 import 'reflect-metadata'
 import './reflect'
+import '@xyflow/react/dist/style.css'
 import './index.css'
 import '@badaitech/chaingraph-nodes'
 

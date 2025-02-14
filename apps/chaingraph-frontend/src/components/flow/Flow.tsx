@@ -41,7 +41,6 @@ import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
 import GroupNode from './nodes/GroupNode/GroupNode'
-import '@xyflow/react/dist/style.css'
 
 // Configuration constants
 const defaultViewport: Viewport = {

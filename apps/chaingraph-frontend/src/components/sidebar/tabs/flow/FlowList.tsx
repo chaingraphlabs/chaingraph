@@ -168,7 +168,9 @@ export function FlowList() {
                           key={flow.id}
                           flow={flow}
                           selected={activeFlowId === flow.id}
-                          onSelect={() => setActiveFlowId(flow.id!)}
+                          onSelect={() => {
+                            setActiveFlowId(flow.id!)
+                          }}
                           onDelete={() => deleteFlow(flow.id!)}
                           onEdit={() => handleEditClick(flow)}
                           disabled={isCreatingFlow || isDeletingFlow || isEditingFlow}

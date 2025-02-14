@@ -7,11 +7,11 @@
  */
 
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types'
+
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
 } from '@/components/flow/utils/node-position'
-
 import {
   $nodes,
   FlowSubscriptionStatus,
@@ -31,7 +31,7 @@ import { positionInterpolator } from '@/store/nodes/position-interpolation-advan
 import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
 import { trpcReact } from '@badaitech/trpc/client'
 import { skipToken } from '@tanstack/react-query'
-import { useUnit } from 'effector-react/effector-react.umd'
+import { useUnit } from 'effector-react'
 import { useEffect, useMemo } from 'react'
 import { updatePort } from '../../ports/events'
 
@@ -305,7 +305,8 @@ export function useFlowSubscription() {
         subscription.reset()
       }
     }
-  }, [activeFlowId, subscription])
+    // FIXME
+  }, [activeFlowId])
 
   useEffect(() => {
     return () => {

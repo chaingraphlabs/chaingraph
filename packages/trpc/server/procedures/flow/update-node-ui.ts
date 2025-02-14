@@ -14,7 +14,6 @@ export const updateNodeUI = publicProcedure
   .input(z.object({
     flowId: z.string(),
     nodeId: z.string(),
-    // FIXME: FIX Cycle types
     ui: NodeUIMetadataSchema,
     version: z.number(),
   }))
@@ -40,34 +39,34 @@ export const updateNodeUI = publicProcedure
     }
 
     // Update dimensions if present
-    // const hasInputDimensions
-    //   = input.ui.dimensions
-    //     && input.ui.dimensions.width > 0
-    //     && input.ui.dimensions.height > 0
+    const hasInputDimensions
+      = input.ui.dimensions
+        && input.ui.dimensions.width > 0
+        && input.ui.dimensions.height > 0
 
-    // const hasDimensionsChanged = (
-    //   hasInputDimensions
-    //   && (
-    //     !node.metadata.ui?.dimensions
-    //     || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
-    //     || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
-    //   )
-    // )
+    const hasDimensionsChanged = (
+      hasInputDimensions
+      && (
+        !node.metadata.ui?.dimensions
+        || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
+        || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
+      )
+    )
 
-    // if (hasDimensionsChanged) {
-    //   node.setDimensions(input.ui.dimensions!, true)
-    // } else {
-    //   node.incrementVersion()
-    // }
+    if (hasDimensionsChanged) {
+      node.setDimensions(input.ui.dimensions!, true)
+    } else {
+      node.incrementVersion()
+    }
 
     // Update metadata
-    // node.setMetadata({
-    //   ...node.metadata,
-    //   ui: {
-    //     ...(node.metadata.ui ?? {}),
-    //     ...input.ui,
-    //   },
-    // })
+    node.setMetadata({
+      ...node.metadata,
+      ui: {
+        ...(node.metadata.ui ?? {}),
+        ...input.ui,
+      },
+    })
 
     return {
       flowId: input.flowId,
