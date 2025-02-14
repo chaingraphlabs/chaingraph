@@ -7,7 +7,7 @@
  */
 
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
-import { trpc } from '@badaitech/chaingraph-backend/client'
+import { trpcReact } from '@badaitech/trpc/client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'chaingraph:selected-flow'
@@ -28,7 +28,7 @@ export function useSelectedFlow() {
     data: selectedFlow,
     isLoading,
     error,
-  } = trpc.flow.getMeta.useQuery(storedFlowId!, {
+  } = trpcReact.flow.getMeta.useQuery(storedFlowId!, {
     enabled: Boolean(storedFlowId),
     staleTime: 1000 * 60, // Consider data fresh for 1 minute
     // Proper query options

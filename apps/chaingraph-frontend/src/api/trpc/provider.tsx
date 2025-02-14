@@ -6,9 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-'use client'
-
-import { queryClient, trpc, trpcClient } from '@badaitech/chaingraph-backend/client'
+import { queryClient, trpcClient, trpcReact } from '@badaitech/trpc/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -20,9 +18,9 @@ interface TrpcProviderProps {
 export function TrpcProvider({ children }: TrpcProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <trpcReact.Provider client={trpcClient} queryClient={queryClient}>
         {children}
-      </trpc.Provider>
+      </trpcReact.Provider>
 
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

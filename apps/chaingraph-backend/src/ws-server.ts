@@ -7,10 +7,8 @@
  */
 
 import process from 'node:process'
-import { applyWSSHandler } from '@trpc/server/adapters/ws'
+import { applyWSSHandler, appRouter, createContext } from '@badaitech/trpc/server'
 import { WebSocketServer } from 'ws'
-import { createContext } from './context'
-import { appRouter } from './router'
 
 export function wsServer() {
   const wss = new WebSocketServer({

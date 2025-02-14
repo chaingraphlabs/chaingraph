@@ -7,8 +7,8 @@
  */
 
 import type { ExecutionEventHandlerMap } from '@badaitech/chaingraph-types'
-import { trpc } from '@badaitech/chaingraph-backend/client'
 import { createExecutionEventHandler, ExecutionEventEnum } from '@badaitech/chaingraph-types'
+import { trpcReact } from '@badaitech/trpc/client'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
@@ -123,7 +123,7 @@ export function useExecutionSubscription() {
   }), [eventHandlers])
 
   // Subscribe to execution events using tRPC
-  const subscription = trpc.execution.subscribeToEvents.useSubscription(
+  const subscription = trpcReact.execution.subscribeToEvents.useSubscription(
     // executionId && !isTerminalStatus(executionStatus)
     executionId
       ? {

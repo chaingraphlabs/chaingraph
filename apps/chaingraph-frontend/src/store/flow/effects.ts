@@ -7,7 +7,7 @@
  */
 
 import type { CreateFlowEvent, UpdateFlowEvent } from '@/store'
-import { trpcClient } from '@badaitech/chaingraph-backend/client'
+import { trpcClient } from '@badaitech/trpc/client'
 import { createEffect } from 'effector'
 
 // Effect for loading flows list

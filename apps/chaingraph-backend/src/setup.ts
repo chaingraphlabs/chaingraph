@@ -11,7 +11,7 @@
 /**
  * TextDecoderStream polyfill based on Node.js' implementation https://github.com/nodejs/node/blob/3f3226c8e363a5f06c1e6a37abd59b6b8c1923f1/lib/internal/webstreams/encoding.js#L121-L200 (MIT License)
  */
-export class TextDecoderStream {
+class TextDecoderStream {
   #handle: TextDecoder
 
   #transform = new TransformStream({
@@ -64,7 +64,7 @@ export class TextDecoderStream {
 /**
  * TextEncoderStream polyfill based on Node.js' implementation https://github.com/nodejs/node/blob/3f3226c8e363a5f06c1e6a37abd59b6b8c1923f1/lib/internal/webstreams/encoding.js#L38-L119 (MIT License)
  */
-export class TextEncoderStream {
+class TextEncoderStream {
   #pendingHighSurrogate: string | null = null
 
   #handle = new TextEncoder()
@@ -133,5 +133,7 @@ export class TextEncoderStream {
   }
 }
 
-globalThis.TextDecoderStream = TextDecoderStream
-globalThis.TextEncoderStream = TextEncoderStream
+export function setupPolyfills() {
+  globalThis.TextDecoderStream = TextDecoderStream
+  globalThis.TextEncoderStream = TextEncoderStream
+}

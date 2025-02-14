@@ -7,7 +7,7 @@
  */
 
 import type { AddNodeEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
-import { trpcClient } from '@badaitech/chaingraph-backend/client'
+import { trpcClient } from '@badaitech/trpc/client'
 import { createEffect } from 'effector'
 
 // Backend node operations

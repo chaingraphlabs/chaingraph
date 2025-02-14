@@ -1,7 +1,4 @@
-import type {
-  UpdatePortUIInput,
-  UpdatePortValueInput,
-} from '@badaitech/chaingraph-backend/procedures'
+import type { UpdatePortUIInput, UpdatePortValueInput } from '@/store/ports/effects'
 import { setNodeVersion } from '@/store'
 import { $activeFlowId } from '@/store/flow/stores'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants'

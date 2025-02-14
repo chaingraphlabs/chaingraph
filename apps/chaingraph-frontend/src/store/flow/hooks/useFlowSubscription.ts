@@ -29,11 +29,11 @@ import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/
 import { addNode, removeNode } from '@/store/nodes/events'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
+import { trpcReact } from '@badaitech/trpc/client'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { useEffect, useMemo } from 'react'
 import { updatePort } from '../../ports/events'
-import { trpc } from '@badaitech/chaingraph-backend/client'
 
 export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)
@@ -264,7 +264,7 @@ export function useFlowSubscription() {
   }), [eventHandlers])
 
   // Subscribe to flow events using tRPC
-  const subscription = trpc.flow.subscribeToEvents.useSubscription(
+  const subscription = trpcReact.flow.subscribeToEvents.useSubscription(
     activeFlowId
       ? {
           flowId: activeFlowId,

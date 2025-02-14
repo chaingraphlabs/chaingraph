@@ -10,23 +10,7 @@
     "directory": "./packages/chaingraph-backend"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./procedures": {
-      "types": "./src/procedures/index.ts",
-      "default": "./src/procedures/index.ts"
-    },
-    "./router": {
-      "types": "./src/router.ts",
-      "default": "./src/router.ts"
-    },
-    "./execution": {
-      "types": "./src/execution/index.ts",
-      "default": "./src/execution/index.ts"
-    },
-    "./client": {
-      "types": "./src/client.ts",
-      "default": "./src/client.ts"
-    }
+    ".": "./src/index.ts"
   },
   "main": "./src/index.ts",
   "scripts": {
@@ -40,6 +24,7 @@
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/trpc": "workspace:*",
     "@types/ws": "^8.5.14",
     "cors": "^2.8.5",
     "esm": "^3.2.25",
