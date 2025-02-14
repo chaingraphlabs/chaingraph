@@ -28,6 +28,8 @@ export enum LLMModels {
   Gpt4o = 'gpt-4o',
   GptO3Mini = 'o3-mini',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
+  DeepseekChat = 'deepseek-chat',
+  DeepseekReasoner = 'deepseek-reasoner',
 }
 
 @ObjectSchema({
@@ -58,6 +60,8 @@ const llmModels = {
   [LLMModels.Gpt4o]: new LLMModel(LLMModels.Gpt4o, 0),
   [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
   [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
+  [LLMModels.DeepseekChat]: new LLMModel(LLMModels.DeepseekChat, 0),
+  [LLMModels.DeepseekReasoner]: new LLMModel(LLMModels.DeepseekReasoner, 0),
 }
 
 @Node({
@@ -126,6 +130,9 @@ class LLMCallNode extends BaseNode {
     }
 
     const llm = new ChatOpenAI({
+      configuration: {
+        baseURL: this.model in [LLMModels.DeepseekReasoner, LLMModels.DeepseekChat] ? 'https://api.deepseek.com/v1' : 'https://api.openai.com/v1',
+      },
       apiKey: this.apiKey,
       model: this.model,
       temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
