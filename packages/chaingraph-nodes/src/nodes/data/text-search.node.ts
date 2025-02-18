@@ -29,6 +29,7 @@ class TextSearchNode extends BaseNode {
   @String({
     title: 'Source Text',
     description: 'Text to search in',
+    minLength: 1,
   })
   sourceText: string = ''
 
