@@ -14,9 +14,8 @@
   },
   "main": "./src/index.ts",
   "scripts": {
-    "dev": "bun --watch run src/index.ts",
-    "build:tsc": "tsc -b",
-    "build": "vite build",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
     "start": "node ./dist/index.cjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"

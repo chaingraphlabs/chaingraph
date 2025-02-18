@@ -7,9 +7,22 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { AnyPortConfig, AnyPortValue, IPortConfig, IPortPlugin, IPortValue, PortType } from '../base'
+import type {
+  AnyPortConfig,
+  AnyPortValue,
+  IPortConfig,
+  IPortPlugin,
+  IPortValue,
+  PortType,
+} from '../base'
 import { z } from 'zod'
-import { basePortConfigSchema, basePortConfigUISchema, isAnyPortValue, PortError, PortErrorType } from '../base'
+import {
+  basePortConfigSchema,
+  basePortConfigUISchema,
+  isAnyPortValue,
+  PortError,
+  PortErrorType,
+} from '../base'
 import { PortPluginRegistry } from './PortPluginRegistry'
 
 /**
@@ -132,7 +145,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
-          `Unknown value type: ${value.type}`,
+          `Unknown value type: ${config.underlyingType.type}`,
         )
       }
 

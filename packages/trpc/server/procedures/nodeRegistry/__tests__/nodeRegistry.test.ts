@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { createCallerFactory } from '@/server/trpc'
 import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
+import { createCallerFactory } from '../../../trpc'
 import { cleanupTestNodes, registerTestNodes } from '../utils'
 
 describe('node Registry Procedures', () => {

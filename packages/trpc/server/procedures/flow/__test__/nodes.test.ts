@@ -11,8 +11,6 @@ import type {
   NodeExecutionResult,
   NodeMetadata,
 } from '@badaitech/chaingraph-types'
-import { appRouter } from '@/server/router'
-import { createTestContext } from '@/server/test/utils/createTestContext'
 import {
   BaseNode,
   Boolean,
@@ -26,6 +24,8 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { appRouter } from '../../../router'
+import { createTestContext } from '../../../test/utils/createTestContext'
 import { createCallerFactory } from '../../../trpc'
 
 @Node({

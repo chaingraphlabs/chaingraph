@@ -8,7 +8,7 @@
 
 import type { IObjectSchema, IPortConfig, ObjectPortConfig, ObjectPortValue } from '../../port'
 import type { JSONValue } from '../../utils/json'
-import { BasePort, ObjectPortPlugin } from '../..//port'
+import { BasePort, ObjectPortPlugin } from '../../port'
 
 /**
  * Concrete implementation of an Object Port.

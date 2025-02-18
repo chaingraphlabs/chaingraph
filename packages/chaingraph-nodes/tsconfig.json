@@ -2,6 +2,7 @@
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "outDir": "dist"
   },

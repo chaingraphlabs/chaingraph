@@ -1,6 +1,7 @@
 {
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "rootDir": "./src",
     "outDir": "dist"

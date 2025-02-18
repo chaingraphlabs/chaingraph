@@ -4,6 +4,8 @@
     "target": "ES2022",
     "lib": ["ES2023"],
     "moduleDetection": "force",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "module": "ESNext",
 
     /* Bundler mode */

@@ -1,6 +1,8 @@
 {
   "extends": "@badaitech/typescript-config/trpc.json",
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "rootDir": ".",
     "module": "ESNext",
     "moduleResolution": "bundler"
