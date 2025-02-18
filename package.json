@@ -28,7 +28,8 @@
     "lint:fix": "eslint . --fix",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.64.2",
@@ -67,6 +68,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "eslint-plugin-unicorn": "56.0.1",
+    "husky": "^9.1.7",
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "4.1.0",
     "prettier-plugin-packagejson": "2.5.6",

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Licensed Files" pattern="(file:*ts||file:*.js||file:*.tsx||file:*.jsx||file:*.css)&amp;&amp;!file:*.config.ts&amp;&amp;!file:*.config.js&amp;&amp;!file:*.config.mjs" />
+</component>

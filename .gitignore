@@ -1,5 +1,4 @@
-.idea
-dist
+.idea/*
 node_modules
 .DS_Store
 **/.DS_Store
@@ -12,6 +11,9 @@ coverage
 #**/__test__/**/*
 #**/__tests__/**/*
 **/*.tsbuildinfo
+
+!.idea/scopes
+!.idea/copyright
 
 .turbo
 .cache
