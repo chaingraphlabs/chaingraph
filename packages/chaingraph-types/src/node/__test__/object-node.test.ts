@@ -6,29 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
-  Input,
-  Node,
-  Port,
-  PortPluginRegistry,
-} from '@badaitech/chaingraph-types'
-import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
-import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
-import {
-  ArrayPortPlugin,
-  EnumPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { Input, Node, Port } from '../../decorator'
+import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { BaseNode } from '../base-node'
+import { registerNodeTransformers } from '../json-transformers'
+import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -61,7 +47,7 @@ class User implements Record<string, unknown> {
 class ObjectNode extends BaseNode {
   @Input()
   @Port({
-    type: 'object',
+    type: 'object' as const,
     schema: {
       properties: {
         street: { type: 'string', defaultValue: 'Main Street' },
@@ -90,7 +76,7 @@ class ObjectNode extends BaseNode {
 class NestedObjectNode extends BaseNode {
   @Input()
   @Port({
-    type: 'object',
+    type: 'object' as const,
     schema: {
       properties: {
         username: { type: 'string', defaultValue: 'user' },
@@ -129,7 +115,7 @@ class NestedObjectNode extends BaseNode {
 class ComplexNode extends BaseNode {
   @Input()
   @Port({
-    type: 'array',
+    type: 'array' as const,
     defaultValue: [],
     itemConfig: {
       type: 'object',
@@ -157,7 +143,7 @@ class ComplexNode extends BaseNode {
 
   @Input()
   @Port({
-    type: 'array',
+    type: 'array' as const,
     itemConfig: {
       type: 'array',
       defaultValue: [],

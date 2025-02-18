@@ -6,33 +6,28 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
-import {
-  type ExecutionContext,
-  Input,
-  type NodeExecutionResult,
-  Output,
-  PortPluginRegistry,
-  String,
-} from '@badaitech/chaingraph-types'
-import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
-import { findPort, traversePorts } from '@badaitech/chaingraph-types/node/traverse-ports'
-import {
-  ArrayPortPlugin,
-  EnumPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
-import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
-import {
-  createStringValue,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins/StringPortPlugin'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../../node'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { BaseNode, findPort, traversePorts } from '../../node'
+import { AnyPortPlugin, ArrayPortPlugin, createStringValue, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
 import { Node } from '../node.decorator'
+import { Input, Output } from '../port-config.decorator'
 import { Port } from '../port.decorator'
+import { String } from '../scalar.decorator'
 import 'reflect-metadata'
+
+const NODE_CATEGORIES = {
+  MESSAGING: 'messaging',
+  AI: 'ai',
+  MATH: 'math',
+  DATA: 'data',
+  FLOW: 'flow',
+  UTILITIES: 'utilities',
+  BASIC_VALUES: 'basic-values',
+  OTHER: 'other',
+  GROUP: 'group',
+} as const
 
 interface InnerObjectSchema {
   foo: string

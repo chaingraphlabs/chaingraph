@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeStatus } from '@badaitech/chaingraph-types/node/node-enums'
-import type { NodeUIMetadata, Position } from '@badaitech/chaingraph-types/node/node-ui'
-import type { IPort } from '@badaitech/chaingraph-types/port'
+import type { IPort } from '../port'
+import type { NodeStatus } from './node-enums'
+import type { NodeUIMetadata, Position } from './node-ui'
 
 /**
  * Enum for all possible node events

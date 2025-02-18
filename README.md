@@ -56,9 +56,6 @@ ChainGraph is built with modern web technologies, aiming at a robust and type-sa
 - **Zod & SuperJSON:**
   Zod is used for runtime schema validation, while SuperJSON manages complex data serialization, ensuring that data remains consistent across the client and server boundaries.
 
-- **Bun:**
-  Employed as the chosen runtime for its superior performance and modern build capabilities, Bun enhances development speed and production performance.
-
 - **XYFlow:**
   A visual flow library used on the frontend to render and manage the drag-and-drop canvas, enabling users to compose workflows visually.
 
@@ -76,13 +73,7 @@ Clone the repository and install dependencies:
 ```bash
 git clone https://github.com/badaitech/chaingraph.git
 cd chaingraph
-make install
-```
-
-Alternatively, you can use Bun directly:
-
-```bash
-bun install
+pnpm install
 ```
 
 ## Running in Development Mode
@@ -90,7 +81,7 @@ bun install
 To start the development environment (both frontend and backend), run:
 
 ```bash
-make dev
+pnpm run dev
 ```
 
 This command launches:
@@ -99,22 +90,16 @@ This command launches:
 
 You can also run each package individually if desired:
 - **Backend:**
-  `bun run --cwd packages/chaingraph-backend dev`
+  `turbo run dev --filter=@badaitech/chaingraph-backend`
 - **Frontend:**
-  `bun run --cwd packages/chaingraph-frontend dev`
+  `turbo run dev --filter=@badaitech/chaingraph-frontend`
 
 ## Building for Production
 
 To build the entire project with a clean installation, execute:
 
 ```bash
-make build
-```
-
-For a full rebuild that first cleans previous builds:
-
-```bash
-make rebuild
+pnpm run build
 ```
 
 ## Docker & Docker-compose
@@ -184,10 +169,10 @@ docker-compose down       # Stop and remove containers
 - **packages/chaingraph-nodes:**
   A collection of pre-built node implementations and category definitions, serving as examples and reusable components for extensibility.
 
-- **packages/chaingraph-backend:**
+- **apps/chaingraph-backend:**
   The backend service that implements a TRPC API router, flow execution logic, in-memory storage for flows and nodes, and WebSocket-based real-time subscriptions.
 
-- **packages/chaingraph-frontend:**
+- **apps/chaingraph-frontend:**
   A React+Vite frontend that utilizes XYFlow for a graphical flow editor, Effector for state management, and TRPC to interact with the backend.
 
 ## Contributing

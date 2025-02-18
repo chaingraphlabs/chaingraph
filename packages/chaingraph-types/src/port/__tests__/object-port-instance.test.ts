@@ -35,7 +35,7 @@ describe('objectPort Instance', () => {
       const value = port.getValue()
 
       // Validate that the default value passes validation.
-      const errors = PortPluginRegistry.getInstance().getPlugin('object').validateValue(value!, config)
+      const errors = PortPluginRegistry.getInstance().getPlugin('object')?.validateValue(value!, config)
       expect(errors).toHaveLength(0)
     })
 
@@ -57,7 +57,7 @@ describe('objectPort Instance', () => {
         extraField: 'unexpected',
       })
 
-      const errors = PortPluginRegistry.getInstance().getPlugin('object').validateValue(badValue, config)
+      const errors = PortPluginRegistry.getInstance().getPlugin('object')?.validateValue(badValue, config)
       expect(errors).toContain('Missing required field: age')
       expect(errors).toContain('Unexpected field: extraField')
     })
@@ -160,7 +160,7 @@ describe('objectPort Instance', () => {
       })
 
       const port = new ObjectPort<typeof schema>(config)
-      const errors = PortPluginRegistry.getInstance().getPlugin('object').validateValue(port.getValue()!, config)
+      const errors = PortPluginRegistry.getInstance().getPlugin('object')?.validateValue(port.getValue()!, config)
       expect(errors).toHaveLength(0)
 
       expect(port.getValue()?.address.city).toBe('New York')
@@ -176,8 +176,8 @@ describe('objectPort Instance', () => {
         },
       })
 
-      const nestedErrors = PortPluginRegistry.getInstance().getPlugin('object').validateValue(badNestedValue, config)
-      expect(nestedErrors.some(msg => msg.includes('at least 3 characters'))).toBe(true)
+      const nestedErrors = PortPluginRegistry.getInstance().getPlugin('object')?.validateValue(badNestedValue, config)
+      expect(nestedErrors?.some(msg => msg.includes('at least 3 characters'))).toBe(true)
     })
   })
 
@@ -200,12 +200,12 @@ describe('objectPort Instance', () => {
       const originalValue = port.getValue()
 
       // Serialize the plain object value.
-      const serialized = PortPluginRegistry.getInstance().getPlugin('object').serializeValue(originalValue!, config)
+      const serialized = PortPluginRegistry.getInstance().getPlugin('object')?.serializeValue(originalValue!, config)
       // Full roundtrip via JSON.
       const jsonString = JSON.stringify(serialized)
       const parsed = JSON.parse(jsonString)
 
-      const deserializedValue = PortPluginRegistry.getInstance().getPlugin('object').deserializeValue(parsed, config)
+      const deserializedValue = PortPluginRegistry.getInstance().getPlugin('object')?.deserializeValue(parsed, config)
       expect(deserializedValue).toEqual(originalValue)
     })
 
@@ -247,10 +247,10 @@ describe('objectPort Instance', () => {
       const port = new ObjectPort(config)
       const originalValue = port.getValue()
 
-      const serialized = PortPluginRegistry.getInstance().getPlugin('object').serializeValue(originalValue!, config)
+      const serialized = PortPluginRegistry.getInstance().getPlugin('object')?.serializeValue(originalValue!, config)
       const jsonString = JSON.stringify(serialized)
       const parsed = JSON.parse(jsonString)
-      const deserializedValue = PortPluginRegistry.getInstance().getPlugin('object').deserializeValue(parsed, config)
+      const deserializedValue = PortPluginRegistry.getInstance().getPlugin('object')?.deserializeValue(parsed, config)
       expect(deserializedValue).toEqual(originalValue)
     })
   })

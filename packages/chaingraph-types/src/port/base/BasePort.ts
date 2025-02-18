@@ -8,8 +8,8 @@
 
 import type { ExtractValue, IPort, IPortConfig } from '../../port'
 import type { JSONValue } from '../../utils/json'
-import { deepCopy } from '../..//utils/deep-copy'
 import { PortError, PortErrorType } from '../../port'
+import { deepCopy } from '../../utils/deep-copy'
 
 export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {
   protected config: C

@@ -6,20 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  BooleanPortConfig,
-  BooleanPortValue,
-  IPortPlugin,
-} from '@badaitech/chaingraph-types/port'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
-import {
-  basePortConfigSchema,
-  booleanPortConfigUISchema,
-  isBooleanPortValue,
-  PortError,
-  PortErrorType,
-} from '@badaitech/chaingraph-types/port'
+import type { JSONValue } from '../../utils/json'
+import type { BooleanPortConfig, BooleanPortValue, IPortPlugin } from '../base'
 import { z } from 'zod'
+import { basePortConfigSchema, booleanPortConfigUISchema, isBooleanPortValue, PortError, PortErrorType } from '../base'
 
 /**
  * Schemas for boolean port validation

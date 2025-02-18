@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IObjectSchema, IPortConfig } from '@badaitech/chaingraph-types'
+import type { IObjectSchema, IPortConfig } from '../port'
 import { resolveObjectSchema } from './object-schema.decorator'
 
 /**

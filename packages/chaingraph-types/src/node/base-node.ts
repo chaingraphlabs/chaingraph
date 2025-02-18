@@ -219,7 +219,7 @@ export abstract class BaseNode implements INode {
   getOutputs(): IPort[] {
     return Array.from(
       this._ports.values()
-        .filter(port => port.getConfig().direction === PortDirection.Output),
+      .filter(port => port.getConfig().direction === PortDirection.Output),
     )
   }
 

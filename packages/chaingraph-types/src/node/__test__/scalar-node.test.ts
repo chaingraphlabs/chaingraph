@@ -47,7 +47,7 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 class ScalarNode extends BaseNode {
   @Input()
   @Port({
-    type: 'string',
+    type: 'string' as const,
     defaultValue: createStringValue('default string'),
     minLength: 1,
     maxLength: 100,
@@ -56,7 +56,7 @@ class ScalarNode extends BaseNode {
 
   @Input()
   @Port({
-    type: 'number',
+    type: 'number' as const,
     defaultValue: createNumberValue(42),
     min: 0,
     max: 100,
@@ -66,7 +66,7 @@ class ScalarNode extends BaseNode {
 
   @Input()
   @Port({
-    type: 'boolean',
+    type: 'boolean' as const,
     defaultValue: createBooleanValue(true),
   })
   boolInput: boolean = true

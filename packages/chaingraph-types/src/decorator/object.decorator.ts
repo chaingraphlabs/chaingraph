@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PortDecoratorOptions } from '@badaitech/chaingraph-types/decorator/port.decorator.types'
+import type { PortDecoratorOptions } from './port.decorator.types'
 import { Port } from './port.decorator'
 
 /**
@@ -36,7 +36,7 @@ import { Port } from './port.decorator'
  */
 export function PortObject(config: Omit<PortDecoratorOptions<'object'>, 'type'>): PropertyDecorator {
   return Port({
-    type: 'object',
+    type: 'object' as const,
     ...config,
   })
 }

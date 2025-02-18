@@ -6,30 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
-  findPort,
-  Input,
-  Node,
-  Port,
-  PortPluginRegistry,
-} from '@badaitech/chaingraph-types'
-import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
-import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
-
-import {
-  ArrayPortPlugin,
-  EnumPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { Input, Node, Port } from '../../decorator'
+import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StringPortPlugin } from '../../port'
+import { BaseNode } from '../base-node'
+import { registerNodeTransformers } from '../json-transformers'
+import { NodeExecutionStatus } from '../node-enums'
+import { findPort } from '../traverse-ports'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -51,7 +37,7 @@ enum Color {
 class EnumNode extends BaseNode {
   @Input()
   @Port({
-    type: 'enum',
+    type: 'enum' as const,
     options: [
       {
         id: Color.Red,

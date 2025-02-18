@@ -6,50 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  ArrayPortPlugin,
-  BaseNode,
-  DefaultValue,
-  Description,
-  EnumPortPlugin,
-  Id,
-  Input,
-  Metadata,
-  MultiChannel,
-  Name,
-  Node,
-  NodeExecutionStatus,
-  Number,
-  NumberEnum,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  ObjectSchema,
-  Output,
-  Port,
-  PortArray,
-  PortArrayNested,
-  PortArrayNumber,
-  PortArrayObject,
-  PortArrayString,
-  PortEnum,
-  PortEnumFromNative,
-  PortEnumFromObject,
-  PortObject,
-  PortPluginRegistry,
-  PortStream,
-  registerNodeTransformers,
-  StreamPortPlugin,
-  String,
-  StringEnum,
-  StringPortPlugin,
-  Title,
-} from '@badaitech/chaingraph-types'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { DefaultValue, Description, Id, Input, Metadata, Name, Node, Number, NumberEnum, ObjectSchema, Output, Port, PortArray, PortArrayNested, PortArrayNumber, PortArrayObject, PortArrayString, PortEnum, PortEnumFromNative, PortEnumFromObject, PortObject, PortStream, String, StringEnum, Title } from '../../decorator'
+import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { MultiChannel } from '../../utils'
+import { BaseNode } from '../base-node'
+import { registerNodeTransformers } from '../json-transformers'
+import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -199,7 +165,7 @@ export class UserProfileNode extends BaseNode {
 
   // Case for infer schema from type field
   @Input() @Port({
-    type: 'object',
+    type: 'object' as const,
     schema: TestUserObject,
     defaultValue: new TestUserObject(),
   })

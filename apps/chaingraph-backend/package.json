@@ -1,0 +1,38 @@
+{
+  "name": "@badaitech/chaingraph-backend",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "license": "BUSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badaitech/chaingraph.git",
+    "directory": "./packages/chaingraph-backend"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "start": "node ./dist/index.cjs",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/trpc": "workspace:*",
+    "@types/ws": "^8.5.14",
+    "cors": "^2.8.5",
+    "esm": "^3.2.25",
+    "superjson": "^2.2.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@badaitech/typescript-config": "workspace:*",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.11.16"
+  }
+}

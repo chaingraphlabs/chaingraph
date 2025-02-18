@@ -14,3 +14,6 @@ coverage
 
 !.idea/scopes
 !.idea/copyright
+
+.turbo
+.cache

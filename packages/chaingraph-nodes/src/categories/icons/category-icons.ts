@@ -18,7 +18,6 @@ import {
   Type,
   Wrench,
 } from 'lucide-react'
-import { CustomIcon } from './components/CustomIcon'
 
 // Define type for icon props
 export type IconProps = SVGProps<SVGSVGElement>
@@ -38,9 +37,6 @@ export const CategoryIcons: Record<string, IconComponent> = {
   Package,
   Grid,
   Type,
-
-  // Custom icons
-  CustomIcon,
 } as const
 
 export type CategoryIconName = keyof typeof CategoryIcons
@@ -53,5 +49,5 @@ export function getCategoryIcon(name: string): IconComponent {
   if (isCategoryIcon(name)) {
     return CategoryIcons[name]
   }
-  return CategoryIcons.CustomIcon
+  return CategoryIcons.Type
 }

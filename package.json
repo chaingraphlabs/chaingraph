@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@10.3.0+sha256.24dd5c65d86c7d0710aba16699fbc46d74fc9acf2b419f4945207f2de9e57e23",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
@@ -16,9 +17,12 @@
   },
   "scripts": {
     "clean": "make clean",
-    "build": "make build",
-    "rebuild": "make rebuild",
-    "dev": "make dev",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "build:front": "turbo run build --filter=@badaitech/chaingraph-frontend",
+    "dev:front": "turbo run dev --filter=@badaitech/chaingraph-frontend",
+    "build:back": "turbo run build --filter=@badaitech/chaingraph-backend",
+    "dev:back": "turbo run dev --filter=@badaitech/chaingraph-backend",
     "test": "make test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -30,11 +34,6 @@
   "dependencies": {
     "@tanstack/react-query": "^5.64.2",
     "@tanstack/react-query-devtools": "^5.64.2",
-    "@trpc/client": "^11.0.0-rc.730",
-    "@trpc/next": "^11.0.0-rc.730",
-    "@trpc/react-query": "^11.0.0-rc.730",
-    "@trpc/server": "^11.0.0-rc.730",
-    "@types/ws": "^8.5.14",
     "decimal.js": "^10.4.3",
     "devalue": "^5.1.1",
     "loglevel": "^1.9.2",
@@ -43,7 +42,6 @@
     "ts-node": "^10.9.2",
     "tslog": "^4.9.3",
     "uuid": "^11.0.4",
-    "ws": "^8.18.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -75,6 +73,7 @@
     "prettier-plugin-organize-imports": "4.1.0",
     "prettier-plugin-packagejson": "2.5.6",
     "prettier-plugin-sort-json": "4.0.0",
+    "turbo": "^2.4.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.0",
     "unplugin-auto-import": "^0.19.0",

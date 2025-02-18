@@ -1,0 +1,35 @@
+{
+  "name": "@badaitech/trpc",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "exports": {
+    "./client": {
+      "types": "./client/index.ts",
+      "default": "./client/index.ts"
+    },
+    "./server": {
+      "types": "./server/router.ts",
+      "default": "./server/router.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check-types": "tsc -b"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": ">= 5.64.x"
+  },
+  "dependencies": {
+    "@trpc/client": "11.0.0-rc.781",
+    "@trpc/react-query": "^11.0.0-rc.781",
+    "@trpc/server": "11.0.0-rc.781"
+  },
+  "devDependencies": {
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/typescript-config": "workspace:*"
+  }
+}

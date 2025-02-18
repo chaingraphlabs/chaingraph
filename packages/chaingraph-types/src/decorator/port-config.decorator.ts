@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { PortDirection } from '@badaitech/chaingraph-types/port'
+import { PortDirection } from '../port'
 import { getPortMetadata, updatePortMetadata } from './metadata-storage'
 import 'reflect-metadata'
 

@@ -279,7 +279,7 @@ export type IPortValue =
   | ObjectPortValue<any>
   | StreamPortValue<any>
   | EnumPortValue
-  | AnyPortValue
+  // | AnyPortValue
 
 export type PortConfigByType<T extends PortType> = ConfigTypeMap[T]
 
@@ -353,7 +353,8 @@ export type ExtractValue<C extends IPortConfig> =
               C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
                 C extends EnumPortConfig ? EnumPortValue :
                   C extends AnyPortConfig ? AnyPortValue :
-                    never
+                    C extends undefined ? undefined :
+                      never
 
 /**
  * Helper function to build a union schema

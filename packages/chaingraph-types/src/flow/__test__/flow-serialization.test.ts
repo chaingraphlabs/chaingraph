@@ -6,37 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
-  Flow,
-  Id,
-  Input,
-  Node,
-  NodeRegistry,
-  Number,
-  Output,
-  PortPluginRegistry,
-  String,
-} from '@badaitech/chaingraph-types'
-
-import { registerFlowTransformers } from '@badaitech/chaingraph-types/flow/json-transformers'
-import { registerNodeTransformers } from '@badaitech/chaingraph-types/node/json-transformers'
-import { NodeExecutionStatus } from '@badaitech/chaingraph-types/node/node-enums'
-import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
-import {
-  ArrayPortPlugin,
-  EnumPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../../node'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { Id, Input, Node, NodeRegistry, Number, Output, String } from '../../decorator'
+import { BaseNode, findPort, NodeExecutionStatus, registerNodeTransformers } from '../../node'
+import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { Flow } from '../flow'
+import { registerFlowTransformers } from '../json-transformers'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
 PortPluginRegistry.getInstance().register(NumberPortPlugin)
