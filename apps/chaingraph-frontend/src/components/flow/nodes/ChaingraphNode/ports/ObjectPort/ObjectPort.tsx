@@ -129,7 +129,7 @@ export function ObjectPort({
                 </div>
               ))}
 
-              {!isSchemaMutable && (
+              {isSchemaMutable && (
                 <AddFieldDialog
                   title={`Add property for ${config.title || config.key}`}
                   className={cn([
