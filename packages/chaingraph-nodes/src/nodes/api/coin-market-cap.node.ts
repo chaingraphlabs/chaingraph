@@ -1,11 +1,3 @@
-/*
- * Copyright (c) 2025 BadLabs
- *
- * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
- *
- * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
- */
-
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
@@ -24,6 +16,31 @@ import { NODE_CATEGORIES } from '../../categories'
 const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
 
 @ObjectSchema({
+  description: 'Financial information for a cryptocurrency',
+})
+class Financials {
+  @Number({ title: 'ATH', description: 'All-time high price' })
+  ath: number = 0;
+
+  @Number({ title: 'Price', description: 'Current price' })
+  price: number = 0;
+
+  @Number({ title: '24h Volume', description: 'Trading volume in the last 24 hours' })
+  volume_24h: number = 0;
+
+  @Number({ title: '24h Change', description: 'Price change in the last 24 hours' })
+  change_24h: number = 0;
+
+  @Number({ title: 'Market Cap', description: 'Total market capitalization' })
+  market_cap: number = 0;
+
+  @Number({ title: 'Total Supply', description: 'Total available supply of the cryptocurrency' })
+  total_supply: number = 0;
+
+  @Number({ title: 'Circulating Supply', description: 'Currently circulating supply' })
+  circulating_supply: number = 0;
+}
+@ObjectSchema({
   description: 'Asset contract addresses, containing blockchain and address pairs',
 })
 class ContractAddress {
@@ -33,54 +50,31 @@ class ContractAddress {
   @String({ title: 'Address', description: 'Contract address' })
   address: string = ''
 }
-
-@ObjectSchema({
-  description: 'Financial information for a cryptocurrency',
-})
-class Financials {
-  @Number({ title: 'ATH', description: 'All-time high price' })
-  ath: number = 0
-
-  @Number({ title: 'Price', description: 'Current price' })
-  price: number = 0
-
-  @Number({ title: '24h Volume', description: 'Trading volume in the last 24 hours' })
-  volume_24h: number = 0
-
-  @Number({ title: '24h Change', description: 'Price change in the last 24 hours' })
-  change_24h: number = 0
-
-  @Number({ title: 'Market Cap', description: 'Total market capitalization' })
-  market_cap: number = 0
-
-  @Number({ title: 'Total Supply', description: 'Total available supply of the cryptocurrency' })
-  total_supply: number = 0
-
-  @Number({ title: 'Circulating Supply', description: 'Currently circulating supply' })
-  circulating_supply: number = 0
-}
-
 @ObjectSchema({
   description: 'Structured data for cryptocurrency information',
 })
 class CryptoData {
   @String({ title: 'Name', description: 'Cryptocurrency name' })
-  name: string = ''
+  name: string = '';
 
   @String({ title: 'Ticker', description: 'Cryptocurrency ticker symbol' })
-  ticker: string = ''
+  ticker: string = '';
 
   @String({ title: 'Description', description: 'Brief description of the cryptocurrency' })
-  description: string = ''
+  description: string = '';
 
   @String({ title: 'Website', description: 'Official website URL' })
-  website: string = ''
+  website: string = '';
 
-  @PortArray({ title: 'Contract Addresses', description: 'List of blockchain-address pairs', itemConfig: { type: 'object', schema: ContractAddress } })
-  contractAddresses: ContractAddress[] = []
+  @PortArray({
+    title: 'Contract Addresses',
+    description: 'List of blockchain-address pairs',
+    itemConfig: { type: 'object', schema: ContractAddress },
+  })
+  contractAddresses: ContractAddress[] = [];
 
   @PortObject({ schema: Financials })
-  financials: Financials = new Financials()
+  financials: Financials = new Financials();
 }
 
 @Node({
@@ -91,25 +85,28 @@ class CryptoData {
 })
 class CoinMarketCapNode extends BaseNode {
   @Input()
-  @String({
+  @PortArray({
     title: 'Cryptocurrencies',
-    description: 'Comma-separated list of cryptocurrency names, tickers, or contract addresses',
+    description: 'List of cryptocurrency names, tickers, or contract addresses',
+    itemConfig: { type: 'string' },
   })
-  cryptoList: string = ''
+  cryptoList: string[] = [];
 
   @Input()
-  @String({
+  @PortArray({
     title: 'Blockchain (optional)',
-    description: 'Comma-separated list of blockchains to filter by',
+    description: 'List of blockchains to filter by',
+    itemConfig: { type: 'string' },
   })
-  blockchain: string = ''
+  blockchain: string[] = [];
 
   @Input()
   @String({
     title: 'Date (optional)',
     description: 'Historical date in YYYY-MM-DD format',
+    pattern: '^\\d{4}-\\d{2}-\\d{2}$',
   })
-  date: string = ''
+  date: string = '';
 
   @Input()
   @String({
@@ -117,7 +114,7 @@ class CoinMarketCapNode extends BaseNode {
     description: 'CoinMarketCap API Key',
     ui: { isPassword: true },
   })
-  apiKey: string = ''
+  apiKey: string = '';
 
   @Output()
   @PortArray({
@@ -125,19 +122,15 @@ class CoinMarketCapNode extends BaseNode {
     description: 'List of cryptocurrency data objects',
     itemConfig: { type: 'object', schema: CryptoData },
   })
-  result: CryptoData[] = []
+  result: CryptoData[] = [];
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.apiKey) {
-      throw new Error('API Key is required')
+      throw new Error('API Key is required');
     }
 
-    const cryptos = this.cryptoList
-  .split(',')
-  .map((c) => c.trim())
-  .filter((c) => c !== '')
-  .join(',');
-    const url = `${CMC_API_URL}?symbol=${cryptos}`
+    const cryptos = this.cryptoList.join(',');
+    const url = `${CMC_API_URL}?symbol=${cryptos}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -145,31 +138,29 @@ class CoinMarketCapNode extends BaseNode {
         'X-CMC_PRO_API_KEY': this.apiKey,
         'Accept': 'application/json',
       },
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch data from CoinMarketCap: ${response.statusText}`)
+      throw new Error(`Failed to fetch data from CoinMarketCap: ${response.statusText}`);
     }
 
-    const data = await response.json()
-    const results: CryptoData[] = []
+    const data = await response.json();
+    const results: CryptoData[] = [];
 
     for (const symbol of Object.keys(data.data)) {
-      const crypto = data.data[symbol]
-      const contractAddresses: ContractAddress[] = 
-      crypto.platform 
+      const crypto = data.data[symbol];
+      const contractAddresses: ContractAddress[] = crypto.platform
         ? Object.entries(crypto.platform).map(([blockchain, address]) => ({
             blockchain,
             address: address as string,
           }))
         : [];
-      
 
       const cryptoData: CryptoData = {
         name: crypto.name,
         ticker: crypto.symbol,
         description: crypto.description || 'No description available',
-        website: crypto.urls?.website?.[0] || "",
+        website: crypto.urls?.website?.[0] || '',
         contractAddresses: contractAddresses,
         financials: {
           ath: crypto.quote?.USD?.ath ?? 0,
@@ -180,20 +171,20 @@ class CoinMarketCapNode extends BaseNode {
           total_supply: crypto.total_supply ?? 0,
           circulating_supply: crypto.circulating_supply ?? 0,
         },
-      }
+      };
 
-      results.push(cryptoData)
+      results.push(cryptoData);
     }
 
-    this.result = results
-    console.log('res', this.result)
+    this.result = results;
+    console.log('res', this.result);
     return {
       status: NodeExecutionStatus.Completed,
       startTime: context.startTime,
       endTime: new Date(),
       outputs: new Map([['result', this.result]]),
-    }
+    };
   }
 }
 
-export default CoinMarketCapNode
+export default CoinMarketCapNode;
