@@ -36,23 +36,23 @@ export function ObjectPort({ port, renderPort, value, onChange, errorMessage }: 
   const properties = Object.values(config.schema.properties)
 
   return (
-    <div className="relative flex gap-2 flex-col text-xs group/port bg-secondary rounded p-2 border border-foreground/50">
+    <div className="relative flex gap-2 flex-col text-xs group/port bg-secondary rounded p-2 border border-foreground/50 mt-3">
       {config.direction === 'input' && <PortHandle port={port} />}
       <Collapsible>
         <CollapsibleTrigger className="flex items-center gap-x-2 font-semibold">
-        <PortTitle>{title}</PortTitle>
+        <PortTitle className='font-semibold'>{title}</PortTitle>
           <ChevronDown className="size-3" />
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className='flex flex-col gap-y-2'>
+          <div className='flex flex-col gap-y-2 mt-3 px-2'>
             {properties.map((config) => {
-              return <Fragment key={config.id}>{renderPort({ portConfig: config })}</Fragment>
+              return <div key={config.id} className='inline-flex flex-col pb-2 border-b border-white/15 last:border-b-0'>{renderPort({ portConfig: config })}</div>
             })}
           </div>
         </CollapsibleContent>
 
-        <AddFieldDialog title={`Add property for ${config.title || config.key}`} />
+        <AddFieldDialog className='mt-3' title={`Add property for ${config.title || config.key}`} />
 
       </Collapsible>
 

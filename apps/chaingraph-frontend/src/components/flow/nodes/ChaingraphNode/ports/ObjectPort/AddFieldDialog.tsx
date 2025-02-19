@@ -10,18 +10,20 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { ReactNode } from 'react'
 
 type Props = {
+  className?: string;
   title: ReactNode
 }
 
 export const AddFieldDialog = (props: Props) => {
-  const {title} = props
+  const {title, className} = props
 
   return (
     <Dialog>
-      <DialogTrigger>Add property</DialogTrigger>
+      <DialogTrigger className={cn('bg-white/5 hover:bg-white/10 p-1 rounded transition-colors', className)}>Add property</DialogTrigger>
       <DialogContent>
           <DialogTitle>{title}</DialogTitle>
           <Input placeholder='Key name' />
