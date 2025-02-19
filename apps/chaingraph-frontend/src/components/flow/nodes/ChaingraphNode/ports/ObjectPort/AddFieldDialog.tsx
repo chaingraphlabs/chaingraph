@@ -9,11 +9,15 @@
 import type { PortType } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { Popover } from '@radix-ui/themes'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
@@ -29,7 +33,16 @@ export function AddFieldDialog(props: Props) {
 
   return (
     <Dialog>
-      <DialogTrigger className={cn('bg-white/5 hover:bg-white/10 p-1 rounded transition-colors', className)}>Add property</DialogTrigger>
+      <DialogTrigger className={cn(
+        'p-1 rounded transition-colors',
+        'flex items-center space-x-1 w-full text-muted-foreground',
+        'text-sm hover:text-accent-foreground',
+        className,
+      )}
+      >
+        <Plus className="w-4 h-4 mr-1" />
+        Add Property
+      </DialogTrigger>
       <DialogContent className="flex flex-col items-start">
         <DialogTitle>{title}</DialogTitle>
         <Input

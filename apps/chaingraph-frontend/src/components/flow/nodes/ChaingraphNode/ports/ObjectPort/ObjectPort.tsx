@@ -9,12 +9,13 @@
 import type { ExtractValue, IPort, IPortConfig, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import type { PortProps } from '../../Port'
 import type { PortOnChangeParam } from '../../types'
+import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
-import { ChevronDown, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
-import { PortTitle } from '../ui/PortTitle'
 import { AddFieldDialog } from './AddFieldDialog'
 
 interface RenderPortParams<C extends IPortConfig> {
@@ -35,55 +36,114 @@ export type ObjectPortProps = PortProps<ObjectPortConfig> & {
   onDelete?: (port: IPort<ObjectPortConfig>) => void
 }
 
-export function ObjectPort({ port, renderPort, className, isOpen: isOpenProp, onDelete, value, onChange, errorMessage }: ObjectPortProps) {
+export function ObjectPort({
+  port,
+  renderPort,
+  className,
+  isOpen: isOpenProp,
+  onDelete,
+  value,
+  onChange,
+  errorMessage,
+}: ObjectPortProps) {
   const config = port.getConfig()
-
   const [isOpen, setIsOpen] = useState(Boolean(config.ui?.collapsible) || isOpenProp)
-
   const title = config.title || config.key
-
   const properties = Object.values(config.schema.properties)
-
   const isSchemaMutable = config.isSchemaMutable
 
   return (
-    <div className={cn('relative flex gap-2 flex-col text-xs group/port bg-secondary rounded p-2 border border-foreground/50 mt-3', !isOpen && 'gap-0', className)}>
+    <div className={cn(
+      'relative flex gap-2 group/port',
+      className,
+    )}
+    >
+
       {onDelete && (
         <X
           onClick={() => onDelete(port)}
-          className={cn('absolute top-1 size-3 cursor-pointer hover:brightness-125', config.direction === 'output' ? 'left-1' : 'right-1')}
+          className={cn(
+            'absolute top-2 size-3 cursor-pointer hover:brightness-125',
+            config.direction === 'output' ? 'left-2' : 'right-2',
+          )}
         />
       )}
 
       {config.direction === 'input' && <PortHandle port={port} />}
-      <button
-        type="button"
-        className="flex items-center gap-x-2 font-semibold"
-        onClick={() => {
-          setIsOpen(!isOpen)
-          requestUpdatePortUI({
-            id: port.id,
-            ui: {
-              collapsible: !isOpen,
-            },
-          })
-        }}
-      >
-        <PortTitle className="font-semibold">{title}</PortTitle>
-        <ChevronDown className="size-3" />
-      </button>
 
-      <div className={cn('flex flex-col gap-y-2 mt-3 px-2', !isOpen && 'invisible h-0')}>
-        {properties.map((config) => {
-          return (
-            <div key={config.id} className="inline-flex flex-col pb-2 border-b border-white/15 last:border-b-0">
-              {renderPort({ portConfig: config, isOpen, isSchemaMutable: Boolean(isSchemaMutable) })}
-            </div>
-          )
-        })}
+      <div className="flex-1">
+        {/* Header */}
+        <button
+          type="button"
+          onClick={() => {
+            setIsOpen(!isOpen)
+            requestUpdatePortUI({
+              id: port.id,
+              ui: { collapsible: !isOpen },
+            })
+          }}
+          className={cn(
+            'flex items-center gap-2 w-full p-1 rounded-md',
+            'bg-muted/40 hover:bg-muted/60 transition-colors',
+            'text-sm font-medium',
+            config.direction === 'input' ? 'justify-start' : 'justify-end',
+            'truncate',
+          )}
+        >
+          {config.direction === 'input'
+          && (isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+
+          <PortTitle className="font-semibold">{title}</PortTitle>
+
+          {config.direction === 'output'
+          && (isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />)}
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className={cn([
+                config.direction === 'input'
+                  ? 'pl-[15px] border-l-2 border-muted/95 border-spacing-0 -ml-[6px]'
+                  : 'pr-[15px] border-r-2 border-muted/95 border-spacing-0 -mr-[6px]',
+              ])}
+            >
+
+              {properties.map(config => (
+                <div
+                  key={config.id}
+                  className={cn(
+                    'relative py-1',
+                    'before:absolute before:left-[-18px] before:top-1/2 before:w-3 before:h-px',
+                    'before:bg-muted/30',
+                  )}
+                >
+                  {renderPort({
+                    portConfig: config,
+                    isOpen,
+                    isSchemaMutable: Boolean(isSchemaMutable),
+                  })}
+                </div>
+              ))}
+
+              {!isSchemaMutable && (
+                <AddFieldDialog
+                  title={`Add property for ${config.title || config.key}`}
+                  className={cn([
+                    config.direction === 'input'
+                      ? 'justify-start'
+                      : 'justify-end',
+                  ])}
+                />
+              )}
+
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      <AddFieldDialog title={`Add property for ${config.title || config.key}`} />
 
       {config.direction === 'output' && <PortHandle port={port} />}
     </div>
