@@ -18,14 +18,23 @@ import {
   NodeExecutionStatus,
   Number,
   Output,
+  PortObject,
   String,
 } from '@badaitech/chaingraph-types'
+
+interface Schema {
+  properties: {
+    hello: {
+      type: 'string'
+    }
+  }
+}
 
 @Node({
   title: 'Scalar Node',
   description: 'Node with scalar ports',
 })
-export class ScalarNode extends BaseNode {
+class ScalarNode extends BaseNode {
   @Input()
   @String({
     defaultValue: 'default string',
@@ -43,6 +52,44 @@ export class ScalarNode extends BaseNode {
     defaultValue: true,
   })
   boolInput: boolean = true
+
+  @Input()
+  @PortObject({
+    schema: {
+      properties: {
+        hello: {
+          type: 'string',
+        },
+        world: {
+          type: 'string',
+        },
+        ww3: {
+          type: "object",
+          schema: {
+            properties: {
+              w: {
+                type: "string"
+              }
+            }
+          }
+        }
+      },
+    },
+  })
+  profile = { hello: '', world: "", ww3: {w: ""} }
+
+
+  @Output()
+  @PortObject({
+    schema: {
+      properties: {
+        hello: {
+          type: 'string',
+        },
+      },
+    },
+  })
+  outputProfile = { hello: '' }
 
   @Output()
   @String()

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode/types'
+import type { ChaingraphNode, PortOnChangeParam } from '@/components/flow/nodes/ChaingraphNode/types'
 import type { NodeProps } from '@xyflow/react'
 import { NodeBody } from '@/components/flow/nodes/ChaingraphNode/NodeBody.tsx'
 import { NodeHeader } from '@/components/flow/nodes/ChaingraphNode/NodeHeader.tsx'
@@ -21,6 +21,24 @@ import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { IPort, IPortConfig } from '@badaitech/chaingraph-types'
+import {PortState} from './types'
+import { NodeContext } from "./context"
+import { requestUpdatePortValue } from '@/store/ports'
+
+
+function initPortsStates(ports: IPort[]) {
+  return ports.reduce<Record<string, PortState>>((acc, port) => {
+    const isValid = port.validate()
+    acc[port.id] = {
+      value: port.getValue(),
+      isValid: port.validate(),
+    }
+
+    return acc
+  }, {})
+}
+
 
 function ChaingraphNodeComponent({
   data,
@@ -38,6 +56,18 @@ function ChaingraphNodeComponent({
 
   const [inputs, setInputs] = useState(data.node.getInputs())
   const [outputs, setOutputs] = useState(data.node.getOutputs())
+
+  const [inputsStates, setInputsStates] = useState(initPortsStates(inputs))
+  const [outputsStates, setOutputsStates] = useState(initPortsStates(outputs))
+
+  // TODO: remove it and subscribe on changes from backend
+  useEffect(() => {
+    setInputsStates(initPortsStates(inputs))
+  }, [inputs])
+
+  useEffect(() => {
+    setOutputsStates(initPortsStates(outputs))
+  }, [outputs])
 
   const { debugMode } = useUnit($executionState)
   const isBreakpointSet = useBreakpoint(id)
@@ -62,6 +92,43 @@ function ChaingraphNodeComponent({
     setOutputs(data.node.getOutputs())
   }, [data.node])
 
+
+    const createChangeInputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+      let isValid = true
+      try {
+        port.setValue(value)
+      } catch (error) {
+        isValid = false
+        console.error(error)
+      }
+  
+      //  it's overhead to have this state. we should use only one store
+      setInputsStates(states => ({ ...states, [port.id]: {
+        value,
+        isValid,
+      } }))
+  
+      requestUpdatePortValue({ id: port.id, value })
+    }
+  
+    const createChangeOutputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+      let isValid = true
+      try {
+        port.setValue(value)
+      } catch (error) {
+        isValid = false
+        console.error(error)
+      }
+  
+      //  it's overhead to have this state. we should use only one store
+      setOutputsStates(states => ({ ...states, [port.id]: {
+        value,
+        isValid,
+      } }))
+  
+      requestUpdatePortValue({ id: port.id, value })
+    }
+
   const executionStateStyle = useMemo(() => {
     if (nodeExecution.isExecuting) {
       return 'animate-pulse border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
@@ -82,6 +149,7 @@ function ChaingraphNodeComponent({
     return null
 
   return (
+    <NodeContext.Provider value={{inputs,outputs, inputsStates, outputsStates, createChangeInputPortHandler, createChangeOutputPortHandler}}>
     <Card
       className={cn(
         'shadow-none transition-all duration-200',
@@ -124,10 +192,7 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      <NodeBody
-        inputs={inputs}
-        outputs={outputs}
-      />
+      <NodeBody />
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
@@ -147,6 +212,7 @@ function ChaingraphNodeComponent({
         </div>
       )}
     </Card>
+    </NodeContext.Provider>
   )
 }
 

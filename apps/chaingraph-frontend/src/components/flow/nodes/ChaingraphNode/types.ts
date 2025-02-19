@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, INode } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, ExtractValue, INode, IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
 
 // export type ChaingraphNode = Node<{
@@ -28,3 +28,13 @@ export type ChaingraphNode = Node<{
   node: INode
   categoryMetadata: CategoryMetadata
 }, 'chaingraphNode'>
+
+
+export interface PortState< C extends IPortConfig = IPortConfig> {
+  value: ExtractValue<C>
+  isValid: boolean
+}
+
+
+export interface PortOnChangeParam<C extends IPortConfig> { value: ExtractValue<C> }
+export type CreatePortHandler  = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => void
