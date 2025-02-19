@@ -90,7 +90,7 @@ function ChaingraphNodeComponent({
     setOutputs(data.node.getOutputs())
   }, [data.node])
 
-  const createChangeInputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+  const createChangeInputPortHandler = useCallback(<C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
     let isValid = true
     try {
       port.setValue(value)
@@ -106,9 +106,9 @@ function ChaingraphNodeComponent({
     } }))
 
     requestUpdatePortValue({ id: port.id, value })
-  }
+  }, [])
 
-  const createChangeOutputPortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
+  const createChangeOutputPortHandler = useCallback(<C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => {
     let isValid = true
     try {
       port.setValue(value)
@@ -124,7 +124,7 @@ function ChaingraphNodeComponent({
     } }))
 
     requestUpdatePortValue({ id: port.id, value })
-  }
+  }, [])
 
   const executionStateStyle = useMemo(() => {
     if (nodeExecution.isExecuting) {
@@ -141,12 +141,13 @@ function ChaingraphNodeComponent({
     }
     return ''
   }, [nodeExecution])
+  const context = useMemo(() => ({ inputs, outputs, inputsStates, outputsStates, createChangeInputPortHandler, createChangeOutputPortHandler }), [inputs, outputs, inputsStates, outputsStates])
 
   if (!activeFlow || !activeFlow.id)
     return null
 
   return (
-    <NodeContext.Provider value={{ inputs, outputs, inputsStates, outputsStates, createChangeInputPortHandler, createChangeOutputPortHandler }}>
+    <NodeContext.Provider value={context}>
       <Card
         className={cn(
           'shadow-none transition-all duration-200',
