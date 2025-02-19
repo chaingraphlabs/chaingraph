@@ -153,6 +153,57 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
   protected deserializeValue(data: JSONValue): ObjectPortValue<S> {
     return ObjectPortPlugin.deserializeValue(data, this.config)
   }
+
+  /**
+   * Adds a new field to the object schema and updates the default and current values.
+   * @param field
+   * @param config
+   */
+  public addField(field: string, config: IPortConfig) {
+    if (!config.key) {
+      config.key = field
+    }
+
+    // Add the field to the schema
+    this.config.schema.properties[field] = config
+
+    // Add fields to the default value
+    if (this.config.defaultValue) {
+      this.config.defaultValue = {
+        ...this.config.defaultValue,
+        [field]: config.defaultValue,
+      }
+    }
+
+    // Add the field to the current value
+    if (this.value && config.defaultValue) {
+      this.value = {
+        ...this.value,
+        [field]: config.defaultValue,
+      }
+    }
+  }
+
+  /**
+   * Remove a field from the object schema and updates the default and current values.
+   * @param field
+   */
+  public removeField(field: string) {
+    // Remove the field from the schema
+    if (this.config.schema.properties[field]) {
+      delete this.config.schema.properties[field]
+    }
+
+    // Remove the field from the default value
+    if (this.config.defaultValue && this.config.defaultValue[field]) {
+      delete this.config.defaultValue[field]
+    }
+
+    // Remove the field from the current value
+    if (this.value && this.value[field]) {
+      delete this.value[field]
+    }
+  }
 }
 
 /**

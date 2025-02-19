@@ -8,4 +8,4 @@
 
 export const NODE_POSITION_DEBOUNCE_MS = 500
 export const NODE_UI_DEBOUNCE_MS = 500
-export const LOCAL_NODE_UI_DEBOUNCE_MS = 1000 / 30 // ~30 FPS
+export const LOCAL_NODE_UI_DEBOUNCE_MS = 1000 / 60 // ~30 FPS

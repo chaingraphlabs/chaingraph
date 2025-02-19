@@ -79,7 +79,7 @@ export abstract class BaseNode implements INode {
       return
     }
 
-    for (const [portId, portConfig] of ports.entries()) {
+    for (const [_, portConfig] of ports.entries()) {
       this.initializePort(this, portConfig)
     }
   }
@@ -87,6 +87,9 @@ export abstract class BaseNode implements INode {
   protected initializePort(objectValue: object, portConfig: IPortConfig, parentPortId?: string): void {
     // Create the port instance
     const existsPort = portConfig.id ? this._ports.get(portConfig.id) : undefined
+    if (existsPort) {
+      existsPort.setConfig(portConfig)
+    }
     const port = existsPort ?? PortFactory.createFromConfig(portConfig)
 
     // Generate a unique port ID if it doesn't exist
@@ -130,24 +133,9 @@ export abstract class BaseNode implements INode {
     }
 
     // Store the port in the _ports Map
-    if (!existsPort) {
-      this._ports.set(portId, port)
-    }
+    this._ports.set(portId, port)
 
     connectInternalFields(port.getValue() as object)
-    // if (portConfig.type === 'object') {
-    //   // for the object port, initialize its nested ports recursively
-    //   const nestedPorts = portConfig.schema?.properties
-    //   if (nestedPorts) {
-    //     for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
-    //       this.initializePort(
-    //         port.getValue() as object,
-    //         nestedPortConfig as IPortConfig,
-    //         portId,
-    //       )
-    //     }
-    //   }
-    // }
   }
 
   /**
@@ -219,7 +207,7 @@ export abstract class BaseNode implements INode {
   getOutputs(): IPort[] {
     return Array.from(
       this._ports.values()
-      .filter(port => port.getConfig().direction === PortDirection.Output),
+        .filter(port => port.getConfig().direction === PortDirection.Output),
     )
   }
 
@@ -555,7 +543,6 @@ export abstract class BaseNode implements INode {
         const configData = metadataFromData.portsConfig[key]
         if (configData && typeof configData === 'object' && 'type' in configData) {
           const plugin = PortPluginRegistry.getInstance().getPlugin(configData.type)
-
           if (!plugin) {
             throw new Error(`No plugin found for port type "${configData.type}"`)
           }

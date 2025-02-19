@@ -12,11 +12,7 @@ import type { JSONValue } from '../utils/json'
 import type { NodeEvent } from './events'
 import type { NodeStatus } from './node-enums'
 import type { Dimensions, NodeUIMetadata, NodeUIState, NodeUIStyle, Position } from './node-ui'
-import type {
-  NodeExecutionResult,
-  NodeMetadata,
-  NodeValidationResult,
-} from './types'
+import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from './types'
 
 /**
  * Base interface for all nodes in ChainGraph

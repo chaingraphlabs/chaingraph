@@ -56,9 +56,8 @@ function GroupNodeComponent({
         <NodeResizeControl
           variant={ResizeControlVariant.Handle}
           position="bottom-right"
-          className="absolute -bottom-1 -right-1 w-3 h-3 border-0 bg-transparent"
-        >
-        </NodeResizeControl>
+          className="absolute -bottom-1 -right-1 w-10 h-10 border-1 bg-transparent"
+        />
       </div>
     </>
   )

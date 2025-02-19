@@ -26,7 +26,6 @@ import {
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { hasCycle } from '@badaitech/chaingraph-types'
-import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'
 
@@ -104,7 +103,7 @@ export function useFlowCallbacks() {
                 && node.metadata.ui?.dimensions?.width !== undefined
                 && node.metadata.ui?.dimensions?.height !== undefined
 
-          if (isSameDimensions || !isNodeDimensionInitialized) {
+          if (isSameDimensions) { // || !isNodeDimensionInitialized) {
             return
           }
 
