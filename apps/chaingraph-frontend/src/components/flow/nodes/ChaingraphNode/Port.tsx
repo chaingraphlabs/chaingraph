@@ -22,9 +22,12 @@ import { StringPort } from './ports/StringPort/StringPort'
 import { StubPort } from './ports/StubPort/StubPort'
 
 export interface PortProps<C extends IPortConfig> {
+  className?: string
   port: IPort<C>
+  portClassName?: string
   value?: ExtractValue<C>
   onChange?: (param: PortOnChangeParam<C>) => void
+  onDelete?: (port: IPort<C>) => void
   errorMessage?: string
 }
 
@@ -50,7 +53,7 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
       return (
         <ObjectPort
           {...props as unknown as ObjectPortProps}
-          renderPort={({ portConfig }) => {
+          renderPort={({ portConfig, isOpen, isSchemaMutable }) => {
             const ports = portConfig.direction === 'input' ? inputs : outputs
             const states = portConfig.direction === 'input' ? inputsStates : outputsStates
             const port = ports.find(({ id }) => portConfig.id === id)
@@ -60,7 +63,21 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
 
             const { isValid, value } = states[port.id]
 
-            return <Port port={port} value={value} errorMessage={isValid ? undefined : 'invalid'} onChange={createChangeInputPortHandler(port)} />
+            return (
+              <Port
+                className={isOpen ? 'relative' : 'static'}
+                portClassName={isOpen ? 'z-0' : '-z-10'}
+                port={port}
+                value={value}
+                errorMessage={isValid ? undefined : 'invalid'}
+                onDelete={isSchemaMutable
+                  ? () => {
+                      console.log('delete')
+                    }
+                  : undefined}
+                onChange={createChangeInputPortHandler(port)}
+              />
+            )
           }}
         />
       )

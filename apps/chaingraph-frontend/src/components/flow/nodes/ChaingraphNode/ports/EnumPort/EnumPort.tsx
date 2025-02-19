@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
 import type { EnumPortConfig, EnumPortValue, IPort } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
@@ -9,19 +16,23 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
+import { X } from 'lucide-react'
 import { useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface EnumPortProps {
+  className?: string
+  portClassName?: string
   port: IPort<EnumPortConfig>
   value: EnumPortValue
   onChange: (param: { value: EnumPortValue }) => void
+  onDelete?: (port: IPort<EnumPortConfig>) => void
   errorMessage?: string
 }
 
 export function EnumPort(props: EnumPortProps) {
-  const { port, onChange, value, errorMessage } = props
+  const { className, port, onChange, value, errorMessage, onDelete } = props
   const config = port.getConfig()
   const ui = config.ui
   const connectedEdges = useEdgesForPort(port.id)
@@ -50,8 +61,15 @@ export function EnumPort(props: EnumPortProps) {
       className={cn(
         'relative flex gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
+        className,
       )}
     >
+      {onDelete && (
+        <X
+          onClick={() => onDelete(port)}
+          className={cn('absolute top-1 size-3 cursor-pointer hover:brightness-125', config.direction === 'output' ? 'left-1' : 'right-1')}
+        />
+      )}
       {config.direction === 'input' && <PortHandle port={port} />}
 
       <div className={cn(

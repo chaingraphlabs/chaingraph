@@ -127,6 +127,7 @@ export interface ArrayPortConfig<
 export interface ObjectPortConfig<S extends IObjectSchema = IObjectSchema> extends BasePortConfig {
   type: 'object'
   schema: S
+  isSchemaMutable?: boolean
   defaultValue?: ObjectPortValue<S>
   ui?: BasePortConfigUIType & ObjectPortConfigUIType
 }

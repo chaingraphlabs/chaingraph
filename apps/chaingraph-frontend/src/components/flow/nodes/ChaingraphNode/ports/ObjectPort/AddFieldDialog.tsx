@@ -8,11 +8,11 @@
 
 import type { PortType } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { Popover } from '@radix-ui/themes'
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 

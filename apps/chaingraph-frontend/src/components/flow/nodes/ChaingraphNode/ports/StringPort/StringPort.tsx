@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
 import type { ExtractValue, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { Input } from '@/components/ui/input'
@@ -8,6 +15,7 @@ import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
+import { X } from 'lucide-react'
 import { type ChangeEvent, type PropsWithChildren, useCallback, useMemo, useRef } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -17,15 +25,18 @@ interface ChangeParam {
 }
 
 export interface StringPortProps {
+  className?: string
+  portClassName?: string
   value: ExtractValue<StringPortConfig>
   onChange: (param: ChangeParam) => void
+  onDelete?: (port: IPort<StringPortConfig>) => void
   port: IPort<StringPortConfig>
   errorMessage?: string
 }
 
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
   const activeFlow = useUnit($activeFlowMetadata)
-  const { port, onChange, value, errorMessage } = props
+  const { className, portClassName, port, onChange, onDelete, value, errorMessage } = props
   const config = port.getConfig()
   const { ui } = config
   const connectedEdges = useEdgesForPort(port.id)
@@ -94,9 +105,17 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       className={cn(
         'relative flex gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
+        className,
       )}
     >
-      {config.direction === 'input' && <PortHandle port={port} />}
+      {onDelete && (
+        <X
+          onClick={() => onDelete(port)}
+          className={cn('absolute cursor-pointer top-0 size-3 hover:brightness-125', config.direction === 'output' ? 'left-0' : 'right-0')}
+        />
+      )}
+
+      {config.direction === 'input' && <PortHandle className={portClassName} port={port} />}
 
       <div className={cn(
         'flex flex-col w-full',
@@ -145,7 +164,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
         )}
       </div>
 
-      {config.direction === 'output' && <PortHandle port={port} />}
+      {config.direction === 'output' && <PortHandle className={portClassName} port={port} />}
     </div>
   )
 }
