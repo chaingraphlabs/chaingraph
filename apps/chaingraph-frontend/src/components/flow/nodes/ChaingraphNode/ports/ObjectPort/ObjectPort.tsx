@@ -7,15 +7,15 @@
  */
 
 import type { ExtractValue, IPortConfig, ObjectPortConfig } from '@badaitech/chaingraph-types'
-import { Fragment, type ReactNode } from 'react'
-import type {  PortProps } from '../../Port'
+import type { ReactNode } from 'react'
+import type { PortProps } from '../../Port'
+import type { PortOnChangeParam } from '../../types'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible'
 import { ChevronDown } from 'lucide-react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
-import { PortOnChangeParam } from '../../types'
-import {  AddFieldDialog } from './AddFieldDialog'
+import { AddFieldDialog } from './AddFieldDialog'
 
 interface RenderPortParams<C extends IPortConfig> {
   portConfig: C
@@ -40,19 +40,19 @@ export function ObjectPort({ port, renderPort, value, onChange, errorMessage }: 
       {config.direction === 'input' && <PortHandle port={port} />}
       <Collapsible>
         <CollapsibleTrigger className="flex items-center gap-x-2 font-semibold">
-        <PortTitle className='font-semibold'>{title}</PortTitle>
+          <PortTitle className="font-semibold">{title}</PortTitle>
           <ChevronDown className="size-3" />
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className='flex flex-col gap-y-2 mt-3 px-2'>
+          <div className="flex flex-col gap-y-2 mt-3 px-2">
             {properties.map((config) => {
-              return <div key={config.id} className='inline-flex flex-col pb-2 border-b border-white/15 last:border-b-0'>{renderPort({ portConfig: config })}</div>
+              return <div key={config.id} className="inline-flex flex-col pb-2 border-b border-white/15 last:border-b-0">{renderPort({ portConfig: config })}</div>
             })}
           </div>
         </CollapsibleContent>
 
-        <AddFieldDialog className='mt-3' title={`Add property for ${config.title || config.key}`} />
+        <AddFieldDialog className="mt-3" title={`Add property for ${config.title || config.key}`} />
 
       </Collapsible>
 

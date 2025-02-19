@@ -29,12 +29,10 @@ export type ChaingraphNode = Node<{
   categoryMetadata: CategoryMetadata
 }, 'chaingraphNode'>
 
-
 export interface PortState< C extends IPortConfig = IPortConfig> {
   value: ExtractValue<C>
   isValid: boolean
 }
 
-
 export interface PortOnChangeParam<C extends IPortConfig> { value: ExtractValue<C> }
-export type CreatePortHandler  = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => void
+export type CreatePortHandler = <C extends IPortConfig>(port: IPort<C>) => ({ value }: PortOnChangeParam<C>) => void

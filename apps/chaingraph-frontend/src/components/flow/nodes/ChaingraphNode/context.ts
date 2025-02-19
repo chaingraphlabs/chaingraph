@@ -7,8 +7,8 @@
  */
 
 import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
+import type { CreatePortHandler, PortState } from './types'
 import { createContext, useContext } from 'react'
-import { CreatePortHandler, PortState } from './types'
 
 interface NodeContextType {
   inputs: IPort<IPortConfig>[]
@@ -22,10 +22,10 @@ interface NodeContextType {
 
 export const NodeContext = createContext<NodeContextType | undefined>(undefined)
 
-
-export const useNodeContext = () => {
-  const ctx = useContext(NodeContext);
-  if(!ctx) throw new Error("useNodeContext must be used within NodeContext.Provider")
+export function useNodeContext() {
+  const ctx = useContext(NodeContext)
+  if (!ctx)
+    throw new Error('useNodeContext must be used within NodeContext.Provider')
 
   return ctx
 }

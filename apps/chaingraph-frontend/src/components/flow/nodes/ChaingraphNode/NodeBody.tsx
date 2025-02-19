@@ -6,19 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { ExtractValue, IPortConfig } from '@badaitech/chaingraph-types'
-import { Port } from './Port'
 import { useNodeContext } from './context'
-
+import { Port } from './Port'
 
 interface PortState< C extends IPortConfig = IPortConfig> {
   value: ExtractValue<C>
   isValid: boolean
 }
 
-
 export function NodeBody() {
-  const {inputs, outputs, outputsStates, inputsStates, createChangeInputPortHandler, createChangeOutputPortHandler} = useNodeContext()
-
+  const { inputs, outputs, outputsStates, inputsStates, createChangeInputPortHandler, createChangeOutputPortHandler } = useNodeContext()
 
   const shallowInputsPorts = inputs.filter(input => !input.getConfig().parentId)
   const shallowOutputsPorts = outputs.filter(output => !output.getConfig().parentId)

@@ -12,16 +12,14 @@ import type { EnumPortProps } from './ports/EnumPort/EnumPort'
 import type { NumberPortProps } from './ports/NumberPort/NumberPort'
 import type { ObjectPortProps } from './ports/ObjectPort/ObjectPort'
 import type { StringPortProps } from './ports/StringPort/StringPort'
+import type { PortOnChangeParam } from './types'
 import { EnumPort } from '@/components/flow/nodes/ChaingraphNode/ports/EnumPort/EnumPort.tsx'
+import { useNodeContext } from './context'
 import { BooleanPort } from './ports/BooleanPort/BooleanPort'
 import { NumberPort } from './ports/NumberPort/NumberPort'
 import { ObjectPort } from './ports/ObjectPort/ObjectPort'
 import { StringPort } from './ports/StringPort/StringPort'
 import { StubPort } from './ports/StubPort/StubPort'
-import { useNodeContext } from './context'
-import { PortOnChangeParam } from './types'
-
-
 
 export interface PortProps<C extends IPortConfig> {
   port: IPort<C>
@@ -31,7 +29,7 @@ export interface PortProps<C extends IPortConfig> {
 }
 
 export function Port<C extends IPortConfig>(props: PortProps<C>) {
-  const {inputs, outputs, inputsStates, outputsStates, createChangeInputPortHandler} = useNodeContext();
+  const { inputs, outputs, inputsStates, outputsStates, createChangeInputPortHandler } = useNodeContext()
   const { port } = props
   const config = port.getConfig()
 
@@ -54,14 +52,14 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
           {...props as unknown as ObjectPortProps}
           renderPort={({ portConfig }) => {
             const ports = portConfig.direction === 'input' ? inputs : outputs
-            const states = portConfig.direction === 'input'  ? inputsStates : outputsStates
+            const states = portConfig.direction === 'input' ? inputsStates : outputsStates
             const port = ports.find(({ id }) => portConfig.id === id)
 
             if (!port)
               return null
 
-            const {isValid, value} =  states[port.id]
-            
+            const { isValid, value } = states[port.id]
+
             return <Port port={port} value={value} errorMessage={isValid ? undefined : 'invalid'} onChange={createChangeInputPortHandler(port)} />
           }}
         />
