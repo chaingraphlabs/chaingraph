@@ -8,5 +8,4 @@
 
 export { default as DebugLogNode } from './log.node'
 export { default as WebhookNode } from './webhook.node'
-export { default as HttpGetNode } from './get.node'
-export { default as HttpPostNode } from './post.node'
+export { default as HttpRequestNode } from './http.node'
