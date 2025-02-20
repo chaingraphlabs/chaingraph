@@ -19,15 +19,15 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import { SystemMessage } from '@langchain/core/messages'
-import {ChatOpenAI, OpenAI} from '@langchain/openai'
+import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
-export enum LLMModels {
+export enum OGLLMModels {
   LLama = 'llama-3.3-70b-instruct',
   DeepSeek = 'deepseek-r1-70b',
 }
 
-export enum LLMModelsProviderAddress {
+export enum OGLLMModelsProviderAddress {
   LLama = '0xf07240Efa67755B5311bc75784a061eDB47165Dd',
   DeepSeek = '0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3',
 }
@@ -41,13 +41,13 @@ class OGLLMModel {
     title: 'Model',
     description: 'Language Model',
   })
-  public model: LLMModels = LLMModels.LLama
+  public model: OGLLMModels = OGLLMModels.LLama
 
   @String({
     title: 'Model',
     description: 'Language Model',
   })
-  public providerAddress: LLMModelsProviderAddress = LLMModelsProviderAddress.LLama
+  public providerAddress: OGLLMModelsProviderAddress = OGLLMModelsProviderAddress.LLama
 
   @Number({
     title: 'Temperature',
@@ -55,7 +55,7 @@ class OGLLMModel {
   })
   public temperature: number = 0
 
-  constructor(model: LLMModels, providerAddress: LLMModelsProviderAddress, temperature: number) {
+  constructor(model: OGLLMModels, providerAddress: OGLLMModelsProviderAddress, temperature: number) {
     this.model = model
     this.temperature = temperature
     this.providerAddress = providerAddress
@@ -63,8 +63,8 @@ class OGLLMModel {
 }
 
 const llmModels = {
-  [LLMModels.LLama]: new OGLLMModel(LLMModels.LLama, LLMModelsProviderAddress.LLama, 0),
-  [LLMModels.DeepSeek]: new OGLLMModel(LLMModels.DeepSeek, LLMModelsProviderAddress.DeepSeek, 0),
+  [OGLLMModels.LLama]: new OGLLMModel(OGLLMModels.LLama, OGLLMModelsProviderAddress.LLama, 0),
+  [OGLLMModels.DeepSeek]: new OGLLMModel(OGLLMModels.DeepSeek, OGLLMModelsProviderAddress.DeepSeek, 0),
 }
 
 @Node({
@@ -79,7 +79,7 @@ class OGLLMCallNode extends BaseNode {
     title: 'Model',
     description: 'Language Model',
   })
-  model: keyof typeof llmModels = LLMModels.LLama
+  model: keyof typeof llmModels = OGLLMModels.LLama
 
   @Input()
   @String({
@@ -137,14 +137,15 @@ class OGLLMCallNode extends BaseNode {
     const provider = new ethers.JsonRpcProvider('https://evmrpc-testnet.0g.ai')
     const wallet = new ethers.Wallet(this.privateKey, provider)
     const broker = await createZGComputeNetworkBroker(wallet)
-
     const { endpoint, model } = await broker.inference.getServiceMetadata(
       llmModels[this.model].providerAddress,
     )
     const headers = await broker.inference.getRequestHeaders(llmModels[this.model].providerAddress, prompt)
+    console.log(headers, endpoint, model)
     const llm = new ChatOpenAI({
       configuration: {
         baseURL: endpoint,
+        defaultHeaders: headers,
       },
       apiKey: '',
       model: this.model,
