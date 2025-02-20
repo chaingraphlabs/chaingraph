@@ -30,13 +30,14 @@ export interface StringPortProps {
   value: ExtractValue<StringPortConfig>
   onChange: (param: ChangeParam) => void
   onDelete?: (port: IPort<StringPortConfig>) => void
+  hideEditor?: boolean
   port: IPort<StringPortConfig>
   errorMessage?: string
 }
 
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
   const activeFlow = useUnit($activeFlowMetadata)
-  const { className, portClassName, port, onChange, onDelete, value, errorMessage } = props
+  const { className, portClassName, port, onChange, onDelete, value, errorMessage, hideEditor } = props
   const config = port.getConfig()
   const { ui } = config
   const connectedEdges = useEdgesForPort(port.id)
@@ -52,8 +53,8 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
   }
 
   const needRenderEditor = useMemo(() => {
-    return isHideEditor(config, connectedEdges)
-  }, [config, connectedEdges])
+    return isHideEditor(config, connectedEdges) && !hideEditor
+  }, [config, connectedEdges, hideEditor])
 
   /*
    * Textarea resizing

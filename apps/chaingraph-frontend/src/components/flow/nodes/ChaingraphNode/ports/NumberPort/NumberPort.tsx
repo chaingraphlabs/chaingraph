@@ -25,11 +25,12 @@ export interface NumberPortProps {
   value?: ExtractValue<NumberPortConfig>
   onChange?: (param: NumberOnChangeParam) => void
   onDelete?: (port: IPort<NumberPortConfig>) => void
+  hideEditor?: boolean
   errorMessage?: string
 }
 
 export function NumberPort(props: NumberPortProps) {
-  const { className, port, value, onDelete, onChange, errorMessage } = props
+  const { className, port, value, onDelete, onChange, errorMessage, hideEditor } = props
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
@@ -37,8 +38,8 @@ export function NumberPort(props: NumberPortProps) {
   const connectedEdges = useEdgesForPort(port.id)
 
   const needRenderEditor = useMemo(() => {
-    return isHideEditor(config, connectedEdges)
-  }, [config, connectedEdges])
+    return isHideEditor(config, connectedEdges) && !hideEditor
+  }, [config, connectedEdges, hideEditor])
 
   if (ui?.hidePort)
     return null

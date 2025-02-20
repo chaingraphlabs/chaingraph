@@ -28,18 +28,19 @@ export interface EnumPortProps {
   value: EnumPortValue
   onChange: (param: { value: EnumPortValue }) => void
   onDelete?: (port: IPort<EnumPortConfig>) => void
+  hideEditor?: boolean
   errorMessage?: string
 }
 
 export function EnumPort(props: EnumPortProps) {
-  const { className, port, onChange, value, errorMessage, onDelete } = props
+  const { className, port, onChange, hideEditor, value, errorMessage, onDelete } = props
   const config = port.getConfig()
   const ui = config.ui
   const connectedEdges = useEdgesForPort(port.id)
 
   const needRenderEditor = useMemo(() => {
-    return isHideEditor(config, connectedEdges)
-  }, [config, connectedEdges])
+    return isHideEditor(config, connectedEdges) && !hideEditor
+  }, [config, connectedEdges, hideEditor])
 
   // If the port should be hidden, don't render it.
   if (ui?.hidePort)

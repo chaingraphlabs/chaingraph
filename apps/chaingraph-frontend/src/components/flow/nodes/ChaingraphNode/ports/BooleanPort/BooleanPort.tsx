@@ -21,19 +21,20 @@ export interface BooleanPortProps {
   value: boolean
   onChange: (param: { value: boolean }) => void
   onDelete?: (port: IPort<BooleanPortConfig>) => void
+  hideEditor?: boolean
   errorMessage?: string
 }
 
 export function BooleanPort(props: BooleanPortProps) {
-  const { className, port, onChange, onDelete, value } = props
+  const { className, port, onChange, onDelete, value, hideEditor } = props
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
 
   const connectedEdges = useEdgesForPort(port.id)
   const needRenderEditor = useMemo(() => {
-    return !ui?.hideEditor && connectedEdges.length === 0
-  }, [ui, connectedEdges])
+    return !ui?.hideEditor && connectedEdges.length === 0 && !hideEditor
+  }, [ui, connectedEdges, hideEditor])
 
   if (ui?.hidePort)
     return null

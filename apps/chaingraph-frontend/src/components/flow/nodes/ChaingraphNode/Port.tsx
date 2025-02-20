@@ -14,6 +14,7 @@ import type { ObjectPortProps } from './ports/ObjectPort/ObjectPort'
 import type { StringPortProps } from './ports/StringPort/StringPort'
 import type { PortOnChangeParam } from './types'
 import { EnumPort } from '@/components/flow/nodes/ChaingraphNode/ports/EnumPort/EnumPort.tsx'
+import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
 import { removeFieldObjectPort } from '@/store/ports'
 import { useNodeContext } from './context'
 import { BooleanPort } from './ports/BooleanPort/BooleanPort'
@@ -29,6 +30,7 @@ export interface PortProps<C extends IPortConfig> {
   value?: ExtractValue<C>
   onChange?: (param: PortOnChangeParam<C>) => void
   onDelete?: () => void
+  hideEditor?: boolean
   errorMessage?: string
 }
 
@@ -36,6 +38,8 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
   const { inputs, outputs, inputsStates, outputsStates, createChangeInputPortHandler } = useNodeContext()
   const { port } = props
   const config = port.getConfig()
+  const edges = useEdgesForPort(port.id)
+  const connected = edges.length > 0
 
   const rootPort = port
 
@@ -56,7 +60,7 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
       return (
         <ObjectPort
           {...props as unknown as ObjectPortProps}
-          renderPort={({ portConfig, isOpen, isSchemaMutable }) => {
+          renderPort={({ portConfig, isOpen, isSchemaMutable, hideEditor }) => {
             const ports = portConfig.direction === 'input' ? inputs : outputs
             const states = portConfig.direction === 'input' ? inputsStates : outputsStates
             const port = ports.find(({ id }) => portConfig.id === id)
@@ -73,6 +77,7 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
                 port={port}
                 value={value}
                 errorMessage={isValid ? undefined : 'invalid'}
+                hideEditor={connected || hideEditor}
                 onDelete={isSchemaMutable
                   ? () => {
                       if (!portConfig.key)

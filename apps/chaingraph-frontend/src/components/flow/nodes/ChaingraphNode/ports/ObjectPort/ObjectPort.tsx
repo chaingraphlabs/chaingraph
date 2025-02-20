@@ -13,7 +13,7 @@ import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortT
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { addFieldObjectPort, requestUpdatePortUI } from '@/store/ports'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
@@ -28,12 +28,14 @@ interface RenderPortParams<C extends IPortConfig> {
   isSchemaMutable: boolean
   onChange?: (param: PortOnChangeParam<C>) => void
   onDelete?: (port: IPort<C>) => void
+  hideEditor?: boolean
   errorMessage?: string
 }
 
 export type ObjectPortProps = PortProps<ObjectPortConfig> & {
   renderPort: <C extends IPortConfig>(params: RenderPortParams<C>) => ReactNode
   isOpen?: boolean
+  hideEditor?: boolean
   onDelete?: (port: IPort<ObjectPortConfig>) => void
 }
 
@@ -49,6 +51,7 @@ export function ObjectPort({
   portClassName,
   isOpen: isOpenProp,
   onDelete,
+  hideEditor,
   value,
   onChange,
   errorMessage,
@@ -130,12 +133,13 @@ export function ObjectPort({
               {renderPort({
                 portConfig: config,
                 isOpen,
+                hideEditor,
                 isSchemaMutable: Boolean(isSchemaMutable),
               })}
             </div>
           ))}
 
-          {isSchemaMutable && (
+          {isSchemaMutable && !hideEditor && (
             <Popover open={isAddPropOpen}>
               <PopoverTrigger asChild>
                 <button

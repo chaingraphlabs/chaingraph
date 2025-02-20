@@ -21,8 +21,6 @@ interface Data {
 }
 
 interface Props {
-  className?: string
-
   onClose: () => void
   onSubmit: (data: Data) => void
 }
@@ -63,7 +61,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, className, onSubmit } = props
+  const { onClose, onSubmit } = props
 
   const [key, setKey] = useState('')
   const [type, setType] = useState<Exclude<PortType, 'array' | 'stream'> | undefined>(undefined)
