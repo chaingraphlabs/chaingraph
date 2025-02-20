@@ -10,13 +10,14 @@ import type { ExtractValue, IPort, IPortConfig, ObjectPortConfig } from '@badait
 import type { PortProps } from '../../Port'
 import type { PortOnChangeParam } from '../../types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
+import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { requestUpdatePortUI } from '@/store/ports'
+import { addFieldObjectPort, requestUpdatePortUI } from '@/store/ports'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
-import { AddFieldDialog } from './AddFieldDialog'
+import { AddPropPopover } from './AddPropPopover'
 
 interface RenderPortParams<C extends IPortConfig> {
   className?: string
@@ -36,16 +37,23 @@ export type ObjectPortProps = PortProps<ObjectPortConfig> & {
   onDelete?: (port: IPort<ObjectPortConfig>) => void
 }
 
+const variants = {
+  open: { opacity: 1, height: 'auto' },
+  closed: { opacity: 0, height: 0 },
+} as const
+
 export function ObjectPort({
   port,
   renderPort,
   className,
+  portClassName,
   isOpen: isOpenProp,
   onDelete,
   value,
   onChange,
   errorMessage,
 }: ObjectPortProps) {
+  const [isAddPropOpen, setIsAddPropOpen] = useState(false)
   const config = port.getConfig()
   const [isOpen, setIsOpen] = useState(Boolean(config.ui?.collapsible) || isOpenProp)
   const title = config.title || config.key
@@ -61,7 +69,7 @@ export function ObjectPort({
 
       {onDelete && (
         <X
-          onClick={() => onDelete(port)}
+          onClick={onDelete}
           className={cn(
             'absolute top-2 size-3 cursor-pointer hover:brightness-125',
             config.direction === 'output' ? 'left-2' : 'right-2',
@@ -69,7 +77,7 @@ export function ObjectPort({
         />
       )}
 
-      {config.direction === 'input' && <PortHandle port={port} />}
+      {config.direction === 'input' && <PortHandle className={portClassName} port={port} />}
 
       <div className="flex-1">
         {/* Header */}
@@ -99,53 +107,69 @@ export function ObjectPort({
           && (isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />)}
         </button>
 
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className={cn([
-                config.direction === 'input'
-                  ? 'pl-[15px] border-l-2 border-muted/95 border-spacing-0 -ml-[6px]'
-                  : 'pr-[15px] border-r-2 border-muted/95 border-spacing-0 -mr-[6px]',
-              ])}
+        <motion.div
+          initial={isOpen ? 'open' : 'closed'}
+          variants={variants}
+          animate={isOpen ? 'open' : 'closed'}
+          className={cn([
+            config.direction === 'input'
+              ? 'pl-[15px] border-l-2 border-muted/95 border-spacing-0 -ml-[6px]'
+              : 'pr-[15px] border-r-2 border-muted/95 border-spacing-0 -mr-[6px]',
+          ])}
+        >
+
+          {properties.map(config => (
+            <div
+              key={config.id}
+              className={cn(
+                'py-1',
+                'before:absolute before:left-[-18px] before:top-1/2 before:w-3 before:h-px',
+                'before:bg-muted/30',
+              )}
             >
+              {renderPort({
+                portConfig: config,
+                isOpen,
+                isSchemaMutable: Boolean(isSchemaMutable),
+              })}
+            </div>
+          ))}
 
-              {properties.map(config => (
-                <div
-                  key={config.id}
-                  className={cn(
-                    'relative py-1',
-                    'before:absolute before:left-[-18px] before:top-1/2 before:w-3 before:h-px',
-                    'before:bg-muted/30',
-                  )}
+          {isSchemaMutable && (
+            <Popover open={isAddPropOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn('inline-flex bg-accent px-2 py-1 rounded text-sm', config.direction === 'input'
+                    ? 'justify-start'
+                    : 'justify-end', className)}
+                  onClick={() => {
+                    setIsAddPropOpen(true)
+                  }}
                 >
-                  {renderPort({
-                    portConfig: config,
-                    isOpen,
-                    isSchemaMutable: Boolean(isSchemaMutable),
-                  })}
-                </div>
-              ))}
-
-              {isSchemaMutable && (
-                <AddFieldDialog
-                  title={`Add property for ${config.title || config.key}`}
-                  className={cn([
-                    config.direction === 'input'
-                      ? 'justify-start'
-                      : 'justify-end',
-                  ])}
+                  Add key
+                </button>
+              </PopoverTrigger>
+              {isAddPropOpen && (
+                <AddPropPopover
+                  onClose={() => {
+                    setIsAddPropOpen(false)
+                  }}
+                  onSubmit={(data) => {
+                    config.schema.properties[data.key] = data.config
+                    port.setConfig(config)
+                    addFieldObjectPort({ id: port.id, ...data })
+                    setIsAddPropOpen(false)
+                  }}
                 />
               )}
-
-            </motion.div>
+            </Popover>
           )}
-        </AnimatePresence>
+
+        </motion.div>
       </div>
 
-      {config.direction === 'output' && <PortHandle port={port} />}
+      {config.direction === 'output' && <PortHandle className={portClassName} port={port} />}
     </div>
   )
 }

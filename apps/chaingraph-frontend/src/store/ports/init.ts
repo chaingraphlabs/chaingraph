@@ -1,12 +1,19 @@
-import type { UpdatePortUIInput, UpdatePortValueInput } from '@/store/ports/effects'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+import type { AddFieldObjectPortInput, RemoveFieldObjectPortInput, UpdatePortUIInput, UpdatePortValueInput } from '@/store/ports/effects'
 import { setNodeVersion } from '@/store'
 import { $activeFlowId } from '@/store/flow/stores'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants'
 import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample'
 import { $nodes } from '@/store/nodes/stores'
-import { baseUpdatePortUIFx, baseUpdatePortValueFx } from '@/store/ports/effects'
+import { addFieldObjectPortFx, baseUpdatePortUIFx, baseUpdatePortValueFx, removeFiledObjectPortFx } from '@/store/ports/effects'
 import { combine, createEffect, sample } from 'effector'
-import { requestUpdatePortUI, requestUpdatePortValue, updatePortUI } from './events'
+import { addFieldObjectPort, removeFieldObjectPort, requestUpdatePortUI, requestUpdatePortValue, updatePortUI } from './events'
 
 //
 // Update port value
@@ -111,4 +118,52 @@ sample({
     preBaseUpdatePortUiFx,
     baseUpdatePortUIFx,
   ],
+})
+
+sample({
+  clock: addFieldObjectPort,
+  source: combine({
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  }),
+  fn: ({ activeFlowId, nodes }, { id, key, config }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
+      return node.ports && node.ports.has(id)
+    })
+    if (!nodeEntry) {
+      throw new Error(`Node for port id '${id}' not found`)
+    }
+    const [nodeId] = nodeEntry
+
+    const result: AddFieldObjectPortInput = { nodeId, config, flowId: activeFlowId, portId: id, key }
+    return result
+  },
+  target: addFieldObjectPortFx,
+})
+
+sample({
+  clock: removeFieldObjectPort,
+  source: {
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  },
+  fn: ({ activeFlowId, nodes }, { id, key }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
+      return node.ports && node.ports.has(id)
+    })
+    if (!nodeEntry) {
+      throw new Error(`Node for port id '${id}' not found`)
+    }
+    const [nodeId] = nodeEntry
+
+    const result: RemoveFieldObjectPortInput = { nodeId, flowId: activeFlowId, portId: id, key }
+    return result
+  },
+  target: removeFiledObjectPortFx,
 })

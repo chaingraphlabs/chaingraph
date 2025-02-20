@@ -14,6 +14,7 @@ import type { ObjectPortProps } from './ports/ObjectPort/ObjectPort'
 import type { StringPortProps } from './ports/StringPort/StringPort'
 import type { PortOnChangeParam } from './types'
 import { EnumPort } from '@/components/flow/nodes/ChaingraphNode/ports/EnumPort/EnumPort.tsx'
+import { removeFieldObjectPort } from '@/store/ports'
 import { useNodeContext } from './context'
 import { BooleanPort } from './ports/BooleanPort/BooleanPort'
 import { NumberPort } from './ports/NumberPort/NumberPort'
@@ -27,7 +28,7 @@ export interface PortProps<C extends IPortConfig> {
   portClassName?: string
   value?: ExtractValue<C>
   onChange?: (param: PortOnChangeParam<C>) => void
-  onDelete?: (port: IPort<C>) => void
+  onDelete?: () => void
   errorMessage?: string
 }
 
@@ -35,6 +36,8 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
   const { inputs, outputs, inputsStates, outputsStates, createChangeInputPortHandler } = useNodeContext()
   const { port } = props
   const config = port.getConfig()
+
+  const rootPort = port
 
   switch (config.type) {
     case 'string': {
@@ -72,7 +75,9 @@ export function Port<C extends IPortConfig>(props: PortProps<C>) {
                 errorMessage={isValid ? undefined : 'invalid'}
                 onDelete={isSchemaMutable
                   ? () => {
-                      console.log('delete')
+                      if (!portConfig.key)
+                        return
+                      removeFieldObjectPort({ id: rootPort.id, key: portConfig.key })
                     }
                   : undefined}
                 onChange={createChangeInputPortHandler(port)}

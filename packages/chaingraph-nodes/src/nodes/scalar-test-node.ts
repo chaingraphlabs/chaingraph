@@ -55,6 +55,7 @@ class ScalarNode extends BaseNode {
 
   @Input()
   @PortObject({
+    isSchemaMutable: true,
     schema: {
       properties: {
         hello: {
@@ -64,20 +65,19 @@ class ScalarNode extends BaseNode {
           type: 'string',
         },
         ww3: {
-          type: "object",
+          type: 'object',
           schema: {
             properties: {
               w: {
-                type: "string"
-              }
-            }
-          }
-        }
+                type: 'string',
+              },
+            },
+          },
+        },
       },
     },
   })
-  profile = { hello: '', world: "", ww3: {w: ""} }
-
+  profile = { hello: '', world: '', ww3: { w: '' } }
 
   @Output()
   @PortObject({
