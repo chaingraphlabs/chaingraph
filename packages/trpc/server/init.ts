@@ -6,8 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IFlowStore } from '@/server/stores/flowStore/types'
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import process from 'node:process'
+import { InMemoryFlowStore } from '@/server/stores/flowStore/inMemoryFlowStore'
 import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
 import {
   AnyPortPlugin,
@@ -24,6 +26,7 @@ import {
   StreamPortPlugin,
   StringPortPlugin,
 } from '@badaitech/chaingraph-types'
+import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { initializeContext } from './context'
 import { CleanupService } from './executions/services/cleanup-service'
@@ -31,7 +34,7 @@ import { ExecutionService } from './executions/services/execution-service'
 import { InMemoryExecutionStore } from './executions/store/execution-store'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 
-export function init() {
+export async function init() {
   PortPluginRegistry.getInstance().register(StringPortPlugin)
   PortPluginRegistry.getInstance().register(NumberPortPlugin)
   PortPluginRegistry.getInstance().register(ArrayPortPlugin)
@@ -46,8 +49,20 @@ export function init() {
 
   // Initialize stores and context
   const db = drizzle(process.env.DATABASE_URL!)
-  // const flowStore = new InMemoryFlowStore()
-  const flowStore = new DBFlowStore(db)
+  let flowStore: IFlowStore = new InMemoryFlowStore()
+
+  // ping to check if the connection is successful
+  try {
+    const res = await db.execute(sql`select 1`)
+    if (!res || res.rows.length === 0) {
+      throw new Error('DB connection failed')
+    }
+    console.log('DB connection successful')
+    flowStore = new DBFlowStore(db)
+  } catch (error) {
+    console.error('DB connection failed, using in-memory store. If you would like to use a database, please set DATABASE_URL environment variable.')
+  }
+
   const nodesCatalog = new NodeCatalog()
   const executionStore = new InMemoryExecutionStore()
   const executionService = new ExecutionService(executionStore)
