@@ -66,7 +66,8 @@ export class Edge implements IEdge {
 
   async transfer(): Promise<void> {
     // Transfer data from the source port to the target port
-    const data = this.sourcePort.getValue() ?? this.sourcePort.getConfig().defaultValue
+    const value = this.sourcePort.getValue()
+    const data = value !== undefined ? value : this.sourcePort.getConfig().defaultValue
     if (data === undefined) {
       console.error(`Source port ${this.sourcePort.id} has no data to transfer.`)
       return

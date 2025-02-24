@@ -168,19 +168,29 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
     this.config.schema.properties[field] = config
 
     // Add fields to the default value
-    if (this.config.defaultValue) {
-      this.config.defaultValue = {
-        ...this.config.defaultValue,
-        [field]: config.defaultValue,
+    if (config.defaultValue !== undefined) {
+      if (this.config.defaultValue) {
+        this.config.defaultValue = {
+          ...this.config.defaultValue,
+          [field]: config.defaultValue,
+        }
+      } else {
+        this.config.defaultValue = {
+          [field]: config.defaultValue,
+        } as ObjectPortValue<S>
       }
     }
 
-    // Add the field to the current value
-    if (this.value && config.defaultValue) {
+    // Add fields to the current value
+    if (this.value) {
       this.value = {
         ...this.value,
         [field]: config.defaultValue,
       }
+    } else {
+      this.value = {
+        [field]: config.defaultValue,
+      } as ObjectPortValue<S>
     }
   }
 
@@ -190,17 +200,17 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    */
   public removeField(field: string) {
     // Remove the field from the schema
-    if (this.config.schema.properties[field]) {
+    if (Object.hasOwn(this.config.schema.properties, field)) {
       delete this.config.schema.properties[field]
     }
 
     // Remove the field from the default value
-    if (this.config.defaultValue && this.config.defaultValue[field]) {
+    if (this.config.defaultValue && Object.hasOwn(this.config.defaultValue, field)) {
       delete this.config.defaultValue[field]
     }
 
     // Remove the field from the current value
-    if (this.value && this.value[field]) {
+    if (this.value && Object.hasOwn(this.value, field)) {
       delete this.value[field]
     }
   }

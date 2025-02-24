@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 import { ExecutionEventEnum, type ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRightCircle, ChevronDownIcon, Timer } from 'lucide-react'
-import React, { Fragment, useState } from 'react'
+import React, { useState } from 'react'
 import { collapseAllNested, darkStyles, defaultStyles, JsonView } from 'react-json-view-lite'
 import 'react-json-view-lite/dist/index.css'
 import './style/json.css'
@@ -314,7 +314,7 @@ function EventDetails({ event }: { event: ExecutionEventImpl }) {
           <div>
             {typeof value === 'object'
               ? (
-                  <Fragment>
+                  <>
                     <JsonView
                       data={value}
                       shouldExpandNode={collapseAllNested}
@@ -323,7 +323,7 @@ function EventDetails({ event }: { event: ExecutionEventImpl }) {
                         ? defaultStyles
                         : darkStyles}
                     />
-                  </Fragment>
+                  </>
                 )
               : (
                   String(value)

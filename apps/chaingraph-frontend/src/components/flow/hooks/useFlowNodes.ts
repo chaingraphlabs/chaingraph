@@ -11,6 +11,7 @@ import { $nodes } from '@/store'
 import { useCategories } from '@/store/categories'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
+import { useUpdateNodeInternals } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 
@@ -19,6 +20,7 @@ import { useMemo } from 'react'
  */
 export function useFlowNodes() {
   const nodes = useUnit($nodes)
+  const updateNodeInternals = useUpdateNodeInternals()
 
   const { getCategoryMetadata } = useCategories()
 
@@ -47,10 +49,15 @@ export function useFlowNodes() {
           ? 'groupNode'
           : 'chaingraphNode'
 
+      const nodePositionRound = {
+        x: Math.round(node.metadata.ui?.position?.x ?? DefaultPosition.x),
+        y: Math.round(node.metadata.ui?.position?.y ?? DefaultPosition.y),
+      }
+
       const reactflowNode: Node = {
         id: node.id,
         type: nodeType,
-        position: node.metadata.ui?.position ?? DefaultPosition,
+        position: nodePositionRound,
         zIndex: nodeType === 'groupNode' ? -1 : 0,
         data: {
           node,

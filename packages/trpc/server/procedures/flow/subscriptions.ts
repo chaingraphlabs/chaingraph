@@ -6,9 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  FlowEvent,
-} from '@badaitech/chaingraph-types'
+import type { FlowEvent } from '@badaitech/chaingraph-types'
 import {
   createQueueIterator,
   EventQueue,
@@ -72,10 +70,21 @@ export const subscribeToEvents = publicProcedure
 
       // 2. Existing nodes
       if (isAcceptedEventType(eventTypes, FlowEventType.NodeAdded)) {
+        // first send nodes without Parent
         for (const node of flow.nodes.values()) {
-          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
-            node,
-          }))
+          if (!node.metadata.parentNodeId) {
+            yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
+              node,
+            }))
+          }
+        }
+
+        for (const node of flow.nodes.values()) {
+          if (node.metadata.parentNodeId) {
+            yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
+              node,
+            }))
+          }
         }
       }
 

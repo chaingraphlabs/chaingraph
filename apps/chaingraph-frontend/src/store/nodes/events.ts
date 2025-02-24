@@ -10,7 +10,6 @@ import type { INode, Position } from '@badaitech/chaingraph-types'
 import type {
   AddNodeEvent,
   NodeState,
-  UpdateNodeEvent,
   UpdateNodeParent,
   UpdateNodePosition,
   UpdateNodeUIEvent,
@@ -19,10 +18,10 @@ import { createEvent } from 'effector'
 
 // Local state CRUD events
 export const addNode = createEvent<INode>()
-export const updateNode = createEvent<UpdateNodeEvent>()
+export const updateNode = createEvent<INode>()
 export const removeNode = createEvent<string>()
-export const setNodeMetadata = createEvent<{ id: string, metadata: NodeState['metadata'] }>()
-export const setNodeVersion = createEvent<{ id: string, version: number }>()
+export const setNodeMetadata = createEvent<{ nodeId: string, metadata: NodeState['metadata'] }>()
+export const setNodeVersion = createEvent<{ nodeId: string, version: number }>()
 export const updateNodeParent = createEvent<UpdateNodeParent>()
 
 // Backend operation events

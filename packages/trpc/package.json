@@ -25,11 +25,15 @@
   "dependencies": {
     "@trpc/client": "11.0.0-rc.781",
     "@trpc/react-query": "^11.0.0-rc.781",
-    "@trpc/server": "11.0.0-rc.781"
+    "@trpc/server": "11.0.0-rc.781",
+    "drizzle-orm": "^0.39.2",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/typescript-config": "workspace:*"
+    "@badaitech/typescript-config": "workspace:*",
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.30.4"
   }
 }

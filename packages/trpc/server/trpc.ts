@@ -47,7 +47,7 @@ const t = initTRPC
 export const router = t.router
 
 export const publicProcedure = t.procedure
-export const authedProcedure = t.procedure.use(async (opts) => {
+export const authedProcedure = publicProcedure.use(async (opts) => {
   const { ctx } = opts
   // `ctx.user` is nullable
   if (!ctx.session.userId) {
@@ -57,6 +57,35 @@ export const authedProcedure = t.procedure.use(async (opts) => {
   return opts.next({
     ctx,
   })
+})
+
+export const flowContextProcedure = publicProcedure.use(async (opts) => {
+  const rawInput = await opts.getRawInput()
+  const flowId: string | null = rawInput
+    && typeof rawInput === 'object'
+    && 'flowId' in rawInput
+    && typeof rawInput.flowId === 'string'
+    ? rawInput.flowId
+    : null
+
+  if (!flowId) {
+    throw new Error('Parameter flowId is required for this procedure')
+  }
+
+  if (opts.type === 'mutation') {
+    const result = await opts.next(opts)
+
+    const { ctx: { flowStore } } = opts
+    const flow = await flowStore.getFlow(flowId)
+    if (!flow) {
+      throw new Error('Flow not found')
+    }
+
+    // todo: with debouncing
+    // await saveFlow(flow)
+    return result
+  }
+  return opts.next(opts)
 })
 
 export const createCallerFactory = t.createCallerFactory

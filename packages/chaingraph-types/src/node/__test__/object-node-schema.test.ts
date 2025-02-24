@@ -92,6 +92,10 @@ describe('object node with dynamic schema serialization', () => {
     expect(recordsPort.getConfig().schema.properties.street.defaultValue).toBe('123 Main St')
     expect(recordsPort.getValue()).toEqual({ street: '123 Main St' })
 
+    expect(Array.from(objectNode.ports.values()).map((port) => {
+      return port.getConfig().key
+    })).toEqual(['records', 'street'])
+
     // expect the node port has the new field
     const streetPort = findPort(objectNode, (port) => {
       return port.getConfig().key === 'street'
@@ -114,6 +118,10 @@ describe('object node with dynamic schema serialization', () => {
     expect(deserializedNode.metadata).toEqual(objectNode.metadata)
     expect(deserializedNode.status).toEqual(objectNode.status)
     expect(deserializedNode.ports).toEqual(objectNode.ports)
+
+    expect(Array.from(deserializedNode.ports.values()).map((port) => {
+      return port.getConfig().key
+    })).toEqual(['records', 'street'])
 
     // expect the deserialized node to have the new field
     const deserializedRecordsPort = deserializedNode.getPort('records') as ObjectPort
@@ -145,6 +153,10 @@ describe('object node with dynamic schema serialization', () => {
     expect(recordsPort2.getConfig().schema.properties.city.type).toBe('object')
     expect(recordsPort2.getConfig().schema.properties.city.defaultValue).toEqual({ name: 'Springfield', state: 'IL' })
     expect(recordsPort2.getValue()).toEqual({ street: '123 Main St', city: { name: 'Springfield', state: 'IL' } })
+
+    expect(Array.from(objectNode.ports.values()).map((port) => {
+      return port.getConfig().key
+    })).toEqual(['records', 'street', 'city', 'name', 'state'])
 
     // expect the node port has the new field
     const cityPort = findPort(objectNode, (port) => {
@@ -191,6 +203,10 @@ describe('object node with dynamic schema serialization', () => {
     // check if the port has the new field
     expect(recordsPort3.getConfig().schema.properties.city).toBeUndefined()
     expect(recordsPort3.getValue()).toEqual({ street: '123 Main St' })
+
+    expect(Array.from(objectNode.ports.values()).map((port) => {
+      return port.getConfig().key
+    })).toEqual(['records', 'street'])
 
     const recordsPortConfig = objectNode.metadata.portsConfig?.get('records') as ObjectPortConfig
     expect(Object.keys(recordsPortConfig.schema.properties)).toEqual(['street'])

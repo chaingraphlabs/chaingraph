@@ -7,10 +7,7 @@
  */
 
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
-import type {
-  DefaultEdgeOptions,
-  NodeTypes,
-} from '@xyflow/react'
+import type { DefaultEdgeOptions, NodeTypes } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
 import { useDnd } from '@/components/dnd'
 import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeContextMenu.tsx'
@@ -23,6 +20,7 @@ import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
+import { useFlowUrlSync } from '@/hooks/useFlowUrlSync.ts'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
   $activeFlowMetadata,
@@ -32,14 +30,11 @@ import {
 } from '@/store'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
-import {
-  Background,
-  ReactFlow,
-  useReactFlow,
-} from '@xyflow/react'
+import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
+// import { FPSCounter } from './components/FPSCounter'
 import GroupNode from './nodes/GroupNode/GroupNode'
 
 // Configuration constants
@@ -87,6 +82,7 @@ function ExecutionComponent() {
 function Flow() {
   // useFlowDebug()
   useFlowSubscription()
+  useFlowUrlSync()
 
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
@@ -124,12 +120,6 @@ function Flow() {
   // const edgeTypes = useMemo(() => ({
   //   chaingraphEdge: ChaingraphEdge,
   // }), [])
-
-  // Update zoom when viewport changes
-  const onViewportChange = useCallback(() => {
-    const currentZoom = getZoom()
-    setZoom(currentZoom)
-  }, [getZoom, setZoom])
 
   // State for context menu
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null)
@@ -262,6 +252,12 @@ function Flow() {
     setContextMenu(null) // Close menu
   }, [activeFlow, contextMenu, screenToFlowPosition])
 
+  // Update zoom when viewport changes
+  const onViewportChange = useCallback((newViewport: Viewport) => {
+    const currentZoom = getZoom()
+    setZoom(currentZoom)
+  }, [getZoom, setZoom])
+
   return (
     <div
       className="w-full h-full relative"
@@ -293,6 +289,7 @@ function Flow() {
         // onReconnectEnd={onReconnectEnd}
         // onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
+        panOnScroll
         onViewportChange={onViewportChange}
         fitView
         preventScrolling
@@ -312,6 +309,8 @@ function Flow() {
 
         <div className="absolute top-4 left-4 z-50">
           <ExecutionComponent />
+
+          {/* <FPSCounter /> */}
         </div>
       </ReactFlow>
 

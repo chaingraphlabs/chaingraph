@@ -21,6 +21,10 @@ export class AdvancedPositionInterpolator {
     currentPosition: Position
   }> = new Map()
 
+  // For throttling the update loop to 60 fps.
+  private lastUpdateTime: number = 0
+  private readonly minFrameTime = 1000 / 60
+
   // Faster and more precise configuration
   private readonly bufferTime = 1000
   private readonly springConstant = 10.5 // Increased for faster movement
@@ -107,6 +111,16 @@ export class AdvancedPositionInterpolator {
   }
 
   private animate = (timestamp: number) => {
+    if (timestamp - this.lastUpdateTime < this.minFrameTime) {
+      // Throttle: If minimal frame time hasn't elapsed, schedule next frame without update.
+      this.animationFrame = requestAnimationFrame(this.animate)
+      return
+    }
+    this.lastUpdateTime = timestamp
+
+    // Array to keep track of nodes whose interpolation is finished.
+    const finishedNodes: string[] = []
+
     this.stateBuffer.forEach((buffer, nodeId) => {
       if (buffer.length === 0)
         return
@@ -115,7 +129,7 @@ export class AdvancedPositionInterpolator {
       const targetPosition = buffer[buffer.length - 1].position
 
       // Use spring interpolation for subsequent movements
-      const deltaTime = 1 / 60
+      const deltaTime = 1 / 30
       const { position, velocity, finished } = this.springInterpolate(
         springState.currentPosition,
         targetPosition,
@@ -124,21 +138,34 @@ export class AdvancedPositionInterpolator {
       )
 
       if (finished) {
-        buffer.length = 1
-        buffer[0] = { position: targetPosition, timestamp }
+        // Notify final position once, then mark this node for removal.
+        this.onUpdate(nodeId, targetPosition)
+        finishedNodes.push(nodeId)
+      } else {
+        springState.currentPosition = position
+        springState.velocity = velocity
+        this.onUpdate(nodeId, position)
       }
-
-      springState.currentPosition = position
-      springState.velocity = velocity
-      this.onUpdate(nodeId, position)
     })
 
-    this.animationFrame = requestAnimationFrame(this.animate)
+    // Clean up finished node states.
+    finishedNodes.forEach((nodeId) => {
+      this.stateBuffer.delete(nodeId)
+      this.springStates.delete(nodeId)
+    })
+
+    // Continue animation only if there is at least one active node.
+    if (this.stateBuffer.size > 0) {
+      this.animationFrame = requestAnimationFrame(this.animate)
+    } else {
+      this.animationFrame = null
+    }
   }
 
   start() {
     if (!this.animationFrame) {
       console.log('Starting position interpolator')
+      this.lastUpdateTime = performance.now()
       this.animationFrame = requestAnimationFrame(this.animate)
     }
   }

@@ -5,7 +5,7 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { EnumPortConfig, EnumPortValue, IPort } from '@badaitech/chaingraph-types'
+import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
   Select,
@@ -16,35 +16,25 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { X } from 'lucide-react'
+import { requestUpdatePortValue } from '@/store/ports'
 import { useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface EnumPortProps {
-  className?: string
-  portClassName?: string
+  node: INode
   port: IPort<EnumPortConfig>
-  value: EnumPortValue
-  onChange: (param: { value: EnumPortValue }) => void
-  onDelete?: (port: IPort<EnumPortConfig>) => void
-  hideEditor?: boolean
-  errorMessage?: string
 }
 
 export function EnumPort(props: EnumPortProps) {
-  const { className, port, onChange, hideEditor, value, errorMessage, onDelete } = props
+  const { node, port } = props
   const config = port.getConfig()
   const ui = config.ui
   const connectedEdges = useEdgesForPort(port.id)
 
   const needRenderEditor = useMemo(() => {
-    return isHideEditor(config, connectedEdges) && !hideEditor
-  }, [config, connectedEdges, hideEditor])
-
-  // If the port should be hidden, don't render it.
-  if (ui?.hidePort)
-    return null
+    return !isHideEditor(config, connectedEdges)
+  }, [config, connectedEdges])
 
   // Choose a title from config.title or config.key.
   const title = config.title || config.key
@@ -52,9 +42,17 @@ export function EnumPort(props: EnumPortProps) {
   // The configuration should include an "options" array.
   const options = config.options || []
 
-  const handleValueChange = (newValue: string) => {
-    onChange({ value: newValue })
+  const handleValueChange = (value: string) => {
+    requestUpdatePortValue({
+      nodeId: node.id,
+      portId: port.id,
+      value,
+    })
   }
+
+  // If the port should be hidden, don't render it.
+  if (ui?.hidePort)
+    return null
 
   return (
     <div
@@ -62,15 +60,8 @@ export function EnumPort(props: EnumPortProps) {
       className={cn(
         'relative flex gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
-        className,
       )}
     >
-      {onDelete && (
-        <X
-          onClick={() => onDelete(port)}
-          className={cn('absolute top-1 size-3 cursor-pointer hover:brightness-125', config.direction === 'output' ? 'left-1' : 'right-1')}
-        />
-      )}
       {config.direction === 'input' && <PortHandle port={port} />}
 
       <div className={cn(
@@ -83,14 +74,15 @@ export function EnumPort(props: EnumPortProps) {
         </PortTitle>
         {needRenderEditor && (
           <Select
-            value={value}
+            value={port.getValue()}
             onValueChange={handleValueChange}
             disabled={ui?.disabled}
           >
             <SelectTrigger
               className={cn(
                 'w-full text-xs p-1 h-8',
-                errorMessage && 'border-red-500',
+                // errorMessage && 'border-red-500',
+                'nodrag',
               )}
             >
               <SelectValue placeholder="Select an option" />

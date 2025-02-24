@@ -94,6 +94,13 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
    * @returns True if the port is valid, otherwise false.
    */
   validate: () => boolean
+
+  /**
+   * Clones the port instance.
+   *
+   * @returns A new port instance with the same configuration and value.
+   */
+  clone: () => IPort<C>
 }
 
 /**

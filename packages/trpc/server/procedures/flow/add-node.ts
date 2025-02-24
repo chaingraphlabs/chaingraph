@@ -6,9 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
 // Input schema for node position
 const NodePositionSchema = z.object({
@@ -24,7 +25,7 @@ const NodeMetadataSchema = z.object({
   tags: z.array(z.string()).optional(),
 }).optional()
 
-export const addNode = publicProcedure
+export const addNode = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     nodeType: z.string(),
@@ -60,6 +61,8 @@ export const addNode = publicProcedure
     // Set position
     node.setPosition(position, true)
 
-    // Add node to flow
-    return await ctx.flowStore.addNode(flowId, node)
+    const createdNode = flow.addNode(node)
+    await ctx.flowStore.updateFlow(flow as Flow)
+
+    return createdNode
   })

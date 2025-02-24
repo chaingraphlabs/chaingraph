@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import type { JSONValue } from '../../../../chaingraph-types/src/utils/json'
+import type { DBType } from '../../context'
 import { eq } from 'drizzle-orm'
-import { db } from './connection'
 import { flowsTable } from './schema'
 
 interface SerializableFlow {
@@ -16,7 +16,7 @@ interface SerializableFlow {
   serialize: () => JSONValue
 }
 
-export async function saveFlow(flow: SerializableFlow) {
+export async function saveFlow(db: DBType, flow: SerializableFlow) {
   const data = flow.serialize()
 
   return db.insert(flowsTable).values({
@@ -25,9 +25,20 @@ export async function saveFlow(flow: SerializableFlow) {
   }).onConflictDoUpdate({ target: flowsTable.id, set: { data } })
 }
 
-export async function loadFlow<T>(id: string, deserialize: (data: JSONValue) => T): Promise<T | null> {
+export async function deleteFlow(db: DBType, id: string) {
+  return db.delete(flowsTable).where(eq(flowsTable.id, id))
+}
+
+export async function listFlows<T>(db: DBType, deserialize: (data: JSONValue) => T) {
+  const result = await db.select().from(flowsTable)
+  return result
+    .filter(row => row.data)
+    .map(row => deserialize(row.data))
+}
+
+export async function loadFlow<T>(db: DBType, id: string, deserialize: (data: JSONValue) => T): Promise<T | null> {
   const result = await db.select().from(flowsTable).where(eq(flowsTable.id, id))
-  if (!result) {
+  if (!result || result.length === 0 || !result[0]?.data) {
     return null
   }
 

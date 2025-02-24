@@ -9,10 +9,6 @@
 import type { INode, Position } from '@badaitech/chaingraph-types'
 import type { Connection, Edge, EdgeChange, HandleType, Node, NodeChange } from '@xyflow/react'
 import {
-  getNodePositionInFlow,
-  getNodePositionInsideParent,
-} from '@/components/flow/utils/node-position'
-import {
   $activeFlowMetadata,
   $edges,
   $nodes,
@@ -27,7 +23,8 @@ import {
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { hasCycle } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
+import { getNodePositionInFlow, getNodePositionInsideParent } from '../utils/node-position'
 
 /**
  * Hook to handle flow interaction callbacks
@@ -39,10 +36,11 @@ export function useFlowCallbacks() {
   // const { getNode, getNodes } = useReactFlow()
   const edges = useUnit($edges)
 
-  const edgeViews = edges.map(edge => ({
-    sourceNode: nodes[edge.sourceNodeId],
-    targetNode: nodes[edge.targetNodeId],
-  }))
+  const edgeViews = useMemo(() =>
+    edges.map(edge => ({
+      sourceNode: nodes[edge.sourceNodeId],
+      targetNode: nodes[edge.targetNodeId],
+    })), [edges, nodes])
 
   // Ref to track edge reconnection state
   const reconnectSuccessful = useRef(false)
@@ -133,7 +131,7 @@ export function useFlowCallbacks() {
               return
 
             setNodeMetadata({
-              id: change.id,
+              nodeId: change.id,
               metadata: {
                 ...node.metadata,
                 ui: {

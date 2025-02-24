@@ -9,7 +9,7 @@
 import type { ExecutionContext } from '../execution'
 import type { EventReturnType, NodeEvent, NodeEventDataType } from '../node/events'
 import type { INode } from '../node/interface'
-import type { Dimensions, NodeUIMetadata, NodeUIStyle, Position } from '../node/node-ui'
+import type { Dimensions, NodeUIMetadata, Position } from '../node/node-ui'
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
 import type { IPort, IPortConfig } from '../port'
 import type { JSONValue } from '../utils/json'
@@ -73,18 +73,39 @@ export abstract class BaseNode implements INode {
     this.setStatus(NodeStatus.Initialized, false)
   }
 
-  protected initializePorts(): void {
+  initializePorts(): void {
     const ports = this._metadata.portsConfig
     if (!ports) {
       return
     }
 
+    const newPorts = new Map<string, IPort>()
     for (const [_, portConfig] of ports.entries()) {
-      this.initializePort(this, portConfig)
+      const ports = this.initializePort(this, portConfig)
+      for (const port of ports) {
+        newPorts.set(port.id, port)
+
+        // check if portConfigWithSame key exists
+        if (port.getConfig().key && !port.getConfig().parentId) {
+          // update metadata port config from the initialized port
+          this.setPortConfig(
+            port.getConfig().key ?? port.getConfig().id ?? 'new_port',
+            port.getConfig(),
+          )
+        }
+      }
     }
+
+    this._ports = newPorts
   }
 
-  protected initializePort(objectValue: object, portConfig: IPortConfig, parentPortId?: string): void {
+  protected initializePort(
+    objectValue: object,
+    portConfig: IPortConfig,
+    parentPortId?: string,
+  ): IPort[] {
+    const ports: IPort[] = []
+
     // Create the port instance
     const existsPort = portConfig.id ? this._ports.get(portConfig.id) : undefined
     if (existsPort) {
@@ -93,7 +114,7 @@ export abstract class BaseNode implements INode {
     const port = existsPort ?? PortFactory.createFromConfig(portConfig)
 
     // Generate a unique port ID if it doesn't exist
-    const portId = portConfig.id || `${parentPortId || ''}.${portConfig.key}`
+    const portId = portConfig.id ?? `${parentPortId ?? ''}.${portConfig.key}`
 
     const connectInternalFields = (val: object) => {
       if (portConfig.type === 'object') {
@@ -101,20 +122,23 @@ export abstract class BaseNode implements INode {
         const nestedPorts = portConfig.schema?.properties
         if (nestedPorts) {
           for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
-            this.initializePort(
+            const childPorts = this.initializePort(
               val,
               nestedPortConfig as IPortConfig,
               portId,
             )
+            for (const childPort of childPorts) {
+              ports.push(childPort)
+            }
           }
         }
       }
     }
 
     // check if the node has a field with the same key as the port
-    if (portConfig.key && Object.prototype.hasOwnProperty.call(objectValue, portConfig.key)) {
+    if (portConfig.key && objectValue && Object.prototype.hasOwnProperty.call(objectValue, portConfig.key)) {
       const value = (objectValue as any)[portConfig.key]
-      if (value) {
+      if (value !== undefined) {
         port.setValue(deepCopy(value))
       }
 
@@ -132,10 +156,10 @@ export abstract class BaseNode implements INode {
       })
     }
 
-    // Store the port in the _ports Map
-    this._ports.set(portId, port)
-
+    ports.push(port)
     connectInternalFields(port.getValue() as object)
+
+    return ports
   }
 
   /**
@@ -299,6 +323,14 @@ export abstract class BaseNode implements INode {
     this._metadata = metadata
   }
 
+  setPortConfig(portId: string, config: IPortConfig): void {
+    if (this._metadata.portsConfig) {
+      this._metadata.portsConfig.set(portId, config)
+    } else {
+      this._metadata.portsConfig = new Map([[portId, config]])
+    }
+  }
+
   setStatus(status: NodeStatus, emitEvent?: boolean): void {
     const oldStatus = this._status
     this._status = status
@@ -394,41 +426,15 @@ export abstract class BaseNode implements INode {
   }
 
   /**
-   * Updates node UI state
-   * @param state New UI state
+   * Updates node UI metadata
+   * @param ui New UI metadata
    * @param emitEvent
    */
-  setUIState(state: NodeUIMetadata['state'], emitEvent?: boolean): void {
-    const oldState = this._metadata.ui?.state
+  setUI(ui: NodeUIMetadata, emitEvent?: boolean): void {
     if (!this._metadata.ui) {
-      this._metadata.ui = { state }
+      this._metadata.ui = ui
     } else {
-      this._metadata.ui.state = state
-    }
-
-    if (!emitEvent) {
-      return
-    }
-
-    this.incrementVersion()
-
-    this.emit(this.createEvent(NodeEventType.UIStateChange, {
-      oldState,
-      newState: state,
-    }))
-  }
-
-  /**
-   * Updates node UI style
-   * @param style New UI style
-   * @param emitEvent
-   */
-  setUIStyle(style: NodeUIStyle, emitEvent?: boolean): void {
-    const oldStyle = this._metadata.ui?.style
-    if (!this._metadata.ui) {
-      this._metadata.ui = { style }
-    } else {
-      this._metadata.ui.style = style
+      this._metadata.ui = { ...this._metadata.ui, ...ui }
     }
 
     if (!emitEvent) {
@@ -438,9 +444,8 @@ export abstract class BaseNode implements INode {
     // update the version
     this.incrementVersion()
 
-    this.emit(this.createEvent(NodeEventType.UIStyleChange, {
-      oldStyle,
-      newStyle: style,
+    this.emit(this.createEvent(NodeEventType.UIChange, {
+      ui: this._metadata.ui,
     }))
   }
 
@@ -448,7 +453,7 @@ export abstract class BaseNode implements INode {
    * Gets current node UI metadata
    * @returns Node UI metadata or undefined if not set
    */
-  getUIMetadata(): NodeUIMetadata | undefined {
+  getUI(): NodeUIMetadata | undefined {
     return this._metadata.ui
   }
 
@@ -508,8 +513,7 @@ export abstract class BaseNode implements INode {
     // const serializedPortsValues: Record<string, JSONValue> = {}
     const serializedPorts: Record<string, JSONValue> = {}
     for (const [portId, port] of this._ports.entries()) {
-      const serializedPort = port.serialize()
-      serializedPorts[portId] = serializedPort
+      serializedPorts[portId] = port.serialize()
     }
 
     return {
@@ -565,6 +569,7 @@ export abstract class BaseNode implements INode {
     const ports = obj.ports as Record<string, any>
 
     // For each key in ports_values we recreate the port.
+    const nodePorts = new Map<string, IPort>()
     for (const portId in ports) {
       const serializedPort = ports[portId]
       if (serializedPort === undefined || serializedPort === null || !('config' in serializedPort)) {
@@ -578,9 +583,16 @@ export abstract class BaseNode implements INode {
 
       // check if the node has a field with the same key as the port then set the port value to the node field
       if (portConfig.key && Object.prototype.hasOwnProperty.call(this, portConfig.key)) {
+        if (portConfig.parentId === '') {
+          continue
+        }
         (this as any)[portConfig.key] = newPort.getValue()
       }
+
+      nodePorts.set(portId, newPort as IPort)
     }
+
+    // this._ports = nodePorts
 
     // this.initialize()
     this.initializePorts()

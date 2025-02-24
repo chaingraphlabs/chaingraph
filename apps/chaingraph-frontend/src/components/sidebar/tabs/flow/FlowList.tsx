@@ -15,7 +15,6 @@ import {
   createFlow,
   type CreateFlowEvent,
   deleteFlow,
-  setActiveFlowId,
   updateFlow,
   type UpdateFlowEvent,
 } from '@/store'
@@ -34,6 +33,7 @@ import { Spinner } from '@radix-ui/themes'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { EmptyFlowState } from './components/EmptyFlowState'
 import { FlowForm } from './components/FlowForm'
 import { FlowListHeader } from './components/FlowListHeader'
@@ -64,6 +64,7 @@ export function FlowList() {
     isDeletingFlow: $isDeletingFlow,
     isEditingFlow: $isUpdatingFlow,
   })
+  const navigate = useNavigate()
 
   // Local UI state
   const [isCreating, setIsCreating] = useState(false)
@@ -97,6 +98,10 @@ export function FlowList() {
       setEditingFlow(undefined)
     }
   }, [editingFlow])
+
+  const handleFlowSelect = (flowId: string) => {
+    navigate(`/flow/${flowId}`)
+  }
 
   // Loading state
   if (isLoading) {
@@ -169,7 +174,7 @@ export function FlowList() {
                           flow={flow}
                           selected={activeFlowId === flow.id}
                           onSelect={() => {
-                            setActiveFlowId(flow.id!)
+                            handleFlowSelect(flow.id!)
                           }}
                           onDelete={() => deleteFlow(flow.id!)}
                           onEdit={() => handleEditClick(flow)}

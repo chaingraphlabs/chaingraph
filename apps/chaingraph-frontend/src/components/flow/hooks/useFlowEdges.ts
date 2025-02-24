@@ -7,8 +7,9 @@
  */
 
 import type { Edge } from '@xyflow/react'
-import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
+import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
 import { $edges } from '@/store'
+import { useUpdateNodeInternals } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 
@@ -18,6 +19,7 @@ import { useMemo } from 'react'
 export function useFlowEdges() {
   const edges = useUnit($edges)
   const nodes = useFlowNodes()
+  const updateNodeInternals = useUpdateNodeInternals()
 
   // Transform edges for ReactFlow
   // const reactFlowEdges = useMemo(() => {
@@ -41,6 +43,21 @@ export function useFlowEdges() {
   //     return edgeData
   //   })
   // }, [edges])
+
+  // useEffect(() => {
+  //   // Effect to update Reactflow internals when edges change
+  //   Object.values(edges).forEach((edge) => {
+  //     updateNodeInternals(edge.sourceNodeId)
+  //     updateNodeInternals(edge.targetNodeId)
+  //   })
+  // }, [edges, updateNodeInternals])
+  //
+  // useEffect(() => {
+  //   // Effect to update Reactflow internals when nodes change
+  //   Object.values(nodes).forEach((node) => {
+  //     updateNodeInternals(node.id)
+  //   })
+  // }, [nodes, updateNodeInternals])
 
   const reactFlowEdges = useMemo(() => {
     return edges

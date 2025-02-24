@@ -6,8 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure, router } from '../../trpc'
+import { flowContextProcedure, publicProcedure, router } from '../../trpc'
 import { addNode } from './add-node'
 import { connectPorts } from './connect-ports'
 import { removeEdge } from './remove-edge'
@@ -73,6 +74,7 @@ export const flowProcedures = router({
         )
     }),
 
+  // TODO: flowContextProcedure ??
   delete: publicProcedure
     .input(z.string())
     .mutation(async ({ input: flowId, ctx }) => {
@@ -80,7 +82,7 @@ export const flowProcedures = router({
       return { success }
     }),
 
-  edit: publicProcedure
+  edit: flowContextProcedure
     .input(z.object({
       flowId: z.string(),
       name: z.string().optional(),
@@ -106,7 +108,7 @@ export const flowProcedures = router({
 
       flow.metadata.updatedAt = new Date()
 
-      return await ctx.flowStore.updateFlow(flowId, flow)
+      return await ctx.flowStore.updateFlow(flow as Flow)
     }),
 
   subscribeToEvents,

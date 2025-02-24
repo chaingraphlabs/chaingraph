@@ -7,6 +7,7 @@
  */
 
 import type { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
+import type { drizzle } from 'drizzle-orm/node-postgres'
 import type { ExecutionService } from './executions/services/execution-service'
 import type { IExecutionStore } from './executions/store/execution-store'
 import type { IFlowStore } from './stores/flowStore/types'
@@ -14,9 +15,11 @@ import type { IFlowStore } from './stores/flowStore/types'
 export interface Session {
   userId: string
 }
+export type DBType = ReturnType<typeof drizzle>
 
 export interface AppContext {
   session: Session
+  db: DBType
   flowStore: IFlowStore
   nodeRegistry: NodeRegistry
   nodesCatalog: NodeCatalog
@@ -24,6 +27,7 @@ export interface AppContext {
   executionStore: IExecutionStore
 }
 
+let db: DBType | null = null
 let flowStore: IFlowStore | null = null
 let nodeRegistry: NodeRegistry | null = null
 let nodesCatalog: NodeCatalog | null = null
@@ -35,12 +39,14 @@ let executionStore: IExecutionStore | null = null
  * Should be called once when application starts
  */
 export function initializeContext(
+  _db: DBType,
   _flowStore: IFlowStore,
   _nodeRegistry: NodeRegistry,
   _nodesCatalog: NodeCatalog,
   _executionService: ExecutionService,
   _executionStore: IExecutionStore,
 ) {
+  db = _db
   flowStore = _flowStore
   nodeRegistry = _nodeRegistry
   nodesCatalog = _nodesCatalog
@@ -54,7 +60,8 @@ export function initializeContext(
  */
 export async function createContext(): Promise<AppContext> {
   if (
-    !flowStore
+    !db
+    || !flowStore
     || !nodeRegistry
     || !nodesCatalog
     || !executionService
@@ -67,6 +74,7 @@ export async function createContext(): Promise<AppContext> {
     session: {
       userId: 'test_user_id', // TODO: Implement proper session management
     },
+    db,
     flowStore,
     nodeRegistry,
     nodesCatalog,

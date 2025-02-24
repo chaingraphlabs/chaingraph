@@ -5,30 +5,53 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { AddFieldObjectPortInput, RemoveFieldObjectPortInput, UpdatePortUIInput, UpdatePortValueInput } from '@/store/ports/effects'
+import type {
+  AddFieldObjectPortInput,
+  RemoveFieldObjectPortInput,
+  UpdatePortUIInput,
+  UpdatePortValueInput,
+} from '@/store/ports/effects'
 import { setNodeVersion } from '@/store'
 import { $activeFlowId } from '@/store/flow/stores'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants'
 import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample'
 import { $nodes } from '@/store/nodes/stores'
-import { addFieldObjectPortFx, baseUpdatePortUIFx, baseUpdatePortValueFx, removeFiledObjectPortFx } from '@/store/ports/effects'
+import {
+  addFieldObjectPortFx,
+  baseUpdatePortUIFx,
+  baseUpdatePortValueFx,
+  removeFiledObjectPortFx,
+} from '@/store/ports/effects'
 import { combine, createEffect, sample } from 'effector'
-import { addFieldObjectPort, removeFieldObjectPort, requestUpdatePortUI, requestUpdatePortValue, updatePortUI } from './events'
+import {
+  addFieldObjectPort,
+  removeFieldObjectPort,
+  requestUpdatePortUI,
+  requestUpdatePortValue,
+  updatePortUI,
+  updatePortValue,
+} from './events'
 
 //
 // Update port value
 //
 export const preBaseUpdatePortValueFx = createEffect(async (params: UpdatePortValueInput) => {
   setNodeVersion({
-    id: params.nodeId,
+    nodeId: params.nodeId,
     version: params.nodeVersion,
   })
 })
 
+// Update local value immediately
+sample({
+  clock: requestUpdatePortValue,
+  target: [updatePortValue],
+})
+
 const throttledRequestUpdatePortValue = accumulateAndSample({
-  source: [requestUpdatePortValue],
+  source: [updatePortValue],
   timeout: NODE_UI_DEBOUNCE_MS,
-  getKey: update => update.id,
+  getKey: update => `${update.nodeId}_${update.portId}`,
 })
 
 sample({
@@ -37,21 +60,14 @@ sample({
     activeFlowId: $activeFlowId,
     nodes: $nodes,
   }),
-  fn: ({ activeFlowId, nodes }, { id, value }) => {
+  fn: ({ activeFlowId, nodes }, { portId, nodeId, value }) => {
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
-    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
-      return node.ports && node.ports.has(id)
-    })
-    if (!nodeEntry) {
-      throw new Error(`Node for port id '${id}' not found`)
-    }
-    const [nodeId] = nodeEntry
     return {
       flowId: activeFlowId,
       nodeId,
-      portId: id,
+      portId,
       value,
       nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
     }
@@ -67,7 +83,7 @@ sample({
 //
 export const preBaseUpdatePortUiFx = createEffect(async (params: UpdatePortUIInput) => {
   setNodeVersion({
-    id: params.nodeId,
+    nodeId: params.nodeId,
     version: params.nodeVersion,
   })
 })
@@ -75,7 +91,7 @@ export const preBaseUpdatePortUiFx = createEffect(async (params: UpdatePortUIInp
 const throttledLocalRequestUpdatePortUi = accumulateAndSample({
   source: [requestUpdatePortUI],
   timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
-  getKey: update => update.id,
+  getKey: update => `${update.nodeId}_${update.portId}`,
 })
 
 sample({
@@ -86,7 +102,7 @@ sample({
 const throttledRequestUpdatePortUi = accumulateAndSample({
   source: [requestUpdatePortUI],
   timeout: NODE_UI_DEBOUNCE_MS,
-  getKey: update => update.id,
+  getKey: update => `${update.nodeId}_${update.portId}`,
 })
 
 sample({
@@ -95,21 +111,15 @@ sample({
     activeFlowId: $activeFlowId,
     nodes: $nodes,
   }),
-  fn: ({ activeFlowId, nodes }, { id, ui }) => {
+  fn: ({ activeFlowId, nodes }, { nodeId, portId, ui }) => {
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
-    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
-      return node.ports && node.ports.has(id)
-    })
-    if (!nodeEntry) {
-      throw new Error(`Node for port id '${id}' not found`)
-    }
-    const [nodeId] = nodeEntry
+
     return {
       flowId: activeFlowId,
       nodeId,
-      portId: id,
+      portId,
       ui,
       nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
     }
@@ -124,21 +134,18 @@ sample({
   clock: addFieldObjectPort,
   source: combine({
     activeFlowId: $activeFlowId,
-    nodes: $nodes,
   }),
-  fn: ({ activeFlowId, nodes }, { id, key, config }) => {
+  fn: ({ activeFlowId }, { nodeId, portId, key, config }) => {
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
-    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
-      return node.ports && node.ports.has(id)
-    })
-    if (!nodeEntry) {
-      throw new Error(`Node for port id '${id}' not found`)
+    const result: AddFieldObjectPortInput = {
+      nodeId,
+      config,
+      flowId: activeFlowId,
+      portId,
+      key,
     }
-    const [nodeId] = nodeEntry
-
-    const result: AddFieldObjectPortInput = { nodeId, config, flowId: activeFlowId, portId: id, key }
     return result
   },
   target: addFieldObjectPortFx,
@@ -150,19 +157,12 @@ sample({
     activeFlowId: $activeFlowId,
     nodes: $nodes,
   },
-  fn: ({ activeFlowId, nodes }, { id, key }) => {
+  fn: ({ activeFlowId, nodes }, { nodeId, portId, key }) => {
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
-    const nodeEntry = Object.entries(nodes).find(([nodeId, node]) => {
-      return node.ports && node.ports.has(id)
-    })
-    if (!nodeEntry) {
-      throw new Error(`Node for port id '${id}' not found`)
-    }
-    const [nodeId] = nodeEntry
 
-    const result: RemoveFieldObjectPortInput = { nodeId, flowId: activeFlowId, portId: id, key }
+    const result: RemoveFieldObjectPortInput = { flowId: activeFlowId, nodeId, portId, key }
     return result
   },
   target: removeFiledObjectPortFx,

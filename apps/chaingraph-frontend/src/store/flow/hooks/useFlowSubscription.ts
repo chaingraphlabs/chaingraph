@@ -7,7 +7,6 @@
  */
 
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types'
-
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
@@ -23,6 +22,7 @@ import {
   setFlowSubscriptionStatus,
   setNodes,
   setNodeVersion,
+  updateNode,
   updateNodeUILocal,
 } from '@/store'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
@@ -61,6 +61,11 @@ export function useFlowSubscription() {
       addNode(data.node)
     },
 
+    [FlowEventType.NodeUpdated]: (data) => {
+      console.log('[NodeUpdated] Received node:', data.node)
+      updateNode(data.node)
+    },
+
     [FlowEventType.NodeRemoved]: (data) => {
       removeNode(data.nodeId)
     },
@@ -78,12 +83,13 @@ export function useFlowSubscription() {
       }
 
       if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
-        // console.log(`[PortUpdated] Received outdated port update event for node ${data.port.getConfig().nodeId}, local version: ${node.metadata.version}, event version: ${data.nodeVersion}`)
+        console.log(`[PortUpdated] Received outdated port update event for node ${data.port.getConfig().nodeId}, local version: ${node.metadata.version}, event version: ${data.nodeVersion}`)
         return
       }
 
       // log the current node version and from the event
       console.log(`[PortUpdated] current node version: ${nodes[data.port.getConfig().nodeId!]?.getVersion()}, event version: ${data.nodeVersion}`)
+      console.log(`[PortUpdated] data:`, data)
 
       updatePort({
         id: data.port.id,
@@ -155,7 +161,7 @@ export function useFlowSubscription() {
       console.log(`[NodeParentUpdated] currentParent: ${currentParent?.id}, newParent: ${newParent?.id}, currentPosition: ${JSON.stringify(currentPosition)}, newPosition: ${JSON.stringify(newPosition)} currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
       setNodeVersion({
-        id: data.nodeId,
+        nodeId: data.nodeId,
         version: data.version,
       })
 
@@ -181,14 +187,35 @@ export function useFlowSubscription() {
         return
       }
 
-      console.log(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
+      // console.log(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
       setNodeVersion({
-        id: data.nodeId,
+        nodeId: data.nodeId,
         version: data.version,
       })
 
       const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
       positionInterpolator.addState(data.nodeId, data.newPosition, currentPosition)
+    },
+
+    [FlowEventType.NodeUIChanged]: (data) => {
+      const currentNode = nodes[data.nodeId]
+      if (!currentNode)
+        return
+
+      const currentVersion = currentNode.getVersion()
+
+      // ignore outdated events
+      if (data.version && data.version <= currentVersion) {
+        console.log(`Ignoring outdated UI change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        return
+      }
+
+      updateNodeUILocal({
+        flowId: activeFlowId!,
+        nodeId: data.nodeId,
+        ui: data.ui,
+        version: data.version,
+      })
     },
 
     [FlowEventType.NodeUIDimensionsChanged]: (data) => {
@@ -210,7 +237,7 @@ export function useFlowSubscription() {
       console.log(`[NOT SKIP] Received dimensions change newDimensions: ${JSON.stringify(data.newDimensions)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
       setNodeVersion({
-        id: data.nodeId,
+        nodeId: data.nodeId,
         version: data.version,
       })
 
@@ -224,34 +251,6 @@ export function useFlowSubscription() {
         version: data.version,
       })
     },
-
-    // [FlowEventType.NodeUIStateChanged]: (data) => {
-    //   const currentNode = nodes[data.nodeId]
-    //   if (!currentNode)
-    //     return
-    //
-    //   const currentVersion = currentNode.getVersion()
-    //
-    //   // ignore outdated events
-    //   if (data.version && data.version <= currentVersion) {
-    //     console.log(`Ignoring outdated state change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
-    //     return
-    //   }
-    //
-    //   currentNode.setMetadata({
-    //     ...currentNode.metadata,
-    //     ui: {
-    //       ...currentNode.metadata.ui,
-    //       ...data.newValue,
-    //       position: data.newValue.position || currentNode.metadata.ui?.position,
-    //       dimensions: data.newValue.dimensions || currentNode.metadata.ui?.dimensions,
-    //       style: data.newValue.style || currentNode.metadata.ui?.style,
-    //       state: data.newValue.state || currentNode.metadata.ui?.state,
-    //       version: data.newValue.version,
-    //     },
-    //   })
-    // },
-
     // Add other event handlers as needed
   }), [nodes, activeFlowId])
 

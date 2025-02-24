@@ -10,6 +10,9 @@ import Decimal from 'decimal.js'
 import { MultiChannel } from './multi-channel'
 
 export function deepCopy(obj: any): any {
+  if (obj === undefined) {
+    return undefined
+  }
   let copy
 
   // Handle the 3 simple types, and null or undefined

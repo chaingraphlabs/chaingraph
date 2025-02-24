@@ -1,18 +1,27 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
 import type { EdgeData } from '@/store'
 import type { IPortConfig } from '@badaitech/chaingraph-types'
 
 export function isHideEditor(config: IPortConfig, connectedEdges: EdgeData[]) {
-  if (config.direction === 'input' && connectedEdges.length > 0) {
-    return false
+  const hasConnections = connectedEdges.length > 0
+  const isInput = config.direction === 'input'
+  const isOutput = config.direction === 'output'
+
+  if (isInput && hasConnections) {
+    return true
   }
 
-  const isOutput = config.direction === 'output'
-  const hasConnections = connectedEdges.length > 0
+  const hideEditorUndefined = config.ui?.hideEditor === undefined
+  if (isOutput && hideEditorUndefined) {
+    return true
+  }
 
-  const isHideEditor
-    = config.ui?.hideEditor === undefined && isOutput // for output port default is true
-      ? true
-      : !!config.ui?.hideEditor
-
-  return !isHideEditor
+  return false
 }

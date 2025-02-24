@@ -5,51 +5,52 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { ExtractValue, IPortConfig } from '@badaitech/chaingraph-types'
-import { useNodeContext } from './context'
-import { Port } from './Port'
+import type { INode } from '@badaitech/chaingraph-types'
+import { PortComponent } from 'components/flow/nodes/ChaingraphNode/PortComponent.tsx'
+import { memo, useMemo } from 'react'
 
-interface PortState< C extends IPortConfig = IPortConfig> {
-  value: ExtractValue<C>
-  isValid: boolean
+export interface NodeBodyProps {
+  node: INode
 }
 
-export function NodeBody() {
-  const { inputs, outputs, outputsStates, inputsStates, createChangeInputPortHandler, createChangeOutputPortHandler } = useNodeContext()
-
-  const shallowInputsPorts = inputs.filter(input => !input.getConfig().parentId)
-  const shallowOutputsPorts = outputs.filter(output => !output.getConfig().parentId)
+function NodeBody({
+  node,
+}: NodeBodyProps) {
+  const inputPorts = useMemo(
+    () => node.getInputs().filter(
+      port => !port.getConfig().parentId,
+    ),
+    [node],
+  )
+  const outputPorts = useMemo(
+    () => node.getOutputs().filter(
+      port => !port.getConfig().parentId,
+    ),
+    [node],
+  )
 
   return (
     <div className="px-3 py-2 space-y-4">
       <div className="space-y-3">
 
         {/* Input Ports */}
-        {shallowInputsPorts.map((port) => {
-          const { value, isValid } = inputsStates[port.id]
-
+        {inputPorts.map((port) => {
           return (
-            <Port
+            <PortComponent
               key={port.id}
+              node={node}
               port={port}
-              value={value}
-              errorMessage={isValid ? undefined : 'invalid'}
-              onChange={createChangeInputPortHandler(port)}
             />
           )
         })}
 
         {/* Output Ports */}
-        {shallowOutputsPorts.map((port) => {
-          const { value, isValid } = outputsStates[port.id]
-
+        {outputPorts.map((port) => {
           return (
-            <Port
+            <PortComponent
               key={port.id}
+              node={node}
               port={port}
-              value={value}
-              errorMessage={isValid ? undefined : 'invalid'}
-              onChange={createChangeOutputPortHandler(port)}
             />
           )
         })}
@@ -57,3 +58,5 @@ export function NodeBody() {
     </div>
   )
 }
+
+export default memo(NodeBody)

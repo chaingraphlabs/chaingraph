@@ -6,10 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
-export const removeEdge = publicProcedure
+export const removeEdge = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     edgeId: z.string(),
@@ -31,6 +32,8 @@ export const removeEdge = publicProcedure
 
     // Remove edge from flow
     flow.removeEdge(edgeId)
+
+    await ctx.flowStore.updateFlow(flow as Flow)
 
     return {
       success: true,

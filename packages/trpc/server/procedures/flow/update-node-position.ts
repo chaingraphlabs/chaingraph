@@ -6,11 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
-export const updateNodePosition = publicProcedure
+// export const updateNodePosition = publicProcedure
+export const updateNodePosition = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     nodeId: z.string(),
@@ -21,9 +23,6 @@ export const updateNodePosition = publicProcedure
     version: z.number(),
   }))
   .mutation(async ({ input, ctx }) => {
-    // TODO: create nodes store
-    const startTime = Date.now()
-
     const flow = await ctx.flowStore.getFlow(input.flowId)
     if (!flow)
       throw new Error('Flow not found')
@@ -59,8 +58,7 @@ export const updateNodePosition = publicProcedure
 
     node.setPosition(input.position, true)
 
-    const duration = Date.now() - startTime
-    console.log(`[FLOW] Updated position for node ${input.nodeId} in ${duration}ms`)
+    await ctx.flowStore.updateFlow(flow as Flow)
 
     return {
       flowId: input.flowId,

@@ -6,14 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionEventData,
-} from '@badaitech/chaingraph-types'
-import {
-  EventQueue,
-  ExecutionEventEnum,
-  ExecutionEventImpl,
-} from '@badaitech/chaingraph-types'
+import type { ExecutionEventData, Flow } from '@badaitech/chaingraph-types'
+import { EventQueue, ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { zAsyncIterable } from '../../procedures/subscriptions/utils/zAsyncIterable'
@@ -44,8 +38,7 @@ export const executionRouter = router({
         })
       }
 
-      const instance = await ctx.executionService.createExecution(flow, input.options)
-
+      const instance = await ctx.executionService.createExecution(flow as Flow, input.options)
       if (input.options?.breakpoints) {
         for (const nodeId of input.options.breakpoints) {
           await ctx.executionService.addBreakpoint(instance.id, nodeId)

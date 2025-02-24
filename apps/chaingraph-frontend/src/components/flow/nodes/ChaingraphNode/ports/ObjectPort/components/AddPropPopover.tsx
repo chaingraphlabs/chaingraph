@@ -7,12 +7,17 @@
  */
 
 import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
-import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { PopoverContent } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button.tsx'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu.tsx'
+import { Input } from '@/components/ui/input.tsx'
+import { PopoverContent } from '@/components/ui/popover.tsx'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
-import { X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
 
 interface Data {
@@ -28,25 +33,52 @@ interface Props {
 const typeConfigMap: Record<PortType, IPortConfig> = {
   string: {
     type: 'string',
+    defaultValue: '',
+    ui: {
+      hideEditor: false,
+    },
   },
   number: {
     type: 'number',
+    defaultValue: 0,
+    ui: {
+      hideEditor: false,
+    },
   },
   enum: {
     type: 'enum',
     options: [],
+    defaultValue: '',
+    ui: {
+      hideEditor: false,
+    },
   },
   boolean: {
     type: 'boolean',
+    defaultValue: false,
+    ui: {
+      hideEditor: false,
+    },
   },
   stream: {
     type: 'stream',
     itemConfig: {},
+    ui: {
+      hideEditor: false,
+    },
   },
   object: {
     type: 'object',
     schema: {
       properties: {},
+    },
+    defaultValue: {},
+    isSchemaMutable: true,
+    ui: {
+      hideEditor: false,
+      addKeyFormHidden: true,
+      addKeyFormSpoilerState: true,
+      keyDeletable: true,
     },
   },
   array: {
@@ -54,9 +86,17 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     itemConfig: {
       type: 'string',
     },
+    defaultValue: [],
+    ui: {
+      hideEditor: false,
+    },
   },
   any: {
     type: 'any',
+    defaultValue: null,
+    ui: {
+      hideEditor: false,
+    },
   },
 }
 
@@ -64,7 +104,8 @@ export function AddPropPopover(props: Props) {
   const { onClose, onSubmit } = props
 
   const [key, setKey] = useState('')
-  const [type, setType] = useState<Exclude<PortType, 'array' | 'stream'> | undefined>(undefined)
+  const [type, setType] = useState<Exclude<PortType, 'array' | 'stream'> | undefined>('string')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {
     if (!type || !key)
@@ -90,31 +131,37 @@ export function AddPropPopover(props: Props) {
 
       <Input
         value={key}
-        onChange={(e) => {
-          setKey(e.target.value)
-        }}
+        onChange={e => setKey(e.target.value)}
         placeholder="key name"
       />
-      <DropdownMenu>
-        <DropdownMenuTrigger className="mt-3 w-full">
-          <Input value={type} className="w-full" placeholder="Select Type" />
+
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <div className="mt-3 w-full relative">
+            <Input
+              value={type}
+              readOnly
+              className="w-full cursor-pointer"
+              onClick={() => setIsDropdownOpen(true)}
+            />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
+          </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          {PORT_TYPES.filter((type) => {
-            return type !== 'array' && type !== 'stream'
-          }).map((type) => {
-            return (
+          {PORT_TYPES
+            .filter(t => t !== 'stream')
+            .map(portType => (
               <DropdownMenuItem
-                key={type}
+                key={portType}
                 onClick={() => {
-                  setType(type)
+                  setType(portType as Exclude<PortType, 'array' | 'stream'>)
+                  setIsDropdownOpen(false)
                 }}
               >
-                {type}
+                {portType}
               </DropdownMenuItem>
-            )
-          })}
+            ))}
         </DropdownMenuContent>
       </DropdownMenu>
 
