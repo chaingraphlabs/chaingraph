@@ -9,17 +9,14 @@ import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingrap
 import {
   BaseNode,
   Input,
-  MultiChannel,
   Node,
   Number,
   ObjectSchema,
   Output,
   PortEnumFromObject,
-  PortStream,
   String,
 } from '@badaitech/chaingraph-types'
-import { SystemMessage } from '@langchain/core/messages'
-import { ChatOpenAI } from '@langchain/openai'
+import { OpenAI } from 'openai'
 import { NODE_CATEGORIES } from '../../categories'
 
 export enum OGLLMModels {
@@ -117,15 +114,14 @@ class OGLLMCallNode extends BaseNode {
   temperature: number = 0
 
   @Output()
-  @PortStream({
-    title: 'Output Stream',
-    description: 'Output stream of the Language Model response',
-    itemConfig: {
-      type: 'string',
-      defaultValue: '',
+  @String({
+    title: 'LLM answer',
+    description: 'Output of LLM',
+    ui: {
+      isTextArea: true,
     },
   })
-  outputStream: MultiChannel<string> = new MultiChannel<string>()
+  output: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const { createZGComputeNetworkBroker } = require('@0glabs/0g-serving-broker')
@@ -137,71 +133,42 @@ class OGLLMCallNode extends BaseNode {
     const provider = new ethers.JsonRpcProvider('https://evmrpc-testnet.0g.ai')
     const wallet = new ethers.Wallet(this.privateKey, provider)
     const broker = await createZGComputeNetworkBroker(wallet)
+    // const services = await broker.inference.listService()
+    // console.log(services)
+
+    const ledger = await broker.inference.ledger.getLedger()
+    // console.log('Balance: ', ledger.ledgerInfo[0])
+    if (!ledger) {
+      await broker.inference.ledger.addLedger(1)
+    } else if (ledger.ledgerInfo[0] < 1000000000000000000n) {
+      await broker.inference.ledger.depositFund(1)
+    }
+    await broker.inference.settleFee(llmModels[this.model].providerAddress, 0.00000000000000003)
+    // await broker.inference.settleFee(llmModels[this.model].providerAddress, 0.00000000000000002)
     const { endpoint, model } = await broker.inference.getServiceMetadata(
       llmModels[this.model].providerAddress,
     )
-    const headers = await broker.inference.getRequestHeaders(llmModels[this.model].providerAddress, prompt)
-    console.log(headers, endpoint, model)
-    const llm = new ChatOpenAI({
-      configuration: {
-        baseURL: endpoint,
-        defaultHeaders: headers,
-      },
+    console.log(endpoint, model)
+    const headers = await broker.inference.getRequestHeaders(llmModels[this.model].providerAddress, this.prompt)
+
+    const openai = new OpenAI({
+      baseURL: endpoint,
       apiKey: '',
-      model: this.model,
-      temperature: this.temperature,
-      streaming: true,
     })
 
-    const messages = [
-      new SystemMessage(this.prompt),
-    ]
-
-    // Start streaming in the background
-    const streamingPromise = async () => {
-      console.log('Streaming started')
-      try {
-        const stream = await llm.stream(messages, {
-          signal: context.abortSignal,
-        })
-
-        const buffer: string[] = []
-        const bufferSize = 5
-
-        for await (const chunk of stream) {
-          // Check if execution was aborted
-          if (context.abortSignal.aborted) {
-            this.outputStream.close()
-            return
-          }
-
-          // add chunk to buffer
-          if (chunk.content) {
-            buffer.push(chunk.content.toString())
-          }
-
-          if (buffer.length > bufferSize) {
-            // Send chunk content to the output stream
-            this.outputStream.send(buffer.join(''))
-
-            // Clear buffer
-            buffer.splice(0, buffer.length)
-          }
-        }
-
-        // Send remaining content
-        if (buffer.length > 0) {
-          this.outputStream.send(buffer.join(''))
-        }
-      } finally {
-        // Close the stream in any case
-        this.outputStream.close()
-      }
-    }
-
-    return {
-      backgroundActions: [streamingPromise],
-    }
+    const completion = await openai.chat.completions.create(
+      {
+        messages: [{ role: 'system', content: this.prompt }],
+        model,
+      },
+      {
+        headers: {
+          ...headers,
+        },
+      },
+    )
+    this.output = completion.choices[0].message.content ?? ''
+    return {}
   }
 }
 
