@@ -33,6 +33,7 @@ import { trpcReact } from '@badaitech/trpc/client'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react'
 import { useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { updatePort } from '../../ports/events'
 
 export function useFlowSubscription() {
@@ -40,6 +41,7 @@ export function useFlowSubscription() {
   const isFlowsLoading = useUnit($isFlowsLoading)
   const subscriptionState = useUnit($flowSubscriptionState)
   const nodes = useUnit($nodes)
+  const navigate = useNavigate()
 
   // Create event handlers map
   const eventHandlers: FlowEventHandlerMap = useMemo(() => ({
@@ -288,6 +290,8 @@ export function useFlowSubscription() {
           code: error.data?.code,
           timestamp: new Date(),
         })
+
+        navigate('/flows')
       },
     },
   )

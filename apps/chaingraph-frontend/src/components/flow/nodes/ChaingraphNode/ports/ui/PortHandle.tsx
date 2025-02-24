@@ -29,6 +29,7 @@ export function PortHandle<C extends IPortConfig>({ port, className }: Props<C>)
         'border-2 border-background',
         'transition-shadow duration-200',
         'data-[connected=true]:shadow-port-connected',
+        'z-50',
         config.direction === 'input' ? '-left-4' : '-right-4',
         !bgColor && 'bg-flow-data',
         className,

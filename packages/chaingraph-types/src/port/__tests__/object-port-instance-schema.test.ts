@@ -41,7 +41,7 @@ describe('objectPort dynamic schema', () => {
       expect(port.getConfig().schema.properties).toEqual({
         name: { type: 'string', minLength: 2 },
         age: { type: 'number', min: 18 },
-        address: { type: 'string', defaultValue: '123 Main St' },
+        address: { key: 'address', type: 'string', defaultValue: '123 Main St' },
       })
       expect(port.getValue()).toEqual({ name: 'Alice', age: 25, address: '123 Main St' })
 
@@ -96,6 +96,7 @@ describe('objectPort dynamic schema', () => {
         age: { type: 'number', min: 18 },
         address: {
           type: 'object',
+          key: 'address',
           schema: {
             properties: {
               street: { type: 'string', defaultValue: '123 Main St' },

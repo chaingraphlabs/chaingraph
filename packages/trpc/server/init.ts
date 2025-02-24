@@ -6,10 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IFlowStore } from '@/server/stores/flowStore/types'
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
+import type { IFlowStore } from './stores/flowStore/types'
 import process from 'node:process'
-import { InMemoryFlowStore } from '@/server/stores/flowStore/inMemoryFlowStore'
 import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
 import {
   AnyPortPlugin,
@@ -33,6 +32,7 @@ import { CleanupService } from './executions/services/cleanup-service'
 import { ExecutionService } from './executions/services/execution-service'
 import { InMemoryExecutionStore } from './executions/store/execution-store'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
+import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 
 export async function init() {
   PortPluginRegistry.getInstance().register(StringPortPlugin)
