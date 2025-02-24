@@ -100,6 +100,20 @@ class OGLLMCallNode extends BaseNode {
 
   @Input()
   @Number({
+    title: 'Fee',
+    description: 'Default fee to reward node owner',
+  })
+  fee: number = 0.00000000000000003
+
+  @Input()
+  @Number({
+    title: 'Min Balance',
+    description: 'Minimum balance to use in inference ledger',
+  })
+  minBalance: number = 1
+
+  @Input()
+  @Number({
     title: 'Temperature',
     description: 'Temperature for sampling',
     min: 0,
@@ -143,12 +157,11 @@ class OGLLMCallNode extends BaseNode {
     } else if (ledger.ledgerInfo[0] < 1000000000000000000n) {
       await broker.inference.ledger.depositFund(1)
     }
-    await broker.inference.settleFee(llmModels[this.model].providerAddress, 0.00000000000000003)
-    // await broker.inference.settleFee(llmModels[this.model].providerAddress, 0.00000000000000002)
+    await broker.inference.settleFee(llmModels[this.model].providerAddress, this.fee)
     const { endpoint, model } = await broker.inference.getServiceMetadata(
       llmModels[this.model].providerAddress,
     )
-    console.log(endpoint, model)
+
     const headers = await broker.inference.getRequestHeaders(llmModels[this.model].providerAddress, this.prompt)
 
     const openai = new OpenAI({
