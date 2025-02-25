@@ -244,7 +244,8 @@ Feel free to open issues for bugs, suggestions, or questions.
 
 ## Developer Documentation
 
-For more details on how to create custom nodes using decorators, please refer to our [Node Decorators Documentation](./docs/nodes/node-decorators.md). This guide provides in-depth explanations and examples on using decorators to define node inputs, outputs, and complex configurations, ensuring type-safety and a more maintainable codebase.
+For more details on how to create custom nodes using decorators, please refer to our [Node Decorators Documentation](./docs/nodes/node-decorators.md) and [Decorators Specification Reference](./docs/nodes/port-decorators-spec.md) and . 
+This guides provides in-depth explanations and examples on using decorators to define node inputs, outputs, and complex configurations, ensuring type-safety and a more maintainable codebase.
 
 ---
 
