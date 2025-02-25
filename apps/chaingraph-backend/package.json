@@ -26,6 +26,7 @@
     "@badaitech/trpc": "workspace:*",
     "@types/ws": "^8.5.14",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "esm": "^3.2.25",
     "superjson": "^2.2.1",
     "ws": "^8.18.0"

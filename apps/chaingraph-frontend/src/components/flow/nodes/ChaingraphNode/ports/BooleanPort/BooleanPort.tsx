@@ -39,7 +39,7 @@ export function BooleanPort(props: BooleanPortProps) {
     })
   }
 
-  if (ui?.hidePort)
+  if (ui?.hide)
     return null
 
   return (

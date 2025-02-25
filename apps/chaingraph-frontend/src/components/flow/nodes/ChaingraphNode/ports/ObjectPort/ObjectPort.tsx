@@ -54,11 +54,15 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
   const title = config.title || config.key || port.id
   const isSchemaMutable = config.isSchemaMutable
   const isOutput = config.direction === 'output'
+  const ui = config.ui
 
   const connectedEdges = useEdgesForPort(port.id)
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
+
+  if (ui?.hide)
+    return null
 
   return (
     <div
@@ -117,6 +121,7 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
                   <PortField
                     key={childPort.id}
                     node={node}
+                    parentPort={port}
                     port={childPort}
                     isOutput={isOutput}
                     isSchemaMutable={isSchemaMutable ?? false}

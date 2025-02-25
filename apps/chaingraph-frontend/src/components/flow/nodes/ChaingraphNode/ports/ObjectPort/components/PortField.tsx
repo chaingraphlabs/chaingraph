@@ -6,13 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
+import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
 import { PortComponent } from '../../../PortComponent'
 import { DeleteButton } from './DeleteButton'
 
 interface PortFieldProps {
   node: INode
+  parentPort: IPort<ObjectPortConfig>
   port: IPort
   isOutput: boolean
   isSchemaMutable: boolean
@@ -21,11 +22,16 @@ interface PortFieldProps {
 
 export function PortField({
   node,
+  parentPort,
   port,
   isOutput,
   isSchemaMutable,
   onDelete,
 }: PortFieldProps) {
+  const isKeyDeletable
+    = parentPort.getConfig()?.ui?.keyDeletable
+      || parentPort.getConfig()?.ui?.keyDeletable === undefined
+
   return (
     <div className="py-1 w-full relative">
       <div className={cn(
@@ -38,7 +44,8 @@ export function PortField({
           <PortComponent node={node} port={port} />
         </div>
 
-        {isSchemaMutable && <DeleteButton onClick={onDelete} />}
+        {(isSchemaMutable && parentPort.getConfig()?.ui?.keyDeletable)
+        && <DeleteButton onClick={onDelete} />}
       </div>
     </div>
   )

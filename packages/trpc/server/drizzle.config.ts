@@ -7,7 +7,10 @@
  */
 
 import process from 'node:process'
+import * as dotenv from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
+
+dotenv.config({ path: '../../.env' })
 
 export default defineConfig({
   out: './drizzle',

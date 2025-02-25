@@ -29,7 +29,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "migrate": "turbo run migrate --filter=@badaitech/trpc"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.64.2",

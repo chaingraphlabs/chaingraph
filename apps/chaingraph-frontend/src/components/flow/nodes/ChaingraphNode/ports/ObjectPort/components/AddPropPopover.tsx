@@ -76,8 +76,6 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     isSchemaMutable: true,
     ui: {
       hideEditor: false,
-      addKeyFormHidden: true,
-      addKeyFormSpoilerState: true,
       keyDeletable: true,
     },
   },

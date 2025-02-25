@@ -14,6 +14,7 @@ ChainGraph is a source-available, flow–based programming framework that empowe
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Running in Development Mode](#running-in-development-mode)
+- [PostgreSQL Database Storage](#postgresql-database-storage)
 - [Building for Production](#building-for-production)
 - [Docker & Docker-compose](#docker--docker-compose)
 - [Project Structure](#project-structure)
@@ -93,6 +94,48 @@ You can also run each package individually if desired:
   `turbo run dev --filter=@badaitech/chaingraph-backend`
 - **Frontend:**
   `turbo run dev --filter=@badaitech/chaingraph-frontend`
+
+## PostgreSQL Database Storage
+
+ChainGraph can be configured to use PostgreSQL for persistent storage instead of the default in-memory storage solution. Follow these steps to set up database storage:
+
+### 1. Start PostgreSQL Database
+
+Use the included Docker Compose configuration to start a PostgreSQL database:
+
+```bash
+docker compose up -d postgres
+```
+
+This will start a PostgreSQL instance accessible on port 5431.
+
+### 2. Configure Database Connection
+
+Create a `.env` file in the project root with your database connection parameters based on the provided `.env.example`:
+
+```
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5431/postgres?sslmode=disable
+```
+
+### 3. Run Database Migrations
+
+Before starting ChainGraph with PostgreSQL storage, you need to run migrations to create the necessary database schema:
+
+```bash
+pnpm run migrate
+```
+
+This command will create all required tables and indexes in your PostgreSQL database.
+
+### 4. Start ChainGraph with Database Storage
+
+Once migrations are complete, you can start ChainGraph as usual. It will automatically detect and use the PostgreSQL database for persistent storage:
+
+```bash
+pnpm run dev
+```
+
+With this configuration, your flows, nodes, and execution data will be stored persistently in PostgreSQL instead of being lost when the server restarts.
 
 ## Building for Production
 

@@ -41,7 +41,7 @@ export function NumberPort(props: NumberPortProps) {
     })
   }
 
-  if (ui?.hidePort)
+  if (ui?.hide)
     return null
 
   return (
@@ -86,17 +86,25 @@ export function NumberPort(props: NumberPortProps) {
             />
 
             {config.ui?.isSlider && (
-              <Slider
-                className={cn('mt-0.5 w-full')}
-                disabled={ui?.disabled}
-                value={[port.getValue() ?? 0]}
-                min={config.min}
-                max={config.max}
-                step={config.step}
-                onValueChange={(values) => {
-                  handleChange(values[0])
-                }}
-              />
+              <>
+                {(config.ui?.leftSliderLabel || config.ui?.rightSliderLabel) && (
+                  <div className="flex justify-between w-full text-xs text-gray-500">
+                    <span>{config.ui.leftSliderLabel}</span>
+                    <span>{config.ui.rightSliderLabel}</span>
+                  </div>
+                )}
+                <Slider
+                  className={cn('mt-2 w-full')}
+                  disabled={ui?.disabled}
+                  value={[port.getValue() ?? 0]}
+                  min={config.min}
+                  max={config.max}
+                  step={config.step}
+                  onValueChange={(values) => {
+                    handleChange(values[0])
+                  }}
+                />
+              </>
             )}
           </>
         )}

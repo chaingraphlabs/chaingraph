@@ -10,14 +10,7 @@ import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { useFlowSearch } from '@/components/sidebar/tabs/flow/hooks/useFlowSearch'
 import { useFlowSort } from '@/components/sidebar/tabs/flow/hooks/useFlowSort'
 import { ErrorMessage } from '@/components/ui/error-message.tsx'
-import {
-  $flowsError,
-  createFlow,
-  type CreateFlowEvent,
-  deleteFlow,
-  updateFlow,
-  type UpdateFlowEvent,
-} from '@/store'
+import { $flowsError, createFlow, type CreateFlowEvent, deleteFlow, updateFlow, type UpdateFlowEvent } from '@/store'
 import {
   $activeFlowId,
   $createFlowError,
@@ -108,17 +101,6 @@ export function FlowList() {
     return <Spinner />
   }
 
-  // Error state
-  if (loadError) {
-    return (
-      <ErrorMessage>
-        Failed to load flows:
-        {' '}
-        {loadError.message}
-      </ErrorMessage>
-    )
-  }
-
   const hasFlows = filteredFlows && filteredFlows.length > 0
   const isEditing = Boolean(editingFlow)
   const showEmptyState = !flows?.length && !isCreating && !isEditing
@@ -126,6 +108,14 @@ export function FlowList() {
 
   return (
     <div className="flex flex-col h-full relative">
+      {loadError && (
+        <ErrorMessage>
+          Failed to load flows:
+          {' '}
+          {loadError.message}
+        </ErrorMessage>
+      )}
+
       <AnimatePresence mode="sync">
         {showEmptyState && (
           <motion.div

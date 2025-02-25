@@ -51,7 +51,7 @@ export function EnumPort(props: EnumPortProps) {
   }
 
   // If the port should be hidden, don't render it.
-  if (ui?.hidePort)
+  if (ui?.hide)
     return null
 
   return (
@@ -93,7 +93,7 @@ export function EnumPort(props: EnumPortProps) {
                   key={option.id}
                   value={option.id!}
                 >
-                  {option.name || option.id}
+                  {option.title || option.name || option.id}
                 </SelectItem>
               ))}
             </SelectContent>

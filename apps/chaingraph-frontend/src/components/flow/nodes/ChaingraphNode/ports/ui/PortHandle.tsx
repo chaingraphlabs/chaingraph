@@ -20,6 +20,7 @@ export function PortHandle<C extends IPortConfig>({ port, className }: Props<C>)
   return (
     <Handle
       id={config.id}
+      hidden={config.ui?.hidePort === true}
       type={config.direction === 'input' ? 'target' : 'source'}
       position={config.direction === 'input' ? Position.Left : Position.Right}
       style={bgColor ? { backgroundColor: bgColor } : undefined}

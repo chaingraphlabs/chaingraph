@@ -13,6 +13,11 @@ export function isHideEditor(config: IPortConfig, connectedEdges: EdgeData[]) {
   const hasConnections = connectedEdges.length > 0
   const isInput = config.direction === 'input'
   const isOutput = config.direction === 'output'
+  const isEditorHiddenExplicit = config.ui?.hideEditor === true
+
+  if (isEditorHiddenExplicit) {
+    return true
+  }
 
   if (isInput && hasConnections) {
     return true

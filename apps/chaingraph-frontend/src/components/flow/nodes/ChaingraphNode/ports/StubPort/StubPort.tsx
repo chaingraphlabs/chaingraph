@@ -14,6 +14,10 @@ export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
   const { port } = props
   const config = port.getConfig()
   const title = config.title || config.key
+  const ui = config.ui
+
+  if (ui?.hide)
+    return null
 
   return (
     <div

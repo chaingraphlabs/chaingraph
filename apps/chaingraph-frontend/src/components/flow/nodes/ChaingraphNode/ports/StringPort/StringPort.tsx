@@ -100,7 +100,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
     })
   }, [activeFlow?.id, port, getZoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
 
-  if (ui?.hidePort)
+  if (ui?.hide)
     return null
 
   const title = config.title || config.key
