@@ -18,6 +18,7 @@ import {
   Number,
   PortObject,
   PortArray,
+  StringEnum,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -101,12 +102,16 @@ class CoinMarketCapNode extends BaseNode {
   cryptoList: string[] = [];
 
   @Input()
-  @PortArray({
-    title: 'Blockchain (optional)',
-    description: 'List of blockchains to filter by',
-    itemConfig: { type: 'string' },
+  @StringEnum(['none', 'bsc'], {
+    title: 'Blockchain',
+    description: 'Filter results by blockchain',
+    defaultValue: 'none',
+    options: [
+      { id: 'none', type: 'string', defaultValue: 'none', title: 'No filter' },
+      { id: 'bsc', type: 'string', defaultValue: 'bsc', title: 'BSC' },
+    ],
   })
-  blockchain: string[] = [];
+  blockchain: string = 'none';
 
   @Input()
   @String({
