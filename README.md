@@ -86,10 +86,12 @@ pnpm run dev
 ```
 
 This command launches:
+
 - The frontend development server (with hot reloading)
 - The backend development process (watch mode)
 
 You can also run each package individually if desired:
+
 - **Backend:**
   `turbo run dev --filter=@badaitech/chaingraph-backend`
 - **Frontend:**
@@ -224,6 +226,7 @@ Before submitting a contribution, you must agree to our [Contributor License Agr
 By submitting a contribution (e.g., a pull request), you confirm that you accept its terms.
 
 Contributions to ChainGraph are welcome! If you wish to submit changes:
+
 - Fork the repository and create a feature or bugfix branch.
 - Ensure your changes follow the project’s style guidelines and that tests pass.
 - Update documentation as necessary.
@@ -251,5 +254,5 @@ ChainGraph is licensed under a [Business Source License 1.1 (BUSL-1.1)](LICENSE.
 
 Since version 1.0 refer to a table below showing a conversion dates for each version:
 
-| ChainGraph Version | License  | Converts to Apache 2.0 |
-|--------------------|----------|------------------------|
+| ChainGraph Version | License | Converts to Apache 2.0 |
+| ------------------ | ------- | ---------------------- |

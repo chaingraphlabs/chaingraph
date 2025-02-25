@@ -1,66 +1,65 @@
 # ChainGraph Decorator Specification Reference
 
-
 ## Table of Contents
 
 - [Introduction](#introduction)
 - [Node Decorators](#1-node-decorators)
-    - [@Node](#node)
+  - [@Node](#node)
 - [Property Decorators](#2-property-decorators)
-    - [Direction Decorators](#direction-decorators)
-        - [@Input](#input)
-        - [@Output](#output)
-    - [Port Metadata Decorators](#port-metadata-decorators)
-        - [@Id](#id)
-        - [@Name](#name)
-        - [@Title](#title)
-        - [@Description](#description)
-        - [@DefaultValue](#defaultvalue)
-        - [@Metadata](#metadata)
+  - [Direction Decorators](#direction-decorators)
+    - [@Input](#input)
+    - [@Output](#output)
+  - [Port Metadata Decorators](#port-metadata-decorators)
+    - [@Id](#id)
+    - [@Name](#name)
+    - [@Title](#title)
+    - [@Description](#description)
+    - [@DefaultValue](#defaultvalue)
+    - [@Metadata](#metadata)
 - [Scalar Port Decorators](#3-scalar-port-decorators)
-    - [@String](#string)
-    - [@Number](#number)
-    - [@Boolean](#boolean)
+  - [@String](#string)
+  - [@Number](#number)
+  - [@Boolean](#boolean)
 - [Complex Port Decorators](#4-complex-port-decorators)
-    - [@PortObject & @ObjectSchema](#portobject--objectschema)
-        - [@ObjectSchema](#objectschema)
-        - [@PortObject](#portobject)
-    - [@PortArray & Array Helpers](#portarray--array-helpers)
-        - [@PortArray](#portarray)
-        - [Array Helper Decorators](#array-helper-decorators)
-            - [@PortArrayString](#portarraystring)
-            - [@PortArrayNumber](#portarraynumber)
-            - [@PortArrayBoolean](#portarrayboolean)
-            - [@PortArrayObject](#portarrayobject)
-            - [@PortArrayNested](#portarraynested)
-    - [@PortEnum & Enum Helpers](#portenum--enum-helpers)
-        - [@PortEnum](#portenum)
-        - [Enum Helper Decorators](#enum-helper-decorators)
-            - [@StringEnum](#stringenum)
-            - [@NumberEnum](#numberenum)
-            - [@PortEnumFromObject](#portenumfromobject)
-            - [@PortEnumFromNative](#portenumfromnative)
-    - [@PortStream](#portstream)
-    - [@PortAny](#portany)
+  - [@PortObject & @ObjectSchema](#portobject--objectschema)
+    - [@ObjectSchema](#objectschema)
+    - [@PortObject](#portobject)
+  - [@PortArray & Array Helpers](#portarray--array-helpers)
+    - [@PortArray](#portarray)
+    - [Array Helper Decorators](#array-helper-decorators)
+      - [@PortArrayString](#portarraystring)
+      - [@PortArrayNumber](#portarraynumber)
+      - [@PortArrayBoolean](#portarrayboolean)
+      - [@PortArrayObject](#portarrayobject)
+      - [@PortArrayNested](#portarraynested)
+  - [@PortEnum & Enum Helpers](#portenum--enum-helpers)
+    - [@PortEnum](#portenum)
+    - [Enum Helper Decorators](#enum-helper-decorators)
+      - [@StringEnum](#stringenum)
+      - [@NumberEnum](#numberenum)
+      - [@PortEnumFromObject](#portenumfromobject)
+      - [@PortEnumFromNative](#portenumfromnative)
+  - [@PortStream](#portstream)
+  - [@PortAny](#portany)
 - [Common UI Configuration Properties](#5-common-ui-configuration-properties)
 - [Port Type-Specific UI Properties](#6-port-type-specific-ui-properties)
-    - [String Port UI](#string-port-ui)
-    - [Number Port UI](#number-port-ui)
-    - [Array Port UI](#array-port-ui)
-    - [Object Port UI](#object-port-ui)
+  - [String Port UI](#string-port-ui)
+  - [Number Port UI](#number-port-ui)
+  - [Array Port UI](#array-port-ui)
+  - [Object Port UI](#object-port-ui)
 - [Complete Examples](#7-complete-examples)
-    - [Basic Node with Scalar Ports](#basic-node-with-scalar-ports)
+  - [Basic Node with Scalar Ports](#basic-node-with-scalar-ports)
 - [Best Practices](#8-best-practices)
-    - [Organization of Decorators](#organization-of-decorators)
-    - [Object Schema Definitions](#object-schema-definitions)
-    - [Default Values](#default-values)
-
+  - [Organization of Decorators](#organization-of-decorators)
+  - [Object Schema Definitions](#object-schema-definitions)
+  - [Default Values](#default-values)
 
 ## Introduction
 
 This document provides a comprehensive specification of all decorators available in the ChainGraph framework. It serves as the definitive reference for all decorator properties, types, and configuration options.
 
 ChainGraph decorators are used to:
+
 - Define nodes and their metadata
 - Configure node properties as ports
 - Specify port data types, validation rules, and UI behavior
@@ -69,12 +68,12 @@ ChainGraph decorators are used to:
 ### How to Use This Reference
 
 Each decorator section includes:
+
 - **Purpose**: What the decorator is used for
 - **Target**: What TypeScript elements it can be applied to
 - **Properties**: Complete list of supported properties and their types
 - **Examples**: Code snippets demonstrating proper usage
 - **UI Visualization**: Where applicable, guidance on how properties affect visual representation
-
 
 ## 1. Node Decorators
 
@@ -87,7 +86,7 @@ Creates a node class that can be registered and used in ChainGraph flows.
 **Properties:**
 
 | Property    | Type           | Required | Default | Description                                |
-|-------------|----------------|----------|---------|--------------------------------------------|
+| ----------- | -------------- | -------- | ------- | ------------------------------------------ |
 | title       | string         | Yes      | -       | Display name of the node                   |
 | description | string         | No       | -       | Detailed description of the node's purpose |
 | category    | string         | No       | "other" | Category grouping for the node             |
@@ -98,6 +97,7 @@ Creates a node class that can be registered and used in ChainGraph flows.
 | ui          | NodeUIMetadata | No       | -       | UI styling and positioning properties      |
 
 **Example:**
+
 ```typescript
 @Node({
   title: 'Message Creator',
@@ -113,12 +113,11 @@ export class CreateMessageNode extends BaseNode {
 **NodeUIMetadata Properties:**
 
 | Property   | Type                                                                    | Description            |
-|------------|-------------------------------------------------------------------------|------------------------|
+| ---------- | ----------------------------------------------------------------------- | ---------------------- |
 | position   | { x: number, y: number }                                                | Position in the canvas |
 | dimensions | { width: number, height: number }                                       | Node dimensions        |
 | style      | { backgroundColor?: string, borderColor?: string }                      | Visual styling         |
 | state      | { isSelected?: boolean, isHighlighted?: boolean, isDisabled?: boolean } | UI state               |
-
 
 ## 2. Property Decorators
 
@@ -131,6 +130,7 @@ Marks a property as an input port.
 **Target:** Property
 
 **Example:**
+
 ```typescript
 @Input()
 @String()
@@ -144,6 +144,7 @@ Marks a property as an output port.
 **Target:** Property
 
 **Example:**
+
 ```typescript
 @Output()
 @String()
@@ -162,10 +163,11 @@ Sets a custom identifier for a port.
 **Properties:**
 
 | Parameter | Type   | Required | Description            |
-|-----------|--------|----------|------------------------|
+| --------- | ------ | -------- | ---------------------- |
 | portId    | string | Yes      | Custom ID for the port |
 
 **Example:**
+
 ```typescript
 @Id('user_status')
 @String()
@@ -180,10 +182,11 @@ Provides a custom name for a port.
 **Properties:**
 
 | Parameter | Type   | Required | Description                      |
-|-----------|--------|----------|----------------------------------|
+| --------- | ------ | -------- | -------------------------------- |
 | portName  | string | Yes      | Custom display name for the port |
 
 **Example:**
+
 ```typescript
 @Name('User Message')
 @String()
@@ -197,11 +200,12 @@ Sets a title for a port.
 **Target:** Property
 **Properties:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| title | string | Yes | Title text for the port |
+| Parameter | Type   | Required | Description             |
+| --------- | ------ | -------- | ----------------------- |
+| title     | string | Yes      | Title text for the port |
 
 **Example:**
+
 ```typescript
 @Title('Message Content')
 @String()
@@ -215,11 +219,12 @@ Adds a description to a port.
 **Target:** Property
 **Properties:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| portDescription | string | Yes | Description text for the port |
+| Parameter       | Type   | Required | Description                   |
+| --------------- | ------ | -------- | ----------------------------- |
+| portDescription | string | Yes      | Description text for the port |
 
 **Example:**
+
 ```typescript
 @Description('Enter the message content to be sent')
 @String()
@@ -233,15 +238,16 @@ Specifies a default value for a port.
 **Target:** Property
 **Properties:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| value | T | Yes | Default value for the port |
+| Parameter | Type | Required | Description                |
+| --------- | ---- | -------- | -------------------------- |
+| value     | T    | Yes      | Default value for the port |
 
 **Example:**
+
 ```typescript
 @DefaultValue('Hello World')
 @String()
-greeting: string;
+greeting?: string;
 ```
 
 #### @Metadata
@@ -251,12 +257,13 @@ Adds arbitrary metadata key/value pairs to a port.
 **Target:** Property
 **Properties:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| key | string | Yes | Metadata key |
-| value | any | Yes | Metadata value |
+| Parameter | Type   | Required | Description    |
+| --------- | ------ | -------- | -------------- |
+| key       | string | Yes      | Metadata key   |
+| value     | any    | Yes      | Metadata value |
 
 **Example:**
+
 ```typescript
 @Metadata('ui:widget', 'status-indicator')
 @String()
@@ -272,15 +279,16 @@ Defines a port with string data type.
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| defaultValue | string | No | '' | Default string value |
-| minLength | number | No | - | Minimum string length |
-| maxLength | number | No | - | Maximum string length |
-| pattern | string | No | - | Regular expression pattern for validation |
-| ui | StringPortConfigUIType | No | - | UI configuration options |
+| Property     | Type                   | Required | Default | Description                               |
+| ------------ | ---------------------- | -------- | ------- | ----------------------------------------- |
+| defaultValue | string                 | No       | ''      | Default string value                      |
+| minLength    | number                 | No       | -       | Minimum string length                     |
+| maxLength    | number                 | No       | -       | Maximum string length                     |
+| pattern      | string                 | No       | -       | Regular expression pattern for validation |
+| ui           | StringPortConfigUIType | No       | -       | UI configuration options                  |
 
 **Example:**
+
 ```typescript
 @Input()
 @String({
@@ -294,12 +302,11 @@ greeting: string = 'Hello World'
 
 **UI Configuration:**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| isTextArea | boolean | Render as multi-line text area |
-| isPassword | boolean | Render as password field with masked input |
-| textareaDimensions | { width?: number, height?: number } | Custom dimensions for textarea |
-
+| Property           | Type                                | Description                                |
+| ------------------ | ----------------------------------- | ------------------------------------------ |
+| isTextArea         | boolean                             | Render as multi-line text area             |
+| isPassword         | boolean                             | Render as password field with masked input |
+| textareaDimensions | { width?: number, height?: number } | Custom dimensions for textarea             |
 
 ---
 
@@ -343,6 +350,7 @@ greeting: string = 'Hello World'
 })
 greeting: string = 'Hello World'
 ```
+
 </td>
     <td> <img src="../images/nodes/string-password.png" alt="drawing" height="150"/></td>
 </tr>
@@ -358,10 +366,10 @@ greeting: string = 'Hello World'
 })
 greeting: string = 'Hello World'
 ```
+
 </td>
     <td> <img src="../images/nodes/string-hidden-editor.png" alt="drawing" height="150"/></td>
 </tr>
-
 
 <tr>
 <td>
@@ -374,6 +382,7 @@ greeting: string = 'Hello World'
 })
 greeting: string = 'Hello World'
 ```
+
 </td>
     <td> <img src="../images/nodes/string-hide.png" alt="drawing" height="150"/></td>
 </tr>
@@ -389,12 +398,12 @@ greeting: string = 'Hello World'
 })
 greeting: string = 'Hello World'
 ```
+
 </td>
     <td> <img src="../images/nodes/string-hide-port.png" alt="drawing" height="150"/></td>
 </tr>
 
 </table>
-
 
 ### @Number
 
@@ -403,16 +412,17 @@ Defines a port with numeric data type.
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| defaultValue | number | No | 0 | Default numeric value |
-| min | number | No | - | Minimum allowed value |
-| max | number | No | - | Maximum allowed value |
-| step | number | No | - | Step increment for UI controls |
-| integer | boolean | No | false | Whether only integers are allowed |
-| ui | NumberPortConfigUIType | No | - | UI configuration options |
+| Property     | Type                   | Required | Default | Description                       |
+| ------------ | ---------------------- | -------- | ------- | --------------------------------- |
+| defaultValue | number                 | No       | 0       | Default numeric value             |
+| min          | number                 | No       | -       | Minimum allowed value             |
+| max          | number                 | No       | -       | Maximum allowed value             |
+| step         | number                 | No       | -       | Step increment for UI controls    |
+| integer      | boolean                | No       | false   | Whether only integers are allowed |
+| ui           | NumberPortConfigUIType | No       | -       | UI configuration options          |
 
 **Example:**
+
 ```typescript
 @Input()
 @Number({
@@ -427,11 +437,11 @@ quantity: number;
 
 **UI Configuration:**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| isSlider | boolean | Render as slider control |
-| leftSliderLabel | string | Label for minimum value of slider |
-| rightSliderLabel | string | Label for maximum value of slider |
+| Property         | Type    | Description                       |
+| ---------------- | ------- | --------------------------------- |
+| isSlider         | boolean | Render as slider control          |
+| leftSliderLabel  | string  | Label for minimum value of slider |
+| rightSliderLabel | string  | Label for maximum value of slider |
 
 <table>
 <tr>
@@ -475,6 +485,7 @@ greeting: number = 100
 })
 greeting: number = 100
 ```
+
 </td>
     <td> <img src="../images/nodes/number-slider-label.png" alt="drawing" height="150"/></td>
 </tr>
@@ -487,13 +498,12 @@ Defines a port with boolean data type.
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| defaultValue | boolean | No | false | Default boolean value |
-| ui | BooleanPortConfigUIType | No | - | UI configuration options |
+| Property     | Type                    | Required | Default | Description              |
+| ------------ | ----------------------- | -------- | ------- | ------------------------ |
+| defaultValue | boolean                 | No       | false   | Default boolean value    |
+| ui           | BooleanPortConfigUIType | No       | -       | UI configuration options |
 
 **Example:**
-
 
 <table>
 <tr>
@@ -506,7 +516,6 @@ Defines a port with boolean data type.
 })
 isActive: boolean = true
 ```
-
 
 </td>
 <td><img src="../images/nodes/boolean-basic.png" alt="drawing" height="150"/></td>
@@ -527,24 +536,25 @@ Marks a class as an object schema.
 **Target:** Class
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| description | string | No | - | Schema description |
-| category | string | No | - | Schema category |
-| id | string | No | - | Custom identifier for the schema |
-| type | string | No | [Class name] | Type identifier |
+| Property    | Type   | Required | Default      | Description                      |
+| ----------- | ------ | -------- | ------------ | -------------------------------- |
+| description | string | No       | -            | Schema description               |
+| category    | string | No       | -            | Schema category                  |
+| id          | string | No       | -            | Custom identifier for the schema |
+| type        | string | No       | [Class name] | Type identifier                  |
 
 **Example:**
+
 ```typescript
 @ObjectSchema({
   description: 'User profile data structure'
 })
 class UserProfile {
   @String({ minLength: 2 })
-  name: string = 'Anonymous';
+  name: string = 'Anonymous'
 
   @Number({ min: 18 })
-  age: number = 21;
+  age: number = 21
 }
 ```
 
@@ -555,14 +565,15 @@ Defines a port that accepts structured data.
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| schema | Class\|IObjectSchema | Yes | - | Object schema definition |
-| defaultValue | object | No | {} | Default object value |
-| isSchemaMutable | boolean | No | false | Whether properties can be added/removed at runtime |
-| ui | ObjectPortConfigUIType | No | - | UI configuration options |
+| Property        | Type                   | Required | Default | Description                                        |
+| --------------- | ---------------------- | -------- | ------- | -------------------------------------------------- |
+| schema          | Class\|IObjectSchema   | Yes      | -       | Object schema definition                           |
+| defaultValue    | object                 | No       | {}      | Default object value                               |
+| isSchemaMutable | boolean                | No       | false   | Whether properties can be added/removed at runtime |
+| ui              | ObjectPortConfigUIType | No       | -       | UI configuration options                           |
 
 **Example:**
+
 ```typescript
 @Input()
 @PortObject({
@@ -575,10 +586,10 @@ profile: UserProfile;
 
 **UI Configuration:**
 
-| Property | Type | Description                        |
-|----------|------|------------------------------------|
+| Property         | Type    | Description                        |
+| ---------------- | ------- | ---------------------------------- |
 | addKeyFormHidden | boolean | Hide the "Add Key" form            |
-| collapsible | boolean | Whether the object collapsed in UI |
+| collapsible      | boolean | Whether the object collapsed in UI |
 
 <table>
 <tr>
@@ -594,7 +605,6 @@ profile: UserProfile;
 })
 profile: UserProfile = new UserProfile()
 ```
-
 
 </td>
 <td><img src="../images/nodes/object-user-profile-basic.png" alt="drawing" height="250"/></td>
@@ -613,10 +623,10 @@ profile: UserProfile = new UserProfile()
 })
 profile: UserProfile = new UserProfile()
 ```
+
 </td>
 <td><img src="../images/nodes/object-user-profile-basic-collapsible.png" alt="drawing" height="150"/></td>
 </tr>
-
 
 <tr>
 <td>
@@ -629,6 +639,7 @@ profile: UserProfile = new UserProfile()
 })
 profile: UserProfile = new UserProfile()
 ```
+
 </td>
 <td><img src="../images/nodes/object-user-profile-basic-mutable.png" alt="drawing" height="250"/></td>
 </tr>
@@ -647,6 +658,7 @@ profile: UserProfile = new UserProfile()
 })
 profile: UserProfile = new UserProfile()
 ```
+
 </td>
 <td><img src="../images/nodes/object-user-profile-basic-mutable-no-deletable.png" alt="drawing" height="250"/></td>
 </tr>
@@ -662,15 +674,16 @@ Defines a port that accepts array data.
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| itemConfig | IPortConfig | Yes | - | Configuration for array items |
-| defaultValue | array | No | [] | Default array value |
-| minLength | number | No | - | Minimum array length |
-| maxLength | number | No | - | Maximum array length |
-| ui | ArrayPortConfigUIType | No | - | UI configuration options |
+| Property     | Type                  | Required | Default | Description                   |
+| ------------ | --------------------- | -------- | ------- | ----------------------------- |
+| itemConfig   | IPortConfig           | Yes      | -       | Configuration for array items |
+| defaultValue | array                 | No       | []      | Default array value           |
+| minLength    | number                | No       | -       | Minimum array length          |
+| maxLength    | number                | No       | -       | Maximum array length          |
+| ui           | ArrayPortConfigUIType | No       | -       | UI configuration options      |
 
 **Example:**
+
 ```typescript
 @Input()
 @PortArray({
@@ -684,11 +697,11 @@ tags: string[];
 
 **UI Configuration:**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| addItemFormHidden | boolean | Hide the "Add Item" form |
+| Property                | Type    | Description                  |
+| ----------------------- | ------- | ---------------------------- |
+| addItemFormHidden       | boolean | Hide the "Add Item" form     |
 | addItemFormSpoilerState | boolean | Show/hide state for the form |
-| itemDeletable | boolean | Allow deleting array items |
+| itemDeletable           | boolean | Allow deleting array items   |
 
 [UI SCREENSHOT PLACEHOLDER: Array port with items and add item button]
 
@@ -701,6 +714,7 @@ ChainGraph provides convenient helper decorators for common array types:
 For string arrays.
 
 **Example:**
+
 ```typescript
 @PortArrayString({ defaultValue: ['a', 'b'] })
 tags: string[];
@@ -711,6 +725,7 @@ tags: string[];
 For number arrays.
 
 **Example:**
+
 ```typescript
 @PortArrayNumber({ defaultValue: [1, 2, 3] })
 scores: number[];
@@ -721,6 +736,7 @@ scores: number[];
 For boolean arrays.
 
 **Example:**
+
 ```typescript
 @PortArrayBoolean({ defaultValue: [true, false] })
 flags: boolean[];
@@ -731,6 +747,7 @@ flags: boolean[];
 For arrays of objects.
 
 **Example:**
+
 ```typescript
 @PortArrayObject(UserProfile, { defaultValue: [new UserProfile()] })
 users: UserProfile[];
@@ -742,13 +759,14 @@ For multi-dimensional arrays.
 
 **Properties:**
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| depth | number | Yes | Number of nested array levels |
-| itemConfig | IPortConfig | Yes | Configuration for innermost items |
-| config | object | No | Additional array configuration |
+| Property   | Type        | Required | Description                       |
+| ---------- | ----------- | -------- | --------------------------------- |
+| depth      | number      | Yes      | Number of nested array levels     |
+| itemConfig | IPortConfig | Yes      | Configuration for innermost items |
+| config     | object      | No       | Additional array configuration    |
 
 **Example:**
+
 ```typescript
 @PortArrayNested(2, { type: 'number', defaultValue: 0 })
 matrix: number[][];
@@ -763,11 +781,11 @@ Enum ports allow selecting from a predefined set of options.
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| options | IPortConfig[] | Yes | - | Array of option configurations |
-| defaultValue | string | No | - | Default selected option ID |
-| ui | EnumPortConfigUIType | No | - | UI configuration options |
+| Property     | Type                 | Required | Default | Description                    |
+| ------------ | -------------------- | -------- | ------- | ------------------------------ |
+| options      | IPortConfig[]        | Yes      | -       | Array of option configurations |
+| defaultValue | string               | No       | -       | Default selected option ID     |
+| ui           | EnumPortConfigUIType | No       | -       | UI configuration options       |
 
 **Example:**
 
@@ -779,35 +797,34 @@ Enum ports allow selecting from a predefined set of options.
 @Input()
 @PortEnum({
     options: [
-        { 
-            id: 'red', 
-            type: 'string', 
-            defaultValue: 'Red', 
-            title: 'Red' 
+        {
+            id: 'red',
+            type: 'string',
+            defaultValue: 'Red',
+            title: 'Red'
         },
-        { 
-            id: 'green', 
-            type: 'string', 
-            defaultValue: 'Green', 
+        {
+            id: 'green',
+            type: 'string',
+            defaultValue: 'Green',
             title: 'Green'
         },
-        { 
-            id: 'blue', 
-            type: 'string', 
-            defaultValue: 'Blue', 
-            title: 'Blue' 
+        {
+            id: 'blue',
+            type: 'string',
+            defaultValue: 'Blue',
+            title: 'Blue'
         },
-    ], 
+    ],
 })
 color: string = 'red'
 ```
 
 </td>
 <td><img src="./../images/nodes/enum-basic.png" alt="drawing" height="250"/></td>
-</tr> 
+</tr>
 
 </table>
-
 
 #### Enum Helper Decorators
 
@@ -816,6 +833,7 @@ color: string = 'red'
 For string-based enums.
 
 **Example:**
+
 ```typescript
 @StringEnum(['Red', 'Green', 'Blue'], { defaultValue: 'Red' })
 color: string;
@@ -826,6 +844,7 @@ color: string;
 For number-based enums.
 
 **Example:**
+
 ```typescript
 @NumberEnum([1, 2, 3], { defaultValue: '1' })
 level: number;
@@ -836,6 +855,7 @@ level: number;
 Creates an enum from an object mapping.
 
 **Example:**
+
 ```typescript
 const statusOptions = {
   active: new UserStatus('Active'),
@@ -852,6 +872,7 @@ status: keyof typeof statusOptions;
 Creates an enum from a native TypeScript enum.
 
 **Example:**
+
 ```typescript
 enum Direction {
   Up = 'Up',
@@ -871,13 +892,14 @@ Defines a port that handles continuous data streams using the MultiChannel imple
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| itemConfig | IPortConfig | Yes | - | Configuration for stream items |
-| defaultValue | MultiChannel | No | - | Default stream channel |
-| ui | StreamPortConfigUIType | No | - | UI configuration options |
+| Property     | Type                   | Required | Default | Description                    |
+| ------------ | ---------------------- | -------- | ------- | ------------------------------ |
+| itemConfig   | IPortConfig            | Yes      | -       | Configuration for stream items |
+| defaultValue | MultiChannel           | No       | -       | Default stream channel         |
+| ui           | StreamPortConfigUIType | No       | -       | UI configuration options       |
 
 **Example:**
+
 ```typescript
 @Input()
 @PortStream({
@@ -893,13 +915,14 @@ Defines a port that can accept any type of value, with optional type validation 
 **Target:** Property
 **Properties:**
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| underlyingType | IPortConfig | No | - | Optional configuration for value validation |
-| defaultValue | any | No | null | Default value |
-| ui | BasePortConfigUIType | No | - | UI configuration options |
+| Property       | Type                 | Required | Default | Description                                 |
+| -------------- | -------------------- | -------- | ------- | ------------------------------------------- |
+| underlyingType | IPortConfig          | No       | -       | Optional configuration for value validation |
+| defaultValue   | any                  | No       | null    | Default value                               |
+| ui             | BasePortConfigUIType | No       | -       | UI configuration options                    |
 
 **Example:**
+
 ```typescript
 @Input()
 @PortAny({
@@ -913,16 +936,17 @@ dynamicInput: any;
 
 All port types support a common set of UI configuration properties through the `ui` parameter:
 
-| Property | Type | Applicable To | Description |
-|----------|------|---------------|-------------|
-| hidden | boolean | All ports | Hide the port entirely |
-| disabled | boolean | All ports | Disable user interaction with the port |
-| hideEditor | boolean | All ports | Hide the editor while showing the port connection point |
-| hidePort | boolean | All ports | Hide the port from the node display |
-| bgColor | string | All ports | Background color for the port handle (hex or CSS color) |
-| borderColor | string | All ports | Border color for the port handle (hex or CSS color) |
+| Property    | Type    | Applicable To | Description                                             |
+| ----------- | ------- | ------------- | ------------------------------------------------------- |
+| hidden      | boolean | All ports     | Hide the port entirely                                  |
+| disabled    | boolean | All ports     | Disable user interaction with the port                  |
+| hideEditor  | boolean | All ports     | Hide the editor while showing the port connection point |
+| hidePort    | boolean | All ports     | Hide the port from the node display                     |
+| bgColor     | string  | All ports     | Background color for the port handle (hex or CSS color) |
+| borderColor | string  | All ports     | Border color for the port handle (hex or CSS color)     |
 
 **Example:**
+
 ```typescript
 @String({
   ui: {
@@ -938,35 +962,35 @@ All port types support a common set of UI configuration properties through the `
 
 ### String Port UI
 
-| Property | Type | Description |
-|----------|------|-------------|
-| isTextArea | boolean | Render as multi-line text area instead of single-line input |
-| isPassword | boolean | Render as password field with masked input |
-| textareaDimensions | { width?: number, height?: number } | Custom dimensions for textarea |
+| Property           | Type                                | Description                                                 |
+| ------------------ | ----------------------------------- | ----------------------------------------------------------- |
+| isTextArea         | boolean                             | Render as multi-line text area instead of single-line input |
+| isPassword         | boolean                             | Render as password field with masked input                  |
+| textareaDimensions | { width?: number, height?: number } | Custom dimensions for textarea                              |
 
 ### Number Port UI
 
-| Property | Type | Description |
-|----------|------|-------------|
-| isSlider | boolean | Render as slider control instead of number input |
-| leftSliderLabel | string | Label for minimum value of slider |
-| rightSliderLabel | string | Label for maximum value of slider |
+| Property         | Type    | Description                                      |
+| ---------------- | ------- | ------------------------------------------------ |
+| isSlider         | boolean | Render as slider control instead of number input |
+| leftSliderLabel  | string  | Label for minimum value of slider                |
+| rightSliderLabel | string  | Label for maximum value of slider                |
 
 ### Array Port UI
 
-| Property | Type | Description |
-|----------|------|-------------|
-| addItemFormHidden | boolean | Hide the "Add Item" form |
-| addItemFormSpoilerState | boolean | Initial state of the "Add Item" form visibility |
-| itemDeletable | boolean | Whether array items can be deleted |
-| enumValues | PortType[] | Types allowed when adding new items |
+| Property                | Type       | Description                                     |
+| ----------------------- | ---------- | ----------------------------------------------- |
+| addItemFormHidden       | boolean    | Hide the "Add Item" form                        |
+| addItemFormSpoilerState | boolean    | Initial state of the "Add Item" form visibility |
+| itemDeletable           | boolean    | Whether array items can be deleted              |
+| enumValues              | PortType[] | Types allowed when adding new items             |
 
 ### Object Port UI
 
-| Property | Type | Description |
-|----------|------|-------------|
+| Property     | Type    | Description                              |
+| ------------ | ------- | ---------------------------------------- |
 | keyDeletable | boolean | Whether object properties can be deleted |
-| collapsible | boolean | Whether the object port collapsed |
+| collapsible  | boolean | Whether the object port collapsed        |
 
 ## 7. Complete Examples
 
@@ -975,20 +999,20 @@ All port types support a common set of UI configuration properties through the `
 ```typescript
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
-    BaseNode,
-    Boolean,
-    Input,
-    Node,
-    Number,
-    ObjectSchema,
-    Output,
-    String,
+  BaseNode,
+  Boolean,
+  Input,
+  Node,
+  Number,
+  ObjectSchema,
+  Output,
+  String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../categories'
 
 @Node({
   title: 'Message Formatter',
-  description: 'Formats a message with parameters', 
+  description: 'Formats a message with parameters',
   category: NODE_CATEGORIES.DATA,
   tags: ['formatting', 'text', 'message'],
 })
@@ -1004,7 +1028,7 @@ class MessageFormatterNode extends BaseNode {
       textareaDimensions: { width: 200, height: 100 },
     }
   })
-  template: string = 'Hello, {name}!';
+  template: string = 'Hello, {name}!'
 
   @Input()
   @String({
@@ -1012,7 +1036,7 @@ class MessageFormatterNode extends BaseNode {
     description: 'Name to insert in the template',
     defaultValue: 'World',
   })
-  name: string = 'World';
+  name: string = 'World'
 
   @Input()
   @Number({
@@ -1026,7 +1050,7 @@ class MessageFormatterNode extends BaseNode {
       isSlider: true,
     }
   })
-  repeatCount: number = 1;
+  repeatCount: number = 1
 
   @Input()
   @Boolean({
@@ -1034,25 +1058,25 @@ class MessageFormatterNode extends BaseNode {
     description: 'Whether to add a timestamp to the message',
     defaultValue: false,
   })
-  addTimestamp: boolean = false;
+  addTimestamp: boolean = false
 
   @Output()
   @String({
     title: 'Formatted Message',
     description: 'The resulting formatted message',
   })
-  output: string = '';
+  output: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    let message = this.template.replace('{name}', this.name);
-    
+    let message = this.template.replace('{name}', this.name)
+
     if (this.addTimestamp) {
-      message = `${message} [${new Date().toISOString()}]`;
+      message = `${message} [${new Date().toISOString()}]`
     }
-    
-    this.output = message.repeat(this.repeatCount);
-    
-    return {};
+
+    this.output = message.repeat(this.repeatCount)
+
+    return {}
   }
 }
 ```
@@ -1093,7 +1117,7 @@ Define object schemas as separate classes rather than inline objects for better 
 class UserProfile {
   @String()
   name: string = '';
-  
+
   @Number()
   age: number = 0;
 }
