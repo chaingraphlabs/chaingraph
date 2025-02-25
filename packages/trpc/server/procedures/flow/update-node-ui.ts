@@ -6,11 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { NodeUIMetadataSchema } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
-export const updateNodeUI = publicProcedure
+export const updateNodeUI = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     nodeId: z.string(),
@@ -38,35 +39,32 @@ export const updateNodeUI = publicProcedure
       }
     }
 
-    // Update dimensions if present
-    const hasInputDimensions
-      = input.ui.dimensions
-        && input.ui.dimensions.width > 0
-        && input.ui.dimensions.height > 0
-
-    const hasDimensionsChanged = (
-      hasInputDimensions
-      && (
-        !node.metadata.ui?.dimensions
-        || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
-        || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
-      )
-    )
-
-    if (hasDimensionsChanged) {
-      node.setDimensions(input.ui.dimensions!, true)
-    } else {
-      node.incrementVersion()
-    }
+    // // Update dimensions if present
+    // const hasInputDimensions
+    //   = input.ui.dimensions
+    //     && input.ui.dimensions.width > 0
+    //     && input.ui.dimensions.height > 0
+    //
+    // const hasDimensionsChanged = (
+    //   hasInputDimensions
+    //   && (
+    //     !node.metadata.ui?.dimensions
+    //     || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
+    //     || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
+    //   )
+    // )
+    //
+    // if (hasDimensionsChanged) {
+    //   node.setDimensions(input.ui.dimensions!, true)
+    // }
 
     // Update metadata
-    node.setMetadata({
-      ...node.metadata,
-      ui: {
-        ...(node.metadata.ui ?? {}),
-        ...input.ui,
-      },
-    })
+    node.setUI({
+      ...(node.metadata.ui ?? {}),
+      ...input.ui,
+    }, true)
+
+    await ctx.flowStore.updateFlow(flow as Flow)
 
     return {
       flowId: input.flowId,

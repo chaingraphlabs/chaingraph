@@ -8,22 +8,33 @@
 
 import Flow from '@/components/flow/Flow'
 import { ReactFlowProvider } from '@xyflow/react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { ThemeToggle } from './components/theme/ThemeToggle'
 
-function App() {
+function FlowLayout() {
   return (
     <div className="flex h-screen">
       <Sidebar />
-
       <div className="flex-1">
         <ReactFlowProvider>
           <Flow />
         </ReactFlowProvider>
       </div>
-
       <ThemeToggle />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/flows" replace />} />
+        <Route path="/flows" element={<FlowLayout />} />
+        <Route path="/flow/:flowId" element={<FlowLayout />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

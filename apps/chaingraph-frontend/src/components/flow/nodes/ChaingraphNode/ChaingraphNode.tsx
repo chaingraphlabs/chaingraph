@@ -8,7 +8,6 @@
 
 import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode/types'
 import type { NodeProps } from '@xyflow/react'
-import { NodeBody } from '@/components/flow/nodes/ChaingraphNode/NodeBody.tsx'
 import { NodeHeader } from '@/components/flow/nodes/ChaingraphNode/NodeHeader.tsx'
 import { BreakpointButton } from '@/components/flow/nodes/debug/BreakpointButton.tsx'
 import { useTheme } from '@/components/theme/hooks/useTheme'
@@ -18,9 +17,11 @@ import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
 import { $executionState, addBreakpoint, removeBreakpoint } from '@/store/execution'
 import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
+import { useNode } from '@/store/nodes/hooks/useNode.ts'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import NodeBody from './NodeBody'
 
 function ChaingraphNodeComponent({
   data,
@@ -28,16 +29,13 @@ function ChaingraphNodeComponent({
   id,
 }: NodeProps<ChaingraphNode>) {
   const activeFlow = useUnit($activeFlowMetadata)
-
   const nodeExecution = useNodeExecution(id)
   const { theme } = useTheme()
+  const node = useNode(id)
 
   const [style, setStyle] = useState(
     theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
   )
-
-  const [inputs, setInputs] = useState(data.node.getInputs())
-  const [outputs, setOutputs] = useState(data.node.getOutputs())
 
   const { debugMode } = useUnit($executionState)
   const isBreakpointSet = useBreakpoint(id)
@@ -55,12 +53,7 @@ function ChaingraphNodeComponent({
     setStyle(
       theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
     )
-  }, [theme, data.categoryMetadata])
-
-  useEffect(() => {
-    setInputs(data.node.getInputs())
-    setOutputs(data.node.getOutputs())
-  }, [data.node])
+  }, [theme, data.categoryMetadata, id])
 
   const executionStateStyle = useMemo(() => {
     if (nodeExecution.isExecuting) {
@@ -78,7 +71,7 @@ function ChaingraphNodeComponent({
     return ''
   }, [nodeExecution])
 
-  if (!activeFlow || !activeFlow.id)
+  if (!activeFlow || !activeFlow.id || !node)
     return null
 
   return (
@@ -86,7 +79,6 @@ function ChaingraphNodeComponent({
       className={cn(
         'shadow-none transition-all duration-200',
         'bg-card opacity-95',
-        // selected && 'shadow-node-selected dark:shadow-node-selected-dark',
         selected
           ? 'border-10 border-primary/50 border-green-500 shadow-[0_0_25px_rgba(34,197,94,0.6)]'
           : 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.3)]',
@@ -104,7 +96,7 @@ function ChaingraphNodeComponent({
                       hover:w-2 transition-all duration-200"
         >
           <BreakpointButton
-            nodeId={data.node.id}
+            nodeId={node.id}
             enabled={isBreakpointSet}
             onToggle={handleBreakpointToggle}
           />
@@ -112,7 +104,7 @@ function ChaingraphNodeComponent({
       )}
 
       <NodeHeader
-        node={data.node}
+        node={node}
         icon={data.categoryMetadata.icon}
         style={style}
         onDelete={() => removeNodeFromFlow({
@@ -125,8 +117,7 @@ function ChaingraphNodeComponent({
       />
 
       <NodeBody
-        inputs={inputs}
-        outputs={outputs}
+        node={node}
       />
 
       <NodeResizeControl
@@ -137,6 +128,7 @@ function ChaingraphNodeComponent({
           background: 'transparent',
           border: 'none',
           height: '100%',
+          width: 10,
         }}
       />
 

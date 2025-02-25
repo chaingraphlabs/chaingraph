@@ -9,8 +9,6 @@
 import { queryClient, trpcClient, trpcReact } from '@badaitech/trpc/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-
 interface TrpcProviderProps {
   children: React.ReactNode
 }
@@ -22,7 +20,7 @@ export function TrpcProvider({ children }: TrpcProviderProps) {
         {children}
       </trpcReact.Provider>
 
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   )
 }

@@ -17,13 +17,13 @@ export enum NodeEventType {
   // Status events
   StatusChange = 'node:status-change',
 
+  // Parent events
   ParentChange = 'node:parent-change',
 
   // UI events
   UIPositionChange = 'node:ui:position-change',
   UIDimensionsChange = 'node:ui:dimensions-change',
-  UIStateChange = 'node:ui:state-change',
-  UIStyleChange = 'node:ui:style-change',
+  UIChange = 'node:ui:change',
 
   // Port events
   PortUpdate = 'node:port-update',
@@ -78,21 +78,11 @@ export interface NodeUIDimensionsChangeEvent extends NodeEventBase {
 }
 
 /**
- * Event emitted when node UI state changes
+ * Event emitted when node UI changes
  */
-export interface NodeUIStateChangeEvent extends NodeEventBase {
-  type: NodeEventType.UIStateChange
-  oldState: NodeUIMetadata['state']
-  newState: NodeUIMetadata['state']
-}
-
-/**
- * Event emitted when node style changes
- */
-export interface NodeUIStyleChangeEvent extends NodeEventBase {
-  type: NodeEventType.UIStyleChange
-  oldStyle: NodeUIMetadata['style']
-  newStyle: NodeUIMetadata['style']
+export interface NodeUIChangeEvent extends NodeEventBase {
+  type: NodeEventType.UIChange
+  ui: NodeUIMetadata
 }
 
 /**
@@ -113,17 +103,15 @@ export type NodeEvent =
   | NodeParentChangeEvent
   | NodeUIPositionChangeEvent
   | NodeUIDimensionsChangeEvent
-  | NodeUIStateChangeEvent
-  | NodeUIStyleChangeEvent
+  | NodeUIChangeEvent
   | PortUpdateEvent
 
 export interface EventTypeToInterface {
   [NodeEventType.StatusChange]: NodeStatusChangeEvent
   [NodeEventType.ParentChange]: NodeParentChangeEvent
+  [NodeEventType.UIChange]: NodeUIChangeEvent
   [NodeEventType.UIPositionChange]: NodeUIPositionChangeEvent
   [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent
-  [NodeEventType.UIStateChange]: NodeUIStateChangeEvent
-  [NodeEventType.UIStyleChange]: NodeUIStyleChangeEvent
   [NodeEventType.PortUpdate]: PortUpdateEvent
 }
 

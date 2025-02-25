@@ -35,6 +35,12 @@ export interface IFlow {
   addNode: (node: INode, disableEvents?: boolean) => INode
 
   /**
+   * Updates a node in the flow and triggers an event.
+   * @param node
+   */
+  updateNode: (node: INode) => void
+
+  /**
    * Removes a node from the flow.
    * @param nodeId The ID of the node to remove.
    */
@@ -51,6 +57,13 @@ export interface IFlow {
    * @param edgeId The ID of the edge to remove.
    */
   removeEdge: (edgeId: string) => void
+
+  /**
+   * Remove a port from a node, including all child ports and their connections
+   * @param nodeId
+   * @param portId
+   */
+  removePort: (nodeId: string, portId: string) => void
 
   /**
    * Connects two nodes via their ports.

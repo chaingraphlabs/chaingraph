@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { FlowMetadata, INode } from '@badaitech/chaingraph-types'
+import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import type { IFlowStore } from './types'
 import { Flow } from '@badaitech/chaingraph-types'
 
@@ -45,30 +45,6 @@ export class InMemoryFlowStore implements IFlowStore {
   }
 
   /**
-   * Adds a node to specified flow
-   * @param flowId Flow identifier
-   * @param node Node to add
-   * @throws Error if flow not found
-   */
-  async addNode(flowId: string, node: INode): Promise<INode> {
-    const flow = this.flows.get(flowId)
-    if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
-    }
-    return flow.addNode(node)
-  }
-
-  /**
-   * Lists all nodes in a flow
-   * @param flowId Flow identifier
-   * @returns Array of nodes or empty array if flow not found
-   */
-  async listFlowNodes(flowId: string): Promise<INode[]> {
-    const flow = this.flows.get(flowId)
-    return flow ? Array.from(flow.nodes.values()) : []
-  }
-
-  /**
    * Deletes flow
    * @param flowId Flow identifier
    * @returns true if flow was deleted, false if not found
@@ -79,12 +55,11 @@ export class InMemoryFlowStore implements IFlowStore {
 
   /**
    * Updates flow with new data
-   * @param flowId Flow identifier
    * @param flow Flow data
    * @returns Updated flow
    */
-  async updateFlow(flowId: string, flow: Flow): Promise<Flow> {
-    this.flows.set(flowId, flow)
+  async updateFlow(flow: Flow): Promise<Flow> {
+    this.flows.set(flow.id, flow)
     return flow
   }
 }

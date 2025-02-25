@@ -6,8 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
 export const updatePortUISchema = z.object({
   flowId: z.string(),
@@ -19,7 +20,7 @@ export const updatePortUISchema = z.object({
 
 export type UpdatePortUIInput = z.infer<typeof updatePortUISchema>
 
-export const updatePortUI = publicProcedure
+export const updatePortUI = flowContextProcedure
   .input(updatePortUISchema)
   .mutation(async ({ input, ctx }) => {
     // TODO: create nodes store
@@ -36,39 +37,19 @@ export const updatePortUI = publicProcedure
     if (!port)
       throw new Error('Port not found')
 
-    const portConfigFromNode = Array.from(node.metadata?.portsConfig?.values() ?? []).find((portConfig) => {
-      return portConfig.id === port.id
-    })
-    if (!portConfigFromNode)
-      throw new Error('Port config not found')
-
     const portConfig = port.getConfig()
-    const currentUi = portConfigFromNode.ui
-    const newUi = {
-      ...currentUi,
+    portConfig.ui = {
       ...portConfig.ui,
       ...input.ui,
     }
 
-    // port.setValue(input.value)
-    console.log('Port UI current ui', currentUi)
-    console.log('Port UI input', input.ui)
-    console.log('Port UI target config', {
-      ui: newUi,
-    })
-
     // set config to the port instance
-    port.setConfig({
-      ...portConfig,
-      ui: newUi,
-    })
-    node.updatePort(port.id, port)
+    port.setConfig(portConfig)
+    // node.updatePort(port.id, port)
+    node.initialize()
+    flow.updateNode(node)
 
-    // set config to the node metadata
-    node.metadata.portsConfig!.set(port.getConfig().key ?? port.getConfig().id!, {
-      ...portConfigFromNode,
-      ui: newUi,
-    })
+    await ctx.flowStore.updateFlow(flow as Flow)
 
     return {
       flowId: input.flowId,

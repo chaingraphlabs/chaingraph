@@ -7,13 +7,30 @@
  */
 
 import { $nodes } from '@/store/nodes'
-import { useUnit } from 'effector-react'
-import { useMemo } from 'react'
+import { useStoreMap } from 'effector-react'
 
-function useNode(nodeId: string) {
-  const nodes = useUnit($nodes)
-  return useMemo(
-    () => nodes[nodeId],
-    [nodes, nodeId],
-  )
+// export function useNode2(nodeId: string) {
+//   const nodes = useUnit($nodes)
+//   return useMemo(
+//     () => nodes[nodeId],
+//     [nodes, nodeId],
+//   )
+// }
+
+export function useNode(nodeId: string) {
+  const node = useStoreMap({
+    store: $nodes,
+    keys: [nodeId],
+    fn: (nodes, [nodeId]) => {
+      return nodes[nodeId]
+    },
+    // TODO: we could use this to update the node only when the version changes
+    // TODO: but before we needs to implement local version changes in the node
+    // TODO: so this local version have to be updated when the local node state changes
+    // updateFilter: (prev, next) => {
+    //   return prev.getVersion() !== next.getVersion()
+    // },
+  })
+
+  return node
 }

@@ -1,30 +1,45 @@
-import type { BooleanPortConfig, IPort } from '@badaitech/chaingraph-types'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+import type { BooleanPortConfig, ExtractValue, INode, IPort } from '@badaitech/chaingraph-types'
+import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor.ts'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
+import { requestUpdatePortValue } from '@/store/ports'
 import { useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface BooleanPortProps {
+  node: INode
   port: IPort<BooleanPortConfig>
-  value: boolean
-  onChange: (param: { value: boolean }) => void
-  errorMessage?: string
 }
 
 export function BooleanPort(props: BooleanPortProps) {
-  const { port, onChange, value } = props
+  const { node, port } = props
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
 
   const connectedEdges = useEdgesForPort(port.id)
   const needRenderEditor = useMemo(() => {
-    return !ui?.hideEditor && connectedEdges.length === 0
-  }, [ui, connectedEdges])
+    return !isHideEditor(config, connectedEdges)
+  }, [config, connectedEdges])
 
-  if (ui?.hidePort)
+  const handleChange = (value: ExtractValue<BooleanPortConfig> | undefined) => {
+    requestUpdatePortValue({
+      nodeId: node.id,
+      portId: port.id,
+      value,
+    })
+  }
+
+  if (ui?.hide)
     return null
 
   return (
@@ -42,13 +57,16 @@ export function BooleanPort(props: BooleanPortProps) {
         config.direction === 'output' ? 'items-end' : 'items-start',
       )}
       >
-        <PortTitle>{title}</PortTitle>
+        <PortTitle>
+          {title}
+        </PortTitle>
 
         {needRenderEditor && (
           <Switch
             disabled={ui?.disabled}
-            checked={value}
-            onCheckedChange={checked => onChange({ value: checked })}
+            checked={port.getValue()}
+            onCheckedChange={checked => handleChange(checked)}
+            className={cn('nodrag')}
           />
         )}
       </div>

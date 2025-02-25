@@ -12,7 +12,8 @@
     // "declaration": true,
     // "declarationMap": true,
     // "emitDeclarationOnly": true,
-    "noEmit": true
+    "noEmit": true,
+    "esModuleInterop": true
   },
   "include": ["server", "client"],
   "exclude": ["node_modules"]

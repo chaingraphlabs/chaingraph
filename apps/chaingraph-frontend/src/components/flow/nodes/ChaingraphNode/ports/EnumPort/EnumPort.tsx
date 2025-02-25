@@ -1,4 +1,11 @@
-import type { EnumPortConfig, EnumPortValue, IPort } from '@badaitech/chaingraph-types'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
   Select,
@@ -9,30 +16,25 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
+import { requestUpdatePortValue } from '@/store/ports'
 import { useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface EnumPortProps {
+  node: INode
   port: IPort<EnumPortConfig>
-  value: EnumPortValue
-  onChange: (param: { value: EnumPortValue }) => void
-  errorMessage?: string
 }
 
 export function EnumPort(props: EnumPortProps) {
-  const { port, onChange, value, errorMessage } = props
+  const { node, port } = props
   const config = port.getConfig()
   const ui = config.ui
   const connectedEdges = useEdgesForPort(port.id)
 
   const needRenderEditor = useMemo(() => {
-    return isHideEditor(config, connectedEdges)
+    return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
-
-  // If the port should be hidden, don't render it.
-  if (ui?.hidePort)
-    return null
 
   // Choose a title from config.title or config.key.
   const title = config.title || config.key
@@ -40,9 +42,17 @@ export function EnumPort(props: EnumPortProps) {
   // The configuration should include an "options" array.
   const options = config.options || []
 
-  const handleValueChange = (newValue: string) => {
-    onChange({ value: newValue })
+  const handleValueChange = (value: string) => {
+    requestUpdatePortValue({
+      nodeId: node.id,
+      portId: port.id,
+      value,
+    })
   }
+
+  // If the port should be hidden, don't render it.
+  if (ui?.hide)
+    return null
 
   return (
     <div
@@ -64,14 +74,15 @@ export function EnumPort(props: EnumPortProps) {
         </PortTitle>
         {needRenderEditor && (
           <Select
-            value={value}
+            value={port.getValue()}
             onValueChange={handleValueChange}
             disabled={ui?.disabled}
           >
             <SelectTrigger
               className={cn(
                 'w-full text-xs p-1 h-8',
-                errorMessage && 'border-red-500',
+                // errorMessage && 'border-red-500',
+                'nodrag',
               )}
             >
               <SelectValue placeholder="Select an option" />
@@ -82,7 +93,7 @@ export function EnumPort(props: EnumPortProps) {
                   key={option.id}
                   value={option.id!}
                 >
-                  {option.name || option.id}
+                  {option.title || option.name || option.id}
                 </SelectItem>
               ))}
             </SelectContent>

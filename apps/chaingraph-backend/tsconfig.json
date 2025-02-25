@@ -5,7 +5,8 @@
     "experimentalDecorators": true,
     "rootDir": ".",
     "module": "ESNext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
   },
   "include": ["src"]
 }

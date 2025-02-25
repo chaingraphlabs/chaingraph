@@ -44,15 +44,15 @@ sample({
 // Position operations
 // * * * * * * * * * * * * * * *
 
-// Update local position immediately ~ 30 FPS
-const throttledupdateNodePositionLocal = accumulateAndSample({
+// Update local position immediately with small debounce
+const throttledUpdateNodePositionLocal = accumulateAndSample({
   source: [updateNodePosition],
-  timeout: LOCAL_NODE_UI_DEBOUNCE_MS, // 30 FPS
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
   getKey: update => update.nodeId,
 })
 
 sample({
-  clock: throttledupdateNodePositionLocal,
+  clock: throttledUpdateNodePositionLocal,
   target: [updateNodePositionLocal],
 })
 
@@ -69,7 +69,6 @@ sample({
   source: $nodes,
   fn: (nodes, params) => ({
     ...params,
-    id: params.nodeId,
     version: (nodes[params.nodeId]?.metadata.version ?? 0) + 1,
   }),
   target: [setNodeVersion, baseUpdateNodePositionFx],
@@ -85,7 +84,6 @@ sample({
   source: $nodes,
   fn: (nodes, params) => ({
     ...params,
-    id: params.nodeId,
     version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
   }),
   target: [setNodeVersion, updateNodeParentFx],
@@ -98,7 +96,7 @@ sample({
 // Handle optimistic updates
 const throttledUpdateNodeUILocal = accumulateAndSample({
   source: [updateNodeUI],
-  timeout: LOCAL_NODE_UI_DEBOUNCE_MS, // 30 FPS
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
   getKey: update => update.nodeId,
 })
 
@@ -120,7 +118,6 @@ sample({
   fn: (nodes, params) => {
     return {
       ...params,
-      id: params.nodeId,
       version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
     }
   },

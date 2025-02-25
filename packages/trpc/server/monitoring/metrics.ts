@@ -57,18 +57,15 @@ export class MetricsCollector {
     const flows = await this.flowStore.listFlows()
     const now = Date.now()
 
-    // Подсчет событий
     const totalEvents = flows.reduce((sum, flow) => {
       return sum + (flow as any).eventQueue.getStats().currentPosition
     }, 0)
 
-    // Расчет rate событий
     this.eventRate = (totalEvents - this.lastEventCount)
       / ((now - this.lastTimestamp) / 1000)
     this.lastEventCount = totalEvents
     this.lastTimestamp = now
 
-    // Сбор метрик по нодам
     const nodeMetrics = flows.reduce((acc, flow) => {
       flow.nodes.forEach((node) => {
         acc.total++
@@ -77,7 +74,6 @@ export class MetricsCollector {
       return acc
     }, { total: 0, byStatus: {} as Record<string, number> })
 
-    // Сбор метрик по очередям событий
     const queueMetrics = flows.reduce((acc, flow) => {
       const stats = (flow as any).eventQueue.getStats()
       acc.total++

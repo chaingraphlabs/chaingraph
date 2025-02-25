@@ -7,8 +7,11 @@
  */
 
 import { init } from '@badaitech/trpc/server'
+import dotenv from 'dotenv'
 import { setupPolyfills } from './setup'
 import { wsServer } from './ws-server'
+
+dotenv.config({ path: '../../.env' })
 
 setupPolyfills()
 

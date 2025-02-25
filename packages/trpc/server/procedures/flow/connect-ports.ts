@@ -6,10 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { Flow } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
-export const connectPorts = publicProcedure
+export const connectPorts = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     sourceNodeId: z.string(),
@@ -49,6 +50,8 @@ export const connectPorts = publicProcedure
       edge.metadata.label = metadata.label
       edge.metadata.description = metadata.description
     }
+
+    await ctx.flowStore.updateFlow(flow as Flow)
 
     return {
       edgeId: edge.id,

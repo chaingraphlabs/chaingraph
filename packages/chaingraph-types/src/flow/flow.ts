@@ -6,12 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IPort } from '../port'
 import type { JSONValue } from '../utils/json'
 import type {
   FlowEvent,
   NodeParentUpdatedEventData,
+  NodeUIChangedEventData,
   NodeUIDimensionsChangedEventData,
-  NodeUIEventData,
   NodeUIPositionChangedEventData,
   PortUpdatedEventData,
 } from './events'
@@ -20,7 +21,7 @@ import type { FlowMetadata } from './types'
 import { v4 as uuidv4 } from 'uuid'
 import { NodeRegistry } from '../decorator'
 import { Edge, type IEdge } from '../edge'
-import { type INode, type NodeEvent, NodeEventType } from '../node'
+import { filterPorts, type INode, type NodeEvent, NodeEventType } from '../node'
 import { EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
 
@@ -33,6 +34,8 @@ export class Flow implements IFlow {
   // TODO: store nodes as adjacency list
 
   // TODO: add known object types schemas
+
+  // TODO: split implementation into multiple files
 
   // private eventEmitter = new EventEmitter()
   protected eventQueue = new EventQueue<FlowEvent>()
@@ -88,11 +91,35 @@ export class Flow implements IFlow {
     return node
   }
 
+  updateNode(node: INode): void {
+    if (!this.nodes.has(node.id)) {
+      throw new Error(`Node with ID ${node.id} does not exist in the flow.`)
+    }
+    this.nodes.set(node.id, node)
+
+    // Emit NodeUpdated event
+    this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.NodeUpdated,
+      { node },
+    ))
+  }
+
   removeNode(nodeId: string): void {
     const node = this.nodes.get(nodeId)
     if (!node) {
       throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
     }
+
+    // find all child nodes and remove them
+    Array.from(this.nodes.values())
+      .filter((n) => {
+        return n.metadata.parentNodeId === nodeId
+      })
+      .forEach((n) => {
+        this.removeNode(n.id)
+      })
 
     // Unsubscribe from node events
     const cancel = this.nodeEventHandlersCancel.get(nodeId)
@@ -115,21 +142,78 @@ export class Flow implements IFlow {
     }
 
     // Emit NodeRemoved event
-    // const event: FlowEvent<FlowEventType.NodeRemoved, NodeRemovedEventData> = {
-    //   index: this.getNextEventIndex(),
-    //   flowId: this.id,
-    //   type: FlowEventType.NodeRemoved,
-    //   timestamp: new Date(),
-    //   data: {
-    //     nodeId,
-    //   },
-    // }
     this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
       FlowEventType.NodeRemoved,
       { nodeId },
     ))
+  }
+
+  /**
+   * Remove a port from a node, including all child ports and their connections
+   * @param nodeId
+   * @param portId
+   */
+  removePort(nodeId: string, portId: string): void {
+    const node = this.nodes.get(nodeId)
+    if (!node) {
+      throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
+    }
+
+    const port = node.getPort(portId)
+    if (!port) {
+      throw new Error(`Port with ID ${portId} does not exist on node ${nodeId}.`)
+    }
+
+    // find all child ports
+    const childPorts = this.findAllChildPorts(node, portId)
+
+    // first remove every connection to all found ports
+    childPorts.forEach((port) => {
+      for (const [edgeId, edge] of this.edges.entries()) {
+        if (edge.sourceNode.id === nodeId && edge.sourcePort.id === port.id) {
+          this.removeEdge(edgeId)
+        }
+        if (edge.targetNode.id === nodeId && edge.targetPort.id === port.id) {
+          this.removeEdge(edgeId)
+        }
+      }
+    })
+
+    // then remove the ports
+    childPorts.forEach((port) => {
+      node.removePort(port.id)
+    })
+  }
+
+  /**
+   * Recursively find all child ports of a given port
+   * Returns an array of all child ports including the port itself
+   *
+   * @param node
+   * @param portId
+   * @private
+   */
+  private findAllChildPorts(node: INode, portId: string): IPort[] {
+    // recursively find all child ports
+    const childPorts: IPort[] = []
+    const portToFind = node.getPort(portId)
+    if (!portToFind) {
+      return childPorts
+    }
+
+    childPorts.push(portToFind)
+
+    if (portToFind.getConfig().type === 'object') {
+      filterPorts(node, (port) => {
+        return port.getConfig().parentId === portToFind.id
+      }).forEach((childPort) => {
+        childPorts.push(...this.findAllChildPorts(node, childPort.id))
+      })
+    }
+
+    return childPorts
   }
 
   addEdge(edge: IEdge): void {
@@ -180,9 +264,16 @@ export class Flow implements IFlow {
       throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
     }
 
+    this.removeAllChildConnections(targetNode, targetPort)
+
     // TODO: Check dead loops
 
-    // Optionally check for port compatibility here
+    // TODO: check for port compatibility here, for example object
+    //  port could be connected if schema is compatible
+
+    // TODO: also decide what if the target object port schema is empty, should we connect any object port to it
+    //  or only the ports with the compatible schema.
+    //  Same question for the array port schema
 
     const edge = new Edge(
       uuidv4(),
@@ -211,6 +302,48 @@ export class Flow implements IFlow {
     return edge
   }
 
+  /**
+   * Recursively remove all connections to all child ports of a given port
+   * @param node
+   * @param port
+   * @private
+   */
+  private removeAllChildConnections(node: INode, port: IPort): void {
+    // iterates over port children and check if there is any connections, if so - remove them
+    const recursiveFindChildConnections = (p: IPort) => {
+      const connections: IEdge[] = []
+
+      if (p.getConfig().type === 'object') {
+        const childPorts = filterPorts(node, (port) => {
+          return port.getConfig().parentId === p.id
+        })
+
+        childPorts.forEach((port) => {
+          // find connections to this port
+          const childConnections = Array.from(this.edges.values()).filter((edge) => {
+            return edge.targetNode.id === node.id && edge.targetPort.id === port.id
+          })
+          if (childConnections.length > 0) {
+            connections.push(...childConnections)
+          }
+
+          const internalConnections = recursiveFindChildConnections(port)
+          if (internalConnections.length > 0) {
+            connections.push(...internalConnections)
+          }
+        })
+      }
+      return connections
+    }
+
+    const targetPortConnections = recursiveFindChildConnections(port)
+    if (targetPortConnections.length > 0) {
+      targetPortConnections.forEach((edge) => {
+        this.removeEdge(edge.id)
+      })
+    }
+  }
+
   async validate(): Promise<boolean> {
     // Validate all nodes and edges
     for (const node of this.nodes.values()) {
@@ -236,6 +369,10 @@ export class Flow implements IFlow {
 
   public getOutgoingEdges(node: INode): IEdge[] {
     return [...this.edges.values()].filter(edge => edge.sourceNode.id === node.id)
+  }
+
+  public filterEdges(predicate: (edge: IEdge) => boolean): IEdge[] {
+    return [...this.edges.values()].filter(predicate)
   }
 
   async dispose(): Promise<void> {
@@ -345,27 +482,44 @@ export class Flow implements IFlow {
         }
         break
 
-      case NodeEventType.StatusChange:
-      case NodeEventType.UIStateChange:
-      case NodeEventType.UIStyleChange:
-      {
-        const nodeUIEventData: NodeUIEventData = {
-          nodeId: node.id,
-          oldValue: (nodeEvent as any).oldValue,
-          newValue: (nodeEvent as any).newValue,
-          version: nodeEvent.version,
+      case NodeEventType.UIChange:
+        {
+        // Handle node UI change event
+          const nodeUIDimensionsEventData: NodeUIChangedEventData = {
+            nodeId: node.id,
+            ui: (nodeEvent as any).ui,
+            version: nodeEvent.version,
+          }
+          flowEvent = newEvent(
+            this.getNextEventIndex(),
+            this.id,
+            this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+            nodeUIDimensionsEventData,
+          )
         }
-        flowEvent = newEvent(
-          this.getNextEventIndex(),
-          this.id,
-          this.mapNodeUIEventToFlowEvent(nodeEvent.type),
-          nodeUIEventData,
-        )
-
         break
-      }
 
-      // Handle other node events if needed
+        // case NodeEventType.StatusChange:
+        // case NodeEventType.UIStateChange:
+        // case NodeEventType.UIStyleChange:
+        // {
+        //   const nodeUIEventData: NodeUIEventData = {
+        //     nodeId: node.id,
+        //     oldValue: (nodeEvent as any).oldValue,
+        //     newValue: (nodeEvent as any).newValue,
+        //     version: nodeEvent.version,
+        //   }
+        //   flowEvent = newEvent(
+        //     this.getNextEventIndex(),
+        //     this.id,
+        //     this.mapNodeUIEventToFlowEvent(nodeEvent.type),
+        //     nodeUIEventData,
+        //   )
+        //
+        //   break
+        // }
+
+        // Handle other node events if needed
 
       case NodeEventType.PortUpdate: {
         const portUpdateEventData: PortUpdatedEventData = {
@@ -403,10 +557,8 @@ export class Flow implements IFlow {
         return FlowEventType.NodeUIPositionChanged
       case NodeEventType.UIDimensionsChange:
         return FlowEventType.NodeUIDimensionsChanged
-      case NodeEventType.UIStateChange:
-        return FlowEventType.NodeUIStateChanged
-      case NodeEventType.UIStyleChange:
-        return FlowEventType.NodeUIStyleChanged
+      case NodeEventType.UIChange:
+        return FlowEventType.NodeUIChanged
       default:
         throw new Error(`Unsupported node event type: ${nodeEventType}`)
     }
@@ -479,7 +631,11 @@ export class Flow implements IFlow {
 
   public deserialize(data: JSONValue): IFlow {
     const flowData = data as any
-    const flow = new Flow(flowData.metadata)
+    const flow = new Flow({
+      ...flowData.metadata,
+      createdAt: new Date(flowData.metadata.createdAt ?? new Date()),
+      updatedAt: new Date(flowData.metadata.updatedAt ?? new Date()),
+    })
 
     for (const nodeData of flowData.nodes) {
       const node = NodeRegistry.getInstance().createNode(

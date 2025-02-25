@@ -32,11 +32,6 @@ export interface AddNodeEvent {
   }
 }
 
-export interface UpdateNodeEvent {
-  id: string
-  data: Partial<NodeState>
-}
-
 export interface UpdateNodeUIEvent {
   flowId: string
   nodeId: string

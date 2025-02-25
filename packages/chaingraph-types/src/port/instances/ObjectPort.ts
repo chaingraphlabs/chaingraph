@@ -153,6 +153,67 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
   protected deserializeValue(data: JSONValue): ObjectPortValue<S> {
     return ObjectPortPlugin.deserializeValue(data, this.config)
   }
+
+  /**
+   * Adds a new field to the object schema and updates the default and current values.
+   * @param field
+   * @param config
+   */
+  public addField(field: string, config: IPortConfig) {
+    if (!config.key) {
+      config.key = field
+    }
+
+    // Add the field to the schema
+    this.config.schema.properties[field] = config
+
+    // Add fields to the default value
+    if (config.defaultValue !== undefined) {
+      if (this.config.defaultValue) {
+        this.config.defaultValue = {
+          ...this.config.defaultValue,
+          [field]: config.defaultValue,
+        }
+      } else {
+        this.config.defaultValue = {
+          [field]: config.defaultValue,
+        } as ObjectPortValue<S>
+      }
+    }
+
+    // Add fields to the current value
+    if (this.value) {
+      this.value = {
+        ...this.value,
+        [field]: config.defaultValue,
+      }
+    } else {
+      this.value = {
+        [field]: config.defaultValue,
+      } as ObjectPortValue<S>
+    }
+  }
+
+  /**
+   * Remove a field from the object schema and updates the default and current values.
+   * @param field
+   */
+  public removeField(field: string) {
+    // Remove the field from the schema
+    if (Object.hasOwn(this.config.schema.properties, field)) {
+      delete this.config.schema.properties[field]
+    }
+
+    // Remove the field from the default value
+    if (this.config.defaultValue && Object.hasOwn(this.config.defaultValue, field)) {
+      delete this.config.defaultValue[field]
+    }
+
+    // Remove the field from the current value
+    if (this.value && Object.hasOwn(this.value, field)) {
+      delete this.value[field]
+    }
+  }
 }
 
 /**

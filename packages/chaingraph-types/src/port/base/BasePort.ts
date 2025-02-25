@@ -39,12 +39,12 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
   }
 
   setValue(newValue: ExtractValue<C>): void {
-    if (!this.validateValue(newValue)) {
-      throw new PortError(
-        PortErrorType.ValidationError,
-        'Value validation failed in setValue.',
-      )
-    }
+    // if (!this.validateValue(newValue)) {
+    //   throw new PortError(
+    //     PortErrorType.ValidationError,
+    //     'Value validation failed in setValue.',
+    //   )
+    // }
     this.value = newValue
   }
 
@@ -107,6 +107,12 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     } catch (error) {
       return false
     }
+  }
+
+  clone(): IPort<C> {
+    const serialized = this.serialize()
+    const newPort = new (this.constructor as new (config: C) => BasePort<C>)(this.config)
+    return newPort.deserialize(serialized)
   }
 
   /**

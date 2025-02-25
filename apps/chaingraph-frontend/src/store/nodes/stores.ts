@@ -18,13 +18,13 @@ import {
   setNodes,
   setNodesLoading,
   setNodeVersion,
+  updateNode,
   updateNodeParent,
   updateNodePositionInterpolated,
   updateNodePositionLocal,
   updateNodeUILocal,
 } from '@/store'
-import { updatePort, updatePortUI } from '@/store/ports/events'
-import { NodeRegistry, PortFactory } from '@badaitech/chaingraph-types'
+import { updatePort, updatePortUI, updatePortValue } from '@/store/ports/events'
 import { combine, createStore } from 'effector'
 
 // Store for nodes
@@ -32,14 +32,18 @@ export const $nodes = createStore<Record<string, INode>>({})
   .on(setNodes, (_, nodes) => ({ ...nodes }))
   .on(addNode, (state, node) => ({
     ...state,
-    [node.id]: node,
+    [node.id]: node.clone(),
+  }))
+  .on(updateNode, (state, node) => ({
+    ...state,
+    [node.id]: node.clone(),
   }))
   .on(removeNode, (state, id) => {
     const { [id]: _, ...rest } = state
     return rest
   })
-  .on(setNodeMetadata, (state, { id, metadata }) => {
-    const node = state[id]
+  .on(setNodeMetadata, (state, { nodeId, metadata }) => {
+    const node = state[nodeId]
     if (!node)
       return state
 
@@ -47,19 +51,19 @@ export const $nodes = createStore<Record<string, INode>>({})
 
     return {
       ...state,
-      [id]: node,
+      [nodeId]: node.clone(),
     }
   })
   .reset(clearNodes)
   .reset(clearActiveFlow)
-  .on(setNodeVersion, (state, { id, version }) => {
-    const node = state[id]
+  .on(setNodeVersion, (state, { nodeId, version }) => {
+    const node = state[nodeId]
     if (!node) {
-      console.error(`Node ${id} not found in store`)
+      console.error(`Node ${nodeId} not found in store`)
       return state
     }
 
-    console.log(`Setting version for node ${id} to ${version}`)
+    console.log(`Setting version for node ${nodeId} to ${version}`)
 
     node.setMetadata({
       ...node.metadata,
@@ -68,7 +72,7 @@ export const $nodes = createStore<Record<string, INode>>({})
 
     return {
       ...state,
-      [id]: node,
+      [nodeId]: node.clone(),
     }
   })
   .on(updatePort, (state, { id, data, nodeVersion }) => {
@@ -87,61 +91,72 @@ export const $nodes = createStore<Record<string, INode>>({})
     if (!port)
       return state
 
-    const newPort = PortFactory.createFromConfig(data.config)
-
     try {
-      newPort.setConfig(data.config)
-      newPort.setValue(data.value)
+      port.setConfig(data.config)
+      port.setValue(data.value)
     } catch (e: any) {
-      console.error('Error updating port value:', e)
+      console.error('Error updating port value:', e, data)
+      return state
     }
-
-    const newNode = NodeRegistry.getInstance().createNode(
-      node.metadata.type,
-      node.id,
-      {
-        ...node.metadata,
-        version: nodeVersion,
-      },
-    )
-    newNode.setPorts(node.ports) // set existing ports
-    newNode.setPort(newPort) // set new port
+    node.setMetadata({
+      ...node.metadata,
+      version: nodeVersion,
+    })
+    node.setPort(port)
 
     return {
       ...state,
-      [nodeId]: newNode,
+      [nodeId]: node.clone(),
     }
   })
-  .on(updatePortUI, (state, { id, ui }) => {
-    const node = Object.values(state).find(node => node.ports.has(id)) // TODO: optimize
+  .on(updatePortValue, (state, { nodeId, portId, value }) => {
+    const node = state[nodeId]
     if (!node)
       return state
 
-    const port = node.getPort(id)
+    const port = node.getPort(portId)
     if (!port)
       return state
 
-    const newPort = PortFactory.createFromConfig(port.getConfig())
-    newPort.setConfig({
+    console.log('Pre port value updated', { nodeId, portId, value: port.getValue() })
+
+    try {
+      port.setValue(value)
+    } catch (e: any) {
+      console.error('Error updating port value:', e)
+      return state
+    }
+    node.setPort(port)
+
+    console.log('Port value updated', { nodeId, portId, value })
+
+    return {
+      ...state,
+      [nodeId]: node.clone(),
+    }
+  })
+  .on(updatePortUI, (state, { nodeId, portId, ui }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    const port = node.getPort(portId)
+    if (!port)
+      return state
+
+    port.setConfig({
       ...port.getConfig(),
       ui: {
         ...port.getConfig().ui,
         ...ui,
       },
     })
-    newPort.setValue(port.getValue())
-
-    const newNode = NodeRegistry.getInstance().createNode(
-      node.metadata.type,
-      node.id,
-      node.metadata,
-    )
-    newNode.setPorts(node.ports) // set existing ports
-    newNode.setPort(newPort) // set new port
+    node.setPorts(node.ports) // set existing ports
+    node.setPort(port) // set new port
 
     return {
       ...state,
-      [node.id]: newNode,
+      [node.id]: node.clone(),
     }
   })
 
@@ -162,7 +177,7 @@ $nodes
 
     return {
       ...state,
-      [nodeId]: node,
+      [nodeId]: node, // Do not clone if local UI changed!
     }
   })
   .on(updateNodePositionLocal, (state, { flowId, nodeId, position }) => {
@@ -182,7 +197,7 @@ $nodes
 
     return {
       ...state,
-      [nodeId]: node,
+      [nodeId]: node, // Do not clone if local position changed!
     }
   })
 
@@ -207,14 +222,6 @@ export const $nodesError = combine(
   $removeNodeError,
   (addError, removeError) => addError || removeError,
 )
-
-// Computed stores
-// export const $nodesList = $nodesWithVersions.map(
-//   nodes => Object.values(nodes),
-// )
-// export const $nodesCount = $nodesWithVersions.map(
-//   nodes => Object.keys(nodes).length,
-// )
 
 // Update store to handle interpolated positions
 $nodes

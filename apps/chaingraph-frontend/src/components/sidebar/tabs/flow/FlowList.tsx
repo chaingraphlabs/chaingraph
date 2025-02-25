@@ -10,15 +10,7 @@ import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { useFlowSearch } from '@/components/sidebar/tabs/flow/hooks/useFlowSearch'
 import { useFlowSort } from '@/components/sidebar/tabs/flow/hooks/useFlowSort'
 import { ErrorMessage } from '@/components/ui/error-message.tsx'
-import {
-  $flowsError,
-  createFlow,
-  type CreateFlowEvent,
-  deleteFlow,
-  setActiveFlowId,
-  updateFlow,
-  type UpdateFlowEvent,
-} from '@/store'
+import { $flowsError, createFlow, type CreateFlowEvent, deleteFlow, updateFlow, type UpdateFlowEvent } from '@/store'
 import {
   $activeFlowId,
   $createFlowError,
@@ -34,6 +26,7 @@ import { Spinner } from '@radix-ui/themes'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { EmptyFlowState } from './components/EmptyFlowState'
 import { FlowForm } from './components/FlowForm'
 import { FlowListHeader } from './components/FlowListHeader'
@@ -64,6 +57,7 @@ export function FlowList() {
     isDeletingFlow: $isDeletingFlow,
     isEditingFlow: $isUpdatingFlow,
   })
+  const navigate = useNavigate()
 
   // Local UI state
   const [isCreating, setIsCreating] = useState(false)
@@ -98,20 +92,13 @@ export function FlowList() {
     }
   }, [editingFlow])
 
+  const handleFlowSelect = (flowId: string) => {
+    navigate(`/flow/${flowId}`)
+  }
+
   // Loading state
   if (isLoading) {
     return <Spinner />
-  }
-
-  // Error state
-  if (loadError) {
-    return (
-      <ErrorMessage>
-        Failed to load flows:
-        {' '}
-        {loadError.message}
-      </ErrorMessage>
-    )
   }
 
   const hasFlows = filteredFlows && filteredFlows.length > 0
@@ -121,6 +108,14 @@ export function FlowList() {
 
   return (
     <div className="flex flex-col h-full relative">
+      {loadError && (
+        <ErrorMessage>
+          Failed to load flows:
+          {' '}
+          {loadError.message}
+        </ErrorMessage>
+      )}
+
       <AnimatePresence mode="sync">
         {showEmptyState && (
           <motion.div
@@ -169,7 +164,7 @@ export function FlowList() {
                           flow={flow}
                           selected={activeFlowId === flow.id}
                           onSelect={() => {
-                            setActiveFlowId(flow.id!)
+                            handleFlowSelect(flow.id!)
                           }}
                           onDelete={() => deleteFlow(flow.id!)}
                           onEdit={() => handleEditClick(flow)}

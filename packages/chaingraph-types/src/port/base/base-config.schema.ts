@@ -61,8 +61,7 @@ export const arrayPortConfigUISchema = basePortConfigUISchema.merge(
  */
 export const objectPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
-    addKeyFormHidden: z.boolean().optional(),
-    addKeyFormSpoilerState: z.boolean().optional(),
+    collapsible: z.boolean().optional(),
     keyDeletable: z.boolean().optional(),
   }).passthrough(),
 )

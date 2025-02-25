@@ -7,16 +7,12 @@
  */
 
 import type { ExecutionContext } from '../execution'
-import type { IPort } from '../port'
+import type { IPort, IPortConfig } from '../port'
 import type { JSONValue } from '../utils/json'
 import type { NodeEvent } from './events'
 import type { NodeStatus } from './node-enums'
-import type { Dimensions, NodeUIMetadata, NodeUIState, NodeUIStyle, Position } from './node-ui'
-import type {
-  NodeExecutionResult,
-  NodeMetadata,
-  NodeValidationResult,
-} from './types'
+import type { Dimensions, NodeUIMetadata, Position } from './node-ui'
+import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from './types'
 
 /**
  * Base interface for all nodes in ChainGraph
@@ -31,6 +27,11 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * Initialize the node
    */
   initialize: () => void
+
+  /**
+   * Initialize the node ports
+   */
+  initializePorts: () => void
 
   /**
    * Execute the node's logic
@@ -115,6 +116,13 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   setMetadata: (metadata: NodeMetadata) => void
 
   /**
+   * Set the node port configuration
+   * @param portId Port ID
+   * @param config Port configuration
+   */
+  setPortConfig: (portId: string, config: IPortConfig) => void
+
+  /**
    * Event handling - Subscribe to node events
    * @param event Event type
    * @param handler Event handler function
@@ -151,24 +159,17 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   setNodeParent: (position: Position, parentNodeId?: string, emitEvent?: boolean) => void
 
   /**
-   * Set the node UI state
-   * @param state New state
+   * Set the node UI
+   * @param ui New UI metadata
    * @param emitEvent Emit event
    */
-  setUIState: (state: NodeUIState, emitEvent?: boolean) => void
-
-  /**
-   * Set the node UI style
-   * @param style New style
-   * @param emitEvent Emit event
-   */
-  setUIStyle: (style: NodeUIStyle, emitEvent?: boolean) => void
+  setUI: (ui: NodeUIMetadata, emitEvent?: boolean) => void
 
   /**
    * Get the node UI metadata
    * @returns Node UI metadata
    */
-  getUIMetadata: () => NodeUIMetadata | undefined
+  getUI: () => NodeUIMetadata | undefined
 
   /**
    * Disable node events

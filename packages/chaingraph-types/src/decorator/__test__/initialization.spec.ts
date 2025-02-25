@@ -10,7 +10,17 @@ import type { ExecutionContext } from '../../execution'
 import type { NodeExecutionResult } from '../../node'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { BaseNode, findPort, traversePorts } from '../../node'
-import { AnyPortPlugin, ArrayPortPlugin, createStringValue, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import {
+  AnyPortPlugin,
+  ArrayPortPlugin,
+  createStringValue,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { Node } from '../node.decorator'
 import { Input, Output } from '../port-config.decorator'
 import { Port } from '../port.decorator'
@@ -68,9 +78,17 @@ class DummyNode extends BaseNode {
             properties: {
               foo: {
                 type: 'string',
+                ui: {
+                  bgColor: '#e70d0d',
+                  borderColor: '#460707',
+                },
               },
               bar: {
                 type: 'number',
+                ui: {
+                  bgColor: '#1f5eec',
+                  borderColor: '#0c2454',
+                },
               },
             },
           },
