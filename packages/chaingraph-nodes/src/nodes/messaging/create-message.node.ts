@@ -13,6 +13,7 @@ import {
   Node,
   NodeExecutionStatus,
   Output,
+  PortArray,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'

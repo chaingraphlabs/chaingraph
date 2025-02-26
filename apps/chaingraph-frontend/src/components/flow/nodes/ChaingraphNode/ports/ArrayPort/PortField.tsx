@@ -6,17 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
+import type { ArrayPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
-import { PortComponent } from '../../../PortComponent'
-import { DeleteButton } from '../../ui/DeleteButton'
+import { PortComponent } from '../../PortComponent'
+import { DeleteButton } from '../ui/DeleteButton'
 
 interface PortFieldProps {
   node: INode
-  parentPort: IPort<ObjectPortConfig>
+  parentPort: IPort<ArrayPortConfig>
   port: IPort
   isOutput: boolean
-  isSchemaMutable: boolean
+  isMutable: boolean
   onDelete: () => void
 }
 
@@ -25,7 +25,7 @@ export function PortField({
   parentPort,
   port,
   isOutput,
-  isSchemaMutable,
+  isMutable,
   onDelete,
 }: PortFieldProps) {
   const isKeyDeletable
@@ -44,8 +44,7 @@ export function PortField({
           <PortComponent node={node} port={port} />
         </div>
 
-        {(isSchemaMutable && parentPort.getConfig()?.ui?.keyDeletable)
-        && <DeleteButton onClick={onDelete} />}
+        {(isMutable && <DeleteButton onClick={onDelete} />)}
       </div>
     </div>
   )

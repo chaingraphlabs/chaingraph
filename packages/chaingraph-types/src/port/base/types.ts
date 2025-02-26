@@ -115,6 +115,7 @@ export interface ArrayPortConfig<
 > extends BasePortConfig {
   type: 'array'
   itemConfig: IPortConfig
+  isMutable?: boolean
   defaultValue?: ArrayPortValue<Item>
   minLength?: number
   maxLength?: number
