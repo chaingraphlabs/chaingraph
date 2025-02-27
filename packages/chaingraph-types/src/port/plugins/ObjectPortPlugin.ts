@@ -223,7 +223,7 @@ export function validateObjectValue(
 /**
  * Object port value schema using Zod.
  */
-const valueSchema: z.ZodType<ObjectPortValue> = z.record(z.string(), z.unknown())
+const valueSchema: z.ZodType<ObjectPortValue> = z.record(z.string(), z.any())
 
 /**
  * Object-specific schema
@@ -255,7 +255,9 @@ const objectSpecificSchema = z.object({
 /**
  * Merge base schema with object-specific schema to create the final config schema
  */
-const configSchema: z.ZodType<ObjectPortConfig> = basePortConfigSchema.merge(objectSpecificSchema)
+const configSchema: z.ZodType<ObjectPortConfig> = basePortConfigSchema
+  .merge(objectSpecificSchema)
+  .passthrough()
 
 /**
  * Object port plugin implementation.
@@ -390,9 +392,10 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
     try {
       const result = configSchema.safeParse(data)
       if (!result.success) {
+        console.log('FUCK UP WITH OBJECT:', result, data)
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid object configuration for deserialization',
+          `Invalid object configuration for deserialization ${JSON.stringify(result)} DATA: ${JSON.stringify(data)}`,
           result.error,
         )
       }

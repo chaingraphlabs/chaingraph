@@ -59,21 +59,41 @@ interface ObjectSchema {
 class DummyNode extends BaseNode {
   @Port({
     type: 'string',
+    ui: {
+      bgColor: '#e70d0d',
+      borderColor: '#460707',
+    },
   })
   public dummyPort?: string = 'test'
 
   @Port({
     type: 'object',
+    ui: {
+      bgColor: '#e44df5',
+      borderColor: '#541e5d',
+    },
     schema: {
       properties: {
         hello: {
           type: 'string',
+          ui: {
+            bgColor: '#e70d0d',
+            borderColor: '#460707',
+          },
         },
         world: {
           type: 'string',
+          ui: {
+            bgColor: '#e70d0d',
+            borderColor: '#460707',
+          },
         },
         inner: {
           type: 'object',
+          ui: {
+            bgColor: '#e44df5',
+            borderColor: '#541e5d',
+          },
           schema: {
             properties: {
               foo: {

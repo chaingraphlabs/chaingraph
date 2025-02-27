@@ -8,6 +8,7 @@
 
 import type { CategorizedNodes, CategoryMetadata, NodeCategory } from './category'
 import type { INode } from './interface'
+import { getPortsMetadata } from './../decorator'
 
 export class NodeCatalog {
   // Singleton instance if needed
@@ -121,7 +122,12 @@ export class NodeCatalog {
 
     // Now add the node's metadata to the list in the category.
     const catGroup = this.categorizedNodes.get(category)!
-    catGroup.nodes.push(node.metadata)
+    const portsConfig = getPortsMetadata(node.constructor)
+
+    catGroup.nodes.push({
+      ...node.metadata,
+      portsConfig,
+    })
 
     // Sort nodes in this category by title
     catGroup.nodes.sort((a, b) => (a.title || '').localeCompare(b.title || ''))

@@ -101,7 +101,6 @@ export const basePortConfigSchema = z.object({
   key: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
-  // direction: z.nativeEnum(PortDirection).optional(),
   direction: z.enum([PortDirection.Input, PortDirection.Output]).optional(),
   ui: basePortConfigUISchema.optional(),
 }).passthrough()

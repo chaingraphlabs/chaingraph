@@ -26,12 +26,7 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
   /**
    * Initialize the node
    */
-  initialize: () => void
-
-  /**
-   * Initialize the node ports
-   */
-  initializePorts: () => void
+  initialize: (portsConfig: Map<string, IPortConfig> | undefined) => void
 
   /**
    * Execute the node's logic
@@ -39,6 +34,14 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * @returns Execution result
    */
   execute: (context: ExecutionContext) => Promise<NodeExecutionResult>
+
+  /**
+   * Handle an event emitted by the node
+   * @param event Event to handle
+   * @param node Node instance
+   * @returns Updated node instance
+   */
+  onEvent: (event: NodeEvent) => Promise<void>
 
   /**
    * Validate the node's configuration and current state
@@ -76,10 +79,9 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
 
   /**
    * Update a port in the node
-   * @param portId ID of the port to update
    * @param port New port data
    */
-  updatePort: (portId: string, port: IPort) => void
+  updatePort: (port: IPort) => void
 
   /**
    * Remove a port from the node
@@ -114,13 +116,6 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * @param metadata New metadata
    */
   setMetadata: (metadata: NodeMetadata) => void
-
-  /**
-   * Set the node port configuration
-   * @param portId Port ID
-   * @param config Port configuration
-   */
-  setPortConfig: (portId: string, config: IPortConfig) => void
 
   /**
    * Event handling - Subscribe to node events
@@ -170,16 +165,6 @@ export interface INode { // extends CustomTransfomer<INode, JSONValue> {
    * @returns Node UI metadata
    */
   getUI: () => NodeUIMetadata | undefined
-
-  /**
-   * Disable node events
-   */
-  disableEvents: () => void
-
-  /**
-   * Enable node events (default)
-   */
-  enableEvents: () => void
 
   /**
    * Increment the node version

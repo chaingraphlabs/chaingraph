@@ -102,7 +102,7 @@ export function AddPropPopover(props: Props) {
   const { onClose, onSubmit } = props
 
   const [key, setKey] = useState('')
-  const [type, setType] = useState<Exclude<PortType, 'array' | 'stream'> | undefined>('string')
+  const [type, setType] = useState<PortType | undefined>('string')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {

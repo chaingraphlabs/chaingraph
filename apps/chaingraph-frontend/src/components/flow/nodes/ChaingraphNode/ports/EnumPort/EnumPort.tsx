@@ -51,7 +51,7 @@ export function EnumPort(props: EnumPortProps) {
   }
 
   // If the port should be hidden, don't render it.
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   return (

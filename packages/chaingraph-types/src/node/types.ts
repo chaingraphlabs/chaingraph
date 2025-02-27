@@ -26,8 +26,11 @@ export interface NodeMetadata {
   author?: string
   parentNodeId?: string
   metadata?: Record<string, unknown>
-  portsConfig?: Map<string, IPortConfig>
   ui?: NodeUIMetadata
+}
+
+export interface NodeMetadataWithPorts extends NodeMetadata {
+  portsConfig: Map<string, IPortConfig>
 }
 
 /**

@@ -34,6 +34,11 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
   get id(): string
 
   /**
+   * The key of the port.
+   */
+  get key(): string
+
+  /**
    * Retrieves the current port configuration.
    *
    * @returns The port configuration of type C.

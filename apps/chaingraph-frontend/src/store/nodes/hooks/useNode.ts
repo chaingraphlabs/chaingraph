@@ -18,7 +18,7 @@ import { useStoreMap } from 'effector-react'
 // }
 
 export function useNode(nodeId: string) {
-  const node = useStoreMap({
+  return useStoreMap({
     store: $nodes,
     keys: [nodeId],
     fn: (nodes, [nodeId]) => {
@@ -31,6 +31,4 @@ export function useNode(nodeId: string) {
     //   return prev.getVersion() !== next.getVersion()
     // },
   })
-
-  return node
 }

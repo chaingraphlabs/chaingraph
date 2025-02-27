@@ -16,7 +16,7 @@ export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
   const title = config.title || config.key
   const ui = config.ui
 
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   return (

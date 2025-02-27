@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow, ObjectPort } from '@badaitech/chaingraph-types'
-import { findPort } from '@badaitech/chaingraph-types'
+import type { Flow, IPort, ObjectPort } from '@badaitech/chaingraph-types'
+import { findPort, PortConfigProcessor, PortFactory } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
 
@@ -39,7 +39,7 @@ export const updatePortValue = flowContextProcedure
       throw new Error('Port not found')
 
     port.setValue(input.value)
-    node.updatePort(port.id, port)
+    node.updatePort(port)
 
     console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 
@@ -81,8 +81,23 @@ export const addFieldObjectPort = flowContextProcedure
     const key = input.key
     const config = input.config
 
+    // check if key already exists
+    if (objectPort.getConfig().schema.properties[key])
+      throw new Error('Key already exists in object port')
+
+    const newPortConfig = (new PortConfigProcessor()).processPortConfig(
+      config,
+      {
+        nodeId: node.id,
+        parentPortConfig: objectPort.getConfig(),
+        propertyKey: key,
+        propertyValue: config.defaultValue,
+      },
+    )
+
+    const newChildPort = PortFactory.create(newPortConfig)
     objectPort.addField(key, config)
-    node.initialize()
+    node.setPort(newChildPort as IPort)
     flow.updateNode(node)
 
     // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
@@ -141,8 +156,7 @@ export const removeFieldObjectPort = flowContextProcedure
     // remove key from object port schema
     objectPort.removeField(key)
 
-    // initialize node to update metadata
-    node.initialize()
+    node.updatePort(objectPort as IPort)
 
     // trigger node update
     flow.updateNode(node)

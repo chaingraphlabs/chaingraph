@@ -6,19 +6,19 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, NodeMetadataWithPorts } from '@badaitech/chaingraph-types'
 import { useDnd } from '@/components/dnd/useDnd'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
   DndContext,
   type DragEndEvent,
+  DragOverlay,
   type DragStartEvent,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { DragOverlay } from '@dnd-kit/core'
 import { useCallback, useContext } from 'react'
 import { NodePreview } from '../sidebar/tabs/node-list/NodePreview'
 
@@ -45,7 +45,7 @@ export function DndProvider({ children }: DndProviderProps) {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { node, categoryMetadata } = event.active.data.current as {
-      node: NodeMetadata
+      node: NodeMetadataWithPorts
       categoryMetadata: CategoryMetadata
     }
     setDraggedNode({ node, categoryMetadata })

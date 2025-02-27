@@ -41,7 +41,7 @@ export function NumberPort(props: NumberPortProps) {
     })
   }
 
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   return (

@@ -6,18 +6,22 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
+import type {
+  CategoryMetadata,
+  NodeMetadata,
+  NodeMetadataWithPorts,
+} from '@badaitech/chaingraph-types'
 import { createContext } from 'react'
 
 export interface NodeDropEvent {
-  node: NodeMetadata
+  node: NodeMetadataWithPorts
   categoryMetadata: CategoryMetadata
   position: { x: number, y: number }
 }
 
 export interface DndContextType {
   draggedNode: {
-    node: NodeMetadata
+    node: NodeMetadataWithPorts
     categoryMetadata: CategoryMetadata
   } | null
   setDraggedNode: (data: { node: NodeMetadata, categoryMetadata: CategoryMetadata } | null) => void

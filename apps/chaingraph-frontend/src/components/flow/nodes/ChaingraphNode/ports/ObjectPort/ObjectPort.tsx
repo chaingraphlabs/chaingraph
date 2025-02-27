@@ -61,7 +61,7 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   return (

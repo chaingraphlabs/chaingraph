@@ -254,7 +254,7 @@ export type EnumPortValue = string
 /**
  * Any port value
  */
-export type AnyPortValue = any
+export type AnyPortValue = any | undefined | null
 
 /**
  * Union type of all port configurations
@@ -280,7 +280,7 @@ export type IPortValue =
   | ObjectPortValue<any>
   | StreamPortValue<any>
   | EnumPortValue
-  // | AnyPortValue
+  | AnyPortValue
 
 export type PortConfigByType<T extends PortType> = ConfigTypeMap[T]
 

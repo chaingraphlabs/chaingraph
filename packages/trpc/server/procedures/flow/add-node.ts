@@ -47,7 +47,7 @@ export const addNode = flowContextProcedure
     const node = newNode.clone()
 
     // Initialize node
-    node.initialize()
+    node.initialize(undefined)
 
     // Set additional metadata if provided
     if (metadata) {
