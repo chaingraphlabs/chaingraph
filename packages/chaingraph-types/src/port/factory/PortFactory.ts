@@ -16,6 +16,7 @@ import type {
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
+  SecretPortConfig,
   StreamPortConfig,
   StringPortConfig,
 } from '../../port'
@@ -31,6 +32,7 @@ import {
   StreamPort,
   StringPort,
 } from '../../port'
+import { SecretPort } from '../instances/SecretPort'
 
 export type SupportedPortInstance =
   | StringPort
@@ -50,8 +52,9 @@ export type PortInstanceFromConfig<T extends IPortConfig> =
           T extends ObjectPortConfig<infer S> ? ObjectPort<S> :
             T extends StreamPortConfig<infer V> ? StreamPort<V> :
               T extends EnumPortConfig ? EnumPort :
-                T extends AnyPortConfig ? AnyPort :
-                  never
+                T extends SecretPortConfig<infer S> ? SecretPort<S> :
+                  T extends AnyPortConfig ? AnyPort :
+                    never
 
 export class PortFactory {
   /**
@@ -73,28 +76,31 @@ export class PortFactory {
 
     switch (config.type) {
       case 'string': {
-        return new StringPort(config as StringPortConfig) as PortInstanceFromConfig<T>
+        return new StringPort(config) as PortInstanceFromConfig<T>
       }
       case 'number': {
-        return new NumberPort(config as NumberPortConfig) as PortInstanceFromConfig<T>
+        return new NumberPort(config) as PortInstanceFromConfig<T>
       }
       case 'boolean': {
-        return new BooleanPort(config as BooleanPortConfig) as PortInstanceFromConfig<T>
+        return new BooleanPort(config) as PortInstanceFromConfig<T>
       }
       case 'array': {
-        return new ArrayPort(config as ArrayPortConfig) as PortInstanceFromConfig<T>
+        return new ArrayPort(config) as PortInstanceFromConfig<T>
       }
       case 'object': {
-        return new ObjectPort(config as ObjectPortConfig) as PortInstanceFromConfig<T>
+        return new ObjectPort(config) as PortInstanceFromConfig<T>
       }
       case 'stream': {
-        return new StreamPort(config as StreamPortConfig) as PortInstanceFromConfig<T>
+        return new StreamPort(config) as PortInstanceFromConfig<T>
       }
       case 'enum': {
-        return new EnumPort(config as EnumPortConfig) as PortInstanceFromConfig<T>
+        return new EnumPort(config) as PortInstanceFromConfig<T>
+      }
+      case 'secret': {
+        return new SecretPort(config) as PortInstanceFromConfig<T>
       }
       case 'any': {
-        return new AnyPort(config as AnyPortConfig) as PortInstanceFromConfig<T>
+        return new AnyPort(config) as PortInstanceFromConfig<T>
       }
       default:
         throw new PortError(

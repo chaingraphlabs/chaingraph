@@ -47,6 +47,6 @@ export class ExecutionContext {
       await this.generateECDHKeyPair()
     }
 
-    return this.ecdhKeyPair as CryptoKeyPair
+    return this.ecdhKeyPair!
   }
 }

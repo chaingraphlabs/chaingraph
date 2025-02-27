@@ -105,6 +105,19 @@ export function serialize<T extends SecretType>(secretType: T, secret: Encrypted
 }
 
 /**
+ * Algorithm used for secret encryption.
+ */
+const encryptionAlgorithm = {
+  name: 'AES-GCM',
+  length: 256,
+}
+
+/**
+ * Length of IV used in encryption.
+ */
+const ivLength = 12
+
+/**
  * Wraps an encrypted value to an object with a decrypt function.
  */
 function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedSecretValue<T>): EncryptedSecretValue<SecretTypeMap[T]> {
@@ -115,12 +128,12 @@ function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedS
     const encryptionKey = await subtle.deriveKey({
       name: 'ECDH',
       public: value.publicKey,
-    }, keyPair.privateKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt'])
+    }, keyPair.privateKey, encryptionAlgorithm, false, ['decrypt'])
 
-    const iv = value.encrypted.subarray(0, 12)
-    const data = value.encrypted.subarray(12)
+    const iv = value.encrypted.subarray(0, ivLength)
+    const data = value.encrypted.subarray(ivLength)
 
-    const decrypted = await subtle.decrypt({ name: 'AES-GCM', length: 256, iv }, encryptionKey, data)
+    const decrypted = await subtle.decrypt({ ...encryptionAlgorithm, iv }, encryptionKey, data)
     return schema.parse(Buffer.from(decrypted).toString())
   }
 

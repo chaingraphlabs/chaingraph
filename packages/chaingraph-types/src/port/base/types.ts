@@ -128,6 +128,7 @@ export interface ArrayPortConfig<
 export interface SecretPortConfig<S extends SecretType = 'string'> extends BasePortConfig {
   type: 'secret'
   secretType: S
+  ui?: BasePortConfigUIType
 }
 
 /**
@@ -293,7 +294,7 @@ export type PortConfigByType<T extends PortType> = ConfigTypeMap[T]
 /**
  * Compile time check that given type has configs for every PortType.
  */
-type ValidateConfigTypeMap<T extends Record<PortType, BasePortConfig>> = T
+type ValidateConfigTypeMap<T extends Record<PortType, IPortConfig>> = T
 
 /**
  * Type mapping for configs

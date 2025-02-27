@@ -16,6 +16,16 @@ import { SecretPortPlugin } from '../plugins/SecretPortPlugin'
  * Concrete implementation of a SecretPort.
  */
 export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<S>> {
+  constructor(config: SecretPortConfig<S>) {
+    const defaultUi = {
+      bgColor: '#d816b5',
+      borderColor: '#571041',
+    }
+
+    const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
+    super(mergedConfig)
+  }
+
   /**
    * @inheritDoc
    *
