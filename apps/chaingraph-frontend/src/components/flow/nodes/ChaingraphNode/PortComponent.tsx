@@ -7,6 +7,7 @@
  */
 
 import type {
+  ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
   INode,
@@ -20,6 +21,7 @@ import {
 } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort.tsx'
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort.tsx'
 import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort.tsx'
+import { ArrayPort } from './ports/ArrayPort/ArrayPort'
 import { EnumPort } from './ports/EnumPort/EnumPort'
 import { StringPort } from './ports/StringPort/StringPort'
 import { StubPort } from './ports/StubPort/StubPort'
@@ -76,7 +78,11 @@ export function PortComponent(props: PortProps) {
         />
       )
     }
-    case 'array':
+    case 'array': {
+      return (
+        <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} />
+      )
+    }
     case 'stream':
     case 'any': {
       return <StubPort port={port} />
