@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
@@ -51,7 +59,6 @@ export default class HttpRequestNode extends BaseNode {
     description: 'Base URI of the API',
     ui: {
       placeholder: 'https://api.example.com',
-      bgColor: '#f0f9ff',
       borderColor: '#3b82f6'
     }
   })
@@ -63,7 +70,6 @@ export default class HttpRequestNode extends BaseNode {
     description: 'Request path',
     ui: {
       placeholder: '/v1/users',
-      bgColor: '#f0f9ff'
     }
   })
   path: string = ''
@@ -89,7 +95,7 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @String({
     title: 'Headers',
-    description: 'Request headers (one per line)',
+    description: 'Request headers (one per line)\nExample:\nAuthorization: Bearer token\nContent-Type: application/json',
     ui: {
       isTextArea: true,
       textareaDimensions: { height: 80 },
@@ -110,17 +116,6 @@ export default class HttpRequestNode extends BaseNode {
     }
   })
   body: string = ''
-
-  @Input()
-  @Boolean({
-    title: 'Requires Authentication',
-    description: 'Toggle if request needs auth headers',
-    defaultValue: false,
-    ui: {
-      hidePort: true  // No need for connection
-    }
-  })
-  requiresAuth: boolean = false
 
   @Input()
   @StringEnum(Object.values(ResponseType), {
@@ -186,17 +181,17 @@ export default class HttpRequestNode extends BaseNode {
 
   private async executeWithRetry(url: URL, init: RequestInit): Promise<Response> {
     let lastError: Error | null = null
-    
+
     for (let attempt = 0; attempt <= this.retries; attempt++) {
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), this.timeout)
-        
+
         const response = await fetch(url.toString(), {
           ...init,
           signal: controller.signal
         })
-        
+
         clearTimeout(timeoutId)
         return response
       } catch (error: any) {
@@ -207,7 +202,7 @@ export default class HttpRequestNode extends BaseNode {
         }
       }
     }
-    
+
     throw lastError || new Error('Request failed after retries')
   }
 
@@ -235,7 +230,7 @@ export default class HttpRequestNode extends BaseNode {
     if (!this.baseUri?.trim()) {
       throw new Error('Base URI is required')
     }
-    
+
     try {
       new URL(this.baseUri)
     } catch (e) {
@@ -305,7 +300,7 @@ export default class HttpRequestNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     try {
       this.validateRequest()
-      
+
       const headerRecord = this.parseHeaders(this.headers)
       const validatedBody = this.validateBody(this.body, headerRecord)
 
