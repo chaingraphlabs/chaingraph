@@ -20,6 +20,7 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import { SystemMessage } from '@langchain/core/messages'
+import { ChatDeepSeek } from '@langchain/deepseek'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -128,17 +129,23 @@ class LLMCallNode extends BaseNode {
     if (!this.apiKey) {
       throw new Error('API Key is required')
     }
-
-    const llm = new ChatOpenAI({
-      configuration: {
-        baseURL: this.model in [LLMModels.DeepseekReasoner, LLMModels.DeepseekChat] ? 'https://api.deepseek.com/v1' : 'https://api.openai.com/v1',
-      },
-      apiKey: this.apiKey,
-      model: this.model,
-      temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
-      streaming: true,
-    })
-
+    let llm: ChatDeepSeek | ChatOpenAI
+    if (this.model === LLMModels.DeepseekReasoner || this.model === LLMModels.DeepseekChat) {
+      llm = new ChatDeepSeek({
+        apiKey: this.apiKey,
+        model: this.model,
+        // temperature: this.temperature,
+        streaming: true,
+      })
+    } else {
+      llm = new ChatOpenAI({
+        apiKey: this.apiKey,
+        model: this.model,
+        temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
+        streaming: true,
+      })
+    }
+    console.log(llm)
     const messages = [
       new SystemMessage(this.prompt),
     ]
