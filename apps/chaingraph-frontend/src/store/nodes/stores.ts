@@ -65,10 +65,7 @@ export const $nodes = createStore<Record<string, INode>>({})
 
     console.log(`Setting version for node ${nodeId} to ${version}`)
 
-    node.setMetadata({
-      ...node.metadata,
-      version,
-    })
+    node.setVersion(version)
 
     return {
       ...state,
@@ -98,10 +95,7 @@ export const $nodes = createStore<Record<string, INode>>({})
       console.error('Error updating port value:', e, data)
       return state
     }
-    node.setMetadata({
-      ...node.metadata,
-      version: nodeVersion,
-    })
+    node.setVersion(nodeVersion)
     node.setPort(port)
 
     return {
@@ -167,13 +161,10 @@ $nodes
     if (!node)
       return state
 
-    node.setMetadata({
-      ...node.metadata,
-      ui: {
-        ...node.metadata.ui,
-        ...ui,
-      },
-    })
+    if (!ui)
+      return state
+
+    node.setUI(ui, false)
 
     return {
       ...state,
@@ -187,13 +178,7 @@ $nodes
 
     // console.log(`[LOCAL] Updating node position for node ${nodeId}, position:`, position)
 
-    node.setMetadata({
-      ...node.metadata,
-      ui: {
-        ...node.metadata.ui,
-        position,
-      },
-    })
+    node.setPosition(position, false)
 
     return {
       ...state,

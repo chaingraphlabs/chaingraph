@@ -3,6 +3,10 @@
 
 # ChainGraph v2
 
+
+[![License](https://img.shields.io/badge/license-BSL-blue.svg)](LICENSE.txt)
+
+
 ChainGraph is a source-available, flow–based programming framework that empowers developers to visually design, execute, and manage complex computational graphs. Whether you are building custom AI agents, data processing pipelines, or collaborative automation systems, ChainGraph’s modular architecture, strong type–safety guarantees, and real–time features help you build robust workflows efficiently.
 
 > **Disclaimer:** This version is intended for demonstration and experimentation purposes only. The API and internal architecture are still evolving, and breaking changes may occur as new features are added and improvements are made.

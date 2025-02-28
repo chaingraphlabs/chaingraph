@@ -72,7 +72,7 @@ sample({
       nodeId,
       portId,
       value,
-      nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
+      nodeVersion: (nodes[nodeId]?.getVersion() ?? 0) + 1,
     }
   },
   target: [
@@ -124,7 +124,7 @@ sample({
       nodeId,
       portId,
       ui,
-      nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
+      nodeVersion: (nodes[nodeId]?.getVersion() ?? 0) + 1,
     }
   },
   target: [

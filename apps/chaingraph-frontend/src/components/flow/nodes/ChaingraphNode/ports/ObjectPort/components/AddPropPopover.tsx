@@ -82,7 +82,12 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
   array: {
     type: 'array',
     itemConfig: {
-      type: 'string',
+      type: 'object',
+      schema: {
+        properties: {},
+      },
+      isSchemaMutable: false,
+      defaultValue: {},
     },
     defaultValue: [],
     ui: {

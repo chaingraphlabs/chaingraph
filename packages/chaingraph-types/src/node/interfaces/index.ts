@@ -6,7 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { BaseNodeCompositional } from './base-node-compositional'
-import 'reflect-metadata'
-
-export abstract class BaseNode extends BaseNodeCompositional {}
+// Export all interfaces
+export * from './icore-node'
+export * from './iport-manager'
+export * from './iport-binder'
+export * from './icomplex-port-handler'
+export * from './inode-ui'
+export * from './inode-events'
+export * from './iserializable'
+export * from './inode-versioning'
+export * from './inode-composite'

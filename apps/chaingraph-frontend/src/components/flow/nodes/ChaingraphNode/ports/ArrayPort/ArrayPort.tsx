@@ -6,7 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
+import type {
+  ArrayPortConfig,
+  ArrayPort as ArrayPortType,
+  INode,
+  IPort,
+} from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -163,12 +168,13 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
                   </PopoverTrigger>
                   {isAddPropOpen && (
                     <AddElementPopover
+                      port={port as ArrayPortType}
                       onClose={() => setIsAddPropOpen(false)}
-                      onSubmit={(data) => {
+                      onSubmit={() => {
                         appendElementArrayPort({
                           nodeId: node.id,
                           portId: port.id,
-                          value: data.element,
+                          value: config.itemConfig.defaultValue,
                         })
 
                         setIsAddPropOpen(false)

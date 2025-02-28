@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { ArrayPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button.tsx'
 import {
   DropdownMenu,
@@ -21,11 +21,12 @@ import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
 
 interface Data {
-  element: string
+  // element: string
   config: IPortConfig
 }
 
 interface Props {
+  port: ArrayPort
   onClose: () => void
   onSubmit: (data: Data) => void
 }
@@ -100,18 +101,18 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 }
 
 export function AddElementPopover(props: Props) {
-  const { onClose, onSubmit } = props
+  const { onClose, onSubmit, port } = props
 
-  const [element, setElement] = useState('')
-  const [type, setType] = useState<Extract<PortType, 'string'> | undefined>('string')
+  const [type, setType] = useState<PortType | undefined>(
+    port.getConfig().itemConfig?.type || 'any',
+  )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {
-    if (!type || !element)
+    if (!type)
       return
 
     onSubmit({
-      element,
       config: typeConfigMap[type],
     })
   }
@@ -128,11 +129,11 @@ export function AddElementPopover(props: Props) {
         />
       </header>
 
-      <Input
-        value={element}
-        onChange={e => setElement(e.target.value)}
-        placeholder="value"
-      />
+      {/* <Input */}
+      {/*  value={element} */}
+      {/*  onChange={e => setElement(e.target.value)} */}
+      {/*  placeholder="value" */}
+      {/* /> */}
 
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
@@ -149,7 +150,6 @@ export function AddElementPopover(props: Props) {
 
         <DropdownMenuContent align="start">
           {PORT_TYPES
-            .filter(t => t === 'string')
             .map(portType => (
               <DropdownMenuItem
                 key={portType}
@@ -165,7 +165,7 @@ export function AddElementPopover(props: Props) {
       </DropdownMenu>
 
       <Button
-        disabled={!element || !type}
+        disabled={!type}
         className="ml-auto mt-6"
         onClick={handleSubmit}
       >

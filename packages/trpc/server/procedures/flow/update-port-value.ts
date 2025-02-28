@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPort, Flow, ObjectPort } from '@badaitech/chaingraph-types'
+import type { Flow, ObjectPort } from '@badaitech/chaingraph-types'
 import { findPort } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
@@ -84,23 +84,9 @@ export const addFieldObjectPort = flowContextProcedure
     // check if key already exists
     if (objectPort.getConfig().schema.properties[key]) {
       throw new Error('Key already exists in object port')
-
-      // const newPortConfig = (new PortConfigProcessor()).processPortConfig(
-      //   config,
-      //   {
-      //     nodeId: node.id,
-      //     parentPortConfig: objectPort.getConfig(),
-      //     propertyKey: key,
-      //     propertyValue: config.defaultValue,
-      //   },
-      // )
-
-      // const newChildPort = PortFactory.create(newPortConfig)
-      // objectPort.addField(key, config)
-      // node.setPort(newChildPort as IPort)
     }
 
-    node.addObjectProperty(objectPort, key, config)
+    node.addObjectProperty(port, key, config)
     flow.updateNode(node)
 
     // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
@@ -156,12 +142,7 @@ export const removeFieldObjectPort = flowContextProcedure
     // remove port, child ports, and all connections to this ports subtree
     flow.removePort(node.id, keyPort.id)
 
-    node.removeObjectProperty(objectPort, key)
-
-    // remove key from object port schema
-    // objectPort.removeField(key)
-
-    // node.updatePort(objectPort as IPort)
+    node.removeObjectProperty(port, key)
 
     // trigger node update
     flow.updateNode(node)
@@ -200,34 +181,7 @@ export const appendElementArrayPort = flowContextProcedure
     if (port.getConfig().type !== 'array')
       throw new Error('Port is not an array port')
 
-    const arrayPort = port as ArrayPort
-    // const key = input.key
-    // const config = input.config
-
-    // check if key already exists
-    // if (objectPort.getConfig().schema.properties[key])
-    //   throw new Error('Key already exists in object port')
-
-    // const arrayLength = arrayPort.getValue()?.length ?? 0
-    // arrayPort.setValue([...arrayPort.getValue() ?? [], input.value])
-    //
-    // const itemConfig = arrayPort.getConfig().itemConfig
-    // const newPortConfig = (new PortConfigProcessor()).processPortConfig(
-    //   { ...itemConfig },
-    //   {
-    //     nodeId: node.id,
-    //     parentPortConfig: arrayPort.getConfig(),
-    //     propertyKey: arrayLength.toString(),
-    //     propertyValue: input.value,
-    //   },
-    // )
-    //
-    // const newChildPort = PortFactory.create(newPortConfig) as IPort
-    // newChildPort.setValue(input.value)
-    //
-    // node.setPort(arrayPort as IPort)
-    // node.setPort(newChildPort as IPort)
-    node.appendArrayItem(arrayPort, input.value)
+    node.appendArrayItem(port, input.value)
     flow.updateNode(node)
 
     // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
@@ -264,7 +218,7 @@ export const removeElementArrayPort = flowContextProcedure
     if (port.getConfig().type !== 'array')
       throw new Error('Port is not an array port')
 
-    node.removeArrayItem(arrayPort, input.value)
+    node.removeArrayItem(port, input.value)
     flow.updateNode(node)
 
     // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
