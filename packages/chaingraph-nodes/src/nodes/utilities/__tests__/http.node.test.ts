@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import HttpRequestNode, { HttpMethod, ResponseType } from '../http.node'
 import { NodeExecutionStatus } from '@badaitech/chaingraph-types'
@@ -19,14 +27,14 @@ describe('HttpRequestNode', () => {
     node = new HttpRequestNode('test-http-node')
     node.baseUri = 'https://api.example.com'  // Set default baseUri
     node.path = '/test'  // Set default path
-    
+
     // Mock fetch
     mockFetch = vi.fn()
     global.fetch = mockFetch
-    
+
     // Create new abort controller for each test
     abortController = new AbortController()
-    
+
     // Setup mock context
     mockContext = {
       executionId: 'test-execution',
@@ -182,7 +190,7 @@ describe('HttpRequestNode', () => {
       for (const method of Object.values(HttpMethod)) {
         node.method = method
         node.headers = method !== HttpMethod.GET ? 'Content-Type: application/json' : ''
-        
+
         const mockResponse = {
           status: 200,
           text: () => Promise.resolve('ok'),
@@ -190,7 +198,7 @@ describe('HttpRequestNode', () => {
           headers: new Headers()
         }
         mockFetch.mockResolvedValueOnce(mockResponse)
-        
+
         const result = await node.execute(mockContext)
         expect(result.status).toBe(NodeExecutionStatus.Completed)
       }
@@ -208,7 +216,7 @@ describe('HttpRequestNode', () => {
         text: () => Promise.resolve(formatJSON(responseData)),
         headers: new Headers()
       })
-      
+
       const result = await node.execute(mockContext)
       expect(result.outputs?.get('response')).toBe(formatJSON(responseData))
     })
@@ -221,7 +229,7 @@ describe('HttpRequestNode', () => {
         json: () => Promise.resolve({ error: 'Bad Request' }),
         headers: new Headers()
       })
-      
+
       const result = await node.execute(mockContext)
       expect(result.outputs?.get('response')).toBe('Bad Request')
     })
@@ -233,7 +241,7 @@ describe('HttpRequestNode', () => {
       node.baseUri = 'https://api.example.com'
       node.path = '/test'
       node.headers = 'Content-Type: application/json\nAuthorization: Bearer token123'
-      
+
       mockFetch.mockResolvedValueOnce({
         status: 200,
         text: () => Promise.resolve('ok'),
@@ -272,7 +280,7 @@ describe('HttpRequestNode', () => {
         json: () => Promise.resolve({}),
         headers: {}
       })
-      
+
       const result = await node.execute(mockContext)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.any(String),
@@ -299,7 +307,7 @@ describe('HttpRequestNode', () => {
       mockFetch.mockImplementationOnce(() => {
         throw new DOMException('The operation was aborted', 'AbortError')
       })
-      
+
       const result = await node.execute(mockContext)
       expect(result.status).toBe(NodeExecutionStatus.Error)
       expect(result.error).toContain('aborted')
@@ -339,13 +347,13 @@ describe('HttpRequestNode', () => {
   describe('Input Validation', () => {
     it('should validate base URI', async () => {
       node.path = '/test'
-      
+
       // Empty URI
       node.baseUri = ''
       const result = await node.execute(mockContext)
       expect(result.status).toBe(NodeExecutionStatus.Error)
       expect(result.error).toBe('Base URI is required')
-      
+
       // Invalid URI
       node.baseUri = 'not-a-url'
       const result2 = await node.execute(mockContext)
@@ -362,7 +370,7 @@ describe('HttpRequestNode', () => {
         json: () => Promise.resolve({}),
         headers: new Headers()
       })
-      
+
       await node.execute(mockContext)
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.example.com/test',
@@ -375,7 +383,7 @@ describe('HttpRequestNode', () => {
       node.path = '/test'
       node.method = HttpMethod.POST
       node.body = formatJSON({ test: true })
-      
+
       const result = await node.execute(mockContext)
       expect(result.status).toBe(NodeExecutionStatus.Error)
       expect(result.error).toBe('Content-Type header is required for requests with body')
@@ -392,7 +400,7 @@ describe('HttpRequestNode', () => {
         text: () => Promise.resolve(formatJSON(responseData)),
         headers: new Headers()
       })
-      
+
       const result = await node.execute(mockContext)
       expect(result.outputs?.get('response')).toBe(formatJSON(responseData))
     })
@@ -400,7 +408,7 @@ describe('HttpRequestNode', () => {
     it('should handle retry logic', async () => {
       node.retries = 2
       node.responseType = ResponseType.TEXT // Set to TEXT type
-      
+
       mockFetch
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Network error'))
@@ -417,12 +425,12 @@ describe('HttpRequestNode', () => {
     })
 
     it('should handle timeout', async () => {
-      mockFetch.mockImplementationOnce(() => 
-        new Promise((_, reject) => setTimeout(() => 
+      mockFetch.mockImplementationOnce(() =>
+        new Promise((_, reject) => setTimeout(() =>
           reject(new Error('The operation was aborted')), 2000)
         )
       )
-      
+
       const result = await node.execute(mockContext)
       expect(result.status).toBe(NodeExecutionStatus.Error)
       expect(result.error).toContain('aborted')
@@ -439,7 +447,7 @@ describe('HttpRequestNode', () => {
         json: () => Promise.resolve({}),
         headers: new Headers()
       })
-      
+
       const result = await node.execute(mockContext)
       expect(result.outputs?.has('statusCode')).toBe(true)
       expect(result.outputs?.get('statusCode')).toBe(201)
@@ -450,7 +458,7 @@ describe('HttpRequestNode', () => {
     it('should handle blob responses', async () => {
       node.responseType = ResponseType.BLOB
       const mockBlob = new Blob(['test data'], { type: 'text/plain' })
-      
+
       mockFetch.mockResolvedValueOnce({
         status: 200,
         blob: () => Promise.resolve(mockBlob),
@@ -480,12 +488,12 @@ describe('HttpRequestNode', () => {
   describe('Timeout handling', () => {
     it('should handle immediate timeouts', async () => {
       node.timeout = 1
-      mockFetch.mockImplementationOnce(() => 
-        new Promise((_, reject) => setTimeout(() => 
+      mockFetch.mockImplementationOnce(() =>
+        new Promise((_, reject) => setTimeout(() =>
           reject(new Error('The operation timed out')), 100)
         )
       )
-      
+
       const result = await node.execute(mockContext)
       expect(result.status).toBe(NodeExecutionStatus.Error)
       expect(result.error).toContain('timed out')
