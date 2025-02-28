@@ -8,7 +8,6 @@
 
 import type { JSONValue } from '../../utils/json'
 import type { EnumPortConfig, EnumPortValue, IPortConfig, IPortPlugin } from '../base'
-import { PortPluginRegistry } from '@badaitech/chaingraph-types/port'
 import { z } from 'zod'
 import {
   basePortConfigSchema,
@@ -17,6 +16,7 @@ import {
   PortError,
   PortErrorType,
 } from '../base'
+import { PortPluginRegistry } from './PortPluginRegistry'
 
 /**
  * Helper to create an enum port value

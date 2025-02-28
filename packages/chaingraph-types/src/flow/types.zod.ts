@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { SerializedEdgeSchema } from '@badaitech/chaingraph-types/edge/types.zod'
-import { SerializedNodeSchema } from '@badaitech/chaingraph-types/node/types.zod'
 import { z } from 'zod'
+import { SerializedEdgeSchema } from '../edge'
+import { SerializedNodeSchema } from '../node'
 
 export const SerializedFlowMetadataSchema = z.object({
   id: z.string().optional(),

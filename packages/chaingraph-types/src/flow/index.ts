@@ -7,6 +7,7 @@
  */
 
 export * from '../execution/execution-context'
+export * from './cycleDetection'
 export * from './debugger'
 export * from './debugger-types'
 export * from './eventHandlers'

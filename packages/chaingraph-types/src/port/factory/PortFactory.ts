@@ -99,7 +99,7 @@ export class PortFactory {
       default:
         throw new PortError(
           PortErrorType.ValidationError,
-          `Unsupported port type: ${(config as any).type}`,
+          `Unsupported port type: ${(config satisfies never as any).type}`,
         )
     }
   }

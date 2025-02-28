@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { JSONValue } from '../../utils/json'
 import type {
   AnyPortConfig,
   AnyPortValue,
@@ -13,17 +14,16 @@ import type {
   IPortPlugin,
   IPortValue,
   PortType,
-} from '@badaitech/chaingraph-types/port'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+} from '../base'
+import { z } from 'zod'
 import {
   basePortConfigSchema,
   basePortConfigUISchema,
   isAnyPortValue,
   PortError,
   PortErrorType,
-  PortPluginRegistry,
-} from '@badaitech/chaingraph-types/port'
-import { z } from 'zod'
+} from '../base'
+import { PortPluginRegistry } from './PortPluginRegistry'
 
 /**
  * Helper to create an any port value
@@ -145,7 +145,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       if (!plugin) {
         throw new PortError(
           PortErrorType.SerializationError,
-          `Unknown value type: ${value.type}`,
+          `Unknown value type: ${config.underlyingType.type}`,
         )
       }
 

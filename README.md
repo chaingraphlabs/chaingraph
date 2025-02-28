@@ -3,7 +3,7 @@
 
 # ChainGraph v2
 
-ChainGraph is an open–source, flow–based programming framework that empowers developers to visually design, execute, and manage complex computational graphs. Whether you are building custom AI agents, data processing pipelines, or collaborative automation systems, ChainGraph’s modular architecture, strong type–safety guarantees, and real–time features help you build robust workflows efficiently.
+ChainGraph is a source-available, flow–based programming framework that empowers developers to visually design, execute, and manage complex computational graphs. Whether you are building custom AI agents, data processing pipelines, or collaborative automation systems, ChainGraph’s modular architecture, strong type–safety guarantees, and real–time features help you build robust workflows efficiently.
 
 > **Disclaimer:** This version is intended for demonstration and experimentation purposes only. The API and internal architecture are still evolving, and breaking changes may occur as new features are added and improvements are made.
 
@@ -14,6 +14,7 @@ ChainGraph is an open–source, flow–based programming framework that empowers
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Running in Development Mode](#running-in-development-mode)
+- [PostgreSQL Database Storage](#postgresql-database-storage)
 - [Building for Production](#building-for-production)
 - [Docker & Docker-compose](#docker--docker-compose)
 - [Project Structure](#project-structure)
@@ -56,9 +57,6 @@ ChainGraph is built with modern web technologies, aiming at a robust and type-sa
 - **Zod & SuperJSON:**
   Zod is used for runtime schema validation, while SuperJSON manages complex data serialization, ensuring that data remains consistent across the client and server boundaries.
 
-- **Bun:**
-  Employed as the chosen runtime for its superior performance and modern build capabilities, Bun enhances development speed and production performance.
-
 - **XYFlow:**
   A visual flow library used on the frontend to render and manage the drag-and-drop canvas, enabling users to compose workflows visually.
 
@@ -76,13 +74,7 @@ Clone the repository and install dependencies:
 ```bash
 git clone https://github.com/badaitech/chaingraph.git
 cd chaingraph
-make install
-```
-
-Alternatively, you can use Bun directly:
-
-```bash
-bun install
+pnpm install
 ```
 
 ## Running in Development Mode
@@ -90,31 +82,69 @@ bun install
 To start the development environment (both frontend and backend), run:
 
 ```bash
-make dev
+pnpm run dev
 ```
 
 This command launches:
+
 - The frontend development server (with hot reloading)
 - The backend development process (watch mode)
 
 You can also run each package individually if desired:
+
 - **Backend:**
-  `bun run --cwd packages/chaingraph-backend dev`
+  `turbo run dev --filter=@badaitech/chaingraph-backend`
 - **Frontend:**
-  `bun run --cwd packages/chaingraph-frontend dev`
+  `turbo run dev --filter=@badaitech/chaingraph-frontend`
+
+## PostgreSQL Database Storage
+
+ChainGraph can be configured to use PostgreSQL for persistent storage instead of the default in-memory storage solution. Follow these steps to set up database storage:
+
+### 1. Start PostgreSQL Database
+
+Use the included Docker Compose configuration to start a PostgreSQL database:
+
+```bash
+docker compose up -d postgres
+```
+
+This will start a PostgreSQL instance accessible on port 5431.
+
+### 2. Configure Database Connection
+
+Create a `.env` file in the project root with your database connection parameters based on the provided `.env.example`:
+
+```
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5431/postgres?sslmode=disable
+```
+
+### 3. Run Database Migrations
+
+Before starting ChainGraph with PostgreSQL storage, you need to run migrations to create the necessary database schema:
+
+```bash
+pnpm run migrate
+```
+
+This command will create all required tables and indexes in your PostgreSQL database.
+
+### 4. Start ChainGraph with Database Storage
+
+Once migrations are complete, you can start ChainGraph as usual. It will automatically detect and use the PostgreSQL database for persistent storage:
+
+```bash
+pnpm run dev
+```
+
+With this configuration, your flows, nodes, and execution data will be stored persistently in PostgreSQL instead of being lost when the server restarts.
 
 ## Building for Production
 
 To build the entire project with a clean installation, execute:
 
 ```bash
-make build
-```
-
-For a full rebuild that first cleans previous builds:
-
-```bash
-make rebuild
+pnpm run build
 ```
 
 ## Docker & Docker-compose
@@ -184,15 +214,19 @@ docker-compose down       # Stop and remove containers
 - **packages/chaingraph-nodes:**
   A collection of pre-built node implementations and category definitions, serving as examples and reusable components for extensibility.
 
-- **packages/chaingraph-backend:**
+- **apps/chaingraph-backend:**
   The backend service that implements a TRPC API router, flow execution logic, in-memory storage for flows and nodes, and WebSocket-based real-time subscriptions.
 
-- **packages/chaingraph-frontend:**
+- **apps/chaingraph-frontend:**
   A React+Vite frontend that utilizes XYFlow for a graphical flow editor, Effector for state management, and TRPC to interact with the backend.
 
 ## Contributing
 
+Before submitting a contribution, you must agree to our [Contributor License Agreement](CLA.md).
+By submitting a contribution (e.g., a pull request), you confirm that you accept its terms.
+
 Contributions to ChainGraph are welcome! If you wish to submit changes:
+
 - Fork the repository and create a feature or bugfix branch.
 - Ensure your changes follow the project’s style guidelines and that tests pass.
 - Update documentation as necessary.
@@ -208,18 +242,10 @@ Feel free to open issues for bugs, suggestions, or questions.
 
 ---
 
-## Contributing
-
-Contributions are welcome! If you would like to help improve ChainGraph:
-
-- Please open issues or pull requests with suggestions, bug reports, or improvements.
-- Make sure to update or add documentation where necessary.
-
----
-
 ## Developer Documentation
 
-For more details on how to create custom nodes using decorators, please refer to our [Node Decorators Documentation](./docs/nodes/node-decorators.md). This guide provides in-depth explanations and examples on using decorators to define node inputs, outputs, and complex configurations, ensuring type-safety and a more maintainable codebase.
+For more details on how to create custom nodes using decorators, please refer to our [Node Decorators Documentation](./docs/nodes/node-decorators.md) and [Decorators Specification Reference](./docs/nodes/port-decorators-spec.md) and . 
+This guides provides in-depth explanations and examples on using decorators to define node inputs, outputs, and complex configurations, ensuring type-safety and a more maintainable codebase.
 
 ---
 
@@ -229,5 +255,5 @@ ChainGraph is licensed under a [Business Source License 1.1 (BUSL-1.1)](LICENSE.
 
 Since version 1.0 refer to a table below showing a conversion dates for each version:
 
-| ChainGraph Version | License  | Converts to Apache 2.0 |
-|--------------------|----------|------------------------|
+| ChainGraph Version | License | Converts to Apache 2.0 |
+| ------------------ | ------- | ---------------------- |

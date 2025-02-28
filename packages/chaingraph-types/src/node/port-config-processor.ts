@@ -6,21 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  AnyPortConfig,
-  ArrayPortConfig,
-  EnumPortConfig,
-  IObjectSchema,
-  IPortConfig,
-  ObjectPortConfig,
-  StreamPortConfig,
-} from '@badaitech/chaingraph-types/port'
+import type { AnyPortConfig, ArrayPortConfig, EnumPortConfig, IObjectSchema, IPortConfig, ObjectPortConfig, StreamPortConfig } from '../port'
 import type { INode } from './interface'
 import type { NodeMetadata } from './types'
-import { getOrCreateNodeMetadata } from '@badaitech/chaingraph-types/decorator'
-import { PortPluginRegistry } from '@badaitech/chaingraph-types/port'
-import { deepCopy } from '@badaitech/chaingraph-types/utils/deep-copy'
 import { v7 as uuidv7 } from 'uuid'
+import { getOrCreateNodeMetadata } from '../decorator'
+import { PortPluginRegistry } from '../port'
+import { deepCopy } from '../utils'
 
 export interface Context {
   nodeId: string

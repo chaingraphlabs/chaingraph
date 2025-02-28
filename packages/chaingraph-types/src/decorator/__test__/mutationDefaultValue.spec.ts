@@ -6,19 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { PortPluginRegistry } from '@badaitech/chaingraph-types'
-import { BaseNode } from '@badaitech/chaingraph-types/node/base-node'
-import { findPort } from '@badaitech/chaingraph-types/node/traverse-ports'
-import {
-  ArrayPortPlugin,
-  EnumPortPlugin,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  StreamPortPlugin,
-} from '@badaitech/chaingraph-types/port/plugins'
-import { AnyPortPlugin } from '@badaitech/chaingraph-types/port/plugins/AnyPortPlugin'
-import { StringPortPlugin } from '@badaitech/chaingraph-types/port/plugins/StringPortPlugin'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { BaseNode, findPort } from '../../node'
+import { AnyPortPlugin, ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
 import { Node } from '../node.decorator'
 import { Port } from '../port.decorator'
 import 'reflect-metadata'

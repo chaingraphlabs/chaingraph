@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExtractValue, IPortConfig } from '@badaitech/chaingraph-types/port'
-import type { JSONValue } from '@badaitech/chaingraph-types/utils/json'
+import type { JSONValue } from '../../utils/json'
+import type { ExtractValue, IPortConfig } from './types'
 
 /**
  * IPort interface
@@ -94,6 +94,13 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
    * @returns True if the port is valid, otherwise false.
    */
   validate: () => boolean
+
+  /**
+   * Clones the port instance.
+   *
+   * @returns A new port instance with the same configuration and value.
+   */
+  clone: () => IPort<C>
 }
 
 /**

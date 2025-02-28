@@ -7,7 +7,7 @@
  */
 
 import type { EdgeMetadata } from '../edge'
-import type { Dimensions, INode, Position } from '../node'
+import type { Dimensions, INode, NodeUIMetadata, Position } from '../node'
 import type { IPort } from '../port'
 import type { IFlow } from './interface'
 
@@ -38,9 +38,7 @@ export enum FlowEventType {
   // Node UI events
   NodeUIPositionChanged = 'flow:node:ui:position-changed',
   NodeUIDimensionsChanged = 'flow:node:ui:dimensions-changed',
-  NodeUIStyleChanged = 'flow:node:ui:style-changed',
-  NodeUIStateChanged = 'flow:node:ui:state-changed',
-
+  NodeUIChanged = 'flow:node:ui:changed',
 }
 
 /**
@@ -103,14 +101,6 @@ export interface NodeParentUpdatedEventData {
   version: number
 }
 
-/** Data for Node UI events */
-export interface NodeUIEventData {
-  nodeId: string
-  oldValue: any
-  newValue: any
-  version: number
-}
-
 /** Data for Node UI Position Changed event */
 export interface NodeUIPositionChangedEventData {
   nodeId: string
@@ -124,6 +114,13 @@ export interface NodeUIDimensionsChangedEventData {
   nodeId: string
   oldDimensions: Dimensions
   newDimensions: Dimensions
+  version: number
+}
+
+/** Data for General Node UI Changed event */
+export interface NodeUIChangedEventData {
+  nodeId: string
+  ui: NodeUIMetadata
   version: number
 }
 
@@ -161,8 +158,7 @@ export interface EventDataMap {
   [FlowEventType.NodeParentUpdated]: NodeParentUpdatedEventData
   [FlowEventType.NodeUIPositionChanged]: NodeUIPositionChangedEventData
   [FlowEventType.NodeUIDimensionsChanged]: NodeUIDimensionsChangedEventData
-  [FlowEventType.NodeUIStyleChanged]: NodeUIEventData
-  [FlowEventType.NodeUIStateChanged]: NodeUIEventData
+  [FlowEventType.NodeUIChanged]: NodeUIChangedEventData
 }
 
 /**

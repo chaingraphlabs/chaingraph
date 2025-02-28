@@ -6,29 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  ArrayPortPlugin,
-  BaseNode,
-  createNumberValue,
-  EnumPortPlugin,
-  findPort,
-  Input,
-  Node,
-  NodeExecutionStatus,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  Port,
-  PortPluginRegistry,
-  registerNodeTransformers,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types'
+import type { ExecutionContext } from '../../execution'
+import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { Input, Node, Port } from '../../decorator'
+import { ArrayPortPlugin, createNumberValue, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { BaseNode } from '../base-node'
+import { registerNodeTransformers } from '../json-transformers'
+import { NodeExecutionStatus } from '../node-enums'
+import { findPort } from '../traverse-ports'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -45,7 +32,7 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 class ArrayNode extends BaseNode {
   @Input()
   @Port({
-    type: 'array',
+    type: 'array' as const,
     itemConfig: {
       type: 'number',
       defaultValue: createNumberValue(0),
