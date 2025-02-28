@@ -148,7 +148,7 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
                       )}
                       onClick={() => setIsAddPropOpen(true)}
                     >
-                      Add key
+                      Add field
                     </button>
                   </PopoverTrigger>
                   {isAddPropOpen && (

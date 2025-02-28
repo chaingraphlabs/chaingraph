@@ -84,10 +84,22 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     itemConfig: {
       type: 'object',
       schema: {
-        properties: {},
+        properties: {
+          a: {
+            type: 'string',
+            defaultValue: '',
+          },
+          b: {
+            type: 'number',
+            defaultValue: 0,
+          },
+        },
       },
       isSchemaMutable: false,
-      defaultValue: {},
+      defaultValue: {
+        a: '',
+        b: 0,
+      },
     },
     defaultValue: [],
     ui: {
@@ -125,7 +137,7 @@ export function AddPropPopover(props: Props) {
     <PopoverContent className="flex flex-col" align="start" side="bottom">
       <header className="flex items-center justify-between mb-4">
         <h4>
-          Add Key
+          Add Object Field
         </h4>
         <X
           className="size-4 cursor-pointer hover:brightness-125"

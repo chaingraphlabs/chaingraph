@@ -22,12 +22,14 @@ import {
   appendElementArrayPortFx,
   baseUpdatePortUIFx,
   baseUpdatePortValueFx,
+  removeElementArrayPortFx,
   removeFiledObjectPortFx,
 } from '@/store/ports/effects'
 import { combine, createEffect, sample } from 'effector'
 import {
   addFieldObjectPort,
   appendElementArrayPort,
+  removeElementArrayPort,
   removeFieldObjectPort,
   requestUpdatePortUI,
   requestUpdatePortValue,
@@ -155,6 +157,23 @@ sample({
 })
 
 sample({
+  clock: removeFieldObjectPort,
+  source: {
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  },
+  fn: ({ activeFlowId, nodes }, { nodeId, portId, key }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+
+    const result: RemoveFieldObjectPortInput = { flowId: activeFlowId, nodeId, portId, key }
+    return result
+  },
+  target: removeFiledObjectPortFx,
+})
+
+sample({
   clock: appendElementArrayPort,
   source: combine({
     activeFlowId: $activeFlowId,
@@ -175,18 +194,20 @@ sample({
 })
 
 sample({
-  clock: removeFieldObjectPort,
-  source: {
+  clock: removeElementArrayPort,
+  source: combine({
     activeFlowId: $activeFlowId,
-    nodes: $nodes,
-  },
-  fn: ({ activeFlowId, nodes }, { nodeId, portId, key }) => {
+  }),
+  fn: ({ activeFlowId }, { nodeId, portId, index }) => {
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
-
-    const result: RemoveFieldObjectPortInput = { flowId: activeFlowId, nodeId, portId, key }
-    return result
+    return {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      index,
+    }
   },
-  target: removeFiledObjectPortFx,
+  target: removeElementArrayPortFx,
 })

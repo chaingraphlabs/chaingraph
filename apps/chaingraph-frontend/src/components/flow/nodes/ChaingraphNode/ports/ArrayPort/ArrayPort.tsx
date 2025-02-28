@@ -16,7 +16,7 @@ import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortT
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { appendElementArrayPort, requestUpdatePortUI } from '@/store/ports'
+import { appendElementArrayPort, removeElementArrayPort, requestUpdatePortUI } from '@/store/ports'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, useMemo, useState } from 'react'
@@ -127,14 +127,7 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
 
               {Array.from(node.ports.values())
                 .filter(p => p.getConfig().parentId === config.id)
-                .map((childPort) => {
-                // const childPort = PortFactory.create({
-                //   ...config.itemConfig,
-                //   defaultValue: value,
-                //   title: `${config.title}.${index}`,
-                //   id: `${config.id}.${index}`,
-                // })
-
+                .map((childPort, index) => {
                   return (
                     <PortField
                       key={childPort.id}
@@ -144,7 +137,11 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
                       isOutput={isOutput}
                       isMutable={isMutable ?? false}
                       onDelete={() => {
-                        // port.setValue(values.filter((_, idx) => index !== idx))
+                        removeElementArrayPort({
+                          nodeId: node.id,
+                          portId: port.id,
+                          index,
+                        })
                       }}
                     />
                   )

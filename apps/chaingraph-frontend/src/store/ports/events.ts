@@ -61,3 +61,9 @@ export const appendElementArrayPort = createEvent<{
   portId: string
   value: any
 }>()
+
+export const removeElementArrayPort = createEvent<{
+  nodeId: string
+  portId: string
+  index: number
+}>()

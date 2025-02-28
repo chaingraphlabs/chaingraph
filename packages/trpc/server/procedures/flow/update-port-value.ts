@@ -200,7 +200,7 @@ export const removeElementArrayPort = flowContextProcedure
     flowId: z.string(),
     nodeId: z.string(),
     portId: z.string(),
-    value: z.any(),
+    index: z.number(),
   }))
   .mutation(async ({ input, ctx }) => {
     const flow = await ctx.flowStore.getFlow(input.flowId)
@@ -218,7 +218,7 @@ export const removeElementArrayPort = flowContextProcedure
     if (port.getConfig().type !== 'array')
       throw new Error('Port is not an array port')
 
-    node.removeArrayItem(port, input.value)
+    node.removeArrayItem(port, input.index)
     flow.updateNode(node)
 
     // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })

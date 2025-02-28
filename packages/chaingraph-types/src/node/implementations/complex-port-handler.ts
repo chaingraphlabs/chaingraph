@@ -164,6 +164,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     itemPort.setValue(value)
     this.portManager.setPort(itemPort)
 
+    // If the item is a complex type (object or array), create child ports
+    this.createComplexItemChildPorts(itemPort, value)
+
     // Update the array value
     const newValue = [...currentValue, value]
     arrayPort.setValue(newValue)
@@ -313,5 +316,94 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const itemPort = PortFactory.createFromConfig(completeItemConfig)
     itemPort.setValue(value)
     this.portManager.setPort(itemPort)
+
+    // If the item is a complex type (object or array), create child ports
+    this.createComplexItemChildPorts(itemPort, value)
+  }
+
+  /**
+   * Creates child ports for complex item types (objects and arrays)
+   * @param itemPort The parent item port
+   * @param value The item value
+   */
+  private createComplexItemChildPorts(itemPort: IPort, value: any): void {
+    const itemConfig = itemPort.getConfig()
+
+    // Handle object type items
+    if (itemConfig.type === 'object' && itemConfig.schema?.properties && typeof value === 'object' && value !== null) {
+      const objectConfig = itemConfig as ObjectPortConfig
+
+      // Create ports for each property in the schema
+      for (const [key, propConfig] of Object.entries(objectConfig.schema.properties)) {
+        const childPortId = `${itemPort.id}.${key}`
+        const childPropertyValue = value[key]
+
+        // Process the property config
+        const processedConfig = this.processPortConfig(
+          { ...propConfig },
+          {
+            nodeId: this.nodeId,
+            parentPortConfig: objectConfig,
+            propertyKey: key,
+            propertyValue: childPropertyValue,
+          },
+        )
+
+        // Create the child port with appropriate configuration
+        const childConfig = {
+          ...processedConfig,
+          id: childPortId,
+          parentId: itemPort.id,
+          key,
+          nodeId: this.nodeId,
+        }
+
+        const childPort = PortFactory.createFromConfig(childConfig)
+        childPort.setValue(childPropertyValue)
+        this.portManager.setPort(childPort)
+
+        // Bind the port to the property
+        this.portBinder.bindPortToNodeProperty(value, childPort)
+
+        // Recursively process nested complex types
+        this.createComplexItemChildPorts(childPort, childPropertyValue)
+      }
+    } else if (itemConfig.type === 'array' && Array.isArray(value)) {
+      // Handle array type items
+      const arrayConfig = itemConfig as ArrayPortConfig
+
+      // Create ports for each array element
+      for (let i = 0; i < value.length; i++) {
+        const childPortId = `${itemPort.id}[${i}]`
+        const elementValue = value[i]
+
+        // Process the element config
+        const processedConfig = this.processPortConfig(
+          { ...arrayConfig.itemConfig },
+          {
+            nodeId: this.nodeId,
+            parentPortConfig: arrayConfig,
+            propertyKey: i.toString(),
+            propertyValue: elementValue,
+          },
+        )
+
+        // Create the element port
+        const elementConfig = {
+          ...processedConfig,
+          id: childPortId,
+          parentId: itemPort.id,
+          key: i.toString(),
+          nodeId: this.nodeId,
+        }
+
+        const elementPort = PortFactory.createFromConfig(elementConfig)
+        elementPort.setValue(elementValue)
+        this.portManager.setPort(elementPort)
+
+        // Recursively process nested complex types
+        this.createComplexItemChildPorts(elementPort, elementValue)
+      }
+    }
   }
 }

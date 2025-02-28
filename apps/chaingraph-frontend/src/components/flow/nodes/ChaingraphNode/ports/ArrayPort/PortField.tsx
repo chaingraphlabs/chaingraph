@@ -30,7 +30,7 @@ export function PortField({
 }: PortFieldProps) {
   const isKeyDeletable
     = parentPort.getConfig()?.ui?.keyDeletable
-    || parentPort.getConfig()?.ui?.keyDeletable === undefined
+      || parentPort.getConfig()?.ui?.keyDeletable === undefined
 
   return (
     <div className="py-1 w-full relative">
