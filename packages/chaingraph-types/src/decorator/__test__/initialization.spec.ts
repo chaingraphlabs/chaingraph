@@ -174,7 +174,18 @@ describe('port Initialization Test', () => {
     expect(dummyPortInstance?.getValue()).toStrictEqual(createStringValue('world'))
 
     // check if all ports are initialized
-    const expectedPortsKeys = ['dummyPort', 'testObject', 'hello', 'world', 'inner', 'foo', 'bar', 'helloArray']
+    const expectedPortsKeys = [
+      'dummyPort',
+      'testObject',
+      'helloArray',
+      'hello',
+      'world',
+      'inner',
+      '0',
+      '1',
+      'foo',
+      'bar',
+    ]
     const actualPortsKeys: string[] = []
     traversePorts(node, (port) => {
       actualPortsKeys.push(port.getConfig().key!)

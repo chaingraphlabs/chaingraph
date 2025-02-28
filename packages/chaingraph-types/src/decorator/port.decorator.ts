@@ -43,7 +43,7 @@ function ensurePortKey(propertyKey: string | symbol, config: { key?: string }) {
 export function Port<T extends PortType>(
   config: PortDecoratorOptions<T> & { type: T },
 ): PropertyDecorator {
-  return function (target: object, propertyKey: string | symbol) {
+  return function (target: object, propertyKey: any) {
     const ctor = target.constructor
     const existingPorts = getPortsMetadata(ctor)
     const existingConfig = existingPorts.get(propertyKey)

@@ -11,15 +11,15 @@ import type { EventReturnType, NodeEvent, NodeEventDataType } from '../node/even
 import type { INode } from '../node/interface'
 import type { Dimensions, NodeUIMetadata, Position } from '../node/node-ui'
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
-import type { IPort, IPortConfig } from '../port'
+import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../port'
 import type { JSONValue } from '../utils/json'
 import { applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
 import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
 import { PortConfigProcessor } from '../node/port-config-processor'
-import { SerializedNodeSchema } from '../node/types.zod'
 import { PortDirection, PortFactory } from '../port'
-import { deepCopy, EventQueue } from '../utils'
+import { EventQueue } from '../utils'
+import { SerializedNodeSchema } from './types.zod'
 import 'reflect-metadata'
 
 export abstract class BaseNode implements INode {
@@ -73,6 +73,10 @@ export abstract class BaseNode implements INode {
     return Promise.resolve()
   }
 
+  /**
+   * Initialize the node with port configurations
+   * @param portsConfig Optional map of port configurations. If not provided, will use metadata.
+   */
   initialize(portsConfig: Map<string, IPortConfig> | undefined = undefined): void {
     if (portsConfig === undefined) {
       portsConfig = getPortsMetadata(this.constructor)
@@ -86,100 +90,701 @@ export abstract class BaseNode implements INode {
       this,
       portsConfig,
     )
+
+    // Initialize ports from configs
     this.initializePortsFromConfigs(portsConfig || new Map())
+
+    // Apply visibility rules
     applyVisibilityRules(this)
+
+    // Update node status
     this.setStatus(NodeStatus.Initialized, false)
   }
 
+  /**
+   * Initialize all ports from configs and establish property bindings
+   * @param portsConfigs Map of port configurations
+   */
   initializePortsFromConfigs(portsConfigs: Map<string, IPortConfig>): void {
-    // If there is no portsConfig, just use the existing ports
-    const newPorts = new Map<string, IPort>()
+    // Create all root-level ports first (those without a parentId)
+    const portMap = new Map<string, IPort>()
+    const objectPortsToProcess: IPort[] = []
 
-    for (const [_, portConfig] of portsConfigs.entries()) {
-      const ports = this.initializePort(this, portConfig)
-      for (const port of ports) {
-        newPorts.set(port.id, port)
+    for (const [key, portConfig] of portsConfigs.entries()) {
+      if (!portConfig.parentId) {
+        const port = PortFactory.createFromConfig(portConfig)
+        portMap.set(port.id, port)
+
+        // Bind this root port to the node property
+        this.bindPortToNodeProperty(this, port)
+
+        // If this is a complex port (object or array), add it to the list to process
+        const config = port.getConfig()
+        if (config.type === 'object' || config.type === 'array') {
+          objectPortsToProcess.push(port)
+        }
       }
     }
 
-    this._ports = newPorts
+    // Process complex ports recursively
+    this.processComplexPorts(portMap, objectPortsToProcess)
+
+    // Set the ports map after all ports are created
+    this._ports = portMap
   }
 
-  protected initializePort(
-    objectValue: object,
-    portConfig: IPortConfig,
-    parentPortId?: string,
-  ): IPort[] {
-    const ports: IPort[] = []
+  /**
+   * Recursively process object and array ports to create their child ports
+   * @param portMap The map to add created ports to
+   * @param portsToProcess List of complex ports to process
+   */
+  private processComplexPorts(portMap: Map<string, IPort>, portsToProcess: IPort[]): void {
+    while (portsToProcess.length > 0) {
+      const port = portsToProcess.shift()!
+      const config = port.getConfig()
 
-    // Create the port instance
-    const existsPort = portConfig.id ? this._ports.get(portConfig.id) : undefined
-    const port = existsPort ?? PortFactory.createFromConfig(portConfig)
-
-    if (!existsPort) {
-      // Just update the port config after creating the port instance
-      // iterate over port.getConfig() and update the external portConfig
-      // this is like a hack to update external portConfig by reference
-      for (const [key, value] of Object.entries(port.getConfig())) {
-        if (value !== undefined) {
-          portConfig[key] = value
-        }
-      }
-    }
-
-    // Generate a unique port ID if it doesn't exist
-    const portId = portConfig.id ?? `${parentPortId ?? ''}.${portConfig.key}`
-
-    const connectInternalFields = (config: IPortConfig, val: object) => {
       if (config.type === 'object') {
-        // for the object port, initialize its nested ports recursively
-        const nestedPorts = config.schema?.properties || {}
-        for (const [_, nestedPortConfig] of Object.entries(nestedPorts)) {
-          const childPorts = this.initializePort(
-            val,
-            nestedPortConfig as IPortConfig,
-            portId,
-          )
-          for (const childPort of childPorts) {
-            ports.push(childPort)
-          }
-        }
+        this.processObjectPort(port, portMap, portsToProcess)
+      } else if (config.type === 'array') {
+        this.processArrayPort(port, portMap, portsToProcess)
       }
     }
+  }
 
-    // check if the node has a field with the same key as the port
-    if (portConfig.key && objectValue && Object.prototype.hasOwnProperty.call(objectValue, portConfig.key)) {
-      const value = (objectValue as any)[portConfig.key]
-      if (value !== undefined) {
-        port.setValue(deepCopy(value))
+  /**
+   * Process an object port to create child ports for all properties
+   * @param objectPort The object port to process
+   * @param portMap The map to add created ports to
+   * @param portsToProcess List to add any new complex ports to
+   */
+  private processObjectPort(objectPort: IPort, portMap: Map<string, IPort>, portsToProcess: IPort[]): void {
+    const config = objectPort.getConfig() as ObjectPortConfig
+    if (!config.schema || !config.schema.properties) {
+      return
+    }
+
+    const objectValue = objectPort.getValue() || {}
+
+    // Process each property in the schema
+    for (const [key, propertyConfig] of Object.entries(config.schema.properties)) {
+      // Process the port config
+      const processedConfig = this.processPortConfig(
+        { ...propertyConfig },
+        {
+          nodeId: this.id,
+          parentPortConfig: config,
+          propertyKey: key,
+          propertyValue: objectValue[key],
+        },
+      )
+
+      // Create the child port
+      const childPortId = `${objectPort.id}.${key}`
+      const childConfig = {
+        ...processedConfig,
+        id: childPortId,
+        parentId: objectPort.id,
+        key,
+        nodeId: this.id,
       }
 
-      // set up a getter and setter for the field
-      Object.defineProperty(objectValue, portConfig.key, {
-        get: () => {
+      const childPort = PortFactory.createFromConfig(childConfig)
+      portMap.set(childPortId, childPort)
+
+      // Bind to parent object
+      if (typeof objectValue === 'object' && objectValue !== null) {
+        this.bindPortToNodeProperty(objectValue, childPort)
+      }
+
+      // If this child is a complex port, add it to the processing queue
+      if (childConfig.type === 'object' || childConfig.type === 'array') {
+        portsToProcess.push(childPort)
+      }
+    }
+  }
+
+  /**
+   * Process an array port to create child ports for all items
+   * @param arrayPort The array port to process
+   * @param portMap The map to add created ports to
+   * @param portsToProcess List to add any new complex ports to
+   */
+  private processArrayPort(arrayPort: IPort, portMap: Map<string, IPort>, portsToProcess: IPort[]): void {
+    const config = arrayPort.getConfig() as ArrayPortConfig
+    const arrayValue = arrayPort.getValue() || []
+
+    // We only process initial items if there are values in the array
+    if (!Array.isArray(arrayValue) || arrayValue.length === 0) {
+      return
+    }
+
+    // Create a port for each item in the array
+    for (let i = 0; i < arrayValue.length; i++) {
+      this.appendArrayItemToMap(arrayPort, arrayValue[i], i, portMap, portsToProcess)
+    }
+  }
+
+  /**
+   * Helper method to create an array item port and add it to the port map
+   */
+  private appendArrayItemToMap(
+    arrayPort: IPort,
+    value: any,
+    index: number,
+    portMap: Map<string, IPort>,
+    portsToProcess: IPort[],
+  ): void {
+    const config = arrayPort.getConfig() as ArrayPortConfig
+
+    // Process item config
+    let itemConfig = { ...config.itemConfig }
+    itemConfig = this.processPortConfig(
+      itemConfig,
+      {
+        nodeId: this.id,
+        parentPortConfig: config,
+        propertyKey: index.toString(),
+        propertyValue: value,
+      },
+    )
+
+    // Create the item port
+    const itemPortId = `${arrayPort.id}[${index}]`
+    const completeItemConfig = {
+      ...itemConfig,
+      id: itemPortId,
+      parentId: arrayPort.id,
+      key: index.toString(),
+      nodeId: this.id,
+    }
+
+    const itemPort = PortFactory.createFromConfig(completeItemConfig)
+    itemPort.setValue(value)
+    portMap.set(itemPortId, itemPort)
+
+    // If this item port is a complex port, add it to the processing queue
+    if (completeItemConfig.type === 'object' || completeItemConfig.type === 'array') {
+      portsToProcess.push(itemPort)
+    }
+  }
+
+  /**
+   * Simplified binding of a port to a node property
+   * Uses Object.defineProperty to create getters/setters that sync port and property values
+   *
+   * @param targetObject The object to bind the port to (usually the node itself or an object property)
+   * @param port The port to bind
+   */
+  protected bindPortToNodeProperty(targetObject: any, port: IPort): void {
+    const config = port.getConfig()
+    const key = config.key
+
+    if (!key) {
+      return
+    }
+
+    // Need a reference to 'this' for the setter function
+    const self = this
+
+    if (config.type === 'object') {
+      // For object ports, we need to rebind all properties when value changes
+      Object.defineProperty(targetObject, key, {
+        get() {
           return port.getValue()
         },
-        set: (newValue: any) => {
+        set(newValue) {
+          // Set the port value
           port.setValue(newValue)
-          if (typeof port.getValue() === 'object') {
-            connectInternalFields(
-              portConfig,
-              port.getValue() as object,
-            )
+
+          // Re-bind all properties for the new object
+          const objectValue = port.getValue()
+          if (objectValue && typeof objectValue === 'object') {
+            const childPorts = self.getChildPorts(port)
+
+            // The critical fix: First update all child port values to match the new object
+            // before rebinding them. This prevents overwriting new values with old ones.
+            for (const childPort of childPorts) {
+              const childConfig = childPort.getConfig()
+              const childKey = childConfig.key
+
+              if (childKey) {
+                // First update the child port's value to match the corresponding property
+                // in the new object value
+                if (objectValue[childKey] !== undefined) {
+                  childPort.setValue(objectValue[childKey])
+                }
+
+                // Rebind each child port to the corresponding property
+                self.bindPortToNodeProperty(objectValue, childPort)
+              }
+            }
           }
         },
         configurable: true,
         enumerable: true,
       })
+    } else if (config.type === 'array') {
+      // For array ports, need to recreate array port items when value changes
+      Object.defineProperty(targetObject, key, {
+        get() {
+          return port.getValue()
+        },
+        set(newValue) {
+          // Set the port value
+          port.setValue(newValue)
+
+          // Recreate all array item ports
+          if (Array.isArray(newValue)) {
+            self.recreateArrayItemPorts(port, newValue)
+          }
+        },
+        configurable: true,
+        enumerable: true,
+      })
+    } else {
+      // For simple types, use standard getter/setter
+      Object.defineProperty(targetObject, key, {
+        get() {
+          return port.getValue()
+        },
+        set(newValue) {
+          port.setValue(newValue)
+        },
+        configurable: true,
+        enumerable: true,
+      })
+    }
+  }
+
+  /**
+   * Helper to recreate array item ports when an array is modified
+   */
+  private recreateArrayItemPorts(arrayPort: IPort, newArray: any[]): void {
+    // First remove all existing child ports for this array
+    const childPorts = this.getChildPorts(arrayPort)
+    for (const childPort of childPorts) {
+      // Also remove any nested ports
+      const nestedPorts = Array.from(this._ports.entries())
+        .filter(([id]) => id.startsWith(`${childPort.id}.`) || id.startsWith(`${childPort.id}[`))
+
+      for (const [id] of nestedPorts) {
+        this._ports.delete(id)
+      }
+
+      this._ports.delete(childPort.id)
     }
 
-    ports.push(port)
-    connectInternalFields(
-      portConfig,
-      port.getValue() as object,
+    // Then create new ports for all items in the array
+    for (let i = 0; i < newArray.length; i++) {
+      this.appendArrayItemToMap(
+        arrayPort,
+        newArray[i],
+        i,
+        this._ports,
+        [], // Empty array since we're not tracking complex ports here
+      )
+    }
+  }
+
+  /**
+   * Helper to process port configurations through PortConfigProcessor
+   */
+  protected processPortConfig(config: IPortConfig, context: {
+    nodeId: string
+    parentPortConfig: IPortConfig | null
+    propertyKey: string
+    propertyValue: any
+  }): IPortConfig {
+    const processor = new PortConfigProcessor()
+    return processor.processPortConfig(config, context)
+  }
+
+  /**
+   * Add a new property to an object port
+   * @param objectPort The parent object port
+   * @param key The property key
+   * @param portConfig The port configuration for the new property
+   */
+  public addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig): void {
+    const config = objectPort.getConfig() as ObjectPortConfig
+    if (config.type !== 'object') {
+      throw new Error('Cannot add property to non-object port')
+    }
+
+    // Update the skeleton schema
+    if (!config.schema) {
+      config.schema = { properties: {} }
+    }
+
+    // Process the port config
+    const processedConfig = this.processPortConfig(
+      { ...portConfig },
+      {
+        nodeId: this.id,
+        parentPortConfig: config,
+        propertyKey: key,
+        propertyValue: portConfig.defaultValue,
+      },
     )
 
-    return ports
+    // Update the schema with the processed config
+    config.schema.properties[key] = processedConfig
+
+    // Create the actual child port
+    const childPortId = `${objectPort.id}.${key}`
+    const childConfig = {
+      ...processedConfig,
+      id: childPortId,
+      parentId: objectPort.id,
+      key,
+      nodeId: this.id,
+    }
+
+    const childPort = PortFactory.createFromConfig(childConfig)
+    this._ports.set(childPortId, childPort)
+
+    // Get the current object value and update it
+    const objectValue = objectPort.getValue()
+    if (typeof objectValue === 'object' && objectValue !== null) {
+      // If default value is provided, set it on the object
+      if (processedConfig.defaultValue !== undefined) {
+        objectValue[key] = processedConfig.defaultValue
+      }
+
+      // Bind the new port to the object property
+      this.bindPortToNodeProperty(objectValue, childPort)
+    }
+
+    // Update the parent port
+    this.updatePort(objectPort)
+  }
+
+  /**
+   * Remove a property from an object port
+   * @param objectPort The parent object port
+   * @param key The property key to remove
+   */
+  public removeObjectProperty(objectPort: IPort, key: string): void {
+    const config = objectPort.getConfig() as ObjectPortConfig
+    if (config.type !== 'object') {
+      throw new Error('Cannot remove property from non-object port')
+    }
+
+    // Update the schema
+    if (config.schema?.properties) {
+      delete config.schema.properties[key]
+    }
+
+    // Remove the actual child port
+    const childPortId = `${objectPort.id}.${key}`
+    this._ports.delete(childPortId)
+
+    // Remove any nested ports that were children of this property
+    const childPorts = Array.from(this._ports.entries())
+      .filter(([id]) => id.startsWith(`${childPortId}.`) || id.startsWith(`${childPortId}[`))
+
+    for (const [id] of childPorts) {
+      this._ports.delete(id)
+    }
+
+    // Get the current object value and update it
+    const objectValue = objectPort.getValue()
+    if (typeof objectValue === 'object' && objectValue !== null) {
+      // Remove the property from the object
+      delete objectValue[key]
+    }
+
+    // Update the parent port
+    this.updatePort(objectPort)
+  }
+
+  /**
+   * Add an item to an array port
+   * @param arrayPort The array port
+   * @param value The value to append
+   * @returns The index of the new item
+   */
+  public appendArrayItem(arrayPort: IPort, value: any): number {
+    const config = arrayPort.getConfig() as ArrayPortConfig
+    if (config.type !== 'array') {
+      throw new Error('Cannot append item to non-array port')
+    }
+
+    // Get current array value or create empty array
+    const currentValue = arrayPort.getValue() || []
+    const newLength = currentValue.length
+
+    // Process item config
+    let itemConfig = { ...config.itemConfig }
+    itemConfig = this.processPortConfig(
+      itemConfig,
+      {
+        nodeId: this.id,
+        parentPortConfig: config,
+        propertyKey: newLength.toString(),
+        propertyValue: value,
+      },
+    )
+
+    // Create the item port
+    const itemPortId = `${arrayPort.id}[${newLength}]`
+    const completeItemConfig = {
+      ...itemConfig,
+      id: itemPortId,
+      parentId: arrayPort.id,
+      key: newLength.toString(),
+      nodeId: this.id,
+    }
+
+    const itemPort = PortFactory.createFromConfig(completeItemConfig)
+    itemPort.setValue(value)
+    this._ports.set(itemPortId, itemPort)
+
+    // Update the array value
+    const newValue = [...currentValue, value]
+    arrayPort.setValue(newValue)
+
+    // Update the array port
+    this.updatePort(arrayPort)
+
+    return newLength
+  }
+
+  /**
+   * Remove an item from an array port
+   * @param arrayPort The array port
+   * @param index The index to remove
+   */
+  public removeArrayItem(arrayPort: IPort, index: number): void {
+    const config = arrayPort.getConfig() as ArrayPortConfig
+    if (config.type !== 'array') {
+      throw new Error('Cannot remove item from non-array port')
+    }
+
+    // Get current array value
+    const currentValue = arrayPort.getValue() || []
+
+    if (index < 0 || index >= currentValue.length) {
+      throw new Error(`Invalid array index: ${index}`)
+    }
+
+    // Create new array without the item
+    const newValue = [
+      ...currentValue.slice(0, index),
+      ...currentValue.slice(index + 1),
+    ]
+
+    // Remove the port for this index
+    const itemPortId = `${arrayPort.id}[${index}]`
+    this._ports.delete(itemPortId)
+
+    // Update array value
+    arrayPort.setValue(newValue)
+
+    // Reindex all ports for items after the removed index
+    for (let i = index + 1; i < currentValue.length; i++) {
+      const oldPortId = `${arrayPort.id}[${i}]`
+      const newPortId = `${arrayPort.id}[${i - 1}]`
+
+      const itemPort = this._ports.get(oldPortId)
+      if (itemPort) {
+        // Update port config
+        const portConfig = itemPort.getConfig()
+        const updatedConfig = {
+          ...portConfig,
+          id: newPortId,
+          key: (i - 1).toString(),
+        }
+
+        // Create new port with updated config and same value
+        const newPort = PortFactory.createFromConfig(updatedConfig)
+        newPort.setValue(itemPort.getValue())
+
+        // Remove old and add new
+        this._ports.delete(oldPortId)
+        this._ports.set(newPortId, newPort)
+      }
+    }
+
+    // Update the array port
+    this.updatePort(arrayPort)
+  }
+
+  /**
+   * Rebuild all property bindings after deserialization
+   */
+  protected rebindAfterDeserialization(): void {
+    // Find all root ports (those without a parentId)
+    const rootPorts = Array.from(this._ports.values())
+      .filter(port => !port.getConfig().parentId)
+
+    // Bind each root port to the node
+    for (const port of rootPorts) {
+      this.bindPortToNodeProperty(this, port)
+    }
+
+    // Bind object and array properties
+    for (const port of this._ports.values()) {
+      const config = port.getConfig()
+      const parentId = config.parentId
+
+      if (!parentId)
+        continue
+
+      // Find parent port
+      const parentPort = this._ports.get(parentId)
+      if (!parentPort)
+        continue
+
+      const parentValue = parentPort.getValue()
+      if (!parentValue)
+        continue
+
+      // For object child ports
+      if (parentId.includes('.') || !parentId.includes('[')) {
+        // For object properties, bind to the parent object's property
+        if (typeof parentValue === 'object' && parentValue !== null && !Array.isArray(parentValue)) {
+          const key = config.key
+          if (key) {
+            this.bindPortToNodeProperty(parentValue, port)
+          }
+        }
+      }
+      // For array item ports
+      else if (parentId.includes('[')) {
+        // For array items, bind to the array at the specified index
+        if (Array.isArray(parentValue)) {
+          const match = port.id.match(/\[(\d+)\]$/)
+          if (match) {
+            const index = Number.parseInt(match[1], 10)
+            if (index < parentValue.length) {
+              // If the item is an object, bind ports to its properties
+              if (typeof parentValue[index] === 'object' && parentValue[index] !== null) {
+                this.bindPortToNodeProperty(parentValue, port)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Rebuild all port bindings for the node
+   * Call this after modifying port structure or when ports are manually added/removed
+   */
+  public rebuildPortBindings(): void {
+    // First, find all root ports
+    const rootPorts = Array.from(this._ports.values())
+      .filter(port => !port.getConfig().parentId)
+
+    // Bind each root port to the node
+    for (const root of rootPorts) {
+      this.bindPortToNodeProperty(this, root)
+    }
+
+    // Then rebind all child ports to their respective parent objects/arrays
+    this.rebindAfterDeserialization()
+  }
+
+  /**
+   * Update port with new configuration/value
+   * @param port The port to update
+   */
+  updatePort(port: IPort): void {
+    if (!this._ports.has(port.id)) {
+      throw new Error(`Port with ID ${port.id} does not exist in inputs or outputs.`)
+    }
+
+    this.incrementVersion()
+    this._ports.set(port.id, port)
+
+    // Special handling for complex ports
+    const config = port.getConfig()
+
+    // For object ports, we need to ensure child ports are created for any new properties
+    if (config.type === 'object') {
+      const childPorts = this.getChildPorts(port)
+      const objectValue = port.getValue() || {}
+      // Rebind the object properties to ensure getter/setter works properly
+      for (const childPort of childPorts) {
+        if (typeof objectValue === 'object' && objectValue !== null) {
+          const key = childPort.getConfig().key
+          if (key) {
+            objectValue[key] = childPort.getValue()
+          }
+        }
+      }
+    }
+    // For array ports, we need to handle updates to array values
+    else if (config.type === 'array') {
+      const arrayValue = port.getValue() || []
+      if (Array.isArray(arrayValue)) {
+        this.recreateArrayItemPorts(port, arrayValue)
+      }
+    }
+
+    this.emit(this.createEvent(NodeEventType.PortUpdate, {
+      portId: port.id,
+      port,
+    }))
+  }
+
+  /**
+   * Find a port by path from the node root
+   * @param path Path segments (property names or array indices)
+   * @returns The port if found, undefined otherwise
+   */
+  public findPortByPath(path: string[]): IPort | undefined {
+    if (path.length === 0) {
+      return undefined
+    }
+
+    // Find the root port first
+    const rootKey = path[0]
+    let currentPort: IPort | undefined
+
+    // Find root port by key
+    for (const port of this._ports.values()) {
+      if (!port.getConfig().parentId && port.getConfig().key === rootKey) {
+        currentPort = port
+        break
+      }
+    }
+
+    if (!currentPort) {
+      return undefined
+    }
+
+    // Follow the path to find the target port
+    for (let i = 1; i < path.length; i++) {
+      const segment = path[i]
+      const isArrayIndex = segment.match(/^\d+$/)
+
+      // Build the expected port ID based on the current port
+      const nextPortId = isArrayIndex
+        ? `${currentPort.id}[${segment}]`
+        : `${currentPort.id}.${segment}`
+
+      currentPort = this._ports.get(nextPortId)
+      if (!currentPort) {
+        return undefined
+      }
+    }
+
+    return currentPort
+  }
+
+  /**
+   * Get child ports for a given parent port
+   * @param parentPort The parent port
+   * @returns An array of child ports
+   */
+  public getChildPorts(parentPort: IPort): IPort[] {
+    const parentId = parentPort.id
+
+    return Array.from(this._ports.values())
+      .filter(port => port.getConfig().parentId === parentId)
   }
 
   /**
@@ -309,28 +914,16 @@ export abstract class BaseNode implements INode {
 
   setPorts(ports: Map<string, IPort>): void {
     this._ports = ports
+    this.rebuildPortBindings()
   }
 
   removePort(portId: string): void {
     if (this._ports.delete(portId)) {
       // Port removed successfully
-      // TODO: add event and version update
+      this.incrementVersion()
     } else {
       throw new Error(`Port with ID ${portId} does not exist in inputs or outputs.`)
     }
-  }
-
-  updatePort(port: IPort): void {
-    if (!this._ports.has(port.id)) {
-      throw new Error(`Port with ID ${port.id} does not exist in inputs or outputs.`)
-    }
-
-    this.incrementVersion()
-    this._ports.set(port.id, port)
-    this.emit(this.createEvent(NodeEventType.PortUpdate, {
-      portId: port.id,
-      port,
-    }))
   }
 
   /**
@@ -491,22 +1084,8 @@ export abstract class BaseNode implements INode {
 
   /**
    * Serializes the node into a JSON-compatible object.
-   * In this implementation we only serialize the port values (reducing object size).
    */
   serialize(): JSONValue {
-    // Helper: serialize the ports configuration from metadata.
-    // const serializedPortsConfig: Record<string, JSONValue> = {}
-    // if (this._metadata.portsConfig) {
-    //   for (const [key, config] of this._metadata.portsConfig.entries()) {
-    //     const plugin = PortPluginRegistry.getInstance().getPlugin(config.type)
-    //     serializedPortsConfig[key.toString()] = plugin
-    //       ? plugin.serializeConfig(config)
-    //       : config
-    //   }
-    // }
-
-    // Serialize ports values only.
-    // const serializedPortsValues: Record<string, JSONValue> = {}
     const serializedPorts: Record<string, JSONValue> = {}
     for (const [portId, port] of this._ports.entries()) {
       serializedPorts[portId] = port.serialize()
@@ -522,8 +1101,6 @@ export abstract class BaseNode implements INode {
 
   /**
    * Deserializes the given JSON data into the node.
-   * This implementation uses the PortFactory to re-create each port instance,
-   * then uses the appropriate port plugin to set the port value from the serialized data.
    */
   deserialize(data: JSONValue): this {
     // Validate incoming data using the Zod schema.
@@ -540,7 +1117,7 @@ export abstract class BaseNode implements INode {
 
     const ports = obj.ports as Record<string, any>
 
-    // For each key in ports_values we recreate the port.
+    // For each key in ports we recreate the port.
     const nodePorts = new Map<string, IPort>()
     for (const portId in ports) {
       const serializedPort = ports[portId]
@@ -551,34 +1128,12 @@ export abstract class BaseNode implements INode {
       const newPort = PortFactory.create(serializedPort.config)
       newPort.deserialize(serializedPort)
       nodePorts.set(portId, newPort as IPort)
-
-      const portConfig = newPort.getConfig()
-
-      // check if the node has a field with the same key as the port then set the port value to the node field
-      if (
-        (portConfig.parentId === '' || portConfig.parentId === undefined)
-        && portConfig.key !== undefined
-        && Object.prototype.hasOwnProperty.call(this, portConfig.key)
-      ) {
-        (this as any)[portConfig.key] = newPort.getValue()
-      }
     }
 
     this._ports = nodePorts
 
-    const rootPorts = Array.from(this._ports.values())
-      .filter(
-        port =>
-          port.getConfig().parentId === undefined
-          || port.getConfig().parentId === '',
-      )
-
-    for (const rootPort of rootPorts) {
-      const initializedPorts = this.initializePort(this, rootPort.getConfig())
-      for (const initializedPort of initializedPorts) {
-        this._ports.set(initializedPort.id, initializedPort)
-      }
-    }
+    // Then rebuild all bindings
+    this.rebindAfterDeserialization()
 
     return this
   }

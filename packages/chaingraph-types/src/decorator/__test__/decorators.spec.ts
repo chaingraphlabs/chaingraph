@@ -44,7 +44,7 @@ describe('decorator tests', () => {
 
   it('should store port metadata', () => {
     // Retrieve ports metadata from the class constructor
-    const portsMetadata: Map<string | symbol, StringPortConfig>
+    const portsMetadata: Map<string, StringPortConfig>
       = Reflect.getMetadata('chaingraph:ports-config', DummyNode)
     expect(portsMetadata).toBeDefined()
     // Check that property "dummyPort" exists

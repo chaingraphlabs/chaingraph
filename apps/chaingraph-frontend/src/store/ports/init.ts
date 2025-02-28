@@ -7,6 +7,7 @@
  */
 import type {
   AddFieldObjectPortInput,
+  AppendElementArrayPortInput,
   RemoveFieldObjectPortInput,
   UpdatePortUIInput,
   UpdatePortValueInput,
@@ -18,6 +19,7 @@ import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-samp
 import { $nodes } from '@/store/nodes/stores'
 import {
   addFieldObjectPortFx,
+  appendElementArrayPortFx,
   baseUpdatePortUIFx,
   baseUpdatePortValueFx,
   removeFiledObjectPortFx,
@@ -25,6 +27,7 @@ import {
 import { combine, createEffect, sample } from 'effector'
 import {
   addFieldObjectPort,
+  appendElementArrayPort,
   removeFieldObjectPort,
   requestUpdatePortUI,
   requestUpdatePortValue,
@@ -149,6 +152,26 @@ sample({
     return result
   },
   target: addFieldObjectPortFx,
+})
+
+sample({
+  clock: appendElementArrayPort,
+  source: combine({
+    activeFlowId: $activeFlowId,
+  }),
+  fn: ({ activeFlowId }, { nodeId, portId, value }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const result: AppendElementArrayPortInput = {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      value,
+    }
+    return result
+  },
+  target: appendElementArrayPortFx,
 })
 
 sample({

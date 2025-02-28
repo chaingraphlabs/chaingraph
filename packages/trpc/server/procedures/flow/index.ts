@@ -18,7 +18,12 @@ import { updateNodeParent } from './update-node-parent'
 import { updateNodePosition } from './update-node-position'
 import { updateNodeUI } from './update-node-ui'
 import { updatePortUI } from './update-port-ui'
-import { addFieldObjectPort, removeFieldObjectPort, updatePortValue } from './update-port-value'
+import {
+  addFieldObjectPort,
+  appendElementArrayPort,
+  removeFieldObjectPort,
+  updatePortValue,
+} from './update-port-value'
 
 export const flowProcedures = router({
   create: publicProcedure
@@ -123,4 +128,5 @@ export const flowProcedures = router({
   updatePortUI,
   addFieldObjectPort,
   removeFieldObjectPort,
+  appendElementArrayPort,
 })

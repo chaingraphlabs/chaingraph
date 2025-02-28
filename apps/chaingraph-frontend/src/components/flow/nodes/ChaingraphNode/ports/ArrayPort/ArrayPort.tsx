@@ -6,13 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, ArrayPortValue, INode, IPort, IPortConfig } from '@badaitech/chaingraph-types'
+import type { ArrayPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { requestUpdatePortUI } from '@/store/ports'
-import { filterPorts, PortFactory } from '@badaitech/chaingraph-types'
+import { appendElementArrayPort, requestUpdatePortUI } from '@/store/ports'
+import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, useMemo, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
@@ -120,23 +120,30 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
               )}
             >
 
-              {values.map((value, index) => {
-                const childPort = PortFactory.create({ ...config.itemConfig, defaultValue: value, title: `${config.title}.${index}`, id: `${config.id}.${index}` })
+              {Array.from(node.ports.values())
+                .filter(p => p.getConfig().parentId === config.id)
+                .map((childPort) => {
+                // const childPort = PortFactory.create({
+                //   ...config.itemConfig,
+                //   defaultValue: value,
+                //   title: `${config.title}.${index}`,
+                //   id: `${config.id}.${index}`,
+                // })
 
-                return (
-                  <PortField
-                    key={childPort.id}
-                    parentPort={port}
-                    node={node}
-                    port={childPort as IPort}
-                    isOutput={isOutput}
-                    isMutable={isMutable ?? false}
-                    onDelete={() => {
-                      port.setValue(values.filter((_, idx) => index !== idx))
-                    }}
-                  />
-                )
-              })}
+                  return (
+                    <PortField
+                      key={childPort.id}
+                      parentPort={port}
+                      node={node}
+                      port={childPort as IPort}
+                      isOutput={isOutput}
+                      isMutable={isMutable ?? false}
+                      onDelete={() => {
+                        // port.setValue(values.filter((_, idx) => index !== idx))
+                      }}
+                    />
+                  )
+                })}
 
               {isMutable && needRenderEditor && (
                 <Popover open={isAddPropOpen}>
@@ -158,7 +165,12 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
                     <AddElementPopover
                       onClose={() => setIsAddPropOpen(false)}
                       onSubmit={(data) => {
-                        port.setValue([...values, data.element])
+                        appendElementArrayPort({
+                          nodeId: node.id,
+                          portId: port.id,
+                          value: data.element,
+                        })
+
                         setIsAddPropOpen(false)
                       }}
                     />

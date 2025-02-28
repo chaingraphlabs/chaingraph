@@ -55,3 +55,9 @@ export const removeFieldObjectPort = createEvent<{
   portId: string
   key: string
 }>()
+
+export const appendElementArrayPort = createEvent<{
+  nodeId: string
+  portId: string
+  value: any
+}>()

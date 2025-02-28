@@ -182,9 +182,9 @@ export class Flow implements IFlow {
     })
 
     // then remove the ports
-    childPorts.forEach((port) => {
-      node.removePort(port.id)
-    })
+    // childPorts.forEach((port) => {
+    //   node.removePort(port.id)
+    // })
   }
 
   /**

@@ -132,7 +132,7 @@ export function applyVisibilityRules(node: INode): IPort[] {
  * @param config Configuration object for visibility rules
  */
 export function PortVisibility(config: PortVisibilityConfig): PropertyDecorator {
-  return (target: object, propertyKey: string | symbol) => {
+  return (target: object, propertyKey: any) => {
     storeVisibilityRule(target.constructor, propertyKey, config)
   }
 }
