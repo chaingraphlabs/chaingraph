@@ -30,6 +30,10 @@ export enum ResponseType {
   BLOB = 'blob'
 }
 
+function formatJSON(data: any): string {
+  return JSON.stringify(data, null, 0)
+}
+
 @Node({
   title: 'HTTP Request',
   description: 'Makes HTTP requests to external services',
@@ -212,14 +216,14 @@ export default class HttpRequestNode extends BaseNode {
       switch (this.responseType) {
         case ResponseType.JSON:
           const json = await response.json()
-          return JSON.stringify(json, null, 2)
+          return formatJSON(json)
         case ResponseType.TEXT:
-          return response.text()
+          return await response.text()
         case ResponseType.BLOB:
           const blob = await response.blob()
           return `Blob: ${blob.type}, ${blob.size} bytes`
         default:
-          return response.text()
+          return await response.text()
       }
     } catch (error: any) {
       throw new Error(`Failed to parse response as ${this.responseType}: ${error.message}`)
@@ -280,7 +284,7 @@ export default class HttpRequestNode extends BaseNode {
       try {
         // Validate and format JSON
         const parsed = JSON.parse(body)
-        return JSON.stringify(parsed, null, 2)
+        return formatJSON(parsed)
       } catch (e) {
         throw new Error(`Invalid JSON body: ${(e as Error).message}`)
       }
