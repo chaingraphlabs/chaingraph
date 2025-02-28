@@ -16,11 +16,7 @@ import type {
   StreamPortConfigUIType,
   StringPortConfigUIType,
 } from '../base'
-import type {
-  EncryptedSecretValue,
-  SecretType,
-  SecretValue,
-} from './secret'
+import type { EncryptedSecretValue, SecretType } from './secret'
 import { z } from 'zod'
 import { MultiChannel, MultiChannelSchema } from '../../utils'
 
@@ -223,7 +219,7 @@ export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<Extra
 /**
  * Secret port value.
  */
-export type SecretPortValue<Secret extends SecretValue = string> = EncryptedSecretValue<Secret>
+export type SecretPortValue<Secret extends SecretType = 'string'> = EncryptedSecretValue<Secret>
 
 /**
  * Object port value

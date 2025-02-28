@@ -8,8 +8,7 @@
 
 import type { JSONValue } from '../../utils/json'
 import type { IPortPlugin, SecretPortConfig, SecretPortValue } from '../base'
-import type { SecretType, SecretTypeMap } from '../base/secret'
-import { Buffer } from 'node:buffer'
+import type { SecretType } from '../base/secret'
 import { z } from 'zod'
 import { ExecutionContext } from '../../execution'
 import { basePortConfigSchema, PortError, PortErrorType } from '../base'
@@ -28,7 +27,7 @@ const configSchema = basePortConfigSchema.merge(z.object({
  */
 const valueSchema: z.ZodType<SecretPortValue> = z.object({
   decrypt: z.function().args(z.instanceof(ExecutionContext)).returns(z.promise(z.any())),
-  encrypted: z.instanceof(Buffer),
+  encrypted: z.instanceof(ArrayBuffer),
   publicKey: z.instanceof(CryptoKey),
 })
 
@@ -39,7 +38,7 @@ export const SecretPortPlugin = {
   typeIdentifier: 'secret',
   configSchema,
   valueSchema,
-  serializeValue<T extends SecretType>(value: SecretPortValue<SecretTypeMap[T]>, config: SecretPortConfig<T>): JSONValue {
+  serializeValue<T extends SecretType>(value: SecretPortValue<T>, config: SecretPortConfig<T>): JSONValue {
     try {
       return serialize(config.secretType, value)
     } catch (e) {
@@ -49,7 +48,7 @@ export const SecretPortPlugin = {
       )
     }
   },
-  deserializeValue<T extends SecretType>(data: JSONValue, config: SecretPortConfig<T>): SecretPortValue<SecretTypeMap[T]> {
+  deserializeValue<T extends SecretType>(data: JSONValue, config: SecretPortConfig<T>): SecretPortValue<T> {
     try {
       return deserialize(config.secretType, data)
     } catch (e) {
@@ -74,7 +73,7 @@ export const SecretPortPlugin = {
 
     return result.data as SecretPortConfig<T>
   },
-  validateValue<T extends SecretType>(value: SecretPortValue<SecretTypeMap[T]>, config: SecretPortConfig<T>): string[] {
+  validateValue<T extends SecretType>(value: SecretPortValue<T>, config: SecretPortConfig<T>): string[] {
     const result = valueSchema.safeParse(value)
     if (!result.success) {
       return result.error.errors.map(issue => issue.message)

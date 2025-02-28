@@ -39,9 +39,9 @@ export type SecretValue = SecretTypeMap[SecretType]
 /**
  * An encrypted value with a method to decrypt this value.
  */
-export interface EncryptedSecretValue<T extends SecretValue> {
-  decrypt: (ctx: ExecutionContext) => Promise<T>
-  encrypted: Buffer<ArrayBufferLike>
+export interface EncryptedSecretValue<T extends SecretType> {
+  decrypt: (ctx: ExecutionContext) => Promise<SecretTypeMap[T]>
+  encrypted: ArrayBuffer
   publicKey: CryptoKey
 }
 
@@ -60,7 +60,7 @@ type SerializableEncryptedSecretValue<T extends SecretType> =
  * Schema of an encrypted secret value.
  */
 const schema = z.object({
-  encrypted: z.instanceof(Buffer),
+  encrypted: z.instanceof(ArrayBuffer),
   publicKey: z.instanceof(CryptoKey),
 })
 
@@ -72,7 +72,7 @@ const schema = z.object({
  * @throws Error if value has an incorrect JSON type. value must be string.
  * @throws Error if secret type is not supported.
  */
-export function deserialize<T extends SecretType>(secretType: T, value: JSONValue): EncryptedSecretValue<SecretTypeMap[T]> {
+export function deserialize<T extends SecretType>(secretType: T, value: JSONValue): EncryptedSecretValue<T> {
   switch (secretType) {
     case 'openai':
     case 'x':
@@ -90,7 +90,7 @@ export function deserialize<T extends SecretType>(secretType: T, value: JSONValu
  *
  * @throws Error if secret type is not supported.
  */
-export function serialize<T extends SecretType>(secretType: T, secret: EncryptedSecretValue<SecretTypeMap[T]>): JSONValue {
+export function serialize<T extends SecretType>(secretType: T, secret: EncryptedSecretValue<T>): JSONValue {
   switch (secretType) {
     case 'openai':
     case 'x':
@@ -120,7 +120,7 @@ const ivLength = 12
 /**
  * Wraps an encrypted value to an object with a decrypt function.
  */
-function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedSecretValue<T>): EncryptedSecretValue<SecretTypeMap[T]> {
+function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedSecretValue<T>): EncryptedSecretValue<T> {
   const schema = secretTypeSchemas[secretType]
   const decrypt = async (ctx: ExecutionContext) => {
     const keyPair = await ctx.getECDHKeyPair()
@@ -130,8 +130,8 @@ function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedS
       public: value.publicKey,
     }, keyPair.privateKey, encryptionAlgorithm, false, ['decrypt'])
 
-    const iv = value.encrypted.subarray(0, ivLength)
-    const data = value.encrypted.subarray(ivLength)
+    const iv = value.encrypted.slice(0, ivLength)
+    const data = value.encrypted.slice(ivLength)
 
     const decrypted = await subtle.decrypt({ ...encryptionAlgorithm, iv }, encryptionKey, data)
     return schema.parse(Buffer.from(decrypted).toString())
