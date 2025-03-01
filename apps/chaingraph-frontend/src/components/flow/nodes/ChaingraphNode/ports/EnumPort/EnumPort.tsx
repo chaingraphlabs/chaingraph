@@ -16,8 +16,8 @@ import type {
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type {EnumPortConfig, INode, IPort} from '@badaitech/chaingraph-types'
-import {isHideEditor} from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
+import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
+import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
   Select,
   SelectContent,
@@ -25,10 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {cn} from '@/lib/utils'
-import {useCallback, useMemo} from 'react'
-import {PortHandle} from '../ui/PortHandle'
-import {PortTitle} from '../ui/PortTitle'
+import { cn } from '@/lib/utils'
+import { useCallback, useMemo } from 'react'
+import { PortHandle } from '../ui/PortHandle'
+import { PortTitle } from '../ui/PortTitle'
 
 export interface EnumPortProps {
   node: INode

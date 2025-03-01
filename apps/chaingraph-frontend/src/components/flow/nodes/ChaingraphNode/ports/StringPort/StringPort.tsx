@@ -16,12 +16,12 @@ import type {
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type {INode, IPort, StringPortConfig} from '@badaitech/chaingraph-types'
-import {isHideEditor} from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
-import {Input} from '@/components/ui/input'
-import {Textarea} from '@/components/ui/textarea'
-import {cn} from '@/lib/utils'
-import {useStore} from '@xyflow/react'
+import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
+import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
+import { useStore } from '@xyflow/react'
 import {
   type ChangeEvent,
   type PropsWithChildren,
@@ -30,8 +30,8 @@ import {
   useRef,
   useState,
 } from 'react'
-import {PortHandle} from '../ui/PortHandle'
-import {PortTitle} from '../ui/PortTitle'
+import { PortHandle } from '../ui/PortHandle'
+import { PortTitle } from '../ui/PortTitle'
 
 export interface StringPortProps {
   node: INode
