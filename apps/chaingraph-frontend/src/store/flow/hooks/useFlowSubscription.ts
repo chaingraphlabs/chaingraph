@@ -162,14 +162,14 @@ export function useFlowSubscription() {
 
       console.log(`[NodeParentUpdated] currentParent: ${currentParent?.id}, newParent: ${newParent?.id}, currentPosition: ${JSON.stringify(currentPosition)}, newPosition: ${JSON.stringify(newPosition)} currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
-      setNodeVersion({
-        nodeId: data.nodeId,
-        version: data.version,
-      })
-
       node.setMetadata({
         ...node.metadata,
         parentNodeId: data.newParentNodeId,
+      })
+
+      setNodeVersion({
+        nodeId: data.nodeId,
+        version: data.version,
       })
 
       positionInterpolator.clearNodeState(data.nodeId)

@@ -15,10 +15,10 @@ import type {
   ObjectPortConfig,
   StreamPortConfig,
 } from '../port'
-import type {INode} from './interface'
-import {v7 as uuidv7} from 'uuid'
-import {getOrCreateNodeMetadata, getPortsMetadata} from '../decorator'
-import {deepCopy} from '../utils'
+import type { INode } from './interface'
+import { v7 as uuidv7 } from 'uuid'
+import { getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
+import { deepCopy } from '../utils'
 
 export interface Context {
   nodeId: string

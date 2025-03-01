@@ -5,16 +5,29 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { INode } from '@badaitech/chaingraph-types'
-import { PortComponent } from 'components/flow/nodes/ChaingraphNode/PortComponent.tsx'
-import { memo, useMemo } from 'react'
+
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+import type {INode} from '@badaitech/chaingraph-types'
+import {PortComponent} from 'components/flow/nodes/ChaingraphNode/PortComponent.tsx'
+import {useMemo} from 'react'
 
 export interface NodeBodyProps {
   node: INode
+  context: PortContextValue
 }
 
 function NodeBody({
   node,
+  context,
 }: NodeBodyProps) {
   const inputPorts = useMemo(
     () => node.getInputs().filter(
@@ -40,6 +53,7 @@ function NodeBody({
               key={port.id}
               node={node}
               port={port}
+              context={context}
             />
           )
         })}
@@ -51,6 +65,7 @@ function NodeBody({
               key={port.id}
               node={node}
               port={port}
+              context={context}
             />
           )
         })}
@@ -59,4 +74,5 @@ function NodeBody({
   )
 }
 
-export default memo(NodeBody)
+// export default memo(NodeBody)
+export default NodeBody

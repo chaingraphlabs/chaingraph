@@ -5,42 +5,71 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
+
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
 import type { ExtractValue, INode, IPort, NumberPortConfig } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { NumberInput } from '@/components/ui/number-input.tsx'
 import { Slider } from '@/components/ui/slider.tsx'
 import { cn } from '@/lib/utils'
-import { useMemo } from 'react'
-import { usePortContext } from '../context/PortContext'
+import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface NumberPortProps {
   node: INode
   port: IPort<NumberPortConfig>
+  context: PortContextValue
 }
 
 export function NumberPort(props: NumberPortProps) {
-  const { node, port } = props
-  const { updatePortValue, getEdgesForPort } = usePortContext()
+  const { node, port, context } = props
+  const { updatePortValue, getEdgesForPort } = context
 
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
 
-  const connectedEdges = getEdgesForPort(port.id)
+  // Memoize edges for this port
+  const connectedEdges = useMemo(() => {
+    return getEdgesForPort(port.id)
+  }, [getEdgesForPort, port.id])
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
-  const handleChange = (value: ExtractValue<NumberPortConfig> | undefined) => {
+  const handleChange = useCallback((value: ExtractValue<NumberPortConfig> | undefined) => {
     updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,
     })
-  }
+  }, [node.id, port.id, updatePortValue])
+
+  // Memoize slider value change handler
+  const handleSliderChange = useCallback((values: number[]) => {
+    handleChange(values[0])
+  }, [handleChange])
+
+  // Memoize number input value change handler
+  const handleNumberInputChange = useCallback(({ floatValue }, sourceInfo: any) => {
+    if (!sourceInfo.event?.isTrusted) {
+      return
+    }
+
+    const val = floatValue ?? Number.NaN
+    handleChange(Number.isNaN(val) ? undefined : val)
+  }, [handleChange])
 
   if (ui?.hidden)
     return null
@@ -76,14 +105,7 @@ export function NumberPort(props: NumberPortProps) {
               min={config.min}
               max={config.max}
               step={config.step}
-              onValueChange={({ floatValue }, sourceInfo) => {
-                if (!sourceInfo.event?.isTrusted) {
-                  return
-                }
-
-                const val = floatValue ?? Number.NaN
-                handleChange(Number.isNaN(val) ? undefined : val)
-              }}
+              onValueChange={handleNumberInputChange}
             />
 
             {config.ui?.isSlider && (
@@ -101,9 +123,7 @@ export function NumberPort(props: NumberPortProps) {
                   min={config.min}
                   max={config.max}
                   step={config.step}
-                  onValueChange={(values) => {
-                    handleChange(values[0])
-                  }}
+                  onValueChange={handleSliderChange}
                 />
               </>
             )}

@@ -6,23 +6,26 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, useMemo, useState } from 'react'
-import { usePortContext } from '../context/PortContext'
+import { Fragment, memo, useCallback, useMemo, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddPropPopover } from './components/AddPropPopover'
-import { PortField } from './components/PortField'
+import PortField from './components/PortField'
 import { PortHeader } from './components/PortHeader'
 
 export interface ObjectPortProps {
   node: INode
   port: IPort<ObjectPortConfig>
+  context: PortContextValue
 }
 
 const variants = {
@@ -30,31 +33,39 @@ const variants = {
   closed: { opacity: 0, height: 0 },
 } as const
 
-function renderChildrenHiddenHandles(node: INode, port: IPort) {
-  return filterPorts(
-    node,
-    p => p.getConfig().parentId === port.getConfig().id,
-  )
-    .map(childPort => (
-      <Fragment key={childPort.id}>
-        <PortHandle
-          key={childPort.id}
-          port={childPort}
-          className={cn('opacity-0')}
-        />
-        {renderChildrenHiddenHandles(node, childPort)}
-      </Fragment>
-    ))
-}
+// Extracted this to a memoizable component
+const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }) => {
+  const childPorts = useMemo(() => {
+    return filterPorts(
+      node,
+      p => p.getConfig().parentId === port.getConfig().id,
+    )
+  }, [node, port])
 
-export function ObjectPort({ node, port }: ObjectPortProps) {
+  return (
+    <>
+      {childPorts.map(childPort => (
+        <Fragment key={childPort.id}>
+          <PortHandle
+            key={childPort.id}
+            port={childPort}
+            className={cn('opacity-0')}
+          />
+          <ChildrenHiddenHandles node={node} port={childPort} />
+        </Fragment>
+      ))}
+    </>
+  )
+})
+
+export function ObjectPort({ node, port, context }: ObjectPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
   const {
     updatePortUI,
     addFieldObjectPort,
     removeFieldObjectPort,
     getEdgesForPort,
-  } = usePortContext()
+  } = context
 
   const config = port.getConfig()
   const title = config.title || config.key || port.id
@@ -62,10 +73,46 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
   const isOutput = config.direction === 'output'
   const ui = config.ui
 
-  const connectedEdges = getEdgesForPort(port.id)
+  // Memoize edges
+  const connectedEdges = useMemo(() => {
+    return getEdgesForPort(port.id)
+  }, [getEdgesForPort, port.id])
+
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
+
+  // Memoize child ports to prevent recalculation
+  const childPorts = useMemo(() => {
+    return Array.from(node.ports.values())
+      .filter(p => p.getConfig().parentId === config.id)
+  }, [node.ports, config.id])
+
+  // Memoize callback functions
+  const handleToggleCollapsible = useCallback(() => {
+    updatePortUI({
+      nodeId: node.id,
+      portId: port.id,
+      ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },
+    })
+  }, [node.id, port.id, config.ui?.collapsible, updatePortUI])
+
+  const handleOpenPopover = useCallback(() => {
+    setIsAddPropOpen(true)
+  }, [])
+
+  const handleClosePopover = useCallback(() => {
+    setIsAddPropOpen(false)
+  }, [])
+
+  const handleSubmitPopover = useCallback((data: any) => {
+    addFieldObjectPort({
+      nodeId: node.id,
+      portId: port.id,
+      ...data,
+    })
+    setIsAddPropOpen(false)
+  }, [node.id, port.id, addFieldObjectPort])
 
   if (ui?.hidden)
     return null
@@ -77,7 +124,7 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!config.ui?.collapsible && renderChildrenHiddenHandles(node, port as IPort)}
+      {!config.ui?.collapsible && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
       {!isOutput && <PortHandle port={port} />}
 
@@ -99,13 +146,7 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
             title={title}
             isOutput={isOutput}
             isCollapsible={!!config.ui?.collapsible}
-            onClick={() => {
-              updatePortUI({
-                nodeId: node.id,
-                portId: port.id,
-                ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },
-              })
-            }}
+            onClick={handleToggleCollapsible}
           />
 
           <AnimatePresence initial={false}>
@@ -121,25 +162,24 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
                   : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
               )}
             >
-              {Array.from(node.ports.values())
-                .filter(p => p.getConfig().parentId === config.id)
-                .map(childPort => (
-                  <PortField
-                    key={childPort.id}
-                    node={node}
-                    parentPort={port}
-                    port={childPort}
-                    isOutput={isOutput}
-                    isSchemaMutable={isSchemaMutable ?? false}
-                    onDelete={() => {
-                      removeFieldObjectPort({
-                        nodeId: node.id!,
-                        portId: port.id!,
-                        key: childPort.getConfig().key!,
-                      })
-                    }}
-                  />
-                ))}
+              {childPorts.map(childPort => (
+                <PortField
+                  key={childPort.id}
+                  node={node}
+                  parentPort={port}
+                  port={childPort}
+                  context={context}
+                  isOutput={isOutput}
+                  isSchemaMutable={isSchemaMutable ?? false}
+                  onDelete={() => {
+                    removeFieldObjectPort({
+                      nodeId: node.id!,
+                      portId: port.id!,
+                      key: childPort.getConfig().key!,
+                    })
+                  }}
+                />
+              ))}
 
               {isSchemaMutable && needRenderEditor && (
                 <Popover open={isAddPropOpen}>
@@ -152,18 +192,15 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
                         'w-fit flex',
                         isOutput ? 'flex-row-reverse' : 'flex-row',
                       )}
-                      onClick={() => setIsAddPropOpen(true)}
+                      onClick={handleOpenPopover}
                     >
                       Add field
                     </button>
                   </PopoverTrigger>
                   {isAddPropOpen && (
                     <AddPropPopover
-                      onClose={() => setIsAddPropOpen(false)}
-                      onSubmit={(data) => {
-                        addFieldObjectPort({ nodeId: node.id, portId: port.id, ...data })
-                        setIsAddPropOpen(false)
-                      }}
+                      onClose={handleClosePopover}
+                      onSubmit={handleSubmitPopover}
                     />
                   )}
                 </Popover>

@@ -15,10 +15,10 @@ import {
   removeNodeFromFlow,
   requestAddEdge,
   requestRemoveEdge,
-  setNodeMetadata,
   updateNodeParent,
   updateNodePosition,
   updateNodeUI,
+  updateNodeUILocal,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { hasCycle } from '@badaitech/chaingraph-types'
@@ -130,16 +130,15 @@ export function useFlowCallbacks() {
             if (isSameSelection)
               return
 
-            setNodeMetadata({
+            updateNodeUILocal({
+              flowId: activeFlow.id!,
               nodeId: change.id,
-              metadata: {
-                ...node.metadata,
-                ui: {
-                  ...node.metadata.ui,
-                  state: {
-                    ...node.metadata.ui?.state,
-                    isSelected: change.selected,
-                  },
+              version: node.getVersion(),
+              ui: {
+                ...node.metadata.ui,
+                state: {
+                  ...node.metadata.ui?.state,
+                  isSelected: change.selected,
                 },
               },
             })

@@ -5,11 +5,23 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
-import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
+
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+import type {INode, IPort, StringPortConfig} from '@badaitech/chaingraph-types'
+import {isHideEditor} from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
+import {Input} from '@/components/ui/input'
+import {Textarea} from '@/components/ui/textarea'
+import {cn} from '@/lib/utils'
+import {useStore} from '@xyflow/react'
 import {
   type ChangeEvent,
   type PropsWithChildren,
@@ -18,31 +30,38 @@ import {
   useRef,
   useState,
 } from 'react'
-import { usePortContext } from '../context/PortContext'
-import { PortHandle } from '../ui/PortHandle'
-import { PortTitle } from '../ui/PortTitle'
+import {PortHandle} from '../ui/PortHandle'
+import {PortTitle} from '../ui/PortTitle'
 
 export interface StringPortProps {
   node: INode
   port: IPort<StringPortConfig>
+  context: PortContextValue
 }
 
+const zoomSelector = s => s.transform[2] ?? 1
+
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
-  const { node, port } = props
+  const { node, port, context } = props
   const {
-    zoom,
     updatePortValue,
     updatePortUI,
     getEdgesForPort,
-  } = usePortContext()
+  } = context
 
   const config = port.getConfig()
   const ui = useMemo(() => config.ui, [config.ui])
-  const connectedEdges = getEdgesForPort(port.id)
+
+  const zoom = useStore(zoomSelector)
+
+  // Memoize connected edges to prevent unnecessary calculations
+  const connectedEdges = useMemo(() => {
+    return getEdgesForPort(port.id)
+  }, [getEdgesForPort, port.id])
 
   const [focused, setFocused] = useState(false)
 
-  const handleChange = <Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
+  const handleChange = useCallback(<Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
     if (!e.nativeEvent.isTrusted) {
       return
     }
@@ -54,7 +73,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       portId: port.id,
       value,
     })
-  }
+  }, [node.id, port.id, updatePortValue])
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
@@ -127,7 +146,6 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
         <PortTitle>
           {title}
           {' '}
-          {config.id}
         </PortTitle>
 
         {!ui?.isTextArea && needRenderEditor && (

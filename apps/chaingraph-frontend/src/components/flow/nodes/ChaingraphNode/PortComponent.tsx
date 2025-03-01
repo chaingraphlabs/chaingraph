@@ -7,6 +7,9 @@
  */
 
 import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+import type {
   ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
@@ -34,43 +37,45 @@ import { StubPort } from './ports/StubPort/StubPort'
 export interface PortProps {
   node: INode
   port: IPort
+  context: PortContextValue
 }
 
 export function PortComponent(props: PortProps) {
   const {
     node,
     port,
+    context,
   } = props
 
   switch (port.getConfig().type) {
     case 'string': {
       return (
-        <StringPort node={node} port={port as IPort<StringPortConfig>} />
+        <StringPort node={node} port={port as IPort<StringPortConfig>} context={context} />
       )
     }
     case 'boolean': {
       return (
-        <BooleanPort node={node} port={port as IPort<BooleanPortConfig>} />
+        <BooleanPort node={node} port={port as IPort<BooleanPortConfig>} context={context} />
       )
     }
     case 'number': {
       return (
-        <NumberPort node={node} port={port as IPort<NumberPortConfig>} />
+        <NumberPort node={node} port={port as IPort<NumberPortConfig>} context={context} />
       )
     }
     case 'enum': {
       return (
-        <EnumPort node={node} port={port as IPort<EnumPortConfig>} />
+        <EnumPort node={node} port={port as IPort<EnumPortConfig>} context={context} />
       )
     }
     case 'object': {
       return (
-        <ObjectPort node={node} port={port as IPort<ObjectPortConfig>} />
+        <ObjectPort node={node} port={port as IPort<ObjectPortConfig>} context={context} />
       )
     }
     case 'array': {
       return (
-        <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} />
+        <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} context={context} />
       )
     }
     case 'stream':

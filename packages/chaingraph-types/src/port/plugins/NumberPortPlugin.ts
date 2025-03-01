@@ -10,7 +10,13 @@ import type { JSONValue } from '../../utils/json'
 import type { IPortPlugin, NumberPortConfig, NumberPortValue } from '../base'
 import Decimal from 'decimal.js'
 import { z } from 'zod'
-import { basePortConfigSchema, isNumberPortValue, numberPortConfigUISchema, PortError, PortErrorType } from '../base'
+import {
+  basePortConfigSchema,
+  isNumberPortValue,
+  numberPortConfigUISchema,
+  PortError,
+  PortErrorType,
+} from '../base'
 
 /**
  * Schemas for number port validation
@@ -190,7 +196,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
     try {
       // For number port, we can simply return the config as is
       // since it doesn't contain any non-serializable parts
-      return config
+      return { ...config }
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

@@ -215,13 +215,7 @@ $nodes
     if (!node)
       return state
 
-    node.setMetadata({
-      ...node.metadata,
-      ui: {
-        ...node.metadata.ui,
-        position,
-      },
-    })
+    node.setPosition(position, false)
 
     return {
       ...state,

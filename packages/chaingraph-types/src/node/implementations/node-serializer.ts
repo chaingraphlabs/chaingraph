@@ -43,7 +43,7 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
 
     return {
       id: this.id,
-      metadata: this.metadata,
+      metadata: { ...this.metadata },
       status: this.status,
       ports: serializedPorts,
     }

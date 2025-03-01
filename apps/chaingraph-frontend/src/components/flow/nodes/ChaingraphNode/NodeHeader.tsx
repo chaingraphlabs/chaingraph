@@ -54,7 +54,7 @@ export function NodeHeader({
     >
       <div className="flex items-center gap-2 min-w-0">
         <div
-          className="w-6 h-6 rounded flex items-center justify-center"
+          className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
           style={{
             background: `${style.text}20`,
           }}
@@ -70,8 +70,6 @@ export function NodeHeader({
           style={{ color: style.text }}
         >
           {node.metadata.title}
-          {' '}
-          {node.id.slice(0, 32)}
         </h3>
       </div>
 
@@ -79,7 +77,7 @@ export function NodeHeader({
       <div className="flex items-center gap-1">
 
         <button
-          className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+          className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors nodrag"
           style={{ color: style.text }}
           onClick={handleDelete}
           title="Delete"

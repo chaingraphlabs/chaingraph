@@ -5,8 +5,19 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
-import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
+
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+import type {EnumPortConfig, INode, IPort} from '@badaitech/chaingraph-types'
+import {isHideEditor} from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
   Select,
   SelectContent,
@@ -14,24 +25,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import { useMemo } from 'react'
-import { usePortContext } from '../context/PortContext'
-import { PortHandle } from '../ui/PortHandle'
-import { PortTitle } from '../ui/PortTitle'
+import {cn} from '@/lib/utils'
+import {useCallback, useMemo} from 'react'
+import {PortHandle} from '../ui/PortHandle'
+import {PortTitle} from '../ui/PortTitle'
 
 export interface EnumPortProps {
   node: INode
   port: IPort<EnumPortConfig>
+  context: PortContextValue
 }
 
 export function EnumPort(props: EnumPortProps) {
-  const { node, port } = props
-  const { updatePortValue, getEdgesForPort } = usePortContext()
+  const { node, port, context } = props
+  const { updatePortValue, getEdgesForPort } = context
 
   const config = port.getConfig()
   const ui = config.ui
-  const connectedEdges = getEdgesForPort(port.id)
+
+  // Memoize edges for this port
+  const connectedEdges = useMemo(() => {
+    return getEdgesForPort(port.id)
+  }, [getEdgesForPort, port.id])
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
@@ -43,13 +58,14 @@ export function EnumPort(props: EnumPortProps) {
   // The configuration should include an "options" array.
   const options = config.options || []
 
-  const handleValueChange = (value: string) => {
+  // Memoize value change handler
+  const handleValueChange = useCallback((value: string) => {
     updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,
     })
-  }
+  }, [node.id, port.id, updatePortValue])
 
   // If the port should be hidden, don't render it.
   if (ui?.hidden)

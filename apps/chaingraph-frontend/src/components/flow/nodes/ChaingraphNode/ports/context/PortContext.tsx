@@ -8,8 +8,7 @@
 
 import type { EdgeData } from '@/store/edges/types'
 import type { IPortConfig } from '@badaitech/chaingraph-types'
-import type { ReactNode } from 'react'
-import { createContext, useContext } from 'react'
+import { createContext } from 'react'
 
 // Parameter interfaces for callbacks
 export interface UpdatePortValueParams {
@@ -51,8 +50,6 @@ export interface RemoveElementArrayPortParams {
 }
 
 export interface PortContextValue {
-  // Zoom related
-  zoom: number
   // UI callbacks
   updatePortValue: (params: UpdatePortValueParams) => void
   updatePortUI: (params: UpdatePortUIParams) => void
@@ -66,26 +63,4 @@ export interface PortContextValue {
   getEdgesForPort: (portId: string) => EdgeData[]
 }
 
-const PortContext = createContext<PortContextValue | null>(null)
-
-export function PortContextProvider({
-  children,
-  value,
-}: {
-  children: ReactNode
-  value: PortContextValue
-}) {
-  return (
-    <PortContext.Provider value={value}>
-      {children}
-    </PortContext.Provider>
-  )
-}
-
-export function usePortContext(): PortContextValue {
-  const context = useContext(PortContext)
-  if (!context) {
-    throw new Error('usePortContext must be used within a PortContextProvider')
-  }
-  return context
-}
+export const PortContext = createContext<PortContextValue | null>(null)

@@ -9,7 +9,13 @@
 import type { JSONValue } from '../../utils/json'
 import type { BooleanPortConfig, BooleanPortValue, IPortPlugin } from '../base'
 import { z } from 'zod'
-import { basePortConfigSchema, booleanPortConfigUISchema, isBooleanPortValue, PortError, PortErrorType } from '../base'
+import {
+  basePortConfigSchema,
+  booleanPortConfigUISchema,
+  isBooleanPortValue,
+  PortError,
+  PortErrorType,
+} from '../base'
 
 /**
  * Schemas for boolean port validation
@@ -89,7 +95,7 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
     try {
       // For boolean port, we can simply return the config as is
       // since it doesn't contain any non-serializable parts
-      return config
+      return { ...config }
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

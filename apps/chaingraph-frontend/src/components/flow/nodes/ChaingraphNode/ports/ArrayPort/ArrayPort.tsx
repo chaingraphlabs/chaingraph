@@ -7,6 +7,9 @@
  */
 
 import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+import type {
   ArrayPortConfig,
   ArrayPort as ArrayPortType,
   INode,
@@ -17,8 +20,7 @@ import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, useMemo, useState } from 'react'
-import { usePortContext } from '../context/PortContext'
+import { Fragment, memo, useCallback, useMemo, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddElementPopover } from './AddElementPopover'
@@ -28,6 +30,7 @@ import { PortHeader } from './PortHeader'
 export interface ArrayPortProps {
   node: INode
   port: IPort<ArrayPortConfig>
+  context: PortContextValue
 }
 
 const variants = {
@@ -35,31 +38,39 @@ const variants = {
   closed: { opacity: 0, height: 0 },
 } as const
 
-function renderChildrenHiddenHandles(node: INode, port: IPort) {
-  return filterPorts(
-    node,
-    p => p.getConfig().parentId === port.getConfig().id,
-  )
-    .map(childPort => (
-      <Fragment key={childPort.id}>
-        <PortHandle
-          key={childPort.id}
-          port={childPort}
-          className={cn('opacity-0')}
-        />
-        {renderChildrenHiddenHandles(node, childPort)}
-      </Fragment>
-    ))
-}
+// Extracted to a memoizable component
+const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }) => {
+  const childPorts = useMemo(() => {
+    return filterPorts(
+      node,
+      p => p.getConfig().parentId === port.getConfig().id,
+    )
+  }, [node, port])
 
-export function ArrayPort({ node, port }: ArrayPortProps) {
+  return (
+    <>
+      {childPorts.map(childPort => (
+        <Fragment key={childPort.id}>
+          <PortHandle
+            key={childPort.id}
+            port={childPort}
+            className={cn('opacity-0')}
+          />
+          <ChildrenHiddenHandles node={node} port={childPort} />
+        </Fragment>
+      ))}
+    </>
+  )
+})
+
+export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
   const {
     updatePortUI,
     appendElementArrayPort,
     removeElementArrayPort,
     getEdgesForPort,
-  } = usePortContext()
+  } = context
 
   const config = port.getConfig()
   const title = config.title || config.key || port.id
@@ -67,12 +78,48 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
   const isOutput = config.direction === 'output'
   const ui = config.ui
 
-  const connectedEdges = getEdgesForPort(port.id)
+  // Memoize edges
+  const connectedEdges = useMemo(() => {
+    return getEdgesForPort(port.id)
+  }, [getEdgesForPort, port.id])
+
   const values = useMemo(() => port.getValue() ?? [], [port])
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges) && Boolean(isMutable)
   }, [config, connectedEdges, isMutable])
+
+  // Memoize callback functions
+  const handleAddElement = useCallback(() => {
+    setIsAddPropOpen(true)
+  }, [])
+
+  const handleClosePopover = useCallback(() => {
+    setIsAddPropOpen(false)
+  }, [])
+
+  const handleSubmitPopover = useCallback(() => {
+    appendElementArrayPort({
+      nodeId: node.id,
+      portId: port.id,
+      value: config.itemConfig.defaultValue,
+    })
+    setIsAddPropOpen(false)
+  }, [node.id, port.id, config.itemConfig.defaultValue, appendElementArrayPort])
+
+  const handleToggleCollapsible = useCallback(() => {
+    updatePortUI({
+      nodeId: node.id,
+      portId: port.id,
+      ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },
+    })
+  }, [node.id, port.id, config.ui?.collapsible, updatePortUI])
+
+  // Memoize child ports to prevent recalculation
+  const childPorts = useMemo(() => {
+    return Array.from(node.ports.values())
+      .filter(p => p.getConfig().parentId === config.id)
+  }, [node.ports, config.id])
 
   if (ui?.hide)
     return null
@@ -84,7 +131,7 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!config.ui?.collapsible && renderChildrenHiddenHandles(node, port as IPort)}
+      {!config.ui?.collapsible && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
       {!isOutput && <PortHandle port={port} />}
 
@@ -108,13 +155,7 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
             title={title}
             isOutput={isOutput}
             isCollapsible={Boolean(isMutable && values.length > 0)}
-            onClick={() => {
-              updatePortUI({
-                nodeId: node.id,
-                portId: port.id,
-                ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },
-              })
-            }}
+            onClick={handleToggleCollapsible}
           />
 
           <pre>{JSON.stringify(port.getValue(), null, 2)}</pre>
@@ -132,28 +173,24 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
                   : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
               )}
             >
-
-              {Array.from(node.ports.values())
-                .filter(p => p.getConfig().parentId === config.id)
-                .map((childPort, index) => {
-                  return (
-                    <PortField
-                      key={childPort.id}
-                      parentPort={port}
-                      node={node}
-                      port={childPort as IPort}
-                      isOutput={isOutput}
-                      isMutable={isMutable ?? false}
-                      onDelete={() => {
-                        removeElementArrayPort({
-                          nodeId: node.id,
-                          portId: port.id,
-                          index,
-                        })
-                      }}
-                    />
-                  )
-                })}
+              {childPorts.map((childPort, index) => (
+                <PortField
+                  key={childPort.id}
+                  parentPort={port}
+                  node={node}
+                  port={childPort as IPort}
+                  context={context}
+                  isOutput={isOutput}
+                  isMutable={isMutable ?? false}
+                  onDelete={() => {
+                    removeElementArrayPort({
+                      nodeId: node.id,
+                      portId: port.id,
+                      index,
+                    })
+                  }}
+                />
+              ))}
 
               {isMutable && needRenderEditor && (
                 <Popover open={isAddPropOpen}>
@@ -166,7 +203,7 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
                         'w-fit flex',
                         isOutput ? 'flex-row-reverse' : 'flex-row',
                       )}
-                      onClick={() => setIsAddPropOpen(true)}
+                      onClick={handleAddElement}
                     >
                       Add Element
                     </button>
@@ -174,16 +211,8 @@ export function ArrayPort({ node, port }: ArrayPortProps) {
                   {isAddPropOpen && (
                     <AddElementPopover
                       port={port as ArrayPortType}
-                      onClose={() => setIsAddPropOpen(false)}
-                      onSubmit={() => {
-                        appendElementArrayPort({
-                          nodeId: node.id,
-                          portId: port.id,
-                          value: config.itemConfig.defaultValue,
-                        })
-
-                        setIsAddPropOpen(false)
-                      }}
+                      onClose={handleClosePopover}
+                      onSubmit={handleSubmitPopover}
                     />
                   )}
                 </Popover>
