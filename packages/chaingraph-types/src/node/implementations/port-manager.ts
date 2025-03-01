@@ -98,6 +98,14 @@ export class PortManager implements IPortManager {
    * @param portId The ID of the port to remove
    */
   removePort(portId: string): void {
+    // remove all child ports first
+    for (const port of this._ports.values()) {
+      if (port.getConfig().parentId === portId) {
+        this.removePort(port.id)
+      }
+    }
+
+    // remove the port itself
     if (!this._ports.delete(portId)) {
       throw new Error(`Port with ID ${portId} does not exist.`)
     }

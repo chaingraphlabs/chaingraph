@@ -9,9 +9,8 @@ import type { BooleanPortConfig, ExtractValue, INode, IPort } from '@badaitech/c
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor.ts'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { requestUpdatePortValue } from '@/store/ports'
 import { useMemo } from 'react'
+import { usePortContext } from '../context/PortContext'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -22,17 +21,19 @@ export interface BooleanPortProps {
 
 export function BooleanPort(props: BooleanPortProps) {
   const { node, port } = props
+  const { updatePortValue, getEdgesForPort } = usePortContext()
+
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
 
-  const connectedEdges = useEdgesForPort(port.id)
+  const connectedEdges = getEdgesForPort(port.id)
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
   const handleChange = (value: ExtractValue<BooleanPortConfig> | undefined) => {
-    requestUpdatePortValue({
+    updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,

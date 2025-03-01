@@ -10,11 +10,10 @@ import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { addFieldObjectPort, removeFieldObjectPort, requestUpdatePortUI } from '@/store/ports'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, useMemo, useState } from 'react'
+import { usePortContext } from '../context/PortContext'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddPropPopover } from './components/AddPropPopover'
@@ -50,13 +49,20 @@ function renderChildrenHiddenHandles(node: INode, port: IPort) {
 
 export function ObjectPort({ node, port }: ObjectPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
+  const {
+    updatePortUI,
+    addFieldObjectPort,
+    removeFieldObjectPort,
+    getEdgesForPort,
+  } = usePortContext()
+
   const config = port.getConfig()
   const title = config.title || config.key || port.id
   const isSchemaMutable = config.isSchemaMutable
   const isOutput = config.direction === 'output'
   const ui = config.ui
 
-  const connectedEdges = useEdgesForPort(port.id)
+  const connectedEdges = getEdgesForPort(port.id)
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
@@ -94,7 +100,7 @@ export function ObjectPort({ node, port }: ObjectPortProps) {
             isOutput={isOutput}
             isCollapsible={!!config.ui?.collapsible}
             onClick={() => {
-              requestUpdatePortUI({
+              updatePortUI({
                 nodeId: node.id,
                 portId: port.id,
                 ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },

@@ -15,10 +15,10 @@ import type {
   ObjectPortConfig,
   StreamPortConfig,
 } from '../port'
-import type { INode } from './interface'
-import { v7 as uuidv7 } from 'uuid'
-import { getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
-import { deepCopy } from '../utils'
+import type {INode} from './interface'
+import {v7 as uuidv7} from 'uuid'
+import {getOrCreateNodeMetadata, getPortsMetadata} from '../decorator'
+import {deepCopy} from '../utils'
 
 export interface Context {
   nodeId: string
@@ -77,26 +77,26 @@ export class PortConfigProcessor {
     portConfig = this.assignBasicFields(portConfig, context)
 
     // Process nested configurations based on port kind
-    if (portConfig.type === 'object') {
-      portConfig = this.processObjectPortConfig(portConfig, context)
-    } else if (portConfig.type === 'array') {
-      portConfig = this.processArrayPortConfig(portConfig, context)
-    } else if (portConfig.type === 'enum') {
-      portConfig = this.processEnumPortConfig(portConfig, context)
-    } else if (portConfig.type === 'any') {
-      portConfig = this.processAnyPortConfig(portConfig, context)
-    } else if (portConfig.type === 'stream') {
-      portConfig = this.processStreamPortConfig(portConfig, context)
-    } else if (
-      portConfig.type === 'string'
-      || portConfig.type === 'number'
-      || portConfig.type === 'boolean'
-    ) {
-      // For primitive port configs, no further processing is needed
-      // All necessary fields have been assigned in 'assignBasicFields'
-    } else {
-      throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
-    }
+    // if (portConfig.type === 'object') {
+    //   portConfig = this.processObjectPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'array') {
+    //   portConfig = this.processArrayPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'enum') {
+    //   portConfig = this.processEnumPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'any') {
+    //   portConfig = this.processAnyPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'stream') {
+    //   portConfig = this.processStreamPortConfig(portConfig, context)
+    // } else if (
+    //   portConfig.type === 'string'
+    //   || portConfig.type === 'number'
+    //   || portConfig.type === 'boolean'
+    // ) {
+    //   // For primitive port configs, no further processing is needed
+    //   // All necessary fields have been assigned in 'assignBasicFields'
+    // } else {
+    //   throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
+    // }
 
     return portConfig
   }
@@ -138,6 +138,7 @@ export class PortConfigProcessor {
     //   newPortConfig.id = propertyKey || this.generateSortableUUID()
     // }
     newPortConfig.id = portConfig.id || this.generateSortableUUID()
+    // newPortConfig.id = this.generateSortableUUID()
 
     // Assign key
     if (!newPortConfig.key) {
@@ -165,7 +166,7 @@ export class PortConfigProcessor {
     }
 
     // Assign nodeId
-    if (!newPortConfig.nodeId) {
+    if (nodeId) {
       newPortConfig.nodeId = nodeId
     }
 

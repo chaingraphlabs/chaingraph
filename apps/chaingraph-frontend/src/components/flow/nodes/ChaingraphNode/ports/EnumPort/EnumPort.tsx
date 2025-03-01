@@ -15,9 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { requestUpdatePortValue } from '@/store/ports'
 import { useMemo } from 'react'
+import { usePortContext } from '../context/PortContext'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -28,9 +27,11 @@ export interface EnumPortProps {
 
 export function EnumPort(props: EnumPortProps) {
   const { node, port } = props
+  const { updatePortValue, getEdgesForPort } = usePortContext()
+
   const config = port.getConfig()
   const ui = config.ui
-  const connectedEdges = useEdgesForPort(port.id)
+  const connectedEdges = getEdgesForPort(port.id)
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
@@ -43,7 +44,7 @@ export function EnumPort(props: EnumPortProps) {
   const options = config.options || []
 
   const handleValueChange = (value: string) => {
-    requestUpdatePortValue({
+    updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,

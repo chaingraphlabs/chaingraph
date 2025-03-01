@@ -10,11 +10,6 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { $activeFlowMetadata } from '@/store'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
-import { useReactFlow } from '@xyflow/react'
-import { useUnit } from 'effector-react'
 import {
   type ChangeEvent,
   type PropsWithChildren,
@@ -23,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { usePortContext } from '../context/PortContext'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -32,13 +28,17 @@ export interface StringPortProps {
 }
 
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
-  const activeFlow = useUnit($activeFlowMetadata)
   const { node, port } = props
+  const {
+    zoom,
+    updatePortValue,
+    updatePortUI,
+    getEdgesForPort,
+  } = usePortContext()
 
   const config = port.getConfig()
   const ui = useMemo(() => config.ui, [config.ui])
-  const connectedEdges = useEdgesForPort(port.id)
-  const { getZoom } = useReactFlow()
+  const connectedEdges = getEdgesForPort(port.id)
 
   const [focused, setFocused] = useState(false)
 
@@ -49,7 +49,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
 
     const value = e.target.value
 
-    requestUpdatePortValue({
+    updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,
@@ -70,13 +70,13 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
     if (!textarea) {
       return
     }
-    if (!activeFlow?.id || !port.getConfig().nodeId) {
+    if (!port.getConfig().nodeId) {
       return
     }
 
     const { width, height } = textarea.getBoundingClientRect()
 
-    const zoom = getZoom()
+    // Using zoom directly from context
     const newDimensions = {
       width: Math.round(width / zoom),
       height: Math.round(height / zoom),
@@ -91,14 +91,14 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
 
     console.log('StringPort handleResize', newDimensions)
 
-    requestUpdatePortUI({
+    updatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: {
         textareaDimensions: newDimensions,
       },
     })
-  }, [activeFlow?.id, port, getZoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
+  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id, updatePortUI])
 
   if (ui?.hidden)
     return null
@@ -126,6 +126,8 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       >
         <PortTitle>
           {title}
+          {' '}
+          {config.id}
         </PortTitle>
 
         {!ui?.isTextArea && needRenderEditor && (

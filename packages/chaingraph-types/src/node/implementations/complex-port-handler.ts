@@ -208,30 +208,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
     // Update array value
     arrayPort.setValue(newValue)
 
-    // Reindex all ports for items after the removed index
-    for (let i = index + 1; i < currentValue.length; i++) {
-      const oldPortId = `${arrayPort.id}[${i}]`
-      const newPortId = `${arrayPort.id}[${i - 1}]`
-
-      const itemPort = this.portManager.getPort(oldPortId)
-      if (itemPort) {
-        // Update port config
-        const portConfig = itemPort.getConfig()
-        const updatedConfig = {
-          ...portConfig,
-          id: newPortId,
-          key: (i - 1).toString(),
-        }
-
-        // Create new port with updated config and same value
-        const newPort = PortFactory.createFromConfig(updatedConfig)
-        newPort.setValue(itemPort.getValue())
-
-        // Remove old and add new
-        this.portManager.removePort(oldPortId)
-        this.portManager.setPort(newPort)
-      }
-    }
+    this.recreateArrayItemPorts(arrayPort, newValue)
 
     // Update the array port
     this.portManager.updatePort(arrayPort)

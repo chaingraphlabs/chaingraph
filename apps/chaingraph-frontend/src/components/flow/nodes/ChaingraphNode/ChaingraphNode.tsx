@@ -14,14 +14,24 @@ import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card.tsx'
 import { cn } from '@/lib/utils'
 import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
+import { useEdgesForNode } from '@/store/edges/hooks/useEdges.ts'
 import { $executionState, addBreakpoint, removeBreakpoint } from '@/store/execution'
 import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
 import { useNode } from '@/store/nodes/hooks/useNode.ts'
-import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
+import {
+  addFieldObjectPort,
+  appendElementArrayPort,
+  removeElementArrayPort,
+  removeFieldObjectPort,
+  requestUpdatePortUI,
+  requestUpdatePortValue,
+} from '@/store/ports'
+import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import NodeBody from './NodeBody'
+import { PortContextProvider } from './ports/context/PortContext'
 
 function ChaingraphNodeComponent({
   data,
@@ -30,8 +40,19 @@ function ChaingraphNodeComponent({
 }: NodeProps<ChaingraphNode>) {
   const activeFlow = useUnit($activeFlowMetadata)
   const nodeExecution = useNodeExecution(id)
+  const dispatch = useUnit({
+    addBreakpoint,
+    removeBreakpoint,
+    requestUpdatePortValue,
+    requestUpdatePortUI,
+    appendElementArrayPort,
+    removeElementArrayPort,
+    addFieldObjectPort,
+    removeFieldObjectPort,
+  })
   const { theme } = useTheme()
   const node = useNode(id)
+  const nodeEdges = useEdgesForNode(id)
 
   const [style, setStyle] = useState(
     theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
@@ -39,7 +60,18 @@ function ChaingraphNodeComponent({
 
   const { debugMode } = useUnit($executionState)
   const isBreakpointSet = useBreakpoint(id)
-  const dispatch = useUnit({ addBreakpoint, removeBreakpoint })
+  const { getZoom } = useReactFlow()
+
+  // Get edges for each port - needs to be defined here so the hook works properly
+  const getEdgesForPortFunction = useCallback((portId: string) => {
+    return nodeEdges.filter(
+      edge => edge.sourcePortId === portId || edge.targetPortId === portId,
+    )
+  }, [nodeEdges])
+  // Get current zoom level for port components that need it
+  const currentZoom = useMemo(() => {
+    return getZoom()
+  }, [getZoom])
 
   const handleBreakpointToggle = useCallback(() => {
     if (isBreakpointSet) {
@@ -116,9 +148,37 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      <NodeBody
-        node={node}
-      />
+      <PortContextProvider
+        value={{
+          zoom: currentZoom,
+          updatePortValue: params => dispatch.requestUpdatePortValue(params),
+          updatePortUI: params => dispatch.requestUpdatePortUI(params),
+          addFieldObjectPort: params => dispatch.addFieldObjectPort({
+            nodeId: params.nodeId,
+            portId: params.portId,
+            config: params.config,
+            key: params.key,
+          }),
+          removeFieldObjectPort: params => dispatch.removeFieldObjectPort({
+            nodeId: params.nodeId,
+            portId: params.portId,
+            key: params.key,
+          }),
+          appendElementArrayPort: params => dispatch.appendElementArrayPort({
+            nodeId: params.nodeId,
+            portId: params.portId,
+            value: params.value,
+          }),
+          removeElementArrayPort: params => dispatch.removeElementArrayPort({
+            nodeId: params.nodeId,
+            portId: params.portId,
+            index: params.index,
+          }),
+          getEdgesForPort: getEdgesForPortFunction,
+        }}
+      >
+        <NodeBody node={node} />
+      </PortContextProvider>
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}

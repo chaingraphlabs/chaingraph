@@ -40,18 +40,18 @@ export function setPortsMetadata(target: any, ports: Map<string, any>): void {
   Reflect.defineMetadata(PORTS_METADATA_KEY, ports, target)
 }
 
-export function getPortMetadata(target: any, propertyKey: string): Record<string, any> {
+export function getPortMetadata(target: any, propertyKey: string | symbol): Record<string, any> {
   const ports = getPortsMetadata(target)
-  return ports.get(propertyKey) || {}
+  return ports.get(propertyKey as string) || {}
 }
 
-export function setPortMetadata(target: any, propertyKey: string, metadata: Record<string, any>): void {
+export function setPortMetadata(target: any, propertyKey: string | symbol, metadata: Record<string, any>): void {
   const ports = getPortsMetadata(target)
-  ports.set(propertyKey, metadata)
+  ports.set(propertyKey as string, metadata)
   setPortsMetadata(target, ports)
 }
 
-export function updatePortMetadata(target: any, propertyKey: string, partial: Record<string, any>): void {
+export function updatePortMetadata(target: any, propertyKey: string | symbol, partial: Record<string, any>): void {
   const current = getPortMetadata(target, propertyKey)
   const updated = { ...current, ...partial }
   setPortMetadata(target, propertyKey, updated)

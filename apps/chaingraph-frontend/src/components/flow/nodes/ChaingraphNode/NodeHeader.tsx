@@ -70,6 +70,8 @@ export function NodeHeader({
           style={{ color: style.text }}
         >
           {node.metadata.title}
+          {' '}
+          {node.id.slice(0, 32)}
         </h3>
       </div>
 

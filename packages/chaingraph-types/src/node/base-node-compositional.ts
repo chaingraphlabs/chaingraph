@@ -422,6 +422,9 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       if (!portsConfig) {
         throw new Error('Ports metadata is missing. Ensure @Port decorator is used or portsConfig is provided.')
       }
+
+      // clone portsConfig to avoid modifying the original
+      portsConfig = new Map(portsConfig)
     }
 
     // Process PortConfigs

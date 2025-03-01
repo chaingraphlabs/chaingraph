@@ -10,9 +10,8 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { NumberInput } from '@/components/ui/number-input.tsx'
 import { Slider } from '@/components/ui/slider.tsx'
 import { cn } from '@/lib/utils'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { requestUpdatePortValue } from '@/store/ports'
 import { useMemo } from 'react'
+import { usePortContext } from '../context/PortContext'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -23,18 +22,20 @@ export interface NumberPortProps {
 
 export function NumberPort(props: NumberPortProps) {
   const { node, port } = props
+  const { updatePortValue, getEdgesForPort } = usePortContext()
+
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
 
-  const connectedEdges = useEdgesForPort(port.id)
+  const connectedEdges = getEdgesForPort(port.id)
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
   const handleChange = (value: ExtractValue<NumberPortConfig> | undefined) => {
-    requestUpdatePortValue({
+    updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,

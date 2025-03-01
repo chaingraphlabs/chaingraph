@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
+import type { EdgeData } from '@/store/edges/types'
+import type { IPortConfig } from '@badaitech/chaingraph-types'
+import type { ReactNode } from 'react'
+import { createContext, useContext } from 'react'
+
+// Parameter interfaces for callbacks
+export interface UpdatePortValueParams {
+  nodeId: string
+  portId: string
+  value: any
+}
+
+export interface UpdatePortUIParams {
+  nodeId: string
+  portId: string
+  ui: Record<string, any>
+}
+
+export interface AddFieldObjectPortParams {
+  nodeId: string
+  portId: string
+  config: IPortConfig
+  key: string
+  defaultValue?: any
+}
+
+export interface RemoveFieldObjectPortParams {
+  nodeId: string
+  portId: string
+  key: string
+}
+
+export interface AddElementArrayPortParams {
+  nodeId: string
+  portId: string
+  value: any
+}
+
+export interface RemoveElementArrayPortParams {
+  nodeId: string
+  portId: string
+  index: number
+}
+
+export interface PortContextValue {
+  // Zoom related
+  zoom: number
+  // UI callbacks
+  updatePortValue: (params: UpdatePortValueParams) => void
+  updatePortUI: (params: UpdatePortUIParams) => void
+  // Object port callbacks
+  addFieldObjectPort: (params: AddFieldObjectPortParams) => void
+  removeFieldObjectPort: (params: RemoveFieldObjectPortParams) => void
+  // Array port callbacks
+  appendElementArrayPort: (params: AddElementArrayPortParams) => void
+  removeElementArrayPort: (params: RemoveElementArrayPortParams) => void
+  // Edge utilities
+  getEdgesForPort: (portId: string) => EdgeData[]
+}
+
+const PortContext = createContext<PortContextValue | null>(null)
+
+export function PortContextProvider({
+  children,
+  value,
+}: {
+  children: ReactNode
+  value: PortContextValue
+}) {
+  return (
+    <PortContext.Provider value={value}>
+      {children}
+    </PortContext.Provider>
+  )
+}
+
+export function usePortContext(): PortContextValue {
+  const context = useContext(PortContext)
+  if (!context) {
+    throw new Error('usePortContext must be used within a PortContextProvider')
+  }
+  return context
+}

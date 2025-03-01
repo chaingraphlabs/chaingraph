@@ -26,6 +26,11 @@ import { EnumPort } from './ports/EnumPort/EnumPort'
 import { StringPort } from './ports/StringPort/StringPort'
 import { StubPort } from './ports/StubPort/StubPort'
 
+/**
+ * PortProps interface for all components rendered through PortComponent
+ * The actual dependencies needed by each port component are passed through
+ * the PortContext instead of directly as props
+ */
 export interface PortProps {
   node: INode
   port: IPort
@@ -40,42 +45,27 @@ export function PortComponent(props: PortProps) {
   switch (port.getConfig().type) {
     case 'string': {
       return (
-        <StringPort
-          node={node}
-          port={port as IPort<StringPortConfig>}
-        />
+        <StringPort node={node} port={port as IPort<StringPortConfig>} />
       )
     }
     case 'boolean': {
       return (
-        <BooleanPort
-          node={node}
-          port={port as IPort<BooleanPortConfig>}
-        />
+        <BooleanPort node={node} port={port as IPort<BooleanPortConfig>} />
       )
     }
     case 'number': {
       return (
-        <NumberPort
-          node={node}
-          port={port as IPort<NumberPortConfig>}
-        />
+        <NumberPort node={node} port={port as IPort<NumberPortConfig>} />
       )
     }
     case 'enum': {
       return (
-        <EnumPort
-          node={node}
-          port={port as IPort<EnumPortConfig>}
-        />
+        <EnumPort node={node} port={port as IPort<EnumPortConfig>} />
       )
     }
     case 'object': {
       return (
-        <ObjectPort
-          node={node}
-          port={port as IPort<ObjectPortConfig>}
-        />
+        <ObjectPort node={node} port={port as IPort<ObjectPortConfig>} />
       )
     }
     case 'array': {

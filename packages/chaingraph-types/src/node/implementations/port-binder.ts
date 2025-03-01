@@ -49,6 +49,7 @@ export class PortBinder implements IPortBinder {
     }
 
     // Need a reference to 'this' for the setter function
+    // eslint-disable-next-line ts/no-this-alias
     const self = this
     const portManager = this.portManager
 

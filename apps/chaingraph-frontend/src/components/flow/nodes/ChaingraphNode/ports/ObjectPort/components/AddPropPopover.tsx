@@ -95,7 +95,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
           },
         },
       },
-      isSchemaMutable: false,
+      isSchemaMutable: true,
       defaultValue: {
         a: '',
         b: 0,
