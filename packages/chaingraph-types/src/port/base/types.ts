@@ -44,16 +44,21 @@ export class PortError extends Error {
   }
 }
 
-export type PortType =
-  | 'string'
-  | 'number'
-  | 'array'
-  | 'object'
-  | 'boolean'
-  | 'stream'
-  | 'enum'
-  | 'secret'
-  | 'any'
+/**
+ * Port type literals
+ */
+export const PORT_TYPES = [
+  'string',
+  'number',
+  'array',
+  'object',
+  'boolean',
+  'stream',
+  'enum',
+  'secret',
+  'any',
+] as const
+export type PortType = (typeof PORT_TYPES)[number]
 
 export const PortDirection = {
   Input: 'input',

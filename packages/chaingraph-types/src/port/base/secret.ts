@@ -17,7 +17,14 @@ import { z } from 'zod'
  */
 const secretTypeSchemas = {
   openai: z.string().min(1),
-  x: z.string().min(1),
+  xAPI: z.object({
+    key: z.string().min(1),
+    secretKey: z.string().min(1),
+  }),
+  xApp: z.object({
+    key: z.string().min(1),
+    secretKey: z.string().min(1),
+  }),
   string: z.string().min(1),
 } satisfies Record<string, z.ZodType>
 
@@ -30,11 +37,6 @@ export type SecretTypeMap = { [key in keyof typeof secretTypeSchemas]: z.infer<t
  * Discriminators of supported secret types.
  */
 export type SecretType = keyof SecretTypeMap
-
-/**
- * Supported value types of secrets.
- */
-export type SecretValue = SecretTypeMap[SecretType]
 
 /**
  * An encrypted value with a method to decrypt this value.
@@ -73,14 +75,11 @@ const schema = z.object({
  * @throws Error if secret type is not supported.
  */
 export function deserialize<T extends SecretType>(secretType: T, value: JSONValue): EncryptedSecretValue<T> {
-  switch (secretType) {
-    case 'openai':
-    case 'x':
-    case 'string':
-      return wrap(secretType, schema.parse(value))
-    default:
-      throw new Error(`Unknown secret type: ${secretType satisfies never}`)
+  if (!isSupportedSecretType(secretType)) {
+    throw new Error(`Unknown secret type: ${secretType}`)
   }
+
+  return wrapSecret(secretType, schema.parse(value))
 }
 
 /**
@@ -91,17 +90,14 @@ export function deserialize<T extends SecretType>(secretType: T, value: JSONValu
  * @throws Error if secret type is not supported.
  */
 export function serialize<T extends SecretType>(secretType: T, secret: EncryptedSecretValue<T>): JSONValue {
-  switch (secretType) {
-    case 'openai':
-    case 'x':
-    case 'string':
-      return {
-        encrypted: secret.encrypted,
-        publicKey: secret.publicKey,
-      } satisfies SerializableEncryptedSecretValue<T>
-    default:
-      throw new Error(`Unknown secret type: ${secretType satisfies never}`)
+  if (!isSupportedSecretType(secretType)) {
+    throw new Error(`Unknown secret type: ${secretType}`)
   }
+
+  return {
+    encrypted: secret.encrypted,
+    publicKey: secret.publicKey,
+  } satisfies SerializableEncryptedSecretValue<T>
 }
 
 /**
@@ -120,7 +116,7 @@ const ivLength = 12
 /**
  * Wraps an encrypted value to an object with a decrypt function.
  */
-function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedSecretValue<T>): EncryptedSecretValue<T> {
+export function wrapSecret<T extends SecretType>(secretType: T, value: SerializableEncryptedSecretValue<T>): EncryptedSecretValue<T> {
   const schema = secretTypeSchemas[secretType]
   const decrypt = async (ctx: ExecutionContext) => {
     const keyPair = await ctx.getECDHKeyPair()
@@ -133,8 +129,11 @@ function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedS
     const iv = value.encrypted.slice(0, ivLength)
     const data = value.encrypted.slice(ivLength)
 
-    const decrypted = await subtle.decrypt({ ...encryptionAlgorithm, iv }, encryptionKey, data)
-    return schema.parse(Buffer.from(decrypted).toString())
+    const decrypted = await subtle.decrypt({
+      ...encryptionAlgorithm,
+      iv,
+    }, encryptionKey, data)
+    return schema.parse(JSON.parse(Buffer.from(decrypted).toString())) as SecretTypeMap[T]
   }
 
   return {
@@ -142,4 +141,12 @@ function wrap<T extends SecretType>(secretType: T, value: SerializableEncryptedS
     encrypted: value.encrypted,
     publicKey: value.publicKey,
   }
+}
+
+/**
+ * Type guard that narrows the type of the given string to a {@link SecretType}.
+ * @param t A string that might be a {@link SecretType}.
+ */
+export function isSupportedSecretType(t: string): t is SecretType {
+  return t in secretTypeSchemas
 }

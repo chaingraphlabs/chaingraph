@@ -74,6 +74,6 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
    * @inheritDoc
    */
   protected deserializeValue(data: JSONValue): SecretPortValue<S> {
-    return SecretPortPlugin.deserializeValue(data, this.config) as SecretPortValue<S>
+    return SecretPortPlugin.deserializeValue(data, this.config)
   }
 }
