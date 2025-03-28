@@ -1,0 +1,32 @@
+{
+  "name": "@badaitech/badai-api",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Bad AI API.",
+  "license": "BUSL-1.1",
+  "scripts": {
+    "check-types": "tsc -b",
+    "graphql-codegen": "graphql-codegen --config graphql-codegen.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com//badaitech/chaingraph.git",
+    "directory": "./packages/badai-api"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "private": true,
+  "dependencies": {
+    "graphql": "^16.10.0",
+    "graphql-request": "^7.1.2"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "5.0.5",
+    "@graphql-codegen/typescript": "4.1.5",
+    "@graphql-codegen/typescript-document-nodes": "4.0.15",
+    "typescript": "^5.7.3"
+  }
+}

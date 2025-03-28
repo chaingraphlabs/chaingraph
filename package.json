@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "pnpm@10.3.0+sha256.24dd5c65d86c7d0710aba16699fbc46d74fc9acf2b419f4945207f2de9e57e23",
+  "packageManager": "pnpm@10.5.2",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
@@ -17,6 +17,7 @@
   },
   "scripts": {
     "clean": "make clean",
+    "preview": "pnpm --filter chaingraph-backend run start | pnpm --filter chaingraph-frontend run preview",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "build:front": "turbo run build --filter=@badaitech/chaingraph-frontend",
@@ -52,6 +53,7 @@
     "@eslint/js": "^9.17.0",
     "@swc/core": "^1.10.7",
     "@testing-library/jest-dom": "^6.6.3",
+    "@turbo/codemod": "^2.4.4",
     "@types/eslint__js": "^8.42.3",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "@typescript-eslint/parser": "^8.19.0",
@@ -74,7 +76,7 @@
     "prettier-plugin-organize-imports": "4.1.0",
     "prettier-plugin-packagejson": "2.5.6",
     "prettier-plugin-sort-json": "4.0.0",
-    "turbo": "^2.4.1",
+    "turbo": "^2.4.4",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.0",
     "unplugin-auto-import": "^0.19.0",

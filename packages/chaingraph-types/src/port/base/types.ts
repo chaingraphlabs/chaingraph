@@ -16,8 +16,9 @@ import type {
   StreamPortConfigUIType,
   StringPortConfigUIType,
 } from '../base'
+import type { EncryptedSecretValue, SecretType } from './secret'
 import { z } from 'zod'
-import { MultiChannel, MultiChannelSchema } from '../..//utils/multi-channel'
+import { MultiChannel, MultiChannelSchema } from '../../utils'
 
 /**
  * Port error types
@@ -54,6 +55,7 @@ export const PORT_TYPES = [
   'boolean',
   'stream',
   'enum',
+  'secret',
   'any',
 ] as const
 export type PortType = (typeof PORT_TYPES)[number]
@@ -120,6 +122,15 @@ export interface ArrayPortConfig<
   minLength?: number
   maxLength?: number
   ui?: BasePortConfigUIType & ArrayPortConfigUIType
+}
+
+/**
+ * Secret port configuration.
+ */
+export interface SecretPortConfig<S extends SecretType = 'string'> extends BasePortConfig {
+  type: 'secret'
+  secretType: S
+  ui?: BasePortConfigUIType
 }
 
 /**
@@ -212,6 +223,11 @@ export type NumberPortValue = number
 export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<ExtractValue<Item>>
 
 /**
+ * Secret port value.
+ */
+export type SecretPortValue<Secret extends SecretType = 'string'> = EncryptedSecretValue<Secret>
+
+/**
  * Object port value
  */
 // export interface ObjectPortValue<S extends ObjectSchema = ObjectSchema> {
@@ -260,15 +276,7 @@ export type AnyPortValue = any | undefined | null
 /**
  * Union type of all port configurations
  */
-export type IPortConfig =
-  | StringPortConfig
-  | NumberPortConfig
-  | BooleanPortConfig
-  | ArrayPortConfig<any>
-  | ObjectPortConfig<any>
-  | StreamPortConfig<any>
-  | EnumPortConfig
-  | AnyPortConfig
+export type IPortConfig = ConfigTypeMap[keyof ConfigTypeMap]
 
 /**
  * Union type of all port values
@@ -286,9 +294,14 @@ export type IPortValue =
 export type PortConfigByType<T extends PortType> = ConfigTypeMap[T]
 
 /**
+ * Compile time check that given type has configs for every PortType.
+ */
+type ValidateConfigTypeMap<T extends Record<PortType, IPortConfig>> = T
+
+/**
  * Type mapping for configs
  */
-export interface ConfigTypeMap {
+export type ConfigTypeMap = ValidateConfigTypeMap<{
   string: StringPortConfig
   number: NumberPortConfig
   boolean: BooleanPortConfig
@@ -296,13 +309,19 @@ export interface ConfigTypeMap {
   object: ObjectPortConfig<any>
   stream: StreamPortConfig<any>
   enum: EnumPortConfig
+  secret: SecretPortConfig<any>
   any: AnyPortConfig
-}
+}>
+
+/**
+ * Compile time check that given type has values for every PortType.
+ */
+type ValidateValueTypeMap<T extends Record<PortType, unknown>> = T
 
 /**
  * Type mapping for values
  */
-export interface ValueTypeMap {
+export type ValueTypeMap = ValidateValueTypeMap<{
   string: StringPortValue
   number: NumberPortValue
   boolean: BooleanPortValue
@@ -310,8 +329,9 @@ export interface ValueTypeMap {
   object: ObjectPortValue<any>
   stream: StreamPortValue<any>
   enum: EnumPortValue
+  secret: SecretPortValue
   any: AnyPortValue
-}
+}>
 
 /**
  * Interface for port plugins with specific type
@@ -347,13 +367,14 @@ export interface RegistryPlugin {
  * Extract the value type from a port config
  */
 export type ExtractValue<C extends IPortConfig> =
-    C extends StringPortConfig ? StringPortValue :
-      C extends NumberPortConfig ? NumberPortValue :
-        C extends BooleanPortConfig ? BooleanPortValue :
-          C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
-            C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
-              C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
-                C extends EnumPortConfig ? EnumPortValue :
+  C extends StringPortConfig ? StringPortValue :
+    C extends NumberPortConfig ? NumberPortValue :
+      C extends BooleanPortConfig ? BooleanPortValue :
+        C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
+          C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
+            C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
+              C extends EnumPortConfig ? EnumPortValue :
+                C extends SecretPortConfig<infer S> ? SecretPortValue<S> :
                   C extends AnyPortConfig ? AnyPortValue :
                     C extends undefined ? undefined :
                       never

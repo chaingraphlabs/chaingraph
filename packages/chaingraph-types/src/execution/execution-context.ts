@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { subtle } from 'node:crypto'
 import { v4 as uuidv4 } from 'uuid'
 
 export class ExecutionContext {
@@ -14,6 +15,8 @@ export class ExecutionContext {
   public readonly flowId?: string
   public readonly metadata: Record<string, unknown>
   public readonly abortController: AbortController
+
+  private ecdhKeyPair: CryptoKeyPair | null = null
 
   constructor(
     flowId: string,
@@ -30,5 +33,20 @@ export class ExecutionContext {
 
   get abortSignal(): AbortSignal {
     return this.abortController.signal
+  }
+
+  private async generateECDHKeyPair() {
+    this.ecdhKeyPair = await subtle.generateKey({
+      name: 'ECDH',
+      namedCurve: 'P-256',
+    }, false, ['deriveKey'])
+  }
+
+  async getECDHKeyPair(): Promise<CryptoKeyPair> {
+    if (this.ecdhKeyPair === null) {
+      await this.generateECDHKeyPair()
+    }
+
+    return this.ecdhKeyPair!
   }
 }

@@ -29,6 +29,7 @@
   "devDependencies": {
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
+    "@badaitech/badai-api": "workspace:*",
     "@types/react": "^18.3.18"
   }
 }

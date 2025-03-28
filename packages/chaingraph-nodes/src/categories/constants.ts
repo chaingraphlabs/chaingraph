@@ -18,6 +18,7 @@ export const NODE_CATEGORIES = {
   BASIC_VALUES: 'basic-values',
   OTHER: 'other',
   GROUP: 'group',
+  SECRET: 'secret',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -212,6 +213,27 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 8,
+  },
+  [NODE_CATEGORIES.SECRET]: {
+    id: NODE_CATEGORIES.SECRET,
+    label: 'Secret',
+    description: 'Secret nodes 🤫',
+    icon: '',
+    style: {
+      light: {
+        primary: '#b98c33',
+        secondary: '#69758f',
+        background: '#bd93b8',
+        text: '#a32303',
+      },
+      dark: {
+        primary: '#7a098c',
+        secondary: '#c6545e',
+        background: '#f57134',
+        text: '#f68c75',
+      },
+    },
+    order: 9,
   },
 }
 
