@@ -1,0 +1,5 @@
+query GetMessagesWithoutSystem($session: Session!, $chat_id : ChatID!, $from: MessageID!, $limit: Int, $order: String) {
+    messagesWithoutSystem(session: $session, chat_id: $chat_id, from: $from, limit: $limit, order: $order) {
+        ...MessageFields
+    }
+}

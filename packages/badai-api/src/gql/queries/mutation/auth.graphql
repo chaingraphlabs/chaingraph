@@ -1,0 +1,10 @@
+mutation AuthMetamaskLogin($input: MetamaskLoginInput!) {
+  authMetamaskLogin(input: $input) {
+    session
+    user_profile {
+      id
+      name
+      picture
+    }
+  }
+}

@@ -19,6 +19,7 @@ export const NODE_CATEGORIES = {
   OTHER: 'other',
   GROUP: 'group',
   SECRET: 'secret',
+  BADAI: 'badai',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -44,8 +45,31 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
         text: '#8be68d',
       },
     },
+    order: 100,
+  },
+
+  [NODE_CATEGORIES.BADAI]: {
+    id: NODE_CATEGORIES.BADAI,
+    label: 'BadAI',
+    description: 'BadAI nodes',
+    icon: 'FlaskConical',
+    style: {
+      light: {
+        primary: '#C9F7E9', // Softer mint green
+        secondary: '#E6F9F4', // Very light mint
+        background: '#FFFFFF',
+        text: '#0F7F58', // Darker green that complements the mint
+      },
+      dark: {
+        primary: '#0F2E24', // Deep dark green
+        secondary: '#061A14', // Even darker green
+        background: '#1C1C1C',
+        text: '#00D18C', // The signature bright green from your UI
+      },
+    },
     order: 0,
   },
+
   [NODE_CATEGORIES.AI]: {
     id: NODE_CATEGORIES.AI,
     label: 'AI & ML',
@@ -217,20 +241,20 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
   [NODE_CATEGORIES.SECRET]: {
     id: NODE_CATEGORIES.SECRET,
     label: 'Secret',
-    description: 'Secret nodes 🤫',
-    icon: '',
+    description: 'Secret nodes',
+    icon: 'Lock', // Adding a lock icon which is more indicative of secrecy/security
     style: {
       light: {
-        primary: '#b98c33',
-        secondary: '#69758f',
-        background: '#bd93b8',
-        text: '#a32303',
+        primary: '#E8F0FE', // Soft steel blue - security-oriented but subtle
+        secondary: '#F1F7FE',
+        background: '#FFFFFF',
+        text: '#2C5282', // Deeper navy blue - conveys trust and security
       },
       dark: {
-        primary: '#7a098c',
-        secondary: '#c6545e',
-        background: '#f57134',
-        text: '#f68c75',
+        primary: '#1A2E4A', // Dark navy - serious, secure feeling
+        secondary: '#0F1B2E', // Even darker navy
+        background: '#1C1C1C',
+        text: '#90CDF4', // Light blue that's visible but not too bright
       },
     },
     order: 9,

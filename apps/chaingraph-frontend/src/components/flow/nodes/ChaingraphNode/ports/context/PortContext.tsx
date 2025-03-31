@@ -63,4 +63,16 @@ export interface PortContextValue {
   getEdgesForPort: (portId: string) => EdgeData[]
 }
 
-export const PortContext = createContext<PortContextValue | null>(null)
+// Create a default context value with no-op functions
+const defaultContext: PortContextValue = {
+  updatePortValue: () => { },
+  updatePortUI: () => { },
+  addFieldObjectPort: () => { },
+  removeFieldObjectPort: () => { },
+  appendElementArrayPort: () => { },
+  removeElementArrayPort: () => { },
+  getEdgesForPort: () => [],
+}
+
+// Create the React context
+export const PortContext = createContext<PortContextValue>(defaultContext)

@@ -27,6 +27,7 @@ export enum LLMModels {
   Gpt4oMini = 'gpt-4o-mini',
   Gpt4o = 'gpt-4o',
   GptO3Mini = 'o3-mini',
+  Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
 }
 
@@ -57,6 +58,7 @@ const llmModels = {
   [LLMModels.Gpt4oMini]: new LLMModel(LLMModels.Gpt4oMini, 0),
   [LLMModels.Gpt4o]: new LLMModel(LLMModels.Gpt4o, 0),
   [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
+  [LLMModels.Claude37Sonnet20250219]: new LLMModel(LLMModels.Claude37Sonnet20250219, 0),
   [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
 }
 
@@ -175,6 +177,9 @@ class LLMCallNode extends BaseNode {
       } finally {
         // Close the stream in any case
         this.outputStream.close()
+
+        console.log('Streaming ended')
+        console.log('Response:', this.outputStream.getBuffer().join(''))
       }
     }
 

@@ -131,6 +131,7 @@ export interface SecretPortConfig<S extends SecretType = 'string'> extends BaseP
   type: 'secret'
   secretType: S
   ui?: BasePortConfigUIType
+  defaultValue: undefined
 }
 
 /**

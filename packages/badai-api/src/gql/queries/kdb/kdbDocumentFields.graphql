@@ -1,0 +1,29 @@
+fragment DocumentFields on DocumentMeta {
+    document_id
+    collection_id
+    url
+    created_at
+    published_at
+    name
+    description
+    tags
+    metadata {
+        key
+        value
+    }
+
+    indexing_state {
+        completion_cost
+        completion_tokens
+        content_tokens
+        embedding_cost
+        is_embedded
+        is_indexed_qa
+        is_indexed_triplet
+        is_parsed
+        is_summarized
+        prompt_cost
+        prompt_tokens
+    }
+
+}

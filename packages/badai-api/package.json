@@ -20,10 +20,13 @@
   "types": "./src/index.ts",
   "private": true,
   "dependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@types/node": "^22.13.14",
     "graphql": "^16.10.0",
     "graphql-request": "^7.1.2"
   },
   "devDependencies": {
+    "@badaitech/typescript-config": "workspace:*",
     "@graphql-codegen/cli": "5.0.5",
     "@graphql-codegen/typescript": "4.1.5",
     "@graphql-codegen/typescript-document-nodes": "4.0.15",

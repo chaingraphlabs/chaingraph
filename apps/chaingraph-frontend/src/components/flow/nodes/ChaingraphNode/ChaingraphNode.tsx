@@ -6,22 +6,21 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
-import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode/types'
 import type { NodeProps } from '@xyflow/react'
-import { NodeHeader } from '@/components/flow/nodes/ChaingraphNode/NodeHeader.tsx'
-import { BreakpointButton } from '@/components/flow/nodes/debug/BreakpointButton.tsx'
-import { useTheme } from '@/components/theme/hooks/useTheme'
-import { Card } from '@/components/ui/card.tsx'
-import { cn } from '@/lib/utils'
-import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
-import { useEdgesForNode } from '@/store/edges/hooks/useEdges.ts'
-import { $executionState, addBreakpoint, removeBreakpoint } from '@/store/execution'
-import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
-import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
-import { useNode } from '@/store/nodes/hooks/useNode.ts'
+import type { PortContextValue } from './ports/context/PortContext'
+import type { ChaingraphNode } from './types'
+import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/react'
+import { useTheme } from 'components/theme/hooks/useTheme'
+import { Card } from 'components/ui/card'
+import { useUnit } from 'effector-react'
+import { cn } from 'lib/utils.ts'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { $activeFlowMetadata, removeNodeFromFlow } from 'store'
+import { useEdgesForNode } from 'store/edges/hooks/useEdges'
+import { $executionState, addBreakpoint, removeBreakpoint } from 'store/execution'
+import { useBreakpoint } from 'store/execution/hooks/useBreakpoint'
+import { useNodeExecution } from 'store/execution/hooks/useNodeExecution'
+import { useNode } from 'store/nodes/hooks/useNode.ts'
 import {
   addFieldObjectPort,
   appendElementArrayPort,
@@ -29,11 +28,11 @@ import {
   removeFieldObjectPort,
   requestUpdatePortUI,
   requestUpdatePortValue,
-} from '@/store/ports'
-import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/react'
-import { useUnit } from 'effector-react'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+} from 'store/ports'
+import { BreakpointButton } from '../debug/BreakpointButton'
 import NodeBody from './NodeBody'
+import NodeErrorPorts from './NodeErrorPorts'
+import { NodeHeader } from './NodeHeader'
 
 function ChaingraphNodeComponent({
   data,
@@ -181,6 +180,7 @@ function ChaingraphNodeComponent({
 
       <NodeHeader
         node={node}
+        context={portContextValue}
         icon={data.categoryMetadata.icon}
         style={style}
         onDelete={() => removeNodeFromFlow({
@@ -192,9 +192,9 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      {/* <PortContextProvider value={portContextValue}> */}
       <NodeBody node={node} context={portContextValue} />
-      {/* </PortContextProvider> */}
+
+      <NodeErrorPorts node={node} context={portContextValue} />
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}

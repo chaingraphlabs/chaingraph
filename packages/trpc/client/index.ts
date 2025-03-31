@@ -11,15 +11,7 @@ import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
 // IT MUST BE RELATED IMPORT
 import type { AppRouter } from '../server/router'
 import { QueryClient } from '@tanstack/react-query'
-import {
-  createTRPCClient,
-  createWSClient,
-  loggerLink,
-  splitLink,
-  unstable_httpBatchStreamLink,
-  unstable_httpSubscriptionLink,
-  wsLink,
-} from '@trpc/client'
+import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'
 import { createTRPCReact } from '@trpc/react-query'
 import superjson from 'superjson'
 
@@ -49,28 +41,28 @@ export const queryClient = new QueryClient({
   },
 })
 
-export const _trpcClient = trpcReact.createClient({
-  // transformer: superjson,
-  links: [
-    // adds pretty logs to your console in development and logs errors in production
-    loggerLink({
-      withContext: true,
-    }),
-
-    splitLink({
-      // uses the httpSubscriptionLink for subscriptions
-      condition: op => op.type === 'subscription',
-      true: unstable_httpSubscriptionLink({
-        transformer: superjson,
-        url: getUrl(),
-      }),
-      false: unstable_httpBatchStreamLink({
-        transformer: superjson,
-        url: getUrl(),
-      }),
-    }),
-  ],
-})
+// export const _trpcClient = trpcReact.createClient({
+//   // transformer: superjson,
+//   links: [
+//     // adds pretty logs to your console in development and logs errors in production
+//     loggerLink({
+//       withContext: true,
+//     }),
+//
+//     splitLink({
+//       // uses the httpSubscriptionLink for subscriptions
+//       condition: op => op.type === 'subscription',
+//       true: unstable_httpSubscriptionLink({
+//         transformer: superjson,
+//         url: getUrl(),
+//       }),
+//       false: unstable_httpBatchStreamLink({
+//         transformer: superjson,
+//         url: getUrl(),
+//       }),
+//     }),
+//   ],
+// })
 
 // create persistent WebSocket connection
 export const wsClient = createWSClient({
@@ -79,6 +71,7 @@ export const wsClient = createWSClient({
     console.error('WebSocket error:', err)
   },
 })
+
 // configure TRPCClient to use WebSockets transport
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [wsLink<AppRouter>({

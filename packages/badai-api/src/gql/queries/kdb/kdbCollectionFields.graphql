@@ -1,0 +1,22 @@
+fragment CollectionFields on Collection {
+    collection_id
+    agent_id
+    creator_address
+    name
+    description
+    created_at
+    indexing_state {
+        completion_cost
+        completion_tokens
+        content_tokens
+        embedding_cost
+        is_embedded
+        is_indexed_qa
+        is_indexed_triplet
+        is_parsed
+        is_summarized
+        prompt_cost
+        prompt_tokens
+    }
+    tags
+}

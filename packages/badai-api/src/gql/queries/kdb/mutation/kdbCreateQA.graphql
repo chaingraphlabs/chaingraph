@@ -1,0 +1,6 @@
+mutation KDBCreateQA($session: Session!, $qa: CreateQAInput!) {
+    kdbCreateQA(session: $session, qa: $qa) {
+        ...QaFields
+    }
+}
+

@@ -1,0 +1,30 @@
+query MarketplaceAgent($session: Session!, $agent_id: AgentID!) {
+    marketplaceAgent(session: $session, agent_id: $agent_id) {
+        agent_id
+        username
+        first_name
+        last_name
+        avatar
+        role
+        can_answer
+        purpose
+        self_awareness
+        tools {
+            name
+        }
+        llm_model
+        owner_id
+        chain_graph_id
+        prompt
+        llm_config {
+            model
+            max_tokens
+            temperature
+        }
+        chat_history_config {
+            messages_count
+            tokens_limit
+        }
+        template_params
+    }
+}

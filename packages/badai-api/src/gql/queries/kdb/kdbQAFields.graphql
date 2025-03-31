@@ -1,0 +1,64 @@
+fragment QaFields on QA {
+    answer
+    answer_tokens
+    chunk_id
+    chunk_number
+    created_at
+    document_id
+    document_published_at
+    indexing_state {
+        completion_cost
+        completion_tokens
+        content_tokens
+        embedding_cost
+        is_embedded
+        is_indexed_qa
+        is_indexed_triplet
+        is_parsed
+        is_summarized
+        prompt_cost
+        prompt_tokens
+    }
+    model
+    page_number_from
+    page_number_to
+    qa_id
+    question
+    question_tokens
+    task_id
+}
+
+
+fragment QaWithDistanceFields on QAWithDistance {
+    qa {
+        ...QaFields
+    }
+    distance
+}
+
+
+fragment QAWithDocumentsFields on QAWithDocuments {
+    document {
+        ...DocumentFields
+    }
+    qas {
+        ...QaWithDistanceFields
+    }
+}
+
+
+fragment QAWithSimilarityFields on QAWithSimilarity {
+    qa{
+        ...QaFields
+    }
+    similarity
+}
+
+fragment QAWithSimilarityByDocumentsFields on QAWithSimilarityByDocuments {
+    document {
+        ...DocumentFields
+    }
+    qas {
+        ...QAWithSimilarityFields
+    }
+}

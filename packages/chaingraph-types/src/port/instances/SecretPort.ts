@@ -18,8 +18,8 @@ import { SecretPortPlugin } from '../plugins/SecretPortPlugin'
 export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<S>> {
   constructor(config: SecretPortConfig<S>) {
     const defaultUi = {
-      bgColor: '#d816b5',
-      borderColor: '#571041',
+      bgColor: '#008080', // Teal
+      borderColor: '#004040', // Dark Teal
     }
 
     const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }

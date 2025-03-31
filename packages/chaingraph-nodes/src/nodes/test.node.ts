@@ -20,11 +20,37 @@ import {
   Input,
   Node,
   NodeEventType,
+  Number,
+  ObjectSchema,
+  Output,
   PortObject,
   PortVisibility,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../categories'
+
+@ObjectSchema()
+class Address {
+  @String()
+  street: string = ''
+
+  @Number()
+  number: number = 0
+}
+
+@ObjectSchema()
+class User {
+  @String()
+  name: string = ''
+
+  @Number()
+  age: number = 0
+
+  @PortObject({
+    schema: Address,
+  })
+  address: Address = new Address()
+}
 
 @Node({
   title: 'Test node',
@@ -68,6 +94,12 @@ class TestNode extends BaseNode {
     isSchemaMutable: true,
   })
   object: Record<string, unknown> = {}
+
+  @Output()
+  @PortObject({
+    schema: User,
+  })
+  objectOut: Record<string, unknown> = {}
 
   async onEvent(event: NodeEvent): Promise<void> {
     await super.onEvent(event)

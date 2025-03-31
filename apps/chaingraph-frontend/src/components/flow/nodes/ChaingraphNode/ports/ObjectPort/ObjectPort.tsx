@@ -82,6 +82,10 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
+  const needRenderObject = useMemo(() => {
+    return connectedEdges.length === 0 || config.direction === 'output'
+  }, [config, connectedEdges])
+
   // Memoize child ports to prevent recalculation
   const childPorts = useMemo(() => {
     return Array.from(node.ports.values())
@@ -128,7 +132,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
 
       {!isOutput && <PortHandle port={port} />}
 
-      {!needRenderEditor && (
+      {!needRenderObject && (
         <div
           className={cn(
             'flex flex-col w-full',
@@ -140,7 +144,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
         </div>
       )}
 
-      {needRenderEditor && (
+      {needRenderObject && (
         <div className="flex-1 min-w-0">
           <PortHeader
             title={title}

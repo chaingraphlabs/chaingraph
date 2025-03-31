@@ -1,0 +1,5 @@
+mutation EditMessage($session: Session!, $chat_id: ChatID!, $id: MessageID!, $message: MessageEditInput!) {
+    editMessage(session: $session, chat_id: $chat_id, id: $id, message: $message) {
+        ...MessageFields
+    }
+}

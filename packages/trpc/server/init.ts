@@ -10,23 +10,10 @@ import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { IFlowStore } from './stores/flowStore/types'
 import process from 'node:process'
 import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
-import {
-  AnyPortPlugin,
-  ArrayPortPlugin,
-  BooleanPortPlugin,
-  EnumPortPlugin,
-  NodeCatalog,
-  NodeRegistry,
-  NumberPortPlugin,
-  ObjectPortPlugin,
-  PortPluginRegistry,
-  registerFlowTransformers,
-  registerNodeTransformers,
-  StreamPortPlugin,
-  StringPortPlugin,
-} from '@badaitech/chaingraph-types'
+import { NodeCatalog, NodeRegistry, registerSuperjsonTransformers } from '@badaitech/chaingraph-types'
 import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
+import SuperJSON from 'superjson'
 import { initializeContext } from './context'
 import { CleanupService } from './executions/services/cleanup-service'
 import { ExecutionService } from './executions/services/execution-service'
@@ -35,17 +22,7 @@ import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 
 export async function init() {
-  PortPluginRegistry.getInstance().register(StringPortPlugin)
-  PortPluginRegistry.getInstance().register(NumberPortPlugin)
-  PortPluginRegistry.getInstance().register(ArrayPortPlugin)
-  PortPluginRegistry.getInstance().register(ObjectPortPlugin)
-  PortPluginRegistry.getInstance().register(EnumPortPlugin)
-  PortPluginRegistry.getInstance().register(StreamPortPlugin)
-  PortPluginRegistry.getInstance().register(AnyPortPlugin)
-  PortPluginRegistry.getInstance().register(BooleanPortPlugin)
-
-  registerNodeTransformers(NodeRegistry.getInstance())
-  registerFlowTransformers()
+  registerSuperjsonTransformers(SuperJSON, NodeRegistry.getInstance())
 
   // Initialize stores and context
   const db = drizzle(process.env.DATABASE_URL!)

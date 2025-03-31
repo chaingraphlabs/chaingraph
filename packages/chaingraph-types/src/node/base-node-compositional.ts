@@ -18,6 +18,7 @@ import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
 import {
   ComplexPortHandler,
+  DefaultPortManager,
   NodeEventManager,
   NodeSerializer,
   NodeUIManager,
@@ -47,6 +48,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   private uiManager: NodeUIManager
   private versionManager: NodeVersionManager
   private serializer: NodeSerializer
+  private defaultPortManager: DefaultPortManager
 
   constructor(id: string, _metadata?: NodeMetadata) {
     this._id = id
@@ -113,13 +115,53 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       this,
     )
 
+    // Initialize default port manager
+    this.defaultPortManager = new DefaultPortManager(
+      this.portManager,
+      this._metadata,
+    )
+
     // IMPORTANT: Set the custom event handler to this instance's onEvent method
     // This allows derived class implementations to receive events
     this.eventManager.setCustomEventHandler(this.onEvent.bind(this))
   }
 
-  // Abstract method that must be implemented by concrete nodes
+  /**
+   * Abstract method that must be implemented by concrete nodes
+   * We'll wrap this with logic for default port handling
+   */
   abstract execute(context: ExecutionContext): Promise<NodeExecutionResult>
+
+  /**
+   * Runtime execute that wraps the abstract execute to handle default ports.
+   * This is an internal method used by the execution engine.
+   *
+   * @param context The execution context
+   * @returns The execution result
+   */
+  async executeWithDefaultPorts(context: ExecutionContext): Promise<NodeExecutionResult> {
+    // Check if node should execute based on flow ports
+    if (!this.shouldExecute()) {
+      this.defaultPortManager.getFlowOutPort()?.setValue(false)
+      return {}
+    }
+
+    try {
+      // Call the original execute method (implemented by derived classes)
+      const result = await this.execute(context)
+
+      // Update flow ports based on execution result
+      await this.updatePortsAfterExecution(true)
+
+      return result
+    } catch (error) {
+      // Handle unexpected errors
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during execution'
+      await this.updatePortsAfterExecution(false, errorMessage)
+
+      return {}
+    }
+  }
 
   //
   // ICoreNode implementation
@@ -414,7 +456,46 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   }
 
   //
-  // Initialize method
+  // IDefaultPortManager implementation (delegation to defaultPortManager)
+  //
+  getDefaultPorts(): IPort[] {
+    return this.defaultPortManager.getDefaultPorts()
+  }
+
+  getDefaultPortConfigs(): IPortConfig[] {
+    return this.defaultPortManager.getDefaultPortConfigs()
+  }
+
+  isDefaultPort(portId: string): boolean {
+    return this.defaultPortManager.isDefaultPort(portId)
+  }
+
+  getFlowInPort(): IPort | undefined {
+    return this.defaultPortManager.getFlowInPort()
+  }
+
+  getFlowOutPort(): IPort | undefined {
+    return this.defaultPortManager.getFlowOutPort()
+  }
+
+  getErrorPort(): IPort | undefined {
+    return this.defaultPortManager.getErrorPort()
+  }
+
+  getErrorMessagePort(): IPort | undefined {
+    return this.defaultPortManager.getErrorMessagePort()
+  }
+
+  shouldExecute(): boolean {
+    return this.defaultPortManager.shouldExecute()
+  }
+
+  async updatePortsAfterExecution(success: boolean, errorMessage?: string): Promise<void> {
+    return this.defaultPortManager.updatePortsAfterExecution(success, errorMessage)
+  }
+
+  //
+  // Initialize method with default ports support
   //
   initialize(portsConfig?: Map<string, IPortConfig>): void {
     if (portsConfig === undefined) {
@@ -423,8 +504,16 @@ export abstract class BaseNodeCompositional implements INodeComposite {
         throw new Error('Ports metadata is missing. Ensure @Port decorator is used or portsConfig is provided.')
       }
 
-      // clone portsConfig to avoid modifying the original
+      // Clone portsConfig to avoid modifying the original
       portsConfig = new Map(portsConfig)
+    }
+
+    // Add default ports to the configuration
+    const defaultPorts = this.getDefaultPortConfigs()
+    for (const portConfig of defaultPorts) {
+      if (portConfig.key && !portsConfig.has(portConfig.key)) {
+        portsConfig.set(portConfig.key, portConfig)
+      }
     }
 
     // Process PortConfigs

@@ -31,13 +31,16 @@ function NodeBody({
 }: NodeBodyProps) {
   const inputPorts = useMemo(
     () => node.getInputs().filter(
-      port => !port.getConfig().parentId,
+      port =>
+        !port.getConfig().parentId
+        && port.getConfig().metadata?.isSystemPort !== true,
     ),
     [node],
   )
   const outputPorts = useMemo(
     () => node.getOutputs().filter(
-      port => !port.getConfig().parentId,
+      port => !port.getConfig().parentId
+        && port.getConfig().metadata?.isSystemPort !== true,
     ),
     [node],
   )

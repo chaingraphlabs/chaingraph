@@ -1,0 +1,10 @@
+mutation AuthAgentLogin($agentID: AgentID!, $session: Session!) {
+  authAgentLogin(agentID: $agentID, session: $session) {
+    session
+    user_profile {
+      id
+      name
+      picture
+    }
+  }
+}

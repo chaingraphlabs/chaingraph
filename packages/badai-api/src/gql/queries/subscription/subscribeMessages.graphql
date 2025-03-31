@@ -1,0 +1,16 @@
+subscription SubscribeMessages($session: Session!, $chat_id: ChatID!, $limitMessages: Int! = 100) {
+    subscribeMessages(session: $session, chat_id: $chat_id, limitMessages : $limitMessages) {
+        event
+        sub_id
+
+        # can be null for event = HISTORY_LOADED
+        message {
+            ...MessageFields
+        }
+
+        # only for event = HISTORY_LOADED
+        messages {
+            ...MessageFields
+        }
+    }
+}

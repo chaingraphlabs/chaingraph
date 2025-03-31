@@ -1,0 +1,41 @@
+fragment MessageFields on Message {
+    attachments {
+        filename
+        id
+        mime_type
+        size
+        url
+    }
+    author
+    chat_id
+    deleted
+    error
+    finished
+    id
+    is_system
+    meta
+    need_answer
+    participant {
+        agent_id
+        avatar
+        first_name
+        is_agent
+        last_name
+        llm_model
+        meta
+        participant_id
+        purpose
+        role
+        self_awareness
+        tools {
+            name
+        }
+        username
+    }
+    reply_to
+    text
+    time
+    total_usage_cost
+    type
+    version
+}

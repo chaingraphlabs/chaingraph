@@ -7,19 +7,22 @@
  */
 
 import type { INode } from './interface'
-import superjson from 'superjson'
+import SuperJSON from 'superjson'
 import { BaseNode, NodeRegistry } from '..'
 
 /**
  * Registers node transformers with SuperJSON
  */
-export function registerNodeTransformers(nodeRegistry?: NodeRegistry): void {
+export function registerNodeTransformers(
+  nodeRegistry?: NodeRegistry,
+  superjsonCustom: typeof SuperJSON = SuperJSON,
+): void {
   // Register base node transformer
   if (nodeRegistry === undefined) {
     nodeRegistry = NodeRegistry.getInstance()
   }
 
-  superjson.registerCustom<INode, any>(
+  superjsonCustom.registerCustom<INode, any>(
     {
       isApplicable: (v): v is INode => {
         return v instanceof BaseNode

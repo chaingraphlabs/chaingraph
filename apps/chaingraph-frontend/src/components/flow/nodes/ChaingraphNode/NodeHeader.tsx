@@ -8,10 +8,12 @@
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryStyle, INode } from '@badaitech/chaingraph-types'
+import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { Cross1Icon } from '@radix-ui/react-icons'
 import { useCallback } from 'react'
+import NodeFlowPorts from './NodeFlowPorts'
 
 interface NodeHeaderProps {
   // title: string
@@ -19,6 +21,7 @@ interface NodeHeaderProps {
   icon: CategoryIconName
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
+  context: PortContextValue
 
   debugMode: boolean
   isBreakpointSet: boolean
@@ -30,6 +33,7 @@ export function NodeHeader({
   icon,
   style,
   onDelete,
+  context,
   debugMode,
   isBreakpointSet,
   onBreakpointToggle,
@@ -52,6 +56,8 @@ export function NodeHeader({
         borderBottom: `1px solid ${style.secondary}`,
       }}
     >
+      <NodeFlowPorts node={node} context={context} />
+
       <div className="flex items-center gap-2 min-w-0">
         <div
           className="w-6 min-w-6 h-6 rounded flex items-center justify-center"

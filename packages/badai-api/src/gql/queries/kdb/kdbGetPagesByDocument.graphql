@@ -1,0 +1,8 @@
+query KDBGetPagesByDocument(
+    $session: Session!,
+    $document_id: DocumentID!,
+) {
+    kdbGetPagesByDocument(session: $session, document_id: $document_id) {
+        ...PageFields
+    }
+}

@@ -12,20 +12,25 @@ import type {
 import type {
   ArrayPortConfig,
   ArrayPort as ArrayPortType,
+  IPortConfig,
   INode,
   IPort,
 } from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
+import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
+import { EditItemConfigPopover } from './EditItemConfigPopover'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddElementPopover } from './AddElementPopover'
 import { PortField } from './PortField'
 import { PortHeader } from './PortHeader'
+import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
+import { Edit } from 'lucide-react'
 
 export interface ArrayPortProps {
   node: INode
@@ -65,10 +70,12 @@ const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }
 
 export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
+  const [isSchemaEditorOpen, setIsSchemaEditorOpen] = useState(false)
   const {
     updatePortUI,
     appendElementArrayPort,
     removeElementArrayPort,
+    updatePortValue,
     getEdgesForPort,
   } = context
 
@@ -115,6 +122,60 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     })
   }, [node.id, port.id, config.ui?.collapsible, updatePortUI])
 
+  // Handle item config updates
+  const handleItemConfigUpdate = useCallback((updatedConfig: ArrayPortConfig) => {
+    // Update using context events - this leverages the store's logic
+    // for handling complex port updates
+    console.log('Updating item config:', updatedConfig)
+    updatePortUI({
+      nodeId: node.id,
+      portId: port.id,
+      ui: { ...config.ui }
+    })
+
+    // Trigger a value update to ensure the itemConfig changes are processed
+    updatePortValue({
+      nodeId: node.id,
+      portId: port.id,
+      value: port.getValue() // Keep the same array values
+    })
+  }, [node.id, port.id, config.ui, port, updatePortUI, updatePortValue])
+
+  // Handle saving from the schema editor
+  const handleSchemaEditorSave = useCallback((newItemConfig: IPortConfig) => {
+    console.log('Schema editor save:', newItemConfig)
+
+    // First update the port configuration
+    updatePortUI({
+      nodeId: node.id,
+      portId: port.id,
+      ui: {
+        ...config.ui
+      }
+    })
+
+    // Then update the itemConfig through the port value update
+    setTimeout(() => {
+      const updatedPortConfig = {
+        ...port.getConfig(),
+        itemConfig: newItemConfig
+      } as ArrayPortConfig;
+
+
+      // Use direct value update to refresh the port
+      port.setConfig(updatedPortConfig);
+
+      // Update the value to trigger a refresh
+      updatePortValue({
+        nodeId: node.id,
+        portId: port.id,
+        value: port.getValue() // Keep the same array values
+      })
+        ;
+    }, 10);
+    setIsSchemaEditorOpen(false)
+  }, [node.id, port, config.ui, updatePortUI, updatePortValue])
+
   // Memoize child ports to prevent recalculation
   const childPorts = useMemo(() => {
     return Array.from(node.ports.values())
@@ -154,11 +215,26 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
           <PortHeader
             title={title}
             isOutput={isOutput}
+            rightElement={
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 rounded-sm"
+                  onClick={() => setIsSchemaEditorOpen(true)}
+                  title="Edit Array Item Schema"
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+                <EditItemConfigPopover
+                  portConfig={config}
+                  onSave={handleItemConfigUpdate}
+                />
+              </div>
+            }
             isCollapsible={Boolean(isMutable && values.length > 0)}
             onClick={handleToggleCollapsible}
           />
-
-          <pre>{JSON.stringify(port.getValue(), null, 2)}</pre>
 
           <AnimatePresence initial={false}>
             <motion.div
@@ -223,6 +299,14 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
       )}
 
       {isOutput && <PortHandle port={port} />}
+
+      {/* Schema Editor Dialog */}
+      <ArrayItemSchemaEditor
+        arrayPortConfig={config}
+        onSave={handleSchemaEditorSave}
+        open={isSchemaEditorOpen}
+        onOpenChange={setIsSchemaEditorOpen}
+      />
     </div>
   )
 }

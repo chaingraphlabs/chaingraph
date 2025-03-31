@@ -1,0 +1,11 @@
+query KDBGetDocuments(
+    $session: Session!,
+    $document_ids: [DocumentID!]!
+) {
+    kdbGetDocuments(
+        session: $session,
+        document_ids: $document_ids
+    ) {
+        ...DocumentFields
+    }
+}

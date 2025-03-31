@@ -20,6 +20,7 @@ export enum NodeStatus {
    */
   Backgrounding = 'backgrounding',
   Completed = 'completed',
+  Skipped = 'skipped',
   Error = 'error',
   Disposed = 'disposed',
 }
@@ -39,4 +40,5 @@ export enum ValidationMessageType {
 export enum NodeExecutionStatus {
   Completed = 'completed',
   Error = 'error',
+  Skipped = 'skipped',
 }

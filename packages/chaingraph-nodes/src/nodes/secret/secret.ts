@@ -15,16 +15,38 @@ import type {
 import { Buffer } from 'node:buffer'
 import { subtle } from 'node:crypto'
 import { GraphQL, graphQLClient } from '@badaitech/badai-api'
-import { BaseNode, Input, isSupportedSecretType, Node, Output, Secret, String, wrapSecret } from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  Input,
+  isSupportedSecretType,
+  Node,
+  Output,
+  Secret,
+  String,
+  wrapSecret,
+} from '@badaitech/chaingraph-types'
+import { NODE_CATEGORIES } from '../../categories'
 
-@Node({})
+@Node({
+  title: 'Secret Vault',
+  description: 'Retrieves a secret from the secret vault',
+  category: NODE_CATEGORIES.SECRET,
+  tags: ['secret', 'vault'],
+})
 export class SecretNode extends BaseNode {
   @Input()
-  @String()
-  secretID: string | null = null
+  @String({
+    title: 'Secret ID',
+    description: 'The ID of the secret to retrieve',
+  })
+  secretID?: string
 
   @Output()
-  @Secret()
+  @Secret({
+    title: 'Secret Value',
+    description: 'The secret value',
+    secretType: 'string',
+  })
   secret?: EncryptedSecretValue<SecretType>
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {

@@ -315,8 +315,6 @@ export class ExecutionEngine {
     try {
       this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node }))
 
-      node.setStatus(NodeStatus.Executing, true)
-
       // Debug point - before execution
       if (this.debugger) {
         const command = await this.debugger.waitForCommand(node)
@@ -339,7 +337,10 @@ export class ExecutionEngine {
             edge,
             error: error as Error,
           }))
-          throw error
+
+          // just skip the node
+          this.setNodeSkipped(node, 'edge transfer failed')
+          return
         }
         this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
           edge,
@@ -347,9 +348,17 @@ export class ExecutionEngine {
         }))
       }
 
+      // check weathers node should execute
+      if (!node.shouldExecute()) {
+        this.setNodeSkipped(node, 'node returned false from shouldExecute')
+        return
+      }
+
+      node.setStatus(NodeStatus.Executing, true)
+
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
       const { backgroundActions } = await withTimeout(
-        node.execute(this.context),
+        node.executeWithDefaultPorts(this.context),
         nodeTimeoutMs,
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
@@ -380,8 +389,6 @@ export class ExecutionEngine {
       } else {
         this.setNodeCompleted(node, nodeStartTime)
       }
-
-      this.completedQueue.enqueue(node)
     } catch (error) {
       this.setNodeError(node, error, nodeStartTime)
     } finally {
@@ -395,6 +402,17 @@ export class ExecutionEngine {
       node,
       executionTime: Date.now() - nodeStartTime,
     }))
+    this.completedQueue.enqueue(node)
+  }
+
+  private setNodeSkipped(node: INode, reason: string) {
+    node.setStatus(NodeStatus.Skipped, true)
+    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
+      node,
+      reason,
+    }))
+
+    this.completedQueue.enqueue(node)
   }
 
   private setNodeError(node: INode, error: unknown, nodeStartTime: number) {
@@ -406,7 +424,8 @@ export class ExecutionEngine {
       executionTime: Date.now() - nodeStartTime,
     }))
 
-    throw error
+    this.completedQueue.enqueue(node)
+    // throw error
   }
 
   public getDebugger(): DebuggerController | null {

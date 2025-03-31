@@ -7,6 +7,7 @@
  */
 
 import type {
+  BadAIContext,
   ExecutionEvent,
   ExecutionEventHandler,
   ExecutionEventImpl,
@@ -36,12 +37,19 @@ export class ExecutionService {
   async createExecution(
     flow: Flow,
     options?: ExecutionOptions,
+    badAIContext?: BadAIContext,
   ): Promise<ExecutionInstance> {
     const clonedFlow = flow.clone() as Flow
 
     const id = uuidv4()
     const abortController = new AbortController()
-    const context = new ExecutionContext(clonedFlow.id, abortController)
+    const context = new ExecutionContext(
+      clonedFlow.id,
+      abortController,
+      undefined,
+      id,
+      badAIContext,
+    )
     const engine = new ExecutionEngine(clonedFlow, context, options)
 
     const instance: ExecutionInstance = {

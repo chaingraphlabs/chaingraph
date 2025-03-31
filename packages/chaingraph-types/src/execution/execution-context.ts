@@ -9,6 +9,13 @@
 import { subtle } from 'node:crypto'
 import { v4 as uuidv4 } from 'uuid'
 
+export interface BadAIContext {
+  agentID?: string
+  agentSession?: string
+  chatID?: string
+  messageID?: number
+}
+
 export class ExecutionContext {
   public readonly executionId: string
   public readonly startTime: Date
@@ -18,17 +25,27 @@ export class ExecutionContext {
 
   private ecdhKeyPair: CryptoKeyPair | null = null
 
+  // integrations
+  public readonly badAIContext?: BadAIContext
+
+  // TODO: chat api gql client
+  // TODO: agent session
+  // TODO: chat room meta + participants agents?
+  // TODO: input chat message / event / tweet / telegram message / some external events
+
   constructor(
     flowId: string,
     abortController: AbortController,
     metadata?: Record<string, unknown>,
     executionId?: string,
+    badAIContext?: BadAIContext,
   ) {
     this.executionId = executionId || uuidv4()
     this.startTime = new Date()
     this.flowId = flowId
     this.metadata = metadata || {}
     this.abortController = abortController
+    this.badAIContext = badAIContext
   }
 
   get abortSignal(): AbortSignal {

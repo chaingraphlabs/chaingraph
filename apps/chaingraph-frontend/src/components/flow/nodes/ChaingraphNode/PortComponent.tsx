@@ -25,6 +25,7 @@ import {
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort.tsx'
 import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort.tsx'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
+import { PortContext } from './ports/context/PortContext'
 import { EnumPort } from './ports/EnumPort/EnumPort'
 import { StringPort } from './ports/StringPort/StringPort'
 import { StubPort } from './ports/StubPort/StubPort'
@@ -46,6 +47,22 @@ export function PortComponent(props: PortProps) {
     port,
     context,
   } = props
+
+  // Safety check - if context isn't provided, try to consume from PortContext
+  if (!context) {
+    console.warn('PortComponent: No context provided for port', port.id)
+    return (
+      <PortContext.Consumer>
+        {(contextValue) => {
+          if (!contextValue) {
+            console.error('PortContext is not available in the component tree')
+            return null
+          }
+          return <PortComponent node={node} port={port} context={contextValue} />
+        }}
+      </PortContext.Consumer>
+    )
+  }
 
   switch (port.getConfig().type) {
     case 'string': {
@@ -79,6 +96,7 @@ export function PortComponent(props: PortProps) {
       )
     }
     case 'stream':
+    case 'secret':
     case 'any': {
       return <StubPort port={port} />
     }
