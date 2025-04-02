@@ -7,3 +7,4 @@
  */
 
 export * from './stream-buffer.node'
+export * from './text-search.node'
