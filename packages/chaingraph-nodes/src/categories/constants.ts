@@ -11,6 +11,7 @@ import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 export const NODE_CATEGORIES = {
   MESSAGING: 'messaging',
   AI: 'ai',
+  API: 'api',
   MATH: 'math',
   DATA: 'data',
   FLOW: 'flow',
@@ -74,6 +75,27 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     id: NODE_CATEGORIES.AI,
     label: 'AI & ML',
     description: 'Artificial Intelligence and Machine Learning nodes',
+    icon: 'Brain',
+    style: {
+      light: {
+        primary: '#F3E8FD', // Soft lavender
+        secondary: '#F9F4FE',
+        background: '#FFFFFF',
+        text: '#6200EA', // Deeper purple
+      },
+      dark: {
+        primary: '#2D1B47',
+        secondary: '#1A0F2E',
+        background: '#1C1C1C',
+        text: '#B794F6',
+      },
+    },
+    order: 1,
+  },
+  [NODE_CATEGORIES.API]: {
+    id: NODE_CATEGORIES.API,
+    label: 'API Calls',
+    description: 'API calls and integrations',
     icon: 'Brain',
     style: {
       light: {
