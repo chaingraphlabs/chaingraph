@@ -24,7 +24,7 @@
     "dev:front": "turbo run dev --filter=@badaitech/chaingraph-frontend",
     "build:back": "turbo run build --filter=@badaitech/chaingraph-backend",
     "dev:back": "turbo run dev --filter=@badaitech/chaingraph-backend",
-    "test": "make test",
+    "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test:watch": "vitest",
