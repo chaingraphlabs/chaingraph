@@ -52,6 +52,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
 
     // Update the schema with the processed config
     config.schema.properties[key] = processedConfig
+    objectPort.setConfig(config)
 
     // Create the actual child port
     const childPortId = `${objectPort.id}.${key}`
@@ -76,10 +77,83 @@ export class ComplexPortHandler implements IComplexPortHandler {
 
       // Bind the new port to the object property
       this.portBinder.bindPortToNodeProperty(objectValue, childPort)
+
+      // Add this new code to handle recursive creation of nested ports
+      const propertyValue = objectValue[key]
+      if (propertyValue !== null && typeof propertyValue === 'object') {
+        // Check if this is a complex type that needs recursive port creation
+        if (processedConfig.type === 'object' && processedConfig.schema?.properties) {
+          // Recursively create ports for each property in the object
+          this.createNestedObjectPorts(childPort, propertyValue, processedConfig as ObjectPortConfig)
+        } else if (processedConfig.type === 'array' && (processedConfig as ArrayPortConfig).itemConfig) {
+          // Recursively create ports for array items
+          if (Array.isArray(propertyValue) && propertyValue.length > 0) {
+            this.recreateArrayItemPorts(childPort, propertyValue)
+          }
+        }
+      }
     }
 
     // Update the parent port
     this.portManager.updatePort(objectPort)
+  }
+
+  /**
+   * Helper method to create ports for all properties of a nested object
+   * @param parentPort The parent port representing the object
+   * @param objectValue The actual object value
+   * @param config The port configuration for the object
+   */
+  private createNestedObjectPorts(parentPort: IPort, objectValue: any, config: ObjectPortConfig): void {
+    if (!config.schema?.properties)
+      return
+
+    // Create a port for each property in the schema
+    for (const [propKey, propConfig] of Object.entries(config.schema.properties)) {
+      // Skip if property doesn't exist in the object value
+      if (!(propKey in objectValue))
+        continue
+
+      // Process the property config
+      const processedConfig = this.processPortConfig(
+        { ...propConfig },
+        {
+          nodeId: this.nodeId,
+          parentPortConfig: config,
+          propertyKey: propKey,
+          propertyValue: objectValue[propKey],
+        },
+      )
+
+      // Create the nested port
+      const nestedPortId = `${parentPort.id}.${propKey}`
+      const nestedConfig = {
+        ...processedConfig,
+        id: nestedPortId,
+        parentId: parentPort.id,
+        key: propKey,
+        nodeId: this.nodeId,
+      }
+
+      const nestedPort = PortFactory.createFromConfig(nestedConfig)
+      nestedPort.setValue(objectValue[propKey])
+      this.portManager.setPort(nestedPort)
+
+      // Bind port to object property
+      this.portBinder.bindPortToNodeProperty(objectValue, nestedPort)
+
+      // Recursively handle nested complex types
+      const propValue = objectValue[propKey]
+      if (propValue !== null && typeof propValue === 'object') {
+        if (processedConfig.type === 'object' && processedConfig.schema?.properties) {
+          // Recursively create ports for nested object
+          this.createNestedObjectPorts(nestedPort, propValue, processedConfig as ObjectPortConfig)
+        } else if (processedConfig.type === 'array' && Array.isArray(propValue)) {
+          // Recursively create ports for array items
+          this.recreateArrayItemPorts(nestedPort, propValue)
+        }
+      }
+    }
   }
 
   /**

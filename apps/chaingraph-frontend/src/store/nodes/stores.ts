@@ -178,6 +178,10 @@ $nodes
 
     // console.log(`[LOCAL] Updating node position for node ${nodeId}, position:`, position)
 
+    // check if the position changed
+    if (node.metadata.ui?.position?.x === position.x && node.metadata.ui?.position?.y === position.y)
+      return state
+
     node.setPosition(position, false)
 
     return {

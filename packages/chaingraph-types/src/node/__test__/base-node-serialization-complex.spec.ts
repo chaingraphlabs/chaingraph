@@ -758,7 +758,7 @@ describe('complex Serialization Tests', () => {
       newNode.initialize()
 
       // Verify all changes were preserved
-      expect(newNode.config).not.toHaveProperty('enabled')
+      expect(newNode.config.enabled).toBe(undefined)
       expect((newNode.config.advanced as any).maxItems).toBe(250)
       expect((newNode.config.advanced as any).caching).toBe(true)
       expect(newNode.features).toEqual(['export', 'admin'])

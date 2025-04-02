@@ -7,14 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
-  Input,
-  Node,
-  NodeExecutionStatus,
-  Output,
-  Number as PortNumber,
-} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, Number as PortNumber } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -69,12 +62,7 @@ class RandomNode extends BaseNode {
 
     console.log(`Generated random number: ${this.result}`)
 
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map([['result', this.result]]),
-    }
+    return {}
   }
 }
 

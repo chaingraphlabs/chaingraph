@@ -7,14 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
-  Input,
-  Node,
-  NodeExecutionStatus,
-  Output,
-  String,
-} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories/constants'
 
 @Node({
@@ -42,12 +35,7 @@ class WebhookNode extends BaseNode {
     // Mock implementation
     this.response = `Webhook called: ${this.url}`
 
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map([['response', this.response]]),
-    }
+    return {}
   }
 }
 

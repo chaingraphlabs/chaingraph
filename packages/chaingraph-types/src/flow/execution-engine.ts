@@ -70,7 +70,7 @@ export class ExecutionEngine {
       this.debugger = new FlowDebugger(
         async (node) => {
           this.eventQueue.publish(
-            this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node }),
+            this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node: node.clone() }),
           )
           onBreakpointHit?.(node)
         },
@@ -84,7 +84,7 @@ export class ExecutionEngine {
       // Emit flow started event
       // this.eventEmitter.emit(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow })
       await this.eventQueue.publish(
-        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow }),
+        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow.clone() }),
       )
 
       // Initialize dependency tracking
@@ -105,7 +105,7 @@ export class ExecutionEngine {
 
       // Emit flow completed event
       await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
-        flow: this.flow,
+        flow: this.flow.clone(),
         executionTime: Date.now() - startTime,
       }))
     } catch (error) {
@@ -125,14 +125,14 @@ export class ExecutionEngine {
       if (this.context.abortSignal.aborted && (!isAbortedDueToError || isAbortedDueToDebugger)) {
         // Emit flow cancelled event
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
-          flow: this.flow,
+          flow: this.flow.clone(),
           reason: this.context.abortSignal.reason ?? ExecutionCancelledReason,
           executionTime: Date.now() - startTime,
         }))
       } else {
         // Emit flow failed event
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
-          flow: this.flow,
+          flow: this.flow.clone(),
           error: error as Error,
           executionTime: Date.now() - startTime,
         }))
@@ -177,7 +177,7 @@ export class ExecutionEngine {
       const node = this.flow.nodes.get(nodeId)
       if (node) {
         this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-          node,
+          node: node.clone(),
           oldStatus: NodeStatus.Idle,
           newStatus: NodeStatus.Initialized,
         }))
@@ -305,7 +305,7 @@ export class ExecutionEngine {
 
     const onStatusChange = (event: NodeStatusChangeEvent) => {
       this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-        node,
+        node: node.clone(),
         oldStatus: event.oldStatus,
         newStatus: event.newStatus,
       }))
@@ -313,7 +313,22 @@ export class ExecutionEngine {
     const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
     try {
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node }))
+      if (node.shouldExecute()) {
+        let foundSkipped = false
+        for (const edge of this.flow.getIncomingEdges(node)) {
+          if (!edge.sourcePort.isSystemError()) {
+            // check if from node is completed
+            if (edge.sourceNode.status !== NodeStatus.Completed && edge.sourceNode.status !== NodeStatus.Backgrounding) {
+              foundSkipped = true
+            }
+          }
+        }
+
+        if (!foundSkipped) {
+          node.setStatus(NodeStatus.Executing, true)
+          this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
+        }
+      }
 
       // Debug point - before execution
       if (this.debugger) {
@@ -327,14 +342,26 @@ export class ExecutionEngine {
 
       // Transfer data from incoming edges
       for (const edge of this.flow.getIncomingEdges(node)) {
+        if (!edge.sourcePort.isSystemError()) {
+          // check if from node is completed
+          if (edge.sourceNode.status !== NodeStatus.Completed && edge.sourceNode.status !== NodeStatus.Backgrounding) {
+            this.setNodeSkipped(node, `wrong status of source node: ${edge.sourceNode.status}`)
+            return
+          }
+        }
+
+        // allow system error ports to transfer in any status
+
         const transferStartTime = Date.now()
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_STARTED, { edge }))
+        this.eventQueue.publish(
+          this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_STARTED, { edge: edge.clone() }),
+        )
 
         try {
           await edge.transfer()
         } catch (error) {
           this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
-            edge,
+            edge: edge.clone(),
             error: error as Error,
           }))
 
@@ -343,18 +370,16 @@ export class ExecutionEngine {
           return
         }
         this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
-          edge,
+          edge: edge.clone(),
           transferTime: Date.now() - transferStartTime,
         }))
       }
 
       // check weathers node should execute
       if (!node.shouldExecute()) {
-        this.setNodeSkipped(node, 'node returned false from shouldExecute')
+        this.setNodeSkipped(node, 'node skipped because flow input port was set to false')
         return
       }
-
-      node.setStatus(NodeStatus.Executing, true)
 
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
       const { backgroundActions } = await withTimeout(
@@ -365,6 +390,8 @@ export class ExecutionEngine {
 
       const hasBackgroundActions = backgroundActions && backgroundActions.length > 0
       if (hasBackgroundActions) {
+        this.setNodeBackgrounding(node, nodeStartTime)
+
         let completedActions = 0
         for (const action of backgroundActions) {
           this.readyQueue.enqueue(
@@ -381,13 +408,19 @@ export class ExecutionEngine {
               .catch(e => this.setNodeError(node, e, nodeStartTime)),
           )
         }
-
-        node.setStatus(NodeStatus.Backgrounding, true)
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
-          node,
-        }))
       } else {
-        this.setNodeCompleted(node, nodeStartTime)
+        if (node.getFlowOutPort()?.getValue() !== true) {
+          // this means the node has not completed successfully
+          const error = node.getErrorPort()?.getValue()
+          const errorMessage = node.getErrorMessagePort()?.getValue()
+          if (error === true && errorMessage) {
+            this.setNodeError(node, new Error(errorMessage.toString()), nodeStartTime)
+          } else {
+            this.setNodeError(node, new Error('node did not complete successfully'), nodeStartTime)
+          }
+        } else {
+          this.setNodeCompleted(node, nodeStartTime)
+        }
       }
     } catch (error) {
       this.setNodeError(node, error, nodeStartTime)
@@ -399,8 +432,16 @@ export class ExecutionEngine {
   private setNodeCompleted(node: INode, nodeStartTime: number) {
     node.setStatus(NodeStatus.Completed, true)
     this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
-      node,
+      node: node.clone(),
       executionTime: Date.now() - nodeStartTime,
+    }))
+    this.completedQueue.enqueue(node)
+  }
+
+  private setNodeBackgrounding(node: INode, nodeStartTime: number) {
+    node.setStatus(NodeStatus.Backgrounding, true)
+    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
+      node: node.clone(),
     }))
     this.completedQueue.enqueue(node)
   }
@@ -408,7 +449,7 @@ export class ExecutionEngine {
   private setNodeSkipped(node: INode, reason: string) {
     node.setStatus(NodeStatus.Skipped, true)
     this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
-      node,
+      node: node.clone(),
       reason,
     }))
 
@@ -419,7 +460,7 @@ export class ExecutionEngine {
     node.setStatus(NodeStatus.Error, true)
 
     this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
-      node,
+      node: node.clone(),
       error: error as Error,
       executionTime: Date.now() - nodeStartTime,
     }))

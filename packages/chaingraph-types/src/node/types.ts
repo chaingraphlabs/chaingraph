@@ -85,11 +85,5 @@ export interface NodeValidationResult {
  * Type definition for node execution result
  */
 export interface NodeExecutionResult {
-  // status?: NodeExecutionStatus
-  // startTime?: Date
-  // endTime?: Date
-  // outputs?: Map<string, unknown>
-  // error?: Error
-  // metadata?: { [key: string]: unknown }
   backgroundActions?: (() => Promise<void>)[]
 }

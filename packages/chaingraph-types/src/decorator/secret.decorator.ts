@@ -12,10 +12,11 @@ import { Port } from './port.decorator'
 /**
  * Decorator to specify a type configuration for type "secret".
  */
-export function Secret(config?: Omit<PortDecoratorOptions<'secret'>, 'type'>): PropertyDecorator {
+export function Secret(config?: Omit<PortDecoratorOptions<'secret'>, 'type' | 'defaultValue'>): PropertyDecorator {
   return Port({
     type: 'secret',
     secretType: 'string',
+    defaultValue: undefined,
     ...config,
   })
 }

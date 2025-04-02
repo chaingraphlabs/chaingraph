@@ -52,7 +52,8 @@ export function useFlowSubscription() {
       setFlowMetadata(data.metadata)
     },
 
-    [FlowEventType.FlowInitEnd]: (data) => {},
+    [FlowEventType.FlowInitEnd]: (data) => {
+    },
 
     [FlowEventType.MetadataUpdated]: (data) => {
       setFlowMetadata(data.newMetadata)

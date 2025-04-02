@@ -6,16 +6,22 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext } from '../../execution'
 import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node, Output, Port } from '../../decorator'
-import { ArrayPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { ExecutionContext } from '../../execution'
+import {
+  ArrayPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { MultiChannel } from '../../utils'
 import { BaseNode } from '../base-node'
 import { registerNodeTransformers } from '../json-transformers'
-import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -57,12 +63,7 @@ class StreamNode extends BaseNode {
       this.outputStream.send(data)
     }
 
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 
@@ -106,14 +107,10 @@ describe('stream node serialization', () => {
     parsed.inputStream.close()
 
     // Execute to process the stream
-    await parsed.execute({
-      startTime: new Date(),
-      flowId: 'test-flow',
-      executionId: 'test-execution',
-      metadata: {},
-      abortController: new AbortController(),
-      abortSignal: new AbortController().signal,
-    })
+    await parsed.execute(new ExecutionContext(
+      'test-flow',
+      new AbortController(),
+    ))
 
     // Collect output stream data
     const receivedData: string[] = []

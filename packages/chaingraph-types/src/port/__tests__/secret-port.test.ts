@@ -50,11 +50,12 @@ describe('secret port', () => {
       publicKey: remoteKeyPair.publicKey,
     } satisfies EncryptedSecretValue<'xApp'>
 
-    const config = { type: 'secret', secretType: 'xApp' } satisfies SecretPortConfig<'xApp'>
+    const config = { type: 'secret', secretType: 'xApp', defaultValue: undefined } satisfies SecretPortConfig<'xApp'>
 
     const jsonValue = SecretPortPlugin.serializeValue(value, config)
     const deserialized = SecretPortPlugin.deserializeValue(jsonValue, config)
 
-    expect(deserialized).toBe(value)
+    expect(deserialized.publicKey).toBe(value.publicKey)
+    expect(deserialized.encrypted).toBe(value.encrypted)
   })
 })

@@ -120,6 +120,14 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     return newPort.deserialize(serialized)
   }
 
+  isSystem() {
+    return this.getConfig()?.metadata?.isSystemPort === true
+  }
+
+  isSystemError() {
+    return this.isSystem() && this.getConfig()?.metadata?.portCategory === 'error'
+  }
+
   /**
    * Returns the default value.
    * Concrete implementations can use a default provided by the configuration.

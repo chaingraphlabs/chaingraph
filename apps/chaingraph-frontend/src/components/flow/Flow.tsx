@@ -15,6 +15,7 @@ import { FlowControlPanel } from '@/components/flow/components/control-panel/Flo
 import { StyledControls } from '@/components/flow/components/controls/StyledControls.tsx'
 import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState.tsx'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus.tsx'
+import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
 import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
@@ -289,7 +290,7 @@ function Flow() {
         nodes={nodes}
         nodeTypes={nodeTypes}
         edges={edges}
-        // edgeTypes={edgeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         // onEdgesChange={onEdgesChange}
         onInit={onInit}
@@ -312,7 +313,7 @@ function Flow() {
         className="bg-background"
         minZoom={0.2}
         maxZoom={2}
-        nodeDragThreshold={3}
+        nodeDragThreshold={5}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}

@@ -49,7 +49,6 @@ import {
 import { MultiChannel } from '../../utils'
 import { BaseNode } from '../base-node'
 import { registerNodeTransformers } from '../json-transformers'
-import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -417,12 +416,7 @@ export class UserProfileNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     this.colorEnum = '12'
 
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 

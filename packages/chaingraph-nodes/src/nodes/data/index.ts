@@ -7,4 +7,3 @@
  */
 
 export * from './stream-buffer.node'
-export * from './template.node'

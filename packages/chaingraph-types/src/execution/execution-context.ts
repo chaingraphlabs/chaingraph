@@ -23,7 +23,7 @@ export class ExecutionContext {
   public readonly metadata: Record<string, unknown>
   public readonly abortController: AbortController
 
-  private ecdhKeyPair: CryptoKeyPair | null = null
+  private ecdhKeyPair?: CryptoKeyPair | null = null
 
   // integrations
   public readonly badAIContext?: BadAIContext
@@ -60,7 +60,7 @@ export class ExecutionContext {
   }
 
   async getECDHKeyPair(): Promise<CryptoKeyPair> {
-    if (this.ecdhKeyPair === null) {
+    if (this.ecdhKeyPair === null || this.ecdhKeyPair === undefined) {
       await this.generateECDHKeyPair()
     }
 

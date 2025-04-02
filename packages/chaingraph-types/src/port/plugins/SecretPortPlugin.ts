@@ -19,8 +19,14 @@ import { deserialize, serialize } from '../base/secret'
  */
 const configSchema = basePortConfigSchema.merge(z.object({
   type: z.literal('secret'),
-  secretType: z.union([z.literal('openai'), z.literal('x'), z.literal('string')]),
-}))
+  secretType: z.union([
+    z.literal('openai'),
+    z.literal('xAPI'),
+    z.literal('xApp'),
+    z.literal('string'),
+  ]) as z.ZodType<SecretType>,
+  defaultValue: z.undefined(),
+})) as z.ZodType<SecretPortConfig>
 
 /**
  * Value schema for secret ports.
@@ -34,7 +40,7 @@ const valueSchema: z.ZodType<SecretPortValue> = z.object({
 /**
  * Plugin implementation for secret ports.
  */
-export const SecretPortPlugin = {
+export const SecretPortPlugin: IPortPlugin<'secret'> = {
   typeIdentifier: 'secret',
   configSchema,
   valueSchema,

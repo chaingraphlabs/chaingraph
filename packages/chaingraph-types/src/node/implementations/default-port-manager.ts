@@ -7,8 +7,7 @@
  */
 
 import type { IPort, IPortConfig } from '../../port'
-import type { IDefaultPortManager, IPortManager } from '../interfaces'
-import type { FlowPorts } from '../types'
+import type { IDefaultPortManager, INodeComposite, IPortManager } from '../interfaces'
 import { errorID, errorMessageID, flowInID, flowOutID, getDefaultPortConfigs } from '../default-ports'
 
 /**
@@ -18,7 +17,7 @@ import { errorID, errorMessageID, flowInID, flowOutID, getDefaultPortConfigs } f
 export class DefaultPortManager implements IDefaultPortManager {
   constructor(
     private portManager: IPortManager,
-    private metadata: { flowPorts?: FlowPorts },
+    private nodeRef: INodeComposite,
   ) {}
 
   /**
@@ -33,7 +32,7 @@ export class DefaultPortManager implements IDefaultPortManager {
    * Get default port configurations based on flowPorts settings
    */
   getDefaultPortConfigs(): IPortConfig[] {
-    return getDefaultPortConfigs(this.metadata.flowPorts)
+    return getDefaultPortConfigs(this.nodeRef.metadata.flowPorts)
   }
 
   /**
@@ -93,13 +92,15 @@ export class DefaultPortManager implements IDefaultPortManager {
    */
   shouldExecute(): boolean {
     // If flow ports are disabled, always execute unless auto-execution is disabled
-    if (this.metadata.flowPorts?.disabledFlowPorts) {
-      return !this.metadata.flowPorts?.disabledAutoExecution
+    if (this.nodeRef.metadata.flowPorts?.disabledFlowPorts) {
+      return !this.nodeRef.metadata.flowPorts?.disabledAutoExecution
     }
 
     // Otherwise, check flowIn port value
     const flowInPort = this.getFlowInPort()
-    return flowInPort?.getValue() === true
+    const flowAllowed = flowInPort?.getValue() === true
+
+    return flowAllowed
   }
 
   /**
@@ -113,19 +114,19 @@ export class DefaultPortManager implements IDefaultPortManager {
     // Update flowOut port
     if (flowOutPort) {
       flowOutPort.setValue(success)
-      await this.portManager.updatePort(flowOutPort)
+      this.portManager.updatePort(flowOutPort)
     }
 
     // Update error port if execution failed
     if (!success && errorPort) {
       errorPort.setValue(true)
-      await this.portManager.updatePort(errorPort)
+      this.portManager.updatePort(errorPort)
     }
 
     // Update errorMessage port if provided
     if (!success && errorMessage && errorMessagePort) {
       errorMessagePort.setValue(errorMessage)
-      await this.portManager.updatePort(errorMessagePort)
+      this.portManager.updatePort(errorMessagePort)
     }
   }
 }

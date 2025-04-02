@@ -81,7 +81,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize components
     this.portManager = new PortManager()
     this.eventManager = new NodeEventManager()
-    this.versionManager = new NodeVersionManager(this._metadata)
+    this.versionManager = new NodeVersionManager(this)
 
     // Initialize components with dependencies
     this.portBinder = new PortBinder(this.portManager, this, this.id)
@@ -95,7 +95,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this.portBinder.setComplexPortHandler(this.complexPortHandler)
 
     this.uiManager = new NodeUIManager(
-      this._metadata,
+      this,
       this.versionManager,
       {
         emit: this.emit.bind(this),
@@ -106,9 +106,6 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     )
 
     this.serializer = new NodeSerializer(
-      this._id,
-      this._metadata,
-      this._status,
       this.portManager,
       (id: string) => new (this.constructor as any)(id) as INodeComposite,
       this.portBinder,
@@ -118,7 +115,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize default port manager
     this.defaultPortManager = new DefaultPortManager(
       this.portManager,
-      this._metadata,
+      this,
     )
 
     // IMPORTANT: Set the custom event handler to this instance's onEvent method

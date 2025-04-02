@@ -8,7 +8,6 @@
 
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query'
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
-// IT MUST BE RELATED IMPORT
 import type { AppRouter } from '../server/router'
 import { QueryClient } from '@tanstack/react-query'
 import { createTRPCClient, createWSClient, wsLink } from '@trpc/client'

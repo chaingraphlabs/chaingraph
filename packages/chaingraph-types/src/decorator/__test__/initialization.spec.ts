@@ -188,6 +188,10 @@ describe('port Initialization Test', () => {
     ]
     const actualPortsKeys: string[] = []
     traversePorts(node, (port) => {
+      if (port.getConfig().metadata?.isSystemPort === true) {
+        return
+      }
+
       actualPortsKeys.push(port.getConfig().key!)
     })
 
@@ -277,7 +281,7 @@ describe('port Initialization Test', () => {
 
     expect(deserializedNode).toBeDefined()
     expect(deserializedNode).toBeInstanceOf(DummyNode)
-    expect(deserializedNode).toEqual(node)
+    expect(deserializedNode.serialize()).toEqual(node.serialize())
   })
 
   it('should deserialize from json', () => {

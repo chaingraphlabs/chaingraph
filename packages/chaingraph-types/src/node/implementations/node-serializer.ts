@@ -6,8 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeStatus } from '../../node/node-enums'
-import type { NodeMetadata } from '../../node/types'
 import type { IPort } from '../../port'
 import type { JSONValue } from '../../utils/json'
 import type { INodeComposite, IPortBinder, IPortManager, ISerializable } from '../interfaces'
@@ -20,9 +18,6 @@ import { SerializedNodeSchema } from '../types.zod'
  */
 export class NodeSerializer implements ISerializable<INodeComposite> {
   constructor(
-    private id: string,
-    private metadata: NodeMetadata,
-    private status: NodeStatus,
     private portManager: IPortManager,
     private createInstance: (id: string) => INodeComposite,
     private portBinder?: IPortBinder,
@@ -34,6 +29,10 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
    * @returns The serialized node
    */
   serialize(): JSONValue {
+    if (!this.nodeRef) {
+      throw new Error('Node reference is required for serialization')
+    }
+
     const serializedPorts: Record<string, JSONValue> = {}
 
     // Serialize all ports
@@ -42,9 +41,9 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
     }
 
     return {
-      id: this.id,
-      metadata: { ...this.metadata },
-      status: this.status,
+      id: this.nodeRef.id,
+      metadata: { ...this.nodeRef.metadata },
+      status: this.nodeRef.status.toString(),
       ports: serializedPorts,
     }
   }
@@ -55,14 +54,19 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
    * @returns The deserialized instance
    */
   deserialize(data: JSONValue): INodeComposite {
+    if (!this.nodeRef) {
+      throw new Error('Node reference is required for deserialization')
+    }
+
     // Validate incoming data using the Zod schema
     const obj = SerializedNodeSchema.parse(data)
 
     // Update status (id is immutable)
-    this.status = obj.status
+    this.nodeRef.setStatus(obj.status, false)
 
     // Update metadata
-    Object.assign(this.metadata, obj.metadata || {})
+    this.nodeRef.setMetadata(obj.metadata)
+    // Object.assign(this.coreNode.metadata, obj.metadata || {})
 
     // Clear current ports
     this.portManager.setPorts(new Map())
@@ -95,7 +99,7 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       this.portBinder.rebindAfterDeserialization()
     }
 
-    return this.nodeRef || this.createInstance(this.id)
+    return this.nodeRef || this.createInstance(obj.id)
   }
 
   /**
@@ -103,8 +107,12 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
    * @returns A new node instance with the same state
    */
   clone(): INodeComposite {
+    if (!this.nodeRef) {
+      throw new Error('Node reference is required for cloning')
+    }
+
     const serialized = this.serialize()
-    const node = this.createInstance(this.id)
+    const node = this.createInstance(this.nodeRef.id)
     node.deserialize(serialized)
     return node
   }

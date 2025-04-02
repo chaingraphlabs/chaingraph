@@ -13,14 +13,14 @@ import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/r
 import { useTheme } from 'components/theme/hooks/useTheme'
 import { Card } from 'components/ui/card'
 import { useUnit } from 'effector-react'
-import { cn } from 'lib/utils.ts'
+import { cn } from 'lib/utils'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { $activeFlowMetadata, removeNodeFromFlow } from 'store'
 import { useEdgesForNode } from 'store/edges/hooks/useEdges'
-import { $executionState, addBreakpoint, removeBreakpoint } from 'store/execution'
+import { $executionState, $highlightedNodeId, addBreakpoint, removeBreakpoint } from 'store/execution'
 import { useBreakpoint } from 'store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from 'store/execution/hooks/useNodeExecution'
-import { useNode } from 'store/nodes/hooks/useNode.ts'
+import { useNode } from 'store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,
   appendElementArrayPort,
@@ -54,9 +54,15 @@ function ChaingraphNodeComponent({
   const { theme } = useTheme()
   const node = useNode(id)
   const nodeEdges = useEdgesForNode(id)
+  const highlightedNodeId = useUnit($highlightedNodeId)
 
   const [style, setStyle] = useState(
     theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
+  )
+
+  const isHighlighted = useMemo(
+    () => highlightedNodeId && highlightedNodeId.includes(id),
+    [highlightedNodeId, id],
   )
 
   const { debugMode } = useUnit($executionState)
@@ -100,20 +106,23 @@ function ChaingraphNodeComponent({
   }, [theme, data.categoryMetadata, id])
 
   const executionStateStyle = useMemo(() => {
+    if (selected) {
+      return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
+    }
     if (nodeExecution.isExecuting) {
       return 'animate-pulse border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
     }
     if (nodeExecution.isCompleted) {
-      return 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]'
+      return 'border-green-500 shadow-[0_0_20px_rgba(34,207,94,0.5)]'
     }
     if (nodeExecution.isFailed) {
-      return 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'
+      return 'border-red-500 shadow-[0_0_20px_rgba(249,68,68,0.5)] opacity-80'
     }
     if (nodeExecution.isSkipped) {
       return 'border-gray-500 opacity-50'
     }
     return ''
-  }, [nodeExecution])
+  }, [nodeExecution, selected])
 
   // Memoize the entire context value to prevent unnecessary renders
   const portContextValue = useMemo(() => {
@@ -159,6 +168,9 @@ function ChaingraphNodeComponent({
           ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
           : 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
         executionStateStyle,
+
+        isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
+        highlightedNodeId !== null && !isHighlighted && 'opacity-40',
       )}
       style={{
         borderColor: style.secondary,
@@ -179,7 +191,7 @@ function ChaingraphNodeComponent({
       )}
 
       <NodeHeader
-        node={node}
+        node={nodeExecution.node ?? node}
         context={portContextValue}
         icon={data.categoryMetadata.icon}
         style={style}
@@ -192,9 +204,9 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      <NodeBody node={node} context={portContextValue} />
+      <NodeBody node={nodeExecution.node ?? node} context={portContextValue} />
 
-      <NodeErrorPorts node={node} context={portContextValue} />
+      <NodeErrorPorts node={nodeExecution.node ?? node} context={portContextValue} />
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}

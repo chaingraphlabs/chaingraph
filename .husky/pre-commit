@@ -7,7 +7,7 @@
 # As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
 #
 
-files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js|tsx|jsx|css)$' | grep -vE '\.config\.(ts|js|mjs)$')
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js|tsx|jsx|css)$' | grep -vE '\.config\.(ts|js|mjs)$' | grep -vE '^packages/badai-api/src/gql/client/')
 
 for file in $files; do
     if ! grep -q "Copyright (c)" "$file"; then

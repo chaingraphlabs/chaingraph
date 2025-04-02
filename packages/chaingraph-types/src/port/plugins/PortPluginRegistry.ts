@@ -27,6 +27,7 @@ import {
   ObjectPortPlugin,
   PortError,
   PortErrorType,
+  SecretPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
 } from '../../port'
@@ -91,7 +92,7 @@ export class PortPluginRegistry {
    */
   getAllPlugins(): IPortPlugin<any>[] {
     // return Array.from(this.plugins.values())
-    return [
+    const plugins = [
       StringPortPlugin,
       NumberPortPlugin,
       ArrayPortPlugin,
@@ -100,7 +101,10 @@ export class PortPluginRegistry {
       StreamPortPlugin,
       AnyPortPlugin,
       BooleanPortPlugin,
+      SecretPortPlugin,
     ]
+
+    return plugins
   }
 
   /**
@@ -122,7 +126,21 @@ export class PortPluginRegistry {
    * Get a union schema for all registered value types
    */
   getValueUnionSchema(): z.ZodType<IPortValue> {
-    const schemas = this.getAllPlugins().map(plugin => plugin.valueSchema)
+    const plugins = this.getAllPlugins()
+
+    const schemas = plugins
+      .filter(plugin => !plugin || !plugin.valueSchema)
+      .map((plugin) => {
+        console.log('PLUUUUUUGGGGIIIINNN:', plugin)
+        if (plugin.valueSchema) {
+          throw new PortError(
+            PortErrorType.RegistryError,
+            `Plugin for type "${plugin.typeIdentifier}" does not have a value schema`,
+          )
+        }
+
+        return plugin.valueSchema
+      })
     return buildUnion(schemas, defaultValueSchema)
   }
 

@@ -12,6 +12,7 @@ import type { IPort } from '../port'
 import { EdgeStatus } from '.'
 import { NodeStatus } from '../node'
 import { PortDirection } from '../port'
+import { deepCopy } from '../utils'
 
 export class Edge implements IEdge {
   readonly id: string
@@ -76,9 +77,9 @@ export class Edge implements IEdge {
     if (
       sourceNodeStatus === NodeStatus.Error
       || sourceNodeStatus === NodeStatus.Skipped
-      || sourceNodeStatus === NodeStatus.Disposed) {
+      || sourceNodeStatus === NodeStatus.Disposed
+    ) {
       if (!isErrorTransferEdge) {
-        // and deny transfer if so
         throw new Error(`Source node ${this.sourceNode.id} is in an invalid state.`)
       }
     }
@@ -119,14 +120,14 @@ export class Edge implements IEdge {
     this.status = EdgeStatus.Inactive
   }
 
-  // clone(): IEdge {
-  //   return new Edge(
-  //     this.id,
-  //     this.sourceNode.clone(),
-  //     this.sourcePort.clone(),
-  //     this.targetNode.clone(),
-  //     this.targetPort.clone(),
-  //     deepCopy(this.metadata),
-  //   )
-  // }
+  clone(): IEdge {
+    return new Edge(
+      this.id,
+      this.sourceNode.clone(),
+      this.sourcePort.clone(),
+      this.targetNode.clone(),
+      this.targetPort.clone(),
+      deepCopy(this.metadata),
+    )
+  }
 }

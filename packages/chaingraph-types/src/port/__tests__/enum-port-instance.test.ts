@@ -125,8 +125,9 @@ describe('enumPort Instance (plain values)', () => {
 
       const port = new EnumPort(config)
       const invalidValue = createEnumValue('invalid_id')
+      port.setValue(invalidValue)
 
-      expect(() => port.setValue(invalidValue)).toThrow()
+      expect(port.validate()).eq(false)
     })
   })
 

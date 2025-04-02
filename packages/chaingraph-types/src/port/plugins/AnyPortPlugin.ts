@@ -50,8 +50,10 @@ export function createAnyConfig(
  * Any port value schema
  */
 const valueSchema = z.custom<any>((val) => {
-  const result = PortPluginRegistry.getInstance().getValueUnionSchema().safeParse(val)
-  return result.success
+  // TODO: decide if we want to validate the value against the underlying type
+  // const result = PortPluginRegistry.getInstance().getValueUnionSchema().safeParse(val)
+  // return result.success
+  return true
 }, { message: 'Invalid AnyPort value' }).optional().nullable()
 
 /**
@@ -66,13 +68,14 @@ const anySpecificSchema = z.object({
 
     if (
       typeof val !== 'object'
-      || val === null
       || !('type' in val)
       || typeof (val as any).type !== 'string'
     ) {
       return false
     }
-    const plugin = PortPluginRegistry.getInstance().getPlugin((val as any).type as PortType)
+    const plugin = PortPluginRegistry.getInstance().getPlugin(
+      (val as any).type as PortType,
+    )
     if (!plugin) {
       return false
     }

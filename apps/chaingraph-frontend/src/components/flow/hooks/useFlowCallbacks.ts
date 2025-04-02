@@ -75,7 +75,7 @@ export function useFlowCallbacks() {
             updateNodePosition({
               flowId: activeFlow.id!,
               nodeId: change.id,
-              position: change.position as Position,
+              position: roundPosition(change.position as Position),
               version: node.getVersion(),
             })
           }
@@ -381,7 +381,7 @@ export function useFlowCallbacks() {
         updateNodePosition({
           flowId: activeFlow.id,
           nodeId: nodeDragStop.id,
-          position: absoluteNodePosition as Position,
+          position: roundPosition(absoluteNodePosition as Position),
           version: flowNode.getVersion(),
         })
 
@@ -389,7 +389,7 @@ export function useFlowCallbacks() {
           flowId: activeFlow.id,
           nodeId: nodeDragStop.id,
           parentNodeId: undefined,
-          position: absoluteNodePosition as Position,
+          position: roundPosition(absoluteNodePosition as Position),
           version: flowNode.getVersion() + 1,
         })
       } else if (newParentId && targetGroupNode && newParentId !== currentParentId) {
@@ -410,7 +410,7 @@ export function useFlowCallbacks() {
         updateNodePosition({
           flowId: activeFlow.id,
           nodeId: nodeDragStop.id,
-          position: newPosition as Position,
+          position: roundPosition(newPosition as Position),
           version: flowNode.getVersion(),
         })
 
@@ -418,7 +418,7 @@ export function useFlowCallbacks() {
           flowId: activeFlow.id,
           nodeId: nodeDragStop.id,
           parentNodeId: newParentId,
-          position: newPosition as Position,
+          position: roundPosition(newPosition as Position),
           version: flowNode.getVersion() + 1,
         })
       }
@@ -446,4 +446,11 @@ function isPointInBounds(point: { x: number, y: number }, bounds: { x: number, y
 
 function isValidPosition(pos: any): pos is { x: number, y: number } {
   return pos && typeof pos.x === 'number' && typeof pos.y === 'number'
+}
+
+function roundPosition(pos: { x: number, y: number }, precision = 5) {
+  return {
+    x: Math.round(pos.x / precision) * precision,
+    y: Math.round(pos.y / precision) * precision,
+  }
 }

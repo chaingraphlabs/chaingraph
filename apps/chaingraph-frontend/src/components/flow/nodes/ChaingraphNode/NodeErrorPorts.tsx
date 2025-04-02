@@ -11,7 +11,7 @@ import type { PortContextValue } from './ports/context/PortContext'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent.tsx'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 
 export interface NodeErrorPortsProps {
   node: INode
@@ -49,42 +49,17 @@ function NodeErrorPorts({
     () => errorConnections || errorMessageConnections,
     [errorConnections, errorMessageConnections],
   )
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
   const { getEdgesForPort } = context
+
+  useEffect(() => {
+    setIsExpanded(!!hasConnections)
+  }, [hasConnections])
 
   // Only render if we have error ports
   if (!errorPort && !errorMessagePort) {
     return null
   }
-
-  // Render port handle
-  // const renderPortHandle = (port: IPort) => {
-  //   const config = port.getConfig()
-  //   const portId = port.id
-  //   const edges = getEdgesForPort(portId)
-  //   const isConnected = edges.length > 0
-  //
-  //   return (
-  //     <Handle
-  //       type="source"
-  //       position={Position.Right}
-  //       id={portId}
-  //       style={{
-  //         right: -5,
-  //         background: config.ui?.bgColor || '#e53e3e',
-  //         zIndex: 20,
-  //       }}
-  //       className={cn(
-  //         'nodrag',
-  //         'w-3 h-3 rounded-full',
-  //         'border-2 border-background',
-  //         'transition-shadow duration-200',
-  //         'data-[connected=true]:shadow-port-connected',
-  //       )}
-  //       data-connected={isConnected}
-  //     />
-  //   )
-  // }
 
   return (
     <div className="border-t border-background/20 mt-2">

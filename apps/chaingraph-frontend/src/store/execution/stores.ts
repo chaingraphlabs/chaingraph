@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionEventData } from '@badaitech/chaingraph-types'
-import type { ExecutionState, ExecutionSubscriptionState, NodeExecutionState } from './types'
+import type { ExecutionState, ExecutionSubscriptionState } from './types'
 import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects.ts'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { combine, createStore } from 'effector'
@@ -20,6 +20,8 @@ import {
   setExecutionStatus,
   setExecutionSubscriptionError,
   setExecutionSubscriptionStatus,
+  setHighlightedEdgeId,
+  setHighlightedNodeId,
   toggleDebugMode,
 } from './events'
 import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
@@ -37,6 +39,11 @@ const initialState: ExecutionState = {
     isSubscribed: false,
   },
   nodeStates: new Map(),
+  edgeStates: new Map(),
+  ui: {
+    highlightedNodeId: null,
+    highlightedEdgeId: null,
+  },
 }
 
 export const $executionState = createStore<ExecutionState>(initialState)
@@ -57,6 +64,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
       status: ExecutionStatus.CREATED,
       events: [],
       nodeStates: new Map(),
+      edgeStates: new Map(),
       error: null,
     }
   })
@@ -78,6 +86,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
       status: ExecutionStatus.STOPPED,
       events: [],
       nodeStates: new Map(),
+      edgeStates: new Map(),
       error: null,
     }
   })
@@ -149,6 +158,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
 
   .on(newExecutionEvent, (state, event) => {
     const nodeStates = new Map(state.nodeStates)
+    const edgeStates = new Map(state.edgeStates)
 
     switch (event.type) {
       case ExecutionEventEnum.NODE_STARTED:
@@ -157,6 +167,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
           nodeStates.set(eventData.node.id, {
             status: 'running',
             startTime: event.timestamp,
+            node: eventData.node,
           })
         }
         break
@@ -170,6 +181,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
           startTime: prevState?.startTime,
           endTime: event.timestamp,
           executionTime: eventData.executionTime,
+          node: eventData.node,
         })
         break
       }
@@ -181,6 +193,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
           status: 'failed',
           endTime: event.timestamp,
           error: eventData.error,
+          node: eventData.node,
         })
         break
       }
@@ -191,6 +204,37 @@ export const $executionState = createStore<ExecutionState>(initialState)
         nodeStates.set(eventData.node.id, {
           status: 'skipped',
           endTime: event.timestamp,
+          node: eventData.node,
+        })
+        break
+      }
+
+      case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
+        edgeStates.set(eventData.edge.id, {
+          status: 'transferring',
+          edge: eventData.edge,
+        })
+        break
+      }
+
+      case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
+        edgeStates.set(eventData.edge.id, {
+          status: 'completed',
+          edge: eventData.edge,
+        })
+        break
+      }
+
+      case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
+        edgeStates.set(eventData.edge.id, {
+          status: 'failed',
+          edge: eventData.edge,
         })
         break
       }
@@ -199,9 +243,32 @@ export const $executionState = createStore<ExecutionState>(initialState)
     return {
       ...state,
       nodeStates,
+      edgeStates,
       events: [...state.events, event],
     }
   })
+
+  // setHighlightedNodeId
+  .on(setHighlightedNodeId, (state, highlightedNodeId) => ({
+    ...state,
+    ui: {
+      ...state.ui,
+      highlightedNodeId:
+        typeof highlightedNodeId === 'string'
+          ? [highlightedNodeId]
+          : highlightedNodeId,
+    },
+  }))
+  .on(setHighlightedEdgeId, (state, highlightedEdgeId) => ({
+    ...state,
+    ui: {
+      ...state.ui,
+      highlightedEdgeId:
+        typeof highlightedEdgeId === 'string'
+          ? [highlightedEdgeId]
+          : highlightedEdgeId,
+    },
+  }))
 
 // Computed stores
 export const $isExecuting = $executionState.map(
@@ -237,8 +304,8 @@ export const $executionSubscriptionState = combine<ExecutionSubscriptionState>({
   ),
 })
 
-export const $nodeExecutionStates = createStore<Map<string, NodeExecutionState>>(new Map())
-  .reset(clearExecutionState)
+// export const $nodeExecutionStates = createStore<Map<string, NodeExecutionState>>(new Map())
+//   .reset(clearExecutionState)
 
 // Auto start conditions
 export const $autoStartConditions = combine({
@@ -254,3 +321,6 @@ export const $autoStartConditions = combine({
 
 // Store to prevent multiple start attempts
 export const $startAttempted = createStore(false)
+
+export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
+export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)

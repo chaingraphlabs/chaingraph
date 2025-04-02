@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, NodeExecutionStatus, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -27,12 +27,7 @@ class DebugLogNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     console.log(this.message)
 
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 

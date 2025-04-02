@@ -8,13 +8,20 @@
 
 import type { ExecutionContext } from '../../execution'
 import type { NodeExecutionResult } from '../types'
-import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node, Port } from '../../decorator'
-import { ArrayPortPlugin, createNumberValue, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import {
+  ArrayPortPlugin,
+  createNumberValue,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { BaseNode } from '../base-node'
 import { registerNodeTransformers } from '../json-transformers'
-import { NodeExecutionStatus } from '../node-enums'
 import { findPort } from '../traverse-ports'
 import 'reflect-metadata'
 
@@ -41,12 +48,7 @@ class ArrayNode extends BaseNode {
   numArray: number[] = [1, 2, 3]
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 
@@ -69,12 +71,14 @@ describe('array node serialization', () => {
     expect(numArrayPort).toBeDefined()
     expect(numArrayPort?.getValue()).toEqual([1, 2, 3])
 
-    const json = superjson.serialize(arrayNode)
-    const parsed = superjson.deserialize(json) as ArrayNode
+    const json = arrayNode.serialize()
 
-    expect(parsed).toBeDefined()
-    expect(parsed.numArray).toEqual(arrayNode.numArray)
-    expect(parsed.metadata).toEqual(arrayNode.metadata)
-    expect(parsed.status).toEqual(arrayNode.status)
+    const parsedNode = new ArrayNode('array-node')
+    parsedNode.deserialize(json)
+
+    expect(parsedNode).toBeDefined()
+    expect(parsedNode.numArray).toEqual(arrayNode.numArray)
+    expect(parsedNode.metadata).toEqual(arrayNode.metadata)
+    expect(parsedNode.status).toEqual(arrayNode.status)
   })
 })

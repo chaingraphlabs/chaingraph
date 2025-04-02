@@ -79,7 +79,7 @@ class EventTestNode extends BaseNodeCompositional {
       if (portMessageSuffix) {
         portMessageSuffix.setValue(`${this.message} [suffix]`)
         // Use portManager directly to avoid recursive event loop
-        this['portManager'].updatePort(portMessageSuffix)
+        await this.updatePort(portMessageSuffix)
       }
     }
 
@@ -87,7 +87,7 @@ class EventTestNode extends BaseNodeCompositional {
   }
 }
 
-describe('Event Handling and Port Visibility', () => {
+describe('event Handling and Port Visibility', () => {
   let node: EventTestNode
 
   beforeEach(() => {

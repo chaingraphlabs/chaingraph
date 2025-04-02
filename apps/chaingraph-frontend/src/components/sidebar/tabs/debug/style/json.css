@@ -6,11 +6,61 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+/* Custom styling for JSON viewer */
 ._11RoI {
-  /*transparent background*/
-  background: transparent;
+  background: transparent !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.8rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
+
 ._2IvMF {
-  /*transparent background*/
-  background: transparent;
+  background: transparent !important;
+}
+
+/* Style for string values */
+._3WEe5 {
+  color: var(--green-700) !important;
+}
+
+/* Style for number values */
+._3K9nD {
+  color: var(--blue-600) !important;
+}
+
+/* Style for boolean values */
+._2pr95 {
+  color: var(--orange-500) !important;
+}
+
+/* Style for null values */
+._3LDgc {
+  color: var(--gray-500) !important;
+}
+
+/* Style for property names */
+._31P1N {
+  color: var(--primary) !important;
+}
+
+/* Improved dark mode support */
+.dark ._3WEe5 {
+  color: var(--green-400) !important;
+}
+
+.dark ._3K9nD {
+  color: var(--blue-400) !important;
+}
+
+.dark ._2pr95 {
+  color: var(--orange-400) !important;
+}
+
+.dark ._3LDgc {
+  color: var(--gray-400) !important;
+}
+
+.dark ._31P1N {
+  color: var(--primary-foreground) !important;
 }

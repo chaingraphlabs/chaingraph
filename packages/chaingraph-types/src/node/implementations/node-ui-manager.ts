@@ -8,8 +8,7 @@
 
 import type { NodeEvent, NodeEventType } from '../../node/events'
 import type { Dimensions, NodeUIMetadata, Position } from '../../node/node-ui'
-import type { NodeMetadata } from '../../node/types'
-import type { INodeUI, INodeVersioning } from '../interfaces'
+import type { INodeComposite, INodeUI, INodeVersioning } from '../interfaces'
 import { NodeEventType as EventType } from '../../node/events'
 
 /**
@@ -18,7 +17,7 @@ import { NodeEventType as EventType } from '../../node/events'
  */
 export class NodeUIManager implements INodeUI {
   constructor(
-    private metadata: NodeMetadata,
+    private nodeRef: INodeComposite,
     private versionManager: INodeVersioning,
     private eventEmitter: { emit: <T extends NodeEvent>(event: T) => Promise<void> },
     private eventFactory: { createEvent: <T extends NodeEventType>(type: T, data: any) => any },
@@ -29,7 +28,7 @@ export class NodeUIManager implements INodeUI {
    * @returns Node UI metadata or undefined if not set
    */
   getUI(): NodeUIMetadata | undefined {
-    return this.metadata.ui
+    return this.nodeRef.metadata.ui
   }
 
   /**
@@ -38,10 +37,10 @@ export class NodeUIManager implements INodeUI {
    * @param emitEvent Whether to emit a UI change event
    */
   setUI(ui: NodeUIMetadata, emitEvent?: boolean): void {
-    if (!this.metadata.ui) {
-      this.metadata.ui = ui
+    if (!this.nodeRef.metadata.ui) {
+      this.nodeRef.metadata.ui = ui
     } else {
-      this.metadata.ui = { ...this.metadata.ui, ...ui }
+      this.nodeRef.metadata.ui = { ...this.nodeRef.metadata.ui, ...ui }
     }
 
     if (!emitEvent) {
@@ -52,7 +51,7 @@ export class NodeUIManager implements INodeUI {
     this.versionManager.incrementVersion()
 
     this.eventEmitter.emit(this.eventFactory.createEvent(EventType.UIChange, {
-      ui: this.metadata.ui,
+      ui: this.nodeRef.metadata.ui,
     }))
   }
 
@@ -62,14 +61,14 @@ export class NodeUIManager implements INodeUI {
    * @param emitEvent Whether to emit a position change event
    */
   setPosition(position: Position, emitEvent?: boolean): void {
-    const oldPosition = this.metadata.ui?.position
-    if (!this.metadata.ui) {
-      this.metadata.ui = {
+    const oldPosition = this.nodeRef.metadata.ui?.position
+    if (!this.nodeRef.metadata.ui) {
+      this.nodeRef.metadata.ui = {
         position,
       }
     } else {
-      this.metadata.ui = {
-        ...this.metadata.ui,
+      this.nodeRef.metadata.ui = {
+        ...this.nodeRef.metadata.ui,
         position,
       }
     }
@@ -93,11 +92,11 @@ export class NodeUIManager implements INodeUI {
    * @param emitEvent Whether to emit a dimensions change event
    */
   setDimensions(dimensions: Dimensions, emitEvent?: boolean): void {
-    const oldDimensions = this.metadata.ui?.dimensions
-    if (!this.metadata.ui) {
-      this.metadata.ui = { dimensions }
+    const oldDimensions = this.nodeRef.metadata.ui?.dimensions
+    if (!this.nodeRef.metadata.ui) {
+      this.nodeRef.metadata.ui = { dimensions }
     } else {
-      this.metadata.ui.dimensions = dimensions
+      this.nodeRef.metadata.ui.dimensions = dimensions
     }
 
     if (!emitEvent) {
@@ -118,14 +117,14 @@ export class NodeUIManager implements INodeUI {
    * @param emitEvent Whether to emit a parent change event
    */
   setNodeParent(position: Position, parentNodeId?: string, emitEvent?: boolean): void {
-    const oldParent = this.metadata?.parentNodeId ?? undefined
-    const oldPosition = this.metadata?.ui?.position
+    const oldParent = this.nodeRef.metadata?.parentNodeId ?? undefined
+    const oldPosition = this.nodeRef.metadata?.ui?.position
 
-    this.metadata.parentNodeId = parentNodeId
-    if (!this.metadata.ui) {
-      this.metadata.ui = { position }
+    this.nodeRef.metadata.parentNodeId = parentNodeId
+    if (!this.nodeRef.metadata.ui) {
+      this.nodeRef.metadata.ui = { position }
     } else {
-      this.metadata.ui.position = position
+      this.nodeRef.metadata.ui.position = position
     }
 
     if (!emitEvent) {
