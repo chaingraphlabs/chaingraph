@@ -267,6 +267,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    */
   async updatePort(port: IPort): Promise<void> {
     this.portManager.updatePort(port)
+    this.rebuildPortBindings()
+
     this.versionManager.incrementVersion()
 
     // Create and emit the port update event

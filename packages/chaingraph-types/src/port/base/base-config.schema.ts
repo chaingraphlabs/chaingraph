@@ -53,7 +53,16 @@ export const arrayPortConfigUISchema = basePortConfigUISchema.merge(
     addItemFormHidden: z.boolean().optional(),
     addItemFormSpoilerState: z.boolean().optional(),
     itemDeletable: z.boolean().optional(),
-    enumValues: z.array(z.enum(['string', 'number', 'array', 'object', 'boolean', 'stream'])).optional(),
+    enumValues: z.array(z.enum([
+      'string',
+      'number',
+      'array',
+      'object',
+      'boolean',
+      'stream',
+      'enum',
+      'any',
+    ])).optional(),
   }).passthrough(),
 )
 /**

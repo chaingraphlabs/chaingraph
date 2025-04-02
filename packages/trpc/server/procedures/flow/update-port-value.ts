@@ -38,6 +38,7 @@ export const updatePortValue = flowContextProcedure
     if (!port)
       throw new Error('Port not found')
 
+    node.rebuildPortBindings()
     port.setValue(input.value)
     node.updatePort(port)
 

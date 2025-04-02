@@ -60,6 +60,11 @@ export class Edge implements IEdge {
 
     // TODO: Add other validation checks here for example for AnyPort, StreamInputPort, StreamOutputPort, etc.
     if (sourcePortKind !== targetPortKind) {
+      if (targetPortKind === 'any') {
+        // allow to port with kind "any" to receive any connections
+        return true
+      }
+
       throw new Error(`Incompatible port types: ${sourcePortKind} -> ${targetPortKind}`)
     }
 

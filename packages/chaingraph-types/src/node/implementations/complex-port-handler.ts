@@ -452,6 +452,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
         elementPort.setValue(elementValue)
         this.portManager.setPort(elementPort)
 
+        // Bind the port to the array element
+        this.portBinder.bindPortToNodeProperty(value, elementPort)
+
         // Recursively process nested complex types
         this.createComplexItemChildPorts(elementPort, elementValue)
       }

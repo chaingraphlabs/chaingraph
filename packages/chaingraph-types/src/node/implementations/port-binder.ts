@@ -290,6 +290,12 @@ export class PortBinder implements IPortBinder {
     itemPort.setValue(value)
     portMap.set(itemPortId, itemPort)
 
+    // Bind item port to the array element
+    const arrayValue = arrayPort.getValue()
+    if (Array.isArray(arrayValue) && index < arrayValue.length) {
+      this.bindPortToNodeProperty(arrayValue, itemPort)
+    }
+
     // If this item is a complex port, add it to processing queue
     if (completeItemConfig.type === 'object' || completeItemConfig.type === 'array') {
       portsToProcess.push(itemPort)
@@ -315,13 +321,13 @@ export class PortBinder implements IPortBinder {
    */
   rebuildPortBindings(): void {
     // First, find all root ports
-    const rootPorts = Array.from(this.portManager.ports.values())
-      .filter(port => !port.getConfig().parentId)
-
-    // Bind each root port to the node
-    for (const rootPort of rootPorts) {
-      this.bindPortToNodeProperty(this.nodeInstance, rootPort)
-    }
+    // const rootPorts = Array.from(this.portManager.ports.values())
+    //   .filter(port => !port.getConfig().parentId)
+    //
+    // // Bind each root port to the node
+    // for (const rootPort of rootPorts) {
+    //   this.bindPortToNodeProperty(this.nodeInstance, rootPort)
+    // }
 
     // Then rebind all complex port children
     this.rebindAfterDeserialization()
@@ -357,6 +363,26 @@ export class PortBinder implements IPortBinder {
       if (!parentValue)
         continue
 
+      if (parentPort.getConfig().type === 'array') {
+        // bind "port" value to "parentPort" value by index
+        const indexString = port.getConfig().key
+        if (indexString?.length) {
+          const index = Number.parseInt(indexString)
+          Object.defineProperty(parentValue, index, {
+            get() {
+              return port.getValue()
+            },
+            set(newValue) {
+              // Set the port value
+              port.setValue(newValue)
+            },
+            configurable: true,
+            enumerable: true,
+          })
+        }
+      }
+
+      // TODO: Check if follow logic is actually works
       // For object child ports
       if (parentId.includes('.') || !parentId.includes('[')) {
         // For object properties, bind to the parent object's property
@@ -366,9 +392,7 @@ export class PortBinder implements IPortBinder {
             this.bindPortToNodeProperty(parentValue, port)
           }
         }
-      }
-      // For array item ports
-      else if (parentId.includes('[')) {
+      } else if (parentId.includes('[')) {
         // For array items, bind to the array at the specified index
         if (Array.isArray(parentValue)) {
           const match = port.id.match(/\[(\d+)\]$/)
