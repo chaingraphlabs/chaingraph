@@ -196,7 +196,7 @@ class CoinMarketCapNode extends BaseNode {
     }
 
     this.result = results
-    console.log('res', this.result)
+
     return {}
   }
 }

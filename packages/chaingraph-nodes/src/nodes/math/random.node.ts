@@ -60,8 +60,6 @@ class RandomNode extends BaseNode {
     const randomValue = min + randomStep * step
     this.result = step === 1 ? Math.floor(randomValue) : randomValue
 
-    console.log(`Generated random number: ${this.result}`)
-
     return {}
   }
 }

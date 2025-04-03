@@ -19,7 +19,8 @@ import {
   PortStream,
   String,
 } from '@badaitech/chaingraph-types'
-import { SystemMessage } from '@langchain/core/messages'
+import { ChatAnthropic } from '@langchain/anthropic'
+import { HumanMessage } from '@langchain/core/messages'
 import { ChatDeepSeek } from '@langchain/deepseek'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
@@ -131,7 +132,8 @@ class LLMCallNode extends BaseNode {
     if (!this.apiKey) {
       throw new Error('API Key is required')
     }
-    let llm: ChatDeepSeek | ChatOpenAI
+    let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic
+
     if (this.model === LLMModels.DeepseekReasoner || this.model === LLMModels.DeepseekChat) {
       llm = new ChatDeepSeek({
         apiKey: this.apiKey,
@@ -139,22 +141,29 @@ class LLMCallNode extends BaseNode {
         // temperature: this.temperature,
         streaming: true,
       })
+    } else if (this.model === LLMModels.Claude35Sonnet20241022 || this.model === LLMModels.Claude37Sonnet20250219) {
+      llm = new ChatAnthropic({
+        apiKey: this.apiKey,
+        model: this.model,
+        temperature: this.temperature,
+        streaming: true,
+      })
     } else {
       llm = new ChatOpenAI({
         apiKey: this.apiKey,
         model: this.model,
-        temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
+        temperature: this.model !== LLMModels.GptO3Mini ? this.temperature : undefined,
         streaming: true,
       })
     }
-    console.log(llm)
+
     const messages = [
-      new SystemMessage(this.prompt),
+      // new SystemMessage(this.prompt),
+      new HumanMessage(this.prompt),
     ]
 
     // Start streaming in the background
     const streamingPromise = async () => {
-      console.log('Streaming started')
       try {
         const stream = await llm.stream(messages, {
           signal: context.abortSignal,
@@ -167,6 +176,7 @@ class LLMCallNode extends BaseNode {
           // Check if execution was aborted
           if (context.abortSignal.aborted) {
             this.outputStream.close()
+            this.outputStream.setError(new Error(`stream aborted`))
             return
           }
 
@@ -188,12 +198,12 @@ class LLMCallNode extends BaseNode {
         if (buffer.length > 0) {
           this.outputStream.send(buffer.join(''))
         }
+      } catch (error: any) {
+        this.outputStream.setError(new Error(error))
+        throw error
       } finally {
         // Close the stream in any case
         this.outputStream.close()
-
-        console.log('Streaming ended')
-        console.log('Response:', this.outputStream.getBuffer().join(''))
       }
     }
 

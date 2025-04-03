@@ -416,7 +416,9 @@ export class ExecutionEngine {
                   this.setNodeCompleted(node, nodeStartTime)
                 }
               })
-              .catch(e => this.setNodeError(node, e, nodeStartTime)),
+              .catch((e) => {
+                this.setNodeError(node, e, nodeStartTime)
+              }),
           )
         }
       } else {
@@ -477,7 +479,6 @@ export class ExecutionEngine {
     }))
 
     this.completedQueue.enqueue(node)
-    // throw error
   }
 
   public getDebugger(): DebuggerController | null {
