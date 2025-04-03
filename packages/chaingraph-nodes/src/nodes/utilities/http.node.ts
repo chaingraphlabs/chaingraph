@@ -11,13 +11,10 @@ import {
   BaseNode,
   Input,
   Node,
-  NodeExecutionStatus,
+  Number,
   Output,
   String,
-  Number,
   StringEnum,
-  PortArray,
-  Boolean,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -35,7 +32,7 @@ export enum HttpMethod {
 export enum ResponseType {
   JSON = 'json',
   TEXT = 'text',
-  BLOB = 'blob'
+  BLOB = 'blob',
 }
 
 function formatJSON(data: any): string {
@@ -49,8 +46,8 @@ function formatJSON(data: any): string {
   tags: ['http', 'request', 'api'],
   metadata: {
     hideHeadersForMethods: [HttpMethod.GET, HttpMethod.HEAD],
-    hideBodyForMethods: [HttpMethod.GET, HttpMethod.HEAD, HttpMethod.DELETE]
-  }
+    hideBodyForMethods: [HttpMethod.GET, HttpMethod.HEAD, HttpMethod.DELETE],
+  },
 })
 export default class HttpRequestNode extends BaseNode {
   @Input()
@@ -59,8 +56,8 @@ export default class HttpRequestNode extends BaseNode {
     description: 'Base URI of the API',
     ui: {
       placeholder: 'https://api.example.com',
-      borderColor: '#3b82f6'
-    }
+      borderColor: '#3b82f6',
+    },
   })
   baseUri: string = ''
 
@@ -70,7 +67,7 @@ export default class HttpRequestNode extends BaseNode {
     description: 'Request path',
     ui: {
       placeholder: '/v1/users',
-    }
+    },
   })
   path: string = ''
 
@@ -83,12 +80,8 @@ export default class HttpRequestNode extends BaseNode {
       id: method,
       title: method,
       type: 'string',
-      defaultValue: method
+      defaultValue: method,
     })),
-    ui: {
-      bgColor: '#fef3c7',  // Light yellow for method
-      borderColor: '#d97706'
-    }
   })
   method: HttpMethod = HttpMethod.GET
 
@@ -99,8 +92,8 @@ export default class HttpRequestNode extends BaseNode {
     ui: {
       isTextArea: true,
       textareaDimensions: { height: 80 },
-      placeholder: 'Content-Type: application/json\nAuthorization: Bearer token'
-    }
+      placeholder: 'Content-Type: application/json\nAuthorization: Bearer token',
+    },
   })
   headers: string = ''
 
@@ -112,8 +105,8 @@ export default class HttpRequestNode extends BaseNode {
       isTextArea: true,
       textareaDimensions: { height: 120 },
       placeholder: '{\n  "key": "value"\n}',
-      hidden: true  // Static boolean value
-    }
+      hidden: true, // Static boolean value
+    },
   })
   body: string = ''
 
@@ -126,8 +119,8 @@ export default class HttpRequestNode extends BaseNode {
       id: type,
       title: type,
       type: 'string',
-      defaultValue: type
-    }))
+      defaultValue: type,
+    })),
   })
   responseType: ResponseType = ResponseType.JSON
 
@@ -139,8 +132,8 @@ export default class HttpRequestNode extends BaseNode {
     ui: {
       min: 1000,
       max: 60000,
-      step: 1000
-    }
+      step: 1000,
+    },
   })
   timeout: number = 30000
 
@@ -152,8 +145,8 @@ export default class HttpRequestNode extends BaseNode {
     ui: {
       min: 0,
       max: 3,
-      step: 1
-    }
+      step: 1,
+    },
   })
   retries: number = 0
 
@@ -162,9 +155,9 @@ export default class HttpRequestNode extends BaseNode {
     title: 'Status Code',
     description: 'HTTP response status code',
     ui: {
-      hidePort: false
+      hidePort: false,
     },
-    defaultValue: 0
+    defaultValue: 0,
   })
   statusCode: number = 0
 
@@ -173,9 +166,9 @@ export default class HttpRequestNode extends BaseNode {
     title: 'Response',
     description: 'Response body',
     ui: {
-      hidePort: false
+      hidePort: false,
     },
-    defaultValue: ''
+    defaultValue: '',
   })
   response: string = ''
 
@@ -189,7 +182,7 @@ export default class HttpRequestNode extends BaseNode {
 
         const response = await fetch(url.toString(), {
           ...init,
-          signal: controller.signal
+          signal: controller.signal,
         })
 
         clearTimeout(timeoutId)
@@ -198,7 +191,7 @@ export default class HttpRequestNode extends BaseNode {
         lastError = error
         if (attempt < this.retries) {
           // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+          await new Promise(resolve => setTimeout(resolve, 2 ** attempt * 1000))
         }
       }
     }
@@ -209,14 +202,16 @@ export default class HttpRequestNode extends BaseNode {
   private async parseResponse(response: Response): Promise<string> {
     try {
       switch (this.responseType) {
-        case ResponseType.JSON:
+        case ResponseType.JSON: {
           const json = await response.json()
           return formatJSON(json)
+        }
         case ResponseType.TEXT:
           return await response.text()
-        case ResponseType.BLOB:
+        case ResponseType.BLOB: {
           const blob = await response.blob()
           return `Blob: ${blob.type}, ${blob.size} bytes`
+        }
         default:
           return await response.text()
       }
@@ -232,6 +227,7 @@ export default class HttpRequestNode extends BaseNode {
     }
 
     try {
+      // eslint-disable-next-line no-new
       new URL(this.baseUri)
     } catch (e) {
       throw new Error(`Invalid Base URI format: ${this.baseUri}`)
@@ -257,7 +253,8 @@ export default class HttpRequestNode extends BaseNode {
 
   private parseHeaders(headers: string): Record<string, string> {
     const headerRecord: Record<string, string> = {}
-    if (!headers?.trim()) return headerRecord
+    if (!headers?.trim())
+      return headerRecord
 
     const headerLines = headers.split('\n')
     for (const line of headerLines) {
@@ -271,7 +268,8 @@ export default class HttpRequestNode extends BaseNode {
   }
 
   private validateBody(body: string, headers: Record<string, string>): string {
-    if (!body?.trim()) return ''
+    if (!body?.trim())
+      return ''
 
     const contentType = headers['Content-Type']?.toLowerCase() || headers['content-type']?.toLowerCase()
 
@@ -288,6 +286,7 @@ export default class HttpRequestNode extends BaseNode {
     if (contentType?.includes('application/x-www-form-urlencoded')) {
       try {
         // Validate form data format
+        // eslint-disable-next-line no-new
         new URLSearchParams(body)
       } catch (e) {
         throw new Error(`Invalid form data body: ${(e as Error).message}`)
@@ -298,59 +297,29 @@ export default class HttpRequestNode extends BaseNode {
   }
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    try {
-      this.validateRequest()
+    this.validateRequest()
 
-      const headerRecord = this.parseHeaders(this.headers)
-      const validatedBody = this.validateBody(this.body, headerRecord)
+    const headerRecord = this.parseHeaders(this.headers)
+    const validatedBody = this.validateBody(this.body, headerRecord)
 
-      const baseUri = this.baseUri.endsWith('/') ? this.baseUri.slice(0, -1) : this.baseUri
-      const path = this.path.startsWith('/') ? this.path : `/${this.path}`
-      const url = new URL(path, baseUri)
+    const baseUri = this.baseUri.endsWith('/') ? this.baseUri.slice(0, -1) : this.baseUri
+    const path = this.path.startsWith('/') ? this.path : `/${this.path}`
+    const url = new URL(path, baseUri)
 
-      const requestInit: RequestInit = {
-        method: this.method,
-        headers: headerRecord,
-      }
+    const requestInit: RequestInit = {
+      method: this.method,
+      headers: headerRecord,
+    }
 
-      if (this.method !== HttpMethod.GET && this.method !== HttpMethod.HEAD) {
-        requestInit.body = validatedBody
-      }
+    if (this.method !== HttpMethod.GET && this.method !== HttpMethod.HEAD) {
+      requestInit.body = validatedBody
+    }
 
-      const response = await this.executeWithRetry(url, requestInit)
-      this.statusCode = response.status
-      this.response = await this.parseResponse(response)
+    const response = await this.executeWithRetry(url, requestInit)
+    this.statusCode = response.status
+    this.response = await this.parseResponse(response)
 
-      console.log('HTTP Request:', {
-        url: url.toString(),
-        method: this.method,
-        headers: headerRecord,
-        body: requestInit.body,
-        responseType: this.responseType,
-        status: this.statusCode
-      })
-
-      return {
-        status: NodeExecutionStatus.Completed,
-        startTime: context.startTime,
-        endTime: new Date(),
-        outputs: new Map<string, OutputValue>([
-          ['statusCode', this.statusCode],
-          ['response', this.response],
-        ]),
-      }
-    } catch (error: any) {
-      console.error('HTTP Request Error:', error)
-      return {
-        status: NodeExecutionStatus.Error,
-        startTime: context.startTime,
-        endTime: new Date(),
-        error: error.message,
-        outputs: new Map([
-          ['statusCode', 0],
-          ['response', error.message]
-        ])
-      }
+    return {
     }
   }
-} 
+}

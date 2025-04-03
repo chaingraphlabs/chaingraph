@@ -12,7 +12,7 @@ import { BaseNode, Boolean, Input, Node, Output, PortAny, String } from '@badait
 @Node({
   title: 'JSON Serializer',
   description: 'Converts any data structure to a JSON string',
-  category: 'data',
+  category: 'utilities',
   tags: ['json', 'serialize', 'conversion', 'format'],
 })
 export class JSONSerializerNode extends BaseNode {

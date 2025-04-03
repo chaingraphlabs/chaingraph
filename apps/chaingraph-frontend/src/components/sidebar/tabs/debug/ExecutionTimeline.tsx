@@ -25,11 +25,12 @@ export function ExecutionTimeline({
   return (
     <div className="space-y-1">
       {filteredEvents.map((event, index) => (
-        <EventCard
-          key={event.index}
-          event={event}
-          index={index}
-        />
+        <div key={event.index} className="space-y-1">
+          <EventCard
+            event={event}
+            index={index}
+          />
+        </div>
       ))}
     </div>
   )

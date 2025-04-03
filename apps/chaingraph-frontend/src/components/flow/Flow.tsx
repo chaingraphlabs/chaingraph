@@ -35,7 +35,6 @@ import { Background, ReactFlow, useOnSelectionChange, useReactFlow } from '@xyfl
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
-import { FPSCounter } from './components/FPSCounter'
 // import { FPSCounter } from './components/FPSCounter'
 import GroupNode from './nodes/GroupNode/GroupNode'
 
@@ -326,7 +325,7 @@ function Flow() {
         <div className="absolute top-4 left-4 z-50">
           <ExecutionComponent />
 
-          <FPSCounter />
+          {/* <FPSCounter /> */}
         </div>
       </ReactFlow>
 

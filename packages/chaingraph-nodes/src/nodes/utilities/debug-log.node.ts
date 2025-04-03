@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, String } from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionEventEnum, Input, Node, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -25,8 +25,15 @@ class DebugLogNode extends BaseNode {
   message: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(this.message)
-
+    await context.sendEvent({
+      index: 0,
+      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+      timestamp: new Date(),
+      data: {
+        node: this.clone(),
+        log: this.message,
+      },
+    })
     return {}
   }
 }

@@ -104,7 +104,7 @@ export function EventCard({ event, index }: EventCardProps) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1">
             <EventTitle event={event} />
           </div>
 
@@ -360,6 +360,22 @@ function EventTitle({ event }: { event: ExecutionEventImpl }) {
         </span>
       )
 
+    case ExecutionEventEnum.NODE_DEBUG_LOG_STRING:
+      return (
+        <div className="text-sm space-y-1 w-full">
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="font-medium truncate max-w-full">
+              Log from "
+              {(event.data as any).node.metadata.title}
+              "
+            </span>
+          </div>
+          <div className="font-mono text-xs bg-muted/30 p-2 rounded border overflow-auto max-h-[120px] whitespace-pre-wrap break-all w-full">
+            {(event.data as any).log}
+          </div>
+        </div>
+      )
+
     default:
       return <span className="text-sm text-muted-foreground">{event.type}</span>
   }
@@ -369,7 +385,7 @@ function EventDetails({ event }: { event: ExecutionEventImpl }) {
   const { theme } = useTheme()
 
   return (
-    <div className="space-y-3 width-[100%]">
+    <div className="space-y-3 w-full">
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div>
           <div className="text-xs text-muted-foreground mb-1">Event Type</div>
@@ -427,6 +443,7 @@ function getNodeDataFromEvent(event: ExecutionEventImpl): string | string[] | nu
     case ExecutionEventEnum.NODE_SKIPPED:
     case ExecutionEventEnum.NODE_STATUS_CHANGED:
     case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+    case ExecutionEventEnum.NODE_DEBUG_LOG_STRING:
       return (event.data as any).node.id
 
     case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
@@ -452,11 +469,6 @@ function getEdgeDataFromEvent(event: ExecutionEventImpl): string | null {
     default:
       return null
   }
-}
-
-// Helper function to determine if an event can highlight nodes/edges
-function canHighlight(event: ExecutionEventImpl): boolean {
-  return Boolean(getNodeDataFromEvent(event) || getEdgeDataFromEvent(event))
 }
 
 // Helper function to format timestamp

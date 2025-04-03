@@ -11,6 +11,7 @@ import type { INode, NodeStatusChangeEvent } from '../node'
 import type { DebuggerController } from './debugger-types'
 import type { ExecutionEventData } from './execution-events'
 import type { Flow } from './flow'
+import { createExecutionEventHandler } from '../flow/execution-handlers'
 import { NodeEventType, NodeStatus } from '../node'
 import { EventQueue } from '../utils'
 import { AsyncQueue } from '../utils/async-queue'
@@ -69,7 +70,7 @@ export class ExecutionEngine {
     if (options?.debug) {
       this.debugger = new FlowDebugger(
         async (node) => {
-          this.eventQueue.publish(
+          await this.eventQueue.publish(
             this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node: node.clone() }),
           )
           onBreakpointHit?.(node)
@@ -79,10 +80,19 @@ export class ExecutionEngine {
   }
 
   async execute(): Promise<void> {
+    // Handle context NODE_DEBUG_LOG_STRING events and send it to execution events queue
+    const contextEventsQueueCancel
+      = this.context.getEventsQueue().subscribe(createExecutionEventHandler({
+        [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: async (data) => {
+          this.eventQueue.publish(
+            this.createEvent(ExecutionEventEnum.NODE_DEBUG_LOG_STRING, data),
+          )
+        },
+      }))
+
     const startTime = Date.now()
     try {
       // Emit flow started event
-      // this.eventEmitter.emit(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow })
       await this.eventQueue.publish(
         this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow.clone() }),
       )
@@ -140,6 +150,7 @@ export class ExecutionEngine {
 
       return Promise.reject(error)
     } finally {
+      contextEventsQueueCancel()
       await this.eventQueue.close()
     }
   }

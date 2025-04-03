@@ -7,17 +7,16 @@
  */
 
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { $activeFlowMetadata } from '@/store'
-import { $executionState, $highlightedEdgeId } from '@/store/execution'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
+import { $activeFlowMetadata } from 'store'
+import { $executionState } from 'store/execution'
 import { ExecutionTimeline } from './ExecutionTimeline'
 import { FilterBar } from './FilterBar'
 
 export function DebugPanel() {
   const activeFlow = useUnit($activeFlowMetadata)
-  const highlightedEdgeId = useUnit($highlightedEdgeId)
   const { executionId, events: executionEvents } = useUnit($executionState)
 
   const [selectedEventTypes, setSelectedEventTypes] = useState<Set<ExecutionEventEnum>>(
@@ -29,7 +28,7 @@ export function DebugPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold mb-4">Execution Log</h2>
         {/* execution id title: */}
@@ -45,12 +44,14 @@ export function DebugPanel() {
         />
       </div>
 
-      <ScrollArea className="flex-1 p-4">
-        <ExecutionTimeline
-          events={executionEvents}
-          selectedEventTypes={selectedEventTypes}
-        />
-      </ScrollArea>
+      <div className="flex items-center mb-2  w-full">
+        <ScrollArea className="flex-1 p-4">
+          <ExecutionTimeline
+            events={executionEvents}
+            selectedEventTypes={selectedEventTypes}
+          />
+        </ScrollArea>
+      </div>
     </div>
   )
 }

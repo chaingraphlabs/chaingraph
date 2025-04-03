@@ -109,6 +109,10 @@ export function useExecutionSubscription() {
 
       setExecutionStatus(ExecutionStatus.PAUSED)
     },
+
+    [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: (data) => {
+      console.log('Debug log from execution:\n', data.node, '\n', data.log)
+    },
   }), [])
 
   // Create event handler with error handling
@@ -124,16 +128,10 @@ export function useExecutionSubscription() {
 
   // Subscribe to execution events using tRPC
   const subscription = trpcReact.execution.subscribeToEvents.useSubscription(
-    // executionId && !isTerminalStatus(executionStatus)
     executionId
       ? {
           executionId,
           lastEventId: null,
-          // eventTypes: [
-          // ExecutionEventEnum.FLOW_STARTED,
-          // ExecutionEventEnum.NODE_STARTED,
-          // ExecutionEventEnum.NODE_COMPLETED,
-          // ],
         }
       : skipToken,
     {
