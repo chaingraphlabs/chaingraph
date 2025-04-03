@@ -223,6 +223,7 @@ describe('flow with async nodes', () => {
 
     const node = new FailingNode('failing-node')
     node.initialize()
+
     flow.addNode(node)
 
     const abortController = new AbortController()
@@ -246,6 +247,8 @@ describe('flow with async nodes', () => {
     const flow = new Flow()
 
     const node = new ManualResolveNode('manual-resolve-node')
+    node.initialize()
+
     flow.addNode(node)
 
     const abortController = new AbortController()

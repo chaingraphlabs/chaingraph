@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { ExecutionContext, NodeExecutionStatus } from '@badaitech/chaingraph-types'
+import { ExecutionContext } from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
 
 import TextSearchNode from '../text-search.node'
@@ -25,10 +25,8 @@ describe('search text node', () => {
     node.searchText = ', W'
 
     // Execute
-    const result = await node.execute(getTestContext())
-
-    expect(result.status).toBe(NodeExecutionStatus.Completed)
-    expect(result.outputs?.get('result')).toBe(true)
+    await node.execute(getTestContext())
+    expect(node.result).toBe(true)
   })
 
   it('should return true if a given lowercase string is in the text with a different case', async () => {
@@ -39,10 +37,8 @@ describe('search text node', () => {
     node.searchText = 'case'
 
     // Execute
-    const result = await node.execute(getTestContext())
-
-    expect(result.status).toBe(NodeExecutionStatus.Completed)
-    expect(result.outputs?.get('result')).toBe(true)
+    await node.execute(getTestContext())
+    expect(node.result).toBe(true)
   })
 
   it('should return false if the search string is not found in the text', async () => {
@@ -53,10 +49,8 @@ describe('search text node', () => {
     node.searchText = 'computer'
 
     // Execute
-    const result = await node.execute(getTestContext())
-
-    expect(result.status).toBe(NodeExecutionStatus.Completed)
-    expect(result.outputs?.get('result')).toBe(false)
+    await node.execute(getTestContext())
+    expect(node.result).toBe(false)
   })
 
   it('should return true if the search string is empty', async () => {
@@ -67,10 +61,8 @@ describe('search text node', () => {
     node.searchText = ''
 
     // Execute
-    const result = await node.execute(getTestContext())
-
-    expect(result.status).toBe(NodeExecutionStatus.Completed)
-    expect(result.outputs?.get('result')).toBe(true)
+    await node.execute(getTestContext())
+    expect(node.result).toBe(true)
   })
 
   it('should return false if the source string is empty', async () => {
@@ -81,9 +73,7 @@ describe('search text node', () => {
     node.searchText = 'nope'
 
     // Execute
-    const result = await node.execute(getTestContext())
-
-    expect(result.status).toBe(NodeExecutionStatus.Completed)
-    expect(result.outputs?.get('result')).toBe(false)
+    await node.execute(getTestContext())
+    expect(node.result).toBe(false)
   })
 })

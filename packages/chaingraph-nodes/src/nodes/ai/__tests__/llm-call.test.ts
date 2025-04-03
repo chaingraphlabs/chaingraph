@@ -12,20 +12,21 @@ import LLMCallNode, { LLMModels } from '../llm-call.node'
 
 describe('deep seek LLM Call', () => {
   it('should resolve the inner schema correctly', async () => {
-    const llmNode = new LLMCallNode()
+    const llmNode = new LLMCallNode('llm-call-node')
     llmNode.model = LLMModels.DeepseekChat
     llmNode.prompt = 'Say only `test` and dont say anything else.'
     llmNode.temperature = 0
-    llmNode.apiKey = process.env.DEEPSEEK_API_KEY
+    llmNode.apiKey = process.env.DEEPSEEK_API_KEY ?? ''
     if (!process.env.DEEPSEEK_API_KEY) {
+      console.warn('Skipping test because DEEPSEEK_API_KEY is not set')
       return
     }
     const abortController = new AbortController()
     const context = new ExecutionContext('', abortController)
     const result = await llmNode.execute(context)
-    await result.backgroundActions[0]()
+    await result.backgroundActions![0]()
     console.log(result)
-    const resultLlmNode: string = llmNode.outputStream.getBuffer()
+    const resultLlmNode: string[] = llmNode.outputStream.getBuffer()
     expect(resultLlmNode).toStrictEqual(['test'])
   }, 100000)
 })

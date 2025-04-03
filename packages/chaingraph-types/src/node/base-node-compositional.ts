@@ -525,6 +525,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize ports from configs
     this.initializePortsFromConfigs(portsConfig || new Map())
 
+    this.rebindAfterDeserialization()
+
     // Apply visibility rules during initialization
     this.applyPortVisibilityRules()
 

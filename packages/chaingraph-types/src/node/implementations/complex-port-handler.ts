@@ -12,6 +12,7 @@ import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 
 /**
+ * TODO: Rethink the approach to how to bind ports and node fields
  * Implementation of IComplexPortHandler interface
  * Handles operations on complex port types (objects and arrays)
  */
@@ -312,6 +313,8 @@ export class ComplexPortHandler implements IComplexPortHandler {
     for (const childPort of childPorts) {
       // Also remove any nested ports
       const ports = this.portManager.ports
+
+      // TODO: we need to change the logic. Why do we really need to rely on the id format?
       const nestedPorts = Array.from(ports.entries())
         .filter(([id]) => id.startsWith(`${childPort.id}.`) || id.startsWith(`${childPort.id}[`))
 
@@ -330,6 +333,8 @@ export class ComplexPortHandler implements IComplexPortHandler {
         i,
       )
     }
+
+    this.portManager.updatePort(arrayPort)
   }
 
   /**
@@ -367,6 +372,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const itemPort = PortFactory.createFromConfig(completeItemConfig)
     itemPort.setValue(value)
     this.portManager.setPort(itemPort)
+
+    const arrayValue = arrayPort.getValue() || []
+    this.portBinder.bindPortToNodeProperty(arrayValue, itemPort)
 
     // If the item is a complex type (object or array), create child ports
     this.createComplexItemChildPorts(itemPort, value)

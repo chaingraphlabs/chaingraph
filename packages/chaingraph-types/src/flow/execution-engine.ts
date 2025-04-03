@@ -448,7 +448,10 @@ export class ExecutionEngine {
       node: node.clone(),
       executionTime: Date.now() - nodeStartTime,
     }))
-    this.completedQueue.enqueue(node)
+
+    if (!this.completedQueue.isClosed()) {
+      this.completedQueue.enqueue(node)
+    }
   }
 
   private setNodeBackgrounding(node: INode, nodeStartTime: number) {
@@ -456,7 +459,10 @@ export class ExecutionEngine {
     this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
       node: node.clone(),
     }))
-    this.completedQueue.enqueue(node)
+
+    if (!this.completedQueue.isClosed()) {
+      this.completedQueue.enqueue(node)
+    }
   }
 
   private setNodeSkipped(node: INode, reason: string) {
@@ -466,7 +472,9 @@ export class ExecutionEngine {
       reason,
     }))
 
-    this.completedQueue.enqueue(node)
+    if (!this.completedQueue.isClosed()) {
+      this.completedQueue.enqueue(node)
+    }
   }
 
   private setNodeError(node: INode, error: unknown, nodeStartTime: number) {
@@ -478,7 +486,9 @@ export class ExecutionEngine {
       executionTime: Date.now() - nodeStartTime,
     }))
 
-    this.completedQueue.enqueue(node)
+    if (!this.completedQueue.isClosed()) {
+      this.completedQueue.enqueue(node)
+    }
   }
 
   public getDebugger(): DebuggerController | null {

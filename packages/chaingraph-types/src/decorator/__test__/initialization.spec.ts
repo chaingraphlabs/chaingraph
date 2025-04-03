@@ -188,7 +188,7 @@ describe('port Initialization Test', () => {
     ]
     const actualPortsKeys: string[] = []
     traversePorts(node, (port) => {
-      if (port.getConfig().metadata?.isSystemPort === true) {
+      if (port.isSystem()) {
         return
       }
 
