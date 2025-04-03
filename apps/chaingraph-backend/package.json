@@ -24,17 +24,17 @@
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/trpc": "workspace:*",
-    "@types/ws": "^8.5.14",
+    "@types/ws": "^8.18.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "esm": "^3.2.25",
     "superjson": "^2.2.2",
-    "ws": "^8.18.0",
+    "ws": "^8.18.1",
     "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
     "@types/cors": "^2.8.17",
-    "@types/node": "^20.11.16"
+    "@types/node": "^20.17.30"
   }
 }

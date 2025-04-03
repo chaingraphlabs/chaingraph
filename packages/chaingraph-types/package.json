@@ -1,8 +1,9 @@
 {
   "name": "@badaitech/chaingraph-types",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
+  "description": "Chaingraph types package",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
@@ -22,11 +23,11 @@
   "dependencies": {
     "reflect-metadata": "^0.2.1",
     "superjson": "^2.2.2",
-    "type-fest": "^4.10.1",
-    "zod": "^3.22.4"
+    "type-fest": "^4.39.1",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
-    "@types/node": "^20.11.16"
+    "@types/node": "^20.17.30"
   }
 }

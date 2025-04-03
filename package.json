@@ -13,7 +13,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": "22.12.0"
+    "node": "22.14.0"
   },
   "scripts": {
     "clean": "make clean",
