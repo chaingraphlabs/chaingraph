@@ -19,6 +19,9 @@
     "check-types": "tsc -b"
   },
   "dependencies": {
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@langchain/community": "^0.3.33",
+    "@langchain/deepseek": "^0.0.1",
     "@langchain/core": "^0.3.39",
     "@langchain/openai": "^0.4.2",
     "langchain": "^0.3.15",

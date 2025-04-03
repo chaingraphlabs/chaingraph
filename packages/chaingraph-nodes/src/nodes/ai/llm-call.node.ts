@@ -20,6 +20,7 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import { SystemMessage } from '@langchain/core/messages'
+import { ChatDeepSeek } from '@langchain/deepseek'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -29,6 +30,8 @@ export enum LLMModels {
   GptO3Mini = 'o3-mini',
   Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
+  DeepseekChat = 'deepseek-chat',
+  DeepseekReasoner = 'deepseek-reasoner',
 }
 
 @ObjectSchema({
@@ -60,6 +63,8 @@ const llmModels = {
   [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
   [LLMModels.Claude37Sonnet20250219]: new LLMModel(LLMModels.Claude37Sonnet20250219, 0),
   [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
+  [LLMModels.DeepseekChat]: new LLMModel(LLMModels.DeepseekChat, 0),
+  [LLMModels.DeepseekReasoner]: new LLMModel(LLMModels.DeepseekReasoner, 0),
 }
 
 @Node({
@@ -126,14 +131,23 @@ class LLMCallNode extends BaseNode {
     if (!this.apiKey) {
       throw new Error('API Key is required')
     }
-
-    const llm = new ChatOpenAI({
-      apiKey: this.apiKey,
-      model: this.model,
-      temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
-      streaming: true,
-    })
-
+    let llm: ChatDeepSeek | ChatOpenAI
+    if (this.model === LLMModels.DeepseekReasoner || this.model === LLMModels.DeepseekChat) {
+      llm = new ChatDeepSeek({
+        apiKey: this.apiKey,
+        model: this.model,
+        // temperature: this.temperature,
+        streaming: true,
+      })
+    } else {
+      llm = new ChatOpenAI({
+        apiKey: this.apiKey,
+        model: this.model,
+        temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
+        streaming: true,
+      })
+    }
+    console.log(llm)
     const messages = [
       new SystemMessage(this.prompt),
     ]
