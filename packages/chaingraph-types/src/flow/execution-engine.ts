@@ -449,9 +449,9 @@ export class ExecutionEngine {
       executionTime: Date.now() - nodeStartTime,
     }))
 
-    // if (!this.completedQueue.isClosed()) {
-    this.completedQueue.enqueue(node)
-    // }
+    if (!this.completedQueue.isClosed()) {
+      this.completedQueue.enqueue(node)
+    }
   }
 
   private setNodeBackgrounding(node: INode, nodeStartTime: number) {
