@@ -17,6 +17,7 @@ import {
   removeEdge,
   setEdge,
   setEdges,
+  setFlowLoaded,
   setFlowMetadata,
   setFlowSubscriptionError,
   setFlowSubscriptionStatus,
@@ -53,6 +54,7 @@ export function useFlowSubscription() {
     },
 
     [FlowEventType.FlowInitEnd]: (data) => {
+      setFlowLoaded(data.flowId)
     },
 
     [FlowEventType.MetadataUpdated]: (data) => {

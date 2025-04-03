@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
-import { EventCard } from './EventCard'
+import { OptimizedEventCard } from './EventCard'
 
 interface ExecutionTimelineProps {
   events: ExecutionEventImpl[]
@@ -26,7 +26,8 @@ export function ExecutionTimeline({
     <div className="space-y-1">
       {filteredEvents.map((event, index) => (
         <div key={event.index} className="space-y-1">
-          <EventCard
+          {/* <EventCard */}
+          <OptimizedEventCard
             event={event}
             index={index}
           />

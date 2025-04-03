@@ -16,6 +16,7 @@ export const setFlowsList = createEvent<FlowMetadata[]>()
 export const setFlowsLoading = createEvent<boolean>()
 export const setFlowsError = createEvent<Error | null>()
 export const setFlowMetadata = createEvent<FlowMetadata>()
+export const setFlowLoaded = createEvent<string>()
 
 // Active flow events
 export const setActiveFlowId = createEvent<string>()

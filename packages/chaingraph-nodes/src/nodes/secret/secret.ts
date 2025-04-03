@@ -54,11 +54,15 @@ export class SecretNode extends BaseNode {
       throw new Error('No secretID provided')
     }
 
+    if (!context.badAIContext?.agentSession) {
+      throw new Error('No agent session provided')
+    }
+
     const keyPair = await context.getECDHKeyPair()
     const { secret } = await graphQLClient.request(GraphQL.ReadSecretDocument, {
       id: this.secretID,
       publicKey: Buffer.from(await subtle.exportKey('raw', keyPair.publicKey)).toString('base64'),
-      session: '',
+      session: context.badAIContext?.agentSession,
     })
 
     const secretType = secret.secret.metadata.type

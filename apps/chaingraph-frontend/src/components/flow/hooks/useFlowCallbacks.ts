@@ -448,7 +448,7 @@ function isValidPosition(pos: any): pos is { x: number, y: number } {
   return pos && typeof pos.x === 'number' && typeof pos.y === 'number'
 }
 
-function roundPosition(pos: { x: number, y: number }, precision = 5) {
+function roundPosition(pos: { x: number, y: number }, precision = 25) {
   return {
     x: Math.round(pos.x / precision) * precision,
     y: Math.round(pos.y / precision) * precision,

@@ -15,6 +15,7 @@ export function useNodeExecution(nodeId: string) {
 
   return useMemo(() => {
     const state = nodeStates.get(nodeId)
+
     return {
       status: state?.status ?? 'idle',
       isExecuting: state?.status === 'running',

@@ -18,7 +18,7 @@ import type {
  */
 import type { INode } from '@badaitech/chaingraph-types'
 import { PortComponent } from 'components/flow/nodes/ChaingraphNode/PortComponent.tsx'
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 
 export interface NodeBodyProps {
   node: INode
@@ -33,14 +33,14 @@ function NodeBody({
     () => node.getInputs().filter(
       port =>
         !port.getConfig().parentId
-        && port.getConfig().metadata?.isSystemPort !== true,
+        && !port.isSystem(),
     ),
     [node],
   )
   const outputPorts = useMemo(
     () => node.getOutputs().filter(
       port => !port.getConfig().parentId
-        && port.getConfig().metadata?.isSystemPort !== true,
+        && !port.isSystem(),
     ),
     [node],
   )
@@ -77,5 +77,7 @@ function NodeBody({
   )
 }
 
-// export default memo(NodeBody)
-export default NodeBody
+export default memo(NodeBody)
+// export default memo(NodeBody, (prev, next) => {
+//   return prev.node.getVersion() === next.node.getVersion()
+// })
