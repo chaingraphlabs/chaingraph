@@ -6,15 +6,20 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
+import { memo, useMemo } from 'react'
 import { PortComponent } from '../../../PortComponent'
-import { DeleteButton } from './DeleteButton'
+import { DeleteButton } from '../../ui/DeleteButton'
 
 interface PortFieldProps {
   node: INode
   parentPort: IPort<ObjectPortConfig>
   port: IPort
+  context: PortContextValue
   isOutput: boolean
   isSchemaMutable: boolean
   onDelete: () => void
@@ -24,13 +29,15 @@ export function PortField({
   node,
   parentPort,
   port,
+  context,
   isOutput,
   isSchemaMutable,
   onDelete,
 }: PortFieldProps) {
-  const isKeyDeletable
-    = parentPort.getConfig()?.ui?.keyDeletable
-      || parentPort.getConfig()?.ui?.keyDeletable === undefined
+  // Memoize this computation to prevent recalculation on every render
+  const isKeyDeletable = useMemo(() =>
+    parentPort.getConfig()?.ui?.keyDeletable
+    || parentPort.getConfig()?.ui?.keyDeletable === undefined, [parentPort])
 
   return (
     <div className="py-1 w-full relative">
@@ -41,7 +48,7 @@ export function PortField({
       )}
       >
         <div className="flex-1 min-w-0">
-          <PortComponent node={node} port={port} />
+          <PortComponent node={node} port={port} context={context} />
         </div>
 
         {(isSchemaMutable && parentPort.getConfig()?.ui?.keyDeletable)
@@ -50,3 +57,6 @@ export function PortField({
     </div>
   )
 }
+
+// Use memo to prevent unnecessary re-renders
+export default memo(PortField)

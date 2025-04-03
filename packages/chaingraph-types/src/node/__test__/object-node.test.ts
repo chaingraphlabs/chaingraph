@@ -11,10 +11,17 @@ import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node, Port } from '../../decorator'
-import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { BaseNode } from '../base-node'
 import { registerNodeTransformers } from '../json-transformers'
-import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -60,12 +67,7 @@ class ObjectNode extends BaseNode {
   address: Address = new Address()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 
@@ -99,12 +101,7 @@ class NestedObjectNode extends BaseNode {
   user: User = new User()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return { }
   }
 }
 
@@ -159,12 +156,7 @@ class ComplexNode extends BaseNode {
   ]
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return { }
   }
 }
 

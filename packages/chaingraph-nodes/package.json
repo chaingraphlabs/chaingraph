@@ -19,14 +19,20 @@
     "check-types": "tsc -b"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.39",
-    "@langchain/openai": "^0.4.2",
-    "langchain": "^0.3.15",
-    "lucide-react": "^0.279.0",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@langchain/community": "^0.3.39",
+    "@langchain/deepseek": "^0.0.1",
+    "@langchain/core": "^0.3.43",
+    "@langchain/openai": "^0.5.2",
+    "@langchain/anthropic": "^0.3.16",
+    "langchain": "^0.3.19",
+    "lucide-react": "^0.487.0",
     "react": "^18.3.1",
-    "superjson": "^2.2.1"
+    "superjson": "^2.2.2",
+    "yaml": "^2.7.1"
   },
   "devDependencies": {
+    "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@types/react": "^18.3.18"

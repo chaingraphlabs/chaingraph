@@ -41,3 +41,6 @@ export const newExecutionEvent = createEvent<ExecutionEventImpl>()
 
 export const resetAutoStart = createEvent()
 export const markStartAttempted = createEvent()
+
+export const setHighlightedNodeId = createEvent<string | string[] | null>()
+export const setHighlightedEdgeId = createEvent<string | string[] | null>()

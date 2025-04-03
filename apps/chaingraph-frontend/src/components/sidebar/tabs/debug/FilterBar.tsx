@@ -40,6 +40,7 @@ export function FilterBar({ selectedTypes, onSelectionChange }: FilterBarProps) 
     ],
     Debug: [
       ExecutionEventEnum.DEBUG_BREAKPOINT_HIT,
+      ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
     ],
   }
 

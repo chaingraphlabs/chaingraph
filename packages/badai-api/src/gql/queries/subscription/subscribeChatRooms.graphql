@@ -1,0 +1,49 @@
+subscription SubscribeChatRooms($session: Session!, $limit_chats: Int) {
+    subscribeChatRooms(session: $session, limit_chats: $limit_chats) {
+        sub_id
+        event
+        chat_rooms {
+            id
+            name
+            author
+            created_at
+            deleted_at
+            deleted
+            participants {
+                participant_id
+                agent_id
+                first_name
+                last_name
+                username
+                avatar
+                is_agent
+                role
+                purpose
+                self_awareness
+                tools {
+                    name
+                }
+                llm_model
+                meta
+            }
+            meta
+        }
+        participants {
+            participant_id
+            agent_id
+            avatar
+            first_name
+            is_agent
+            last_name
+            purpose
+            role
+            self_awareness
+            username
+            tools {
+                name
+            }
+            llm_model
+            meta
+        }
+    }
+}

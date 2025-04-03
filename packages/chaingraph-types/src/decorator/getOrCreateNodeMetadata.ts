@@ -8,7 +8,7 @@
 
 import type { NodeMetadata } from '../node'
 
-import { getNodeMetadata, getPortsMetadata } from './metadata-storage'
+import { getNodeMetadata } from './metadata-storage'
 import 'reflect-metadata'
 
 /**
@@ -21,10 +21,8 @@ export function getOrCreateNodeMetadata(target: any): NodeMetadata {
   if (!nodeMeta) {
     nodeMeta = { type: 'undefined' }
   }
-  const portsConfig: Record<string | symbol, any> = getPortsMetadata(target.constructor)
 
   return {
     ...nodeMeta,
-    portsConfig,
   } as NodeMetadata
 }

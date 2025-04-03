@@ -1,0 +1,6 @@
+mutation KDBCreatePage($session: Session!, $pages: [PageInput!]!) {
+    kdbCreatePage(session: $session, pages: $pages) {
+        ...PageFields
+    }
+}
+

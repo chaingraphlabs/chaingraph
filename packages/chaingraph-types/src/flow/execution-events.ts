@@ -30,6 +30,7 @@ export enum ExecutionEventEnum {
   NODE_FAILED = 'node:failed',
   NODE_SKIPPED = 'node:skipped',
   NODE_STATUS_CHANGED = 'node:status-changed',
+  NODE_DEBUG_LOG_STRING = 'node:debug-log-string',
 
   // Edge events
   EDGE_TRANSFER_STARTED = 'edge:transfer-started',
@@ -91,6 +92,10 @@ export interface ExecutionEventData {
     node: INode
     oldStatus: NodeStatus
     newStatus: NodeStatus
+  }
+  [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: {
+    node: INode
+    log: string
   }
   [ExecutionEventEnum.EDGE_TRANSFER_STARTED]: {
     edge: IEdge

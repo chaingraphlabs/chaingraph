@@ -30,3 +30,15 @@ export type RemoveFieldObjectPortInput = RouterInputs['flow']['removeFieldObject
 export const removeFiledObjectPortFx = createEffect(async (params: RemoveFieldObjectPortInput) => {
   return trpcClient.flow.removeFieldObjectPort.mutate(params)
 })
+
+// appendElementArrayPort
+export type AppendElementArrayPortInput = RouterInputs['flow']['appendElementArrayPort']
+export const appendElementArrayPortFx = createEffect(async (params: AppendElementArrayPortInput) => {
+  return trpcClient.flow.appendElementArrayPort.mutate(params)
+})
+
+// removeElementArrayPort
+export type RemoveElementArrayPortInput = RouterInputs['flow']['removeElementArrayPort']
+export const removeElementArrayPortFx = createEffect(async (params: RemoveElementArrayPortInput) => {
+  return trpcClient.flow.removeElementArrayPort.mutate(params)
+})

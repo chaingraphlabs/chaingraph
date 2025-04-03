@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeMetadata } from './types'
+import type { NodeMetadataWithPorts } from './types'
 
 /**
  * Base type for node category identifier
@@ -48,5 +48,5 @@ export interface CategoryMetadata {
 export interface CategorizedNodes {
   category: NodeCategory
   metadata: CategoryMetadata
-  nodes: NodeMetadata[]
+  nodes: NodeMetadataWithPorts[]
 }

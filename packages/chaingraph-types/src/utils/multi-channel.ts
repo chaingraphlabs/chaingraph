@@ -17,6 +17,7 @@ export const MultiChannelSchema = z.object({
 export class MultiChannel<T> {
   private buffer: T[] = []
   private isClosed = false
+  private error: Error | null = null
   private subscribers: Set<Subscriber<T>> = new Set()
 
   send(value: T): void {
@@ -46,6 +47,14 @@ export class MultiChannel<T> {
         subscriber.notify()
       }
     }
+  }
+
+  setError(error: Error): void {
+    this.error = error
+  }
+
+  getError() {
+    return this.error
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<T> {

@@ -25,6 +25,7 @@ export function useNodeExecution(nodeId: string) {
       error: state?.error,
       startTime: state?.startTime,
       endTime: state?.endTime,
+      node: state?.node,
     }
   }, [nodeStates, nodeId])
 }

@@ -1,0 +1,5 @@
+mutation DeleteMessage($session: Session!, $chat_id: ChatID!, $message_id: MessageID!) {
+    deleteMessage(session: $session, chat_id: $chat_id, id: $message_id) {
+        ...MessageFields
+    }
+}

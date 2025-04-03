@@ -6,12 +6,18 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AnyPortConfig, ArrayPortConfig, EnumPortConfig, IObjectSchema, IPortConfig, ObjectPortConfig, StreamPortConfig } from '../port'
+import type {
+  AnyPortConfig,
+  ArrayPortConfig,
+  EnumPortConfig,
+  IObjectSchema,
+  IPortConfig,
+  ObjectPortConfig,
+  StreamPortConfig,
+} from '../port'
 import type { INode } from './interface'
-import type { NodeMetadata } from './types'
 import { v7 as uuidv7 } from 'uuid'
-import { getOrCreateNodeMetadata } from '../decorator'
-import { PortPluginRegistry } from '../port'
+import { getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
 import { deepCopy } from '../utils'
 
 export interface Context {
@@ -25,15 +31,19 @@ export class PortConfigProcessor {
   /**
    * Processes all port configurations of a node, ensuring they are fully specified.
    * @param node The node whose ports are to be processed.
+   * @param portsConfig The port configurations to process.
+   * @returns The processed port configurations.
    */
-  processNodePorts(node: INode): NodeMetadata {
-    // const nodeMetadata = this.cloneNodeMetadata(getOrCreateNodeMetadata(node))
-    const nodeMetadata = node.metadata
+  processNodePorts(
+    node: INode,
+    portsConfig: Map<string, IPortConfig>,
+  ): Map<string, IPortConfig> {
     const nodeId = node.id
+    // const nodeMetadata = node.metadata
 
-    if (nodeMetadata.portsConfig) {
+    if (portsConfig) {
       // Process each port configuration associated with the node
-      for (const [propertyKey, portConfig] of nodeMetadata.portsConfig.entries()) {
+      for (const [propertyKey, portConfig] of portsConfig.entries()) {
         const processedPortConfig = this.processPortConfig(
           // { ...portConfig }, // Clone to avoid mutating original
           deepCopy(portConfig), // Clone to avoid mutating original
@@ -46,27 +56,11 @@ export class PortConfigProcessor {
         )
 
         // Update the port config in the node metadata
-        nodeMetadata.portsConfig.set(propertyKey, processedPortConfig)
+        portsConfig.set(propertyKey, processedPortConfig)
       }
     }
 
-    return nodeMetadata
-  }
-
-  cloneNodeMetadata(nodeMetadata: NodeMetadata): NodeMetadata {
-    const clonedNodeMetadata: NodeMetadata = {
-      ...nodeMetadata,
-      portsConfig: new Map(),
-    }
-
-    if (nodeMetadata.portsConfig) {
-      for (const [key, portConfig] of nodeMetadata.portsConfig.entries()) {
-        const newConfig = PortPluginRegistry.getInstance().cloneConfig(portConfig)
-        clonedNodeMetadata.portsConfig!.set(key, newConfig)
-      }
-    }
-
-    return clonedNodeMetadata
+    return portsConfig
   }
 
   /**
@@ -75,7 +69,7 @@ export class PortConfigProcessor {
    * @param context The context for processing, including parent information.
    * @returns The processed port configuration.
    */
-  private processPortConfig(
+  public processPortConfig(
     portConfig: IPortConfig,
     context: Context,
   ): IPortConfig {
@@ -83,26 +77,26 @@ export class PortConfigProcessor {
     portConfig = this.assignBasicFields(portConfig, context)
 
     // Process nested configurations based on port kind
-    if (portConfig.type === 'object') {
-      portConfig = this.processObjectPortConfig(portConfig, context)
-    } else if (portConfig.type === 'array') {
-      portConfig = this.processArrayPortConfig(portConfig, context)
-    } else if (portConfig.type === 'enum') {
-      portConfig = this.processEnumPortConfig(portConfig, context)
-    } else if (portConfig.type === 'any') {
-      portConfig = this.processAnyPortConfig(portConfig, context)
-    } else if (portConfig.type === 'stream') {
-      portConfig = this.processStreamPortConfig(portConfig, context)
-    } else if (
-      portConfig.type === 'string'
-      || portConfig.type === 'number'
-      || portConfig.type === 'boolean'
-    ) {
-      // For primitive port configs, no further processing is needed
-      // All necessary fields have been assigned in 'assignBasicFields'
-    } else {
-      throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
-    }
+    // if (portConfig.type === 'object') {
+    //   portConfig = this.processObjectPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'array') {
+    //   portConfig = this.processArrayPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'enum') {
+    //   portConfig = this.processEnumPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'any') {
+    //   portConfig = this.processAnyPortConfig(portConfig, context)
+    // } else if (portConfig.type === 'stream') {
+    //   portConfig = this.processStreamPortConfig(portConfig, context)
+    // } else if (
+    //   portConfig.type === 'string'
+    //   || portConfig.type === 'number'
+    //   || portConfig.type === 'boolean'
+    // ) {
+    //   // For primitive port configs, no further processing is needed
+    //   // All necessary fields have been assigned in 'assignBasicFields'
+    // } else {
+    //   throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
+    // }
 
     return portConfig
   }
@@ -144,6 +138,7 @@ export class PortConfigProcessor {
     //   newPortConfig.id = propertyKey || this.generateSortableUUID()
     // }
     newPortConfig.id = portConfig.id || this.generateSortableUUID()
+    // newPortConfig.id = this.generateSortableUUID()
 
     // Assign key
     if (!newPortConfig.key) {
@@ -171,7 +166,7 @@ export class PortConfigProcessor {
     }
 
     // Assign nodeId
-    if (!newPortConfig.nodeId) {
+    if (nodeId) {
       newPortConfig.nodeId = nodeId
     }
 
@@ -212,7 +207,8 @@ export class PortConfigProcessor {
       }
 
       const objectMetadata = getOrCreateNodeMetadata(objectInstance)
-      if (!objectMetadata.portsConfig) {
+      const portsConfig = getPortsMetadata(objectInstance)
+      if (!portsConfig) {
         throw new Error(`No portsConfig found in object metadata for property '${context.propertyKey}'.`)
       }
 
@@ -223,7 +219,7 @@ export class PortConfigProcessor {
         properties: {} as Record<string, IPortConfig>,
       }
 
-      for (const [nestedPropertyKey, nestedPortConfig] of objectMetadata.portsConfig.entries()) {
+      for (const [nestedPropertyKey, nestedPortConfig] of portsConfig) {
         schema.properties[nestedPropertyKey] = nestedPortConfig
       }
 

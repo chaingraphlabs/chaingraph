@@ -49,10 +49,12 @@ export function createAnyConfig(
 /**
  * Any port value schema
  */
-const valueSchema = z.custom<IPortValue>((val) => {
-  const result = PortPluginRegistry.getInstance().getValueUnionSchema().safeParse(val)
-  return result.success
-}, { message: 'Invalid AnyPort value' }).optional()
+const valueSchema = z.custom<any>((val) => {
+  // TODO: decide if we want to validate the value against the underlying type
+  // const result = PortPluginRegistry.getInstance().getValueUnionSchema().safeParse(val)
+  // return result.success
+  return true
+}, { message: 'Invalid AnyPort value' }).optional().nullable()
 
 /**
  * Any port configuration schema
@@ -60,27 +62,32 @@ const valueSchema = z.custom<IPortValue>((val) => {
 const anySpecificSchema = z.object({
   type: z.literal('any'),
   underlyingType: z.custom<IPortConfig | undefined>((val) => {
+    if (val === undefined || val === null) {
+      return true
+    }
+
     if (
       typeof val !== 'object'
-      || val === null
       || !('type' in val)
       || typeof (val as any).type !== 'string'
     ) {
       return false
     }
-    const plugin = PortPluginRegistry.getInstance().getPlugin((val as any).type as PortType)
+    const plugin = PortPluginRegistry.getInstance().getPlugin(
+      (val as any).type as PortType,
+    )
     if (!plugin) {
       return false
     }
     const result = plugin.configSchema.safeParse(val)
     return result.success
   }, { message: 'Invalid underlying port configuration' }),
-  defaultValue: valueSchema.optional(),
+  defaultValue: valueSchema.optional().nullable(),
   ui: basePortConfigUISchema.optional(),
 }).passthrough()
 
 // Merge base schema with any-specific schema
-const configSchema = basePortConfigSchema.merge(anySpecificSchema)
+const configSchema = basePortConfigSchema.merge(anySpecificSchema).passthrough()
 
 /**
  * Validate any value against config
@@ -187,7 +194,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
   serializeConfig: (config: AnyPortConfig): JSONValue => {
     try {
       let underlyingTypeSerialized: JSONValue
-      let defaultValueSerialized: JSONValue
+      let defaultValueSerialized: JSONValue = config.defaultValue
 
       if (config.underlyingType !== undefined && config.underlyingType !== null) {
         // Get the plugin for the underlying type
@@ -235,7 +242,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
       if (!result.success) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid any configuration for deserialization',
+          `Invalid any configuration for deserialization ${JSON.stringify(result)} DATA: ${JSON.stringify(data)}`,
           result.error,
         )
       }

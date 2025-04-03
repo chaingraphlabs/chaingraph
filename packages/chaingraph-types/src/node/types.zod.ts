@@ -33,6 +33,15 @@ export const NodeUIMetadataSchema = z.object({
 }).passthrough()
 
 /**
+ * Schema for node flow ports configuration
+ */
+export const FlowPortsSchema = z.object({
+  disabledFlowPorts: z.boolean().optional().default(false),
+  disabledAutoExecution: z.boolean().optional().default(false),
+  disabledError: z.boolean().optional().default(false),
+}).passthrough()
+
+/**
  * Schema for node metadata
  */
 export const NodeMetadataSchema = z.lazy(() => z.object({
@@ -50,6 +59,7 @@ export const NodeMetadataSchema = z.lazy(() => z.object({
   portsConfig: z.record(z.string(), z.any()).optional(),
   ui: NodeUIMetadataSchema.optional(),
   version: z.number().optional(),
+  flowPorts: FlowPortsSchema.optional(),
 }).passthrough())
 
 /**

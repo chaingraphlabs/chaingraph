@@ -1,0 +1,33 @@
+mutation RenameChatRoom($session: Session!, $id: ChatID!, $new_name: String!)  {
+    renameChatRoom(session: $session, id: $id, new_name: $new_name) {
+        id
+        name
+        author
+        created_at
+        deleted_at
+        deleted
+        updated_at
+        last_message_time
+        last_message {
+            ...MessageFields
+        }
+        participants {
+            agent_id
+            avatar
+            first_name
+            is_agent
+            last_name
+            participant_id
+            purpose
+            role
+            self_awareness
+            tools {
+                name
+            }
+            username
+            llm_model
+            meta
+        }
+        meta
+    }
+}

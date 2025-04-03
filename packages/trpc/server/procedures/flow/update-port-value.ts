@@ -38,8 +38,9 @@ export const updatePortValue = flowContextProcedure
     if (!port)
       throw new Error('Port not found')
 
+    node.rebuildPortBindings()
     port.setValue(input.value)
-    node.updatePort(port.id, port)
+    node.updatePort(port)
 
     console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 
@@ -81,8 +82,12 @@ export const addFieldObjectPort = flowContextProcedure
     const key = input.key
     const config = input.config
 
-    objectPort.addField(key, config)
-    node.initialize()
+    // check if key already exists
+    if (objectPort.getConfig().schema.properties[key]) {
+      throw new Error('Key already exists in object port')
+    }
+
+    node.addObjectProperty(port, key, config)
     flow.updateNode(node)
 
     // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
@@ -138,16 +143,86 @@ export const removeFieldObjectPort = flowContextProcedure
     // remove port, child ports, and all connections to this ports subtree
     flow.removePort(node.id, keyPort.id)
 
-    // remove key from object port schema
-    objectPort.removeField(key)
-
-    // initialize node to update metadata
-    node.initialize()
+    node.removeObjectProperty(port, key)
 
     // trigger node update
     flow.updateNode(node)
 
     console.log('Object port key removed', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key })
+
+    await ctx.flowStore.updateFlow(flow as Flow)
+
+    return {
+      flowId: input.flowId,
+      nodeId: input.nodeId,
+      node,
+    }
+  })
+
+export const appendElementArrayPort = flowContextProcedure
+  .input(z.object({
+    flowId: z.string(),
+    nodeId: z.string(),
+    portId: z.string(),
+    value: z.any(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    const flow = await ctx.flowStore.getFlow(input.flowId)
+    if (!flow)
+      throw new Error('Flow not found')
+
+    const node = flow.nodes.get(input.nodeId)
+    if (!node)
+      throw new Error('Node not found')
+
+    const port = node.getPort(input.portId)
+    if (!port)
+      throw new Error('Port not found')
+
+    if (port.getConfig().type !== 'array')
+      throw new Error('Port is not an array port')
+
+    node.appendArrayItem(port, input.value)
+    flow.updateNode(node)
+
+    // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
+
+    await ctx.flowStore.updateFlow(flow as Flow)
+
+    return {
+      flowId: input.flowId,
+      nodeId: input.nodeId,
+      node,
+    }
+  })
+
+export const removeElementArrayPort = flowContextProcedure
+  .input(z.object({
+    flowId: z.string(),
+    nodeId: z.string(),
+    portId: z.string(),
+    index: z.number(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    const flow = await ctx.flowStore.getFlow(input.flowId)
+    if (!flow)
+      throw new Error('Flow not found')
+
+    const node = flow.nodes.get(input.nodeId)
+    if (!node)
+      throw new Error('Node not found')
+
+    const port = node.getPort(input.portId)
+    if (!port)
+      throw new Error('Port not found')
+
+    if (port.getConfig().type !== 'array')
+      throw new Error('Port is not an array port')
+
+    node.removeArrayItem(port, input.index)
+    flow.updateNode(node)
+
+    // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 
     await ctx.flowStore.updateFlow(flow as Flow)
 

@@ -1,0 +1,5 @@
+query GetMessages($session: Session!, $chat_id : ChatID!, $from: MessageID!, $limit: Int, $order: String) {
+    messages(session: $session, chat_id: $chat_id, from: $from, limit: $limit, order: $order) {
+        ...MessageFields
+    }
+}

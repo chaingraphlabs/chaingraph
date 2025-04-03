@@ -1,0 +1,11 @@
+mutation VoiceToText($session: Session!, $attachment_id: AttachmentID!) {
+    voiceToText(session: $session, attachment_id: $attachment_id) {
+        language
+        tokens
+        text
+        avg_logprob
+        no_speech_prob
+        temperature
+        compression_ratio
+    }
+}

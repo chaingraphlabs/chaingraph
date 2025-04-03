@@ -1,0 +1,9 @@
+
+schema: ./schema.graphql
+documents: 'src/gql/queries/**/*.graphql'
+
+extensions:
+  endpoints:
+    ChatAPI:
+      url: http://0.0.0.0:9151/graphql
+      introspect: true

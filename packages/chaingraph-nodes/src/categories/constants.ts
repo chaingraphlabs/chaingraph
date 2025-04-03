@@ -11,6 +11,7 @@ import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 export const NODE_CATEGORIES = {
   MESSAGING: 'messaging',
   AI: 'ai',
+  API: 'api',
   MATH: 'math',
   DATA: 'data',
   FLOW: 'flow',
@@ -18,6 +19,8 @@ export const NODE_CATEGORIES = {
   BASIC_VALUES: 'basic-values',
   OTHER: 'other',
   GROUP: 'group',
+  SECRET: 'secret',
+  BADAI: 'badai',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -43,12 +46,56 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
         text: '#8be68d',
       },
     },
+    order: 100,
+  },
+
+  [NODE_CATEGORIES.BADAI]: {
+    id: NODE_CATEGORIES.BADAI,
+    label: 'BadAI',
+    description: 'BadAI nodes',
+    icon: 'FlaskConical',
+    style: {
+      light: {
+        primary: '#C9F7E9', // Softer mint green
+        secondary: '#E6F9F4', // Very light mint
+        background: '#FFFFFF',
+        text: '#0F7F58', // Darker green that complements the mint
+      },
+      dark: {
+        primary: '#0F2E24', // Deep dark green
+        secondary: '#061A14', // Even darker green
+        background: '#1C1C1C',
+        text: '#00D18C', // The signature bright green from your UI
+      },
+    },
     order: 0,
   },
+
   [NODE_CATEGORIES.AI]: {
     id: NODE_CATEGORIES.AI,
     label: 'AI & ML',
     description: 'Artificial Intelligence and Machine Learning nodes',
+    icon: 'Brain',
+    style: {
+      light: {
+        primary: '#F3E8FD', // Soft lavender
+        secondary: '#F9F4FE',
+        background: '#FFFFFF',
+        text: '#6200EA', // Deeper purple
+      },
+      dark: {
+        primary: '#2D1B47',
+        secondary: '#1A0F2E',
+        background: '#1C1C1C',
+        text: '#B794F6',
+      },
+    },
+    order: 1,
+  },
+  [NODE_CATEGORIES.API]: {
+    id: NODE_CATEGORIES.API,
+    label: 'API Calls',
+    description: 'API calls and integrations',
     icon: 'Brain',
     style: {
       light: {
@@ -212,6 +259,27 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 8,
+  },
+  [NODE_CATEGORIES.SECRET]: {
+    id: NODE_CATEGORIES.SECRET,
+    label: 'Secret',
+    description: 'Secret nodes',
+    icon: 'Lock', // Adding a lock icon which is more indicative of secrecy/security
+    style: {
+      light: {
+        primary: '#E8F0FE', // Soft steel blue - security-oriented but subtle
+        secondary: '#F1F7FE',
+        background: '#FFFFFF',
+        text: '#2C5282', // Deeper navy blue - conveys trust and security
+      },
+      dark: {
+        primary: '#1A2E4A', // Dark navy - serious, secure feeling
+        secondary: '#0F1B2E', // Even darker navy
+        background: '#1C1C1C',
+        text: '#90CDF4', // Light blue that's visible but not too bright
+      },
+    },
+    order: 9,
   },
 }
 

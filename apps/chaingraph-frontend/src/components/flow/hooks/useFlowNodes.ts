@@ -11,7 +11,6 @@ import { $nodes } from '@/store'
 import { useCategories } from '@/store/categories'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
-import { useUpdateNodeInternals } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 
@@ -20,7 +19,7 @@ import { useMemo } from 'react'
  */
 export function useFlowNodes() {
   const nodes = useUnit($nodes)
-  const updateNodeInternals = useUpdateNodeInternals()
+  // const updateNodeInternals = useUpdateNodeInternals()
 
   const { getCategoryMetadata } = useCategories()
 

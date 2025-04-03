@@ -10,12 +10,45 @@ import type { ExecutionContext } from '../../execution'
 import type { NodeExecutionResult } from '../types'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { DefaultValue, Description, Id, Input, Metadata, Name, Node, Number, NumberEnum, ObjectSchema, Output, Port, PortArray, PortArrayNested, PortArrayNumber, PortArrayObject, PortArrayString, PortEnum, PortEnumFromNative, PortEnumFromObject, PortObject, PortStream, String, StringEnum, Title } from '../../decorator'
-import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import {
+  DefaultValue,
+  Description,
+  Id,
+  Input,
+  Metadata,
+  Name,
+  Node,
+  Number,
+  NumberEnum,
+  ObjectSchema,
+  Output,
+  Port,
+  PortArray,
+  PortArrayNested,
+  PortArrayNumber,
+  PortArrayObject,
+  PortArrayString,
+  PortEnum,
+  PortEnumFromNative,
+  PortEnumFromObject,
+  PortObject,
+  PortStream,
+  String,
+  StringEnum,
+  Title,
+} from '../../decorator'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { MultiChannel } from '../../utils'
 import { BaseNode } from '../base-node'
 import { registerNodeTransformers } from '../json-transformers'
-import { NodeExecutionStatus } from '../node-enums'
 import 'reflect-metadata'
 
 PortPluginRegistry.getInstance().register(StringPortPlugin)
@@ -383,12 +416,7 @@ export class UserProfileNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     this.colorEnum = '12'
 
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 
@@ -442,8 +470,8 @@ describe('complex node', () => {
     expect(parsed).toBeDefined()
 
     // iterate over metadata ports config and compare with the original node
-    for (const [key, value] of testNode.metadata.portsConfig!.entries()) {
-      const config = parsed.metadata.portsConfig!.get(key)
+    for (const [portId, value] of testNode.ports.entries()) {
+      const config = parsed.ports.get(portId)
       expect(config).toBeDefined()
       expect(config).toStrictEqual(value)
     }

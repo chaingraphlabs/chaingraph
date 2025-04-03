@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, NodeMetadata } from '@badaitech/chaingraph-types'
+import type { INode, NodeExecutionResult, NodeMetadata } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, NodeRegistry, String } from '@badaitech/chaingraph-types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -45,8 +45,8 @@ export class AnotherTestNode extends BaseNode {
   //   super(id, metadata)
   // }
 
-  async execute(): Promise<any> {
-    return { status: 'completed' }
+  async execute(): Promise<NodeExecutionResult> {
+    return {}
   }
 }
 

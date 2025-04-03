@@ -11,8 +11,10 @@ import {
   Brain,
   Calculator,
   Database,
+  FlaskConical,
   GitBranch,
   Grid,
+  Lock,
   MessageSquare,
   Package,
   Type,
@@ -37,6 +39,8 @@ export const CategoryIcons: Record<string, IconComponent> = {
   Package,
   Grid,
   Type,
+  Lock,
+  FlaskConical,
 } as const
 
 export type CategoryIconName = keyof typeof CategoryIcons

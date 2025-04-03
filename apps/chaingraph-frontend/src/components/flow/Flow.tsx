@@ -15,6 +15,7 @@ import { FlowControlPanel } from '@/components/flow/components/control-panel/Flo
 import { StyledControls } from '@/components/flow/components/controls/StyledControls.tsx'
 import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState.tsx'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus.tsx'
+import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
 import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
@@ -30,7 +31,7 @@ import {
 } from '@/store'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
+import { Background, ReactFlow, useOnSelectionChange, useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
@@ -258,6 +259,19 @@ function Flow() {
     setZoom(currentZoom)
   }, [getZoom, setZoom])
 
+  const onChange = useCallback(({ nodes, edges }) => {
+    // setSelectedNodes(nodes.map(node => node.id))
+    // setSelectedEdges(edges.map(edge => edge.id))
+
+    nodes.forEach((node) => {
+      console.log('Node:', node)
+    })
+  }, [])
+
+  useOnSelectionChange({
+    onChange,
+  })
+
   return (
     <div
       className="w-full h-full relative"
@@ -275,7 +289,7 @@ function Flow() {
         nodes={nodes}
         nodeTypes={nodeTypes}
         edges={edges}
-        // edgeTypes={edgeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         // onEdgesChange={onEdgesChange}
         onInit={onInit}
@@ -298,6 +312,7 @@ function Flow() {
         className="bg-background"
         minZoom={0.2}
         maxZoom={2}
+        nodeDragThreshold={5}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}

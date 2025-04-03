@@ -6,27 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  LucideIcon,
-} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import {
-  AlertOctagon,
-  AlertTriangle,
-  ArrowRightFromLine,
-  ArrowRightToLine,
-  Ban,
-  Bug,
-  CheckCircle2,
-  CircleDot,
-  CircleOff,
-  Cpu,
-  Pause,
-  Play,
-  PlayCircle,
-  TimerReset,
-  XCircle,
-} from 'lucide-react'
+import { AlertOctagon, AlertTriangle, ArrowRightFromLine, ArrowRightToLine, Ban, Bug, CheckCircle2, CircleDot, CircleOff, Cpu, FileText, Pause, Play, PlayCircle, TimerReset, XCircle } from 'lucide-react'
 
 export interface EventTheme {
   icon: LucideIcon
@@ -237,6 +219,18 @@ export const eventThemes: Record<ExecutionEventEnum, EventTheme> = {
     bgColor: {
       light: 'bg-orange-50',
       dark: 'bg-orange-500/10',
+    },
+  },
+
+  [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: {
+    icon: FileText, // Using FileText icon for logs
+    color: {
+      light: 'text-sky-700',
+      dark: 'text-sky-300',
+    },
+    bgColor: {
+      light: 'bg-sky-50',
+      dark: 'bg-sky-500/10',
     },
   },
 }

@@ -5,16 +5,23 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
+
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
 import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { $activeFlowMetadata } from '@/store'
-import { useEdgesForPort } from '@/store/edges/hooks/useEdgesForPort'
-import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
-import { useReactFlow } from '@xyflow/react'
-import { useUnit } from 'effector-react'
+import { useStore } from '@xyflow/react'
 import {
   type ChangeEvent,
   type PropsWithChildren,
@@ -29,32 +36,44 @@ import { PortTitle } from '../ui/PortTitle'
 export interface StringPortProps {
   node: INode
   port: IPort<StringPortConfig>
+  context: PortContextValue
 }
 
+const zoomSelector = s => s.transform[2] ?? 1
+
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
-  const activeFlow = useUnit($activeFlowMetadata)
-  const { node, port } = props
+  const { node, port, context } = props
+  const {
+    updatePortValue,
+    updatePortUI,
+    getEdgesForPort,
+  } = context
 
   const config = port.getConfig()
   const ui = useMemo(() => config.ui, [config.ui])
-  const connectedEdges = useEdgesForPort(port.id)
-  const { getZoom } = useReactFlow()
+
+  const zoom = useStore(zoomSelector)
+
+  // Memoize connected edges to prevent unnecessary calculations
+  const connectedEdges = useMemo(() => {
+    return getEdgesForPort(port.id)
+  }, [getEdgesForPort, port.id])
 
   const [focused, setFocused] = useState(false)
 
-  const handleChange = <Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
+  const handleChange = useCallback(<Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
     if (!e.nativeEvent.isTrusted) {
       return
     }
 
     const value = e.target.value
 
-    requestUpdatePortValue({
+    updatePortValue({
       nodeId: node.id,
       portId: port.id,
       value,
     })
-  }
+  }, [node.id, port.id, updatePortValue])
 
   const needRenderEditor = useMemo(() => {
     return !isHideEditor(config, connectedEdges)
@@ -70,13 +89,13 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
     if (!textarea) {
       return
     }
-    if (!activeFlow?.id || !port.getConfig().nodeId) {
+    if (!port.getConfig().nodeId) {
       return
     }
 
     const { width, height } = textarea.getBoundingClientRect()
 
-    const zoom = getZoom()
+    // Using zoom directly from context
     const newDimensions = {
       width: Math.round(width / zoom),
       height: Math.round(height / zoom),
@@ -91,16 +110,16 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
 
     console.log('StringPort handleResize', newDimensions)
 
-    requestUpdatePortUI({
+    updatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: {
         textareaDimensions: newDimensions,
       },
     })
-  }, [activeFlow?.id, port, getZoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
+  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id, updatePortUI])
 
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   const title = config.title || config.key
@@ -126,6 +145,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       >
         <PortTitle>
           {title}
+          {' '}
         </PortTitle>
 
         {!ui?.isTextArea && needRenderEditor && (

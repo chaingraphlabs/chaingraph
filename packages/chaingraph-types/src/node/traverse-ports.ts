@@ -53,6 +53,16 @@ export function findPort(node: INode, predicate: (port: IPort) => boolean): IPor
 }
 
 /**
+ * Find a port by port config.key
+ * @param node Node to search
+ * @param key Key to search
+ * @returns Found port or undefined
+ */
+export function findPortByKey(node: INode, key: string): IPort | undefined {
+  return findPort(node, port => port.getConfig().key === key)
+}
+
+/**
  * Map ports of a node
  * @param node Node to map
  * @param mapper Mapper function

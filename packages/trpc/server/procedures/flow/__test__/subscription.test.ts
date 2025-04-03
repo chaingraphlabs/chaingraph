@@ -19,7 +19,6 @@ import {
   Input,
   Node,
   NodeCatalog,
-  NodeExecutionStatus,
   NodeRegistry,
   Number,
   Output,
@@ -61,12 +60,7 @@ class ScalarNode extends BaseNode {
   strOutput: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 

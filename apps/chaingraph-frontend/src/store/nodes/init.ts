@@ -69,7 +69,7 @@ sample({
   source: $nodes,
   fn: (nodes, params) => ({
     ...params,
-    version: (nodes[params.nodeId]?.metadata.version ?? 0) + 1,
+    version: (nodes[params.nodeId]?.getVersion() ?? 0) + 1,
   }),
   target: [setNodeVersion, baseUpdateNodePositionFx],
 })

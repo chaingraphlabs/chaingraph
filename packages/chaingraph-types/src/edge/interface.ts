@@ -61,5 +61,5 @@ export interface IEdge {
   /**
    * Clone the edge
    */
-  // clone: () => IEdge
+  clone: () => IEdge
 }

@@ -52,7 +52,8 @@ export function useFlowSubscription() {
       setFlowMetadata(data.metadata)
     },
 
-    [FlowEventType.FlowInitEnd]: (data) => {},
+    [FlowEventType.FlowInitEnd]: (data) => {
+    },
 
     [FlowEventType.MetadataUpdated]: (data) => {
       setFlowMetadata(data.newMetadata)
@@ -162,14 +163,14 @@ export function useFlowSubscription() {
 
       console.log(`[NodeParentUpdated] currentParent: ${currentParent?.id}, newParent: ${newParent?.id}, currentPosition: ${JSON.stringify(currentPosition)}, newPosition: ${JSON.stringify(newPosition)} currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
-      setNodeVersion({
-        nodeId: data.nodeId,
-        version: data.version,
-      })
-
       node.setMetadata({
         ...node.metadata,
         parentNodeId: data.newParentNodeId,
+      })
+
+      setNodeVersion({
+        nodeId: data.nodeId,
+        version: data.version,
       })
 
       positionInterpolator.clearNodeState(data.nodeId)
@@ -185,11 +186,11 @@ export function useFlowSubscription() {
 
       // if event contains version + 1 then just update the version
       if (data.version && data.version <= currentVersion) {
-        // console.log(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        console.log(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
         return
       }
 
-      // console.log(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
+      console.log(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
       setNodeVersion({
         nodeId: data.nodeId,
         version: data.version,

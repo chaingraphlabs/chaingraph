@@ -1,0 +1,19 @@
+mutation ChatRoomCreateParticipant($session: Session!, $chat_id: ChatID!, $input: ParticipantInput!) {
+    chatRoomCreateParticipant(session: $session, chat_id: $chat_id, input: $input) {
+        agent_id
+        avatar
+        first_name
+        is_agent
+        last_name
+        participant_id
+        purpose
+        role
+        self_awareness
+        tools {
+            name
+        }
+        username
+        llm_model
+        meta
+    }
+}

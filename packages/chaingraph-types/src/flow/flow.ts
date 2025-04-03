@@ -166,7 +166,7 @@ export class Flow implements IFlow {
       throw new Error(`Port with ID ${portId} does not exist on node ${nodeId}.`)
     }
 
-    // find all child ports
+    // find all child ports including the port itself
     const childPorts = this.findAllChildPorts(node, portId)
 
     // first remove every connection to all found ports
@@ -182,9 +182,9 @@ export class Flow implements IFlow {
     })
 
     // then remove the ports
-    childPorts.forEach((port) => {
-      node.removePort(port.id)
-    })
+    // childPorts.forEach((port) => {
+    //   node.removePort(port.id)
+    // })
   }
 
   /**

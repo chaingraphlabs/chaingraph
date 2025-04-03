@@ -11,12 +11,7 @@ import { FlowList } from '@/components/sidebar/tabs/flow/FlowList.tsx'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
   ChevronLeftIcon,
@@ -42,7 +37,7 @@ const STORAGE_KEYS = {
 
 const DEFAULT_WIDTH = 320
 const MIN_WIDTH = 200
-const MAX_WIDTH = 600
+const MAX_WIDTH = 1200
 
 const tabs = [
   {
@@ -192,7 +187,7 @@ export function Sidebar() {
       {isExpanded && activeTab && (
         <div
           className="relative bg-card border-r"
-          style={{ width: `${width}px` }}
+          style={{ width: `${width}px`, maxWidth: `90%` }}
         >
           {/* Collapse Button */}
           <Button

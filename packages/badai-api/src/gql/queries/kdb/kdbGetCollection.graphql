@@ -1,0 +1,12 @@
+query KDBGetCollection(
+    $session: Session!,
+    $collection_id: CollectionID!,
+) {
+    kdbGetCollection(
+        session: $session,
+        collection_id: $collection_id
+    ) {
+        ...CollectionFields
+    }
+}
+

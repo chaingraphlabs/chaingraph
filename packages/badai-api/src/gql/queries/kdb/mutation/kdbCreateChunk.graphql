@@ -1,0 +1,6 @@
+mutation KDBCreateChunk($session: Session!, $chunks: [ChunkInput!]!) {
+    kdbCreateChunk(session: $session, chunks: $chunks) {
+        ...ChunkFields
+    }
+}
+

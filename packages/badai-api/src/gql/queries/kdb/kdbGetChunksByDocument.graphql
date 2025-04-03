@@ -1,0 +1,8 @@
+query KDBGetChunksByDocument(
+    $session: Session!,
+    $document_id: DocumentID!,
+) {
+    kdbGetChunksByDocument(session: $session, document_id: $document_id) {
+        ...ChunkFields
+    }
+}

@@ -1,0 +1,13 @@
+query KDBIndexingDocumentTaskGetByState(
+    $session: Session!,
+    $state: [IndexingDocumentTaskState!]!,
+    $limit: Int! = 100
+) {
+    kdbIndexingDocumentTaskGetByState(
+        session: $session,
+        state: $state,
+        limit: $limit
+    ) {
+        ...IndexingDocumentTaskFields
+    }
+}

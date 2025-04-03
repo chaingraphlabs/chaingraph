@@ -1,0 +1,3 @@
+mutation UnsubscribeMessages($session: Session!, $chat_id: ChatID!, $sub_id: SubscriptionID!) {
+  unsubscribeMessages(session: $session, chat_id: $chat_id, sub_id: $sub_id)
+}

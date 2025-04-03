@@ -19,7 +19,9 @@ import {
   PortStream,
   String,
 } from '@badaitech/chaingraph-types'
-import { SystemMessage } from '@langchain/core/messages'
+import { ChatAnthropic } from '@langchain/anthropic'
+import { HumanMessage } from '@langchain/core/messages'
+import { ChatDeepSeek } from '@langchain/deepseek'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -27,7 +29,10 @@ export enum LLMModels {
   Gpt4oMini = 'gpt-4o-mini',
   Gpt4o = 'gpt-4o',
   GptO3Mini = 'o3-mini',
+  Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
+  DeepseekChat = 'deepseek-chat',
+  DeepseekReasoner = 'deepseek-reasoner',
 }
 
 @ObjectSchema({
@@ -57,7 +62,10 @@ const llmModels = {
   [LLMModels.Gpt4oMini]: new LLMModel(LLMModels.Gpt4oMini, 0),
   [LLMModels.Gpt4o]: new LLMModel(LLMModels.Gpt4o, 0),
   [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
+  [LLMModels.Claude37Sonnet20250219]: new LLMModel(LLMModels.Claude37Sonnet20250219, 0),
   [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
+  [LLMModels.DeepseekChat]: new LLMModel(LLMModels.DeepseekChat, 0),
+  [LLMModels.DeepseekReasoner]: new LLMModel(LLMModels.DeepseekReasoner, 0),
 }
 
 @Node({
@@ -124,21 +132,38 @@ class LLMCallNode extends BaseNode {
     if (!this.apiKey) {
       throw new Error('API Key is required')
     }
+    let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic
 
-    const llm = new ChatOpenAI({
-      apiKey: this.apiKey,
-      model: this.model,
-      temperature: this.model !== 'o3-mini' ? this.temperature : undefined,
-      streaming: true,
-    })
+    if (this.model === LLMModels.DeepseekReasoner || this.model === LLMModels.DeepseekChat) {
+      llm = new ChatDeepSeek({
+        apiKey: this.apiKey,
+        model: this.model,
+        // temperature: this.temperature,
+        streaming: true,
+      })
+    } else if (this.model === LLMModels.Claude35Sonnet20241022 || this.model === LLMModels.Claude37Sonnet20250219) {
+      llm = new ChatAnthropic({
+        apiKey: this.apiKey,
+        model: this.model,
+        temperature: this.temperature,
+        streaming: true,
+      })
+    } else {
+      llm = new ChatOpenAI({
+        apiKey: this.apiKey,
+        model: this.model,
+        temperature: this.model !== LLMModels.GptO3Mini ? this.temperature : undefined,
+        streaming: true,
+      })
+    }
 
     const messages = [
-      new SystemMessage(this.prompt),
+      // new SystemMessage(this.prompt),
+      new HumanMessage(this.prompt),
     ]
 
     // Start streaming in the background
     const streamingPromise = async () => {
-      console.log('Streaming started')
       try {
         const stream = await llm.stream(messages, {
           signal: context.abortSignal,
@@ -151,6 +176,7 @@ class LLMCallNode extends BaseNode {
           // Check if execution was aborted
           if (context.abortSignal.aborted) {
             this.outputStream.close()
+            this.outputStream.setError(new Error(`stream aborted`))
             return
           }
 
@@ -172,6 +198,9 @@ class LLMCallNode extends BaseNode {
         if (buffer.length > 0) {
           this.outputStream.send(buffer.join(''))
         }
+      } catch (error: any) {
+        this.outputStream.setError(new Error(error))
+        throw error
       } finally {
         // Close the stream in any case
         this.outputStream.close()

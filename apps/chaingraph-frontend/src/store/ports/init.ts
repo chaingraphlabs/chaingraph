@@ -7,6 +7,7 @@
  */
 import type {
   AddFieldObjectPortInput,
+  AppendElementArrayPortInput,
   RemoveFieldObjectPortInput,
   UpdatePortUIInput,
   UpdatePortValueInput,
@@ -18,13 +19,17 @@ import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-samp
 import { $nodes } from '@/store/nodes/stores'
 import {
   addFieldObjectPortFx,
+  appendElementArrayPortFx,
   baseUpdatePortUIFx,
   baseUpdatePortValueFx,
+  removeElementArrayPortFx,
   removeFiledObjectPortFx,
 } from '@/store/ports/effects'
 import { combine, createEffect, sample } from 'effector'
 import {
   addFieldObjectPort,
+  appendElementArrayPort,
+  removeElementArrayPort,
   removeFieldObjectPort,
   requestUpdatePortUI,
   requestUpdatePortValue,
@@ -69,7 +74,7 @@ sample({
       nodeId,
       portId,
       value,
-      nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
+      nodeVersion: (nodes[nodeId]?.getVersion() ?? 0) + 1,
     }
   },
   target: [
@@ -121,7 +126,7 @@ sample({
       nodeId,
       portId,
       ui,
-      nodeVersion: (nodes[nodeId]?.metadata.version ?? 0) + 1,
+      nodeVersion: (nodes[nodeId]?.getVersion() ?? 0) + 1,
     }
   },
   target: [
@@ -166,4 +171,43 @@ sample({
     return result
   },
   target: removeFiledObjectPortFx,
+})
+
+sample({
+  clock: appendElementArrayPort,
+  source: combine({
+    activeFlowId: $activeFlowId,
+  }),
+  fn: ({ activeFlowId }, { nodeId, portId, value }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const result: AppendElementArrayPortInput = {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      value,
+    }
+    return result
+  },
+  target: appendElementArrayPortFx,
+})
+
+sample({
+  clock: removeElementArrayPort,
+  source: combine({
+    activeFlowId: $activeFlowId,
+  }),
+  fn: ({ activeFlowId }, { nodeId, portId, index }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    return {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      index,
+    }
+  },
+  target: removeElementArrayPortFx,
 })

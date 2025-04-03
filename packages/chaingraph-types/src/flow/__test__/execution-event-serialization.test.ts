@@ -11,8 +11,16 @@ import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node, String } from '../../decorator'
 import { ExecutionContext } from '../../execution'
-import { BaseNode, NodeExecutionStatus, NodeStatus, registerNodeTransformers } from '../../node'
-import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { BaseNode, NodeStatus, registerNodeTransformers } from '../../node'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { ExecutionEventEnum, ExecutionEventImpl } from '../execution-events'
 import { Flow } from '../flow'
 import { registerFlowTransformers } from '../json-transformers'
@@ -43,12 +51,7 @@ describe('executionEventImpl Serialization', () => {
     @Node(mockNodeMetadata)
     class MockNode extends BaseNode {
       async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-        return {
-          status: NodeExecutionStatus.Completed,
-          startTime: context.startTime,
-          endTime: new Date(),
-          outputs: new Map(),
-        }
+        return {}
       }
     }
 
@@ -103,12 +106,7 @@ describe('executionEventImpl Serialization', () => {
       a: string = 'test'
 
       async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-        return {
-          status: NodeExecutionStatus.Completed,
-          startTime: context.startTime,
-          endTime: new Date(),
-          outputs: new Map(),
-        }
+        return {}
       }
     }
 

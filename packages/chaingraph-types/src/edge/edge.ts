@@ -10,7 +10,9 @@ import type { EdgeMetadata, IEdge } from '.'
 import type { INode } from '../node'
 import type { IPort } from '../port'
 import { EdgeStatus } from '.'
+import { NodeStatus } from '../node'
 import { PortDirection } from '../port'
+import { deepCopy } from '../utils'
 
 export class Edge implements IEdge {
   readonly id: string
@@ -58,6 +60,11 @@ export class Edge implements IEdge {
 
     // TODO: Add other validation checks here for example for AnyPort, StreamInputPort, StreamOutputPort, etc.
     if (sourcePortKind !== targetPortKind) {
+      if (targetPortKind === 'any') {
+        // allow to port with kind "any" to receive any connections
+        return true
+      }
+
       throw new Error(`Incompatible port types: ${sourcePortKind} -> ${targetPortKind}`)
     }
 
@@ -65,13 +72,46 @@ export class Edge implements IEdge {
   }
 
   async transfer(): Promise<void> {
+    const sourceNodeStatus = this.sourceNode.status
+    const flowOutPort = this.sourceNode.getFlowOutPort()
+    const errorPort = this.sourceNode.getErrorPort()
+    const errorMessagePort = this.sourceNode.getErrorMessagePort()
+
+    const isErrorTransferEdge = this.sourcePort.id === errorPort?.id || this.sourcePort.id === errorMessagePort?.id
+
+    if (
+      sourceNodeStatus === NodeStatus.Error
+      || sourceNodeStatus === NodeStatus.Skipped
+      || sourceNodeStatus === NodeStatus.Disposed
+    ) {
+      if (!isErrorTransferEdge) {
+        throw new Error(`Source node ${this.sourceNode.id} is in an invalid state.`)
+      }
+    }
+
+    if (errorPort && errorMessagePort && errorPort.getValue() === true) {
+      // check if the source port is error port or error message port
+      if (!isErrorTransferEdge) {
+        // and deny transfer if so
+        throw new Error(`Source node ${this.sourceNode.id} has an error: ${errorMessagePort.getValue()}`)
+      }
+    }
+
+    if (flowOutPort && flowOutPort.getValue() !== true) {
+      // check if the source port is flow out port
+      if (!isErrorTransferEdge) {
+        // and deny transfer if so
+        throw new Error(`Source node ${this.sourceNode.id} is not allowed to execute.`)
+      }
+    }
+
     // Transfer data from the source port to the target port
     const value = this.sourcePort.getValue()
     const data = value !== undefined ? value : this.sourcePort.getConfig().defaultValue
     if (data === undefined) {
-      console.error(`Source port ${this.sourcePort.id} has no data to transfer.`)
-      return
-      // throw new Error(`Source port ${this.sourcePort.id} has no data to transfer.`)
+      // console.error(`Source port ${this.sourcePort.id} has no data to transfer.`)
+      // return
+      throw new Error(`Source port ${this.sourcePort.id} has no data to transfer.`)
     }
     this.targetPort.setValue(data)
   }
@@ -85,14 +125,14 @@ export class Edge implements IEdge {
     this.status = EdgeStatus.Inactive
   }
 
-  // clone(): IEdge {
-  //   return new Edge(
-  //     this.id,
-  //     this.sourceNode.clone(),
-  //     this.sourcePort.clone(),
-  //     this.targetNode.clone(),
-  //     this.targetPort.clone(),
-  //     deepCopy(this.metadata),
-  //   )
-  // }
+  clone(): IEdge {
+    return new Edge(
+      this.id,
+      this.sourceNode.clone(),
+      this.sourcePort.clone(),
+      this.targetNode.clone(),
+      this.targetPort.clone(),
+      deepCopy(this.metadata),
+    )
+  }
 }

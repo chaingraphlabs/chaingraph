@@ -59,21 +59,41 @@ interface ObjectSchema {
 class DummyNode extends BaseNode {
   @Port({
     type: 'string',
+    ui: {
+      bgColor: '#e70d0d',
+      borderColor: '#460707',
+    },
   })
   public dummyPort?: string = 'test'
 
   @Port({
     type: 'object',
+    ui: {
+      bgColor: '#e44df5',
+      borderColor: '#541e5d',
+    },
     schema: {
       properties: {
         hello: {
           type: 'string',
+          ui: {
+            bgColor: '#e70d0d',
+            borderColor: '#460707',
+          },
         },
         world: {
           type: 'string',
+          ui: {
+            bgColor: '#e70d0d',
+            borderColor: '#460707',
+          },
         },
         inner: {
           type: 'object',
+          ui: {
+            bgColor: '#e44df5',
+            borderColor: '#541e5d',
+          },
           schema: {
             properties: {
               foo: {
@@ -154,9 +174,24 @@ describe('port Initialization Test', () => {
     expect(dummyPortInstance?.getValue()).toStrictEqual(createStringValue('world'))
 
     // check if all ports are initialized
-    const expectedPortsKeys = ['dummyPort', 'testObject', 'hello', 'world', 'inner', 'foo', 'bar', 'helloArray']
+    const expectedPortsKeys = [
+      'dummyPort',
+      'testObject',
+      'helloArray',
+      'hello',
+      'world',
+      'inner',
+      '0',
+      '1',
+      'foo',
+      'bar',
+    ]
     const actualPortsKeys: string[] = []
     traversePorts(node, (port) => {
+      if (port.isSystem()) {
+        return
+      }
+
       actualPortsKeys.push(port.getConfig().key!)
     })
 
@@ -246,7 +281,7 @@ describe('port Initialization Test', () => {
 
     expect(deserializedNode).toBeDefined()
     expect(deserializedNode).toBeInstanceOf(DummyNode)
-    expect(deserializedNode).toEqual(node)
+    expect(deserializedNode.serialize()).toEqual(node.serialize())
   })
 
   it('should deserialize from json', () => {

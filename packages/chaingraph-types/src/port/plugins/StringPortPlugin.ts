@@ -9,7 +9,13 @@
 import type { JSONValue } from '../../utils/json'
 import type { IPortPlugin, StringPortConfig, StringPortValue } from '../base'
 import { z } from 'zod'
-import { basePortConfigSchema, isStringPortValue, PortError, PortErrorType, stringPortConfigUISchema } from '../base'
+import {
+  basePortConfigSchema,
+  isStringPortValue,
+  PortError,
+  PortErrorType,
+  stringPortConfigUISchema,
+} from '../base'
 
 /**
  * Helper to create a string port value
@@ -181,7 +187,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
     try {
       // For string port, we can simply return the config as is
       // since it doesn't contain any non-serializable parts
-      return config
+      return { ...config }
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

@@ -16,8 +16,10 @@ import { Flow } from './flow'
 /**
  * Registers flow transformers with SuperJSON
  */
-export function registerFlowTransformers() {
-  SuperJSON.registerCustom<IPort, any>(
+export function registerFlowTransformers(
+  superjsonCustom: typeof SuperJSON = SuperJSON,
+) {
+  superjsonCustom.registerCustom<IPort, any>(
     {
       isApplicable: (v): v is IPort => {
         return v instanceof BasePort
@@ -34,7 +36,7 @@ export function registerFlowTransformers() {
   )
 
   // Flow
-  SuperJSON.registerCustom<Flow, any>(
+  superjsonCustom.registerCustom<Flow, any>(
     {
       isApplicable: (v): v is Flow => {
         return v instanceof Flow
@@ -57,9 +59,9 @@ export function registerFlowTransformers() {
   )
 
   // Execution event data
-  SuperJSON.registerCustom<ExecutionEventImpl, any>(
+  superjsonCustom.registerCustom<ExecutionEventImpl, any>(
     {
-      isApplicable: (v): v is ExecutionEventImpl<any> => {
+      isApplicable: (v): v is ExecutionEventImpl => {
         return v instanceof ExecutionEventImpl
       },
       serialize: (v) => {
@@ -67,22 +69,27 @@ export function registerFlowTransformers() {
           index: v.index,
           type: v.type,
           timestamp: v.timestamp,
-          data: SuperJSON.stringify(v.data),
+          data: superjsonCustom.stringify(v.data),
         }
       },
       deserialize: (v) => {
-        const data = SuperJSON.parse(v.data)
+        try {
+          const data = superjsonCustom.parse(v.data)
 
-        return new ExecutionEventImpl(
-          v.index,
-          v.type,
-          v.timestamp,
-          data,
-        )
+          return new ExecutionEventImpl(
+            v.index,
+            v.type,
+            v.timestamp,
+            data,
+          )
+        } catch (e) {
+          console.error('Failed to deserialize execution event', e)
+          throw e
+        }
       },
     },
     'ExecutionEventImpl',
   )
 
-  registerEdgeTransformers()
+  registerEdgeTransformers(superjsonCustom)
 }

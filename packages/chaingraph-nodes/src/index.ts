@@ -8,3 +8,9 @@
 
 export * from './categories'
 export * from './nodes'
+
+export function initializeNodes(callback: () => void) {
+  // Initialize nodes here
+
+  callback()
+}

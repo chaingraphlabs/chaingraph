@@ -11,8 +11,16 @@ import type { NodeExecutionResult } from '../../node'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { Id, Input, Node, NodeRegistry, Number, Output, String } from '../../decorator'
-import { BaseNode, findPort, NodeExecutionStatus, registerNodeTransformers } from '../../node'
-import { ArrayPortPlugin, EnumPortPlugin, NumberPortPlugin, ObjectPortPlugin, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { BaseNode, findPort, registerNodeTransformers } from '../../node'
+import {
+  ArrayPortPlugin,
+  EnumPortPlugin,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '../../port'
 import { Flow } from '../flow'
 import { registerFlowTransformers } from '../json-transformers'
 
@@ -40,12 +48,7 @@ class SourceNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     this.output = this.input
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map([['output', this.output]]),
-    }
+    return {}
   }
 }
 
@@ -64,12 +67,7 @@ class TargetNode extends BaseNode {
   numberInput: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 

@@ -1,0 +1,11 @@
+query KDBGetParticipantCollections(
+    $session: Session!,
+    $agent_id: AgentID!,
+) {
+    kdbGetAgentCollections(
+        session: $session,
+        agent_id: $agent_id,
+    ) {
+        ...CollectionFields
+    }
+}

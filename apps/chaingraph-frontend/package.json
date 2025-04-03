@@ -45,8 +45,8 @@
     "@radix-ui/react-tooltip": "^1.1.6",
     "@radix-ui/themes": "^3.1.6",
     "@types/color": "^4.2.0",
-    "@xyflow/react": "^12.4.2",
-    "@xyflow/system": "^0.0.50",
+    "@xyflow/react": "^12.4.4",
+    "@xyflow/system": "^0.0.52",
     "add": "^2.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -67,7 +67,8 @@
     "superjson": "^2.2.2",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod-to-json-schema": "^3.24.1"
+    "zod-to-json-schema": "^3.24.1",
+    "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@badaitech/trpc": "workspace:*",
@@ -97,6 +98,7 @@
     "storybook": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript-eslint": "^8.18.2",
+    "vite-plugin-node-polyfills": "^0.17.0",
     "vite-plugin-svgr": "^4.3.0"
   },
   "eslintConfig": {

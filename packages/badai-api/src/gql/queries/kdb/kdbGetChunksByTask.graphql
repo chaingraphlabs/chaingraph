@@ -1,0 +1,8 @@
+query KDBGetChunksByTask(
+    $session: Session!,
+    $task_id: TaskID!,
+) {
+    kdbGetChunksByTask(session: $session, task_id:  $task_id) {
+        ...ChunkFields
+    }
+}

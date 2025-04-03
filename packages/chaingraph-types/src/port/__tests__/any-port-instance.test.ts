@@ -8,10 +8,18 @@
 
 import type { AnyPortConfig } from '../base'
 import { describe, expect, it } from 'vitest'
+import { PortPluginRegistry } from '../../port/plugins'
 import { AnyPort } from '../instances'
-import { AnyPortPlugin, validateAnyValue } from '../plugins/AnyPortPlugin'
-import { createNumberConfig, createNumberValue } from '../plugins/NumberPortPlugin'
-import { createStringConfig, createStringValue } from '../plugins/StringPortPlugin'
+import {
+  AnyPortPlugin,
+  createNumberConfig,
+  createNumberValue,
+  createStringConfig,
+  createStringValue,
+  NumberPortPlugin,
+  StringPortPlugin,
+  validateAnyValue,
+} from '../plugins/'
 
 /**
  * Helper function to create an any port value
@@ -20,9 +28,9 @@ function createAnyValue(value: any): any {
   return value
 }
 
-// PortPluginRegistry.getInstance().register(AnyPortPlugin)
-// PortPluginRegistry.getInstance().register(StringPortPlugin)
-// PortPluginRegistry.getInstance().register(NumberPortPlugin)
+PortPluginRegistry.getInstance().register(AnyPortPlugin)
+PortPluginRegistry.getInstance().register(StringPortPlugin)
+PortPluginRegistry.getInstance().register(NumberPortPlugin)
 
 describe('anyPort Instance', () => {
   describe('basic validation', () => {
@@ -113,8 +121,9 @@ describe('anyPort Instance', () => {
 
       const port = new AnyPort(config)
       const invalidValue = createAnyValue(createNumberValue(-1))
+      port.setValue(invalidValue)
 
-      expect(() => port.setValue(invalidValue)).toThrow()
+      expect(port.validate()).eq(false)
     })
   })
 

@@ -7,6 +7,10 @@
  */
 
 import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+import type {
+  ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
   INode,
@@ -20,64 +24,79 @@ import {
 } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort.tsx'
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort.tsx'
 import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort.tsx'
+import { ArrayPort } from './ports/ArrayPort/ArrayPort'
+import { PortContext } from './ports/context/PortContext'
 import { EnumPort } from './ports/EnumPort/EnumPort'
 import { StringPort } from './ports/StringPort/StringPort'
 import { StubPort } from './ports/StubPort/StubPort'
 
+/**
+ * PortProps interface for all components rendered through PortComponent
+ * The actual dependencies needed by each port component are passed through
+ * the PortContext instead of directly as props
+ */
 export interface PortProps {
   node: INode
   port: IPort
+  context: PortContextValue
 }
 
 export function PortComponent(props: PortProps) {
   const {
     node,
     port,
+    context,
   } = props
+
+  // Safety check - if context isn't provided, try to consume from PortContext
+  if (!context) {
+    console.warn('PortComponent: No context provided for port', port.id)
+    return (
+      <PortContext.Consumer>
+        {(contextValue) => {
+          if (!contextValue) {
+            console.error('PortContext is not available in the component tree')
+            return null
+          }
+          return <PortComponent node={node} port={port} context={contextValue} />
+        }}
+      </PortContext.Consumer>
+    )
+  }
 
   switch (port.getConfig().type) {
     case 'string': {
       return (
-        <StringPort
-          node={node}
-          port={port as IPort<StringPortConfig>}
-        />
+        <StringPort node={node} port={port as IPort<StringPortConfig>} context={context} />
       )
     }
     case 'boolean': {
       return (
-        <BooleanPort
-          node={node}
-          port={port as IPort<BooleanPortConfig>}
-        />
+        <BooleanPort node={node} port={port as IPort<BooleanPortConfig>} context={context} />
       )
     }
     case 'number': {
       return (
-        <NumberPort
-          node={node}
-          port={port as IPort<NumberPortConfig>}
-        />
+        <NumberPort node={node} port={port as IPort<NumberPortConfig>} context={context} />
       )
     }
     case 'enum': {
       return (
-        <EnumPort
-          node={node}
-          port={port as IPort<EnumPortConfig>}
-        />
+        <EnumPort node={node} port={port as IPort<EnumPortConfig>} context={context} />
       )
     }
     case 'object': {
       return (
-        <ObjectPort
-          node={node}
-          port={port as IPort<ObjectPortConfig>}
-        />
+        <ObjectPort node={node} port={port as IPort<ObjectPortConfig>} context={context} />
       )
     }
-    case 'array':
+    case 'array': {
+      return (
+        <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} context={context} />
+      )
+    }
     case 'stream':
+    case 'secret':
     case 'any': {
       return <StubPort port={port} />
     }

@@ -45,8 +45,7 @@ export const updatePortUI = flowContextProcedure
 
     // set config to the port instance
     port.setConfig(portConfig)
-    // node.updatePort(port.id, port)
-    node.initialize()
+    node.updatePort(port)
     flow.updateNode(node)
 
     await ctx.flowStore.updateFlow(flow as Flow)

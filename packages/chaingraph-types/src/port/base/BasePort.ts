@@ -6,10 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExtractValue, IPort, IPortConfig } from '../../port'
 import type { JSONValue } from '../../utils/json'
-import { PortError, PortErrorType } from '../../port'
+import type { IPort } from './IPort'
+import type { ExtractValue, IPortConfig } from './types'
 import { deepCopy } from '../../utils/deep-copy'
+import { PortError, PortErrorType } from './types'
 
 export abstract class BasePort<C extends IPortConfig = IPortConfig> implements IPort<C> {
   protected config: C
@@ -23,6 +24,10 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
 
   get id(): string {
     return this.config.id ?? ''
+  }
+
+  get key(): string {
+    return this.config.key ?? ''
   }
 
   getConfig(): C {
@@ -113,6 +118,14 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     const serialized = this.serialize()
     const newPort = new (this.constructor as new (config: C) => BasePort<C>)(this.config)
     return newPort.deserialize(serialized)
+  }
+
+  isSystem() {
+    return this.getConfig()?.metadata?.isSystemPort === true
+  }
+
+  isSystemError() {
+    return this.isSystem() && this.getConfig()?.metadata?.portCategory === 'error'
   }
 
   /**

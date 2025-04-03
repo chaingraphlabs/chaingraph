@@ -31,8 +31,8 @@ import { BooleanPortPlugin } from '../plugins'
 export class BooleanPort extends BasePort<BooleanPortConfig> {
   constructor(config: BooleanPortConfig) {
     const defaultUi = {
-      bgColor: '#63f54d',
-      borderColor: '#1e4b18',
+      bgColor: '#4cd53b',
+      borderColor: '#176510',
     }
 
     const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }

@@ -82,12 +82,30 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
   array: {
     type: 'array',
     itemConfig: {
-      type: 'string',
+      type: 'object',
+      schema: {
+        properties: {
+          a: {
+            type: 'string',
+            defaultValue: '',
+          },
+          b: {
+            type: 'number',
+            defaultValue: 0,
+          },
+        },
+      },
+      isSchemaMutable: true,
+      defaultValue: {
+        a: '',
+        b: 0,
+      },
     },
     defaultValue: [],
     ui: {
       hideEditor: false,
     },
+    isMutable: true,
   },
   any: {
     type: 'any',
@@ -102,7 +120,7 @@ export function AddPropPopover(props: Props) {
   const { onClose, onSubmit } = props
 
   const [key, setKey] = useState('')
-  const [type, setType] = useState<Exclude<PortType, 'array' | 'stream'> | undefined>('string')
+  const [type, setType] = useState<PortType | undefined>('string')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {
@@ -119,7 +137,7 @@ export function AddPropPopover(props: Props) {
     <PopoverContent className="flex flex-col" align="start" side="bottom">
       <header className="flex items-center justify-between mb-4">
         <h4>
-          Add Key
+          Add Object Field
         </h4>
         <X
           className="size-4 cursor-pointer hover:brightness-125"

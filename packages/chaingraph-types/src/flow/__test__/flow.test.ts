@@ -6,18 +6,30 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeExecutionResult } from '../../node'
-import type { IPort } from '../../port'
-import Decimal from 'decimal.js'
+import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
+import {
+  ArrayPortPlugin,
+  BaseNode,
+  EnumPortPlugin,
+  ExecutionContext,
+  ExecutionEventEnum,
+  Input,
+  Node,
+  Number,
+  NumberPortPlugin,
+  ObjectPortPlugin,
+  Output,
+  PortPluginRegistry,
+  StreamPortPlugin,
+  StringPortPlugin,
+} from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
-import { ExecutionContext } from '../../execution'
-import { BaseNode, NodeExecutionStatus } from '../../node'
-import { ArrayPortPlugin, EnumPortPlugin, NumberPort, NumberPortPlugin, ObjectPortPlugin, PortDirection, PortPluginRegistry, StreamPortPlugin, StringPortPlugin } from '../../port'
+import { Id } from '../../decorator'
 import { ExecutionEngine } from '../execution-engine'
-import { ExecutionEventEnum } from '../execution-events'
 import { createExecutionEventHandler } from '../execution-handlers'
 import { Flow } from '../flow'
 
+// Register all port plugins
 PortPluginRegistry.getInstance().register(StringPortPlugin)
 PortPluginRegistry.getInstance().register(NumberPortPlugin)
 PortPluginRegistry.getInstance().register(ArrayPortPlugin)
@@ -25,55 +37,31 @@ PortPluginRegistry.getInstance().register(ObjectPortPlugin)
 PortPluginRegistry.getInstance().register(EnumPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
+// Define the AddNode using decorators
+@Node({
+  title: 'Add Node',
+  description: 'Adds two numbers and outputs the result',
+  category: 'math',
+})
 class AddNode extends BaseNode {
-  inputA: NumberPort
-  inputB: NumberPort
-  output: NumberPort
+  @Input()
+  @Number({ defaultValue: 0 })
+  @Id('inputA')
+  inputA: number = 0
 
-  constructor(id: string) {
-    super(id, {
-      id,
-      type: 'AddNode',
-      title: 'Add Node',
-    })
+  @Input()
+  @Number({ defaultValue: 0 })
+  @Id('inputB')
+  inputB: number = 0
 
-    this.inputA = new NumberPort({
-      id: 'inputA',
-      type: 'number',
-      direction: PortDirection.Input,
-    })
-
-    this.inputB = new NumberPort({
-      id: 'inputB',
-      type: 'number',
-      direction: PortDirection.Input,
-    })
-
-    this.output = new NumberPort({
-      id: 'output',
-      type: 'number',
-      direction: PortDirection.Output,
-    })
-
-    this.ports.set('inputA', this.inputA as IPort)
-    this.ports.set('inputB', this.inputB as IPort)
-    this.ports.set('output', this.output as IPort)
-  }
+  @Output()
+  @Number()
+  @Id('output')
+  output: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const a = this.inputA.getValue() ?? 0
-
-    const b = this.inputB.getValue() ?? 0
-    const result = a + b
-    this.output.setValue(result)
-
-    return {
-      // status: 'completed',
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map([['output', this.output.getValue()]]),
-    }
+    this.output = this.inputA + this.inputB
+    return {}
   }
 }
 
@@ -89,17 +77,17 @@ describe('flow Execution', () => {
     node2.initialize()
 
     // Set initial values
-    node1.inputA.setValue(5)
-    node1.inputB.setValue(10)
+    node1.inputA = 5
+    node1.inputB = 10
 
     flow.addNode(node1)
     flow.addNode(node2)
 
     // Connect node1 output to node2 inputA
-    await flow.connectPorts(node1.id, node1.output.id, node2.id, node2.inputA.id)
+    await flow.connectPorts(node1.id, 'output', node2.id, 'inputA')
 
     // Set node2 inputB
-    node2.inputB.setValue(20)
+    node2.inputB = 20
 
     await flow.validate()
 
@@ -116,11 +104,8 @@ describe('flow Execution', () => {
     await executionEngine.execute()
 
     // Verify results
-    const resultNode1 = node1.output.getValue()
-    const resultNode2 = node2.output.getValue()
-
-    expect(resultNode1).toBe(15)
-    expect(resultNode2).toBe(35)
+    expect(node1.output).toBe(15)
+    expect(node2.output).toBe(35)
   })
 
   it('should execute a complex flow with multiple nodes', async () => {
@@ -148,14 +133,14 @@ describe('flow Execution', () => {
     flow.addNode(finalNode)
 
     // Set initial values for source nodes
-    sourceNode1.inputA.setValue(5)
-    sourceNode1.inputB.setValue(10) // Result will be 15
+    sourceNode1.inputA = 5
+    sourceNode1.inputB = 10 // Result will be 15
 
-    sourceNode2.inputA.setValue(3)
-    sourceNode2.inputB.setValue(7) // Result will be 10
+    sourceNode2.inputA = 3
+    sourceNode2.inputB = 7 // Result will be 10
 
     // Set additional input for intermediateNode2
-    intermediateNode2.inputB.setValue(20)
+    intermediateNode2.inputB = 20
 
     // Connect nodes
     // sourceNode1.output -> intermediateNode1.inputA
@@ -189,11 +174,11 @@ describe('flow Execution', () => {
     await executionEngine.execute()
 
     // Verify results
-    expect(sourceNode1.output.getValue()).toBe(15) // 5 + 10
-    expect(sourceNode2.output.getValue()).toBe(10) // 3 + 7
-    expect(intermediateNode1.output.getValue()).toBe(25) // 15 + 10
-    expect(intermediateNode2.output.getValue()).toBe(30) // 10 + 20
-    expect(finalNode.output.getValue()).toBe(55) // 25 + 30
+    expect(sourceNode1.output).toBe(15) // 5 + 10
+    expect(sourceNode2.output).toBe(10) // 3 + 7
+    expect(intermediateNode1.output).toBe(25) // 15 + 10
+    expect(intermediateNode2.output).toBe(30) // 10 + 20
+    expect(finalNode.output).toBe(55) // 25 + 30
   })
 
   it('should pause execution at breakpoint and continue', async () => {
@@ -214,10 +199,10 @@ describe('flow Execution', () => {
     flow.addNode(finalNode)
 
     // Set initial values
-    sourceNode1.inputA.setValue(5)
-    sourceNode1.inputB.setValue(10)
-    sourceNode2.inputA.setValue(3)
-    sourceNode2.inputB.setValue(7)
+    sourceNode1.inputA = 5
+    sourceNode1.inputB = 10
+    sourceNode2.inputA = 3
+    sourceNode2.inputB = 7
 
     // Connect nodes
     await flow.connectPorts('source1', 'output', 'final', 'inputA')
@@ -272,9 +257,9 @@ describe('flow Execution', () => {
     expect(breakpointHits).toEqual(['source1']) // Only source1 should hit breakpoint
 
     // Verify results
-    expect(sourceNode1.output.getValue()).toBe(15) // 5 + 10
-    expect(sourceNode2.output.getValue()).toBe(10) // 3 + 7
-    expect(finalNode.output.getValue()).toBe(25) // 15 + 10
+    expect(sourceNode1.output).toBe(15) // 5 + 10
+    expect(sourceNode2.output).toBe(10) // 3 + 7
+    expect(finalNode.output).toBe(25) // 15 + 10
   })
 
   it('should step through execution', async () => {
@@ -284,17 +269,17 @@ describe('flow Execution', () => {
     const sourceNode = new AddNode('source') // 5 + 10 = 15
     const finalNode = new AddNode('final') // 15 + 5 = 20
 
-    await sourceNode.initialize()
-    await finalNode.initialize()
+    sourceNode.initialize()
+    finalNode.initialize()
 
     // Add nodes to flow
     flow.addNode(sourceNode)
     flow.addNode(finalNode)
 
     // Set initial values
-    sourceNode.inputA.setValue(5)
-    sourceNode.inputB.setValue(10)
-    finalNode.inputB.setValue(5)
+    sourceNode.inputA = 5
+    sourceNode.inputB = 10
+    finalNode.inputB = 5
 
     // Connect nodes
     await flow.connectPorts('source', 'output', 'final', 'inputA')
@@ -355,8 +340,8 @@ describe('flow Execution', () => {
       ])
 
       // Verify results
-      expect(sourceNode.output.getValue()).toBe(15) // 5 + 10
-      expect(finalNode.output.getValue()).toBe(20) // 15 + 5
+      expect(sourceNode.output).toBe(15) // 5 + 10
+      expect(finalNode.output).toBe(20) // 15 + 5
     } finally {
       unsubscribe()
     }
@@ -390,17 +375,17 @@ describe('flow Execution', () => {
     nodes.forEach(node => flow.addNode(node))
 
     // Set initial values
-    source1.inputA.setValue(5)
-    source1.inputB.setValue(10) // 15
+    source1.inputA = 5
+    source1.inputB = 10 // 15
 
-    source2.inputA.setValue(3)
-    source2.inputB.setValue(7) // 10
+    source2.inputA = 3
+    source2.inputB = 7 // 10
 
-    source3.inputA.setValue(8)
-    source3.inputB.setValue(2) // 10
+    source3.inputA = 8
+    source3.inputB = 2 // 10
 
-    source4.inputA.setValue(15)
-    source4.inputB.setValue(5) // 20
+    source4.inputA = 15
+    source4.inputB = 5 // 20
 
     // merger1 gets source1 output as inputA, source2 output as inputB
     await flow.connectPorts('source1', 'output', 'merger1', 'inputA')
@@ -419,7 +404,7 @@ describe('flow Execution', () => {
     const context = new ExecutionContext(flow.id, abortController)
     const executionEngine = new ExecutionEngine(flow, context, {
       execution: {
-        maxConcurrency: 2, // Force sequential execution for predictable debugging
+        maxConcurrency: 2, // Allow some parallelism but still keep execution somewhat predictable
         nodeTimeoutMs: 10000000,
         flowTimeoutMs: 5000000,
       },
@@ -434,7 +419,7 @@ describe('flow Execution', () => {
     const executionSteps: Array<{
       event: string
       nodeId: string
-      outputs?: Map<string, unknown>
+      outputs?: any
     }> = []
 
     const handleEvent = createExecutionEventHandler({
@@ -454,12 +439,13 @@ describe('flow Execution', () => {
       },
 
       [ExecutionEventEnum.NODE_COMPLETED]: (data) => {
+        // Get the output value directly from the decorated property
+        const outputValue = data.node instanceof AddNode ? data.node.output : undefined
+
         executionSteps.push({
           event: 'completed',
           nodeId: data.node.id,
-          outputs: new Map(
-            data.node.getOutputs().map(port => [port.id, port.getValue()]),
-          ),
+          outputs: { output: outputValue },
         })
       },
     })
@@ -499,13 +485,13 @@ describe('flow Execution', () => {
       })
 
       // Verify final results
-      expect(source1.output.getValue()).toBe(15) // 5 + 10
-      expect(source2.output.getValue()).toBe(10) // 3 + 7
-      expect(source3.output.getValue()).toBe(10) // 8 + 2
-      expect(source4.output.getValue()).toBe(20) // 15 + 5
-      expect(merger1.output.getValue()).toBe(25) // 15 + 10
-      expect(merger2.output.getValue()).toBe(30) // 10 + 20
-      expect(final.output.getValue()).toBe(55) // 25 + 30
+      expect(source1.output).toBe(15) // 5 + 10
+      expect(source2.output).toBe(10) // 3 + 7
+      expect(source3.output).toBe(10) // 8 + 2
+      expect(source4.output).toBe(20) // 15 + 5
+      expect(merger1.output).toBe(25) // 15 + 10
+      expect(merger2.output).toBe(30) // 10 + 20
+      expect(final.output).toBe(55) // 25 + 30
 
       // Verify that we have the correct number of execution steps
       // For each node we expect: started, paused, completed = 3 events
@@ -516,78 +502,23 @@ describe('flow Execution', () => {
         if (step.event === 'completed' && step.outputs) {
           const nodeId = step.nodeId
           const expectedOutput = {
-            source1: new Decimal(15),
-            source2: new Decimal(10),
-            source3: new Decimal(10),
-            source4: new Decimal(20),
-            merger1: new Decimal(25),
-            merger2: new Decimal(30),
-            final: new Decimal(55),
+            source1: 15,
+            source2: 10,
+            source3: 10,
+            source4: 20,
+            merger1: 25,
+            merger2: 30,
+            final: 55,
           }[nodeId]
 
-          const output = step.outputs.get('output')
-          if (output && typeof output === 'object' && 'toNumber' in output) {
-            expect(output).toStrictEqual(expectedOutput)
-          }
+          const output = step.outputs.output
+          expect(output).toBe(expectedOutput)
         }
       })
     } finally {
       unsubscribe()
     }
-  }, { timeout: 20000000 })
-
-  // it('should handle stop command during execution', async () => {
-  //   const flow = new Flow({ name: 'Stop Test Flow' })
-  //
-  //   // Create and initialize nodes
-  //   const sourceNode = new AddNode('source')
-  //   const finalNode = new AddNode('final')
-  //
-  //   await sourceNode.initialize()
-  //   await finalNode.initialize()
-  //
-  //   // Add nodes to flow
-  //   flow.addNode(sourceNode)
-  //   flow.addNode(finalNode)
-  //
-  //   // Set initial values
-  //   sourceNode.inputA.setValue(5)
-  //   sourceNode.inputB.setValue(10)
-  //   finalNode.inputB.setValue(5)
-  //
-  //   // Connect nodes
-  //   await flow.connectPorts('source', 'output', 'final', 'inputA')
-  //
-  //   const abortController = new AbortController()
-  //   const context = new ExecutionContext(flow.id, abortController)
-  //   const executionEngine = new ExecutionEngine(flow, context, {
-  //     execution: {
-  //       maxConcurrency: 1,
-  //       nodeTimeoutMs: 1000,
-  //       flowTimeoutMs: 5000,
-  //     },
-  //     debug: true,
-  //   })
-  //
-  //   const dbg = executionEngine.getDebugger()
-  //   expect(dbg).not.toBeNull()
-  //
-  //   // Track events
-  //   const events: ExecutionEventEnum[] = []
-  //   executionEngine.onAll((event) => {
-  //     events.push(event.type)
-  //   })
-  //
-  //   // Call stop before execution
-  //   dbg!.stop()
-  //
-  //   // Execute and expect it to fail
-  //   await expect(executionEngine.execute()).rejects.toThrow(ExecutionStoppedByDebugger)
-  //
-  //   // Verify events
-  //   expect(events).toContain(ExecutionEventEnum.FLOW_STARTED)
-  //   expect(events).toContain(ExecutionEventEnum.FLOW_CANCELLED)
-  // })
+  }, { timeout: 5000 })
 
   it('should handle abortController signal during execution', async () => {
     const flow = new Flow({ name: 'Stop Test Flow' })
@@ -604,9 +535,9 @@ describe('flow Execution', () => {
     flow.addNode(finalNode)
 
     // Set initial values
-    sourceNode.inputA.setValue(5)
-    sourceNode.inputB.setValue(10)
-    finalNode.inputB.setValue(5)
+    sourceNode.inputA = 5
+    sourceNode.inputB = 10
+    finalNode.inputB = 5
 
     // Connect nodes
     await flow.connectPorts('source', 'output', 'final', 'inputA')

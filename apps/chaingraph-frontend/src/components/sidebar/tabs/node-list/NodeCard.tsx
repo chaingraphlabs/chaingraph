@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, NodeMetadataWithPorts } from '@badaitech/chaingraph-types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -18,7 +18,7 @@ import { useMemo } from 'react'
 import { NodePreview } from './NodePreview'
 
 interface NodeCardProps {
-  node: NodeMetadata
+  node: NodeMetadataWithPorts
   categoryMetadata: CategoryMetadata
 }
 

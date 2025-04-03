@@ -32,22 +32,22 @@ export function updateNodeMetadata(target: any, partialMetadata: Record<string, 
 /**
  * PORT METADATA STORAGE FUNCTIONS
  */
-export function getPortsMetadata(target: any): Map<string | symbol, any> {
+export function getPortsMetadata(target: any): Map<string, any> {
   return Reflect.getMetadata(PORTS_METADATA_KEY, target) || new Map()
 }
 
-export function setPortsMetadata(target: any, ports: Map<string | symbol, any>): void {
+export function setPortsMetadata(target: any, ports: Map<string, any>): void {
   Reflect.defineMetadata(PORTS_METADATA_KEY, ports, target)
 }
 
 export function getPortMetadata(target: any, propertyKey: string | symbol): Record<string, any> {
   const ports = getPortsMetadata(target)
-  return ports.get(propertyKey) || {}
+  return ports.get(propertyKey as string) || {}
 }
 
 export function setPortMetadata(target: any, propertyKey: string | symbol, metadata: Record<string, any>): void {
   const ports = getPortsMetadata(target)
-  ports.set(propertyKey, metadata)
+  ports.set(propertyKey as string, metadata)
   setPortsMetadata(target, ports)
 }
 

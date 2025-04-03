@@ -34,6 +34,11 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
   get id(): string
 
   /**
+   * The key of the port.
+   */
+  get key(): string
+
+  /**
    * Retrieves the current port configuration.
    *
    * @returns The port configuration of type C.
@@ -101,6 +106,20 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
    * @returns A new port instance with the same configuration and value.
    */
   clone: () => IPort<C>
+
+  /**
+   * Check if the port is a system port.
+   *
+   * @returns True if the port is a system port, otherwise false.
+   */
+  isSystem: () => boolean
+
+  /**
+   * Check if the port is a system error port.
+   *
+   * @returns True if the port is a system error port, otherwise false.
+   */
+  isSystemError: () => boolean
 }
 
 /**

@@ -80,3 +80,14 @@ export function Boolean(config?: Omit<PortDecoratorOptions<'boolean'>, 'type'>):
     ...config,
   })
 }
+
+/**
+ * PortAny decorator to specify a port configuration for type "any".
+ * @param config Optional configuration object for additional options.
+ */
+export function PortAny(config?: Omit<PortDecoratorOptions<'any'>, 'type'>): PropertyDecorator {
+  return Port({
+    type: 'any',
+    ...config,
+  })
+}

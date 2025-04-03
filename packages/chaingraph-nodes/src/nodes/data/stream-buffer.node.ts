@@ -55,12 +55,15 @@ class StreamBufferNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const accumulated: string[] = []
-
     for await (const value of this.inputStream) {
       accumulated.push(value)
     }
-
     this.buffer = accumulated.join(this.separator)
+
+    const streamError = this.inputStream.getError()
+    if (streamError) {
+      throw streamError
+    }
 
     return {}
   }

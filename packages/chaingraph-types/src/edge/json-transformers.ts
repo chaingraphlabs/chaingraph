@@ -6,44 +6,56 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import superjson from 'superjson'
+import type { INode } from '../node'
+import type { IPort } from '../port'
+import SuperJSON from 'superjson'
 import { Edge } from './edge'
 
 /**
  * Registers edge transformers with superjson
  */
-export function registerEdgeTransformers() {
+export function registerEdgeTransformers(
+  superjsonCustom: typeof SuperJSON = SuperJSON,
+) {
   // const edge = new Edge('', {} as INode, {} as any, {} as INode, {} as any, {})
 
-  superjson.registerCustom<Edge, any>(
+  superjsonCustom.registerCustom<Edge, any>(
     {
       isApplicable: (v): v is Edge => {
         return v instanceof Edge
       },
       serialize: (v) => {
-        return superjson.serialize({
+        return superjsonCustom.serialize({
           id: v.id,
           status: v.status,
           metadata: v.metadata,
-          // TODO:!!!!
-          sourceNode: superjson.serialize(v.sourceNode),
-          sourcePort: superjson.serialize(v.sourcePort),
-          targetNode: superjson.serialize(v.targetNode),
-          targetPort: superjson.serialize(v.targetPort),
+          sourceNode: superjsonCustom.serialize(v.sourceNode),
+          sourcePort: superjsonCustom.serialize(v.sourcePort),
+          targetNode: superjsonCustom.serialize(v.targetNode),
+          targetPort: superjsonCustom.serialize(v.targetPort),
         })
       },
       deserialize: (v) => {
-        const edgeData = superjson.deserialize(v) as any
+        const edgeData = superjsonCustom.deserialize(
+          v as any,
+        ) as any
+
+        const sourceNode = superjsonCustom.deserialize<INode>(edgeData.sourceNode)
+        const sourcePort = superjsonCustom.deserialize<IPort>(edgeData.sourcePort)
+        const targetNode = superjsonCustom.deserialize<INode>(edgeData.targetNode)
+        const targetPort = superjsonCustom.deserialize<IPort>(edgeData.targetPort)
 
         // todo: validate edgeData
-        return new Edge(
+        const edge = new Edge(
           edgeData.id,
-          superjson.deserialize(edgeData.sourceNode),
-          superjson.deserialize(edgeData.sourcePort),
-          superjson.deserialize(edgeData.targetNode),
-          superjson.deserialize(edgeData.targetPort),
+          sourceNode,
+          sourcePort,
+          targetNode,
+          targetPort,
           edgeData.metadata,
         )
+
+        return edge
       },
     },
     'Edge',

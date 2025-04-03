@@ -28,8 +28,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "esm": "^3.2.25",
-    "superjson": "^2.2.1",
-    "ws": "^8.18.0"
+    "superjson": "^2.2.2",
+    "ws": "^8.18.0",
+    "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",

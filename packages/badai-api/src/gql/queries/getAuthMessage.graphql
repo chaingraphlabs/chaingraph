@@ -1,0 +1,3 @@
+query AuthMetamaskMessage($address: MetamaskAddress!) {
+  authMetamaskMessage(address: $address)
+}
