@@ -11,6 +11,7 @@ import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import {
   deleteFlow,
   FlowSubscriptionStatus,
+  setFlowLoaded,
   setFlowMetadata,
   setFlowsError,
   setFlowsList,
@@ -33,6 +34,23 @@ export const $flows = createStore<FlowMetadata[]>([])
     } else {
       // Insert new flow
       return [...flows, updatedFlow]
+    }
+  })
+  .on(setFlowLoaded, (flows, updatedFlowId) => {
+    const flowExists = flows.some(f => f.id === updatedFlowId)
+    if (flowExists) {
+      // Update existing flow
+      return flows.map(flow =>
+        flow.id === updatedFlowId
+          ? {
+              ...flow,
+              metadata: {
+                ...flow.metadata,
+                loaded: true,
+              },
+            }
+          : flow,
+      )
     }
   })
   .on(deleteFlow, (flows, id) =>

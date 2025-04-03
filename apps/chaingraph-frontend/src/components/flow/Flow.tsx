@@ -21,6 +21,7 @@ import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges'
 import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
+import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode.tsx'
 import { useFlowUrlSync } from '@/hooks/useFlowUrlSync.ts'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
@@ -35,8 +36,7 @@ import { Background, ReactFlow, useOnSelectionChange, useReactFlow } from '@xyfl
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { useCallback, useContext, useRef, useState } from 'react'
-// import { FPSCounter } from './components/FPSCounter'
-import GroupNode from './nodes/GroupNode/GroupNode'
+import { FPSCounter } from './components/FPSCounter'
 
 // Configuration constants
 const defaultViewport: Viewport = {
@@ -325,7 +325,7 @@ function Flow() {
         <div className="absolute top-4 left-4 z-50">
           <ExecutionComponent />
 
-          {/* <FPSCounter /> */}
+          <FPSCounter />
         </div>
       </ReactFlow>
 

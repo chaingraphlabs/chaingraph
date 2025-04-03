@@ -7,9 +7,8 @@
  */
 
 import type { NodeProps } from '@xyflow/react'
-import type { PortContextValue } from './ports/context/PortContext'
 import type { ChaingraphNode } from './types'
-import { NodeResizeControl, ResizeControlVariant, useReactFlow } from '@xyflow/react'
+import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useTheme } from 'components/theme/hooks/useTheme'
 import { Card } from 'components/ui/card'
 import { useUnit } from 'effector-react'
@@ -65,9 +64,9 @@ function ChaingraphNodeComponent({
     [highlightedNodeId, id],
   )
 
-  const { debugMode } = useUnit($executionState)
+  const { debugMode, executionId } = useUnit($executionState)
   const isBreakpointSet = useBreakpoint(id)
-  const { getZoom } = useReactFlow()
+  // const { getZoom } = useReactFlow()
 
   // Get edges for each port - needs to be defined here so the hook works properly
   const edgesMapByPortId = useMemo(() => {
@@ -105,28 +104,42 @@ function ChaingraphNodeComponent({
     )
   }, [theme, data.categoryMetadata, id])
 
+  // Use throttled/memoized version of execution state style to reduce renders
   const executionStateStyle = useMemo(() => {
-    if (selected) {
-      return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
+    // Calculate the style based on node state
+    const calculateStyle = () => {
+      if (selected) {
+        return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
+      }
+      if (nodeExecution.isExecuting) {
+        return `border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] scale-[1.02] animate-[glow_3s_ease-in-out_infinite]`
+      }
+      if (nodeExecution.isCompleted) {
+        return 'border-green-500 shadow-[0_0_20px_rgba(34,207,94,0.5)]'
+      }
+      if (nodeExecution.isFailed) {
+        return 'border-red-500 shadow-[0_0_20px_rgba(249,68,68,0.5)] opacity-80'
+      }
+      if (nodeExecution.isSkipped) {
+        return 'border-gray-500 opacity-50'
+      }
+
+      if (executionId) {
+        if (nodeExecution.status === 'idle') {
+          return 'border-gray-500 opacity-30'
+        }
+      }
+
+      return ''
     }
-    if (nodeExecution.isExecuting) {
-      return 'animate-pulse border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-    }
-    if (nodeExecution.isCompleted) {
-      return 'border-green-500 shadow-[0_0_20px_rgba(34,207,94,0.5)]'
-    }
-    if (nodeExecution.isFailed) {
-      return 'border-red-500 shadow-[0_0_20px_rgba(249,68,68,0.5)] opacity-80'
-    }
-    if (nodeExecution.isSkipped) {
-      return 'border-gray-500 opacity-50'
-    }
-    return ''
-  }, [nodeExecution, selected])
+
+    // Only the execution status matters for styling, not all nodeExecution properties
+    return calculateStyle()
+  }, [selected, nodeExecution.isExecuting, nodeExecution.isCompleted, nodeExecution.isFailed, nodeExecution.isSkipped, nodeExecution.status, executionId])
 
   // Memoize the entire context value to prevent unnecessary renders
   const portContextValue = useMemo(() => {
-    const portContextValue: PortContextValue = {
+    return {
       updatePortValue: params => dispatch.requestUpdatePortValue(params),
       updatePortUI: params => dispatch.requestUpdatePortUI(params),
       addFieldObjectPort: params => dispatch.addFieldObjectPort({
@@ -152,7 +165,6 @@ function ChaingraphNodeComponent({
       }),
       getEdgesForPort: getEdgesForPortFunction,
     }
-    return portContextValue
   }, [dispatch, getEdgesForPortFunction])
 
   if (!activeFlow || !activeFlow.id || !node)

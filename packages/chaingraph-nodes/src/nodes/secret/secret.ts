@@ -54,11 +54,16 @@ export class SecretNode extends BaseNode {
       throw new Error('No secretID provided')
     }
 
+    // if (!context.badAIContext?.agentSession) {
+    //   throw new Error('No agent session provided')
+    // }
+
     const keyPair = await context.getECDHKeyPair()
     const { secret } = await graphQLClient.request(GraphQL.ReadSecretDocument, {
       id: this.secretID,
       publicKey: Buffer.from(await subtle.exportKey('raw', keyPair.publicKey)).toString('base64'),
-      session: '',
+      // session: context.badAIContext?.agentSession,
+      session: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImN2N3BqaGtkbGVqazBqcHAydDYwIiwidXNlcl9pZCI6IjQyMjg0YTA3LTZiODgtNDc2ZC1iYTQ0LTY2ZmFiZTFkNTRjOCIsInVzZXJfcm9sZSI6ImFkbWluIiwiaXNzIjoiYmFkYWkiLCJleHAiOjE3NDQyNTA1NjYsImlzX2FnZW50IjpmYWxzZX0.dkTLVOhVdihnG2PG2c1kCDd6qYuQyDeZ6ZlOUhp7GH0',
     })
 
     const secretType = secret.secret.metadata.type

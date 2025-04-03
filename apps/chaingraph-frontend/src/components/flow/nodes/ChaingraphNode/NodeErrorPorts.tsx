@@ -50,7 +50,7 @@ function NodeErrorPorts({
     [errorConnections, errorMessageConnections],
   )
   const [isExpanded, setIsExpanded] = useState(true)
-  const { getEdgesForPort } = context
+  // const { getEdgesForPort } = context
 
   useEffect(() => {
     setIsExpanded(!!hasConnections)
