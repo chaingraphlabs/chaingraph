@@ -181,11 +181,6 @@ export function PropertyItem({
     }
   }, [config.type])
 
-  // Return early if no config is provided
-  if (!config || !config.type) {
-    return null
-  }
-
   return (
     <Card className="mb-2 border-l-4 overflow-hidden" style={{ borderLeftColor: getTypeColor(config.type) }}>
       <CardHeader className="px-4 py-2 flex flex-row items-center space-y-0 gap-2">
