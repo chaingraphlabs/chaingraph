@@ -12,15 +12,20 @@ files=$(
   git diff --cached --name-only --diff-filter=ACM \
   | grep -E '\.(ts|js|tsx|jsx|css)$' \
   | grep -vE '\.config\.(ts|js|mjs)$' \
-  | grep -vE '\.(md|svg|html|yaml|yml|sh)$' \
-)
+  | grep -vE '\.(md|svg|html|yaml|yml|sh|json|sh)$' \
+  | grep -vE '^\.changeset/' \
+) || exit 0
+
+# If no matching files, exit successfully
+if [ -z "$files" ]; then
+  exit 0
+fi
 
 for file in $files; do
-    echo "$file"
     if ! grep -q "Copyright (c)" "$file"; then
         echo "❌ Error: Missing license header in $file"
         exit 1
     fi
 done
 
-#exit 0
+exit 0
