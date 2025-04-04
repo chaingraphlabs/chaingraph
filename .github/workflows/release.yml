@@ -98,10 +98,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug changeset directory
+        run: |
+          echo "Listing .changeset directory contents:"
+          ls -la .changeset/
+          echo "Changeset files (excluding README and config):"
+          find .changeset -type f -not -name "README.md" -not -name "config.json" -ls
+
       - name: Check for changesets
         id: check
         run: |
-          if [ -n "$(ls -A .changeset/*.md 2>/dev/null | grep -v README.md | grep -v config.json)" ]; then
+          if [ -n "$(find .changeset -type f -name "*.md" -not -name "README.md")" ]; then
             echo "has_changesets=true" >> $GITHUB_OUTPUT
             echo "Changesets found"
           else
@@ -230,13 +237,38 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create version PR
-        uses: changesets/action@v1
-        with:
-          publish: false
-          version: pnpm changeset version
-          commit: 'chore: update package versions'
-          title: 'chore: update package versions'
+      - name: Configure Git User
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Debug changesets
+        run: |
+          echo "Listing .changeset directory contents:"
+          ls -la .changeset/
+          echo "Current branch:"
+          git branch --show-current
+          echo "Git status:"
+          git status
+
+      - name: Run version
+        run: |
+          echo "Running changeset version..."
+          pnpm changeset version
+
+          echo "Git status after version update:"
+          git status
+
+          # Check if there are changes to commit
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Commit and push changes
+          git add .
+          git commit -m "chore: update package versions"
+          git push origin HEAD
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
