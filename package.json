@@ -38,7 +38,7 @@
     "migrate": "turbo run migrate --filter=@badaitech/chaingraph-trpc",
     "publish-list": "pnpm -r ls --json | jq -r 'map(select(.private != true)) | .[].name'",
     "prepublish-check": "pnpm run lint && pnpm run test",
-    "publish-packages": "make publish",
+    "release": "make publish",
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "changeset publish"
