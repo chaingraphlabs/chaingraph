@@ -1,6 +1,6 @@
 {
   "name": "@badaitech/chaingraph-trpc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "description": "tRPC client and server for the BadAi Chaingraph",
   "author": "",
