@@ -11,9 +11,11 @@
     "@badaitech/typescript-config": "0.0.0"
   },
   "changesets": [
+    "breezy-boxes-agree",
     "cyan-baboons-return",
     "eleven-sites-flow",
     "funny-knives-judge",
-    "honest-wings-spend"
+    "honest-wings-spend",
+    "thin-ducks-read"
   ]
 }
