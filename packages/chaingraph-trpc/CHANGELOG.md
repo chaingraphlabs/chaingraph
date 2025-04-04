@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.3-alpha.1
+
+### Patch Changes
+
+- 9c6fd41: One more release test
+
 ## 0.1.3-alpha.0
 
 ### Patch Changes
