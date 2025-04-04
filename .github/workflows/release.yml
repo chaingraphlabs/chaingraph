@@ -6,28 +6,6 @@ on:
       - main
   release:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish packages to npm
-        type: boolean
-        default: false
-      version:
-        description: Create changeset version PR
-        type: boolean
-        default: false
-      prerelease:
-        description: Use pre-release mode
-        type: boolean
-        default: false
-      prereleaseTag:
-        description: 'Pre-release tag (alpha, beta, etc.)'
-        type: string
-        default: alpha
-      exitPrerelease:
-        description: Exit pre-release mode before versioning
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -102,7 +80,7 @@ jobs:
     name: Check repository status
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.inputs.version == 'true' || github.event.inputs.publish == 'true'
+    if: github.event_name == 'push'
     outputs:
       has_changesets: ${{ steps.check.outputs.has_changesets }}
       is_prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
@@ -141,60 +119,6 @@ jobs:
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
             echo "tag=" >> $GITHUB_OUTPUT
             echo "Not in prerelease mode"
-          fi
-
-  # Manage prerelease mode
-  prerelease-mode:
-    name: Manage prerelease mode
-    needs: [build, check-status]
-    runs-on: ubuntu-latest
-    if: github.event.inputs.prerelease == 'true' || github.event.inputs.exitPrerelease == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Configure Git User
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Enter prerelease mode
-        if: github.event.inputs.prerelease == 'true' && github.event.inputs.exitPrerelease != 'true'
-        run: |
-          echo "Entering prerelease mode with tag: ${{ github.event.inputs.prereleaseTag }}"
-          pnpm changeset pre enter ${{ github.event.inputs.prereleaseTag }}
-          git add .changeset/pre.json
-          git commit -m "chore: enter prerelease mode (${{ github.event.inputs.prereleaseTag }})"
-          git push origin HEAD
-
-      - name: Exit prerelease mode
-        if: github.event.inputs.exitPrerelease == 'true'
-        run: |
-          echo "Exiting prerelease mode"
-          pnpm changeset pre exit
-          if [ -f ".changeset/pre.json" ]; then
-            git rm .changeset/pre.json
-            git commit -m "chore: exit prerelease mode"
-            git push origin HEAD
-          else
-            echo "Not in prerelease mode, nothing to do"
           fi
 
   # Dev versions job - automatically publish dev versions from main when no changesets exist
@@ -273,11 +197,7 @@ jobs:
     name: Version and publish packages
     needs: [build, check-status]
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') ||
-      github.event.inputs.version == 'true' ||
-      github.event.inputs.publish == 'true' ||
-      github.event_name == 'release'
+    if: (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') || github.event_name == 'release'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -302,7 +222,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Download build artifacts
-        if: github.event_name == 'release' || github.event.inputs.publish == 'true'
+        if: github.event_name == 'release'
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
@@ -329,18 +249,14 @@ jobs:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Use changesets/action for version PR or publishing
-      - name: Create versions or publish
-        if: github.event_name != 'release'
+      # Use changesets/action for creating version PRs
+      - name: Create version PR
+        if: github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
-          # Only publish if manually triggered with publish=true
-          publish: ${{ github.event.inputs.publish == 'true' }}
-          # Always version (create PR) for push events with changesets or when version=true
-          version: ${{ (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') || github.event.inputs.version == 'true' }}
+          publish: false
+          version: true
           commit: 'chore: update package versions'
           title: 'chore: update package versions'
-          createGithubReleases: ${{ github.event.inputs.publish == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
