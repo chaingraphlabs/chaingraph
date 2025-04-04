@@ -1,5 +1,12 @@
 # @badaitech/chaingraph-types
 
+## 0.1.3-alpha.2
+
+### Patch Changes
+
+- 2b28c97: Change release workflow for the one more release publish test
+- f1e40ef: Ajust release workflow
+
 ## 0.1.3-alpha.1
 
 ### Patch Changes
