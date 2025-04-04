@@ -18,6 +18,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write # Needed for creating version PRs
+
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
