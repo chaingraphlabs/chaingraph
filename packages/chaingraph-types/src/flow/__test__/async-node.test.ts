@@ -237,7 +237,8 @@ describe('flow with async nodes', () => {
 
     await executionEngine.execute()
 
-    console.log(events)
+    // TODO: finish test
+    // console.log(events)
 
     // await expect(executionEngine.execute.bind(executionEngine)).rejects.toThrow('Simulated failure')
     // expect(node.status).toBe(NodeStatus.Error)

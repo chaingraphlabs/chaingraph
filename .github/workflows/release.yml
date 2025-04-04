@@ -1,4 +1,3 @@
-# .github/workflows/release.yml
 name: Release
 
 on:
@@ -17,11 +16,23 @@ on:
         description: Create changeset version PR
         type: boolean
         default: false
+      prerelease:
+        description: Use pre-release mode
+        type: boolean
+        default: false
+      prereleaseTag:
+        description: 'Pre-release tag (alpha, beta, etc.)'
+        type: string
+        default: alpha
+      exitPrerelease:
+        description: Exit pre-release mode before versioning
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
   packages: write
-  pull-requests: write # Needed for creating version PRs
+  pull-requests: write
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -86,14 +97,16 @@ jobs:
             apps/*/dist
           retention-days: 1
 
-  # Check for changesets - this is a separate job to determine which workflows to run
-  check-changesets:
-    name: Check for changesets
+  # Check for changesets and prerelease status
+  check-status:
+    name: Check repository status
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.inputs.version == 'true'
+    if: github.event_name == 'push' || github.event.inputs.version == 'true' || github.event.inputs.publish == 'true'
     outputs:
       has_changesets: ${{ steps.check.outputs.has_changesets }}
+      is_prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
+      prerelease_tag: ${{ steps.prerelease.outputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -116,12 +129,80 @@ jobs:
             echo "No changesets found"
           fi
 
+      - name: Check prerelease status
+        id: prerelease
+        run: |
+          if [ -f ".changeset/pre.json" ]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            TAG=$(grep -o '"tag": *"[^"]*"' .changeset/pre.json | sed 's/"tag": *"\([^"]*\)"/\1/')
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "In prerelease mode with tag: $TAG"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+            echo "Not in prerelease mode"
+          fi
+
+  # Manage prerelease mode
+  prerelease-mode:
+    name: Manage prerelease mode
+    needs: [build, check-status]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.prerelease == 'true' || github.event.inputs.exitPrerelease == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure Git User
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Enter prerelease mode
+        if: github.event.inputs.prerelease == 'true' && github.event.inputs.exitPrerelease != 'true'
+        run: |
+          echo "Entering prerelease mode with tag: ${{ github.event.inputs.prereleaseTag }}"
+          pnpm changeset pre enter ${{ github.event.inputs.prereleaseTag }}
+          git add .changeset/pre.json
+          git commit -m "chore: enter prerelease mode (${{ github.event.inputs.prereleaseTag }})"
+          git push origin HEAD
+
+      - name: Exit prerelease mode
+        if: github.event.inputs.exitPrerelease == 'true'
+        run: |
+          echo "Exiting prerelease mode"
+          pnpm changeset pre exit
+          if [ -f ".changeset/pre.json" ]; then
+            git rm .changeset/pre.json
+            git commit -m "chore: exit prerelease mode"
+            git push origin HEAD
+          else
+            echo "Not in prerelease mode, nothing to do"
+          fi
+
   # Dev versions job - automatically publish dev versions from main when no changesets exist
   dev-publish:
     name: Publish dev versions
-    needs: [build, check-changesets]
+    needs: [build, check-status]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'false'
+    if: github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'false' && needs.check-status.outputs.is_prerelease == 'false'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -141,20 +222,6 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -187,6 +254,11 @@ jobs:
             console.log('Updated', pkg.name, 'from', originalVersion, 'to', pkg.version);
           "
 
+      - name: Set up .npmrc for publishing
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
+          echo "@badaitech:registry=https://npm.pkg.github.com" >> .npmrc
+
       - name: Publish dev versions
         run: |
           echo "Publishing dev versions..."
@@ -196,12 +268,12 @@ jobs:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Changesets version job - create version PR when changesets exist
+  # Create Version PR
   version:
     name: Create version PR
-    needs: [build, check-changesets]
+    needs: [build, check-status]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true') || github.event.inputs.version == 'true'
+    if: (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') || github.event.inputs.version == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -220,20 +292,6 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -251,29 +309,42 @@ jobs:
           echo "Git status:"
           git status
 
-      - name: Run version
+      - name: Create version PR
+        id: create_version_pr
         run: |
+          # Run version command to update package versions
           echo "Running changeset version..."
-          pnpm changeset version
+          pnpm changeset version || true
 
-          echo "Git status after version update:"
-          git status
-
-          # Check if there are changes to commit
+          # Check if any files were changed
           if git diff --quiet; then
-            echo "No changes to commit"
+            echo "No changes detected after versioning"
+            echo "version_updated=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Commit and push changes
+          # Commit changes
           git add .
           git commit -m "chore: update package versions"
-          git push origin HEAD
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Release job - triggered by GitHub release creation or manual trigger
-  release:
+          # Create branch for PR
+          BRANCH_NAME="version-packages-$(date +%Y%m%d%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          git push -u origin $BRANCH_NAME
+
+          # Create PR using GitHub CLI
+          PR_URL=$(gh pr create --title "chore: update package versions" \
+            --body "This PR was created by the GitHub Actions workflow to update package versions." \
+            --base main \
+            --head $BRANCH_NAME)
+
+          echo "PR created: $PR_URL"
+          echo "version_updated=true" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Publish packages
+  publish:
     name: Publish packages
     needs: build
     runs-on: ubuntu-latest
@@ -298,20 +369,6 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -325,6 +382,11 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+
+      - name: Set up .npmrc for publishing
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
+          echo "@badaitech:registry=https://npm.pkg.github.com" >> .npmrc
 
       # For GitHub releases, set the version from the tag
       - name: Set version from release tag
@@ -352,11 +414,28 @@ jobs:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub release for changesets
+      # If this is a manual publish, create a release
+      - name: Create GitHub release
         if: github.event_name != 'release' && github.event.inputs.publish == 'true'
-        uses: changesets/action@v1
-        with:
-          publish: false # We've already published
-          createGithubReleases: true
+        run: |
+          # Get the current version of the root package
+          VERSION=$(node -p "require('./package.json').version")
+
+          # Get all updated package versions for the release notes
+          echo "Preparing release notes..."
+          PACKAGES=$(pnpm -r exec -- node -e "console.log(require('./package.json').name + '@' + require('./package.json').version)")
+
+          # Create release notes
+          NOTES="# Release v$VERSION
+
+          ## Packages:
+          $(echo "$PACKAGES" | sed 's/^/- /')
+          "
+
+          # Create a GitHub release
+          gh release create "v$VERSION" \
+            --title "Release v$VERSION" \
+            --notes "$NOTES" \
+            --target main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
