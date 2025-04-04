@@ -1,4 +1,5 @@
 #!/bin/sh
+
 #
 # Copyright (c) 2025 BadLabs
 #
@@ -7,13 +8,19 @@
 # As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
 #
 
-files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js|tsx|jsx|css)$' | grep -vE '\.config\.(ts|js|mjs)$' | grep -vE '^packages/badai-api/src/gql/client/')
+files=$(
+  git diff --cached --name-only --diff-filter=ACM \
+  | grep -E '\.(ts|js|tsx|jsx|css)$' \
+  | grep -vE '\.config\.(ts|js|mjs)$' \
+  | grep -vE '\.(md|svg|html|yaml|yml|sh)$' \
+)
 
 for file in $files; do
+    echo "$file"
     if ! grep -q "Copyright (c)" "$file"; then
         echo "❌ Error: Missing license header in $file"
         exit 1
     fi
 done
 
-exit 0
+#exit 0
