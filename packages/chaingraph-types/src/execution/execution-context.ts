@@ -6,9 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+// import for CryptoKeyPair
 import type { ExecutionEvent } from '../flow'
 import { subtle } from 'node:crypto'
 import { v4 as uuidv4 } from 'uuid'
+
 import { EventQueue } from '../utils'
 
 export interface BadAIContext {

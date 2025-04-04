@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+// import type { W } from '@trpc/client'
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query'
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
 import type { AppRouter } from '../server/router'
@@ -63,8 +64,10 @@ export const queryClient = new QueryClient({
 //   ],
 // })
 
+export type WSClient = ReturnType<typeof createWSClient>
+
 // create persistent WebSocket connection
-export const wsClient = createWSClient({
+export const wsClient: WSClient = createWSClient({
   url: `ws://localhost:3001`,
   onError: (err) => {
     console.error('WebSocket error:', err)

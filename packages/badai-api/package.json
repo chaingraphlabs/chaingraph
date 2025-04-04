@@ -16,6 +16,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "tsc -b",
     "check-types": "tsc -b",
     "graphql-codegen": "graphql-codegen --config graphql-codegen.ts"
   },

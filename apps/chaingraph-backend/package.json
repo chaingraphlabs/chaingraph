@@ -39,6 +39,6 @@
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
     "@types/cors": "^2.8.17",
-    "@types/node": "^20.17.30"
+    "@types/node": "^22.14.0"
   }
 }

@@ -166,8 +166,9 @@ class CoinMarketCapNode extends BaseNode {
     const data = await response.json()
     const results: CryptoData[] = []
 
-    for (const symbol of Object.keys(data.data)) {
-      const crypto = data.data[symbol]
+    //
+    for (const symbol of Object.keys(data.data as any)) {
+      const crypto = (data.data as any)[symbol]
       const contractAddresses: ContractAddress[] = crypto.platform
         ? Object.entries(crypto.platform).map(([blockchain, address]) => ({
             blockchain,

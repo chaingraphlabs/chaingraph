@@ -19,6 +19,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "tsc -b",
     "test": "vitest",
     "check-types": "tsc -b",
     "test:coverage": "vitest run --coverage"
@@ -27,10 +28,14 @@
     "reflect-metadata": "^0.2.1",
     "superjson": "^2.2.2",
     "type-fest": "^4.39.1",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "uuid": "^11.0.4"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
-    "@types/node": "^20.17.30"
+    "@types/node": "^22.14.0",
+    "vitest": "^2.1.9",
+    "superjson": "^2.2.2",
+    "uuid": "^11.0.4"
   }
 }

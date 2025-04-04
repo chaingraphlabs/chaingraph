@@ -2,8 +2,13 @@
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
+    "lib": ["dom", "ESNext", "ESNext.AsyncIterable"],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
     "outDir": "dist"
   },
   "include": ["src"],

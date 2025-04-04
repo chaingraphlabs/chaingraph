@@ -19,12 +19,12 @@ publish: prepublish-check build publish-packages
 # Publish all packages individually
 publish-packages:
 	@echo "Publishing all packages..."
-	pnpm --filter @badaitech/chaingraph-types publish --access restricted --no-git-checks
-	pnpm --filter @badaitech/chaingraph-nodes publish --access restricted --no-git-checks
-	pnpm --filter @badaitech/chaingraph-trpc publish --access restricted --no-git-checks
-	pnpm --filter @badaitech/chaingraph-backend publish --access restricted --no-git-checks
-	pnpm --filter @badaitech/chaingraph-frontend publish --access restricted --no-git-checks
-	pnpm --filter @badaitech/badai-api publish --access restricted --no-git-checks
+	pnpm --filter @badaitech/chaingraph-types publish --access restricted
+	pnpm --filter @badaitech/chaingraph-nodes publish --access restricted
+	pnpm --filter @badaitech/chaingraph-trpc publish --access restricted
+	pnpm --filter @badaitech/chaingraph-backend publish --access restricted
+	pnpm --filter @badaitech/chaingraph-frontend publish --access restricted
+	pnpm --filter @badaitech/badai-api publish --access restricted
 	# Root package should be published last
 	pnpm publish --access restricted --no-git-checks
 	@echo "All packages have been published!"
@@ -33,10 +33,13 @@ publish-packages:
 # Clean build outputs
 clean-builds:
 	@echo "Cleaning build outputs..."
-	rm -rf **/dist
-	rm -rf **/build
-	rm -rf **/coverage
-	rm -rf **/*.tsbuildinfo
+	rm -rf ./dist/
+	rm -rf ./build/
+	rm -rf ./coverage/
+	rm -rf ./*/**/dist/
+	rm -rf ./*/**/build/
+	rm -rf ./*/**/coverage/
+	rm -rf ./*/**/*.tsbuildinfo
 	@echo "Build outputs cleaned!"
 
 # Clean cache

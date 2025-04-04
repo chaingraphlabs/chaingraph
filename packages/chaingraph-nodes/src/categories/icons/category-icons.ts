@@ -51,7 +51,8 @@ export function isCategoryIcon(name: string): name is CategoryIconName {
 
 export function getCategoryIcon(name: string): IconComponent {
   if (isCategoryIcon(name)) {
-    return CategoryIcons[name]
+    return CategoryIcons[name]!
   }
-  return CategoryIcons.Type
+
+  return CategoryIcons.Type!
 }

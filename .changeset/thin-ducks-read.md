@@ -1,0 +1,10 @@
+---
+"@badaitech/chaingraph-nodes": patch
+"@badaitech/chaingraph-types": patch
+"@badaitech/chaingraph-frontend": patch
+"@badaitech/chaingraph-trpc": patch
+"@badaitech/chaingraph-backend": patch
+"@badaitech/badai-api": patch
+---
+
+Fix packages configs for the package building.

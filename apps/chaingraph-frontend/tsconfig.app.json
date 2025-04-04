@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "jsx": "react-jsx",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "lib": ["DOM", "ESNext", "ESNext.AsyncIterable", "DOM.Iterable"],
     "moduleDetection": "force",
     "useDefineForClassFields": true,
     "emitDecoratorMetadata": true,
@@ -24,6 +24,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
     "noEmit": true,
     "isolatedModules": true,
     "skipLibCheck": true,
