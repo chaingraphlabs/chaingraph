@@ -1,5 +1,12 @@
 # @badaitech/badai-api
 
+## 0.1.3-alpha.3
+
+### Patch Changes
+
+- 3dcef34: Simplify release workflow
+- 3dcef34: Fix packages configs for the package building.
+
 ## 0.1.3-alpha.2
 
 ### Patch Changes

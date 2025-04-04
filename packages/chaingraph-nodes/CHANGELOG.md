@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.3-alpha.3
+
+### Patch Changes
+
+- 3dcef34: Simplify release workflow
+- 3dcef34: Fix packages configs for the package building.
+- Updated dependencies [3dcef34]
+- Updated dependencies [3dcef34]
+  - @badaitech/chaingraph-types@0.1.3-alpha.3
+
 ## 0.1.3-alpha.2
 
 ### Patch Changes
