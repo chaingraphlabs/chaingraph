@@ -21,6 +21,9 @@ ChainGraph is a source-available, flow-based programming framework that empowers
 - [Docker & Docker-compose](#docker--docker-compose)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
+- [Development Tools](#development-tools)
+- [Current Limitations & Work-In-Progress](#current-limitations--work-in-progress)
+- [Release Process](#release-process)
 - [Developer Documentation](#developer-documentation)
 - [License](#license)
 
@@ -288,6 +291,71 @@ pnpm lint:fix  # Fix linting issues
 - **Unstable API:** Because ChainGraph is still in active development, many aspects of the API may change and documentation might be updated accordingly.
 - **Incomplete Features:** Some advanced features are still under development.
 - **Experimental Design:** The current version is primarily for demonstration and evaluation purposes. It is not yet ready for production use.
+
+## Release Process
+
+ChainGraph uses [changesets](https://github.com/changesets/changesets) to manage versioning, changelogs, and package publishing.
+
+### Creating Changes
+
+When making changes that should be released:
+
+1. Create your changes in a feature branch
+2. Run `pnpm changeset` to create a changeset file
+3. Select the packages that were modified
+4. Choose the appropriate version bump (patch, minor, major)
+5. Write a concise description of the changes
+6. Commit the generated changeset file along with your code changes
+
+### Automated Releases
+
+The project uses GitHub Actions to automate the release process:
+
+1. When PRs with changesets are merged to the main branch, a "Version Packages" PR is automatically created
+2. When the Version Packages PR is merged, packages are automatically published to GitHub Packages
+3. When a GitHub Release is manually created, the associated packages are automatically published with the release tag version
+
+### Manual Release Actions
+
+You can manually trigger releases from the GitHub Actions tab:
+
+1. Navigate to the "Release" workflow
+2. Click "Run workflow"
+3. Choose the desired action:
+  - Create a changeset version PR
+  - Publish packages immediately
+
+### Commands for Local Development
+
+```bash
+# Add a new changeset
+pnpm changeset
+
+# Preview what versions would be applied
+pnpm changeset version --dry-run
+
+# Create a release (updates versions and changelogs)
+pnpm changeset version
+
+# Publish packages locally (rarely needed)
+pnpm changeset publish
+```
+
+### Prerelease Mode
+
+For alpha/beta releases:
+
+```bash
+# Enter prerelease mode
+pnpm changeset pre enter alpha
+
+# Add changesets and version as normal
+pnpm changeset
+pnpm changeset version
+
+# Exit prerelease mode when done
+pnpm changeset pre exit
+```
 
 ## Developer Documentation
 
