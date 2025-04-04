@@ -1,3 +1,4 @@
+# .github/workflows/release.yml
 name: Release
 
 on:
@@ -80,12 +81,115 @@ jobs:
             apps/*/dist
           retention-days: 1
 
-  # Changesets version job - create version PR when changes are detected
-  version:
-    name: Create version PR
+  # Check for changesets - this is a separate job to determine which workflows to run
+  check-changesets:
+    name: Check for changesets
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.inputs.version == 'true'
+    outputs:
+      has_changesets: ${{ steps.check.outputs.has_changesets }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for changesets
+        id: check
+        run: |
+          if [ -n "$(ls -A .changeset/*.md 2>/dev/null | grep -v README.md | grep -v config.json)" ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+            echo "Changesets found"
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "No changesets found"
+          fi
+
+  # Dev versions job - automatically publish dev versions from main when no changesets exist
+  dev-publish:
+    name: Publish dev versions
+    needs: [build, check-changesets]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@badaitech'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: .
+
+      - name: Generate short commit hash
+        id: commit_hash
+        run: |
+          SHORT_HASH=$(git rev-parse --short HEAD)
+          echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+
+      - name: Update package versions with dev suffix
+        run: |
+          SHORT_HASH="${{ steps.commit_hash.outputs.short_hash }}"
+          # Update all package versions with dev suffix - this OVERWRITES existing versions
+          pnpm -r exec -- node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+            const originalVersion = pkg.version;
+            // Add dev suffix to version (keeping the original version number)
+            pkg.version = originalVersion.includes('-dev.')
+              ? originalVersion.replace(/-dev\.[a-f0-9]+$/, '-dev.${SHORT_HASH}')
+              : originalVersion + '-dev.${SHORT_HASH}';
+            fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+            console.log('Updated', pkg.name, 'from', originalVersion, 'to', pkg.version);
+          "
+
+      - name: Publish dev versions
+        run: |
+          echo "Publishing dev versions..."
+          pnpm -r publish --access restricted --no-git-checks --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Changesets version job - create version PR when changesets exist
+  version:
+    name: Create version PR
+    needs: [build, check-changesets]
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true') || github.event.inputs.version == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
