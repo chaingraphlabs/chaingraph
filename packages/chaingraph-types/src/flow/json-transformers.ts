@@ -50,7 +50,6 @@ export function registerFlowTransformers(
           return Flow.deserialize(v) as Flow
         } catch (e) {
           console.error('Failed to deserialize flow', e)
-          debugger
           throw e
         }
       },

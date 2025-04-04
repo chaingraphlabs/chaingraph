@@ -1,3 +1,3 @@
-mutation StopCompletion($session: Session!, $chat_id: ChatID!)  {
-    stopCompletion(session: $session, chat_id: $chat_id)
+mutation StopCompletion($session: Session!, $chat_id: ChatID!) {
+  stopCompletion(session: $session, chat_id: $chat_id)
 }

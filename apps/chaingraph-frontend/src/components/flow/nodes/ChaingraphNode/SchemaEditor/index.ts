@@ -6,6 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+export { ArrayItemSchemaEditor } from './ArrayItemSchemaEditor'
 export * from './SchemaEditor'
 export { SchemaEditorProvider, useSchemaEditor } from './SchemaEditorContext'
-export { ArrayItemSchemaEditor } from './ArrayItemSchemaEditor'

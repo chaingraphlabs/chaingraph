@@ -1,8 +1,8 @@
-query chainGraphGet($session : Session!, $chat_id: ChatID!, $participant_id: ParticipantID!) {
-    chainGraphGet(session: $session, chat_id: $chat_id, participant_id: $participant_id) {
-        author
-        created_at
-        graph
-        graph_id
-    }
+query chainGraphGet($session: Session!, $chat_id: ChatID!, $participant_id: ParticipantID!) {
+  chainGraphGet(session: $session, chat_id: $chat_id, participant_id: $participant_id) {
+    author
+    created_at
+    graph
+    graph_id
+  }
 }

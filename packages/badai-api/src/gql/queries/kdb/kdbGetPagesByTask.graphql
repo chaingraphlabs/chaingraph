@@ -1,8 +1,5 @@
-query KDBGetPagesByTask(
-    $session: Session!,
-    $task_id: TaskID!,
-) {
-    kdbGetPagesByTask(session: $session, task_id: $task_id) {
-        ...PageFields
-    }
+query KDBGetPagesByTask($session: Session!, $task_id: TaskID!) {
+  kdbGetPagesByTask(session: $session, task_id: $task_id) {
+    ...PageFields
+  }
 }

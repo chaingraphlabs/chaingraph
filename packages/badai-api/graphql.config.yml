@@ -1,4 +1,3 @@
-
 schema: ./schema.graphql
 documents: 'src/gql/queries/**/*.graphql'
 

@@ -1,8 +1,5 @@
-query KDBGetChunk(
-    $session: Session!,
-    $chunk_id: ChunkID!
-) {
-    kdbGetChunk(session: $session, chunk_id: $chunk_id) {
-        ...ChunkFields
-    }
+query KDBGetChunk($session: Session!, $chunk_id: ChunkID!) {
+  kdbGetChunk(session: $session, chunk_id: $chunk_id) {
+    ...ChunkFields
+  }
 }

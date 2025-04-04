@@ -1,5 +1,5 @@
 mutation SetMessageMeta($session: Session!, $chat_id: ChatID!, $id: MessageID!, $message_meta: MessageMetaInput!) {
-    setMessageMeta(session: $session, chat_id: $chat_id, id: $id, message_meta: $message_meta) {
-        ...MessageFields
-    }
+  setMessageMeta(session: $session, chat_id: $chat_id, id: $id, message_meta: $message_meta) {
+    ...MessageFields
+  }
 }

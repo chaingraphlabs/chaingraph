@@ -1,66 +1,66 @@
 fragment variableFields on Variable {
-    id
-    namespace
-    key
-    value {
-        type
-        value
-    }
-    createdAt
-    updatedAt
+  id
+  namespace
+  key
+  value {
+    type
+    value
+  }
+  createdAt
+  updatedAt
 }
 
 # Query to get a single variable
 query GetVariable($session: Session!, $namespace: NamespaceInput!, $key: String!) {
-    getVariable(session: $session, namespace: $namespace, key: $key) {
-        variable {
-            ...variableFields
-        }
+  getVariable(session: $session, namespace: $namespace, key: $key) {
+    variable {
+      ...variableFields
     }
+  }
 }
 
 # Query to get all variables in a namespace
 query GetVariables($session: Session!, $namespace: NamespaceInput!) {
-    getVariables(session: $session, namespace: $namespace) {
-        variables {
-            ...variableFields
-        }
+  getVariables(session: $session, namespace: $namespace) {
+    variables {
+      ...variableFields
     }
+  }
 }
 
 # Mutation to set a single variable
 mutation SetVariable($session: Session!, $namespace: NamespaceInput!, $key: String!, $value: VariableValueInput!) {
-    setVariable(session: $session, namespace: $namespace, key: $key, value: $value) {
-        variable {
-            ...variableFields
-        }
+  setVariable(session: $session, namespace: $namespace, key: $key, value: $value) {
+    variable {
+      ...variableFields
     }
+  }
 }
 
 # Mutation to set multiple variables
 mutation SetVariables($session: Session!, $namespace: NamespaceInput!, $variables: [KeyValueInput!]!) {
-    setVariables(session: $session, namespace: $namespace, variables: $variables) {
-        variables {
-            ...variableFields
-        }
+  setVariables(session: $session, namespace: $namespace, variables: $variables) {
+    variables {
+      ...variableFields
     }
+  }
 }
 
 # Mutation to delete a single variable
 mutation DeleteVariable($session: Session!, $namespace: NamespaceInput!, $key: String!) {
-    deleteVariable(session: $session, namespace: $namespace, key: $key)
+  deleteVariable(session: $session, namespace: $namespace, key: $key)
 }
 
 # Mutation to delete all variables in a namespace
 mutation DeleteVariables($session: Session!, $namespace: NamespaceInput!) {
-    deleteVariables(session: $session, namespace: $namespace)
+  deleteVariables(session: $session, namespace: $namespace)
 }
 
 # Mutation to append a value to an existing variable
 mutation AppendVariable($session: Session!, $namespace: NamespaceInput!, $key: String!, $value: VariableValueInput!) {
-    appendVariable(session: $session, namespace: $namespace, key: $key, value: $value) {
-        variable {
-            ...variableFields
-        }
+  appendVariable(session: $session, namespace: $namespace, key: $key, value: $value) {
+    variable {
+      ...variableFields
     }
+  }
 }

@@ -1,8 +1,8 @@
 mutation MessageAddDelta($session: Session!, $chat_id: ChatID!, $message_id: MessageID!, $delta: String!) {
-    addDelta(session: $session, chat_id: $chat_id, id: $message_id, delta: $delta) {
-        id
-        chat_id
-        text
-        version
-    }
+  addDelta(session: $session, chat_id: $chat_id, id: $message_id, delta: $delta) {
+    id
+    chat_id
+    text
+    version
+  }
 }

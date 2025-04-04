@@ -1,3 +1,3 @@
-mutation AppendUsages($session: Session!, $usages: [UsageInput!]!)  {
-    appendUsages(session: $session, usages: $usages)
+mutation AppendUsages($session: Session!, $usages: [UsageInput!]!) {
+  appendUsages(session: $session, usages: $usages)
 }

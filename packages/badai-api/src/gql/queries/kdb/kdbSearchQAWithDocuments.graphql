@@ -1,23 +1,22 @@
 query kdbSearchQAWithDocuments(
-    $session: Session!,
-    $collections: [CollectionID!]!,
-    $queries: [String!]!,
-    $queries_weights: [Float!],
-
-    $options: SearchQAOptions,
-    $filters: SearchQAFilters,
-    $order_by: SearchQAOrderBy,
+  $session: Session!
+  $collections: [CollectionID!]!
+  $queries: [String!]!
+  $queries_weights: [Float!]
+  $options: SearchQAOptions
+  $filters: SearchQAFilters
+  $order_by: SearchQAOrderBy
 ) {
-    kdbSearchQAWithDocuments(
-        session: $session,
-        collections: $collections,
-        queries: $queries,
-        queries_weights: $queries_weights,
+  kdbSearchQAWithDocuments(
+    session: $session
+    collections: $collections
+    queries: $queries
+    queries_weights: $queries_weights
 
-        options: $options,
-        filters: $filters,
-        order_by: $order_by,
-    ) {
-        ...QAWithSimilarityByDocumentsFields
-    }
+    options: $options
+    filters: $filters
+    order_by: $order_by
+  ) {
+    ...QAWithSimilarityByDocumentsFields
+  }
 }

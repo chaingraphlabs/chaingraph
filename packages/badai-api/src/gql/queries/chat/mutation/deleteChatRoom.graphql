@@ -1,3 +1,3 @@
-mutation DeleteChatRoom($session: Session!, $chatID: ChatID!)  {
-    deleteChatRoom(session: $session, id: $chatID)
+mutation DeleteChatRoom($session: Session!, $chatID: ChatID!) {
+  deleteChatRoom(session: $session, id: $chatID)
 }

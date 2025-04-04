@@ -1,33 +1,33 @@
-mutation CreateChatRoom($session: Session!, $agents: [AgentID!] = [])  {
-    createChatRoom(session: $session, agents: $agents) {
-        id
-        name
-        author
-        created_at
-        deleted_at
-        deleted
-        updated_at
-        last_message_time
-        last_message {
-            ...MessageFields
-        }
-        participants {
-            agent_id
-            avatar
-            first_name
-            is_agent
-            last_name
-            participant_id
-            purpose
-            role
-            self_awareness
-            tools {
-                name
-            }
-            username
-            llm_model
-            meta
-        }
-        meta
+mutation CreateChatRoom($session: Session!, $agents: [AgentID!] = []) {
+  createChatRoom(session: $session, agents: $agents) {
+    id
+    name
+    author
+    created_at
+    deleted_at
+    deleted
+    updated_at
+    last_message_time
+    last_message {
+      ...MessageFields
     }
+    participants {
+      agent_id
+      avatar
+      first_name
+      is_agent
+      last_name
+      participant_id
+      purpose
+      role
+      self_awareness
+      tools {
+        name
+      }
+      username
+      llm_model
+      meta
+    }
+    meta
+  }
 }

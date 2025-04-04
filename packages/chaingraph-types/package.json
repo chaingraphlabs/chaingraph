@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-types",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Core type definitions for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -21,8 +21,7 @@
   "scripts": {
     "test": "vitest",
     "check-types": "tsc -b",
-    "test:coverage": "vitest run --coverage",
-    "publish": "pnpm publish --access=restricted --report-summary"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "reflect-metadata": "^0.2.1",

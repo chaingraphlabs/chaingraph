@@ -1,8 +1,8 @@
 query AdminAgentGetTwitterApiKeys($session: Session!, $agent_id: AgentID!) {
-    adminAgentGetTwitterApiKeys(session: $session, agent_id: $agent_id) {
-        access_token
-        access_token_secret
-        consumer_key
-        consumer_secret
-    }
+  adminAgentGetTwitterApiKeys(session: $session, agent_id: $agent_id) {
+    access_token
+    access_token_secret
+    consumer_key
+    consumer_secret
+  }
 }

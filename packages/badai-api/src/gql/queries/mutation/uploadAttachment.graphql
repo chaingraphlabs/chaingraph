@@ -1,7 +1,7 @@
 mutation UploadAttachment($session: Session!, $attachment: AttachmentBlob!) {
-    uploadAttachment(session: $session, attachment: $attachment) {
-        id
-        mime_type
-        url
-    }
+  uploadAttachment(session: $session, attachment: $attachment) {
+    id
+    mime_type
+    url
+  }
 }

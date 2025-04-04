@@ -1,52 +1,51 @@
 fragment agentFields on AgentMeta {
-    agent_id
-    username
-    owner_id
-    first_name
-    last_name
-    avatar
-    role
-    can_answer
-    chain_graph_id
-    skeleton
-    template_params
-    llm_config {
-        model
-        temperature
-        max_tokens
-    }
-    is_agent
-    deployment_status
+  agent_id
+  username
+  owner_id
+  first_name
+  last_name
+  avatar
+  role
+  can_answer
+  chain_graph_id
+  skeleton
+  template_params
+  llm_config {
+    model
+    temperature
+    max_tokens
+  }
+  is_agent
+  deployment_status
 
-    # deprecated fields, remove in the future
-    prompt
-    chat_history_config {
-        messages_count
-        tokens_limit
-    }
-    llm_model
-    purpose
-    self_awareness
-    tools {
-        name
-    }
+  # deprecated fields, remove in the future
+  prompt
+  chat_history_config {
+    messages_count
+    tokens_limit
+  }
+  llm_model
+  purpose
+  self_awareness
+  tools {
+    name
+  }
 }
 
 fragment agentCollectionFields on AgentCollection {
-    collection_id
-    title
-    description
-    owner_id
-    order
-    updated_at
-    agents {
-        ...agentFields
-    }
+  collection_id
+  title
+  description
+  owner_id
+  order
+  updated_at
+  agents {
+    ...agentFields
+  }
 }
 
-
 query MarketplaceAgents($session: Session!) {
-    marketplaceAgents(session: $session) {
-        ...agentCollectionFields
-    }
+  marketplaceAgents(session: $session) {
+    ...agentCollectionFields
+  }
 }

@@ -1,95 +1,95 @@
 query GetTweetsFromDB($session: Session!, $tweets_ids: [TweetID!]!) {
-    getTweetsFromDB(session: $session, tweets_ids: $tweets_ids) {
-        ...TweetFields
-    }
+  getTweetsFromDB(session: $session, tweets_ids: $tweets_ids) {
+    ...TweetFields
+  }
 }
 
 fragment TwitterUserFields on TwitterUser {
-    created_at
-    description
-    id
-    name
-    profile_image_url
-    public_metrics {
-        followers_count
-        following_count
-        listed_count
-        tweet_count
-    }
-    url
-    username
-    verified
+  created_at
+  description
+  id
+  name
+  profile_image_url
+  public_metrics {
+    followers_count
+    following_count
+    listed_count
+    tweet_count
+  }
+  url
+  username
+  verified
 }
 
 fragment TweetFields on Tweet {
-    tweet_id
-    text
+  tweet_id
+  text
+  author {
+    ...TwitterUserFields
+  }
+  conversation_id
+  in_reply_to_user_id
+  reply_to_tweet_id
+  created_at
+  mentioned_users {
+    ...TwitterUserFields
+  }
+  public_metrics {
+    like_count
+    quote_count
+    reply_count
+    retweet_count
+  }
+  quoted_tweet {
     author {
-        ...TwitterUserFields
+      ...TwitterUserFields
     }
     conversation_id
     in_reply_to_user_id
     reply_to_tweet_id
     created_at
     mentioned_users {
-        ...TwitterUserFields
+      ...TwitterUserFields
     }
     public_metrics {
-        like_count
-        quote_count
-        reply_count
-        retweet_count
+      like_count
+      quote_count
+      reply_count
+      retweet_count
     }
     quoted_tweet {
-        author {
-            ...TwitterUserFields
-        }
-        conversation_id
-        in_reply_to_user_id
-        reply_to_tweet_id
-        created_at
-        mentioned_users {
-            ...TwitterUserFields
-        }
-        public_metrics {
-            like_count
-            quote_count
-            reply_count
-            retweet_count
-        }
-        quoted_tweet {
-            tweet_id
-        }
-        reply_tweet {
-            tweet_id
-        }
-        text
-        tweet_id
+      tweet_id
     }
     reply_tweet {
-        author {
-            ...TwitterUserFields
-        }
-        conversation_id
-        in_reply_to_user_id
-        reply_to_tweet_id
-        created_at
-        mentioned_users {
-            ...TwitterUserFields
-        }
-        public_metrics {
-            like_count
-            quote_count
-            reply_count
-            retweet_count
-        }
-        quoted_tweet {
-            tweet_id
-        }
-        reply_tweet {
-            tweet_id
-        }
-        text
-        tweet_id
+      tweet_id
     }
+    text
+    tweet_id
+  }
+  reply_tweet {
+    author {
+      ...TwitterUserFields
+    }
+    conversation_id
+    in_reply_to_user_id
+    reply_to_tweet_id
+    created_at
+    mentioned_users {
+      ...TwitterUserFields
+    }
+    public_metrics {
+      like_count
+      quote_count
+      reply_count
+      retweet_count
+    }
+    quoted_tweet {
+      tweet_id
+    }
+    reply_tweet {
+      tweet_id
+    }
+    text
+    tweet_id
+  }
 }

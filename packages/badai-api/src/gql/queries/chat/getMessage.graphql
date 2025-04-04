@@ -1,5 +1,5 @@
-query GetMessage($session: Session!, $chat_id : ChatID!, $id: MessageID!) {
-    message(session: $session, chat_id: $chat_id, id: $id) {
-        ...MessageFields
-    }
+query GetMessage($session: Session!, $chat_id: ChatID!, $id: MessageID!) {
+  message(session: $session, chat_id: $chat_id, id: $id) {
+    ...MessageFields
+  }
 }

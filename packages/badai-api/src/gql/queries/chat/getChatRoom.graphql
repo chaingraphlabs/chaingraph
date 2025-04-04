@@ -1,34 +1,33 @@
 query GetChatRoom($session: Session!, $chat_id: ChatID!) {
-    getChatRoom(session: $session, chat_id: $chat_id) {
-        id
-        name
-        author
-        created_at
-        deleted_at
-        deleted
-        updated_at
-        last_message_time
-        last_message {
-            ...MessageFields
-        }
-        participants {
-            participant_id
-            agent_id
-            first_name
-            last_name
-            username
-            avatar
-            is_agent
-            role
-            purpose
-            self_awareness
-            tools {
-                name
-            }
-            llm_model
-            meta
-        }
-        meta
+  getChatRoom(session: $session, chat_id: $chat_id) {
+    id
+    name
+    author
+    created_at
+    deleted_at
+    deleted
+    updated_at
+    last_message_time
+    last_message {
+      ...MessageFields
     }
+    participants {
+      participant_id
+      agent_id
+      first_name
+      last_name
+      username
+      avatar
+      is_agent
+      role
+      purpose
+      self_awareness
+      tools {
+        name
+      }
+      llm_model
+      meta
+    }
+    meta
+  }
 }
-

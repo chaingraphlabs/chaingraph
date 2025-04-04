@@ -1,15 +1,10 @@
 mutation KDBIndexingDocumentTaskTransitionState(
-    $session: Session!,
-    $taskID: TaskID!,
-    $toState: IndexingDocumentTaskState!,
-    $version: Int!
+  $session: Session!
+  $taskID: TaskID!
+  $toState: IndexingDocumentTaskState!
+  $version: Int!
 ) {
-    kdbIndexingDocumentTaskTransitionState(
-        session: $session,
-        taskID: $taskID,
-        toState: $toState,
-        version: $version
-    ) {
-        ...IndexingDocumentTaskFields
-    }
+  kdbIndexingDocumentTaskTransitionState(session: $session, taskID: $taskID, toState: $toState, version: $version) {
+    ...IndexingDocumentTaskFields
+  }
 }

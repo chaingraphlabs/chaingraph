@@ -1,5 +1,5 @@
 mutation SendMessage($session: Session!, $chat_id: ChatID!, $message: MessageInput!) {
-    sendMessage(session: $session, chat_id: $chat_id, message: $message) {
-        ...MessageFields
-    }
+  sendMessage(session: $session, chat_id: $chat_id, message: $message) {
+    ...MessageFields
+  }
 }

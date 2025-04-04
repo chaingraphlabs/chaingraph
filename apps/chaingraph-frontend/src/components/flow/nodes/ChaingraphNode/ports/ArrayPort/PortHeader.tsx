@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { PortTitle } from '../ui/PortTitle'
-import type { ReactNode } from 'react'
 
 interface PortHeaderProps {
   title: string
@@ -24,7 +24,7 @@ export function PortHeader({
   isOutput,
   isCollapsible,
   onClick,
-  rightElement
+  rightElement,
 }: PortHeaderProps) {
   return (
     <div className="space-y-1">
@@ -68,8 +68,9 @@ export function PortHeader({
       {rightElement && (
         <div className={cn(
           'flex',
-          isOutput ? 'justify-end' : 'justify-start'
-        )}>
+          isOutput ? 'justify-end' : 'justify-start',
+        )}
+        >
           {rightElement}
         </div>
       )}

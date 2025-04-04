@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -22,8 +22,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "check-types": "tsc --noEmit",
-    "publish": "pnpm publish --access=restricted --report-summary"
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",

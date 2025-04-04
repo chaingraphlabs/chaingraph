@@ -1,10 +1,5 @@
-mutation AddMessageAttachment(
-    $session: Session!,
-    $chat_id: ChatID!,
-    $id: MessageID!,
-    $attachment_id: AttachmentID!
-) {
-    addMessageAttachment(session: $session, chat_id: $chat_id, id: $id, attachment_id: $attachment_id) {
-        ...MessageFields
-    }
+mutation AddMessageAttachment($session: Session!, $chat_id: ChatID!, $id: MessageID!, $attachment_id: AttachmentID!) {
+  addMessageAttachment(session: $session, chat_id: $chat_id, id: $id, attachment_id: $attachment_id) {
+    ...MessageFields
+  }
 }

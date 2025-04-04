@@ -1,5 +1,5 @@
 mutation KDBIndexingDocumentTaskCreate($session: Session!, $input: KdbIndexingDocumentTaskCreateInput!) {
-    kdbIndexingDocumentTaskCreate(session: $session, input: $input) {
-        ...IndexingDocumentTaskFields
-    }
+  kdbIndexingDocumentTaskCreate(session: $session, input: $input) {
+    ...IndexingDocumentTaskFields
+  }
 }

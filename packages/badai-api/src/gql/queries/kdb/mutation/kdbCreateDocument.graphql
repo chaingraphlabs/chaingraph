@@ -1,6 +1,5 @@
 mutation KDBCreateDocument($session: Session!, $doc: DocumentMetaInput!) {
-    kdbCreateDocument(session: $session, doc: $doc) {
-        ...DocumentFields
-    }
+  kdbCreateDocument(session: $session, doc: $doc) {
+    ...DocumentFields
+  }
 }
-

@@ -1,25 +1,24 @@
 mutation KDBCreateTriplet($session: Session!, $triplets: CreateTripletInput!) {
-    kdbCreateTriplet(session: $session, triplet: $triplets) {
-        chunk_id
-        document_id
-        task_id
-        object
-        predicate
-        subject
-        triplet_id
-        indexing_state {
-            completion_cost
-            completion_tokens
-            content_tokens
-            embedding_cost
-            is_embedded
-            is_indexed_qa
-            is_indexed_triplet
-            is_parsed
-            is_summarized
-            prompt_cost
-            prompt_tokens
-        }
+  kdbCreateTriplet(session: $session, triplet: $triplets) {
+    chunk_id
+    document_id
+    task_id
+    object
+    predicate
+    subject
+    triplet_id
+    indexing_state {
+      completion_cost
+      completion_tokens
+      content_tokens
+      embedding_cost
+      is_embedded
+      is_indexed_qa
+      is_indexed_triplet
+      is_parsed
+      is_summarized
+      prompt_cost
+      prompt_tokens
     }
+  }
 }
-
