@@ -13,6 +13,9 @@
     "url": "git+https://github.com//badaitech/chaingraph.git",
     "directory": "./packages/badai-api"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     ".": "./src/index.ts"
   },

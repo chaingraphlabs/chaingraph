@@ -1,13 +1,17 @@
 {
   "name": "@badaitech/chaingraph-backend",
   "type": "module",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
+  "description": "Backend server for the Chaingraph project",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",
-    "directory": "./packages/chaingraph-backend"
+    "directory": "./apps/chaingraph-backend"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "exports": {
     ".": "./src/index.ts"

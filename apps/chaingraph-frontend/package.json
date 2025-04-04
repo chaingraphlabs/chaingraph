@@ -1,13 +1,17 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
+  "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",
-    "directory": "./packages/chaingraph-frontend"
+    "directory": "./apps/chaingraph-frontend"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "dev": "vite",
