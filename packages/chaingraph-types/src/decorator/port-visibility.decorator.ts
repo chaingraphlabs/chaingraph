@@ -93,7 +93,6 @@ export function applyVisibilityRules(node: INode): IPort[] {
           },
         })
         mutatedPorts.push(port)
-        console.log('Applying visibility rule', { portKey, shouldBeVisible, port: port.getConfig() })
       }
     }
   }

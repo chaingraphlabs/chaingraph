@@ -392,7 +392,6 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
     try {
       const result = configSchema.safeParse(data)
       if (!result.success) {
-        console.log('FUCK UP WITH OBJECT:', result, data)
         throw new PortError(
           PortErrorType.SerializationError,
           `Invalid object configuration for deserialization ${JSON.stringify(result)} DATA: ${JSON.stringify(data)}`,

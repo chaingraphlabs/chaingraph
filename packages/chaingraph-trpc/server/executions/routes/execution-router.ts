@@ -217,7 +217,6 @@ export const executionRouter = router({
         } catch (error) {
           console.error('Error handling execution events:', error)
         } finally {
-          console.log('Unsubscribing from engine events')
           unsubscribe()
         }
       } finally {

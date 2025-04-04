@@ -131,7 +131,6 @@ export class PortPluginRegistry {
     const schemas = plugins
       .filter(plugin => !plugin || !plugin.valueSchema)
       .map((plugin) => {
-        console.log('PLUUUUUUGGGGIIIINNN:', plugin)
         if (plugin.valueSchema) {
           throw new PortError(
             PortErrorType.RegistryError,

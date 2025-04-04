@@ -118,9 +118,5 @@ export class CleanupService {
         console.error(`Failed to cleanup execution ${id}:`, error)
       }
     }
-
-    if (toRemove.size > 0) {
-      console.log(`Cleaned up ${toRemove.size} old executions`)
-    }
   }
 }
