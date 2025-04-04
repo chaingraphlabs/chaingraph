@@ -34,7 +34,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "prepare": "husky",
-    "migrate": "turbo run migrate --filter=@badaitech/trpc"
+    "migrate": "turbo run migrate --filter=@badaitech/chaingraph-trpc"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.64.2",

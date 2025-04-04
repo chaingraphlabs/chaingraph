@@ -1,7 +1,7 @@
 {
-  "name": "@badaitech/trpc",
+  "name": "@badaitech/chaingraph-trpc",
   "version": "0.1.0",
-  "description": "",
+  "description": "tRPC client and server for the BadAi Chaingraph",
   "author": "",
   "license": "ISC",
   "private": false,
@@ -27,7 +27,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc -b",
-    "migrate": "npx drizzle-kit push --config ./server/drizzle.config.ts"
+    "migrate": "npx drizzle-kit push --config ./server/drizzle.config.ts",
+    "publish": "pnpm publish --access=restricted --report-summary --no-git-checks"
   },
   "peerDependencies": {
     "@tanstack/react-query": ">= 5.64.x"

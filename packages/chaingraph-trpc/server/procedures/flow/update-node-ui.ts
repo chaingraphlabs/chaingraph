@@ -7,7 +7,6 @@
  */
 
 import type { Flow } from '@badaitech/chaingraph-types'
-import { NodeUIMetadataSchema } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
 
@@ -15,7 +14,25 @@ export const updateNodeUI = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     nodeId: z.string(),
-    ui: NodeUIMetadataSchema,
+    ui: z.object({
+      position: z.object({
+        x: z.number(),
+        y: z.number(),
+      }).optional(),
+      dimensions: z.object({
+        width: z.number(),
+        height: z.number(),
+      }).optional(),
+      style: z.object({
+        backgroundColor: z.string().optional(),
+        borderColor: z.string().optional(),
+      }).optional(),
+      state: z.object({
+        isSelected: z.boolean().optional(),
+        isHighlighted: z.boolean().optional(),
+        isDisabled: z.boolean().optional(),
+      }).optional(),
+    }),
     version: z.number(),
   }))
   .mutation(async ({ input, ctx }) => {

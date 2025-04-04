@@ -68,7 +68,7 @@ export class CleanupService {
       const aDate = a.completedAt || a.createdAt
       const bDate = b.completedAt || b.createdAt
       return bDate.getTime() - aDate.getTime()
-    })
+    }) ?? []
 
     // Track which executions to remove
     const toRemove = new Set<string>()
@@ -103,7 +103,10 @@ export class CleanupService {
     if (this.config.maxExecutions && sortedExecutions.length > this.config.maxExecutions) {
       const excess = sortedExecutions.length - this.config.maxExecutions
       for (let i = sortedExecutions.length - 1; i >= 0 && i > sortedExecutions.length - excess - 1; i--) {
-        toRemove.add(sortedExecutions[i].id)
+        if (!sortedExecutions || sortedExecutions[i] === undefined) {
+          continue
+        }
+        toRemove.add(sortedExecutions[i]!.id)
       }
     }
 

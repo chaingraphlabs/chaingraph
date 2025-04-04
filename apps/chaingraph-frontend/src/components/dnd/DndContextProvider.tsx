@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, NodeMetadataWithPorts } from '@badaitech/chaingraph-types'
 import type { NodeDropEvent } from './DndContext'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { DndContext } from './DndContext'
 
 export function DndContextProvider({ children }: { children: React.ReactNode }) {
   const [draggedNode, setDraggedNode] = useState<{
-    node: NodeMetadata
+    node: NodeMetadataWithPorts
     categoryMetadata: CategoryMetadata
   } | null>(null)
 

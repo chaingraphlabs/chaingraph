@@ -7,7 +7,7 @@
  */
 
 import type { CreateExecutionOptions, ExecutionStatus } from './types'
-import { trpcClient } from '@badaitech/trpc/client'
+import { trpcClient } from '@badaitech/chaingraph-trpc/client'
 import { createEffect } from 'effector'
 import { $executionState } from './stores'
 import { isTerminalStatus } from './types'

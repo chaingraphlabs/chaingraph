@@ -20,7 +20,8 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest",
-    "check-types": "tsc -b"
+    "check-types": "tsc -b",
+    "publish": "pnpm publish --access=restricted --report-summary"
   },
   "dependencies": {
     "@badaitech/chaingraph-types": "workspace:*",

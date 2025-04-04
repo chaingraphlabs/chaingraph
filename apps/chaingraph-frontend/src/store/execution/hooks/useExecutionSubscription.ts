@@ -7,8 +7,8 @@
  */
 
 import type { ExecutionEventHandlerMap } from '@badaitech/chaingraph-types'
+import { trpcReact } from '@badaitech/chaingraph-trpc/client'
 import { createExecutionEventHandler, ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { trpcReact } from '@badaitech/trpc/client'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'

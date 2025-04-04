@@ -22,7 +22,8 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "publish": "pnpm publish --access=restricted --report-summary"
   },
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
@@ -75,7 +76,7 @@
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "@badaitech/trpc": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@chromatic-com/storybook": "^3.2.6",
     "@eslint/js": "^9.23.0",

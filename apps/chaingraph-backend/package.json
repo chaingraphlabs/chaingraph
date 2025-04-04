@@ -27,7 +27,7 @@
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/trpc": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
     "@types/ws": "^8.18.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

@@ -1,12 +1,14 @@
 {
   "name": "@badaitech/badai-api",
   "type": "module",
-  "version": "1.0.0",
-  "description": "Bad AI API.",
+  "version": "0.1.1",
+  "description": "Bad AI GraphQL API client",
   "license": "BUSL-1.1",
+  "private": false,
   "scripts": {
     "check-types": "tsc -b",
-    "graphql-codegen": "graphql-codegen --config graphql-codegen.ts"
+    "graphql-codegen": "graphql-codegen --config graphql-codegen.ts",
+    "publish": "pnpm publish --access=restricted --report-summary"
   },
   "repository": {
     "type": "git",
@@ -21,7 +23,6 @@
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "private": true,
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
     "@types/node": "^22.14.0",

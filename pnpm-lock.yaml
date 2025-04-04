@@ -162,12 +162,12 @@ importers:
       '@badaitech/chaingraph-nodes':
         specifier: workspace:*
         version: link:../../packages/chaingraph-nodes
+      '@badaitech/chaingraph-trpc':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-trpc
       '@badaitech/chaingraph-types':
         specifier: workspace:*
         version: link:../../packages/chaingraph-types
-      '@badaitech/trpc':
-        specifier: workspace:*
-        version: link:../../packages/trpc
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
@@ -347,9 +347,9 @@ importers:
         specifier: ^3.24.5
         version: 3.24.5(zod@3.24.2)
     devDependencies:
-      '@badaitech/trpc':
+      '@badaitech/chaingraph-trpc':
         specifier: workspace:*
-        version: link:../../packages/trpc
+        version: link:../../packages/chaingraph-trpc
       '@badaitech/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -512,29 +512,7 @@ importers:
         specifier: ^18.3.18
         version: 18.3.18
 
-  packages/chaingraph-types:
-    dependencies:
-      reflect-metadata:
-        specifier: ^0.2.1
-        version: 0.2.2
-      superjson:
-        specifier: ^2.2.2
-        version: 2.2.2
-      type-fest:
-        specifier: ^4.39.1
-        version: 4.39.1
-      zod:
-        specifier: ^3.24.2
-        version: 3.24.2
-    devDependencies:
-      '@badaitech/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: ^20.17.30
-        version: 20.17.30
-
-  packages/trpc:
+  packages/chaingraph-trpc:
     dependencies:
       '@tanstack/react-query':
         specifier: '>= 5.64.x'
@@ -573,6 +551,28 @@ importers:
       drizzle-kit:
         specifier: ^0.30.6
         version: 0.30.6
+
+  packages/chaingraph-types:
+    dependencies:
+      reflect-metadata:
+        specifier: ^0.2.1
+        version: 0.2.2
+      superjson:
+        specifier: ^2.2.2
+        version: 2.2.2
+      type-fest:
+        specifier: ^4.39.1
+        version: 4.39.1
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+    devDependencies:
+      '@badaitech/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^20.17.30
+        version: 20.17.30
 
   packages/typescript-config: {}
 
@@ -7149,9 +7149,6 @@ packages:
     peerDependencies:
       pg: '>=8.0'
 
-  pg-protocol@1.7.1:
-    resolution: {integrity: sha512-gjTHWGYWsEgy9MsY0Gp6ZJxV24IjDqdpTW7Eh0x+WfJLFsm/TJx1MzL6T0D88mBvkpxotCQ6TwW6N+Kko7lhgQ==}
-
   pg-protocol@1.8.0:
     resolution: {integrity: sha512-jvuYlEkL03NRvOoyoRktBK7+qU5kOvlAwvmrH8sr3wbLrOdVWsRxQfz8mMy9sZFsqJ1hEWNfdWKI4SAmoL+j7g==}
 
@@ -11917,7 +11914,7 @@ snapshots:
   '@types/pg@8.11.11':
     dependencies:
       '@types/node': 22.14.0
-      pg-protocol: 1.7.1
+      pg-protocol: 1.8.0
       pg-types: 4.0.2
 
   '@types/prop-types@15.7.14': {}
@@ -15916,8 +15913,6 @@ snapshots:
   pg-pool@3.8.0(pg@8.14.1):
     dependencies:
       pg: 8.14.1
-
-  pg-protocol@1.7.1: {}
 
   pg-protocol@1.8.0: {}
 
