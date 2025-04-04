@@ -268,87 +268,16 @@ jobs:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Create Version PR
-  version:
-    name: Create version PR
+  # Version and publish using changesets/action
+  version-publish:
+    name: Version and publish packages
     needs: [build, check-status]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') || github.event.inputs.version == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Configure Git User
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Debug changesets
-        run: |
-          echo "Listing .changeset directory contents:"
-          ls -la .changeset/
-          echo "Current branch:"
-          git branch --show-current
-          echo "Git status:"
-          git status
-
-      - name: Create version PR
-        id: create_version_pr
-        run: |
-          # Run version command to update package versions
-          echo "Running changeset version..."
-          pnpm changeset version || true
-
-          # Check if any files were changed
-          if git diff --quiet; then
-            echo "No changes detected after versioning"
-            echo "version_updated=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Commit changes
-          git add .
-          git commit -m "chore: update package versions"
-
-          # Create branch for PR
-          BRANCH_NAME="version-packages-$(date +%Y%m%d%H%M%S)"
-          git checkout -b $BRANCH_NAME
-          git push -u origin $BRANCH_NAME
-
-          # Create PR using GitHub CLI
-          PR_URL=$(gh pr create --title "chore: update package versions" \
-            --body "This PR was created by the GitHub Actions workflow to update package versions." \
-            --base main \
-            --head $BRANCH_NAME)
-
-          echo "PR created: $PR_URL"
-          echo "version_updated=true" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Publish packages
-  publish:
-    name: Publish packages
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release' || github.event.inputs.publish == 'true'
+    if: |
+      (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') ||
+      github.event.inputs.version == 'true' ||
+      github.event.inputs.publish == 'true' ||
+      github.event_name == 'release'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -373,23 +302,19 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Download build artifacts
+        if: github.event_name == 'release' || github.event.inputs.publish == 'true'
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: .
-
-      - name: Configure Git User
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
 
       - name: Set up .npmrc for publishing
         run: |
           echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
           echo "@badaitech:registry=https://npm.pkg.github.com" >> .npmrc
 
-      # For GitHub releases, set the version from the tag
-      - name: Set version from release tag
+      # For GitHub releases, set the version from the tag and publish directly
+      - name: Set version from release tag and publish
         if: github.event_name == 'release'
         run: |
           TAG_VERSION="${{ github.event.release.tag_name }}"
@@ -397,45 +322,25 @@ jobs:
           VERSION="${TAG_VERSION#v}"
           echo "Setting version to $VERSION for all packages"
           pnpm -r exec -- npm version $VERSION --no-git-tag-version
-
-      # For manual or release publish, use changesets
-      - name: Publish packages
-        run: |
-          # If it's a GitHub release, publish with the right version
-          if [ "${{ github.event_name }}" == "release" ]; then
-            echo "Publishing release packages..."
-            pnpm -r publish --access restricted --no-git-checks
-          else
-            echo "Publishing packages using changeset..."
-            pnpm changeset publish --no-git-tag
-          fi
+          echo "Publishing release packages..."
+          pnpm -r publish --access restricted --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # If this is a manual publish, create a release
-      - name: Create GitHub release
-        if: github.event_name != 'release' && github.event.inputs.publish == 'true'
-        run: |
-          # Get the current version of the root package
-          VERSION=$(node -p "require('./package.json').version")
-
-          # Get all updated package versions for the release notes
-          echo "Preparing release notes..."
-          PACKAGES=$(pnpm -r exec -- node -e "console.log(require('./package.json').name + '@' + require('./package.json').version)")
-
-          # Create release notes
-          NOTES="# Release v$VERSION
-
-          ## Packages:
-          $(echo "$PACKAGES" | sed 's/^/- /')
-          "
-
-          # Create a GitHub release
-          gh release create "v$VERSION" \
-            --title "Release v$VERSION" \
-            --notes "$NOTES" \
-            --target main
+      # Use changesets/action for version PR or publishing
+      - name: Create versions or publish
+        if: github.event_name != 'release'
+        uses: changesets/action@v1
+        with:
+          # Only publish if manually triggered with publish=true
+          publish: ${{ github.event.inputs.publish == 'true' }}
+          # Always version (create PR) for push events with changesets or when version=true
+          version: ${{ (github.event_name == 'push' && needs.check-status.outputs.has_changesets == 'true') || github.event.inputs.version == 'true' }}
+          commit: 'chore: update package versions'
+          title: 'chore: update package versions'
+          createGithubReleases: ${{ github.event.inputs.publish == 'true' }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
