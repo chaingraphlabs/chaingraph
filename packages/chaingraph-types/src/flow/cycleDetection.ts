@@ -34,11 +34,11 @@ export function hasCycle(nodes: Iterable<INode>, edges: Iterable<Edge>, edge?: E
   )
 
   if (edge) {
-    inDegree[edge.targetNode.id]++
+    inDegree![edge.targetNode.id]++
   }
 
   for (const edge of allEdges) {
-    inDegree[edge.targetNode.id]++
+    inDegree![edge.targetNode.id]++
   }
 
   const queue: string[] = Object.entries(inDegree)

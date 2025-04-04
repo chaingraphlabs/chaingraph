@@ -17,3 +17,6 @@ coverage
 
 .turbo
 .cache
+
+*.d.ts
+*.d.ts.map

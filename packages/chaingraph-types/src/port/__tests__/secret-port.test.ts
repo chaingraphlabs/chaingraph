@@ -52,7 +52,8 @@ describe('secret port', () => {
 
     const config = { type: 'secret', secretType: 'xApp', defaultValue: undefined } satisfies SecretPortConfig<'xApp'>
 
-    const jsonValue = SecretPortPlugin.serializeValue(value, config)
+    // TODO: remove "any" cast
+    const jsonValue = SecretPortPlugin.serializeValue(value as any, config)
     const deserialized = SecretPortPlugin.deserializeValue(jsonValue, config)
 
     expect(deserialized.publicKey).toBe(value.publicKey)

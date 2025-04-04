@@ -6,13 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
-import {
-  PortPluginRegistry,
-} from '@badaitech/chaingraph-types'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { PortPluginRegistry } from '@badaitech/chaingraph-types'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
@@ -24,7 +19,6 @@ import {
   EnumPortPlugin,
   Input,
   Node,
-  NodeExecutionStatus,
   NodeRegistry,
   NumberPortPlugin,
   ObjectPortPlugin,
@@ -72,12 +66,7 @@ class ScalarNode extends BaseNode {
   boolInput: boolean = true
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-      outputs: new Map(),
-    }
+    return {}
   }
 }
 
