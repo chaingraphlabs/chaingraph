@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { init } from '@badaitech/trpc/server'
+import { init } from '@badaitech/chaingraph-trpc/server'
 import dotenv from 'dotenv'
 import { setupPolyfills } from './setup'
 import { wsServer } from './ws-server'

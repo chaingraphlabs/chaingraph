@@ -1,5 +1,5 @@
 mutation FinishMessage($session: Session!, $chat_id: ChatID!, $id: MessageID!) {
-    finishMessage(session: $session, chat_id: $chat_id, id: $id) {
-        ...MessageFields
-    }
+  finishMessage(session: $session, chat_id: $chat_id, id: $id) {
+    ...MessageFields
+  }
 }

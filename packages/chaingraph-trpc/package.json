@@ -1,9 +1,18 @@
 {
-  "name": "@badaitech/trpc",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@badaitech/chaingraph-trpc",
+  "version": "0.1.2",
+  "private": false,
+  "description": "tRPC client and server for the BadAi Chaingraph",
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badaitech/chaingraph.git",
+    "directory": "./packages/trpc"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     "./client": {
       "types": "./client/index.ts",
@@ -25,17 +34,17 @@
   },
   "dependencies": {
     "@trpc/client": "11.0.0",
-    "@trpc/react-query": "^11.0.0",
+    "@trpc/react-query": "^11.0.2",
     "@trpc/server": "11.0.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.2",
-    "pg": "^8.13.1"
+    "pg": "^8.14.1"
   },
   "devDependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@types/pg": "^8.11.11",
-    "drizzle-kit": "^0.30.4"
+    "drizzle-kit": "^0.30.6"
   }
 }

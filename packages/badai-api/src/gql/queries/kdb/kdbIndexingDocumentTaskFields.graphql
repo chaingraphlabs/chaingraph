@@ -1,49 +1,49 @@
 fragment IndexingDocumentTaskFields on IndexingDocumentTask {
-    task_id
-    document_id
-    chat_id
-    message_id
-    author_id
+  task_id
+  document_id
+  chat_id
+  message_id
+  author_id
 
-    task_state
-    created_at
-    update_at
-    confirmed
-    version
-    error
+  task_state
+  created_at
+  update_at
+  confirmed
+  version
+  error
 
-    statistics {
-        chunks_indexed_qa
-        chunks_indexed_triplet
-        chunks_total
-        current_indexing_speed
-        expected_finish_seconds
-        expected_finished_at
-        indexed_percent
-        indexing_started_at
-        llm_approximate_cost
-        llm_stats {
-            completion_cost
-            embeddings_cost
-            embeddings_count
-            prompt_cost
-            total_cost
-        }
-        pages
-        qa_total
-        total_tokens
-        triplets_total
-        indexed_for_seconds
+  statistics {
+    chunks_indexed_qa
+    chunks_indexed_triplet
+    chunks_total
+    current_indexing_speed
+    expected_finish_seconds
+    expected_finished_at
+    indexed_percent
+    indexing_started_at
+    llm_approximate_cost
+    llm_stats {
+      completion_cost
+      embeddings_cost
+      embeddings_count
+      prompt_cost
+      total_cost
     }
+    pages
+    qa_total
+    total_tokens
+    triplets_total
+    indexed_for_seconds
+  }
 
-    config {
-        chunk_overlap_tokens
-        chunk_size_tokens
-        cost_limit
-        need_qa
-        qa_count_per_run
-        qa_model
-        force_confirm
-        instruction_for_qa
-    }
+  config {
+    chunk_overlap_tokens
+    chunk_size_tokens
+    cost_limit
+    need_qa
+    qa_count_per_run
+    qa_model
+    force_confirm
+    instruction_for_qa
+  }
 }

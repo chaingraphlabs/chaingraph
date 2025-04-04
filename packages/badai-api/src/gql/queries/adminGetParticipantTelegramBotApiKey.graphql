@@ -1,3 +1,3 @@
 query AdminGetParticipantTelegramBotAPIKey($session: Session!, $chat_id: ChatID!) {
-    adminGetParticipantTelegramBotApiKey(session: $session, chat_id: $chat_id)
+  adminGetParticipantTelegramBotApiKey(session: $session, chat_id: $chat_id)
 }

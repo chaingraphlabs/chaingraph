@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { RouterInputs } from '@badaitech/trpc/client'
-import { trpcClient } from '@badaitech/trpc/client'
+import type { RouterInputs } from '@badaitech/chaingraph-trpc/client'
+import { trpcClient } from '@badaitech/chaingraph-trpc/client'
 import { createEffect } from 'effector'
 
 export type UpdatePortValueInput = Parameters<typeof trpcClient.flow.updatePortValue.mutate>[0]

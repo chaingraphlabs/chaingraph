@@ -29,7 +29,13 @@ export default antfu(
       markdown: 'prettier',
       graphql: 'prettier',
     },
-    ignores: ['**/fixtures', '**/*.generated.*', 'packages/badai-api/src/gql/client'],
+    ignores: [
+      '**/fixtures',
+      '**/*.generated.*',
+      'packages/badai-api/src/gql/client/**/*',
+      'packages/badai-api/schema.graphql',
+      '**/*.md',
+    ],
   },
   // Add custom rules
   {

@@ -1,13 +1,17 @@
 {
   "name": "@badaitech/chaingraph-backend",
   "type": "module",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.2",
+  "private": false,
+  "description": "Backend server for the Chaingraph project",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",
-    "directory": "./packages/chaingraph-backend"
+    "directory": "./apps/chaingraph-backend"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "exports": {
     ".": "./src/index.ts"
@@ -22,19 +26,19 @@
   },
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/trpc": "workspace:*",
-    "@types/ws": "^8.5.14",
+    "@types/ws": "^8.18.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "esm": "^3.2.25",
     "superjson": "^2.2.2",
-    "ws": "^8.18.0",
+    "ws": "^8.18.1",
     "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
     "@types/cors": "^2.8.17",
-    "@types/node": "^20.11.16"
+    "@types/node": "^20.17.30"
   }
 }

@@ -63,7 +63,6 @@ export function initializeJsonTransformers() {
             data,
           )
         } catch (e) {
-          debugger
           console.error('Failed to deserialize execution event', e)
           throw e
         }
@@ -86,7 +85,6 @@ export function initializeJsonTransformers() {
           return Flow.deserialize(v) as Flow
         } catch (e) {
           console.error('Failed to deserialize flow', e)
-          debugger
           throw e
         }
       },
@@ -107,7 +105,6 @@ export function initializeJsonTransformers() {
           const port = PortFactory.createFromConfig((v as any).config)
           return port.deserialize(v)
         } catch (e) {
-          debugger
           console.error('Error deserializing port:', e)
           throw e
         }

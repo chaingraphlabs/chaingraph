@@ -7,8 +7,8 @@
  */
 
 import type { AddNodeEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
-import { trpcClient } from '@badaitech/trpc/client'
-import { createEffect } from 'effector'
+import { trpcClient } from '@badaitech/chaingraph-trpc/client'
+import { createEffect } from 'effector' // Backend node operations
 
 // Backend node operations
 export const addNodeToFlowFx = createEffect(async (event: AddNodeEvent) => {

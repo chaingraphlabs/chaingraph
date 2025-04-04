@@ -1,3 +1,3 @@
-mutation RegenerateLastResponse($session: Session!, $chat_id: ChatID!)  {
-    regenerateLastResponse(session: $session, chat_id: $chat_id)
+mutation RegenerateLastResponse($session: Session!, $chat_id: ChatID!) {
+  regenerateLastResponse(session: $session, chat_id: $chat_id)
 }

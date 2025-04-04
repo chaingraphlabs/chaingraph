@@ -1,19 +1,19 @@
 query KDBQueryCollectionQA(
-    $session: Session!,
-    $collection_id: [CollectionID!]!,
-    $queryString: String!,
-    $threshold: Float! = 0.5,
-    $limit: Int! = 20
-    $tokensLimit: Int! = 4000
+  $session: Session!
+  $collection_id: [CollectionID!]!
+  $queryString: String!
+  $threshold: Float! = 0.5
+  $limit: Int! = 20
+  $tokensLimit: Int! = 4000
 ) {
-    kdbQueryCollectionQA(
-        session: $session,
-        collection_id: $collection_id,
-        queryString: $queryString,
-        threshold: $threshold,
-        limit: $limit,
-        tokensLimit: $tokensLimit
-    ) {
-        ...QaWithDistanceFields
-    }
+  kdbQueryCollectionQA(
+    session: $session
+    collection_id: $collection_id
+    queryString: $queryString
+    threshold: $threshold
+    limit: $limit
+    tokensLimit: $tokensLimit
+  ) {
+    ...QaWithDistanceFields
+  }
 }

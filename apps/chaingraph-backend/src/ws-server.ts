@@ -7,7 +7,7 @@
  */
 
 import process from 'node:process'
-import { applyWSSHandler, appRouter, createContext } from '@badaitech/trpc/server'
+import { applyWSSHandler, appRouter, createContext } from '@badaitech/chaingraph-trpc/server'
 import { WebSocketServer } from 'ws'
 
 export function wsServer() {

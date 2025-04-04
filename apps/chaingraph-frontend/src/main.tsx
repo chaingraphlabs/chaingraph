@@ -6,12 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { initializeJsonTransformers } from '@/lib/superjson-transformers.ts'
-import { initializeStores } from '@/store/init.ts'
+import { initializeJsonTransformers } from '@/lib/superjson-transformers'
+import { initializeStores } from '@/store/init'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
-import { RootProvider } from './providers/RootProvider.tsx'
+import { RootProvider } from './providers/RootProvider'
 import 'reflect-metadata'
 import './reflect'
 import '@xyflow/react/dist/style.css'

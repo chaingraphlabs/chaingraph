@@ -1,19 +1,19 @@
 query KDBQueryParticipantCollectionQA(
-    $session: Session!,
-    $participantID: ParticipantID!,
-    $queryString: String!,
-    $threshold: Float! = 0.5,
-    $limit: Int! = 20
-    $tokensLimit: Int! = 4000
+  $session: Session!
+  $participantID: ParticipantID!
+  $queryString: String!
+  $threshold: Float! = 0.5
+  $limit: Int! = 20
+  $tokensLimit: Int! = 4000
 ) {
-    kdbQueryParticipantCollectionQA(
-        session: $session,
-        participantID: $participantID,
-        queryString: $queryString,
-        threshold: $threshold,
-        limit: $limit,
-        tokensLimit: $tokensLimit
-    ) {
-        ...QaWithDistanceFields
-    }
+  kdbQueryParticipantCollectionQA(
+    session: $session
+    participantID: $participantID
+    queryString: $queryString
+    threshold: $threshold
+    limit: $limit
+    tokensLimit: $tokensLimit
+  ) {
+    ...QaWithDistanceFields
+  }
 }

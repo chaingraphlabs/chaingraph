@@ -39,7 +39,8 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
    * @inheritDoc
    */
   protected validateValue(value: SecretPortValue<S>): boolean {
-    return SecretPortPlugin.validateValue(value, this.config).length === 0
+    // todo: remove "as any" when possible
+    return SecretPortPlugin.validateValue(value as any, this.config).length === 0
   }
 
   /**
@@ -60,7 +61,8 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
    * @inheritDoc
    */
   protected serializeValue(value: SecretPortValue<S>): JSONValue {
-    return SecretPortPlugin.serializeValue(value, this.config)
+    // todo: remove "as any" when possible
+    return SecretPortPlugin.serializeValue(value as any, this.config)
   }
 
   /**
@@ -74,6 +76,6 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
    * @inheritDoc
    */
   protected deserializeValue(data: JSONValue): SecretPortValue<S> {
-    return SecretPortPlugin.deserializeValue(data, this.config)
+    return SecretPortPlugin.deserializeValue(data, this.config) as SecretPortValue<S>
   }
 }

@@ -7,8 +7,8 @@
  */
 
 import type { AddEdgeEventData, RemoveEdgeEventData } from './types'
-import { trpcClient } from '@badaitech/trpc/client'
-import { createEffect } from 'effector'
+import { trpcClient } from '@badaitech/chaingraph-trpc/client'
+import { createEffect } from 'effector' // Effect for adding edge
 
 // Effect for adding edge
 export const addEdgeFx = createEffect(async (event: AddEdgeEventData) => {

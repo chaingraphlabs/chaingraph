@@ -4,6 +4,10 @@
     "build": {
       "outputs": ["dist/**"]
     },
+    "publish": {
+      "dependsOn": ["^publish", "build"],
+      "outputs": []
+    },
     "check-types": {
       "dependsOn": ["^check-types"]
     },

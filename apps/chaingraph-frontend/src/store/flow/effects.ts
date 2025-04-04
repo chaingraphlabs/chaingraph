@@ -7,8 +7,8 @@
  */
 
 import type { CreateFlowEvent, UpdateFlowEvent } from '@/store'
-import { trpcClient } from '@badaitech/trpc/client'
-import { createEffect } from 'effector'
+import { trpcClient } from '@badaitech/chaingraph-trpc/client'
+import { createEffect } from 'effector' // Effect for loading flows list
 
 // Effect for loading flows list
 export const loadFlowsListFx = createEffect(async () => {

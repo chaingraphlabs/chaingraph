@@ -1,15 +1,5 @@
-mutation KDBIndexingDocumentTaskError(
-    $session: Session!,
-    $taskID: TaskID!,
-    $version: Int!,
-    $error: String!
-) {
-    kdbIndexingDocumentTaskError(
-        session: $session,
-        taskID: $taskID,
-        version: $version,
-        error: $error
-    ) {
-        ...IndexingDocumentTaskFields
-    }
+mutation KDBIndexingDocumentTaskError($session: Session!, $taskID: TaskID!, $version: Int!, $error: String!) {
+  kdbIndexingDocumentTaskError(session: $session, taskID: $taskID, version: $version, error: $error) {
+    ...IndexingDocumentTaskFields
+  }
 }

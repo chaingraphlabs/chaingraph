@@ -1,11 +1,5 @@
-query KDBIndexingDocumentTaskGet(
-    $session: Session!,
-    $taskID: TaskID!,
-) {
-    kdbIndexingDocumentTaskGet(
-        session: $session,
-        taskID: $taskID,
-    ) {
-        ...IndexingDocumentTaskFields
-    }
+query KDBIndexingDocumentTaskGet($session: Session!, $taskID: TaskID!) {
+  kdbIndexingDocumentTaskGet(session: $session, taskID: $taskID) {
+    ...IndexingDocumentTaskFields
+  }
 }

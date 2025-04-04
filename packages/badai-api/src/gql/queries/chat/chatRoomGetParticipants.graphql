@@ -1,19 +1,19 @@
-query ChatRoomGetParticipants($session: Session!, $chat_id: ChatID!)  {
-    chatRoomGetParticipants(session: $session, chat_id: $chat_id) {
-        agent_id
-        avatar
-        first_name
-        is_agent
-        last_name
-        participant_id
-        purpose
-        role
-        self_awareness
-        tools {
-            name
-        }
-        username
-        llm_model
-        meta
+query ChatRoomGetParticipants($session: Session!, $chat_id: ChatID!) {
+  chatRoomGetParticipants(session: $session, chat_id: $chat_id) {
+    agent_id
+    avatar
+    first_name
+    is_agent
+    last_name
+    participant_id
+    purpose
+    role
+    self_awareness
+    tools {
+      name
     }
+    username
+    llm_model
+    meta
+  }
 }

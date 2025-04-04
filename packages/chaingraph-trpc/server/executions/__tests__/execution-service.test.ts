@@ -6,8 +6,19 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, ExecutionEventImpl, INode, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, ExecutionEventEnum, Flow, Node, NodeExecutionStatus } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionContext,
+  ExecutionEventImpl,
+  INode,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  ExecutionEventEnum,
+  Flow,
+  Node,
+  NodeExecutionStatus,
+} from '@badaitech/chaingraph-types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CleanupService } from '../services/cleanup-service'
 import { ExecutionService } from '../services/execution-service'
@@ -24,11 +35,7 @@ class TestNode extends BaseNode {
   }
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    return {
-      status: NodeExecutionStatus.Completed,
-      startTime: context.startTime,
-      endTime: new Date(),
-    }
+    return {}
   }
 }
 

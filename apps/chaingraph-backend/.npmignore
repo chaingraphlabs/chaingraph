@@ -1,0 +1,13 @@
+src/
+node_modules/
+tests/
+coverage/
+.turbo/
+.vscode/
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example
+tsconfig.json
