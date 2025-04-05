@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.3-alpha.6
+
+### Patch Changes
+
+- Prepare chaingraph-frontend to build lib with components as well as the browser bundle. Adjust packages configs.
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.3-alpha.6
+  - @badaitech/chaingraph-types@0.1.3-alpha.6
+  - @badaitech/chaingraph-trpc@0.1.3-alpha.6
+
 ## 0.1.3-alpha.5
 
 ### Patch Changes

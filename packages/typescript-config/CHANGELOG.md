@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.0.1-alpha.4
+
+### Patch Changes
+
+- Prepare chaingraph-frontend to build lib with components as well as the browser bundle. Adjust packages configs.
+
 ## 0.0.1-alpha.3
 
 ### Patch Changes
