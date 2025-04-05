@@ -6,4 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './components/flow/Flow'
+import { defineConfig } from 'vite'
+import baseConfig from './vite.config'
+
+export default defineConfig({
+  ...baseConfig,
+  build: {
+    ...baseConfig.build,
+    outDir: 'dist/app',
+  },
+})

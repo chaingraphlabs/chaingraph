@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon.tsx'
+import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import {
   useExpandedCategories,
 } from '@/components/sidebar/tabs/node-list/hooks/useExpandedCategories'

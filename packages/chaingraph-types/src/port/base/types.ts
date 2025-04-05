@@ -199,28 +199,16 @@ export interface AnyPortConfig extends BasePortConfig {
 /**
  * String port value
  */
-// export interface StringPortValue {
-//   type: 'string'
-//   value: string
-// }
 export type StringPortValue = string
 
 /**
  * Number port value
  */
-// export interface NumberPortValue {
-//   type: 'number'
-//   value: number
-// }
 export type NumberPortValue = number
 
 /**
  * Array port value
  */
-// export interface ArrayPortValue<Item extends IPortConfig = IPortConfig> {
-//   type: 'array'
-//   value: Array<ExtractValue<Item>>
-// }
 export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<ExtractValue<Item>>
 
 /**
@@ -231,10 +219,6 @@ export type SecretPortValue<Secret extends SecretType = 'string'> = EncryptedSec
 /**
  * Object port value
  */
-// export interface ObjectPortValue<S extends ObjectSchema = ObjectSchema> {
-//   type: 'object'
-//   value: ObjectPortValueFromSchema<S>
-// }
 export type ObjectPortValue<S extends IObjectSchema = IObjectSchema> = ObjectPortValueFromSchema<S>
 
 /**
@@ -249,19 +233,11 @@ type MultiChannelTyped<T extends IPortConfig = IPortConfig> = MultiChannel<Extra
 /**
  * Stream port value
  */
-// export interface StreamPortValue<T extends IPortConfig = IPortConfig> {
-//   type: 'stream'
-//   value: MultiChannelTyped<T>
-// }
 export type StreamPortValue<T extends IPortConfig = IPortConfig> = MultiChannelTyped<T>
 
 /**
  * Boolean port value
  */
-// export interface BooleanPortValue {
-//   type: 'boolean'
-//   value: boolean
-// }
 export type BooleanPortValue = boolean
 
 /**

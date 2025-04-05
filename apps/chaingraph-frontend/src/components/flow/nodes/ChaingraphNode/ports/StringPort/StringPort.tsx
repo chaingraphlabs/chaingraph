@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 /*
  * Copyright (c) 2025 BadLabs
  *

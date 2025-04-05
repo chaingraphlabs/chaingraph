@@ -7,15 +7,15 @@
  */
 
 import type { ArrayPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
-import { Button } from '@/components/ui/button.tsx'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.tsx'
-import { Input } from '@/components/ui/input.tsx'
-import { PopoverContent } from '@/components/ui/popover.tsx'
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { PopoverContent } from '@/components/ui/popover'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'

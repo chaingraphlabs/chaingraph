@@ -7,7 +7,10 @@
  */
 
 import SuperJSON from 'superjson'
-import { MultiChannel, NodeRegistry, registerFlowTransformers, registerNodeTransformers } from '..'
+import { NodeRegistry } from './decorator'
+import { registerFlowTransformers } from './flow'
+import { registerNodeTransformers } from './node'
+import { MultiChannel } from './utils'
 
 /**
  * Registers SuperJSON transformers

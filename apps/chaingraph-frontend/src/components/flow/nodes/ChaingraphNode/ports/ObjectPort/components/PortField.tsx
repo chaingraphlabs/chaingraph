@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
 import { memo, useMemo } from 'react'

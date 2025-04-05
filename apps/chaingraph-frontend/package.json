@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.3-alpha.3",
+  "version": "0.1.3-alpha.6",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -13,10 +13,25 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/lib/exports.d.ts",
+      "import": "./dist/lib/chaingraph-frontend.mjs",
+      "default": "./dist/lib/chaingraph-frontend.js"
+    }
+  },
+  "main": "./dist/lib/chaingraph-frontend.js",
+  "module": "./dist/lib/chaingraph-frontend.mjs",
+  "types": "./dist/lib/exports.d.ts",
+  "files": [
+    "dist/lib"
+  ],
   "scripts": {
     "dev": "vite",
     "dev-force": "vite --force",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:app && npm run build:lib",
+    "build:app": "tsc -b && vite build --config vite.app.config.ts",
+    "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
     "lint": "eslint .",
     "fix": "eslint . --fix",
     "preview": "vite preview",

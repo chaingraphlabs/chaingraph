@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
-import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle.tsx'
+import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
 import { cn } from '@/lib/utils'
 import { PortTitle } from '../ui/PortTitle'
 

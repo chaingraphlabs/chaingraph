@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 /*
  * Copyright (c) 2025 BadLabs
  *
@@ -17,7 +17,7 @@ import type {
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { BooleanPortConfig, ExtractValue, INode, IPort } from '@badaitech/chaingraph-types'
-import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor.ts'
+import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { memo, useCallback, useMemo } from 'react'
