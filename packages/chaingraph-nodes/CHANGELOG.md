@@ -1,5 +1,21 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.3-alpha.5
+
+### Patch Changes
+
+- Adjust package.json configs to fix npm package
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.3-alpha.5
+
+## 0.1.3-alpha.4
+
+### Patch Changes
+
+- bump
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.3-alpha.4
+
 ## 0.1.3-alpha.3
 
 ### Patch Changes
@@ -7,6 +23,18 @@
 - 3dcef34: Simplify release workflow
 - 3dcef34: Fix packages configs for the package building.
 - Updated dependencies [3dcef34]
+- Updated dependencies [3dcef34]
+  - @badaitech/chaingraph-types@0.1.3-alpha.3
+
+## 0.1.3-alpha.3
+
+### Patch Changes
+
+- 3dcef34: Simplify release workflow
+- Try to fix npm package
+- 3dcef34: Fix packages configs for the package building.
+- Updated dependencies [3dcef34]
+- Updated dependencies
 - Updated dependencies [3dcef34]
   - @badaitech/chaingraph-types@0.1.3-alpha.3
 

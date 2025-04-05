@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type {
   ArrayPortConfig,
   BooleanPortConfig,
@@ -21,9 +21,9 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BooleanPort,
-} from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort.tsx'
-import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort.tsx'
-import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
+import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
+import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
 import { PortContext } from './ports/context/PortContext'
 import { EnumPort } from './ports/EnumPort/EnumPort'

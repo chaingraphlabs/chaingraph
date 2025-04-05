@@ -6,11 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { initializeCategoriesFx } from '@/store/categories/init'
-import { initializeFlowsFx } from '@/store/flow/init'
-import './flow/init'
+import { initializeCategoriesFx } from './categories/init'
+import { initializeFlowsFx } from './flow/init'
 import './nodes/init'
-import './categories/init'
 import './edges/init'
 import './execution/init'
 import './ports/init'

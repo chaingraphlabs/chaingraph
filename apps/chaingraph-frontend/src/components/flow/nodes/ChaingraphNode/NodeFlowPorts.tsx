@@ -8,7 +8,7 @@
 
 import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
-import { cn } from '@/lib/utils.ts'
+import { cn } from '@/lib/utils'
 import { Handle, Position, useReactFlow } from '@xyflow/react'
 import { memo, useMemo } from 'react'
 

@@ -8,8 +8,8 @@ node_modules
 coverage
 **/coverage/**/*
 **/dist/**/*
-#**/__test__/**/*
-#**/__tests__/**/*
+packages/**/src/**/*.js
+apps/**/src/**/*.js
 **/*.tsbuildinfo
 
 !.idea/scopes

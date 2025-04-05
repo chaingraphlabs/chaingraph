@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip.tsx'
+} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 

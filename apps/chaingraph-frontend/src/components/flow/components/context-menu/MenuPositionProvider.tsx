@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { MenuPosition } from './MenuPositionContext.tsx'
+import type { MenuPosition } from './MenuPositionContext'
 import { useMemo, useState } from 'react'
-import { MenuPositionContext } from './MenuPositionContext.tsx'
+import { MenuPositionContext } from './MenuPositionContext'
 
 export function MenuPositionProvider({ children }: { children: React.ReactNode }) {
   const [position, setPosition] = useState<MenuPosition | null>(null)

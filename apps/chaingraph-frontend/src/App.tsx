@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import Flow from '@/components/flow/Flow'
 import { ReactFlowProvider } from '@xyflow/react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import Flow from './components/flow/Flow'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { ThemeToggle } from './components/theme/ThemeToggle'
 

@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 /*
  * Copyright (c) 2025 BadLabs
  *
@@ -17,7 +17,7 @@ import type {
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { INode } from '@badaitech/chaingraph-types'
-import { PortComponent } from 'components/flow/nodes/ChaingraphNode/PortComponent.tsx'
+import { PortComponent } from 'components/flow/nodes/ChaingraphNode/PortComponent'
 import { memo, useMemo } from 'react'
 
 export interface NodeBodyProps {

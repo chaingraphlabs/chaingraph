@@ -8,7 +8,7 @@
 
 import type { Edge } from '@xyflow/react'
 import type { EdgeData } from 'store'
-import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes.ts'
+import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
 import { $executionState, $highlightedEdgeId, $highlightedNodeId } from '@/store/execution'
 import { useUnit } from 'effector-react'
 import { useMemo, useRef } from 'react'

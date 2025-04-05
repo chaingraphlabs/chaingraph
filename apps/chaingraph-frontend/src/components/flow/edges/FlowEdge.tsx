@@ -7,7 +7,7 @@
  */
 
 import type { EdgeProps } from '@xyflow/react'
-import { useTheme } from '@/components/theme/hooks/useTheme.ts'
+import { useTheme } from '@/components/theme/hooks/useTheme'
 import { getBezierPath } from '@xyflow/react'
 import { motion } from 'framer-motion'
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react'

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "declaration": true,
+    "declarationDir": "dist/lib",
+    "emitDeclarationOnly": true,
+    "noEmit": false
+  },
+  "include": [
+    "src/exports.tsx",
+    "src/components/flow/**/*",
+    "src/providers/**/*"
+  ],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+}

@@ -8,7 +8,7 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
-import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent.tsx'
+import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
 import { memo, useEffect, useMemo, useState } from 'react'

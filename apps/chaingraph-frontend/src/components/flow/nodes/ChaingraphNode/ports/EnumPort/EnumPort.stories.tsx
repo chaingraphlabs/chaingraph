@@ -8,7 +8,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react'
 
-import { EnumPort } from './EnumPort.tsx'
+import { EnumPort } from './EnumPort'
 
 const meta: Meta<typeof EnumPort> = {
   component: EnumPort,

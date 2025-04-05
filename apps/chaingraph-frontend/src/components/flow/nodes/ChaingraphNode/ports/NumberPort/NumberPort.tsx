@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 /*
  * Copyright (c) 2025 BadLabs
  *
@@ -18,8 +18,8 @@ import type {
  */
 import type { ExtractValue, INode, IPort, NumberPortConfig } from '@badaitech/chaingraph-types'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
-import { NumberInput } from '@/components/ui/number-input.tsx'
-import { Slider } from '@/components/ui/slider.tsx'
+import { NumberInput } from '@/components/ui/number-input'
+import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'

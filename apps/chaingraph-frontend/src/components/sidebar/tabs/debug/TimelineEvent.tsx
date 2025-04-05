@@ -8,9 +8,9 @@
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button.tsx'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible.tsx'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { ChevronDownIcon, ChevronRightIcon, CodeIcon } from '@radix-ui/react-icons'

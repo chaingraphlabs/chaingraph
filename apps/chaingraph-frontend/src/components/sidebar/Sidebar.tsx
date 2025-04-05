@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel.tsx'
-import { FlowList } from '@/components/sidebar/tabs/flow/FlowList.tsx'
+import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel'
+import { FlowList } from '@/components/sidebar/tabs/flow/FlowList'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'

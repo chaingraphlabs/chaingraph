@@ -7,11 +7,11 @@
  */
 
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
-import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon.tsx'
+import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import { useTheme } from '@/components/theme/hooks/useTheme'
-import { Button } from '@/components/ui/button.tsx'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command.tsx'
-import { ScrollArea } from '@/components/ui/scroll-area.tsx'
+import { Button } from '@/components/ui/button'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
 import { motion } from 'framer-motion'

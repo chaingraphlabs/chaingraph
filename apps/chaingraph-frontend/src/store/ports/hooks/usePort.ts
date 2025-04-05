@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $ports } from '@/store/ports/stores.ts'
+import { $ports } from '@/store/ports/stores'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 

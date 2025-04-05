@@ -7,10 +7,10 @@
  */
 
 import type { PropsWithChildren } from 'react'
-import { TrpcProvider } from '@/api/trpc/provider.tsx'
+import { TrpcProvider } from '@/api/trpc/provider'
 import { DndContextProvider, DndProvider } from '@/components/dnd'
 import { MenuPositionProvider } from '@/components/flow/components/context-menu'
-import { ThemeProvider } from '@/components/theme/ThemeProvider.tsx'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { ZoomProvider } from '@/providers/ZoomProvider'
 import { ReactFlowProvider } from '@xyflow/react'
 

@@ -8,7 +8,7 @@
 
 import type {
   PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext.tsx'
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type {
   ArrayPortConfig,
   ArrayPort as ArrayPortType,
@@ -16,7 +16,7 @@ import type {
   IPort,
   IPortConfig,
 } from '@badaitech/chaingraph-types'
-import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle.tsx'
+import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { filterPorts } from '@badaitech/chaingraph-types'

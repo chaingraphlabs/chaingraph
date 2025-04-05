@@ -8,7 +8,7 @@
 
 import type { ExecutionEventData } from '@badaitech/chaingraph-types'
 import type { ExecutionState, ExecutionSubscriptionState } from './types'
-import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects.ts'
+import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { combine, createStore } from 'effector'
 import {
