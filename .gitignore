@@ -20,3 +20,5 @@ apps/**/src/**/*.js
 
 *.d.ts
 *.d.ts.map
+
+vitest.config.js
