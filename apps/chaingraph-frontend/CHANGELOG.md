@@ -33,6 +33,17 @@
   - @badaitech/chaingraph-nodes@0.1.3
   - @badaitech/chaingraph-types@0.1.3
 
+## 0.1.3-alpha.7
+
+### Patch Changes
+
+- 0938d64: Add meta-llama/llama-4-scout-17b-16e-instruct model to the LLM call node. Adjust build configs
+- ff25864: Modify turbo.json config to make it depend on packages and make build order correct
+- Updated dependencies [0938d64]
+- Updated dependencies [ff25864]
+  - @badaitech/chaingraph-nodes@0.1.3-alpha.7
+  - @badaitech/chaingraph-types@0.1.3-alpha.7
+
 ## 0.1.3-alpha.6
 
 ### Patch Changes

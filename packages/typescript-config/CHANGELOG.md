@@ -14,6 +14,13 @@
 - Release v0.1.3
 - 594f20c: bump
 
+## 0.0.1-alpha.5
+
+### Patch Changes
+
+- 0938d64: Add meta-llama/llama-4-scout-17b-16e-instruct model to the LLM call node. Adjust build configs
+- ff25864: Modify turbo.json config to make it depend on packages and make build order correct
+
 ## 0.0.1-alpha.4
 
 ### Patch Changes

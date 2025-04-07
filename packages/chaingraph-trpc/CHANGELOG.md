@@ -18,6 +18,13 @@
 - 3dcef34: Fix packages configs for the package building.
 - 594f20c: bump
 
+## 0.1.3-alpha.7
+
+### Patch Changes
+
+- 0938d64: Add meta-llama/llama-4-scout-17b-16e-instruct model to the LLM call node. Adjust build configs
+- ff25864: Modify turbo.json config to make it depend on packages and make build order correct
+
 ## 0.1.3-alpha.6
 
 ### Patch Changes
