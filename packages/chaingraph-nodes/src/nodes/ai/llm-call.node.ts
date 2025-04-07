@@ -33,6 +33,7 @@ export enum LLMModels {
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
   DeepseekChat = 'deepseek-chat',
   DeepseekReasoner = 'deepseek-reasoner',
+  GroqMetaLlamaLlama4Scout17b16eInstruct = 'groq/meta-llama/llama-4-scout-17b-16e-instruct',
 }
 
 @ObjectSchema({
@@ -66,6 +67,7 @@ const llmModels = {
   [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
   [LLMModels.DeepseekChat]: new LLMModel(LLMModels.DeepseekChat, 0),
   [LLMModels.DeepseekReasoner]: new LLMModel(LLMModels.DeepseekReasoner, 0),
+  [LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct]: new LLMModel(LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct, 0),
 }
 
 @Node({
@@ -147,6 +149,16 @@ class LLMCallNode extends BaseNode {
         model: this.model,
         temperature: this.temperature,
         streaming: true,
+      })
+    } else if (this.model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct) {
+      llm = new ChatOpenAI({
+        apiKey: this.apiKey,
+        model: this.model.replace(/^groq\//, ''),
+        temperature: this.temperature,
+        streaming: true,
+        configuration: {
+          baseURL: 'https://api.groq.com/openai/v1',
+        },
       })
     } else {
       llm = new ChatOpenAI({
