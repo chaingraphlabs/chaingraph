@@ -14,9 +14,15 @@
     "registry": "https://npm.pkg.github.com"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.cjs"
+    }
   },
-  "main": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.cjs",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "bun --watch run src/index.ts",
     "build": "tsc -b && vite build",

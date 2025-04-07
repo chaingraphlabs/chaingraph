@@ -524,14 +524,14 @@ importers:
         specifier: '>= 5.64.x'
         version: 5.66.0(react@18.3.1)
       '@trpc/client':
-        specifier: 11.0.0
-        version: 11.0.0(@trpc/server@11.0.0(typescript@5.8.2))(typescript@5.8.2)
+        specifier: 11.0.2
+        version: 11.0.2(@trpc/server@11.0.2(typescript@5.8.2))(typescript@5.8.2)
       '@trpc/react-query':
-        specifier: ^11.0.2
-        version: 11.0.2(@tanstack/react-query@5.66.0(react@18.3.1))(@trpc/client@11.0.0(@trpc/server@11.0.0(typescript@5.8.2))(typescript@5.8.2))(@trpc/server@11.0.0(typescript@5.8.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.2)
+        specifier: 11.0.2
+        version: 11.0.2(@tanstack/react-query@5.66.0(react@18.3.1))(@trpc/client@11.0.2(@trpc/server@11.0.2(typescript@5.8.2))(typescript@5.8.2))(@trpc/server@11.0.2(typescript@5.8.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.2)
       '@trpc/server':
-        specifier: 11.0.0
-        version: 11.0.0(typescript@5.8.2)
+        specifier: 11.0.2
+        version: 11.0.2(typescript@5.8.2)
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
@@ -3852,10 +3852,10 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@trpc/client@11.0.0':
-    resolution: {integrity: sha512-U2THlxsdr4ykAX5lpTU8k5WRADPQ+68Ex2gfUht3MlCxGK7njBmNSSzjpQSWNt7tMI/xsYrddFiRlmEPrh+Cbg==}
+  '@trpc/client@11.0.2':
+    resolution: {integrity: sha512-GlPEedbMTerkUfAJBsrwU6dg8N65lt3LBwrCoqR3MTZ64lRU/DQqyLjzpz5nRkEN0x4S2JmX0hASV9vc2KlSHA==}
     peerDependencies:
-      '@trpc/server': 11.0.0
+      '@trpc/server': 11.0.2
       typescript: '>=5.7.2'
 
   '@trpc/react-query@11.0.2':
@@ -3868,8 +3868,8 @@ packages:
       react-dom: '>=18.2.0'
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.0.0':
-    resolution: {integrity: sha512-xY9q/b/wR/tWGYTm5xmRjivkYD2EZZXmOKmHuNJRYZuLbieeNUsdfQRjJC409WB1pjKWInomhHwuA8bahZJ4lQ==}
+  '@trpc/server@11.0.2':
+    resolution: {integrity: sha512-PIcm8UWFyE0AnIYjxsyc1zfVa6X10m9Opm1SJ2ou9Vu8dlXO6rMtmafLUXJsMeQk/3ecxObFtEiZIX8TvB3eCg==}
     peerDependencies:
       typescript: '>=5.7.2'
 
@@ -12059,21 +12059,21 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@trpc/client@11.0.0(@trpc/server@11.0.0(typescript@5.8.2))(typescript@5.8.2)':
+  '@trpc/client@11.0.2(@trpc/server@11.0.2(typescript@5.8.2))(typescript@5.8.2)':
     dependencies:
-      '@trpc/server': 11.0.0(typescript@5.8.2)
+      '@trpc/server': 11.0.2(typescript@5.8.2)
       typescript: 5.8.2
 
-  '@trpc/react-query@11.0.2(@tanstack/react-query@5.66.0(react@18.3.1))(@trpc/client@11.0.0(@trpc/server@11.0.0(typescript@5.8.2))(typescript@5.8.2))(@trpc/server@11.0.0(typescript@5.8.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.2)':
+  '@trpc/react-query@11.0.2(@tanstack/react-query@5.66.0(react@18.3.1))(@trpc/client@11.0.2(@trpc/server@11.0.2(typescript@5.8.2))(typescript@5.8.2))(@trpc/server@11.0.2(typescript@5.8.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.2)':
     dependencies:
       '@tanstack/react-query': 5.66.0(react@18.3.1)
-      '@trpc/client': 11.0.0(@trpc/server@11.0.0(typescript@5.8.2))(typescript@5.8.2)
-      '@trpc/server': 11.0.0(typescript@5.8.2)
+      '@trpc/client': 11.0.2(@trpc/server@11.0.2(typescript@5.8.2))(typescript@5.8.2)
+      '@trpc/server': 11.0.2(typescript@5.8.2)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       typescript: 5.8.2
 
-  '@trpc/server@11.0.0(typescript@5.8.2)':
+  '@trpc/server@11.0.2(typescript@5.8.2)':
     dependencies:
       typescript: 5.8.2
 
