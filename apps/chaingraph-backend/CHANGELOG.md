@@ -1,5 +1,39 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.3
+
+### Patch Changes
+
+- 3dcef34: Simplify release workflow
+- 00464f5: Test release process
+- 594f20c: Adjust package.json configs to fix npm package
+- 0938d64: Add meta-llama/llama-4-scout-17b-16e-instruct model to the LLM call node. Adjust build configs
+- 9c6fd41: One more release test
+- 594f20c: Try to fix npm package
+- 0fbe508: Prepare chaingraph-frontend to build lib with components as well as the browser bundle. Adjust packages configs.
+- 2b28c97: Change release workflow for the one more release publish test
+- ff25864: Modify turbo.json config to make it depend on packages and make build order correct
+- f1e40ef: Ajust release workflow
+- Release v0.1.3
+- 3dcef34: Fix packages configs for the package building.
+- 594f20c: bump
+- Updated dependencies [3dcef34]
+- Updated dependencies [00464f5]
+- Updated dependencies [594f20c]
+- Updated dependencies [0938d64]
+- Updated dependencies [9c6fd41]
+- Updated dependencies [594f20c]
+- Updated dependencies [0fbe508]
+- Updated dependencies [2b28c97]
+- Updated dependencies [ff25864]
+- Updated dependencies [f1e40ef]
+- Updated dependencies
+- Updated dependencies [3dcef34]
+- Updated dependencies [594f20c]
+  - @badaitech/chaingraph-nodes@0.1.3
+  - @badaitech/chaingraph-trpc@0.1.3
+  - @badaitech/chaingraph-types@0.1.3
+
 ## 0.1.3-alpha.7
 
 ### Patch Changes
