@@ -6,6 +6,8 @@
     "rootDir": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "noEmit": true,
+    "outDir": "./dist",
     "esModuleInterop": true
   },
   "include": ["src"]
