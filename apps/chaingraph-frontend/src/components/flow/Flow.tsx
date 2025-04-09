@@ -7,9 +7,8 @@
  */
 
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
-import type { DefaultEdgeOptions, NodeTypes } from '@xyflow/react'
+import type { DefaultEdgeOptions } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
-import { useDnd } from '@/components/dnd'
 import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeContextMenu'
 import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel'
 import { StyledControls } from '@/components/flow/components/controls/StyledControls'
@@ -17,10 +16,8 @@ import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
-import { useFlowEdges } from '@/components/flow/hooks/useFlowEdges'
-import { useFlowNodes } from '@/components/flow/hooks/useFlowNodes'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
-import ChaingraphNode from '@/components/flow/nodes/ChaingraphNode/ChaingraphNode'
+import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
 import { useFlowUrlSync } from '@/hooks/useFlowUrlSync'
 import { ZoomContext } from '@/providers/ZoomProvider'
@@ -30,12 +27,14 @@ import {
   addNodeToFlow,
   useFlowSubscription,
 } from '@/store'
+import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
+import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { Background, ReactFlow, useOnSelectionChange, useReactFlow } from '@xyflow/react'
+import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
-import { useCallback, useContext, useRef, useState } from 'react'
+import { memo, use, useCallback, useMemo, useRef, useState } from 'react'
 import { FPSCounter } from './components/FPSCounter'
 
 // Configuration constants
@@ -47,11 +46,6 @@ const defaultViewport: Viewport = {
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
   animated: true,
-}
-
-const nodeTypes: NodeTypes = {
-  chaingraphNode: ChaingraphNode,
-  groupNode: GroupNode,
 }
 
 function ExecutionComponent() {
@@ -88,19 +82,21 @@ function Flow() {
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, getZoom } = useReactFlow()
-  const { onNodeDrop } = useDnd()
-  const { setZoom } = useContext(ZoomContext)
-  const edgeReconnectSuccessful = useRef(true)
+  // const { onNodeDrop } = useDnd()
+  const { setZoom } = use(ZoomContext)
+  // const edgeReconnectSuccessful = useRef(true)
 
   // State
-  // const [nodes, setNodes] = useState<Node[]>(initialNodes)
-  // const [edges, setEdges] = useState<Edge[]>(initialEdges)
-  const nodes = useFlowNodes()
-  const edges = useFlowEdges()
+  const nodes = useXYFlowNodes()
+  const edges = useXYFlowEdges()
   const activeFlow = useUnit($activeFlowMetadata)
   const subscriptionState = useUnit($flowSubscriptionState)
 
-  // const edges = useFlowEdges()
+  const nodeTypes = useMemo(() => ({
+    // chaingraphNode: memo(ChaingraphNode),
+    chaingraphNode: ChaingraphNodeOptimized,
+    groupNode: memo(GroupNode),
+  }), [])
 
   // Setup node drop handling
   useNodeDrop()
@@ -259,18 +255,18 @@ function Flow() {
     setZoom(currentZoom)
   }, [getZoom, setZoom])
 
-  const onChange = useCallback(({ nodes, edges }) => {
-    // setSelectedNodes(nodes.map(node => node.id))
-    // setSelectedEdges(edges.map(edge => edge.id))
-
-    nodes.forEach((node) => {
-      console.log('Node:', node)
-    })
-  }, [])
-
-  useOnSelectionChange({
-    onChange,
-  })
+  // const onChange = useCallback(({ nodes, edges }) => {
+  //   setSelectedNodes(nodes.map(node => node.id))
+  //   setSelectedEdges(edges.map(edge => edge.id))
+  //
+  //   // nodes.forEach((node) => {
+  //   //   console.log('Node:', node)
+  //   // })
+  // }, [])
+  //
+  // useOnSelectionChange({
+  //   onChange,
+  // })
 
   return (
     <div
@@ -313,6 +309,16 @@ function Flow() {
         minZoom={0.2}
         maxZoom={2}
         nodeDragThreshold={5}
+
+        // Add these important properties for performance:
+        nodesFocusable={false}
+        edgesFocusable={false}
+        // This is crucial - tells React Flow to use shallow comparison
+        // when checking if nodes have changed
+        nodeExtent={[
+          [-10000, -10000],
+          [10000, 10000],
+        ]}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}
@@ -323,7 +329,7 @@ function Flow() {
         )}
 
         <div className="absolute top-4 left-4 z-50">
-          <ExecutionComponent />
+          {/* <ExecutionComponent /> */}
 
           <FPSCounter />
         </div>

@@ -41,8 +41,8 @@ export function DndContextProvider({ children }: { children: React.ReactNode }) 
   }), [draggedNode, onNodeDrop, emitNodeDrop])
 
   return (
-    <DndContext.Provider value={contextValue}>
+    <DndContext value={contextValue}>
       {children}
-    </DndContext.Provider>
+    </DndContext>
   )
 }

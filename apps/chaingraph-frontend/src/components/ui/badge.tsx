@@ -6,8 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 
 import * as React from 'react'
 

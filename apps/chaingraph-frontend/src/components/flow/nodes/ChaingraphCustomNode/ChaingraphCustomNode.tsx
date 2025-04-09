@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNodeCustom } from './types'
 import {
   ChevronDownIcon,
@@ -15,7 +16,7 @@ import {
 } from '@radix-ui/react-icons'
 import {
   Handle,
-  type NodeProps,
+
   NodeResizeControl,
   Position,
   ResizeControlVariant,

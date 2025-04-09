@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEventImpl, IEdge, INode } from '@badaitech/chaingraph-types'
+import type { IEdge, INode } from '@badaitech/chaingraph-types'
 
 export enum ExecutionStatus {
   IDLE = 'IDLE',
@@ -19,10 +19,10 @@ export enum ExecutionStatus {
   ERROR = 'ERROR',
 }
 
-export interface ExecutionStateUI {
-  highlightedNodeId: string[] | null
-  highlightedEdgeId: string[] | null
-}
+// export interface ExecutionStateUI {
+//   highlightedNodeId: string[] | null
+//   highlightedEdgeId: string[] | null
+// }
 
 export interface ExecutionState {
   status: ExecutionStatus
@@ -30,11 +30,10 @@ export interface ExecutionState {
   debugMode: boolean
   breakpoints: Set<string>
   error: ExecutionError | null
-  events: ExecutionEventImpl[]
   subscription: ExecutionSubscriptionState
-  nodeStates: Map<string, NodeExecutionState>
-  edgeStates: Map<string, EdgeExecutionState>
-  ui: ExecutionStateUI
+  // nodeStates: Map<string, NodeExecutionState>
+  // edgeStates: Map<string, EdgeExecutionState>
+  // ui: ExecutionStateUI
 }
 
 export interface ExecutionError {

@@ -9,7 +9,7 @@
 import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
-import { Handle, Position, useReactFlow } from '@xyflow/react'
+import { Handle, Position } from '@xyflow/react'
 import { memo, useMemo } from 'react'
 
 export interface NodeFlowPortsProps {
@@ -22,22 +22,24 @@ function NodeFlowPorts({
   context,
 }: NodeFlowPortsProps) {
   const { getEdgesForPort } = context
-  const { getZoom } = useReactFlow()
 
   // Filter out the flow ports from the default ports
   const flowPorts = useMemo(() => {
     return node.getDefaultPorts().filter((port) => {
-      const metadata = port.getConfig().metadata
-      return metadata?.isSystemPort === true && metadata?.portCategory === 'flow'
+      return port.isSystem() && !port.isSystemError()
     })
   }, [node])
 
   // Separate into input and output ports
   const flowInPort = useMemo(() =>
-    flowPorts.find(port => port.getConfig().key === '__execute'), [flowPorts])
+    flowPorts.find(
+      port => port.isSystem() && port.getConfig().direction === 'input',
+    ), [flowPorts])
 
   const flowOutPort = useMemo(() =>
-    flowPorts.find(port => port.getConfig().key === '__success'), [flowPorts])
+    flowPorts.find(
+      port => port.isSystem() && port.getConfig().direction === 'output',
+    ), [flowPorts])
 
   // Helper to render port handles
   const renderPortHandle = (port: IPort, position: Position) => {

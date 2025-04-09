@@ -15,10 +15,14 @@ export function useExecution() {
   const subscriptionState = useUnit($executionSubscriptionState)
 
   // Use the subscription hook
-  useExecutionSubscription()
+  const { isSubscribed, isConnecting, status: subscriptionStatus, error } = useExecutionSubscription()
 
   return {
     ...executionState,
     subscription: subscriptionState,
+    isSubscribed,
+    isConnecting,
+    subscriptionStatus,
+    error,
   }
 }

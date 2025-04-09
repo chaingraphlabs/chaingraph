@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { type PropsWithChildren, useMemo, useState } from 'react'
+import type { PropsWithChildren } from 'react'
+import { useMemo, useState } from 'react'
 import { ZoomContext } from './ZoomContext'
 
 export function ZoomProvider({ children }: PropsWithChildren) {
@@ -18,8 +19,8 @@ export function ZoomProvider({ children }: PropsWithChildren) {
   }), [zoom])
 
   return (
-    <ZoomContext.Provider value={contextValue}>
+    <ZoomContext value={contextValue}>
       {children}
-    </ZoomContext.Provider>
+    </ZoomContext>
   )
 }

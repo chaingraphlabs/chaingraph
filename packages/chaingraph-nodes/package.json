@@ -36,10 +36,10 @@
     "@langchain/community": "^0.3.39",
     "@langchain/core": "^0.3.43",
     "@langchain/deepseek": "^0.0.1",
-    "@langchain/openai": "^0.5.2",
-    "langchain": "^0.3.19",
+    "@langchain/openai": "^0.5.4",
+    "langchain": "^0.3.20",
     "lucide-react": "^0.487.0",
-    "react": "^18.3.1",
+    "react": "^19.1.0",
     "superjson": "^2.2.2",
     "yaml": "^2.7.1"
   },
@@ -47,7 +47,7 @@
     "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
-    "@types/react": "^18.3.18",
-    "vitest": "^2.1.9"
+    "@types/react": "^19.1.0",
+    "vitest": "^3.1.1"
   }
 }

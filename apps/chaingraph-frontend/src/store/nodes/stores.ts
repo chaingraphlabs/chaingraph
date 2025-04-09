@@ -9,6 +9,7 @@
 import type { INode } from '@badaitech/chaingraph-types'
 import {
   addNode,
+  addNodes,
   addNodeToFlowFx,
   clearActiveFlow,
   clearNodes,
@@ -30,32 +31,52 @@ import { combine, createStore } from 'effector'
 // Store for nodes
 export const $nodes = createStore<Record<string, INode>>({})
   .on(setNodes, (_, nodes) => ({ ...nodes }))
-  .on(addNode, (state, node) => ({
-    ...state,
-    [node.id]: node.clone(),
-  }))
-  .on(updateNode, (state, node) => ({
-    ...state,
-    [node.id]: node.clone(),
-  }))
+
+  // Single node operations - only clone the affected node and preserve others
+  .on(addNode, (state, node) => {
+    return { ...state, [node.id]: node }
+  })
+
+  // Add nodes operation
+  .on(addNodes, (state, nodes) => {
+    const newState = { ...state }
+    nodes.forEach((node) => {
+      newState[node.id] = node
+    })
+
+    return newState
+  })
+
+  .on(updateNode, (state, node) => {
+    // Create a new state object, but only clone the node we're updating
+    return { ...state, [node.id]: node }
+  })
+
   .on(removeNode, (state, id) => {
+    // Use object destructuring for clean removal without full state copy
     const { [id]: _, ...rest } = state
     return rest
   })
+
+  // Reset handlers
+  .reset(clearNodes)
+  .reset(clearActiveFlow)
+
+  // Metadata update operations
   .on(setNodeMetadata, (state, { nodeId, metadata }) => {
     const node = state[nodeId]
     if (!node)
       return state
 
-    node.setMetadata(metadata)
+    // Clone only the node being modified
+    const updatedNode = node // .clone()
+    updatedNode.setMetadata(metadata)
 
-    return {
-      ...state,
-      [nodeId]: node.clone(),
-    }
+    // Return new state with just the updated node changed
+    return { ...state, [nodeId]: updatedNode }
   })
-  .reset(clearNodes)
-  .reset(clearActiveFlow)
+
+  // Version update - important for change tracking
   .on(setNodeVersion, (state, { nodeId, version }) => {
     const node = state[nodeId]
     if (!node) {
@@ -63,15 +84,15 @@ export const $nodes = createStore<Record<string, INode>>({})
       return state
     }
 
-    console.log(`Setting version for node ${nodeId} to ${version}`)
+    // Only clone the node we're updating
+    const updatedNode = node// .clone()
+    updatedNode.setVersion(version)
 
-    node.setVersion(version)
-
-    return {
-      ...state,
-      [nodeId]: node.clone(),
-    }
+    // Return new state with just the updated node changed
+    return { ...state, [nodeId]: updatedNode }
   })
+
+  // Port operations
   .on(updatePort, (state, { id, data, nodeVersion }) => {
     if (!data || !data.config)
       return state
@@ -89,20 +110,23 @@ export const $nodes = createStore<Record<string, INode>>({})
       return state
 
     try {
-      port.setConfig(data.config)
-      port.setValue(data.value)
+      // Clone both node and port to maintain immutability
+      const updatedNode = node// .clone()
+      const updatedPort = port.clone()
+
+      updatedPort.setConfig(data.config)
+      updatedPort.setValue(data.value)
+
+      updatedNode.setVersion(nodeVersion)
+      updatedNode.setPort(updatedPort)
+
+      return { ...state, [nodeId]: updatedNode }
     } catch (e: any) {
       console.error('Error updating port value:', e, data)
       return state
     }
-    node.setVersion(nodeVersion)
-    node.setPort(port)
-
-    return {
-      ...state,
-      [nodeId]: node.clone(),
-    }
   })
+
   .on(updatePortValue, (state, { nodeId, portId, value }) => {
     const node = state[nodeId]
     if (!node)
@@ -112,23 +136,21 @@ export const $nodes = createStore<Record<string, INode>>({})
     if (!port)
       return state
 
-    console.log('Pre port value updated', { nodeId, portId, value: port.getValue() })
-
     try {
-      port.setValue(value)
+      // Clone both node and port
+      const updatedNode = node.clone()
+      const updatedPort = port.clone()
+
+      updatedPort.setValue(value)
+      updatedNode.setPort(updatedPort)
+
+      return { ...state, [nodeId]: updatedNode }
     } catch (e: any) {
       console.error('Error updating port value:', e)
       return state
     }
-    node.setPort(port)
-
-    console.log('Port value updated', { nodeId, portId, value })
-
-    return {
-      ...state,
-      [nodeId]: node.clone(),
-    }
   })
+
   .on(updatePortUI, (state, { nodeId, portId, ui }) => {
     const node = state[nodeId]
     if (!node)
@@ -138,56 +160,93 @@ export const $nodes = createStore<Record<string, INode>>({})
     if (!port)
       return state
 
-    port.setConfig({
-      ...port.getConfig(),
+    // Clone both node and port
+    const updatedNode = node// .clone()
+    const updatedPort = port.clone()
+
+    updatedPort.setConfig({
+      ...updatedPort.getConfig(),
       ui: {
-        ...port.getConfig().ui,
+        ...updatedPort.getConfig().ui,
         ...ui,
       },
     })
-    node.setPorts(node.ports) // set existing ports
-    node.setPort(port) // set new port
 
-    return {
-      ...state,
-      [node.id]: node.clone(),
-    }
+    updatedNode.setPorts(updatedNode.ports) // Keep existing ports
+    updatedNode.setPort(updatedPort) // Update the specific port
+
+    return { ...state, [nodeId]: updatedNode }
   })
 
 // Update nodes store to handle UI updates
 $nodes
   .on(updateNodeUILocal, (state, { nodeId, ui }) => {
     const node = state[nodeId]
-    if (!node)
+    if (!node || !ui)
       return state
 
-    if (!ui)
-      return state
+    // Clone the node for the UI update
+    const updatedNode = node// .clone()
+    updatedNode.setUI(ui, false)
 
-    node.setUI(ui, false)
-
-    return {
-      ...state,
-      [nodeId]: node, // Do not clone if local UI changed!
-    }
+    return { ...state, [nodeId]: updatedNode }
   })
+
   .on(updateNodePositionLocal, (state, { flowId, nodeId, position }) => {
+    // Don't modify state if node doesn't exist
     const node = state[nodeId]
     if (!node)
       return state
 
-    // console.log(`[LOCAL] Updating node position for node ${nodeId}, position:`, position)
+    // Skip update if position is unchanged
+    if (
+      node.metadata.ui?.position?.x === position.x
+      && node.metadata.ui?.position?.y === position.y
+    ) {
+      return state
+    }
 
-    // check if the position changed
-    if (node.metadata.ui?.position?.x === position.x && node.metadata.ui?.position?.y === position.y)
+    // Clone the node and update its position
+    // const updatedNode = node.clone()
+    const updatedNode = node
+    updatedNode.setPosition(position, false)
+
+    // Fix: Use updatedNode instead of node
+    return { ...state, [nodeId]: updatedNode }
+  })
+
+// Update store to handle interpolated positions
+$nodes
+  .on(updateNodePositionInterpolated, (state, { nodeId, position }) => {
+    const node = state[nodeId]
+    if (!node)
       return state
 
-    node.setPosition(position, false)
+    // Clone the node and update its position
+    const updatedNode = node// .clone()
+    updatedNode.setPosition(position, false)
 
-    return {
-      ...state,
-      [nodeId]: node, // Do not clone if local position changed!
-    }
+    return { ...state, [nodeId]: updatedNode }
+  })
+
+// Update node parent
+$nodes
+  .on(updateNodeParent, (state, { nodeId, parentNodeId }) => {
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    // Clone the node and update its parent
+    const updatedNode = node// .clone()
+    updatedNode.setMetadata({
+      ...updatedNode.metadata,
+      parentNodeId,
+      ui: {
+        ...updatedNode.metadata.ui,
+      },
+    })
+
+    return { ...state, [nodeId]: updatedNode }
   })
 
 // Loading states
@@ -211,40 +270,3 @@ export const $nodesError = combine(
   $removeNodeError,
   (addError, removeError) => addError || removeError,
 )
-
-// Update store to handle interpolated positions
-$nodes
-  .on(updateNodePositionInterpolated, (state, { nodeId, position }) => {
-    const node = state[nodeId]
-    if (!node)
-      return state
-
-    node.setPosition(position, false)
-
-    return {
-      ...state,
-      [nodeId]: node,
-    }
-  })
-
-// updateNodeParent
-$nodes
-  .on(updateNodeParent, (state, { nodeId, parentNodeId }) => {
-    const node = state[nodeId]
-    if (!node)
-      return state
-
-    node.setMetadata({
-      ...node.metadata,
-      parentNodeId,
-      ui: {
-        ...node.metadata.ui,
-        // position,
-      },
-    })
-
-    return {
-      ...state,
-      [nodeId]: node,
-    }
-  })

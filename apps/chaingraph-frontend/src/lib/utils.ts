@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { type ClassValue, clsx } from 'clsx'
+import type { ClassValue } from 'clsx'
+import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {

@@ -6,11 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ExecutionContext,
-  INode,
-  NodeExecutionResult,
-} from '@badaitech/chaingraph-types'
+import type { ExecutionContext, INode, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Boolean,
@@ -24,7 +20,6 @@ import {
   PortVisibility,
   String,
 } from '@badaitech/chaingraph-types'
-import { NODE_CATEGORIES } from '../../categories'
 
 /**
  * Schema for RegExp flags
@@ -86,7 +81,7 @@ Common use cases:
 • Validate input formats (emails, dates, credit cards)
 • Replace or redact sensitive information
 • Transform text formats (e.g., date formats, markdown to HTML)`,
-  category: NODE_CATEGORIES.UTILITIES,
+  category: 'utilities',
   tags: ['regex', 'text', 'pattern', 'match', 'replace', 'extract', 'validation', 'parsing'],
 })
 class RegExpNode extends BaseNode {

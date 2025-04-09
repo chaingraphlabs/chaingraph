@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 *storybook.log
+
+/node_modules
+/coverage
+/.next/
+/build
+/dist

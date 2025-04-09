@@ -13,6 +13,7 @@ import {
 } from '@/components/flow/utils/node-position'
 import {
   $nodes,
+  addNodes,
   FlowSubscriptionStatus,
   removeEdge,
   setEdge,
@@ -61,13 +62,17 @@ export function useFlowSubscription() {
       setFlowMetadata(data.newMetadata)
     },
 
+    [FlowEventType.NodesAdded]: (data) => {
+      addNodes(data.nodes)
+    },
+
     [FlowEventType.NodeAdded]: (data) => {
-      console.log('[NodeAdded] Received node:', data.node)
+      // console.log('[NodeAdded] Received node:', data.node)
       addNode(data.node)
     },
 
     [FlowEventType.NodeUpdated]: (data) => {
-      console.log('[NodeUpdated] Received node:', data.node)
+      // console.log('[NodeUpdated] Received node:', data.node)
       updateNode(data.node)
     },
 
@@ -93,8 +98,8 @@ export function useFlowSubscription() {
       }
 
       // log the current node version and from the event
-      console.log(`[PortUpdated] current node version: ${nodes[data.port.getConfig().nodeId!]?.getVersion()}, event version: ${data.nodeVersion}`)
-      console.log(`[PortUpdated] data:`, data)
+      // console.log(`[PortUpdated] current node version: ${nodes[data.port.getConfig().nodeId!]?.getVersion()}, event version: ${data.nodeVersion}`)
+      // console.log(`[PortUpdated] data:`, data)
 
       updatePort({
         id: data.port.id,
@@ -118,6 +123,20 @@ export function useFlowSubscription() {
         targetPortId: data.targetPortId,
         metadata: data.metadata,
       })
+    },
+
+    [FlowEventType.EdgesAdded]: (data) => {
+      setEdges(data.edges.map((edge) => {
+        return {
+          flowId: activeFlowId!,
+          edgeId: edge.edgeId,
+          sourceNodeId: edge.sourceNodeId,
+          sourcePortId: edge.sourcePortId,
+          targetNodeId: edge.targetNodeId,
+          targetPortId: edge.targetPortId,
+          metadata: edge.metadata,
+        }
+      }))
     },
 
     [FlowEventType.EdgeRemoved]: (data) => {

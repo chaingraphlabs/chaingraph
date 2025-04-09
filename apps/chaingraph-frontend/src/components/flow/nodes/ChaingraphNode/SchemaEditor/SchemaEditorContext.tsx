@@ -15,7 +15,7 @@ import type {
 import type { ReactNode } from 'react'
 import type { SchemaEditorContextValue } from './types'
 import { BaseNode } from '@badaitech/chaingraph-types'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -164,9 +164,9 @@ export function SchemaEditorProvider({ children, initialConfig }: SchemaEditorPr
   )
 
   return (
-    <SchemaEditorContext.Provider value={contextValue}>
+    <SchemaEditorContext value={contextValue}>
       {children}
-    </SchemaEditorContext.Provider>
+    </SchemaEditorContext>
   )
 }
 
@@ -174,7 +174,7 @@ export function SchemaEditorProvider({ children, initialConfig }: SchemaEditorPr
  * Hook to access the schema editor context
  */
 export function useSchemaEditor() {
-  const context = useContext(SchemaEditorContext)
+  const context = use(SchemaEditorContext)
 
   if (!context) {
     throw new Error('useSchemaEditor must be used within a SchemaEditorProvider')

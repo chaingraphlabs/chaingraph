@@ -20,6 +20,12 @@ export default defineConfig({
   plugins: [
     nodePolyfills({
       include: ['buffer', 'crypto', 'path'],
+      globals: {
+        global: true,
+        Buffer: true,
+        process: true,
+      },
+      protocolImports: true,
     }),
     react({
       tsDecorators: true,
@@ -41,5 +47,12 @@ export default defineConfig({
   build: {
     sourcemap: true,
     outDir: 'dist',
+    rollupOptions: {
+      external: [
+        'react',
+        'react-dom',
+        // 'vite-plugin-node-polyfills/shims/global',
+      ],
+    },
   },
 })

@@ -10,6 +10,7 @@ import type { IPort } from '../../port'
 import type { JSONValue } from '../../utils/json'
 import type { INodeComposite, IPortBinder, IPortManager, ISerializable } from '../interfaces'
 import { PortFactory } from '../../port'
+import { deepCopy } from '../../utils'
 import { SerializedNodeSchema } from '../types.zod'
 
 /**
@@ -65,7 +66,7 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
     this.nodeRef.setStatus(obj.status, false)
 
     // Update metadata
-    this.nodeRef.setMetadata(obj.metadata)
+    this.nodeRef.setMetadata(deepCopy(obj.metadata))
     // Object.assign(this.coreNode.metadata, obj.metadata || {})
 
     // Clear current ports

@@ -45,8 +45,8 @@ clean-builds:
 # Clean cache
 clean-cache:
 	@echo "Cleaning cache..."
-	rm -rf .turbo
-	rm -rf .cache
+	rm -rf ./.turbo
+	rm -rf ./.cache
 	@echo "Cache cleaned!"
 
 # Clean everything

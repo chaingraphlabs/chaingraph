@@ -16,6 +16,12 @@ export default defineConfig({
   plugins: [
     nodePolyfills({
       include: ['buffer', 'crypto', 'path'],
+      globals: {
+        global: true,
+        Buffer: true,
+        process: true,
+      },
+      protocolImports: true,
     }),
     react({
       tsDecorators: true,
@@ -30,6 +36,10 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['superjson'],
+    exclude: ['reflect-metadata'],
+  },
   build: {
     sourcemap: true,
     outDir: 'dist/lib',
@@ -43,22 +53,20 @@ export default defineConfig({
       external: [
         'react',
         'react-dom',
-        '@xyflow/react',
         '@badaitech/chaingraph-types',
         '@badaitech/chaingraph-nodes',
         '@badaitech/chaingraph-trpc',
-        'react-router-dom',
-        'lucide-react',
-        'effector',
-        'effector-react',
+        '@badaitech/badai-api',
+        // 'vite-plugin-node-polyfills/shims/global',
       ],
       output: {
         globals: {
           'react': 'React',
           'react-dom': 'ReactDOM',
-          '@xyflow/react': 'ReactFlow',
           '@badaitech/chaingraph-types': 'ChainGraphTypes',
           '@badaitech/chaingraph-nodes': 'ChainGraphNodes',
+          '@badaitech/chaingraph-trpc': 'ChainGraphTRPC',
+          '@badaitech/badai-api': 'BadAIApi',
         },
       },
     },

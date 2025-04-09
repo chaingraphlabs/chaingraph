@@ -111,22 +111,24 @@ function ChaingraphNodeComponent({
       if (selected) {
         return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
       }
-      if (nodeExecution.isExecuting) {
-        return `border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] scale-[1.02] animate-[glow_3s_ease-in-out_infinite]`
-      }
-      if (nodeExecution.isCompleted) {
-        return 'border-green-500 shadow-[0_0_20px_rgba(34,207,94,0.5)]'
-      }
-      if (nodeExecution.isFailed) {
-        return 'border-red-500 shadow-[0_0_20px_rgba(249,68,68,0.5)] opacity-80'
-      }
-      if (nodeExecution.isSkipped) {
-        return 'border-gray-500 opacity-50'
-      }
+      if (nodeExecution) {
+        if (nodeExecution.isExecuting) {
+          return `border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] scale-[1.02] animate-[glow_3s_ease-in-out_infinite]`
+        }
+        if (nodeExecution.isCompleted) {
+          return 'border-green-500 shadow-[0_0_20px_rgba(34,207,94,0.5)]'
+        }
+        if (nodeExecution.isFailed) {
+          return 'border-red-500 shadow-[0_0_20px_rgba(249,68,68,0.5)] opacity-80'
+        }
+        if (nodeExecution.isSkipped) {
+          return 'border-gray-500 opacity-50'
+        }
 
-      if (executionId) {
-        if (nodeExecution.status === 'idle') {
-          return 'border-gray-500 opacity-30'
+        if (executionId) {
+          if (nodeExecution.status === 'idle') {
+            return 'border-gray-500 opacity-30'
+          }
         }
       }
 
@@ -135,7 +137,11 @@ function ChaingraphNodeComponent({
 
     // Only the execution status matters for styling, not all nodeExecution properties
     return calculateStyle()
-  }, [selected, nodeExecution.isExecuting, nodeExecution.isCompleted, nodeExecution.isFailed, nodeExecution.isSkipped, nodeExecution.status, executionId])
+  }, [
+    selected,
+    nodeExecution,
+    executionId,
+  ])
 
   // Memoize the entire context value to prevent unnecessary renders
   const portContextValue = useMemo(() => {
@@ -203,7 +209,7 @@ function ChaingraphNodeComponent({
       )}
 
       <NodeHeader
-        node={nodeExecution.node ?? node}
+        node={nodeExecution?.node ?? node}
         context={portContextValue}
         icon={data.categoryMetadata.icon}
         style={style}
@@ -216,9 +222,9 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      <NodeBody node={nodeExecution.node ?? node} context={portContextValue} />
+      <NodeBody node={nodeExecution?.node ?? node} context={portContextValue} />
 
-      <NodeErrorPorts node={nodeExecution.node ?? node} context={portContextValue} />
+      <NodeErrorPorts node={nodeExecution?.node ?? node} context={portContextValue} />
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
@@ -232,9 +238,9 @@ function ChaingraphNodeComponent({
         }}
       />
 
-      {nodeExecution.executionTime !== undefined && (
+      {nodeExecution?.executionTime !== undefined && (
         <div className="absolute -top-2 -right-2 px-1 py-0.5 text-xs bg-background rounded border shadow-sm">
-          {nodeExecution.executionTime}
+          {nodeExecution?.executionTime}
           ms
         </div>
       )}

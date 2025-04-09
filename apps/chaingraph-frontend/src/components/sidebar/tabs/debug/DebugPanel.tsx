@@ -7,6 +7,7 @@
  */
 
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useExecutionEvents } from '@/store/execution/hooks/useExecutionEvents'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
@@ -17,11 +18,19 @@ import { FilterBar } from './FilterBar'
 
 export function DebugPanel() {
   const activeFlow = useUnit($activeFlowMetadata)
-  const { executionId, events: executionEvents } = useUnit($executionState)
+  const { executionId } = useUnit($executionState)
+  // const executionEvents = useUnit($executionEvents)
 
   const [selectedEventTypes, setSelectedEventTypes] = useState<Set<ExecutionEventEnum>>(
     new Set(Object.values(ExecutionEventEnum)),
   )
+
+  const executionEvents = useExecutionEvents({
+    selectedEventTypes,
+    bufferTimeMs: 250,
+    maxEvents: 1000,
+    newestFirst: true,
+  })
 
   if (!activeFlow) {
     return

@@ -6,9 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { PropsWithChildren } from 'react'
+import type { ThemeMode } from './ThemeContext'
 import { Theme } from '@radix-ui/themes'
-import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react'
-import { ThemeContext, type ThemeMode } from './ThemeContext'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ThemeContext } from './ThemeContext'
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -34,10 +36,10 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const themeProviderValue = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme])
 
   return (
-    <ThemeContext.Provider value={themeProviderValue}>
+    <ThemeContext value={themeProviderValue}>
       <Theme appearance={theme}>
         {children}
       </Theme>
-    </ThemeContext.Provider>
+    </ThemeContext>
   )
 }

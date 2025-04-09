@@ -206,13 +206,4 @@ function NodeStatusBadge({ status, prevStatus, showBadge, onStatusChange }: Node
   )
 }
 
-// Use React.memo with a custom comparison function to minimize re-renders
-export default memo(NodeStatusBadge, (prevProps, nextProps) => {
-  // Only re-render if visibility or status changed
-  return (
-    prevProps.showBadge === nextProps.showBadge
-    && prevProps.status === nextProps.status
-    && (nextProps.status === prevProps.prevStatus
-      || (!nextProps.showBadge && !prevProps.showBadge))
-  )
-})
+export default memo(NodeStatusBadge)
