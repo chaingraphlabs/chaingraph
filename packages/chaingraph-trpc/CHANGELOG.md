@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.4
+
+### Patch Changes
+
+- 50214bc: Upgrade React to v19. Upgrade other dependencies. Optimize frontend effector stores.
+
 ## 0.1.3
 
 ### Patch Changes
