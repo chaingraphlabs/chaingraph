@@ -30,7 +30,9 @@ export default defineConfig({
     react({
       tsDecorators: true,
     }),
-    tsconfigPaths(),
+    tsconfigPaths({
+      configNames: ['tsconfig.json', 'tsconfig.app.json'],
+    }),
     svgr({
       include: ['**/*.svg'],
       svgrOptions: {
@@ -40,6 +42,11 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
   optimizeDeps: {
     include: ['superjson'],
     exclude: ['reflect-metadata'],

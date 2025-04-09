@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.5
+
+### Patch Changes
+
+- Fix and adjust chaingraph-frontend lib NPM package
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.5
+  - @badaitech/chaingraph-types@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

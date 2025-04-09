@@ -26,7 +26,9 @@ export default defineConfig({
     react({
       tsDecorators: true,
     }),
-    tsconfigPaths(),
+    tsconfigPaths({
+      configNames: ['tsconfig.json', 'tsconfig.lib.json'],
+    }),
     svgr({
       include: ['**/*.svg'],
       svgrOptions: {
@@ -36,6 +38,11 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
   optimizeDeps: {
     include: ['superjson'],
     exclude: ['reflect-metadata'],
@@ -63,10 +70,10 @@ export default defineConfig({
         globals: {
           'react': 'React',
           'react-dom': 'ReactDOM',
-          '@badaitech/chaingraph-types': 'ChainGraphTypes',
-          '@badaitech/chaingraph-nodes': 'ChainGraphNodes',
-          '@badaitech/chaingraph-trpc': 'ChainGraphTRPC',
-          '@badaitech/badai-api': 'BadAIApi',
+          // '@badaitech/chaingraph-types': 'ChainGraphTypes',
+          // '@badaitech/chaingraph-nodes': 'ChainGraphNodes',
+          // '@badaitech/chaingraph-trpc': 'ChainGraphTRPC',
+          // '@badaitech/badai-api': 'BadAIApi',
         },
       },
     },

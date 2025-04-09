@@ -5,7 +5,10 @@
     "declaration": true,
     "declarationDir": "dist/lib",
     "emitDeclarationOnly": false,
-    "noEmit": true
+    "noEmit": false
+  },
+  "paths": {
+    "@/*": ["./*"]
   },
   "include": [
     "src/exports.tsx",
