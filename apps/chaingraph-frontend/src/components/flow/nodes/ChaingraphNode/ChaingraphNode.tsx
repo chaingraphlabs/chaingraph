@@ -8,18 +8,20 @@
 
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
-import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
-import { useTheme } from 'components/theme/hooks/useTheme'
-import { Card } from 'components/ui/card'
-import { useUnit } from 'effector-react'
-import { cn } from 'lib/utils'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { $activeFlowMetadata, removeNodeFromFlow } from 'store'
-import { useEdgesForNode } from 'store/edges/hooks/useEdges'
-import { $executionState, $highlightedNodeId, addBreakpoint, removeBreakpoint } from 'store/execution'
-import { useBreakpoint } from 'store/execution/hooks/useBreakpoint'
-import { useNodeExecution } from 'store/execution/hooks/useNodeExecution'
-import { useNode } from 'store/nodes/hooks/useNode'
+import { useTheme } from '@/components/theme/hooks/useTheme'
+import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
+import { useEdgesForNode } from '@/store/edges/hooks/useEdges'
+import {
+  $executionState,
+  $highlightedNodeId,
+  addBreakpoint,
+  removeBreakpoint,
+} from '@/store/execution'
+import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
+import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
+import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,
   appendElementArrayPort,
@@ -27,7 +29,10 @@ import {
   removeFieldObjectPort,
   requestUpdatePortUI,
   requestUpdatePortValue,
-} from 'store/ports'
+} from '@/store/ports'
+import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
+import { useUnit } from 'effector-react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { BreakpointButton } from '../debug/BreakpointButton'
 import NodeBody from './NodeBody'
 import NodeErrorPorts from './NodeErrorPorts'

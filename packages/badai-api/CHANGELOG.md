@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.1.5
+
+### Patch Changes
+
+- Fix and adjust chaingraph-frontend lib NPM package
+
 ## 0.1.4
 
 ### Patch Changes

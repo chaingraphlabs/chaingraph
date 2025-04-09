@@ -30,3 +30,4 @@ dist-ssr
 /.next/
 /build
 /dist
+src/**/*.js
