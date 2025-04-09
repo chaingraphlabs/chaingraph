@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.4
+
+### Patch Changes
+
+- 50214bc: Upgrade React to v19. Upgrade other dependencies. Optimize frontend effector stores.
+- Updated dependencies [50214bc]
+  - @badaitech/chaingraph-types@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
