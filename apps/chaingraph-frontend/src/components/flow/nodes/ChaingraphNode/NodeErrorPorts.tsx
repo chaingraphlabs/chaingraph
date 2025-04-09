@@ -11,7 +11,7 @@ import type { PortContextValue } from './ports/context/PortContext'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 
 export interface NodeErrorPortsProps {
   node: INode
@@ -25,8 +25,7 @@ function NodeErrorPorts({
   // Filter error ports from default ports
   const errorPorts = useMemo(() => {
     return node.getDefaultPorts().filter((port) => {
-      const metadata = port.getConfig().metadata
-      return metadata?.isSystemPort === true && metadata?.portCategory === 'error'
+      return port.isSystemError()
     })
   }, [node])
 
@@ -52,9 +51,9 @@ function NodeErrorPorts({
   const [isExpanded, setIsExpanded] = useState(true)
   // const { getEdgesForPort } = context
 
-  useEffect(() => {
-    setIsExpanded(!!hasConnections)
-  }, [hasConnections])
+  // useEffect(() => {
+  //   setIsExpanded(!!hasConnections)
+  // }, [hasConnections])
 
   // Only render if we have error ports
   if (!errorPort && !errorMessagePort) {

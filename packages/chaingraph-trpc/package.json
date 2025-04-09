@@ -33,14 +33,14 @@
     "migrate": "npx drizzle-kit push --config ./server/drizzle.config.ts"
   },
   "peerDependencies": {
-    "@tanstack/react-query": ">= 5.64.x"
+    "@tanstack/react-query": ">= 5.67.1"
   },
   "dependencies": {
-    "@trpc/client": "11.0.2",
-    "@trpc/react-query": "11.0.2",
-    "@trpc/server": "11.0.2",
+    "@trpc/client": "11.0.3",
+    "@trpc/react-query": "11.0.3",
+    "@trpc/server": "11.0.3",
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.39.2",
+    "drizzle-orm": "^0.41.0",
     "pg": "^8.14.1"
   },
   "devDependencies": {

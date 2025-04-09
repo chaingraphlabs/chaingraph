@@ -154,7 +154,7 @@ export class AsyncQueue<T> {
   /**
    * Returns an async iterator for the queue.
    */
-  async *[Symbol.asyncIterator](): AsyncIterator<T> {
+  async* [Symbol.asyncIterator](): AsyncIterator<T> {
     while (!this._closed) {
       const item = await this.dequeue()
       if (item === null)

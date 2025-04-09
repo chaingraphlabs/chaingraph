@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { BaseEdge, type EdgeProps, getBezierPath } from '@xyflow/react'
+import type { EdgeProps } from '@xyflow/react'
+import { BaseEdge, getBezierPath } from '@xyflow/react'
 import { motion } from 'framer-motion'
 import React from 'react'
 

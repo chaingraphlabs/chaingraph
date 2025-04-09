@@ -15,4 +15,7 @@ export default defineConfig({
     ...baseConfig.build,
     outDir: 'dist/app',
   },
+  plugins: [
+    ...baseConfig.plugins,
+  ],
 })

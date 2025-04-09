@@ -55,12 +55,12 @@ sample({
 
 const throttledRequestUpdatePortValue = accumulateAndSample({
   source: [updatePortValue],
-  timeout: NODE_UI_DEBOUNCE_MS,
+  timeout: 5,
   getKey: update => `${update.nodeId}_${update.portId}`,
 })
 
 sample({
-  clock: throttledRequestUpdatePortValue,
+  clock: updatePortValue,
   source: combine({
     activeFlowId: $activeFlowId,
     nodes: $nodes,

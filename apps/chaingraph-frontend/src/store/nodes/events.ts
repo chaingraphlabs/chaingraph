@@ -18,6 +18,7 @@ import { createEvent } from 'effector'
 
 // Local state CRUD events
 export const addNode = createEvent<INode>()
+export const addNodes = createEvent<INode[]>()
 export const updateNode = createEvent<INode>()
 export const removeNode = createEvent<string>()
 export const setNodeMetadata = createEvent<{ nodeId: string, metadata: NodeState['metadata'] }>()

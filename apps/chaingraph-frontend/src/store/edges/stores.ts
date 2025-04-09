@@ -22,7 +22,10 @@ import { combine, createStore } from 'effector'
 
 // Main edges store
 export const $edges = createStore<EdgeData[]>([])
-  .on(setEdges, (_, edges) => edges)
+  .on(setEdges, (source, edges) => [
+    ...source,
+    ...edges,
+  ])
   .on(setEdge, (edges, edge) => [
     ...edges,
     { ...edge },

@@ -7,19 +7,11 @@
  */
 
 import type { CategoryMetadata, NodeMetadataWithPorts } from '@badaitech/chaingraph-types'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDnd } from '@/components/dnd/useDnd'
 import { ZoomContext } from '@/providers/ZoomProvider'
-import {
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import { useCallback, useContext } from 'react'
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { use, useCallback } from 'react'
 import { NodePreview } from '../sidebar/tabs/node-list/NodePreview'
 
 interface DndProviderProps {
@@ -28,7 +20,7 @@ interface DndProviderProps {
 
 export function DndProvider({ children }: DndProviderProps) {
   const { draggedNode, setDraggedNode, emitNodeDrop } = useDnd()
-  const { zoom } = useContext(ZoomContext)
+  const { zoom } = use(ZoomContext)
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {

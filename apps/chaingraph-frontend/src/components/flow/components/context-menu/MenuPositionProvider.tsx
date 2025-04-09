@@ -19,8 +19,8 @@ export function MenuPositionProvider({ children }: { children: React.ReactNode }
   )
 
   return (
-    <MenuPositionContext.Provider value={contextValue}>
+    <MenuPositionContext value={contextValue}>
       {children}
-    </MenuPositionContext.Provider>
+    </MenuPositionContext>
   )
 }

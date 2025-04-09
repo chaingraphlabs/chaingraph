@@ -52,7 +52,7 @@ export function PortField({
         </div>
 
         {(isSchemaMutable && parentPort.getConfig()?.ui?.keyDeletable)
-        && <DeleteButton onClick={onDelete} />}
+          && <DeleteButton onClick={onDelete} />}
       </div>
     </div>
   )

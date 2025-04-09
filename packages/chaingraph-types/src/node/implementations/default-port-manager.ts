@@ -8,7 +8,7 @@
 
 import type { IPort, IPortConfig } from '../../port'
 import type { IDefaultPortManager, INodeComposite, IPortManager } from '../interfaces'
-import { errorID, errorMessageID, flowInID, flowOutID, getDefaultPortConfigs } from '../default-ports'
+import { errorID, errorMessageID, getDefaultPortConfigs } from '../default-ports'
 
 /**
  * Implementation of IDefaultPortManager interface
@@ -25,7 +25,7 @@ export class DefaultPortManager implements IDefaultPortManager {
    */
   getDefaultPorts(): IPort[] {
     return Array.from(this.portManager.ports.values())
-      .filter(port => port.getConfig()?.metadata?.isSystemPort === true)
+      .filter(port => port.isSystem())
   }
 
   /**
@@ -49,8 +49,9 @@ export class DefaultPortManager implements IDefaultPortManager {
   getFlowInPort(): IPort | undefined {
     return Array.from(this.portManager.ports.values())
       .find(port =>
-        port.getConfig()?.metadata?.isSystemPort === true
-        && port.getConfig()?.key === flowInID,
+        port.isSystem()
+        && !port.isSystemError()
+        && port.getConfig()?.direction === 'input',
       )
   }
 
@@ -60,8 +61,9 @@ export class DefaultPortManager implements IDefaultPortManager {
   getFlowOutPort(): IPort | undefined {
     return Array.from(this.portManager.ports.values())
       .find(port =>
-        port.getConfig()?.metadata?.isSystemPort === true
-        && port.getConfig()?.key === flowOutID,
+        port.isSystem()
+        && !port.isSystemError()
+        && port.getConfig()?.direction === 'output',
       )
   }
 
@@ -71,7 +73,7 @@ export class DefaultPortManager implements IDefaultPortManager {
   getErrorPort(): IPort | undefined {
     return Array.from(this.portManager.ports.values())
       .find(port =>
-        port.getConfig()?.metadata?.isSystemPort === true
+        port.isSystemError()
         && port.getConfig()?.key === errorID,
       )
   }
@@ -82,7 +84,7 @@ export class DefaultPortManager implements IDefaultPortManager {
   getErrorMessagePort(): IPort | undefined {
     return Array.from(this.portManager.ports.values())
       .find(port =>
-        port.getConfig()?.metadata?.isSystemPort === true
+        port.isSystemError()
         && port.getConfig()?.key === errorMessageID,
       )
   }

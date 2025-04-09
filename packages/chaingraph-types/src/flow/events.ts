@@ -22,6 +22,7 @@ export enum FlowEventType {
   MetadataUpdated = 'flow:metadata-updated',
 
   // Node events
+  NodesAdded = 'flow:nodes:added',
   NodeAdded = 'flow:node:added',
   NodeRemoved = 'flow:node:removed',
   NodeUpdated = 'flow:node:updated',
@@ -31,6 +32,7 @@ export enum FlowEventType {
   PortUpdated = 'flow:port:updated',
 
   // Edge events
+  EdgesAdded = 'flow:edges:added',
   EdgeAdded = 'flow:edge:added',
   EdgeRemoved = 'flow:edge:removed',
   // EdgeUpdated = 'flow:edge:updated',
@@ -48,6 +50,11 @@ export enum FlowEventType {
 /** Data for NodeAdded event */
 export interface NodeAddedEventData {
   node: INode
+}
+
+/** Data for NodesAdded event */
+export interface NodesAddedEventData {
+  nodes: INode[]
 }
 
 /** Data for NodeRemoved event */
@@ -74,6 +81,11 @@ export interface EdgeAddedEventData {
   targetNodeId: string
   targetPortId: string
   metadata: EdgeMetadata
+}
+
+/** Data for EdgesAdded event */
+export interface EdgesAddedEventData {
+  edges: EdgeAddedEventData[]
 }
 
 /** Data for EdgeRemoved event */
@@ -148,10 +160,12 @@ export interface EventDataMap {
   [FlowEventType.FlowInitStart]: FlowInitStart
   [FlowEventType.FlowInitEnd]: FlowInitEnd
   [FlowEventType.MetadataUpdated]: MetadataUpdatedEventData
+  [FlowEventType.NodesAdded]: NodesAddedEventData
   [FlowEventType.NodeAdded]: NodeAddedEventData
   [FlowEventType.NodeRemoved]: NodeRemovedEventData
   [FlowEventType.NodeUpdated]: NodeUpdatedEventData
   [FlowEventType.PortUpdated]: PortUpdatedEventData
+  [FlowEventType.EdgesAdded]: EdgesAddedEventData
   [FlowEventType.EdgeAdded]: EdgeAddedEventData
   [FlowEventType.EdgeRemoved]: EdgeRemovedEventData
   // [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData

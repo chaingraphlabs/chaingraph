@@ -61,7 +61,7 @@ export const subscribeToEvents = publicProcedure
       // Send initial state events
       // 1. Metadata
       // if (!eventTypes || eventTypes?.includes(FlowEventType.MetadataUpdated)) {
-      if (isAcceptedEventType(eventTypes, FlowEventType.MetadataUpdated)) {
+      if (isAcceptedEventType(eventTypes, FlowEventType.FlowInitStart)) {
         yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.FlowInitStart, {
           flowId,
           metadata: flow.metadata,
@@ -69,35 +69,42 @@ export const subscribeToEvents = publicProcedure
       }
 
       // 2. Existing nodes
-      if (isAcceptedEventType(eventTypes, FlowEventType.NodeAdded)) {
-        // first send nodes without Parent
-        for (const node of flow.nodes.values()) {
-          if (!node.metadata.parentNodeId) {
-            yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
-              node,
-            }))
-          }
+      if (isAcceptedEventType(eventTypes, FlowEventType.NodesAdded)) {
+        const noParentNodes = Array.from(flow.nodes.values())
+          .filter(node => !node.metadata.parentNodeId)
+
+        const parentedNodes = Array.from(flow.nodes.values())
+          .filter(node => node.metadata.parentNodeId)
+
+        if (noParentNodes.length > 0) {
+          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodesAdded, {
+            nodes: noParentNodes,
+          }))
         }
 
-        for (const node of flow.nodes.values()) {
-          if (node.metadata.parentNodeId) {
-            yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodeAdded, {
-              node,
-            }))
-          }
+        if (parentedNodes.length > 0) {
+          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.NodesAdded, {
+            nodes: parentedNodes,
+          }))
         }
       }
 
       // 3. Existing edges
-      if (isAcceptedEventType(eventTypes, FlowEventType.EdgeAdded)) {
-        for (const edge of flow.edges.values()) {
-          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgeAdded, {
+      if (isAcceptedEventType(eventTypes, FlowEventType.EdgesAdded)) {
+        const edges = Array.from(flow.edges.values()).map((edge) => {
+          return {
             edgeId: edge.id,
             sourceNodeId: edge.sourceNode.id,
             sourcePortId: edge.sourcePort.id,
             targetNodeId: edge.targetNode.id,
             targetPortId: edge.targetPort.id,
             metadata: edge.metadata,
+          }
+        })
+
+        if (edges.length > 0) {
+          yield tracked(String(eventIndex++), newEvent(eventIndex, flowId, FlowEventType.EdgesAdded, {
+            edges,
           }))
         }
       }

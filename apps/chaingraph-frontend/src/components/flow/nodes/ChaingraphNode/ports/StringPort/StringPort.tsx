@@ -17,14 +17,14 @@ import type {
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
+import type { ChangeEvent, PropsWithChildren } from 'react'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { useStore } from '@xyflow/react'
 import {
-  type ChangeEvent,
-  type PropsWithChildren,
+
   useCallback,
   useMemo,
   useRef,
@@ -134,9 +134,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       )}
     >
       {config.direction === 'input'
-      && (
-        <PortHandle port={port} />
-      )}
+        && (
+          <PortHandle port={port} />
+        )}
 
       <div className={cn(
         'flex flex-col w-full',
@@ -198,9 +198,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       </div>
 
       {config.direction === 'output'
-      && (
-        <PortHandle port={port} />
-      )}
+        && (
+          <PortHandle port={port} />
+        )}
     </div>
   )
 }

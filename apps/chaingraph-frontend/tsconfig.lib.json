@@ -4,8 +4,8 @@
     "rootDir": "src",
     "declaration": true,
     "declarationDir": "dist/lib",
-    "emitDeclarationOnly": true,
-    "noEmit": false
+    "emitDeclarationOnly": false,
+    "noEmit": true
   },
   "include": [
     "src/exports.tsx",

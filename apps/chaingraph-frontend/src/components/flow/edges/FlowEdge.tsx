@@ -94,10 +94,10 @@ const ParticleEffect = memo(({
       const timeDiff = now - stored.lastUpdateTime
 
       // Only update if enough time has passed (prevents position jumps)
-      if (timeDiff > 26) { // 16ms = approx one frame
+      if (timeDiff > 16) { // 16ms = approx one frame
         const speeds = [0.005, 0.003, 0.003, 0.003]
         // const timeRatio = timeDiff / 16
-        const timeRatio = timeDiff / 26
+        const timeRatio = timeDiff / 16
 
         // Update progress based on elapsed time
         particlesRef.current.progress = stored.progress.map((p, i) =>
@@ -115,7 +115,7 @@ const ParticleEffect = memo(({
     // Initialize animation variables
     let animationFrameId: number
     const speeds = [0.005, 0.003, 0.003, 0.003] // Different speeds for each particle
-    const rafInterval = 1 // Only update animation every X frames to reduce CPU usage
+    const rafInterval = 2 // Only update animation every X frames to reduce CPU usage
     let frameCount = 0
     let isActive = true // Flag to check if the component is still mounted
 
@@ -385,13 +385,15 @@ export const FlowEdge = memo(({
       />
 
       {/* Particle animations using manual animation to preserve positions between renders */}
-      <ParticleEffect
-        edgeId={stableAnimId}
-        pathRef={pathRef}
-        pathLength={pathLength}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-      />
+      {pathRef.current !== null && pathLength > 0 && (
+        <ParticleEffect
+          edgeId={stableAnimId}
+          pathRef={pathRef as React.RefObject<SVGPathElement>}
+          pathLength={pathLength}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+        />
+      )}
     </g>
   )
 })

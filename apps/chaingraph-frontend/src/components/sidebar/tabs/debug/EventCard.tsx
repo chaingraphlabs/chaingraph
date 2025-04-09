@@ -6,13 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { eventThemes } from '@/components/sidebar/tabs/debug/theme'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { setHighlightedEdgeId, setHighlightedNodeId } from '@/store/execution'
-import { ExecutionEventEnum, type ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRightCircle, ChevronDownIcon, Clock, Timer } from 'lucide-react'
 import React, { memo, useCallback, useMemo, useRef, useState } from 'react'

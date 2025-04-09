@@ -6,8 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEventData } from '@badaitech/chaingraph-types'
-import type { ExecutionState, ExecutionSubscriptionState } from './types'
+import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import type {
+  EdgeExecutionState,
+  ExecutionState,
+  ExecutionSubscriptionState,
+  NodeExecutionState,
+} from './types'
 import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { combine, createStore } from 'effector'
@@ -32,19 +37,200 @@ const initialState: ExecutionState = {
   debugMode: false,
   breakpoints: new Set(),
   error: null,
-  events: [],
   subscription: {
     status: ExecutionSubscriptionStatus.IDLE,
     error: null,
     isSubscribed: false,
   },
-  nodeStates: new Map(),
-  edgeStates: new Map(),
-  ui: {
-    highlightedNodeId: null,
-    highlightedEdgeId: null,
-  },
 }
+
+export const $executionEvents = createStore<ExecutionEventImpl[]>([])
+  .on(newExecutionEvent, (state, event) => {
+    return [...state, event]
+  })
+  .reset(clearExecutionState)
+  .reset(stopExecutionFx.done)
+  .reset(createExecutionFx.doneData)
+
+export const $executionNodes = createStore<Record<string, NodeExecutionState>>({}, {
+  updateFilter: (prev, next) => {
+    // If either is null/undefined
+    if (!prev || !next)
+      return true
+
+    // Check for different node IDs
+    const prevIds = Object.keys(prev)
+    const nextIds = Object.keys(next)
+
+    // If number of nodes changed
+    if (prevIds.length !== nextIds.length)
+      return true
+
+    // Check if any node has a different status
+    for (const nodeId of prevIds) {
+      // If node doesn't exist in next
+      if (!next[nodeId])
+        return true
+
+      // If status changed
+      if (prev[nodeId]?.status !== next[nodeId]?.status)
+        return true
+    }
+
+    // No relevant changes detected
+    return false
+  },
+})
+  .on(newExecutionEvent, (state, event) => {
+    let finalState = state
+    let stateChanged = false
+
+    switch (event.type) {
+      case ExecutionEventEnum.NODE_STARTED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
+          finalState = {
+            ...state,
+            [eventData.node.id]: {
+              status: 'running',
+              startTime: event.timestamp,
+              node: eventData.node,
+            },
+          }
+          stateChanged = true
+        }
+        break
+
+      case ExecutionEventEnum.NODE_COMPLETED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
+
+        const prevState = state[eventData.node.id]
+        if (!prevState) {
+          finalState = {
+            ...state,
+            [eventData.node.id]: {
+              status: 'completed',
+              startTime: event.timestamp,
+              endTime: event.timestamp,
+              executionTime: eventData.executionTime,
+              node: eventData.node,
+            },
+          }
+        } else {
+          finalState = {
+            ...state,
+            [eventData.node.id]: {
+              ...prevState,
+              status: 'completed',
+              endTime: event.timestamp,
+              executionTime: eventData.executionTime,
+              node: eventData.node,
+            },
+          }
+        }
+        stateChanged = true
+        break
+      }
+
+      case ExecutionEventEnum.NODE_FAILED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
+        finalState = {
+          ...state,
+          [eventData.node.id]: {
+            status: 'failed',
+            endTime: event.timestamp,
+            error: eventData.error,
+            node: eventData.node,
+          },
+        }
+        stateChanged = true
+        break
+      }
+
+      case ExecutionEventEnum.NODE_SKIPPED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
+        finalState = {
+          ...state,
+          [eventData.node.id]: {
+            status: 'skipped',
+            endTime: event.timestamp,
+            node: eventData.node,
+          },
+        }
+        stateChanged = true
+        break
+      }
+    }
+
+    if (stateChanged) {
+      return finalState
+    }
+    return state
+  })
+  .reset(clearExecutionState)
+  .reset(createExecutionFx.doneData)
+  // .reset(stopExecutionFx.done)
+
+export const $executionEdges = createStore<Record<string, EdgeExecutionState>>({})
+  .on(newExecutionEvent, (state, event) => {
+    let finalState = state
+    let stateChanged = false
+
+    switch (event.type) {
+      case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
+        finalState = {
+          ...state,
+          [eventData.edge.id]: {
+            status: 'transferring',
+            edge: eventData.edge,
+          },
+        }
+        stateChanged = true
+        break
+      }
+
+      case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
+        finalState = {
+          ...state,
+          [eventData.edge.id]: {
+            status: 'completed',
+            edge: eventData.edge,
+          },
+        }
+        stateChanged = true
+        break
+      }
+
+      case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
+      {
+        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
+        finalState = {
+          ...state,
+          [eventData.edge.id]: {
+            status: 'failed',
+            edge: eventData.edge,
+          },
+        }
+        stateChanged = true
+        break
+      }
+    }
+
+    if (stateChanged) {
+      return finalState
+    }
+    return state
+  })
+  .reset(clearExecutionState)
+  .reset(createExecutionFx.doneData)
+  // .reset(stopExecutionFx.done)
 
 export const $executionState = createStore<ExecutionState>(initialState)
 // Handle execution status changes
@@ -62,12 +248,51 @@ export const $executionState = createStore<ExecutionState>(initialState)
       ...state,
       executionId,
       status: ExecutionStatus.CREATED,
-      events: [],
-      nodeStates: new Map(),
-      edgeStates: new Map(),
       error: null,
     }
   })
+  .on(newExecutionEvent, (state, event) => {
+    switch (event.type) {
+      // case ExecutionEventEnum.FLOW_SUBSCRIBED:
+      //   console.log('Flow subscribed:', event.data)
+      //   return { ...state, status: ExecutionStatus.CREATED }
+
+      case ExecutionEventEnum.FLOW_STARTED:
+        console.log('Flow started:', event.data)
+        return { ...state, status: ExecutionStatus.RUNNING }
+
+      case ExecutionEventEnum.FLOW_COMPLETED:
+        console.log('Flow completed:', event.data)
+        return { ...state, status: ExecutionStatus.COMPLETED }
+
+      case ExecutionEventEnum.FLOW_FAILED:
+        console.log('Flow failed:', event.data)
+        return {
+          ...state,
+          status: ExecutionStatus.ERROR,
+          error: {
+            message: (event.data as ExecutionEventData[ExecutionEventEnum.FLOW_FAILED]).error.message,
+            timestamp: event.timestamp,
+          },
+        }
+
+      case ExecutionEventEnum.FLOW_CANCELLED:
+        console.log('Flow cancelled:', event.data)
+        return {
+          ...state,
+          status: ExecutionStatus.STOPPED,
+        }
+
+      case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+        return {
+          ...state,
+          status: ExecutionStatus.PAUSED,
+        }
+    }
+
+    return state
+  })
+
 // .on(startExecutionFx.pending, state => ({
 //   ...state,
 //   status: ExecutionStatus.RUNNING,
@@ -84,9 +309,6 @@ export const $executionState = createStore<ExecutionState>(initialState)
     return {
       ...state,
       status: ExecutionStatus.STOPPED,
-      events: [],
-      nodeStates: new Map(),
-      edgeStates: new Map(),
       error: null,
     }
   })
@@ -156,119 +378,17 @@ export const $executionState = createStore<ExecutionState>(initialState)
     }
   })
 
-  .on(newExecutionEvent, (state, event) => {
-    const nodeStates = new Map(state.nodeStates)
-    const edgeStates = new Map(state.edgeStates)
+export const $highlightedNodeId = createStore<string[] | null>(null)
+  .on(setHighlightedNodeId, (state, highlightedNodeId) =>
+    typeof highlightedNodeId === 'string'
+      ? [highlightedNodeId]
+      : highlightedNodeId)
 
-    switch (event.type) {
-      case ExecutionEventEnum.NODE_STARTED:
-        {
-          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
-          nodeStates.set(eventData.node.id, {
-            status: 'running',
-            startTime: event.timestamp,
-            node: eventData.node,
-          })
-        }
-        break
-
-      case ExecutionEventEnum.NODE_COMPLETED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
-        const prevState = nodeStates.get(eventData.node.id)
-        nodeStates.set(eventData.node.id, {
-          status: 'completed',
-          startTime: prevState?.startTime,
-          endTime: event.timestamp,
-          executionTime: eventData.executionTime,
-          node: eventData.node,
-        })
-        break
-      }
-
-      case ExecutionEventEnum.NODE_FAILED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
-        nodeStates.set(eventData.node.id, {
-          status: 'failed',
-          endTime: event.timestamp,
-          error: eventData.error,
-          node: eventData.node,
-        })
-        break
-      }
-
-      case ExecutionEventEnum.NODE_SKIPPED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
-        nodeStates.set(eventData.node.id, {
-          status: 'skipped',
-          endTime: event.timestamp,
-          node: eventData.node,
-        })
-        break
-      }
-
-      case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
-        edgeStates.set(eventData.edge.id, {
-          status: 'transferring',
-          edge: eventData.edge,
-        })
-        break
-      }
-
-      case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
-        edgeStates.set(eventData.edge.id, {
-          status: 'completed',
-          edge: eventData.edge,
-        })
-        break
-      }
-
-      case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
-        edgeStates.set(eventData.edge.id, {
-          status: 'failed',
-          edge: eventData.edge,
-        })
-        break
-      }
-    }
-
-    return {
-      ...state,
-      nodeStates,
-      edgeStates,
-      events: [...state.events, event],
-    }
-  })
-
-  // setHighlightedNodeId
-  .on(setHighlightedNodeId, (state, highlightedNodeId) => ({
-    ...state,
-    ui: {
-      ...state.ui,
-      highlightedNodeId:
-        typeof highlightedNodeId === 'string'
-          ? [highlightedNodeId]
-          : highlightedNodeId,
-    },
-  }))
-  .on(setHighlightedEdgeId, (state, highlightedEdgeId) => ({
-    ...state,
-    ui: {
-      ...state.ui,
-      highlightedEdgeId:
-        typeof highlightedEdgeId === 'string'
-          ? [highlightedEdgeId]
-          : highlightedEdgeId,
-    },
-  }))
+export const $highlightedEdgeId = createStore<string[] | null>(null)
+  .on(setHighlightedEdgeId, (state, highlightedEdgeId) =>
+    typeof highlightedEdgeId === 'string'
+      ? [highlightedEdgeId]
+      : highlightedEdgeId)
 
 // Computed stores
 export const $isExecuting = $executionState.map(
@@ -322,5 +442,5 @@ export const $autoStartConditions = combine({
 // Store to prevent multiple start attempts
 export const $startAttempted = createStore(false)
 
-export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
-export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)
+// export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
+// export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)

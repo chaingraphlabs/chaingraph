@@ -6,11 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CreateFlowEvent, UpdateFlowEvent } from '@/store'
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { useFlowSearch } from '@/components/sidebar/tabs/flow/hooks/useFlowSearch'
 import { useFlowSort } from '@/components/sidebar/tabs/flow/hooks/useFlowSort'
 import { ErrorMessage } from '@/components/ui/error-message'
-import { $flowsError, createFlow, type CreateFlowEvent, deleteFlow, updateFlow, type UpdateFlowEvent } from '@/store'
+import { $flowsError, createFlow, deleteFlow, updateFlow } from '@/store'
 import {
   $activeFlowId,
   $createFlowError,

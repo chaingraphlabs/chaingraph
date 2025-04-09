@@ -6,6 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IEdge } from '../edge'
+import type { INode, NodeEvent } from '../node'
 import type { IPort } from '../port'
 import type { JSONValue } from '../utils/json'
 import type {
@@ -20,8 +22,8 @@ import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
 import { v4 as uuidv4 } from 'uuid'
 import { NodeRegistry } from '../decorator'
-import { Edge, type IEdge } from '../edge'
-import { filterPorts, type INode, type NodeEvent, NodeEventType } from '../node'
+import { Edge } from '../edge'
+import { filterPorts, NodeEventType } from '../node'
 import { EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
 
