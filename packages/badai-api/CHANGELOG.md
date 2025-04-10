@@ -1,5 +1,35 @@
 # @badaitech/badai-api
 
+## 0.1.6-dev.9
+
+### Patch Changes
+
+- One more try
+
+## 0.1.6-dev.8
+
+### Patch Changes
+
+- Adjust frontend stores import paths
+
+## 0.1.6-dev.7
+
+### Patch Changes
+
+- One more version
+
+## 0.1.6-dev.6
+
+### Patch Changes
+
+- One more try boundle frontend
+
+## 0.1.6-dev.5
+
+### Patch Changes
+
+- One more frontend adjustments
+
 ## 0.1.6-dev.4
 
 ### Patch Changes

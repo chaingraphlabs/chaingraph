@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { FlowSubscriptionError, FlowSubscriptionStatus } from '@/store'
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import type { FlowSubscriptionError, FlowSubscriptionStatus } from './types'
 import { createEvent } from 'effector'
 
 // Flow list events

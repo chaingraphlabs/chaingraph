@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $xyflowEdges } from '@/store/edges/xyflow-edges'
 import { useStoreMap } from 'effector-react'
 import { useMemo } from 'react'
+import { $xyflowEdges } from '../xyflow-edges'
 
 /**
  * Hook that returns XYFlow edges with optimized re-rendering.

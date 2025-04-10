@@ -8,9 +8,9 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import { $xyflowNodes } from '@/store/nodes/xyflow-nodes'
 import { useStoreMap } from 'effector-react'
 import { useMemo, useRef } from 'react'
+import { $xyflowNodes } from '../xyflow-nodes'
 
 /**
  * Returns a stable reference to XYFlow nodes, only updating when there are

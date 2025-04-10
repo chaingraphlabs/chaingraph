@@ -6,14 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $nodes, updateNodeParentFx, updateNodePositionLocal, updateNodeUIFx } from '@/store'
+import { sample } from 'effector'
+import { $nodes, updateNodeParentFx, updateNodePositionLocal, updateNodeUIFx } from '../nodes'
 import {
   LOCAL_NODE_UI_DEBOUNCE_MS,
   NODE_POSITION_DEBOUNCE_MS,
   NODE_UI_DEBOUNCE_MS,
-} from '@/store/nodes/constants'
-import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample'
-import { sample } from 'effector'
+} from './constants'
 import { addNodeToFlowFx, baseUpdateNodePositionFx, removeNodeFromFlowFx } from './effects'
 import {
   addNodeToFlow,
@@ -24,6 +23,7 @@ import {
   updateNodeUI,
   updateNodeUILocal,
 } from './events'
+import { accumulateAndSample } from './operators/accumulate-and-sample'
 import './interpolation-init'
 
 // * * * * * * * * * * * * * * *

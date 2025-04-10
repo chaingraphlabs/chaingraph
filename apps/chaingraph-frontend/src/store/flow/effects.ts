@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CreateFlowEvent, UpdateFlowEvent } from '@/store'
+import type { CreateFlowEvent, UpdateFlowEvent } from './events'
 import { trpcClient } from '@badaitech/chaingraph-trpc/client'
 import { createEffect } from 'effector' // Effect for loading flows list
 

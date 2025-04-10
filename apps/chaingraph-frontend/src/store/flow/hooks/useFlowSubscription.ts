@@ -7,36 +7,37 @@
  */
 
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types'
-import {
-  getNodePositionInFlow,
-  getNodePositionInsideParent,
-} from '@/components/flow/utils/node-position'
-import {
-  $nodes,
-  addNodes,
-  FlowSubscriptionStatus,
-  removeEdge,
-  setEdge,
-  setEdges,
-  setFlowLoaded,
-  setFlowMetadata,
-  setFlowSubscriptionError,
-  setFlowSubscriptionStatus,
-  setNodes,
-  setNodeVersion,
-  updateNode,
-  updateNodeUILocal,
-} from '@/store'
-import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
-import { addNode, removeNode } from '@/store/nodes/events'
-import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { trpcReact } from '@badaitech/chaingraph-trpc/client'
 import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
 import { skipToken } from '@tanstack/react-query'
 import { useUnit } from 'effector-react'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getNodePositionInFlow,
+  getNodePositionInsideParent,
+} from '../../../components/flow/utils/node-position'
+import { removeEdge, setEdge, setEdges } from '../../edges/events'
+import {
+  addNode,
+  addNodes,
+  removeNode,
+  setNodes,
+  setNodeVersion,
+  updateNode,
+  updateNodeUILocal,
+} from '../../nodes/events'
+import { positionInterpolator } from '../../nodes/position-interpolation-advanced'
+import { $nodes } from '../../nodes/stores'
 import { updatePort } from '../../ports/events'
+import {
+  setFlowLoaded,
+  setFlowMetadata,
+  setFlowSubscriptionError,
+  setFlowSubscriptionStatus,
+} from '../events'
+import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '../stores'
+import { FlowSubscriptionStatus } from '../types'
 
 export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)

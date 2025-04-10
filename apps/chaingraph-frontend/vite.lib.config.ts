@@ -45,6 +45,7 @@ export default defineConfig({
     },
   },
   build: {
+    minify: false,
     sourcemap: true,
     outDir: 'dist/lib',
     lib: {
@@ -56,16 +57,16 @@ export default defineConfig({
     rollupOptions: {
       // Only keep React and ReactDOM as external dependencies
       external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
+        // 'react',
+        // 'react-dom',
+        // 'react/jsx-runtime',
       ],
       output: {
         // Bundle everything else together
         globals: {
-          'react': 'React',
-          'react-dom': 'ReactDOM',
-          'react/jsx-runtime': 'jsxRuntime',
+          // 'react': 'React',
+          // 'react-dom': 'ReactDOM',
+          // 'react/jsx-runtime': 'jsxRuntime',
         },
       },
     },
@@ -79,8 +80,9 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      '@badaitech/chaingraph',
-      '@badaitech/chaingraph',
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
       '@dnd-kit/core',
       '@fontsource/inter',
       '@fontsource/jetbrains-mono',

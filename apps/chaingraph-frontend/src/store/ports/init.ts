@@ -11,12 +11,12 @@ import type {
   RemoveFieldObjectPortInput,
   UpdatePortUIInput,
   UpdatePortValueInput,
-} from '@/store/ports/effects'
-import { setNodeVersion } from '@/store'
-import { $activeFlowId } from '@/store/flow/stores'
-import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '@/store/nodes/constants'
-import { accumulateAndSample } from '@/store/nodes/operators/accumulate-and-sample'
-import { $nodes } from '@/store/nodes/stores'
+} from './effects'
+import { combine, createEffect, sample } from 'effector'
+import { $activeFlowId } from '../flow'
+import { $nodes, setNodeVersion } from '../nodes'
+import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '../nodes/constants'
+import { accumulateAndSample } from '../nodes/operators/accumulate-and-sample'
 import {
   addFieldObjectPortFx,
   appendElementArrayPortFx,
@@ -24,8 +24,7 @@ import {
   baseUpdatePortValueFx,
   removeElementArrayPortFx,
   removeFiledObjectPortFx,
-} from '@/store/ports/effects'
-import { combine, createEffect, sample } from 'effector'
+} from './effects'
 import {
   addFieldObjectPort,
   appendElementArrayPort,

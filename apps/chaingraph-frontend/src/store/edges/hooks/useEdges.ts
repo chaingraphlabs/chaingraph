@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { EdgeData } from '@/store/edges/types'
-import { $edges } from '@/store/edges/stores'
+import type { EdgeData } from '../types'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
+import { $edges } from '../stores'
 
 export function useEdgesForPort(portId: string): EdgeData[] {
   const edges = useUnit($edges)

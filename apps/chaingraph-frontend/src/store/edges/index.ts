@@ -8,5 +8,9 @@
 
 export * from './effects'
 export * from './events'
+export { useEdgesForNode, useEdgesForPort } from './hooks/useEdges'
+export { useXYFlowEdges } from './hooks/useXYFlowEdges'
+export * from './init'
 export * from './stores'
 export * from './types'
+export { $xyflowEdges } from './xyflow-edges'

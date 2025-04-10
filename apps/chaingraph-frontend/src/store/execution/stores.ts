@@ -13,9 +13,9 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { combine, createStore } from 'effector'
+import { createExecutionFx, stopExecutionFx } from './effects'
 import {
   addBreakpoint,
   clearExecutionState,

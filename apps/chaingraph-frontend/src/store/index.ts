@@ -8,5 +8,8 @@
 
 export * from './categories'
 export * from './edges'
+export * from './execution'
 export * from './flow'
+export { initializeStores } from './init'
 export * from './nodes'
+export * from './ports'

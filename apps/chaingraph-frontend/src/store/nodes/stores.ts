@@ -7,11 +7,12 @@
  */
 
 import type { INode } from '@badaitech/chaingraph-types'
+import { combine, createStore } from 'effector'
+import { clearActiveFlow } from '../flow/events'
 import {
   addNode,
   addNodes,
   addNodeToFlowFx,
-  clearActiveFlow,
   clearNodes,
   removeNode,
   removeNodeFromFlowFx,
@@ -24,9 +25,8 @@ import {
   updateNodePositionInterpolated,
   updateNodePositionLocal,
   updateNodeUILocal,
-} from '@/store'
-import { updatePort, updatePortUI, updatePortValue } from '@/store/ports/events'
-import { combine, createStore } from 'effector'
+} from '../nodes'
+import { updatePort, updatePortUI, updatePortValue } from '../ports/events'
 
 // Store for nodes
 export const $nodes = createStore<Record<string, INode>>({})

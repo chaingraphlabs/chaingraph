@@ -7,9 +7,9 @@
  */
 
 import type { Position } from '@badaitech/chaingraph-types'
-import { $nodes } from '@/store'
-import { updateNodePositionInterpolated, updateNodePositionLocal } from '@/store/nodes/events'
 import { createStore } from 'effector'
+import { updateNodePositionInterpolated, updateNodePositionLocal } from './events'
+import { $nodes } from './stores'
 
 // Store that keeps track of the last position for each node ID
 // This allows us to stabilize the node references

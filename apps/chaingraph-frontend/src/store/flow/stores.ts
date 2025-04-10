@@ -6,19 +6,19 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { FlowSubscriptionError } from '@/store'
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import type { FlowSubscriptionError } from './types'
+import { combine, createStore } from 'effector'
+import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from './effects'
 import {
   deleteFlow,
-  FlowSubscriptionStatus,
   setFlowLoaded,
   setFlowMetadata,
   setFlowsError,
   setFlowsList,
   setFlowsLoading,
-} from '@/store'
-import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from '@/store/flow/effects'
-import { combine, createStore } from 'effector'
+} from './events'
+import { FlowSubscriptionStatus } from './types'
 
 // Store for all flows list
 export const $flows = createStore<FlowMetadata[]>([])

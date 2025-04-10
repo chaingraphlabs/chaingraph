@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { requestAddEdge, requestRemoveEdge } from '@/store'
 import { sample } from 'effector'
 import { addEdgeFx, removeEdgeFx } from './effects'
+import { requestAddEdge, requestRemoveEdge } from './events'
 
 // Initialize edge operations
 sample({

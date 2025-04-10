@@ -1,0 +1,25 @@
+{
+  "mode": "pre",
+  "tag": "dev",
+  "initialVersions": {
+    "@badaitech/chaingraph-backend": "0.1.5",
+    "@badaitech/chaingraph-frontend": "0.1.5",
+    "@badaitech/badai-api": "0.1.5",
+    "@badaitech/chaingraph-nodes": "0.1.5",
+    "@badaitech/chaingraph-trpc": "0.1.5",
+    "@badaitech/chaingraph-types": "0.1.5",
+    "@badaitech/typescript-config": "0.1.5"
+  },
+  "changesets": [
+    "all-islands-flow",
+    "five-boats-sort",
+    "gold-times-read",
+    "neat-crabs-attend",
+    "olive-chicken-pay",
+    "pink-ducks-fall",
+    "plain-doors-bathe",
+    "real-sites-wash",
+    "sad-pugs-clean",
+    "three-garlics-travel"
+  ]
+}

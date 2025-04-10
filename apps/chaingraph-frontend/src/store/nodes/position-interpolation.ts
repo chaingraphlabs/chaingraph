@@ -7,7 +7,7 @@
  */
 
 import type { Position } from '@badaitech/chaingraph-types'
-import { NODE_POSITION_DEBOUNCE_MS } from '@/store/nodes/constants'
+import { NODE_POSITION_DEBOUNCE_MS } from './constants'
 
 // Interpolation modes
 export enum InterpolationMode {

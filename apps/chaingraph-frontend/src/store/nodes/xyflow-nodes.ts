@@ -8,12 +8,12 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import { $nodes } from '@/store'
-import { $categoryMetadata } from '@/store/categories/stores'
-import { $nodePositions } from '@/store/nodes/node-positions'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { combine } from 'effector'
+import { $categoryMetadata } from '../categories/stores'
+import { $nodePositions } from './node-positions'
+import { $nodes } from './stores'
 
 /**
  * Enhanced store for XYFlow nodes that preserves node references when only positions change.

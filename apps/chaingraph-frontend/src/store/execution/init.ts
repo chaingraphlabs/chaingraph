@@ -6,12 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $autoStartConditions, $executionState, $startAttempted } from '@/store/execution/stores'
-import {
-  ExecutionStatus,
-  ExecutionSubscriptionStatus,
-  isTerminalStatus,
-} from '@/store/execution/types'
 import { sample } from 'effector'
 import {
   addBreakpointFx,
@@ -38,6 +32,8 @@ import {
   stepExecution,
   stopExecution,
 } from './events'
+import { $autoStartConditions, $executionState, $startAttempted } from './stores'
+import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
 
 // Handle execution creation
 sample({
