@@ -91,7 +91,7 @@
     "unplugin-auto-import": "^19.1.2",
     "unplugin-swc": "^1.5.1",
     "vite": "^6.2.5",
-    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-plugin-node-polyfills": "0.17.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.1.1",
     "vitest-tsconfig-paths": "^3.4.1"
