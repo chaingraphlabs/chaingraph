@@ -8,14 +8,15 @@
 
 import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type {
+  CreateExecutionOptions,
   EdgeExecutionState,
   ExecutionState,
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
+import { trpcClient } from '@badaitech/chaingraph-trpc/client'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { combine, createStore } from 'effector'
-import { createExecutionFx, stopExecutionFx } from './effects'
+import { attach, combine, createEffect, createStore } from 'effector'
 import {
   addBreakpoint,
   clearExecutionState,
@@ -43,6 +44,76 @@ const initialState: ExecutionState = {
     isSubscribed: false,
   },
 }
+
+export const $executionState = createStore<ExecutionState>(initialState)
+
+// Control effects
+export const createExecutionFx = attach({
+  source: $executionState,
+  effect: createEffect(
+    async (params: { state: ExecutionState, payload: CreateExecutionOptions }) => {
+      const { state, payload } = params
+      const { flowId, debug } = payload
+      const breakpoints = state.breakpoints
+
+      const response = await trpcClient.execution.create.mutate({
+        flowId,
+        options: {
+          debug,
+          breakpoints: debug ? Array.from(breakpoints) : [],
+          execution: {
+            maxConcurrency: 10,
+            nodeTimeoutMs: 90000,
+            flowTimeoutMs: 300000,
+          },
+        },
+      })
+      return response.executionId
+    },
+  ),
+  mapParams: (payload: CreateExecutionOptions, state: ExecutionState) => ({
+    state,
+    payload,
+  }),
+})
+
+export const startExecutionFx = createEffect(async (executionId: string) => {
+  return trpcClient.execution.start.mutate({ executionId })
+})
+
+export const pauseExecutionFx = createEffect(async (executionId: string) => {
+  return trpcClient.execution.pause.mutate({ executionId })
+})
+
+export const resumeExecutionFx = createEffect(async (executionId: string) => {
+  return trpcClient.execution.resume.mutate({ executionId })
+})
+
+export const stopExecutionFx = createEffect(async (executionId: string) => {
+  return trpcClient.execution.stop.mutate({ executionId })
+})
+
+// Debug effects
+export const addBreakpointFx = createEffect(
+  async ({ executionId, nodeId }: { executionId: string, nodeId: string }) => {
+    return trpcClient.execution.debug.addBreakpoint.mutate({ executionId, nodeId })
+  },
+)
+
+export const removeBreakpointFx = createEffect(
+  async ({ executionId, nodeId }: { executionId: string, nodeId: string }) => {
+    return trpcClient.execution.debug.removeBreakpoint.mutate({ executionId, nodeId })
+  },
+)
+
+export const stepExecutionFx = createEffect(async (executionId: string) => {
+  return trpcClient.execution.debug.step.mutate({ executionId })
+})
+
+// effect for checking terminal status
+export const checkTerminalStatusFx = createEffect((status: ExecutionStatus) => {
+  return isTerminalStatus(status)
+})
 
 export const $executionEvents = createStore<ExecutionEventImpl[]>([])
   .on(newExecutionEvent, (state, event) => {
@@ -232,8 +303,8 @@ export const $executionEdges = createStore<Record<string, EdgeExecutionState>>({
   .reset(createExecutionFx.doneData)
   // .reset(stopExecutionFx.done)
 
-export const $executionState = createStore<ExecutionState>(initialState)
 // Handle execution status changes
+$executionState
   .on(createExecutionFx.pending, (state) => {
     if (state.status === ExecutionStatus.IDLE) {
       return {
