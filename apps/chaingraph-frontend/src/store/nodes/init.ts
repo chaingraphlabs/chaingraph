@@ -7,23 +7,30 @@
  */
 
 import { sample } from 'effector'
-import { $nodes, updateNodeParentFx, updateNodePositionLocal, updateNodeUIFx } from '../nodes'
 import {
   LOCAL_NODE_UI_DEBOUNCE_MS,
   NODE_POSITION_DEBOUNCE_MS,
   NODE_UI_DEBOUNCE_MS,
 } from './constants'
-import { addNodeToFlowFx, baseUpdateNodePositionFx, removeNodeFromFlowFx } from './effects'
+import {
+  addNodeToFlowFx,
+  baseUpdateNodePositionFx,
+  removeNodeFromFlowFx,
+  updateNodeParentFx,
+  updateNodeUIFx,
+} from './effects'
 import {
   addNodeToFlow,
   removeNodeFromFlow,
   setNodeVersion,
   updateNodeParent,
   updateNodePosition,
+  updateNodePositionLocal,
   updateNodeUI,
   updateNodeUILocal,
 } from './events'
 import { accumulateAndSample } from './operators/accumulate-and-sample'
+import { $nodes } from './stores'
 import './interpolation-init'
 
 // * * * * * * * * * * * * * * *

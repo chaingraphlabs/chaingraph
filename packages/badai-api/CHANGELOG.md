@@ -1,5 +1,143 @@
 # @badaitech/badai-api
 
+## 0.1.6-dev.33
+
+### Patch Changes
+
+- New try to include all styles to the bundle
+
+## 0.1.6-dev.32
+
+### Patch Changes
+
+- adjust configs for styles
+
+## 0.1.6-dev.31
+
+### Patch Changes
+
+- Adjust build config to include styles to the npm bundle
+
+## 0.1.6-dev.30
+
+### Patch Changes
+
+- add styles export for the frontend lib
+
+## 0.1.6-dev.29
+
+### Patch Changes
+
+- Remove debug
+
+## 0.1.6-dev.28
+
+### Patch Changes
+
+- Try to explicitly provide nodes types instead of take it from the decorator reflection
+
+## 0.1.6-dev.27
+
+### Patch Changes
+
+- dirty hack to use static TRPC client
+
+## 0.1.6-dev.26
+
+### Patch Changes
+
+- Adjust root provider initialization
+
+## 0.1.6-dev.25
+
+### Patch Changes
+
+- Make nodeRegistry as param for the RootProvider
+
+## 0.1.6-dev.24
+
+### Patch Changes
+
+- Move initialize stores under providers in order to it has a way to use tRPC clients from hook
+
+## 0.1.6-dev.23
+
+### Patch Changes
+
+- Rewrite TRPC to use TanStack React Query
+
+## 0.1.6-dev.22
+
+### Patch Changes
+
+- trpc server exports
+
+## 0.1.6-dev.21
+
+### Patch Changes
+
+- Some changes
+
+## 0.1.6-dev.20
+
+### Patch Changes
+
+- some changes
+
+## 0.1.6-dev.19
+
+### Patch Changes
+
+- Add trpc properties to the root provider
+
+## 0.1.6-dev.18
+
+### Patch Changes
+
+- Add SuperJSON param to initializeJsonTransformers
+
+## 0.1.6-dev.17
+
+### Patch Changes
+
+- remove useNaviogate from the codebase
+
+## 0.1.6-dev.16
+
+### Patch Changes
+
+- make react and react dome as external lib
+
+## 0.1.6-dev.15
+
+### Patch Changes
+
+- change effector nodes stores imports path
+
+## 0.1.6-dev.14
+
+### Patch Changes
+
+- Change effector store imports order
+
+## 0.1.6-dev.13
+
+### Patch Changes
+
+- do not include react to the frontend npm lib
+
+## 0.1.6-dev.12
+
+### Patch Changes
+
+- Fix RootProviders
+
+## 0.1.6-dev.11
+
+### Patch Changes
+
+- Adjust imports for the fronend stores
+
 ## 0.1.6-dev.10
 
 ### Patch Changes

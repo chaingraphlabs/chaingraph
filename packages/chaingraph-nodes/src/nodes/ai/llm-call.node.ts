@@ -71,6 +71,7 @@ const llmModels = {
 }
 
 @Node({
+  type: 'LLMCallNode',
   title: 'LLM Call',
   description: 'Sends prompt to Language Model and streams response',
   category: NODE_CATEGORIES.AI,

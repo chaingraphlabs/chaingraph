@@ -5,14 +5,14 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
+
 import type {
   AddFieldObjectPortInput,
   AppendElementArrayPortInput,
   RemoveFieldObjectPortInput,
-  UpdatePortUIInput,
-  UpdatePortValueInput,
 } from './effects'
 import { combine, createEffect, sample } from 'effector'
+
 import { $activeFlowId } from '../flow'
 import { $nodes, setNodeVersion } from '../nodes'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '../nodes/constants'
@@ -39,7 +39,7 @@ import {
 //
 // Update port value
 //
-export const preBaseUpdatePortValueFx = createEffect(async (params: UpdatePortValueInput) => {
+export const preBaseUpdatePortValueFx = createEffect(async (params) => {
   setNodeVersion({
     nodeId: params.nodeId,
     version: params.nodeVersion,
@@ -85,7 +85,7 @@ sample({
 //
 // Update port UI with throttling
 //
-export const preBaseUpdatePortUiFx = createEffect(async (params: UpdatePortUIInput) => {
+export const preBaseUpdatePortUiFx = createEffect(async (params) => {
   setNodeVersion({
     nodeId: params.nodeId,
     version: params.nodeVersion,

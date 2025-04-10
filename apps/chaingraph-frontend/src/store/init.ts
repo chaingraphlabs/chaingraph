@@ -6,23 +6,33 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CategorizedNodes, FlowMetadata } from '@badaitech/chaingraph-types'
 import { initializeCategoriesFx } from './categories/init'
 import { initializeFlowsFx } from './flow/init'
 import './nodes/init'
+import './ports/init'
 import './edges/init'
 import './execution/init'
-import './ports/init'
 
 /**
  * Initialize all stores and load initial data
  */
-export async function initializeStores() {
+export async function initializeStores(callback?: (
+  categorizedNodes: CategorizedNodes[],
+  flows: FlowMetadata[],
+) => void | Promise<void>) {
   try {
     // Initialize stores in parallel
-    await Promise.all([
+    const result = await Promise.all([
       initializeCategoriesFx(),
       initializeFlowsFx(),
     ])
+
+    // callback with the results
+    if (callback) {
+      const [categorizedNodes, flows] = result
+      await callback(categorizedNodes, flows)
+    }
 
     console.log('Stores initialized successfully')
   } catch (error) {

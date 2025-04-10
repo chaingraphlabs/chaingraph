@@ -73,6 +73,7 @@ export enum RegExpMode {
  * Node for processing text with regular expressions
  */
 @Node({
+  type: 'RegExpNode',
   title: 'Regular Expression Processor',
   description: `Process text using regular expressions with different operation modes.
 

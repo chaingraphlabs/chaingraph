@@ -10,12 +10,16 @@ const { fontFamily } = require('tailwindcss/defaultTheme')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ['class'],
+  darkMode: 'class',
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}', // This catches all files, but we can be more specific
+    './src/components/**/*.{ts,tsx}',
+    './src/components/ui/**/*.{ts,tsx}',
+    './src/components/flow/**/*.{ts,tsx}',
+    './src/exports.tsx', // Important to include the exports file
+    './src/lib.css', // Include your CSS entry file
+    './src/index.css', // Include your CSS entry file
+    './src/safelist/**/*.{ts,tsx}', // Include safelist explicitly
   ],
   theme: {
     container: {

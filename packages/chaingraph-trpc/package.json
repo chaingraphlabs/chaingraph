@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.1.6-dev.10",
+  "version": "0.1.6-dev.33",
   "private": false,
   "description": "tRPC client and server for the BadAi Chaingraph",
   "license": "BUSL-1.1",
@@ -36,9 +36,10 @@
     "@tanstack/react-query": ">= 5.67.1"
   },
   "dependencies": {
-    "@trpc/client": "11.0.3",
-    "@trpc/react-query": "11.0.3",
-    "@trpc/server": "11.0.3",
+    "@trpc/client": "11.0.4",
+    "@trpc/react-query": "11.0.4",
+    "@trpc/server": "11.0.4",
+    "@trpc/tanstack-react-query": "^11.0.4",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
     "pg": "^8.14.1"

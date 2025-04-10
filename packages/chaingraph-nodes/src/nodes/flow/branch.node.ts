@@ -11,6 +11,7 @@ import { BaseNode, Input, Node, Output, String } from '@badaitech/chaingraph-typ
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'BranchNode',
   title: 'Branch',
   description: 'Controls flow based on condition',
   category: NODE_CATEGORIES.FLOW,

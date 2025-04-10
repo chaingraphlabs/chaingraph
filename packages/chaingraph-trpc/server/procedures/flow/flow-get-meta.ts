@@ -9,22 +9,12 @@
 import { z } from 'zod'
 import { publicProcedure } from '../../trpc'
 
-export const toUpperCase = publicProcedure
+export const getMeta = publicProcedure
   .input(z.string())
-  .query(({ input }) => {
-    return input.toUpperCase()
-  })
-
-export const complexData = publicProcedure
-  .query(() => {
-    return {
-      date: new Date(),
-      map: new Map([['key', 'value']]),
-      set: new Set([1, 2, 3]),
-      bigint: BigInt(9007199254740991),
-      nested: {
-        array: [1, 2, 3],
-        null: null,
-      },
+  .query(async ({ input: flowId, ctx }) => {
+    const flow = await ctx.flowStore.getFlow(flowId)
+    if (!flow) {
+      throw new Error(`Flow ${flowId} not found`)
     }
+    return flow.metadata
   })

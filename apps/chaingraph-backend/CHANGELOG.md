@@ -1,5 +1,235 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.6-dev.33
+
+### Patch Changes
+
+- New try to include all styles to the bundle
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.33
+  - @badaitech/chaingraph-types@0.1.6-dev.33
+  - @badaitech/chaingraph-trpc@0.1.6-dev.33
+
+## 0.1.6-dev.32
+
+### Patch Changes
+
+- adjust configs for styles
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.32
+  - @badaitech/chaingraph-types@0.1.6-dev.32
+  - @badaitech/chaingraph-trpc@0.1.6-dev.32
+
+## 0.1.6-dev.31
+
+### Patch Changes
+
+- Adjust build config to include styles to the npm bundle
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.31
+  - @badaitech/chaingraph-types@0.1.6-dev.31
+  - @badaitech/chaingraph-trpc@0.1.6-dev.31
+
+## 0.1.6-dev.30
+
+### Patch Changes
+
+- add styles export for the frontend lib
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.30
+  - @badaitech/chaingraph-types@0.1.6-dev.30
+  - @badaitech/chaingraph-trpc@0.1.6-dev.30
+
+## 0.1.6-dev.29
+
+### Patch Changes
+
+- Remove debug
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.29
+  - @badaitech/chaingraph-types@0.1.6-dev.29
+  - @badaitech/chaingraph-trpc@0.1.6-dev.29
+
+## 0.1.6-dev.28
+
+### Patch Changes
+
+- Try to explicitly provide nodes types instead of take it from the decorator reflection
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.28
+  - @badaitech/chaingraph-types@0.1.6-dev.28
+  - @badaitech/chaingraph-trpc@0.1.6-dev.28
+
+## 0.1.6-dev.27
+
+### Patch Changes
+
+- dirty hack to use static TRPC client
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.27
+  - @badaitech/chaingraph-types@0.1.6-dev.27
+  - @badaitech/chaingraph-trpc@0.1.6-dev.27
+
+## 0.1.6-dev.26
+
+### Patch Changes
+
+- Adjust root provider initialization
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.26
+  - @badaitech/chaingraph-types@0.1.6-dev.26
+  - @badaitech/chaingraph-trpc@0.1.6-dev.26
+
+## 0.1.6-dev.25
+
+### Patch Changes
+
+- Make nodeRegistry as param for the RootProvider
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.25
+  - @badaitech/chaingraph-types@0.1.6-dev.25
+  - @badaitech/chaingraph-trpc@0.1.6-dev.25
+
+## 0.1.6-dev.24
+
+### Patch Changes
+
+- Move initialize stores under providers in order to it has a way to use tRPC clients from hook
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.24
+  - @badaitech/chaingraph-types@0.1.6-dev.24
+  - @badaitech/chaingraph-trpc@0.1.6-dev.24
+
+## 0.1.6-dev.23
+
+### Patch Changes
+
+- Rewrite TRPC to use TanStack React Query
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.23
+  - @badaitech/chaingraph-types@0.1.6-dev.23
+  - @badaitech/chaingraph-trpc@0.1.6-dev.23
+
+## 0.1.6-dev.22
+
+### Patch Changes
+
+- trpc server exports
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.22
+  - @badaitech/chaingraph-types@0.1.6-dev.22
+  - @badaitech/chaingraph-trpc@0.1.6-dev.22
+
+## 0.1.6-dev.21
+
+### Patch Changes
+
+- Some changes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.21
+  - @badaitech/chaingraph-types@0.1.6-dev.21
+  - @badaitech/chaingraph-trpc@0.1.6-dev.21
+
+## 0.1.6-dev.20
+
+### Patch Changes
+
+- some changes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.20
+  - @badaitech/chaingraph-types@0.1.6-dev.20
+  - @badaitech/chaingraph-trpc@0.1.6-dev.20
+
+## 0.1.6-dev.19
+
+### Patch Changes
+
+- Add trpc properties to the root provider
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.19
+  - @badaitech/chaingraph-types@0.1.6-dev.19
+  - @badaitech/chaingraph-trpc@0.1.6-dev.19
+
+## 0.1.6-dev.18
+
+### Patch Changes
+
+- Add SuperJSON param to initializeJsonTransformers
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.18
+  - @badaitech/chaingraph-types@0.1.6-dev.18
+  - @badaitech/chaingraph-trpc@0.1.6-dev.18
+
+## 0.1.6-dev.17
+
+### Patch Changes
+
+- remove useNaviogate from the codebase
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.17
+  - @badaitech/chaingraph-types@0.1.6-dev.17
+  - @badaitech/chaingraph-trpc@0.1.6-dev.17
+
+## 0.1.6-dev.16
+
+### Patch Changes
+
+- make react and react dome as external lib
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.16
+  - @badaitech/chaingraph-types@0.1.6-dev.16
+  - @badaitech/chaingraph-trpc@0.1.6-dev.16
+
+## 0.1.6-dev.15
+
+### Patch Changes
+
+- change effector nodes stores imports path
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.15
+  - @badaitech/chaingraph-types@0.1.6-dev.15
+  - @badaitech/chaingraph-trpc@0.1.6-dev.15
+
+## 0.1.6-dev.14
+
+### Patch Changes
+
+- Change effector store imports order
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.14
+  - @badaitech/chaingraph-types@0.1.6-dev.14
+  - @badaitech/chaingraph-trpc@0.1.6-dev.14
+
+## 0.1.6-dev.13
+
+### Patch Changes
+
+- do not include react to the frontend npm lib
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.13
+  - @badaitech/chaingraph-types@0.1.6-dev.13
+  - @badaitech/chaingraph-trpc@0.1.6-dev.13
+
+## 0.1.6-dev.12
+
+### Patch Changes
+
+- Fix RootProviders
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.12
+  - @badaitech/chaingraph-types@0.1.6-dev.12
+  - @badaitech/chaingraph-trpc@0.1.6-dev.12
+
+## 0.1.6-dev.11
+
+### Patch Changes
+
+- Adjust imports for the fronend stores
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.11
+  - @badaitech/chaingraph-types@0.1.6-dev.11
+  - @badaitech/chaingraph-trpc@0.1.6-dev.11
+
 ## 0.1.6-dev.10
 
 ### Patch Changes

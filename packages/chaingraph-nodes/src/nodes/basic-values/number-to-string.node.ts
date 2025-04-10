@@ -19,6 +19,7 @@ import {
 import { Decimal } from 'decimal.js'
 
 @Node({
+  type: 'NumberToStringNode',
   title: 'Number to String',
   description: 'Converts a number to its string representation with precise decimal handling',
   category: 'data',

@@ -11,6 +11,7 @@ import { BaseNode, Node, Number, Output } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'NumberNode',
   title: 'Number Node',
   description: 'A node that outputs a number value.',
   category: NODE_CATEGORIES.BASIC_VALUES,

@@ -11,6 +11,7 @@ import { BaseNode, Node } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'GroupNode',
   title: 'Group',
   description: 'Nodes group',
   category: NODE_CATEGORIES.GROUP,

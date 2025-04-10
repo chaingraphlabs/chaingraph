@@ -7,12 +7,12 @@
  */
 
 import type { AddNodeEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
+import { getStaticTRPCClient } from '@/trpc/client'
 import { createEffect } from 'effector' // Backend node operations
 
 // Backend node operations
 export const addNodeToFlowFx = createEffect(async (event: AddNodeEvent) => {
-  return trpcClient.flow.addNode.mutate({
+  return getStaticTRPCClient().flow.addNode.mutate({
     flowId: event.flowId,
     nodeType: event.nodeType,
     position: event.position,
@@ -24,7 +24,7 @@ export const removeNodeFromFlowFx = createEffect(async (params: {
   flowId: string
   nodeId: string
 }) => {
-  return trpcClient.flow.removeNode.mutate(params)
+  return getStaticTRPCClient().flow.removeNode.mutate(params)
 })
 
 export const updateNodeUIFx = createEffect(async (params: UpdateNodeUIEvent): Promise<UpdateNodeUIEvent> => {
@@ -32,7 +32,7 @@ export const updateNodeUIFx = createEffect(async (params: UpdateNodeUIEvent): Pr
     throw new Error('UI metadata is required')
   }
 
-  return trpcClient.flow.updateNodeUI.mutate({
+  return getStaticTRPCClient().flow.updateNodeUI.mutate({
     flowId: params.flowId,
     nodeId: params.nodeId,
     ui: params.ui,
@@ -41,8 +41,7 @@ export const updateNodeUIFx = createEffect(async (params: UpdateNodeUIEvent): Pr
 })
 
 export const updateNodeParentFx = createEffect(async (params: UpdateNodeParent): Promise<UpdateNodeParent> => {
-  console.log('PARENT FX:', params)
-  return trpcClient.flow.updateNodeParent.mutate({
+  return getStaticTRPCClient().flow.updateNodeParent.mutate({
     flowId: params.flowId,
     nodeId: params.nodeId,
     parentNodeId: params.parentNodeId,
@@ -52,7 +51,7 @@ export const updateNodeParentFx = createEffect(async (params: UpdateNodeParent):
 })
 
 export const baseUpdateNodePositionFx = createEffect(async (params: UpdateNodePosition) => {
-  return trpcClient.flow.updateNodePosition.mutate({
+  return getStaticTRPCClient().flow.updateNodePosition.mutate({
     ...params,
     version: params.version,
   })

@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
+import { getStaticTRPCClient } from '@/trpc/client'
 import { createEffect } from 'effector'
 
 export const fetchCategorizedNodesFx = createEffect(async () => {
-  const response = await trpcClient.nodeRegistry.getCategorizedNodes.query()
+  const response = await getStaticTRPCClient().nodeRegistry.getCategorizedNodes.query()
 
   return response
 })

@@ -53,6 +53,7 @@ class User {
 }
 
 @Node({
+  type: 'TestNode',
   title: 'Test node',
   description: 'Test node',
   category: NODE_CATEGORIES.UTILITIES,

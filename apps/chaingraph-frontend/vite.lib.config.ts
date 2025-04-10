@@ -39,6 +39,11 @@ export default defineConfig({
       },
     }),
   ],
+  css: {
+    postcss: './postcss.lib.config.js',
+    // Disable modules to keep class names intact
+    modules: false,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -74,6 +79,8 @@ export default defineConfig({
   build: {
     minify: false,
     sourcemap: true,
+    cssCodeSplit: false,
+    cssMinify: false, // Keep CSS readable for debugging
     outDir: 'dist/lib',
     lib: {
       entry: 'src/exports.tsx',
@@ -95,6 +102,7 @@ export default defineConfig({
           'react-dom': 'ReactDOM',
           'react/jsx-runtime': 'jsxRuntime',
         },
+        assetFileNames: 'chaingraph-frontend.css',
       },
     },
     commonjsOptions: {

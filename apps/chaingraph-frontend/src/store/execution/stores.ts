@@ -14,7 +14,7 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
+import { getStaticTRPCClient } from '@/trpc/client'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { attach, combine, createEffect, createStore } from 'effector'
 import {
@@ -56,7 +56,7 @@ export const createExecutionFx = attach({
       const { flowId, debug } = payload
       const breakpoints = state.breakpoints
 
-      const response = await trpcClient.execution.create.mutate({
+      const response = await getStaticTRPCClient().execution.create.mutate({
         flowId,
         options: {
           debug,
@@ -78,36 +78,36 @@ export const createExecutionFx = attach({
 })
 
 export const startExecutionFx = createEffect(async (executionId: string) => {
-  return trpcClient.execution.start.mutate({ executionId })
+  return getStaticTRPCClient().execution.start.mutate({ executionId })
 })
 
 export const pauseExecutionFx = createEffect(async (executionId: string) => {
-  return trpcClient.execution.pause.mutate({ executionId })
+  return getStaticTRPCClient().execution.pause.mutate({ executionId })
 })
 
 export const resumeExecutionFx = createEffect(async (executionId: string) => {
-  return trpcClient.execution.resume.mutate({ executionId })
+  return getStaticTRPCClient().execution.resume.mutate({ executionId })
 })
 
 export const stopExecutionFx = createEffect(async (executionId: string) => {
-  return trpcClient.execution.stop.mutate({ executionId })
+  return getStaticTRPCClient().execution.stop.mutate({ executionId })
 })
 
 // Debug effects
 export const addBreakpointFx = createEffect(
   async ({ executionId, nodeId }: { executionId: string, nodeId: string }) => {
-    return trpcClient.execution.debug.addBreakpoint.mutate({ executionId, nodeId })
+    return getStaticTRPCClient().execution.debug.addBreakpoint.mutate({ executionId, nodeId })
   },
 )
 
 export const removeBreakpointFx = createEffect(
   async ({ executionId, nodeId }: { executionId: string, nodeId: string }) => {
-    return trpcClient.execution.debug.removeBreakpoint.mutate({ executionId, nodeId })
+    return getStaticTRPCClient().execution.debug.removeBreakpoint.mutate({ executionId, nodeId })
   },
 )
 
 export const stepExecutionFx = createEffect(async (executionId: string) => {
-  return trpcClient.execution.debug.step.mutate({ executionId })
+  return getStaticTRPCClient().execution.debug.step.mutate({ executionId })
 })
 
 // effect for checking terminal status

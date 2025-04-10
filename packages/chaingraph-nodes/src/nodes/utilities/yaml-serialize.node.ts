@@ -11,6 +11,7 @@ import { BaseNode, Boolean, Input, Node, Output, PortAny, String } from '@badait
 import { stringify } from 'yaml'
 
 @Node({
+  type: 'YAMLSerializerNode',
   title: 'YAML Serializer',
   description: 'Converts any data structure to a YAML string',
   category: 'utilities',

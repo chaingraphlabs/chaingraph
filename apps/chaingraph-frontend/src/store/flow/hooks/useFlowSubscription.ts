@@ -7,12 +7,12 @@
  */
 
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types'
-import { trpcReact } from '@badaitech/chaingraph-trpc/client'
+import { useTRPC } from '@badaitech/chaingraph-trpc/client'
 import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
 import { skipToken } from '@tanstack/react-query'
+import { useSubscription } from '@trpc/tanstack-react-query'
 import { useUnit } from 'effector-react'
 import { useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
@@ -39,12 +39,18 @@ import {
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '../stores'
 import { FlowSubscriptionStatus } from '../types'
 
+// export function useFlowSubscription2() {
+//   const trpc = useTRPC()
+//   const activeFlowId = useUnit($activeFlowId)
+//
+//
+// }
+
 export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)
   const isFlowsLoading = useUnit($isFlowsLoading)
   const subscriptionState = useUnit($flowSubscriptionState)
   const nodes = useUnit($nodes)
-  const navigate = useNavigate()
 
   // Create event handlers map
   const eventHandlers: FlowEventHandlerMap = useMemo(() => ({
@@ -287,8 +293,8 @@ export function useFlowSubscription() {
     },
   }), [eventHandlers])
 
-  // Subscribe to flow events using tRPC
-  const subscription = trpcReact.flow.subscribeToEvents.useSubscription(
+  const trpc = useTRPC()
+  const opts = trpc.flow.subscribeToEvents.subscriptionOptions(
     activeFlowId
       ? {
           flowId: activeFlowId,
@@ -313,11 +319,14 @@ export function useFlowSubscription() {
           code: error.data?.code,
           timestamp: new Date(),
         })
-
-        navigate('/flows')
       },
     },
   )
+
+  const subscription = useSubscription({
+    ...opts,
+    enabled: !!activeFlowId,
+  })
 
   // Update subscription status on unmount
   useEffect(() => {

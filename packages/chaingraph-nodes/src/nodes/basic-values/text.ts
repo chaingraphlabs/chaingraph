@@ -11,6 +11,7 @@ import { BaseNode, Node, Output, String } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'TextNode',
   title: 'Text Node',
   description: 'A node that outputs a text string.',
   category: NODE_CATEGORIES.BASIC_VALUES,

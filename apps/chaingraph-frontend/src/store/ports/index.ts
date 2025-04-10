@@ -9,6 +9,5 @@
 export * from './effects'
 export * from './events'
 export { usePort } from './hooks/usePort'
-export * from './init'
 export * from './stores'
 export * from './types'

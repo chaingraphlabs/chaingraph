@@ -11,6 +11,7 @@ import { BaseNode, Input, Node, Output, Number as PortNumber } from '@badaitech/
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'RandomNode',
   title: 'Random Number',
   description: 'Generate a random number within a given range with an optional step.',
   category: NODE_CATEGORIES.MATH,
