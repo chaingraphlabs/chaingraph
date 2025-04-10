@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.6-dev.10
+
+### Patch Changes
+
+- Apply fix effector
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.10
+  - @badaitech/chaingraph-types@0.1.6-dev.10
+
 ## 0.1.6-dev.9
 
 ### Patch Changes

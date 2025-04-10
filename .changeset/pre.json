@@ -11,6 +11,7 @@
     "@badaitech/typescript-config": "0.1.5"
   },
   "changesets": [
+    "afraid-shrimps-post",
     "all-islands-flow",
     "five-boats-sort",
     "gold-times-read",

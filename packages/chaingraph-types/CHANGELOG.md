@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.1.6-dev.10
+
+### Patch Changes
+
+- Apply fix effector
+
 ## 0.1.6-dev.9
 
 ### Patch Changes
