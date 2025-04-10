@@ -93,8 +93,8 @@ export function PortComponent(props: PortProps) {
         <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} context={context} />
       )
     }
-    case 'stream':
     // case 'secret':
+    case 'stream':
     case 'any': {
       return <StubPort port={port} />
     }
