@@ -42,6 +42,33 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'vite-plugin-node-polyfills/shims/buffer': path.resolve(
+        __dirname,
+        'node_modules',
+        'vite-plugin-node-polyfills',
+        'shims',
+        'buffer',
+        'dist',
+        'index.cjs',
+      ),
+      'vite-plugin-node-polyfills/shims/global': path.resolve(
+        __dirname,
+        'node_modules',
+        'vite-plugin-node-polyfills',
+        'shims',
+        'global',
+        'dist',
+        'index.cjs',
+      ),
+      'vite-plugin-node-polyfills/shims/process': path.resolve(
+        __dirname,
+        'node_modules',
+        'vite-plugin-node-polyfills',
+        'shims',
+        'process',
+        'dist',
+        'index.cjs',
+      ),
     },
   },
   build: {
@@ -57,16 +84,16 @@ export default defineConfig({
     rollupOptions: {
       // Only keep React and ReactDOM as external dependencies
       external: [
-        // 'react',
-        // 'react-dom',
-        // 'react/jsx-runtime',
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
       ],
       output: {
         // Bundle everything else together
         globals: {
-          // 'react': 'React',
-          // 'react-dom': 'ReactDOM',
-          // 'react/jsx-runtime': 'jsxRuntime',
+          'react': 'React',
+          'react-dom': 'ReactDOM',
+          'react/jsx-runtime': 'jsxRuntime',
         },
       },
     },
