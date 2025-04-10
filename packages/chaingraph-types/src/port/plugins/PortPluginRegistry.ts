@@ -27,7 +27,6 @@ import {
   ObjectPortPlugin,
   PortError,
   PortErrorType,
-  SecretPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
 } from '../../port'
@@ -101,7 +100,7 @@ export class PortPluginRegistry {
       StreamPortPlugin,
       AnyPortPlugin,
       BooleanPortPlugin,
-      SecretPortPlugin,
+      // SecretPortPlugin,
     ]
 
     return plugins

@@ -1,5 +1,55 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.6-dev.4
+
+### Patch Changes
+
+- One more dev bundle testing
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.4
+  - @badaitech/chaingraph-types@0.1.6-dev.4
+  - @badaitech/chaingraph-trpc@0.1.6-dev.4
+
+## 0.1.6-dev.3
+
+### Patch Changes
+
+- Next try
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.3
+  - @badaitech/chaingraph-types@0.1.6-dev.3
+  - @badaitech/chaingraph-trpc@0.1.6-dev.3
+
+## 0.1.6-dev.2
+
+### Patch Changes
+
+- adjust the frontend lib vite config
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.2
+  - @badaitech/chaingraph-types@0.1.6-dev.2
+  - @badaitech/chaingraph-trpc@0.1.6-dev.2
+
+## 0.1.6-dev.1
+
+### Patch Changes
+
+- remove rollupOptions external from the frontend lib package vite config
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.1
+  - @badaitech/chaingraph-types@0.1.6-dev.1
+  - @badaitech/chaingraph-trpc@0.1.6-dev.1
+
+## 0.1.6-dev.0
+
+### Patch Changes
+
+- Remove secret port type and all secret usages
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.0
+  - @badaitech/chaingraph-types@0.1.6-dev.0
+  - @badaitech/chaingraph-trpc@0.1.6-dev.0
+
 ## 0.1.5
 
 ### Patch Changes

@@ -1,19 +1,26 @@
 {
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
+    "composite": true,
     "rootDir": "src",
+    "moduleResolution": "bundler",
     "declaration": true,
-    "declarationDir": "dist/lib",
-    "emitDeclarationOnly": false,
-    "noEmit": false
-  },
-  "paths": {
-    "@/*": ["./*"]
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "dist/lib",
+    "sourceMap": true
   },
   "include": [
-    "src/exports.tsx",
-    "src/components/flow/**/*",
-    "src/providers/**/*"
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ],
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.stories.tsx",
+    "src/main.tsx",
+    "src/App.tsx"
+  ]
 }

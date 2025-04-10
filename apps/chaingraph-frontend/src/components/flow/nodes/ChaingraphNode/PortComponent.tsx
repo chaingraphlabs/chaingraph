@@ -19,9 +19,7 @@ import type {
   ObjectPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
-import {
-  BooleanPort,
-} from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
+import { BooleanPort } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
 import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
@@ -96,7 +94,7 @@ export function PortComponent(props: PortProps) {
       )
     }
     case 'stream':
-    case 'secret':
+    // case 'secret':
     case 'any': {
       return <StubPort port={port} />
     }
