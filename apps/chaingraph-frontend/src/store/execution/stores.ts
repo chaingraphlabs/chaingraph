@@ -14,7 +14,7 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { getStaticTRPCClient } from '@/trpc/client'
+import { $trpcClient } from '@/store/trpc/store'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { attach, combine, createEffect, createStore } from 'effector'
 import {
@@ -49,65 +49,110 @@ export const $executionState = createStore<ExecutionState>(initialState)
 
 // Control effects
 export const createExecutionFx = attach({
-  source: $executionState,
-  effect: createEffect(
-    async (params: { state: ExecutionState, payload: CreateExecutionOptions }) => {
-      const { state, payload } = params
-      const { flowId, debug } = payload
-      const breakpoints = state.breakpoints
-
-      const response = await getStaticTRPCClient().execution.create.mutate({
-        flowId,
-        options: {
-          debug,
-          breakpoints: debug ? Array.from(breakpoints) : [],
-          execution: {
-            maxConcurrency: 10,
-            nodeTimeoutMs: 90000,
-            flowTimeoutMs: 300000,
-          },
-        },
-      })
-      return response.executionId
-    },
-  ),
-  mapParams: (payload: CreateExecutionOptions, state: ExecutionState) => ({
-    state,
-    payload,
+  source: combine({
+    client: $trpcClient,
+    state: $executionState,
   }),
+  effect: async (sources, payload: CreateExecutionOptions) => {
+    const { client, state } = sources
+    const { flowId, debug } = payload
+    const breakpoints = state.breakpoints
+
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+
+    const response = await client.execution.create.mutate({
+      flowId,
+      options: {
+        debug,
+        breakpoints: debug ? Array.from(breakpoints) : [],
+        execution: {
+          maxConcurrency: 10,
+          nodeTimeoutMs: 90000,
+          flowTimeoutMs: 300000,
+        },
+      },
+    })
+    return response.executionId
+  },
 })
 
-export const startExecutionFx = createEffect(async (executionId: string) => {
-  return getStaticTRPCClient().execution.start.mutate({ executionId })
+export const startExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.start.mutate({ executionId })
+  },
 })
 
-export const pauseExecutionFx = createEffect(async (executionId: string) => {
-  return getStaticTRPCClient().execution.pause.mutate({ executionId })
+export const pauseExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.pause.mutate({ executionId })
+  },
 })
 
-export const resumeExecutionFx = createEffect(async (executionId: string) => {
-  return getStaticTRPCClient().execution.resume.mutate({ executionId })
+export const resumeExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.resume.mutate({ executionId })
+  },
 })
 
-export const stopExecutionFx = createEffect(async (executionId: string) => {
-  return getStaticTRPCClient().execution.stop.mutate({ executionId })
+export const stopExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.stop.mutate({ executionId })
+  },
 })
 
 // Debug effects
-export const addBreakpointFx = createEffect(
-  async ({ executionId, nodeId }: { executionId: string, nodeId: string }) => {
-    return getStaticTRPCClient().execution.debug.addBreakpoint.mutate({ executionId, nodeId })
+export const addBreakpointFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: { executionId: string, nodeId: string }) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.debug.addBreakpoint.mutate({
+      executionId: params.executionId,
+      nodeId: params.nodeId,
+    })
   },
-)
+})
 
-export const removeBreakpointFx = createEffect(
-  async ({ executionId, nodeId }: { executionId: string, nodeId: string }) => {
-    return getStaticTRPCClient().execution.debug.removeBreakpoint.mutate({ executionId, nodeId })
+export const removeBreakpointFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: { executionId: string, nodeId: string }) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.debug.removeBreakpoint.mutate({
+      executionId: params.executionId,
+      nodeId: params.nodeId,
+    })
   },
-)
+})
 
-export const stepExecutionFx = createEffect(async (executionId: string) => {
-  return getStaticTRPCClient().execution.debug.step.mutate({ executionId })
+export const stepExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.debug.step.mutate({ executionId })
+  },
 })
 
 // effect for checking terminal status

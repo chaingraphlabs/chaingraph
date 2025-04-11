@@ -77,4 +77,6 @@ export function createTRPCClient(
   })
 }
 
+export type TRPCClient = ReturnType<typeof createTRPCClient>
+
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>()

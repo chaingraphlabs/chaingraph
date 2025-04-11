@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/badai-api",
   "type": "module",
-  "version": "0.1.6-dev.33",
+  "version": "0.1.6-dev.41",
   "private": false,
   "description": "Bad AI GraphQL API client",
   "license": "BUSL-1.1",

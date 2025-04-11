@@ -6,9 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import './categories/init'
-import './flow/init'
-import './nodes/init'
-import './ports/init'
-import './edges/init'
-import './execution/init'
+import { $trpcClient } from '@/store/trpc/store'
+import { useUnit } from 'effector-react'
+
+export function useTrpCClient() {
+  const trpcClient = useUnit($trpcClient)
+  if (!trpcClient) {
+    throw new Error('TRPC client is not initialized')
+  }
+
+  return trpcClient
+}

@@ -117,7 +117,6 @@ module.exports = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: 0 },
         },
-
         'glow': {
           '0%, 100%': { boxShadow: '0 0 10px rgba(59,130,246,0.5)' },
           '50%': { boxShadow: '0 0 18px rgba(59,130,246,0.7)' },

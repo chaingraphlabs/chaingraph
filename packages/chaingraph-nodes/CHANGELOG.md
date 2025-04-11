@@ -1,5 +1,69 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.6-dev.41
+
+### Patch Changes
+
+- move node samples to the store file
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.41
+
+## 0.1.6-dev.40
+
+### Patch Changes
+
+- Add effector stores import file to root provider
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.40
+
+## 0.1.6-dev.39
+
+### Patch Changes
+
+- Rewrite trpc client initialization
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.39
+
+## 0.1.6-dev.38
+
+### Patch Changes
+
+- Play around effector stores
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.38
+
+## 0.1.6-dev.37
+
+### Patch Changes
+
+- Play around effector stores to make it work
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.37
+
+## 0.1.6-dev.36
+
+### Patch Changes
+
+- add effector logs
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.36
+
+## 0.1.6-dev.35
+
+### Patch Changes
+
+- Add effector logger, adjust static trpc client creation without duplicates
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.35
+
+## 0.1.6-dev.34
+
+### Patch Changes
+
+- add styles
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.34
+
 ## 0.1.6-dev.33
 
 ### Patch Changes

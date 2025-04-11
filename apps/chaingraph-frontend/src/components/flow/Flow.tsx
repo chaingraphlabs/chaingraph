@@ -19,6 +19,7 @@ import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
+import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
   $activeFlowMetadata,
@@ -73,7 +74,13 @@ function ExecutionComponent() {
   )
 }
 
-function Flow() {
+export interface FlowProps {
+  className?: string
+}
+
+function Flow({
+  className,
+}: FlowProps) {
   // useFlowDebug()
 
   useFlowSubscription()
@@ -270,87 +277,88 @@ function Flow() {
   // })
 
   return (
-    <div className="chaingraph-root">
-      <div
-        className="w-full h-full relative"
-        ref={reactFlowWrapper}
-        onContextMenu={onContextMenu}
-      >
-        <div className="absolute top-4 right-4 z-50">
-          <SubscriptionStatus
-            status={subscriptionState.status}
-            className="shadow-lg"
-          />
-        </div>
-
-        <ReactFlow
-          nodes={nodes}
-          nodeTypes={nodeTypes}
-          edges={edges}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          // onEdgesChange={onEdgesChange}
-          onInit={onInit}
-          onConnect={onConnect}
-          onEdgesChange={onEdgesChange}
-          onReconnect={onReconnect}
-          onReconnectStart={onReconnectStart}
-          onReconnectEnd={onReconnectEnd}
-          // onReconnect={onReconnect}
-          // onReconnectStart={onReconnectStart}
-          // onReconnectEnd={onReconnectEnd}
-          // onNodeDrag={onNodeDrag}
-          onNodeDragStop={onNodeDragStop}
-          panOnScroll
-          onViewportChange={onViewportChange}
-          fitView
-          preventScrolling
-          defaultViewport={defaultViewport}
-          defaultEdgeOptions={defaultEdgeOptions}
-          className="bg-background"
-          minZoom={0.2}
-          maxZoom={2}
-          nodeDragThreshold={5}
-
-          // Add these important properties for performance:
-          nodesFocusable={false}
-          edgesFocusable={false}
-          // This is crucial - tells React Flow to use shallow comparison
-          // when checking if nodes have changed
-          nodeExtent={[
-            [-10000, -10000],
-            [10000, 10000],
-          ]}
-        >
-          <Background />
-          {/* <Controls position="bottom-right" /> */}
-          <StyledControls position="bottom-right" />
-
-          {activeFlow && (
-            <FlowControlPanel />
-          )}
-
-          <div className="absolute top-4 left-4 z-50">
-            {/* <ExecutionComponent /> */}
-
-            <FPSCounter />
-          </div>
-        </ReactFlow>
-
-        {/* Context Menu */}
-        <AnimatePresence>
-          {(activeFlow && contextMenu) && (
-            <NodeContextMenu
-              position={contextMenu}
-              onSelect={handleNodeSelect}
-              onClose={() => setContextMenu(null)}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Show empty state when no flow is selected */}
-        {!activeFlow && <FlowEmptyState />}
+    <div
+      className={cn(
+        'w-full h-full relative chaingraph-root',
+        className,
+      )}
+      ref={reactFlowWrapper}
+      onContextMenu={onContextMenu}
+    >
+      <div className="absolute top-4 right-4 z-50">
+        <SubscriptionStatus
+          status={subscriptionState.status}
+          className="shadow-lg"
+        />
       </div>
+
+      <ReactFlow
+        nodes={nodes}
+        nodeTypes={nodeTypes}
+        edges={edges}
+        edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        // onEdgesChange={onEdgesChange}
+        onInit={onInit}
+        onConnect={onConnect}
+        onEdgesChange={onEdgesChange}
+        onReconnect={onReconnect}
+        onReconnectStart={onReconnectStart}
+        onReconnectEnd={onReconnectEnd}
+        // onReconnect={onReconnect}
+        // onReconnectStart={onReconnectStart}
+        // onReconnectEnd={onReconnectEnd}
+        // onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
+        panOnScroll
+        onViewportChange={onViewportChange}
+        fitView
+        preventScrolling
+        defaultViewport={defaultViewport}
+        defaultEdgeOptions={defaultEdgeOptions}
+        className="bg-background"
+        minZoom={0.2}
+        maxZoom={2}
+        nodeDragThreshold={5}
+
+        // Add these important properties for performance:
+        nodesFocusable={false}
+        edgesFocusable={false}
+        // This is crucial - tells React Flow to use shallow comparison
+        // when checking if nodes have changed
+        nodeExtent={[
+          [-10000, -10000],
+          [10000, 10000],
+        ]}
+      >
+        <Background />
+        {/* <Controls position="bottom-right" /> */}
+        <StyledControls position="bottom-right" />
+
+        {activeFlow && (
+          <FlowControlPanel />
+        )}
+
+        <div className="absolute top-4 left-4 z-50">
+          {/* <ExecutionComponent /> */}
+
+          <FPSCounter />
+        </div>
+      </ReactFlow>
+
+      {/* Context Menu */}
+      <AnimatePresence>
+        {(activeFlow && contextMenu) && (
+          <NodeContextMenu
+            position={contextMenu}
+            onSelect={handleNodeSelect}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Show empty state when no flow is selected */}
+      {!activeFlow && <FlowEmptyState />}
     </div>
   )
 }

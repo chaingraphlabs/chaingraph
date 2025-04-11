@@ -59,8 +59,8 @@ const throttledUpdateNodePositionLocal = accumulateAndSample({
 })
 
 sample({
-  clock: throttledUpdateNodePositionLocal,
-  // clock: updateNodePosition,
+  // clock: throttledUpdateNodePositionLocal,
+  clock: updateNodePosition,
   target: [updateNodePositionLocal],
 })
 

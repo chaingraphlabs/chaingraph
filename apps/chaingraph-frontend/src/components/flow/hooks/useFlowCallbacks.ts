@@ -36,11 +36,15 @@ export function useFlowCallbacks() {
   // const { getNode, getNodes } = useReactFlow()
   const edges = useUnit($edges)
 
-  const edgeViews = useMemo(() =>
-    edges.map(edge => ({
+  const edgeViews = useMemo(() => {
+    if (!activeFlow || !nodes || !edges)
+      return []
+
+    return edges.map(edge => ({
       sourceNode: nodes[edge.sourceNodeId],
       targetNode: nodes[edge.targetNodeId],
-    })), [edges, nodes])
+    }))
+  }, [activeFlow, edges, nodes])
 
   // Ref to track edge reconnection state
   const reconnectSuccessful = useRef(false)

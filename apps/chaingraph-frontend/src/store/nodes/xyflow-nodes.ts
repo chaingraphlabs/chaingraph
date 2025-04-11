@@ -12,7 +12,6 @@ import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { combine } from 'effector'
 import { $categoryMetadata } from '../categories/stores'
-import { $nodePositions } from './node-positions'
 import { $nodes } from './stores'
 
 /**
@@ -22,8 +21,9 @@ import { $nodes } from './stores'
 export const $xyflowNodes = combine(
   $nodes,
   $categoryMetadata,
-  $nodePositions,
-  (nodes, categoryMetadata, nodePositions) => {
+  // $nodePositions,
+  // (nodes, categoryMetadata, nodePositions) => {
+  (nodes, categoryMetadata) => {
     if (!nodes || Object.keys(nodes).length === 0) {
       return []
     }
@@ -53,7 +53,8 @@ export const $xyflowNodes = combine(
         : 'chaingraphNode'
 
       // Get position from the positions store if available
-      const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+      // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+      const position = node.metadata.ui?.position || DefaultPosition
 
       // Round positions to integers for better rendering performance
       const nodePositionRound = {

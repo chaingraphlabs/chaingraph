@@ -8,12 +8,17 @@
 
 'use client'
 
+import 'reflect-metadata'
+
 /**
  * Import this CSS file to use the ChainGraph components:
  * import '@badaitech/chaingraph-frontend/style.css';
  */
 
-// import './index.css'
+import '@radix-ui/themes/styles.css'
+import '@xyflow/react/dist/style.css'
+import './index.css'
+
 import './safelist/tailwind-safelist' // Import the safelist file
 import './safelist/shadcn-safelist' // Import the safelist file
 
@@ -24,4 +29,3 @@ export * from './components/ui'
 export { RootProvider } from './providers/RootProvider'
 export * from './providers/ZoomProvider'
 export * from './store'
-export { initializeStores } from './store/init'

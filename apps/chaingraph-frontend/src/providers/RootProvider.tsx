@@ -9,11 +9,10 @@
 import type { CategorizedNodes, FlowMetadata } from '@badaitech/chaingraph-types'
 import { TooltipProvider } from '@/components/ui'
 
-import { initializeStores } from '@/store/init'
-import { setStaticTRPCClient } from '@/trpc/client'
+import { initializeStores } from '@/store/init-stores-fx'
+import { $trpcClient, createTRPCClientEvent } from '@/store/trpc/store'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import {
-  createTRPCClient,
   getQueryClient,
   TRPCProvider,
 } from '@badaitech/chaingraph-trpc/client'
@@ -25,11 +24,15 @@ import {
 import { Theme } from '@radix-ui/themes'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactFlowProvider } from '@xyflow/react'
-import { useState } from 'react'
+import { attachLogger } from 'effector-logger'
+import { useUnit } from 'effector-react'
 import SuperJSON from 'superjson'
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ZoomProvider } from './ZoomProvider'
+
+import '../store'
+import '../store/init'
 
 interface RootProviderProps {
   children: React.ReactNode
@@ -46,6 +49,14 @@ export function RootProvider({
   superjsonCustom,
   nodeRegistry,
 }: RootProviderProps) {
+  // effector logger
+  attachLogger()
+
+  createTRPCClientEvent({
+    trpcURL: trpcURL ?? DefaultTRPCURL,
+    superjsonCustom: superjsonCustom ?? SuperJSON,
+  })
+
   initializeNodes((_nodeRegistry: NodeRegistry) => {
     if (nodeRegistry) {
       nodeRegistry.copyFrom(_nodeRegistry)
@@ -55,10 +66,12 @@ export function RootProvider({
   })
 
   // Static tRPC needs for the effector effects
-  setStaticTRPCClient(createTRPCClient({
-    url: trpcURL ?? DefaultTRPCURL,
-    superjsonCustom: superjsonCustom ?? SuperJSON,
-  }))
+  // if (!isStaticTRPCClientExists()) {
+  //   setStaticTRPCClient(createTRPCClient({
+  //     url: trpcURL ?? DefaultTRPCURL,
+  //     superjsonCustom: superjsonCustom ?? SuperJSON,
+  //   }))
+  // }
 
   initializeStores((categorizedNodes: CategorizedNodes[], flows: FlowMetadata[]) => {
     console.log('Stores initialized successfully')
@@ -73,10 +86,7 @@ export function RootProvider({
   )
 
   const queryClient = getQueryClient()
-  const [trpcClient] = useState(() => createTRPCClient({
-    url: trpcURL ?? DefaultTRPCURL,
-    superjsonCustom: superjsonCustom ?? SuperJSON,
-  }))
+  const trpcClient = useUnit($trpcClient)
 
   return (
     // <ThemeProvider>

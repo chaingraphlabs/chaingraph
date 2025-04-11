@@ -7,28 +7,52 @@
  */
 
 import type { CreateFlowEvent, UpdateFlowEvent } from './events'
-import { getStaticTRPCClient } from '@/trpc/client'
-import { createEffect } from 'effector'
+import { attach } from 'effector'
+import { $trpcClient } from '../trpc/store'
 
 // Effect for loading flows list
-export const loadFlowsListFx = createEffect(async () => {
-  return getStaticTRPCClient().flow.list.query()
+export const loadFlowsListFx = attach({
+  source: $trpcClient,
+  effect: async (client) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.list.query()
+  },
 })
 
 // Effect for creating new flow
-export const createFlowFx = createEffect(async (event: CreateFlowEvent) => {
-  return getStaticTRPCClient().flow.create.mutate(event.metadata)
+export const createFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: CreateFlowEvent) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.create.mutate(event.metadata)
+  },
 })
 
 // Effect for editing flow
-export const editFlowFx = createEffect(async (event: UpdateFlowEvent) => {
-  return getStaticTRPCClient().flow.edit.mutate({
-    flowId: event.id,
-    ...event.metadata,
-  })
+export const editFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: UpdateFlowEvent) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.edit.mutate({
+      flowId: event.id,
+      ...event.metadata,
+    })
+  },
 })
 
 // Effect for deleting flow
-export const deleteFlowFx = createEffect(async (id: string) => {
-  return getStaticTRPCClient().flow.delete.mutate(id)
+export const deleteFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, id: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.delete.mutate(id)
+  },
 })

@@ -1,5 +1,53 @@
 # @badaitech/typescript-config
 
+## 0.1.6-dev.41
+
+### Patch Changes
+
+- move node samples to the store file
+
+## 0.1.6-dev.40
+
+### Patch Changes
+
+- Add effector stores import file to root provider
+
+## 0.1.6-dev.39
+
+### Patch Changes
+
+- Rewrite trpc client initialization
+
+## 0.1.6-dev.38
+
+### Patch Changes
+
+- Play around effector stores
+
+## 0.1.6-dev.37
+
+### Patch Changes
+
+- Play around effector stores to make it work
+
+## 0.1.6-dev.36
+
+### Patch Changes
+
+- add effector logs
+
+## 0.1.6-dev.35
+
+### Patch Changes
+
+- Add effector logger, adjust static trpc client creation without duplicates
+
+## 0.1.6-dev.34
+
+### Patch Changes
+
+- add styles
+
 ## 0.1.6-dev.33
 
 ### Patch Changes

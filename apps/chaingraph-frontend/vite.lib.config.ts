@@ -26,6 +26,9 @@ export default defineConfig({
     }),
     react({
       tsDecorators: true,
+      plugins: [
+        ['@effector/swc-plugin', {}],
+      ],
     }),
     tsconfigPaths({
       configNames: ['tsconfig.json', 'tsconfig.lib.json'],

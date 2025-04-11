@@ -86,3 +86,5 @@ export {
   useTRPC,
   useTRPCClient,
 } from './trpc'
+
+export type { TRPCClient } from './trpc'
