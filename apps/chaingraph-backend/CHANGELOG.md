@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.6-dev.42
+
+### Patch Changes
+
+- Include badaitech package to external one
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.42
+  - @badaitech/chaingraph-types@0.1.6-dev.42
+  - @badaitech/chaingraph-trpc@0.1.6-dev.42
+
 ## 0.1.6-dev.41
 
 ### Patch Changes

@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.6-dev.41",
+  "version": "0.1.6-dev.42",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@fontsource/inter": "^5.2.5",
@@ -106,7 +107,6 @@
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@chromatic-com/storybook": "^3.2.6",
     "@effector/swc-plugin": "^0.7.0",

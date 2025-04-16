@@ -8,61 +8,61 @@
 
 import type { IPortConfig } from '@badaitech/chaingraph-types'
 import type { PortState } from './types'
-import { createEvent } from 'effector'
+import { portsDomain } from '../domains'
 
 // Port CRUD events
-export const updatePort = createEvent<{
+export const updatePort = portsDomain.createEvent<{
   id: string
   data: Partial<PortState>
   nodeVersion: number
 }>()
 
-export const updatePortValue = createEvent<{
+export const updatePortValue = portsDomain.createEvent<{
   nodeId: string
   portId: string
   value: any
 }>()
 
-export const updatePortUI = createEvent<{
+export const updatePortUI = portsDomain.createEvent<{
   nodeId: string
   portId: string
   ui: any
 }>()
 
 // Value updates
-export const requestUpdatePortValue = createEvent<{
+export const requestUpdatePortValue = portsDomain.createEvent<{
   nodeId: string
   portId: string
   value: any
 }>()
 
 // UI updates
-export const requestUpdatePortUI = createEvent<{
+export const requestUpdatePortUI = portsDomain.createEvent<{
   nodeId: string
   portId: string
   ui: any
 }>()
 
 // Object port updates
-export const addFieldObjectPort = createEvent<{
+export const addFieldObjectPort = portsDomain.createEvent<{
   nodeId: string
   portId: string
   config: IPortConfig
   key: string
 }>()
-export const removeFieldObjectPort = createEvent<{
+export const removeFieldObjectPort = portsDomain.createEvent<{
   nodeId: string
   portId: string
   key: string
 }>()
 
-export const appendElementArrayPort = createEvent<{
+export const appendElementArrayPort = portsDomain.createEvent<{
   nodeId: string
   portId: string
   value: any
 }>()
 
-export const removeElementArrayPort = createEvent<{
+export const removeElementArrayPort = portsDomain.createEvent<{
   nodeId: string
   portId: string
   index: number

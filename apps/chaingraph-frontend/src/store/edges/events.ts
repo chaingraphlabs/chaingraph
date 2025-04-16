@@ -7,20 +7,20 @@
  */
 
 import type { AddEdgeEventData, EdgeData, EdgeError, RemoveEdgeEventData } from './types'
-import { createEvent } from 'effector'
+import { edgesDomain } from '../domains'
 
 // Edge CRUD events
-export const removeEdge = createEvent<RemoveEdgeEventData>()
-export const setEdges = createEvent<EdgeData[]>()
-export const setEdge = createEvent<EdgeData>()
+export const removeEdge = edgesDomain.createEvent<RemoveEdgeEventData>()
+export const setEdges = edgesDomain.createEvent<EdgeData[]>()
+export const setEdge = edgesDomain.createEvent<EdgeData>()
 
 // Back-end interaction events
-export const requestAddEdge = createEvent<AddEdgeEventData>()
-export const requestRemoveEdge = createEvent<RemoveEdgeEventData>()
+export const requestAddEdge = edgesDomain.createEvent<AddEdgeEventData>()
+export const requestRemoveEdge = edgesDomain.createEvent<RemoveEdgeEventData>()
 
 // Loading state events
-export const setEdgesLoading = createEvent<boolean>()
-export const setEdgesError = createEvent<EdgeError | null>()
+export const setEdgesLoading = edgesDomain.createEvent<boolean>()
+export const setEdgesError = edgesDomain.createEvent<EdgeError | null>()
 
 // Reset events
-export const resetEdges = createEvent()
+export const resetEdges = edgesDomain.createEvent()

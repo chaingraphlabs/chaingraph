@@ -8,15 +8,15 @@
 
 import type { CategorizedNodes, CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { FetchCategoriesError } from './types'
-import { createEvent } from 'effector'
+import { categoriesDomain } from '../domains'
 
 // Data events
-export const setCategorizedNodes = createEvent<CategorizedNodes[]>()
-export const setCategoryMetadata = createEvent<Map<string, CategoryMetadata>>()
+export const setCategorizedNodes = categoriesDomain.createEvent<CategorizedNodes[]>()
+export const setCategoryMetadata = categoriesDomain.createEvent<Map<string, CategoryMetadata>>()
 
 // Loading state events
-export const setLoading = createEvent<boolean>()
-export const setError = createEvent<FetchCategoriesError | null>()
+export const setLoading = categoriesDomain.createEvent<boolean>()
+export const setError = categoriesDomain.createEvent<FetchCategoriesError | null>()
 
 // Reset events
-export const resetCategories = createEvent()
+export const resetCategories = categoriesDomain.createEvent()

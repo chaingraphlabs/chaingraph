@@ -7,7 +7,7 @@
  */
 
 import type { EdgeData, EdgeError } from './types'
-import { combine, createStore } from 'effector'
+import { edgesDomain } from '@/store/domains'
 import {
   addEdgeFx,
   removeEdge,
@@ -21,7 +21,7 @@ import {
 import { clearActiveFlow } from '../flow/events'
 
 // Main edges store
-export const $edges = createStore<EdgeData[]>([])
+export const $edges = edgesDomain.createStore<EdgeData[]>([])
   .on(setEdges, (source, edges) => [
     ...source,
     ...edges,
@@ -37,13 +37,13 @@ export const $edges = createStore<EdgeData[]>([])
   .reset(clearActiveFlow)
 
 // Loading state
-export const $isEdgesLoading = createStore(false)
+export const $isEdgesLoading = edgesDomain.createStore(false)
   .on(setEdgesLoading, (_, isLoading) => isLoading)
   .on(addEdgeFx.pending, (_, isPending) => isPending)
   .on(removeEdgeFx.pending, (_, isPending) => isPending)
 
 // Error state
-export const $edgesError = createStore<EdgeError | null>(null)
+export const $edgesError = edgesDomain.createStore<EdgeError | null>(null)
   .on(setEdgesError, (_, error) => error)
   .on(addEdgeFx.failData, (_, error) => ({
     message: error.message,
@@ -56,8 +56,8 @@ export const $edgesError = createStore<EdgeError | null>(null)
   .reset([addEdgeFx.done, removeEdgeFx.done])
 
 // Combined store for edge state
-export const $edgesState = combine({
-  edges: $edges,
-  isLoading: $isEdgesLoading,
-  error: $edgesError,
-})
+// export const $edgesState = combine({
+//   edges: $edges,
+//   isLoading: $isEdgesLoading,
+//   error: $edgesError,
+// })

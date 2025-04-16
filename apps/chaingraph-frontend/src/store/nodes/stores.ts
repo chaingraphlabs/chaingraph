@@ -7,42 +7,31 @@
  */
 
 import type { INode } from '@badaitech/chaingraph-types'
-import { combine, createStore } from 'effector'
-import { sample } from 'effector'
+import { combine } from 'effector'
+import { nodesDomain } from '../domains'
 import { clearActiveFlow } from '../flow/events'
 import { updatePort, updatePortUI, updatePortValue } from '../ports/events'
-import {
-  LOCAL_NODE_UI_DEBOUNCE_MS,
-  NODE_POSITION_DEBOUNCE_MS,
-  NODE_UI_DEBOUNCE_MS,
-} from './constants'
 
-import { addNodeToFlowFx, baseUpdateNodePositionFx, removeNodeFromFlowFx, updateNodeParentFx, updateNodeUIFx } from './effects'
-
+import { addNodeToFlowFx, removeNodeFromFlowFx } from './effects'
 import {
   addNode,
   addNodes,
-  addNodeToFlow,
   clearNodes,
   removeNode,
-  removeNodeFromFlow,
   setNodeMetadata,
   setNodes,
   setNodesLoading,
   setNodeVersion,
   updateNode,
   updateNodeParent,
-  updateNodePosition,
   updateNodePositionInterpolated,
   updateNodePositionLocal,
-  updateNodeUI,
   updateNodeUILocal,
 } from './events'
-import { accumulateAndSample } from './operators/accumulate-and-sample'
 import './interpolation-init'
 
 // Store for nodes
-export const $nodes = createStore<Record<string, INode>>({})
+export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
   .on(setNodes, (_, nodes) => ({ ...nodes }))
 
   // Single node operations - only clone the affected node and preserve others
@@ -263,17 +252,17 @@ $nodes
   })
 
 // Loading states
-export const $isNodesLoading = createStore(false)
+export const $isNodesLoading = nodesDomain.createStore(false)
   .on(setNodesLoading, (_, isLoading) => isLoading)
   .on(addNodeToFlowFx.pending, (_, isPending) => isPending)
   .on(removeNodeFromFlowFx.pending, (_, isPending) => isPending)
 
 // Error states
-export const $addNodeError = createStore<Error | null>(null)
+export const $addNodeError = nodesDomain.createStore<Error | null>(null)
   .on(addNodeToFlowFx.failData, (_, error) => error)
   .reset(addNodeToFlowFx.done)
 
-export const $removeNodeError = createStore<Error | null>(null)
+export const $removeNodeError = nodesDomain.createStore<Error | null>(null)
   .on(removeNodeFromFlowFx.failData, (_, error) => error)
   .reset(removeNodeFromFlowFx.done)
 
@@ -283,107 +272,3 @@ export const $nodesError = combine(
   $removeNodeError,
   (addError, removeError) => addError || removeError,
 )
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-// * * * * * * * * * * * * * * *
-// CRUD operations
-// * * * * * * * * * * * * * * *
-// Handle backend node operations
-sample({
-  clock: addNodeToFlow,
-  target: addNodeToFlowFx,
-})
-
-sample({
-  clock: removeNodeFromFlow,
-  target: removeNodeFromFlowFx,
-})
-
-// * * * * * * * * * * * * * * *
-// Position operations
-// * * * * * * * * * * * * * * *
-
-// Update local position immediately with small debounce
-const throttledUpdateNodePositionLocal = accumulateAndSample({
-  source: [updateNodePosition],
-  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
-  getKey: update => update.nodeId,
-})
-
-sample({
-  // clock: throttledUpdateNodePositionLocal,
-  clock: updateNodePosition,
-  target: [updateNodePositionLocal],
-})
-
-// throttled node position updates
-const throttledUpdatePosition = accumulateAndSample({
-  source: [updateNodePosition],
-  timeout: NODE_POSITION_DEBOUNCE_MS,
-  getKey: update => update.nodeId,
-})
-
-// Update local node version and send the updated position to the server
-sample({
-  clock: throttledUpdatePosition,
-  source: $nodes,
-  fn: (nodes, params) => ({
-    ...params,
-    version: (nodes[params.nodeId]?.getVersion() ?? 0) + 1,
-  }),
-  target: [setNodeVersion, baseUpdateNodePositionFx],
-})
-
-// * * * * * * * * * * * * * * *
-// Node operations
-// * * * * * * * * * * * * * * *
-
-// On node parent update, update the local node version and send the updated parent to the server
-sample({
-  clock: updateNodeParent,
-  source: $nodes,
-  fn: (nodes, params) => ({
-    ...params,
-    version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
-  }),
-  target: [setNodeVersion, updateNodeParentFx],
-})
-
-// * * * * * * * * * * * * * * *
-// Node UI operations
-// * * * * * * * * * * * * * * *
-
-// Handle optimistic updates
-const throttledUpdateNodeUILocal = accumulateAndSample({
-  source: [updateNodeUI],
-  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
-  getKey: update => update.nodeId,
-})
-
-sample({
-  clock: throttledUpdateNodeUILocal,
-  target: [updateNodeUILocal],
-})
-
-const throttledUIUpdate = accumulateAndSample({
-  source: [updateNodeUI],
-  timeout: NODE_UI_DEBOUNCE_MS,
-  getKey: update => update.nodeId,
-})
-
-// Create middleware to update the version of the node before sending it to the server
-sample({
-  clock: throttledUIUpdate,
-  source: $nodes,
-  fn: (nodes, params) => {
-    return {
-      ...params,
-      version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
-    }
-  },
-  target: [setNodeVersion, updateNodeUIFx],
-})

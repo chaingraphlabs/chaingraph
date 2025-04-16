@@ -97,6 +97,9 @@ export default defineConfig({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        '@badaitech/chaingraph-nodes',
+        '@badaitech/chaingraph-types',
+        '@badaitech/chaingraph-trpc',
       ],
       output: {
         // Bundle everything else together
@@ -104,6 +107,9 @@ export default defineConfig({
           'react': 'React',
           'react-dom': 'ReactDOM',
           'react/jsx-runtime': 'jsxRuntime',
+          '@badaitech/chaingraph-nodes': 'ChainGraphNodes',
+          '@badaitech/chaingraph-types': 'ChainGraphTypes',
+          '@badaitech/chaingraph-trpc': 'ChainGraphTRPC',
         },
         assetFileNames: 'chaingraph-frontend.css',
       },

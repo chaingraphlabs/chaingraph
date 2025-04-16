@@ -14,9 +14,10 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { $trpcClient } from '@/store/trpc/store'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { attach, combine, createEffect, createStore } from 'effector'
+import { attach, combine } from 'effector'
+import { executionDomain } from '../domains'
+import { $trpcClient } from '../trpc/store'
 import {
   addBreakpoint,
   clearExecutionState,
@@ -45,7 +46,7 @@ const initialState: ExecutionState = {
   },
 }
 
-export const $executionState = createStore<ExecutionState>(initialState)
+export const $executionState = executionDomain.createStore<ExecutionState>(initialState)
 
 // Control effects
 export const createExecutionFx = attach({
@@ -156,11 +157,11 @@ export const stepExecutionFx = attach({
 })
 
 // effect for checking terminal status
-export const checkTerminalStatusFx = createEffect((status: ExecutionStatus) => {
+export const checkTerminalStatusFx = executionDomain.createEffect((status: ExecutionStatus) => {
   return isTerminalStatus(status)
 })
 
-export const $executionEvents = createStore<ExecutionEventImpl[]>([])
+export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]>([])
   .on(newExecutionEvent, (state, event) => {
     return [...state, event]
   })
@@ -168,7 +169,7 @@ export const $executionEvents = createStore<ExecutionEventImpl[]>([])
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
 
-export const $executionNodes = createStore<Record<string, NodeExecutionState>>({}, {
+export const $executionNodes = executionDomain.createStore<Record<string, NodeExecutionState>>({}, {
   updateFilter: (prev, next) => {
     // If either is null/undefined
     if (!prev || !next)
@@ -290,7 +291,7 @@ export const $executionNodes = createStore<Record<string, NodeExecutionState>>({
   .reset(createExecutionFx.doneData)
   // .reset(stopExecutionFx.done)
 
-export const $executionEdges = createStore<Record<string, EdgeExecutionState>>({})
+export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
   .on(newExecutionEvent, (state, event) => {
     let finalState = state
     let stateChanged = false
@@ -494,13 +495,13 @@ $executionState
     }
   })
 
-export const $highlightedNodeId = createStore<string[] | null>(null)
+export const $highlightedNodeId = executionDomain.createStore<string[] | null>(null)
   .on(setHighlightedNodeId, (state, highlightedNodeId) =>
     typeof highlightedNodeId === 'string'
       ? [highlightedNodeId]
       : highlightedNodeId)
 
-export const $highlightedEdgeId = createStore<string[] | null>(null)
+export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(null)
   .on(setHighlightedEdgeId, (state, highlightedEdgeId) =>
     typeof highlightedEdgeId === 'string'
       ? [highlightedEdgeId]
@@ -556,7 +557,7 @@ export const $autoStartConditions = combine({
 })
 
 // Store to prevent multiple start attempts
-export const $startAttempted = createStore(false)
+export const $startAttempted = executionDomain.createStore(false)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)

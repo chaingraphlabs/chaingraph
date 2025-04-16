@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.1.6-dev.41",
+  "version": "0.1.6-dev.42",
   "private": false,
   "description": "tRPC client and server for the BadAi Chaingraph",
   "license": "BUSL-1.1",

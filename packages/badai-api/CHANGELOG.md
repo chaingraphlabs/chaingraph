@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.1.6-dev.42
+
+### Patch Changes
+
+- Include badaitech package to external one
+
 ## 0.1.6-dev.41
 
 ### Patch Changes
