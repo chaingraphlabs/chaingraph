@@ -79,8 +79,10 @@ jobs:
       # Create .npmrc file for GitHub Packages
       - name: Setup .npmrc
         run: |
-          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
           echo "@badaitech:registry=https://npm.pkg.github.com" >> .npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # For GitHub releases, publish directly with version from tag
       - name: Publish packages from release
@@ -95,6 +97,49 @@ jobs:
           pnpm -r publish --access restricted --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from package.json
+        id: package-version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and push Frontend Docker image
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/chaingraph-frontend/Dockerfile
+          push: ${{ github.event_name == 'release' }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build and push Backend Docker image
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/chaingraph-backend/Dockerfile
+          push: ${{ github.event_name == 'release' }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:latest
+            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Use changesets action for main branch pushes
       - name: Create Release PR or Publish
