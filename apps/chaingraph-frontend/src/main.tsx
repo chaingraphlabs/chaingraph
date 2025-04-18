@@ -25,8 +25,7 @@ import '@badaitech/chaingraph-nodes'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RootProvider
-      // TODO: from ENV
-      trpcURL={DefaultTRPCURL}
+      trpcURL={import.meta.env.VITE_CHAINGRAPH_TRPC_URL || DefaultTRPCURL}
       // superjsonCustom={SuperJSON}
       // nodeRegistry={NodeRegistry.getInstance()}
     >

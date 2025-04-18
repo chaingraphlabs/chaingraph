@@ -19,6 +19,7 @@ apps/**/src/**/*.js
 .cache
 
 *.d.ts
+!apps/chaingraph-frontend/src/vite-env.d.ts
 *.d.ts.map
 
 vitest.config.js
