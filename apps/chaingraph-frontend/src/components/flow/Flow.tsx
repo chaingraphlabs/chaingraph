@@ -241,6 +241,8 @@ function Flow({
 
     const node = NodeRegistry.getInstance().createNode(nodeMeta.type, 'new')
 
+    console.log('SEND ONE ADD NODE TO FLOW')
+
     // Dispatch addNodeToFlow event
     addNodeToFlow({
       flowId: activeFlow.id!,

@@ -156,7 +156,7 @@ export function init() {
         && conditions.executionStatus === ExecutionStatus.CREATED
         && conditions.subscriptionStatus === ExecutionSubscriptionStatus.SUBSCRIBED
         && !conditions.hasError
-        && conditions.executionId !== null
+        && !!conditions.executionId
       )
     },
     fn: (_, conditions) => conditions.executionId!,

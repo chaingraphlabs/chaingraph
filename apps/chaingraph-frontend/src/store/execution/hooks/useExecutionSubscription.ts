@@ -214,9 +214,9 @@ export function useExecutionSubscription() {
       }
 
       // Reset subscription
-      if (subscription) {
-        subscription.reset()
-      }
+      // if (subscription) {
+      //   subscription.reset()
+      // }
     }
     // FIXME
   }, [executionId])

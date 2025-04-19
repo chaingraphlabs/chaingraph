@@ -23,6 +23,7 @@
     "clean": "make clean",
     "preview": "pnpm --filter chaingraph-backend run start | pnpm --filter chaingraph-frontend run preview",
     "build": "turbo run build",
+    "pre:dev": "turbo run build",
     "dev": "turbo run dev",
     "build:front": "turbo run build --filter=@badaitech/chaingraph-frontend",
     "dev:front": "turbo run dev --filter=@badaitech/chaingraph-frontend",

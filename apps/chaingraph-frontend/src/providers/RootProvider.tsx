@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategorizedNodes, FlowMetadata } from '@badaitech/chaingraph-types'
 import { TooltipProvider } from '@/components/ui'
 
 import { initializeStores } from '@/store/init-stores-fx'
@@ -26,11 +25,12 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactFlowProvider } from '@xyflow/react'
 import { attachLogger } from 'effector-logger'
 import { useUnit } from 'effector-react'
+import { useEffect, useRef } from 'react'
 import SuperJSON from 'superjson'
+
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ZoomProvider } from './ZoomProvider'
-
 import '../store'
 import '../store/init'
 
@@ -49,6 +49,9 @@ export function RootProvider({
   superjsonCustom,
   nodeRegistry,
 }: RootProviderProps) {
+  // Use ref to track initialization state
+  const isInitializedRef = useRef(false)
+
   // effector logger
   attachLogger()
 
@@ -73,12 +76,24 @@ export function RootProvider({
   //   }))
   // }
 
-  initializeStores((categorizedNodes: CategorizedNodes[], flows: FlowMetadata[]) => {
-    console.log('Stores initialized successfully')
-    // callback with the results
-    console.log('Categorized Nodes:', categorizedNodes)
-    console.log('Flows:', flows)
-  }).catch(console.error)
+  // initializeStores((categorizedNodes: CategorizedNodes[], flows: FlowMetadata[]) => {
+  //   console.log('Stores initialized successfully')
+  //   // callback with the results
+  //   console.log('Categorized Nodes:', categorizedNodes)
+  //   console.log('Flows:', flows)
+  // }).catch(console.error)
+
+  useEffect(() => {
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true
+
+      initializeStores((categorizedNodes, flows) => {
+        console.log('Stores initialized successfully')
+        console.log('Categorized Nodes:', categorizedNodes)
+        console.log('Flows:', flows)
+      }).catch(console.error)
+    }
+  }, [])
 
   registerSuperjsonTransformers(
     superjsonCustom ?? SuperJSON,

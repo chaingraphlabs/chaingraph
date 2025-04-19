@@ -288,8 +288,8 @@ export const $executionNodes = executionDomain.createStore<Record<string, NodeEx
     return state
   })
   .reset(clearExecutionState)
+  .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
-  // .reset(stopExecutionFx.done)
 
 export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
   .on(newExecutionEvent, (state, event) => {
@@ -346,8 +346,8 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
     return state
   })
   .reset(clearExecutionState)
+  .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
-  // .reset(stopExecutionFx.done)
 
 // Handle execution status changes
 $executionState
@@ -458,7 +458,11 @@ $executionState
   }))
 
   // Reset state
-  .reset(clearExecutionState)
+  .on(clearExecutionState, state => ({
+    ...initialState,
+    debugMode: state.debugMode,
+    breakpoints: state.breakpoints,
+  }))
 
   // Handle subscription status
   .on(setExecutionSubscriptionStatus, (state, status) => ({
