@@ -8,4 +8,4 @@
 "@badaitech/badai-api": patch
 ---
 
-Move initialize stores under providers in order to it has a way to use tRPC clients from hook
+Move store initialization under providers so that tRPC clients can be accessed via hooks.
