@@ -8,4 +8,4 @@
 "@badaitech/badai-api": patch
 ---
 
-One more try boundle frontend
+One more try bundle frontend
