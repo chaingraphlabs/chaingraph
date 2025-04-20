@@ -239,8 +239,8 @@ function ExecutionControls() {
 ChainGraph frontend is compatible with modern browsers including:
 - Chrome/Edge (latest 2 versions)
 - Firefox (latest 2 versions)
-- Safari (latest 2 versions)
 
+Safari needs to investigate some issues.
 Internet Explorer is not supported.
 
 ## Contributing

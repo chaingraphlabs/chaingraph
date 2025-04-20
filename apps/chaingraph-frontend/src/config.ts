@@ -7,6 +7,5 @@
  */
 
 export const appConfig = {
-  appName: 'ChainGraph',
   chaingraphTRPCWSUrl: import.meta.env.VITE_CHAINGRAPH_TRPC_WS_URL || 'ws://localhost:3001',
 }

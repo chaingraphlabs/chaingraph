@@ -15,7 +15,7 @@ interface ViteTypeOptions {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_CHAINGRAPH_TRPC_URL: string
+  readonly VITE_CHAINGRAPH_TRPC_WS_URL: string
   // more env variables...
 }
 

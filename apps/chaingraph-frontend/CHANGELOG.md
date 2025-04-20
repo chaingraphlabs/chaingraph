@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.6-dev.44
+
+### Patch Changes
+
+- - Add authentication service to the chaingraph backend with two modes: dev and badai. When Dev mode is configured, then server will accept any requests. When badai is configured, then the server will expect the BadAI session JWT tokoken provided.
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.6-dev.44
+  - @badaitech/chaingraph-types@0.1.6-dev.44
+  - @badaitech/chaingraph-trpc@0.1.6-dev.44
+
 ## 0.1.6-dev.43
 
 ### Patch Changes
