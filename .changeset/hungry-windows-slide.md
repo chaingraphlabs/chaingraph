@@ -8,4 +8,4 @@
 "@badaitech/badai-api": patch
 ---
 
-make react and react dome as external lib
+make react and react-dom as external lib

@@ -8,4 +8,4 @@
 "@badaitech/badai-api": patch
 ---
 
-dirty hack to use static TRPC client
+temporary workaround to use static TRPC client

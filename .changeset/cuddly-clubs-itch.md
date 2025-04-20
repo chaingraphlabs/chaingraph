@@ -8,4 +8,4 @@
 "@badaitech/badai-api": patch
 ---
 
-Play around effector stores to make it work
+Experiment with effector stores to ensure proper functionality

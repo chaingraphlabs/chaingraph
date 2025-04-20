@@ -8,4 +8,4 @@
 "@badaitech/badai-api": patch
 ---
 
-New try to include all styles to the bundle
+Attempt to include all styles in the bundle
