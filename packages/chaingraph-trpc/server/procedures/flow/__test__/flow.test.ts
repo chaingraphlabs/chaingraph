@@ -94,15 +94,16 @@ describe('flow Procedures', () => {
       const caller = createCaller(ctx)
 
       // Create multiple flows
-      await Promise.all([
-        caller.flow.create({ name: 'Flow 1' }),
-        caller.flow.create({ name: 'Flow 2' }),
-        caller.flow.create({ name: 'Flow 3' }),
-      ])
+      await caller.flow.create({ name: 'Flow 1' })
+      // small timeout to ensure the flows are created in different timestamps
+      await new Promise(resolve => setTimeout(resolve, 20))
+      await caller.flow.create({ name: 'Flow 2' })
+      await new Promise(resolve => setTimeout(resolve, 20))
+      await caller.flow.create({ name: 'Flow 3' })
 
       const flows = await caller.flow.list()
       expect(flows).toHaveLength(3)
-      expect(flows.map(f => f.name)).toEqual(['Flow 1', 'Flow 2', 'Flow 3'])
+      expect(flows.map(f => f.name)).toEqual(['Flow 3', 'Flow 2', 'Flow 1'])
     })
 
     it('should return empty array when no flows exist', async () => {
