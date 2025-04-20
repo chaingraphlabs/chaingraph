@@ -17,7 +17,10 @@ export const SerializedFlowMetadataSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   tags: z.array(z.string()).optional(),
+  ownerID: z.string().optional(),
+  parentId: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
+  version: z.number().optional(),
 })
 
 export const SerializedFlowSchema = z.object({

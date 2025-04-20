@@ -28,6 +28,15 @@ export interface FlowMetadata {
   /** Tags for organization */
   tags?: string[]
 
+  /** Owner ID */
+  ownerID?: string
+
+  /** Parent flow ID */
+  parentId?: string
+
+  /** Version number */
+  version?: number
+
   /** Custom metadata */
   metadata?: Record<string, unknown>
 }

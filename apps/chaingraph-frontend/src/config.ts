@@ -6,16 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { init } from '@badaitech/chaingraph-trpc/server'
-import { prettyPrintConfig } from './config'
-import { setupPolyfills } from './setup-polyfills'
-import { wsServer } from './ws-server'
-import './config'
-
-setupPolyfills()
-
-prettyPrintConfig()
-
-init()
-
-wsServer()
+export const appConfig = {
+  appName: 'ChainGraph',
+  chaingraphTRPCWSUrl: import.meta.env.VITE_CHAINGRAPH_TRPC_WS_URL || 'ws://localhost:3001',
+}

@@ -7,14 +7,16 @@
  */
 
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
-export const getMeta = publicProcedure
-  .input(z.string())
-  .query(async ({ input: flowId, ctx }) => {
-    const flow = await ctx.flowStore.getFlow(flowId)
+export const getMeta = flowContextProcedure
+  .input(z.object({
+    flowId: z.string(),
+  }))
+  .query(async ({ input, ctx }) => {
+    const flow = await ctx.flowStore.getFlow(input.flowId)
     if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
+      throw new Error(`Flow ${input.flowId} not found`)
     }
     return flow.metadata
   })

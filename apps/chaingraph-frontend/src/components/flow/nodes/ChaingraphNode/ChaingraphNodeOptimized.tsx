@@ -33,12 +33,6 @@ const ChaingraphNodeOptimized = memo(
     if (prevVersion !== nextVersion)
       return false
 
-    // Check if execution state changed
-    // const prevExecution = prevProps.data?.execution
-    // const nextExecution = nextProps.data?.execution
-    // if (prevExecution?.status !== nextExecution?.status)
-    //   return false
-
     // Dimensions check
     if (prevProps.positionAbsoluteX !== nextProps.positionAbsoluteX
       || prevProps.positionAbsoluteY !== nextProps.positionAbsoluteY) {

@@ -53,6 +53,8 @@ export const deleteFlowFx = attach({
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.flow.delete.mutate(id)
+    return client.flow.delete.mutate({
+      flowId: id,
+    })
   },
 })

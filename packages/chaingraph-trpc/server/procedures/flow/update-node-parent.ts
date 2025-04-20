@@ -49,7 +49,7 @@ export const updateNodeParent = flowContextProcedure
     )
     flow.updateNode(node)
 
-    console.log(`[FLOW] Updated parent for node ${input.nodeId} to ${input.parentNodeId}`)
+    // console.log(`[FLOW] Updated parent for node ${input.nodeId} to ${input.parentNodeId}`)
 
     await ctx.flowStore.updateFlow(flow as Flow)
 

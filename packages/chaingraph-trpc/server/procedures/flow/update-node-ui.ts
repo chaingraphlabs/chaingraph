@@ -31,6 +31,7 @@ export const updateNodeUI = flowContextProcedure
         isSelected: z.boolean().optional(),
         isHighlighted: z.boolean().optional(),
         isDisabled: z.boolean().optional(),
+        isErrorPortCollapsed: z.boolean().optional(),
       }).optional(),
     }),
     version: z.number(),
@@ -76,9 +77,29 @@ export const updateNodeUI = flowContextProcedure
     // }
 
     // Update metadata
+
+    // ...updatedNode.metadata.ui,
+    //       ...ui,
+    //       style: {
+    //         ...updatedNode.metadata.ui?.style,
+    //         ...ui.style,
+    //       },
+    //       state: {
+    //         ...updatedNode.metadata.ui?.state,
+    //         ...ui.state,
+    //       },
+
     node.setUI({
       ...(node.metadata.ui ?? {}),
       ...input.ui,
+      style: {
+        ...(node.metadata.ui?.style ?? {}),
+        ...input.ui.style,
+      },
+      state: {
+        ...(node.metadata.ui?.state ?? {}),
+        ...input.ui.state,
+      },
     }, true)
 
     await ctx.flowStore.updateFlow(flow as Flow)

@@ -12,12 +12,12 @@ import { EventQueue, ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/c
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { zAsyncIterable } from '../../procedures/subscriptions/utils/zAsyncIterable'
-import { publicProcedure, router } from '../../trpc'
+import { executionContextProcedure, flowContextProcedure, router } from '../../trpc'
 import { debugRouter } from './debug-router'
 
 export const executionRouter = router({
   // Create execution instance
-  create: publicProcedure
+  create: flowContextProcedure
     .input(z.object({
       flowId: z.string(),
       options: z.object({
@@ -64,7 +64,7 @@ export const executionRouter = router({
     }),
 
   // Start execution
-  start: publicProcedure
+  start: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
@@ -82,7 +82,7 @@ export const executionRouter = router({
     }),
 
   // Stop execution
-  stop: publicProcedure
+  stop: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
@@ -100,7 +100,7 @@ export const executionRouter = router({
     }),
 
   // Pause execution
-  pause: publicProcedure
+  pause: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
@@ -118,7 +118,7 @@ export const executionRouter = router({
     }),
 
   // Resume execution
-  resume: publicProcedure
+  resume: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
@@ -136,7 +136,7 @@ export const executionRouter = router({
     }),
 
   // Get execution state
-  getState: publicProcedure
+  getState: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
@@ -153,7 +153,7 @@ export const executionRouter = router({
     }),
 
   // Subscribe to execution events
-  subscribeToEvents: publicProcedure
+  subscribeToEvents: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
       eventTypes: z.array(z.nativeEnum(ExecutionEventEnum)).optional(),
@@ -204,15 +204,6 @@ export const executionRouter = router({
           for await (const event of iterator) {
             // yield tracked(String(eventIndex++), event)
             yield event
-
-            // Check if execution is completed or failed
-            // if (
-            //   event.type === ExecutionEventEnum.FLOW_COMPLETED
-            //   || event.type === ExecutionEventEnum.FLOW_FAILED
-            //   || event.type === ExecutionEventEnum.FLOW_CANCELLED
-            // ) {
-            //   break
-            // }
           }
         } catch (error) {
           console.error('Error handling execution events:', error)

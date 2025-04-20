@@ -123,7 +123,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const handleItemConfigUpdate = useCallback((updatedConfig: ArrayPortConfig) => {
     // Update using context events - this leverages the store's logic
     // for handling complex port updates
-    console.log('Updating item config:', updatedConfig)
+    console.debug('Updating item config:', updatedConfig)
     updatePortUI({
       nodeId: node.id,
       portId: port.id,
@@ -140,7 +140,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
 
   // Handle saving from the schema editor
   const handleSchemaEditorSave = useCallback((newItemConfig: IPortConfig) => {
-    console.log('Schema editor save:', newItemConfig)
+    console.debug('Schema editor save:', newItemConfig)
 
     // First update the port configuration
     updatePortUI({

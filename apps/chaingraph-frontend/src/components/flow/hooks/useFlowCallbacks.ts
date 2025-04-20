@@ -18,7 +18,6 @@ import {
   updateNodeParent,
   updateNodePosition,
   updateNodeUI,
-  updateNodeUILocal,
 } from '@/store'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { hasCycle } from '@badaitech/chaingraph-types'
@@ -92,7 +91,7 @@ export function useFlowCallbacks() {
             return
 
           if (!change.dimensions || !change.dimensions.width || !change.dimensions.height) {
-            console.log(`[useFlowCallbacks] Invalid dimensions change:`, change)
+            console.warn(`[useFlowCallbacks] Invalid dimensions change:`, change)
             return
           }
 
@@ -130,18 +129,14 @@ export function useFlowCallbacks() {
               return
 
             // check if the selection state is the same
-            const isSameSelection = node.metadata.ui?.state?.isSelected === change.selected
-            if (isSameSelection)
-              return
 
-            updateNodeUILocal({
+            // updateNodeUILocal({
+            updateNodeUI({
               flowId: activeFlow.id!,
               nodeId: change.id,
               version: node.getVersion(),
               ui: {
-                ...node.metadata.ui,
                 state: {
-                  ...node.metadata.ui?.state,
                   isSelected: change.selected,
                 },
               },
@@ -164,7 +159,7 @@ export function useFlowCallbacks() {
           break
 
         default:
-          console.log(`[useFlowCallbacks] Unhandled node change:`, change)
+          console.warn(`[useFlowCallbacks] Unhandled node change:`, change)
           break
       }
     })
@@ -175,7 +170,7 @@ export function useFlowCallbacks() {
     if (!activeFlow?.id)
       return
 
-    console.log('[useFlowCallbacks] Edge changes:', changes)
+    console.debug('[useFlowCallbacks] Edge changes:', changes)
 
     changes.forEach((change) => {
       switch (change.type) {
@@ -219,7 +214,6 @@ export function useFlowCallbacks() {
    * Called when user starts dragging an edge handle
    */
   const onReconnectStart = useCallback((_: React.MouseEvent, edge: Edge, handleType: HandleType) => {
-    console.log('[useFlowCallbacks] Reconnect start:', edge, handleType)
     reconnectSuccessful.current = false
   }, [])
 
@@ -230,7 +224,6 @@ export function useFlowCallbacks() {
     if (!activeFlow?.id)
       return
 
-    console.log('[useFlowCallbacks] Reconnect:', oldEdge, newConnection)
     reconnectSuccessful.current = true
 
     // Remove old edge
@@ -252,8 +245,6 @@ export function useFlowCallbacks() {
   const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
     if (!activeFlow?.id)
       return
-
-    console.log('[useFlowCallbacks] Reconnect end:', edge, 'successful:', reconnectSuccessful.current)
 
     if (!reconnectSuccessful.current) {
       requestRemoveEdge({
@@ -452,7 +443,7 @@ function isValidPosition(pos: any): pos is { x: number, y: number } {
   return pos && typeof pos.x === 'number' && typeof pos.y === 'number'
 }
 
-function roundPosition(pos: { x: number, y: number }, precision = 15) {
+function roundPosition(pos: { x: number, y: number }, precision = 10) {
   return {
     x: Math.round(pos.x / precision) * precision,
     y: Math.round(pos.y / precision) * precision,

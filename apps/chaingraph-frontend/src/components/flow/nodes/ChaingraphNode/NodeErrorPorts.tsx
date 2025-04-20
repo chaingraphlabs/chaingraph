@@ -10,8 +10,10 @@ import type { INode } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
+import { $activeFlowId, updateNodeUI } from '@/store'
 import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
-import { memo, useMemo, useState } from 'react'
+import { useUnit } from 'effector-react'
+import { memo, useCallback, useMemo } from 'react'
 
 export interface NodeErrorPortsProps {
   node: INode
@@ -22,6 +24,8 @@ function NodeErrorPorts({
   node,
   context,
 }: NodeErrorPortsProps) {
+  const activeFlowId = useUnit($activeFlowId)
+
   // Filter error ports from default ports
   const errorPorts = useMemo(() => {
     return node.getDefaultPorts().filter((port) => {
@@ -48,12 +52,28 @@ function NodeErrorPorts({
     () => errorConnections || errorMessageConnections,
     [errorConnections, errorMessageConnections],
   )
-  const [isExpanded, setIsExpanded] = useState(true)
-  // const { getEdgesForPort } = context
 
-  // useEffect(() => {
-  //   setIsExpanded(!!hasConnections)
-  // }, [hasConnections])
+  const isExpanded = useMemo(() => {
+    return node.metadata.ui?.state?.isErrorPortCollapsed !== undefined
+      && !node.metadata.ui?.state?.isErrorPortCollapsed
+  }, [node.metadata.ui?.state?.isErrorPortCollapsed])
+
+  const onToggle = useCallback(() => {
+    if (!activeFlowId) {
+      return
+    }
+
+    updateNodeUI({
+      flowId: activeFlowId,
+      nodeId: node.id,
+      ui: {
+        state: {
+          isErrorPortCollapsed: isExpanded,
+        },
+      },
+      version: node.getVersion(),
+    })
+  }, [activeFlowId, node, isExpanded])
 
   // Only render if we have error ports
   if (!errorPort && !errorMessagePort) {
@@ -65,11 +85,12 @@ function NodeErrorPorts({
       {/* Toggle Button */}
       <button
         type="button"
-        onClick={() => !hasConnections && setIsExpanded(!isExpanded)}
+        onClick={() => !hasConnections && onToggle()}
         className={cn(
           'w-full flex items-center justify-between p-2',
           'text-xs text-foreground/70 transition-colors rounded-b',
           hasConnections && 'hover:bg-background/10',
+          'nodrag',
         )}
       >
         <div className="flex items-center gap-2">

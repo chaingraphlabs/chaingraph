@@ -71,7 +71,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     // Clone only the node being modified
-    const updatedNode = node // .clone()
+    const updatedNode = node.clone()
     updatedNode.setMetadata(metadata)
 
     // Return new state with just the updated node changed
@@ -87,7 +87,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     }
 
     // Only clone the node we're updating
-    const updatedNode = node// .clone()
+    const updatedNode = node.clone()
     updatedNode.setVersion(version)
 
     // Return new state with just the updated node changed
@@ -113,14 +113,14 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
     try {
       // Clone both node and port to maintain immutability
-      const updatedNode = node// .clone()
+      const updatedNode = node.clone()
       const updatedPort = port.clone()
 
       updatedPort.setConfig(data.config)
       updatedPort.setValue(data.value)
 
-      updatedNode.setVersion(nodeVersion)
       updatedNode.setPort(updatedPort)
+      updatedNode.setVersion(nodeVersion)
 
       return { ...state, [nodeId]: updatedNode }
     } catch (e: any) {
@@ -163,7 +163,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     // Clone both node and port
-    const updatedNode = node// .clone()
+    const updatedNode = node.clone()
     const updatedPort = port.clone()
 
     updatedPort.setConfig({
@@ -188,8 +188,19 @@ $nodes
       return state
 
     // Clone the node for the UI update
-    const updatedNode = node// .clone()
-    updatedNode.setUI(ui, false)
+    const updatedNode = node.clone()
+    updatedNode.setUI({
+      ...updatedNode.metadata.ui ?? {},
+      ...ui ?? {},
+      style: {
+        ...(updatedNode.metadata.ui?.style ?? {}),
+        ...ui.style ?? {},
+      },
+      state: {
+        ...updatedNode.metadata.ui?.state ?? {},
+        ...ui.state ?? {},
+      },
+    }, false)
 
     return { ...state, [nodeId]: updatedNode }
   })
@@ -209,7 +220,7 @@ $nodes
     }
 
     // Clone the node and update its position
-    const updatedNode = node.clone()
+    const updatedNode = node// .clone()
     // const updatedNode = node
     updatedNode.setPosition(position, false)
 
@@ -225,7 +236,7 @@ $nodes
       return state
 
     // Clone the node and update its position
-    const updatedNode = node// .clone()
+    const updatedNode = node.clone()
     updatedNode.setPosition(position, false)
 
     return { ...state, [nodeId]: updatedNode }
@@ -239,7 +250,7 @@ $nodes
       return state
 
     // Clone the node and update its parent
-    const updatedNode = node// .clone()
+    const updatedNode = node.clone()
     updatedNode.setMetadata({
       ...updatedNode.metadata,
       parentNodeId,

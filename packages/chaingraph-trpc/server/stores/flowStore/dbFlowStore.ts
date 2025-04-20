@@ -8,9 +8,13 @@
 
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import type { DBType } from '../../context'
+import type { ListOrderBy } from '../postgres/store'
 import type { IFlowStore } from './types'
 import { Flow } from '@badaitech/chaingraph-types'
+import { serializableFlow } from '../postgres/store'
 import { deleteFlow, listFlows, loadFlow, saveFlow } from '../postgres/store'
+
+const defaultFlowLimit = 1000
 
 /**
  * In-memory implementation of flow storage
@@ -30,7 +34,11 @@ export class DBFlowStore implements IFlowStore {
    */
   async createFlow(metadata: FlowMetadata): Promise<Flow> {
     const flow = new Flow(metadata)
-    await saveFlow(this.db, flow)
+    flow.metadata.version = await saveFlow(
+      this.db,
+      await serializableFlow(flow),
+    )
+
     this.flows.set(flow.id, flow)
 
     return flow
@@ -60,16 +68,24 @@ export class DBFlowStore implements IFlowStore {
   }
 
   /**
-   * TODO: it is not safe method to load all flows at once
-   * Lists all available flows
+   * Lists all available flows ordered by updatedAt desc
    * @returns Array of flows
    */
-  async listFlows(): Promise<Flow[]> {
+  async listFlows(
+    ownerId: string,
+    orderBy: ListOrderBy,
+    limit: number,
+  ): Promise<Flow[]> {
     // load all flows from DB and cache which is not in cache
-    // TODO: do not load all flows at once
-    const flows = await listFlows(this.db, (data) => {
-      return Flow.deserialize(data)
-    })
+    const flows = await listFlows(
+      this.db,
+      ownerId,
+      orderBy,
+      limit || defaultFlowLimit,
+      (data) => {
+        return Flow.deserialize(data)
+      },
+    )
 
     flows.forEach((flow) => {
       if (!this.flows.has(flow.id)) {
@@ -100,8 +116,44 @@ export class DBFlowStore implements IFlowStore {
    * @returns Updated flow
    */
   async updateFlow(flow: Flow): Promise<Flow> {
-    await saveFlow(this.db, flow)
+    flow.metadata.version = await saveFlow(
+      this.db,
+      await serializableFlow(flow),
+    )
     this.flows.set(flow.id, flow)
     return flow
+  }
+
+  /**
+   * Checks if user has access to flow
+   * @param flowId Flow identifier
+   * @param userId User identifier
+   * @returns true if user has access, false otherwise
+   */
+  async hasAccess(flowId: string, userId: string): Promise<boolean> {
+    // get flow from cache
+    let flow = this.flows.get(flowId)
+    if (!flow) {
+      // check if flow exists in db
+      const flowFromDB = await this.getFlow(flowId)
+      if (!flowFromDB) {
+        return false
+      }
+
+      // add to cache
+      this.flows.set(flowFromDB.id, flowFromDB)
+      flow = flowFromDB
+    }
+
+    if (!flow) {
+      return false
+    }
+
+    // check if user has access to flow
+    const hasAccess = flow.metadata.ownerID === userId
+
+    // TODO: add another checks for access for example if flow is public or user is in group
+
+    return hasAccess
   }
 }

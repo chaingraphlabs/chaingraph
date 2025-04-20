@@ -375,15 +375,15 @@ $executionState
       //   return { ...state, status: ExecutionStatus.CREATED }
 
       case ExecutionEventEnum.FLOW_STARTED:
-        console.log('Flow started:', event.data)
+        console.debug('Flow started:', event.data)
         return { ...state, status: ExecutionStatus.RUNNING }
 
       case ExecutionEventEnum.FLOW_COMPLETED:
-        console.log('Flow completed:', event.data)
+        console.debug('Flow completed:', event.data)
         return { ...state, status: ExecutionStatus.COMPLETED }
 
       case ExecutionEventEnum.FLOW_FAILED:
-        console.log('Flow failed:', event.data)
+        console.debug('Flow failed:', event.data)
         return {
           ...state,
           status: ExecutionStatus.ERROR,
@@ -394,7 +394,7 @@ $executionState
         }
 
       case ExecutionEventEnum.FLOW_CANCELLED:
-        console.log('Flow cancelled:', event.data)
+        console.debug('Flow cancelled:', event.data)
         return {
           ...state,
           status: ExecutionStatus.STOPPED,

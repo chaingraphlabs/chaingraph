@@ -12,17 +12,21 @@ import { createTRPCClient } from '@badaitech/chaingraph-trpc/client'
 import SuperJSON from 'superjson'
 
 export const createTRPCClientEvent = trpcDomain.createEvent<{
+  sessionToken?: string
   trpcURL?: string
   superjsonCustom?: typeof SuperJSON
 }>()
 
 export const $trpcClient = trpcDomain.createStore<TRPCClient | null>(null)
-  .on(createTRPCClientEvent, (s, { trpcURL, superjsonCustom }) => {
+  .on(createTRPCClientEvent, (s, { sessionToken, trpcURL, superjsonCustom }) => {
     if (s !== null) {
       return s
     }
     return createTRPCClient({
       url: trpcURL ?? `ws://localhost:3001`,
       superjsonCustom: superjsonCustom ?? SuperJSON,
+      auth: {
+        token: sessionToken ?? undefined,
+      },
     })
   })

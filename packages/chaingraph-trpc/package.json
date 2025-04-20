@@ -27,6 +27,7 @@
     "dist"
   ],
   "scripts": {
+    "dev": "tsc -b --watch",
     "build": "tsc -b",
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc -b",
@@ -36,19 +37,23 @@
     "@tanstack/react-query": ">= 5.67.1"
   },
   "dependencies": {
-    "@trpc/client": "11.0.4",
-    "@trpc/react-query": "11.0.4",
-    "@trpc/server": "11.0.4",
-    "@trpc/tanstack-react-query": "^11.0.4",
+    "@trpc/client": "11.1.0",
+    "@trpc/react-query": "11.1.0",
+    "@trpc/server": "11.1.0",
+    "@trpc/tanstack-react-query": "^11.1.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
-    "pg": "^8.14.1"
+    "graphql-request": "^7.1.2",
+    "pg": "^8.14.1",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
+    "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@types/pg": "^8.11.11",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.30.6"
   }
 }

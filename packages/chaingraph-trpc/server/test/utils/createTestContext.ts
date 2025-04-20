@@ -9,6 +9,7 @@
 import type { IFlowStore } from 'server/stores/flowStore/types'
 import type { AppContext } from '../../context'
 import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
+import { DevUser } from '../../auth/types'
 import { InMemoryFlowStore } from '../../stores/flowStore/inMemoryFlowStore'
 
 /**
@@ -29,7 +30,19 @@ export function createTestContext(
 
   return {
     session: {
-      userId: 'test_user_id',
+      isAuthenticated: true,
+      user: {
+        id: 'dev:admin',
+        displayName: 'Admin User',
+        role: 'admin',
+      },
+      session: {
+        userId: 'dev:admin',
+        token: 'admin-token',
+        provider: 'dev', // or 'none' if not authenticated
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiration
+        user: DevUser,
+      },
     },
     nodeRegistry,
     nodesCatalog,

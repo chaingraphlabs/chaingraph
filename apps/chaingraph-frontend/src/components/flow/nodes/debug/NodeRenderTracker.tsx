@@ -24,13 +24,13 @@ export function NodeRenderTracker({ nodeId, shouldShowLogs = false }: NodeRender
     renderCount.current += 1
 
     if (shouldShowLogs) {
-      console.log(`[RenderTracker] Node ${nodeId} rendered (${renderCount.current} times)`)
+      console.debug(`[RenderTracker] Node ${nodeId} rendered (${renderCount.current} times)`)
     }
 
     // Return cleanup to track component unmounts
     return () => {
       if (shouldShowLogs) {
-        console.log(`[RenderTracker] Node ${nodeId} unmounted after ${renderCount.current} renders`)
+        console.debug(`[RenderTracker] Node ${nodeId} unmounted after ${renderCount.current} renders`)
       }
     }
   })

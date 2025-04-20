@@ -7,21 +7,27 @@
  */
 
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { authedProcedure } from '../../trpc'
 
-export const create = publicProcedure
+export const create = authedProcedure
   .input(z.object({
     name: z.string(),
     description: z.string().optional(),
     tags: z.array(z.string()).optional(),
   }))
   .mutation(async ({ input, ctx }) => {
+    const userId = ctx.session?.user?.id
+    if (!userId) {
+      throw new Error('User not authenticated')
+    }
+
     const flow = await ctx.flowStore.createFlow({
       name: input.name,
       description: input.description,
       createdAt: new Date(),
       updatedAt: new Date(),
       tags: input.tags,
+      ownerID: userId,
     })
 
     return flow.metadata

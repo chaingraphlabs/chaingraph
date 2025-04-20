@@ -28,7 +28,9 @@ export function useSelectedFlow() {
     data: selectedFlow,
     isLoading,
     error,
-  } = trpcReact.flow.getMeta.useQuery(storedFlowId!, {
+  } = trpcReact.flow.getMeta.useQuery({
+    flowId: storedFlowId!,
+  }, {
     enabled: Boolean(storedFlowId),
     staleTime: 1000 * 60, // Consider data fresh for 1 minute
     // Proper query options

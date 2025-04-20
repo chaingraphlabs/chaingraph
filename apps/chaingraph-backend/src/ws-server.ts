@@ -9,23 +9,25 @@
 import process from 'node:process'
 import { applyWSSHandler, appRouter, createContext } from '@badaitech/chaingraph-trpc/server'
 import { WebSocketServer } from 'ws'
+import { appConfig } from './config'
 
 export function wsServer() {
   const wss = new WebSocketServer({
-    port: 3001,
+    host: appConfig.trpcServerHost,
+    port: appConfig.trpcServerPort,
   })
 
   const handler = applyWSSHandler({
     wss,
     router: appRouter,
     createContext,
-    // Enable heartbeat messages to keep connection open (disabled by default)
+    // Enable heartbeat messages to keep the connection open (disabled by default)
     keepAlive: {
-      enabled: false,
-      // server ping message interval in milliseconds
-      pingMs: 3000,
-      // connection is terminated if pong message is not received in this many milliseconds
-      pongWaitMs: 10000,
+      enabled: appConfig.trpcServerKeepAlive.enabled || true,
+      // server pings message interval in milliseconds
+      pingMs: appConfig.trpcServerKeepAlive.pingMs || 5000,
+      // the connection is terminated if a pong message is not received in this many milliseconds
+      pongWaitMs: appConfig.trpcServerKeepAlive.pongWaitMs || 10000,
     },
   })
   wss.on('connection', (ws) => {
@@ -37,7 +39,7 @@ export function wsServer() {
   wss.on('error', (err) => {
     console.error('WebSocket Server Error:', err)
   })
-  console.log('WebSocket Server listening on ws://localhost:3001')
+  console.log(`WebSocket Server listening on ws://${appConfig.trpcServerHost}:${appConfig.trpcServerPort}`)
   process.on('SIGTERM', () => {
     console.log('SIGTERM')
     handler.broadcastReconnectNotification()

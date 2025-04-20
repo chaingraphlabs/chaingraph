@@ -7,11 +7,24 @@
  */
 
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 
-export const flowDelete = publicProcedure
-  .input(z.string())
-  .mutation(async ({ input: flowId, ctx }) => {
-    const success = await ctx.flowStore.deleteFlow(flowId)
+export const flowDelete = flowContextProcedure
+  .input(z.object({
+    flowId: z.string(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    // check user access
+    if (!ctx.session?.user?.id) {
+      throw new Error('User not authenticated')
+    }
+
+    // check if flow exists
+    const hasAccess = await ctx.flowStore.hasAccess(input.flowId, ctx.session.user.id)
+    if (!hasAccess) {
+      throw new Error('Flow not found or access denied')
+    }
+
+    const success = await ctx.flowStore.deleteFlow(input.flowId)
     return { success }
   })

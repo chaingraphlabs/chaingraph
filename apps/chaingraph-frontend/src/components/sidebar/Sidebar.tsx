@@ -36,11 +36,32 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help'
+
+const defaultEnabledTabs: tabsType[] = [
+  'flows',
+  'nodes',
+  // 'events',
+  // 'variables',
+  'debug',
+  // 'settings',
+  // 'help',
+]
+
 const DEFAULT_WIDTH = 320
 const MIN_WIDTH = 200
 const MAX_WIDTH = 1200
 
-export function Sidebar() {
+// sidebar prop types
+export interface SidebarProps {
+  onFlowSelected?: (flowId: string) => void
+  enabledTabs?: tabsType[]
+}
+
+export function Sidebar({
+  onFlowSelected,
+  enabledTabs = defaultEnabledTabs,
+}: SidebarProps) {
   const tabs = [
     {
       id: 'flows',
@@ -50,6 +71,7 @@ export function Sidebar() {
         <FlowList onFlowSelected={({ flowId }) => {
           // navigate(`/flow/${flowId}`)
           setActiveFlowId(flowId)
+          onFlowSelected?.(flowId)
         }}
         />
       ),
@@ -90,7 +112,7 @@ export function Sidebar() {
       label: 'Help',
       content: <Help />,
     },
-  ] as const
+  ].filter(tab => enabledTabs === undefined || enabledTabs.includes(tab.id as tabsType))
 
   const [activeTab, setActiveTab] = useState<string | null>(() => {
     return localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB)

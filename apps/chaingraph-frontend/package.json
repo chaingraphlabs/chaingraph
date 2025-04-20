@@ -20,6 +20,11 @@
       "import": "./dist/lib/chaingraph-frontend.mjs",
       "default": "./dist/lib/chaingraph-frontend.js"
     },
+    "./store": {
+      "types": "./dist/lib/store.d.ts",
+      "import": "./dist/lib/store.mjs",
+      "default": "./dist/lib/store.js"
+    },
     "./style.css": "./dist/lib/chaingraph-frontend.css",
     "./styles": "./dist/lib/chaingraph-frontend.css"
   },
@@ -76,13 +81,13 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@radix-ui/themes": "^3.2.1",
     "@tanstack/react-query": "^5.67.1",
-    "@trpc/client": "11.0.4",
-    "@trpc/react-query": "11.0.4",
-    "@trpc/server": "11.0.4",
-    "@trpc/tanstack-react-query": "^11.0.4",
+    "@trpc/client": "11.1.0",
+    "@trpc/react-query": "11.1.0",
+    "@trpc/server": "11.1.0",
+    "@trpc/tanstack-react-query": "^11.1.0",
     "@types/color": "^4.2.0",
-    "@xyflow/react": "^12.5.5",
-    "@xyflow/system": "^0.0.55",
+    "@xyflow/react": "^12.6.0",
+    "@xyflow/system": "^0.0.57",
     "add": "^2.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

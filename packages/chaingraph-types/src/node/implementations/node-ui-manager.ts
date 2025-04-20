@@ -40,7 +40,18 @@ export class NodeUIManager implements INodeUI {
     if (!this.nodeRef.metadata.ui) {
       this.nodeRef.metadata.ui = ui
     } else {
-      this.nodeRef.metadata.ui = { ...this.nodeRef.metadata.ui, ...ui }
+      this.nodeRef.metadata.ui = {
+        ...this.nodeRef.metadata.ui ?? {},
+        ...ui ?? {},
+        state: {
+          ...this.nodeRef.metadata.ui.state ?? {},
+          ...ui.state ?? {},
+        },
+        style: {
+          ...this.nodeRef.metadata.ui.style ?? {},
+          ...ui.style ?? {},
+        },
+      }
     }
 
     if (!emitEvent) {

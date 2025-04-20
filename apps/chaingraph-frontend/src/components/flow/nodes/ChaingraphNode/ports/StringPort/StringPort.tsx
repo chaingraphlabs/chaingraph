@@ -108,8 +108,6 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       return
     }
 
-    console.log('StringPort handleResize', newDimensions)
-
     updatePortUI({
       nodeId: node.id,
       portId: port.id,

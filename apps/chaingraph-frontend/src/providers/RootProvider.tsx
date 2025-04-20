@@ -7,7 +7,6 @@
  */
 
 import { TooltipProvider } from '@/components/ui'
-
 import { initializeStores } from '@/store/init-stores-fx'
 import { $trpcClient, createTRPCClientEvent } from '@/store/trpc/store'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
@@ -16,29 +15,31 @@ import {
   TRPCProvider,
 } from '@badaitech/chaingraph-trpc/client'
 import {
-
   NodeRegistry,
   registerSuperjsonTransformers,
 } from '@badaitech/chaingraph-types'
-import { Theme } from '@radix-ui/themes'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactFlowProvider } from '@xyflow/react'
-import { attachLogger } from 'effector-logger'
 import { useUnit } from 'effector-react'
+
 import { useEffect, useRef } from 'react'
 import SuperJSON from 'superjson'
-
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
+import { ThemeProvider } from '../components/theme/ThemeProvider'
+
 import { ZoomProvider } from './ZoomProvider'
 import '../store'
-import '../store/init'
+// import '../store/init'
 
 interface RootProviderProps {
-  children: React.ReactNode
   trpcURL?: string
+  sessionToken?: string
   superjsonCustom?: typeof SuperJSON
   nodeRegistry?: NodeRegistry
+  theme?: 'dark' | 'light'
+
+  children: React.ReactNode
 }
 
 export const DefaultTRPCURL = `ws://localhost:3001`
@@ -46,66 +47,55 @@ export const DefaultTRPCURL = `ws://localhost:3001`
 export function RootProvider({
   children,
   trpcURL,
+  sessionToken,
   superjsonCustom,
   nodeRegistry,
+  theme,
 }: RootProviderProps) {
   // Use ref to track initialization state
   const isInitializedRef = useRef(false)
-
-  // effector logger
-  attachLogger()
-
-  createTRPCClientEvent({
-    trpcURL: trpcURL ?? DefaultTRPCURL,
-    superjsonCustom: superjsonCustom ?? SuperJSON,
-  })
-
-  initializeNodes((_nodeRegistry: NodeRegistry) => {
-    if (nodeRegistry) {
-      nodeRegistry.copyFrom(_nodeRegistry)
-    }
-
-    NodeRegistry.setInstance(nodeRegistry ?? _nodeRegistry)
-  })
-
-  // Static tRPC needs for the effector effects
-  // if (!isStaticTRPCClientExists()) {
-  //   setStaticTRPCClient(createTRPCClient({
-  //     url: trpcURL ?? DefaultTRPCURL,
-  //     superjsonCustom: superjsonCustom ?? SuperJSON,
-  //   }))
-  // }
-
-  // initializeStores((categorizedNodes: CategorizedNodes[], flows: FlowMetadata[]) => {
-  //   console.log('Stores initialized successfully')
-  //   // callback with the results
-  //   console.log('Categorized Nodes:', categorizedNodes)
-  //   console.log('Flows:', flows)
-  // }).catch(console.error)
 
   useEffect(() => {
     if (!isInitializedRef.current) {
       isInitializedRef.current = true
 
+      // effector logger
+      // if (process.env.NODE_ENV === 'development') {
+      //   attachLogger()
+      // }
+
+      initializeNodes((_nodeRegistry: NodeRegistry) => {
+        if (nodeRegistry) {
+          nodeRegistry.copyFrom(_nodeRegistry)
+        }
+
+        NodeRegistry.setInstance(nodeRegistry ?? _nodeRegistry)
+      })
+
+      registerSuperjsonTransformers(
+        superjsonCustom ?? SuperJSON,
+        NodeRegistry.getInstance(),
+      )
+
+      createTRPCClientEvent({
+        sessionToken,
+        trpcURL: trpcURL ?? DefaultTRPCURL,
+        superjsonCustom: superjsonCustom ?? SuperJSON,
+      })
+
       initializeStores((categorizedNodes, flows) => {
-        console.log('Stores initialized successfully')
-        console.log('Categorized Nodes:', categorizedNodes)
-        console.log('Flows:', flows)
+        console.debug('Stores initialized successfully')
+        console.debug('Categorized Nodes:', categorizedNodes)
+        console.debug('Flows:', flows)
       }).catch(console.error)
     }
-  }, [])
-
-  registerSuperjsonTransformers(
-    superjsonCustom ?? SuperJSON,
-    NodeRegistry.getInstance(),
-  )
+  }, [nodeRegistry, sessionToken, superjsonCustom, trpcURL])
 
   const queryClient = getQueryClient()
   const trpcClient = useUnit($trpcClient)
 
   return (
-    // <ThemeProvider>
-    <Theme appearance="dark">
+    <ThemeProvider theme={theme}>
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
           <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
@@ -123,7 +113,6 @@ export function RootProvider({
           </TRPCProvider>
         </QueryClientProvider>
       </TooltipProvider>
-    </Theme>
-    // </ThemeProvider>
+    </ThemeProvider>
   )
 }

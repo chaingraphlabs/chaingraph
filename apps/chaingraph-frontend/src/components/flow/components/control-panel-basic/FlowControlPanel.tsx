@@ -161,15 +161,12 @@ export function FlowControlPanel() {
               status={status}
               breakpointHit={breakpointHit}
               onStepOver={() => {
-                console.log('Step over')
                 simulateBreakpointHit()
               }}
               onStepInto={() => {
-                console.log('Step into')
                 simulateBreakpointHit()
               }}
               onStepOut={() => {
-                console.log('Step out')
                 simulateBreakpointHit()
               }}
             />

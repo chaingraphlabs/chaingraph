@@ -33,7 +33,7 @@ export async function initializeStores(callback?: (
       await callback(categorizedNodes, flows)
     }
 
-    console.log('Stores initialized successfully')
+    console.debug('Stores initialized successfully')
   } catch (error) {
     console.error('Failed to initialize stores:', error)
     throw error

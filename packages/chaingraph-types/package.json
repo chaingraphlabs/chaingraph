@@ -33,6 +33,7 @@
     "dist"
   ],
   "scripts": {
+    "dev": "tsc -b --watch",
     "build": "tsc -b",
     "test": "vitest",
     "check-types": "tsc -b",

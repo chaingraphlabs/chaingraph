@@ -16,6 +16,12 @@ import {
 import { createTRPCContext } from '@trpc/tanstack-react-query'
 import SuperJSON from 'superjson'
 
+// Authentication-related configuration
+interface AuthOptions {
+  token?: string
+  getToken?: () => string | undefined
+}
+
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -52,17 +58,23 @@ export function createTRPCClient(
   opts: {
     url: string
     superjsonCustom?: typeof SuperJSON
+    auth?: AuthOptions
   } = {
     url: `ws://localhost:3001`,
     superjsonCustom: SuperJSON,
   },
 ) {
+  const token = opts.auth?.token || opts.auth?.getToken?.() || undefined
+
   return _createTRPCClient<AppRouter>({
     links: [
       wsLink<AppRouter>({
         transformer: opts?.superjsonCustom ?? SuperJSON,
         client: createWSClient({
           url: opts.url,
+          connectionParams: {
+            sessionBadAI: token,
+          },
           onError: (err) => {
             console.error('WebSocket error:', err)
           },

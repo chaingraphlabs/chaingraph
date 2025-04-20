@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
-import { EventQueue } from '../utils'
+import { deepCopy, EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
 
 export class Flow implements IFlow {
@@ -567,12 +567,11 @@ export class Flow implements IFlow {
   }
 
   public clone(): IFlow {
-    const newFlow = new Flow({ ...this.metadata })
+    const newFlow = new Flow(deepCopy(this.metadata))
 
     // Clone nodes
     for (const node of this.nodes.values()) {
-      const clonedNode = node.clone()
-      newFlow.addNode(clonedNode, true)
+      newFlow.addNode(node.clone(), true)
     }
 
     // Clone edges
@@ -633,6 +632,11 @@ export class Flow implements IFlow {
 
   public deserialize(data: JSONValue): IFlow {
     const flowData = data as any
+
+    if (!flowData.metadata) {
+      throw new Error('Invalid flow data: missing metadata.')
+    }
+
     const flow = new Flow({
       ...flowData.metadata,
       createdAt: new Date(flowData.metadata.createdAt ?? new Date()),

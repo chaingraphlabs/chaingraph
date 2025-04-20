@@ -62,8 +62,8 @@ export function init() {
   })
 
   sample({
-    // clock: throttledUpdateNodePositionLocal,
-    clock: updateNodePosition,
+    clock: throttledUpdateNodePositionLocal,
+    // clock: updateNodePosition,
     target: [updateNodePositionLocal],
   })
 

@@ -8,11 +8,11 @@
 
 import type { CategorizedNodes } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { publicProcedure, router } from '../../trpc'
+import { authedProcedure, router } from '../../trpc'
 
 export const nodeRegistryProcedures = router({
   // Get all nodes grouped by categories
-  getCategorizedNodes: publicProcedure
+  getCategorizedNodes: authedProcedure
     .query(async ({ ctx }): Promise<CategorizedNodes[]> => {
       // return ctx.nodesCatalog.getAllNodes()
       const nodes = ctx.nodesCatalog.getAllNodes()
@@ -28,27 +28,27 @@ export const nodeRegistryProcedures = router({
     }),
 
   // Search nodes across all categories
-  searchNodes: publicProcedure
+  searchNodes: authedProcedure
     .input(z.string())
     .query(async ({ ctx, input }): Promise<CategorizedNodes[]> => {
       return ctx.nodesCatalog.searchNodes(input)
     }),
 
   // Get nodes for specific category
-  getNodesByCategory: publicProcedure
+  getNodesByCategory: authedProcedure
     .input(z.string())
     .query(async ({ ctx, input }): Promise<CategorizedNodes | undefined> => {
       return ctx.nodesCatalog.getNodesByCategory(input)
     }),
 
   // Get available categories
-  getCategories: publicProcedure
+  getCategories: authedProcedure
     .query(async ({ ctx }) => {
       return ctx.nodesCatalog.getCategories()
     }),
 
   // Get specific node type
-  getNodeType: publicProcedure
+  getNodeType: authedProcedure
     .input(z.string())
     .query(async ({ input: nodeType, ctx }) => {
       const node = ctx.nodesCatalog.getNodeByType(nodeType)
@@ -59,7 +59,7 @@ export const nodeRegistryProcedures = router({
     }),
 
   // Legacy procedure for backward compatibility
-  listAvailableTypes: publicProcedure
+  listAvailableTypes: authedProcedure
     .query(async ({ ctx }) => {
       return ctx.nodesCatalog.getAllNodes().flatMap((category: CategorizedNodes) => category.nodes)
     }),
