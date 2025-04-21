@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.8
+
+### Patch Changes
+
+- 83524d7: Add docker images release workflow
+- Updated dependencies [83524d7]
+  - @badaitech/chaingraph-nodes@0.1.8
+  - @badaitech/chaingraph-trpc@0.1.8
+  - @badaitech/chaingraph-types@0.1.8
+
 ## 0.1.7
 
 ### Patch Changes
