@@ -1,0 +1,15 @@
+query GetUserProfile($session: Session!) {
+  userProfile(session: $session) {
+    email
+    externalAccounts {
+      ID
+      providerID
+    }
+    id
+    name
+    picture
+    role
+    tariffCurrent
+    tariffExpires
+  }
+}

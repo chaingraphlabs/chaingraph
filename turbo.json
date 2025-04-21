@@ -13,6 +13,7 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
+      "dependsOn": ["^dev"],
       "persistent": true,
       "cache": false
     },

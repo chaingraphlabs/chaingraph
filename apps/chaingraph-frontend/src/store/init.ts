@@ -6,27 +6,24 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { initializeCategoriesFx } from './categories/init'
-import { initializeFlowsFx } from './flow/init'
-import './nodes/init'
-import './edges/init'
-import './execution/init'
-import './ports/init'
+// import './flow/init'
+// import './nodes/init'
+// import './ports/init'
+// import './edges/init'
+// import './execution/init'
 
-/**
- * Initialize all stores and load initial data
- */
-export async function initializeStores() {
-  try {
-    // Initialize stores in parallel
-    await Promise.all([
-      initializeCategoriesFx(),
-      initializeFlowsFx(),
-    ])
+import { init as categoriesInit } from './categories/init'
+import { init as edgesInit } from './edges/init'
+import { init as executionInit } from './execution/init'
+import { init as flowInit } from './flow/init'
+import { init as nodesInit } from './nodes/init'
+import { init as portsInit } from './ports/init'
 
-    console.log('Stores initialized successfully')
-  } catch (error) {
-    console.error('Failed to initialize stores:', error)
-    throw error
-  }
+export function init() {
+  categoriesInit()
+  flowInit()
+  nodesInit()
+  edgesInit()
+  portsInit()
+  executionInit()
 }

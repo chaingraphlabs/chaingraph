@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph",
   "type": "module",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": false,
   "packageManager": "pnpm@10.5.2",
   "license": "BUSL-1.1",
@@ -23,7 +23,8 @@
     "clean": "make clean",
     "preview": "pnpm --filter chaingraph-backend run start | pnpm --filter chaingraph-frontend run preview",
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "pre:dev": "turbo run build",
+    "dev": "turbo run dev --parallel --no-cache",
     "build:front": "turbo run build --filter=@badaitech/chaingraph-frontend",
     "dev:front": "turbo run dev --filter=@badaitech/chaingraph-frontend",
     "build:back": "turbo run build --filter=@badaitech/chaingraph-backend",
@@ -91,7 +92,7 @@
     "unplugin-auto-import": "^19.1.2",
     "unplugin-swc": "^1.5.1",
     "vite": "^6.2.5",
-    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-plugin-node-polyfills": "0.17.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.1.1",
     "vitest-tsconfig-paths": "^3.4.1"

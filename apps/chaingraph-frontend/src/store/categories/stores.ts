@@ -6,10 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { FetchCategoriesError } from '@/store/categories/types'
 import type { CategorizedNodes, CategoryMetadata } from '@badaitech/chaingraph-types'
+import type { FetchCategoriesError } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
-import { combine, createStore } from 'effector'
+import { combine } from 'effector'
+import { categoriesDomain } from '../domains'
 import { fetchCategorizedNodesFx } from './effects'
 import {
   resetCategories,
@@ -20,12 +21,12 @@ import {
 } from './events'
 
 // Main data stores
-export const $categorizedNodes = createStore<CategorizedNodes[]>([])
+export const $categorizedNodes = categoriesDomain.createStore<CategorizedNodes[]>([])
   .on(setCategorizedNodes, (_, nodes) => nodes)
   .on(fetchCategorizedNodesFx.doneData, (_, nodes) => nodes)
   .reset(resetCategories)
 
-export const $categoryMetadata = createStore<Map<string, CategoryMetadata>>(new Map())
+export const $categoryMetadata = categoriesDomain.createStore<Map<string, CategoryMetadata>>(new Map())
   .on(setCategoryMetadata, (_, metadata) => metadata)
   .on(fetchCategorizedNodesFx.doneData, (_, nodes) => {
     const map = new Map<string, CategoryMetadata>()
@@ -37,12 +38,12 @@ export const $categoryMetadata = createStore<Map<string, CategoryMetadata>>(new 
   .reset(resetCategories)
 
 // Loading states
-export const $isLoading = createStore(false)
+export const $isLoading = categoriesDomain.createStore(false)
   .on(setLoading, (_, isLoading) => isLoading)
   .on(fetchCategorizedNodesFx.pending, (_, isPending) => isPending)
 
 // Error state
-export const $error = createStore<FetchCategoriesError | null>(null)
+export const $error = categoriesDomain.createStore<FetchCategoriesError | null>(null)
   .on(setError, (_, error) => error)
   .on(fetchCategorizedNodesFx.failData, (_, error) => ({
     message: error.message,
@@ -59,10 +60,10 @@ export const $categoriesState = combine({
 })
 
 // Helper computed store for getting category metadata
-export const $getCategoryMetadata = $categoryMetadata.map(
-  metadata => (categoryId: string) =>
-    metadata.get(categoryId) ?? metadata.get(NODE_CATEGORIES.OTHER)!,
-)
+// export const $getCategoryMetadata = $categoryMetadata.map(
+//   metadata => (categoryId: string) =>
+//     metadata.get(categoryId) ?? metadata.get(NODE_CATEGORIES.OTHER)!,
+// )
 
 export const $categoryMetadataGetter = combine(
   $categoryMetadata,

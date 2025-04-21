@@ -8,14 +8,16 @@
 
 import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type {
+  CreateExecutionOptions,
   EdgeExecutionState,
   ExecutionState,
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { createExecutionFx, stopExecutionFx } from '@/store/execution/effects'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { combine, createStore } from 'effector'
+import { attach, combine } from 'effector'
+import { executionDomain } from '../domains'
+import { $trpcClient } from '../trpc/store'
 import {
   addBreakpoint,
   clearExecutionState,
@@ -44,7 +46,122 @@ const initialState: ExecutionState = {
   },
 }
 
-export const $executionEvents = createStore<ExecutionEventImpl[]>([])
+export const $executionState = executionDomain.createStore<ExecutionState>(initialState)
+
+// Control effects
+export const createExecutionFx = attach({
+  source: combine({
+    client: $trpcClient,
+    state: $executionState,
+  }),
+  effect: async (sources, payload: CreateExecutionOptions) => {
+    const { client, state } = sources
+    const { flowId, debug } = payload
+    const breakpoints = state.breakpoints
+
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+
+    const response = await client.execution.create.mutate({
+      flowId,
+      options: {
+        debug,
+        breakpoints: debug ? Array.from(breakpoints) : [],
+        execution: {
+          maxConcurrency: 10,
+          nodeTimeoutMs: 90000,
+          flowTimeoutMs: 300000,
+        },
+      },
+    })
+    return response.executionId
+  },
+})
+
+export const startExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.start.mutate({ executionId })
+  },
+})
+
+export const pauseExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.pause.mutate({ executionId })
+  },
+})
+
+export const resumeExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.resume.mutate({ executionId })
+  },
+})
+
+export const stopExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.stop.mutate({ executionId })
+  },
+})
+
+// Debug effects
+export const addBreakpointFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: { executionId: string, nodeId: string }) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.debug.addBreakpoint.mutate({
+      executionId: params.executionId,
+      nodeId: params.nodeId,
+    })
+  },
+})
+
+export const removeBreakpointFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: { executionId: string, nodeId: string }) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.debug.removeBreakpoint.mutate({
+      executionId: params.executionId,
+      nodeId: params.nodeId,
+    })
+  },
+})
+
+export const stepExecutionFx = attach({
+  source: $trpcClient,
+  effect: async (client, executionId: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.execution.debug.step.mutate({ executionId })
+  },
+})
+
+// effect for checking terminal status
+export const checkTerminalStatusFx = executionDomain.createEffect((status: ExecutionStatus) => {
+  return isTerminalStatus(status)
+})
+
+export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]>([])
   .on(newExecutionEvent, (state, event) => {
     return [...state, event]
   })
@@ -52,7 +169,7 @@ export const $executionEvents = createStore<ExecutionEventImpl[]>([])
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
 
-export const $executionNodes = createStore<Record<string, NodeExecutionState>>({}, {
+export const $executionNodes = executionDomain.createStore<Record<string, NodeExecutionState>>({}, {
   updateFilter: (prev, next) => {
     // If either is null/undefined
     if (!prev || !next)
@@ -171,10 +288,10 @@ export const $executionNodes = createStore<Record<string, NodeExecutionState>>({
     return state
   })
   .reset(clearExecutionState)
+  .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
-  // .reset(stopExecutionFx.done)
 
-export const $executionEdges = createStore<Record<string, EdgeExecutionState>>({})
+export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
   .on(newExecutionEvent, (state, event) => {
     let finalState = state
     let stateChanged = false
@@ -229,11 +346,11 @@ export const $executionEdges = createStore<Record<string, EdgeExecutionState>>({
     return state
   })
   .reset(clearExecutionState)
+  .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
-  // .reset(stopExecutionFx.done)
 
-export const $executionState = createStore<ExecutionState>(initialState)
 // Handle execution status changes
+$executionState
   .on(createExecutionFx.pending, (state) => {
     if (state.status === ExecutionStatus.IDLE) {
       return {
@@ -258,15 +375,15 @@ export const $executionState = createStore<ExecutionState>(initialState)
       //   return { ...state, status: ExecutionStatus.CREATED }
 
       case ExecutionEventEnum.FLOW_STARTED:
-        console.log('Flow started:', event.data)
+        console.debug('Flow started:', event.data)
         return { ...state, status: ExecutionStatus.RUNNING }
 
       case ExecutionEventEnum.FLOW_COMPLETED:
-        console.log('Flow completed:', event.data)
+        console.debug('Flow completed:', event.data)
         return { ...state, status: ExecutionStatus.COMPLETED }
 
       case ExecutionEventEnum.FLOW_FAILED:
-        console.log('Flow failed:', event.data)
+        console.debug('Flow failed:', event.data)
         return {
           ...state,
           status: ExecutionStatus.ERROR,
@@ -277,7 +394,7 @@ export const $executionState = createStore<ExecutionState>(initialState)
         }
 
       case ExecutionEventEnum.FLOW_CANCELLED:
-        console.log('Flow cancelled:', event.data)
+        console.debug('Flow cancelled:', event.data)
         return {
           ...state,
           status: ExecutionStatus.STOPPED,
@@ -341,7 +458,11 @@ export const $executionState = createStore<ExecutionState>(initialState)
   }))
 
   // Reset state
-  .reset(clearExecutionState)
+  .on(clearExecutionState, state => ({
+    ...initialState,
+    debugMode: state.debugMode,
+    breakpoints: state.breakpoints,
+  }))
 
   // Handle subscription status
   .on(setExecutionSubscriptionStatus, (state, status) => ({
@@ -378,13 +499,13 @@ export const $executionState = createStore<ExecutionState>(initialState)
     }
   })
 
-export const $highlightedNodeId = createStore<string[] | null>(null)
+export const $highlightedNodeId = executionDomain.createStore<string[] | null>(null)
   .on(setHighlightedNodeId, (state, highlightedNodeId) =>
     typeof highlightedNodeId === 'string'
       ? [highlightedNodeId]
       : highlightedNodeId)
 
-export const $highlightedEdgeId = createStore<string[] | null>(null)
+export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(null)
   .on(setHighlightedEdgeId, (state, highlightedEdgeId) =>
     typeof highlightedEdgeId === 'string'
       ? [highlightedEdgeId]
@@ -440,7 +561,7 @@ export const $autoStartConditions = combine({
 })
 
 // Store to prevent multiple start attempts
-export const $startAttempted = createStore(false)
+export const $startAttempted = executionDomain.createStore(false)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)

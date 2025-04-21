@@ -7,26 +7,36 @@
  */
 
 import type { AddEdgeEventData, RemoveEdgeEventData } from './types'
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
-import { createEffect } from 'effector' // Effect for adding edge
+import { $trpcClient } from '@/store/trpc/store'
+import { attach } from 'effector'
 
 // Effect for adding edge
-export const addEdgeFx = createEffect(async (event: AddEdgeEventData) => {
-  return trpcClient.flow.connectPorts.mutate({
-    flowId: event.flowId,
-    sourceNodeId: event.sourceNodeId,
-    sourcePortId: event.sourcePortId,
-    targetNodeId: event.targetNodeId,
-    targetPortId: event.targetPortId,
-    metadata: event.metadata,
-  })
+export const addEdgeFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: AddEdgeEventData) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.connectPorts.mutate({
+      flowId: event.flowId,
+      sourceNodeId: event.sourceNodeId,
+      sourcePortId: event.sourcePortId,
+      targetNodeId: event.targetNodeId,
+      targetPortId: event.targetPortId,
+      metadata: event.metadata,
+    })
+  },
 })
 
-// Effect for removing edge
-export const removeEdgeFx = createEffect(async (event: RemoveEdgeEventData) => {
-  // Assuming we have an endpoint for edge removal
-  return trpcClient.flow.removeEdge.mutate({
-    flowId: event.flowId,
-    edgeId: event.edgeId,
-  })
+export const removeEdgeFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: RemoveEdgeEventData) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.removeEdge.mutate({
+      flowId: event.flowId,
+      edgeId: event.edgeId,
+    })
+  },
 })

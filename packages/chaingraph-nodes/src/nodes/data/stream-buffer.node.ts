@@ -19,6 +19,7 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'StreamBufferNode',
   title: 'Stream Buffer',
   description: 'Collects strings from a stream and concatenates them into a single string.',
   category: NODE_CATEGORIES.DATA,

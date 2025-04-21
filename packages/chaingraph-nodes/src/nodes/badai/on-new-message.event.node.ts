@@ -14,6 +14,7 @@ import { NODE_CATEGORIES } from '../../categories'
 import { Message } from './types'
 
 @Node({
+  type: 'OnNewMessageEventNode',
   title: 'On New Message Event',
   description: 'Triggered when a new message is received in the chat',
   category: NODE_CATEGORIES.BADAI,

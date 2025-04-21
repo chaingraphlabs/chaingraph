@@ -59,19 +59,72 @@ await init()
 wsServer()
 ```
 
-### Environment Configuration
+### Environment Variables
 
-Create a `.env` file with optional configuration:
+ChainGraph Backend can be configured through environment variables. You can set these in a `.env` file in the project root or provide them directly when running the server.
 
-```
-# PostgreSQL connection string (optional, defaults to in-memory storage)
+#### Server Configuration
+
+| Variable           | Description                      | Default     | Example   |
+| ------------------ | -------------------------------- | ----------- | --------- |
+| `TRPC_SERVER_HOST` | Host address for the tRPC server | `localhost` | `0.0.0.0` |
+| `TRPC_SERVER_PORT` | Port for the tRPC server         | `3001`      | `4000`    |
+
+#### Keep-Alive Settings
+
+| Variable                              | Description                             | Default | Example |
+| ------------------------------------- | --------------------------------------- | ------- | ------- |
+| `TRPC_SERVER_KEEP_ALIVE_ENABLED`      | Enable/disable WebSocket keep-alive     | `true`  | `false` |
+| `TRPC_SERVER_KEEP_ALIVE_PING_MS`      | Interval for sending ping messages (ms) | `5000`  | `10000` |
+| `TRPC_SERVER_KEEP_ALIVE_PONG_WAIT_MS` | Timeout for awaiting pong response (ms) | `10000` | `20000` |
+
+#### Database Configuration
+
+| Variable       | Description                  | Default                                                       | Example                                                     |
+| -------------- | ---------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres@localhost:5431/postgres?sslmode=disable` | `postgres://user:password@host:5432/dbname?sslmode=require` |
+
+#### Authentication Settings
+
+| Variable             | Description                                | Default                         | Example                         |
+| -------------------- | ------------------------------------------ | ------------------------------- | ------------------------------- |
+| `AUTH_ENABLED`       | Enable/disable authentication              | `false`                         | `true`                          |
+| `AUTH_DEV_MODE`      | Enable development mode for authentication | `false`                         | `true`                          |
+| `BADAI_AUTH_ENABLED` | Enable BadAI authentication                | `false`                         | `true`                          |
+| `BADAI_API_URL`      | URL for the BadAI GraphQL API              | `http://localhost:9151/graphql` | `https://api.badai.com/graphql` |
+
+#### Example .env Files
+
+**Basic Configuration:**
+```env
+# Basic server setup
+TRPC_SERVER_HOST=localhost
+TRPC_SERVER_PORT=3001
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/chaingraph
+```
 
-# Server port (optional, defaults to 3001)
-PORT=3001
+**Production Configuration:**
+```env
+# Production setup with authentication
+TRPC_SERVER_HOST=0.0.0.0
+TRPC_SERVER_PORT=3001
+TRPC_SERVER_KEEP_ALIVE_ENABLED=true
+TRPC_SERVER_KEEP_ALIVE_PING_MS=5000
+TRPC_SERVER_KEEP_ALIVE_PONG_WAIT_MS=10000
+DATABASE_URL=postgres://user:password@prod-db:5432/chaingraph?sslmode=require
+AUTH_ENABLED=true
+BADAI_AUTH_ENABLED=true
+BADAI_API_URL=https://api.badai.com/graphql
+```
 
-# Log level (optional, defaults to 'info')
-LOG_LEVEL=debug
+**Development Configuration:**
+```env
+# Development setup
+TRPC_SERVER_HOST=localhost
+TRPC_SERVER_PORT=3001
+DATABASE_URL=postgres://postgres@localhost:5431/postgres?sslmode=disable
+AUTH_ENABLED=true
+AUTH_DEV_MODE=true
 ```
 
 ### Running with Docker

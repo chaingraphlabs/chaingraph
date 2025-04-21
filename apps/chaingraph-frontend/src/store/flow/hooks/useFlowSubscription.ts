@@ -7,43 +7,50 @@
  */
 
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types'
+import { useTRPC } from '@badaitech/chaingraph-trpc/client'
+import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
+import { skipToken } from '@tanstack/react-query'
+import { useSubscription } from '@trpc/tanstack-react-query'
+import { useUnit } from 'effector-react'
+import { useEffect, useMemo } from 'react'
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
-} from '@/components/flow/utils/node-position'
+} from '../../../components/flow/utils/node-position'
+import { removeEdge, setEdge, setEdges } from '../../edges/events'
 import {
-  $nodes,
+  addNode,
   addNodes,
-  FlowSubscriptionStatus,
-  removeEdge,
-  setEdge,
-  setEdges,
-  setFlowLoaded,
-  setFlowMetadata,
-  setFlowSubscriptionError,
-  setFlowSubscriptionStatus,
+  removeNode,
   setNodes,
   setNodeVersion,
   updateNode,
   updateNodeUILocal,
-} from '@/store'
-import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '@/store/flow/stores'
-import { addNode, removeNode } from '@/store/nodes/events'
-import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
-import { trpcReact } from '@badaitech/chaingraph-trpc/client'
-import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
-import { skipToken } from '@tanstack/react-query'
-import { useUnit } from 'effector-react'
-import { useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+} from '../../nodes/events'
+import { positionInterpolator } from '../../nodes/position-interpolation-advanced'
+import { $nodes } from '../../nodes/stores'
 import { updatePort } from '../../ports/events'
+import {
+  setFlowLoaded,
+  setFlowMetadata,
+  setFlowSubscriptionError,
+  setFlowSubscriptionStatus,
+} from '../events'
+import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '../stores'
+import { FlowSubscriptionStatus } from '../types'
+
+// export function useFlowSubscription2() {
+//   const trpc = useTRPC()
+//   const activeFlowId = useUnit($activeFlowId)
+//
+//
+// }
 
 export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)
   const isFlowsLoading = useUnit($isFlowsLoading)
   const subscriptionState = useUnit($flowSubscriptionState)
   const nodes = useUnit($nodes)
-  const navigate = useNavigate()
 
   // Create event handlers map
   const eventHandlers: FlowEventHandlerMap = useMemo(() => ({
@@ -93,7 +100,7 @@ export function useFlowSubscription() {
       }
 
       if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
-        console.log(`[PortUpdated] Received outdated port update event for node ${data.port.getConfig().nodeId}, local version: ${node.metadata.version}, event version: ${data.nodeVersion}`)
+        console.warn(`[PortUpdated] Received outdated port update event for node ${data.port.getConfig().nodeId}, local version: ${node.metadata.version}, event version: ${data.nodeVersion}`)
         return
       }
 
@@ -109,6 +116,11 @@ export function useFlowSubscription() {
           value: data.port.getValue(),
         },
         nodeVersion: data.nodeVersion ?? 1,
+      })
+
+      setNodeVersion({
+        nodeId: data.port.getConfig().nodeId!,
+        version: data.nodeVersion ?? 1,
       })
     },
 
@@ -182,7 +194,7 @@ export function useFlowSubscription() {
         return
       }
 
-      console.log(`[NodeParentUpdated] currentParent: ${currentParent?.id}, newParent: ${newParent?.id}, currentPosition: ${JSON.stringify(currentPosition)}, newPosition: ${JSON.stringify(newPosition)} currentVersion: ${currentVersion}, data.version: ${data.version}`)
+      console.debug(`[NodeParentUpdated] currentParent: ${currentParent?.id}, newParent: ${newParent?.id}, currentPosition: ${JSON.stringify(currentPosition)}, newPosition: ${JSON.stringify(newPosition)} currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
       node.setMetadata({
         ...node.metadata,
@@ -207,11 +219,11 @@ export function useFlowSubscription() {
 
       // if event contains version + 1 then just update the version
       if (data.version && data.version <= currentVersion) {
-        console.log(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        console.warn(`[SKIPPING] Received position change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
         return
       }
 
-      console.log(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
+      // console.debug(`[NOT SKIP] Received position change currentPosition: ${JSON.stringify(data.oldPosition)}, newPosition: ${JSON.stringify(data.newPosition)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
       setNodeVersion({
         nodeId: data.nodeId,
         version: data.version,
@@ -230,7 +242,7 @@ export function useFlowSubscription() {
 
       // ignore outdated events
       if (data.version && data.version <= currentVersion) {
-        console.log(`Ignoring outdated UI change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        console.debug(`Ignoring outdated UI change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
         return
       }
 
@@ -238,6 +250,11 @@ export function useFlowSubscription() {
         flowId: activeFlowId!,
         nodeId: data.nodeId,
         ui: data.ui,
+        version: data.version,
+      })
+
+      setNodeVersion({
+        nodeId: data.nodeId,
         version: data.version,
       })
     },
@@ -258,7 +275,7 @@ export function useFlowSubscription() {
         return
       }
 
-      console.log(`[NOT SKIP] Received dimensions change newDimensions: ${JSON.stringify(data.newDimensions)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
+      // console.debug(`[NOT SKIP] Received dimensions change newDimensions: ${JSON.stringify(data.newDimensions)}, currentVersion: ${currentVersion}, data.version: ${data.version}`)
 
       setNodeVersion({
         nodeId: data.nodeId,
@@ -279,15 +296,19 @@ export function useFlowSubscription() {
   }), [nodes, activeFlowId])
 
   // Create event handler with error handling
-  const handleEvent = useMemo(() => createEventHandler(eventHandlers, {
-    onError: (error, event) => {
-      console.error(`Error handling event ${event.type}:`, error)
-      // Consider creating a separate error event/store for subscription errors
-    },
-  }), [eventHandlers])
+  const handleEvent = useMemo(() =>
+    createEventHandler(
+      eventHandlers,
+      {
+        onError: (error, event) => {
+          console.error(`Error handling event ${event.type}:`, error)
+          // Consider creating a separate error event/store for subscription errors
+        },
+      },
+    ), [eventHandlers])
 
-  // Subscribe to flow events using tRPC
-  const subscription = trpcReact.flow.subscribeToEvents.useSubscription(
+  const trpc = useTRPC()
+  const opts = trpc.flow.subscribeToEvents.subscriptionOptions(
     activeFlowId
       ? {
           flowId: activeFlowId,
@@ -296,11 +317,18 @@ export function useFlowSubscription() {
       : skipToken,
     {
       onStarted: () => {
+        console.debug('[FLOW SUB] Subscription started')
         setFlowSubscriptionStatus(FlowSubscriptionStatus.CONNECTING)
       },
+      onConnectionStateChange: (state) => {
+        console.debug('[FLOW SUB] Connection state changed:', state)
+      },
       onData: async (trackedData) => {
-        // Set status to SUBSCRIBED on first data received
-        setFlowSubscriptionStatus(FlowSubscriptionStatus.SUBSCRIBED)
+        // Set status to SUBSCRIBED on the first data received
+        if (!subscriptionState.isSubscribed) {
+          setFlowSubscriptionStatus(FlowSubscriptionStatus.SUBSCRIBED)
+        }
+
         // console.log('Received event:', trackedData.data)
         await handleEvent(trackedData.data)
       },
@@ -312,11 +340,14 @@ export function useFlowSubscription() {
           code: error.data?.code,
           timestamp: new Date(),
         })
-
-        navigate('/flows')
       },
     },
   )
+
+  const subscription = useSubscription({
+    ...opts,
+    enabled: !!activeFlowId,
+  })
 
   // Update subscription status on unmount
   useEffect(() => {
@@ -331,7 +362,7 @@ export function useFlowSubscription() {
       }
     }
     // FIXME
-  }, [activeFlowId])
+  }, [activeFlowId, subscription])
 
   useEffect(() => {
     return () => {

@@ -6,22 +6,23 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { FlowSubscriptionError } from '@/store'
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import type { FlowSubscriptionError } from './types'
+import { flowDomain } from '@/store/domains'
+import { combine } from 'effector'
+import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from './effects'
 import {
   deleteFlow,
-  FlowSubscriptionStatus,
   setFlowLoaded,
   setFlowMetadata,
   setFlowsError,
   setFlowsList,
   setFlowsLoading,
-} from '@/store'
-import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from '@/store/flow/effects'
-import { combine, createStore } from 'effector'
+} from './events'
+import { FlowSubscriptionStatus } from './types'
 
 // Store for all flows list
-export const $flows = createStore<FlowMetadata[]>([])
+export const $flows = flowDomain.createStore<FlowMetadata[]>([])
   // Handle direct state updates
   .on(setFlowsList, (_, flows) => flows)
   .on(setFlowMetadata, (flows, updatedFlow) => {
@@ -57,40 +58,40 @@ export const $flows = createStore<FlowMetadata[]>([])
     flows.filter(f => f.id !== id))
 
 // Currently active flow ID
-export const $activeFlowId = createStore<string | null>(null)
+export const $activeFlowId = flowDomain.createStore<string | null>(null)
 
 // Main loading state
-export const $isFlowsLoading = createStore<boolean>(false)
+export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
   .on(setFlowsLoading, (_, isLoading) => isLoading)
   .on(loadFlowsListFx.pending, (_, isPending) => isPending)
 
 // Main error state
-export const $flowsError = createStore<Error | null>(null)
+export const $flowsError = flowDomain.createStore<Error | null>(null)
   .on(setFlowsError, (_, error) => error)
   .on(loadFlowsListFx.failData, (_, error) => error)
   .reset(loadFlowsListFx.done)
 
 // Specific operation error stores
-export const $createFlowError = createStore<Error | null>(null)
+export const $createFlowError = flowDomain.createStore<Error | null>(null)
   .on(createFlowFx.failData, (_, error) => error)
   .reset(createFlowFx.done)
 
-export const $updateFlowError = createStore<Error | null>(null)
+export const $updateFlowError = flowDomain.createStore<Error | null>(null)
   .on(editFlowFx.failData, (_, error) => error)
   .reset(editFlowFx.done)
 
-export const $deleteFlowError = createStore<Error | null>(null)
+export const $deleteFlowError = flowDomain.createStore<Error | null>(null)
   .on(deleteFlowFx.failData, (_, error) => error)
   .reset(deleteFlowFx.done)
 
 // Specific operation loading states
-export const $isCreatingFlow = createStore<boolean>(false)
+export const $isCreatingFlow = flowDomain.createStore<boolean>(false)
   .on(createFlowFx.pending, (_, isPending) => isPending)
 
-export const $isUpdatingFlow = createStore<boolean>(false)
+export const $isUpdatingFlow = flowDomain.createStore<boolean>(false)
   .on(editFlowFx.pending, (_, isPending) => isPending)
 
-export const $isDeletingFlow = createStore<boolean>(false)
+export const $isDeletingFlow = flowDomain.createStore<boolean>(false)
   .on(deleteFlowFx.pending, (_, isPending) => isPending)
 
 // Combined error store
@@ -113,11 +114,11 @@ export const $activeFlowMetadata = combine(
 )
 
 // Subscription related stores
-export const $flowSubscriptionStatus = createStore<FlowSubscriptionStatus>(
+export const $flowSubscriptionStatus = flowDomain.createStore<FlowSubscriptionStatus>(
   FlowSubscriptionStatus.IDLE,
 )
 
-export const $flowSubscriptionError = createStore<FlowSubscriptionError | null>(null)
+export const $flowSubscriptionError = flowDomain.createStore<FlowSubscriptionError | null>(null)
 
 // Derived store to check if subscription is active
 export const $isFlowSubscribed = $flowSubscriptionStatus.map(

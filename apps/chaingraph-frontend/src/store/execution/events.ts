@@ -13,34 +13,34 @@ import type {
   ExecutionStatus,
   ExecutionSubscriptionStatus,
 } from './types'
-import { createEvent } from 'effector'
+import { executionDomain } from '../domains'
 
 // Control events
-export const createExecution = createEvent<CreateExecutionOptions>()
-export const startExecution = createEvent<string>() // executionId
-export const pauseExecution = createEvent<string>() // executionId
-export const resumeExecution = createEvent<string>() // executionId
-export const stopExecution = createEvent<string>() // executionId
+export const createExecution = executionDomain.createEvent<CreateExecutionOptions>()
+export const startExecution = executionDomain.createEvent<string>() // executionId
+export const pauseExecution = executionDomain.createEvent<string>() // executionId
+export const resumeExecution = executionDomain.createEvent<string>() // executionId
+export const stopExecution = executionDomain.createEvent<string>() // executionId
 
 // Debug events
-export const toggleDebugMode = createEvent<boolean>()
-export const addBreakpoint = createEvent<{ nodeId: string }>()
-export const removeBreakpoint = createEvent<{ nodeId: string }>()
-export const stepExecution = createEvent<string>() // executionId
+export const toggleDebugMode = executionDomain.createEvent<boolean>()
+export const addBreakpoint = executionDomain.createEvent<{ nodeId: string }>()
+export const removeBreakpoint = executionDomain.createEvent<{ nodeId: string }>()
+export const stepExecution = executionDomain.createEvent<string>() // executionId
 
 // State events
-export const setExecutionError = createEvent<ExecutionError | null>()
-export const clearExecutionState = createEvent()
+export const setExecutionError = executionDomain.createEvent<ExecutionError | null>()
+export const clearExecutionState = executionDomain.createEvent()
 
 // Subscription events
-export const setExecutionSubscriptionStatus = createEvent<ExecutionSubscriptionStatus>()
-export const setExecutionSubscriptionError = createEvent<ExecutionError | null>()
+export const setExecutionSubscriptionStatus = executionDomain.createEvent<ExecutionSubscriptionStatus>()
+export const setExecutionSubscriptionError = executionDomain.createEvent<ExecutionError | null>()
 
-export const setExecutionStatus = createEvent<ExecutionStatus>()
-export const newExecutionEvent = createEvent<ExecutionEventImpl>()
+export const setExecutionStatus = executionDomain.createEvent<ExecutionStatus>()
+export const newExecutionEvent = executionDomain.createEvent<ExecutionEventImpl>()
 
-export const resetAutoStart = createEvent()
-export const markStartAttempted = createEvent()
+export const resetAutoStart = executionDomain.createEvent()
+export const markStartAttempted = executionDomain.createEvent()
 
-export const setHighlightedNodeId = createEvent<string | string[] | null>()
-export const setHighlightedEdgeId = createEvent<string | string[] | null>()
+export const setHighlightedNodeId = executionDomain.createEvent<string | string[] | null>()
+export const setHighlightedEdgeId = executionDomain.createEvent<string | string[] | null>()

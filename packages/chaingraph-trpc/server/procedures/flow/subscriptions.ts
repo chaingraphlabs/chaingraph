@@ -15,14 +15,14 @@ import {
 } from '@badaitech/chaingraph-types'
 import { tracked } from '@trpc/server'
 import { z } from 'zod'
-import { publicProcedure } from '../../trpc'
+import { flowContextProcedure } from '../../trpc'
 import { zAsyncIterable } from '../subscriptions/utils/zAsyncIterable'
 
 function isAcceptedEventType(eventTypes: FlowEventType[] | undefined, type: FlowEventType) {
   return !eventTypes || eventTypes.length === 0 || eventTypes.includes(type)
 }
 
-export const subscribeToEvents = publicProcedure
+export const subscribeToEvents = flowContextProcedure
   .input(
     z.object({
       flowId: z.string(),

@@ -7,14 +7,20 @@
  */
 
 import type { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
+import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
 import type { drizzle } from 'drizzle-orm/node-postgres'
+import type { AuthSession, User } from './auth/types'
 import type { ExecutionService } from './executions/services/execution-service'
 import type { IExecutionStore } from './executions/store/execution-store'
 import type { IFlowStore } from './stores/flowStore/types'
+import { authService } from './auth/service'
 
 export interface Session {
-  userId: string
+  user?: User
+  session?: AuthSession
+  isAuthenticated: boolean
 }
+
 export type DBType = ReturnType<typeof drizzle>
 
 export interface AppContext {
@@ -58,7 +64,7 @@ export function initializeContext(
  * Creates context for tRPC procedures
  * Reuses initialized stores instead of creating new ones
  */
-export async function createContext(): Promise<AppContext> {
+export async function createContext(opts: CreateHTTPContextOptions): Promise<AppContext> {
   if (
     !db
     || !flowStore
@@ -70,9 +76,18 @@ export async function createContext(): Promise<AppContext> {
     throw new Error('Context not initialized. Call initializeContext first.')
   }
 
+  // Get token from request headers or websocket
+  const token = getAuthToken(opts)
+
+  // Validate session
+  const session = await authService.validateSession(token)
+  const user = await authService.getUserFromSession(session)
+
   return {
     session: {
-      userId: 'test_user_id', // TODO: Implement proper session management
+      user: user ?? undefined,
+      session: session ?? undefined,
+      isAuthenticated: !!user && !!session,
     },
     db,
     flowStore,
@@ -81,6 +96,33 @@ export async function createContext(): Promise<AppContext> {
     executionService,
     executionStore,
   }
+}
+
+// Extract token from HTTP headers or WebSocket
+function getAuthToken(opts: CreateHTTPContextOptions): string | undefined {
+  // try to get from connection params
+  if (opts.info.connectionParams?.sessionBadAI && opts.info.connectionParams?.sessionBadAI.length > 0) {
+    return opts.info.connectionParams.sessionBadAI
+  }
+
+  // Try to get from Authorization header
+  if (opts.req.headers.authorization) {
+    const [scheme, token] = opts.req.headers.authorization.split(' ')
+    if (scheme?.toLowerCase() === 'bearer' && token) {
+      return token
+    }
+  }
+
+  // Try to get from cookie
+  const cookies = opts.req.headers.cookie
+  if (cookies) {
+    const match = cookies.match(/session_badai=([^;]+)/)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+
+  return undefined
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>

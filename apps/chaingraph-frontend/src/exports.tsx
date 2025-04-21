@@ -6,170 +6,26 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export { default as Flow } from './components/flow/Flow'
+'use client'
 
-// UI Components
-export {
-  // Accordion
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+import 'reflect-metadata'
 
-  // Alert
-  Alert,
-  AlertDescription,
-  // Alert Dialog
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  AlertDialogPortal,
+/**
+ * Import this CSS file to use the ChainGraph components:
+ * import '@badaitech/chaingraph-frontend/style.css';
+ */
 
-  AlertDialogTitle,
-  AlertDialogTrigger,
-  AlertTitle,
+import '@radix-ui/themes/styles.css'
+import '@xyflow/react/dist/style.css'
+import './index.css'
 
-  // Badge
-  Badge,
-  badgeVariants,
+import './safelist/tailwind-safelist' // Import the safelist file
+import './safelist/shadcn-safelist' // Import the safelist file
 
-  // Button
-  Button,
-  buttonVariants,
-
-  // Card
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-
-  // Collapsible
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-
-  // Command
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-
-  // Context Menu
-  ContextMenu,
-  ContextMenuCheckboxItem,
-  ContextMenuContent,
-  ContextMenuGroup,
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuPortal,
-  ContextMenuRadioGroup,
-  ContextMenuRadioItem,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger,
-
-  // Dialog
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
-
-  // Dropdown Menu
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-
-  // Error Message
-  ErrorMessage,
-
-  // Input
-  Input,
-
-  // Label
-  Label,
-
-  // Number Input
-  NumberInput,
-
-  // Popover
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverTrigger,
-
-  // Scroll Area
-  ScrollArea,
-  ScrollBar,
-
-  // Select
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectScrollDownButton,
-  SelectScrollUpButton,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-
-  // Separator
-  Separator,
-
-  // Skeleton
-  Skeleton,
-
-  // Slider
-  Slider,
-
-  // Switch
-  Switch,
-
-  // Tabs
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-
-  // Textarea
-  Textarea,
-
-  // Tooltip
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from './components/ui'
+export * from './components/dnd'
+export * from './components/flow'
+export * from './components/sidebar'
+export * from './components/ui'
+export { RootProvider } from './providers/RootProvider'
+export * from './providers/ZoomProvider'
+export * from './store'

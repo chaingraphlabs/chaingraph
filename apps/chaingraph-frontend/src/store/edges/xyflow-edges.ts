@@ -8,11 +8,15 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { Edge } from '@xyflow/react'
-import { $edges } from '@/store'
-import { $executionState, $highlightedEdgeId, $highlightedNodeId } from '@/store/execution'
-import { $executionNodes } from '@/store/execution/stores'
-import { $xyflowNodes } from '@/store/nodes/xyflow-nodes'
 import { combine } from 'effector'
+import {
+  $executionNodes,
+  $executionState,
+  $highlightedEdgeId,
+  $highlightedNodeId,
+} from '../execution/stores'
+import { $xyflowNodes } from '../nodes/xyflow-nodes'
+import { $edges } from './stores'
 
 // Constants for edge styling
 const EDGE_STYLES = {

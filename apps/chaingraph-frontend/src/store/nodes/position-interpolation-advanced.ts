@@ -164,7 +164,7 @@ export class AdvancedPositionInterpolator {
 
   start() {
     if (!this.animationFrame) {
-      console.log('Starting position interpolator')
+      console.debug('Starting position interpolator')
       this.lastUpdateTime = performance.now()
       this.animationFrame = requestAnimationFrame(this.animate)
     }

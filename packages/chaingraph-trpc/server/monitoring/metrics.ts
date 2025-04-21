@@ -54,7 +54,11 @@ export class MetricsCollector {
   ) {}
 
   async collectMetrics(): Promise<ApplicationMetrics> {
-    const flows = await this.flowStore.listFlows()
+    const flows = await this.flowStore.listFlows(
+      '',
+      'updatedAtDesc',
+      1000,
+    )
     const now = Date.now()
 
     const totalEvents = flows.reduce((sum, flow) => {

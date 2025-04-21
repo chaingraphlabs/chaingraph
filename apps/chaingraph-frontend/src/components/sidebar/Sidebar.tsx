@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { setActiveFlowId } from '@/store'
 import {
   ChevronLeftIcon,
   CodeIcon,
@@ -35,56 +36,84 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help'
+
+const defaultEnabledTabs: tabsType[] = [
+  'flows',
+  'nodes',
+  // 'events',
+  // 'variables',
+  'debug',
+  // 'settings',
+  // 'help',
+]
+
 const DEFAULT_WIDTH = 320
 const MIN_WIDTH = 200
 const MAX_WIDTH = 1200
 
-const tabs = [
-  {
-    id: 'flows',
-    icon: <Share1Icon />,
-    label: 'Flows',
-    content: <FlowList />,
-  },
-  {
-    id: 'nodes',
-    icon: <LayersIcon />,
-    label: 'Nodes',
-    content: <NodeList />,
-  },
-  {
-    id: 'events',
-    icon: <CodeIcon />,
-    label: 'Events',
-    content: <EventList />,
-  },
-  {
-    id: 'variables',
-    icon: <ValueIcon />,
-    label: 'Variables',
-    content: <VariableList />,
-  },
-  {
-    id: 'debug',
-    icon: <Bug />,
-    label: 'Debug',
-    content: <DebugPanel />,
-  },
-  {
-    id: 'settings',
-    icon: <GearIcon />,
-    label: 'Settings',
-    content: <Settings />,
-  },
-  {
-    id: 'help',
-    icon: <QuestionMarkIcon />,
-    label: 'Help',
-    content: <Help />,
-  },
-] as const
+// sidebar prop types
+export interface SidebarProps {
+  onFlowSelected?: (flowId: string) => void
+  enabledTabs?: tabsType[]
+}
 
-export function Sidebar() {
+export function Sidebar({
+  onFlowSelected,
+  enabledTabs = defaultEnabledTabs,
+}: SidebarProps) {
+  const tabs = [
+    {
+      id: 'flows',
+      icon: <Share1Icon />,
+      label: 'Flows',
+      content: (
+        <FlowList onFlowSelected={({ flowId }) => {
+          // navigate(`/flow/${flowId}`)
+          setActiveFlowId(flowId)
+          onFlowSelected?.(flowId)
+        }}
+        />
+      ),
+    },
+    {
+      id: 'nodes',
+      icon: <LayersIcon />,
+      label: 'Nodes',
+      content: <NodeList />,
+    },
+    {
+      id: 'events',
+      icon: <CodeIcon />,
+      label: 'Events',
+      content: <EventList />,
+    },
+    {
+      id: 'variables',
+      icon: <ValueIcon />,
+      label: 'Variables',
+      content: <VariableList />,
+    },
+    {
+      id: 'debug',
+      icon: <Bug />,
+      label: 'Debug',
+      content: <DebugPanel />,
+    },
+    {
+      id: 'settings',
+      icon: <GearIcon />,
+      label: 'Settings',
+      content: <Settings />,
+    },
+    {
+      id: 'help',
+      icon: <QuestionMarkIcon />,
+      label: 'Help',
+      content: <Help />,
+    },
+  ].filter(tab => enabledTabs === undefined || enabledTabs.includes(tab.id as tabsType))
+
   const [activeTab, setActiveTab] = useState<string | null>(() => {
     return localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB)
   })

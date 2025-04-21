@@ -71,6 +71,7 @@ const llmModels = {
 }
 
 @Node({
+  type: 'LLMCallNode',
   title: 'LLM Call',
   description: 'Sends prompt to Language Model and streams response',
   category: NODE_CATEGORIES.AI,
@@ -174,15 +175,15 @@ class LLMCallNode extends BaseNode {
       new HumanMessage(this.prompt),
     ]
 
+    const stream = await llm.stream(messages, {
+      signal: context.abortSignal,
+    })
+
     // Start streaming in the background
     const streamingPromise = async () => {
       try {
-        const stream = await llm.stream(messages, {
-          signal: context.abortSignal,
-        })
-
         const buffer: string[] = []
-        const bufferSize = 5
+        const bufferSize = 5 // TODO: consider if we really need this buffer
 
         for await (const chunk of stream) {
           // Check if execution was aborted

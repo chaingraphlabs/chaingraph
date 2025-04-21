@@ -6,29 +6,31 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { requestAddEdge, requestRemoveEdge } from '@/store'
 import { sample } from 'effector'
 import { addEdgeFx, removeEdgeFx } from './effects'
+import { requestAddEdge, requestRemoveEdge } from './events'
 
+export function init() {
 // Initialize edge operations
-sample({
-  clock: requestAddEdge,
-  target: addEdgeFx,
-})
+  sample({
+    clock: requestAddEdge,
+    target: addEdgeFx,
+  })
 
-sample({
-  clock: requestRemoveEdge,
-  target: removeEdgeFx,
-})
+  sample({
+    clock: requestRemoveEdge,
+    target: removeEdgeFx,
+  })
 
-// Handle successful edge additions
-sample({
-  clock: addEdgeFx.doneData,
-  target: [], // Add any additional targets for successful edge creation
-})
+  // Handle successful edge additions
+  sample({
+    clock: addEdgeFx.doneData,
+    target: [], // Add any additional targets for successful edge creation
+  })
 
-// Handle successful edge removals
-sample({
-  clock: removeEdgeFx.doneData,
-  target: [], // Add any additional targets for successful edge removal
-})
+  // Handle successful edge removals
+  sample({
+    clock: removeEdgeFx.doneData,
+    target: [], // Add any additional targets for successful edge removal
+  })
+}

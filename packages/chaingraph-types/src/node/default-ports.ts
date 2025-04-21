@@ -8,8 +8,8 @@
 
 import type { BooleanPortConfig, IPortConfig, StringPortConfig } from '../port'
 import type { FlowPorts } from './types'
-import { v7 as uuidv7 } from 'uuid'
 import { PortDirection } from '../port'
+import { generatePortID } from './id-generate'
 
 export const flowInID = '__execute'
 export const flowOutID = '__success'
@@ -23,7 +23,7 @@ export function createDefaultFlowInPort(): BooleanPortConfig {
   return {
     type: 'boolean',
     key: flowInID,
-    id: uuidv7(),
+    id: generatePortID(),
     title: 'Execute',
     description: 'Whether the node should execute',
     direction: PortDirection.Input,
@@ -46,7 +46,7 @@ export function createDefaultFlowOutPort(): BooleanPortConfig {
   return {
     type: 'boolean',
     key: flowOutID,
-    id: uuidv7(),
+    id: generatePortID(),
     title: 'Success',
     description: 'Whether the node executed successfully',
     direction: PortDirection.Output,
@@ -69,7 +69,7 @@ export function createDefaultErrorPort(): BooleanPortConfig {
   return {
     type: 'boolean',
     key: errorID,
-    id: uuidv7(),
+    id: generatePortID(),
     title: 'Error',
     description: 'Whether an error occurred during execution',
     direction: PortDirection.Output,
@@ -92,7 +92,7 @@ export function createDefaultErrorMessagePort(): StringPortConfig {
   return {
     type: 'string',
     key: errorMessageID,
-    id: uuidv7(),
+    id: generatePortID(),
     title: 'Error Message',
     description: 'The error message if an error occurred during execution',
     direction: PortDirection.Output,

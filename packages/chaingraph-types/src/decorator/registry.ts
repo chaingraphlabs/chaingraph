@@ -29,6 +29,30 @@ export class NodeRegistry {
     return NodeRegistry.instance
   }
 
+  static setInstance(instance: NodeRegistry): void {
+    NodeRegistry.instance = instance
+  }
+
+  /**
+   * Copy and append nodes and object schemas from another registry
+   * @param other NodeRegistry instance to copy from
+   */
+  copyFrom(other: NodeRegistry): void {
+    // append nodes
+    other.nodesConstructors.forEach((nodeClass, type) => {
+      if (!this.nodesConstructors.has(type)) {
+        this.nodesConstructors.set(type, nodeClass)
+      }
+    })
+
+    // append object schemas
+    other.objectSchema.forEach((schema, id) => {
+      if (!this.objectSchema.has(id)) {
+        this.objectSchema.set(id, schema)
+      }
+    })
+  }
+
   /**
    * Register a node class with its type identifier.
    * @param nodeClass Constructor of the node

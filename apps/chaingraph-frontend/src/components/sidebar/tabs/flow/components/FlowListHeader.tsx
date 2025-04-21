@@ -34,17 +34,31 @@ export function FlowListHeader({
     <div className="space-y-3">
       {/* Selected Flow Indicator */}
       {(selectedFlow || isLoadingSelectedFlow) && (
-        <div className="inline-flex items-center gap-1.5 text-sm text-primary">
-          <span className="text-muted-foreground">Selected:</span>
-          {' '}
-          {isLoadingSelectedFlow}
-          {isLoadingSelectedFlow
-            ? (
-                <Spinner className="w-3 h-3" />
-              )
-            : (
-                <span className="font-medium">{selectedFlow?.name}</span>
-              )}
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-sm text-primary">
+            <span className="text-muted-foreground">Selected:</span>
+            {' '}
+            {isLoadingSelectedFlow}
+            {isLoadingSelectedFlow
+              ? (
+                  <Spinner className="w-3 h-3" />
+                )
+              : (
+                  <span className="font-medium">{selectedFlow?.name}</span>
+                )}
+          </div>
+          <div className="inline-flex items-center gap-1.5 text-sm text-primary">
+            <span className="text-muted-foreground">Flow ID:</span>
+            {' '}
+            {isLoadingSelectedFlow}
+            {isLoadingSelectedFlow
+              ? (
+                  <Spinner className="w-3 h-3" />
+                )
+              : (
+                  <span className="font-medium">{selectedFlow?.id}</span>
+                )}
+          </div>
         </div>
       )}
 

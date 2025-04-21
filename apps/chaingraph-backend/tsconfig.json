@@ -6,6 +6,13 @@
     "rootDir": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "paths": {
+      "@badaitech/chaingraph-trpc/*": ["../../packages/chaingraph-trpc/*"],
+      "@badaitech/chaingraph-types/*": ["../../packages/chaingraph-types/src/*"],
+      "@badaitech/chaingraph-nodes/*": ["../../packages/chaingraph-nodes/src/*"],
+      "@badaitech/typescript-config/*": ["../../packages/typescript-config/*"]
+      // Add other packages as needed
+    },
     "noEmit": true,
     "outDir": "./dist",
     "esModuleInterop": true

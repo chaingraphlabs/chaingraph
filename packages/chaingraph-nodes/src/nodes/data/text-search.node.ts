@@ -11,6 +11,7 @@ import { BaseNode, Boolean, Input, Node, Output, String } from '@badaitech/chain
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'TextSearchNode',
   title: 'Text Search',
   description: 'Search for a string in the source text (case-insensitive)',
   category: NODE_CATEGORIES.DATA,

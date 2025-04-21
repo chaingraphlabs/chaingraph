@@ -7,4 +7,5 @@
  */
 
 export { default as ChaingraphNodeComponent } from './ChaingraphNode'
+export { default as ChaingraphNodeOptimized } from './ChaingraphNodeOptimized'
 export * from './types'

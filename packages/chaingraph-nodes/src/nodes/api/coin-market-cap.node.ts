@@ -86,6 +86,7 @@ class CryptoData {
 }
 
 @Node({
+  type: 'CoinMarketCapNode',
   title: 'CoinMarketCap Price Fetcher',
   description: 'Fetches cryptocurrency prices from CoinMarketCap',
   category: NODE_CATEGORIES.API,

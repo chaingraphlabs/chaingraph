@@ -32,7 +32,7 @@ export const updateNodePosition = flowContextProcedure
       throw new Error('Node not found')
 
     if (node.getVersion() >= input.version) {
-      console.log(`Node ${input.nodeId} has been updated since the request was made, local version: ${node.getVersion()}, request version: ${input.version}`)
+      console.warn(`Node ${input.nodeId} has been updated since the request was made, local version: ${node.getVersion()}, request version: ${input.version}`)
       // Node has been updated since the request was made
       return {
         flowId: input.flowId,
@@ -42,19 +42,19 @@ export const updateNodePosition = flowContextProcedure
       }
     }
 
-    const hasPositionChanged = (
-      !node.metadata.ui?.position
-      || node.metadata.ui.position.x !== input.position.x
-      || node.metadata.ui.position.y !== input.position.y
-    )
-    if (!hasPositionChanged) {
-      return {
-        flowId: input.flowId,
-        nodeId: input.nodeId,
-        position: input.position,
-        version: node.getVersion(),
-      }
-    }
+    // const hasPositionChanged = (
+    //   !node.metadata.ui?.position
+    //   || node.metadata.ui.position.x !== input.position.x
+    //   || node.metadata.ui.position.y !== input.position.y
+    // )
+    // if (!hasPositionChanged) {
+    //   return {
+    //     flowId: input.flowId,
+    //     nodeId: input.nodeId,
+    //     position: input.position,
+    //     version: node.getVersion(),
+    //   }
+    // }
 
     node.setPosition(input.position, true)
 

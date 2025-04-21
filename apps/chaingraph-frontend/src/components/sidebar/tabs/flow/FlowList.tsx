@@ -27,13 +27,18 @@ import { Spinner } from '@radix-ui/themes'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { EmptyFlowState } from './components/EmptyFlowState'
 import { FlowForm } from './components/FlowForm'
 import { FlowListHeader } from './components/FlowListHeader'
 import { FlowListItem } from './components/FlowListItem'
 
-export function FlowList() {
+export interface FlowListProps {
+  onFlowSelected: ({ flowId }: { flowId: string }) => void | undefined
+}
+
+export function FlowList(
+  props: FlowListProps,
+) {
   // Get store values and effects statuses
   const {
     flows,
@@ -58,7 +63,7 @@ export function FlowList() {
     isDeletingFlow: $isDeletingFlow,
     isEditingFlow: $isUpdatingFlow,
   })
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   // Local UI state
   const [isCreating, setIsCreating] = useState(false)
@@ -94,7 +99,9 @@ export function FlowList() {
   }, [editingFlow])
 
   const handleFlowSelect = (flowId: string) => {
-    navigate(`/flow/${flowId}`)
+    props?.onFlowSelected?.({
+      flowId,
+    })
   }
 
   // Loading state
@@ -108,7 +115,7 @@ export function FlowList() {
   const showList = (flows?.length ?? 0) > 0 && !isCreating && !isEditing
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative pr-6">
       {loadError && (
         <ErrorMessage>
           Failed to load flows:

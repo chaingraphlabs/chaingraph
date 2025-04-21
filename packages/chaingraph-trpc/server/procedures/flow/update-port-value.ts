@@ -42,7 +42,7 @@ export const updatePortValue = flowContextProcedure
     port.setValue(input.value)
     node.updatePort(port)
 
-    console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
+    // console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 
     await ctx.flowStore.updateFlow(flow as Flow)
 
@@ -148,7 +148,7 @@ export const removeFieldObjectPort = flowContextProcedure
     // trigger node update
     flow.updateNode(node)
 
-    console.log('Object port key removed', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key })
+    // console.log('Object port key removed', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key })
 
     await ctx.flowStore.updateFlow(flow as Flow)
 

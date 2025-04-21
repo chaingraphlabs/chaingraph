@@ -14,6 +14,7 @@ import { NodeCatalog, NodeRegistry, registerSuperjsonTransformers } from '@badai
 import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import SuperJSON from 'superjson'
+import { authConfig } from './auth/config'
 import { initializeContext } from './context'
 import { CleanupService } from './executions/services/cleanup-service'
 import { ExecutionService } from './executions/services/execution-service'
@@ -23,6 +24,33 @@ import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 
 export async function init() {
   registerSuperjsonTransformers(SuperJSON, NodeRegistry.getInstance())
+
+  if (authConfig.enabled) {
+    console.log('\n=== Authentication Configuration ===')
+    if (authConfig.devMode) {
+      console.log('🔓 Auth is enabled but running in DEV MODE:')
+      console.log('   • All requests will be allowed regardless of authentication')
+      console.log('   • User roles will not be enforced')
+    } else {
+      console.log('🔒 tRPC server Authentication is ENABLED and enforced')
+      if (authConfig.badaiAuth.enabled) {
+        console.log('   🧪 BadAI Auth provider: Active')
+        console.log(`   • API URL: ${authConfig.badaiAuth.apiUrl}`)
+      } else {
+        console.log('   ❌ No authentication provider is configured')
+        console.log('   • To enable BadaI Auth: set BADAI_AUTH_ENABLED=true and configure BADAI_API_URL')
+        console.log('   • For development: set AUTH_DEV_MODE=true to bypass authentication checks')
+        throw new Error('Authentication is enabled but no auth provider is configured')
+      }
+    }
+    console.log('===================================\n')
+  } else {
+    console.log('\n=== Authentication Configuration ===')
+    console.log('🔓 Authentication is DISABLED')
+    console.log('   • All requests will be allowed without authentication')
+    console.log('   • To enable authentication, set AUTH_ENABLED=true')
+    console.log('===================================\n')
+  }
 
   // Initialize stores and context
   const db = drizzle(process.env.DATABASE_URL!)

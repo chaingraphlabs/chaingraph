@@ -59,7 +59,6 @@ function GroupNodeComponent({
       nodeId: id,
       ui: {
         style: {
-          ...node.metadata.ui?.style ?? {},
           backgroundColor: color,
         },
       },

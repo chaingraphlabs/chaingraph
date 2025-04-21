@@ -97,6 +97,16 @@ export function FlowForm({
             </Button>
           </div>
 
+          {flow?.id && (
+            <div className="text-sm text-muted-foreground">
+              Flow ID:
+              {' '}
+              {flow.id}
+            </div>
+          )}
+
+          {/* Divider */}
+
           {/* Name Field */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">

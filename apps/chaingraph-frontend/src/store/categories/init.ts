@@ -6,24 +6,27 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { createEffect, sample } from 'effector'
+import { sample } from 'effector'
+import { categoriesDomain } from '../domains'
 import { fetchCategorizedNodesFx } from './effects'
 import { setCategorizedNodes } from './events'
 
-// Handle fetch results
-sample({
-  clock: fetchCategorizedNodesFx.doneData,
-  target: [
-    setCategorizedNodes,
-    // Metadata will be updated automatically through store handlers
-  ],
-})
-
-export const initializeCategoriesFx = createEffect(async () => {
+export const initializeCategoriesFx = categoriesDomain.createEffect(async () => {
   return await fetchCategorizedNodesFx()
 })
 
-sample({
-  clock: initializeCategoriesFx,
-  target: fetchCategorizedNodesFx,
-})
+export function init() {
+  // Handle fetch results
+  sample({
+    clock: fetchCategorizedNodesFx.doneData,
+    target: [
+      setCategorizedNodes,
+      // Metadata will be updated automatically through store handlers
+    ],
+  })
+
+  sample({
+    clock: initializeCategoriesFx,
+    target: fetchCategorizedNodesFx,
+  })
+}

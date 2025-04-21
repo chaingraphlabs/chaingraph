@@ -11,6 +11,7 @@ import { BaseNode, ExecutionEventEnum, Input, Node, String } from '@badaitech/ch
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'DebugLogNode',
   title: 'Debug Log',
   description: 'Logs a message to the console',
   category: NODE_CATEGORIES.UTILITIES,

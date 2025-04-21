@@ -6,11 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { NodeRegistry } from '@badaitech/chaingraph-types'
+
 export * from './categories'
 export * from './nodes'
 
-export function initializeNodes(callback: () => void) {
+export function initializeNodes(callback: (nodeRegistry: NodeRegistry) => void) {
   // Initialize nodes here
-
-  callback()
+  callback(NodeRegistry.getInstance())
 }

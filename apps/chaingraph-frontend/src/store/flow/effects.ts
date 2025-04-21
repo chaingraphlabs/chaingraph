@@ -6,29 +6,55 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CreateFlowEvent, UpdateFlowEvent } from '@/store'
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
-import { createEffect } from 'effector' // Effect for loading flows list
+import type { CreateFlowEvent, UpdateFlowEvent } from './events'
+import { attach } from 'effector'
+import { $trpcClient } from '../trpc/store'
 
 // Effect for loading flows list
-export const loadFlowsListFx = createEffect(async () => {
-  return trpcClient.flow.list.query()
+export const loadFlowsListFx = attach({
+  source: $trpcClient,
+  effect: async (client) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.list.query()
+  },
 })
 
 // Effect for creating new flow
-export const createFlowFx = createEffect(async (event: CreateFlowEvent) => {
-  return trpcClient.flow.create.mutate(event.metadata)
+export const createFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: CreateFlowEvent) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.create.mutate(event.metadata)
+  },
 })
 
 // Effect for editing flow
-export const editFlowFx = createEffect(async (event: UpdateFlowEvent) => {
-  return trpcClient.flow.edit.mutate({
-    flowId: event.id,
-    ...event.metadata,
-  })
+export const editFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: UpdateFlowEvent) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.edit.mutate({
+      flowId: event.id,
+      ...event.metadata,
+    })
+  },
 })
 
 // Effect for deleting flow
-export const deleteFlowFx = createEffect(async (id: string) => {
-  return trpcClient.flow.delete.mutate(id)
+export const deleteFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, id: string) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.delete.mutate({
+      flowId: id,
+    })
+  },
 })

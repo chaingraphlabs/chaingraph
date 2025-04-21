@@ -16,7 +16,6 @@ import type {
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
-  SecretPortConfig,
   StreamPortConfig,
   StringPortConfig,
 } from '../../port'
@@ -32,7 +31,6 @@ import {
   StreamPort,
   StringPort,
 } from '../../port'
-import { SecretPort } from '../instances/SecretPort'
 
 export type SupportedPortInstance =
   | StringPort
@@ -52,9 +50,9 @@ export type PortInstanceFromConfig<T extends IPortConfig> =
           T extends ObjectPortConfig<infer S> ? ObjectPort<S> :
             T extends StreamPortConfig<infer V> ? StreamPort<V> :
               T extends EnumPortConfig ? EnumPort :
-                T extends SecretPortConfig<infer S> ? SecretPort<S> :
-                  T extends AnyPortConfig ? AnyPort :
-                    never
+                // T extends SecretPortConfig<infer S> ? SecretPort<S> :
+                T extends AnyPortConfig ? AnyPort :
+                  never
 
 export class PortFactory {
   /**
@@ -96,9 +94,9 @@ export class PortFactory {
       case 'enum': {
         return new EnumPort(config) as PortInstanceFromConfig<T>
       }
-      case 'secret': {
-        return new SecretPort(config) as PortInstanceFromConfig<T>
-      }
+      // case 'secret': {
+      //   return new SecretPort(config) as PortInstanceFromConfig<T>
+      // }
       case 'any': {
         return new AnyPort(config) as PortInstanceFromConfig<T>
       }

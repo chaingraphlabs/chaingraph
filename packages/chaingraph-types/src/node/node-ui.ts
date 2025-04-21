@@ -33,6 +33,7 @@ export interface NodeUIState {
   isSelected?: boolean
   isHighlighted?: boolean
   isDisabled?: boolean
+  isErrorPortCollapsed?: boolean
 }
 
 /**

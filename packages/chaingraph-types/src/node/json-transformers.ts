@@ -34,13 +34,18 @@ export function registerNodeTransformers(
         const nodeData = v as any
         const nodeMetadata = nodeData.metadata as any
 
-        const node = nodeRegistry.createNode(
-          nodeMetadata.type,
-          nodeData.id ?? nodeMetadata.id ?? '',
-          nodeMetadata,
-        )
+        try {
+          const node = nodeRegistry.createNode(
+            nodeMetadata.type,
+            nodeData.id ?? nodeMetadata.id ?? '',
+            nodeMetadata,
+          )
 
-        return node.deserialize(nodeData)
+          return node.deserialize(nodeData)
+        } catch (err: any) {
+          console.error('Failed to deserialize node', err, nodeRegistry)
+          throw err
+        }
       },
     },
     'BaseNode',

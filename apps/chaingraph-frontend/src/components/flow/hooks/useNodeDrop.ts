@@ -38,7 +38,7 @@ export function useNodeDrop() {
       return
     }
 
-    console.log('[useNodeDrop]: Node drop event:', event)
+    console.debug('[useNodeDrop]: Node drop event:', event)
 
     try {
       // Calculate drop position
@@ -47,7 +47,7 @@ export function useNodeDrop() {
         y: event.position.y,
       })
 
-      console.log('Dropped node:', event.node.title, position)
+      console.debug('Dropped node:', event.node.title, position)
 
       // Dispatch addNodeToFlow event
       addNodeToFlow({

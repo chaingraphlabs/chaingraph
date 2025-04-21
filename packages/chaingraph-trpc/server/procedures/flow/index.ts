@@ -6,11 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow } from '@badaitech/chaingraph-types'
-import { z } from 'zod'
-import { flowContextProcedure, publicProcedure, router } from '../../trpc'
+import { router } from '../../trpc'
 import { addNode } from './add-node'
 import { connectPorts } from './connect-ports'
+import { create } from './flow-create'
+import { flowDelete } from './flow-delete'
+import { edit } from './flow-edit'
+import { get } from './flow-get'
+import { getMeta } from './flow-get-meta'
+import { list } from './flow-list'
 import { removeEdge } from './remove-edge'
 import { removeNode } from './remove-node'
 import { subscribeToEvents } from './subscriptions'
@@ -27,96 +31,12 @@ import {
 } from './update-port-value'
 
 export const flowProcedures = router({
-  create: publicProcedure
-    .input(z.object({
-      name: z.string(),
-      description: z.string().optional(),
-      tags: z.array(z.string()).optional(),
-    }))
-    .mutation(async ({ input, ctx }) => {
-      const flow = await ctx.flowStore.createFlow({
-        name: input.name,
-        description: input.description,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tags: input.tags,
-      })
-
-      return flow.metadata
-    }),
-
-  get: publicProcedure
-    .input(z.string())
-    .query(async ({ input: flowId, ctx }) => {
-      const flow = await ctx.flowStore.getFlow(flowId)
-      if (!flow) {
-        throw new Error(`Flow ${flowId} not found`)
-      }
-
-      return flow
-    }),
-
-  getMeta: publicProcedure
-    .input(z.string())
-    .query(async ({ input: flowId, ctx }) => {
-      const flow = await ctx.flowStore.getFlow(flowId)
-      if (!flow) {
-        throw new Error(`Flow ${flowId} not found`)
-      }
-      return flow.metadata
-    }),
-
-  list: publicProcedure
-    .query(async ({ ctx }) => {
-      const flows = await ctx.flowStore.listFlows()
-
-      return flows
-        .map(flow => flow.metadata)
-        .filter(flowMeta =>
-          flowMeta
-          && flowMeta.id !== ''
-          && flowMeta.createdAt !== null
-          && flowMeta.updatedAt !== null,
-        )
-    }),
-
-  // TODO: flowContextProcedure ??
-  delete: publicProcedure
-    .input(z.string())
-    .mutation(async ({ input: flowId, ctx }) => {
-      const success = await ctx.flowStore.deleteFlow(flowId)
-      return { success }
-    }),
-
-  edit: flowContextProcedure
-    .input(z.object({
-      flowId: z.string(),
-      name: z.string().optional(),
-      description: z.string().optional(),
-      tags: z.array(z.string()).optional(),
-    }))
-    .mutation(async ({ input, ctx }) => {
-      const { flowId, name, description, tags } = input
-      const flow = await ctx.flowStore.getFlow(flowId)
-      if (!flow) {
-        throw new Error(`Flow ${flowId} not found`)
-      }
-
-      if (name) {
-        flow.metadata.name = name
-      }
-      if (description) {
-        flow.metadata.description = description
-      }
-      if (tags) {
-        flow.metadata.tags = tags
-      }
-
-      flow.metadata.updatedAt = new Date()
-
-      return await ctx.flowStore.updateFlow(flow as Flow)
-    }),
-
+  create,
+  get,
+  getMeta,
+  list,
+  delete: flowDelete,
+  edit,
   subscribeToEvents,
   addNode,
   removeNode,
@@ -132,3 +52,26 @@ export const flowProcedures = router({
   appendElementArrayPort,
   removeElementArrayPort,
 })
+
+export { addNode } from './add-node'
+export { connectPorts } from './connect-ports'
+export { create } from './flow-create'
+export { flowDelete } from './flow-delete'
+export { edit } from './flow-edit'
+export { get } from './flow-get'
+export { getMeta } from './flow-get-meta'
+export { list } from './flow-list'
+export { removeEdge } from './remove-edge'
+export { removeNode } from './remove-node'
+export { subscribeToEvents } from './subscriptions'
+export { updateNodeParent } from './update-node-parent'
+export { updateNodePosition } from './update-node-position'
+export { updateNodeUI } from './update-node-ui'
+export { updatePortUI } from './update-port-ui'
+export {
+  addFieldObjectPort,
+  appendElementArrayPort,
+  removeElementArrayPort,
+  removeFieldObjectPort,
+  updatePortValue,
+} from './update-port-value'

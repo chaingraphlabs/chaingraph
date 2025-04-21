@@ -92,8 +92,16 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       nodePorts.set(portId, newPort)
     }
 
+    // Sort map by port id, it is sortable
+    const sortedNodePorts = new Map([...nodePorts.entries()]
+      .sort(
+        (a, b) => {
+          return a[0].localeCompare(b[0])
+        },
+      ))
+
     // Update port manager with all ports
-    this.portManager.setPorts(nodePorts)
+    this.portManager.setPorts(sortedNodePorts)
 
     // Critical: ensure all ports are properly bound to node properties
     if (this.portBinder) {

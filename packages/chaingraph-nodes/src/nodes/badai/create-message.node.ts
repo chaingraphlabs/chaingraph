@@ -20,6 +20,7 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'CreateMessageBadAINode',
   title: 'Create Message',
   description: 'Creates a new message with specified content',
   category: NODE_CATEGORIES.BADAI,

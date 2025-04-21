@@ -8,12 +8,11 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import { $nodes } from '@/store'
-import { $categoryMetadata } from '@/store/categories/stores'
-import { $nodePositions } from '@/store/nodes/node-positions'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { combine } from 'effector'
+import { $categoryMetadata } from '../categories/stores'
+import { $nodes } from './stores'
 
 /**
  * Enhanced store for XYFlow nodes that preserves node references when only positions change.
@@ -22,8 +21,9 @@ import { combine } from 'effector'
 export const $xyflowNodes = combine(
   $nodes,
   $categoryMetadata,
-  $nodePositions,
-  (nodes, categoryMetadata, nodePositions) => {
+  // $nodePositions,
+  // (nodes, categoryMetadata, nodePositions) => {
+  (nodes, categoryMetadata) => {
     if (!nodes || Object.keys(nodes).length === 0) {
       return []
     }
@@ -53,7 +53,8 @@ export const $xyflowNodes = combine(
         : 'chaingraphNode'
 
       // Get position from the positions store if available
-      const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+      // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+      const position = node.metadata.ui?.position || DefaultPosition
 
       // Round positions to integers for better rendering performance
       const nodePositionRound = {

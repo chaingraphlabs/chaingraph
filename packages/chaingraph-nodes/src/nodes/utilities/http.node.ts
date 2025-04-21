@@ -40,6 +40,7 @@ function formatJSON(data: any): string {
 }
 
 @Node({
+  type: 'HttpRequestNode',
   title: 'HTTP Request',
   description: 'Makes HTTP requests to external services',
   category: NODE_CATEGORIES.UTILITIES,

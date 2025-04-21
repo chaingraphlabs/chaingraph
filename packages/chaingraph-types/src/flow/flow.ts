@@ -20,12 +20,18 @@ import type {
 } from './events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { v4 as uuidv4 } from 'uuid'
 import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
-import { EventQueue } from '../utils'
+import { deepCopy, EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
+
+function generateFlowID(): string {
+  return `V2${customAlphabet(nolookalikes, 24)()}`
+}
 
 export class Flow implements IFlow {
   readonly id: string
@@ -50,7 +56,7 @@ export class Flow implements IFlow {
   private nodeEventHandlersCancel: Map<string, () => void> = new Map()
 
   constructor(metadata: Partial<FlowMetadata> = {}) {
-    this.id = metadata.id || uuidv4()
+    this.id = metadata.id || generateFlowID()
     if (metadata.id !== this.id) {
       metadata.id = this.id
     }
@@ -567,12 +573,11 @@ export class Flow implements IFlow {
   }
 
   public clone(): IFlow {
-    const newFlow = new Flow({ ...this.metadata })
+    const newFlow = new Flow(deepCopy(this.metadata))
 
     // Clone nodes
     for (const node of this.nodes.values()) {
-      const clonedNode = node.clone()
-      newFlow.addNode(clonedNode, true)
+      newFlow.addNode(node.clone(), true)
     }
 
     // Clone edges
@@ -633,6 +638,11 @@ export class Flow implements IFlow {
 
   public deserialize(data: JSONValue): IFlow {
     const flowData = data as any
+
+    if (!flowData.metadata) {
+      throw new Error('Invalid flow data: missing metadata.')
+    }
+
     const flow = new Flow({
       ...flowData.metadata,
       createdAt: new Date(flowData.metadata.createdAt ?? new Date()),

@@ -19,12 +19,13 @@ import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
-import { useFlowUrlSync } from '@/hooks/useFlowUrlSync'
+import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import {
-  $activeFlowMetadata,
+  $activeFlowId,
   $flowSubscriptionState,
   addNodeToFlow,
+  setActiveFlowId,
   useFlowSubscription,
 } from '@/store'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
@@ -34,8 +35,7 @@ import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
-import { memo, use, useCallback, useMemo, useRef, useState } from 'react'
-import { FPSCounter } from './components/FPSCounter'
+import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 // Configuration constants
 const defaultViewport: Viewport = {
@@ -74,26 +74,33 @@ function ExecutionComponent() {
   )
 }
 
-function Flow() {
+export interface FlowProps {
+  className?: string
+
+  flowId?: string
+}
+
+function Flow({
+  className,
+  flowId,
+}: FlowProps) {
   // useFlowDebug()
+
   useFlowSubscription()
-  useFlowUrlSync()
+  useExecutionSubscription()
 
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, getZoom } = useReactFlow()
-  // const { onNodeDrop } = useDnd()
   const { setZoom } = use(ZoomContext)
-  // const edgeReconnectSuccessful = useRef(true)
 
   // State
   const nodes = useXYFlowNodes()
   const edges = useXYFlowEdges()
-  const activeFlow = useUnit($activeFlowMetadata)
+  const activeFlowId = useUnit($activeFlowId)
   const subscriptionState = useUnit($flowSubscriptionState)
 
   const nodeTypes = useMemo(() => ({
-    // chaingraphNode: memo(ChaingraphNode),
     chaingraphNode: ChaingraphNodeOptimized,
     groupNode: memo(GroupNode),
   }), [])
@@ -112,100 +119,16 @@ function Flow() {
     onNodeDragStop,
   } = useFlowCallbacks()
 
-  // Register node types
-
-  // const edgeTypes = useMemo(() => ({
-  //   chaingraphEdge: ChaingraphEdge,
-  // }), [])
-
-  // State for context menu
+  // State for a context menu
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null)
-
-  // // Subscribe to node drop events
-  // useEffect(() => {
-  //   // Handler for node drops
-  //   const handleNodeDrop = (event: NodeDropEvent) => {
-  //     if (!reactFlowWrapper.current)
-  //       return
-  //
-  //     // Calculate position relative to the ReactFlow container
-  //     const position = screenToFlowPosition({
-  //       x: event.position.x,
-  //       y: event.position.y,
-  //     })
-  //
-  //     // Create new node
-  //     const newNode = {
-  //       id: uuidv7(),
-  //       type: 'chaingraphNode',
-  //       position,
-  //       data: {
-  //         node: event.node,
-  //         categoryMetadata: event.categoryMetadata,
-  //       },
-  //     }
-  //
-  //     // setNodes(nodes => [...nodes, newNode])
-  //   }
-  //
-  //   // Subscribe to drop events
-  //   const unsubscribe = onNodeDrop(handleNodeDrop)
-  //
-  //   // Cleanup subscription
-  //   return unsubscribe
-  // }, [onNodeDrop, screenToFlowPosition])
 
   const onInit = useCallback(() => {
     setZoom(getZoom())
   }, [getZoom, setZoom])
 
-  // Node changes handler
-  // const onNodesChange: OnNodesChange = useCallback(
-  //   changes => setNodes(nds => applyNodeChanges(changes, nds)),
-  //   [],
-  // )
-
-  // Edge changes handler
-  // const onEdgesChange: OnEdgesChange = useCallback(
-  //   changes => setEdges(eds => applyEdgeChanges(changes, eds)),
-  //   [],
-  // )
-
-  // Connection handlers
-  // const onConnect: OnConnect = useCallback(
-  //   connection => setEdges(eds => addEdge(connection, eds)),
-  //   [],
-  // )
-
-  // const onReconnectStart = useCallback(() => {
-  //   edgeReconnectSuccessful.current = false
-  // }, [])
-  //
-  // const onReconnect = useCallback((oldEdge: Edge, newConnection: Connection) => {
-  //   edgeReconnectSuccessful.current = true
-  //   setEdges(els => reconnectEdge(oldEdge, newConnection, els))
-  // }, [])
-  //
-  // const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
-  //   if (!edgeReconnectSuccessful.current) {
-  //     setEdges(eds => eds.filter(e => e.id !== edge.id))
-  //   }
-  //   edgeReconnectSuccessful.current = true
-  // }, [])
-
-  // Node drag handler
-  // const onNodeDrag: OnNodeDrag = useCallback((_, node) => {
-  //   updateNodeUI({
-  //     nodeId: node.id,
-  //     ui: {
-  //       position: node.position,
-  //     },
-  //   })
-  // }, [])
-
   // Handle context menu
   const onContextMenu = useCallback((event: React.MouseEvent) => {
-    if (!activeFlow) {
+    if (!activeFlowId) {
       return
     }
     // Prevent default context menu
@@ -217,13 +140,12 @@ function Flow() {
       y: event.clientY,
     }
 
-    console.log('Context menu opening at:', position)
     setContextMenu(position)
-  }, [activeFlow])
+  }, [activeFlowId])
 
   // Handle node selection
   const handleNodeSelect = useCallback((nodeMeta: NodeMetadata, categoryMetadata: CategoryMetadata) => {
-    if (!contextMenu || !activeFlow)
+    if (!contextMenu || !activeFlowId)
       return
 
     const flowPosition = screenToFlowPosition({
@@ -235,7 +157,7 @@ function Flow() {
 
     // Dispatch addNodeToFlow event
     addNodeToFlow({
-      flowId: activeFlow.id!,
+      flowId: activeFlowId,
       nodeType: nodeMeta.type,
       position: flowPosition,
       metadata: {
@@ -247,7 +169,7 @@ function Flow() {
     })
 
     setContextMenu(null) // Close menu
-  }, [activeFlow, contextMenu, screenToFlowPosition])
+  }, [activeFlowId, contextMenu, screenToFlowPosition])
 
   // Update zoom when viewport changes
   const onViewportChange = useCallback((newViewport: Viewport) => {
@@ -255,22 +177,20 @@ function Flow() {
     setZoom(currentZoom)
   }, [getZoom, setZoom])
 
-  // const onChange = useCallback(({ nodes, edges }) => {
-  //   setSelectedNodes(nodes.map(node => node.id))
-  //   setSelectedEdges(edges.map(edge => edge.id))
-  //
-  //   // nodes.forEach((node) => {
-  //   //   console.log('Node:', node)
-  //   // })
-  // }, [])
-  //
-  // useOnSelectionChange({
-  //   onChange,
-  // })
+  // Check flowId props and set active flow if changed
+  useEffect(() => {
+    if (!flowId || activeFlowId === flowId)
+      return
+
+    setActiveFlowId(flowId)
+  }, [flowId, activeFlowId])
 
   return (
     <div
-      className="w-full h-full relative"
+      className={cn(
+        'w-full h-full relative chaingraph-root',
+        className,
+      )}
       ref={reactFlowWrapper}
       onContextMenu={onContextMenu}
     >
@@ -301,7 +221,7 @@ function Flow() {
         onNodeDragStop={onNodeDragStop}
         panOnScroll
         onViewportChange={onViewportChange}
-        fitView
+        fitView={true}
         preventScrolling
         defaultViewport={defaultViewport}
         defaultEdgeOptions={defaultEdgeOptions}
@@ -324,20 +244,19 @@ function Flow() {
         {/* <Controls position="bottom-right" /> */}
         <StyledControls position="bottom-right" />
 
-        {activeFlow && (
+        {activeFlowId && (
           <FlowControlPanel />
         )}
 
-        <div className="absolute top-4 left-4 z-50">
-          {/* <ExecutionComponent /> */}
-
-          <FPSCounter />
-        </div>
+        {/* <div className="absolute top-4 left-4 z-50"> */}
+        {/* <ExecutionComponent /> */}
+        {/* <FPSCounter /> */}
+        {/* </div> */}
       </ReactFlow>
 
       {/* Context Menu */}
       <AnimatePresence>
-        {(activeFlow && contextMenu) && (
+        {(activeFlowId && contextMenu) && (
           <NodeContextMenu
             position={contextMenu}
             onSelect={handleNodeSelect}
@@ -347,7 +266,7 @@ function Flow() {
       </AnimatePresence>
 
       {/* Show empty state when no flow is selected */}
-      {!activeFlow && <FlowEmptyState />}
+      {!activeFlowId && <FlowEmptyState />}
     </div>
   )
 }

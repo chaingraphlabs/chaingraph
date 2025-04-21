@@ -6,15 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { updateNodePositionInterpolated } from './events'
-import { positionInterpolator } from './position-interpolation-advanced'
-
-// Initialize interpolator update handler
-positionInterpolator.onUpdate = (nodeId, position) => {
-  updateNodePositionInterpolated({
-    nodeId,
-    position,
-  })
-}
-
-positionInterpolator.start()
+// // Initialize interpolator update handler
+// positionInterpolator.onUpdate = (nodeId, position) => {
+//   updateNodePositionInterpolated({
+//     nodeId,
+//     position,
+//   })
+// }
+//
+// positionInterpolator.start()

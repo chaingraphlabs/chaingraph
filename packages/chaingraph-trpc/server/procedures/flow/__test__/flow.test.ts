@@ -49,7 +49,9 @@ describe('flow Procedures', () => {
       expect(result.id).toBeDefined()
 
       // Verify flow was created correctly
-      const flow = await caller.flow.get(result.id!)
+      const flow = await caller.flow.get({
+        flowId: result.id!,
+      })
       expect(flow.metadata.name).toBe(metadata.name)
       expect(flow.metadata.description).toBe(metadata.description)
       expect(flow.metadata.tags).toEqual(metadata.tags)
@@ -80,7 +82,9 @@ describe('flow Procedures', () => {
       const ctx = createTestContext()
       const caller = createCaller(ctx)
 
-      await expect(caller.flow.get('non-existent-id')).rejects.toThrow()
+      await expect(caller.flow.get({
+        flowId: 'non-existent-id',
+      })).rejects.toThrow()
     })
   })
 
@@ -90,15 +94,16 @@ describe('flow Procedures', () => {
       const caller = createCaller(ctx)
 
       // Create multiple flows
-      await Promise.all([
-        caller.flow.create({ name: 'Flow 1' }),
-        caller.flow.create({ name: 'Flow 2' }),
-        caller.flow.create({ name: 'Flow 3' }),
-      ])
+      await caller.flow.create({ name: 'Flow 1' })
+      // small timeout to ensure the flows are created in different timestamps
+      await new Promise(resolve => setTimeout(resolve, 20))
+      await caller.flow.create({ name: 'Flow 2' })
+      await new Promise(resolve => setTimeout(resolve, 20))
+      await caller.flow.create({ name: 'Flow 3' })
 
       const flows = await caller.flow.list()
       expect(flows).toHaveLength(3)
-      expect(flows.map(f => f.name)).toEqual(['Flow 1', 'Flow 2', 'Flow 3'])
+      expect(flows.map(f => f.name)).toEqual(['Flow 3', 'Flow 2', 'Flow 1'])
     })
 
     it('should return empty array when no flows exist', async () => {
@@ -125,19 +130,25 @@ describe('flow Procedures', () => {
       }
 
       // Delete flow
-      const result = await caller.flow.delete(flow.id!)
+      const result = await caller.flow.delete({
+        flowId: flow.id!,
+      })
       expect(result.success).toBe(true)
 
       // Verify flow was deleted
-      await expect(caller.flow.get(flow.id!)).rejects.toThrow()
+      await expect(caller.flow.get({
+        flowId: flow.id!,
+      })).rejects.toThrow()
     })
 
-    it('should return success false for non-existent flow', async () => {
+    it('should return error for non existent flow', async () => {
       const ctx = createTestContext()
       const caller = createCaller(ctx)
 
-      const result = await caller.flow.delete('non-existent-id')
-      expect(result.success).toBe(false)
+      const result = caller.flow.delete({
+        flowId: 'non-existent-id',
+      })
+      await expect(result).rejects.toThrow('Flow not found or access denied')
     })
   })
 })

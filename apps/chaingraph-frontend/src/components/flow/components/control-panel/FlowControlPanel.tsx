@@ -193,24 +193,26 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                   transition={{ duration: 0.3 }}
                 >
                   {/* Stop Button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <MotionButton
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleStop}
-                        disabled={!canControl}
-                        className="rounded-full"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <StopIcon className="w-4 h-4" />
-                      </MotionButton>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      Stop Flow
-                    </TooltipContent>
-                  </Tooltip>
+                  {executionStatus === ExecutionStatus.RUNNING && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MotionButton
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleStop}
+                          disabled={!canControl}
+                          className="rounded-full"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          <StopIcon className="w-4 h-4" />
+                        </MotionButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        Stop Flow
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
 
                   {/* Reset Button */}
                   <Tooltip>
@@ -228,7 +230,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                       </MotionButton>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
-                      Reset Flow
+                      Reset Execution
                     </TooltipContent>
                   </Tooltip>
                 </motion.div>
@@ -261,7 +263,10 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
 
           {/* Debug Controls (Right Side) */}
           <AnimatePresence>
-            {debugMode && executionId && (
+            {debugMode
+              && executionId
+              && executionStatus !== ExecutionStatus.COMPLETED
+              && executionStatus !== ExecutionStatus.ERROR && (
               <motion.div
                 className={cn(
                   'absolute left-full ml-2',

@@ -7,53 +7,82 @@
  */
 
 import type { AddNodeEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
-import { createEffect } from 'effector' // Backend node operations
+import { attach } from 'effector'
+import { $trpcClient } from '../trpc/store'
 
 // Backend node operations
-export const addNodeToFlowFx = createEffect(async (event: AddNodeEvent) => {
-  return trpcClient.flow.addNode.mutate({
-    flowId: event.flowId,
-    nodeType: event.nodeType,
-    position: event.position,
-    metadata: event.metadata,
-  })
+export const addNodeToFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, event: AddNodeEvent) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.addNode.mutate({
+      flowId: event.flowId,
+      nodeType: event.nodeType,
+      position: event.position,
+      metadata: event.metadata,
+    })
+  },
 })
 
-export const removeNodeFromFlowFx = createEffect(async (params: {
-  flowId: string
-  nodeId: string
-}) => {
-  return trpcClient.flow.removeNode.mutate(params)
+export const removeNodeFromFlowFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: {
+    flowId: string
+    nodeId: string
+  }) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.removeNode.mutate(params)
+  },
 })
 
-export const updateNodeUIFx = createEffect(async (params: UpdateNodeUIEvent): Promise<UpdateNodeUIEvent> => {
-  if (!params.ui) {
-    throw new Error('UI metadata is required')
-  }
+export const updateNodeUIFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: UpdateNodeUIEvent): Promise<UpdateNodeUIEvent> => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    if (!params.ui) {
+      throw new Error('UI metadata is required')
+    }
 
-  return trpcClient.flow.updateNodeUI.mutate({
-    flowId: params.flowId,
-    nodeId: params.nodeId,
-    ui: params.ui,
-    version: params.version,
-  })
+    return client.flow.updateNodeUI.mutate({
+      flowId: params.flowId,
+      nodeId: params.nodeId,
+      ui: params.ui,
+      version: params.version,
+    })
+  },
 })
 
-export const updateNodeParentFx = createEffect(async (params: UpdateNodeParent): Promise<UpdateNodeParent> => {
-  console.log('PARENT FX:', params)
-  return trpcClient.flow.updateNodeParent.mutate({
-    flowId: params.flowId,
-    nodeId: params.nodeId,
-    parentNodeId: params.parentNodeId,
-    position: params.position,
-    version: params.version,
-  })
+export const updateNodeParentFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: UpdateNodeParent): Promise<UpdateNodeParent> => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.updateNodeParent.mutate({
+      flowId: params.flowId,
+      nodeId: params.nodeId,
+      parentNodeId: params.parentNodeId,
+      position: params.position,
+      version: params.version,
+    })
+  },
 })
 
-export const baseUpdateNodePositionFx = createEffect(async (params: UpdateNodePosition) => {
-  return trpcClient.flow.updateNodePosition.mutate({
-    ...params,
-    version: params.version,
-  })
+export const baseUpdateNodePositionFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: UpdateNodePosition) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.updateNodePosition.mutate({
+      ...params,
+      version: params.version,
+    })
+  },
 })

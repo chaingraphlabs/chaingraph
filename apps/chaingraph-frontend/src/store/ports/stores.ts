@@ -8,7 +8,7 @@
 
 import type { INode, IPort } from '@badaitech/chaingraph-types'
 // Create a derived store that combines ports from all nodes
-import { $nodes } from '@/store'
+import { $nodes } from '../nodes/stores'
 
 export const $ports = $nodes.map((nodes: Record<string, INode>) => {
   const portsIndex: Record<string, IPort> = {}

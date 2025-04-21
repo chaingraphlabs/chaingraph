@@ -8,11 +8,11 @@
 
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
-import { publicProcedure, router } from '../../trpc'
+import { executionContextProcedure, router } from '../../trpc'
 
 export const debugRouter = router({
   // Add breakpoint
-  addBreakpoint: publicProcedure
+  addBreakpoint: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
       nodeId: z.string(),
@@ -31,7 +31,7 @@ export const debugRouter = router({
     }),
 
   // Remove breakpoint
-  removeBreakpoint: publicProcedure
+  removeBreakpoint: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
       nodeId: z.string(),
@@ -50,7 +50,7 @@ export const debugRouter = router({
     }),
 
   // Step execution
-  step: publicProcedure
+  step: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
@@ -68,7 +68,7 @@ export const debugRouter = router({
     }),
 
   // Get breakpoints
-  getBreakpoints: publicProcedure
+  getBreakpoints: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))

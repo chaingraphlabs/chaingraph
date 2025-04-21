@@ -29,6 +29,7 @@ export const NodeUIMetadataSchema = z.object({
     isSelected: z.boolean().optional(),
     isHighlighted: z.boolean().optional(),
     isDisabled: z.boolean().optional(),
+    isErrorPortCollapsed: z.boolean().optional(),
   }).optional(),
 }).passthrough()
 

@@ -7,13 +7,14 @@
  */
 
 import { init } from '@badaitech/chaingraph-trpc/server'
-import dotenv from 'dotenv'
-import { setupPolyfills } from './setup'
+import { prettyPrintConfig } from './config'
+import { setupPolyfills } from './setup-polyfills'
 import { wsServer } from './ws-server'
-
-dotenv.config({ path: '../../.env' })
+import './config'
 
 setupPolyfills()
+
+prettyPrintConfig()
 
 init()
 

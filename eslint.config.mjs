@@ -48,6 +48,14 @@ export default antfu(
       // '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
       'ts/no-unsafe-function-type': 'off',
       'no-console': 'off',
+
+      // imports
+      'import/order': 'off',
+      'import/first': 'off',
+      'import/no-duplicates': 'off',
+      'sort-imports': 'off',
+      'simple-import-sort/imports': 'off',
+      'antfu/imports-order': 'off', // Specifically for @antfu/eslint-config
     },
   },
 )

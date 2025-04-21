@@ -44,27 +44,43 @@ Replace `YOUR_GITHUB_PAT` with your actual GitHub personal access token.
 To integrate the ChainGraph editor into your React application:
 
 ```tsx
-import { Flow } from '@badaitech/chaingraph-frontend';
-import { TrpcProvider } from '@badaitech/chaingraph-trpc/client';
-import { ThemeProvider, ZoomProvider, DndProvider } from '@badaitech/chaingraph-frontend/providers';
-import { ReactFlowProvider } from '@xyflow/react';
+import {Flow} from '@badaitech/chaingraph-frontend';
+import {TrpcProvider} from '@badaitech/chaingraph-trpc/client';
+import {ThemeProvider, ZoomProvider, DndProvider} from '@badaitech/chaingraph-frontend/providers';
+import {ReactFlowProvider} from '@xyflow/react';
 
 function App() {
-  return (
-    <ThemeProvider>
-      <TrpcProvider>
-        <ReactFlowProvider>
-          <ZoomProvider>
-            <DndProvider>
-              <div className="h-screen">
-                <Flow />
-              </div>
-            </DndProvider>
-          </ZoomProvider>
-        </ReactFlowProvider>
-      </TrpcProvider>
-    </ThemeProvider>
-  );
+    return (
+        <RootProvider
+            trpcURL={`ws://localhost:3001`}
+            superjsonCustom={SuperJSON}
+            nodeRegistry={NodeRegistry.getInstance()}
+        >
+            <div className="flex h-screen">
+                <Sidebar
+                    onFlowSelected={(flowId) => {
+                        // For example, navigate to the selected flow
+                        // navigate(`/flow/${flowId}`)
+                    }}
+                    enabledTabs={[
+                        'flows', 
+                        'nodes', 
+                        'events', 
+                        'variables', 
+                        'debug', 
+                        'settings', 
+                        'help'
+                    ]}
+                />
+                <div className="flex-1">
+                    <Flow
+                        {/* Flow id is optional */}
+                        flowId={'your-flow-id'}
+                    />
+                </div>
+            </div>
+        </RootProvider>
+    );
 }
 
 export default App;
@@ -199,7 +215,7 @@ import {
   stepExecution
 } from '@badaitech/chaingraph-frontend';
 import { useUnit } from 'effector-react';
-import { $executionState } from '@badaitech/chaingraph-frontend/store';
+import { $executionState } from '@badaitech/chaingraph-frontend';
 
 function ExecutionControls() {
   const { executionId, status, debugMode } = useUnit($executionState);
@@ -223,8 +239,8 @@ function ExecutionControls() {
 ChainGraph frontend is compatible with modern browsers including:
 - Chrome/Edge (latest 2 versions)
 - Firefox (latest 2 versions)
-- Safari (latest 2 versions)
 
+Safari needs to investigate some issues.
 Internet Explorer is not supported.
 
 ## Contributing

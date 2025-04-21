@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-types",
   "type": "module",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "private": false,
   "description": "Core type definitions for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -33,12 +33,15 @@
     "dist"
   ],
   "scripts": {
+    "dev": "tsc -b --watch",
     "build": "tsc -b",
     "test": "vitest",
     "check-types": "tsc -b",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "nanoid": "^5.1.5",
+    "nanoid-dictionary": "^4.3.0",
     "reflect-metadata": "^0.2.2",
     "superjson": "^2.2.2",
     "type-fest": "^4.39.1",

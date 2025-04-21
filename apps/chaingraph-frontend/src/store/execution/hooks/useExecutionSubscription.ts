@@ -6,11 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { trpcReact } from '@badaitech/chaingraph-trpc/client'
+import { useTRPC } from '@badaitech/chaingraph-trpc/client'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { skipToken } from '@tanstack/react-query'
+import { useSubscription } from '@trpc/tanstack-react-query'
+// import { trpcReact } from '@badaitech/chaingraph-trpc/client'
 import { useUnit } from 'effector-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   $executionState,
   $executionSubscriptionState,
@@ -125,7 +127,9 @@ export function useExecutionSubscription() {
   // }), [eventHandlers])
 
   // Subscribe to execution events using tRPC
-  const subscription = trpcReact.execution.subscribeToEvents.useSubscription(
+  const trpc = useTRPC()
+
+  const opts = trpc.execution.subscribeToEvents.subscriptionOptions(
     executionId
       ? {
           executionId,
@@ -166,8 +170,7 @@ export function useExecutionSubscription() {
         // await handleEvent(trackedData)
       },
       onError: (error) => {
-        // eslint-disable-next-line no-debugger
-        debugger
+        // debugger
         console.error('Error subscribing to execution events:', error)
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.ERROR)
         setExecutionSubscriptionError({
@@ -178,6 +181,11 @@ export function useExecutionSubscription() {
       },
     },
   )
+
+  const subscription = useSubscription({
+    ...opts,
+    enabled: !!executionId,
+  })
 
   // Add effect to handle terminal states
   // useEffect(() => {
@@ -198,6 +206,20 @@ export function useExecutionSubscription() {
   //     }
   //   }
   // }, [executionStatus])
+
+  useEffect(() => {
+    return () => {
+      if (executionId) {
+        setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.DISCONNECTED)
+      }
+
+      // Reset subscription
+      // if (subscription) {
+      //   subscription.reset()
+      // }
+    }
+    // FIXME
+  }, [executionId])
 
   return useMemo(() => ({
     isSubscribed: subscriptionState.status === ExecutionSubscriptionStatus.SUBSCRIBED,

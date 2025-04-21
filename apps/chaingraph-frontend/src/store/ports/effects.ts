@@ -7,38 +7,71 @@
  */
 
 import type { RouterInputs } from '@badaitech/chaingraph-trpc/client'
-import { trpcClient } from '@badaitech/chaingraph-trpc/client'
-import { createEffect } from 'effector'
+import { attach } from 'effector'
+import { $trpcClient } from '../trpc/store'
 
-export type UpdatePortValueInput = Parameters<typeof trpcClient.flow.updatePortValue.mutate>[0]
-export type UpdatePortUIInput = Parameters<typeof trpcClient.flow.updatePortUI.mutate>[0]
-export const baseUpdatePortValueFx = createEffect(async (params: UpdatePortValueInput) => {
-  return trpcClient.flow.updatePortValue.mutate(params)
+export const baseUpdatePortValueFx = attach({
+  source: $trpcClient,
+  effect: async (client, params) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.updatePortValue.mutate(params)
+  },
 })
 
-export const baseUpdatePortUIFx = createEffect(async (params: UpdatePortUIInput) => {
-  return trpcClient.flow.updatePortUI.mutate(params)
+export const baseUpdatePortUIFx = attach({
+  source: $trpcClient,
+  effect: async (client, params) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.updatePortUI.mutate(params)
+  },
 })
 
 export type AddFieldObjectPortInput = RouterInputs['flow']['addFieldObjectPort']
-export const addFieldObjectPortFx = createEffect(async (params: AddFieldObjectPortInput) => {
-  console.log(params)
-  return trpcClient.flow.addFieldObjectPort.mutate(params)
+export const addFieldObjectPortFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: AddFieldObjectPortInput) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.addFieldObjectPort.mutate(params)
+  },
 })
 
 export type RemoveFieldObjectPortInput = RouterInputs['flow']['removeFieldObjectPort']
-export const removeFiledObjectPortFx = createEffect(async (params: RemoveFieldObjectPortInput) => {
-  return trpcClient.flow.removeFieldObjectPort.mutate(params)
+export const removeFiledObjectPortFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: RemoveFieldObjectPortInput) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.removeFieldObjectPort.mutate(params)
+  },
 })
 
 // appendElementArrayPort
 export type AppendElementArrayPortInput = RouterInputs['flow']['appendElementArrayPort']
-export const appendElementArrayPortFx = createEffect(async (params: AppendElementArrayPortInput) => {
-  return trpcClient.flow.appendElementArrayPort.mutate(params)
+export const appendElementArrayPortFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: AppendElementArrayPortInput) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.appendElementArrayPort.mutate(params)
+  },
 })
 
 // removeElementArrayPort
 export type RemoveElementArrayPortInput = RouterInputs['flow']['removeElementArrayPort']
-export const removeElementArrayPortFx = createEffect(async (params: RemoveElementArrayPortInput) => {
-  return trpcClient.flow.removeElementArrayPort.mutate(params)
+export const removeElementArrayPortFx = attach({
+  source: $trpcClient,
+  effect: async (client, params: RemoveElementArrayPortInput) => {
+    if (!client) {
+      throw new Error('TRPC client is not initialized')
+    }
+    return client.flow.removeElementArrayPort.mutate(params)
+  },
 })

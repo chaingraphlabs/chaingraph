@@ -21,7 +21,4 @@ export type AppRouter = typeof appRouter
 // Create and export the caller factory
 export const createCaller = createCallerFactory(appRouter)
 
-export { createContext } from './context'
-
-export { init } from './init'
-export { applyWSSHandler } from '@trpc/server/adapters/ws'
+export * from './export'

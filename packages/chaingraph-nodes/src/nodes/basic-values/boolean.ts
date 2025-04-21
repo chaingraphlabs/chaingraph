@@ -11,6 +11,7 @@ import { BaseNode, Boolean, Node, Output } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
+  type: 'BooleanNode',
   title: 'Boolean Node',
   description: 'A node that outputs a boolean value.',
   category: NODE_CATEGORIES.BASIC_VALUES,

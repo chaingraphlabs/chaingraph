@@ -14,37 +14,37 @@ import type {
   UpdateNodePosition,
   UpdateNodeUIEvent,
 } from './types'
-import { createEvent } from 'effector'
+import { nodesDomain } from '../domains'
 
 // Local state CRUD events
-export const addNode = createEvent<INode>()
-export const addNodes = createEvent<INode[]>()
-export const updateNode = createEvent<INode>()
-export const removeNode = createEvent<string>()
-export const setNodeMetadata = createEvent<{ nodeId: string, metadata: NodeState['metadata'] }>()
-export const setNodeVersion = createEvent<{ nodeId: string, version: number }>()
-export const updateNodeParent = createEvent<UpdateNodeParent>()
+export const addNode = nodesDomain.createEvent<INode>()
+export const addNodes = nodesDomain.createEvent<INode[]>()
+export const updateNode = nodesDomain.createEvent<INode>()
+export const removeNode = nodesDomain.createEvent<string>()
+export const setNodeMetadata = nodesDomain.createEvent<{ nodeId: string, metadata: NodeState['metadata'] }>()
+export const setNodeVersion = nodesDomain.createEvent<{ nodeId: string, version: number }>()
+export const updateNodeParent = nodesDomain.createEvent<UpdateNodeParent>()
 
 // Backend operation events
-export const addNodeToFlow = createEvent<AddNodeEvent>()
-export const removeNodeFromFlow = createEvent<{ flowId: string, nodeId: string }>()
+export const addNodeToFlow = nodesDomain.createEvent<AddNodeEvent>()
+export const removeNodeFromFlow = nodesDomain.createEvent<{ flowId: string, nodeId: string }>()
 
 // Bulk operations
-export const setNodes = createEvent<Record<string, INode>>()
-export const clearNodes = createEvent()
+export const setNodes = nodesDomain.createEvent<Record<string, INode>>()
+export const clearNodes = nodesDomain.createEvent()
 
 // State events
-export const setNodesLoading = createEvent<boolean>()
-export const setNodesError = createEvent<Error | null>()
+export const setNodesLoading = nodesDomain.createEvent<boolean>()
+export const setNodesError = nodesDomain.createEvent<Error | null>()
 
 // UI update events
-export const updateNodeUI = createEvent<UpdateNodeUIEvent>()
-export const updateNodeUILocal = createEvent<UpdateNodeUIEvent>() // For optimistic updates
-export const updateNodePosition = createEvent<UpdateNodePosition>()
-export const updateNodePositionLocal = createEvent<UpdateNodePosition>() // For optimistic updates
+export const updateNodeUI = nodesDomain.createEvent<UpdateNodeUIEvent>()
+export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() // For optimistic updates
+export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
+export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
 
 // New event for interpolated position updates
-export const updateNodePositionInterpolated = createEvent<{
+export const updateNodePositionInterpolated = nodesDomain.createEvent<{
   nodeId: string
   position: Position
 }>()

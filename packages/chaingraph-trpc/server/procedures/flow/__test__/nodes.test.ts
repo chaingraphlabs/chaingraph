@@ -107,7 +107,9 @@ describe('flow Node Procedures', () => {
       expect(node.metadata.title).toBe('Scalar Node')
 
       // Verify node exists in flow
-      const fetchedFlow = await caller.flow.get(flow.id!)
+      const fetchedFlow = await caller.flow.get({
+        flowId: flow.id!,
+      })
       expect(fetchedFlow.nodes).toHaveLength(1)
       expect(Array.from(fetchedFlow.nodes.values())[0]?.id).toBe(node.id)
     })

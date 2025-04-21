@@ -7,6 +7,7 @@
  */
 
 import type { Flow, FlowMetadata } from '@badaitech/chaingraph-types'
+import type { ListOrderBy } from '../postgres/store'
 
 /**
  * Interface for flow storage implementations
@@ -14,7 +15,12 @@ import type { Flow, FlowMetadata } from '@badaitech/chaingraph-types'
 export interface IFlowStore {
   createFlow: (metadata: FlowMetadata) => Promise<Flow>
   getFlow: (flowId: string) => Promise<Flow | null>
-  listFlows: () => Promise<Flow[]>
+  listFlows: (
+    ownerId: string,
+    orderBy: ListOrderBy,
+    limit: number,
+  ) => Promise<Flow[]>
   deleteFlow: (flowId: string) => Promise<boolean>
   updateFlow: (flow: Flow) => Promise<Flow>
+  hasAccess: (flowId: string, userId: string) => Promise<boolean>
 }

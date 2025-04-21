@@ -12,10 +12,22 @@ import { Theme } from '@radix-ui/themes'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ThemeContext } from './ThemeContext'
 
-export function ThemeProvider({ children }: PropsWithChildren) {
-  const [theme, setTheme] = useState<ThemeMode>(() => {
+const localStorageKeyPrefix = 'chaingraph:'
+const localStorageKeyTheme = `${localStorageKeyPrefix}theme`
+
+export interface ThemeProviderProps extends PropsWithChildren {
+  theme?: ThemeMode
+}
+
+export function ThemeProvider({ children, theme }: ThemeProviderProps) {
+  const [currentTheme, setTheme] = useState<ThemeMode>(() => {
+    // check if a theme is passed as a prop
+    if (theme) {
+      return theme
+    }
+
     // Check localStorage first
-    const savedTheme = localStorage.getItem('theme') as ThemeMode
+    const savedTheme = localStorage.getItem(localStorageKeyTheme) as ThemeMode
     if (savedTheme)
       return savedTheme
 
@@ -25,19 +37,22 @@ export function ThemeProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     // Update DOM and localStorage when theme changes
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-    localStorage.setItem('theme', theme)
-  }, [theme])
+    document.documentElement.classList.toggle('dark', currentTheme === 'dark')
+    localStorage.setItem(localStorageKeyTheme, currentTheme)
+  }, [currentTheme])
 
   const toggleTheme = useCallback(() => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
   }, [])
 
-  const themeProviderValue = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme])
+  const themeProviderValue = useMemo(() => ({
+    theme: currentTheme,
+    toggleTheme,
+  }), [currentTheme, toggleTheme])
 
   return (
     <ThemeContext value={themeProviderValue}>
-      <Theme appearance={theme}>
+      <Theme appearance={themeProviderValue.theme}>
         {children}
       </Theme>
     </ThemeContext>

@@ -10,6 +10,7 @@ import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingrap
 import { BaseNode, Boolean, Input, Node, Output, PortAny, String } from '@badaitech/chaingraph-types'
 
 @Node({
+  type: 'JSONSerializerNode',
   title: 'JSON Serializer',
   description: 'Converts any data structure to a JSON string',
   category: 'utilities',

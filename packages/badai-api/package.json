@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/badai-api",
   "type": "module",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "private": false,
   "description": "Bad AI GraphQL API client",
   "license": "BUSL-1.1",
@@ -23,6 +23,7 @@
     "dist"
   ],
   "scripts": {
+    "dev": "tsc -b --watch",
     "build": "tsc -b",
     "check-types": "tsc -b",
     "graphql-codegen": "graphql-codegen --config graphql-codegen.ts"
