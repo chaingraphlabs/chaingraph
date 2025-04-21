@@ -115,7 +115,7 @@ export function FlowList(
   const showList = (flows?.length ?? 0) > 0 && !isCreating && !isEditing
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative pr-6">
       {loadError && (
         <ErrorMessage>
           Failed to load flows:

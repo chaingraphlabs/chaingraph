@@ -6,9 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export default {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
+import { v7 as uuidv7 } from 'uuid'
+
+export function generatePortID(): string {
+  // return `PO${customAlphabet(nolookalikes, 16)()}`
+  // generate sortable UUID for now
+  return uuidv7()
 }

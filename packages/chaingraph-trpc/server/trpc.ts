@@ -113,6 +113,16 @@ export const flowContextProcedure = authedProcedure.use(async (opts) => {
     })
   }
 
+  if (ctx.session.user.role === 'admin' || ctx.session.user.id === 'service') {
+    // Admins have access to all flows
+    return opts.next(opts)
+  }
+
+  if (ctx.session.user.role === 'agent') {
+    // TODO: needs to check if the agent is allowed to access the flow somehow
+    return opts.next(opts)
+  }
+
   if (!await ctx.flowStore.hasAccess(flowId, ctx.session.user.id)) {
     throw new TRPCError({
       code: 'FORBIDDEN',
@@ -157,6 +167,11 @@ export const executionContextProcedure = authedProcedure.use(async (opts) => {
       code: 'UNAUTHORIZED',
       message: 'User not authenticated',
     })
+  }
+
+  if (ctx.session.user.role === 'admin') {
+    // Admins have access to all flows
+    return opts.next(opts)
   }
 
   // TODO: make sure that we read from the cache when persistent storage is implemented

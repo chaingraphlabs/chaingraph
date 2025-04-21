@@ -20,12 +20,18 @@ import type {
 } from './events'
 import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { v4 as uuidv4 } from 'uuid'
 import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
 import { deepCopy, EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
+
+function generateFlowID(): string {
+  return `V2${customAlphabet(nolookalikes, 24)()}`
+}
 
 export class Flow implements IFlow {
   readonly id: string
@@ -50,7 +56,7 @@ export class Flow implements IFlow {
   private nodeEventHandlersCancel: Map<string, () => void> = new Map()
 
   constructor(metadata: Partial<FlowMetadata> = {}) {
-    this.id = metadata.id || uuidv4()
+    this.id = metadata.id || generateFlowID()
     if (metadata.id !== this.id) {
       metadata.id = this.id
     }

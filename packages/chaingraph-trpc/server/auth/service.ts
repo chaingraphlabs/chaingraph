@@ -54,6 +54,7 @@ export class AuthService {
             id: `badai:${userProfile.id}`,
             displayName: userProfile.name,
             role: this.mapBadAIUserRole(userProfile.role),
+            provider: 'badai',
           }
 
           // TODO: add session token to the TTL cache. Check that key TTL time before session expiration
@@ -100,6 +101,7 @@ export class AuthService {
       case GraphQL.UserRole.Admin:
         return 'admin'
       case GraphQL.UserRole.Agent:
+        return 'agent'
       case GraphQL.UserRole.User:
         return 'user'
       default:
@@ -108,5 +110,5 @@ export class AuthService {
   }
 }
 
-// Create singleton instance
+// Create a singleton instance
 export const authService = new AuthService()

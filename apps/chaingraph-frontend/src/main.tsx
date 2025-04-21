@@ -23,7 +23,6 @@ import '@badaitech/chaingraph-nodes'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RootProvider
-      // TODO: from ENV
       trpcURL={appConfig.chaingraphTRPCWSUrl}
       superjsonCustom={SuperJSON}
       nodeRegistry={NodeRegistry.getInstance()}

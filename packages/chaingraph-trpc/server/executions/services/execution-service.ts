@@ -23,8 +23,13 @@ import {
   ExecutionEventEnum,
 } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
-import { v4 as uuidv4 } from 'uuid'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { ExecutionStatus } from '../types'
+
+function generateExecutionID(): string {
+  return `EX${customAlphabet(nolookalikes, 24)()}`
+}
 
 export class ExecutionService {
   // Keep track of event queues per execution
@@ -41,7 +46,7 @@ export class ExecutionService {
   ): Promise<ExecutionInstance> {
     const clonedFlow = flow.clone() as Flow
 
-    const id = uuidv4()
+    const id = generateExecutionID()
     const abortController = new AbortController()
     const context = new ExecutionContext(
       clonedFlow.id,

@@ -80,10 +80,10 @@ export default defineConfig({
     },
   },
   build: {
-    minify: false,
+    minify: true,
     sourcemap: true,
     cssCodeSplit: false,
-    cssMinify: false, // Keep CSS readable for debugging
+    cssMinify: true,
     outDir: 'dist/lib',
     lib: {
       entry: 'src/exports.tsx',

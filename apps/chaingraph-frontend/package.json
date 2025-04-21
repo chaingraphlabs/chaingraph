@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.6-dev.44",
+  "version": "0.1.6-dev.51",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -137,6 +137,7 @@
     "eslint-plugin-storybook": "^0.12.0",
     "globals": "^16.0.0",
     "postcss": "^8.5.3",
+    "postcss-import": "^16.1.0",
     "storybook": "^8.6.12",
     "tailwindcss": "^3.4.17",
     "typescript-eslint": "^8.29.1",

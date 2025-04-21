@@ -1,5 +1,47 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.6-dev.51
+
+### Patch Changes
+
+- One more build with many small changes
+
+## 0.1.6-dev.50
+
+### Patch Changes
+
+- Add tailwind css prefix 'cg-'
+
+## 0.1.6-dev.49
+
+### Patch Changes
+
+- Adjust trpc connection
+
+## 0.1.6-dev.48
+
+### Patch Changes
+
+- fix theme provider
+
+## 0.1.6-dev.47
+
+### Patch Changes
+
+- minify css for lib build
+
+## 0.1.6-dev.46
+
+### Patch Changes
+
+- Remove outdated CSS files
+
+## 0.1.6-dev.45
+
+### Patch Changes
+
+- Add nanoid with custom alphabet for generating flow id's
+
 ## 0.1.6-dev.44
 
 ### Patch Changes

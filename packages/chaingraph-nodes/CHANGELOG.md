@@ -1,5 +1,61 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.6-dev.51
+
+### Patch Changes
+
+- One more build with many small changes
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.51
+
+## 0.1.6-dev.50
+
+### Patch Changes
+
+- Add tailwind css prefix 'cg-'
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.50
+
+## 0.1.6-dev.49
+
+### Patch Changes
+
+- Adjust trpc connection
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.49
+
+## 0.1.6-dev.48
+
+### Patch Changes
+
+- fix theme provider
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.48
+
+## 0.1.6-dev.47
+
+### Patch Changes
+
+- minify css for lib build
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.47
+
+## 0.1.6-dev.46
+
+### Patch Changes
+
+- Remove outdated CSS files
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.46
+
+## 0.1.6-dev.45
+
+### Patch Changes
+
+- Add nanoid with custom alphabet for generating flow id's
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.6-dev.45
+
 ## 0.1.6-dev.44
 
 ### Patch Changes

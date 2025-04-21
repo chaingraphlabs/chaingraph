@@ -7,7 +7,8 @@
  */
 
 import type { Flow } from '@badaitech/chaingraph-types'
-import { v7 as uuidv7 } from 'uuid'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
 
@@ -24,6 +25,10 @@ const NodeMetadataSchema = z.object({
   category: z.string().optional(),
   tags: z.array(z.string()).optional(),
 }).optional()
+
+function generateNodeID(): string {
+  return `NO${customAlphabet(nolookalikes, 16)()}`
+}
 
 export const addNode = flowContextProcedure
   .input(z.object({
@@ -42,7 +47,7 @@ export const addNode = flowContextProcedure
     }
 
     // Create node instance
-    const nodeId = uuidv7()
+    const nodeId = generateNodeID()
     const newNode = ctx.nodeRegistry.createNode(nodeType, `${nodeType}:${nodeId}`)
     const node = newNode.clone()
 

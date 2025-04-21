@@ -10,6 +10,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './index.css';
+
 .chaingraph-root {
   /* Reset styles that might affect your components */
   all: initial;
@@ -24,50 +26,5 @@
   *::before,
   *::after {
     box-sizing: inherit;
-  }
-}
-
-/* Import your existing CSS */
-@import './index.css';
-@import './shadcn-variables.css';
-
-/* Force include important component classes */
-@layer components {
-  /* Dialog component */
-  .dialog-overlay {
-    @apply fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0;
-  }
-
-  .dialog-content {
-    @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full;
-  }
-
-  /* Add similar blocks for other important shadcn components */
-
-  /* Button component */
-  .btn {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-  }
-
-  /* All button variants */
-  .btn-default {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
-  }
-  .btn-destructive {
-    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
-  }
-  .btn-outline {
-    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
-  }
-  .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
-  }
-  .btn-ghost {
-    @apply hover:bg-accent hover:text-accent-foreground;
-  }
-
-  /* ReactFlow specific classes */
-  .react-flow__handle {
-    @apply w-4 h-4 rounded-full border-2 border-background transition-colors duration-200;
   }
 }

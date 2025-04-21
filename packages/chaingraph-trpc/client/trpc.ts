@@ -18,8 +18,7 @@ import SuperJSON from 'superjson'
 
 // Authentication-related configuration
 interface AuthOptions {
-  token?: string
-  getToken?: () => string | undefined
+  sessionBadAI?: string
 }
 
 function makeQueryClient() {
@@ -64,7 +63,7 @@ export function createTRPCClient(
     superjsonCustom: SuperJSON,
   },
 ) {
-  const token = opts.auth?.token || opts.auth?.getToken?.() || undefined
+  const token = opts.auth?.sessionBadAI || undefined
 
   return _createTRPCClient<AppRouter>({
     links: [

@@ -6,12 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export type UserRole = 'admin' | 'user' | 'guest'
+export type UserRole = 'admin' | 'agent' | 'user' | 'guest'
 
 export interface User {
   id: string
   displayName?: string
   role: UserRole
+  provider?: 'badai' | 'dev' | 'none'
   // Add other user properties as needed
 }
 
@@ -27,4 +28,5 @@ export const DevUser: User = {
   id: 'dev:admin',
   displayName: 'Admin User',
   role: 'admin',
+  provider: 'dev',
 }

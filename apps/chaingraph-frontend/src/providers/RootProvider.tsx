@@ -78,7 +78,7 @@ export function RootProvider({
       )
 
       createTRPCClientEvent({
-        sessionToken,
+        sessionBadAI: sessionToken,
         trpcURL: trpcURL ?? DefaultTRPCURL,
         superjsonCustom: superjsonCustom ?? SuperJSON,
       })

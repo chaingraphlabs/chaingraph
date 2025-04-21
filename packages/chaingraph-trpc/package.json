@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.1.6-dev.44",
+  "version": "0.1.6-dev.51",
   "private": false,
   "description": "tRPC client and server for the BadAi Chaingraph",
   "license": "BUSL-1.1",
@@ -44,6 +44,8 @@
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
     "graphql-request": "^7.1.2",
+    "nanoid": "^5.1.5",
+    "nanoid-dictionary": "^4.3.0",
     "pg": "^8.14.1",
     "ws": "^8.18.1"
   },
