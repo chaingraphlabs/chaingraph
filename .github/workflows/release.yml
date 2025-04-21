@@ -98,12 +98,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from package.json
-        id: package-version
+      - name: Extract backend version from package.json
+        id: backend-package-version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Extracted version: $VERSION"
+          VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
+          echo "VERSION=$BACK_VERSION" >> $GITHUB_ENV
+          echo "Extracted backend version: $BACK_VERSION"
+
+      - name: Extract frontend version from package.json
+        id: frontend-package-version
+        run: |
+          VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
+          echo "VERSION=$FRONT_VERSION" >> $GITHUB_ENV
+          echo "Extracted frontend version: $FRONT_VERSION"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -121,10 +128,10 @@ jobs:
         with:
           context: .
           file: apps/chaingraph-frontend/Dockerfile
-          push: ${{ github.event_name == 'release' }}
+          push: ${{ github.ref == 'release' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.FRONT_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -134,10 +141,10 @@ jobs:
         with:
           context: .
           file: apps/chaingraph-backend/Dockerfile
-          push: ${{ github.event_name == 'release' }}
+          push: ${{ github.ref == 'release' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/chaingraph-backend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.BACK_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
