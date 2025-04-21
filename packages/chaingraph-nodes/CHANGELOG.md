@@ -1,16 +1,5 @@
 # @badaitech/chaingraph-nodes
 
-## 0.2.0
-
-### Minor Changes
-
-- Fix versioning
-
-### Patch Changes
-
-- Updated dependencies
-  - @badaitech/chaingraph-types@0.2.0
-
 ## 0.1.9
 
 ### Patch Changes
