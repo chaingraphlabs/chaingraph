@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.8
+
+### Patch Changes
+
+- 83524d7: Add docker images release workflow
+
 ## 0.1.7
 
 ### Patch Changes
