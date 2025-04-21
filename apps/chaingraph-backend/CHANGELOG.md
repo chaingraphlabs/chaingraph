@@ -1,5 +1,127 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.7
+
+### Patch Changes
+
+- Bump version
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.7
+  - @badaitech/chaingraph-types@0.1.7
+  - @badaitech/chaingraph-trpc@0.1.7
+
+## 0.1.6
+
+### Patch Changes
+
+- 4848793: Apply fix effector
+- b6f1191: One more try bundle frontend
+- a8a7eb3: minify css for lib build
+- b2c0c68: Add effector stores import file to root provider
+- b2c0c68: Add effector logger, adjust static trpc client creation without duplicates
+- a8a7eb3: Remove outdated CSS files
+- 4848793: Attempt to include all styles in the bundle
+- c21e8c0: Fix ui logic and effector store execution reset trigger
+- 4848793: Move store initialization under providers so that tRPC clients can be accessed via hooks.
+- 4848793: Adjust root provider initialization
+- b2c0c68: Experiment with effector stores to ensure proper functionality
+- 4848793: adjust configs for styles
+- 4848793: Fix RootProviders
+- a8a7eb3: Add tailwind css prefix 'cg-'
+- a8a7eb3: Add nanoid with custom alphabet for generating flow id's
+- 4848793: temporary workaround to use static TRPC client
+- b6f1191: One more version
+- 4848793: remove useNaviogate from the codebase
+- 4848793: Add SuperJSON param to initializeJsonTransformers
+- 4848793: Add trpc properties to the root provider
+- b2c0c68: add styles
+- b6f1191: Remove secret port type and all secret usages
+- 4848793: Change effector store imports order
+- 4848793: make react and react-dom as external lib
+- 150a6de: Include badaitech package to external one
+- 4848793: Some changes
+- a8a7eb3: fix theme provider
+- 4848793: Adjust build config to include styles to the npm bundle
+- b2c0c68: Rewrite trpc client initialization
+- 4848793: Rewrite TRPC to use TanStack React Query
+- b6f1191: Adjust frontend stores import paths
+- 4848793: Make nodeRegistry as param for the RootProvider
+- b6f1191: adjust the frontend lib vite config
+- b6f1191: One more frontend adjustments
+- b6f1191: One more dev bundle testing
+- 4848793: add styles export for the frontend lib
+- 4848793: Adjust imports for the fronend stores
+- b6f1191: One more try
+- a8a7eb3: Adjust trpc connection
+- b2c0c68: add effector logs
+- a8a7eb3: - Add authentication service to the chaingraph backend with two modes: dev and badai. When Dev mode is configured, then server will accept any requests. When badai is configured, then the server will expect the BadAI session JWT tokoken provided.
+- b6f1191: Next try
+- b2c0c68: Play around effector stores
+- 4848793: trpc server exports
+- b2c0c68: move node samples to the store file
+- b6f1191: remove rollupOptions external from the frontend lib package vite config
+- 4848793: some changes
+- 4848793: Try to explicitly provide nodes types instead of take it from the decorator reflection
+- 4848793: Remove debug
+- 4848793: change effector nodes stores imports path
+- a8a7eb3: One more build with many small changes
+- 4848793: do not include react to the frontend npm lib
+- Updated dependencies [4848793]
+- Updated dependencies [b6f1191]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [4848793]
+- Updated dependencies [c21e8c0]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [4848793]
+- Updated dependencies [b6f1191]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [b6f1191]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [150a6de]
+- Updated dependencies [4848793]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [4848793]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [4848793]
+- Updated dependencies [b6f1191]
+- Updated dependencies [4848793]
+- Updated dependencies [b6f1191]
+- Updated dependencies [b6f1191]
+- Updated dependencies [b6f1191]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [b6f1191]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [b6f1191]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [4848793]
+- Updated dependencies [b2c0c68]
+- Updated dependencies [b6f1191]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [4848793]
+- Updated dependencies [a8a7eb3]
+- Updated dependencies [4848793]
+  - @badaitech/chaingraph-nodes@0.1.6
+  - @badaitech/chaingraph-types@0.1.6
+  - @badaitech/chaingraph-trpc@0.1.6
+
 ## 0.1.6-dev.51
 
 ### Patch Changes
