@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - release
   release:
     types: [created]
 
@@ -86,7 +87,7 @@ jobs:
 
       # For GitHub releases, publish directly with version from tag
       - name: Publish packages from release
-        if: github.event_name == 'release'
+        if: github.ref == 'release'
         run: |
           TAG_VERSION="${{ github.event.release.tag_name }}"
           # Remove 'v' prefix if present
@@ -101,14 +102,14 @@ jobs:
       - name: Extract backend version from package.json
         id: backend-package-version
         run: |
-          VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
+          BACK_VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
           echo "VERSION=$BACK_VERSION" >> $GITHUB_ENV
           echo "Extracted backend version: $BACK_VERSION"
 
       - name: Extract frontend version from package.json
         id: frontend-package-version
         run: |
-          VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
+          FRONT_VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
           echo "VERSION=$FRONT_VERSION" >> $GITHUB_ENV
           echo "Extracted frontend version: $FRONT_VERSION"
 
