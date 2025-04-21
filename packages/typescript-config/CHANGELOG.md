@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.9
+
+### Patch Changes
+
+- Bump version
+
 ## 0.1.8
 
 ### Patch Changes
