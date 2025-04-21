@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches:
+      - main
       - release
   release:
     types: [created]
@@ -86,7 +87,7 @@ jobs:
 
       # For GitHub releases, publish directly with version from tag
       - name: Publish packages from release
-        if: github.event_name == 'release'
+        if: github.ref == 'release'
         run: |
           TAG_VERSION="${{ github.event.release.tag_name }}"
           # Remove 'v' prefix if present
