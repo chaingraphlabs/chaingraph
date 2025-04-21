@@ -52,7 +52,7 @@ export function ThemeProvider({ children, theme }: ThemeProviderProps) {
 
   return (
     <ThemeContext value={themeProviderValue}>
-      <Theme appearance={currentTheme}>
+      <Theme appearance={themeProviderValue.theme}>
         {children}
       </Theme>
     </ThemeContext>
