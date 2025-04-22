@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.1.9-2
+
+### Minor Changes
+
+- Change release condition
+
 ## 0.1.9-1
 
 ### Minor Changes
