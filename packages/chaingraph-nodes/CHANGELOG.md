@@ -11,17 +11,6 @@
 - Updated dependencies
   - @badaitech/chaingraph-types@0.1.9-1
 
-## 0.1.9-1
-
-### Minor Changes
-
-- New release process
-
-### Patch Changes
-
-- Updated dependencies
-  - @badaitech/chaingraph-types@0.1.9-1
-
 ## 0.1.9
 
 ### Patch Changes
