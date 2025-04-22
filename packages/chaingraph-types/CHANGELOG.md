@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-types
 
+## 0.1.9-1
+
+### Minor Changes
+
+- New release process
+
+## 0.1.9-1
+
+### Minor Changes
+
+- New release process
+
 ## 0.1.9
 
 ### Patch Changes
