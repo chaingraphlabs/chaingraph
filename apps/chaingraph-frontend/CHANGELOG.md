@@ -1,5 +1,31 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.9-1
+
+### Minor Changes
+
+- New release process
+
+### Patch Changes
+
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.9-1
+  - @badaitech/chaingraph-trpc@0.1.9-1
+  - @badaitech/chaingraph-types@0.1.9-1
+
+## 0.1.9-1
+
+### Minor Changes
+
+- New release process
+
+### Patch Changes
+
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.9-1
+  - @badaitech/chaingraph-trpc@0.1.9-1
+  - @badaitech/chaingraph-types@0.1.9-1
+
 ## 0.1.9
 
 ### Patch Changes

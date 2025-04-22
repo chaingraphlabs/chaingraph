@@ -103,14 +103,14 @@ jobs:
         id: backend-package-version
         run: |
           BACK_VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
-          echo "VERSION=$BACK_VERSION" >> $GITHUB_ENV
+          echo "BACK_VERSION=$BACK_VERSION" >> $GITHUB_ENV
           echo "Extracted backend version: $BACK_VERSION"
 
       - name: Extract frontend version from package.json
         id: frontend-package-version
         run: |
           FRONT_VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
-          echo "VERSION=$FRONT_VERSION" >> $GITHUB_ENV
+          echo "FRONT_VERSION=$FRONT_VERSION" >> $GITHUB_ENV
           echo "Extracted frontend version: $FRONT_VERSION"
 
       - name: Set up Docker Buildx
