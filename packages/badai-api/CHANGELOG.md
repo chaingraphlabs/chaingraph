@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.1.9-dev.0
+
+### Patch Changes
+
+- shadow dom
+
 ## 0.1.9-2
 
 ### Minor Changes

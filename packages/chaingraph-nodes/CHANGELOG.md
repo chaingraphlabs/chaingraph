@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.9-dev.0
+
+### Patch Changes
+
+- shadow dom
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.9-dev.0
+
 ## 0.1.9-2
 
 ### Minor Changes
