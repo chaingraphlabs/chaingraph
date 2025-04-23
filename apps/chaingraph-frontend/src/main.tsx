@@ -15,9 +15,6 @@ import App from './App'
 import { RootProvider } from './providers/RootProvider'
 import 'reflect-metadata'
 import './reflect'
-import '@radix-ui/themes/styles.css'
-import '@xyflow/react/dist/style.css'
-import './index.css'
 import '@badaitech/chaingraph-nodes'
 
 createRoot(document.getElementById('root')!).render(

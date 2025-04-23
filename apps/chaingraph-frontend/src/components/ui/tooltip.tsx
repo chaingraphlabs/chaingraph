@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const TooltipProvider = TooltipPrimitive.Provider
 
@@ -18,8 +19,10 @@ const Tooltip = TooltipPrimitive.Root
 const TooltipTrigger = TooltipPrimitive.Trigger
 
 function TooltipContent({ ref, className, sideOffset = 4, ...props }: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof TooltipPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Portal container={portalEl}>
       <TooltipPrimitive.Content
         ref={ref}
         sideOffset={sideOffset}

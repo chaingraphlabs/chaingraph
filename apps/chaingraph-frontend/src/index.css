@@ -11,7 +11,7 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :host {
     /* Base Theme Colors */
     --background: 0 0% 98%;
     --foreground: 0 0% 9%;

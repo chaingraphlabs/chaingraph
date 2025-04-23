@@ -11,6 +11,7 @@ import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const Select = SelectPrimitive.Root
 
@@ -71,8 +72,10 @@ SelectScrollDownButton.displayName
   = SelectPrimitive.ScrollDownButton.displayName
 
 function SelectContent({ ref, className, children, position = 'popper', ...props }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof SelectPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={portalEl}>
       <SelectPrimitive.Content
         ref={ref}
         className={cn(

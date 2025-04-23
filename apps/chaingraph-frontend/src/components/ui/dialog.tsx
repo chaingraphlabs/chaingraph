@@ -11,6 +11,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const Dialog = DialogPrimitive.Root
 
@@ -35,8 +36,10 @@ function DialogOverlay({ ref, className, ...props }: React.ComponentPropsWithout
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 function DialogContent({ ref, className, children, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof DialogPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <DialogPortal>
+    <DialogPortal container={portalEl}>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}

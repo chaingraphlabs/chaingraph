@@ -7,6 +7,7 @@
  */
 
 import { TooltipProvider } from '@/components/ui'
+import { ShadowWithStyles } from '@/components/ui/shadow'
 import { initializeStores } from '@/store/init-stores-fx'
 import { $trpcClient, createTRPCClientEvent } from '@/store/trpc/store'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
@@ -21,13 +22,11 @@ import {
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useUnit } from 'effector-react'
-
 import { useEffect, useRef } from 'react'
 import SuperJSON from 'superjson'
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ThemeProvider } from '../components/theme/ThemeProvider'
-
 import { ZoomProvider } from './ZoomProvider'
 import '../store'
 // import '../store/init'
@@ -95,24 +94,28 @@ export function RootProvider({
   const trpcClient = useUnit($trpcClient)
 
   return (
-    <ThemeProvider theme={theme}>
-      <TooltipProvider>
-        <QueryClientProvider client={queryClient}>
-          <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-            <ReactFlowProvider>
-              <ZoomProvider>
-                <DndContextProvider>
-                  <DndProvider>
-                    <MenuPositionProvider>
-                      {children}
-                    </MenuPositionProvider>
-                  </DndProvider>
-                </DndContextProvider>
-              </ZoomProvider>
-            </ReactFlowProvider>
-          </TRPCProvider>
-        </QueryClientProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <ShadowWithStyles>
+      <ThemeProvider theme={theme}>
+
+        <TooltipProvider>
+          <QueryClientProvider client={queryClient}>
+            <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+              <ReactFlowProvider>
+                <ZoomProvider>
+                  <DndContextProvider>
+                    <DndProvider>
+                      <MenuPositionProvider>
+                        {children}
+                      </MenuPositionProvider>
+                    </DndProvider>
+                  </DndContextProvider>
+                </ZoomProvider>
+              </ReactFlowProvider>
+            </TRPCProvider>
+          </QueryClientProvider>
+        </TooltipProvider>
+        <div id="chaingraph-portal" />
+      </ThemeProvider>
+    </ShadowWithStyles>
   )
 }
