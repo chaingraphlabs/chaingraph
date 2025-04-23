@@ -6,7 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { index, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, integer, jsonb, pgTableCreator, text, timestamp } from 'drizzle-orm/pg-core'
+
+const pgTable = pgTableCreator(name => `chaingraph_${name}`)
 
 export const flowsTable = pgTable('flows', {
   id: text('id').primaryKey(),
@@ -16,10 +18,8 @@ export const flowsTable = pgTable('flows', {
   ownerId: text('owner_id'),
   parentId: text('parent_id'),
   version: integer('version').default(1).notNull(),
-}, (table) => {
-  return {
-    ownerIdCreatedAtIdx: index('owner_id_created_at_idx').on(table.ownerId, table.createdAt),
-    ownerIdUpdatedAtIdx: index('owner_id_updated_at_idx').on(table.ownerId, table.updatedAt),
-    parentIdIdx: index('parent_id_idx').on(table.parentId),
-  }
-})
+}, table => [
+  index('flows_owner_id_created_at_idx').on(table.ownerId, table.createdAt),
+  index('flows_owner_id_updated_at_idx').on(table.ownerId, table.updatedAt),
+  index('flows_parent_id_idx').on(table.parentId),
+])

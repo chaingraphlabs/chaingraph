@@ -1,5 +1,17 @@
 # @badaitech/typescript-config
 
+## 0.1.10
+
+### Patch Changes
+
+- bump version
+
+## 0.1.9
+
+### Patch Changes
+
+- Add prefix to the pg schema tables. Update drizzle config. Add Dockerfile for db migration.
+
 ## 0.1.9-2
 
 ### Minor Changes
