@@ -16,6 +16,7 @@ import { RootProvider } from './providers/RootProvider'
 import 'reflect-metadata'
 import './reflect'
 import '@badaitech/chaingraph-nodes'
+import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
