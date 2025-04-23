@@ -22,7 +22,7 @@ export function useShadowRoot() {
   return ctx
 }
 
-export function Shadow({ children }: PropsWithChildren) {
+export function Shadow({ children, className }: PropsWithChildren<{ className?: string }>) {
   const [root, setRoot] = useState<ShadowRoot | undefined>()
 
   const hostRef = useCallback((node: HTMLDivElement | null) => {
@@ -34,15 +34,15 @@ export function Shadow({ children }: PropsWithChildren) {
   }, [])
 
   return (
-    <div ref={hostRef}>
+    <div className={className} ref={hostRef}>
       {root && <ShadowRootContext value={root}>{createPortal(<>{children}</>, root)}</ShadowRootContext> }
     </div>
   )
 }
 
-export function ShadowWithStyles({ children }: PropsWithChildren) {
+export function ShadowWithStyles({ className, children }: PropsWithChildren<{ className?: string }>) {
   return (
-    <Shadow>
+    <Shadow className={className}>
       <style>{radixStyles}</style>
       <style>{xyflowStyles}</style>
       <style>{styles}</style>

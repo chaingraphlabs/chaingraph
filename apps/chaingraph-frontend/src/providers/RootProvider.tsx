@@ -32,6 +32,7 @@ import '../store'
 // import '../store/init'
 
 interface RootProviderProps {
+  className?: string
   trpcURL?: string
   sessionToken?: string
   superjsonCustom?: typeof SuperJSON
@@ -44,6 +45,7 @@ interface RootProviderProps {
 export const DefaultTRPCURL = `ws://localhost:3001`
 
 export function RootProvider({
+  className,
   children,
   trpcURL,
   sessionToken,
@@ -94,7 +96,7 @@ export function RootProvider({
   const trpcClient = useUnit($trpcClient)
 
   return (
-    <ShadowWithStyles>
+    <ShadowWithStyles className={className}>
       <ThemeProvider theme={theme}>
 
         <TooltipProvider>
