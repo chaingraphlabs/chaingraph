@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.11
+
+### Patch Changes
+
+- Make packages public
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.11
+
 ## 0.1.10
 
 ### Patch Changes
