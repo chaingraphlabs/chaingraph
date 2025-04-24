@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.11
+
+### Patch Changes
+
+- Make packages public
+
 ## 0.1.10
 
 ### Patch Changes
