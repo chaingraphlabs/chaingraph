@@ -1,6 +1,7 @@
 # ChainGraph Project Makefile
 
-.PHONY: all build prepublish-check publish publish-packages clean
+.PHONY: all build prepublish-check publish publish-packages clean \
+	db-migrate-build db-migrate-run db-migrate
 
 # Default target - only builds the project
 all: build
@@ -52,3 +53,34 @@ clean-cache:
 # Clean everything
 clean: clean-builds clean-cache
 	@echo "Project cleaned successfully!"
+
+# Database migration commands
+# ----------------------------------------------------------------
+
+# Name of the migration Docker image
+MIGRATION_IMAGE := badaitech/chaingraph-migration
+
+# Path to the migration Dockerfile
+MIGRATION_DOCKERFILE := apps/chaingraph-backend/migrate.Dockerfile
+
+# Build the migration Docker image
+db-migrate-build:
+	@echo "Building database migration Docker image..."
+	docker build -t $(MIGRATION_IMAGE) -f $(MIGRATION_DOCKERFILE) .
+	@echo "Migration image built successfully!"
+
+# Run database migrations with the specified DATABASE_URL
+# Usage: make db-migrate-run DATABASE_URL="postgres://username:password@hostname:5432/dbname"
+db-migrate-run:
+ifndef DATABASE_URL
+	@echo "Error: DATABASE_URL is required"
+	@echo "Usage: make db-migrate-run DATABASE_URL=\"postgres://username:password@hostname:5432/dbname\""
+	@exit 1
+endif
+	@echo "Running database migrations..."
+	docker run --rm -e DATABASE_URL="$(DATABASE_URL)" $(MIGRATION_IMAGE)
+	@echo "Database migrations completed!"
+
+# Build migration image and run migrations in one command
+# Usage: make db-migrate DATABASE_URL="postgres://username:password@hostname:5432/dbname"
+db-migrate: db-migrate-build db-migrate-run

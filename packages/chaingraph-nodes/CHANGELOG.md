@@ -1,5 +1,29 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.10
+
+### Patch Changes
+
+- bump version
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.10
+
+## 0.1.9
+
+### Patch Changes
+
+- Add prefix to the pg schema tables. Update drizzle config. Add Dockerfile for db migration.
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.9
+
+## 0.1.9-dev.0
+
+### Patch Changes
+
+- shadow dom
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.9-dev.0
+
 ## 0.1.9-2
 
 ### Minor Changes
