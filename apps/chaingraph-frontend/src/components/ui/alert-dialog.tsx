@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const AlertDialog = AlertDialogPrimitive.Root
 
@@ -33,8 +34,10 @@ function AlertDialogOverlay({ ref, className, ...props }: React.ComponentPropsWi
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
 function AlertDialogContent({ ref, className, ...props }: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof AlertDialogPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <AlertDialogPortal>
+    <AlertDialogPortal container={portalEl}>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
         ref={ref}

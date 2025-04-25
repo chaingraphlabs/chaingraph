@@ -11,6 +11,7 @@ import * as ContextMenuPrimitive from '@radix-ui/react-context-menu'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const ContextMenu = ContextMenuPrimitive.Root
 
@@ -59,8 +60,10 @@ function ContextMenuSubContent({ ref, className, ...props }: React.ComponentProp
 ContextMenuSubContent.displayName = ContextMenuPrimitive.SubContent.displayName
 
 function ContextMenuContent({ ref, className, ...props }: React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof ContextMenuPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <ContextMenuPrimitive.Portal>
+    <ContextMenuPrimitive.Portal container={portalEl}>
       <ContextMenuPrimitive.Content
         ref={ref}
         className={cn(

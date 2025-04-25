@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const Popover = PopoverPrimitive.Root
 
@@ -17,8 +18,10 @@ const PopoverTrigger = PopoverPrimitive.Trigger
 const PopoverAnchor = PopoverPrimitive.Anchor
 
 function PopoverContent({ ref, className, align = 'center', sideOffset = 4, ...props }: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof PopoverPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal container={portalEl}>
       <PopoverPrimitive.Content
         ref={ref}
         align={align}

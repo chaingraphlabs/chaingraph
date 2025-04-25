@@ -1,5 +1,12 @@
 # @badaitech/typescript-config
 
+## 0.1.12
+
+### Patch Changes
+
+- Shandow dom added
+- 2376c69: shadow dom
+
 ## 0.1.11
 
 ### Patch Changes
@@ -17,6 +24,12 @@
 ### Patch Changes
 
 - Add prefix to the pg schema tables. Update drizzle config. Add Dockerfile for db migration.
+
+## 0.1.9-dev.0
+
+### Patch Changes
+
+- shadow dom
 
 ## 0.1.9-2
 

@@ -11,6 +11,7 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 
 import * as React from 'react'
+import { useShadowRoot } from './shadow'
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -61,8 +62,10 @@ DropdownMenuSubContent.displayName
   = DropdownMenuPrimitive.SubContent.displayName
 
 function DropdownMenuContent({ ref, className, sideOffset = 4, ...props }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof DropdownMenuPrimitive.Content> | null> }) {
+  const shadowRoot = useShadowRoot()
+  const portalEl = shadowRoot.getElementById('chaingraph-portal')
   return (
-    <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Portal container={portalEl}>
       <DropdownMenuPrimitive.Content
         ref={ref}
         sideOffset={sideOffset}
