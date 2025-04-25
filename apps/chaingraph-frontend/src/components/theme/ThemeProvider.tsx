@@ -17,6 +17,7 @@ const localStorageKeyTheme = `${localStorageKeyPrefix}theme`
 
 export interface ThemeProviderProps extends PropsWithChildren {
   theme?: ThemeMode
+  className?: string
 }
 
 export function ThemeProvider({ children, theme }: ThemeProviderProps) {
@@ -62,7 +63,7 @@ export function ThemeProvider({ children, theme }: ThemeProviderProps) {
 
   return (
     <ThemeContext value={themeProviderValue}>
-      <Theme appearance={themeProviderValue.theme}>
+      <Theme className="w-full h-full" appearance={themeProviderValue.theme}>
         {children}
       </Theme>
     </ThemeContext>

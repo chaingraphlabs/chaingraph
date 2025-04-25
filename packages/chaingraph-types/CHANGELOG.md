@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.1.13
+
+### Patch Changes
+
+- styles for theme provider
+
 ## 0.1.12
 
 ### Patch Changes
