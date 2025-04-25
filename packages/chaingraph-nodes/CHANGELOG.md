@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.12
+
+### Patch Changes
+
+- Shandow dom added
+- 2376c69: shadow dom
+- Updated dependencies
+- Updated dependencies [2376c69]
+  - @badaitech/chaingraph-types@0.1.12
+
 ## 0.1.11
 
 ### Patch Changes

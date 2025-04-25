@@ -1,5 +1,12 @@
 # @badaitech/chaingraph-types
 
+## 0.1.12
+
+### Patch Changes
+
+- Shandow dom added
+- 2376c69: shadow dom
+
 ## 0.1.11
 
 ### Patch Changes
