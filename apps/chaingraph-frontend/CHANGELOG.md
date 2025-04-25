@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.13
+
+### Patch Changes
+
+- styles for theme provider
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.13
+  - @badaitech/chaingraph-types@0.1.13
+  - @badaitech/chaingraph-trpc@0.1.13
+
 ## 0.1.12
 
 ### Patch Changes
