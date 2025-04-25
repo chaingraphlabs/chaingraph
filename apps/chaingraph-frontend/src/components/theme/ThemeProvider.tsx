@@ -9,7 +9,7 @@
 import type { PropsWithChildren } from 'react'
 import type { ThemeMode } from './ThemeContext'
 import { Theme } from '@radix-ui/themes'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ThemeContext } from './ThemeContext'
 
 const localStorageKeyPrefix = 'chaingraph:'
@@ -35,11 +35,21 @@ export function ThemeProvider({ children, theme }: ThemeProviderProps) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
+  const currentThemeRef = useRef<ThemeMode>(currentTheme)
+  currentThemeRef.current = currentTheme
+
   useEffect(() => {
     // Update DOM and localStorage when theme changes
     document.documentElement.classList.toggle('dark', currentTheme === 'dark')
     localStorage.setItem(localStorageKeyTheme, currentTheme)
   }, [currentTheme])
+
+  useEffect(() => {
+    if (theme && theme !== currentThemeRef.current) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
+      setTheme(theme)
+    }
+  }, [theme])
 
   const toggleTheme = useCallback(() => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
