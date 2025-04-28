@@ -8,4 +8,4 @@
 
 export * from './gql/client'
 export * as GraphQL from './gql/client/graphql'
-export { graphQLClient } from './gql/execute'
+export { createGraphQLClient } from './gql/execute'

@@ -13,3 +13,7 @@ import { GraphQLClient } from 'graphql-request'
 const api = 'http://localhost:9151/graphql'
 
 export const graphQLClient = new GraphQLClient(api)
+
+export function createGraphQLClient(url: string) {
+  return new GraphQLClient(url)
+}
