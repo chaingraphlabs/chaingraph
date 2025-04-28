@@ -7,7 +7,8 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { GraphQL, graphQLClient } from '@badaitech/badai-api'
+import process from 'node:process'
+import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
   Boolean,
@@ -68,6 +69,10 @@ class CreateMessageBadAINode extends BaseNode {
     if (!chatID) {
       throw new Error('BadAI chat ID is not available in the context')
     }
+
+    const graphQLClient = createGraphQLClient(
+      process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
+    )
 
     const { sendMessage } = await graphQLClient.request(GraphQL.SendMessageDocument, {
       session: agentSession,
