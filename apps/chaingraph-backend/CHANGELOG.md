@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.14
+
+### Patch Changes
+
+- Regenerate GQL badai client. Create new badai api instance instead of useing predefined one
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.14
+  - @badaitech/chaingraph-trpc@0.1.14
+  - @badaitech/chaingraph-types@0.1.14
+
 ## 0.1.13
 
 ### Patch Changes

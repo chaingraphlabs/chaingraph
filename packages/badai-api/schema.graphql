@@ -6,8 +6,13 @@ schema {
     subscription: Subscription
 }
 
-"The @defer directive may be specified on a fragment spread to imply de-prioritization, that causes the fragment to be omitted in the initial response, and delivered as a subsequent response afterward. A query with @defer directive will cause the request to potentially return multiple responses, where non-deferred data is delivered in the initial response and data deferred delivered in a subsequent response. @include and @skip take precedence over @defer."
-directive @defer(if: Boolean = true, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+"Directs the executor to defer this fragment when the `if` argument is true or undefined."
+directive @defer(
+    "Deferred when true or undefined."
+    if: Boolean = true,
+    "Unique name"
+    label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
 directive @extends on OBJECT | INTERFACE
 
@@ -15,7 +20,7 @@ directive @external on FIELD_DEFINITION
 
 directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
 
-"The `@oneOf` _built-in directive_ is used within the type system definition language to indicate an Input Object is a OneOf Input Object."
+"Indicates exactly one field must be supplied and this field must not be `null`."
 directive @oneOf on INPUT_OBJECT
 
 directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
@@ -1119,6 +1124,7 @@ input AttachmentBlob {
 
 input ChainGraphInput {
     graph: String!
+    graph_id: GraphID
 }
 
 input ChatHistoryConfigInput {

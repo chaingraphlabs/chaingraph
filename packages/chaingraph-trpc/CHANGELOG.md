@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.14
+
+### Patch Changes
+
+- Regenerate GQL badai client. Create new badai api instance instead of useing predefined one
+
 ## 0.1.13
 
 ### Patch Changes

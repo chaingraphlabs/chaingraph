@@ -208,6 +208,7 @@ export type ChainGraphHistory = {
 
 export type ChainGraphInput = {
   graph: Scalars['String']['input'];
+  graph_id?: InputMaybe<Scalars['GraphID']['input']>;
 };
 
 export type ChatHistoryConfig = {

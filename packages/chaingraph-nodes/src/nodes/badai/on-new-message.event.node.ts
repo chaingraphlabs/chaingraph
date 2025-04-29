@@ -8,7 +8,8 @@
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import type { Attachment, Participant } from './types'
-import { GraphQL, graphQLClient } from '@badaitech/badai-api'
+import process from 'node:process'
+import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import { BaseNode, Node, Output, PortObject } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Message } from './types'
@@ -44,6 +45,10 @@ class OnNewMessageEventNode extends BaseNode {
     if (!agentSession) {
       throw new Error('BadAI agent session is not available in the context')
     }
+
+    const graphQLClient = createGraphQLClient(
+      process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
+    )
 
     const { message } = await graphQLClient.request(GraphQL.GetMessageDocument, {
       session: agentSession,
