@@ -8,7 +8,7 @@
 
 import { sample } from 'effector'
 import { addEdgeFx, removeEdgeFx } from './effects'
-import { requestAddEdge, requestRemoveEdge } from './events'
+import { requestAddEdge, requestRemoveEdge, resetEdges } from './events'
 
 export function init() {
 // Initialize edge operations
@@ -33,4 +33,8 @@ export function init() {
     clock: removeEdgeFx.doneData,
     target: [], // Add any additional targets for successful edge removal
   })
+}
+
+export function reset() {
+  resetEdges()
 }

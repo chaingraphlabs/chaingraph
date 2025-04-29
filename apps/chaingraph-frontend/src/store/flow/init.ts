@@ -93,3 +93,9 @@ export function init() {
     .reset(resetFlowSubscription)
     .reset(clearActiveFlow)
 }
+
+export function reset() {
+  setFlowsList([])
+  clearActiveFlow()
+  resetFlowSubscription()
+}

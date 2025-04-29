@@ -180,3 +180,7 @@ export function init() {
     target: resetAutoStart,
   })
 }
+
+export function reset() {
+  clearExecutionState()
+}

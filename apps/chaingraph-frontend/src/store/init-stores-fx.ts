@@ -9,7 +9,7 @@
 import type { CategorizedNodes, FlowMetadata } from '@badaitech/chaingraph-types'
 import { initializeCategoriesFx } from './categories/init'
 import { initializeFlowsFx } from './flow/init'
-import { init } from './init'
+import { init, reset } from './init'
 
 /**
  * Initialize all stores and load initial data
@@ -38,4 +38,8 @@ export async function initializeStores(callback?: (
     console.error('Failed to initialize stores:', error)
     throw error
   }
+}
+
+export async function resetStores() {
+  reset()
 }

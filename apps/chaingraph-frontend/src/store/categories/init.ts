@@ -9,7 +9,7 @@
 import { sample } from 'effector'
 import { categoriesDomain } from '../domains'
 import { fetchCategorizedNodesFx } from './effects'
-import { setCategorizedNodes } from './events'
+import { resetCategories, setCategorizedNodes } from './events'
 
 export const initializeCategoriesFx = categoriesDomain.createEffect(async () => {
   return await fetchCategorizedNodesFx()
@@ -29,4 +29,8 @@ export function init() {
     clock: initializeCategoriesFx,
     target: fetchCategorizedNodesFx,
   })
+}
+
+export function reset() {
+  resetCategories()
 }

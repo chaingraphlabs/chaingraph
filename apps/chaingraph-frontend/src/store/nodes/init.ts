@@ -21,6 +21,7 @@ import {
 } from './effects'
 import {
   addNodeToFlow,
+  clearNodes,
   removeNodeFromFlow,
   setNodeVersion,
   updateNodeParent,
@@ -144,4 +145,8 @@ export function init() {
   }
 
   positionInterpolator.start()
+}
+
+export function reset() {
+  clearNodes()
 }

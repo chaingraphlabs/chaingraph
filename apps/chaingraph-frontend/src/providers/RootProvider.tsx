@@ -8,7 +8,7 @@
 
 import { TooltipProvider } from '@/components/ui'
 import { ShadowWithStyles } from '@/components/ui/shadow'
-import { initializeStores } from '@/store/init-stores-fx'
+import { initializeStores, resetStores } from '@/store/init-stores-fx'
 import { $trpcClient, createTRPCClientEvent } from '@/store/trpc/store'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import {
@@ -89,6 +89,10 @@ export function RootProvider({
         console.debug('Categorized Nodes:', categorizedNodes)
         console.debug('Flows:', flows)
       }).catch(console.error)
+    }
+
+    return () => {
+      resetStores()
     }
   }, [nodeRegistry, sessionToken, superjsonCustom, trpcURL])
 

@@ -12,11 +12,11 @@
 // import './edges/init'
 // import './execution/init'
 
-import { init as categoriesInit } from './categories/init'
-import { init as edgesInit } from './edges/init'
-import { init as executionInit } from './execution/init'
-import { init as flowInit } from './flow/init'
-import { init as nodesInit } from './nodes/init'
+import { init as categoriesInit, reset as categoriesReset } from './categories/init'
+import { init as edgesInit, reset as edgesReset } from './edges/init'
+import { init as executionInit, reset as executionReset } from './execution/init'
+import { init as flowInit, reset as flowReset } from './flow/init'
+import { init as nodesInit, reset as nodesReset } from './nodes/init'
 import { init as portsInit } from './ports/init'
 
 export function init() {
@@ -26,4 +26,12 @@ export function init() {
   edgesInit()
   portsInit()
   executionInit()
+}
+
+export function reset() {
+  categoriesReset()
+  edgesReset()
+  executionReset()
+  flowReset()
+  nodesReset()
 }
