@@ -1,5 +1,71 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.15-dev.10
+
+### Patch Changes
+
+- add HandlebarsTemplateNode
+
+## 0.1.15-dev.9
+
+### Patch Changes
+
+- Add get port schema node
+
+## 0.1.15-dev.8
+
+### Patch Changes
+
+- Add BadAI finish message node and enchanceother BadAI nodes
+
+## 0.1.15-dev.7
+
+### Patch Changes
+
+- Add connections metadata to the port metadata. Improve badai streaming node
+
+## 0.1.15-dev.6
+
+### Patch Changes
+
+- Improve stream message node
+
+## 0.1.15-dev.5
+
+### Patch Changes
+
+- Add on stream started node
+
+## 0.1.15-dev.4
+
+### Patch Changes
+
+- Add bunch of BadAI nodes
+
+## 0.1.15-dev.3
+
+### Patch Changes
+
+- add array length node
+
+## 0.1.15-dev.2
+
+### Patch Changes
+
+- Add filter node
+
+## 0.1.15-dev.1
+
+### Patch Changes
+
+- Add multiple nodes: BadAIChatHistoryNode, BadAIChatMetaNode, OnNewMessageEventNode, BranchNode, NotNode
+
+## 0.1.15-dev.0
+
+### Patch Changes
+
+- New nodes and tsconfig fixes.
+
 ## 0.1.14
 
 ### Patch Changes

@@ -27,7 +27,7 @@ export class AuthService {
    * Validate a session token and return user information
    */
   async validateSession(token: string | undefined): Promise<AuthSession | null> {
-    // If auth is disabled globally, return dev user session
+    // If auth is disabled globally, return the dev user session
     if (!authConfig.enabled || authConfig.devMode) {
       return {
         userId: `${DevUser.id}`,

@@ -7,16 +7,17 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import type { Attachment, Participant } from './types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import { BaseNode, Node, Output, PortObject } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import { Attachment } from './types'
+import { Participant } from './types'
 import { Message } from './types'
 
 @Node({
   type: 'OnNewMessageEventNode',
-  title: 'On New Message Event',
+  title: 'BadAI On New Message Event',
   description: 'Triggered when a new message is received in the chat',
   category: NODE_CATEGORIES.BADAI,
   tags: ['message', 'event', 'new'],
@@ -26,7 +27,7 @@ class OnNewMessageEventNode extends BaseNode {
   @PortObject({
     schema: Message,
     title: 'Message',
-    description: 'The received message data',
+    description: 'The received message data from BadAI chat',
   })
   message?: Message
 
@@ -56,7 +57,7 @@ class OnNewMessageEventNode extends BaseNode {
       id: messageID,
     })
 
-    const inputMessage = message as any
+    const inputMessage = message as GraphQL.MessageFieldsFragment
     if (!inputMessage) {
       throw new Error('Failed to fetch message from BadAI API')
     }
@@ -64,49 +65,51 @@ class OnNewMessageEventNode extends BaseNode {
     // Transform participant data if available
     let participant: Participant | undefined
     if (inputMessage.participant) {
-      participant = {
-        participant_id: inputMessage.participant.participant_id,
-        username: inputMessage.participant.username,
-        first_name: inputMessage.participant.first_name,
-        agent_id: inputMessage.participant.agent_id || '',
-        is_agent: Boolean(inputMessage.participant.is_agent),
-        avatar: inputMessage.participant.avatar || '',
-        last_name: inputMessage.participant.last_name || undefined,
-        meta: typeof inputMessage.participant.meta === 'string'
-          ? inputMessage.participant.meta
-          : JSON.stringify(inputMessage.participant.meta || {}),
-      }
+      participant = new Participant()
+      participant.participant_id = inputMessage.participant.participant_id
+      participant.username = inputMessage.participant.username
+      participant.first_name = inputMessage.participant.first_name
+      participant.agent_id = inputMessage.participant.agent_id || ''
+      participant.is_agent = Boolean(inputMessage.participant.is_agent)
+      participant.avatar = inputMessage.participant.avatar || ''
+      participant.last_name = inputMessage.participant.last_name || undefined
+      participant.meta = typeof inputMessage.participant.meta === 'string'
+        ? inputMessage.participant.meta
+        : JSON.stringify(inputMessage.participant.meta || {})
     }
 
     // Transform attachments if available
-    const attachments: Attachment[] = inputMessage.attachments?.map(attachment => ({
-      id: attachment.id,
-      filename: attachment.filename,
-      url: attachment.url,
-      mime_type: attachment.mime_type,
-      size: attachment.size,
-    })) || []
+    const attachments: Attachment[] = (inputMessage.attachments as GraphQL.Attachment[] | undefined)?.map((attachment) => {
+      const attachmentPort = new Attachment()
+
+      attachmentPort.id = attachment.id
+      attachmentPort.filename = attachment.filename
+      attachmentPort.url = attachment.url
+      attachmentPort.mime_type = attachment.mime_type
+      attachmentPort.size = attachment.size
+
+      return attachmentPort
+    }) || []
 
     // Create the message object according to our schema
-    this.message = {
-      message_id: inputMessage.message_id,
-      chat_id: inputMessage.chat_id,
-      text: inputMessage.text || '',
-      author_id: inputMessage.author_id,
-      type: inputMessage.type || 'common',
-      time: inputMessage.time,
-      participant,
-      attachments,
-      finished: Boolean(inputMessage.finished),
-      is_system: Boolean(inputMessage.is_system),
-      need_answer: Boolean(inputMessage.need_answer),
-      version: inputMessage.version || 1,
-      reply_to: inputMessage.reply_to || undefined,
-      error: inputMessage.error || undefined,
-      meta: typeof inputMessage.meta === 'string'
-        ? inputMessage.meta
-        : JSON.stringify(inputMessage.meta || {}),
-    }
+    this.message = new Message()
+    this.message.message_id = inputMessage.id
+    this.message.chat_id = inputMessage.chat_id
+    this.message.text = inputMessage.text || ''
+    this.message.author_id = inputMessage.author
+    this.message.type = inputMessage.type || 'common'
+    this.message.time = inputMessage.time
+    this.message.participant = participant || undefined
+    this.message.attachments = attachments || []
+    this.message.finished = Boolean(inputMessage.finished)
+    this.message.is_system = Boolean(inputMessage.is_system)
+    this.message.need_answer = Boolean(inputMessage.need_answer)
+    this.message.version = inputMessage.version || 1
+    this.message.reply_to = inputMessage.reply_to || undefined
+    this.message.error = inputMessage.error || undefined
+    this.message.meta = typeof inputMessage.meta === 'string'
+      ? inputMessage.meta
+      : JSON.stringify(inputMessage.meta || {})
 
     return {}
   }

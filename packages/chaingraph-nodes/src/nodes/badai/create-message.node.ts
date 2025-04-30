@@ -22,7 +22,7 @@ import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
   type: 'CreateMessageBadAINode',
-  title: 'Create Message',
+  title: 'BadAI Create Message',
   description: 'Creates a new message with specified content',
   category: NODE_CATEGORIES.BADAI,
   tags: ['message', 'create', 'content'],
@@ -88,7 +88,11 @@ class CreateMessageBadAINode extends BaseNode {
       },
     })
 
-    const createdMessageID = (sendMessage as any).id
+    if (!sendMessage) {
+      throw new Error('Failed to create message, no response received')
+    }
+
+    const createdMessageID = (sendMessage as GraphQL.Message).id
     if (!createdMessageID) {
       throw new Error('Failed to create message, message ID is not available')
     }
@@ -96,6 +100,7 @@ class CreateMessageBadAINode extends BaseNode {
     // check message id must be a number, try to parse it as well
     this.messageID = Number.parseInt(createdMessageID, 10)
     if (Number.isNaN(this.messageID)) {
+      this.messageID = -1
       throw new TypeError('Failed to parse created message ID as a number')
     }
 

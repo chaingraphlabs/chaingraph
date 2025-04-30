@@ -6,6 +6,14 @@
     "experimentalDecorators": true,
     "rootDir": "src",
     "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./*"],
+      "@badaitech/chaingraph-trpc/*": ["../../packages/chaingraph-trpc/*"],
+      "@badaitech/chaingraph-types/*": ["../../packages/chaingraph-types/src/*"],
+      "@badaitech/chaingraph-nodes/*": ["../../packages/chaingraph-nodes/src/*"],
+      "@badaitech/typescript-config/*": ["../../packages/typescript-config/*"],
+      "@badaitech/badai-api/*": ["../../packages/badai-api/src/*"]
+    },
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,

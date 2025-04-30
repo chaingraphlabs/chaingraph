@@ -4,6 +4,9 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "rootDir": "./src",
+    "paths": {
+      "@badaitech/typescript-config/*": ["../typescript-config/*"]
+    },
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,

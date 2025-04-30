@@ -129,6 +129,50 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
   }
 
   /**
+   * Adds a connection to the port metadata.
+   *
+   * @param nodeId - The ID of the node to connect to.
+   * @param portId - The ID of the port to connect to.
+   *
+   */
+  addConnection(nodeId: string, portId: string) {
+    if (!this.config.connections) {
+      this.config.connections = []
+    }
+
+    // Check if the connection already exists
+    const existingConnection = this.config.connections.find(
+      connection => connection.nodeId === nodeId && connection.portId === portId,
+    )
+    if (existingConnection) {
+      // Connection already exists, no need to add it again
+      return
+    }
+
+    this.config.connections.push({
+      nodeId,
+      portId,
+    })
+  }
+
+  /**
+   * Removes a connection from the port metadata.
+   *
+   * @param nodeId - The ID of the node to disconnect from.
+   * @param portId - The ID of the port to disconnect from.
+   */
+  removeConnection(nodeId: string, portId: string) {
+    if (!this.config.connections) {
+      return
+    }
+
+    // Filter out the connection to be removed
+    this.config.connections = this.config.connections.filter(
+      connection => !(connection.nodeId === nodeId && connection.portId === portId),
+    )
+  }
+
+  /**
    * Returns the default value.
    * Concrete implementations can use a default provided by the configuration.
    */

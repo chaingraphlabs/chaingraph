@@ -22,7 +22,6 @@ import type { IFlow } from './interface'
 import type { FlowMetadata } from './types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
-import { v4 as uuidv4 } from 'uuid'
 import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
@@ -31,6 +30,10 @@ import { FlowEventType, newEvent } from './events'
 
 function generateFlowID(): string {
   return `V2${customAlphabet(nolookalikes, 24)()}`
+}
+
+function generateEdgeID(): string {
+  return `ED${customAlphabet(nolookalikes, 18)()}`
 }
 
 export class Flow implements IFlow {
@@ -228,6 +231,34 @@ export class Flow implements IFlow {
     if (this.edges.has(edge.id)) {
       throw new Error(`Edge with ID ${edge.id} already exists in the flow.`)
     }
+
+    if (edge.sourcePort && edge.targetPort) {
+      edge.sourcePort.addConnection(edge.targetNode.id, edge.targetPort.id)
+      edge.targetPort.addConnection(edge.sourceNode.id, edge.sourcePort.id)
+    }
+
+    edge.targetNode.emit({
+      type: NodeEventType.PortConnected,
+      sourceNode: edge.targetNode,
+      sourcePort: edge.targetPort,
+      targetNode: edge.sourceNode,
+      targetPort: edge.sourcePort,
+      nodeId: edge.targetNode.id,
+      timestamp: new Date(),
+      version: edge.targetNode.getVersion(),
+    })
+
+    edge.sourceNode.emit({
+      type: NodeEventType.PortConnected,
+      sourceNode: edge.sourceNode,
+      sourcePort: edge.sourcePort,
+      targetNode: edge.targetNode,
+      targetPort: edge.targetPort,
+      nodeId: edge.sourceNode.id,
+      timestamp: new Date(),
+      version: edge.sourceNode.getVersion(),
+    })
+
     this.edges.set(edge.id, edge)
   }
 
@@ -236,6 +267,35 @@ export class Flow implements IFlow {
     if (!edge) {
       throw new Error(`Edge with ID ${edgeId} does not exist in the flow.`)
     }
+
+    // Remove connections from ports
+    if (edge.sourcePort && edge.targetPort) {
+      edge.sourcePort.removeConnection(edge.targetNode.id, edge.targetPort.id)
+      edge.targetPort.removeConnection(edge.sourceNode.id, edge.sourcePort.id)
+    }
+
+    edge.targetNode.emit({
+      type: NodeEventType.PortDisconnected,
+      sourceNode: edge.targetNode,
+      sourcePort: edge.targetPort,
+      targetNode: edge.sourceNode,
+      targetPort: edge.sourcePort,
+      nodeId: edge.targetNode.id,
+      timestamp: new Date(),
+      version: edge.targetNode.getVersion(),
+    })
+
+    edge.sourceNode.emit({
+      type: NodeEventType.PortDisconnected,
+      sourceNode: edge.sourceNode,
+      sourcePort: edge.sourcePort,
+      targetNode: edge.targetNode,
+      targetPort: edge.targetPort,
+      nodeId: edge.sourceNode.id,
+      timestamp: new Date(),
+      version: edge.sourceNode.getVersion(),
+    })
+
     this.edges.delete(edgeId)
 
     this.emitEvent(newEvent(
@@ -284,7 +344,7 @@ export class Flow implements IFlow {
     //  Same question for the array port schema
 
     const edge = new Edge(
-      uuidv4(),
+      generateEdgeID(),
       sourceNode,
       sourcePort,
       targetNode,
@@ -306,6 +366,10 @@ export class Flow implements IFlow {
         metadata: edge.metadata,
       },
     ))
+
+    // Create and emit the port update event
+    this.updateNode(sourceNode)
+    this.updateNode(targetNode)
 
     return edge
   }

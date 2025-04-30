@@ -207,7 +207,7 @@ export function PortEnumFromObject<T extends Record<string, any>>(
  */
 export function PortEnumFromNative<E extends Record<string, string | number>>(
   nativeEnum: E,
-  config?: Omit<PortDecoratorOptions<'enum'>, 'type'>,
+  config?: Omit<PortDecoratorOptions<'enum'>, 'type' | 'options'>,
 ): PropertyDecorator {
   // Since native enums only include the keys (for string enums there's no reverse mapping)
   // we iterate over the keys.
@@ -238,9 +238,9 @@ export function PortEnumFromNative<E extends Record<string, string | number>>(
 
   const enumConfig: PortDecoratorOptions<'enum'> = {
     type: 'enum',
-    options: optionConfigs,
-    defaultValue: defaultOptionId,
     ...config,
+    defaultValue: defaultOptionId,
+    options: optionConfigs,
   }
 
   return Port(enumConfig)
