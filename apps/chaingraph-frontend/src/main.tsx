@@ -24,8 +24,6 @@ createRoot(document.getElementById('root')!).render(
       trpcURL={appConfig.chaingraphTRPCWSUrl}
       superjsonCustom={SuperJSON}
       nodeRegistry={NodeRegistry.getInstance()}
-      // theme="light"
-      // sessionToken="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImN2cnM0ZG1mYzN2dGthbjM1OTRnIiwidXNlcl9pZCI6IjQyMjg0YTA3LTZiODgtNDc2ZC1iYTQ0LTY2ZmFiZTFkNTRjOCIsInVzZXJfcm9sZSI6ImFkbWluIiwiaXNzIjoiYmFkYWkiLCJleHAiOjE3NDY4ODIzNTgsImlzX2FnZW50IjpmYWxzZX0.dUwM3uk2H0wgN2OSB9RPU4IzgvJ7vCQQ2VbwrH2yEBo"
     >
       <App />
     </RootProvider>

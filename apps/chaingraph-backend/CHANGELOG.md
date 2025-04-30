@@ -1,5 +1,147 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.15
+
+### Patch Changes
+
+- Add multiple nodes: BadAIChatHistoryNode, BadAIChatMetaNode, OnNewMessageEventNode, BranchNode, NotNode
+- Add on stream started node
+- New nodes and tsconfig fixes.
+- Add connections metadata to the port metadata. Improve badai streaming node
+- add array length node
+- Add bunch of BadAI nodes
+- Add multiple nodes: BadAIChatHistoryNode, BadAIChatMetaNode, EditMessageBadAINode, FinishMessageBadAINode, OnNewMessageEventNode, BadAIStreamMessageNode, ArrayLengthNode, FilterNode, OnStreamStartedNode, BranchNode, NotNode, GetPortSchemaNode, HandlebarsTemplateNode, LangchainTemplateNode.
+- Add BadAI finish message node and enchanceother BadAI nodes
+- Add filter node
+- Add get port schema node
+- add HandlebarsTemplateNode
+- Improve stream message node
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15
+  - @badaitech/chaingraph-types@0.1.15
+  - @badaitech/chaingraph-trpc@0.1.15
+
+## 0.1.15-dev.10
+
+### Patch Changes
+
+- add HandlebarsTemplateNode
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.10
+  - @badaitech/chaingraph-types@0.1.15-dev.10
+  - @badaitech/chaingraph-trpc@0.1.15-dev.10
+
+## 0.1.15-dev.9
+
+### Patch Changes
+
+- Add get port schema node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.9
+  - @badaitech/chaingraph-types@0.1.15-dev.9
+  - @badaitech/chaingraph-trpc@0.1.15-dev.9
+
+## 0.1.15-dev.8
+
+### Patch Changes
+
+- Add BadAI finish message node and enchanceother BadAI nodes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.8
+  - @badaitech/chaingraph-types@0.1.15-dev.8
+  - @badaitech/chaingraph-trpc@0.1.15-dev.8
+
+## 0.1.15-dev.7
+
+### Patch Changes
+
+- Add connections metadata to the port metadata. Improve badai streaming node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.7
+  - @badaitech/chaingraph-types@0.1.15-dev.7
+  - @badaitech/chaingraph-trpc@0.1.15-dev.7
+
+## 0.1.15-dev.6
+
+### Patch Changes
+
+- Improve stream message node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.6
+  - @badaitech/chaingraph-types@0.1.15-dev.6
+  - @badaitech/chaingraph-trpc@0.1.15-dev.6
+
+## 0.1.15-dev.5
+
+### Patch Changes
+
+- Add on stream started node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.5
+  - @badaitech/chaingraph-types@0.1.15-dev.5
+  - @badaitech/chaingraph-trpc@0.1.15-dev.5
+
+## 0.1.15-dev.4
+
+### Patch Changes
+
+- Add bunch of BadAI nodes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.4
+  - @badaitech/chaingraph-types@0.1.15-dev.4
+  - @badaitech/chaingraph-trpc@0.1.15-dev.4
+
+## 0.1.15-dev.3
+
+### Patch Changes
+
+- add array length node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.3
+  - @badaitech/chaingraph-types@0.1.15-dev.3
+  - @badaitech/chaingraph-trpc@0.1.15-dev.3
+
+## 0.1.15-dev.2
+
+### Patch Changes
+
+- Add filter node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.2
+  - @badaitech/chaingraph-types@0.1.15-dev.2
+  - @badaitech/chaingraph-trpc@0.1.15-dev.2
+
+## 0.1.15-dev.1
+
+### Patch Changes
+
+- Add multiple nodes: BadAIChatHistoryNode, BadAIChatMetaNode, OnNewMessageEventNode, BranchNode, NotNode
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.1
+  - @badaitech/chaingraph-types@0.1.15-dev.1
+  - @badaitech/chaingraph-trpc@0.1.15-dev.1
+
+## 0.1.15-dev.0
+
+### Patch Changes
+
+- New nodes and tsconfig fixes.
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.15-dev.0
+  - @badaitech/chaingraph-types@0.1.15-dev.0
+  - @badaitech/chaingraph-trpc@0.1.15-dev.0
+
 ## 0.1.14
 
 ### Patch Changes

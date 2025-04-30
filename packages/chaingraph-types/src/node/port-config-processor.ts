@@ -109,7 +109,7 @@ export class PortConfigProcessor {
     // Create a new object to avoid mutation
     const newPortConfig = { ...portConfig }
 
-    newPortConfig.id = portConfig.id || this.generateSortableUUID()
+    newPortConfig.id = portConfig.id || generatePortID(propertyKey)
 
     // Assign key
     if (!newPortConfig.key) {
@@ -147,13 +147,5 @@ export class PortConfigProcessor {
     }
 
     return newPortConfig
-  }
-
-  /**
-   * Generates a sortable UUID using UUID version 7.
-   * @returns A sortable UUID string.
-   */
-  private generateSortableUUID(): string {
-    return generatePortID()
   }
 }

@@ -7,6 +7,7 @@
  */
 
 import type { IPort } from '../port'
+import type { INode } from './interface'
 import type { NodeStatus } from './node-enums'
 import type { NodeUIMetadata, Position } from './node-ui'
 
@@ -27,6 +28,8 @@ export enum NodeEventType {
 
   // Port events
   PortUpdate = 'node:port-update',
+  PortConnected = 'node:port-connected',
+  PortDisconnected = 'node:port-disconnected',
 }
 
 /**
@@ -95,6 +98,28 @@ export interface PortUpdateEvent extends NodeEventBase {
 }
 
 /**
+ * Event emitted when a port is connected
+ */
+export interface PortConnectedEvent extends NodeEventBase {
+  type: NodeEventType.PortConnected
+  sourceNode: INode
+  sourcePort: IPort
+  targetNode: INode
+  targetPort: IPort
+}
+
+/**
+ * Event emitted when a port is disconnected
+ */
+export interface PortDisconnectedEvent extends NodeEventBase {
+  type: NodeEventType.PortDisconnected
+  sourceNode: INode
+  sourcePort: IPort
+  targetNode: INode
+  targetPort: IPort
+}
+
+/**
  * Union type of all possible node events
  */
 export type NodeEvent =
@@ -105,6 +130,8 @@ export type NodeEvent =
   | NodeUIDimensionsChangeEvent
   | NodeUIChangeEvent
   | PortUpdateEvent
+  | PortConnectedEvent
+  | PortDisconnectedEvent
 
 export interface EventTypeToInterface {
   [NodeEventType.StatusChange]: NodeStatusChangeEvent
@@ -113,6 +140,8 @@ export interface EventTypeToInterface {
   [NodeEventType.UIPositionChange]: NodeUIPositionChangeEvent
   [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent
   [NodeEventType.PortUpdate]: PortUpdateEvent
+  [NodeEventType.PortConnected]: PortConnectedEvent
+  [NodeEventType.PortDisconnected]: PortDisconnectedEvent
 }
 
 export type NodeEventDataType<T extends NodeEventType> = Omit<

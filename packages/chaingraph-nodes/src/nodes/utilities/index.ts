@@ -7,7 +7,10 @@
  */
 
 export * from './debug-log.node'
+export * from './get-port-schema.node'
+export * from './handlebars-template.node'
 export * from './http.node'
 export * from './json-serialize.node'
+export * from './langchain-template.node'
 export * from './regexp.node'
 export * from './yaml-serialize.node'

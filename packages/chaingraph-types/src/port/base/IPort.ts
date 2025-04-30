@@ -120,6 +120,23 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
    * @returns True if the port is a system error port, otherwise false.
    */
   isSystemError: () => boolean
+
+  /**
+   * Adds a connection to the port metadata.
+   *
+   * @param nodeId - The ID of the node to connect to.
+   * @param portId - The ID of the port to connect to.
+   *
+   */
+  addConnection: (nodeId: string, portId: string) => void
+
+  /**
+   * Removes a connection from the port metadata.
+   *
+   * @param nodeId - The ID of the node to disconnect from.
+   * @param portId - The ID of the port to disconnect from.
+   */
+  removeConnection: (nodeId: string, portId: string) => void
 }
 
 /**
