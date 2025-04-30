@@ -6,32 +6,47 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-// import './flow/init'
-// import './nodes/init'
-// import './ports/init'
-// import './edges/init'
-// import './execution/init'
+import type { CategorizedNodes, FlowMetadata } from '@badaitech/chaingraph-types'
+import { fetchCategorizedNodesFx, resetCategories } from './categories'
+import { resetEdges } from './edges'
+import { clearExecutionState } from './execution'
+import { clearActiveFlow, loadFlowsListFx, setFlowsList } from './flow'
+import { clearNodes, initInterpolatorFx } from './nodes'
 
-import { init as categoriesInit, reset as categoriesReset } from './categories/init'
-import { init as edgesInit, reset as edgesReset } from './edges/init'
-import { init as executionInit, reset as executionReset } from './execution/init'
-import { init as flowInit, reset as flowReset } from './flow/init'
-import { init as nodesInit, reset as nodesReset } from './nodes/init'
-import { init as portsInit } from './ports/init'
+/**
+ * Initialize all stores and load initial data
+ */
+export async function initializeStores(callback?: (
+  categorizedNodes: CategorizedNodes[],
+  flows: FlowMetadata[],
+) => void | Promise<void>) {
+  try {
+    initInterpolatorFx()
 
-export function init() {
-  categoriesInit()
-  flowInit()
-  nodesInit()
-  edgesInit()
-  portsInit()
-  executionInit()
+    // Initialize stores in parallel
+    const result = await Promise.all([
+      fetchCategorizedNodesFx(),
+      loadFlowsListFx(),
+    ])
+
+    // callback with the results
+    if (callback) {
+      const [categorizedNodes, flows] = result
+      await callback(categorizedNodes, flows)
+    }
+
+    console.debug('Stores initialized successfully')
+  } catch (error) {
+    console.error('Failed to initialize stores:', error)
+    throw error
+  }
 }
 
 export function reset() {
-  categoriesReset()
-  edgesReset()
-  executionReset()
-  flowReset()
-  nodesReset()
+  resetCategories()
+  clearNodes()
+  resetEdges()
+  clearActiveFlow()
+  setFlowsList([])
+  clearExecutionState()
 }

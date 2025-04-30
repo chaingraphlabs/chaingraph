@@ -6,10 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './effects'
-export * from './events'
 export { useEdgesForNode, useEdgesForPort } from './hooks/useEdges'
 export { useXYFlowEdges } from './hooks/useXYFlowEdges'
-export * from './stores'
+export { $edges, $xyflowEdges, removeEdge, requestAddEdge, requestRemoveEdge, resetEdges, setEdge, setEdges } from './stores'
+
 export * from './types'
-export { $xyflowEdges } from './xyflow-edges'

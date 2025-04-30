@@ -11,23 +11,26 @@ import type { FetchCategoriesError } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { combine } from 'effector'
 import { categoriesDomain } from '../domains'
-import { fetchCategorizedNodesFx } from './effects'
-import {
-  resetCategories,
-  setCategorizedNodes,
-  setCategoryMetadata,
-  setError,
-  setLoading,
-} from './events'
+import { $trpcClient } from '../trpc/store'
 
-// Main data stores
-export const $categorizedNodes = categoriesDomain.createStore<CategorizedNodes[]>([])
-  .on(setCategorizedNodes, (_, nodes) => nodes)
+// EVENTS
+export const resetCategories = categoriesDomain.createEvent()
+
+// EFFECTS
+export const fetchCategorizedNodesFx = categoriesDomain.createEffect(() => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.nodeRegistry.getCategorizedNodes.query()
+})
+
+// STORES
+const $categorizedNodes = categoriesDomain.createStore<CategorizedNodes[]>([])
   .on(fetchCategorizedNodesFx.doneData, (_, nodes) => nodes)
   .reset(resetCategories)
 
 export const $categoryMetadata = categoriesDomain.createStore<Map<string, CategoryMetadata>>(new Map())
-  .on(setCategoryMetadata, (_, metadata) => metadata)
   .on(fetchCategorizedNodesFx.doneData, (_, nodes) => {
     const map = new Map<string, CategoryMetadata>()
     nodes.forEach((category) => {
@@ -37,19 +40,14 @@ export const $categoryMetadata = categoriesDomain.createStore<Map<string, Catego
   })
   .reset(resetCategories)
 
-// Loading states
-export const $isLoading = categoriesDomain.createStore(false)
-  .on(setLoading, (_, isLoading) => isLoading)
-  .on(fetchCategorizedNodesFx.pending, (_, isPending) => isPending)
+const $isLoading = fetchCategorizedNodesFx.pending
 
-// Error state
-export const $error = categoriesDomain.createStore<FetchCategoriesError | null>(null)
-  .on(setError, (_, error) => error)
+const $error = categoriesDomain.createStore<FetchCategoriesError | null>(null)
   .on(fetchCategorizedNodesFx.failData, (_, error) => ({
     message: error.message,
     timestamp: new Date(),
   }))
-  .reset(fetchCategorizedNodesFx.done)
+  .reset(fetchCategorizedNodesFx.doneData)
 
 // Computed stores
 export const $categoriesState = combine({
@@ -58,12 +56,6 @@ export const $categoriesState = combine({
   isLoading: $isLoading,
   error: $error,
 })
-
-// Helper computed store for getting category metadata
-// export const $getCategoryMetadata = $categoryMetadata.map(
-//   metadata => (categoryId: string) =>
-//     metadata.get(categoryId) ?? metadata.get(NODE_CATEGORIES.OTHER)!,
-// )
 
 export const $categoryMetadataGetter = combine(
   $categoryMetadata,

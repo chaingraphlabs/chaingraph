@@ -6,29 +6,145 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
-import { combine } from 'effector'
-import { nodesDomain } from '../domains'
-import { clearActiveFlow } from '../flow/events'
-import { updatePort, updatePortUI, updatePortValue } from '../ports/events'
+import type { INode, IPort, Position } from '@badaitech/chaingraph-types'
+import type { Node } from '@xyflow/react'
+import type { AddNodeEvent, NodeState, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
+import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
+import { DefaultPosition } from '@badaitech/chaingraph-types'
 
-import { addNodeToFlowFx, removeNodeFromFlowFx } from './effects'
-import {
-  addNode,
-  addNodes,
-  clearNodes,
-  removeNode,
-  setNodeMetadata,
-  setNodes,
-  setNodesLoading,
-  setNodeVersion,
-  updateNode,
-  updateNodeParent,
-  updateNodePositionInterpolated,
-  updateNodePositionLocal,
-  updateNodeUILocal,
-} from './events'
+import { combine, sample } from 'effector'
+import { $categoryMetadata } from '../categories'
+import { nodesDomain } from '../domains'
+import { clearActiveFlow } from '../flow'
+import { updatePort, updatePortUI, updatePortValue } from '../ports'
+import { $trpcClient } from '../trpc/store'
+import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
+import { accumulateAndSample } from './operators/accumulate-and-sample'
+import { positionInterpolator } from './position-interpolation-advanced'
 import './interpolation-init'
+
+// EVENTS
+
+// Local state CRUD events
+export const addNode = nodesDomain.createEvent<INode>()
+export const addNodes = nodesDomain.createEvent<INode[]>()
+export const updateNode = nodesDomain.createEvent<INode>()
+export const removeNode = nodesDomain.createEvent<string>()
+export const setNodeMetadata = nodesDomain.createEvent<{ nodeId: string, metadata: NodeState['metadata'] }>()
+export const setNodeVersion = nodesDomain.createEvent<{ nodeId: string, version: number }>()
+export const updateNodeParent = nodesDomain.createEvent<UpdateNodeParent>()
+
+// Backend operation events
+export const addNodeToFlow = nodesDomain.createEvent<AddNodeEvent>()
+export const removeNodeFromFlow = nodesDomain.createEvent<{ flowId: string, nodeId: string }>()
+
+// Bulk operations
+export const setNodes = nodesDomain.createEvent<Record<string, INode>>()
+export const clearNodes = nodesDomain.createEvent()
+
+// State events
+export const setNodesLoading = nodesDomain.createEvent<boolean>()
+export const setNodesError = nodesDomain.createEvent<Error | null>()
+
+// UI update events
+export const updateNodeUI = nodesDomain.createEvent<UpdateNodeUIEvent>()
+export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() // For optimistic updates
+export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
+export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
+
+// New event for interpolated position updates
+export const updateNodePositionInterpolated = nodesDomain.createEvent<{
+  nodeId: string
+  position: Position
+}>()
+
+// EFFECTS
+
+// Backend node operations
+export const addNodeToFlowFx = nodesDomain.createEffect(async (event: AddNodeEvent) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.addNode.mutate({
+    flowId: event.flowId,
+    nodeType: event.nodeType,
+    position: event.position,
+    metadata: event.metadata,
+  })
+})
+
+export const initInterpolatorFx = nodesDomain.createEffect(() => {
+  // Initialize interpolator update handler
+  positionInterpolator.onUpdate = (nodeId, position) => {
+    updateNodePositionInterpolated({
+      nodeId,
+      position,
+    })
+  }
+
+  positionInterpolator.start()
+})
+
+const clearInterpolatorFx = nodesDomain.createEffect(() => {
+  positionInterpolator.dispose()
+})
+
+export const removeNodeFromFlowFx = nodesDomain.createEffect(async (params: {
+  flowId: string
+  nodeId: string
+}) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.removeNode.mutate(params)
+})
+
+export const updateNodeUIFx = nodesDomain.createEffect(async (params: UpdateNodeUIEvent): Promise<UpdateNodeUIEvent> => {
+  const client = $trpcClient.getState()
+
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  if (!params.ui) {
+    throw new Error('UI metadata is required')
+  }
+
+  return client.flow.updateNodeUI.mutate({
+    flowId: params.flowId,
+    nodeId: params.nodeId,
+    ui: params.ui,
+    version: params.version,
+  })
+})
+
+export const updateNodeParentFx = nodesDomain.createEffect(async (params: UpdateNodeParent): Promise<UpdateNodeParent> => {
+  const client = $trpcClient.getState()
+
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.updateNodeParent.mutate({
+    flowId: params.flowId,
+    nodeId: params.nodeId,
+    parentNodeId: params.parentNodeId,
+    position: params.position,
+    version: params.version,
+  })
+})
+
+export const baseUpdateNodePositionFx = nodesDomain.createEffect(async (params: UpdateNodePosition) => {
+  const client = $trpcClient.getState()
+
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.updateNodePosition.mutate({
+    ...params,
+    version: params.version,
+  })
+})
 
 // Store for nodes
 export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
@@ -62,7 +178,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Reset handlers
   .reset(clearNodes)
-  .reset(clearActiveFlow)
+  // .reset(clearActiveFlow)
 
   // Metadata update operations
   .on(setNodeMetadata, (state, { nodeId, metadata }) => {
@@ -180,6 +296,104 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     return { ...state, [nodeId]: updatedNode }
   })
 
+/**
+ * Enhanced store for XYFlow nodes that preserves node references when only positions change.
+ * This significantly reduces unnecessary re-renders.
+ */
+export const $xyflowNodes = combine(
+  $nodes,
+  $categoryMetadata,
+  // $nodePositions,
+  // (nodes, categoryMetadata, nodePositions) => {
+  (nodes, categoryMetadata) => {
+    if (!nodes || Object.keys(nodes).length === 0) {
+      return []
+    }
+
+    // Create a cache for already created XYFlow nodes to preserve references
+    const nodeCache = new Map<string, Node>()
+
+    // Helper function to get category metadata within this computation
+    const getCategoryMetadata = (categoryId: string) =>
+      categoryMetadata.get(categoryId) ?? categoryMetadata.get(NODE_CATEGORIES.OTHER)!
+
+    // Sort nodes to have groups first, then regular nodes
+    const sortedNodes = Object.values(nodes).sort((a, b) => {
+      if (a.metadata.category === NODE_CATEGORIES.GROUP)
+        return -1
+      if (b.metadata.category === NODE_CATEGORIES.GROUP)
+        return 1
+      return 0
+    })
+
+    // Transform to XYFlow node format
+    return sortedNodes.map((node): Node => {
+      const nodeId = node.id
+      const nodeCategoryMetadata = getCategoryMetadata(node.metadata.category!)
+      const nodeType = node.metadata.category === NODE_CATEGORIES.GROUP
+        ? 'groupNode'
+        : 'chaingraphNode'
+
+      // Get position from the positions store if available
+      // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+      const position = node.metadata.ui?.position || DefaultPosition
+
+      // Round positions to integers for better rendering performance
+      const nodePositionRound = {
+        x: Math.round(position.x),
+        y: Math.round(position.y),
+      }
+
+      // Get existing node from cache if it exists and hasn't changed
+      const cacheKey = `${nodeId}-${node.getVersion()}`
+      const cachedNode = nodeCache.get(cacheKey)
+
+      // Check if we can reuse the cached node (only position might have changed)
+      if (cachedNode
+        && (cachedNode.data.node as INode).getVersion() === node.getVersion()
+        && cachedNode.parentId === node.metadata.parentNodeId
+        && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)) {
+        // If only the position changed, just update that and return the same node reference
+        if (cachedNode.position.x !== nodePositionRound.x
+          || cachedNode.position.y !== nodePositionRound.y) {
+          cachedNode.position = nodePositionRound
+        }
+
+        return cachedNode
+      }
+
+      // Create a new node
+      const reactflowNode: Node = {
+        id: nodeId,
+        type: nodeType,
+        position: nodePositionRound,
+        zIndex: nodeType === 'groupNode' ? -1 : 0,
+        data: {
+          node,
+          categoryMetadata: nodeCategoryMetadata,
+        },
+        parentId: node.metadata.parentNodeId,
+        selected: node.metadata.ui?.state?.isSelected ?? false,
+      }
+
+      // Set dimensions if available
+      if (
+        node.metadata.ui?.dimensions
+        && node.metadata.ui.dimensions.width > 0
+        && node.metadata.ui.dimensions.height > 0
+      ) {
+        reactflowNode.width = node.metadata.ui.dimensions.width
+        reactflowNode.height = node.metadata.ui.dimensions.height
+      }
+
+      // Store in cache for future reference
+      nodeCache.set(cacheKey, reactflowNode)
+
+      return reactflowNode
+    })
+  },
+)
+
 // Update nodes store to handle UI updates
 $nodes
   .on(updateNodeUILocal, (state, { nodeId, ui }) => {
@@ -283,3 +497,109 @@ export const $nodesError = combine(
   $removeNodeError,
   (addError, removeError) => addError || removeError,
 )
+
+// SAMPLES
+
+// * * * * * * * * * * * * * * *
+// CRUD operations
+// * * * * * * * * * * * * * * *
+// Handle backend node operations
+sample({
+  clock: addNodeToFlow,
+  target: addNodeToFlowFx,
+})
+
+sample({
+  clock: removeNodeFromFlow,
+  target: removeNodeFromFlowFx,
+})
+
+// * * * * * * * * * * * * * * *
+// Position operations
+// * * * * * * * * * * * * * * *
+
+// Update local position immediately with small debounce
+const throttledUpdateNodePositionLocal = accumulateAndSample({
+  source: [updateNodePosition],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+sample({
+  clock: throttledUpdateNodePositionLocal,
+  // clock: updateNodePosition,
+  target: [updateNodePositionLocal],
+})
+
+// throttled node position updates
+const throttledUpdatePosition = accumulateAndSample({
+  source: [updateNodePosition],
+  timeout: NODE_POSITION_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+// Update local node version and send the updated position to the server
+sample({
+  clock: throttledUpdatePosition,
+  source: $nodes,
+  fn: (nodes, params) => ({
+    ...params,
+    version: (nodes[params.nodeId]?.getVersion() ?? 0) + 1,
+  }),
+  target: [setNodeVersion, baseUpdateNodePositionFx],
+})
+
+// * * * * * * * * * * * * * * *
+// Node operations
+// * * * * * * * * * * * * * * *
+
+// On node parent update, update the local node version and send the updated parent to the server
+sample({
+  clock: updateNodeParent,
+  source: $nodes,
+  fn: (nodes, params) => ({
+    ...params,
+    version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
+  }),
+  target: [setNodeVersion, updateNodeParentFx],
+})
+
+// * * * * * * * * * * * * * * *
+// Node UI operations
+// * * * * * * * * * * * * * * *
+
+// Handle optimistic updates
+const throttledUpdateNodeUILocal = accumulateAndSample({
+  source: [updateNodeUI],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+sample({
+  clock: throttledUpdateNodeUILocal,
+  target: [updateNodeUILocal],
+})
+
+const throttledUIUpdate = accumulateAndSample({
+  source: [updateNodeUI],
+  timeout: NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+// Create middleware to update the version of the node before sending it to the server
+sample({
+  clock: throttledUIUpdate,
+  source: $nodes,
+  fn: (nodes, params) => {
+    return {
+      ...params,
+      version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
+    }
+  },
+  target: [setNodeVersion, updateNodeUIFx],
+})
+
+sample({
+  clock: clearNodes,
+  target: clearInterpolatorFx,
+})

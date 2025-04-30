@@ -19,7 +19,7 @@ import {
 import { Command, CommandInput } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import { $categorizedNodes, $isLoading } from '@/store'
+import { useCategories} from '@/store/categories'
 import { useUnit } from 'effector-react'
 import { LayersIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -28,8 +28,8 @@ import { NodeListSkeleton } from './NodeListSkeleton'
 
 export function NodeList() {
   const [searchQuery, setSearchQuery] = useState('')
-  const categories = useUnit($categorizedNodes)
-  const isLoading = useUnit($isLoading)
+
+  const {isLoading, categories} = useCategories()
 
   // Memoize filtered categories based on search
   const filteredCategories = useMemo(() => {

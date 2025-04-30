@@ -8,10 +8,10 @@
 
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useExecutionEvents } from '@/store/execution/hooks/useExecutionEvents'
+import { $activeFlowMetadata } from '@/store/flow'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
-import { $activeFlowMetadata } from 'store'
 import { $executionState } from 'store/execution'
 import { ExecutionTimeline } from './ExecutionTimeline'
 import { FilterBar } from './FilterBar'

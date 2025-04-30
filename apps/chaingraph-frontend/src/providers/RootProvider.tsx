@@ -8,7 +8,7 @@
 
 import { TooltipProvider } from '@/components/ui'
 import { ShadowWithStyles } from '@/components/ui/shadow'
-import { initializeStores, resetStores } from '@/store/init-stores-fx'
+import { initializeStores, reset } from '@/store/init'
 import { $trpcClient, createTRPCClientEvent } from '@/store/trpc/store'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import {
@@ -23,13 +23,13 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useEffect, useRef } from 'react'
+import { Outlet } from 'react-router-dom'
 import SuperJSON from 'superjson'
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ThemeProvider } from '../components/theme/ThemeProvider'
 import { ZoomProvider } from './ZoomProvider'
 import '../store'
-// import '../store/init'
 
 interface RootProviderProps {
   className?: string
@@ -39,7 +39,7 @@ interface RootProviderProps {
   nodeRegistry?: NodeRegistry
   theme?: 'dark' | 'light'
 
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export const DefaultTRPCURL = `ws://localhost:3001`
@@ -59,7 +59,6 @@ export function RootProvider({
   useEffect(() => {
     if (!isInitializedRef.current) {
       isInitializedRef.current = true
-
       // effector logger
       // if (process.env.NODE_ENV === 'development') {
       //   attachLogger()
@@ -92,7 +91,7 @@ export function RootProvider({
     }
 
     return () => {
-      resetStores()
+      reset()
     }
   }, [nodeRegistry, sessionToken, superjsonCustom, trpcURL])
 
@@ -111,7 +110,7 @@ export function RootProvider({
                   <DndContextProvider>
                     <DndProvider>
                       <MenuPositionProvider>
-                        {children}
+                        {children ?? <Outlet />}
                       </MenuPositionProvider>
                     </DndProvider>
                   </DndContextProvider>

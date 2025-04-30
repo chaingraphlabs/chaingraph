@@ -8,7 +8,7 @@
 
 import { useStoreMap } from 'effector-react'
 import { useMemo } from 'react'
-import { $xyflowEdges } from '../xyflow-edges'
+import { $xyflowEdges } from '../stores'
 
 /**
  * Hook that returns XYFlow edges with optimized re-rendering.

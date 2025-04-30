@@ -46,7 +46,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc -b --noEmit"
   },
   "peerDependencies": {
     "@xyflow/react": "^12.0.0",

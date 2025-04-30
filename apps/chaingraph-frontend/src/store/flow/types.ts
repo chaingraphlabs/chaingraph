@@ -19,3 +19,18 @@ export interface FlowSubscriptionError {
   code?: string
   timestamp: Date
 }
+
+export interface FlowMetadataEvent {
+  name: string
+  description?: string
+  tags?: string[]
+}
+
+export interface CreateFlowEvent {
+  metadata: FlowMetadataEvent
+}
+
+export interface UpdateFlowEvent {
+  id: string
+  metadata: FlowMetadataEvent
+}
