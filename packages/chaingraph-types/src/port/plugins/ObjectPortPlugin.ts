@@ -303,7 +303,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
-        error instanceof Error ? error.message : 'Unknown error during object serialization',
+        error instanceof Error ? error.message.toString() : 'Unknown error during object serialization',
       )
     }
   },

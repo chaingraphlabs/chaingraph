@@ -10,6 +10,10 @@ import type { ClassValue } from 'clsx'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-export function cn(...inputs: ClassValue[]) {
+/**
+ * Utility function to merge class names with Tailwind support
+ * This combines clsx for conditional classes with tailwind-merge for de-duplication
+ */
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }

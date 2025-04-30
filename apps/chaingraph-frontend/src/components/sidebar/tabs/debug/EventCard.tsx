@@ -285,7 +285,7 @@ const EventDetails = memo(({ event, isVisible }: { event: ExecutionEventImpl, is
 
       <div className="space-y-3 mt-2">
         {Object.entries(event.data).map(([key, value]) => (
-          <div key={key} className="rounded-md overflow-hidden">
+          <div key={key} className="rounded-md overflow-scroll">
             <div className="text-xs text-muted-foreground px-2 py-1 bg-muted/30 border-b flex items-center justify-between">
               <span>{key}</span>
             </div>
@@ -298,7 +298,7 @@ const EventDetails = memo(({ event, isVisible }: { event: ExecutionEventImpl, is
                 ? (
                     <JsonView
                       data={SuperJSON.serialize(value).json as any}
-                      shouldExpandNode={() => false} // Keep all nodes collapsed initially
+                      shouldExpandNode={() => true} // Keep all nodes collapsed initially
                       style={theme === 'light' ? defaultStyles : darkStyles}
                     />
                   )

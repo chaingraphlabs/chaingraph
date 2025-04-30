@@ -36,10 +36,11 @@ export enum PortErrorType {
 export class PortError extends Error {
   constructor(
     public type: PortErrorType,
-    message: string,
+    message?: string,
     public details?: unknown,
   ) {
-    super(message)
+    console.log(`creating port error: ${type} - ${message} - ${details}`)
+    super(message?.toString() ?? 'Unknown port error')
     this.name = 'PortError'
   }
 }
@@ -67,6 +68,11 @@ export const PortDirection = {
 
 export type PortDirectionEnum = (typeof PortDirection)[keyof typeof PortDirection]
 
+export interface Connection {
+  nodeId: string
+  portId: string
+}
+
 /**
  * Base interface for all port configurations
  */
@@ -82,6 +88,7 @@ export interface BasePortConfig { // extends JSONObject
   description?: string
   direction?: PortDirectionEnum
   ui?: BasePortConfigUIType
+  connections?: Connection[]
 }
 
 /**

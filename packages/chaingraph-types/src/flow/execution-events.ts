@@ -127,7 +127,7 @@ export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnu
     public type: T,
     public timestamp: Date,
     public data: ExecutionEventData[T],
-  ) {}
+  ) { }
 }
 
 export type AllExecutionEvents = {

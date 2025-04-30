@@ -144,7 +144,6 @@ export class Message {
   @String({
     title: 'Text',
     description: 'Content of the message',
-    minLength: 0,
     ui: {
       isTextArea: true,
       textareaDimensions: { height: 100 },
@@ -251,4 +250,79 @@ export class Message {
     },
   })
   meta: string = '{}'
+}
+
+// Define ChatMeta schema
+@ObjectSchema({
+  description: 'Represents a chat room or conversation',
+})
+export class ChatMeta {
+  @String({
+    title: 'Chat ID',
+    description: 'Unique identifier for the chat room',
+    minLength: 1,
+  })
+  id: string = ''
+
+  @String({
+    title: 'Name',
+    description: 'Name of the chat room',
+    minLength: 1,
+  })
+  name: string = ''
+
+  @String({
+    title: 'Author',
+    description: 'ID of the participant who created the chat room',
+    minLength: 1,
+  })
+  author: string = ''
+
+  @String({
+    title: 'Created At',
+    description: 'Timestamp when the chat room was created',
+    minLength: 1,
+  })
+  created_at: string = ''
+
+  @String({
+    title: 'Updated At',
+    description: 'Timestamp when the chat room was last updated',
+    minLength: 1,
+  })
+  updated_at: string = ''
+
+  @String({
+    title: 'Metadata',
+    description: 'Additional JSON metadata for the chat room',
+    defaultValue: '{}',
+    ui: {
+      isTextArea: true,
+    },
+  })
+  meta: string = '{}'
+
+  @PortArray({
+    title: 'Participants',
+    description: 'List of participants in the chat room',
+    itemConfig: {
+      type: 'object',
+      schema: Participant,
+    },
+    defaultValue: [],
+  })
+  participants: Participant[] = []
+
+  @PortObject({
+    schema: Message,
+    title: 'Last Message',
+    description: 'The last message sent in the chat room',
+  })
+  last_message?: Message
+
+  @String({
+    title: 'Last Message Time',
+    description: 'Timestamp of the last message in the chat room',
+  })
+  last_message_time?: string
 }

@@ -8,5 +8,4 @@
 
 export * from './boolean'
 export * from './number'
-export * from './number-to-string.node'
 export * from './text'

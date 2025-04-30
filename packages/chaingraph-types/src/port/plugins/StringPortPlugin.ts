@@ -156,7 +156,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
       if (!isStringPortValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid string value structure',
+          `Invalid string value structure, actual type: ${typeof value}`,
         )
       }
       return value

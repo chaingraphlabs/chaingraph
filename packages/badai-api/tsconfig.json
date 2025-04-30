@@ -8,6 +8,9 @@
     "experimentalDecorators": true,
     "baseUrl": ".",
     "rootDir": "./src",
+    "paths": {
+      "@badaitech/typescript-config/*": ["../typescript-config/*"]
+    },
     /** Emit types for internal packages to speed up editor performance. */
     "declaration": true,
     "declarationMap": true,
