@@ -196,16 +196,16 @@ describe('flow with async nodes', () => {
 
     await flow.connectPorts(
       evenNode.id,
-      evenNode.getOutputs()[0].id,
+      evenNode.getOutputs()[3].id,
       mergerNode.id,
-      mergerNode.getInputs()[0].id,
+      mergerNode.getInputs()[1].id,
     )
 
     await flow.connectPorts(
       oddNode.id,
-      oddNode.getOutputs()[0].id,
+      oddNode.getOutputs()[3].id,
       mergerNode.id,
-      mergerNode.getInputs()[1].id,
+      mergerNode.getInputs()[2].id,
     )
 
     const abortController = new AbortController()

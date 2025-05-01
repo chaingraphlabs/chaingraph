@@ -112,8 +112,8 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
     expect(innerSchema?.type).toEqual('InnerObjectSchema')
     expect(innerSchema?.isObjectSchema).toBe(true)
     expect(innerSchema?.properties).toEqual({
-      foo: { type: 'string', key: 'foo' },
-      bar: { type: 'number', key: 'bar' },
+      foo: { type: 'string', key: 'foo', order: 1 },
+      bar: { type: 'number', key: 'bar', order: 2 },
     })
   })
 
@@ -127,6 +127,7 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
       type: 'array',
       itemConfig: { type: 'string' },
       key: 'stringArray',
+      order: 1,
     })
 
     // Array of objects.
@@ -138,11 +139,13 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
         schema: expectedInner,
       },
       key: 'objectArray',
+      order: 2,
     })
 
     // Nested object property.
     expect(schema?.properties.nestedObject).toEqual({
       type: 'object',
+      order: 3,
       schema: {
         type: 'NestedObject',
         properties: {
@@ -163,6 +166,7 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
     // Array of arrays.
     expect(schema?.properties.arrayOfArrays).toEqual({
       type: 'array',
+      order: 4,
       itemConfig: {
         type: 'array',
         itemConfig: {
@@ -180,6 +184,7 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
     expect(deepOuterSchema?.type).toEqual('DeepOuter')
     expect(deepOuterSchema?.properties.intermediate).toEqual({
       type: 'object',
+      order: 1,
       schema: getObjectSchema(Intermediate),
       key: 'intermediate',
     })
@@ -188,6 +193,7 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
     expect(intermediateSchema).toBeDefined()
     expect(intermediateSchema?.properties.list).toEqual({
       type: 'array',
+      order: 1,
       itemConfig: {
         type: 'object',
         schema: getObjectSchema(DeepInner),
@@ -238,6 +244,7 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
     // "nested" property check.
     expect(complexSchema?.properties.nested).toEqual({
       type: 'object',
+      order: 1,
       schema: {
         type: 'ComplexNested',
         properties: {
@@ -260,6 +267,7 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
     // "matrix" property check.
     expect(complexSchema?.properties.matrix).toEqual({
       type: 'array',
+      order: 2,
       itemConfig: {
         type: 'array',
         itemConfig: { type: 'number' },

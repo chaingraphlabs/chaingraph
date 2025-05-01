@@ -135,7 +135,7 @@ describe('object node with dynamic schema serialization', () => {
         .map((port) => {
           return port.getConfig().key
         }),
-    ).toEqual(['records', 'street'])
+    ).toEqual(['street', 'records'])
 
     // expect the deserialized node to have the new field
     const deserializedRecordsPort = deserializedNode.getPort('records') as ObjectPort

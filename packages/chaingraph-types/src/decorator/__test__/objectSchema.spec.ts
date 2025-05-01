@@ -58,8 +58,8 @@ describe('advanced ObjectSchema system', () => {
     expect(innerSchema?.type).toEqual('InnerObjectSchema')
     expect(innerSchema?.isObjectSchema).toBe(true)
     expect(innerSchema?.properties).toEqual({
-      foo: { type: 'string', key: 'foo' },
-      bar: { type: 'number', key: 'bar' },
+      foo: { type: 'string', key: 'foo', order: 1 },
+      bar: { type: 'number', key: 'bar', order: 2 },
     })
   })
 
@@ -68,12 +68,13 @@ describe('advanced ObjectSchema system', () => {
     expect(outerSchema).toBeDefined()
     expect(outerSchema?.type).toEqual('OuterObjectSchema')
 
-    expect(outerSchema?.properties.hello).toEqual({ type: 'string', key: 'hello' })
-    expect(outerSchema?.properties.world).toEqual({ type: 'string', key: 'world' })
+    expect(outerSchema?.properties.hello).toEqual({ type: 'string', key: 'hello', order: 1 })
+    expect(outerSchema?.properties.world).toEqual({ type: 'string', key: 'world', order: 2 })
 
     // For explicit schema, the config should be exactly what was provided.
     expect(outerSchema?.properties.innerExplicit).toEqual({
       type: 'object',
+      order: 3,
       schema: {
         type: 'InnerObjectSchema',
         properties: {
