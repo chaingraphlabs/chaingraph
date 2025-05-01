@@ -154,8 +154,8 @@ export function PortDocContent<C extends IPortConfig>({
 
           {/* Default value */}
           {hasDefaultValue(config) && (
-            <div className="pt-1 space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">Default value</div>
+            <div className="pt-1 space-y-1 text-muted-foreground">
+              <div className="text-xs font-medium">Default value</div>
               <pre className={cn(
                 'text-[11px] p-1.5 bg-muted/50',
                 'rounded block overflow-x-auto text-wrap',
@@ -173,7 +173,7 @@ export function PortDocContent<C extends IPortConfig>({
 
           {/* Value */}
           {port.getValue() !== undefined && (
-            <div className="pt-1 space-y-1">
+            <div className="pt-1 space-y-1 text-muted-foreground">
               <div className="text-xs font-medium text-muted-foreground">Value</div>
               <pre className={cn(
                 'text-[11px] p-1.5 bg-muted/50',
