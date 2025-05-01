@@ -62,7 +62,7 @@ export class ArrayLengthNode extends BaseNode {
     }
 
     // Calculate and return the array length
-    this.length = this.array.length
+    this.length = this.array.length || 0
 
     return {}
   }

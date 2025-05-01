@@ -6,9 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './array-length.node'
-export * from './filter-array-lucene.node'
-export * from './number-to-string.node'
-export * from './on-stream-started.node'
-export * from './stream-buffer.node'
-export * from './text-search.node'
+import { createContext, use } from 'react'
+
+export const ShadowRootContext = createContext<ShadowRoot | null>(null)
+
+export function useShadowRoot() {
+  const ctx = use(ShadowRootContext)
+  if (!ctx)
+    throw new Error('ShadowRootContext')
+  return ctx
+}

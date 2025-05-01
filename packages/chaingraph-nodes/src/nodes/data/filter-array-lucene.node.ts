@@ -7,20 +7,20 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output, PortArray, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortArray, String } from '@badaitech/chaingraph-types'
 import { filter, QueryParser } from 'lucene-kit'
 
 /**
  * Filter node that applies Lucene-style query syntax to filter arrays of objects
  */
 @Node({
-  type: 'FilterNode',
-  title: 'Filter Array',
-  description: 'Filter an array of objects using Lucene-style query syntax',
+  type: 'FilterArrayLuceneNode',
+  title: 'Filter Array (Lucene)',
+  description: 'Filter an array of objects using Lucene-style query syntax, allowing for complex searches and filtering based on multiple fields and conditions.',
   category: 'data',
   tags: ['filter', 'array', 'query', 'search', 'lucene'],
 })
-export class FilterNode extends BaseNode {
+export class FilterArrayLuceneNode extends BaseNode {
   @Input()
   @PortArray({
     title: 'Input Array',
@@ -55,33 +55,13 @@ export class FilterNode extends BaseNode {
   })
   filteredArray: any[] = []
 
-  @Output()
-  @Boolean({
-    title: 'Is Valid Query',
-    description: 'Whether the query is valid',
-    defaultValue: true,
-  })
-  isValidQuery: boolean = true
-
-  @Output()
-  @String({
-    title: 'Error Message',
-    description: 'Error message if the query is invalid',
-    defaultValue: '',
-  })
-  errorMessage: string = ''
-
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Reset outputs
-    this.isValidQuery = true
-    this.errorMessage = ''
     this.filteredArray = []
 
     // Validate inputs
     if (!this.inputArray || !Array.isArray(this.inputArray)) {
-      this.isValidQuery = false
-      this.errorMessage = 'Input is not a valid array'
-      return {}
+      throw new Error('Input is not a valid array')
     }
 
     // Empty query returns all items
@@ -99,9 +79,7 @@ export class FilterNode extends BaseNode {
 
       return {}
     } catch (error) {
-      this.isValidQuery = false
-      this.errorMessage = `Error during filtering: ${error instanceof Error ? error.message : String(error as any)}`
-      return {}
+      throw new Error(`Error during filtering: ${error instanceof Error ? error.message : JSON.stringify(error)}`)
     }
   }
 }

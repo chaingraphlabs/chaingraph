@@ -65,7 +65,7 @@ function GroupNodeComponent({
       },
       version: node.metadata.version ?? 0,
     })
-  }, [activeFlow, node.metadata.ui?.style, node.metadata.version, id])
+  }, [activeFlow, node, id])
 
   const hasTitle = !!node.metadata.ui?.title
 

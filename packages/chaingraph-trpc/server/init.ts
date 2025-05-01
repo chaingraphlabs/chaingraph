@@ -23,6 +23,7 @@ import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 
 export async function init() {
+  process.setMaxListeners(0)
   registerSuperjsonTransformers(SuperJSON, NodeRegistry.getInstance())
 
   if (authConfig.enabled) {

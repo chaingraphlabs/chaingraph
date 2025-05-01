@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import * as React from 'react'
-import { useShadowRoot } from './shadow'
+import { useShadowRoot } from './useShadowRoot'
 
 const AlertDialog = AlertDialogPrimitive.Root
 

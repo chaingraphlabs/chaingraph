@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort, Position } from '@badaitech/chaingraph-types'
+import type { INode, Position } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
 import type { AddNodeEvent, NodeState, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
@@ -15,7 +15,6 @@ import { DefaultPosition } from '@badaitech/chaingraph-types'
 import { combine, sample } from 'effector'
 import { $categoryMetadata } from '../categories'
 import { nodesDomain } from '../domains'
-import { clearActiveFlow } from '../flow'
 import { updatePort, updatePortUI, updatePortValue } from '../ports'
 import { $trpcClient } from '../trpc/store'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
@@ -408,11 +407,11 @@ $nodes
       ...ui ?? {},
       style: {
         ...(updatedNode.metadata.ui?.style ?? {}),
-        ...ui.style ?? {},
+        ...(ui.style ?? {}),
       },
       state: {
-        ...updatedNode.metadata.ui?.state ?? {},
-        ...ui.state ?? {},
+        ...(updatedNode.metadata.ui?.state ?? {}),
+        ...(ui.state ?? {}),
       },
     }, false)
 

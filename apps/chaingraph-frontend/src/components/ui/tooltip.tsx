@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 
 import * as React from 'react'
-import { useShadowRoot } from './shadow'
+import { useShadowRoot } from './useShadowRoot'
 
 const TooltipProvider = TooltipPrimitive.Provider
 

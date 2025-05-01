@@ -8,10 +8,10 @@
 
 import type { RouterInputs } from '@badaitech/chaingraph-trpc/client'
 
-import type { INode, IPort, IPortConfig } from '@badaitech/chaingraph-types'
+import type { IPortConfig } from '@badaitech/chaingraph-types'
 import type { PortState } from './types'
 import { portsDomain } from '@/store/domains'
-import { combine, sample } from 'effector'
+import { sample } from 'effector'
 import { $activeFlowId } from '../flow'
 import { $nodes, setNodeVersion } from '../nodes'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '../nodes/constants'

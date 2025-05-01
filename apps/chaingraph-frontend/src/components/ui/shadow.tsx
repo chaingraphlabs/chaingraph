@@ -9,18 +9,10 @@
 import type { PropsWithChildren } from 'react'
 import radixStyles from '@radix-ui/themes/styles.css?inline'
 import xyflowStyles from '@xyflow/react/dist/style.css?inline'
-import { createContext, use, useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styles from '../../index.css?inline'
-
-const ShadowRootContext = createContext<ShadowRoot | null>(null)
-
-export function useShadowRoot() {
-  const ctx = use(ShadowRootContext)
-  if (!ctx)
-    throw new Error('ShadowRootContext')
-  return ctx
-}
+import { ShadowRootContext } from './useShadowRoot'
 
 export function Shadow({ children, className }: PropsWithChildren<{ className?: string }>) {
   const [root, setRoot] = useState<ShadowRoot | undefined>()
