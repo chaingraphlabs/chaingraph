@@ -12,13 +12,13 @@ import Color from 'color'
 // Get a color based on port type
 export function getPortTypeColor(theme: 'light' | 'dark', portConfig: IPortConfig) {
   const defaultColorMap: Record<string, string> = {
-    string: '#e70d0d', // blue
-    number: '#1f5eec', // red
+    string: '#e70d0d', // red
+    number: '#1f5eec', // blue
     boolean: '#4cd53b', // green
-    array: '#1acbe8', // purple
-    object: '#e44df5', // orange
-    stream: '#ffa047', // cyan
-    enum: '#eedf3c', // pink
+    array: '#1acbe8', // cyan
+    object: '#e44df5', // purple
+    stream: '#ffa047', // orange
+    enum: '#eedf3c', // yellow
     any: '#cccccc', // gray
   }
 
