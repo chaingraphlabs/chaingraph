@@ -53,7 +53,19 @@ export class PortConfigProcessor {
       }
     }
 
-    return portsConfig
+    // sort ports by order or if order is undefined or same, sort by key
+    const sortedPortsConfig = new Map([
+      ...Array.from(portsConfig.entries()).sort((a, b) => {
+        const orderA = a[1].order ?? 0
+        const orderB = b[1].order ?? 0
+        if (orderA !== orderB) {
+          return orderA - orderB
+        }
+        return a[0].localeCompare(b[0])
+      }),
+    ])
+
+    return sortedPortsConfig
   }
 
   /**

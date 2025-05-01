@@ -89,6 +89,7 @@ export interface BasePortConfig { // extends JSONObject
   direction?: PortDirectionEnum
   ui?: BasePortConfigUIType
   connections?: Connection[]
+  order?: number
 }
 
 /**

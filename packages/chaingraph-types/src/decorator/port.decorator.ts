@@ -52,6 +52,8 @@ export function Port<T extends PortType>(
     }
     ensurePortKey(propertyKey, config)
 
+    config.order = existingPorts.size + 1
+
     // Process object ports.
     if (config.type === 'object') {
       if (!('schema' in config)) {

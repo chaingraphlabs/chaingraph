@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.17
+
+### Patch Changes
+
+- Add port documentation and debug value tooltip. Make port order configurable
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.17
+  - @badaitech/chaingraph-nodes@0.1.17
+  - @badaitech/chaingraph-trpc@0.1.17
+
 ## 0.1.16
 
 ### Patch Changes
