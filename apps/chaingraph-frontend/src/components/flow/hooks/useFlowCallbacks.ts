@@ -8,17 +8,9 @@
 
 import type { INode, Position } from '@badaitech/chaingraph-types'
 import type { Connection, Edge, EdgeChange, HandleType, Node, NodeChange } from '@xyflow/react'
-import {
-  $activeFlowMetadata,
-  $edges,
-  $nodes,
-  removeNodeFromFlow,
-  requestAddEdge,
-  requestRemoveEdge,
-  updateNodeParent,
-  updateNodePosition,
-  updateNodeUI,
-} from '@/store'
+import { $edges, requestAddEdge, requestRemoveEdge } from '@/store/edges'
+import { $activeFlowMetadata } from '@/store/flow'
+import { $nodes, removeNodeFromFlow, updateNodeParent, updateNodePosition, updateNodeUI } from '@/store/nodes'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { hasCycle } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'

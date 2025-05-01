@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store'
+import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store/flow'
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'

@@ -10,28 +10,49 @@ import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingra
 import type {
   CreateExecutionOptions,
   EdgeExecutionState,
+  ExecutionError,
   ExecutionState,
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { attach, combine } from 'effector'
+import { attach, combine, sample } from 'effector'
 import { executionDomain } from '../domains'
 import { $trpcClient } from '../trpc/store'
-import {
-  addBreakpoint,
-  clearExecutionState,
-  newExecutionEvent,
-  removeBreakpoint,
-  setExecutionError,
-  setExecutionStatus,
-  setExecutionSubscriptionError,
-  setExecutionSubscriptionStatus,
-  setHighlightedEdgeId,
-  setHighlightedNodeId,
-  toggleDebugMode,
-} from './events'
 import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
+
+// EVENTS
+// Control events
+export const createExecution = executionDomain.createEvent<CreateExecutionOptions>()
+export const startExecution = executionDomain.createEvent<string>() // executionId
+export const pauseExecution = executionDomain.createEvent<string>() // executionId
+export const resumeExecution = executionDomain.createEvent<string>() // executionId
+export const stopExecution = executionDomain.createEvent<string>() // executionId
+
+// Debug events
+export const toggleDebugMode = executionDomain.createEvent<boolean>()
+export const addBreakpoint = executionDomain.createEvent<{ nodeId: string }>()
+export const removeBreakpoint = executionDomain.createEvent<{ nodeId: string }>()
+export const stepExecution = executionDomain.createEvent<string>() // executionId
+
+// State events
+export const setExecutionError = executionDomain.createEvent<ExecutionError | null>()
+export const clearExecutionState = executionDomain.createEvent()
+
+// Subscription events
+export const setExecutionSubscriptionStatus = executionDomain.createEvent<ExecutionSubscriptionStatus>()
+export const setExecutionSubscriptionError = executionDomain.createEvent<ExecutionError | null>()
+
+export const setExecutionStatus = executionDomain.createEvent<ExecutionStatus>()
+export const newExecutionEvent = executionDomain.createEvent<ExecutionEventImpl>()
+
+export const resetAutoStart = executionDomain.createEvent()
+export const markStartAttempted = executionDomain.createEvent()
+
+export const setHighlightedNodeId = executionDomain.createEvent<string | string[] | null>()
+export const setHighlightedEdgeId = executionDomain.createEvent<string | string[] | null>()
+
+// STORES
 
 const initialState: ExecutionState = {
   status: ExecutionStatus.IDLE,
@@ -49,34 +70,30 @@ const initialState: ExecutionState = {
 export const $executionState = executionDomain.createStore<ExecutionState>(initialState)
 
 // Control effects
-export const createExecutionFx = attach({
-  source: combine({
-    client: $trpcClient,
-    state: $executionState,
-  }),
-  effect: async (sources, payload: CreateExecutionOptions) => {
-    const { client, state } = sources
-    const { flowId, debug } = payload
-    const breakpoints = state.breakpoints
+export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
+  const client = $trpcClient.getState()
+  const state = $executionState.getState()
 
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
+  const { flowId, debug } = payload
+  const breakpoints = state.breakpoints
 
-    const response = await client.execution.create.mutate({
-      flowId,
-      options: {
-        debug,
-        breakpoints: debug ? Array.from(breakpoints) : [],
-        execution: {
-          maxConcurrency: 10,
-          nodeTimeoutMs: 90000,
-          flowTimeoutMs: 300000,
-        },
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+
+  const response = await client.execution.create.mutate({
+    flowId,
+    options: {
+      debug,
+      breakpoints: debug ? Array.from(breakpoints) : [],
+      execution: {
+        maxConcurrency: 10,
+        nodeTimeoutMs: 90000,
+        flowTimeoutMs: 300000,
       },
-    })
-    return response.executionId
-  },
+    },
+  })
+  return response.executionId
 })
 
 export const startExecutionFx = attach({
@@ -565,3 +582,144 @@ export const $startAttempted = executionDomain.createStore(false)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)
+
+// Handle execution creation
+sample({
+  clock: createExecution,
+  target: createExecutionFx,
+})
+
+// Handle execution control
+sample({
+  clock: startExecution,
+  target: startExecutionFx,
+})
+
+sample({
+  clock: pauseExecution,
+  target: pauseExecutionFx,
+})
+
+sample({
+  clock: resumeExecution,
+  target: resumeExecutionFx,
+})
+
+sample({
+  clock: stopExecution,
+  target: stopExecutionFx,
+})
+
+// Handle debug operations
+// sample({
+//   clock: addBreakpoint,
+//   target: addBreakpointFx,
+// })
+//
+// sample({
+//   clock: removeBreakpoint,
+//   target: removeBreakpointFx,
+// })
+
+$executionState
+  .on(addBreakpoint, (state, { nodeId }) => ({
+    ...state,
+    breakpoints: new Set([...state.breakpoints, nodeId]),
+  }))
+  .on(removeBreakpoint, (state, { nodeId }) => {
+    const newBreakpoints = new Set(state.breakpoints)
+    newBreakpoints.delete(nodeId)
+    return {
+      ...state,
+      breakpoints: newBreakpoints,
+    }
+  })
+
+sample({
+  clock: stepExecution,
+  target: stepExecutionFx,
+})
+
+// Handle errors
+sample({
+  clock: [
+    createExecutionFx.failData,
+    startExecutionFx.failData,
+    pauseExecutionFx.failData,
+    resumeExecutionFx.failData,
+    stopExecutionFx.failData,
+    addBreakpointFx.failData,
+    removeBreakpointFx.failData,
+    stepExecutionFx.failData,
+  ],
+  fn: error => ({
+    message: error.message,
+    timestamp: new Date(),
+  }),
+  target: setExecutionError,
+})
+
+// Handle terminal status
+// sample({
+//   clock: [
+//     // Update status events from execution
+//     $executionState.updates.map(state => state.status),
+//   ],
+//   filter: (status): status is ExecutionStatus =>
+//     status !== undefined && isTerminalStatus(status),
+//   target: clearExecutionState,
+// })
+
+// Add cleanup on subscription end
+// sample({
+//   clock: setExecutionSubscriptionStatus,
+//   filter: status => status === ExecutionSubscriptionStatus.DISCONNECTED,
+//   target: clearExecutionState,
+// })
+
+// Handle start attempt tracking
+$startAttempted
+  .on(markStartAttempted, () => true)
+  .reset([
+    resetAutoStart,
+    createExecution,
+    // Reset on terminal states
+    sample({
+      clock: $executionState,
+      filter: state => isTerminalStatus(state.status),
+    }),
+  ])
+
+// Auto-start logic
+sample({
+  clock: $autoStartConditions,
+  source: $startAttempted,
+  filter: (attempted, conditions) => {
+    return (
+      !attempted
+      && conditions.executionStatus === ExecutionStatus.CREATED
+      && conditions.subscriptionStatus === ExecutionSubscriptionStatus.SUBSCRIBED
+      && !conditions.hasError
+      && !!conditions.executionId
+    )
+  },
+  fn: (_, conditions) => conditions.executionId!,
+  target: [
+    startExecution,
+    markStartAttempted,
+  ],
+})
+
+// Reset auto-start when needed
+sample({
+  clock: [
+    createExecution,
+    clearExecutionState,
+    // Add reset when subscription disconnects
+    sample({
+      clock: setExecutionSubscriptionStatus,
+      filter: status => status === ExecutionSubscriptionStatus.DISCONNECTED,
+    }),
+  ],
+  target: resetAutoStart,
+})

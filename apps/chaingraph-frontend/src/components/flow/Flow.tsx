@@ -21,15 +21,10 @@ import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/Chai
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
 import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
-import {
-  $activeFlowId,
-  $flowSubscriptionState,
-  addNodeToFlow,
-  setActiveFlowId,
-  useFlowSubscription,
-} from '@/store'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
+import { $activeFlowId, $flowSubscriptionState, setActiveFlowId, useFlowSubscription } from '@/store/flow'
+import { addNodeToFlow } from '@/store/nodes'
 import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Background, ReactFlow, useReactFlow } from '@xyflow/react'

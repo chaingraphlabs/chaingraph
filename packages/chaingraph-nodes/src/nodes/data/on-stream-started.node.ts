@@ -21,7 +21,7 @@ import { NODE_CATEGORIES } from '../../categories'
 @Node({
   type: 'OnStreamStarted',
   title: 'On Stream Started',
-  description: 'Handles the start of a and returns the boolean flag',
+  description: 'Handles the start of a stream (first element received) and returns the boolean flag',
   category: NODE_CATEGORIES.DATA,
 })
 class OnStreamStartedNode extends BaseNode {
@@ -29,12 +29,12 @@ class OnStreamStartedNode extends BaseNode {
   @Input()
   @PortStream({
     title: 'Input Stream',
-    description: 'Stream of strings to collect',
+    description: 'Stream to watch',
     itemConfig: {
-      type: 'string',
+      type: 'any',
     },
   })
-  public inputStream: MultiChannel<string> = new MultiChannel<string>()
+  public inputStream: MultiChannel<any> = new MultiChannel<any>()
 
   // Output port for the concatenated result
   @Output()

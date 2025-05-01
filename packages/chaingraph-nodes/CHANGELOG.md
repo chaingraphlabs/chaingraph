@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.16
+
+### Patch Changes
+
+- Fix the group node color picker. Add the handlebars log function call to send the event to the context.
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.16
+
 ## 0.1.15
 
 ### Patch Changes

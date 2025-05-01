@@ -11,7 +11,6 @@ import type { ChaingraphNode } from './types'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { $activeFlowMetadata, removeNodeFromFlow } from '@/store'
 import { useEdgesForNode } from '@/store/edges/hooks/useEdges'
 import {
   $executionState,
@@ -21,6 +20,8 @@ import {
 } from '@/store/execution'
 import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
+import { $activeFlowMetadata } from '@/store/flow'
+import { removeNodeFromFlow } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,

@@ -7,7 +7,7 @@
  */
 
 export * from './array-length.node'
-export * from './filter.node'
+export * from './filter-array-lucene.node'
 export * from './number-to-string.node'
 export * from './on-stream-started.node'
 export * from './stream-buffer.node'

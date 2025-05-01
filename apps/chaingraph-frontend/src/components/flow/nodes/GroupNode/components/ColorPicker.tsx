@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 import Color from 'color'
 import { Paintbrush } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { HexColorPicker } from 'react-colorful'
+import { CirclePicker } from 'react-color'
 
 interface ColorPickerProps {
   color: string
@@ -35,14 +35,14 @@ export function ColorPicker({ className, color, onChange }: ColorPickerProps) {
 
     const newColor = Color(localColor.hex).alpha(localColor.alpha).rgb().string()
     onChange(newColor)
-  }, [localColor.alpha, localColor.hex, onChange])
+  }, [localColor, onChange])
 
   const handleAlphaChange = useCallback((values: number[]) => {
     setLocalColor(prev => ({ ...prev, alpha: values[0] }))
 
     const newColor = Color(localColor.hex).alpha(localColor.alpha).rgb().string()
     onChange(newColor)
-  }, [localColor.alpha, localColor.hex, onChange])
+  }, [localColor, onChange])
 
   // useEffect(() => {
   // }, [localColor, onChange])
@@ -58,16 +58,24 @@ export function ColorPicker({ className, color, onChange }: ColorPickerProps) {
             className,
           )}
         >
-          <Paintbrush className="h-6 w-6  text-muted-foreground/60 hover:text-muted-foreground" />
+          <Paintbrush className="h-6 w-6 text-muted-foreground/60 hover:text-muted-foreground" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4">
         <div className="flex flex-col gap-4">
-          <HexColorPicker color={localColor.hex} onChange={handleColorChange} />
+          <CirclePicker
+            color={localColor.hex}
+            onChange={(color) => {
+              handleColorChange(color.hex)
+              handleAlphaChange([localColor.alpha])
+            }}
+          />
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Opacity</span>
+              <span className="text-sm text-muted-foreground">Opacity:</span>
+              {' '}
+              {' '}
               <span className="text-sm text-muted-foreground">
                 {Math.round(localColor.alpha * 100)}
                 %

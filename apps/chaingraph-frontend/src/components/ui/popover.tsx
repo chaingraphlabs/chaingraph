@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 
 import * as React from 'react'
-import { useShadowRoot } from './shadow'
+import { useShadowRoot } from './useShadowRoot'
 
 const Popover = PopoverPrimitive.Root
 

@@ -7,19 +7,81 @@
  */
 
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
-import type { FlowSubscriptionError } from './types'
+import type { CreateFlowEvent, FlowSubscriptionError, UpdateFlowEvent } from './types'
 import { flowDomain } from '@/store/domains'
-import { combine } from 'effector'
-import { createFlowFx, deleteFlowFx, editFlowFx, loadFlowsListFx } from './effects'
-import {
-  deleteFlow,
-  setFlowLoaded,
-  setFlowMetadata,
-  setFlowsError,
-  setFlowsList,
-  setFlowsLoading,
-} from './events'
+import { combine, sample } from 'effector'
+import { $trpcClient } from '../trpc/store'
 import { FlowSubscriptionStatus } from './types'
+
+// EVENTS
+
+// Flow list events
+export const loadFlowsList = flowDomain.createEvent()
+export const setFlowsList = flowDomain.createEvent<FlowMetadata[]>()
+export const setFlowsLoading = flowDomain.createEvent<boolean>()
+export const setFlowsError = flowDomain.createEvent<Error | null>()
+export const setFlowMetadata = flowDomain.createEvent<FlowMetadata>()
+export const setFlowLoaded = flowDomain.createEvent<string>()
+
+// Active flow events
+export const setActiveFlowId = flowDomain.createEvent<string>()
+export const clearActiveFlow = flowDomain.createEvent()
+
+// Flow CRUD events
+export const createFlow = flowDomain.createEvent<CreateFlowEvent>()
+export const updateFlow = flowDomain.createEvent<UpdateFlowEvent>()
+export const deleteFlow = flowDomain.createEvent<string>()
+
+// Subscription events
+export const setFlowSubscriptionStatus = flowDomain.createEvent<FlowSubscriptionStatus>()
+export const setFlowSubscriptionError = flowDomain.createEvent<FlowSubscriptionError | null>()
+export const resetFlowSubscription = flowDomain.createEvent()
+
+// EFFECTS
+
+// Effect for loading flows list
+export const loadFlowsListFx = flowDomain.createEffect(async () => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.list.query()
+})
+
+// Effect for creating new flow
+export const createFlowFx = flowDomain.createEffect(async (event: CreateFlowEvent) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.create.mutate(event.metadata)
+})
+
+// Effect for editing flow
+export const editFlowFx = flowDomain.createEffect(async (event: UpdateFlowEvent) => {
+  const client = $trpcClient.getState()
+
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.edit.mutate({
+    flowId: event.id,
+    ...event.metadata,
+  })
+})
+
+// Effect for deleting flow
+export const deleteFlowFx = flowDomain.createEffect(async (id: string) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.delete.mutate({
+    flowId: id,
+  })
+})
+
+// STORES
 
 // Store for all flows list
 export const $flows = flowDomain.createStore<FlowMetadata[]>([])
@@ -59,6 +121,8 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
 
 // Currently active flow ID
 export const $activeFlowId = flowDomain.createStore<string | null>(null)
+  .on(setActiveFlowId, (_, id) => id)
+  .reset(clearActiveFlow)
 
 // Main loading state
 export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
@@ -116,9 +180,9 @@ export const $activeFlowMetadata = combine(
 // Subscription related stores
 export const $flowSubscriptionStatus = flowDomain.createStore<FlowSubscriptionStatus>(
   FlowSubscriptionStatus.IDLE,
-)
+).on(setFlowSubscriptionStatus, (_, status) => status).reset(resetFlowSubscription).reset(clearActiveFlow)
 
-export const $flowSubscriptionError = flowDomain.createStore<FlowSubscriptionError | null>(null)
+export const $flowSubscriptionError = flowDomain.createStore<FlowSubscriptionError | null>(null).on(setFlowSubscriptionError, (_, error) => error).reset(resetFlowSubscription).reset(clearActiveFlow)
 
 // Derived store to check if subscription is active
 export const $isFlowSubscribed = $flowSubscriptionStatus.map(
@@ -130,4 +194,53 @@ export const $flowSubscriptionState = combine({
   status: $flowSubscriptionStatus,
   error: $flowSubscriptionError,
   isSubscribed: $isFlowSubscribed,
+})
+
+// SAMPLES
+
+// Flow List operations
+sample({
+  clock: loadFlowsList,
+  target: loadFlowsListFx,
+})
+sample({
+  clock: loadFlowsListFx.doneData,
+  target: setFlowsList,
+})
+
+// Flow Create operations
+sample({
+  clock: createFlow,
+  target: createFlowFx,
+})
+sample({
+  clock: createFlowFx.doneData,
+  fn: response => response,
+  target: setFlowMetadata,
+})
+
+// Flow Update operations
+sample({
+  clock: updateFlow,
+  target: editFlowFx,
+})
+sample({
+  clock: editFlowFx.doneData,
+  fn: response => response.metadata,
+  target: setFlowMetadata,
+})
+
+// Flow Delete operations
+sample({
+  clock: deleteFlow,
+  target: [
+    deleteFlowFx,
+    // If we need to clear active flow after deletion
+    sample({
+      clock: deleteFlow,
+      source: $activeFlowId,
+      filter: (activeId, deletedId) => activeId === deletedId,
+      target: clearActiveFlow,
+    }),
+  ],
 })

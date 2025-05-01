@@ -61,7 +61,7 @@ export class JSONSerializerNode extends BaseNode {
    */
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     try {
-      // Handle null/undefined case
+      // Handle a null/undefined case
       if (this.data === null || this.data === undefined) {
         this.json = JSON.stringify(null)
         return {}

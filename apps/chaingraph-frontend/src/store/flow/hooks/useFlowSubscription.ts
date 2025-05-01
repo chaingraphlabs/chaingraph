@@ -17,26 +17,11 @@ import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
 } from '../../../components/flow/utils/node-position'
-import { removeEdge, setEdge, setEdges } from '../../edges/events'
-import {
-  addNode,
-  addNodes,
-  removeNode,
-  setNodes,
-  setNodeVersion,
-  updateNode,
-  updateNodeUILocal,
-} from '../../nodes/events'
+import { removeEdge, setEdge, setEdges } from '../../edges'
+import { $nodes, addNode, addNodes, removeNode, setNodes, setNodeVersion, updateNode, updateNodeUILocal } from '../../nodes'
 import { positionInterpolator } from '../../nodes/position-interpolation-advanced'
-import { $nodes } from '../../nodes/stores'
-import { updatePort } from '../../ports/events'
-import {
-  setFlowLoaded,
-  setFlowMetadata,
-  setFlowSubscriptionError,
-  setFlowSubscriptionStatus,
-} from '../events'
-import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading } from '../stores'
+import { updatePort } from '../../ports'
+import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading, setFlowLoaded, setFlowMetadata, setFlowSubscriptionError, setFlowSubscriptionStatus } from '../stores'
 import { FlowSubscriptionStatus } from '../types'
 
 // export function useFlowSubscription2() {

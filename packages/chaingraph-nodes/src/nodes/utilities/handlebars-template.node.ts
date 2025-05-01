@@ -6,7 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
+import {
+  ExecutionEventEnum,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -98,9 +104,23 @@ Profile details: {{{json user.profile}}}`
 
       let compiledTemplate: HandlebarsTemplateDelegate<any>
       try {
+        Handlebars.logger.log = (level: number, obj: string) => {
+          console.log(`[Handlebars debug] ${obj}`)
+          context.sendEvent({
+            index: 0,
+            type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+            timestamp: new Date(),
+            data: {
+              node: this.clone(),
+              log: `[Handlebars] [${level}] ${obj}`,
+            },
+          })
+        }
         compiledTemplate = Handlebars.compile(this.template)
       } catch (compileError) {
-        throw new Error(`Template compilation failed: ${compileError instanceof Error ? compileError.message : JSON.stringify(compileError)}`)
+        throw new Error(
+          `Template compilation failed: ${compileError instanceof Error ? compileError.message : JSON.stringify(compileError)}`,
+        )
       }
 
       // Render the template with the variables
@@ -108,7 +128,7 @@ Profile details: {{{json user.profile}}}`
 
       return {}
     } catch (error) {
-      throw new Error(`Template rendering failed: ${error}`)
+      throw new Error(`Handlebars template rendering failed: ${error}`)
     }
   }
 }

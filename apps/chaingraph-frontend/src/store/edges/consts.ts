@@ -6,14 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { useUnit } from 'effector-react'
-import { useMemo } from 'react'
-import { $ports } from '../stores'
-
-export function usePort(nodeId: string, portId: string) {
-  const ports = useUnit($ports)
-  return useMemo(
-    () => ports[`${nodeId}-${portId}`],
-    [ports, nodeId, portId],
-  )
+export const EDGE_STYLES = {
+  DEFAULT: {
+    strokeOpacity: 0.8,
+    strokeWidth: 4,
+  },
+  HIGHLIGHTED: {
+    strokeOpacity: 1,
+    strokeWidth: 6,
+  },
+  DIMMED: {
+    strokeOpacity: 0.1,
+    strokeWidth: 4,
+  },
 }
