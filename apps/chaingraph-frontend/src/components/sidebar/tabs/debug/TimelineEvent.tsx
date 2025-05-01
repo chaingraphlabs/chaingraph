@@ -7,6 +7,7 @@
  */
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ScrollArea } from '@/components/ui'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -81,9 +82,12 @@ export function TimelineEvent({ event, isGrouped = false }: TimelineEventProps) 
         {/* Expanded Content */}
         <Collapsible open={isExpanded}>
           <CollapsibleContent>
-            <div className="mt-2 pt-2 border-t">
-              <DetailedEventContent event={event} />
-            </div>
+            <ScrollArea className="flex-grow overflow-auto">
+              <div className="mt-2 pt-2 border-t">
+                Detailed event data:
+                {/* <DetailedEventContent event={event} /> */}
+              </div>
+            </ScrollArea>
           </CollapsibleContent>
         </Collapsible>
       </Card>

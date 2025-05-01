@@ -46,6 +46,33 @@ Handlebars.registerHelper('lowercase', (str) => {
 })
 class HandlebarsTemplateNode extends BaseNode {
   @Input()
+  @String({
+    title: 'Template',
+    description: 'Handlebars template with variables in {{variable}} format',
+    ui: {
+      isTextArea: true,
+      textareaDimensions: { height: 200 },
+    },
+  })
+  template: string = `Hello, {{{user.name}}}!
+
+{{#if user.isPremium}}
+  Premium features activated.
+  Subscription: {{{uppercase user.subscription.tier}}} tier
+
+  Your subscribed products:
+  {{#each user.products}}
+    - {{{this.name}}}: {{{this.description}}}
+  {{else}}
+    No products found.
+  {{/each}}
+{{else}}
+  Consider upgrading to premium for more features.
+{{/if}}
+
+Profile details: {{{json user.profile}}}`
+
+  @Input()
   @PortObject({
     title: 'Variables',
     description: 'Object containing variables to insert into the template',
@@ -59,34 +86,6 @@ class HandlebarsTemplateNode extends BaseNode {
     },
   })
   variables: Record<string, any> = {}
-
-  @Input()
-  @String({
-    title: 'Template',
-    description: 'Handlebars template with variables in {{variable}} format',
-    ui: {
-      isTextArea: true,
-      textareaDimensions: { height: 200 },
-    },
-  })
-  template: string = `Hello, {{user.name}}!
-
-{{#if user.isPremium}}
-  Premium features activated.
-  Subscription: {{uppercase user.subscription.tier}} tier
-  Expires: {{formatDate user.subscription.expiryDate "long"}}
-
-  Your subscribed products:
-  {{#each user.products}}
-    - {{this.name}}: {{this.description}}
-  {{else}}
-    No products found.
-  {{/each}}
-{{else}}
-  Consider upgrading to premium for more features.
-{{/if}}
-
-Profile details: {{{json user.profile}}}`
 
   @Output()
   @String({

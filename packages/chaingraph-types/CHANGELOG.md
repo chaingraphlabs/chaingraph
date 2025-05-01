@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.1.18
+
+### Patch Changes
+
+- Improve the sidebar execution events card to be more informative and easy to understand. Improve port doc tooltips design and colors, fix several bugs.
+
 ## 0.1.17
 
 ### Patch Changes

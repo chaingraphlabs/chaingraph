@@ -18,39 +18,24 @@ import type {
   StreamPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
+import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/formatValue'
+import { useTheme } from '@/components/theme'
 import { Badge, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
+import { getPortTypeColor } from './getPortTypeColor'
 
 interface PortDocContentProps<C extends IPortConfig> {
   port: IPort<C>
   className?: string
 }
 
-// Get a color based on port type
-function getPortTypeColor(portConfig: IPortConfig) {
-  const colorMap: Record<string, string> = {
-    string: '#e70d0d', // blue
-    number: '#1f5eec', // red
-    boolean: '#4cd53b', // green
-    array: '#1acbe8', // purple
-    object: '#e44df5', // orange
-    stream: '#ffa047', // cyan
-    enum: '#eedf3c', // pink
-    any: '#cccccc', // gray
-  }
-
-  return {
-    borderColor: portConfig.ui?.borderColor || colorMap[portConfig.type] || '#cccccc',
-    bgColor: portConfig.ui?.bgColor || colorMap[portConfig.type] || '#cccccc',
-  }
-}
-
 export function PortDocContent<C extends IPortConfig>({
   port,
   className,
 }: PortDocContentProps<C>) {
+  const { theme } = useTheme()
   const config = port.getConfig()
   const [containerHeight, setContainerHeight] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -88,34 +73,48 @@ export function PortDocContent<C extends IPortConfig>({
   }
 
   // Get appropriate color for the port
-  const portColor = getPortTypeColor(config)
+  const portColor = getPortTypeColor(theme, config)
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        'w-[300px] rounded-lg shadow-lg',
-        'border border-border',
+        'w-[300px] rounded-lg ',
         'bg-card flex flex-col',
+        'border',
         className,
       )}
-      style={{ maxHeight: containerHeight ? `${containerHeight}px` : 'auto' }}
+      style={{
+        maxHeight: containerHeight ? `${containerHeight}px` : 'auto',
+        borderColor: portColor.borderColor,
+        // borderWidth: 1,
+        // borderRadius: 8,
+      }}
+
     >
       {/* Header */}
       <div
-        className="px-3 py-2 flex items-center justify-between rounded-t-lg shrink-0"
+        className="px-3 py-2 flex items-center justify-between shrink-0 rounded-tl-lg rounded-tr-lg"
         style={{
-          backgroundColor: `${portColor.borderColor}`, // Using port color with 15% opacity for background
-          borderBottom: `1px solid ${portColor.bgColor}`,
+          backgroundColor: `${portColor.headerBgColor}`,
+          borderBottom: `1px solid ${portColor.borderColor}`,
         }}
       >
         <div className="flex items-center gap-2">
           {/* Port Circle */}
           <div
-            className="w-4 h-4 rounded-full border-2 border-background shrink-0"
-            style={{ backgroundColor: portColor.bgColor }}
+            className="w-3 h-3 rounded-full border-1 shrink-0"
+            style={{
+              backgroundColor: portColor.circleColor,
+              borderColor: portColor.borderColor,
+            }}
           />
-          <h3 className="font-medium text-sm">
+          <h3
+            className="font-medium text-sm"
+            style={{
+              color: portColor.textColor,
+            }}
+          >
             {config.title || config.name || 'Port'}
           </h3>
         </div>
@@ -123,7 +122,12 @@ export function PortDocContent<C extends IPortConfig>({
           {config.required && (
             <div className="w-1.5 h-1.5 rounded-full bg-red-500" title="Required"></div>
           )}
-          <span className="text-xs px-1.5 py-0.5 bg-muted/50 rounded">
+          <span
+            className="text-xs px-1.5 py-0.5 bg-muted rounded"
+            style={{
+              color: portColor.textColor,
+            }}
+          >
             {formatPortType(config.type)}
           </span>
         </div>
@@ -146,7 +150,7 @@ export function PortDocContent<C extends IPortConfig>({
           {config.description && (
             <div
               className="space-y-1 text-xs text-muted-foreground whitespace-pre-wrap border-l-2 pl-2"
-              style={{ borderColor: `${portColor}` }}
+              style={{ borderColor: portColor.circleColor }}
             >
               {formatDescriptionWithBreaks(config.description)}
             </div>
@@ -158,7 +162,7 @@ export function PortDocContent<C extends IPortConfig>({
               <div className="text-xs font-medium">Default value</div>
               <pre className={cn(
                 'text-[11px] p-1.5 bg-muted/50',
-                'rounded block overflow-x-auto text-wrap',
+                'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
                 {formatDefaultValue(config)}
@@ -177,14 +181,15 @@ export function PortDocContent<C extends IPortConfig>({
               <div className="text-xs font-medium text-muted-foreground">Value</div>
               <pre className={cn(
                 'text-[11px] p-1.5 bg-muted/50',
-                'rounded block overflow-x-auto text-wrap',
+                'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
-                {formatValue(port.getValue())}
+                {port.getConfig().type === 'string' && port.getConfig()?.ui?.isPassword === true
+                  ? '**** hidden ****'
+                  : formatValue(port.getValue())}
               </pre>
             </div>
           )}
-
         </div>
       </ScrollArea>
     </div>
@@ -220,30 +225,6 @@ function formatDefaultValue(config: IPortConfig): string {
   }
 }
 
-function formatValue(value: any): string {
-  if (
-    value === undefined
-    || value === null
-    || (typeof value === 'string' && value.trim() === '')
-  ) {
-    return 'N/A'
-  }
-
-  try {
-    if (typeof value === 'object') {
-      return JSON.stringify(value, null, 2)
-    }
-    // check if is an array
-    if (Array.isArray(value)) {
-      return JSON.stringify(value, null, 2)
-    }
-
-    return String(value)
-  } catch (error) {
-    return 'Complex value'
-  }
-}
-
 // Reusable PropertyItem component for object schemas
 interface PropertyItemProps {
   name: string
@@ -253,8 +234,9 @@ interface PropertyItemProps {
 }
 
 function PropertyItem({ name, config, level = 0, isLast = false }: PropertyItemProps) {
+  const { theme } = useTheme()
   const [isOpen, setIsOpen] = useState(level === 0)
-  const portColor = getPortTypeColor(config)
+  const portColor = getPortTypeColor(theme, config)
   const isExpandable = config.type === 'object' || config.type === 'array'
   const indent = level * 12
 
@@ -266,7 +248,7 @@ function PropertyItem({ name, config, level = 0, isLast = false }: PropertyItemP
         level > 0 && 'mt-1',
         isLast ? '' : 'after:content-[\'\'] after:absolute after:left-0 after:top-[14px] after:h-full after:w-[1px] after:bg-border',
       )}
-      style={{ borderColor: portColor.bgColor, marginLeft: `${indent}px` }}
+      style={{ borderColor: portColor.borderColor, marginLeft: `${indent}px` }}
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="relative">
         <CollapsibleTrigger
@@ -288,7 +270,7 @@ function PropertyItem({ name, config, level = 0, isLast = false }: PropertyItemP
           <Badge
             variant="outline"
             className="text-[10px] px-1.5 py-0 h-4 inline-flex items-center ml-1"
-            style={{ borderColor: `${portColor}` }}
+            style={{ borderColor: `${portColor.borderColor}` }}
           >
             {config.type}
           </Badge>
@@ -405,6 +387,12 @@ function getTypeSpecificInfo(config: IPortConfig): React.ReactElement | null {
 }
 
 function renderStringConfig(config: StringPortConfig): React.ReactElement {
+  const needsToRender = config.minLength !== undefined || config.maxLength !== undefined || config.pattern
+
+  if (!needsToRender) {
+    return <></>
+  }
+
   return (
     <div className="mt-3 space-y-2 border-t pt-2 border-muted/40">
       <div className="text-xs font-medium">String configuration</div>
@@ -433,6 +421,11 @@ function renderStringConfig(config: StringPortConfig): React.ReactElement {
 }
 
 function renderNumberConfig(config: NumberPortConfig): React.ReactElement {
+  const needsToRender = config.min !== undefined || config.max !== undefined || config.step !== undefined || config.integer !== undefined
+  if (!needsToRender) {
+    return <></>
+  }
+
   return (
     <div className="mt-3 space-y-2 border-t pt-2 border-muted/40">
       <div className="text-xs font-medium">Number configuration</div>
@@ -574,7 +567,7 @@ function renderEnumConfig(config: EnumPortConfig): React.ReactElement {
         <ul className="mt-1 space-y-1 text-[10px]">
           {options.map((option, index) => (
             <li key={index} className="pl-2 border-l border-muted/50">
-              {option.defaultValue || `Option ${index + 1}`}
+              {formatValue(option.defaultValue) || `Option ${index + 1}`}
             </li>
           ))}
         </ul>

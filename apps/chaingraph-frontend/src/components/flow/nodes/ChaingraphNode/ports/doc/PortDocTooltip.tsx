@@ -8,6 +8,7 @@
 
 import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
+import { useTheme } from '@/components/theme'
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +16,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import Color from 'color'
+import { getPortTypeColor } from './getPortTypeColor'
 import { PortDocContent } from './PortDocContent'
 
 interface PortDocTooltipProps<C extends IPortConfig> {
@@ -28,19 +31,40 @@ export function PortDocTooltip<C extends IPortConfig>({
   children,
   className,
 }: PortDocTooltipProps<C>) {
+  const { theme } = useTheme()
+  const portColor = getPortTypeColor(theme, port.getConfig())
+
+  // Convert the hex border color to RGB components for the shadow
+  const colorObj = new Color(
+    theme === 'dark'
+      ? portColor.borderColor
+      : new Color(portColor.borderColor)
+          .desaturate(0.7)
+          .darken(0.2)
+          .hex(),
+  )
+  const r = colorObj.red()
+  const g = colorObj.green()
+  const b = colorObj.blue()
+
   return (
     <TooltipProvider delayDuration={500}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn('relative', className)}>
-            {children}
-          </div>
+          {/* <div className={cn('relative', className)}> */}
+          {children}
+          {/* </div> */}
         </TooltipTrigger>
         <TooltipContent
           side="right"
           align="center"
           sideOffset={32}
-          className="p-0 border-0 bg-transparent shadow-primary select-text"
+          className={cn(
+            'p-0 border-0 bg-transparent select-text',
+          )}
+          style={{
+            boxShadow: `0 0 25px rgba(${r},${g},${b},0.9)`,
+          }}
         >
           <div className="pointer-events-auto">
             <PortDocContent port={port} />
