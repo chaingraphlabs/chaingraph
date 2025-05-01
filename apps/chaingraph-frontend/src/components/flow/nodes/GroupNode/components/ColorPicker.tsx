@@ -66,7 +66,6 @@ export function ColorPicker({ className, color, onChange }: ColorPickerProps) {
           <CirclePicker
             color={localColor.hex}
             onChange={(color) => {
-              console.log(color)
               handleColorChange(color.hex)
               handleAlphaChange([localColor.alpha])
             }}
