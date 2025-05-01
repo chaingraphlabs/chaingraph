@@ -7,9 +7,7 @@
  */
 
 export { DebugPanel } from './DebugPanel'
-export { EventCard } from './EventCard'
 export { ExecutionTimeline } from './ExecutionTimeline'
 export { FilterBar } from './FilterBar'
 export { eventThemes } from './theme'
 export type { EventTheme } from './theme'
-export { TimelineEvent } from './TimelineEvent'

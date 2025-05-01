@@ -216,7 +216,7 @@ export function Sidebar({
       {isExpanded && activeTab && (
         <div
           className="relative bg-card border-r"
-          style={{ width: `${width}px`, maxWidth: `90%` }}
+          style={{ width: `${width}px` }}
         >
           {/* Collapse Button */}
           <Button

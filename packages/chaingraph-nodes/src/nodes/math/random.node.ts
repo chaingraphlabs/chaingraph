@@ -8,6 +8,7 @@
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, Output, Number as PortNumber } from '@badaitech/chaingraph-types'
+import { Decimal } from 'decimal.js'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -47,19 +48,28 @@ class RandomNode extends BaseNode {
   result: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const min = Number.isFinite(this.rangeFrom) ? this.rangeFrom : 0
-    const max = Number.isFinite(this.rangeTo) ? this.rangeTo : 100
-    const step = Number.isFinite(this.step) && this.step > 0 ? this.step : 1
+  // Convert inputs to Decimal objects for precise calculations
+    const min = Number.isFinite(this.rangeFrom) ? new Decimal(this.rangeFrom) : new Decimal(0)
+    const max = Number.isFinite(this.rangeTo) ? new Decimal(this.rangeTo) : new Decimal(100)
+    const step = Number.isFinite(this.step) && this.step > 0 ? new Decimal(this.step) : new Decimal(1)
 
-    if (min > max) {
+    // Validate range
+    if (min.greaterThan(max)) {
       throw new Error('Invalid range: Range From must be less than or equal to Range To.')
     }
 
-    const range = max - min
-    const stepsCount = Math.floor(range / step)
-    const randomStep = Math.random() * (stepsCount + 1)
-    const randomValue = min + randomStep * step
-    this.result = step === 1 ? Math.floor(randomValue) : randomValue
+    // Calculate the number of possible steps in the range
+    const range = max.minus(min)
+    const stepsCount = range.dividedBy(step).floor()
+
+    // Generate random integer step count (0 to stepsCount, inclusive)
+    const randomStepCount = Decimal.floor(new Decimal(Math.random()).times(stepsCount.plus(1)))
+
+    // Calculate the exact value by adding the precise number of steps to min
+    const randomValue = min.plus(randomStepCount.times(step))
+
+    // Convert back to number for output
+    this.result = randomValue.toNumber()
 
     return {}
   }

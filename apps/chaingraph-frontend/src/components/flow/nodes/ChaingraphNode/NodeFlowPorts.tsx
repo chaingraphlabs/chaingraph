@@ -11,6 +11,7 @@ import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
 import { Handle, Position } from '@xyflow/react'
 import { memo, useMemo } from 'react'
+import { PortDocTooltip } from './ports/doc'
 
 export interface NodeFlowPortsProps {
   node: INode
@@ -54,32 +55,34 @@ function NodeFlowPorts({
     )
 
     return (
-      <Handle
-        type={position === Position.Left ? 'target' : 'source'}
-        position={position}
-        id={portId}
-        style={{
-          background: portColor,
-          // border: `2px solid ${isConnected ? '#ffffff' : portColor}`,
-          top: 16, // Position at header level
-          transform: position === Position.Left ? 'translateX(-100%)' : 'translateX(100%)',
-          // width: 10,
-          // height: 10,
-          zIndex: 20,
-        }}
-        // className=
-        className={cn(
+      <PortDocTooltip port={port}>
+        <Handle
+          type={position === Position.Left ? 'target' : 'source'}
+          position={position}
+          id={portId}
+          style={{
+            background: portColor,
+            // border: `2px solid ${isConnected ? '#ffffff' : portColor}`,
+            top: 16, // Position at header level
+            transform: position === Position.Left ? 'translateX(-100%)' : 'translateX(100%)',
+            // width: 10,
+            // height: 10,
+            zIndex: 20,
+          }}
+          // className=
+          className={cn(
           // 'absolute',
-          'nodrag',
-          'w-4 h-4 rounded-full',
-          'border-2 border-background',
-          'transition-shadow duration-200',
-          'data-[connected=true]:shadow-port-connected',
-          'z-50',
+            'nodrag',
+            'w-4 h-4 rounded-full',
+            'border-2 border-background',
+            'transition-shadow duration-200',
+            'data-[connected=true]:shadow-port-connected',
+            'z-50',
           // !bgColor && 'bg-flow-data',
           // className,
-        )}
-      />
+          )}
+        />
+      </PortDocTooltip>
     )
   }
 
