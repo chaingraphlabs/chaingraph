@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.1.17
+
+### Patch Changes
+
+- Add port documentation and debug value tooltip. Make port order configurable
+
 ## 0.1.16
 
 ### Patch Changes

@@ -84,6 +84,7 @@ describe('edge case: Array of objects with empty object schema', () => {
         schema: expectedInner,
       },
       key: 'emptyObjectArray',
+      order: 1,
     })
   })
 })
@@ -126,6 +127,7 @@ describe('edge case: Deeply nested arrays and objects', () => {
       type: 'object',
       schema: middleExpected,
       key: 'middle',
+      order: 1,
     })
 
     // For the inner array property within MiddleSchema, check as well.
@@ -138,6 +140,7 @@ describe('edge case: Deeply nested arrays and objects', () => {
         schema: innerExpected,
       },
       key: 'innerArray',
+      order: 1,
     })
   })
 })

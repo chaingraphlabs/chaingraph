@@ -92,10 +92,15 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       nodePorts.set(portId, newPort)
     }
 
-    // Sort map by port id, it is sortable
+    // Sort map by port order, or if order is undefined or same, sort by key
     const sortedNodePorts = new Map([...nodePorts.entries()]
       .sort(
         (a, b) => {
+          const orderA = a[1].getConfig().order ?? 0
+          const orderB = b[1].getConfig().order ?? 0
+          if (orderA !== orderB) {
+            return orderA - orderB
+          }
           return a[0].localeCompare(b[0])
         },
       ))
