@@ -60,8 +60,8 @@ function ContextMenuSubContent({ ref, className, ...props }: React.ComponentProp
 ContextMenuSubContent.displayName = ContextMenuPrimitive.SubContent.displayName
 
 function ContextMenuContent({ ref, className, ...props }: React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof ContextMenuPrimitive.Content> | null> }) {
-  const shadowRoot = useShadowRoot()
-  const portalEl = shadowRoot.getElementById('chaingraph-portal')
+  const { root } = useShadowRoot()
+  const portalEl = root.getElementById('chaingraph-portal')
   return (
     <ContextMenuPrimitive.Portal container={portalEl}>
       <ContextMenuPrimitive.Content

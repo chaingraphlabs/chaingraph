@@ -8,7 +8,11 @@
 
 import { createContext, use } from 'react'
 
-export const ShadowRootContext = createContext<ShadowRoot | null>(null)
+interface ShadowRootContextType {
+  root: ShadowRoot
+  height: number
+}
+export const ShadowRootContext = createContext<ShadowRootContextType | null>(null)
 
 export function useShadowRoot() {
   const ctx = use(ShadowRootContext)

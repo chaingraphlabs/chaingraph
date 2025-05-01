@@ -6,10 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PropsWithChildren } from 'react'
+import type { CSSProperties, PropsWithChildren } from 'react'
 import type { ThemeMode } from './ThemeContext'
+import { cn } from '@/lib/utils'
 import { Theme } from '@radix-ui/themes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useShadowRoot } from '../ui/useShadowRoot'
 import { ThemeContext } from './ThemeContext'
 
 const localStorageKeyPrefix = 'chaingraph:'
@@ -18,9 +20,11 @@ const localStorageKeyTheme = `${localStorageKeyPrefix}theme`
 export interface ThemeProviderProps extends PropsWithChildren {
   theme?: ThemeMode
   className?: string
+  style?: CSSProperties
 }
 
-export function ThemeProvider({ children, theme }: ThemeProviderProps) {
+export function ThemeProvider({ children, style, className, theme }: ThemeProviderProps) {
+  const { height } = useShadowRoot()
   const [currentTheme, setTheme] = useState<ThemeMode>(() => {
     // check if a theme is passed as a prop
     if (theme) {
@@ -63,7 +67,7 @@ export function ThemeProvider({ children, theme }: ThemeProviderProps) {
 
   return (
     <ThemeContext value={themeProviderValue}>
-      <Theme className="w-full h-full" appearance={themeProviderValue.theme}>
+      <Theme style={{ height, minHeight: height, ...style }} className={cn('w-full h-full', className)} appearance={themeProviderValue.theme}>
         {children}
       </Theme>
     </ThemeContext>
