@@ -152,6 +152,10 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: StringPortValue): JSONValue => {
+    if (value === undefined) {
+      return ''
+    }
+
     try {
       if (!isStringPortValue(value)) {
         throw new PortError(

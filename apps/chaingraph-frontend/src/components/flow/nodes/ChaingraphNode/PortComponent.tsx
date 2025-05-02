@@ -10,6 +10,7 @@ import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type {
+  AnyPortConfig,
   ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
@@ -22,6 +23,7 @@ import type {
 import { BooleanPort } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
 import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort'
+import { AnyPort } from 'components/flow/nodes/ChaingraphNode/ports/AnyPort/AnyPort'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
 import { PortContext } from './ports/context/PortContext'
 import { EnumPort } from './ports/EnumPort/EnumPort'
@@ -94,8 +96,12 @@ export function PortComponent(props: PortProps) {
       )
     }
     // case 'secret':
-    case 'stream':
+
     case 'any': {
+      return <AnyPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
+    }
+
+    case 'stream': {
       return <StubPort port={port} />
     }
 

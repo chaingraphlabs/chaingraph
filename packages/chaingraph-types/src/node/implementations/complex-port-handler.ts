@@ -8,6 +8,7 @@
 
 import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
 import type { IComplexPortHandler, IPortBinder, IPortManager } from '../interfaces'
+import { ObjectPort } from '../../port'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 
@@ -97,6 +98,19 @@ export class ComplexPortHandler implements IComplexPortHandler {
 
     // Update the parent port
     this.portManager.updatePort(objectPort)
+
+    if ((objectPort.getConfig().parentId?.length || 0) > 0) {
+      // Update the parent port to reflect the new child
+      const parentPort = this.portManager.getPort(objectPort.getConfig().parentId!)
+
+      if (parentPort?.getConfig().type === 'object' && parentPort instanceof ObjectPort) {
+        this.addObjectProperty(
+          parentPort,
+          objectPort.getConfig().key!,
+          objectPort.getConfig(),
+        )
+      }
+    }
   }
 
   /**

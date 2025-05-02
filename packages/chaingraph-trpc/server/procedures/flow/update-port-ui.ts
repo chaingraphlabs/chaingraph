@@ -37,6 +37,15 @@ export const updatePortUI = flowContextProcedure
     if (!port)
       throw new Error('Port not found')
 
+    console.log('Port UI updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, ui: input.ui })
+    console.log('Port UI before', port.getConfig().ui)
+    console.log('Port UI after', {
+      ...port.getConfig().ui,
+      ...input.ui,
+    })
+    console.log('Port Config', port.getConfig())
+    console.log(`Port Value ${JSON.stringify(port.getValue())}`)
+
     const portConfig = port.getConfig()
     portConfig.ui = {
       ...portConfig.ui,

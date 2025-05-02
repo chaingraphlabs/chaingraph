@@ -193,7 +193,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
   },
   serializeConfig: (config: AnyPortConfig): JSONValue => {
     try {
-      let underlyingTypeSerialized: JSONValue
+      let underlyingTypeSerialized: JSONValue | undefined
       let defaultValueSerialized: JSONValue = config.defaultValue
 
       if (config.underlyingType !== undefined && config.underlyingType !== null) {
@@ -205,6 +205,9 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
             `Unknown underlying type: ${config.underlyingType.type}`,
           )
         }
+
+        console.log(`[AnyPortPlugin] serializeConfig`, config)
+        console.log(`[AnyPortPlugin] plugin`, config.underlyingType.type)
 
         // Serialize the underlying type config using its plugin
         underlyingTypeSerialized = plugin.serializeConfig(config.underlyingType)
@@ -224,11 +227,19 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         defaultValueSerialized = plugin.serializeValue(config.defaultValue, config.underlyingType)
       }
 
-      return {
+      let result = {
         ...config,
         underlyingType: underlyingTypeSerialized,
-        defaultValue: defaultValueSerialized,
       }
+
+      if (defaultValueSerialized !== undefined) {
+        result = {
+          ...result,
+          defaultValue: defaultValueSerialized,
+        }
+      }
+
+      return result
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -268,7 +279,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         return {
           ...result.data,
           underlyingType: deserializedUnderlyingType,
-          defaultValue: plugin.deserializeValue(result.data.defaultValue, deserializedUnderlyingType),
+          defaultValue: result.data.defaultValue ? plugin.deserializeValue(result.data.defaultValue, deserializedUnderlyingType) : undefined,
         }
       }
 

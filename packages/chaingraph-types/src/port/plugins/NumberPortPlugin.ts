@@ -111,6 +111,11 @@ export function validateNumberValue(
 ): string[] {
   const errors: string[] = []
 
+  if (value === undefined || value === null) {
+    // If the value is undefined or null, we can skip validation
+    return errors
+  }
+
   if (!isNumberPortValue(value)) {
     errors.push('Invalid number value structure')
     return errors
@@ -161,6 +166,10 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: NumberPortValue): JSONValue => {
+    if (value === undefined) {
+      return 0
+    }
+
     try {
       if (!isNumberPortValue(value)) {
         throw new PortError(
@@ -184,7 +193,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
           'Invalid number value for deserialization',
         )
       }
-      return data
+      return data || 0
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

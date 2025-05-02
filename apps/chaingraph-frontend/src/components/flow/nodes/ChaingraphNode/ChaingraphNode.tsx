@@ -21,7 +21,7 @@ import {
 import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
 import { $activeFlowMetadata } from '@/store/flow'
-import { removeNodeFromFlow } from '@/store/nodes'
+import { removeNodeFromFlow, updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,
@@ -35,6 +35,7 @@ import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { BreakpointButton } from '../debug/BreakpointButton'
+import { useElementResize } from './hooks/useElementResize'
 import NodeBody from './NodeBody'
 import NodeErrorPorts from './NodeErrorPorts'
 import { NodeHeader } from './NodeHeader'
@@ -179,11 +180,45 @@ function ChaingraphNodeComponent({
     }
   }, [dispatch, getEdgesForPortFunction])
 
+  // Use a custom hook to handle element resize
+  const { ref: cardRef } = useElementResize<HTMLDivElement>({
+    debounceTime: 500,
+    onResize: (size) => {
+      if (!activeFlow || !activeFlow.id || !node)
+        return
+
+      const actualDimensions = node.metadata.ui?.dimensions || {
+        width: 0,
+        height: 0,
+      }
+
+      const isDimensionsChanged = size.width !== actualDimensions.width
+        || size.height !== actualDimensions.height
+
+      if (!isDimensionsChanged)
+        return
+
+      updateNodeUI({
+        flowId: activeFlow.id!,
+        nodeId: id,
+        ui: {
+          // ...node.metadata.ui,
+          dimensions: {
+            width: size.width,
+            height: size.height,
+          },
+        },
+        version: node.getVersion(),
+      })
+    },
+  })
+
   if (!activeFlow || !activeFlow.id || !node)
     return null
 
   return (
     <Card
+      ref={cardRef}
       className={cn(
         'shadow-none transition-all duration-200',
         'bg-card opacity-95',
@@ -240,7 +275,7 @@ function ChaingraphNodeComponent({
           background: 'transparent',
           border: 'none',
           height: '100%',
-          width: 10,
+          width: 12,
         }}
       />
 

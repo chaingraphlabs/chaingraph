@@ -587,9 +587,9 @@ profile: UserProfile;
 **UI Configuration:**
 
 | Property         | Type    | Description                        |
-| ---------------- | ------- | ---------------------------------- |
+|------------------| ------- | ---------------------------------- |
 | addKeyFormHidden | boolean | Hide the "Add Key" form            |
-| collapsible      | boolean | Whether the object collapsed in UI |
+| collapsed        | boolean | Whether the object collapsed in UI |
 
 <table>
 <tr>
@@ -600,7 +600,7 @@ profile: UserProfile;
 @PortObject({
     schema: UserProfile,
     ui: {
-        collapsible: true,
+      collapsed: true,
     },
 })
 profile: UserProfile = new UserProfile()
@@ -618,7 +618,7 @@ profile: UserProfile = new UserProfile()
 @PortObject({
     schema: UserProfile,
     ui: {
-        collapsible: false,
+      collapsed: false,
     },
 })
 profile: UserProfile = new UserProfile()
@@ -988,9 +988,9 @@ All port types support a common set of UI configuration properties through the `
 ### Object Port UI
 
 | Property     | Type    | Description                              |
-| ------------ | ------- | ---------------------------------------- |
+|--------------| ------- | ---------------------------------------- |
 | keyDeletable | boolean | Whether object properties can be deleted |
-| collapsible  | boolean | Whether the object port collapsed        |
+| collapsed    | boolean | Whether the object port collapsed        |
 
 ## 7. Complete Examples
 

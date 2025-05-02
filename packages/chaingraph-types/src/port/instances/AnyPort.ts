@@ -7,7 +7,7 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { AnyPortConfig, AnyPortValue } from '../base'
+import type { AnyPortConfig, AnyPortValue, IPortConfig } from '../base'
 import { BasePort } from '../base'
 import { AnyPortPlugin } from '../plugins'
 
@@ -127,6 +127,16 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    */
   protected deserializeValue(data: JSONValue): AnyPortValue {
     return AnyPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Sets the underlying type of the any port.
+   * This method allows changing the underlying type dynamically.
+   * @param underlyingType - The new underlying type configuration.
+   */
+  public setUnderlyingType(underlyingType: IPortConfig | undefined) {
+    console.log('!!! SET UNDERLYING TYPE', underlyingType)
+    this.config.underlyingType = underlyingType
   }
 }
 

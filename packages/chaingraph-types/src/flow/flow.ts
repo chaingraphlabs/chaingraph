@@ -25,6 +25,7 @@ import { nolookalikes } from 'nanoid-dictionary'
 import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
+import { AnyPort } from '../port'
 import { deepCopy, EventQueue } from '../utils'
 import { FlowEventType, newEvent } from './events'
 
@@ -95,7 +96,7 @@ export class Flow implements IFlow {
         this.getNextEventIndex(),
         this.id,
         FlowEventType.NodeAdded,
-        { node },
+        { node: node.clone() },
       ))
     }
 
@@ -113,7 +114,7 @@ export class Flow implements IFlow {
       this.getNextEventIndex(),
       this.id,
       FlowEventType.NodeUpdated,
-      { node },
+      { node: node.clone() },
     ))
   }
 
@@ -239,10 +240,10 @@ export class Flow implements IFlow {
 
     edge.targetNode.emit({
       type: NodeEventType.PortConnected,
-      sourceNode: edge.targetNode,
-      sourcePort: edge.targetPort,
-      targetNode: edge.sourceNode,
-      targetPort: edge.sourcePort,
+      sourceNode: edge.targetNode.clone(),
+      sourcePort: edge.targetPort.clone(),
+      targetNode: edge.sourceNode.clone(),
+      targetPort: edge.sourcePort.clone(),
       nodeId: edge.targetNode.id,
       timestamp: new Date(),
       version: edge.targetNode.getVersion(),
@@ -250,10 +251,10 @@ export class Flow implements IFlow {
 
     edge.sourceNode.emit({
       type: NodeEventType.PortConnected,
-      sourceNode: edge.sourceNode,
-      sourcePort: edge.sourcePort,
-      targetNode: edge.targetNode,
-      targetPort: edge.targetPort,
+      sourceNode: edge.sourceNode.clone(),
+      sourcePort: edge.sourcePort.clone(),
+      targetNode: edge.targetNode.clone(),
+      targetPort: edge.targetPort.clone(),
       nodeId: edge.sourceNode.id,
       timestamp: new Date(),
       version: edge.sourceNode.getVersion(),
@@ -268,32 +269,58 @@ export class Flow implements IFlow {
       throw new Error(`Edge with ID ${edgeId} does not exist in the flow.`)
     }
 
+    const sourceNode = this.nodes.get(edge.sourceNode.id) ?? edge.sourceNode
+    const targetNode = this.nodes.get(edge.targetNode.id) ?? edge.targetNode
+
+    const sourcePort = sourceNode.getPort(edge.sourcePort.id) ?? edge.sourcePort
+    const targetPort = targetNode.getPort(edge.targetPort.id) ?? edge.targetPort
+
     // Remove connections from ports
-    if (edge.sourcePort && edge.targetPort) {
-      edge.sourcePort.removeConnection(edge.targetNode.id, edge.targetPort.id)
-      edge.targetPort.removeConnection(edge.sourceNode.id, edge.sourcePort.id)
+    if (sourcePort && targetPort) {
+      sourcePort.removeConnection(targetNode.id, targetPort.id)
+      targetPort.removeConnection(sourceNode.id, sourcePort.id)
     }
 
-    edge.targetNode.emit({
+    // if target port is an any port type then remove the underlying type
+    if (targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort) {
+      targetPort.setUnderlyingType(undefined)
+      targetNode.updatePort(targetPort)
+
+      if (targetPort.getConfig().parentId && (targetPort.getConfig().parentId?.length || 0) > 0) {
+        const parentPort = targetNode.getPort(targetPort.getConfig().parentId!)
+        if (parentPort) {
+          targetNode.removeObjectProperty(parentPort, targetPort.getConfig().key || '')
+
+          // recreate targetPort without underlying type
+          targetNode.addObjectProperty(
+            parentPort,
+            targetPort.getConfig().key!,
+            targetPort.getConfig(),
+          )
+        }
+      }
+    }
+
+    targetNode.emit({
       type: NodeEventType.PortDisconnected,
-      sourceNode: edge.targetNode,
-      sourcePort: edge.targetPort,
-      targetNode: edge.sourceNode,
-      targetPort: edge.sourcePort,
-      nodeId: edge.targetNode.id,
+      sourceNode: targetNode.clone(),
+      sourcePort: targetPort.clone(),
+      targetNode: sourceNode.clone(),
+      targetPort: sourcePort.clone(),
+      nodeId: targetNode.id,
       timestamp: new Date(),
-      version: edge.targetNode.getVersion(),
+      version: targetNode.getVersion(),
     })
 
-    edge.sourceNode.emit({
+    sourceNode.emit({
       type: NodeEventType.PortDisconnected,
-      sourceNode: edge.sourceNode,
-      sourcePort: edge.sourcePort,
-      targetNode: edge.targetNode,
-      targetPort: edge.targetPort,
-      nodeId: edge.sourceNode.id,
+      sourceNode: sourceNode.clone(),
+      sourcePort: sourcePort.clone(),
+      targetNode: targetNode.clone(),
+      targetPort: targetPort.clone(),
+      nodeId: sourceNode.id,
       timestamp: new Date(),
-      version: edge.sourceNode.getVersion(),
+      version: sourceNode.getVersion(),
     })
 
     this.edges.delete(edgeId)
@@ -342,6 +369,50 @@ export class Flow implements IFlow {
     // TODO: also decide what if the target object port schema is empty, should we connect any object port to it
     //  or only the ports with the compatible schema.
     //  Same question for the array port schema
+
+    // check if the target port is an any type then set the target port underlying type to the source port
+    if (targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort) {
+      const targetPortConfig = targetPort.getConfig()
+
+      targetPort.setUnderlyingType({
+        ...sourcePort.getConfig(),
+        id: targetPortConfig.id,
+        direction: targetPortConfig.direction,
+        parentId: targetPortConfig.parentId,
+        nodeId: targetPortConfig.nodeId,
+        order: targetPortConfig.order,
+        key: targetPortConfig.key,
+      })
+
+      console.log('!!! UNDERLYING TYPE SERIALIZE!!!!: ', targetPort.serialize())
+
+      targetNode.updatePort(targetPort)
+
+      if (targetPortConfig.parentId && (targetPortConfig.parentId?.length || 0) > 0) {
+        const parentPort = targetNode.getPort(targetPortConfig.parentId!)
+        if (parentPort) {
+          targetNode.removeObjectProperty(parentPort, targetPortConfig.key || '')
+
+          targetNode.addObjectProperty(
+            parentPort,
+            targetPortConfig.key!,
+            targetPort.getConfig(),
+          )
+        }
+      }
+      // if (targetPortConfig.parentId && (targetPortConfig.parentId?.length || 0) > 0) {
+      //   const parentPort = targetNode.getPort(targetPortConfig.parentId!)
+      //   if (parentPort) {
+      //     console.log('!!! UNDERLYING TYPE SET: ', targetPort.getConfig().underlyingType)
+      //
+      //     // targetNode.addObjectProperty(
+      //     //   parentPort,
+      //     //   targetPortConfig.key || '',
+      //     //   targetPortConfig,
+      //     // )
+      //   }
+      // }
+    }
 
     const edge = new Edge(
       generateEdgeID(),
@@ -595,7 +666,7 @@ export class Flow implements IFlow {
 
       case NodeEventType.PortUpdate: {
         const portUpdateEventData: PortUpdatedEventData = {
-          port: (nodeEvent as any).port,
+          port: (nodeEvent as any).port.clone(),
           nodeVersion: nodeEvent.version,
         }
 

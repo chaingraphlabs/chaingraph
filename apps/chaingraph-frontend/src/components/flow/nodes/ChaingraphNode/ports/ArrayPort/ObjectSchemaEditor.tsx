@@ -74,7 +74,7 @@ export function ObjectSchemaEditor({ initialSchema, onChange }: ObjectSchemaEdit
       ui: {
         hideEditor: false,
         keyDeletable: true,
-        collapsible: true,
+        collapsed: true,
       },
     })
 

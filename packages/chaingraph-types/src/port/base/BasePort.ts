@@ -63,6 +63,11 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
    * It calls the abstract serializeConfig and serializeValue methods.
    */
   serialize(): JSONValue {
+    const config = this.serializeConfig(this.config)
+    if (this.value === undefined) {
+      return { config }
+    }
+
     return {
       config: this.serializeConfig(this.config),
       value: this.value !== undefined ? this.serializeValue(this.value) : undefined,
