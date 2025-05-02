@@ -18,8 +18,8 @@ const PopoverTrigger = PopoverPrimitive.Trigger
 const PopoverAnchor = PopoverPrimitive.Anchor
 
 function PopoverContent({ ref, className, align = 'center', sideOffset = 4, ...props }: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof PopoverPrimitive.Content> | null> }) {
-  const shadowRoot = useShadowRoot()
-  const portalEl = shadowRoot.getElementById('chaingraph-portal')
+  const { root } = useShadowRoot()
+  const portalEl = root.getElementById('chaingraph-portal')
   return (
     <PopoverPrimitive.Portal container={portalEl}>
       <PopoverPrimitive.Content

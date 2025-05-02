@@ -9,25 +9,35 @@
 import type { PropsWithChildren } from 'react'
 import radixStyles from '@radix-ui/themes/styles.css?inline'
 import xyflowStyles from '@xyflow/react/dist/style.css?inline'
-import { useCallback, useState } from 'react'
+import { useSize } from 'ahooks'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styles from '../../index.css?inline'
 import { ShadowRootContext } from './useShadowRoot'
 
 export function Shadow({ children, className }: PropsWithChildren<{ className?: string }>) {
   const [root, setRoot] = useState<ShadowRoot | undefined>()
+  const ref = useRef<HTMLDivElement>(null)
+  const size = useSize(ref)
 
   const hostRef = useCallback((node: HTMLDivElement | null) => {
     if (!node || node.shadowRoot)
       return
 
+    ref.current = node
     const shadowRoot = node.attachShadow({ mode: 'open' })
     setRoot(shadowRoot)
   }, [])
 
+  const value = useMemo(() => {
+    if (!root)
+      return
+    return { height: size?.height ?? 0, root }
+  }, [root, size?.height])
+
   return (
     <div className={className} ref={hostRef}>
-      {root && <ShadowRootContext value={root}>{createPortal(<>{children}</>, root)}</ShadowRootContext> }
+      {value && <ShadowRootContext value={value}>{createPortal(<>{children}</>, value.root)}</ShadowRootContext> }
     </div>
   )
 }

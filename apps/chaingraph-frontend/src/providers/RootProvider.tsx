@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CSSProperties } from 'react'
 import { TooltipProvider } from '@/components/ui'
 import { ShadowWithStyles } from '@/components/ui/shadow'
 import { initializeStores, reset } from '@/store/init'
@@ -32,7 +33,9 @@ import { ZoomProvider } from './ZoomProvider'
 import '../store'
 
 interface RootProviderProps {
+  wrapperClassName?: string
   className?: string
+  style?: CSSProperties
   trpcURL?: string
   sessionToken?: string
   superjsonCustom?: typeof SuperJSON
@@ -45,7 +48,9 @@ interface RootProviderProps {
 export const DefaultTRPCURL = `ws://localhost:3001`
 
 export function RootProvider({
+  wrapperClassName,
   className,
+  style,
   children,
   trpcURL,
   sessionToken,
@@ -99,8 +104,8 @@ export function RootProvider({
   const trpcClient = useUnit($trpcClient)
 
   return (
-    <ShadowWithStyles className={className}>
-      <ThemeProvider theme={theme}>
+    <ShadowWithStyles className={wrapperClassName}>
+      <ThemeProvider className={className} style={style} theme={theme}>
 
         <TooltipProvider>
           <QueryClientProvider client={queryClient}>

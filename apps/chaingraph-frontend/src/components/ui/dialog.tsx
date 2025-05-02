@@ -36,8 +36,8 @@ function DialogOverlay({ ref, className, ...props }: React.ComponentPropsWithout
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 function DialogContent({ ref, className, children, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof DialogPrimitive.Content> | null> }) {
-  const shadowRoot = useShadowRoot()
-  const portalEl = shadowRoot.getElementById('chaingraph-portal')
+  const { root } = useShadowRoot()
+  const portalEl = root.getElementById('chaingraph-portal')
   return (
     <DialogPortal container={portalEl}>
       <DialogOverlay />
