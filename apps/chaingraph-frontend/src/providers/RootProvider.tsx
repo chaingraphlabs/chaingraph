@@ -96,7 +96,8 @@ export function RootProvider({
     }
 
     return () => {
-      reset()
+      if (isInitializedRef.current)
+        reset()
     }
   }, [nodeRegistry, sessionToken, superjsonCustom, trpcURL])
 

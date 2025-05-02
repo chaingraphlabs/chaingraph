@@ -7,11 +7,10 @@
  */
 
 import type { CategorizedNodes, FlowMetadata } from '@badaitech/chaingraph-types'
-import { fetchCategorizedNodesFx, resetCategories } from './categories'
-import { resetEdges } from './edges'
-import { clearExecutionState } from './execution'
-import { clearActiveFlow, loadFlowsListFx, setFlowsList } from './flow'
-import { clearNodes, initInterpolatorFx } from './nodes'
+import { fetchCategorizedNodesFx } from './categories'
+import { globalReset } from './common'
+import { loadFlowsListFx } from './flow'
+import { initInterpolatorFx } from './nodes'
 
 /**
  * Initialize all stores and load initial data
@@ -43,10 +42,5 @@ export async function initializeStores(callback?: (
 }
 
 export function reset() {
-  resetCategories()
-  clearNodes()
-  resetEdges()
-  clearActiveFlow()
-  setFlowsList([])
-  clearExecutionState()
+  globalReset()
 }
