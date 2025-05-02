@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.1.20
+
+### Patch Changes
+
+- Bump version
+
 ## 0.1.19
 
 ### Patch Changes
