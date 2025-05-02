@@ -34,8 +34,8 @@ function AlertDialogOverlay({ ref, className, ...props }: React.ComponentPropsWi
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
 function AlertDialogContent({ ref, className, ...props }: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof AlertDialogPrimitive.Content> | null> }) {
-  const shadowRoot = useShadowRoot()
-  const portalEl = shadowRoot.getElementById('chaingraph-portal')
+  const { root } = useShadowRoot()
+  const portalEl = root.getElementById('chaingraph-portal')
   return (
     <AlertDialogPortal container={portalEl}>
       <AlertDialogOverlay />

@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -89,6 +89,7 @@
     "@xyflow/react": "^12.6.0",
     "@xyflow/system": "^0.0.57",
     "add": "^2.0.6",
+    "ahooks": "^3.8.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
