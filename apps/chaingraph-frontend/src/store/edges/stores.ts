@@ -11,6 +11,7 @@ import type { Edge } from '@xyflow/react'
 import type { AddEdgeEventData, EdgeData, RemoveEdgeEventData } from './types'
 import { edgesDomain } from '@/store/domains'
 import { attach, combine, sample } from 'effector'
+import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
 import { $xyflowNodes } from '../nodes'
 import { $trpcClient } from '../trpc/store'
@@ -71,6 +72,7 @@ export const $edges = edgesDomain.createStore<EdgeData[]>([])
     edge => edge.edgeId !== event.edgeId,
   ))
   .reset(resetEdges)
+  .reset(globalReset)
   // .reset(clearActiveFlow)
 
 /**

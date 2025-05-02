@@ -10,6 +10,7 @@ import type { CategorizedNodes, CategoryMetadata } from '@badaitech/chaingraph-t
 import type { FetchCategoriesError } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { combine } from 'effector'
+import { globalReset } from '../common'
 import { categoriesDomain } from '../domains'
 import { $trpcClient } from '../trpc/store'
 
@@ -29,6 +30,7 @@ export const fetchCategorizedNodesFx = categoriesDomain.createEffect(() => {
 const $categorizedNodes = categoriesDomain.createStore<CategorizedNodes[]>([])
   .on(fetchCategorizedNodesFx.doneData, (_, nodes) => nodes)
   .reset(resetCategories)
+  .reset(globalReset)
 
 export const $categoryMetadata = categoriesDomain.createStore<Map<string, CategoryMetadata>>(new Map())
   .on(fetchCategorizedNodesFx.doneData, (_, nodes) => {
@@ -39,6 +41,7 @@ export const $categoryMetadata = categoriesDomain.createStore<Map<string, Catego
     return map
   })
   .reset(resetCategories)
+  .reset(globalReset)
 
 const $isLoading = fetchCategorizedNodesFx.pending
 
@@ -48,6 +51,7 @@ const $error = categoriesDomain.createStore<FetchCategoriesError | null>(null)
     timestamp: new Date(),
   }))
   .reset(fetchCategorizedNodesFx.doneData)
+  .reset(globalReset)
 
 // Computed stores
 export const $categoriesState = combine({

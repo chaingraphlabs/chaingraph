@@ -17,6 +17,7 @@ import type {
 } from './types'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { attach, combine, sample } from 'effector'
+import { globalReset } from '../common'
 import { executionDomain } from '../domains'
 import { $trpcClient } from '../trpc/store'
 import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
@@ -67,7 +68,7 @@ const initialState: ExecutionState = {
   },
 }
 
-export const $executionState = executionDomain.createStore<ExecutionState>(initialState)
+export const $executionState = executionDomain.createStore<ExecutionState>(initialState).reset(globalReset)
 
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
@@ -185,6 +186,7 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
+  .reset(globalReset)
 
 export const $executionNodes = executionDomain.createStore<Record<string, NodeExecutionState>>({}, {
   updateFilter: (prev, next) => {
@@ -307,6 +309,7 @@ export const $executionNodes = executionDomain.createStore<Record<string, NodeEx
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
+  .reset(globalReset)
 
 export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
   .on(newExecutionEvent, (state, event) => {
@@ -365,6 +368,7 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
+  .reset(globalReset)
 
 // Handle execution status changes
 $executionState
@@ -521,12 +525,14 @@ export const $highlightedNodeId = executionDomain.createStore<string[] | null>(n
     typeof highlightedNodeId === 'string'
       ? [highlightedNodeId]
       : highlightedNodeId)
+  .reset(globalReset)
 
 export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(null)
   .on(setHighlightedEdgeId, (state, highlightedEdgeId) =>
     typeof highlightedEdgeId === 'string'
       ? [highlightedEdgeId]
       : highlightedEdgeId)
+  .reset(globalReset)
 
 // Computed stores
 export const $isExecuting = $executionState.map(
@@ -578,7 +584,7 @@ export const $autoStartConditions = combine({
 })
 
 // Store to prevent multiple start attempts
-export const $startAttempted = executionDomain.createStore(false)
+export const $startAttempted = executionDomain.createStore(false).reset(globalReset)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)

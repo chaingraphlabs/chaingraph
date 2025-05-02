@@ -14,6 +14,7 @@ import { DefaultPosition } from '@badaitech/chaingraph-types'
 
 import { combine, sample } from 'effector'
 import { $categoryMetadata } from '../categories'
+import { globalReset } from '../common'
 import { nodesDomain } from '../domains'
 import { updatePort, updatePortUI, updatePortValue } from '../ports'
 import { $trpcClient } from '../trpc/store'
@@ -294,6 +295,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
     return { ...state, [nodeId]: updatedNode }
   })
+  .reset(globalReset)
 
 /**
  * Enhanced store for XYFlow nodes that preserves node references when only positions change.
@@ -480,15 +482,18 @@ export const $isNodesLoading = nodesDomain.createStore(false)
   .on(setNodesLoading, (_, isLoading) => isLoading)
   .on(addNodeToFlowFx.pending, (_, isPending) => isPending)
   .on(removeNodeFromFlowFx.pending, (_, isPending) => isPending)
+  .reset(globalReset)
 
 // Error states
 export const $addNodeError = nodesDomain.createStore<Error | null>(null)
   .on(addNodeToFlowFx.failData, (_, error) => error)
   .reset(addNodeToFlowFx.done)
+  .reset(globalReset)
 
 export const $removeNodeError = nodesDomain.createStore<Error | null>(null)
   .on(removeNodeFromFlowFx.failData, (_, error) => error)
   .reset(removeNodeFromFlowFx.done)
+  .reset(globalReset)
 
 // Combined error store
 export const $nodesError = combine(
