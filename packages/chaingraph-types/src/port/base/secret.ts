@@ -17,6 +17,8 @@ import { z } from 'zod'
  */
 const secretTypeSchemas = {
   openai: z.string().min(1),
+  anthropic: z.string().min(1),
+  deepseek: z.string().min(1),
   xAPI: z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),

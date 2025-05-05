@@ -21,6 +21,8 @@ const configSchema = basePortConfigSchema.merge(z.object({
   type: z.literal('secret'),
   secretType: z.union([
     z.literal('openai'),
+    z.literal('anthropic'),
+    z.literal('deepseek'),
     z.literal('xAPI'),
     z.literal('xApp'),
     z.literal('string'),
