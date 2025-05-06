@@ -105,8 +105,6 @@ class TestGateNode extends BaseNode {
     if (event.type === NodeEventType.PortConnected) {
       // TODO: add check that show source port any has underlying type
     }
-    if (event.type === NodeEventType.PortDisconnected) {
-    }
   }
 }
 
