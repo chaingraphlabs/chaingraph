@@ -33,12 +33,34 @@ import {
 } from '@/store/ports'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { BreakpointButton } from '../debug/BreakpointButton'
 import { useElementResize } from './hooks/useElementResize'
 import NodeBody from './NodeBody'
 import NodeErrorPorts from './NodeErrorPorts'
 import { NodeHeader } from './NodeHeader'
+
+const defaultCategoryMetadata = {
+  id: 'other',
+  label: 'Other',
+  description: 'Other nodes',
+  icon: 'Package',
+  style: {
+    light: {
+      primary: '#F5F5F5', // Soft gray
+      secondary: '#FAFAFA',
+      background: '#FFFFFF',
+      text: '#616161', // Darker gray
+    },
+    dark: {
+      primary: '#2C2C2C',
+      secondary: '#1F1F1F',
+      background: '#1C1C1C',
+      text: '#BDBDBD',
+    },
+  },
+  order: 7,
+}
 
 function ChaingraphNodeComponent({
   data,
@@ -62,9 +84,11 @@ function ChaingraphNodeComponent({
   const nodeEdges = useEdgesForNode(id)
   const highlightedNodeId = useUnit($highlightedNodeId)
 
-  const [style, setStyle] = useState(
-    theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
-  )
+  const categoryMetadata = data.categoryMetadata ?? defaultCategoryMetadata
+
+  const style = useMemo(() => {
+    return theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light
+  }, [categoryMetadata, theme])
 
   const isHighlighted = useMemo(
     () => highlightedNodeId && highlightedNodeId.includes(id),
@@ -104,12 +128,6 @@ function ChaingraphNodeComponent({
       dispatch.addBreakpoint({ nodeId: id })
     }
   }, [isBreakpointSet, dispatch, id])
-
-  useEffect(() => {
-    setStyle(
-      theme === 'dark' ? data.categoryMetadata.style.dark : data.categoryMetadata.style.light,
-    )
-  }, [theme, data.categoryMetadata, id])
 
   // Use throttled/memoized version of execution state style to reduce renders
   const executionStateStyle = useMemo(() => {
@@ -252,7 +270,7 @@ function ChaingraphNodeComponent({
       <NodeHeader
         node={nodeExecution?.node ?? node}
         context={portContextValue}
-        icon={data.categoryMetadata.icon}
+        icon={categoryMetadata.icon}
         style={style}
         onDelete={() => removeNodeFromFlow({
           flowId: activeFlow.id!,

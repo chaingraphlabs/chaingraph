@@ -11,5 +11,5 @@ import type { Node } from '@xyflow/react'
 
 export type ChaingraphNode = Node<{
   node: INode
-  categoryMetadata: CategoryMetadata
+  categoryMetadata?: CategoryMetadata
 }, 'chaingraphNode'>
