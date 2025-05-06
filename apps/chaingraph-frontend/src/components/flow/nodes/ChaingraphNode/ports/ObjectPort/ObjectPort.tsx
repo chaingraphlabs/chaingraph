@@ -210,6 +210,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                     <AddPropPopover
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
+                      nextOrder={childPorts.length + 1}
                     />
                   )}
                 </Popover>

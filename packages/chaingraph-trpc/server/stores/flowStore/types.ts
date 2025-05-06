@@ -23,4 +23,7 @@ export interface IFlowStore {
   deleteFlow: (flowId: string) => Promise<boolean>
   updateFlow: (flow: Flow) => Promise<Flow>
   hasAccess: (flowId: string, userId: string) => Promise<boolean>
+
+  lockFlow: (flowId: string, timeout?: number) => Promise<void>
+  unlockFlow: (flowId: string) => Promise<void>
 }

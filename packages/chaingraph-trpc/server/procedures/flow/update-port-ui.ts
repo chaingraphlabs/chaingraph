@@ -25,43 +25,42 @@ export const updatePortUI = flowContextProcedure
   .mutation(async ({ input, ctx }) => {
     // TODO: create nodes store
 
-    const flow = await ctx.flowStore.getFlow(input.flowId)
-    if (!flow)
-      throw new Error('Flow not found')
+    await ctx.flowStore.lockFlow(input.flowId)
 
-    const node = flow.nodes.get(input.nodeId)
-    if (!node)
-      throw new Error('Node not found')
+    console.log(`[updatePortUI] Locking flow ${input.flowId} for connection...`)
+    try {
+      const flow = await ctx.flowStore.getFlow(input.flowId)
+      if (!flow)
+        throw new Error('Flow not found')
 
-    const port = node.ports.get(input.portId)
-    if (!port)
-      throw new Error('Port not found')
+      const node = flow.nodes.get(input.nodeId)
+      if (!node)
+        throw new Error('Node not found')
 
-    console.log('Port UI updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, ui: input.ui })
-    console.log('Port UI before', port.getConfig().ui)
-    console.log('Port UI after', {
-      ...port.getConfig().ui,
-      ...input.ui,
-    })
-    console.log('Port Config', port.getConfig())
-    console.log(`Port Value ${JSON.stringify(port.getValue())}`)
+      const port = node.ports.get(input.portId)
+      if (!port)
+        throw new Error('Port not found')
 
-    const portConfig = port.getConfig()
-    portConfig.ui = {
-      ...portConfig.ui,
-      ...input.ui,
-    }
+      const portConfig = port.getConfig()
+      portConfig.ui = {
+        ...portConfig.ui,
+        ...input.ui,
+      }
 
-    // set config to the port instance
-    port.setConfig(portConfig)
-    node.updatePort(port)
-    flow.updateNode(node)
+      // set config to the port instance
+      port.setConfig(portConfig)
+      node.updatePort(port)
+      flow.updateNode(node)
 
-    await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow as Flow)
 
-    return {
-      flowId: input.flowId,
-      nodeId: input.nodeId,
-      port,
+      return {
+        flowId: input.flowId,
+        nodeId: input.nodeId,
+        port,
+      }
+    } finally {
+      console.log(`[updatePortUI] Unlocking flow ${input.flowId} after connection...`)
+      await ctx.flowStore.unlockFlow(input.flowId)
     }
   })

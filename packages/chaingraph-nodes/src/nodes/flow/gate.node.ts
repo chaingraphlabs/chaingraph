@@ -8,6 +8,8 @@
 
 import type {
   ExecutionContext,
+  IPort,
+  IPortConfig,
   NodeEvent,
   NodeExecutionResult,
   PortConnectedEvent,
@@ -15,12 +17,7 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   AnyPort,
-} from '@badaitech/chaingraph-types'
-import {
   filterPorts,
-} from '@badaitech/chaingraph-types'
-
-import {
   NodeEventType,
 } from '@badaitech/chaingraph-types'
 import {
@@ -34,13 +31,11 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 /**
- * Gate Node - Creates dynamic port structure mappings between different parts of a flow
+ * Gate Node - Creates dynamic port mappings between different parts of a flow
  *
- * Instead of creating predefined input/output pairs, this node:
- * 1. Starts with 'any' type input ports
- * 2. When connected to another port, inherits that port's type
- * 3. Creates matching output ports with the same keys as connected ports
- * 4. Forwards data from input to corresponding output during execution
+ * 1. Provides 'any' type input ports that inherit types from connected ports
+ * 2. Creates matching output ports with the same types as connected input ports
+ * 3. Forwards data from inputs to corresponding outputs during execution
  */
 @Node({
   type: 'GateNode',
@@ -50,23 +45,21 @@ import { NODE_CATEGORIES } from '../../categories'
   tags: ['flow', 'connect', 'route', 'hub', 'junction'],
 })
 class GateNode extends BaseNode {
-  // Input object port containing dynamic input properties
   @Input()
   @PortObject({
     title: 'Gate Inputs',
     description: 'Connect inputs to properties of this object',
-    isSchemaMutable: true,
+    isSchemaMutable: false,
     schema: {
       type: 'object',
       properties: {},
     },
     ui: {
-      collapsed: false,
+      collapsed: true,
     },
   })
-  inputObject: Record<string, any> = { }
+  inputObject: Record<string, any> = {}
 
-  // Output object port containing matching output properties
   @Output()
   @PortObject({
     title: 'Gate Outputs',
@@ -77,12 +70,11 @@ class GateNode extends BaseNode {
       properties: {},
     },
     ui: {
-      collapsed: false,
+      collapsed: true,
     },
   })
   outputObject: Record<string, any> = {}
 
-  // Hidden port to store connections mapping
   @Input()
   @String({
     title: 'Connections Map',
@@ -113,13 +105,44 @@ class GateNode extends BaseNode {
   }
 
   /**
-   * Execute method handles transferring data from inputs to their corresponding outputs
+   * Finds a unique port key that doesn't conflict with any existing port in the node
+   * @param baseKey The desired port key
+   * @returns A unique key not currently used by any port in the node
    */
-  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(`[GateNode ${this.id}] Executing with ${Object.keys(this.connections).length} connections`)
+  private getUniquePortKey(baseKey: string): string {
+    // Get all ports in this node
+    const allPorts = filterPorts(this, port => true)
 
+    // Get all existing keys
+    const existingKeys = new Set<string>()
+    for (const port of allPorts) {
+      const key = port.getConfig().key
+      if (key) {
+        existingKeys.add(key)
+      }
+    }
+
+    // If the base key doesn't exist, return it directly
+    if (!existingKeys.has(baseKey))
+      return baseKey
+
+    // Try adding numeric suffixes until we find an available key
+    let suffix = 1
+    let candidateKey = `${baseKey}_${suffix}`
+
+    while (existingKeys.has(candidateKey)) {
+      suffix++
+      candidateKey = `${baseKey}_${suffix}`
+    }
+
+    return candidateKey
+  }
+
+  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Transfer values from input properties to corresponding output properties
-    for (const [inputKey, outputKey] of Object.entries(this.connections)) {
+    const connectionMap = this.connections
+
+    for (const [inputKey, outputKey] of Object.entries(connectionMap)) {
       try {
         // Get the value from input and set it to the output
         this.outputObject[outputKey] = this.inputObject[inputKey]
@@ -131,98 +154,165 @@ class GateNode extends BaseNode {
     return {}
   }
 
-  /**
-   * Handles node events - primarily connection and disconnection events
-   */
   async onEvent(event: NodeEvent): Promise<void> {
-    // Call parent handler first
     await super.onEvent(event)
 
-    // Handle port connection events
-    if (event.type === NodeEventType.PortConnected) {
+    if (event.type === NodeEventType.StatusChange) {
+      await this.handleStatusChange()
+    } else if (event.type === NodeEventType.PortConnected) {
       await this.handlePortConnected(event as PortConnectedEvent)
     } else if (event.type === NodeEventType.PortDisconnected) {
-      // Handle port disconnection events
       await this.handlePortDisconnected(event as PortDisconnectedEvent)
+    }
+  }
+
+  private async handleStatusChange(): Promise<void> {
+    await this.ensureHasOneNotConnectedInputAnyPort()
+    return Promise.resolve()
+  }
+
+  private async handlePortConnected(event: PortConnectedEvent): Promise<void> {
+    // If the connection is with one of our inputs
+    if (event.sourceNode.id === this.id) {
+      const inputPort = event.sourcePort
+      const targetPort = event.targetPort
+
+      // Check if this is an input port inside our inputObject
+      const inputObjectPort = this.findPortByKey('inputObject')
+      if (inputPort.getConfig().parentId === inputObjectPort?.id) {
+        const inputKey = inputPort.getConfig().key || ''
+
+        // Check if this input port already has an output mapping
+        const connectionMap = this.connections
+        if (connectionMap[inputKey]) {
+          // This input already has a mapped output port, so ignore this event
+          console.log(`[GateNode ${this.id}] Input port ${inputKey} already has an output mapping, ignoring connection event`)
+          return
+        }
+
+        // Use the target port's key for better readability, ensuring it's unique
+        let outputKey = targetPort.key || inputKey
+        outputKey = this.getUniquePortKey(outputKey)
+
+        // Update the connections map
+        connectionMap[inputKey] = outputKey
+        this.saveConnections(connectionMap)
+
+        // Create or update the output port based on the connected port's type
+        await this.createOutputPort(inputPort, outputKey, targetPort)
+      }
     }
 
     await this.ensureHasOneNotConnectedInputAnyPort()
   }
 
-  /**
-   * Handles port connection events
-   * Sets underlying type and creates matching output ports
-   */
-  private async handlePortConnected(event: PortConnectedEvent): Promise<void> {
+  private async handlePortDisconnected(event: PortDisconnectedEvent): Promise<void> {
+    if (event.sourceNode.id === this.id) {
+      const inputPort = event.sourcePort
+      const inputObjectPort = this.findPortByKey('inputObject')
 
-    // const gateInputsPorts = this.findPortByKey('inputObject')
-    // if (!gateInputsPorts) {
-    //   console.error(`[GateNode ${this.id}] Input ports not found for connection event`)
-    //   return
-    // }
-    //
-    // const gateOutputsPorts = this.findPortByKey('outputObject')
-    // if (!gateOutputsPorts) {
-    //   console.error(`[GateNode ${this.id}] Output ports not found for connection event`)
-    //   return
-    // }
-    //
-    // const gateInputPort = findPort(this, (port) => {
-    //   return event.sourcePort.id === port.id
-    // })
-    // if (!gateInputPort) {
-    //   console.error(`[GateNode ${this.id}] Input port not found for connection event`)
-    //   return
-    // }
-    // const gateInputPortConfig = gateInputPort.getConfig()
-    //
-    // const connectedToPort = event.targetPort
-    // const connectedToPortConfig = connectedToPort.getConfig()
-    //
-    // // Set the underlying type of the input port to match the connected port
-    // if (gateInputPort instanceof AnyPort) {
-    //   gateInputPort.setUnderlyingType({
-    //     ...connectedToPortConfig,
-    //     id: gateInputPort.id,
-    //     direction: gateInputPortConfig.direction,
-    //     nodeId: this.id,
-    //     parentId: gateInputPortConfig.parentId,
-    //     connections: gateInputPortConfig.connections,
-    //     order: gateInputPortConfig.order,
-    //   })
-    //
-    //   console.log(`[GateNode ${this.id}] UNDERLYING TYPE SET: `, gateInputPort.getConfig().underlyingType)
-    //
-    //   await this.updatePort(gateInputPort)
-    // }
-    //
-    // await this.updatePort(gateInputsPorts)
-    // await this.updatePort(gateOutputsPorts)
+      // Only process for our input ports
+      if (inputPort.getConfig().parentId === inputObjectPort?.id) {
+        const inputKey = inputPort.getConfig().key || ''
+
+        // Get the current connection map
+        const connectionMap = this.connections
+
+        // Find the output key this input was mapped to
+        const outputKey = connectionMap[inputKey]
+
+        if (outputKey) {
+          // Remove this mapping from connections
+          delete connectionMap[inputKey]
+          this.saveConnections(connectionMap)
+
+          // Check if any other input uses this output key
+          const isOutputKeyUsed = Object.values(connectionMap).includes(outputKey)
+
+          // Only remove the output port if it's not used by any other input
+          if (!isOutputKeyUsed) {
+            const outputObjectPort = this.findPortByKey('outputObject')
+            if (outputObjectPort) {
+              this.removeObjectProperty(outputObjectPort, outputKey)
+              await this.updatePort(outputObjectPort)
+            }
+          }
+        }
+      }
+    }
+
+    await this.ensureHasOneNotConnectedInputAnyPort()
   }
 
-  /**
-   * Handles port disconnection events
-   * Cleans up ports and connection mappings
-   */
-  private async handlePortDisconnected(event: PortDisconnectedEvent): Promise<void> {
+  private async createOutputPort(
+    inputPort: IPort,
+    outputKey: string,
+    targetPort: IPort<IPortConfig>,
+  ): Promise<void> {
+    const outputObjectPort = this.findPortByKey('outputObject')
+    if (!outputObjectPort)
+      return
 
+    const inputPortConfig = inputPort.getConfig()
+    const inputOrder = inputPortConfig.order || 0
+
+    // Determine the port type to create based on the input port
+    let portConfig
+
+    if (inputPortConfig.type === 'any') {
+      // Get the underlying type for 'any' ports
+      const anyPort = inputPort as AnyPort
+      const underlyingType = anyPort.getRawConfig().underlyingType
+
+      if (!underlyingType) {
+        // If no underlying type, we don't create an output yet
+        return
+      }
+
+      portConfig = {
+        ...underlyingType,
+        id: `${this.id}_${outputKey}`,
+        key: outputKey,
+        nodeId: this.id,
+        parentId: outputObjectPort.id,
+        direction: 'output',
+        order: inputOrder, // Inherit order from input port
+      }
+    } else {
+      // For non-any ports, use their config directly
+      portConfig = {
+        ...inputPortConfig,
+        id: `${this.id}_${outputKey}`,
+        key: outputKey,
+        nodeId: this.id,
+        parentId: outputObjectPort.id,
+        direction: 'output',
+        order: inputOrder, // Inherit order from input port
+      }
+    }
+
+    // Add the output port to the output object
+    this.addObjectProperty(outputObjectPort, outputKey, portConfig)
+    await this.updatePort(outputObjectPort)
   }
 
   private async ensureHasOneNotConnectedInputAnyPort(): Promise<void> {
     const gateInputObjectPort = this.findPortByKey('inputObject')
-    if (!gateInputObjectPort) {
-      console.error(`[GateNode ${this.id}] Input ports not found for connection event`)
+    if (!gateInputObjectPort)
       return
-    }
 
-    const allParentsGateInput = filterPorts(this, (port) => {
-      const config = port.getConfig()
-      return config.parentId === gateInputObjectPort.id
-    })
-
+    // Find empty any ports (those without connections or underlying type)
     const emptyAnyPorts = filterPorts(this, (port) => {
       const config = port.getConfig()
-      return config.parentId === gateInputObjectPort.id && config.type === 'any' && config.connections?.length === 0
+      if (config.type !== 'any')
+        return false
+
+      const anyPort = port as AnyPort
+      const underlyingType = anyPort.getRawConfig().underlyingType
+
+      return config.parentId === gateInputObjectPort.id
+        && !underlyingType
+        && (!config.connections || config.connections.length === 0)
     }).sort((a, b) => {
       const aOrder = a.getConfig().order ?? 100
       const bOrder = b.getConfig().order ?? 100
@@ -230,32 +320,99 @@ class GateNode extends BaseNode {
     })
 
     if (emptyAnyPorts.length === 0) {
-      // needs to create a new one
-      const gateInputAnyPort1 = new AnyPort({
-        id: 'gate-input-1',
+      // Create a new empty any port if none exists
+      const nextId = this.getNextAvailableInputPortId()
+      const nextOrder = this.getNextAvailableOrder()
+      const basePortId = `gate-input-${nextId}`
+      const newPortId = this.getUniquePortKey(basePortId)
+
+      const gateInputAnyPort = new AnyPort({
+        id: newPortId,
         type: 'any',
-        key: 'gate_input_1',
+        key: newPortId,
         parentId: gateInputObjectPort.id,
         nodeId: this.id,
-        order: allParentsGateInput.length + 1,
+        order: nextOrder, // Set proper order for sorting
         direction: 'input',
         connections: [],
       })
 
       this.addObjectProperty(
         gateInputObjectPort,
-        gateInputAnyPort1.key,
-        gateInputAnyPort1.getConfig(),
+        gateInputAnyPort.key,
+        gateInputAnyPort.getConfig(),
       )
       await this.updatePort(gateInputObjectPort)
     } else if (emptyAnyPorts.length > 1) {
-      // needs to remove all but one
+      // Remove excess empty ports, keeping just one
       const portsToRemove = emptyAnyPorts.slice(1)
+
       for (const port of portsToRemove) {
         this.removeObjectProperty(gateInputObjectPort, port.getConfig().key || '')
       }
+
       await this.updatePort(gateInputObjectPort)
     }
+  }
+
+  /**
+   * Finds the next available input port ID that's not currently in use
+   */
+  private getNextAvailableInputPortId(): number {
+    const gateInputObjectPort = this.findPortByKey('inputObject')
+    if (!gateInputObjectPort)
+      return 1
+
+    // Get all child ports of the input object
+    const allInputPorts = filterPorts(this, port =>
+      port.getConfig().parentId === gateInputObjectPort.id)
+
+    // Extract existing IDs
+    const existingIds = new Set<number>()
+
+    for (const port of allInputPorts) {
+      const key = port.getConfig().key || ''
+      // Extract numeric ID from keys like "gate-input-42"
+      const match = key.match(/gate-input-(\d+)/)
+      if (match && match[1]) {
+        const id = Number.parseInt(match[1], 10)
+        if (!Number.isNaN(id)) {
+          existingIds.add(id)
+        }
+      }
+    }
+
+    // Find the smallest available ID
+    let nextId = 1
+    while (existingIds.has(nextId)) {
+      nextId++
+    }
+
+    return nextId
+  }
+
+  /**
+   * Finds the next available order value for a new port
+   */
+  private getNextAvailableOrder(): number {
+    const gateInputObjectPort = this.findPortByKey('inputObject')
+    if (!gateInputObjectPort)
+      return 1
+
+    // Get all child ports of the input object
+    const allInputPorts = filterPorts(this, port =>
+      port.getConfig().parentId === gateInputObjectPort.id)
+
+    // Find highest existing order
+    let maxOrder = 0
+    for (const port of allInputPorts) {
+      const order = port.getConfig().order || 0
+      if (order > maxOrder) {
+        maxOrder = order
+      }
+    }
+
+    return maxOrder + 1
   }
 }
 

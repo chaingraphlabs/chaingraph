@@ -69,8 +69,8 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     }
 
     return {
-      config: this.serializeConfig(this.config),
-      value: this.value !== undefined ? this.serializeValue(this.value) : undefined,
+      config,
+      value: this.serializeValue(this.value),
     }
   }
 
@@ -85,6 +85,13 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
         'Invalid serialized data: expected a JSON object.',
       )
     }
+    if (!('config' in data)) {
+      throw new PortError(
+        PortErrorType.SerializationError,
+        'Invalid serialized data: missing config.',
+      )
+    }
+
     const obj = data as { config: JSONValue, value?: JSONValue }
     const config = this.deserializeConfig(obj.config)
     this.setConfig(config)

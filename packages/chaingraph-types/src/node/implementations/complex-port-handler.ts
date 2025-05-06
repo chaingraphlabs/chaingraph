@@ -53,7 +53,11 @@ export class ComplexPortHandler implements IComplexPortHandler {
     )
 
     // Update the schema with the processed config
-    config.schema.properties[key] = processedConfig
+    const objectPortTyped = objectPort as ObjectPort
+    objectPortTyped.addField(
+      key,
+      processedConfig,
+    )
     objectPort.setConfig(config)
 
     // Create the actual child port
@@ -95,6 +99,24 @@ export class ComplexPortHandler implements IComplexPortHandler {
         }
       }
     }
+
+    // Bind the parent object port schema property to the child port config
+    /// //////////////////////////// EXPERIMENTAL CODE ////////////////////////////
+
+    Object.defineProperty(config.schema.properties[key], key, {
+      get() {
+        return childPort.getConfig() as IPortConfig
+      },
+      set(newConfig) {
+        // Update the child port config
+        childPort.setConfig(newConfig)
+        this.portManager.updatePort(childPort)
+      },
+      configurable: true,
+      enumerable: true,
+    })
+
+    /// //////////////////////////// EXPERIMENTAL CODE END ////////////////////////////
 
     // Update the parent port
     this.portManager.updatePort(objectPort)

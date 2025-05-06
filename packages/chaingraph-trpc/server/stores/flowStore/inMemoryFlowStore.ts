@@ -15,7 +15,14 @@ import { Flow } from '@badaitech/chaingraph-types'
  * In-memory implementation of flow storage
  */
 export class InMemoryFlowStore implements IFlowStore {
+  // Map to store flows in memory
   private flows: Map<string, Flow> = new Map()
+
+  // Map to manage locks and wait queues
+  private lockQueues: Map<string, {
+    locked: boolean
+    waitQueue: Array<{ resolve: () => void, reject: (error: Error) => void }>
+  }> = new Map()
 
   /**
    * Creates a new flow with given metadata
@@ -127,5 +134,69 @@ export class InMemoryFlowStore implements IFlowStore {
     // TODO: Implement more complex access control logic if needed
 
     return hasAccess
+  }
+
+  /**
+   * Locks a flow to prevent concurrent modifications.
+   * If the flow is already locked, this method will block until the lock is released.
+   * @param flowId Flow identifier
+   * @param timeout Lock timeout in milliseconds (default: 5000 ms)
+   * @throws Error if flow doesn't exist
+   */
+  async lockFlow(flowId: string, timeout = 5000): Promise<void> {
+    // Check if flow exists
+    const flow = await this.getFlow(flowId)
+    if (!flow) {
+      throw new Error(`Flow with ID ${flowId} not found`)
+    }
+
+    // Initialize lock queue if needed
+    if (!this.lockQueues.has(flowId)) {
+      this.lockQueues.set(flowId, {
+        locked: false,
+        waitQueue: [],
+      })
+    }
+
+    const lockInfo = this.lockQueues.get(flowId)!
+
+    // If already locked, wait in the queue
+    if (lockInfo.locked) {
+      await new Promise<void>((resolve, reject) => {
+        lockInfo.waitQueue.push({ resolve, reject })
+      })
+    }
+
+    // Mark as locked
+    lockInfo.locked = true
+
+    // Setup timeout if needed
+    if (timeout > 0) {
+      setTimeout(() => {
+        this.unlockFlow(flowId).catch(console.error)
+      }, timeout)
+    }
+  }
+
+  /**
+   * Unlocks a previously locked flow and grants lock to the next waiter if any
+   * @param flowId Flow identifier
+   * @throws Error if flow doesn't exist
+   */
+  async unlockFlow(flowId: string): Promise<void> {
+    // Check if flow exists
+
+    const lockInfo = this.lockQueues.get(flowId)
+    if (!lockInfo)
+      return // No lock to release
+
+    // If there are waiters, give the lock to the next one
+    if (lockInfo.waitQueue.length > 0) {
+      const nextWaiter = lockInfo.waitQueue.shift()!
+      nextWaiter.resolve()
+    } else {
+      // No waiters, just mark as unlocked
+      lockInfo.locked = false
+    }
   }
 }

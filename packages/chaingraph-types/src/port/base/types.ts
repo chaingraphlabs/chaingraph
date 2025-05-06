@@ -40,6 +40,9 @@ export class PortError extends Error {
     public details?: unknown,
   ) {
     console.log(`creating port error: ${type} - ${message} - ${details}`)
+    // print stack trace:
+    console.trace()
+
     super(message?.toString() ?? 'Unknown port error')
     this.name = 'PortError'
   }

@@ -18,24 +18,30 @@ export const removeNode = flowContextProcedure
   .mutation(async ({ input, ctx }) => {
     const { flowId, nodeId } = input
 
-    // Get flow from store
-    const flow = await ctx.flowStore.getFlow(flowId)
-    if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
-    }
+    await ctx.flowStore.lockFlow(flowId)
 
-    // Get node
-    const node = flow.nodes.get(nodeId)
-    if (!node) {
-      throw new Error(`Node ${nodeId} not found in flow ${flowId}`)
-    }
+    try {
+      // Get flow from store
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
 
-    // Remove node from flow
-    flow.removeNode(nodeId)
-    await ctx.flowStore.updateFlow(flow as Flow)
+      // Get node
+      const node = flow.nodes.get(nodeId)
+      if (!node) {
+        throw new Error(`Node ${nodeId} not found in flow ${flowId}`)
+      }
 
-    return {
-      success: true,
-      removedNodeId: nodeId,
+      // Remove node from flow
+      flow.removeNode(nodeId)
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      return {
+        success: true,
+        removedNodeId: nodeId,
+      }
+    } finally {
+      await ctx.flowStore.unlockFlow(flowId)
     }
   })

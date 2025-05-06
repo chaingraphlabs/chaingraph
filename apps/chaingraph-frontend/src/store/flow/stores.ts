@@ -180,7 +180,10 @@ export const $activeFlowMetadata = combine(
 // Subscription related stores
 export const $flowSubscriptionStatus = flowDomain.createStore<FlowSubscriptionStatus>(
   FlowSubscriptionStatus.IDLE,
-).on(setFlowSubscriptionStatus, (_, status) => status).reset(resetFlowSubscription).reset(clearActiveFlow)
+)
+  .on(setFlowSubscriptionStatus, (_, status) => status)
+  .reset(resetFlowSubscription)
+  .reset(clearActiveFlow)
 
 export const $flowSubscriptionError = flowDomain.createStore<FlowSubscriptionError | null>(null).on(setFlowSubscriptionError, (_, error) => error).reset(resetFlowSubscription).reset(clearActiveFlow)
 

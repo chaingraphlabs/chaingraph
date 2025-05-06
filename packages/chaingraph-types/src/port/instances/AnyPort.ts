@@ -53,6 +53,20 @@ export class AnyPort extends BasePort<AnyPortConfig> {
     super(mergedConfig)
   }
 
+  getConfig(): AnyPortConfig {
+    if (this.config.underlyingType) {
+      return {
+        ...this.config.underlyingType,
+        type: 'any',
+      } as AnyPortConfig
+    }
+    return this.config
+  }
+
+  getRawConfig(): AnyPortConfig {
+    return this.config
+  }
+
   /**
    * Returns the default value from the configuration.
    * @returns The default AnyPortValue if specified; otherwise undefined.
@@ -135,7 +149,6 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param underlyingType - The new underlying type configuration.
    */
   public setUnderlyingType(underlyingType: IPortConfig | undefined) {
-    console.log('!!! SET UNDERLYING TYPE', underlyingType)
     this.config.underlyingType = underlyingType
   }
 }

@@ -281,23 +281,19 @@ export class Flow implements IFlow {
       targetPort.removeConnection(sourceNode.id, sourcePort.id)
     }
 
+    const isSourcePortAny = sourcePort.getConfig().type === 'any' && sourcePort instanceof AnyPort
+    const isTargetPortAny = targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort
+
     // if target port is an any port type then remove the underlying type
-    if (targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort) {
-      targetPort.setUnderlyingType(undefined)
-      targetNode.updatePort(targetPort)
+    if (isSourcePortAny || isTargetPortAny) {
+      const anyPort = (isSourcePortAny ? sourcePort : targetPort) as AnyPort
+      anyPort.setUnderlyingType(undefined)
+      anyPort.setValue(anyPort.getRawConfig().defaultValue)
 
-      if (targetPort.getConfig().parentId && (targetPort.getConfig().parentId?.length || 0) > 0) {
-        const parentPort = targetNode.getPort(targetPort.getConfig().parentId!)
-        if (parentPort) {
-          targetNode.removeObjectProperty(parentPort, targetPort.getConfig().key || '')
-
-          // recreate targetPort without underlying type
-          targetNode.addObjectProperty(
-            parentPort,
-            targetPort.getConfig().key!,
-            targetPort.getConfig(),
-          )
-        }
+      if (isSourcePortAny) {
+        sourceNode.updatePort(sourcePort)
+      } else if (isTargetPortAny) {
+        targetNode.updatePort(targetPort)
       }
     }
 
@@ -384,34 +380,9 @@ export class Flow implements IFlow {
         key: targetPortConfig.key,
       })
 
-      console.log('!!! UNDERLYING TYPE SERIALIZE!!!!: ', targetPort.serialize())
-
+      // set the value of the target port to the value of the source port
+      targetPort.setValue(sourcePort.getValue())
       targetNode.updatePort(targetPort)
-
-      if (targetPortConfig.parentId && (targetPortConfig.parentId?.length || 0) > 0) {
-        const parentPort = targetNode.getPort(targetPortConfig.parentId!)
-        if (parentPort) {
-          targetNode.removeObjectProperty(parentPort, targetPortConfig.key || '')
-
-          targetNode.addObjectProperty(
-            parentPort,
-            targetPortConfig.key!,
-            targetPort.getConfig(),
-          )
-        }
-      }
-      // if (targetPortConfig.parentId && (targetPortConfig.parentId?.length || 0) > 0) {
-      //   const parentPort = targetNode.getPort(targetPortConfig.parentId!)
-      //   if (parentPort) {
-      //     console.log('!!! UNDERLYING TYPE SET: ', targetPort.getConfig().underlyingType)
-      //
-      //     // targetNode.addObjectProperty(
-      //     //   parentPort,
-      //     //   targetPortConfig.key || '',
-      //     //   targetPortConfig,
-      //     // )
-      //   }
-      // }
     }
 
     const edge = new Edge(
@@ -439,6 +410,9 @@ export class Flow implements IFlow {
     ))
 
     // Create and emit the port update event
+    sourceNode.incrementVersion()
+    targetNode.incrementVersion()
+
     this.updateNode(sourceNode)
     this.updateNode(targetNode)
 
@@ -676,6 +650,8 @@ export class Flow implements IFlow {
           FlowEventType.PortUpdated,
           portUpdateEventData,
         )
+
+        this.updateNode(node)
         break
       }
 

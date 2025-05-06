@@ -32,7 +32,7 @@ export function useSelectedFlow() {
     flowId: storedFlowId!,
   }, {
     enabled: Boolean(storedFlowId),
-    staleTime: 1000 * 60, // Consider data fresh for 1 minute
+    staleTime: 1000 * 15, // Consider data fresh for 1 minute
     // Proper query options
     gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
     retry: false, // Don't retry on error
@@ -61,11 +61,9 @@ export function useSelectedFlow() {
     }
   }, [error, storedFlowId])
 
-  const contextValue = useMemo(() => ({
+  return useMemo(() => ({
     selectedFlow: error || isLoading ? undefined : selectedFlow ?? undefined,
     setSelectedFlow,
     isLoading: isLoading && Boolean(storedFlowId),
   }), [error, selectedFlow, setSelectedFlow, isLoading, storedFlowId])
-
-  return contextValue
 }

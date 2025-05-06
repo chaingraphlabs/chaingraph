@@ -28,5 +28,16 @@ export const $trpcClient = trpcDomain.createStore<TRPCClient | null>(null)
       auth: {
         sessionBadAI,
       },
+      wsClientCallbacks: {
+        onError: (error) => {
+          console.error('[TRPC Client] WebSocket error:', error)
+        },
+        onClose: (event) => {
+          console.log('[TRPC Client] WebSocket closed:', event)
+        },
+        onOpen: () => {
+          console.log('[TRPC Client] WebSocket opened')
+        },
+      },
     })
   })

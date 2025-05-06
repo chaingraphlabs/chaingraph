@@ -58,6 +58,12 @@ export function createTRPCClient(
     url: string
     superjsonCustom?: typeof SuperJSON
     auth?: AuthOptions
+
+    wsClientCallbacks?: {
+      onOpen?: () => void
+      onError?: (err?: Event) => void
+      onClose?: (cause?: { code?: number }) => void
+    }
   } = {
     url: `ws://localhost:3001`,
     superjsonCustom: SuperJSON,
@@ -74,13 +80,22 @@ export function createTRPCClient(
           connectionParams: {
             sessionBadAI: token,
           },
-          onError: (err) => {
-            console.error('WebSocket error:', err)
+          onOpen: () => {
+            console.log('WebSocket connection opened')
+            opts.wsClientCallbacks?.onOpen && opts.wsClientCallbacks.onOpen()
+          },
+          onError: (event) => {
+            console.error('WebSocket error event:', event)
+            opts.wsClientCallbacks?.onError && opts.wsClientCallbacks.onError(event)
+          },
+          onClose: (cause) => {
+            console.error('WebSocket connection closed:', cause)
+            opts.wsClientCallbacks?.onClose && opts.wsClientCallbacks.onClose(cause)
           },
           keepAlive: {
             enabled: true,
             intervalMs: 5000,
-            pongTimeoutMs: 3500,
+            pongTimeoutMs: 1000,
           },
         }),
       }),

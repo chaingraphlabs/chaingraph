@@ -21,7 +21,7 @@ import {
 import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
 import { $activeFlowMetadata } from '@/store/flow'
-import { removeNodeFromFlow, updateNodeUI } from '@/store/nodes'
+import { removeNodeFromFlow } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,
@@ -198,18 +198,18 @@ function ChaingraphNodeComponent({
       if (!isDimensionsChanged)
         return
 
-      updateNodeUI({
-        flowId: activeFlow.id!,
-        nodeId: id,
-        ui: {
-          // ...node.metadata.ui,
-          dimensions: {
-            width: size.width,
-            height: size.height,
-          },
-        },
-        version: node.getVersion(),
-      })
+      // updateNodeUI({
+      //   flowId: activeFlow.id!,
+      //   nodeId: id,
+      //   ui: {
+      //     // ...node.metadata.ui,
+      //     dimensions: {
+      //       width: size.width,
+      //       height: size.height,
+      //     },
+      //   },
+      //   version: node.getVersion(),
+      // })
     },
   })
 

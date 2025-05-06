@@ -18,14 +18,12 @@ import type {
  */
 import type {
   AnyPortConfig,
-  ExtractValue,
   INode,
   IPort,
 } from '@badaitech/chaingraph-types'
 import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
-import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { cn } from '@/lib/utils'
-import { memo, useCallback, useMemo } from 'react'
+import { memo } from 'react'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface AnyPortProps {
@@ -35,29 +33,30 @@ export interface AnyPortProps {
 }
 
 function AnyPortComponent(props: AnyPortProps) {
-  const { node, port, context } = props
-  const { updatePortValue, getEdgesForPort } = context
+  const { port } = props
+  // const { node, port, context } = props
+  // const { updatePortValue, getEdgesForPort } = context
 
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
 
   // Memoize the edges for this port
-  const connectedEdges = useMemo(() => {
-    return getEdgesForPort(port.id)
-  }, [getEdgesForPort, port.id])
+  // const connectedEdges = useMemo(() => {
+  //   return getEdgesForPort(port.id)
+  // }, [getEdgesForPort, port.id])
 
-  const needRenderEditor = useMemo(() => {
-    return !isHideEditor(config, connectedEdges)
-  }, [config, connectedEdges])
-
-  const handleChange = useCallback((value: ExtractValue<AnyPortConfig> | undefined) => {
-    updatePortValue({
-      nodeId: node.id,
-      portId: port.id,
-      value,
-    })
-  }, [node.id, port.id, updatePortValue])
+  // const needRenderEditor = useMemo(() => {
+  //   return !isHideEditor(config, connectedEdges)
+  // }, [config, connectedEdges])
+  //
+  // const handleChange = useCallback((value: ExtractValue<AnyPortConfig> | undefined) => {
+  //   updatePortValue({
+  //     nodeId: node.id,
+  //     portId: port.id,
+  //     value,
+  //   })
+  // }, [node.id, port.id, updatePortValue])
 
   if (ui?.hidden)
     return null

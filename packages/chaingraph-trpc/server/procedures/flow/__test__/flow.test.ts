@@ -148,7 +148,7 @@ describe('flow Procedures', () => {
       const result = caller.flow.delete({
         flowId: 'non-existent-id',
       })
-      await expect(result).rejects.toThrow('Flow not found or access denied')
+      await expect(result).rejects.toThrow('Flow with ID non-existent-id not found')
     })
   })
 })

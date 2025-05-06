@@ -28,6 +28,7 @@ interface Data {
 interface Props {
   onClose: () => void
   onSubmit: (data: Data) => void
+  nextOrder?: number
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -132,12 +133,18 @@ export function AddPropPopover(props: Props) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {
-    if (!type || !key)
+    if (!type || !key || !typeConfigMap[type])
       return
+
+    const newPortConfig: IPortConfig = {
+      ...typeConfigMap[type],
+      // order has to be set to the length of the port object
+      order: props.nextOrder ?? 0,
+    }
 
     onSubmit({
       key,
-      config: typeConfigMap[type],
+      config: newPortConfig,
     })
   }
 

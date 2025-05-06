@@ -174,7 +174,7 @@ describe('anyPort Instance', () => {
       }
 
       const port = new AnyPort(config)
-      const portConfig = port.getConfig()
+      const portConfig = port.getRawConfig()
 
       expect(portConfig.ui?.bgColor).toBe('#cccccc')
       expect(portConfig.ui?.borderColor).toBe('#333333')
@@ -191,7 +191,7 @@ describe('anyPort Instance', () => {
       }
 
       const port = new AnyPort(config)
-      const portConfig = port.getConfig()
+      const portConfig = port.getRawConfig()
 
       expect(portConfig.ui?.bgColor).toBe('#custom')
       expect(portConfig.ui?.borderColor).toBe('#custom-border')
@@ -253,7 +253,7 @@ describe('anyPort Instance', () => {
           type: 'string',
         },
       }
-      expect(updatedDeserialized.getConfig()).toEqual(expectedUpdatedConfig)
+      expect(updatedDeserialized.getRawConfig()).toEqual(expectedUpdatedConfig)
       expect(updatedDeserialized.getValue()).toEqual(undefined)
       expect(updatedDeserialized.validate()).toBe(true)
 
