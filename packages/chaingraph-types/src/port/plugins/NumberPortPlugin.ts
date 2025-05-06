@@ -186,6 +186,10 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
     }
   },
   deserializeValue: (data: JSONValue) => {
+    if (data === undefined) {
+      return 0
+    }
+
     try {
       if (!isNumberPortValue(data)) {
         throw new PortError(

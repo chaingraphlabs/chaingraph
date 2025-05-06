@@ -28,6 +28,10 @@ export function validateArrayValue(
 ): string[] {
   const errors: string[] = []
 
+  if (value === undefined) {
+    return []
+  }
+
   // Type validation
   if (!isArrayPortValue(value)) {
     errors.push('Invalid array value structure')
@@ -117,6 +121,15 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: ArrayPortValue, config: ArrayPortConfig): JSONValue => {
+    if (value === undefined) {
+      return []
+    }
+
+    if (!config.itemConfig || !config.itemConfig.type) {
+      // return the raw value if no itemConfig is provided
+      return value
+    }
+
     try {
       if (!isArrayPortValue(value)) {
         throw new PortError(
@@ -153,6 +166,10 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
     }
   },
   deserializeValue: (data: JSONValue, config: ArrayPortConfig): ArrayPortValue => {
+    if (data === undefined) {
+      return []
+    }
+
     try {
       if (!isArrayPortValue(data)) {
         throw new PortError(
@@ -191,6 +208,11 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
         )
       }
 
+      if (!config.itemConfig || !config.itemConfig.type) {
+        // return the raw config if no itemConfig is provided
+        return { ...config }
+      }
+
       const pluginItem = PortPluginRegistry.getInstance().getPlugin(config.itemConfig.type)
       if (!pluginItem) {
         throw new PortError(
@@ -226,6 +248,11 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
           'Invalid array configuration for deserialization',
           result.error,
         )
+      }
+
+      if (!result.data.itemConfig || !result.data.itemConfig.type) {
+        // return the raw config if no itemConfig is provided
+        return { ...result.data }
       }
 
       // Deserialize the nested itemConfig using its corresponding plugin

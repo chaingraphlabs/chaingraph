@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.23
+
+### Patch Changes
+
+- Fix the port plugins undefined serialize/deserialize errors
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.23
+  - @badaitech/chaingraph-types@0.1.23
+  - @badaitech/chaingraph-trpc@0.1.23
+
 ## 0.1.22
 
 ### Patch Changes

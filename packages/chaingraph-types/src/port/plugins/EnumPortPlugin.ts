@@ -47,6 +47,10 @@ const valueSchema: z.ZodType<EnumPortValue> = z.string()
 const enumSpecificSchema = z.object({
   type: z.literal('enum'),
   options: z.array(z.custom<IPortConfig>((val) => {
+    if (val === undefined) {
+      return true
+    }
+
     if (
       typeof val !== 'object'
       || val === null
@@ -79,6 +83,10 @@ export function validateEnumValue(
 ): string[] {
   const errors: string[] = []
 
+  if (value === undefined) {
+    return errors
+  }
+
   // Type validation
   if (!isEnumPortValue(value)) {
     errors.push('Invalid enum value structure')
@@ -107,6 +115,10 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: EnumPortValue): JSONValue => {
+    if (value === undefined) {
+      return ''
+    }
+
     try {
       if (!isEnumPortValue(value)) {
         throw new PortError(
