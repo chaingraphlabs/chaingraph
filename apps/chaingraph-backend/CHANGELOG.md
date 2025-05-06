@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.21
+
+### Patch Changes
+
+- Add memory locks for atomic updates, fix flow sync issues, add gate node, improve 'any' type port connections
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.21
+  - @badaitech/chaingraph-types@0.1.21
+  - @badaitech/chaingraph-trpc@0.1.21
+
 ## 0.1.20
 
 ### Patch Changes
