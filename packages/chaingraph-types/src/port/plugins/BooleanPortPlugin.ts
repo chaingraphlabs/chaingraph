@@ -60,6 +60,10 @@ export const BooleanPortPlugin: IPortPlugin<'boolean'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: BooleanPortValue): JSONValue => {
+    if (value === undefined) {
+      return false
+    }
+
     try {
       if (!isBooleanPortValue(value)) {
         throw new PortError(

@@ -87,6 +87,11 @@ function validateField(
 ): string[] {
   const errors: string[] = []
 
+  if (fieldValue === undefined) {
+    // If the value is undefined or null, we can skip validation
+    return errors
+  }
+
   // Basic structure validation
   // if (!isValidFieldValue(fieldValue)) {
   //   errors.push(`Invalid field value structure for field ${fieldPath}`)

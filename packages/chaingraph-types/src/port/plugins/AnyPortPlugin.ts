@@ -13,6 +13,7 @@ import type {
   IPortConfig,
   IPortPlugin,
   IPortValue,
+  PortType,
 } from '../base'
 import { z } from 'zod'
 import {
@@ -60,28 +61,28 @@ const valueSchema = z.custom<any>((val) => {
  */
 const anySpecificSchema = z.object({
   type: z.literal('any'),
-  underlyingType: z.any(),
-  // underlyingType: z.custom<IPortConfig | undefined>((val) => {
-  //   if (val === undefined || val === null) {
-  //     return true
-  //   }
-  //
-  //   if (
-  //     typeof val !== 'object'
-  //     || !('type' in val)
-  //     || typeof (val as any).type !== 'string'
-  //   ) {
-  //     return false
-  //   }
-  //   const plugin = PortPluginRegistry.getInstance().getPlugin(
-  //     (val as any).type as PortType,
-  //   )
-  //   if (!plugin) {
-  //     return false
-  //   }
-  //   const result = plugin.configSchema.safeParse(val)
-  //   return result.success
-  // }, { message: 'Invalid underlying port configuration' }),
+  // underlyingType: z.any(),
+  underlyingType: z.custom<IPortConfig | undefined>((val) => {
+    if (val === undefined || val === null) {
+      return true
+    }
+
+    if (
+      typeof val !== 'object'
+      || !('type' in val)
+      || typeof (val as any).type !== 'string'
+    ) {
+      return false
+    }
+    const plugin = PortPluginRegistry.getInstance().getPlugin(
+      (val as any).type as PortType,
+    )
+    if (!plugin) {
+      return false
+    }
+    const result = plugin.configSchema.safeParse(val)
+    return result.success
+  }, { message: 'Invalid underlying port configuration' }),
   defaultValue: valueSchema.optional().nullable(),
   ui: basePortConfigUISchema.optional(),
 }).passthrough()
@@ -97,6 +98,10 @@ export function validateAnyValue(
   config: AnyPortConfig,
 ): string[] {
   const errors: string[] = []
+
+  if (value === undefined) {
+    return errors
+  }
 
   // Type validation
   if (!isAnyPortValue(value)) {
@@ -130,6 +135,10 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: AnyPortValue, config: AnyPortConfig): JSONValue => {
+    if (value === undefined) {
+      return undefined
+    }
+
     try {
       if (!isAnyPortValue(value)) {
         throw new PortError(

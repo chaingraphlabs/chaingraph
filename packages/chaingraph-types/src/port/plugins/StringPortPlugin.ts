@@ -172,6 +172,10 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
     }
   },
   deserializeValue: (data: JSONValue) => {
+    if (data === undefined) {
+      return ''
+    }
+
     try {
       if (!isStringPortValue(data)) {
         throw new PortError(

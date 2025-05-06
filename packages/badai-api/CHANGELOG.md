@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.1.23
+
+### Patch Changes
+
+- Fix the port plugins undefined serialize/deserialize errors
+
 ## 0.1.22
 
 ### Patch Changes
