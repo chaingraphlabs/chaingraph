@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.22
+
+### Patch Changes
+
+- default category metadata
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.22
+  - @badaitech/chaingraph-trpc@0.1.22
+  - @badaitech/chaingraph-types@0.1.22
+
 ## 0.1.21
 
 ### Patch Changes

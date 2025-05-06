@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.1.22
+
+### Patch Changes
+
+- default category metadata
+
 ## 0.1.21
 
 ### Patch Changes

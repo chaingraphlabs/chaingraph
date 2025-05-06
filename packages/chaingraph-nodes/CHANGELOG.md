@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.22
+
+### Patch Changes
+
+- default category metadata
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.22
+
 ## 0.1.21
 
 ### Patch Changes
