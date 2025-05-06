@@ -174,7 +174,7 @@ describe('anyPort Instance', () => {
       }
 
       const port = new AnyPort(config)
-      const portConfig = port.getConfig()
+      const portConfig = port.getRawConfig()
 
       expect(portConfig.ui?.bgColor).toBe('#cccccc')
       expect(portConfig.ui?.borderColor).toBe('#333333')
@@ -191,10 +191,73 @@ describe('anyPort Instance', () => {
       }
 
       const port = new AnyPort(config)
-      const portConfig = port.getConfig()
+      const portConfig = port.getRawConfig()
 
       expect(portConfig.ui?.bgColor).toBe('#custom')
       expect(portConfig.ui?.borderColor).toBe('#custom-border')
+    })
+
+    it('dynamicaly change underlying type and serialize', () => {
+      const config: AnyPortConfig = {
+        type: 'any',
+      }
+
+      const port = new AnyPort(config)
+      const serialized = port.serialize()
+      const serializedJson = JSON.stringify(serialized)
+      const parsedData = JSON.parse(serializedJson)
+      const deserialized = new AnyPort(config)
+      deserialized.deserialize(parsedData)
+
+      const expectedConfig = {
+        type: 'any',
+        ui: {
+          bgColor: '#cccccc',
+          borderColor: '#333333',
+        },
+        underlyingType: undefined,
+      }
+      expect(deserialized.getConfig()).toEqual(expectedConfig)
+      expect(deserialized.getValue()).toEqual(undefined)
+
+      // set underlying type
+      deserialized.setUnderlyingType({
+        type: 'string',
+        defaultValue: 'string_default',
+        direction: 'input',
+        id: 'any-port',
+        parentId: 'parent-id',
+        connections: [],
+        order: 0,
+      })
+
+      const updatedSerialized = deserialized.serialize()
+      const updatedSerializedJson = JSON.stringify(updatedSerialized)
+      const updatedParsedData = JSON.parse(updatedSerializedJson)
+      const updatedDeserialized = new AnyPort(config)
+      updatedDeserialized.deserialize(updatedParsedData)
+      const expectedUpdatedConfig = {
+        defaultValue: undefined,
+        type: 'any',
+        ui: {
+          bgColor: '#cccccc',
+          borderColor: '#333333',
+        },
+        underlyingType: {
+          connections: [],
+          defaultValue: 'string_default',
+          direction: 'input',
+          id: 'any-port',
+          order: 0,
+          parentId: 'parent-id',
+          type: 'string',
+        },
+      }
+      expect(updatedDeserialized.getRawConfig()).toEqual(expectedUpdatedConfig)
+      expect(updatedDeserialized.getValue()).toEqual(undefined)
+      expect(updatedDeserialized.validate()).toBe(true)
+
+      updatedDeserialized.serialize()
     })
   })
 })

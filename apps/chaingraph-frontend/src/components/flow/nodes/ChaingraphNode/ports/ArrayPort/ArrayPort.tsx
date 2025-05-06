@@ -115,9 +115,9 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     updatePortUI({
       nodeId: node.id,
       portId: port.id,
-      ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },
+      ui: { collapsed: config.ui?.collapsed === undefined ? true : !config.ui.collapsed },
     })
-  }, [node.id, port.id, config.ui?.collapsible, updatePortUI])
+  }, [node.id, port.id, config.ui?.collapsed, updatePortUI])
 
   // Handle item config updates
   const handleItemConfigUpdate = useCallback((updatedConfig: ArrayPortConfig) => {
@@ -187,7 +187,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!config.ui?.collapsible && <ChildrenHiddenHandles node={node} port={port as IPort} />}
+      {!config.ui?.collapsed && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
       {!isOutput && <PortHandle port={port} />}
 
@@ -233,10 +233,10 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
 
           <AnimatePresence initial={false}>
             <motion.div
-              initial={config.ui?.collapsible ? 'open' : 'closed'}
+              initial={config.ui?.collapsed ? 'open' : 'closed'}
               variants={variants}
-              animate={config.ui?.collapsible ? 'open' : 'closed'}
-              exit={config.ui?.collapsible ? 'closed' : 'open'}
+              animate={config.ui?.collapsed ? 'open' : 'closed'}
+              exit={config.ui?.collapsed ? 'closed' : 'open'}
               className={cn(
                 'relative w-full',
                 isOutput

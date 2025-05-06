@@ -21,6 +21,13 @@ import type {
 import type { JSONObject, JSONValue } from '../../utils/json'
 import { z } from 'zod'
 import {
+  isStreamPortValue,
+} from '..'
+import {
+  isBooleanPortValue,
+  isEnumPortValue,
+} from '..'
+import {
   basePortConfigSchema,
   isArrayPortValue,
   isObjectPortValue,
@@ -104,6 +111,24 @@ function validateField(
         if (isStringPortValue(fieldValue)) {
           errors.push(...validateNumberValue(fieldValue, fieldConfig))
         }
+        break
+      case 'boolean':
+        if (isBooleanPortValue(fieldValue)) {
+          errors.push(`Invalid boolean value for field ${fieldPath}`)
+        }
+        break
+      case 'enum':
+        if (isEnumPortValue(fieldValue)) {
+          errors.push(`Invalid enum value for field ${fieldPath}: ${fieldValue}`)
+        }
+        break
+      case 'stream':
+        if (isStreamPortValue(fieldValue)) {
+          errors.push(`Invalid stream value for field ${fieldPath}: ${fieldValue}`)
+        }
+        break
+      case 'any':
+        // No validation needed for "any" type
         break
       case 'object': {
         // For object port type, we now check the "schema" property.
@@ -198,6 +223,10 @@ export function validateObjectValue(
   const value = maybeValue
 
   // Validate each field defined in the schema.
+  if (!config.schema || !config.schema.properties) {
+    return []
+  }
+
   for (const [key, fieldConfig] of Object.entries(config.schema.properties)) {
     const fieldValue = value[key]
     if (fieldValue === undefined) {

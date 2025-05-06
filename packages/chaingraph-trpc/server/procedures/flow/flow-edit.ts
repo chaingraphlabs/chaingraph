@@ -19,22 +19,29 @@ export const edit = flowContextProcedure
   }))
   .mutation(async ({ input, ctx }) => {
     const { flowId, name, description, tags } = input
-    const flow = await ctx.flowStore.getFlow(flowId)
-    if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
-    }
 
-    if (name) {
-      flow.metadata.name = name
-    }
-    if (description) {
-      flow.metadata.description = description
-    }
-    if (tags) {
-      flow.metadata.tags = tags
-    }
+    await ctx.flowStore.lockFlow(flowId)
 
-    flow.metadata.updatedAt = new Date()
+    try {
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
 
-    return await ctx.flowStore.updateFlow(flow as Flow)
+      if (name) {
+        flow.metadata.name = name
+      }
+      if (description) {
+        flow.metadata.description = description
+      }
+      if (tags) {
+        flow.metadata.tags = tags
+      }
+
+      flow.metadata.updatedAt = new Date()
+
+      return await ctx.flowStore.updateFlow(flow as Flow)
+    } finally {
+      await ctx.flowStore.unlockFlow(flowId)
+    }
   })

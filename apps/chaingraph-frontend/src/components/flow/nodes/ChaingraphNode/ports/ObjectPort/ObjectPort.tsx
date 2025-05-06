@@ -29,8 +29,8 @@ export interface ObjectPortProps {
 }
 
 const variants = {
-  open: { opacity: 1, height: 'auto' },
-  closed: { opacity: 0, height: 0 },
+  open: { opacity: 1, height: 'auto', transition: { duration: 0 } },
+  closed: { opacity: 0, height: 0, transition: { duration: 0.1 } },
 } as const
 
 // Extracted this to a memoizable component
@@ -97,9 +97,9 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     updatePortUI({
       nodeId: node.id,
       portId: port.id,
-      ui: { collapsible: config.ui?.collapsible === undefined ? true : !config.ui.collapsible },
+      ui: { collapsed: config.ui?.collapsed === undefined ? true : !config.ui.collapsed },
     })
-  }, [node.id, port.id, config.ui?.collapsible, updatePortUI])
+  }, [node.id, port.id, config.ui?.collapsed, updatePortUI])
 
   const handleOpenPopover = useCallback(() => {
     setIsAddPropOpen(true)
@@ -128,7 +128,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!config.ui?.collapsible && <ChildrenHiddenHandles node={node} port={port as IPort} />}
+      {!config.ui?.collapsed && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
       {!isOutput && <PortHandle port={port} />}
 
@@ -149,16 +149,20 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
           <PortHeader
             title={title}
             isOutput={isOutput}
-            isCollapsible={!!config.ui?.collapsible}
+            isCollapsible={!!config.ui?.collapsed}
             onClick={handleToggleCollapsible}
           />
 
-          <AnimatePresence initial={false}>
+          <AnimatePresence
+            initial={false}
+            propagate={true}
+            mode="wait"
+          >
             <motion.div
-              initial={config.ui?.collapsible ? 'open' : 'closed'}
+              initial={config.ui?.collapsed ? 'open' : 'closed'}
               variants={variants}
-              animate={config.ui?.collapsible ? 'open' : 'closed'}
-              exit={config.ui?.collapsible ? 'closed' : 'open'}
+              animate={config.ui?.collapsed ? 'open' : 'closed'}
+              exit={config.ui?.collapsed ? 'closed' : 'open'}
               className={cn(
                 'relative w-full',
                 isOutput
@@ -166,6 +170,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                   : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
               )}
             >
+
               {childPorts.map(childPort => (
                 <PortField
                   key={childPort.id}
@@ -205,6 +210,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                     <AddPropPopover
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
+                      nextOrder={childPorts.length + 1}
                     />
                   )}
                 </Popover>

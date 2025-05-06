@@ -152,14 +152,14 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Single node operations - only clone the affected node and preserve others
   .on(addNode, (state, node) => {
-    return { ...state, [node.id]: node }
+    return { ...state, [node.id]: node.clone() }
   })
 
   // Add nodes operation
   .on(addNodes, (state, nodes) => {
     const newState = { ...state }
     nodes.forEach((node) => {
-      newState[node.id] = node
+      newState[node.id] = node.clone()
     })
 
     return newState
@@ -167,7 +167,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   .on(updateNode, (state, node) => {
     // Create a new state object, but only clone the node we're updating
-    return { ...state, [node.id]: node }
+    return { ...state, [node.id]: node.clone() }
   })
 
   .on(removeNode, (state, id) => {

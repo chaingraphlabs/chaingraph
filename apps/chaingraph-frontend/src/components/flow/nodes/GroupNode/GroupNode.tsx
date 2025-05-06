@@ -84,15 +84,17 @@ function GroupNodeComponent({
       style={{ backgroundColor: node.metadata.ui?.style?.backgroundColor ?? defaultColor }}
     >
       {/* Color Picker */}
-      <div
-        className="absolute top-2 right-2 z-10"
-        onMouseDown={e => e.stopPropagation()}
-      >
-        <ColorPicker
-          color={node.metadata.ui?.style?.backgroundColor ?? defaultColor}
-          onChange={handleColorChange}
-        />
-      </div>
+      {selected && (
+        <div
+          className="absolute top-2 right-2 z-10"
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <ColorPicker
+            color={node.metadata.ui?.style?.backgroundColor ?? defaultColor}
+            onChange={handleColorChange}
+          />
+        </div>
+      )}
 
       {/* Title Area */}
       <div

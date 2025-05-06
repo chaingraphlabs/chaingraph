@@ -18,25 +18,31 @@ export const removeEdge = flowContextProcedure
   .mutation(async ({ input, ctx }) => {
     const { flowId, edgeId } = input
 
-    // Get flow from store
-    const flow = await ctx.flowStore.getFlow(flowId)
-    if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
-    }
+    await ctx.flowStore.lockFlow(flowId)
 
-    // Get edge
-    const edge = flow.edges.get(edgeId)
-    if (!edge) {
-      throw new Error(`Edge ${edgeId} not found in flow ${flowId}`)
-    }
+    try {
+      // Get flow from store
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
 
-    // Remove edge from flow
-    flow.removeEdge(edgeId)
+      // Get edge
+      const edge = flow.edges.get(edgeId)
+      if (!edge) {
+        throw new Error(`Edge ${edgeId} not found in flow ${flowId}`)
+      }
 
-    await ctx.flowStore.updateFlow(flow as Flow)
+      // Remove edge from flow
+      flow.removeEdge(edgeId)
 
-    return {
-      success: true,
-      removedEdgeId: edgeId,
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      return {
+        success: true,
+        removedEdgeId: edgeId,
+      }
+    } finally {
+      await ctx.flowStore.unlockFlow(flowId)
     }
   })

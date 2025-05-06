@@ -8,6 +8,7 @@
 
 import type { IPort, NodeExecutionResult } from '../..'
 import { describe, expect, it } from 'vitest'
+import { AnyPort } from '../..'
 import { BaseNode, Edge, Flow } from '../..'
 import { hasCycle } from '../cycleDetection'
 
@@ -21,7 +22,9 @@ class Node extends BaseNode {
   }
 }
 
-const port = null as unknown as IPort<any>
+const port = new AnyPort({
+  type: 'any',
+}) as IPort<any>
 
 describe('detect cycle', () => {
   it('shouldn\'t detect cycle in an empty graph', () => {

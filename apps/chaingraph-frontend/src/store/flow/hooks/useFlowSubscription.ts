@@ -17,8 +17,17 @@ import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
 } from '../../../components/flow/utils/node-position'
-import { removeEdge, setEdge, setEdges } from '../../edges'
-import { $nodes, addNode, addNodes, removeNode, setNodes, setNodeVersion, updateNode, updateNodeUILocal } from '../../nodes'
+import { removeEdge, resetEdges, setEdge, setEdges } from '../../edges'
+import {
+  $nodes,
+  addNode,
+  addNodes,
+  clearNodes,
+  removeNode,
+  setNodeVersion,
+  updateNode,
+  updateNodeUILocal,
+} from '../../nodes'
 import { positionInterpolator } from '../../nodes/position-interpolation-advanced'
 import { updatePort } from '../../ports'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading, setFlowLoaded, setFlowMetadata, setFlowSubscriptionError, setFlowSubscriptionStatus } from '../stores'
@@ -41,13 +50,17 @@ export function useFlowSubscription() {
   const eventHandlers: FlowEventHandlerMap = useMemo(() => ({
     [FlowEventType.FlowInitStart]: (data) => {
       // clean up existing flow data
-      setNodes({})
-      setEdges([])
+
+      console.log(`[FlowInitStart] Flow init start for flow ${data.flowId}`)
+      clearNodes()
+      resetEdges()
+
       setFlowMetadata(data.metadata)
     },
 
     [FlowEventType.FlowInitEnd]: (data) => {
       setFlowLoaded(data.flowId)
+      console.log(`[FlowInitEnd] Flow init end for flow ${data.flowId}`)
     },
 
     [FlowEventType.MetadataUpdated]: (data) => {
@@ -302,11 +315,15 @@ export function useFlowSubscription() {
       : skipToken,
     {
       onStarted: () => {
-        console.debug('[FLOW SUB] Subscription started')
+        console.debug(`[FLOW SUB] Subscription started for flow ${activeFlowId}`)
+
+        clearNodes()
+        resetEdges()
+
         setFlowSubscriptionStatus(FlowSubscriptionStatus.CONNECTING)
       },
       onConnectionStateChange: (state) => {
-        console.debug('[FLOW SUB] Connection state changed:', state)
+        console.debug(`[FLOW SUB] Connection state changed for flow ${activeFlowId}:`, state)
       },
       onData: async (trackedData) => {
         // Set status to SUBSCRIBED on the first data received
@@ -318,7 +335,7 @@ export function useFlowSubscription() {
         await handleEvent(trackedData.data)
       },
       onError: (error) => {
-        console.error('Error subscribing to flow events:', error)
+        console.error(`Error subscribing to flow events for flow ${activeFlowId}:`, error)
         setFlowSubscriptionStatus(FlowSubscriptionStatus.ERROR)
         setFlowSubscriptionError({
           message: error.message,

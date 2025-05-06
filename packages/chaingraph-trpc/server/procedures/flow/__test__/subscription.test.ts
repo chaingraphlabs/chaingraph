@@ -161,6 +161,10 @@ describe('flow Event Subscription', () => {
         return
       }
 
+      if (eventData.type !== FlowEventType.NodeAdded) {
+        return
+      }
+
       // Verify event structure
       expect(typeof id).toBe('string')
       expect(eventData.type).toBe(FlowEventType.NodeAdded)

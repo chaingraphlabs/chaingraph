@@ -22,42 +22,48 @@ export const updateNodeParent = flowContextProcedure
     version: z.number(),
   }))
   .mutation(async ({ input, ctx }) => {
-    const flow = await ctx.flowStore.getFlow(input.flowId)
-    if (!flow)
-      throw new Error('Flow not found')
+    await ctx.flowStore.lockFlow(input.flowId)
 
-    const node = flow.nodes.get(input.nodeId)
-    if (!node)
-      throw new Error('Node not found')
+    try {
+      const flow = await ctx.flowStore.getFlow(input.flowId)
+      if (!flow)
+        throw new Error('Flow not found')
 
-    // Check if the node has been updated since the request was made
-    // if (node.getVersion() >= input.version) {
-    //   return {
-    //     flowId: input.flowId,
-    //     nodeId: input.nodeId,
-    //     parentNodeId: node.metadata.parentNodeId ?? undefined,
-    //     position: node.metadata.ui?.position ?? DefaultPosition,
-    //     version: node.getVersion(),
-    //   }
-    // }
+      const node = flow.nodes.get(input.nodeId)
+      if (!node)
+        throw new Error('Node not found')
 
-    // Update the parent node
-    node.setNodeParent(
-      input.position,
-      input.parentNodeId ?? undefined,
-      true,
-    )
-    flow.updateNode(node)
+      // Check if the node has been updated since the request was made
+      // if (node.getVersion() >= input.version) {
+      //   return {
+      //     flowId: input.flowId,
+      //     nodeId: input.nodeId,
+      //     parentNodeId: node.metadata.parentNodeId ?? undefined,
+      //     position: node.metadata.ui?.position ?? DefaultPosition,
+      //     version: node.getVersion(),
+      //   }
+      // }
 
-    // console.log(`[FLOW] Updated parent for node ${input.nodeId} to ${input.parentNodeId}`)
+      // Update the parent node
+      node.setNodeParent(
+        input.position,
+        input.parentNodeId ?? undefined,
+        true,
+      )
+      flow.updateNode(node)
 
-    await ctx.flowStore.updateFlow(flow as Flow)
+      // console.log(`[FLOW] Updated parent for node ${input.nodeId} to ${input.parentNodeId}`)
 
-    return {
-      flowId: input.flowId,
-      nodeId: input.nodeId,
-      parentNodeId: input.parentNodeId,
-      position: input.position,
-      version: node.getVersion(),
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      return {
+        flowId: input.flowId,
+        nodeId: input.nodeId,
+        parentNodeId: input.parentNodeId,
+        position: input.position,
+        version: node.getVersion(),
+      }
+    } finally {
+      await ctx.flowStore.unlockFlow(input.flowId)
     }
   })

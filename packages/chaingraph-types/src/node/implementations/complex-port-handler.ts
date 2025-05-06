@@ -8,6 +8,7 @@
 
 import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
 import type { IComplexPortHandler, IPortBinder, IPortManager } from '../interfaces'
+import { ObjectPort } from '../../port'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 
@@ -52,7 +53,11 @@ export class ComplexPortHandler implements IComplexPortHandler {
     )
 
     // Update the schema with the processed config
-    config.schema.properties[key] = processedConfig
+    const objectPortTyped = objectPort as ObjectPort
+    objectPortTyped.addField(
+      key,
+      processedConfig,
+    )
     objectPort.setConfig(config)
 
     // Create the actual child port
@@ -95,8 +100,39 @@ export class ComplexPortHandler implements IComplexPortHandler {
       }
     }
 
+    // Bind the parent object port schema property to the child port config
+    /// //////////////////////////// EXPERIMENTAL CODE ////////////////////////////
+
+    Object.defineProperty(config.schema.properties[key], key, {
+      get() {
+        return childPort.getConfig() as IPortConfig
+      },
+      set(newConfig) {
+        // Update the child port config
+        childPort.setConfig(newConfig)
+        this.portManager.updatePort(childPort)
+      },
+      configurable: true,
+      enumerable: true,
+    })
+
+    /// //////////////////////////// EXPERIMENTAL CODE END ////////////////////////////
+
     // Update the parent port
     this.portManager.updatePort(objectPort)
+
+    if ((objectPort.getConfig().parentId?.length || 0) > 0) {
+      // Update the parent port to reflect the new child
+      const parentPort = this.portManager.getPort(objectPort.getConfig().parentId!)
+
+      if (parentPort?.getConfig().type === 'object' && parentPort instanceof ObjectPort) {
+        this.addObjectProperty(
+          parentPort,
+          objectPort.getConfig().key!,
+          objectPort.getConfig(),
+        )
+      }
+    }
   }
 
   /**

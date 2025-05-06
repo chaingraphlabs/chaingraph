@@ -7,6 +7,7 @@
  */
 
 import type { Flow } from '@badaitech/chaingraph-types'
+import { NodeStatus } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
 import { z } from 'zod'
@@ -26,7 +27,7 @@ const NodeMetadataSchema = z.object({
   tags: z.array(z.string()).optional(),
 }).optional()
 
-function generateNodeID(): string {
+export function generateNodeID(): string {
   return `NO${customAlphabet(nolookalikes, 16)()}`
 }
 
@@ -40,36 +41,47 @@ export const addNode = flowContextProcedure
   .mutation(async ({ input, ctx }) => {
     const { flowId, nodeType, position, metadata } = input
 
-    // Get flow from store
-    const flow = await ctx.flowStore.getFlow(flowId)
-    if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
+    await ctx.flowStore.lockFlow(flowId)
+
+    try {
+      // Get flow from store
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
+
+      // Create node instance
+      const nodeId = generateNodeID()
+      const newNode = ctx.nodeRegistry.createNode(nodeType, `${nodeType}:${nodeId}`)
+      const node = newNode.clone()
+
+      // Initialize node
+      // Explicitly provide undefined to use the ports from the decorated node registry
+      node.initialize(undefined)
+
+      // Set additional metadata if provided
+      if (metadata) {
+        const currentMetadata = node.metadata
+        node.setMetadata({
+          ...currentMetadata,
+          ...metadata,
+        })
+      }
+
+      // Set position
+      node.setPosition(position, true)
+
+      console.debug(`[FLOW] Added node ${node.id} to flow ${flowId}`)
+
+      const createdNode = flow.addNode(node)
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      createdNode.setStatus(NodeStatus.Initialized, true)
+      flow.updateNode(createdNode)
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      return createdNode
+    } finally {
+      await ctx.flowStore.unlockFlow(flowId)
     }
-
-    // Create node instance
-    const nodeId = generateNodeID()
-    const newNode = ctx.nodeRegistry.createNode(nodeType, `${nodeType}:${nodeId}`)
-    const node = newNode.clone()
-
-    // Initialize node
-    node.initialize(undefined)
-
-    // Set additional metadata if provided
-    if (metadata) {
-      const currentMetadata = node.metadata
-      node.setMetadata({
-        ...currentMetadata,
-        ...metadata,
-      })
-    }
-
-    // Set position
-    node.setPosition(position, true)
-
-    console.debug(`[FLOW] Added node ${node.id} to flow ${flowId}`)
-
-    const createdNode = flow.addNode(node)
-    await ctx.flowStore.updateFlow(flow as Flow)
-
-    return createdNode
   })

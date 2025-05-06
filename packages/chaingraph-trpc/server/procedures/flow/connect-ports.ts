@@ -33,32 +33,41 @@ export const connectPorts = flowContextProcedure
       metadata,
     } = input
 
-    // Get flow from store
-    const flow = await ctx.flowStore.getFlow(flowId)
-    if (!flow) {
-      throw new Error(`Flow ${flowId} not found`)
-    }
+    await ctx.flowStore.lockFlow(flowId)
 
-    // Connect ports
-    const edge = await flow.connectPorts(sourceNodeId, sourcePortId, targetNodeId, targetPortId)
-    if (!edge) {
-      throw new Error('Failed to connect ports')
-    }
+    console.log(`[connectPorts] Locking flow ${flowId} for connection...`)
 
-    // Set edge metadata if provided
-    if (metadata) {
-      edge.metadata.label = metadata.label
-      edge.metadata.description = metadata.description
-    }
+    try {
+      // Get flow from store
+      const flow = await ctx.flowStore.getFlow(flowId)
+      if (!flow) {
+        throw new Error(`Flow ${flowId} not found`)
+      }
 
-    await ctx.flowStore.updateFlow(flow as Flow)
+      // Connect ports
+      const edge = await flow.connectPorts(sourceNodeId, sourcePortId, targetNodeId, targetPortId)
+      if (!edge) {
+        throw new Error('Failed to connect ports')
+      }
 
-    return {
-      edgeId: edge.id,
-      sourceNodeId,
-      sourcePortId,
-      targetNodeId,
-      targetPortId,
-      metadata: edge.metadata,
+      // Set edge metadata if provided
+      if (metadata) {
+        edge.metadata.label = metadata.label
+        edge.metadata.description = metadata.description
+      }
+
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      return {
+        edgeId: edge.id,
+        sourceNodeId,
+        sourcePortId,
+        targetNodeId,
+        targetPortId,
+        metadata: edge.metadata,
+      }
+    } finally {
+      console.log(`[connectPorts] Unlocking flow ${flowId} after connection...`)
+      await ctx.flowStore.unlockFlow(flowId)
     }
   })

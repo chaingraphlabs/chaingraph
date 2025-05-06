@@ -19,12 +19,18 @@ export const flowDelete = flowContextProcedure
       throw new Error('User not authenticated')
     }
 
-    // check if flow exists
-    const hasAccess = await ctx.flowStore.hasAccess(input.flowId, ctx.session.user.id)
-    if (!hasAccess) {
-      throw new Error('Flow not found or access denied')
-    }
+    await ctx.flowStore.lockFlow(input.flowId)
 
-    const success = await ctx.flowStore.deleteFlow(input.flowId)
-    return { success }
+    try {
+      // check if flow exists
+      const hasAccess = await ctx.flowStore.hasAccess(input.flowId, ctx.session.user.id)
+      if (!hasAccess) {
+        throw new Error('Flow not found or access denied')
+      }
+
+      const success = await ctx.flowStore.deleteFlow(input.flowId)
+      return { success }
+    } finally {
+      await ctx.flowStore.unlockFlow(input.flowId)
+    }
   })

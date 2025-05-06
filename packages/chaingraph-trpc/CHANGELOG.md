@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.21
+
+### Patch Changes
+
+- Add memory locks for atomic updates, fix flow sync issues, add gate node, improve 'any' type port connections
+
 ## 0.1.20
 
 ### Patch Changes

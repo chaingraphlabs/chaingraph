@@ -183,7 +183,7 @@ class LLMCallNode extends BaseNode {
     const streamingPromise = async () => {
       try {
         const buffer: string[] = []
-        const bufferSize = 5 // TODO: consider if we really need this buffer
+        const bufferSize = 1 // TODO: consider if we really need this buffer
 
         for await (const chunk of stream) {
           // Check if execution was aborted

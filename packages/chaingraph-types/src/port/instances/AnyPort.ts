@@ -7,7 +7,7 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { AnyPortConfig, AnyPortValue } from '../base'
+import type { AnyPortConfig, AnyPortValue, IPortConfig } from '../base'
 import { BasePort } from '../base'
 import { AnyPortPlugin } from '../plugins'
 
@@ -51,6 +51,20 @@ export class AnyPort extends BasePort<AnyPortConfig> {
 
     const mergedConfig = { ...config, ui: { ...defaultUi, ...config.ui } }
     super(mergedConfig)
+  }
+
+  getConfig(): AnyPortConfig {
+    if (this.config.underlyingType) {
+      return {
+        ...this.config.underlyingType,
+        type: 'any',
+      } as AnyPortConfig
+    }
+    return this.config
+  }
+
+  getRawConfig(): AnyPortConfig {
+    return this.config
   }
 
   /**
@@ -127,6 +141,15 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    */
   protected deserializeValue(data: JSONValue): AnyPortValue {
     return AnyPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Sets the underlying type of the any port.
+   * This method allows changing the underlying type dynamically.
+   * @param underlyingType - The new underlying type configuration.
+   */
+  public setUnderlyingType(underlyingType: IPortConfig | undefined) {
+    this.config.underlyingType = underlyingType
   }
 }
 

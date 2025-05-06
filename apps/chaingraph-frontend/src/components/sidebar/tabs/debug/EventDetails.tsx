@@ -26,6 +26,7 @@ function serializeEvent(event: ExecutionEventImpl) {
     case ExecutionEventEnum.NODE_BACKGROUNDED:
     case ExecutionEventEnum.NODE_SKIPPED:
     case ExecutionEventEnum.NODE_STATUS_CHANGED:
+    case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
     {
       const data = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
       const node = data.node
@@ -45,10 +46,6 @@ function serializeEvent(event: ExecutionEventImpl) {
       return (
         <div>
           <div className="text-xs text-muted-foreground mt-1">
-            {/* <pre className="text-sm font-mono bg-muted/10 p-2 rounded border overflow-auto max-h-[350px] whitespace-pre-wrap break-all"> */}
-            {/*  {JSON.stringify(node.serialize(), null, 2)} */}
-            {/* </pre> */}
-
             <div>Node ports:</div>
             <div className="text-xs text-muted-foreground mt-1">
               <ScrollArea className="flex-grow overflow-scroll max-h-[350px] ">
@@ -99,19 +96,22 @@ function serializeEvent(event: ExecutionEventImpl) {
         </div>
       )
     }
-    // case ExecutionEventEnum.FLOW_SUBSCRIBED:
-    // case ExecutionEventEnum.FLOW_STARTED:
-    // case ExecutionEventEnum.FLOW_COMPLETED:
-    // case ExecutionEventEnum.FLOW_FAILED:
-    // case ExecutionEventEnum.FLOW_CANCELLED:
-    // case ExecutionEventEnum.FLOW_PAUSED:
-    // case ExecutionEventEnum.FLOW_RESUMED:
-    // case ExecutionEventEnum.NODE_STARTED:
-    // case ExecutionEventEnum.NODE_BACKGROUNDED:
-    // case ExecutionEventEnum.NODE_FAILED:
-    // case ExecutionEventEnum.NODE_SKIPPED:
-    // case ExecutionEventEnum.NODE_STATUS_CHANGED:
-    // case ExecutionEventEnum.NODE_DEBUG_LOG_STRING:
+
+    case ExecutionEventEnum.NODE_DEBUG_LOG_STRING:
+    {
+      const data = event.data as ExecutionEventData[ExecutionEventEnum.NODE_DEBUG_LOG_STRING]
+      const node = data.node
+
+      return (
+        <div className="p-2">
+          <div className="text-sm font-medium">{node.metadata.title ?? node.metadata.id}</div>
+          <pre className="text-sm font-mono bg-muted/10 p-2 rounded border overflow-auto max-h-[350px] whitespace-pre-wrap break-all">
+            {data.log}
+          </pre>
+        </div>
+      )
+    }
+
     case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
     case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
     case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
@@ -189,7 +189,6 @@ function serializeEvent(event: ExecutionEventImpl) {
         </div>
       )
     }
-    // case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
   }
 
   return (
@@ -229,29 +228,6 @@ export const EventDetails = memo(({ event, isVisible }: { event: ExecutionEventI
         <ScrollArea className="flex-grow overflow-scroll">
           {serializeEvent(event)}
         </ScrollArea>
-
-        {/* {Object.entries(event.data).map(([key, value]) => ( */}
-        {/*  <div key={key} className="rounded-md"> */}
-        {/*    <div className="text-xs text-muted-foreground px-2 py-1 bg-muted/30 border-b flex items-center justify-between"> */}
-        {/*      <span>{key}</span> */}
-        {/*    </div> */}
-        {/*    <div className={cn( */}
-        {/*      'px-2 py-1.5', */}
-        {/*      typeof value === 'object' ? 'bg-muted/10' : '', */}
-        {/*    )} */}
-        {/*    > */}
-        {/*      {typeof value === 'object' */}
-        {/*        ? ( */}
-        {/*            <ScrollArea className="flex-grow overflow-scroll"> */}
-        {/*              {serializeEvent(value)} */}
-        {/*            </ScrollArea> */}
-        {/*          ) */}
-        {/*        : ( */}
-        {/*            <span className="text-sm">{String(value)}</span> */}
-        {/*          )} */}
-        {/*    </div> */}
-        {/*  </div> */}
-        {/* ))} */}
       </div>
     </div>
   )

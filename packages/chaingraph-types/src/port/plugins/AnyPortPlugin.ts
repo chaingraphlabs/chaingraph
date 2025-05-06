@@ -13,7 +13,6 @@ import type {
   IPortConfig,
   IPortPlugin,
   IPortValue,
-  PortType,
 } from '../base'
 import { z } from 'zod'
 import {
@@ -61,27 +60,28 @@ const valueSchema = z.custom<any>((val) => {
  */
 const anySpecificSchema = z.object({
   type: z.literal('any'),
-  underlyingType: z.custom<IPortConfig | undefined>((val) => {
-    if (val === undefined || val === null) {
-      return true
-    }
-
-    if (
-      typeof val !== 'object'
-      || !('type' in val)
-      || typeof (val as any).type !== 'string'
-    ) {
-      return false
-    }
-    const plugin = PortPluginRegistry.getInstance().getPlugin(
-      (val as any).type as PortType,
-    )
-    if (!plugin) {
-      return false
-    }
-    const result = plugin.configSchema.safeParse(val)
-    return result.success
-  }, { message: 'Invalid underlying port configuration' }),
+  underlyingType: z.any(),
+  // underlyingType: z.custom<IPortConfig | undefined>((val) => {
+  //   if (val === undefined || val === null) {
+  //     return true
+  //   }
+  //
+  //   if (
+  //     typeof val !== 'object'
+  //     || !('type' in val)
+  //     || typeof (val as any).type !== 'string'
+  //   ) {
+  //     return false
+  //   }
+  //   const plugin = PortPluginRegistry.getInstance().getPlugin(
+  //     (val as any).type as PortType,
+  //   )
+  //   if (!plugin) {
+  //     return false
+  //   }
+  //   const result = plugin.configSchema.safeParse(val)
+  //   return result.success
+  // }, { message: 'Invalid underlying port configuration' }),
   defaultValue: valueSchema.optional().nullable(),
   ui: basePortConfigUISchema.optional(),
 }).passthrough()
@@ -193,7 +193,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
   },
   serializeConfig: (config: AnyPortConfig): JSONValue => {
     try {
-      let underlyingTypeSerialized: JSONValue
+      let underlyingTypeSerialized: JSONValue | undefined
       let defaultValueSerialized: JSONValue = config.defaultValue
 
       if (config.underlyingType !== undefined && config.underlyingType !== null) {
@@ -205,6 +205,9 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
             `Unknown underlying type: ${config.underlyingType.type}`,
           )
         }
+
+        // console.log(`[AnyPortPlugin] serializeConfig`, config)
+        // console.log(`[AnyPortPlugin] plugin`, config.underlyingType.type)
 
         // Serialize the underlying type config using its plugin
         underlyingTypeSerialized = plugin.serializeConfig(config.underlyingType)
@@ -224,11 +227,23 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         defaultValueSerialized = plugin.serializeValue(config.defaultValue, config.underlyingType)
       }
 
-      return {
+      let result = {
         ...config,
         underlyingType: underlyingTypeSerialized,
-        defaultValue: defaultValueSerialized,
       }
+
+      if (defaultValueSerialized !== undefined) {
+        result = {
+          ...result,
+          underlyingType: underlyingTypeSerialized,
+          defaultValue: defaultValueSerialized,
+        }
+      }
+
+      // console.log(`[AnyPortPlugin] FINAL RESULT SERIALIZE`, result)
+      // console.log(`[AnyPortPlugin] FINAL RESULT ORIGINAL`, config)
+
+      return result
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
@@ -251,7 +266,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         result.data.underlyingType !== undefined
         && result.data.underlyingType !== null
         && typeof result.data.underlyingType === 'object'
-        && 'type' in result.data.underlyingType
+        // && 'type' in result.data.underlyingType
       ) {
         // Get the plugin for the underlying type
         const plugin = PortPluginRegistry.getInstance().getPlugin(result.data.underlyingType.type)
@@ -268,7 +283,7 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
         return {
           ...result.data,
           underlyingType: deserializedUnderlyingType,
-          defaultValue: plugin.deserializeValue(result.data.defaultValue, deserializedUnderlyingType),
+          defaultValue: result.data.defaultValue ? plugin.deserializeValue(result.data.defaultValue, deserializedUnderlyingType) : undefined,
         }
       }
 

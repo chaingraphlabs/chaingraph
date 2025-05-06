@@ -70,7 +70,7 @@ export const arrayPortConfigUISchema = basePortConfigUISchema.merge(
  */
 export const objectPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
-    collapsible: z.boolean().optional(),
+    collapsed: z.boolean().optional(),
     keyDeletable: z.boolean().optional(),
   }).passthrough(),
 )

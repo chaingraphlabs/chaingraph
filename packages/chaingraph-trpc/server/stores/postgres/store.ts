@@ -9,7 +9,7 @@
 import type { Flow } from '@badaitech/chaingraph-types'
 import type { JSONValue } from '../../../../chaingraph-types/src/utils/json'
 import type { DBType } from '../../context'
-import { asc, desc, eq, isNull, or, sql } from 'drizzle-orm'
+import { asc, desc, eq, sql } from 'drizzle-orm'
 
 import { flowsTable } from './schema'
 
@@ -22,6 +22,7 @@ interface SerializableFlow {
 }
 
 export async function serializableFlow(flow: Flow): Promise<SerializableFlow> {
+  console.log('creating serializable flow', Array.from(flow.nodes.values()).filter(node => node.metadata.type === 'source').map(node => node.metadata.id))
   return {
     id: flow.id || '',
     ownerId: flow.metadata.ownerID || '',
@@ -95,11 +96,7 @@ export async function listFlows<T>(
     .select()
     .from(flowsTable)
     .where(
-      or(
-        eq(flowsTable.ownerId, ownerId),
-        eq(flowsTable.ownerId, ''),
-        isNull(flowsTable.ownerId),
-      ),
+      eq(flowsTable.ownerId, ownerId),
     )
     .orderBy(orderByMap[orderBy])
     .limit(limit)

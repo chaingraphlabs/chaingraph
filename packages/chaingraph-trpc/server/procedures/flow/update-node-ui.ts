@@ -39,75 +39,93 @@ export const updateNodeUI = flowContextProcedure
   .mutation(async ({ input, ctx }) => {
     // TODO: create nodes store
 
-    const flow = await ctx.flowStore.getFlow(input.flowId)
-    if (!flow)
-      throw new Error('Flow not found')
+    await ctx.flowStore.lockFlow(input.flowId)
 
-    const node = flow.nodes.get(input.nodeId)
-    if (!node)
-      throw new Error('Node not found')
+    console.log(`[updateNodeUI] Locking flow ${input.flowId} for connection...`)
 
-    // Check if the node has been updated since the request was made
-    if (node.getVersion() >= input.version) {
+    try {
+      const flow = await ctx.flowStore.getFlow(input.flowId)
+      if (!flow)
+        throw new Error('Flow not found')
+
+      const node = flow.nodes.get(input.nodeId)
+      if (!node)
+        throw new Error('Node not found')
+
+      // Check if the node has been updated since the request was made
+      if (node.getVersion() >= input.version) {
+        return {
+          flowId: input.flowId,
+          nodeId: input.nodeId,
+          ui: node.metadata.ui,
+          version: node.getVersion(),
+        }
+      }
+
+      // Log the node title and ID and the input UI
+      console.log('Node title:', node.metadata.title)
+      console.log('Node ID:', node.metadata.id)
+
+      // Log the Node ports erializedJson:
+      // console.log('Node ports:', Array.from(node.ports.values()).map((port) => {
+      //   return port.serialize()
+      // }))
+
+      // // Update dimensions if present
+      // const hasInputDimensions
+      //   = input.ui.dimensions
+      //     && input.ui.dimensions.width > 0
+      //     && input.ui.dimensions.height > 0
+      //
+      // const hasDimensionsChanged = (
+      //   hasInputDimensions
+      //   && (
+      //     !node.metadata.ui?.dimensions
+      //     || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
+      //     || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
+      //   )
+      // )
+      //
+      // if (hasDimensionsChanged) {
+      //   node.setDimensions(input.ui.dimensions!, true)
+      // }
+
+      // Update metadata
+
+      // ...updatedNode.metadata.ui,
+      //       ...ui,
+      //       style: {
+      //         ...updatedNode.metadata.ui?.style,
+      //         ...ui.style,
+      //       },
+      //       state: {
+      //         ...updatedNode.metadata.ui?.state,
+      //         ...ui.state,
+      //       },
+
+      node.setUI({
+        ...(node.metadata.ui ?? {}),
+        ...input.ui,
+        style: {
+          ...(node.metadata.ui?.style ?? {}),
+          ...input.ui.style,
+        },
+        state: {
+          ...(node.metadata.ui?.state ?? {}),
+          ...input.ui.state,
+        },
+      }, true)
+
+      await ctx.flowStore.updateFlow(flow as Flow)
+
       return {
         flowId: input.flowId,
         nodeId: input.nodeId,
-        ui: node.metadata.ui,
+        ui: node.metadata.ui ?? {},
         version: node.getVersion(),
       }
-    }
-
-    // // Update dimensions if present
-    // const hasInputDimensions
-    //   = input.ui.dimensions
-    //     && input.ui.dimensions.width > 0
-    //     && input.ui.dimensions.height > 0
-    //
-    // const hasDimensionsChanged = (
-    //   hasInputDimensions
-    //   && (
-    //     !node.metadata.ui?.dimensions
-    //     || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
-    //     || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
-    //   )
-    // )
-    //
-    // if (hasDimensionsChanged) {
-    //   node.setDimensions(input.ui.dimensions!, true)
-    // }
-
-    // Update metadata
-
-    // ...updatedNode.metadata.ui,
-    //       ...ui,
-    //       style: {
-    //         ...updatedNode.metadata.ui?.style,
-    //         ...ui.style,
-    //       },
-    //       state: {
-    //         ...updatedNode.metadata.ui?.state,
-    //         ...ui.state,
-    //       },
-
-    node.setUI({
-      ...(node.metadata.ui ?? {}),
-      ...input.ui,
-      style: {
-        ...(node.metadata.ui?.style ?? {}),
-        ...input.ui.style,
-      },
-      state: {
-        ...(node.metadata.ui?.state ?? {}),
-        ...input.ui.state,
-      },
-    }, true)
-
-    await ctx.flowStore.updateFlow(flow as Flow)
-
-    return {
-      flowId: input.flowId,
-      nodeId: input.nodeId,
-      ui: node.metadata.ui ?? {},
-      version: node.getVersion(),
+    } finally {
+      console.log(`[updateNodeUI] Unlocking flow ${input.flowId} for connection...`)
+      await ctx.flowStore.unlockFlow(input.flowId)
     }
   })
