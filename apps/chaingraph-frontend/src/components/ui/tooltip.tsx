@@ -19,8 +19,8 @@ const Tooltip = TooltipPrimitive.Root
 const TooltipTrigger = TooltipPrimitive.Trigger
 
 function TooltipContent({ ref, className, sideOffset = 4, ...props }: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof TooltipPrimitive.Content> | null> }) {
-  const shadowRoot = useShadowRoot()
-  const portalEl = shadowRoot.getElementById('chaingraph-portal')
+  const { root } = useShadowRoot()
+  const portalEl = root.getElementById('chaingraph-portal')
   return (
     <TooltipPrimitive.Portal container={portalEl}>
       <TooltipPrimitive.Content

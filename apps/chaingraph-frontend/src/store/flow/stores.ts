@@ -10,6 +10,7 @@ import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import type { CreateFlowEvent, FlowSubscriptionError, UpdateFlowEvent } from './types'
 import { flowDomain } from '@/store/domains'
 import { combine, sample } from 'effector'
+import { globalReset } from '../common'
 import { $trpcClient } from '../trpc/store'
 import { FlowSubscriptionStatus } from './types'
 
@@ -118,45 +119,55 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
   })
   .on(deleteFlow, (flows, id) =>
     flows.filter(f => f.id !== id))
+  .reset(globalReset)
 
 // Currently active flow ID
 export const $activeFlowId = flowDomain.createStore<string | null>(null)
   .on(setActiveFlowId, (_, id) => id)
   .reset(clearActiveFlow)
+  .reset(globalReset)
 
 // Main loading state
 export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
   .on(setFlowsLoading, (_, isLoading) => isLoading)
   .on(loadFlowsListFx.pending, (_, isPending) => isPending)
+  .reset(globalReset)
 
 // Main error state
 export const $flowsError = flowDomain.createStore<Error | null>(null)
   .on(setFlowsError, (_, error) => error)
   .on(loadFlowsListFx.failData, (_, error) => error)
   .reset(loadFlowsListFx.done)
+  .reset(globalReset)
 
 // Specific operation error stores
 export const $createFlowError = flowDomain.createStore<Error | null>(null)
   .on(createFlowFx.failData, (_, error) => error)
   .reset(createFlowFx.done)
+  .reset(globalReset)
 
 export const $updateFlowError = flowDomain.createStore<Error | null>(null)
   .on(editFlowFx.failData, (_, error) => error)
   .reset(editFlowFx.done)
+  .reset(globalReset)
 
 export const $deleteFlowError = flowDomain.createStore<Error | null>(null)
   .on(deleteFlowFx.failData, (_, error) => error)
   .reset(deleteFlowFx.done)
+  .reset(globalReset)
 
 // Specific operation loading states
 export const $isCreatingFlow = flowDomain.createStore<boolean>(false)
   .on(createFlowFx.pending, (_, isPending) => isPending)
+  .reset(globalReset)
 
 export const $isUpdatingFlow = flowDomain.createStore<boolean>(false)
   .on(editFlowFx.pending, (_, isPending) => isPending)
+  .reset(globalReset)
 
 export const $isDeletingFlow = flowDomain.createStore<boolean>(false)
   .on(deleteFlowFx.pending, (_, isPending) => isPending)
+  .reset(globalReset)
 
 // Combined error store
 export const $allFlowsErrors = combine(
@@ -180,12 +191,16 @@ export const $activeFlowMetadata = combine(
 // Subscription related stores
 export const $flowSubscriptionStatus = flowDomain.createStore<FlowSubscriptionStatus>(
   FlowSubscriptionStatus.IDLE,
-)
-  .on(setFlowSubscriptionStatus, (_, status) => status)
+).on(setFlowSubscriptionStatus, (_, status) => status)
   .reset(resetFlowSubscription)
   .reset(clearActiveFlow)
+  .reset(globalReset)
 
-export const $flowSubscriptionError = flowDomain.createStore<FlowSubscriptionError | null>(null).on(setFlowSubscriptionError, (_, error) => error).reset(resetFlowSubscription).reset(clearActiveFlow)
+export const $flowSubscriptionError = flowDomain.createStore<FlowSubscriptionError | null>(null)
+  .on(setFlowSubscriptionError, (_, error) => error)
+  .reset(resetFlowSubscription)
+  .reset(clearActiveFlow)
+  .reset(globalReset)
 
 // Derived store to check if subscription is active
 export const $isFlowSubscribed = $flowSubscriptionStatus.map(

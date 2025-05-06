@@ -62,8 +62,8 @@ DropdownMenuSubContent.displayName
   = DropdownMenuPrimitive.SubContent.displayName
 
 function DropdownMenuContent({ ref, className, sideOffset = 4, ...props }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & { ref?: React.RefObject<React.ElementRef<typeof DropdownMenuPrimitive.Content> | null> }) {
-  const shadowRoot = useShadowRoot()
-  const portalEl = shadowRoot.getElementById('chaingraph-portal')
+  const { root } = useShadowRoot()
+  const portalEl = root.getElementById('chaingraph-portal')
   return (
     <DropdownMenuPrimitive.Portal container={portalEl}>
       <DropdownMenuPrimitive.Content
