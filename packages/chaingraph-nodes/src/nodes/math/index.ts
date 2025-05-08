@@ -9,3 +9,4 @@
 export * from './not.node'
 export * from './random.node'
 export * from './and.node'
+export * from './or.node'
