@@ -174,7 +174,7 @@
 /* Connection line (when dragging new connection) */
 .react-flow__connection-path {
   @apply stroke-[3.5px];
-  stroke: hsl(var(--edge-connecting));
+  @apply stroke-[hsl(var(--flow-execute))];
 }
 
 /* Add edge animation */
@@ -200,10 +200,6 @@
 .react-flow__selection {
   @apply border-2 border-[hsl(var(--flow-execute))]/50;
   @apply bg-[hsl(var(--flow-execute))]/10;
-}
-
-.react-flow__connection-path {
-  @apply stroke-[hsl(var(--flow-execute))];
 }
 
 /* Controls */

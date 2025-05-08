@@ -67,6 +67,7 @@ function DropdownMenuContent({ ref, className, sideOffset = 4, ...props }: React
   return (
     <DropdownMenuPrimitive.Portal container={portalEl}>
       <DropdownMenuPrimitive.Content
+        hideWhenDetached
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
