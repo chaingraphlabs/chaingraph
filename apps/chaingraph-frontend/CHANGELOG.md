@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.24-dev.2
+
+### Patch Changes
+
+- Fix deserialization
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.24-dev.2
+  - @badaitech/chaingraph-types@0.1.24-dev.2
+  - @badaitech/chaingraph-trpc@0.1.24-dev.2
+
 ## 0.1.24-dev.1
 
 ### Patch Changes

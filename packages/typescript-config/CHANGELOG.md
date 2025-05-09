@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.24-dev.2
+
+### Patch Changes
+
+- Fix deserialization
+
 ## 0.1.24-dev.1
 
 ### Patch Changes

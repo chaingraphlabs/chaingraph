@@ -819,7 +819,9 @@ export class Flow implements IFlow {
       const targetNode = flow.nodes.get(edgeData.targetNodeId)
 
       if (!sourceNode || !targetNode) {
-        throw new Error('Failed to deserialize flow: source or target node not found.')
+        // throw new Error('Failed to deserialize flow: source or target node not found.')
+        console.error(`[Flow] Failed to deserialize flow: source or target node not found, skiping`)
+        continue
       }
 
       const sourcePort = sourceNode.getPort(edgeData.sourcePortId)
