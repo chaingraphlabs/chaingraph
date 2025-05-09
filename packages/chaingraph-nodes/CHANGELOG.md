@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.24-dev.3
+
+### Patch Changes
+
+- Fix enum deserialize
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.24-dev.3
+
 ## 0.1.24-dev.2
 
 ### Patch Changes

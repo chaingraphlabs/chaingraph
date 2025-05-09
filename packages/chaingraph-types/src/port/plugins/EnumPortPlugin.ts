@@ -83,7 +83,7 @@ export function validateEnumValue(
 ): string[] {
   const errors: string[] = []
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return errors
   }
 
@@ -115,7 +115,7 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: EnumPortValue): JSONValue => {
-    if (value === undefined) {
+    if (value === undefined || value === null) {
       return ''
     }
 
@@ -135,6 +135,10 @@ export const EnumPortPlugin: IPortPlugin<'enum'> = {
     }
   },
   deserializeValue: (data: JSONValue): EnumPortValue => {
+    if (data === undefined || data === null) {
+      return ''
+    }
+
     try {
       if (!isEnumPortValue(data)) {
         throw new PortError(

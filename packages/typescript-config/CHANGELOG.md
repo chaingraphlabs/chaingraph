@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.24-dev.3
+
+### Patch Changes
+
+- Fix enum deserialize
+
 ## 0.1.24-dev.2
 
 ### Patch Changes
