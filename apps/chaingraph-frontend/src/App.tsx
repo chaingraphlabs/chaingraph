@@ -23,7 +23,7 @@ function App() {
             trpcURL={appConfig.chaingraphTRPCWSUrl}
             superjsonCustom={SuperJSON}
             nodeRegistry={NodeRegistry.getInstance()}
-            sessionToken={process.env.REACT_APP_SESSION_TOKEN || ''}
+            sessionToken={import.meta.env.VITE_CHAINGRAPH_SESSION_TOKEN || ''}
           />
         )}
         >
