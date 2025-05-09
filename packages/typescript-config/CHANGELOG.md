@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.24-dev.0
+
+### Patch Changes
+
+- 639038b: Redevelop gate node, now it handles complex types much better. Add LLM Call with structured output node. Add basic value Object node with mutable schema. Rename BadAI to ArchAI nodes and category. Add math And node. Add yaml helper to handlebars template. Add OKX nodes to build whole swap flow. Add PortCreate, PortDelete events to the node. Improve here and there core port, nodes, flow logic as well as port plugins.
+
 ## 0.1.23
 
 ### Patch Changes

@@ -23,7 +23,7 @@ function App() {
             trpcURL={appConfig.chaingraphTRPCWSUrl}
             superjsonCustom={SuperJSON}
             nodeRegistry={NodeRegistry.getInstance()}
-            sessionToken={import.meta.env.VITE_CHAINGRAPH_SESSION_TOKEN || ''}
+            sessionToken={import.meta.env.VITE_CHAINGRAPH_SESSION_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQwN3RsdG1mYzN2bTNmaGg4bTlnIiwidXNlcl9pZCI6IjQyMjg0YTA3LTZiODgtNDc2ZC1iYTQ0LTY2ZmFiZTFkNTRjOCIsInVzZXJfcm9sZSI6ImFkbWluIiwiaXNzIjoiYmFkYWkiLCJleHAiOjE3NDg0NjE1NTgsImlzX2FnZW50IjpmYWxzZX0.GqRvWcglYGnAfB1vI9iYXaxXepl3AECZnpxMdg6-QTE'}
           />
         )}
         >
