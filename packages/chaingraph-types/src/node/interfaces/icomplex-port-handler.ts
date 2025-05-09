@@ -19,7 +19,7 @@ export interface IComplexPortHandler {
    * @param key The property key
    * @param portConfig The port configuration for the new property
    */
-  addObjectProperty: (objectPort: IPort, key: string, portConfig: IPortConfig) => void
+  addObjectProperty: (objectPort: IPort, key: string, portConfig: IPortConfig) => IPort
 
   /**
    * Remove a property from an object port

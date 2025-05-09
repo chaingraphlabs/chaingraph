@@ -20,7 +20,8 @@ export const NODE_CATEGORIES = {
   OTHER: 'other',
   GROUP: 'group',
   SECRET: 'secret',
-  BADAI: 'badai',
+  ARCHAI: 'archai',
+  OKX_DEX: 'okx-dex',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -49,10 +50,10 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     order: 100,
   },
 
-  [NODE_CATEGORIES.BADAI]: {
-    id: NODE_CATEGORIES.BADAI,
-    label: 'BadAI',
-    description: 'BadAI nodes',
+  [NODE_CATEGORIES.ARCHAI]: {
+    id: NODE_CATEGORIES.ARCHAI,
+    label: 'ArchAI',
+    description: 'ArchAI nodes',
     icon: 'FlaskConical',
     style: {
       light: {
@@ -281,6 +282,29 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     },
     order: 9,
   },
+
+  [NODE_CATEGORIES.OKX_DEX]: {
+    id: NODE_CATEGORIES.OKX_DEX,
+    label: 'OKX DEX API',
+    description: 'OKX Decentralized Exchange API integration',
+    icon: 'Wallet', // Will add this to the icons
+    style: {
+      light: {
+        primary: '#FFF8E1', // Soft amber/gold
+        secondary: '#FFFCF0',
+        background: '#FFFFFF',
+        text: '#B47D00', // Deeper gold/amber
+      },
+      dark: {
+        primary: '#493C14', // Deep amber
+        secondary: '#2C240B', // Darker amber
+        background: '#1C1C1C',
+        text: '#FFD54F', // Bright gold that's visible on dark
+      },
+    },
+    order: 10, // After Secret
+  },
+
 }
 
 export function getCategoriesMetadata(): CategoryMetadata[] {

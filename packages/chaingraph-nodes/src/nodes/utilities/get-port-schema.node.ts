@@ -8,17 +8,19 @@
 
 import type {
   ExecutionContext,
-  IPort,
   IPortConfig,
   NodeEvent,
   NodeExecutionResult,
+  ObjectPort,
   PortConnectedEvent,
   PortDisconnectedEvent,
+} from '@badaitech/chaingraph-types'
+import {
+  findPort,
 } from '@badaitech/chaingraph-types'
 
 import {
   BaseNode,
-  findPortByKey,
   Input,
   Node,
   NodeEventType,
@@ -27,6 +29,18 @@ import {
   PortObject,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import {
+  AnyPortSchema,
+  ArrayPortSchema,
+  BasePortSchema,
+  BooleanPortSchema,
+  EnumPortSchema,
+  NumberPortSchema,
+  ObjectPortSchema,
+  PortSchemaUnion,
+  StreamPortSchema,
+  StringPortSchema,
+} from './get-port-schema.type'
 
 @Node({
   type: 'GetPortSchemaNode',
@@ -38,7 +52,7 @@ import { NODE_CATEGORIES } from '../../categories'
 class GetPortSchemaNode extends BaseNode {
   @Input()
   @PortAny({
-    title: 'Input',
+    title: 'Input Port',
     description: 'Connect this to any port to extract its schema',
   })
   input: any
@@ -46,44 +60,13 @@ class GetPortSchemaNode extends BaseNode {
   @Output()
   @PortObject({
     title: 'Port Schema',
-    description: 'The schema of the connected port',
-    isSchemaMutable: false,
-    schema: {
-      type: 'object',
-      properties: {
-        type: {
-          type: 'string',
-          title: 'Port Type',
-        },
-        title: {
-          type: 'string',
-          title: 'Title',
-        },
-        description: {
-          type: 'string',
-          title: 'Description',
-        },
-        defaultValue: {
-          type: 'any',
-          title: 'Default Value',
-        },
-      },
-      description: 'The schema of the connected port',
-    },
-    ui: {
-      hideEditor: true,
-    },
+    description: 'Schema details of the connected port',
+    schema: PortSchemaUnion,
   })
-  portSchema: Record<string, any> = {}
+  portSchema: PortSchemaUnion = new PortSchemaUnion()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    // Empty execute method as requested
-
-    // context.
-
-    const inputPort = findPortByKey(this, 'input') as IPort
-    console.log(`[GetPortSchemaNode] Input port:`, inputPort.getConfig())
-
+    // The schema is populated in the event handlers, no additional logic needed here
     return {}
   }
 
@@ -91,149 +74,237 @@ class GetPortSchemaNode extends BaseNode {
     await super.onEvent(event)
 
     if (event.type === NodeEventType.PortConnected) {
-      console.log(`[GetPortSchemaNode] Port connected event:`, event.nodeId)
       await this.handlePortConnectedEvent(event as PortConnectedEvent)
     } else if (event.type === NodeEventType.PortDisconnected) {
-      console.log(`[GetPortSchemaNode] Port disconnected event:`, event.nodeId)
       await this.handlePortDisconnectedEvent(event as PortDisconnectedEvent)
     }
   }
 
   /**
-   * Recursively process port schema and extract all nested properties
+   * Maps a port configuration to the appropriate schema object
    */
-  private processSchemaRecursively(portConfig: IPortConfig): Record<string, any> {
-    if (!portConfig) {
-      return { type: 'unknown' }
-    }
+  private buildSchemaFromPortConfig(portConfig: IPortConfig): PortSchemaUnion {
+    const schema = new PortSchemaUnion()
+    schema.type = portConfig.type || 'unknown'
 
-    // Create base schema with common properties
-    const schema: Record<string, any> = {
-      type: portConfig.type,
-      title: portConfig.title,
-      description: portConfig.description,
-      defaultValue: portConfig.defaultValue,
-      ui: portConfig.ui,
-      // validation: portConfig.validation,
-    }
+    // Fill in the base properties
+    let specificSchema: BasePortSchema
 
-    // Process type-specific schema details
+    // Create the appropriate schema object based on port type
     switch (portConfig.type) {
-      case 'object':
-        // For object types, process each property recursively
-        schema.properties = {}
-        if (portConfig.schema && portConfig.schema.properties) {
-          const properties = portConfig.schema.properties as Record<string, IPortConfig>
-          for (const key in properties) {
-            schema.properties[key] = this.processSchemaRecursively(properties[key])
-          }
-        }
+      case 'string': {
+        const stringSchema = new StringPortSchema()
+        stringSchema.defaultValue = portConfig.defaultValue || ''
+        stringSchema.minLength = portConfig.minLength
+        stringSchema.maxLength = portConfig.maxLength
+        stringSchema.pattern = portConfig.pattern
+        stringSchema.ui = portConfig.ui || {}
+        specificSchema = stringSchema
         break
-
-      case 'array':
-        // For array types, process the item configuration recursively
-        if (portConfig.itemConfig) {
-          schema.itemConfig = this.processSchemaRecursively(portConfig.itemConfig)
-        }
+      }
+      case 'number': {
+        const numberSchema = new NumberPortSchema()
+        numberSchema.defaultValue = portConfig.defaultValue ?? 0
+        numberSchema.min = portConfig.min
+        numberSchema.max = portConfig.max
+        numberSchema.step = portConfig.step
+        numberSchema.integer = portConfig.integer
+        numberSchema.ui = portConfig.ui || {}
+        specificSchema = numberSchema
         break
-
-      case 'enum':
-        // For enum types, include the options
-        schema.options = portConfig.options
+      }
+      case 'boolean': {
+        const boolSchema = new BooleanPortSchema()
+        boolSchema.defaultValue = portConfig.defaultValue ?? false
+        boolSchema.ui = portConfig.ui || {}
+        specificSchema = boolSchema
         break
-
-      case 'stream':
-        // For stream types, process the item configuration like arrays
-        if (portConfig.itemConfig) {
-          schema.itemConfig = this.processSchemaRecursively(portConfig.itemConfig)
-        }
+      }
+      case 'array': {
+        const arraySchema = new ArrayPortSchema()
+        arraySchema.itemConfig = this.extractItemConfig(portConfig.itemConfig)
+        arraySchema.defaultValue = portConfig.defaultValue || []
+        arraySchema.minLength = portConfig.minLength
+        arraySchema.maxLength = portConfig.maxLength
+        arraySchema.isMutable = portConfig.isMutable
+        arraySchema.ui = portConfig.ui || {}
+        specificSchema = arraySchema
         break
+      }
+      case 'object': {
+        const objectSchema = new ObjectPortSchema()
+        objectSchema.schema = this.extractObjectSchema(portConfig.schema)
+        objectSchema.defaultValue = portConfig.defaultValue || {}
+        objectSchema.isSchemaMutable = portConfig.isSchemaMutable
+        objectSchema.ui = portConfig.ui || {}
+        specificSchema = objectSchema
+        break
+      }
+      case 'enum': {
+        const enumSchema = new EnumPortSchema()
+        enumSchema.options = portConfig.options?.map(opt => ({
+          id: opt.id || '',
+          title: opt.title || opt.id || '',
+          type: opt.type || 'string',
+          defaultValue: opt.defaultValue,
+        })) || []
+        enumSchema.defaultValue = portConfig.defaultValue || ''
+        enumSchema.ui = portConfig.ui || {}
+        specificSchema = enumSchema
+        break
+      }
+      case 'stream': {
+        const streamSchema = new StreamPortSchema()
+        streamSchema.itemConfig = this.extractItemConfig(portConfig.itemConfig)
+        streamSchema.ui = portConfig.ui || {}
+        specificSchema = streamSchema
+        break
+      }
+      case 'any': {
+        const anySchema = new AnyPortSchema()
+        anySchema.underlyingType = portConfig.underlyingType
+          ? this.extractItemConfig(portConfig.underlyingType)
+          : {}
+        anySchema.defaultValue = portConfig.defaultValue
+        anySchema.ui = portConfig.ui || {}
+        specificSchema = anySchema
+        break
+      }
+      default: {
+        specificSchema = new BasePortSchema()
+        break
+      }
     }
+
+    // Set base properties
+    specificSchema.id = portConfig.id || ''
+    specificSchema.key = portConfig.key || ''
+    specificSchema.title = portConfig.title || ''
+    specificSchema.description = portConfig.description || ''
+    specificSchema.direction = portConfig.direction || ''
+    specificSchema.required = portConfig.required || false
+    specificSchema.type = portConfig.type || 'any'
+
+    // Assign the specific schema to the union schema
+    schema.config = this.serializeSchema(specificSchema)
+
+    const schemaConfigPort = findPort(this, (port) => {
+      return port.key === 'portSchema' && !port.getConfig().parentId
+    }) as ObjectPort
+
+    // console.log(`[GetPortSchemaNode] Schema for port ${portConfig.key}:`, schemaConfigPort)
+
+    // schemaConfigPort.addField(
+    //   'field_name',
+    //   fieldConfig,
+    // )
 
     return schema
   }
 
   /**
-   * Recursively add port properties to an output port
+   * Extract item configuration for array and stream ports
    */
-  private addNestedPropertiesToPort(
-    outputPort: IPort,
-    sourceConfig: IPortConfig,
-    parentPath: string = '',
-  ): void {
-    if (!sourceConfig) {
-      return
+  private extractItemConfig(itemConfig?: IPortConfig): Record<string, any> {
+    if (!itemConfig) {
+      return {}
     }
 
-    // Handle object type with nested properties
-    if (sourceConfig.type === 'object' && sourceConfig.schema && sourceConfig.schema.properties) {
-      const properties = sourceConfig.schema.properties as Record<string, IPortConfig>
-
-      for (const key in properties) {
-        const propConfig = properties[key]
-        const propPath = parentPath ? `${parentPath}.${key}` : key
-
-        // Check if the property already exists in the output port
-        const existingProp = findPortByKey(this, propPath)
-        if (existingProp) {
-          console.log(`[GetPortSchemaNode] Property already exists:`, propPath)
-          continue
-        }
-
-        // Add this property to the output port
-        this.addObjectProperty(outputPort, propPath, propConfig)
-
-        // Recursively process any nested properties
-        this.addNestedPropertiesToPort(outputPort, propConfig, propPath)
-      }
-    } else if (sourceConfig.type === 'array' && sourceConfig.itemConfig) {
-    // Handle array type with item configuration
-      const itemPath = parentPath ? `${parentPath}.items` : 'items'
-
-      // Add the array item configuration
-      this.addObjectProperty(outputPort, itemPath, sourceConfig.itemConfig)
-
-      // Recursively process the item configuration
-      this.addNestedPropertiesToPort(outputPort, sourceConfig.itemConfig, itemPath)
+    return {
+      type: itemConfig.type || 'unknown',
+      title: itemConfig.title,
+      description: itemConfig.description,
+      defaultValue: itemConfig.defaultValue,
+      // Include other type-specific properties based on item type
+      ...(itemConfig.type === 'string'
+        ? {
+            minLength: itemConfig.minLength,
+            maxLength: itemConfig.maxLength,
+            pattern: itemConfig.pattern,
+          }
+        : {}),
+      ...(itemConfig.type === 'number'
+        ? {
+            min: itemConfig.min,
+            max: itemConfig.max,
+            step: itemConfig.step,
+            integer: itemConfig.integer,
+          }
+        : {}),
+      ...(itemConfig.type === 'array'
+        ? {
+            itemConfig: this.extractItemConfig(itemConfig.itemConfig),
+            minLength: itemConfig.minLength,
+            maxLength: itemConfig.maxLength,
+          }
+        : {}),
+      ...(itemConfig.type === 'object'
+        ? {
+            schema: this.extractObjectSchema(itemConfig.schema),
+            isSchemaMutable: itemConfig.isSchemaMutable,
+          }
+        : {}),
+      ...(itemConfig.type === 'enum'
+        ? {
+            options: itemConfig.options,
+          }
+        : {}),
+      ui: itemConfig.ui || {},
     }
+  }
+
+  /**
+   * Extract object schema for object ports
+   */
+  private extractObjectSchema(schema?: any): Record<string, any> {
+    if (!schema || !schema.properties) {
+      return { properties: {} }
+    }
+
+    const properties: Record<string, any> = {}
+
+    for (const key in schema.properties) {
+      const propConfig = schema.properties[key]
+      properties[key] = this.extractItemConfig(propConfig)
+    }
+
+    return {
+      id: schema.id || undefined,
+      type: schema.type || 'object',
+      description: schema.description || undefined,
+      category: schema.category || undefined,
+      properties,
+    }
+  }
+
+  /**
+   * Serialize a schema object to a plain object for output
+   */
+  private serializeSchema(schema: any): Record<string, any> {
+    // Deep clone to avoid modifying the original
+    return JSON.parse(JSON.stringify(schema))
   }
 
   private async handlePortConnectedEvent(event: PortConnectedEvent): Promise<void> {
     // Check if the connection is with our input port
     if (event.sourceNode.id === this.id && event.sourcePort.key === 'input') {
-      const connectedToPort = event.targetPort
-      const sourceConfig = connectedToPort.getConfig()
+      const targetPort = event.targetPort
+      const targetConfig = targetPort.getConfig()
 
-      this.portSchema = JSON.parse(JSON.stringify(sourceConfig))
+      // Build the schema based on the port type
+      this.portSchema = this.buildSchemaFromPortConfig(targetConfig)
 
-      // Method 1: Build a complete schema object
-      // this.portSchema = this.processSchemaRecursively(sourceConfig)
-      //
-      // // Method 2: Use recursive property addition
-      // const outputPort = findPortByKey(this, 'portSchema') as IPort
-      // if (outputPort) {
-      //   // Clear existing properties first
-      //   // (This depends on implementation, may need to be modified based on the actual BaseNode implementation)
-      //
-      //   // Add all nested properties recursively
-      //   this.addNestedPropertiesToPort(outputPort, sourceConfig)
-      //
-      //   // Update the port
-      //   this.updatePort(outputPort)
-      // }
+      console.log(`[GetPortSchemaNode] Connected to port of type ${targetConfig.type}`)
+      console.log(`[GetPortSchemaNode] Schema extracted:`, this.portSchema)
     }
   }
 
   private async handlePortDisconnectedEvent(event: PortDisconnectedEvent): Promise<void> {
     // Check if the disconnection is from our input port
-    if (event.targetNode.id === this.id && event.targetPort.key === 'input') {
-      // Clear the schema information
-      this.portSchema = {}
-
-      // const outputPort = findPortByKey(this, 'portSchema')
-      // if (outputPort) {
-      //   this.updatePort(outputPort)
-      // }
+    if (event.sourceNode.id === this.id && event.sourcePort.key === 'input') {
+      // Reset the schema when disconnected
+      this.portSchema = new PortSchemaUnion()
+      console.log(`[GetPortSchemaNode] Disconnected, schema reset`)
     }
   }
 }

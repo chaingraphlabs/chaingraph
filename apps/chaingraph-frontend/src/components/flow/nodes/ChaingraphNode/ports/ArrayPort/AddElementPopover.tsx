@@ -158,6 +158,7 @@ export function AddElementPopover(props: Props) {
 
         <DropdownMenuContent align="start">
           {PORT_TYPES
+            .filter(portType => portType !== 'any')// && portType !== 'secret')
             .map(portType => (
               <DropdownMenuItem
                 key={portType}

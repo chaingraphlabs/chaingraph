@@ -117,7 +117,7 @@ export function validateNumberValue(
   }
 
   if (!isNumberPortValue(value)) {
-    errors.push('Invalid number value structure')
+    errors.push(`Invalid number value structure, actual value: ${JSON.stringify(value)}`)
     return errors
   }
 
@@ -151,7 +151,7 @@ export function validateNumberValue(
     }
   }
 
-  if (config.integer === true && !decimalValue.isInteger()) {
+  if (decimalValue && config.integer === true && !decimalValue.isInteger()) {
     errors.push('Value must be an integer')
   }
 
@@ -166,7 +166,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: NumberPortValue): JSONValue => {
-    if (value === undefined) {
+    if (value === undefined || value === null) {
       return 0
     }
 
@@ -174,7 +174,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       if (!isNumberPortValue(value)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid number value structure',
+          `Invalid number value structure, actual value: ${JSON.stringify(value)}`,
         )
       }
       return value
@@ -186,7 +186,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
     }
   },
   deserializeValue: (data: JSONValue) => {
-    if (data === undefined) {
+    if (data === undefined || data === null) {
       return 0
     }
 
@@ -194,7 +194,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
       if (!isNumberPortValue(data)) {
         throw new PortError(
           PortErrorType.SerializationError,
-          'Invalid number value for deserialization',
+          `Invalid number value for deserialization, actual value: ${JSON.stringify(data)}`,
         )
       }
       return data || 0

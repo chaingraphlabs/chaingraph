@@ -17,13 +17,13 @@ import { Participant } from './types'
 import { ChatMeta } from './types'
 
 @Node({
-  type: 'BadAIChatMetaNode',
-  title: 'BadAI Chat Meta',
-  description: 'Chat meta context for BadAI',
-  category: NODE_CATEGORIES.BADAI,
+  type: 'ArchAIChatMetaNode',
+  title: 'ArchAI Chat Meta',
+  description: 'Chat meta context for ArchAI',
+  category: NODE_CATEGORIES.ARCHAI,
   tags: ['chat', 'meta', 'context'],
 })
-class BadAIChatMetaNode extends BaseNode {
+class ArchAIChatMetaNode extends BaseNode {
   @Output()
   @PortObject({
     schema: ChatMeta,
@@ -35,12 +35,12 @@ class BadAIChatMetaNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const chatID = context.badAIContext?.chatID
     if (!chatID) {
-      throw new Error('BadAI chat ID is not available in the context')
+      throw new Error('ArchAI chat ID is not available in the context')
     }
 
     const agentSession = context.badAIContext?.agentSession
     if (!agentSession) {
-      throw new Error('BadAI agent session is not available in the context')
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -54,7 +54,7 @@ class BadAIChatMetaNode extends BaseNode {
 
     const chatMeta = getChatRoom as GraphQL.ChatRoom
     if (!chatMeta) {
-      throw new Error('Failed to fetch message from BadAI API')
+      throw new Error('Failed to fetch message from ArchAI API')
     }
 
     // Transform participant data if available
@@ -139,4 +139,4 @@ class BadAIChatMetaNode extends BaseNode {
   }
 }
 
-export default BadAIChatMetaNode
+export default ArchAIChatMetaNode

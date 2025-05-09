@@ -188,35 +188,36 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(createExecutionFx.doneData)
   .reset(globalReset)
 
-export const $executionNodes = executionDomain.createStore<Record<string, NodeExecutionState>>({}, {
-  updateFilter: (prev, next) => {
+export const $executionNodes = executionDomain
+  .createStore<Record<string, NodeExecutionState>>({}, {
+    updateFilter: (prev, next) => {
     // If either is null/undefined
-    if (!prev || !next)
-      return true
+      if (!prev || !next)
+        return true
 
-    // Check for different node IDs
-    const prevIds = Object.keys(prev)
-    const nextIds = Object.keys(next)
+      // Check for different node IDs
+      const prevIds = Object.keys(prev)
+      const nextIds = Object.keys(next)
 
-    // If number of nodes changed
-    if (prevIds.length !== nextIds.length)
-      return true
+      // If number of nodes changed
+      if (prevIds.length !== nextIds.length)
+        return true
 
-    // Check if any node has a different status
-    for (const nodeId of prevIds) {
+      // Check if any node has a different status
+      for (const nodeId of prevIds) {
       // If node doesn't exist in next
-      if (!next[nodeId])
-        return true
+        if (!next[nodeId])
+          return true
 
-      // If status changed
-      if (prev[nodeId]?.status !== next[nodeId]?.status)
-        return true
-    }
+        // If status changed
+        if (prev[nodeId]?.status !== next[nodeId]?.status)
+          return true
+      }
 
-    // No relevant changes detected
-    return false
-  },
-})
+      // No relevant changes detected
+      return false
+    },
+  })
   .on(newExecutionEvent, (state, event) => {
     let finalState = state
     let stateChanged = false

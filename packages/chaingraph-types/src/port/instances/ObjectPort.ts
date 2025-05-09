@@ -6,7 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IObjectSchema, IPortConfig, ObjectPortConfig, ObjectPortValue } from '../../port'
+import type {
+  IObjectSchema,
+  IPortConfig,
+  ObjectPortConfig,
+  ObjectPortValue,
+} from '../../port'
 import type { JSONValue } from '../../utils/json'
 import { BasePort, ObjectPortPlugin } from '../../port'
 
@@ -90,6 +95,85 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    */
   getValue(): ObjectPortValue<S> | undefined {
     return super.getValue() as ObjectPortValue<S> | undefined
+  }
+
+  setValue(newValue: ObjectPortValue<S> | undefined): void {
+    // Clear the current value if newValue is undefined
+    if (newValue === undefined) {
+      this.value = undefined
+      return
+    }
+
+    // Initialize value if it doesn't exist
+    if (this.value === undefined) {
+      this.value = {} as ObjectPortValue<S>
+    }
+
+    // Delete keys that don't exist in new value
+    for (const key in this.value) {
+      if (Object.hasOwn(this.value, key) && !Object.hasOwn(newValue, key)) {
+        delete this.value[key]
+      }
+    }
+
+    // Set new values and recursively update
+    for (const key in newValue) {
+      if (Object.hasOwn(newValue, key)) {
+        const value = newValue[key]
+        if (value !== undefined) {
+          this.setValueForKey(this.value, key, value)
+        }
+      }
+    }
+  }
+
+  /**
+   * Set a value for a specific key with proper type handling
+   * @param target - The target object to update
+   * @param key - The key to set
+   * @param value - The value to set
+   */
+  private setValueForKey(target: Record<string, any>, key: string, value: any): void {
+    // Handle null values
+    if (value === null) {
+      target[key] = null
+      return
+    }
+
+    // Handle object types (excluding arrays) - update recursively
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      // Initialize target property if it doesn't exist or isn't an object
+      if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+        target[key] = {}
+      }
+
+      // Recursively update the object properties
+      this.setObjectPropertiesRecursively(target[key], value)
+    } else {
+      // For arrays or primitive values, assign directly
+      target[key] = value
+    }
+  }
+
+  /**
+   * Recursively update object properties
+   * @param target - The target object to update
+   * @param source - The source object with new values
+   */
+  private setObjectPropertiesRecursively(target: Record<string, any>, source: Record<string, any>): void {
+    // Delete properties from target that don't exist in source
+    for (const key in target) {
+      if (Object.hasOwn(target, key) && !Object.hasOwn(source, key)) {
+        delete target[key]
+      }
+    }
+
+    // Update or add properties from source to target
+    for (const key in source) {
+      if (Object.hasOwn(source, key)) {
+        this.setValueForKey(target, key, source[key])
+      }
+    }
   }
 
   /**

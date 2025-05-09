@@ -18,6 +18,7 @@ import {
   MessageSquare,
   Package,
   Type,
+  Wallet,
   Wrench,
 } from 'lucide-react'
 
@@ -41,6 +42,7 @@ export const CategoryIcons: Record<string, IconComponent> = {
   Type,
   Lock,
   FlaskConical,
+  Wallet,
 } as const
 
 export type CategoryIconName = keyof typeof CategoryIcons

@@ -17,9 +17,9 @@ import { Message } from './types'
 
 @Node({
   type: 'OnNewMessageEventNode',
-  title: 'BadAI On New Message Event',
+  title: 'ArchAI On New Message Event',
   description: 'Triggered when a new message is received in the chat',
-  category: NODE_CATEGORIES.BADAI,
+  category: NODE_CATEGORIES.ARCHAI,
   tags: ['message', 'event', 'new'],
 })
 class OnNewMessageEventNode extends BaseNode {
@@ -27,24 +27,24 @@ class OnNewMessageEventNode extends BaseNode {
   @PortObject({
     schema: Message,
     title: 'Message',
-    description: 'The received message data from BadAI chat',
+    description: 'The received message data from ArchAI chat',
   })
   message?: Message
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const chatID = context.badAIContext?.chatID
     if (!chatID) {
-      throw new Error('BadAI chat ID is not available in the context')
+      throw new Error('ArchAI chat ID is not available in the context')
     }
 
     const messageID = context.badAIContext?.messageID
     if (!messageID) {
-      throw new Error('BadAI message ID is not available in the context')
+      throw new Error('ArchAI message ID is not available in the context')
     }
 
     const agentSession = context.badAIContext?.agentSession
     if (!agentSession) {
-      throw new Error('BadAI agent session is not available in the context')
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -59,7 +59,7 @@ class OnNewMessageEventNode extends BaseNode {
 
     const inputMessage = message as GraphQL.MessageFieldsFragment
     if (!inputMessage) {
-      throw new Error('Failed to fetch message from BadAI API')
+      throw new Error('Failed to fetch message from ArchAI API')
     }
 
     // Transform participant data if available

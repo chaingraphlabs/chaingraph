@@ -29,8 +29,20 @@ export interface ObjectPortProps {
 }
 
 const variants = {
-  open: { opacity: 1, height: 'auto', transition: { duration: 0 } },
-  closed: { opacity: 0, height: 0, transition: { duration: 0.1 } },
+  open: {
+    opacity: 1,
+    height: 'auto',
+    pointerEvents: 'auto' as const,
+    transition: { duration: 0.2 },
+    overflow: 'visible' as const,
+  },
+  closed: {
+    opacity: 0,
+    height: 0,
+    pointerEvents: 'none' as const,
+    overflow: 'hidden' as const,
+    transition: { duration: 0.1 },
+  },
 } as const
 
 // Extracted this to a memoizable component
@@ -153,11 +165,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
             onClick={handleToggleCollapsible}
           />
 
-          <AnimatePresence
-            initial={false}
-            propagate={true}
-            mode="wait"
-          >
+          <AnimatePresence initial={false} mode="wait">
             <motion.div
               initial={config.ui?.collapsed ? 'open' : 'closed'}
               variants={variants}

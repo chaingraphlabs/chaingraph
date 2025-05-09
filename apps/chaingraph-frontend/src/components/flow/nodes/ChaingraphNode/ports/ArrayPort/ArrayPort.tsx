@@ -36,10 +36,21 @@ export interface ArrayPortProps {
 }
 
 const variants = {
-  open: { opacity: 1, height: 'auto' },
-  closed: { opacity: 0, height: 0 },
+  open: {
+    opacity: 1,
+    height: 'auto',
+    pointerEvents: 'auto' as const,
+    transition: { duration: 0.2 },
+    overflow: 'visible' as const,
+  },
+  closed: {
+    opacity: 0,
+    height: 0,
+    pointerEvents: 'none' as const,
+    overflow: 'hidden' as const,
+    transition: { duration: 0.1 },
+  },
 } as const
-
 // Extracted to a memoizable component
 const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }) => {
   const childPorts = useMemo(() => {

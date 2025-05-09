@@ -107,7 +107,8 @@ export class PortManager implements IPortManager {
 
     // remove the port itself
     if (!this._ports.delete(portId)) {
-      throw new Error(`Port with ID ${portId} does not exist.`)
+      // throw new Error(`Port with ID ${portId} does not exist.`)
+      // just ignore the error
     }
   }
 
@@ -173,9 +174,9 @@ export class PortManager implements IPortManager {
    * @param port The port to update
    */
   updatePort(port: IPort): void {
-    if (!this._ports.has(port.id)) {
-      throw new Error(`Port with ID ${port.id} does not exist.`)
-    }
+    // if (!this._ports.has(port.id)) {
+    //   throw new Error(`Port with ID ${port.id} does not exist.`)
+    // }
 
     this._ports.set(port.id, port)
   }

@@ -20,13 +20,13 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  type: 'FinishMessageBadAINode',
-  title: 'BadAI Finish Message',
+  type: 'FinishMessageArchAINode',
+  title: 'ArchAI Finish Message',
   description: 'Controls the finished state of a message',
-  category: NODE_CATEGORIES.BADAI,
+  category: NODE_CATEGORIES.ARCHAI,
   tags: ['message', 'finish', 'status'],
 })
-class FinishMessageBadAINode extends BaseNode {
+class FinishMessageArchAINode extends BaseNode {
   @Input()
   @NumberPort({
     title: 'Message ID',
@@ -61,12 +61,12 @@ class FinishMessageBadAINode extends BaseNode {
 
     const agentSession = context.badAIContext?.agentSession
     if (!agentSession) {
-      throw new Error('BadAI agent session is not available in the context')
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const chatID = context.badAIContext?.chatID
     if (!chatID) {
-      throw new Error('BadAI chat ID is not available in the context')
+      throw new Error('ArchAI chat ID is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -125,4 +125,4 @@ class FinishMessageBadAINode extends BaseNode {
   }
 }
 
-export default FinishMessageBadAINode
+export default FinishMessageArchAINode

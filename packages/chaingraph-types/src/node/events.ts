@@ -27,6 +27,8 @@ export enum NodeEventType {
   UIChange = 'node:ui:change',
 
   // Port events
+  PortCreate = 'node:port-create',
+  PortDelete = 'node:port-delete',
   PortUpdate = 'node:port-update',
   PortConnected = 'node:port-connected',
   PortDisconnected = 'node:port-disconnected',
@@ -89,6 +91,24 @@ export interface NodeUIChangeEvent extends NodeEventBase {
 }
 
 /**
+ * Event emitted when a port is created
+ */
+export interface PortCreateEvent extends NodeEventBase {
+  type: NodeEventType.PortCreate
+  portId: string
+  port: IPort
+}
+
+/**
+ * Event emitted when a port is deleted
+ */
+export interface PortDeleteEvent extends NodeEventBase {
+  type: NodeEventType.PortDelete
+  portId: string
+  port: IPort
+}
+
+/**
  * Event emitted when a port is updated
  */
 export interface PortUpdateEvent extends NodeEventBase {
@@ -129,6 +149,8 @@ export type NodeEvent =
   | NodeUIPositionChangeEvent
   | NodeUIDimensionsChangeEvent
   | NodeUIChangeEvent
+  | PortCreateEvent
+  | PortDeleteEvent
   | PortUpdateEvent
   | PortConnectedEvent
   | PortDisconnectedEvent
@@ -139,6 +161,8 @@ export interface EventTypeToInterface {
   [NodeEventType.UIChange]: NodeUIChangeEvent
   [NodeEventType.UIPositionChange]: NodeUIPositionChangeEvent
   [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent
+  [NodeEventType.PortCreate]: PortCreateEvent
+  [NodeEventType.PortDelete]: PortDeleteEvent
   [NodeEventType.PortUpdate]: PortUpdateEvent
   [NodeEventType.PortConnected]: PortConnectedEvent
   [NodeEventType.PortDisconnected]: PortDisconnectedEvent

@@ -7,6 +7,7 @@
  */
 
 import type { Flow, ObjectPort } from '@badaitech/chaingraph-types'
+import { NodeEventType } from '@badaitech/chaingraph-types'
 import { findPort } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
@@ -96,7 +97,18 @@ export const addFieldObjectPort = flowContextProcedure
         throw new Error('Key already exists in object port')
       }
 
-      node.addObjectProperty(port, key, config)
+      const createdPort = node.addObjectProperty(port, key, config)
+      if (!createdPort)
+        throw new Error('Failed to create port')
+
+      await node.emit({
+        type: NodeEventType.PortCreate,
+        portId: createdPort.id,
+        port: createdPort,
+        nodeId: node.id,
+        timestamp: new Date(),
+        version: node.getVersion(),
+      })
       flow.updateNode(node)
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
@@ -159,6 +171,15 @@ export const removeFieldObjectPort = flowContextProcedure
       flow.removePort(node.id, keyPort.id)
 
       node.removeObjectProperty(port, key)
+
+      node.emit({
+        type: NodeEventType.PortDelete,
+        portId: keyPort.id,
+        port: keyPort,
+        nodeId: node.id,
+        timestamp: new Date(),
+        version: node.getVersion(),
+      })
 
       // trigger node update
       flow.updateNode(node)

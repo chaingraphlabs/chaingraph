@@ -59,7 +59,7 @@ class LLMModel {
   }
 }
 
-const llmModels = {
+export const llmModels = {
   [LLMModels.Gpt4oMini]: new LLMModel(LLMModels.Gpt4oMini, 0),
   [LLMModels.Gpt4o]: new LLMModel(LLMModels.Gpt4o, 0),
   [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),

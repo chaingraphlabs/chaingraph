@@ -22,11 +22,22 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import Handlebars from 'handlebars'
+import { stringify } from 'yaml'
 import { NODE_CATEGORIES } from '../../categories'
 
 // Register some useful built-in helpers
 Handlebars.registerHelper('json', (context) => {
   return JSON.stringify(context, null, 2)
+})
+
+Handlebars.registerHelper('yaml', (context) => {
+  // Serialize the data to YAML
+  return stringify(context)
+})
+
+Handlebars.registerHelper('yml', (context) => {
+  // Serialize the data to YAML
+  return stringify(context)
 })
 
 Handlebars.registerHelper('uppercase', (str) => {
@@ -51,7 +62,10 @@ class HandlebarsTemplateNode extends BaseNode {
     description: 'Handlebars template with variables in {{variable}} format',
     ui: {
       isTextArea: true,
-      textareaDimensions: { height: 200 },
+      textareaDimensions: {
+        width: 250,
+        height: 200,
+      },
     },
   })
   template: string = `Hello, {{{user.name}}}!

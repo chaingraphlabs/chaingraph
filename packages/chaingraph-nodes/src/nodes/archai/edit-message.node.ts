@@ -25,13 +25,13 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  type: 'EditMessageBadAINode',
-  title: 'BadAI Edit Message',
+  type: 'EditMessageArchAINode',
+  title: 'ArchAI Edit Message',
   description: 'Edits an existing message with updated content',
-  category: NODE_CATEGORIES.BADAI,
+  category: NODE_CATEGORIES.ARCHAI,
   tags: ['message', 'edit', 'content'],
 })
-class EditMessageBadAINode extends BaseNode {
+class EditMessageArchAINode extends BaseNode {
   @Input()
   @NumberPort({
     title: 'Message ID',
@@ -72,12 +72,12 @@ class EditMessageBadAINode extends BaseNode {
 
     const agentSession = context.badAIContext?.agentSession
     if (!agentSession) {
-      throw new Error('BadAI agent session is not available in the context')
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const chatID = context.badAIContext?.chatID
     if (!chatID) {
-      throw new Error('BadAI chat ID is not available in the context')
+      throw new Error('ArchAI chat ID is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -122,4 +122,4 @@ class EditMessageBadAINode extends BaseNode {
   }
 }
 
-export default EditMessageBadAINode
+export default EditMessageArchAINode

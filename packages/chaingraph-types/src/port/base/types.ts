@@ -39,7 +39,7 @@ export class PortError extends Error {
     message?: string,
     public details?: unknown,
   ) {
-    console.log(`creating port error: ${type} - ${message} - ${details}`)
+    console.log(`creating port error: ${type} - ${message} ${`- ${details}` || ''}`)
     // print stack trace:
     console.trace()
 

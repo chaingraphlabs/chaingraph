@@ -135,8 +135,8 @@ export const AnyPortPlugin: IPortPlugin<'any'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: AnyPortValue, config: AnyPortConfig): JSONValue => {
-    if (value === undefined) {
-      return undefined
+    if (value === undefined || value === null) {
+      return value
     }
 
     try {

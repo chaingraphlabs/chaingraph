@@ -8,4 +8,5 @@
 
 export * from './boolean'
 export * from './number'
+export * from './object'
 export * from './text'

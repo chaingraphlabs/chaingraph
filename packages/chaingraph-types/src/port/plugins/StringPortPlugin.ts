@@ -8,7 +8,9 @@
 
 import type { JSONValue } from '../../utils/json'
 import type { IPortPlugin, StringPortConfig, StringPortValue } from '../base'
+import Decimal from 'decimal.js'
 import { z } from 'zod'
+import { isNumberPortValue } from '../base'
 import {
   basePortConfigSchema,
   isStringPortValue,
@@ -152,15 +154,20 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: StringPortValue): JSONValue => {
-    if (value === undefined) {
+    if (value === undefined || value === null) {
       return ''
     }
 
     try {
       if (!isStringPortValue(value)) {
+        if (isNumberPortValue(value)) {
+          // If the value is a number, convert it to a string
+          return new Decimal(value).toString()
+        }
+
         throw new PortError(
           PortErrorType.SerializationError,
-          `Invalid string value structure, actual type: ${typeof value}`,
+          `Invalid string value structure, actual type: ${typeof value}: ${JSON.stringify(value)}`,
         )
       }
       return value
@@ -172,12 +179,15 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
     }
   },
   deserializeValue: (data: JSONValue) => {
-    if (data === undefined) {
+    if (data === undefined || data === null) {
       return ''
     }
 
     try {
       if (!isStringPortValue(data)) {
+        if (isNumberPortValue(data)) {
+          return new Decimal(data).toString()
+        }
         throw new PortError(
           PortErrorType.SerializationError,
           'Invalid string value for deserialization',
@@ -193,8 +203,14 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
   },
   serializeConfig: (config: StringPortConfig): JSONValue => {
     try {
-      // For string port, we can simply return the config as is
-      // since it doesn't contain any non-serializable parts
+      if (isNumberPortValue(config.defaultValue)) {
+        // If the value is a number, convert it to a string
+        return {
+          ...config,
+          defaultValue: new Decimal(config.defaultValue).toString(),
+        }
+      }
+
       return { ...config }
     } catch (error) {
       throw new PortError(

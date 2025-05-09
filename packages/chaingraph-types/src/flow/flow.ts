@@ -16,6 +16,8 @@ import type {
   NodeUIChangedEventData,
   NodeUIDimensionsChangedEventData,
   NodeUIPositionChangedEventData,
+  PortCreatedEventData,
+  PortRemovedEventData,
   PortUpdatedEventData,
 } from './events'
 import type { IFlow } from './interface'
@@ -366,6 +368,8 @@ export class Flow implements IFlow {
     //  or only the ports with the compatible schema.
     //  Same question for the array port schema
 
+    const targetValue = sourcePort.getValue() ?? sourcePort.getConfig().defaultValue ?? undefined
+
     // check if the target port is an any type then set the target port underlying type to the source port
     if (targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort) {
       const targetPortConfig = targetPort.getConfig()
@@ -378,12 +382,16 @@ export class Flow implements IFlow {
         nodeId: targetPortConfig.nodeId,
         order: targetPortConfig.order,
         key: targetPortConfig.key,
+        title: targetPortConfig.title,
+        description: targetPortConfig.description,
       })
-
-      // set the value of the target port to the value of the source port
-      targetPort.setValue(sourcePort.getValue())
-      targetNode.updatePort(targetPort)
     }
+
+    if (targetValue !== undefined) {
+      targetPort.setValue(targetValue)
+    }
+
+    targetNode.updatePort(targetPort)
 
     const edge = new Edge(
       generateEdgeID(),
@@ -655,6 +663,38 @@ export class Flow implements IFlow {
         break
       }
 
+      case NodeEventType.PortCreate: {
+        const portCreateEventData: PortCreatedEventData = {
+          port: (nodeEvent as any).port.clone(),
+          nodeVersion: nodeEvent.version,
+        }
+
+        flowEvent = newEvent(
+          this.getNextEventIndex(),
+          this.id,
+          FlowEventType.PortCreated,
+          portCreateEventData,
+        )
+        this.updateNode(node)
+        break
+      }
+
+      case NodeEventType.PortDelete: {
+        const portRemovedEventData: PortRemovedEventData = {
+          port: (nodeEvent as any).port.clone(),
+          nodeVersion: nodeEvent.version,
+        }
+
+        flowEvent = newEvent(
+          this.getNextEventIndex(),
+          this.id,
+          FlowEventType.PortRemoved,
+          portRemovedEventData,
+        )
+        this.updateNode(node)
+        break
+      }
+
       default:
         // Ignore other events
         break
@@ -761,12 +801,17 @@ export class Flow implements IFlow {
     })
 
     for (const nodeData of flowData.nodes) {
-      const node = NodeRegistry.getInstance().createNode(
-        nodeData.metadata.type,
-        nodeData.id,
-        nodeData.metadata,
-      )
-      flow.addNode(node.deserialize(nodeData), true)
+      try {
+        const node = NodeRegistry.getInstance().createNode(
+          nodeData.metadata.type,
+          nodeData.id,
+          nodeData.metadata,
+        )
+        flow.addNode(node.deserialize(nodeData), true)
+      } catch (error) {
+        console.error(`[Flow] Failed to deserialize node: ${nodeData.id}`, error)
+        // ignore the error and continue with the next node
+      }
     }
 
     for (const edgeData of flowData.edges) {
@@ -781,7 +826,14 @@ export class Flow implements IFlow {
       const targetPort = targetNode.getPort(edgeData.targetPortId)
 
       if (!sourcePort || !targetPort) {
-        throw new Error('Failed to deserialize flow: source or target port not found.')
+        console.error(`[Flow] Failed to deserialize edge: ${edgeData.id}`, {
+          sourceNodeId: edgeData.sourceNodeId,
+          targetNodeId: edgeData.targetNodeId,
+          sourcePortId: edgeData.sourcePortId,
+          targetPortId: edgeData.targetPortId,
+        })
+        continue
+        // throw new Error('Failed to deserialize flow: source or target port not found.')
       }
 
       const edge = new Edge(

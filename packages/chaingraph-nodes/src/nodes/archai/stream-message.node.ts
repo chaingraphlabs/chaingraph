@@ -37,12 +37,12 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  type: 'BadAIStreamMessageNode',
-  title: 'BadAI Stream Message',
-  description: 'Streams message content to BadAI by collecting input strings and sending them in chunks to update an existing message or create a new one.',
-  category: NODE_CATEGORIES.BADAI,
+  type: 'ArchAIStreamMessageNode',
+  title: 'ArchAI Stream Message',
+  description: 'Streams message content to ArchAI by collecting input strings and sending them in chunks to update an existing message or create a new one.',
+  category: NODE_CATEGORIES.ARCHAI,
 })
-class BadAIStreamMessageNode extends BaseNode {
+class ArchAIStreamMessageNode extends BaseNode {
   @Input()
   @PortNumber({
     title: 'Message ID',
@@ -124,12 +124,12 @@ class BadAIStreamMessageNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const chatID = context.badAIContext?.chatID
     if (!chatID) {
-      throw new Error('BadAI chat ID is not available in the context')
+      throw new Error('ArchAI chat ID is not available in the context')
     }
 
     const agentSession = context.badAIContext?.agentSession
     if (!agentSession) {
-      throw new Error('BadAI agent session is not available in the context')
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -249,4 +249,4 @@ class BadAIStreamMessageNode extends BaseNode {
   }
 }
 
-export default BadAIStreamMessageNode
+export default ArchAIStreamMessageNode

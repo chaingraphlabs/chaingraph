@@ -32,13 +32,13 @@ enum Order {
 }
 
 @Node({
-  type: 'BadAIChatHistoryNode',
-  title: 'BadAI Chat History',
-  description: 'Retrieve chat history from BadAI Chat',
-  category: NODE_CATEGORIES.BADAI,
+  type: 'ArchAIChatHistoryNode',
+  title: 'ArchAI Chat History',
+  description: 'Retrieve chat history from ArchAI Chat',
+  category: NODE_CATEGORIES.ARCHAI,
   tags: ['chat', 'history', 'context'],
 })
-class BadAIChatHistoryNode extends BaseNode {
+class ArchAIChatHistoryNode extends BaseNode {
   @Input()
   @Number({
     title: 'From Message ID',
@@ -86,12 +86,12 @@ class BadAIChatHistoryNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const chatID = context.badAIContext?.chatID
     if (!chatID) {
-      throw new Error('BadAI chat ID is not available in the context')
+      throw new Error('ArchAI chat ID is not available in the context')
     }
 
     const agentSession = context.badAIContext?.agentSession
     if (!agentSession) {
-      throw new Error('BadAI agent session is not available in the context')
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -174,4 +174,4 @@ class BadAIChatHistoryNode extends BaseNode {
   }
 }
 
-export default BadAIChatHistoryNode
+export default ArchAIChatHistoryNode
