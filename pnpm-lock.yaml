@@ -171,6 +171,9 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      bigint-crypto-utils:
+        specifier: ^3.3.0
+        version: 3.3.0
       cors:
         specifier: ^2.8.5
         version: 2.8.5

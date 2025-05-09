@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.1.24-dev.1
+
+### Patch Changes
+
+- Fix backend build
+
 ## 0.1.24-dev.0
 
 ### Patch Changes
