@@ -86,7 +86,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize components with dependencies
     this.portBinder = new PortBinder(this.portManager, this, this.id)
     this.complexPortHandler = new ComplexPortHandler(
-      this.portManager,
+      // this.portManager,
+      this,
       this.portBinder,
       this.id,
     )
@@ -367,8 +368,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   //
   // IComplexPortHandler implementation (delegation to complexPortHandler)
   //
-  addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig): void {
-    this.complexPortHandler.addObjectProperty(objectPort, key, portConfig)
+  addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig): IPort {
+    return this.complexPortHandler.addObjectProperty(objectPort, key, portConfig)
   }
 
   removeObjectProperty(objectPort: IPort, key: string): void {

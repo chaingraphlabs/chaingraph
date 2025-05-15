@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { useArchAIConfig } from '@/components/sidebar/tabs/archai-integration'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import SuperJSON from 'superjson'
@@ -14,6 +15,12 @@ import { RootProvider } from './exports'
 import { FlowLayout } from './FlowLayout'
 
 function App() {
+  const { config } = useArchAIConfig()
+
+  if (!config) {
+    return <div>Loading ArchAI config...</div>
+  }
+
   return (
     <BrowserRouter>
       <Routes>
@@ -23,6 +30,7 @@ function App() {
             trpcURL={appConfig.chaingraphTRPCWSUrl}
             superjsonCustom={SuperJSON}
             nodeRegistry={NodeRegistry.getInstance()}
+            sessionToken={config.userSession || import.meta.env.VITE_CHAINGRAPH_SESSION_TOKEN || 'dev'}
           />
         )}
         >

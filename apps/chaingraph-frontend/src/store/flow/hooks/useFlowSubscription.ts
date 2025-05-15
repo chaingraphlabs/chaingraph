@@ -78,6 +78,17 @@ export function useFlowSubscription() {
 
     [FlowEventType.NodeUpdated]: (data) => {
       // console.log('[NodeUpdated] Received node:', data.node)
+      const node = nodes[data.node.id]
+      if (!node) {
+        console.error(`[NodeUpdated] Node ${data.node.id} not found`)
+        return
+      }
+
+      if (data.node.getVersion() && data.node.getVersion() < node.getVersion()) {
+        console.warn(`[NodeUpdated] Received outdated node update event for node ${data.node.id}, local version: ${node.getVersion()}, event version: ${data.node.getVersion()}`)
+        return
+      }
+
       updateNode(data.node)
     },
 

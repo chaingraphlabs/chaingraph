@@ -221,19 +221,9 @@ function Flow({
         defaultViewport={defaultViewport}
         defaultEdgeOptions={defaultEdgeOptions}
         className="bg-background"
-        minZoom={0.2}
+        minZoom={0.05}
         maxZoom={2}
         nodeDragThreshold={5}
-
-        // Add these important properties for performance:
-        nodesFocusable={false}
-        edgesFocusable={false}
-        // This is crucial - tells React Flow to use shallow comparison
-        // when checking if nodes have changed
-        nodeExtent={[
-          [-10000, -10000],
-          [10000, 10000],
-        ]}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}

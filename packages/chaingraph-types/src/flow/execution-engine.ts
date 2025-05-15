@@ -324,21 +324,21 @@ export class ExecutionEngine {
     const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
     try {
+      const incomingEdges = this.flow.getIncomingEdges(node)
       if (node.shouldExecute()) {
-        let foundSkipped = false
-        for (const edge of this.flow.getIncomingEdges(node)) {
-          if (!edge.sourcePort.isSystemError()) {
-            // check if from node is completed
-            if (edge.sourceNode.status !== NodeStatus.Completed && edge.sourceNode.status !== NodeStatus.Backgrounding) {
-              foundSkipped = true
-            }
+        // First, validate all source nodes statuses before proceeding
+        for (const edge of incomingEdges) {
+          if (!edge.sourcePort.isSystemError()
+            && edge.sourceNode.status !== NodeStatus.Completed
+            && edge.sourceNode.status !== NodeStatus.Backgrounding) {
+            this.setNodeSkipped(node, `wrong status of source node: ${edge.sourceNode.status}`)
+            return
           }
         }
 
-        if (!foundSkipped) {
-          node.setStatus(NodeStatus.Executing, true)
-          this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
-        }
+        // If all source nodes have valid status, set this node to executing
+        node.setStatus(NodeStatus.Executing, true)
+        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
       }
 
       // Debug point - before execution
@@ -351,39 +351,41 @@ export class ExecutionEngine {
         }
       }
 
-      // Transfer data from incoming edges
-      for (const edge of this.flow.getIncomingEdges(node)) {
-        if (!edge.sourcePort.isSystemError()) {
-          // check if from node is completed
-          if (edge.sourceNode.status !== NodeStatus.Completed && edge.sourceNode.status !== NodeStatus.Backgrounding) {
-            this.setNodeSkipped(node, `wrong status of source node: ${edge.sourceNode.status}`)
-            return
+      // Prepare transfer functions that properly preserve context
+      const transferFunctions = incomingEdges.map((edge) => {
+        return async () => {
+          const transferStartTime = Date.now()
+          try {
+            // Execute the transfer
+            await edge.transfer()
+
+            // Only publish event if the execution wasn't aborted
+            if (!this.context.abortSignal.aborted) {
+              this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
+                edge: edge.clone(),
+                transferTime: Date.now() - transferStartTime,
+              }))
+            }
+          } catch (error) {
+            // Only publish event if the execution wasn't aborted
+            if (!this.context.abortSignal.aborted) {
+              this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
+                edge: edge.clone(),
+                error: error as Error,
+              }))
+            }
+            throw error // Rethrow to be caught by Promise.all
           }
         }
+      })
 
-        // allow system error ports to transfer in any status
-
-        const transferStartTime = Date.now()
-        this.eventQueue.publish(
-          this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_STARTED, { edge: edge.clone() }),
-        )
-
-        try {
-          await edge.transfer()
-        } catch (error) {
-          this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
-            edge: edge.clone(),
-            error: error as Error,
-          }))
-
-          // just skip the node
-          this.setNodeSkipped(node, 'edge transfer failed')
-          return
-        }
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
-          edge: edge.clone(),
-          transferTime: Date.now() - transferStartTime,
-        }))
+      // Execute all transfers in parallel
+      try {
+        await Promise.all(transferFunctions.map(fn => fn()))
+      } catch (error) {
+        // If any transfer failed, skip the node
+        this.setNodeSkipped(node, 'edge transfer failed')
+        return
       }
 
       // check weathers node should execute

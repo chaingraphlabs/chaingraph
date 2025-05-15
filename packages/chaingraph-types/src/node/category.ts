@@ -43,6 +43,7 @@ export interface CategoryMetadata {
   icon: string
   style: CategoryStyle
   order: number
+  hidden?: boolean
 }
 
 export interface CategorizedNodes {

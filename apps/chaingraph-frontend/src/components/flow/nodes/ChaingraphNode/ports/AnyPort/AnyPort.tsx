@@ -33,30 +33,11 @@ export interface AnyPortProps {
 }
 
 function AnyPortComponent(props: AnyPortProps) {
-  const { port } = props
-  // const { node, port, context } = props
-  // const { updatePortValue, getEdgesForPort } = context
+  const { port, node, context } = props
 
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
-
-  // Memoize the edges for this port
-  // const connectedEdges = useMemo(() => {
-  //   return getEdgesForPort(port.id)
-  // }, [getEdgesForPort, port.id])
-
-  // const needRenderEditor = useMemo(() => {
-  //   return !isHideEditor(config, connectedEdges)
-  // }, [config, connectedEdges])
-  //
-  // const handleChange = useCallback((value: ExtractValue<AnyPortConfig> | undefined) => {
-  //   updatePortValue({
-  //     nodeId: node.id,
-  //     portId: port.id,
-  //     value,
-  //   })
-  // }, [node.id, port.id, updatePortValue])
 
   if (ui?.hidden)
     return null
@@ -80,16 +61,6 @@ function AnyPortComponent(props: AnyPortProps) {
           {title}
         </PortTitle>
 
-        {config.underlyingType && (
-          <div
-            className={cn(
-              'text-xs text-gray-500',
-              config.direction === 'output' ? 'text-right' : 'text-left',
-            )}
-          >
-            {config.underlyingType.type}
-          </div>
-        )}
       </div>
 
       {config.direction === 'output' && <PortHandle port={port} />}

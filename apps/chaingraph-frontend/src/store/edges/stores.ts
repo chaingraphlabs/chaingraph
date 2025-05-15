@@ -176,6 +176,10 @@ export const $xyflowEdges = combine(
           edgeStyle = EDGE_STYLES.DIMMED
           edgeType = 'default'
         }
+        if (executionId && (!targetNodeExecution)) {
+          edgeStyle = EDGE_STYLES.DIMMED
+          edgeType = 'default'
+        }
 
         if (hasHighlights) {
           if (highlightedNodeId) {

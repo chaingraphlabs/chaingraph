@@ -68,14 +68,17 @@ const initialState: ExecutionState = {
   },
 }
 
-export const $executionState = executionDomain.createStore<ExecutionState>(initialState).reset(globalReset)
+export const $executionState = executionDomain.createStore<ExecutionState>(initialState)
+  .reset(globalReset)
+  .reset(clearExecutionState)
+  .reset(createExecution)
 
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
   const client = $trpcClient.getState()
   const state = $executionState.getState()
 
-  const { flowId, debug } = payload
+  const { flowId, debug, archAIIntegration } = payload
   const breakpoints = state.breakpoints
 
   if (!client) {
@@ -93,6 +96,18 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
         flowTimeoutMs: 300000,
       },
     },
+    integration: archAIIntegration
+      ? {
+          badai: archAIIntegration
+            ? {
+                agentID: archAIIntegration.agentID,
+                agentSession: archAIIntegration.agentSession,
+                chatID: archAIIntegration.chatID,
+                messageID: archAIIntegration.messageID,
+              }
+            : undefined,
+        }
+      : undefined,
   })
   return response.executionId
 })
@@ -186,37 +201,39 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
+  .reset(createExecution)
   .reset(globalReset)
 
-export const $executionNodes = executionDomain.createStore<Record<string, NodeExecutionState>>({}, {
-  updateFilter: (prev, next) => {
+export const $executionNodes = executionDomain
+  .createStore<Record<string, NodeExecutionState>>({}, {
+    updateFilter: (prev, next) => {
     // If either is null/undefined
-    if (!prev || !next)
-      return true
+      if (!prev || !next)
+        return true
 
-    // Check for different node IDs
-    const prevIds = Object.keys(prev)
-    const nextIds = Object.keys(next)
+      // Check for different node IDs
+      const prevIds = Object.keys(prev)
+      const nextIds = Object.keys(next)
 
-    // If number of nodes changed
-    if (prevIds.length !== nextIds.length)
-      return true
+      // If number of nodes changed
+      if (prevIds.length !== nextIds.length)
+        return true
 
-    // Check if any node has a different status
-    for (const nodeId of prevIds) {
+      // Check if any node has a different status
+      for (const nodeId of prevIds) {
       // If node doesn't exist in next
-      if (!next[nodeId])
-        return true
+        if (!next[nodeId])
+          return true
 
-      // If status changed
-      if (prev[nodeId]?.status !== next[nodeId]?.status)
-        return true
-    }
+        // If status changed
+        if (prev[nodeId]?.status !== next[nodeId]?.status)
+          return true
+      }
 
-    // No relevant changes detected
-    return false
-  },
-})
+      // No relevant changes detected
+      return false
+    },
+  })
   .on(newExecutionEvent, (state, event) => {
     let finalState = state
     let stateChanged = false
@@ -582,6 +599,8 @@ export const $autoStartConditions = combine({
     (execError, subError) => Boolean(execError || subError),
   ),
 })
+
+export const $executionId = $executionState.map(state => state.executionId)
 
 // Store to prevent multiple start attempts
 export const $startAttempted = executionDomain.createStore(false).reset(globalReset)

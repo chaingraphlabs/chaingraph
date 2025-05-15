@@ -83,20 +83,16 @@ describe('string port plugin (plain values)', () => {
       expect(serialized).toEqual('test')
     })
 
-    it('should throw on invalid string structure', () => {
-      // An "invalid" value here is one that is not a string.
-      // For example, passing an object instead of a string.
-      const invalidValue = { not: 'a string' }
-      expect(() => StringPortPlugin.serializeValue(invalidValue as any, {} as any)).toThrow(
-        'Invalid string value structure',
-      )
+    it('should serialize object values as json', () => {
+      const objectValue = { not: 'a string' }
+      const serialized = StringPortPlugin.serializeValue(objectValue as any, {} as any)
+      expect(serialized).toEqual(JSON.stringify(objectValue))
     })
 
-    it('should throw on wrong type', () => {
+    it('should serialize numbers as strings', () => {
       const invalidValue = 123
-      expect(() => StringPortPlugin.serializeValue(invalidValue as any, {} as any)).toThrow(
-        'Invalid string value structure',
-      )
+      const serizlized = StringPortPlugin.serializeValue(invalidValue as any, {} as any)
+      expect(serizlized).toEqual('123')
     })
   })
 
@@ -116,12 +112,11 @@ describe('string port plugin (plain values)', () => {
       )
     })
 
-    it('should throw on wrong type', () => {
+    it('should deserialize numbers as strings', () => {
       // Passing a number instead of a string.
       const invalidData = 123
-      expect(() => StringPortPlugin.deserializeValue(invalidData as any, {} as any)).toThrow(
-        'Invalid string value for deserialization',
-      )
+      const deserialized = StringPortPlugin.deserializeValue(invalidData as any, {} as any)
+      expect(deserialized).toEqual(createStringValue('123'))
     })
   })
 

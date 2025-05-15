@@ -13,6 +13,7 @@ import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, memo, useCallback, useMemo, useState } from 'react'
@@ -29,8 +30,20 @@ export interface ObjectPortProps {
 }
 
 const variants = {
-  open: { opacity: 1, height: 'auto', transition: { duration: 0 } },
-  closed: { opacity: 0, height: 0, transition: { duration: 0.1 } },
+  open: {
+    opacity: 1,
+    height: 'auto',
+    pointerEvents: 'auto' as const,
+    transition: { duration: 0.2 },
+    overflow: 'visible' as const,
+  },
+  closed: {
+    opacity: 0,
+    height: 0,
+    pointerEvents: 'none' as const,
+    overflow: 'hidden' as const,
+    transition: { duration: 0.1 },
+  },
 } as const
 
 // Extracted this to a memoizable component
@@ -72,6 +85,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
   const isSchemaMutable = config.isSchemaMutable
   const isOutput = config.direction === 'output'
   const ui = config.ui
+  const executionID = useExecutionID()
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -153,11 +167,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
             onClick={handleToggleCollapsible}
           />
 
-          <AnimatePresence
-            initial={false}
-            propagate={true}
-            mode="wait"
-          >
+          <AnimatePresence initial={false} mode="wait">
             <motion.div
               initial={config.ui?.collapsed ? 'open' : 'closed'}
               variants={variants}
@@ -200,8 +210,10 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                         'hover:bg-accent/80 transition-colors',
                         'w-fit flex',
                         isOutput ? 'flex-row-reverse' : 'flex-row',
+                        !!executionID && 'cursor-not-allowed opacity-50',
                       )}
                       onClick={handleOpenPopover}
+                      disabled={!!executionID}
                     >
                       Add field
                     </button>

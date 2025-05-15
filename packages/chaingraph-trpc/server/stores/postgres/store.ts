@@ -22,7 +22,6 @@ interface SerializableFlow {
 }
 
 export async function serializableFlow(flow: Flow): Promise<SerializableFlow> {
-  console.log('creating serializable flow', Array.from(flow.nodes.values()).filter(node => node.metadata.type === 'source').map(node => node.metadata.id))
   return {
     id: flow.id || '',
     ownerId: flow.metadata.ownerID || '',

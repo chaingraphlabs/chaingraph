@@ -51,6 +51,13 @@ export interface ExecutionError {
 export interface CreateExecutionOptions {
   flowId: string
   debug?: boolean
+
+  archAIIntegration?: {
+    agentID?: string
+    agentSession?: string
+    chatID?: string
+    messageID?: number
+  }
 }
 
 export interface ExecutionOptions {

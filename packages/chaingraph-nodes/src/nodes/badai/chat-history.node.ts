@@ -51,9 +51,9 @@ class BadAIChatHistoryNode extends BaseNode {
   @Number({
     title: 'Limit',
     description: 'Number of messages to fetch from the chat history',
-    defaultValue: 100,
+    defaultValue: 30,
   })
-  limit: number = 100
+  limit: number = 30
 
   @Input()
   @PortEnum({
@@ -107,10 +107,14 @@ class BadAIChatHistoryNode extends BaseNode {
       order: Order.DESC,
     })
 
-    const chatMessages = messages as GraphQL.Message[]
+    let chatMessages = messages as GraphQL.Message[]
     if (!chatMessages) {
       return {}
     }
+
+    chatMessages = chatMessages.filter((message) => {
+      return !message.is_system
+    })
 
     // sort messages by id depending on the order
     if (this.order === Order.ASC) {
@@ -162,7 +166,7 @@ class BadAIChatHistoryNode extends BaseNode {
       messagePort.need_answer = Boolean(message.need_answer)
       messagePort.version = message.version || 1
       messagePort.reply_to = message.reply_to || undefined
-      messagePort.error = message.error || undefined
+      messagePort.error = message.error || ''
       messagePort.meta = typeof message.meta === 'string'
         ? message.meta
         : JSON.stringify(message.meta || {})

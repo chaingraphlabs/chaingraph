@@ -29,6 +29,8 @@ export enum FlowEventType {
   NodeParentUpdated = 'flow:node:parent-updated',
 
   // Port events
+  PortCreated = 'flow:port:created',
+  PortRemoved = 'flow:port:removed',
   PortUpdated = 'flow:port:updated',
 
   // Edge events
@@ -65,6 +67,18 @@ export interface NodeRemovedEventData {
 /** Data for NodeUpdated event */
 export interface NodeUpdatedEventData {
   node: INode
+}
+
+/** Data for PortCreated event */
+export interface PortCreatedEventData {
+  port: IPort
+  nodeVersion: number
+}
+
+/** Data for PortRemoved event */
+export interface PortRemovedEventData {
+  port: IPort
+  nodeVersion: number
 }
 
 /** Data for PortUpdated event */
@@ -164,6 +178,8 @@ export interface EventDataMap {
   [FlowEventType.NodeAdded]: NodeAddedEventData
   [FlowEventType.NodeRemoved]: NodeRemovedEventData
   [FlowEventType.NodeUpdated]: NodeUpdatedEventData
+  [FlowEventType.PortCreated]: PortCreatedEventData
+  [FlowEventType.PortRemoved]: PortRemovedEventData
   [FlowEventType.PortUpdated]: PortUpdatedEventData
   [FlowEventType.EdgesAdded]: EdgesAddedEventData
   [FlowEventType.EdgeAdded]: EdgeAddedEventData

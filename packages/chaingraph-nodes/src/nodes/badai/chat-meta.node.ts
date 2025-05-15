@@ -118,7 +118,7 @@ class BadAIChatMetaNode extends BaseNode {
       lastMessage.need_answer = Boolean(chatMeta.last_message.need_answer)
       lastMessage.version = chatMeta.last_message.version || 1
       lastMessage.reply_to = chatMeta.last_message.reply_to || undefined
-      lastMessage.error = chatMeta.last_message.error || undefined
+      lastMessage.error = chatMeta.last_message.error || ''
       lastMessage.meta = typeof chatMeta.last_message.meta === 'string'
         ? chatMeta.last_message.meta
         : JSON.stringify(chatMeta.last_message.meta || {})

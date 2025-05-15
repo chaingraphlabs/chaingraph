@@ -28,7 +28,7 @@ export function validateArrayValue(
 ): string[] {
   const errors: string[] = []
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return []
   }
 
@@ -75,6 +75,10 @@ const arraySpecificSchema = z.object({
   type: z.literal('array'),
   defaultValue: valueSchema.optional(),
   itemConfig: z.custom<IPortConfig>((val) => {
+    if (val === undefined || val === null) {
+      return true
+    }
+
     if (
       typeof val !== 'object'
       || val === null
@@ -121,7 +125,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: ArrayPortValue, config: ArrayPortConfig): JSONValue => {
-    if (value === undefined) {
+    if (value === undefined || value === null) {
       return []
     }
 
@@ -166,7 +170,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
     }
   },
   deserializeValue: (data: JSONValue, config: ArrayPortConfig): ArrayPortValue => {
-    if (data === undefined) {
+    if (data === undefined || data === null) {
       return []
     }
 
@@ -294,6 +298,10 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
     }
   },
   validateValue: (value: ArrayPortValue, config: ArrayPortConfig): string[] => {
+    if (value === undefined || value === null) {
+      return []
+    }
+
     return validateArrayValue(value, config)
   },
   validateConfig: (config: ArrayPortConfig): string[] => {

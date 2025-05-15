@@ -25,6 +25,7 @@ export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
       className={cn(
         'relative flex items-center gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
+        'truncate',
       )}
     >
       {config.direction === 'output' && (

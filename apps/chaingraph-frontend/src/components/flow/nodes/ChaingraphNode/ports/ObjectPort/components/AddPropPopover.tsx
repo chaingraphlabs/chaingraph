@@ -83,24 +83,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
   array: {
     type: 'array',
     itemConfig: {
-      type: 'object',
-      schema: {
-        properties: {
-          a: {
-            type: 'string',
-            defaultValue: '',
-          },
-          b: {
-            type: 'number',
-            defaultValue: 0,
-          },
-        },
-      },
-      isSchemaMutable: true,
-      defaultValue: {
-        a: '',
-        b: 0,
-      },
+      type: 'any',
     },
     defaultValue: [],
     ui: {
@@ -181,12 +164,12 @@ export function AddPropPopover(props: Props) {
 
         <DropdownMenuContent>
           {PORT_TYPES
-            .filter(t => t !== 'stream')
+            .filter(t => t !== 'stream' && t !== 'any')
             .map(portType => (
               <DropdownMenuItem
                 key={portType}
                 onClick={() => {
-                  setType(portType as Exclude<PortType, 'array' | 'stream'>)
+                  setType(portType as Exclude<PortType, 'any' | 'stream'>)
                   setIsDropdownOpen(false)
                 }}
               >

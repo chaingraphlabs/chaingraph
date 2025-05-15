@@ -19,6 +19,7 @@ import type {
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, memo, useCallback, useMemo, useState } from 'react'
@@ -36,10 +37,21 @@ export interface ArrayPortProps {
 }
 
 const variants = {
-  open: { opacity: 1, height: 'auto' },
-  closed: { opacity: 0, height: 0 },
+  open: {
+    opacity: 1,
+    height: 'auto',
+    pointerEvents: 'auto' as const,
+    transition: { duration: 0.2 },
+    overflow: 'visible' as const,
+  },
+  closed: {
+    opacity: 0,
+    height: 0,
+    pointerEvents: 'none' as const,
+    overflow: 'hidden' as const,
+    transition: { duration: 0.1 },
+  },
 } as const
-
 // Extracted to a memoizable component
 const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }) => {
   const childPorts = useMemo(() => {
@@ -81,6 +93,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const isMutable = config.isMutable
   const isOutput = config.direction === 'output'
   const ui = config.ui
+  const executionID = useExecutionID()
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -273,8 +286,10 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
                         'hover:bg-accent/80 transition-colors',
                         'w-fit flex',
                         isOutput ? 'flex-row-reverse' : 'flex-row',
+                        !!executionID && 'cursor-not-allowed opacity-50',
                       )}
                       onClick={handleAddElement}
+                      disabled={!!executionID}
                     >
                       Add Element
                     </button>

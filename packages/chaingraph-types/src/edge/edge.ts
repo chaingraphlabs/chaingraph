@@ -8,7 +8,7 @@
 
 import type { EdgeMetadata, IEdge } from '.'
 import type { INode } from '../node'
-import type { IPort } from '../port'
+import type { AnyPortConfig, IPort } from '../port'
 import { EdgeStatus } from '.'
 import { NodeStatus } from '../node'
 import { PortDirection } from '../port'
@@ -63,6 +63,18 @@ export class Edge implements IEdge {
       if (targetPortKind === 'any') {
         // allow to port with kind "any" to receive any connections
         return true
+      }
+
+      if (sourcePortKind === 'any') {
+        // get the underlying type of source any port
+        // and check if it is compatible with the target port
+        const sourcePortConfig = this.sourcePort.getConfig() as AnyPortConfig
+        const sourcePortUnderlyingType = sourcePortConfig.underlyingType
+        if (sourcePortUnderlyingType) {
+          if (sourcePortUnderlyingType.type === targetPortKind) {
+            return true
+          }
+        }
       }
 
       throw new Error(`Incompatible port types: ${sourcePortKind} -> ${targetPortKind}`)

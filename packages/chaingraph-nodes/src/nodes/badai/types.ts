@@ -25,6 +25,7 @@ export class Participant {
     title: 'Participant ID',
     description: 'Unique identifier for the participant',
     minLength: 1,
+    required: true,
   })
   participant_id: string = ''
 
@@ -32,6 +33,7 @@ export class Participant {
     title: 'Username',
     description: 'Username of the participant',
     minLength: 1,
+    required: true,
   })
   username: string = ''
 
@@ -39,6 +41,7 @@ export class Participant {
     title: 'First Name',
     description: 'First name of the participant',
     minLength: 1,
+    required: true,
   })
   first_name: string = ''
 
@@ -46,6 +49,7 @@ export class Participant {
     title: 'Agent ID',
     description: 'ID of the agent if participant is an agent',
     minLength: 1,
+    required: true,
   })
   agent_id: string = ''
 
@@ -53,6 +57,7 @@ export class Participant {
     title: 'Is Agent',
     description: 'Whether this participant is an agent',
     defaultValue: false,
+    required: true,
   })
   is_agent: boolean = false
 
@@ -89,6 +94,7 @@ export class Attachment {
     title: 'Attachment ID',
     description: 'Unique identifier for the attachment',
     minLength: 1,
+    required: true,
   })
   id: string = ''
 
@@ -96,6 +102,7 @@ export class Attachment {
     title: 'Filename',
     description: 'Name of the attached file',
     minLength: 1,
+    required: true,
   })
   filename: string = ''
 
@@ -103,6 +110,7 @@ export class Attachment {
     title: 'URL',
     description: 'URL to download the attachment',
     minLength: 1,
+    required: true,
   })
   url: string = ''
 
@@ -131,6 +139,7 @@ export class Message {
   @Number({
     title: 'Message ID',
     description: 'Unique identifier for the message',
+    required: true,
   })
   message_id: number = 0
 
@@ -138,6 +147,7 @@ export class Message {
     title: 'Chat ID',
     description: 'ID of the chat this message belongs to',
     minLength: 1,
+    required: true,
   })
   chat_id: string = ''
 
@@ -148,6 +158,7 @@ export class Message {
       isTextArea: true,
       textareaDimensions: { height: 100 },
     },
+    required: true,
   })
   text: string = ''
 
@@ -155,6 +166,7 @@ export class Message {
     title: 'Author ID',
     description: 'ID of the participant who sent the message',
     minLength: 1,
+    required: true,
   })
   author_id: string = ''
 
@@ -171,6 +183,7 @@ export class Message {
       { id: 'twitter', type: 'string', defaultValue: 'twitter', title: 'Twitter' },
     ],
     defaultValue: 'common',
+    required: true,
   })
   type: string = 'common'
 
@@ -178,6 +191,7 @@ export class Message {
     title: 'Timestamp',
     description: 'Time when the message was sent',
     minLength: 1,
+    required: true,
   })
   time: string = ''
 
@@ -194,6 +208,7 @@ export class Message {
     itemConfig: {
       type: 'object',
       schema: Attachment,
+      defaultValue: new Attachment(),
     },
     defaultValue: [],
   })
@@ -203,6 +218,7 @@ export class Message {
     title: 'Finished',
     description: 'Whether this message has been completed',
     defaultValue: true,
+    required: true,
   })
   finished: boolean = true
 
@@ -210,6 +226,7 @@ export class Message {
     title: 'System Message',
     description: 'Whether this is a system message',
     defaultValue: false,
+    required: true,
   })
   is_system: boolean = false
 
@@ -217,6 +234,7 @@ export class Message {
     title: 'Needs Answer',
     description: 'Whether this message requires a response',
     defaultValue: false,
+    required: true,
   })
   need_answer: boolean = false
 
@@ -226,20 +244,24 @@ export class Message {
     min: 1,
     integer: true,
     defaultValue: 1,
+    required: true,
   })
   version: number = 1
 
   @Number({
     title: 'Reply To',
     description: 'ID of the message this is replying to',
+    defaultValue: 0,
+    required: false,
   })
-  reply_to?: number
+  reply_to: number = 0
 
   @String({
     title: 'Error',
     description: 'Error message if something went wrong',
+    required: true,
   })
-  error?: string
+  error: string = ''
 
   @String({
     title: 'Metadata',
@@ -261,6 +283,7 @@ export class ChatMeta {
     title: 'Chat ID',
     description: 'Unique identifier for the chat room',
     minLength: 1,
+    required: true,
   })
   id: string = ''
 
@@ -268,6 +291,7 @@ export class ChatMeta {
     title: 'Name',
     description: 'Name of the chat room',
     minLength: 1,
+    required: true,
   })
   name: string = ''
 
@@ -275,6 +299,7 @@ export class ChatMeta {
     title: 'Author',
     description: 'ID of the participant who created the chat room',
     minLength: 1,
+    required: true,
   })
   author: string = ''
 
@@ -282,6 +307,7 @@ export class ChatMeta {
     title: 'Created At',
     description: 'Timestamp when the chat room was created',
     minLength: 1,
+    required: true,
   })
   created_at: string = ''
 
@@ -289,6 +315,7 @@ export class ChatMeta {
     title: 'Updated At',
     description: 'Timestamp when the chat room was last updated',
     minLength: 1,
+    required: true,
   })
   updated_at: string = ''
 
@@ -308,8 +335,10 @@ export class ChatMeta {
     itemConfig: {
       type: 'object',
       schema: Participant,
+      defaultValue: new Participant(),
     },
     defaultValue: [],
+    required: true,
   })
   participants: Participant[] = []
 
@@ -317,6 +346,7 @@ export class ChatMeta {
     schema: Message,
     title: 'Last Message',
     description: 'The last message sent in the chat room',
+    defaultValue: new Message(),
   })
   last_message?: Message
 
@@ -325,4 +355,26 @@ export class ChatMeta {
     description: 'Timestamp of the last message in the chat room',
   })
   last_message_time?: string
+}
+
+/**
+ * Enum for variable namespaces in BadAI
+ */
+export enum VariableNamespace {
+  Execution = 'execution',
+  Agent = 'agent',
+  Chat = 'chat',
+  ChatAgent = 'chat_agent',
+}
+
+/**
+ * Enum for variable value types in BadAI
+ */
+export enum VariableValueType {
+  String = 'string',
+  Number = 'number',
+  Boolean = 'boolean',
+  Object = 'object',
+  Array = 'array',
+  Any = 'any',
 }

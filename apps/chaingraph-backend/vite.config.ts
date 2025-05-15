@@ -21,5 +21,8 @@ export default defineConfig({
       formats: ['cjs'],
     },
     outDir: 'dist',
+    rollupOptions: {
+      external: ['bigint-crypto-utils'],
+    },
   },
 })

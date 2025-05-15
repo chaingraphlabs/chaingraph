@@ -33,3 +33,6 @@ export const portsDomain = createDomain('ports')
 
 // TRPC domain for remote procedure call management
 export const trpcDomain = createDomain('trpc')
+
+// ArchAI domain for ArchAI integration management
+export const archaiDomain = createDomain('archai')

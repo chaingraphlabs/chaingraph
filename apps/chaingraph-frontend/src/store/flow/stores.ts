@@ -133,6 +133,14 @@ export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
   .on(loadFlowsListFx.pending, (_, isPending) => isPending)
   .reset(globalReset)
 
+export const $isFlowLoaded = flowDomain.createStore<boolean>(false)
+  .on(setFlowLoaded, (_, flowId) => {
+    const flow = $flows.getState().find(f => f.id === flowId)
+    return flow && flow.metadata ? !!flow.metadata?.loaded : false
+  })
+  .reset(clearActiveFlow)
+  .reset(globalReset)
+
 // Main error state
 export const $flowsError = flowDomain.createStore<Error | null>(null)
   .on(setFlowsError, (_, error) => error)

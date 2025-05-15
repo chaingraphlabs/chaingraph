@@ -115,7 +115,7 @@ const ParticleEffect = memo(({
     // Initialize animation variables
     let animationFrameId: number
     const speeds = [0.005, 0.003, 0.003, 0.003] // Different speeds for each particle
-    const rafInterval = 2 // Only update animation every X frames to reduce CPU usage
+    const rafInterval = 3 // Only update animation every X frames to reduce CPU usage
     let frameCount = 0
     let isActive = true // Flag to check if the component is still mounted
 

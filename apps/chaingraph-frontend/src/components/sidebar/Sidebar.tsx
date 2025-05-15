@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { initConfig } from '@/store/archai'
 import { setActiveFlowId } from '@/store/flow'
 import {
   ChevronLeftIcon,
@@ -22,8 +23,9 @@ import {
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { Bug, LayersIcon } from 'lucide-react'
+import { Bug, LayersIcon, Scroll } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { ArchAIIntegration } from './tabs/archai-integration'
 import { EventList } from './tabs/EventList'
 import { Help } from './tabs/Help'
 import { Settings } from './tabs/Settings'
@@ -36,7 +38,7 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
-export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help'
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai'
 
 const defaultEnabledTabs: tabsType[] = [
   'flows',
@@ -44,6 +46,7 @@ const defaultEnabledTabs: tabsType[] = [
   // 'events',
   // 'variables',
   'debug',
+  'archai',
   // 'settings',
   // 'help',
 ]
@@ -101,6 +104,12 @@ export function Sidebar({
       content: <DebugPanel />,
     },
     {
+      id: 'archai',
+      icon: <Scroll />,
+      label: 'ArchAI Integration',
+      content: <ArchAIIntegration />,
+    },
+    {
       id: 'settings',
       icon: <GearIcon />,
       label: 'Settings',
@@ -125,6 +134,11 @@ export function Sidebar({
   const [width, setWidth] = useState<number>(() => {
     return Number(localStorage.getItem(STORAGE_KEYS.WIDTH)) || DEFAULT_WIDTH
   })
+
+  // Initialize archai config from localStorage on mount
+  useEffect(() => {
+    initConfig()
+  }, [])
 
   // Refs for resize handlers
   const isResizing = useRef(false)
@@ -199,7 +213,7 @@ export function Sidebar({
                   )}
                   onClick={() => handleTabClick(tab.id)}
                 >
-                  <div className="w-5 h-5 text-muted-foreground">
+                  <div className="w-4 h-4 text-muted-foreground">
                     {tab.icon}
                   </div>
                 </Button>
