@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.1.25
+
+### Patch Changes
+
+- Fix stream port UI
+
 ## 0.1.24
 
 ### Patch Changes

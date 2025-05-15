@@ -26,10 +26,13 @@ export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
         'relative flex items-center gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
         'truncate',
+        'h-20',
       )}
     >
       {config.direction === 'output' && (
-        <PortTitle>{title}</PortTitle>
+        <PortTitle>
+          {title}
+        </PortTitle>
       )}
 
       <PortHandle port={port} />

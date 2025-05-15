@@ -18,18 +18,19 @@ import type {
   IPort,
   NumberPortConfig,
   ObjectPortConfig,
+  StreamPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
 import { BooleanPort } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
 import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort'
 
+import { StreamPort } from '@/components/flow/nodes/ChaingraphNode/ports/StreamPort/StreamPort'
 import { AnyPort } from 'components/flow/nodes/ChaingraphNode/ports/AnyPort/AnyPort'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
 import { PortContext } from './ports/context/PortContext'
 import { EnumPort } from './ports/EnumPort/EnumPort'
 import { StringPort } from './ports/StringPort/StringPort'
-import { StubPort } from './ports/StubPort/StubPort'
 
 /**
  * PortProps interface for all components rendered through PortComponent
@@ -103,7 +104,7 @@ export function PortComponent(props: PortProps) {
     }
 
     case 'stream': {
-      return <StubPort port={port} />
+      return <StreamPort node={node} port={port as IPort<StreamPortConfig>} context={context} />
     }
 
     default: {

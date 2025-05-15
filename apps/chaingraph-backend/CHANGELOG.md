@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.25
+
+### Patch Changes
+
+- Fix stream port UI
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.25
+  - @badaitech/chaingraph-types@0.1.25
+  - @badaitech/chaingraph-trpc@0.1.25
+
 ## 0.1.24
 
 ### Patch Changes

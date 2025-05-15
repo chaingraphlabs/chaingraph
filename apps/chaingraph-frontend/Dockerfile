@@ -14,6 +14,7 @@ RUN turbo prune "@badaitech/chaingraph-frontend" --docker
 FROM base AS builder
 
 ARG NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml

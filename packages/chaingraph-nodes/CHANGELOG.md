@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.25
+
+### Patch Changes
+
+- Fix stream port UI
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.25
+
 ## 0.1.24
 
 ### Patch Changes
