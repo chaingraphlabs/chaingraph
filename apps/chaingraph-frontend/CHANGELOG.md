@@ -1,5 +1,26 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.24
+
+### Patch Changes
+
+- eb4cf29: Add the ArchAI integration tab with configurable session and nodes context. When execution ID exists then disable all port inputs. Merge execution node and editor nodes UI to make it interactive after execution complete. Add BadAI nodes in the hidden category as fallback. Fix ports serialize/deserialize undefined and null values with fallback. Recursive open Any port underlying type. Improve LLM call with structured output node. Now it work well with Groq and any other LLM's. Add retries with error feedback. Other changes and bug fixes.
+- Small fixes for the session token in root provider and get variable node
+- d5409b8: Fix backend build
+- 639038b: Redevelop gate node, now it handles complex types much better. Add LLM Call with structured output node. Add basic value Object node with mutable schema. Rename BadAI to ArchAI nodes and category. Add math And node. Add yaml helper to handlebars template. Add OKX nodes to build whole swap flow. Add PortCreate, PortDelete events to the node. Improve here and there core port, nodes, flow logic as well as port plugins.
+- d5409b8: Fix deserialization
+- d5409b8: Fix enum deserialize
+- Updated dependencies [eb4cf29]
+- Updated dependencies
+- Updated dependencies [d5409b8]
+- Updated dependencies [639038b]
+- Updated dependencies [d5409b8]
+- Updated dependencies [d5409b8]
+  - @badaitech/chaingraph-nodes@0.1.24
+  - @badaitech/chaingraph-types@0.1.24
+  - @badaitech/chaingraph-trpc@0.1.24
+  - @badaitech/badai-api@0.1.24
+
 ## 0.1.24-dev.4
 
 ### Patch Changes
