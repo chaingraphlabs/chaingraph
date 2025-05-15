@@ -24,6 +24,7 @@ function TooltipContent({ ref, className, sideOffset = 4, ...props }: React.Comp
   return (
     <TooltipPrimitive.Portal container={portalEl}>
       <TooltipPrimitive.Content
+        hideWhenDetached
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
