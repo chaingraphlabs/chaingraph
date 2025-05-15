@@ -62,6 +62,11 @@ class TargetNode extends BaseNode {
   textInput: string = ''
 
   @Input()
+  @String()
+  @Id('textInput2')
+  textInput2: string = ''
+
+  @Input()
   @Number()
   @Id('numberInput')
   numberInput: number = 0
@@ -197,7 +202,7 @@ describe('flow Serialization', () => {
     // Create multiple connections
     await flow.connectPorts(source1.id, 'output', target1.id, 'textInput')
     await flow.connectPorts(source1.id, 'output', target2.id, 'textInput')
-    await flow.connectPorts(source2.id, 'output', target2.id, 'textInput')
+    await flow.connectPorts(source2.id, 'output', target2.id, 'textInput2')
 
     // Serialize
     const serialized = superjson.serialize(flow)
@@ -252,7 +257,7 @@ describe('flow Serialization', () => {
       e.sourceNode.id === 'source-2'
       && e.targetNode.id === 'target-2'
       && e.sourcePort.id === 'output'
-      && e.targetPort.id === 'textInput',
+      && e.targetPort.id === 'textInput2',
     )).toBe(true)
   })
 
