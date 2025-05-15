@@ -100,6 +100,7 @@ export default defineConfig({
         '@badaitech/chaingraph-nodes',
         '@badaitech/chaingraph-types',
         '@badaitech/chaingraph-trpc',
+        '@badaitech/badai-api',
       ],
       output: {
         // Bundle everything else together
@@ -110,6 +111,7 @@ export default defineConfig({
           '@badaitech/chaingraph-nodes': 'ChainGraphNodes',
           '@badaitech/chaingraph-types': 'ChainGraphTypes',
           '@badaitech/chaingraph-trpc': 'ChainGraphTRPC',
+          '@badaitech/badai-api': 'ChainGraphArchAIAPI',
         },
         assetFileNames: 'chaingraph-frontend.css',
       },

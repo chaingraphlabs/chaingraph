@@ -21,6 +21,43 @@ interface UseElementResizeOptions {
 }
 
 /**
+ * Detects the browser zoom level using various methods
+ * @returns The current browser zoom level (1 = 100%, 1.1 = 110%, etc.)
+ */
+export function detectBrowserZoom(): number {
+  // Method 1: Using visual viewport API (modern browsers)
+  if (window.visualViewport?.scale) {
+    return window.visualViewport.scale
+  }
+
+  // Method 2: Calculate zoom by comparing actual width to ideal width
+  // Create a temporary measuring element
+  const tempEl = document.createElement('div')
+  tempEl.style.width = '100vw'
+  tempEl.style.height = '0'
+  tempEl.style.position = 'absolute'
+  tempEl.style.top = '0'
+  tempEl.style.left = '0'
+  tempEl.style.visibility = 'hidden'
+
+  document.body.appendChild(tempEl)
+  const idealWidth = tempEl.getBoundingClientRect().width
+  document.body.removeChild(tempEl)
+
+  // If idealWidth is valid, compare with innerWidth
+  if (idealWidth > 0) {
+    const ratio = window.innerWidth / idealWidth
+    // Only return if it seems like a reasonable zoom value
+    if (ratio > 0.5 && ratio < 5) {
+      return ratio
+    }
+  }
+
+  // Method 3: Fallback to 1 if we can't detect
+  return 1
+}
+
+/**
  * Hook to track element size changes with debouncing
  * @param options Configuration options
  * @returns Object with ref to attach to the element
@@ -39,6 +76,21 @@ export function useElementResize<T extends HTMLElement = HTMLDivElement>({
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isResizingRef = useRef<boolean>(false)
   const minUpdateIntervalMs = maxUpdatesPerSecond ? (1000 / maxUpdatesPerSecond) : 0
+  const zoomLevelRef = useRef<number>(1)
+
+  // Update zoom level on mount and on resize
+  useEffect(() => {
+    // Set initial zoom level
+    zoomLevelRef.current = detectBrowserZoom()
+
+    // Update zoom level on window resize (which happens when zooming)
+    const updateZoomLevel = () => {
+      zoomLevelRef.current = detectBrowserZoom()
+    }
+
+    window.addEventListener('resize', updateZoomLevel)
+    return () => window.removeEventListener('resize', updateZoomLevel)
+  }, [])
 
   // This function checks if we should allow an update based on time constraints
   const shouldAllowUpdate = useCallback(() => {
@@ -84,6 +136,14 @@ export function useElementResize<T extends HTMLElement = HTMLDivElement>({
       const rect = (entry.target as HTMLElement).getBoundingClientRect()
       width = rect.width
       height = rect.height
+    }
+
+    // Normalize measurements based on browser zoom level
+    // This ensures consistent sizing regardless of user's browser zoom
+    const zoomLevel = zoomLevelRef.current
+    if (zoomLevel !== 1) {
+      width = width / zoomLevel
+      height = height / zoomLevel
     }
 
     // Store the current size

@@ -8,6 +8,7 @@
 
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
+import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -20,7 +21,7 @@ import {
 } from '@/store/execution'
 import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
-import { $activeFlowMetadata } from '@/store/flow'
+import { $activeFlowMetadata, $isFlowLoaded } from '@/store/flow'
 import { removeNodeFromFlow, updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
@@ -83,6 +84,7 @@ function ChaingraphNodeComponent({
   const node = useNode(id)
   const nodeEdges = useEdgesForNode(id)
   const highlightedNodeId = useUnit($highlightedNodeId)
+  const isFlowLoaded = useUnit($isFlowLoaded)
 
   const categoryMetadata = data.categoryMetadata ?? defaultCategoryMetadata
 
@@ -136,6 +138,10 @@ function ChaingraphNodeComponent({
       if (selected) {
         return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
       }
+      if (executionId && !nodeExecution) {
+        return 'border-gray-500 opacity-30'
+      }
+
       if (nodeExecution) {
         if (nodeExecution.isExecuting) {
           return `border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] scale-[1.02] animate-[glow_3s_ease-in-out_infinite]`
@@ -198,11 +204,15 @@ function ChaingraphNodeComponent({
     }
   }, [dispatch, getEdgesForPortFunction])
 
+  const nodeToRender = useMemo(() => {
+    return nodeExecution?.node ? mergeNodePortsUi(nodeExecution.node, node) : node
+  }, [node, nodeExecution])
+
   // Use a custom hook to handle element resize
   const { ref: cardRef } = useElementResize<HTMLDivElement>({
     debounceTime: 500,
     onResize: (size) => {
-      if (!activeFlow || !activeFlow.id || !node)
+      if (!activeFlow || !activeFlow.id || !node || !isFlowLoaded)
         return
 
       const actualDimensions = node.metadata.ui?.dimensions || {
@@ -214,6 +224,14 @@ function ChaingraphNodeComponent({
         || size.height !== actualDimensions.height
 
       if (!isDimensionsChanged)
+        return
+
+      const diffWidth = size.width - actualDimensions.width
+      const diffHeight = size.height - actualDimensions.height
+
+      // threshold for minimum size
+      const threshold = 5
+      if (Math.abs(diffWidth) < threshold && Math.abs(diffHeight) < threshold)
         return
 
       updateNodeUI({
@@ -231,7 +249,7 @@ function ChaingraphNodeComponent({
     },
   })
 
-  if (!activeFlow || !activeFlow.id || !node)
+  if (!activeFlow || !activeFlow.id || !nodeToRender)
     return null
 
   return (
@@ -260,7 +278,7 @@ function ChaingraphNodeComponent({
                       hover:w-2 transition-all duration-200"
         >
           <BreakpointButton
-            nodeId={node.id}
+            nodeId={nodeToRender.id}
             enabled={isBreakpointSet}
             onToggle={handleBreakpointToggle}
           />
@@ -268,7 +286,7 @@ function ChaingraphNodeComponent({
       )}
 
       <NodeHeader
-        node={nodeExecution?.node ?? node}
+        node={nodeToRender}
         context={portContextValue}
         icon={categoryMetadata.icon}
         style={style}
@@ -281,9 +299,15 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      <NodeBody node={nodeExecution?.node ?? node} context={portContextValue} />
+      <NodeBody
+        node={nodeToRender}
+        context={portContextValue}
+      />
 
-      <NodeErrorPorts node={nodeExecution?.node ?? node} context={portContextValue} />
+      <NodeErrorPorts
+        node={nodeToRender}
+        context={portContextValue}
+      />
 
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}

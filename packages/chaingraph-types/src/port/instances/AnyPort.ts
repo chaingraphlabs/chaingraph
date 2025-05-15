@@ -54,10 +54,26 @@ export class AnyPort extends BasePort<AnyPortConfig> {
   }
 
   getConfig(): AnyPortConfig {
-    if (this.config.underlyingType) {
+    let underlyingType = this.config.underlyingType
+    if (underlyingType) {
+      // find actual underlying type by iterate over any port underlying types
+      while (underlyingType && underlyingType.type === 'any' && underlyingType.underlyingType) {
+        underlyingType = underlyingType.underlyingType
+      }
+
       return {
         ...this.config.underlyingType,
         type: 'any',
+        id: this.config.id,
+        parentId: this.config.parentId,
+        key: this.config.key,
+        title: this.config.title,
+        description: this.config.description,
+        connections: this.config.connections,
+        order: this.config.order,
+        nodeId: this.config.nodeId,
+        direction: this.config.direction,
+        underlyingType,
       } as AnyPortConfig
     }
     return this.config

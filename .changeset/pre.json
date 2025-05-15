@@ -1,0 +1,20 @@
+{
+  "mode": "pre",
+  "tag": "dev",
+  "initialVersions": {
+    "@badaitech/chaingraph-backend": "0.1.23",
+    "@badaitech/chaingraph-frontend": "0.1.23",
+    "@badaitech/badai-api": "0.1.23",
+    "@badaitech/chaingraph-nodes": "0.1.23",
+    "@badaitech/chaingraph-trpc": "0.1.23",
+    "@badaitech/chaingraph-types": "0.1.23",
+    "@badaitech/typescript-config": "0.1.23"
+  },
+  "changesets": [
+    "dark-planes-battle",
+    "flat-jars-accept",
+    "gentle-hands-change",
+    "many-things-buy",
+    "yellow-snails-pay"
+  ]
+}

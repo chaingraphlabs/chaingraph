@@ -10,6 +10,7 @@ import type { JSONValue } from '../../utils/json'
 import type { IPortPlugin, StringPortConfig, StringPortValue } from '../base'
 import Decimal from 'decimal.js'
 import { z } from 'zod'
+import { isBooleanPortValue } from '../base'
 import { isNumberPortValue } from '../base'
 import {
   basePortConfigSchema,
@@ -163,6 +164,16 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
         if (isNumberPortValue(value)) {
           // If the value is a number, convert it to a string
           return new Decimal(value).toString()
+        }
+
+        if (isBooleanPortValue(value)) {
+          // If the value is a boolean, convert it to a string
+          return value ? 'true' : 'false'
+        }
+
+        if (typeof value === 'object' || Array.isArray(value)) {
+          // If the value is an object, convert it to a string
+          return JSON.stringify(value)
         }
 
         throw new PortError(

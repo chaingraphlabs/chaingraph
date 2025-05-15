@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CategorizedNodes } from '@badaitech/chaingraph-types'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import {
   useExpandedCategories,
@@ -28,22 +29,22 @@ import { NodeListSkeleton } from './NodeListSkeleton'
 export function NodeList() {
   const [searchQuery, setSearchQuery] = useState('')
 
-  const { isLoading, categories } = useCategories()
+  const { isLoading, categories, getCategoryMetadata } = useCategories()
 
   // Memoize filtered categories based on search
   const filteredCategories = useMemo(() => {
     if (!searchQuery)
       return categories
 
-    return categories?.filter(category =>
-      category.nodes.some(node =>
+    return categories?.filter((category: CategorizedNodes) => {
+      return category.nodes.some(node =>
         node.title?.toLowerCase().includes(searchQuery.toLowerCase())
         || node.description?.toLowerCase().includes(searchQuery.toLowerCase())
         || node.tags?.some(tag =>
           tag.toLowerCase().includes(searchQuery.toLowerCase()),
         ),
-      ),
-    )
+      )
+    })
   }, [searchQuery, categories])
 
   const availableCategories = useMemo(
@@ -82,45 +83,47 @@ export function NodeList() {
           onValueChange={setExpandedCategories}
           className="space-y-0.5 p-1"
         >
-          {filteredCategories?.map(category => (
-            <AccordionItem
-              key={category.category}
-              value={category.category}
-              className="border-0"
-            >
-              <AccordionTrigger
-                className={cn(
-                  'py-1 px-2 rounded-sm hover:bg-accent/50',
-                  'hover:no-underline text-sm',
-                  'data-[state=open]:bg-accent/40',
-                )}
+          {filteredCategories
+            .filter(category => !category.metadata.hidden)
+            .map(category => (
+              <AccordionItem
+                key={category.category}
+                value={category.category}
+                className="border-0"
               >
-                <div className="flex items-center gap-2">
-                  <CategoryIcon
-                    name={category.metadata.icon}
-                    size={16}
-                    className="text-muted-foreground"
-                  />
-                  <span className="font-medium">{category.metadata.label}</span>
-                  <span className="text-xs text-muted-foreground font-normal">
-                    {category.nodes.length}
-                  </span>
-                </div>
-              </AccordionTrigger>
-
-              <AccordionContent className="pt-1 pb-2">
-                <div className="space-y-1 pl-6">
-                  {category.nodes.map(node => (
-                    <NodeCard
-                      key={node.type}
-                      node={node}
-                      categoryMetadata={category.metadata}
+                <AccordionTrigger
+                  className={cn(
+                    'py-1 px-2 rounded-sm hover:bg-accent/50',
+                    'hover:no-underline text-sm',
+                    'data-[state=open]:bg-accent/40',
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <CategoryIcon
+                      name={category.metadata.icon}
+                      size={16}
+                      className="text-muted-foreground"
                     />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
+                    <span className="font-medium">{category.metadata.label}</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      {category.nodes.length}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+
+                <AccordionContent className="pt-1 pb-2">
+                  <div className="space-y-1 pl-6">
+                    {category.nodes.map(node => (
+                      <NodeCard
+                        key={node.type}
+                        node={node}
+                        categoryMetadata={category.metadata}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
         </Accordion>
 
         {/* Empty State */}

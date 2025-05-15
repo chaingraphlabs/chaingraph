@@ -106,7 +106,28 @@ class GateNode extends BaseNode {
     // Transfer values from inputs to corresponding outputs
     for (const [inputKey, outputKey] of Object.entries(connectionMap)) {
       try {
-        this.outputObject[outputKey] = this.inputObject[inputKey]
+        const inputPort = this.inputObject[inputKey]
+        if (!inputPort)
+          continue
+
+        if (typeof inputPort === 'object') {
+          for (const [key, value] of Object.entries(inputPort)) {
+            if (typeof value === 'object' && value !== null) {
+              // If the value is an object, we need to create a new object for the output
+              this.outputObject[outputKey] = {
+                ...this.outputObject[outputKey],
+                [key]: value,
+              }
+            } else {
+              this.outputObject[outputKey] = {
+                ...this.outputObject[outputKey],
+                [key]: value,
+              }
+            }
+          }
+        } else {
+          this.outputObject[outputKey] = this.inputObject[inputKey]
+        }
       } catch (error) {
         this.logError(`Error transferring value from ${inputKey} to ${outputKey}:`, error)
       }
@@ -431,6 +452,8 @@ class GateNode extends BaseNode {
           hideEditor: true,
         },
         defaultValue: underlyingType.defaultValue,
+        title: targetPort ? targetPort.getConfig().title : underlyingType.title || inputPortConfig.title,
+        description: targetPort ? targetPort.getConfig().description : underlyingType.description || inputPortConfig.description,
       }
     } else {
       // For other port types, use the input config directly
@@ -447,6 +470,9 @@ class GateNode extends BaseNode {
           hideEditor: true,
         },
         defaultValue: inputPortConfig.defaultValue as any,
+
+        title: targetPort ? targetPort.getConfig().title : inputPortConfig.title,
+        description: targetPort ? targetPort.getConfig().description : inputPortConfig.description,
       }
     }
 

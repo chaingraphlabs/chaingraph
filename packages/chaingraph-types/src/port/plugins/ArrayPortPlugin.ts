@@ -125,7 +125,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
   configSchema,
   valueSchema,
   serializeValue: (value: ArrayPortValue, config: ArrayPortConfig): JSONValue => {
-    if (value === undefined) {
+    if (value === undefined || value === null) {
       return []
     }
 
@@ -170,7 +170,7 @@ export const ArrayPortPlugin: IPortPlugin<'array'> = {
     }
   },
   deserializeValue: (data: JSONValue, config: ArrayPortConfig): ArrayPortValue => {
-    if (data === undefined) {
+    if (data === undefined || data === null) {
       return []
     }
 

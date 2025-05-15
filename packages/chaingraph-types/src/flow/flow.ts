@@ -357,6 +357,10 @@ export class Flow implements IFlow {
       throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
     }
 
+    if ((targetPort.getConfig().connections?.length || 0) > 0) {
+      throw new Error(`Target port with ID ${targetPortId} already has connections.`)
+    }
+
     this.removeAllChildConnections(targetNode, targetPort)
 
     // TODO: Check dead loops
@@ -385,13 +389,13 @@ export class Flow implements IFlow {
         title: targetPortConfig.title,
         description: targetPortConfig.description,
       })
-    }
 
-    if (targetValue !== undefined) {
-      targetPort.setValue(targetValue)
-    }
+      if (targetValue !== undefined) {
+        targetPort.setValue(targetValue)
+      }
 
-    targetNode.updatePort(targetPort)
+      targetNode.updatePort(targetPort)
+    }
 
     const edge = new Edge(
       generateEdgeID(),
@@ -737,7 +741,9 @@ export class Flow implements IFlow {
       const sourceNode = newFlow.nodes.get(edge.sourceNode.id)
       const targetNode = newFlow.nodes.get(edge.targetNode.id)
       if (!sourceNode || !targetNode) {
-        throw new Error(`Failed to clone edge ${edge.id}: source or target node not found.`)
+        // ignore such edges
+        continue
+        // throw new Error(`Failed to clone edge ${edge.id}: source or target node not found.`)
       }
 
       // Find the source and target ports in the new flow
@@ -745,7 +751,9 @@ export class Flow implements IFlow {
       const targetPort = targetNode.getPort(edge.targetPort.id)
 
       if (!sourcePort || !targetPort) {
-        throw new Error(`Failed to clone edge ${edge.id}: source or target port not found.`)
+        // ignore such edges
+        continue
+        // throw new Error(`Failed to clone edge ${edge.id}: source or target port not found.`)
       }
 
       const clonedEdge = new Edge(

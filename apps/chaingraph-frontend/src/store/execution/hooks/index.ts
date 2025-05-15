@@ -7,7 +7,7 @@
  */
 
 export { useBreakpoint } from './useBreakpoint'
-export { useExecution } from './useExecution'
+export { useExecution, useExecutionID } from './useExecution'
 export { useExecutionEvents } from './useExecutionEvents'
 export { useExecutionSubscription } from './useExecutionSubscription'
 export { useNodeExecution } from './useNodeExecution'

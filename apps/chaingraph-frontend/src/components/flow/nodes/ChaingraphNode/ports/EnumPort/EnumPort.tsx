@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -37,6 +38,8 @@ export interface EnumPortProps {
 }
 
 export function EnumPort(props: EnumPortProps) {
+  const executionID = useExecutionID()
+
   const { node, port, context } = props
   const { updatePortValue, getEdgesForPort } = context
 
@@ -84,6 +87,7 @@ export function EnumPort(props: EnumPortProps) {
       <div className={cn(
         'flex flex-col w-full',
         config.direction === 'output' ? 'items-end' : 'items-start',
+        'truncate',
       )}
       >
         <PortTitle>
@@ -93,7 +97,7 @@ export function EnumPort(props: EnumPortProps) {
           <Select
             value={port.getValue()}
             onValueChange={handleValueChange}
-            disabled={ui?.disabled}
+            disabled={executionID ? true : ui?.disabled ?? false}
           >
             <SelectTrigger
               className={cn(

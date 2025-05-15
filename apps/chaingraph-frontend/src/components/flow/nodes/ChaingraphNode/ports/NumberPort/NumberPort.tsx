@@ -21,6 +21,7 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { NumberInput } from '@/components/ui/number-input'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -38,6 +39,7 @@ export function NumberPort(props: NumberPortProps) {
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
+  const executionID = useExecutionID()
 
   // Memoize edges for this port
   const connectedEdges = useMemo(() => {
@@ -88,6 +90,7 @@ export function NumberPort(props: NumberPortProps) {
       <div className={cn(
         'flex flex-col',
         config.direction === 'output' ? 'items-end' : 'items-start',
+        'truncate',
       )}
       >
         <PortTitle>{title}</PortTitle>
@@ -95,7 +98,7 @@ export function NumberPort(props: NumberPortProps) {
         {needRenderEditor && (
           <>
             <NumberInput
-              disabled={ui?.disabled}
+              disabled={executionID ? true : ui?.disabled ?? false}
               className={cn(
                 // errorMessage && 'border-red-500',
                 'w-full',
@@ -118,7 +121,7 @@ export function NumberPort(props: NumberPortProps) {
                 )}
                 <Slider
                   className={cn('mt-2 w-full')}
-                  disabled={ui?.disabled}
+                  disabled={executionID ? true : ui?.disabled ?? false}
                   value={[port.getValue() ?? 0]}
                   min={config.min}
                   max={config.max}

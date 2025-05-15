@@ -20,6 +20,7 @@ import type { BooleanPortConfig, ExtractValue, INode, IPort } from '@badaitech/c
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { memo, useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -31,6 +32,8 @@ export interface BooleanPortProps {
 }
 
 function BooleanPortComponent(props: BooleanPortProps) {
+  const executionID = useExecutionID()
+
   const { node, port, context } = props
   const { updatePortValue, getEdgesForPort } = context
 
@@ -71,6 +74,7 @@ function BooleanPortComponent(props: BooleanPortProps) {
       <div className={cn(
         'flex flex-col',
         config.direction === 'output' ? 'items-end' : 'items-start',
+        'truncate',
       )}
       >
         <PortTitle>
@@ -79,7 +83,7 @@ function BooleanPortComponent(props: BooleanPortProps) {
 
         {needRenderEditor && (
           <Switch
-            disabled={ui?.disabled}
+            disabled={executionID ? true : ui?.disabled ?? false}
             checked={port.getValue()}
             onCheckedChange={checked => handleChange(checked)}
             className={cn('nodrag')}

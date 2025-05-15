@@ -120,7 +120,7 @@ export function PortDocContent<C extends IPortConfig>({
         </div>
         <div className="flex items-center space-x-1.5">
           {config.required && (
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500" title="Required">
+            <div className="pl-1.5 pr-1.5 rounded-full bg-red-500" title="Required">
               Required
             </div>
           )}
@@ -621,7 +621,7 @@ function renderAnyConfig(config: AnyPortConfig): React.ReactElement {
         {config.underlyingType && (
           <>
             <span className="text-muted-foreground">Underlying type:</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 inline-flex items-center">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-1 h-5 inline-flex items-center">
               {config.underlyingType.type}
             </Badge>
           </>

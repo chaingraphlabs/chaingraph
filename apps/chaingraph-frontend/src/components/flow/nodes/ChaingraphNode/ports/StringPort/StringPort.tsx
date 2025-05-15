@@ -22,6 +22,7 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { useStore } from '@xyflow/react'
 import {
 
@@ -42,6 +43,7 @@ export interface StringPortProps {
 const zoomSelector = s => s.transform[2] ?? 1
 
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
+  const executionID = useExecutionID()
   const { node, port, context } = props
   const {
     updatePortValue,
@@ -139,6 +141,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       <div className={cn(
         'flex flex-col w-full',
         config.direction === 'output' ? 'items-end' : 'items-start',
+        'truncate',
       )}
       >
         <PortTitle>
@@ -159,7 +162,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
             placeholder={port.getConfig().title ?? 'Text'}
             type={ui?.isPassword ? 'password' : undefined}
             data-1p-ignore
-            disabled={ui?.disabled ?? false}
+            disabled={executionID ? true : ui?.disabled ?? false}
           />
         )}
 
@@ -190,6 +193,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
                 focused && 'nowheel',
               )}
               placeholder="String"
+              disabled={executionID ? true : ui?.disabled ?? false}
             />
           </>
         )}

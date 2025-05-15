@@ -26,3 +26,8 @@ export function useExecution() {
     error,
   }
 }
+
+export function useExecutionID() {
+  const { executionId } = useUnit($executionState)
+  return executionId
+}

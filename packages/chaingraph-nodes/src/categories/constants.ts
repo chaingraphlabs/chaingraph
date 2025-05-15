@@ -21,6 +21,7 @@ export const NODE_CATEGORIES = {
   GROUP: 'group',
   SECRET: 'secret',
   ARCHAI: 'archai',
+  BADAI: 'badai',
   OKX_DEX: 'okx-dex',
 } as const
 
@@ -70,6 +71,29 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 0,
+  },
+
+  [NODE_CATEGORIES.BADAI]: {
+    id: NODE_CATEGORIES.BADAI,
+    label: 'BadAI',
+    description: 'BadAI nodes',
+    icon: 'FlaskConical',
+    style: {
+      light: {
+        primary: '#C9F7E9', // Softer mint green
+        secondary: '#E6F9F4', // Very light mint
+        background: '#FFFFFF',
+        text: '#0F7F58', // Darker green that complements the mint
+      },
+      dark: {
+        primary: '#0F2E24', // Deep dark green
+        secondary: '#061A14', // Even darker green
+        background: '#1C1C1C',
+        text: '#00D18C', // The signature bright green from your UI
+      },
+    },
+    order: 0,
+    hidden: true,
   },
 
   [NODE_CATEGORIES.AI]: {

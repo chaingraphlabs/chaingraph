@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.24-dev.3",
+  "version": "0.1.24-dev.4",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -56,6 +56,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
+    "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",

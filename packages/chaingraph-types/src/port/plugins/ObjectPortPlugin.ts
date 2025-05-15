@@ -219,6 +219,11 @@ export function validateObjectValue(
 ): string[] {
   const errors: string[] = []
 
+  if (maybeValue === undefined || maybeValue === null) {
+    // If the value is undefined or null, we can skip validation
+    return errors
+  }
+
   // Type validation.
   if (!isObjectPortValue(maybeValue)) {
     errors.push('Invalid object value structure')
@@ -302,6 +307,13 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
   valueSchema,
 
   serializeValue: (value: ObjectPortValue, config: ObjectPortConfig): JSONValue => {
+    if (value === undefined || value === null) {
+      if (config.required) {
+        return {}
+      }
+      return undefined
+    }
+
     try {
       if (!isObjectPortValue(value)) {
         throw new PortError(
@@ -343,6 +355,9 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
   },
 
   deserializeValue: (data: JSONValue, config: ObjectPortConfig): ObjectPortValue => {
+    if (data === undefined || data === null) {
+      return {}
+    }
     try {
       // Expecting an object with a "value" property that contains the serialized fields.
       if (typeof data !== 'object' || data === null) {

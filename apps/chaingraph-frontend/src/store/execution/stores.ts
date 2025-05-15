@@ -68,14 +68,17 @@ const initialState: ExecutionState = {
   },
 }
 
-export const $executionState = executionDomain.createStore<ExecutionState>(initialState).reset(globalReset)
+export const $executionState = executionDomain.createStore<ExecutionState>(initialState)
+  .reset(globalReset)
+  .reset(clearExecutionState)
+  .reset(createExecution)
 
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
   const client = $trpcClient.getState()
   const state = $executionState.getState()
 
-  const { flowId, debug } = payload
+  const { flowId, debug, archAIIntegration } = payload
   const breakpoints = state.breakpoints
 
   if (!client) {
@@ -93,6 +96,18 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
         flowTimeoutMs: 300000,
       },
     },
+    integration: archAIIntegration
+      ? {
+          badai: archAIIntegration
+            ? {
+                agentID: archAIIntegration.agentID,
+                agentSession: archAIIntegration.agentSession,
+                chatID: archAIIntegration.chatID,
+                messageID: archAIIntegration.messageID,
+              }
+            : undefined,
+        }
+      : undefined,
   })
   return response.executionId
 })
@@ -186,6 +201,7 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
+  .reset(createExecution)
   .reset(globalReset)
 
 export const $executionNodes = executionDomain
@@ -583,6 +599,8 @@ export const $autoStartConditions = combine({
     (execError, subError) => Boolean(execError || subError),
   ),
 })
+
+export const $executionId = $executionState.map(state => state.executionId)
 
 // Store to prevent multiple start attempts
 export const $startAttempted = executionDomain.createStore(false).reset(globalReset)

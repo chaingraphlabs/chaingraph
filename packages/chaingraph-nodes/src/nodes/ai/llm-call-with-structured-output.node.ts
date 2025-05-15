@@ -8,7 +8,11 @@
 
 import type {
   AnyPort,
+  ArrayPortConfig,
+  EnumPortConfig,
   ExecutionContext,
+  IObjectSchema,
+  IPortConfig,
   NodeEvent,
   NodeExecutionResult,
   ObjectPort,
@@ -16,21 +20,16 @@ import type {
   PortConnectedEvent,
 } from '@badaitech/chaingraph-types'
 import {
-  ObjectSchema,
-} from '@badaitech/chaingraph-types'
-import {
-  findPort,
-} from '@badaitech/chaingraph-types'
-import {
-  NodeEventType,
-} from '@badaitech/chaingraph-types'
-import { ExecutionEventEnum, PortAny } from '@badaitech/chaingraph-types'
-import {
   BaseNode,
+  ExecutionEventEnum,
+  findPort,
   Input,
   Node,
+  NodeEventType,
   Number,
+  ObjectSchema,
   Output,
+  PortAny,
   PortEnumFromObject,
   PortObject,
   String,
@@ -38,10 +37,13 @@ import {
 import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatDeepSeek } from '@langchain/deepseek'
+import { ChatGroq } from '@langchain/groq'
 import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
 import { LLMModels, llmModels } from './llm-call.node'
+
+const llmMaxRetries = 3
 
 @ObjectSchema({
   description: 'Configuration for LLM Call with Structured Output Node',
@@ -108,7 +110,6 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     schema: LLMConfig,
     title: 'LLM Configuration',
     description: 'Configuration for the LLM call',
-
   })
   config: LLMConfig = new LLMConfig()
 
@@ -151,9 +152,6 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     try {
-      // Log execution start
-      await this.debugLog(context, 'Starting structured output generation')
-
       // Generate structured response
       const structuredResponse = await this.generateStructuredResponse(context)
 
@@ -162,7 +160,6 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
         this.structuredResponse[key] = value
       }
 
-      // Log final result
       await this.debugLog(context, `Final structured response: ${JSON.stringify(structuredResponse, null, 2)}`)
 
       return {}
@@ -212,9 +209,18 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     const outputSchemaPort = sourcePort as AnyPort
-    const underlyingType = outputSchemaPort.getRawConfig().underlyingType
+    let underlyingType = outputSchemaPort.getRawConfig().underlyingType
     if (!underlyingType) {
       return
+    }
+
+    // Iterate through the underlying type to find the actual type
+    if (underlyingType.type === 'any') {
+      while (underlyingType.type === 'any') {
+        if (underlyingType.type === 'any' && underlyingType.underlyingType) {
+          underlyingType = underlyingType.underlyingType
+        }
+      }
     }
 
     if (underlyingType.type !== 'object') {
@@ -269,39 +275,15 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     const zodSchema = this.createZodSchemaFromPortSchema(schema)
 
     // Create the appropriate LLM instance
-    let llm: ChatOpenAI | ChatAnthropic | ChatDeepSeek
-
-    if (this.config.model === LLMModels.DeepseekReasoner || this.config.model === LLMModels.DeepseekChat) {
-      llm = new ChatDeepSeek({
-        apiKey: this.config.apiKey,
-        model: this.config.model,
-        temperature: this.config.temperature,
-      })
-    } else if (this.config.model === LLMModels.Claude35Sonnet20241022 || this.config.model === LLMModels.Claude37Sonnet20250219) {
-      llm = new ChatAnthropic({
-        apiKey: this.config.apiKey,
-        model: this.config.model,
-        temperature: this.config.temperature,
-      })
-    } else if (this.config.model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct) {
-      llm = new ChatOpenAI({
-        apiKey: this.config.apiKey,
-        model: this.config.model.replace(/^groq\//, ''),
-        temperature: this.config.temperature,
-        configuration: {
-          baseURL: 'https://api.groq.com/openai/v1',
-        },
-      })
-    } else {
-      llm = new ChatOpenAI({
-        apiKey: this.config.apiKey,
-        model: this.config.model,
-        temperature: this.config.model !== LLMModels.GptO3Mini ? this.config.temperature : undefined,
-      })
-    }
+    const llm = this.createLLMInstance()
 
     // Bind structured output to the model
-    const modelWithStructuredOutput = llm.withStructuredOutput(zodSchema)
+    const modelWithStructuredOutput = llm.withStructuredOutput(
+      zodSchema,
+      {
+        strict: true,
+      },
+    )
 
     // Invoke the model with the prompt
     const messages = [
@@ -318,19 +300,85 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
       new HumanMessage(this.prompt),
     ]
 
-    try {
-      // Use the abort signal for timeout handling
-      const result = await modelWithStructuredOutput.invoke(messages, {
-        signal: context.abortSignal,
-      })
+    return await this.invokeModelWithRetries(modelWithStructuredOutput, messages, context)
+  }
 
-      return result || {}
-    } catch (error) {
-      await this.debugLog(context, `Error during model invocation: ${error}`)
-      throw error
+  /**
+   * Create an appropriate LLM instance based on the selected model
+   */
+  private createLLMInstance(): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
+    if (this.config.model === LLMModels.DeepseekReasoner || this.config.model === LLMModels.DeepseekChat) {
+      return new ChatDeepSeek({
+        apiKey: this.config.apiKey,
+        model: this.config.model,
+        temperature: this.config.temperature,
+        maxRetries: llmMaxRetries,
+      })
+    } else if (this.config.model === LLMModels.Claude35Sonnet20241022 || this.config.model === LLMModels.Claude37Sonnet20250219) {
+      return new ChatAnthropic({
+        apiKey: this.config.apiKey,
+        model: this.config.model,
+        temperature: this.config.temperature,
+        maxRetries: llmMaxRetries,
+      })
+    } else if (this.config.model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct) {
+      return new ChatGroq({
+        apiKey: this.config.apiKey,
+        model: this.config.model.replace(/^groq\//, ''),
+        temperature: this.config.temperature,
+        maxRetries: llmMaxRetries,
+      })
+    } else {
+      return new ChatOpenAI({
+        apiKey: this.config.apiKey,
+        model: this.config.model,
+        temperature: this.config.model !== LLMModels.GptO3Mini ? this.config.temperature : undefined,
+        maxRetries: llmMaxRetries,
+      })
     }
   }
 
+  /**
+   * Invoke the model with retries in case of failure
+   */
+  private async invokeModelWithRetries(
+    model: any,
+    messages: (SystemMessage | HumanMessage)[],
+    context: ExecutionContext,
+  ): Promise<Record<string, any>> {
+    for (let i = 0; i < llmMaxRetries; i++) {
+      try {
+        // Use the abort signal for timeout handling
+        const result = await model.invoke(messages, {
+          signal: context.abortSignal,
+        })
+
+        return result || {}
+      } catch (error) {
+        if (i >= llmMaxRetries - 1) {
+          await this.debugLog(context, `Error during model invocation: ${error}`)
+          throw error
+        } else {
+          await this.debugLog(context, `Error during model invocation, retrying with feedback: ${error}`)
+
+          messages.push(
+            new HumanMessage(
+              `ERROR: ${error}\n`
+              + `Please provide a valid JSON response according to the schema.\n`,
+            ),
+          )
+        }
+      }
+    }
+
+    // This should never be reached due to the throw in the loop above,
+    // but TypeScript needs it for type safety
+    throw new Error('Maximum retries exceeded')
+  }
+
+  /**
+   * Send a debug log event to the execution context
+   */
   private async debugLog(context: ExecutionContext, message: string): Promise<void> {
     await context.sendEvent({
       index: 0,
@@ -343,112 +391,242 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     })
   }
 
-  private createZodSchemaFromPortSchema(portSchema: any): z.ZodType<any> {
-    // Start with an empty object schema
+  /**
+   * Main function to create a Zod schema from a port schema
+   */
+  private createZodSchemaFromPortSchema(portSchema: IObjectSchema): z.ZodObject<Record<string, z.ZodTypeAny>> {
     const schemaObj: Record<string, z.ZodTypeAny> = {}
 
-    // Process each property in the port schema
-    if (portSchema && portSchema.properties) {
-      Object.entries(portSchema.properties).forEach(([key, propConfig]: [string, any]) => {
-        // Create appropriate Zod schema based on property type
-        switch (propConfig.type) {
-          case 'string': {
-            let stringSchema = z.string()
-            // Add description if available
-            if (propConfig.description) {
-              stringSchema = stringSchema.describe(propConfig.description)
-            }
-            schemaObj[key] = stringSchema
-            break
-          }
-
-          case 'number': {
-            let numberSchema = z.number()
-            // Add description if available
-            if (propConfig.description) {
-              numberSchema = numberSchema.describe(propConfig.description)
-            }
-            schemaObj[key] = numberSchema
-            break
-          }
-
-          case 'boolean': {
-            let boolSchema = z.boolean()
-            // Add description if available
-            if (propConfig.description) {
-              boolSchema = boolSchema.describe(propConfig.description)
-            }
-            schemaObj[key] = boolSchema
-            break
-          }
-
-          case 'array': {
-            // Determine array item type if specified
-            let itemSchema: z.ZodTypeAny = z.any()
-            if (propConfig.itemConfig) {
-              console.log(`[LLMCallWithStructuredOutput] Array item config: ${JSON.stringify(propConfig.itemConfig)}`)
-              if (propConfig.itemConfig.type === 'string') {
-                itemSchema = z.string()
-              } else if (propConfig.itemConfig.type === 'number') {
-                itemSchema = z.number()
-              } else if (propConfig.itemConfig.type === 'boolean') {
-                itemSchema = z.boolean()
-              } else if (propConfig.itemConfig.type === 'object' && propConfig.itemConfig.schema) {
-                itemSchema = this.createZodSchemaFromPortSchema(propConfig.itemConfig.schema)
-              } else if (propConfig.itemConfig.type === 'array' && propConfig.itemConfig.schema) {
-                itemSchema = this.createZodSchemaFromPortSchema(propConfig.itemConfig.schema)
-              } else if (propConfig.itemConfig.type === 'enum') {
-                // TODO: Handle enum types
-              } else {
-                // Fallback to any type for unknown item types
-                itemSchema = z.string()
-              }
-            }
-
-            // Create a basic array schema with the determined item type
-            let arraySchema = z.array(itemSchema)
-
-            // Add description if available
-            if (propConfig.description) {
-              arraySchema = arraySchema.describe(propConfig.description)
-            }
-            schemaObj[key] = arraySchema
-            break
-          }
-
-          case 'object': {
-            // For nested objects, recursively create a schema
-            if (propConfig.schema && Object.keys(propConfig.schema.properties).length > 0) {
-              schemaObj[key] = this.createZodSchemaFromPortSchema(propConfig.schema)
-              if (propConfig.description) {
-                schemaObj[key] = schemaObj[key].describe(propConfig.description)
-              }
-            } else {
-              let recordSchema = z.record(z.any())
-              // Add description if available
-              if (propConfig.description) {
-                recordSchema = recordSchema.describe(propConfig.description)
-              }
-              schemaObj[key] = recordSchema
-            }
-            break
-          }
-
-          default: {
-            // For any other type, use any schema
-            let anySchema = z.any()
-            // Add description if available
-            if (propConfig.description) {
-              anySchema = anySchema.describe(propConfig.description)
-            }
-            schemaObj[key] = anySchema
-          }
-        }
-      })
+    if (!portSchema || !portSchema.properties) {
+      return z.object({})
     }
+
+    // Process each property in the port schema
+    Object.entries(portSchema.properties).forEach(([key, propConfig]: [string, IPortConfig]) => {
+      const zodSchema = this.createZodTypeForConfig(propConfig)
+      if (zodSchema) {
+        schemaObj[key] = zodSchema
+      }
+    })
 
     // Create the final Zod object schema
     return z.object(schemaObj)
+  }
+
+  /**
+   * Dispatch to the appropriate schema creator based on property type
+   */
+  private createZodTypeForConfig(propConfig: IPortConfig): z.ZodTypeAny | null {
+    if (!propConfig || !propConfig.type) {
+      return null
+    }
+
+    switch (propConfig.type) {
+      case 'string':
+        return this.createStringSchema(propConfig)
+      case 'number':
+        return this.createNumberSchema(propConfig)
+      case 'boolean':
+        return this.createBooleanSchema(propConfig)
+      case 'array':
+        return this.createArraySchema(propConfig)
+      case 'object':
+        return this.createObjectSchema(propConfig)
+      case 'enum':
+        return this.createEnumSchema(propConfig)
+      default:
+        return this.createDefaultSchema(propConfig)
+    }
+  }
+
+  /**
+   * Create a Zod schema for string properties
+   */
+  private createStringSchema(config: IPortConfig): z.ZodString {
+    let schema = z.string()
+
+    if (config.description) {
+      schema = schema.describe(config.description)
+    }
+
+    if (!config.required) {
+      return schema.optional() as any
+    }
+
+    return schema
+  }
+
+  /**
+   * Create a Zod schema for number properties
+   */
+  private createNumberSchema(config: IPortConfig): z.ZodNumber {
+    let schema = z.number()
+
+    if (config.description) {
+      schema = schema.describe(config.description)
+    }
+
+    if (!config.required) {
+      return schema.optional() as any
+    }
+
+    return schema
+  }
+
+  /**
+   * Create a Zod schema for boolean properties
+   */
+  private createBooleanSchema(config: IPortConfig): z.ZodBoolean {
+    let schema = z.boolean()
+
+    if (config.description) {
+      schema = schema.describe(config.description)
+    }
+
+    if (!config.required) {
+      return schema.optional() as any
+    }
+
+    return schema
+  }
+
+  /**
+   * Create a Zod schema for array properties
+   */
+  private createArraySchema(config: ArrayPortConfig): z.ZodArray<z.ZodTypeAny> {
+    // Determine the item schema
+    let itemSchema: z.ZodTypeAny = z.any()
+
+    if (config.itemConfig) {
+      itemSchema = this.determineArrayItemSchema(config.itemConfig)
+    }
+
+    // Create array schema with the determined item type
+    let arraySchema = z.array(itemSchema)
+
+    if (config.description) {
+      arraySchema = arraySchema.describe(config.description)
+    }
+
+    if (!config.required) {
+      return arraySchema.optional() as any
+    }
+
+    return arraySchema
+  }
+
+  /**
+   * Determine the schema for array items based on their configuration
+   */
+  private determineArrayItemSchema(itemConfig: IPortConfig): z.ZodTypeAny {
+    if (!itemConfig.type) {
+      return z.any()
+    }
+
+    switch (itemConfig.type) {
+      case 'string':
+        return z.string()
+      case 'number':
+        return z.number()
+      case 'boolean':
+        return z.boolean()
+      case 'object':
+        if (itemConfig.schema) {
+          return this.createZodSchemaFromPortSchema(itemConfig.schema)
+        }
+        return z.object({})
+      case 'array':
+        if (itemConfig.itemConfig) {
+          return z.array(this.determineArrayItemSchema(itemConfig.itemConfig))
+        }
+        return z.array(z.any())
+      case 'enum':
+        // Create enum schema from options if available
+        if (itemConfig.options && itemConfig.options.length > 0) {
+          const enumValues = itemConfig.options.map(opt =>
+            opt.defaultValue ? String(opt.defaultValue) : '',
+          ).filter(Boolean)
+
+          if (enumValues.length > 0) {
+            return z.enum(enumValues as [string, ...string[]])
+          }
+        }
+        return z.string()
+      default:
+        return z.any()
+    }
+  }
+
+  /**
+   * Create a Zod schema for object properties
+   */
+  private createObjectSchema(config: ObjectPortConfig): z.ZodTypeAny {
+    // For nested objects, recursively create a schema
+    if (config.schema && Object.keys(config.schema.properties || {}).length > 0) {
+      let objSchema = this.createZodSchemaFromPortSchema(config.schema)
+
+      if (config.description) {
+        objSchema = objSchema.describe(config.description)
+      }
+
+      if (!config.required) {
+        return objSchema.optional()
+      }
+
+      return objSchema
+    }
+
+    // For objects without defined properties, use a generic record schema
+    let recordSchema = z.record(z.any())
+
+    if (config.description) {
+      recordSchema = recordSchema.describe(config.description)
+    }
+
+    if (!config.required) {
+      return recordSchema.optional()
+    }
+
+    return recordSchema
+  }
+
+  /**
+   * Create a Zod schema for enum properties
+   */
+  private createEnumSchema(config: EnumPortConfig): z.ZodEnum<[string, ...string[]]> | z.ZodString {
+    const enumValues = config.options.map((option) => {
+      return option.defaultValue.toString() || ''
+    }) as [string, ...string[]]
+
+    let enumSchema = z.enum(enumValues)
+
+    // Add description if available
+    if (config.description) {
+      enumSchema = enumSchema.describe(config.description)
+    }
+
+    if (!config.required) {
+      enumSchema = enumSchema.optional() as any
+    }
+
+    return enumSchema
+  }
+
+  /**
+   * Create a default Zod schema for unknown types
+   */
+  private createDefaultSchema(config: IPortConfig): z.ZodTypeAny {
+    let schema = z.any()
+
+    if (config.description) {
+      schema = schema.describe(config.description)
+    }
+
+    if (!config.required) {
+      return schema.optional()
+    }
+
+    return schema
   }
 }
 

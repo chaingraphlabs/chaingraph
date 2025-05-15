@@ -17,6 +17,6 @@ export const EDGE_STYLES = {
   },
   DIMMED: {
     strokeOpacity: 0.1,
-    strokeWidth: 4,
+    strokeWidth: 2,
   },
 }

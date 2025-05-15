@@ -106,7 +106,7 @@ class OnNewMessageEventNode extends BaseNode {
     this.message.need_answer = Boolean(inputMessage.need_answer)
     this.message.version = inputMessage.version || 1
     this.message.reply_to = inputMessage.reply_to || undefined
-    this.message.error = inputMessage.error || undefined
+    this.message.error = inputMessage.error || ''
     this.message.meta = typeof inputMessage.meta === 'string'
       ? inputMessage.meta
       : JSON.stringify(inputMessage.meta || {})

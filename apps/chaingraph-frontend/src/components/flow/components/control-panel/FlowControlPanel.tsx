@@ -11,6 +11,7 @@ import { StatusIndicator } from '@/components/flow/components/control-panel/Stat
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { $archaiConfig } from '@/store'
 import {
   $executionState,
   $executionSubscriptionState,
@@ -39,6 +40,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
   const { status: executionStatus, executionId, debugMode } = useUnit($executionState)
   const { isSubscribed } = useUnit($executionSubscriptionState)
   const activeFlow = useUnit($activeFlowMetadata)
+  const archAIConfig = useUnit($archaiConfig)
 
   // Handlers for execution control
   const handlePlay = useCallback(() => {
@@ -46,10 +48,20 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
       return
 
     if (!executionId || executionStatus === ExecutionStatus.IDLE || isTerminalStatus(executionStatus)) {
+      const archAIIntegration = archAIConfig
+        ? {
+            agentID: archAIConfig.agentID,
+            agentSession: archAIConfig.agentSession,
+            chatID: archAIConfig.chatID,
+            messageID: archAIConfig.messageID,
+          }
+        : undefined
+
       // Create new execution
       createExecution({
         flowId: activeFlow.id,
         debug: debugMode,
+        archAIIntegration,
       })
     } else if (executionStatus === ExecutionStatus.CREATED) {
       // Start newly created execution
@@ -58,7 +70,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
       // Resume execution
       resumeExecution(executionId)
     }
-  }, [activeFlow?.id, executionId, executionStatus, debugMode])
+  }, [activeFlow?.id, executionId, executionStatus, debugMode, archAIConfig])
 
   const handlePause = useCallback(() => {
     if (executionId && executionStatus === ExecutionStatus.RUNNING) {

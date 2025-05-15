@@ -42,6 +42,7 @@ export function PortHeader({
             'bg-muted/40 hover:bg-muted/60 transition-colors',
             'text-sm font-medium nodrag',
             isOutput ? 'justify-end' : 'justify-start',
+            'truncate',
           )}
         >
           <div className={cn(

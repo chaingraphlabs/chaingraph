@@ -13,6 +13,7 @@ import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, memo, useCallback, useMemo, useState } from 'react'
@@ -84,6 +85,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
   const isSchemaMutable = config.isSchemaMutable
   const isOutput = config.direction === 'output'
   const ui = config.ui
+  const executionID = useExecutionID()
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -208,8 +210,10 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                         'hover:bg-accent/80 transition-colors',
                         'w-fit flex',
                         isOutput ? 'flex-row-reverse' : 'flex-row',
+                        !!executionID && 'cursor-not-allowed opacity-50',
                       )}
                       onClick={handleOpenPopover}
+                      disabled={!!executionID}
                     >
                       Add field
                     </button>
