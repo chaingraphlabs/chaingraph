@@ -45,7 +45,6 @@ export function mergeNodePortsUi(node: INode, nodeToMerge: INode): INode {
         },
       )
 
-      console.log(`Merging port ${portId} UI properties: ${JSON.stringify(portToMerge.getConfig().ui)}`)
       newNode.setPort(port)
     }
   }

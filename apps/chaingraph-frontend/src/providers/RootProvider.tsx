@@ -60,8 +60,25 @@ export function RootProvider({
 }: RootProviderProps) {
   // Use ref to track initialization state
   const isInitializedRef = useRef(false)
+  const sessionTokenRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
+    if (sessionToken) {
+      if (!sessionTokenRef.current) {
+        sessionTokenRef.current = sessionToken
+        console.debug('Session token initialized:', sessionTokenRef.current)
+      } else {
+        if (sessionTokenRef.current !== sessionToken) {
+          console.warn('Session token changed, reinitializing stores')
+          sessionTokenRef.current = sessionToken
+          isInitializedRef.current = false
+          reset()
+        }
+      }
+    } else {
+      console.warn('Session token is undefined, using default value')
+    }
+
     if (!isInitializedRef.current) {
       isInitializedRef.current = true
       // effector logger
@@ -83,7 +100,7 @@ export function RootProvider({
       )
 
       createTRPCClientEvent({
-        sessionBadAI: sessionToken,
+        sessionBadAI: sessionTokenRef.current,
         trpcURL: trpcURL ?? DefaultTRPCURL,
         superjsonCustom: superjsonCustom ?? SuperJSON,
       })
@@ -96,8 +113,10 @@ export function RootProvider({
     }
 
     return () => {
-      if (isInitializedRef.current)
+      if (isInitializedRef.current) {
+        isInitializedRef.current = false
         reset()
+      }
     }
   }, [nodeRegistry, sessionToken, superjsonCustom, trpcURL])
 

@@ -19,9 +19,6 @@ export const createTRPCClientEvent = trpcDomain.createEvent<{
 
 export const $trpcClient = trpcDomain.createStore<TRPCClient | null>(null)
   .on(createTRPCClientEvent, (s, { sessionBadAI, trpcURL, superjsonCustom }) => {
-    if (s !== null) {
-      return s
-    }
     return createTRPCClient({
       url: trpcURL ?? `ws://localhost:3001`,
       superjsonCustom: superjsonCustom ?? SuperJSON,

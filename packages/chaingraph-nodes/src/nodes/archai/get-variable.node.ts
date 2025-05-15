@@ -520,6 +520,10 @@ class ArchAIGetVariableNode extends BaseNode {
       }
     } catch (error: any) {
       this.exists = false
+      if (!this.useDefaultValue) {
+        throw error
+      }
+
       defaultValueResult()
     }
 
