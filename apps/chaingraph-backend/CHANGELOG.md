@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.1.26
+
+### Patch Changes
+
+- Remove duplicate for the "on new message event" node. Fallback for array port value serialization.
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.26
+  - @badaitech/chaingraph-types@0.1.26
+  - @badaitech/chaingraph-trpc@0.1.26
+
 ## 0.1.25
 
 ### Patch Changes
