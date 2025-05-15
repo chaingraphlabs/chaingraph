@@ -13,6 +13,8 @@ RUN turbo prune "@badaitech/chaingraph-backend" --docker
 # Second stage: Install dependencies and build
 FROM base AS builder
 
+ENV NODE_OPTIONS="--max-old-space-size=8192"
+
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
