@@ -7,6 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { PortVisibility } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -45,19 +46,14 @@ function formatJSON(data: any): string {
   description: 'Makes HTTP requests to external services',
   category: NODE_CATEGORIES.UTILITIES,
   tags: ['http', 'request', 'api'],
-  metadata: {
-    hideHeadersForMethods: [HttpMethod.GET, HttpMethod.HEAD],
-    hideBodyForMethods: [HttpMethod.GET, HttpMethod.HEAD, HttpMethod.DELETE],
-  },
 })
 export default class HttpRequestNode extends BaseNode {
   @Input()
   @String({
     title: 'Base URI',
-    description: 'Base URI of the API',
+    description: 'The base URL of the API including protocol (http/https). This forms the foundation of your request URL.',
     ui: {
-      placeholder: 'https://api.example.com',
-      borderColor: '#3b82f6',
+      placeholder: 'Example: https://api.example.com',
     },
   })
   baseUri: string = ''
@@ -65,9 +61,9 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @String({
     title: 'Path',
-    description: 'Request path',
+    description: 'The endpoint path that will be appended to the Base URI. Should typically start with a slash (/).',
     ui: {
-      placeholder: '/v1/users',
+      placeholder: 'Example: /v1/users',
     },
   })
   path: string = ''
@@ -75,7 +71,7 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @StringEnum(Object.values(HttpMethod), {
     title: 'Method',
-    description: 'HTTP method',
+    description: 'HTTP request method. GET retrieves data, POST creates/sends data, PUT updates resources, DELETE removes resources.',
     defaultValue: HttpMethod.GET,
     options: Object.values(HttpMethod).map(method => ({
       id: method,
@@ -89,11 +85,11 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @String({
     title: 'Headers',
-    description: 'Request headers (one per line)\nExample:\nAuthorization: Bearer token\nContent-Type: application/json',
+    description: 'HTTP headers to include with your request. Enter one header per line in "Key: Value" format. Common examples: Authorization, Content-Type, Accept.',
     ui: {
       isTextArea: true,
-      textareaDimensions: { height: 80 },
-      placeholder: 'Content-Type: application/json\nAuthorization: Bearer token',
+      textareaDimensions: { width: 300, height: 80 },
+      placeholder: 'Content-Type: application/json\nAuthorization: Bearer YOUR_TOKEN\nAccept: application/json',
     },
   })
   headers: string = ''
@@ -101,12 +97,18 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @String({
     title: 'Body',
-    description: 'Request body',
+    description: 'Request payload for POST, PUT, or PATCH requests. Format depends on Content-Type header (often JSON).',
     ui: {
       isTextArea: true,
-      textareaDimensions: { height: 120 },
-      placeholder: '{\n  "key": "value"\n}',
-      hidden: true, // Static boolean value
+      textareaDimensions: { width: 300, height: 120 },
+      placeholder: '{\n  "name": "John Doe",\n  "email": "john@example.com"\n}',
+    },
+  })
+  @PortVisibility({
+    showIf: (node) => {
+      const httpNode = node as HttpRequestNode
+      return !httpNode.method
+        || ![HttpMethod.GET, HttpMethod.HEAD, HttpMethod.DELETE].includes(httpNode.method)
     },
   })
   body: string = ''
@@ -114,7 +116,7 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @StringEnum(Object.values(ResponseType), {
     title: 'Response Type',
-    description: 'How to parse the response',
+    description: 'Format to parse the response. JSON for structured data, Text for plain text, Blob for binary files.',
     defaultValue: ResponseType.JSON,
     options: Object.values(ResponseType).map(type => ({
       id: type,
@@ -128,7 +130,7 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @Number({
     title: 'Timeout',
-    description: 'Request timeout in milliseconds',
+    description: 'Maximum time (in milliseconds) to wait for a response before aborting the request.',
     defaultValue: 30000,
     ui: {
       min: 1000,
@@ -141,7 +143,7 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @Number({
     title: 'Retries',
-    description: 'Number of retry attempts',
+    description: 'Number of times to retry the request if it fails. Uses exponential backoff between attempts.',
     defaultValue: 0,
     ui: {
       min: 0,
@@ -154,10 +156,7 @@ export default class HttpRequestNode extends BaseNode {
   @Output()
   @Number({
     title: 'Status Code',
-    description: 'HTTP response status code',
-    ui: {
-      hidePort: false,
-    },
+    description: 'HTTP response status code. 2xx indicates success, 4xx indicates client error, 5xx indicates server error.',
     defaultValue: 0,
   })
   statusCode: number = 0
@@ -165,10 +164,7 @@ export default class HttpRequestNode extends BaseNode {
   @Output()
   @String({
     title: 'Response',
-    description: 'Response body',
-    ui: {
-      hidePort: false,
-    },
+    description: 'The response body from the server, formatted according to the selected Response Type.',
     defaultValue: '',
   })
   response: string = ''
