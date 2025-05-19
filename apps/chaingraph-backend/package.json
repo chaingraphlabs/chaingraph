@@ -41,7 +41,7 @@
     "esm": "^3.2.25",
     "superjson": "^2.2.2",
     "ws": "^8.18.1",
-    "yaml": "^2.7.1"
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
