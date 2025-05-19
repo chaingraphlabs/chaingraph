@@ -32,6 +32,7 @@
     "check-types": "tsc -b"
   },
   "dependencies": {
+    "@0glabs/0g-serving-broker": "^0.1.2",
     "@badaitech/chaingraph-types": "workspace:*",
     "@langchain/anthropic": "^0.3.20",
     "@langchain/community": "^0.3.42",
@@ -40,6 +41,8 @@
     "@langchain/groq": "^0.2.2",
     "@langchain/openai": "^0.5.10",
     "@okx-dex/okx-dex-sdk": "^1.0.11",
+    "@types/crypto-js": "^4.2.2",
+    "ethers": "^6.13.5",
     "handlebars": "^4.7.8",
     "langchain": "^0.3.24",
     "lucene-kit": "^1.2.0",
