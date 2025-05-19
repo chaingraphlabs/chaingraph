@@ -249,12 +249,13 @@ export function validateObjectValue(
     errors.push(...fieldErrors)
   }
 
+  // TODO: disabled for now because there is the possibility of having objects without or partial schema, so validate only known fields
   // Check for extra fields in the value that are not defined in the schema.
-  for (const key of Object.keys(value)) {
-    if (!config.schema.properties[key]) {
-      errors.push(`Unexpected field: ${key}`)
-    }
-  }
+  // for (const key of Object.keys(value)) {
+  //   if (!config.schema.properties[key]) {
+  //     errors.push(`Unexpected field: ${key}`)
+  //   }
+  // }
 
   return errors
 }
@@ -345,6 +346,15 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         serializedFields[key] = plugin.serializeValue(fieldValue, fieldConfig)
       }
 
+      // Iterate over value and add any extra fields that are not in the schema.
+      for (const [key, fieldValue] of Object.entries(value)) {
+        if (config.schema.properties[key] === undefined) {
+          // If the field is not defined in the schema, add it to the serialized fields.
+          // This is the case of the object without or partial schema.
+          serializedFields[key] = fieldValue
+        }
+      }
+
       return serializedFields
     } catch (error) {
       throw new PortError(
@@ -389,6 +399,15 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         }
         // Use the nested field configuration when deserializing.
         deserialized[key] = plugin.deserializeValue(fieldSerializedValue, fieldConfig)
+      }
+
+      // Iterate over the value and add any extra fields that are not in the schema.
+      for (const [key, fieldValue] of Object.entries(serializedFields)) {
+        if (config.schema.properties[key] === undefined) {
+          // If the field is not defined in the schema, add it to the deserialized fields.
+          // This is the case of the object without or partial schema.
+          deserialized[key] = fieldValue
+        }
       }
 
       return deserialized as ObjectPortValue

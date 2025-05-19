@@ -16,6 +16,7 @@ import {
   PortEnumFromObject,
   String,
 } from '@badaitech/chaingraph-types'
+import { Decimal } from 'decimal.js'
 import { OpenAI } from 'openai'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -27,6 +28,12 @@ export enum OGLLMModels {
 export enum OGLLMModelsProviderAddress {
   LLama = '0xf07240Efa67755B5311bc75784a061eDB47165Dd',
   DeepSeek = '0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3',
+}
+
+interface LedgerDetailStructOutput {
+  ledgerInfo: bigint[]
+  infers: [string, bigint, bigint][]
+  fines: [string, bigint, bigint][] | null
 }
 
 @ObjectSchema({
@@ -103,7 +110,7 @@ class OGLLMCallNode extends BaseNode {
     title: 'Fee',
     description: 'Default fee to reward node owner',
   })
-  fee: number = 0.00000000000000003
+  fee: number = 0.000000000000003
 
   @Input()
   @Number({
@@ -138,7 +145,9 @@ class OGLLMCallNode extends BaseNode {
   output: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    // eslint-disable-next-line ts/no-require-imports
     const { createZGComputeNetworkBroker } = require('@0glabs/0g-serving-broker')
+    // eslint-disable-next-line ts/no-require-imports
     const { ethers } = require('ethers')
 
     if (!this.privateKey) {
@@ -146,23 +155,51 @@ class OGLLMCallNode extends BaseNode {
     }
     const provider = new ethers.JsonRpcProvider('https://evmrpc-testnet.0g.ai')
     const wallet = new ethers.Wallet(this.privateKey, provider)
+
     const broker = await createZGComputeNetworkBroker(wallet)
     // const services = await broker.inference.listService()
-    // console.log(services)
 
-    const ledger = await broker.inference.ledger.getLedger()
-    // console.log('Balance: ', ledger.ledgerInfo[0])
-    if (!ledger) {
-      await broker.inference.ledger.addLedger(1)
-    } else if (ledger.ledgerInfo[0] < 1000000000000000000n) {
-      await broker.inference.ledger.depositFund(1)
+    let accountDetails: LedgerDetailStructOutput | undefined
+
+    try {
+      accountDetails = await broker.ledger.getLedger()
+    } catch (error) {
+      await broker.ledger.addLedger(this.minBalance)
+      accountDetails = await broker.ledger.getLedger()
     }
-    await broker.inference.settleFee(llmModels[this.model].providerAddress, this.fee)
-    const { endpoint, model } = await broker.inference.getServiceMetadata(
-      llmModels[this.model].providerAddress,
+
+    if (!accountDetails) {
+      throw new Error('Failed to retrieve ledger details')
+    }
+
+    const balanceDec = new Decimal(accountDetails.ledgerInfo[0].toString()).mul(
+      new Decimal(10).pow(-18),
     )
 
-    const headers = await broker.inference.getRequestHeaders(llmModels[this.model].providerAddress, this.prompt)
+    if (balanceDec.lessThan(this.minBalance)) {
+      const topUpAmount = new Decimal(this.minBalance).sub(balanceDec).toNumber()
+      console.log(
+        `[0G] Insufficient balance: ${balanceDec.toString()} < ${this.minBalance}, adding ${topUpAmount} 0G to ledger`,
+      )
+      await broker.ledger.depositFund(
+        topUpAmount,
+      )
+    }
+
+    const llmModel = llmModels[this.model]
+    if (!llmModel) {
+      throw new Error(`Invalid model: ${this.model}`)
+    }
+
+    await broker.inference.settleFee(llmModel.providerAddress, this.fee)
+    const { endpoint, model } = await broker.inference.getServiceMetadata(
+      llmModel.providerAddress,
+    )
+
+    const headers = await broker.inference.getRequestHeaders(
+      llmModel.providerAddress,
+      this.prompt,
+    )
 
     const openai = new OpenAI({
       baseURL: endpoint,
@@ -180,6 +217,7 @@ class OGLLMCallNode extends BaseNode {
         },
       },
     )
+
     this.output = completion.choices[0].message.content ?? ''
     return {}
   }

@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.28
+
+### Patch Changes
+
+- 0g llm node implementation and fixes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.28
+  - @badaitech/chaingraph-types@0.1.28
+  - @badaitech/chaingraph-trpc@0.1.28
+  - @badaitech/badai-api@0.1.28
+
 ## 0.1.27
 
 ### Patch Changes

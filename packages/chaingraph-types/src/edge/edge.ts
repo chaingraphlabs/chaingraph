@@ -126,6 +126,7 @@ export class Edge implements IEdge {
       throw new Error(`Source port ${this.sourcePort.id} has no data to transfer.`)
     }
     this.targetPort.setValue(data)
+    this.targetNode.updatePort(this.targetPort)
   }
 
   updateMetadata(metadata: Partial<EdgeMetadata>): void {
