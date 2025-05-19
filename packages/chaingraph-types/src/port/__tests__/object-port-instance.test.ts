@@ -59,7 +59,8 @@ describe('objectPort Instance', () => {
 
       const errors = PortPluginRegistry.getInstance().getPlugin('object')?.validateValue(badValue, config)
       expect(errors).toContain('Missing required field: age')
-      expect(errors).toContain('Unexpected field: extraField')
+      // Outdated check, for now we are not validating extra fields because some objects are dynamic
+      // expect(errors).toContain('Unexpected field: extraField')
     })
   })
 

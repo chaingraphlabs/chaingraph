@@ -33,6 +33,7 @@ export const stringPortConfigUISchema = basePortConfigUISchema.merge(
       width: z.number().optional(),
       height: z.number().optional(),
     }).optional(),
+    placeholder: z.string().optional(),
   }).passthrough(),
 )
 /**

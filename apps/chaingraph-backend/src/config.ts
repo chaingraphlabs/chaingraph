@@ -48,8 +48,6 @@ export function prettyPrintConfig() {
   console.log(`  Enabled: ${configCopy.trpcServerKeepAlive.enabled}`)
   console.log(`  Ping Interval: ${configCopy.trpcServerKeepAlive.pingMs}ms`)
   console.log(`  Pong Timeout: ${configCopy.trpcServerKeepAlive.pongWaitMs}ms`)
-  console.log('Database:')
-  console.log(`  URL: ${configCopy.databaseUrl}`)
   console.log('Authentication:')
   console.log(`  Enabled: ${configCopy.authEnabled}`)
   console.log(`  Dev Mode: ${configCopy.authDevMode}`)
