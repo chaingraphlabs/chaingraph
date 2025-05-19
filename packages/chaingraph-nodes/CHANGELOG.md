@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.1.27
+
+### Patch Changes
+
+- Fix http node body port visibility and improve descriptions. CI build docker only for the "release" branch.
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.1.27
+
 ## 0.1.26
 
 ### Patch Changes

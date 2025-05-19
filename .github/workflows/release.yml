@@ -100,56 +100,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract backend version from package.json
-        id: backend-package-version
-        run: |
-          BACK_VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
-          echo "BACK_VERSION=$BACK_VERSION" >> $GITHUB_ENV
-          echo "Extracted backend version: $BACK_VERSION"
-
-      - name: Extract frontend version from package.json
-        id: frontend-package-version
-        run: |
-          FRONT_VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
-          echo "FRONT_VERSION=$FRONT_VERSION" >> $GITHUB_ENV
-          echo "Extracted frontend version: $FRONT_VERSION"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Build and push Frontend Docker image
-      - name: Build and push Frontend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/chaingraph-frontend/Dockerfile
-          push: ${{ github.ref == 'refs/heads/release' }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.FRONT_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Build and push Backend Docker image
-      - name: Build and push Backend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/chaingraph-backend/Dockerfile
-          push: ${{ github.ref == 'refs/heads/release' }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.BACK_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       # Use changesets action for main branch pushes
       - name: Create Release PR or Publish
         if: github.event_name == 'push'
@@ -163,3 +113,59 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract backend version from package.json
+        if: github.ref == 'refs/heads/release'
+        id: backend-package-version
+        run: |
+          BACK_VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
+          echo "BACK_VERSION=$BACK_VERSION" >> $GITHUB_ENV
+          echo "Extracted backend version: $BACK_VERSION"
+
+      - name: Extract frontend version from package.json
+        if: github.ref == 'refs/heads/release'
+        id: frontend-package-version
+        run: |
+          FRONT_VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
+          echo "FRONT_VERSION=$FRONT_VERSION" >> $GITHUB_ENV
+          echo "Extracted frontend version: $FRONT_VERSION"
+
+      - name: Set up Docker Buildx
+        if: github.ref == 'refs/heads/release'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        if: github.ref == 'refs/heads/release'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and push Backend Docker image
+      - name: Build and push Backend Docker image
+        if: github.ref == 'refs/heads/release'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/chaingraph-backend/Dockerfile
+          push: ${{ github.ref == 'refs/heads/release' }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:latest
+            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.BACK_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build and push Frontend Docker image
+      - name: Build and push Frontend Docker image
+        if: github.ref == 'refs/heads/release'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/chaingraph-frontend/Dockerfile
+          push: ${{ github.ref == 'refs/heads/release' }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.FRONT_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
