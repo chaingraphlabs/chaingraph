@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-types
 
+## 0.1.28
+
+### Patch Changes
+
+- 0g llm node implementation and fixes
+
+## 0.1.27
+
+### Patch Changes
+
+- Fix http node body port visibility and improve descriptions. CI build docker only for the "release" branch.
+
 ## 0.1.26
 
 ### Patch Changes

@@ -158,8 +158,14 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
               'w-full',
               // errorMessage && 'border-red-500',
               'nodrag',
+              'placeholder:text-neutral-400 placeholder:opacity-40',
             )}
-            placeholder={port.getConfig().title ?? 'Text'}
+            placeholder={
+              port.getConfig().ui?.placeholder
+              ?? port.getConfig().title
+              ?? port.getConfig().key
+              ?? 'Text'
+            }
             type={ui?.isPassword ? 'password' : undefined}
             data-1p-ignore
             disabled={executionID ? true : ui?.disabled ?? false}
@@ -191,8 +197,14 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
                 'nodrag',
                 'max-w-full',
                 focused && 'nowheel',
+                'placeholder:text-neutral-400 placeholder:opacity-40',
               )}
-              placeholder="String"
+              placeholder={
+                port.getConfig().ui?.placeholder
+                ?? port.getConfig().title
+                ?? port.getConfig().key
+                ?? 'Text'
+              }
               disabled={executionID ? true : ui?.disabled ?? false}
             />
           </>
