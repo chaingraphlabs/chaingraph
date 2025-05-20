@@ -7,31 +7,31 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { PortObject } from '@badaitech/chaingraph-types'
-import { BaseNode, Node, Output } from '@badaitech/chaingraph-types'
+import { BaseNode, Node, Output, PortArray } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  type: 'ObjectNode',
-  title: 'Object Node',
-  description: 'A node that outputs an object',
+  type: 'ArrayNode',
+  title: 'Array Node',
+  description: 'A node that outputs an array',
   category: NODE_CATEGORIES.BASIC_VALUES,
 })
-class ObjectNode extends BaseNode {
+class ArrayNode extends BaseNode {
   @Output()
-  @PortObject({
-    title: 'Object',
-    description: 'The output object.',
-    schema: {
-      properties: {},
+  @PortArray({
+    title: 'Array',
+    description: 'The output array.',
+    defaultValue: [],
+    itemConfig: {
+      type: 'any',
     },
-    isSchemaMutable: true,
+    isMutable: true,
     ui: {
-      keyDeletable: true,
       hideEditor: false,
+      addItemFormHidden: false,
     },
   })
-  public object: Record<string, any> = {}
+  array: any[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // This node simply outputs the default number value.
@@ -39,4 +39,4 @@ class ObjectNode extends BaseNode {
   }
 }
 
-export default ObjectNode
+export default ArrayNode
