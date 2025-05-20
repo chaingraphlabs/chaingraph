@@ -7,4 +7,5 @@
  */
 
 export * from './branch.node'
+export * from './switch.node'
 export * from './gate.node'

@@ -86,6 +86,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
   const isOutput = config.direction === 'output'
   const ui = config.ui
   const executionID = useExecutionID()
+  const enumValues = ui?.enumValues
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -223,6 +224,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
                       nextOrder={childPorts.length + 1}
+                      enumValues={enumValues}
                     />
                   )}
                 </Popover>

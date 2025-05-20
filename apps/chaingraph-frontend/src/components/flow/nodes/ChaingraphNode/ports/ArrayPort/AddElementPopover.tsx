@@ -110,11 +110,12 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 
 export function AddElementPopover(props: Props) {
   const { onClose, onSubmit, port } = props
-
+  const enumValues = port.getConfig().ui?.enumValues
   const [type, setType] = useState<PortType | undefined>(
-    port.getConfig().itemConfig?.type || 'any',
+    enumValues?.at(0) || 'any',
   )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
 
   const handleSubmit = () => {
     if (!type)
@@ -158,7 +159,7 @@ export function AddElementPopover(props: Props) {
 
         <DropdownMenuContent align="start">
           {PORT_TYPES
-            .filter(portType => portType !== 'any')// && portType !== 'secret')
+            .filter(portType => (!enumValues || enumValues.includes(portType)) && portType !== 'any')// && portType !== 'secret')
             .map(portType => (
               <DropdownMenuItem
                 key={portType}

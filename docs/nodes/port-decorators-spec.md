@@ -987,10 +987,12 @@ All port types support a common set of UI configuration properties through the `
 
 ### Object Port UI
 
-| Property     | Type    | Description                              |
-|--------------| ------- | ---------------------------------------- |
-| keyDeletable | boolean | Whether object properties can be deleted |
-| collapsed    | boolean | Whether the object port collapsed        |
+| Property           | Type       | Description                              |
+|--------------------| -------    | ---------------------------------------- |
+| keyDeletable       | boolean    | Whether object properties can be deleted |
+| collapsed          | boolean    | Whether the object port collapsed        |
+| hidePropertyEditor | boolean    | Whether object properties can be edited  |
+| enumValues         | PortType[] | Types allowed when adding new properties |
 
 ## 7. Complete Examples
 

@@ -72,6 +72,17 @@ export const objectPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
     collapsed: z.boolean().optional(),
     keyDeletable: z.boolean().optional(),
+    hidePropertyEditor: z.boolean().optional(),
+    enumValues: z.array(z.enum([
+      'string',
+      'number',
+      'array',
+      'object',
+      'boolean',
+      'stream',
+      'enum',
+      'any',
+    ])).optional(),
   }).passthrough(),
 )
 /**
