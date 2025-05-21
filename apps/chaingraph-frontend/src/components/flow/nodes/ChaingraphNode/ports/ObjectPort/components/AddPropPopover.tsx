@@ -110,7 +110,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit, enumValues: enumValues } = props
+  const { onClose, onSubmit, enumValues } = props
   const [key, setKey] = useState('')
   const [type, setType] = useState<PortType | undefined>(
     enumValues?.at(0) || 'string',
