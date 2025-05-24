@@ -34,7 +34,7 @@ import { NODE_CATEGORIES } from '../../categories'
 @Node({
   type: 'SwitchNode',
   title: 'Switch',
-  description: 'Controls flow based on matching a string value with a list of case values, if no matches found the default value will be set to true',
+  description: 'Controls flow based on matching a string value with a list of case values, if no matches found the default value will be used.',
   category: NODE_CATEGORIES.FLOW,
   tags: ['flow', 'condition', 'switch', 'logic'],
 })
