@@ -9,7 +9,7 @@
 import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
+import type { INode, IPort, ObjectPortConfig, ObjectPort as ObjectPortType, } from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -224,7 +224,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
                       nextOrder={childPorts.length + 1}
-                      enumValues={enumValues}
+                      port={port as ObjectPortType}
                     />
                   )}
                 </Popover>
