@@ -115,7 +115,7 @@ export function AddElementPopover(props: Props) {
   const dropDownValues = (itemType !== 'any' ? [itemType] : (port.getConfig().ui?.enumValues || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
 
   const [type, setType] = useState<PortType | undefined>(
-    dropDownValues.at(0)
+    dropDownValues.at(0) || itemType
   )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
