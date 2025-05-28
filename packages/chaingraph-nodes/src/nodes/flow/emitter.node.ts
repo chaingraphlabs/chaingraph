@@ -36,21 +36,19 @@ class EventEmitterNode extends BaseNode {
   eventData: EventData = new EventData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    this.emitEvent(context)
-    return {}
-  }
-
-  async emitEvent(context: ExecutionContext): Promise<void> {
     const eventName = this.eventData.eventName
     if (!eventName) {
       throw new Error('Event name is required to emit an event')
     }
 
-    const nodeEvents = (context.integrations.nodeEvents || []) as EmittedEventContext[]
+    // Use the new event emission API if available
+    if (context.emitEvent) {
+      context.emitEvent(eventName, this.eventData)
+    } else {
+      throw new Error('Event emission is not supported in this context')
+    }
 
-    context.integrations.nodeEvents = [...nodeEvents, {
-      eventName,
-    } as EmittedEventContext]
+    return {}
   }
 }
 

@@ -7,6 +7,8 @@
  */
 
 import type {
+  EmittedEvent,
+  EmittedEventContext,
   ExecutionEvent,
   ExecutionEventHandler,
   ExecutionEventImpl,
@@ -34,6 +36,8 @@ function generateExecutionID(): string {
 export class ExecutionService {
   // Keep track of event queues per execution
   private eventQueues: Map<string, EventQueue<ExecutionEventImpl>> = new Map()
+  // Keep track of child executions
+  private childExecutions: Map<string, Set<string>> = new Map() // parentId -> Set<childId>
 
   constructor(
     private readonly store: IExecutionStore,
@@ -43,6 +47,8 @@ export class ExecutionService {
     flow: Flow,
     options?: ExecutionOptions,
     integrations?: IntegrationContext,
+    parentExecutionId?: string,
+    eventData?: EmittedEventContext,
   ): Promise<ExecutionInstance> {
     const clonedFlow = flow.clone() as Flow
 
@@ -54,7 +60,15 @@ export class ExecutionService {
       undefined,
       id,
       integrations,
+      parentExecutionId,
+      eventData,
+      !!parentExecutionId, // isChildExecution
     )
+
+    // Enable event support for all executions
+    if (!context.emittedEvents) {
+      context.emittedEvents = []
+    }
     const engine = new ExecutionEngine(clonedFlow, context, options)
 
     const instance: ExecutionInstance = {
@@ -64,9 +78,26 @@ export class ExecutionService {
       flow: clonedFlow,
       status: ExecutionStatus.Created,
       createdAt: new Date(),
+      parentExecutionId,
+    }
+
+    // Set up event callback for parent executions
+    if (!parentExecutionId) {
+      engine.setEventCallback(async (ctx) => {
+        await this.processEmittedEvents(instance)
+      })
     }
 
     await this.store.create(instance)
+
+    // Track parent-child relationship
+    if (parentExecutionId) {
+      if (!this.childExecutions.has(parentExecutionId)) {
+        this.childExecutions.set(parentExecutionId, new Set())
+      }
+      this.childExecutions.get(parentExecutionId)!.add(id)
+    }
+
     return instance
   }
 
@@ -143,6 +174,9 @@ export class ExecutionService {
     instance.context.abortController.abort('Execution stopped by user')
     instance.status = ExecutionStatus.Stopped
     await this.store.create(instance)
+
+    // Stop all child executions when parent is stopped
+    await this.stopChildExecutions(id)
   }
 
   async pauseExecution(id: string): Promise<void> {
@@ -316,6 +350,55 @@ export class ExecutionService {
     return Array.from(dbg.getState().breakpoints)
   }
 
+  /**
+   * Process emitted events and spawn child executions
+   */
+  async processEmittedEvents(instance: ExecutionInstance): Promise<void> {
+    const context = instance.context
+    if (!context.emittedEvents || context.emittedEvents.length === 0) {
+      return
+    }
+
+    const unprocessedEvents = context.emittedEvents.filter(e => !e.processed)
+
+    for (const event of unprocessedEvents) {
+      // Always spawn child execution for each event
+      await this.spawnChildExecutionForEvent(instance, event)
+      event.processed = true
+    }
+  }
+
+  /**
+   * Spawn a child execution for a specific event
+   */
+  private async spawnChildExecutionForEvent(
+    parentInstance: ExecutionInstance,
+    event: EmittedEvent,
+  ): Promise<void> {
+    const eventContext: EmittedEventContext = {
+      eventName: event.type,
+      payload: event.data,
+    }
+
+    // Create child execution
+    const childInstance = await this.createExecution(
+      parentInstance.flow,
+      parentInstance.engine.getOptions(),
+      parentInstance.context.integrations,
+      parentInstance.id,
+      eventContext,
+    )
+    console.log(`Spawning child execution ${childInstance.id} for event ${event.type}`)
+
+    // Update event with child execution ID
+    event.childExecutionId = childInstance.id
+
+    // Start child execution asynchronously
+    this.startExecution(childInstance.id).catch((error) => {
+      console.error(`Failed to start child execution ${childInstance.id}:`, error)
+    })
+  }
+
   private createEventHandlers(instance: ExecutionInstance): ExecutionEventHandler<any> {
     return createExecutionEventHandler({
       [ExecutionEventEnum.FLOW_COMPLETED]: async () => {
@@ -389,6 +472,62 @@ export class ExecutionService {
     const executions = await this.store.list()
     await Promise.all(
       executions.map(execution => this.dispose(execution.id)),
+    )
+  }
+
+  /**
+   * Get all child executions for a parent execution
+   */
+  async getChildExecutions(parentId: string): Promise<string[]> {
+    const childIds = this.childExecutions.get(parentId)
+    return childIds ? Array.from(childIds) : []
+  }
+
+  /**
+   * Wait for all child executions to complete
+   */
+  async waitForChildExecutions(parentId: string, timeoutMs: number = 30000): Promise<void> {
+    const childIds = await this.getChildExecutions(parentId)
+    if (childIds.length === 0)
+      return
+
+    const startTime = Date.now()
+
+    // Poll for completion
+    while (Date.now() - startTime < timeoutMs) {
+      const allCompleted = await Promise.all(
+        childIds.map(async (childId) => {
+          const instance = await this.getInstance(childId)
+          if (!instance)
+            return true // Child no longer exists
+
+          return instance.status === ExecutionStatus.Completed
+            || instance.status === ExecutionStatus.Failed
+            || instance.status === ExecutionStatus.Stopped
+        }),
+      )
+
+      if (allCompleted.every(completed => completed)) {
+        return
+      }
+
+      // Wait a bit before checking again
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+
+    throw new Error(`Timeout waiting for child executions of ${parentId}`)
+  }
+
+  /**
+   * Stop all child executions
+   */
+  async stopChildExecutions(parentId: string): Promise<void> {
+    const childIds = await this.getChildExecutions(parentId)
+
+    await Promise.all(
+      childIds.map(childId => this.stopExecution(childId).catch((err) => {
+        console.error(`Failed to stop child execution ${childId}:`, err)
+      })),
     )
   }
 }

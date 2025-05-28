@@ -62,31 +62,28 @@ class EventListenerNode extends BaseNode {
   outputData: EventData = new EventData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const nodeEvent = ((context.integrations.nodeEvents || []) as EventData[]).find((_event, index) => {
-      return index >= this.processedEventsOffset && _event.eventName === this.inputFilter.eventName
-    })
-    const nodeEventIndex = ((context.integrations.nodeEvents || []) as EventData[]).findIndex((_event, index) => {
-      return index >= this.processedEventsOffset && _event.eventName === this.inputFilter.eventName
-    })
-    console.debug(
-      'EventListenerNode - nodeEvent:',
-      nodeEvent,
-      'nodeEventIndex:',
-      nodeEventIndex,
-      'processedEventsOffset:',
-      this.processedEventsOffset,
-      'context',
-      JSON.stringify(context.integrations),
-    )
+    if (context.eventData) {
+      console.log('EventListenerNode executing in child mode with event data:', context.eventData)
 
-    if (nodeEvent && nodeEventIndex >= 0) {
-      this.outputData.eventName = nodeEvent.eventName
-      this.processedEventsOffset = nodeEventIndex + 1
+      // Child execution mode - we have event data
+      const { eventName, payload } = context.eventData
+
+      if (eventName !== this.inputFilter.eventName) {
+        // Skip this listener - not for this event
+        throw new Error(`EventListenerNode skipped - event type mismatch: expected ${this.inputFilter.eventName}, got ${eventName}`)
+      }
+
+      // Process event data
+      this.outputData.eventName = eventName
+      if (payload && typeof payload === 'object' && 'eventName' in payload) {
+        // If payload has eventName, use it (for compatibility)
+        this.outputData = { ...payload } as EventData
+      }
 
       return {}
     }
 
-    throw new Error('EventListenerNode skipped execution')
+    throw new Error('EventListenerNode executed without event data')
   }
 }
 

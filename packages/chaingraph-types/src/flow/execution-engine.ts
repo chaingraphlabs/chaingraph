@@ -51,6 +51,7 @@ export class ExecutionEngine {
   // private readonly eventQueue: EventQueue<ExecutionEvent>
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
+  private onEventCallback?: (context: ExecutionContext) => Promise<void>
 
   constructor(
     private readonly flow: Flow,
@@ -233,6 +234,14 @@ export class ExecutionEngine {
 
       // Process dependents and potentially enqueue new nodes
       await this.processDependents(completedNode)
+
+      // Check for emitted events after node completion
+      if (this.onEventCallback && this.context.emittedEvents && this.context.emittedEvents.length > 0) {
+        const unprocessedEvents = this.context.emittedEvents.filter(e => !e.processed)
+        if (unprocessedEvents.length > 0) {
+          await this.onEventCallback(this.context)
+        }
+      }
 
       // Check if execution is complete based on the new requirements
       if (await this.isExecutionComplete()) {
@@ -497,6 +506,10 @@ export class ExecutionEngine {
     return this.debugger
   }
 
+  public getOptions(): ExecutionEngineOptions | undefined {
+    return this.options
+  }
+
   public on<T extends ExecutionEventEnum>(
     type: T,
     handler: (event: ExecutionEventImpl<T>) => void,
@@ -510,6 +523,13 @@ export class ExecutionEngine {
 
   public onAll(handler: (event: ExecutionEventImpl) => void): () => void {
     return this.eventQueue.subscribe(handler)
+  }
+
+  /**
+   * Set a callback to be called when events are emitted
+   */
+  public setEventCallback(callback: (context: ExecutionContext) => Promise<void>): void {
+    this.onEventCallback = callback
   }
 
   // protected createEvent<T extends ExecutionEventEnum>(

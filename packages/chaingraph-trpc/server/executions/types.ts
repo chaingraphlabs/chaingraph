@@ -47,6 +47,7 @@ export interface ExecutionInstance {
     message: string
     nodeId?: string
   }
+  parentExecutionId?: string
 }
 
 export interface ExecutionEventSubscription {
