@@ -29,14 +29,9 @@ export const executionRouter = router({
         debug: z.boolean().optional(),
         breakpoints: z.array(z.string()).optional(),
       }).optional(),
-      integration: z.object({
-        badai: z.object({
-          agentID: z.string().optional(),
-          agentSession: z.string().optional(),
-          chatID: z.string().optional(),
-          messageID: z.number().optional(),
-        }).optional(),
-      }).optional(),
+      integration: z.record(z.string(),
+        // For each integration type key, we accept any valid object
+        z.object({}).catchall(z.unknown())).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const flow = await ctx.flowStore.getFlow(input.flowId)
@@ -50,7 +45,7 @@ export const executionRouter = router({
       const instance = await ctx.executionService.createExecution(
         flow as Flow,
         input.options,
-        input.integration?.badai,
+        input.integration,
       )
       if (input.options?.breakpoints) {
         for (const nodeId of input.options.breakpoints) {

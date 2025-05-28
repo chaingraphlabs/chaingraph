@@ -12,12 +12,8 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { EventQueue } from '../utils'
 
-export interface BadAIContext {
-  agentID?: string
-  agentSession?: string
-  chatID?: string
-  messageID?: number
-}
+// Generic integration interface that can handle any integration type
+export type IntegrationContext = Record<string, unknown>
 
 export class ExecutionContext {
   public readonly executionId: string
@@ -32,7 +28,7 @@ export class ExecutionContext {
   private readonly eventsQueue: EventQueue<ExecutionEvent>
 
   // integrations
-  public readonly badAIContext?: BadAIContext
+  public readonly integrations: IntegrationContext
 
   // TODO: chat api gql client
   // TODO: agent session
@@ -44,14 +40,14 @@ export class ExecutionContext {
     abortController: AbortController,
     metadata?: Record<string, unknown>,
     executionId?: string,
-    badAIContext?: BadAIContext,
+    integrations?: IntegrationContext,
   ) {
     this.executionId = executionId || uuidv4()
     this.startTime = new Date()
     this.flowId = flowId
     this.metadata = metadata || {}
     this.abortController = abortController
-    this.badAIContext = badAIContext
+    this.integrations = integrations || {}
     this.eventsQueue = new EventQueue<ExecutionEvent>(10)
   }
 
@@ -80,5 +76,17 @@ export class ExecutionContext {
 
   getEventsQueue(): EventQueue<ExecutionEvent> {
     return this.eventsQueue as EventQueue<ExecutionEvent>
+  }
+
+  /**
+   * Helper method to get a specific integration by type
+   * @param type The integration type to retrieve
+   * @returns The integration data or undefined if not found
+   */
+  getIntegration<T = unknown>(type: string): T | undefined {
+    if (!this.integrations) {
+      return undefined
+    }
+    return this.integrations[type] as T
   }
 }

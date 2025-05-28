@@ -7,11 +7,11 @@
  */
 
 import type {
-  BadAIContext,
   ExecutionEvent,
   ExecutionEventHandler,
   ExecutionEventImpl,
   Flow,
+  IntegrationContext,
 } from '@badaitech/chaingraph-types'
 import type { IExecutionStore } from '../store/execution-store'
 import type { ExecutionInstance, ExecutionOptions, ExecutionState } from '../types'
@@ -42,7 +42,7 @@ export class ExecutionService {
   async createExecution(
     flow: Flow,
     options?: ExecutionOptions,
-    badAIContext?: BadAIContext,
+    integrations?: IntegrationContext,
   ): Promise<ExecutionInstance> {
     const clonedFlow = flow.clone() as Flow
 
@@ -53,7 +53,7 @@ export class ExecutionService {
       abortController,
       undefined,
       id,
-      badAIContext,
+      integrations,
     )
     const engine = new ExecutionEngine(clonedFlow, context, options)
 

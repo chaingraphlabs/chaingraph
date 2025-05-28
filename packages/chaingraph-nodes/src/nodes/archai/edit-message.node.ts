@@ -7,6 +7,7 @@
  */
 
 import type {
+  BadAIContext,
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
@@ -70,12 +71,14 @@ class EditMessageArchAINode extends BaseNode {
       throw new Error('Message ID is required to edit a message')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const badAIContext = context.getIntegration<BadAIContext>('badai')
+
+    const agentSession = badAIContext?.agentSession
     if (!agentSession) {
       throw new Error('ArchAI agent session is not available in the context')
     }
 
-    const chatID = context.badAIContext?.chatID
+    const chatID = badAIContext?.chatID
     if (!chatID) {
       throw new Error('ArchAI chat ID is not available in the context')
     }

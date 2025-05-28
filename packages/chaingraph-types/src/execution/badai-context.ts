@@ -6,6 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './badai-context'
-export * from './emitted-event-context'
-export * from './execution-context'
+/**
+ * Context for BadAI integration
+ */
+export interface BadAIContext {
+  agentSession?: string
+  agentID?: string
+  chatID?: string
+  messageID?: number
+}

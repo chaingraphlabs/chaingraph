@@ -10,6 +10,8 @@ import type {
   AnyPort,
   ArrayPortConfig,
 
+  BadAIContext,
+
   ExecutionContext,
   IPort,
   IPortConfig,
@@ -441,7 +443,9 @@ class ArchAIGetVariableNode extends BaseNode {
 
     try {
       // Get required context information
-      const agentSession = context.badAIContext?.agentSession
+      const badAIContext = context.getIntegration<BadAIContext>('badai')
+
+      const agentSession = badAIContext?.agentSession
       if (!agentSession) {
         throw new Error('ArchAI agent session is not available in the context')
       }
@@ -457,14 +461,14 @@ class ArchAIGetVariableNode extends BaseNode {
         executionId = context.executionId
       } else if (this.namespace === VariableNamespace.Agent) {
         namespaceType = GraphQL.NamespaceType.Agent
-        agentId = context.badAIContext?.agentID
+        agentId = badAIContext?.agentID
       } else if (this.namespace === VariableNamespace.Chat) {
         namespaceType = GraphQL.NamespaceType.Chat
-        chatId = context.badAIContext?.chatID
+        chatId = badAIContext?.chatID
       } else if (this.namespace === VariableNamespace.ChatAgent) {
         namespaceType = GraphQL.NamespaceType.ChatAgent
-        agentId = context.badAIContext?.agentID
-        chatId = context.badAIContext?.chatID
+        agentId = badAIContext?.agentID
+        chatId = badAIContext?.chatID
       }
 
       if (!namespaceType) {
