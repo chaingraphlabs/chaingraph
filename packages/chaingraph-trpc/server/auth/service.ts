@@ -69,7 +69,7 @@ export class AuthService {
           }
         }
       } catch (error) {
-        console.error('BadAI token validation error:', error)
+        // console.error('BadAI token validation error:', error)
       }
     }
 

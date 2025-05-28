@@ -450,7 +450,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.optional() as any
+      return schema.nullable().optional() as any
     }
 
     return schema
@@ -467,7 +467,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.optional() as any
+      return schema.nullable().optional() as any
     }
 
     return schema
@@ -484,7 +484,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.optional() as any
+      return schema.nullable().optional() as any
     }
 
     return schema
@@ -509,7 +509,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      return arraySchema.optional() as any
+      return arraySchema.nullable().optional() as any
     }
 
     return arraySchema
@@ -570,7 +570,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
       }
 
       if (!config.required) {
-        return objSchema.optional()
+        return objSchema.nullable().optional()
       }
 
       return objSchema
@@ -584,7 +584,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      return recordSchema.optional()
+      return recordSchema.nullable().optional()
     }
 
     return recordSchema
@@ -606,7 +606,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      enumSchema = enumSchema.optional() as any
+      enumSchema = enumSchema.nullable().optional() as any
     }
 
     return enumSchema
@@ -623,7 +623,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.optional()
+      return schema.nullable().optional()
     }
 
     return schema

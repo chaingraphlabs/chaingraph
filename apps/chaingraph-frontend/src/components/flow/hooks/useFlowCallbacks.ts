@@ -286,6 +286,10 @@ export function useFlowCallbacks() {
 
       const flowNode = nodes[nodeDragStop.id]
 
+      if (flowNode) {
+        // TODO: add to node metadata that node is dragged stop!!!
+      }
+
       if (!flowNode || flowNode.metadata.category === 'group')
         continue
 
@@ -410,6 +414,14 @@ export function useFlowCallbacks() {
         })
       }
     }
+  }, [activeFlow?.id, nodes])// Handle node drag end
+
+  const onNodeDragStart = useCallback((
+    event: React.MouseEvent,
+    nodesDrag: Node,
+    nodesDragStop: Node[],
+  ) => {
+    // TODO: add to node metadata that node is dragged
   }, [activeFlow?.id, nodes])
 
   return {
@@ -419,6 +431,7 @@ export function useFlowCallbacks() {
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStart,
     onNodeDragStop,
   }
 }

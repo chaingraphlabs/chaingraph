@@ -607,3 +607,23 @@ sample({
   clock: clearNodes,
   target: clearInterpolatorFx,
 })
+
+// Create store for dragging nodes (nodes which user moves right now)
+export const $draggingNodes = nodesDomain.createStore<string[]>([])
+  // Track nodes that start being dragged
+  .on(throttledUpdateNodeUILocal, (state, { nodeId, ui }) => {
+    if (ui?.state?.isSelected) {
+      // check if node id exists in the state:
+      if (!state.includes(nodeId)) {
+        // Add nodeId to the array if it's not already there
+        return [...state, nodeId]
+      }
+    } else {
+      // check if not selected and in the list, then remove from the list
+      if (state.includes(nodeId)) {
+        return state.filter(id => id !== nodeId)
+      }
+    }
+    return state
+  })
+  .reset(globalReset)

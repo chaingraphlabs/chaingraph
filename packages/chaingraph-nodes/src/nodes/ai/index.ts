@@ -16,6 +16,6 @@
 // export * from './tools-collection.node'
 
 export * from './0g-llm-call.node'
-// export * from './antropic'
+export * from './antropic'
 export * from './llm-call-with-structured-output.node'
 export * from './llm-call.node'
