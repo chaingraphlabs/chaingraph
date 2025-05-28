@@ -27,6 +27,7 @@ import {
   isBooleanPortValue,
   isEnumPortValue,
 } from '..'
+import { generatePortIDArrayElement } from '../../node/id-generate'
 import {
   basePortConfigSchema,
   isArrayPortValue,
@@ -183,7 +184,7 @@ function validateField(
             const itemErrors = validateField(
               itemValue,
               arrayConfig.itemConfig,
-              `${fieldPath}[${i}]`,
+              generatePortIDArrayElement(fieldPath, i),
             )
             errors.push(...itemErrors)
           }
@@ -192,7 +193,7 @@ function validateField(
       }
       default:
         {
-        // For other port types, use the plugin's Zod schema validation.
+          // For other port types, use the plugin's Zod schema validation.
           const schemaResult = plugin.valueSchema.safeParse(fieldValue)
           if (!schemaResult.success) {
             for (const issue of schemaResult.error.errors) {

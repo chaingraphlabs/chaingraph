@@ -68,7 +68,7 @@ classDiagram
         <<interface>>
         +addObjectProperty(objectPort, key, portConfig)
         +removeObjectProperty(objectPort, key)
-        +appendArrayItem(arrayPort, value)
+        +appendArrayItem(arrayPort, value, itemConfig)
         +removeArrayItem(arrayPort, index)
         +processPortConfig(config, context)
         +recreateArrayItemPorts(arrayPort, newArray)
@@ -107,7 +107,7 @@ classDiagram
         -nodeId: string
         +addObjectProperty(objectPort, key, config)
         +removeObjectProperty(objectPort, key)
-        +appendArrayItem(arrayPort, value)
+        +appendArrayItem(arrayPort, value, itemConfig)
         +removeArrayItem(arrayPort, index)
         +processPortConfig(config, context)
     }

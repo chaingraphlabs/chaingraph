@@ -32,9 +32,10 @@ export interface IComplexPortHandler {
    * Add an item to an array port
    * @param arrayPort The array port
    * @param value The value to append
+   * @param itemConfig The configuration to change
    * @returns The index of the new item
    */
-  appendArrayItem: (arrayPort: IPort, value: any) => number
+  appendArrayItem: (arrayPort: IPort, value: any, itemConfig: IPortConfig) => number
 
   /**
    * Remove an item from an array port

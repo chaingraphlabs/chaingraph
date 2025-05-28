@@ -194,6 +194,7 @@ function ChaingraphNodeComponent({
         nodeId: params.nodeId,
         portId: params.portId,
         value: params.value,
+        itemConfig: params.itemConfig
       }),
       removeElementArrayPort: params => dispatch.removeElementArrayPort({
         nodeId: params.nodeId,

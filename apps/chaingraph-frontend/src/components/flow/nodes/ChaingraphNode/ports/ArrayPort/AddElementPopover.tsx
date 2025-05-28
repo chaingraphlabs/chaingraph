@@ -28,7 +28,7 @@ interface Data {
 interface Props {
   port: ArrayPort
   onClose: () => void
-  onSubmit: (data: Data) => void
+  onSubmit: (newItemConfig: IPortConfig) => void
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -123,9 +123,7 @@ export function AddElementPopover(props: Props) {
     if (!type)
       return
 
-    onSubmit({
-      config: typeConfigMap[type],
-    })
+    onSubmit(typeConfigMap[type])
   }
 
   return (

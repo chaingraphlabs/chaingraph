@@ -69,6 +69,7 @@ export const appendElementArrayPort = portsDomain.createEvent<{
   nodeId: string
   portId: string
   value: any
+  itemConfig: IPortConfig
 }>()
 
 export const removeElementArrayPort = portsDomain.createEvent<{
@@ -265,7 +266,7 @@ sample({
 
 sample({
   clock: appendElementArrayPort,
-  fn: ({ nodeId, portId, value }) => {
+  fn: ({ nodeId, portId, value, itemConfig }) => {
     const activeFlowId = $activeFlowId.getState()
     if (!activeFlowId) {
       throw new Error('No active flow selected')
@@ -275,6 +276,7 @@ sample({
       flowId: activeFlowId,
       portId,
       value,
+      itemConfig
     }
     return result
   },

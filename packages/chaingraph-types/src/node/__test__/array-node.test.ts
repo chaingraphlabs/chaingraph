@@ -115,6 +115,7 @@ describe('array node serialization', () => {
     arrayNode.appendArrayItem(
       numArrayPort as IPort,
       0,
+      numArrayPort.getConfig().itemConfig
     )
 
     // serialize and deserialize the node

@@ -13,6 +13,7 @@ import { ObjectPort } from '../../port'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 import { findPort } from '../traverse-ports'
+import { generatePortIDArrayElement } from '../../node/id-generate'
 
 /**
  * TODO: Rethink the approach to how to bind ports and node fields
@@ -277,9 +278,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const newLength = currentValue.length
 
     // Process item config
-    let itemConfig = { ...config.itemConfig }
-    itemConfig = this.processPortConfig(
-      itemConfig,
+    let portItemConfig = { ...config.itemConfig }
+    portItemConfig = this.processPortConfig(
+      portItemConfig,
       {
         nodeId: this.nodeId,
         parentPortConfig: config,
@@ -289,9 +290,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     )
 
     // Create the item port
-    const itemPortId = `${arrayPort.id}[${newLength}]`
+    const itemPortId = generatePortIDArrayElement(arrayPort.id, newLength)
     const completeItemConfig = {
-      ...itemConfig,
+      ...portItemConfig,
       id: itemPortId,
       parentId: arrayPort.id,
       key: newLength.toString(),
@@ -340,7 +341,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
     ]
 
     // Remove the port for this index
-    const itemPortId = `${arrayPort.id}[${index}]`
+    const itemPortId = generatePortIDArrayElement(arrayPort.id, index)
     this.portManager.removePort(itemPortId)
 
     // Update array value
@@ -496,7 +497,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
 
       // Create ports for each array element
       for (let i = 0; i < value.length; i++) {
-        const childPortId = `${itemPort.id}[${i}]`
+        const childPortId = generatePortIDArrayElement(itemPort.id, i)
         const elementValue = value[i]
 
         // Process the element config

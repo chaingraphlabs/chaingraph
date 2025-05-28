@@ -41,6 +41,7 @@ export interface AddElementArrayPortParams {
   nodeId: string
   portId: string
   value: any
+  itemConfig: IPortConfig
 }
 
 export interface RemoveElementArrayPortParams {

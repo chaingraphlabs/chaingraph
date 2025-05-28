@@ -348,7 +348,7 @@ this.tags.push('follow-up'); // Automatically updates port
 
 // Add an item using API
 const tagsPort = this.findPortByKey('tags');
-this.appendArrayItem(tagsPort!, 'critical');
+this.appendArrayItem(tagsPort!, 'critical', tags.getConfig());
 
 // Remove an item
 this.removeArrayItem(tagsPort!, 1); // Removes 'urgent'

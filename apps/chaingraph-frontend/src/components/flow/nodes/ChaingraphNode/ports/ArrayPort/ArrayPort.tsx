@@ -16,6 +16,7 @@ import type {
   IPort,
   IPortConfig,
 } from '@badaitech/chaingraph-types'
+import { Button } from '@/components/ui/button'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -27,6 +28,7 @@ import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddElementPopover } from './AddElementPopover'
+import { Edit } from 'lucide-react'
 import { PortField } from './PortField'
 import { PortHeader } from './PortHeader'
 
@@ -95,6 +97,15 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const ui = config.ui
   const executionID = useExecutionID()
 
+  // Memoize child ports to prevent recalculation
+  const childPorts = useMemo(() => {
+    return Array.from(node.ports.values())
+      .filter(p => p.getConfig().parentId === config.id)
+  }, [node.ports, config.id])
+
+  //Use firstport config as itemconfig otherwise, arrayports itemConfig
+  const newItemConfig = useMemo(() => childPorts.length > 0 ? childPorts[0].getConfig() : config.itemConfig, [childPorts.length])
+
   // Memoize edges
   const connectedEdges = useMemo(() => {
     return getEdgesForPort(port.id)
@@ -108,21 +119,35 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
 
   // Memoize callback functions
   const handleAddElement = useCallback(() => {
-    setIsAddPropOpen(true)
-  }, [])
+    // if type is not any you want immediately add element instead of choose type    
+    if (newItemConfig.type === 'any') {
+      setIsAddPropOpen(true)
+    } else {
+      // if type is not any you want immediately add element instead of choose type 
+      appendElementArrayPort({
+        nodeId: node.id,
+        portId: port.id,
+        value: newItemConfig.defaultValue,
+        itemConfig: newItemConfig
+      })
+
+    }
+  }, [newItemConfig])
 
   const handleClosePopover = useCallback(() => {
     setIsAddPropOpen(false)
   }, [])
 
-  const handleSubmitPopover = useCallback(() => {
+  const handleSubmitPopover = useCallback((newItemConfig: IPortConfig) => {
+    // Add new array element with the choosen type
     appendElementArrayPort({
       nodeId: node.id,
       portId: port.id,
-      value: config.itemConfig.defaultValue,
+      value: newItemConfig.defaultValue,
+      itemConfig: newItemConfig
     })
     setIsAddPropOpen(false)
-  }, [node.id, port.id, config.itemConfig.defaultValue, appendElementArrayPort])
+  }, [node.id, port.id, appendElementArrayPort])
 
   const handleToggleCollapsible = useCallback(() => {
     updatePortUI({
@@ -184,13 +209,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     setIsSchemaEditorOpen(false)
   }, [node.id, port, config.ui, updatePortUI, updatePortValue])
 
-  // Memoize child ports to prevent recalculation
-  const childPorts = useMemo(() => {
-    return Array.from(node.ports.values())
-      .filter(p => p.getConfig().parentId === config.id)
-  }, [node.ports, config.id])
-
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   return (

@@ -105,9 +105,9 @@ export function ArrayItemSchemaEditor({
               </TabsList>
             </div>
 
-            <TabsContent value="visual" className="flex-1 flex flex-col">
+            {tab === "visual" && <TabsContent value="visual" className="flex-1 flex flex-col">
               <ArrayItemEditorContent onSave={onSave} />
-            </TabsContent>
+            </TabsContent>}
 
             <TabsContent value="json" className="flex-1 p-6">
               <JsonEditor onSave={onSave} />
@@ -238,11 +238,11 @@ function ArrayItemEditorContent({ onSave }: { onSave: (config: IPortConfig) => v
 
   return (
     <>
-      <ScrollArea className="flex-1">
+      <ScrollArea type="scroll" className="flex-1">
         <div className="p-6">
           <div className="mb-4">
             <h3 className="text-lg font-medium">
-              Array Item Type:
+              Array Item Type:&nbsp;
               <span className="text-primary">{itemConfig.type}</span>
             </h3>
             <p className="text-sm text-muted-foreground mb-4">

@@ -6,11 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow, ObjectPort } from '@badaitech/chaingraph-types'
+import type { ArrayPortConfig, Flow, ObjectPort } from '@badaitech/chaingraph-types'
 import { NodeEventType } from '@badaitech/chaingraph-types'
 import { findPort } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
+import { generatePortIDArrayElement } from '@badaitech/chaingraph-types/node/id-generate'
 
 export const updatePortValueSchema = z.object({
   flowId: z.string(),
@@ -204,6 +205,7 @@ export const appendElementArrayPort = flowContextProcedure
     nodeId: z.string(),
     portId: z.string(),
     value: z.any(),
+    itemConfig: z.any(),
   }))
   .mutation(async ({ input, ctx }) => {
     await ctx.flowStore.lockFlow(input.flowId)
@@ -224,7 +226,17 @@ export const appendElementArrayPort = flowContextProcedure
       if (port.getConfig().type !== 'array')
         throw new Error('Port is not an array port')
 
-      node.appendArrayItem(port, input.value)
+      // Process item config if choosen type of itemconfig is different
+      const config = port.getConfig() as ArrayPortConfig
+      if (config.itemConfig.type !== input.itemConfig.type) {
+        port.setConfig({
+          ...config,
+          itemConfig: input.itemConfig
+        })
+        node.updatePort(port)
+      }
+
+      node.appendArrayItem(port, input.value, input.itemConfig)
       flow.updateNode(node)
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
@@ -266,6 +278,9 @@ export const removeElementArrayPort = flowContextProcedure
 
       if (port.getConfig().type !== 'array')
         throw new Error('Port is not an array port')
+
+      const itemPortId = generatePortIDArrayElement(port.id, input.index)
+      flow.removePort(node.id, itemPortId)
 
       node.removeArrayItem(port, input.index)
       flow.updateNode(node)
