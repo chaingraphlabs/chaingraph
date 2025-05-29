@@ -267,7 +267,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
    * @param value The value to append
    * @returns The index of the new item
    */
-  appendArrayItem(arrayPort: IPort, value: any): number {
+  appendArrayItem(arrayPort: IPort, value: any, itemConfig: IPortConfig): number {
     const config = arrayPort.getConfig() as ArrayPortConfig
     if (config.type !== 'array') {
       throw new Error('Cannot append item to non-array port')
