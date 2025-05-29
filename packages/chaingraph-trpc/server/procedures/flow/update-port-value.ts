@@ -199,12 +199,11 @@ export const removeFieldObjectPort = flowContextProcedure
     }
   })
 
-export const appendElementArrayPort = flowContextProcedure
+export const updateItemConfigArrayPort = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     nodeId: z.string(),
     portId: z.string(),
-    value: z.any(),
     itemConfig: z.any(),
   }))
   .mutation(async ({ input, ctx }) => {
@@ -226,17 +225,56 @@ export const appendElementArrayPort = flowContextProcedure
       if (port.getConfig().type !== 'array')
         throw new Error('Port is not an array port')
 
-      // Process item config if choosen type of itemconfig is different
       const config = port.getConfig() as ArrayPortConfig
-      if (config.itemConfig.type !== input.itemConfig.type) {
-        port.setConfig({
-          ...config,
-          itemConfig: input.itemConfig
-        })
-        node.updatePort(port)
-      }
+      port.setConfig({
+        ...config,
+        itemConfig: input.itemConfig
+      })
+      node.updatePort(port)
 
-      node.appendArrayItem(port, input.value, input.itemConfig)
+      node.updateArrayItemConfig(port)
+
+      flow.updateNode(node)
+
+      await ctx.flowStore.updateFlow(flow as Flow)
+
+      return {
+        flowId: input.flowId,
+        nodeId: input.nodeId,
+        node,
+      }
+    } finally {
+      await ctx.flowStore.unlockFlow(input.flowId)
+    }
+  })
+
+export const appendElementArrayPort = flowContextProcedure
+  .input(z.object({
+    flowId: z.string(),
+    nodeId: z.string(),
+    portId: z.string(),
+    value: z.any(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    await ctx.flowStore.lockFlow(input.flowId)
+
+    try {
+      const flow = await ctx.flowStore.getFlow(input.flowId)
+      if (!flow)
+        throw new Error('Flow not found')
+
+      const node = flow.nodes.get(input.nodeId)
+      if (!node)
+        throw new Error('Node not found')
+
+      const port = node.getPort(input.portId)
+      if (!port)
+        throw new Error('Port not found')
+
+      if (port.getConfig().type !== 'array')
+        throw new Error('Port is not an array port')
+
+      node.appendArrayItem(port, input.value)
       flow.updateNode(node)
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })

@@ -31,6 +31,7 @@ import { AddElementPopover } from './AddElementPopover'
 import { Edit } from 'lucide-react'
 import { PortField } from './PortField'
 import { PortHeader } from './PortHeader'
+import { EditItemConfigPopover } from './EditItemConfigPopover'
 
 export interface ArrayPortProps {
   node: INode
@@ -84,6 +85,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const [isSchemaEditorOpen, setIsSchemaEditorOpen] = useState(false)
   const {
     updatePortUI,
+    updateItemConfigArrayPort,
     appendElementArrayPort,
     removeElementArrayPort,
     updatePortValue,
@@ -127,10 +129,8 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
       appendElementArrayPort({
         nodeId: node.id,
         portId: port.id,
-        value: newItemConfig.defaultValue,
-        itemConfig: newItemConfig
+        value: newItemConfig.defaultValue
       })
-
     }
   }, [newItemConfig])
 
@@ -139,12 +139,17 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   }, [])
 
   const handleSubmitPopover = useCallback((newItemConfig: IPortConfig) => {
+    // Update array ports itemConfig
+    updateItemConfigArrayPort({
+      nodeId: node.id,
+      portId: port.id,
+      itemConfig: newItemConfig,
+    })
     // Add new array element with the choosen type
     appendElementArrayPort({
       nodeId: node.id,
       portId: port.id,
-      value: newItemConfig.defaultValue,
-      itemConfig: newItemConfig
+      value: newItemConfig.defaultValue
     })
     setIsAddPropOpen(false)
   }, [node.id, port.id, appendElementArrayPort])

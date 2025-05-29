@@ -262,12 +262,34 @@ export class ComplexPortHandler implements IComplexPortHandler {
   }
 
   /**
+   * Updates the items with new configuration
+   * @param arrayPort The array port
+   */
+  updateArrayItemConfig(arrayPort: IPort): void {
+    const config = arrayPort.getConfig() as ArrayPortConfig
+    if (config.type !== 'array') {
+      throw new Error('Cannot remove item from non-array port')
+    }
+
+    // Get current array value
+    const currentValue = arrayPort.getValue() || []
+
+    if (currentValue.length === 0)
+      return
+
+    this.recreateArrayItemPorts(arrayPort, currentValue)
+
+    // Update the array port
+    this.portManager.updatePort(arrayPort)
+  }
+
+  /**
    * Add an item to an array port
    * @param arrayPort The array port
    * @param value The value to append
    * @returns The index of the new item
    */
-  appendArrayItem(arrayPort: IPort, value: any, itemConfig: IPortConfig): number {
+  appendArrayItem(arrayPort: IPort, value: any): number {
     const config = arrayPort.getConfig() as ArrayPortConfig
     if (config.type !== 'array') {
       throw new Error('Cannot append item to non-array port')

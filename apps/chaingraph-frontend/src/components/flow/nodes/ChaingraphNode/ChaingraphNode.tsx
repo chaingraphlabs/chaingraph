@@ -26,6 +26,7 @@ import { removeNodeFromFlow, updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,
+  updateItemConfigArrayPort,
   appendElementArrayPort,
   removeElementArrayPort,
   removeFieldObjectPort,
@@ -75,6 +76,7 @@ function ChaingraphNodeComponent({
     removeBreakpoint,
     requestUpdatePortValue,
     requestUpdatePortUI,
+    updateItemConfigArrayPort,
     appendElementArrayPort,
     removeElementArrayPort,
     addFieldObjectPort,
@@ -190,11 +192,15 @@ function ChaingraphNodeComponent({
         portId: params.portId,
         key: params.key,
       }),
+      updateItemConfigArrayPort: params => dispatch.updateItemConfigArrayPort({
+        nodeId: params.nodeId,
+        portId: params.portId,
+        itemConfig: params.itemConfig
+      }),
       appendElementArrayPort: params => dispatch.appendElementArrayPort({
         nodeId: params.nodeId,
         portId: params.portId,
         value: params.value,
-        itemConfig: params.itemConfig
       }),
       removeElementArrayPort: params => dispatch.removeElementArrayPort({
         nodeId: params.nodeId,

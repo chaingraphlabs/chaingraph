@@ -24,6 +24,7 @@ import { updateNodeUI } from './update-node-ui'
 import { updatePortUI } from './update-port-ui'
 import {
   addFieldObjectPort,
+  updateItemConfigArrayPort,
   appendElementArrayPort,
   removeElementArrayPort,
   removeFieldObjectPort,
@@ -49,6 +50,7 @@ export const flowProcedures = router({
   updatePortUI,
   addFieldObjectPort,
   removeFieldObjectPort,
+  updateItemConfigArrayPort,
   appendElementArrayPort,
   removeElementArrayPort,
 })
@@ -70,6 +72,7 @@ export { updateNodeUI } from './update-node-ui'
 export { updatePortUI } from './update-port-ui'
 export {
   addFieldObjectPort,
+  updateItemConfigArrayPort,
   appendElementArrayPort,
   removeElementArrayPort,
   removeFieldObjectPort,

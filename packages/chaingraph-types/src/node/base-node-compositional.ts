@@ -376,8 +376,12 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this.complexPortHandler.removeObjectProperty(objectPort, key)
   }
 
-  appendArrayItem(arrayPort: IPort, value: any, itemConfig: IPortConfig): number {
-    return this.complexPortHandler.appendArrayItem(arrayPort, value, itemConfig)
+  updateArrayItemConfig(arrayPort: IPort): void {
+    this.complexPortHandler.updateArrayItemConfig(arrayPort)
+  }
+
+  appendArrayItem(arrayPort: IPort, value: any): number {
+    return this.complexPortHandler.appendArrayItem(arrayPort, value)
   }
 
   removeArrayItem(arrayPort: IPort, index: number): void {

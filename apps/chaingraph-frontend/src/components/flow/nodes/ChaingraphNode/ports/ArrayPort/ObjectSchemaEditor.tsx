@@ -146,13 +146,22 @@ export function ObjectSchemaEditor({ initialSchema, onChange }: ObjectSchemaEdit
         setVirtualNode(virtualNode.clone())
       },
 
+      updateItemConfigArrayPort: (params) => {
+        const port = virtualNode.getPort(params.portId)
+        if (!port) {
+          return
+        }
+
+        virtualNode.updateArrayItemConfig(port)
+        setVirtualNode(virtualNode.clone())
+      },
       appendElementArrayPort: (params) => {
         const port = virtualNode.getPort(params.portId)
         if (!port) {
           return
         }
 
-        virtualNode.appendArrayItem(port, params.value, params.itemConfig)
+        virtualNode.appendArrayItem(port, params.value)
         setVirtualNode(virtualNode.clone())
       },
       removeElementArrayPort: (params) => {
