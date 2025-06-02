@@ -17,5 +17,5 @@ export function generatePortID(propertyKey: string = ''): string {
 
 export function generatePortIDArrayElement(portId: string, elementKey: number): string {
   return `${portId}[${elementKey}]`
-  //return `${portId}[${customAlphabet(nolookalikes, 16)()}]`
+  // return `${portId}[${customAlphabet(nolookalikes, 16)()}]`
 }

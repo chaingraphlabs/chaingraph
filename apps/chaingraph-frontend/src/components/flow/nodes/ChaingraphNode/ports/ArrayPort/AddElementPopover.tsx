@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPort, ArrayPortConfig, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { ArrayPortConfig, IPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -115,7 +115,7 @@ export function AddElementPopover(props: Props) {
   const dropDownValues = (itemType !== 'any' ? [itemType] : (port.getConfig().ui?.allowedTypes || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
 
   const [type, setType] = useState<PortType | undefined>(
-    dropDownValues.at(0) || itemType
+    dropDownValues.at(0) || itemType,
   )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 

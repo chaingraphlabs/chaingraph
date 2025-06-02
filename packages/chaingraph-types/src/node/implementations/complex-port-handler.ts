@@ -9,11 +9,11 @@
 import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
 import type { INode } from '../interface'
 import type { IComplexPortHandler, IPortBinder, IPortManager } from '../interfaces'
+import { generatePortIDArrayElement } from '../../node/id-generate'
 import { ObjectPort } from '../../port'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 import { findPort } from '../traverse-ports'
-import { generatePortIDArrayElement } from '../../node/id-generate'
 
 /**
  * TODO: Rethink the approach to how to bind ports and node fields

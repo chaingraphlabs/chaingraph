@@ -27,7 +27,6 @@ import {
   isBooleanPortValue,
   isEnumPortValue,
 } from '..'
-import { generatePortIDArrayElement } from '../../node/id-generate'
 import {
   basePortConfigSchema,
   isArrayPortValue,
@@ -40,6 +39,7 @@ import {
   validateNumberValue,
   validateStringValue,
 } from '..'
+import { generatePortIDArrayElement } from '../../node/id-generate'
 
 /**
  * Helper to create an object port value.

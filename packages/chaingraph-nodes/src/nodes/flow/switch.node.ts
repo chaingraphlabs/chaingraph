@@ -8,23 +8,19 @@
 
 import type {
   ExecutionContext,
-  NodeEvent,
   NodeExecutionResult,
-  PortCreateEvent,
 } from '@badaitech/chaingraph-types'
 import {
 } from '@badaitech/chaingraph-types'
-import {
-  NodeEventType,
-} from '@badaitech/chaingraph-types'
+
 import {
   BaseNode,
+  Boolean,
   Input,
   Node,
   Output,
   PortObject,
   String,
-  Boolean,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -100,4 +96,3 @@ class SwitchNode extends BaseNode {
 }
 
 export default SwitchNode
-

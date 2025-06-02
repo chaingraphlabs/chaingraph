@@ -6,12 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, Flow, ObjectPort } from '@badaitech/chaingraph-types'
+import type { ObjectPort } from '@badaitech/chaingraph-types'
 import { NodeEventType } from '@badaitech/chaingraph-types'
 import { findPort } from '@badaitech/chaingraph-types'
+import { generatePortIDArrayElement } from '@badaitech/chaingraph-types/node/id-generate'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
-import { generatePortIDArrayElement } from '@badaitech/chaingraph-types/node/id-generate'
 
 export const updatePortValueSchema = z.object({
   flowId: z.string(),
@@ -228,7 +228,7 @@ export const updateItemConfigArrayPort = flowContextProcedure
 
       port.setConfig({
         ...config,
-        itemConfig: input.itemConfig
+        itemConfig: input.itemConfig,
       })
       node.updatePort(port)
 

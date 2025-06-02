@@ -26,12 +26,12 @@ import { removeNodeFromFlow, updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   addFieldObjectPort,
-  updateItemConfigArrayPort,
   appendElementArrayPort,
   removeElementArrayPort,
   removeFieldObjectPort,
   requestUpdatePortUI,
   requestUpdatePortValue,
+  updateItemConfigArrayPort,
 } from '@/store/ports'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
@@ -195,7 +195,7 @@ function ChaingraphNodeComponent({
       updateItemConfigArrayPort: params => dispatch.updateItemConfigArrayPort({
         nodeId: params.nodeId,
         portId: params.portId,
-        itemConfig: params.itemConfig
+        itemConfig: params.itemConfig,
       }),
       appendElementArrayPort: params => dispatch.appendElementArrayPort({
         nodeId: params.nodeId,

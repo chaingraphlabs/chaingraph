@@ -15,7 +15,6 @@ import type {
   IPort,
   IPortConfig,
 } from '@badaitech/chaingraph-types'
-import { Button } from '@/components/ui/button'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -27,10 +26,8 @@ import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddElementPopover } from './AddElementPopover'
-import { Edit } from 'lucide-react'
 import { PortField } from './PortField'
 import { PortHeader } from './PortHeader'
-import { EditItemConfigPopover } from './EditItemConfigPopover'
 
 export interface ArrayPortProps {
   node: INode
@@ -104,8 +101,8 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
       .filter(p => p.getConfig().parentId === config.id)
   }, [node.ports, config.id])
 
-  //Use firstport config as itemconfig otherwise, arrayports itemConfig
-  const newItemConfig = useMemo(() => childPorts.length > 0 ? childPorts[0].getConfig() : config.itemConfig, [childPorts.length])
+  // Use firstport config as itemconfig otherwise, arrayports itemConfig
+  const newItemConfig = useMemo(() => childPorts.length > 0 ? childPorts[0].getConfig() : config.itemConfig, [childPorts, config.itemConfig])
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -120,18 +117,18 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
 
   // Memoize callback functions
   const handleAddElement = useCallback(() => {
-    // if type is not any you want immediately add element instead of choose type    
+    // if type is not any you want immediately add element instead of choose type
     if (newItemConfig.type === 'any') {
       setIsAddPropOpen(true)
     } else {
-      // if type is not any you want immediately add element instead of choose type 
+      // if type is not any you want immediately add element instead of choose type
       appendElementArrayPort({
         nodeId: node.id,
         portId: port.id,
-        value: newItemConfig.defaultValue
+        value: newItemConfig.defaultValue,
       })
     }
-  }, [newItemConfig])
+  }, [newItemConfig, appendElementArrayPort, node.id, port.id])
 
   const handleClosePopover = useCallback(() => {
     setIsAddPropOpen(false)
@@ -148,10 +145,10 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     appendElementArrayPort({
       nodeId: node.id,
       portId: port.id,
-      value: newItemConfig.defaultValue
+      value: newItemConfig.defaultValue,
     })
     setIsAddPropOpen(false)
-  }, [node.id, port.id, appendElementArrayPort])
+  }, [node.id, port.id, appendElementArrayPort, updateItemConfigArrayPort])
 
   const handleToggleCollapsible = useCallback(() => {
     updatePortUI({

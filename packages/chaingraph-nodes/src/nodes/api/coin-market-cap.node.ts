@@ -171,9 +171,9 @@ class CoinMarketCapNode extends BaseNode {
       const crypto = (data.data as any)[symbol]
       const contractAddresses: ContractAddress[] = crypto.platform
         ? Object.entries(crypto.platform).map(([blockchain, address]) => ({
-          blockchain,
-          address: address as string,
-        }))
+            blockchain,
+            address: address as string,
+          }))
         : []
 
       const cryptoData: CryptoData = {

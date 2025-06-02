@@ -44,8 +44,8 @@ export function PortField({
     ...portConfig,
     ui: {
       ...portConfig.ui || {},
-      hideEditor: parentPort.getConfig()?.ui?.hidePropertyEditor || false
-    }
+      hideEditor: parentPort.getConfig()?.ui?.hidePropertyEditor || false,
+    },
   })
 
   return (

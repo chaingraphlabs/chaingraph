@@ -105,9 +105,11 @@ export function ArrayItemSchemaEditor({
               </TabsList>
             </div>
 
-            {tab === "visual" && <TabsContent value="visual" className="flex-1 flex flex-col">
-              <ArrayItemEditorContent onSave={onSave} />
-            </TabsContent>}
+            {tab === 'visual' && (
+              <TabsContent value="visual" className="flex-1 flex flex-col">
+                <ArrayItemEditorContent onSave={onSave} />
+              </TabsContent>
+            )}
 
             <TabsContent value="json" className="flex-1 p-6">
               <JsonEditor onSave={onSave} />

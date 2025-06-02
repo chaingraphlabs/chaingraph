@@ -290,7 +290,7 @@ sample({
       nodeId,
       flowId: activeFlowId,
       portId,
-      itemConfig
+      itemConfig,
     }
     return result
   },
@@ -308,7 +308,7 @@ sample({
       nodeId,
       flowId: activeFlowId,
       portId,
-      value
+      value,
     }
     return result
   },
