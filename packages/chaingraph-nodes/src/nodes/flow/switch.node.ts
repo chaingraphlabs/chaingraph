@@ -62,7 +62,7 @@ class SwitchNode extends BaseNode {
       keyDeletable: true,
       hideEditor: false,
       hidePropertyEditor: true,
-      enumValues: ['boolean'],
+      allowedTypes: ['boolean'],
     },
   })
   caseObject: Record<string, boolean> = {}
@@ -84,14 +84,7 @@ class SwitchNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const keys: string[] = Object.keys(this.caseObject)
     for (const key of keys) {
-      try {
-        if (typeof this.caseObject[key] !== 'boolean') {
-          continue
-        }
-        this.caseObject[key] = this.input === key
-      } catch (error) {
-        this.logError(`Error matching case value ${key} with input value ${this.input}:`, error)
-      }
+      this.caseObject[key] = this.input === key
     }
     this.default = !keys.includes(this.input)
 

@@ -11,7 +11,6 @@ import type {
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type {
   ArrayPortConfig,
-  ArrayPort as ArrayPortType,
   INode,
   IPort,
   IPortConfig,
@@ -320,7 +319,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
                   </PopoverTrigger>
                   {isAddPropOpen && (
                     <AddElementPopover
-                      port={port as ArrayPortType}
+                      port={port}
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
                     />

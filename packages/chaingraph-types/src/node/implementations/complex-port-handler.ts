@@ -262,12 +262,11 @@ export class ComplexPortHandler implements IComplexPortHandler {
   }
 
   /**
-   * Updates the items with new configuration
+   * Updates the items with the new array ports item configuration
    * @param arrayPort The array port
    */
   updateArrayItemConfig(arrayPort: IPort): void {
-    const config = arrayPort.getConfig() as ArrayPortConfig
-    if (config.type !== 'array') {
+    if (arrayPort.getConfig().type !== 'array') {
       throw new Error('Cannot remove item from non-array port')
     }
 
@@ -277,6 +276,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
     if (currentValue.length === 0)
       return
 
+    // This recreates all item ports and use the new item configuration from the array port
     this.recreateArrayItemPorts(arrayPort, currentValue)
 
     // Update the array port
@@ -290,7 +290,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
    * @returns The index of the new item
    */
   appendArrayItem(arrayPort: IPort, value: any): number {
-    const config = arrayPort.getConfig() as ArrayPortConfig
+    const config = arrayPort.getConfig()
     if (config.type !== 'array') {
       throw new Error('Cannot append item to non-array port')
     }
@@ -300,9 +300,8 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const newLength = currentValue.length
 
     // Process item config
-    let portItemConfig = { ...config.itemConfig }
-    portItemConfig = this.processPortConfig(
-      portItemConfig,
+    const itemConfig = this.processPortConfig(
+      { ...config.itemConfig },
       {
         nodeId: this.nodeId,
         parentPortConfig: config,
@@ -314,7 +313,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
     // Create the item port
     const itemPortId = generatePortIDArrayElement(arrayPort.id, newLength)
     const completeItemConfig = {
-      ...portItemConfig,
+      ...itemConfig,
       id: itemPortId,
       parentId: arrayPort.id,
       key: newLength.toString(),
@@ -344,7 +343,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
    * @param index The index to remove
    */
   removeArrayItem(arrayPort: IPort, index: number): void {
-    const config = arrayPort.getConfig() as ArrayPortConfig
+    const config = arrayPort.getConfig()
     if (config.type !== 'array') {
       throw new Error('Cannot remove item from non-array port')
     }
@@ -434,9 +433,8 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const config = arrayPort.getConfig() as ArrayPortConfig
 
     // Process item config
-    let itemConfig = { ...config.itemConfig }
-    itemConfig = this.processPortConfig(
-      itemConfig,
+    const itemConfig = this.processPortConfig(
+      { ...config.itemConfig },
       {
         nodeId: this.nodeId,
         parentPortConfig: config,

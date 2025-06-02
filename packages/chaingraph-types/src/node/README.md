@@ -213,7 +213,7 @@ The system provides robust support for complex data structures through specializ
 Complex port operations include:
 - `addObjectProperty`: Adds a property to an object port
 - `removeObjectProperty`: Removes a property from an object port
-- `updateArrayItemConfig`: Updates the items with new item configuration
+- `updateArrayItemConfig`: Updates the items with the new array ports item configuration
 - `appendArrayItem`: Adds an item to an array port
 - `removeArrayItem`: Removes an item from an array port
 - `recreateArrayItemPorts`: Rebuilds port structure for array items
@@ -344,9 +344,6 @@ this.addObjectProperty(
 })
 tags: string[] = ['important', 'urgent'];
 
-// Update items with new configuration using API
-this.updateArrayItemConfig(tagsPort!);
-
 // Add an item
 this.tags.push('follow-up'); // Automatically updates port
 
@@ -356,6 +353,18 @@ this.appendArrayItem(tagsPort!, 'critical');
 
 // Remove an item
 this.removeArrayItem(tagsPort!, 1); // Removes 'urgent'
+
+
+// Update the item configuration using API
+const tagsConfig = tagsPort!.getConfig()
+tagsPort!.setConfig({
+  ...tagsConfig,
+  itemConfig: {
+    ...tagsConfig.itemConfig,
+    defaultValue: '-'
+  }
+})
+this.updateArrayItemConfig(tagsPort!)
 ```
 
 ### Implementing Event Handling

@@ -29,7 +29,7 @@ export interface IComplexPortHandler {
   removeObjectProperty: (objectPort: IPort, key: string) => void
 
   /**
-   * Updates the items with new configuration
+   * Updates the items with the new array ports item configuration
    * @param arrayPort The array port
    */
   updateArrayItemConfig: (arrayPort: IPort) => void

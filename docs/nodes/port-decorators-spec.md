@@ -983,7 +983,7 @@ All port types support a common set of UI configuration properties through the `
 | addItemFormHidden       | boolean    | Hide the "Add Item" form                        |
 | addItemFormSpoilerState | boolean    | Initial state of the "Add Item" form visibility |
 | itemDeletable           | boolean    | Whether array items can be deleted              |
-| enumValues              | PortType[] | Types allowed when adding new items             |
+| allowedTypes            | PortType[] | Types allowed when adding new items             |
 
 ### Object Port UI
 
@@ -992,7 +992,7 @@ All port types support a common set of UI configuration properties through the `
 | keyDeletable       | boolean    | Whether object properties can be deleted |
 | collapsed          | boolean    | Whether the object port collapsed        |
 | hidePropertyEditor | boolean    | Whether object properties can be edited  |
-| enumValues         | PortType[] | Types allowed when adding new properties |
+| allowedTypes       | PortType[] | Types allowed when adding new properties |
 
 ## 7. Complete Examples
 

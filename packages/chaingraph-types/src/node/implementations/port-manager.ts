@@ -146,7 +146,7 @@ export class PortManager implements IPortManager {
 
       // Build the expected port ID based on the current port
       const nextPortId = isArrayIndex
-        ? generatePortIDArrayElement(currentPort.id, segment)
+        ? generatePortIDArrayElement(currentPort.id, parseInt(segment))
         : `${currentPort.id}.${segment}`
 
       currentPort = this._ports.get(nextPortId)

@@ -49,7 +49,7 @@ export const updatePortValue = flowContextProcedure
 
       // console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 
-      await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow)
 
       return {
         flowId: input.flowId,
@@ -114,7 +114,7 @@ export const addFieldObjectPort = flowContextProcedure
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 
-      await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow)
 
       return {
         flowId: input.flowId,
@@ -187,7 +187,7 @@ export const removeFieldObjectPort = flowContextProcedure
 
       // console.log('Object port key removed', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key })
 
-      await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow)
 
       return {
         flowId: input.flowId,
@@ -222,10 +222,10 @@ export const updateItemConfigArrayPort = flowContextProcedure
       if (!port)
         throw new Error('Port not found')
 
-      if (port.getConfig().type !== 'array')
+      const config = port.getConfig()
+      if (config.type !== 'array')
         throw new Error('Port is not an array port')
 
-      const config = port.getConfig() as ArrayPortConfig
       port.setConfig({
         ...config,
         itemConfig: input.itemConfig
@@ -236,7 +236,7 @@ export const updateItemConfigArrayPort = flowContextProcedure
 
       flow.updateNode(node)
 
-      await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow)
 
       return {
         flowId: input.flowId,
@@ -279,7 +279,7 @@ export const appendElementArrayPort = flowContextProcedure
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 
-      await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow)
 
       return {
         flowId: input.flowId,
@@ -325,7 +325,7 @@ export const removeElementArrayPort = flowContextProcedure
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 
-      await ctx.flowStore.updateFlow(flow as Flow)
+      await ctx.flowStore.updateFlow(flow)
 
       return {
         flowId: input.flowId,
