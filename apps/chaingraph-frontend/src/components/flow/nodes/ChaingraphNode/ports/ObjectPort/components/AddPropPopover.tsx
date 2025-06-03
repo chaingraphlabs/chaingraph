@@ -89,6 +89,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     defaultValue: [],
     ui: {
       hideEditor: false,
+      allowedTypes: ['string', 'number', 'boolean']
     },
     isMutable: true,
   },
