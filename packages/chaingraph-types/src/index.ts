@@ -9,12 +9,10 @@
 import 'reflect-metadata'
 
 export * from './decorator'
-// export * from './decorator/secret.decorator'
+export * from './decorator/secret.decorator'
 export * from './edge'
 export * from './flow'
 export { registerSuperjsonTransformers } from './json-transformers'
 export * from './node'
 export * from './port'
-// export type { EncryptedSecretValue, SecretType } from './port/base/secret'
-// export { isSupportedSecretType, wrapSecret } from './port/base/secret'
 export * from './utils'

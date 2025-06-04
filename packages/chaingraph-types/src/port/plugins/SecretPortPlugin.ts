@@ -42,7 +42,7 @@ const valueSchema: z.ZodType<SecretPortValue> = z.object({
 /**
  * Plugin implementation for secret ports.
  */
-export const SecretPortPlugin: IPortPlugin<'secret'> = {
+export const SecretPortPlugin = {
   typeIdentifier: 'secret',
   configSchema,
   valueSchema,

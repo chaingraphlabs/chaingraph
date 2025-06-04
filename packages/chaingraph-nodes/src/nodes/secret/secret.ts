@@ -14,7 +14,8 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { Buffer } from 'node:buffer'
 import { subtle } from 'node:crypto'
-import { GraphQL, graphQLClient } from '@badaitech/badai-api'
+import process from 'node:process'
+import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
   Input,
@@ -57,6 +58,10 @@ export class SecretNode extends BaseNode {
     if (!context.badAIContext?.agentSession) {
       throw new Error('No agent session provided')
     }
+
+    const graphQLClient = createGraphQLClient(
+      process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
+    )
 
     const keyPair = await context.getECDHKeyPair()
     const { secret } = await graphQLClient.request(GraphQL.ReadSecretDocument, {
