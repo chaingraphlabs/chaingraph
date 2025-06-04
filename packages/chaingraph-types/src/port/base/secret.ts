@@ -22,6 +22,9 @@ export const secretTypeSchemas = {
   anthropic: z.object({
     apiKey: z.string().min(1),
   }),
+  coinmarketcap: z.object({
+    apiKey: z.string().min(1),
+  }),
   deepseek: z.object({
     apiKey: z.string().min(1),
   }),
@@ -106,6 +109,15 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+      },
+    },
+  },
+  coinmarketcap: {
+    icon: 'Package',
+    label: 'CoinMarketCap API',
+    fields: {
+      apiKey: {
+        label: 'CoinMarketCap API Key',
       },
     },
   },

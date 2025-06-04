@@ -171,6 +171,42 @@ export class DirectSecretDeepSeek extends BaseNode {
 }
 
 @Node({
+  title: 'Direct Secret CoinMarketCap',
+  description: 'Converts CoinMarketCap API key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your CoinMarketCap API key without storing it in the secret management panel first.',
+  category: NODE_CATEGORIES.SECRET,
+  tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+})
+export class DirectSecretCoinMarketCap extends BaseNode {
+  @Input()
+  @String({
+    title: 'CoinMarketCap API Key',
+    description: 'Your raw CoinMarketCap API key that needs to be encrypted. This will be converted into a secure format that can be safely used throughout your workflow.',
+    ui: {
+      isPassword: true,
+    },
+  })
+  coinMarketCapAPIKey?: SecretTypeMap['coinmarketcap']
+
+  @Output()
+  @Secret<'coinmarketcap'>({
+    title: 'Encrypted CoinMarketCap API Key',
+    description: 'The CoinMarketCap API key encrypted as a secure secret that can be safely passed between nodes. This encrypted format protects your CoinMarketCap credentials while allowing them to be used by compatible nodes in your workflow.',
+    secretType: 'coinmarketcap',
+  })
+  encryptedCoinMarketCapKey?: EncryptedSecretValue<'coinmarketcap'>
+
+  async execute(ctx: ExecutionContext): Promise<NodeExecutionResult> {
+    if (!this.coinMarketCapAPIKey) {
+      throw new Error(`CoinMarketCap API key is required`)
+    }
+
+    this.encryptedCoinMarketCapKey = await encryptDirectSecret(ctx, 'coinmarketcap', this.coinMarketCapAPIKey)
+
+    return {}
+  }
+}
+
+@Node({
   title: 'Direct Secret',
   description: 'Converts generic string secret (such as API keys or passwords) directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt sensitive string information without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
