@@ -18,6 +18,7 @@ import { z } from 'zod'
 export const secretTypeSchemas = {
   openai: z.string().min(1),
   anthropic: z.string().min(1),
+  coinmarketcap: z.string().min(1),
   deepseek: z.string().min(1),
   xAPI: z.object({
     key: z.string().min(1),
