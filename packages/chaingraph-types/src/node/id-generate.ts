@@ -14,3 +14,8 @@ export function generatePortID(propertyKey: string = ''): string {
   // generate sortable UUID for now
   // return uuidv7()
 }
+
+export function generatePortIDArrayElement(portId: string, elementKey: number): string {
+  return `${portId}[${elementKey}]`
+  // return `${portId}[${customAlphabet(nolookalikes, 16)()}]`
+}

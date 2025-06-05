@@ -72,6 +72,7 @@ const llmModels = {
 }
 
 @Node({
+  type: 'OGLLMCallNode',
   title: '0G LLM Call',
   description: 'Sends prompt to Language Model on 0G network and streams response',
   category: NODE_CATEGORIES.AI,

@@ -65,6 +65,12 @@ export const removeFieldObjectPort = portsDomain.createEvent<{
   key: string
 }>()
 
+export const updateItemConfigArrayPort = portsDomain.createEvent<{
+  nodeId: string
+  portId: string
+  itemConfig: IPortConfig
+}>()
+
 export const appendElementArrayPort = portsDomain.createEvent<{
   nodeId: string
   portId: string
@@ -112,6 +118,16 @@ export const removeFiledObjectPortFx = portsDomain.createEffect(async (params: R
     throw new Error('TRPC client is not initialized')
   }
   return client.flow.removeFieldObjectPort.mutate(params)
+})
+
+// updateItemConfigArrayPort
+export type UpdateItemConfigArrayPortInput = RouterInputs['flow']['updateItemConfigArrayPort']
+export const updateItemConfigArrayPortFx = portsDomain.createEffect(async (params: UpdateItemConfigArrayPortInput) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.updateItemConfigArrayPort.mutate(params)
 })
 
 // appendElementArrayPort
@@ -261,6 +277,24 @@ sample({
     return result
   },
   target: removeFiledObjectPortFx,
+})
+
+sample({
+  clock: updateItemConfigArrayPort,
+  fn: ({ nodeId, portId, itemConfig }) => {
+    const activeFlowId = $activeFlowId.getState()
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const result: UpdateItemConfigArrayPortInput = {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      itemConfig,
+    }
+    return result
+  },
+  target: updateItemConfigArrayPortFx,
 })
 
 sample({

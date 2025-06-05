@@ -223,6 +223,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
                       nextOrder={childPorts.length + 1}
+                      port={port}
                     />
                   )}
                 </Popover>
