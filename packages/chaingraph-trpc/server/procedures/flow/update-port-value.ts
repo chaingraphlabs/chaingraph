@@ -7,9 +7,8 @@
  */
 
 import type { ObjectPort } from '@badaitech/chaingraph-types'
-import { NodeEventType } from '@badaitech/chaingraph-types'
+import { generatePortIDArrayElement, NodeEventType } from '@badaitech/chaingraph-types'
 import { findPort } from '@badaitech/chaingraph-types'
-import { generatePortIDArrayElement } from '@badaitech/chaingraph-types/node/id-generate'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
 

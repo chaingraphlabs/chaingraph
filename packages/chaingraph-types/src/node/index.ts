@@ -9,6 +9,7 @@
 export * from './base-node'
 export * from './category'
 export * from './events'
+export * from './id-generate'
 export * from './interface'
 export * from './json-transformers'
 export * from './node-catalog'
