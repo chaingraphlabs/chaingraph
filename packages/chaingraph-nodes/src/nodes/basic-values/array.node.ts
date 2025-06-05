@@ -29,7 +29,7 @@ class ArrayNode extends BaseNode {
     ui: {
       hideEditor: false,
       addItemFormHidden: false,
-      allowedTypes: ['string', 'number', 'boolean']
+      allowedTypes: ['string', 'number', 'boolean'],
     },
   })
   array: any[] = []
