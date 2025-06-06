@@ -91,13 +91,13 @@ class JsonDeserializeNode extends BaseNode {
             this.deserializedObject = {}
 
             // Get the output port for deserializedObject to extract its schema
-            const outputPort = this.findPortByKey('deserializedObject')
+            const outputPort = this.findPortByKey('deserializedObject') as ObjectPort | null
             if (!outputPort) {
                 throw new Error('Could not find deserializedObject port')
             }
 
             // Extract the schema from the port configuration
-            const portConfig = (outputPort as ObjectPort).getConfig()
+            const portConfig = outputPort.getConfig()
             const schema = portConfig.schema
 
             // If schema is empty or not defined, return the parsed JSON as is
@@ -109,8 +109,11 @@ class JsonDeserializeNode extends BaseNode {
             // Map properties according to the schema
             for (const [key, propConfig] of Object.entries(schema.properties)) {
                 if (key in parsedJson) {
-                    // Property exists in the JSON, set it in the output
-                    this.deserializedObject[key] = this.convertValueToType(parsedJson[key], propConfig)
+                    // Property exists in the JSON, check if types match
+                    if (!this.validateType(parsedJson[key], propConfig.type)) {
+                        throw new Error(`Type mismatch for field '${key}': expected ${propConfig.type}, got ${typeof parsedJson[key]}`)
+                    }
+                    this.deserializedObject[key] = parsedJson[key]
                 } else if (!this.ignoreMissingFields) {
                     // Property doesn't exist and we're not ignoring missing fields
                     throw new Error(`Field '${key}' is required but missing in the JSON`)
@@ -124,7 +127,7 @@ class JsonDeserializeNode extends BaseNode {
 
             return {}
         } catch (error) {
-            const errorMessage = `Failed to deserialize JSON:  ${error}`
+            const errorMessage = `Failed to deserialize JSON: ${error}`
             await this.debugLog(context, `ERROR: ${errorMessage}`)
             throw new Error(errorMessage)
         }
@@ -178,6 +181,8 @@ class JsonDeserializeNode extends BaseNode {
             while (underlyingType.type === 'any') {
                 if (underlyingType.type === 'any' && underlyingType.underlyingType) {
                     underlyingType = underlyingType.underlyingType
+                } else {
+                    break
                 }
             }
         }
@@ -199,48 +204,55 @@ class JsonDeserializeNode extends BaseNode {
             return
         }
 
-        // Clear existing properties in the deserializedObject port schema
-        const objectPort = deserializedObjectPort as ObjectPort
-        const existingProperties = Object.keys(objectPort.getConfig().schema.properties || {})
+        try {
+            // Clear existing properties in the deserializedObject port schema
+            const objectPort = deserializedObjectPort as ObjectPort
+            const portConfig = objectPort.getConfig()
 
-        // Remove existing properties that are not in the new schema
-        for (const existingKey of existingProperties) {
-            this.removeObjectProperty(deserializedObjectPort, existingKey)
-        }
+            // Create a new schema with the properties from the outputSchema port
+            const newSchema = {
+                type: 'object',
+                properties: {}
+            }
 
-        // Add new properties from the outputSchema port
-        for (const [key, value] of Object.entries(outputSchemaPortConfig.schema.properties)) {
-            this.addObjectProperty(deserializedObjectPort, key, value)
+            // Copy properties from the outputSchema port
+            if (outputSchemaPortConfig.schema && outputSchemaPortConfig.schema.properties) {
+                Object.entries(outputSchemaPortConfig.schema.properties).forEach(([key, value]) => {
+                    newSchema.properties[key] = value
+                })
+            }
+
+            // Set the new schema
+            objectPort.setConfig({
+                ...portConfig,
+                schema: newSchema
+            })
+        } catch (error) {
+            console.error('Error updating deserializedObject schema:', error)
         }
     }
 
     /**
-     * Convert parsed JSON value to the appropriate type based on port configuration
+     * Validate if a value matches the expected type
      */
-    private convertValueToType(value: any, propConfig: IPortConfig): any {
+    private validateType(value: any, expectedType: string): boolean {
         if (value === null || value === undefined) {
-            return null
+            return true // Null/undefined is allowed for any type
         }
 
-        switch (propConfig.type) {
+        switch (expectedType) {
             case 'string':
-                return String(value)
+                return typeof value === 'string'
             case 'number':
-                return Number(value)
+                return typeof value === 'number'
             case 'boolean':
-                return Boolean(value)
+                return typeof value === 'boolean'
             case 'object':
-                if (typeof value !== 'object') {
-                    return {}
-                }
-                return value
+                return typeof value === 'object' && !Array.isArray(value)
             case 'array':
-                if (!Array.isArray(value)) {
-                    return []
-                }
-                return value
+                return Array.isArray(value)
             default:
-                return value
+                return true // Unknown types will pass validation
         }
     }
 
