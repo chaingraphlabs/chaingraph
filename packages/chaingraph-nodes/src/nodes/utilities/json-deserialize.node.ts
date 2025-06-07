@@ -10,12 +10,14 @@ import type {
     AnyPort,
     ExecutionContext,
     ExecutionEvent,
+    IPort,
     IPortConfig,
     NodeEvent,
     NodeExecutionResult,
     ObjectPort,
     ObjectPortConfig,
     PortConnectedEvent,
+    PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
 import {
     BaseNode,
@@ -41,11 +43,19 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class JsonDeserializeNode extends BaseNode {
     @Input()
-    @PortAny({
+    @PortObject({
         title: 'Output Schema',
         description: 'Schema for the deserialized object. Connect an object port to define the structure.',
+        isSchemaMutable: true,
+        schema: {
+            type: 'object',
+            properties: {},
+        },
+        ui: {
+            keyDeletable: true,
+        }
     })
-    outputSchema: any = {}
+    outputSchema: Record<string, any> = {}
 
     @Input()
     @String({
@@ -74,6 +84,9 @@ class JsonDeserializeNode extends BaseNode {
             type: 'object',
             properties: {},
         },
+        ui: {
+            keyDeletable: true,
+        }
     })
     deserializedObject: Record<string, any> = {}
 
@@ -143,92 +156,115 @@ class JsonDeserializeNode extends BaseNode {
             case NodeEventType.PortConnected:
                 await this.handlePortConnected(event as PortConnectedEvent)
                 break
+            case NodeEventType.PortUpdate:
+                await this.handlePortUpdate(event as PortUpdateEvent)
+                break
         }
     }
 
     /**
-     * Handle port connection events - specifically for "any" ports
+     * Handle port update events
+     */
+    private async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
+        // Check if the updated port is our outputSchema port
+        if (event.port.getConfig().key === 'outputSchema') {
+            // Sync the schema to the output port
+            await this.syncSchemaToOutput(event.port as ObjectPort)
+        }
+    }
+
+    /**
+     * Handle port connection events to sync schema from input to output
      */
     private async handlePortConnected(event: PortConnectedEvent): Promise<void> {
-        // Only process connections from our own inputs and for "any" ports
-        if (event.sourceNode.id !== this.id) {
+        // Only process connections to our own inputs
+        if (event.targetNode.id !== this.id) {
             return
         }
 
-        const sourcePort = event.sourcePort
-        const sourcePortConfig = sourcePort.getConfig()
+        const targetPort = event.targetPort
+        const targetPortConfig = targetPort.getConfig()
 
-        if (
-            sourcePortConfig.key !== 'outputSchema'
-            || sourcePortConfig.direction !== 'input'
-            || sourcePortConfig.parentId
-        ) {
-            return
-        }
-
-        if (!sourcePortConfig || sourcePortConfig.type !== 'any') {
-            return
-        }
-
-        const outputSchemaPort = sourcePort as AnyPort
-        let underlyingType = outputSchemaPort.getRawConfig().underlyingType
-        if (!underlyingType) {
-            return
-        }
-
-        // Iterate through the underlying type to find the actual type
-        if (underlyingType.type === 'any') {
-            while (underlyingType.type === 'any') {
-                if (underlyingType.type === 'any' && underlyingType.underlyingType) {
-                    underlyingType = underlyingType.underlyingType
-                } else {
-                    break
-                }
-            }
-        }
-
-        if (underlyingType.type !== 'object') {
-            return
-        }
-
-        const outputSchemaPortConfig = underlyingType as ObjectPortConfig
-
-        // get the deserializedObject port and update its schema
-        const deserializedObjectPort = findPort(this, (port) => {
-            return port.getConfig().key === 'deserializedObject'
-                && !port.getConfig().parentId
-                && port.getConfig().direction === 'output'
-        })
-
-        if (!deserializedObjectPort) {
+        // Only interested in connections to the outputSchema port
+        if (targetPortConfig.key !== 'outputSchema') {
             return
         }
 
         try {
-            // Clear existing properties in the deserializedObject port schema
-            const objectPort = deserializedObjectPort as ObjectPort
-            const portConfig = objectPort.getConfig()
+            // Get the connected source port
+            const sourcePort = event.sourcePort
 
-            // Create a new schema with the properties from the outputSchema port
-            const newSchema = {
-                type: 'object',
-                properties: {}
+            // Check if it's an object port
+            if (sourcePort.getConfig().type !== 'object') {
+                return
             }
 
-            // Copy properties from the outputSchema port
-            if (outputSchemaPortConfig.schema && outputSchemaPortConfig.schema.properties) {
-                Object.entries(outputSchemaPortConfig.schema.properties).forEach(([key, value]) => {
-                    newSchema.properties[key] = value
-                })
+            // Get the outputSchema port
+            const outputSchemaPort = this.findPortByKey('outputSchema') as ObjectPort | null
+            if (!outputSchemaPort) {
+                return
             }
 
-            // Set the new schema
-            objectPort.setConfig({
-                ...portConfig,
-                schema: newSchema
-            })
+            // Sync the schema from the source port to our output port
+            await this.syncSchemaToOutput(outputSchemaPort)
+
         } catch (error) {
-            console.error('Error updating deserializedObject schema:', error)
+            console.error('Error handling port connection:', error)
+            await this.debugLog({ sendEvent: async (e) => { console.log(e) } } as any,
+                `Error handling port connection: ${error}`)
+        }
+    }
+
+    /**
+     * Synchronize the schema from outputSchema to deserializedObject
+     */
+    private async syncSchemaToOutput(sourcePort: ObjectPort): Promise<void> {
+        try {
+            // Get the source schema
+            const sourceSchema = sourcePort.getConfig().schema
+            if (!sourceSchema || !sourceSchema.properties) {
+                return
+            }
+
+            // Get the deserializedObject port
+            const deserializedObjectPort = this.findPortByKey('deserializedObject') as ObjectPort | null
+            if (!deserializedObjectPort) {
+                return
+            }
+
+            // Clear existing properties in the deserializedObject port
+            const currentSchema = deserializedObjectPort.getConfig().schema
+            const currentProperties = currentSchema.properties || {}
+            for (const key of Object.keys(currentProperties)) {
+                this.removeObjectProperty(deserializedObjectPort as IPort, key)
+            }
+
+            // Create output ports matching the schema properties
+            for (const [key, propConfig] of Object.entries(sourceSchema.properties)) {
+                // Create a port configuration for this property
+                const newPortConfig: IPortConfig = {
+                    ...propConfig,
+                    id: `${this.id}_output_${key}`,
+                    key: key,
+                    nodeId: this.id,
+                    parentId: deserializedObjectPort.id,
+                    direction: 'output',
+                    ui: {
+                        ...(propConfig.ui || {}),
+                        keyDeletable: true,
+                    },
+                }
+
+                // Add the property to the deserializedObject port
+                await this.addObjectProperty(deserializedObjectPort as IPort, key, newPortConfig)
+            }
+
+            await this.debugLog({ sendEvent: async (e) => { console.log(e) } } as any,
+                `Updated deserializedObject schema with properties: ${Object.keys(sourceSchema.properties).join(', ')}`)
+        } catch (error) {
+            console.error('Error synchronizing schema:', error)
+            await this.debugLog({ sendEvent: async (e) => { console.log(e) } } as any,
+                `Error synchronizing schema: ${error}`)
         }
     }
 
