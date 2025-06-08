@@ -1,7 +1,12 @@
 packages:
   - apps/*
   - packages/*
-ignoredBuiltDependencies:
-  - esbuild
 onlyBuiltDependencies:
   - '@swc/core'
+  - blake-hash
+  - bufferutil
+  - es5-ext
+  - keccak
+  - protobufjs
+  - secp256k1
+  - utf-8-validate
