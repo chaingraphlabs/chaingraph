@@ -37,6 +37,11 @@ export enum ExecutionEventEnum {
   EDGE_TRANSFER_COMPLETED = 'edge:transfer-completed',
   EDGE_TRANSFER_FAILED = 'edge:transfer-failed',
 
+  // Child execution events
+  CHILD_EXECUTION_SPAWNED = 'child:spawned',
+  CHILD_EXECUTION_COMPLETED = 'child:completed',
+  CHILD_EXECUTION_FAILED = 'child:failed',
+  
   // Debug events
   DEBUG_BREAKPOINT_HIT = 'debug:breakpoint-hit',
 }
@@ -110,6 +115,23 @@ export interface ExecutionEventData {
   }
   [ExecutionEventEnum.DEBUG_BREAKPOINT_HIT]: {
     node: INode
+  }
+  [ExecutionEventEnum.CHILD_EXECUTION_SPAWNED]: {
+    parentExecutionId: string
+    childExecutionId: string
+    eventName: string
+    eventData: any
+  }
+  [ExecutionEventEnum.CHILD_EXECUTION_COMPLETED]: {
+    parentExecutionId: string
+    childExecutionId: string
+    eventName: string
+  }
+  [ExecutionEventEnum.CHILD_EXECUTION_FAILED]: {
+    parentExecutionId: string
+    childExecutionId: string
+    eventName: string
+    error: Error
   }
 }
 

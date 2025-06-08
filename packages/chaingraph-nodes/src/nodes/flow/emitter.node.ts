@@ -37,13 +37,18 @@ class EventEmitterNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const eventName = this.eventData.eventName
+    console.log(`[EventEmitterNode] Executing with eventName: ${eventName}`)
+    
     if (!eventName) {
       throw new Error('Event name is required to emit an event')
     }
 
     // Use the new event emission API if available
     if (context.emitEvent) {
+      console.log(`[EventEmitterNode] Emitting event: ${eventName}`)
       context.emitEvent(eventName, this.eventData)
+      console.log(`[EventEmitterNode] Event emitted successfully`)
+      console.log(`[EventEmitterNode] Current emittedEvents:`, context.emittedEvents)
     } else {
       throw new Error('Event emission is not supported in this context')
     }

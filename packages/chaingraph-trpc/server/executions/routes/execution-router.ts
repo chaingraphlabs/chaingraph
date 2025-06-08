@@ -144,7 +144,34 @@ export const executionRouter = router({
         })
       }
 
-      return ctx.executionService.getExecutionState(input.executionId)
+      const state = await ctx.executionService.getExecutionState(input.executionId)
+      const childExecutions = await ctx.executionService.getChildExecutions(input.executionId)
+      
+      return {
+        ...state,
+        parentExecutionId: instance.parentExecutionId,
+        childExecutionIds: childExecutions,
+      }
+    }),
+
+  // Get child executions
+  getChildExecutions: executionContextProcedure
+    .input(z.object({
+      executionId: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const childIds = await ctx.executionService.getChildExecutions(input.executionId)
+      const childStates = await Promise.all(
+        childIds.map(async (childId) => {
+          const state = await ctx.executionService.getExecutionState(childId)
+          const instance = await ctx.executionService.getInstance(childId)
+          return {
+            ...state,
+            eventData: instance?.context.eventData,
+          }
+        })
+      )
+      return childStates
     }),
 
   // Subscribe to execution events
@@ -170,43 +197,38 @@ export const executionRouter = router({
       }
 
       const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
-      const eventQueue = new EventQueue<ExecutionEventImpl>(200)
+      
+      // Get the service's event queue for this execution
+      const serviceEventQueue = ctx.executionService.getEventQueue(input.executionId)
+      if (!serviceEventQueue) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Event queue not found for execution',
+        })
+      }
+
+      // Send initial state event
+      yield new ExecutionEventImpl(
+        -1,
+        ExecutionEventEnum.FLOW_SUBSCRIBED,
+        new Date(),
+        {
+          flow: instance.flow,
+        } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
+      )
 
       try {
-        // Subscribe to engine events
-        const unsubscribe = instance.engine.onAll((event) => {
+        // Create async iterator for the service's event queue
+        const iterator = serviceEventQueue.createIterator()
+        for await (const event of iterator) {
           // Filter by event types if specified
           if (!isAcceptedEventType(input.eventTypes, event.type)) {
-            return
+            continue
           }
-          eventQueue.publish(event)
-        })
-
-        // // Send initial state event
-        // yield tracked(String(eventIndex++), new ExecutionEventImpl(
-        yield new ExecutionEventImpl(
-          -1,
-          ExecutionEventEnum.FLOW_SUBSCRIBED,
-          new Date(),
-          {
-            flow: instance.flow,
-          } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
-        )
-
-        try {
-          // Create async iterator for event queue
-          const iterator = eventQueue.createIterator()
-          for await (const event of iterator) {
-            // yield tracked(String(eventIndex++), event)
-            yield event
-          }
-        } catch (error) {
-          console.error('Error handling execution events:', error)
-        } finally {
-          unsubscribe()
+          yield event
         }
-      } finally {
-        await eventQueue.close()
+      } catch (error) {
+        console.error('Error handling execution events:', error)
       }
     }),
 

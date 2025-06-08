@@ -248,7 +248,9 @@ export class ExecutionEngine {
       // Check for emitted events after node completion
       if (this.onEventCallback && this.context.emittedEvents && this.context.emittedEvents.length > 0) {
         const unprocessedEvents = this.context.emittedEvents.filter(e => !e.processed)
+        console.log(`[ExecutionEngine] After node ${completedNode.metadata.title}, found ${unprocessedEvents.length} unprocessed events`)
         if (unprocessedEvents.length > 0) {
+          console.log(`[ExecutionEngine] Calling onEventCallback`)
           await this.onEventCallback(this.context)
         }
       }

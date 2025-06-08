@@ -73,7 +73,17 @@ function formatTimestamp(timestamp: Date): string {
 // Main optimized EventCard component
 export const OptimizedEventCard = memo(({ event, index }: EventCardProps) => {
   const { theme: themeMode } = useTheme()
-  const eventTheme = eventThemes[event.type]
+  const eventTheme = eventThemes[event.type] || {
+    icon: CircleDot,
+    color: {
+      light: 'text-gray-700',
+      dark: 'text-gray-300',
+    },
+    bgColor: {
+      light: 'bg-gray-50',
+      dark: 'bg-gray-500/10',
+    },
+  }
   const [isExpanded, setIsExpanded] = useState(false)
 
   // Format timestamp only once per event

@@ -153,6 +153,9 @@ export function useExecutionSubscription() {
             ExecutionEventEnum.EDGE_TRANSFER_COMPLETED,
             ExecutionEventEnum.EDGE_TRANSFER_FAILED,
             ExecutionEventEnum.DEBUG_BREAKPOINT_HIT,
+            ExecutionEventEnum.CHILD_EXECUTION_SPAWNED,
+            ExecutionEventEnum.CHILD_EXECUTION_COMPLETED,
+            ExecutionEventEnum.CHILD_EXECUTION_FAILED,
           ],
         }
       : skipToken,

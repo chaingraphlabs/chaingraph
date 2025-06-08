@@ -236,6 +236,38 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
           </div>
         )
 
+      // Child Execution Events
+      case ExecutionEventEnum.CHILD_EXECUTION_SPAWNED:
+        return (
+          <div className="text-sm space-y-1">
+            <div>Child execution spawned</div>
+            <Badge variant="secondary" className="text-xs font-normal">
+              Event: {(event.data as any).eventName}
+            </Badge>
+          </div>
+        )
+
+      case ExecutionEventEnum.CHILD_EXECUTION_COMPLETED:
+        return (
+          <div className="text-sm space-y-1">
+            <div>Child execution completed</div>
+            <Badge variant="outline" className="text-xs font-normal">
+              Event: {(event.data as any).eventName}
+            </Badge>
+          </div>
+        )
+
+      case ExecutionEventEnum.CHILD_EXECUTION_FAILED:
+        return (
+          <div className="text-sm space-y-1">
+            <div>Child execution failed</div>
+            <Badge variant="destructive" className="text-xs font-normal">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Event: {(event.data as any).eventName}
+            </Badge>
+          </div>
+        )
+
       default:
         return <span className="text-sm text-muted-foreground">{event.type}</span>
     }

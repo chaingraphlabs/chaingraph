@@ -112,6 +112,48 @@ function serializeEvent(event: ExecutionEventImpl) {
       )
     }
 
+    case ExecutionEventEnum.CHILD_EXECUTION_SPAWNED:
+    case ExecutionEventEnum.CHILD_EXECUTION_COMPLETED:
+    case ExecutionEventEnum.CHILD_EXECUTION_FAILED:
+    {
+      const data = event.data as ExecutionEventData[ExecutionEventEnum.CHILD_EXECUTION_SPAWNED]
+      
+      return (
+        <div className="p-2 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Event Name</div>
+              <Badge variant="secondary">{data.eventName}</Badge>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Child Execution ID</div>
+              <Badge variant="outline" className="text-xs font-mono">
+                {data.childExecutionId}
+              </Badge>
+            </div>
+          </div>
+          
+          {data.eventData && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Event Data</div>
+              <pre className="text-sm font-mono bg-muted/10 p-2 rounded border overflow-auto max-h-[200px] whitespace-pre-wrap break-all">
+                {JSON.stringify(data.eventData, null, 2)}
+              </pre>
+            </div>
+          )}
+          
+          {event.type === ExecutionEventEnum.CHILD_EXECUTION_FAILED && data.error && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Error</div>
+              <Badge variant="destructive" className="text-xs">
+                {data.error.message}
+              </Badge>
+            </div>
+          )}
+        </div>
+      )
+    }
+
     case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
     case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
     case ExecutionEventEnum.EDGE_TRANSFER_FAILED:

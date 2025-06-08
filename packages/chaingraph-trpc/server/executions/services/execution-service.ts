@@ -11,7 +11,6 @@ import type {
   EmittedEventContext,
   ExecutionEvent,
   ExecutionEventHandler,
-  ExecutionEventImpl,
   Flow,
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
@@ -23,6 +22,7 @@ import {
   ExecutionContext,
   ExecutionEngine,
   ExecutionEventEnum,
+  ExecutionEventImpl,
 } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
 import { customAlphabet } from 'nanoid'
@@ -90,6 +90,12 @@ export class ExecutionService {
 
     await this.store.create(instance)
 
+    // Setup event queue immediately for parent executions
+    // This ensures the queue exists when subscriptions are created
+    if (!parentExecutionId) {
+      this.setupEventHandling(instance)
+    }
+
     // Track parent-child relationship
     if (parentExecutionId) {
       if (!this.childExecutions.has(parentExecutionId)) {
@@ -125,8 +131,11 @@ export class ExecutionService {
     }
 
     try {
-      // Setup event handling
-      const eventQueue = this.setupEventHandling(instance)
+      // Setup event handling if not already done
+      let eventQueue = this.eventQueues.get(id)
+      if (!eventQueue) {
+        eventQueue = this.setupEventHandling(instance)
+      }
 
       // Update instance state
       instance.status = ExecutionStatus.Running
@@ -355,13 +364,19 @@ export class ExecutionService {
    */
   async processEmittedEvents(instance: ExecutionInstance): Promise<void> {
     const context = instance.context
+    console.log(`[processEmittedEvents] Checking for events in execution ${instance.id}`)
+    console.log(`[processEmittedEvents] emittedEvents:`, context.emittedEvents)
+    
     if (!context.emittedEvents || context.emittedEvents.length === 0) {
+      console.log(`[processEmittedEvents] No events to process`)
       return
     }
 
     const unprocessedEvents = context.emittedEvents.filter(e => !e.processed)
+    console.log(`[processEmittedEvents] Found ${unprocessedEvents.length} unprocessed events`)
 
     for (const event of unprocessedEvents) {
+      console.log(`[processEmittedEvents] Processing event: ${event.type}`)
       // Always spawn child execution for each event
       await this.spawnChildExecutionForEvent(instance, event)
       event.processed = true
@@ -393,6 +408,29 @@ export class ExecutionService {
     // Update event with child execution ID
     event.childExecutionId = childInstance.id
 
+    // Emit child execution spawned event to parent
+    const parentEventQueue = this.eventQueues.get(parentInstance.id)
+    console.log(`[spawnChildExecutionForEvent] Parent event queue exists: ${!!parentEventQueue}`)
+    if (parentEventQueue) {
+      console.log(`[spawnChildExecutionForEvent] Publishing CHILD_EXECUTION_SPAWNED event`)
+      await parentEventQueue.publish(
+        new ExecutionEventImpl(
+          Date.now(),
+          ExecutionEventEnum.CHILD_EXECUTION_SPAWNED,
+          new Date(),
+          {
+            parentExecutionId: parentInstance.id,
+            childExecutionId: childInstance.id,
+            eventName: event.type,
+            eventData: event.data,
+          }
+        )
+      )
+      console.log(`[spawnChildExecutionForEvent] CHILD_EXECUTION_SPAWNED event published`)
+    } else {
+      console.log(`[spawnChildExecutionForEvent] WARNING: No parent event queue found for ${parentInstance.id}`)
+    }
+
     // Start child execution asynchronously
     this.startExecution(childInstance.id).catch((error) => {
       console.error(`Failed to start child execution ${childInstance.id}:`, error)
@@ -416,8 +454,24 @@ export class ExecutionService {
         instance.completedAt = new Date()
         await this.store.create(instance)
 
-        // If this is a child execution completing, check if parent can complete
+        // If this is a child execution completing, notify parent and check if it can complete
         if (instance.parentExecutionId) {
+          const parentEventQueue = this.eventQueues.get(instance.parentExecutionId)
+          if (parentEventQueue) {
+            const eventName = instance.context.eventData?.eventName || 'unknown'
+            await parentEventQueue.publish(
+              new ExecutionEventImpl(
+                Date.now(),
+                ExecutionEventEnum.CHILD_EXECUTION_COMPLETED,
+                new Date(),
+                {
+                  parentExecutionId: instance.parentExecutionId,
+                  childExecutionId: instance.id,
+                  eventName,
+                }
+              )
+            )
+          }
           await this.checkParentCompletion(instance.parentExecutionId)
         }
       },
@@ -430,8 +484,25 @@ export class ExecutionService {
         }
         await this.store.create(instance)
 
-        // If this is a child execution failing, check if parent can complete
+        // If this is a child execution failing, notify parent and check if it can complete
         if (instance.parentExecutionId) {
+          const parentEventQueue = this.eventQueues.get(instance.parentExecutionId)
+          if (parentEventQueue) {
+            const eventName = instance.context.eventData?.eventName || 'unknown'
+            await parentEventQueue.publish(
+              new ExecutionEventImpl(
+                Date.now(),
+                ExecutionEventEnum.CHILD_EXECUTION_FAILED,
+                new Date(),
+                {
+                  parentExecutionId: instance.parentExecutionId,
+                  childExecutionId: instance.id,
+                  eventName,
+                  error: data.error,
+                }
+              )
+            )
+          }
           await this.checkParentCompletion(instance.parentExecutionId)
         }
       },
@@ -481,6 +552,13 @@ export class ExecutionService {
     })
 
     return eventQueue
+  }
+
+  /**
+   * Get the event queue for a specific execution
+   */
+  getEventQueue(executionId: string): EventQueue<ExecutionEvent> | undefined {
+    return this.eventQueues.get(executionId)
   }
 
   async dispose(id: string): Promise<void> {
