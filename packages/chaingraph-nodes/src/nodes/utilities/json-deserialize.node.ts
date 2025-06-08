@@ -12,7 +12,7 @@ import type {
     IPortConfig,
     NodeEvent,
     NodeExecutionResult,
-    ObjectPort,
+    AnyPort,
     PortConnectedEvent,
     PortDisconnectedEvent,
     PortUpdateEvent,
@@ -25,7 +25,7 @@ import {
     Node,
     NodeEventType,
     Output,
-    PortObject,
+    PortAny,
     String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -39,19 +39,11 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class JsonDeserializeNode extends BaseNode {
     @Input()
-    @PortObject({
+    @PortAny({
         title: 'Output Schema',
-        description: 'Schema for the deserialized object. Connect an object port to define the structure.',
-        isSchemaMutable: true,
-        schema: {
-            type: 'object',
-            properties: {},
-        },
-        ui: {
-            keyDeletable: true,
-        }
+        description: 'Schema for the deserialized object. Connect array or object to use its schema for parsing.',
     })
-    outputSchema: Record<string, any> = {}
+    outputSchema: any = {}
 
     @Input()
     @String({
@@ -72,19 +64,19 @@ class JsonDeserializeNode extends BaseNode {
     ignoreMissingFields: boolean = false
 
     @Output()
-    @PortObject({
+    @PortAny({
         title: 'Deserialized Object',
         description: 'The parsed object according to the schema',
-        isSchemaMutable: true,
-        schema: {
-            type: 'object',
-            properties: {},
+        ui: {
+            keyDeletable: false,
+            hideEditor: false,
         },
-
     })
-    deserializedObject: Record<string, any> = {}
+    deserializedObject: any = {}
 
     async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+        throw new Error("Not implemented")
+        /**
         try {
             // Parse the JSON string
             let parsedJson: Record<string, any>
@@ -95,12 +87,15 @@ class JsonDeserializeNode extends BaseNode {
             }
 
             // Get the output port for deserializedObject and extract its schema
-            const outputPort = this.findPortByKey('deserializedObject') as ObjectPort | null
+            const outputPort = this.findPortByKey('deserializedObject')
             if (!outputPort) {
                 throw new Error('Could not find deserializedObject port')
             }
 
-            const outputPortSchema = outputPort.getConfig().schema
+            const outputPortConfig = outputPort.getConfig()
+            const outputPortSchema = outputPortConfig.type === 'any' 
+                ? (outputPort as AnyPort).getRawConfig().underlyingType?.schema
+                : outputPortConfig.schema
 
             await this.debugLog(context, `Got schema for output port: : ${JSON.stringify(outputPortSchema, null, 1)}`)
 
@@ -132,6 +127,7 @@ class JsonDeserializeNode extends BaseNode {
             const errorMessage = `Failed to execute JSON Desrializer node: ${error}`
             throw new Error(errorMessage)
         }
+        */
     }
 
     /**
@@ -147,21 +143,6 @@ class JsonDeserializeNode extends BaseNode {
             case NodeEventType.PortDisconnected:
                 await this.handlePortDisconnected(event as PortDisconnectedEvent)
                 break
-            case NodeEventType.PortUpdate:
-                await this.handlePortUpdate(event as PortUpdateEvent)
-                break
-        }
-    }
-
-    /**
-     * Handle port update events, take schema from updated input port
-     */
-    private async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
-        const updatedPort = event.port;
-        const updatedPortConfig = event.port.getConfig();
-
-        if (updatedPortConfig.key === 'outputSchema') {
-            await this.syncSchemaToOutput(updatedPort as ObjectPort)
         }
     }
 
@@ -169,70 +150,58 @@ class JsonDeserializeNode extends BaseNode {
      * Handle port connection events to sync schema from target port
      */
     private async handlePortConnected(event: PortConnectedEvent): Promise<void> {
-        const sourcePortConfig = event.sourcePort.getConfig();
         const targetPort = event.targetPort;
+        const sourcePortConfig = event.sourcePort.getConfig();
 
         if (sourcePortConfig.key === 'outputSchema') {
-            await this.syncSchemaToOutput(targetPort as ObjectPort);
+            await this.syncSchemaToOutput(targetPort);
         }
-
     }
 
     /**
      * Handle port disconnection events to sync schema from input port back
      */
     private async handlePortDisconnected(event: PortDisconnectedEvent): Promise<void> {
-        const disconnectedPort = event.sourcePort;
-        const disconnectedPortConfig = disconnectedPort.getConfig();
+        const disconnectedPortConfig = event.sourcePort.getConfig();
 
         if (disconnectedPortConfig.key === 'outputSchema') {
-            await this.syncSchemaToOutput(disconnectedPort as ObjectPort);
+            await this.cleanSchemaToOutput();
         }
     }
 
     /**
      * Synchronize the schema from outputSchema to deserializedObject
      */
-    private async syncSchemaToOutput(sourcePort: ObjectPort): Promise<void> {
+    private async syncSchemaToOutput(targetPort: IPort): Promise<void> {
         try {
-            //Clean target port
-            //await this.cleanSchemaToOutput();
-
-            // Get the source schema
-            const sourceSchema = sourcePort.getConfig().schema
-            if (!sourceSchema || !sourceSchema.properties) {
-                return
-            }
-
-            // Get the output port for deserializedObject and extract its schema
-            const outputPort = this.findPortByKey('deserializedObject') as ObjectPort | null
+            const outputPort = this.findPortByKey('deserializedObject')
             if (!outputPort) {
                 throw new Error('Could not find deserializedObject port')
             }
 
-            // Create output ports matching the schema properties
-            for (const [key, propConfig] of Object.entries(sourceSchema.properties)) {
-                // Create a port configuration for this property
-                const newPortConfig: IPortConfig = {
-                    ...propConfig,
-                    id: `${this.id}_output_${key}`,
-                    key: key,
-                    nodeId: this.id,
-                    parentId: outputPort.id,
-                    direction: 'output',
-                    ui: {
-                        ...(propConfig.ui || {})
-                    },
-                }
-
-                // Add the property to the deserializedObject port
-                await this.addObjectProperty(outputPort as IPort, key, newPortConfig)
+            if (outputPort.getConfig().type !== 'any') {
+                throw new Error('Cannot sync schema: deserializedObject port is not an AnyPort')
             }
 
-            await this.updatePort(outputPort as IPort)
+            const outputAnyPort = outputPort as AnyPort;
+
+            if (targetPort.getConfig().type === 'any') {
+                const targetAnyPort = targetPort as AnyPort;
+                const underlyingType = targetAnyPort.getRawConfig().underlyingType;
+
+                if (underlyingType) {
+                    outputAnyPort.setUnderlyingType(underlyingType);
+                }
+            } else {
+                const targetConfig = targetPort.getConfig();
+                outputAnyPort.setUnderlyingType(targetConfig);
+            }
+
+            await this.updatePort(outputPort);
+            this.deserializedObject = {};
 
         } catch (error) {
-            const errorMessage = `Error synchronising schema: ${error}`
+            const errorMessage = `Error synchronizing schema: ${error}`
             throw new Error(errorMessage)
         }
     }
@@ -242,21 +211,20 @@ class JsonDeserializeNode extends BaseNode {
      */
     private async cleanSchemaToOutput(): Promise<void> {
         try {
-            // Get the deserializedObject port
-            const deserializedObjectPort = this.findPortByKey('deserializedObject') as ObjectPort | null
-            if (!deserializedObjectPort) {
-                return
+            const outputPort = this.findPortByKey('deserializedObject')
+            if (!outputPort) {
+                throw new Error('Could not find deserializedObject port')
             }
 
-            // Clear existing properties in the deserializedObject port
-            const currentSchema = deserializedObjectPort.getConfig().schema
-            const currentProperties = currentSchema.properties || {}
-            for (const key of Object.keys(currentProperties)) {
-                this.removeObjectProperty(deserializedObjectPort as IPort, key)
+            if (outputPort.getConfig().type !== 'any') {
+                throw new Error('Cannot sync schema: deserializedObject port is not an AnyPort')
             }
 
-            // Reset the deserialized object value
-            this.deserializedObject = {}
+            const outputAnyPort = outputPort as AnyPort;
+            outputAnyPort.setUnderlyingType(undefined);
+            await this.updatePort(outputPort);
+
+            this.deserializedObject = {};
 
         } catch (error) {
             const errorMessage = `Error cleaning schema: ${error}`
@@ -289,8 +257,8 @@ class JsonDeserializeNode extends BaseNode {
     }
 
     /**
-       * Send a debug log event to the execution context
-       */
+     * Send a debug log event to the execution context
+     */
     private async debugLog(context: ExecutionContext, message: string): Promise<void> {
         await context.sendEvent({
             index: 0,
