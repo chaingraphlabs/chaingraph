@@ -34,6 +34,10 @@ class EventData {
   description: 'Listens for specific events and triggers actions',
   category: NODE_CATEGORIES.FLOW,
   tags: ['flow', 'event', 'listener', 'trigger', 'action', 'logic'],
+  flowPorts: {
+    // Disable auto-execution - this node should only execute when explicitly triggered by events
+    disabledAutoExecution: true
+  }
 })
 class EventListenerNode extends BaseNode {
   @Input()
@@ -62,28 +66,39 @@ class EventListenerNode extends BaseNode {
   outputData: EventData = new EventData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    if (context.eventData) {
-      console.log('EventListenerNode executing in child mode with event data:', context.eventData)
-
-      // Child execution mode - we have event data
-      const { eventName, payload } = context.eventData
-
-      if (eventName !== this.inputFilter.eventName) {
-        // Skip this listener - not for this event
-        throw new Error(`EventListenerNode skipped - event type mismatch: expected ${this.inputFilter.eventName}, got ${eventName}`)
-      }
-
-      // Process event data
-      this.outputData.eventName = eventName
-      if (payload && typeof payload === 'object' && 'eventName' in payload) {
-        // If payload has eventName, use it (for compatibility)
-        this.outputData = { ...payload } as EventData
-      }
-
+    console.log(`EventListenerNode ${this.id} execute called, isChildExecution: ${context.isChildExecution}, hasEventData: ${!!context.eventData}`)
+    
+    // EventListenerNode should ONLY execute in child executions with event data
+    // It should never execute in parent context or without event data
+    if (!context.eventData || !context.isChildExecution) {
+      console.log(`EventListenerNode ${this.id} should not execute - not in event-driven child context`)
+      
+      // Clear output data
+      this.outputData = new EventData()
+      
+      // Return empty result - the node ran but did nothing
       return {}
     }
 
-    throw new Error('EventListenerNode executed without event data')
+    console.log('EventListenerNode executing in child mode with event data:', context.eventData)
+
+    // Child execution mode - we have event data
+    const { eventName, payload } = context.eventData
+
+    if (eventName !== this.inputFilter.eventName) {
+      // Skip this listener - not for this event
+      console.log(`EventListenerNode ${this.id} skipping - event type mismatch: expected ${this.inputFilter.eventName}, got ${eventName}`)
+      return {}
+    }
+
+    // Process event data
+    // Simply set the eventName on the existing outputData instance
+    this.outputData.eventName = eventName
+
+    console.log(`EventListenerNode ${this.id} outputData.eventName after processing:`, this.outputData.eventName)
+    
+    // Return empty result - node executed successfully
+    return {}
   }
 }
 

@@ -54,23 +54,31 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this._id = id
 
     // Initialize metadata
+    // Always start with decorator metadata as base
+    const decoratorMetadata = getOrCreateNodeMetadata(this)
+    if (!decoratorMetadata) {
+      throw new Error('Node metadata missing. Ensure @Node decorator is used.')
+    }
+
     if (_metadata) {
       if (!_metadata.type) {
         throw new Error('Node type is required in metadata.')
       }
 
-      this._metadata = { ..._metadata }
-    } else {
-      const metadata = getOrCreateNodeMetadata(this)
-      if (!metadata) {
-        throw new Error('Node metadata missing. Ensure @Node decorator is used or metadata is provided.')
+      // Merge provided metadata with decorator metadata
+      // Decorator metadata provides defaults, provided metadata overrides specific fields
+      this._metadata = { 
+        ...decoratorMetadata,  // Start with decorator metadata (includes flowPorts)
+        ..._metadata,          // Override with provided metadata
+        // Preserve flowPorts from decorator if not in provided metadata
+        ...(_metadata.flowPorts || decoratorMetadata.flowPorts ? { flowPorts: _metadata.flowPorts || decoratorMetadata.flowPorts } : {})
       }
-
-      if (!metadata.type) {
+    } else {
+      if (!decoratorMetadata.type) {
         throw new Error('Node type is required in metadata.')
       }
 
-      this._metadata = { ...metadata }
+      this._metadata = { ...decoratorMetadata }
     }
 
     // Initialize version if not set
@@ -177,7 +185,15 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   }
 
   setMetadata(metadata: NodeMetadata): void {
-    this._metadata = metadata
+    // Get decorator metadata to preserve important fields like flowPorts
+    const decoratorMetadata = getOrCreateNodeMetadata(this)
+    
+    // Merge provided metadata with decorator metadata
+    this._metadata = {
+      ...metadata,
+      // Preserve flowPorts from decorator if not in provided metadata
+      ...(metadata.flowPorts || decoratorMetadata?.flowPorts ? { flowPorts: metadata.flowPorts || decoratorMetadata?.flowPorts } : {})
+    }
   }
 
   setStatus(status: NodeStatus, emitEvent?: boolean): void {

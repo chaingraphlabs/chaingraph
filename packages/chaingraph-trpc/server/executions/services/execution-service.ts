@@ -402,9 +402,24 @@ export class ExecutionService {
   private createEventHandlers(instance: ExecutionInstance): ExecutionEventHandler<any> {
     return createExecutionEventHandler({
       [ExecutionEventEnum.FLOW_COMPLETED]: async () => {
+        // Check if this is a parent execution with children
+        const childIds = await this.getChildExecutions(instance.id)
+
+        if (childIds.length > 0 && !instance.parentExecutionId) {
+          // This is a parent execution with children
+          // Don't mark as completed yet - we'll check again when children complete
+          console.log(`Parent execution ${instance.id} has ${childIds.length} active children, deferring completion`)
+          return
+        }
+
         instance.status = ExecutionStatus.Completed
         instance.completedAt = new Date()
         await this.store.create(instance)
+
+        // If this is a child execution completing, check if parent can complete
+        if (instance.parentExecutionId) {
+          await this.checkParentCompletion(instance.parentExecutionId)
+        }
       },
 
       [ExecutionEventEnum.FLOW_FAILED]: async (data) => {
@@ -414,12 +429,22 @@ export class ExecutionService {
           message: data.error.message,
         }
         await this.store.create(instance)
+
+        // If this is a child execution failing, check if parent can complete
+        if (instance.parentExecutionId) {
+          await this.checkParentCompletion(instance.parentExecutionId)
+        }
       },
 
       [ExecutionEventEnum.FLOW_CANCELLED]: async () => {
         instance.status = ExecutionStatus.Stopped
         instance.completedAt = new Date()
         await this.store.create(instance)
+
+        // If this is a child execution being cancelled, check if parent can complete
+        if (instance.parentExecutionId) {
+          await this.checkParentCompletion(instance.parentExecutionId)
+        }
       },
 
       [ExecutionEventEnum.FLOW_PAUSED]: async () => {
@@ -529,5 +554,59 @@ export class ExecutionService {
         console.error(`Failed to stop child execution ${childId}:`, err)
       })),
     )
+  }
+
+  /**
+   * Check if a parent execution can be completed after a child completes
+   */
+  private async checkParentCompletion(parentId: string): Promise<void> {
+    const parentInstance = await this.getInstance(parentId)
+    if (!parentInstance) {
+      console.error(`Parent execution ${parentId} not found`)
+      return
+    }
+
+    // Only proceed if parent is still running
+    if (parentInstance.status !== ExecutionStatus.Running) {
+      return
+    }
+
+    // Check if all children are completed
+    const childIds = await this.getChildExecutions(parentId)
+    const allChildrenCompleted = await Promise.all(
+      childIds.map(async (childId) => {
+        const child = await this.getInstance(childId)
+        if (!child)
+          return true // Child no longer exists
+
+        return child.status === ExecutionStatus.Completed
+          || child.status === ExecutionStatus.Failed
+          || child.status === ExecutionStatus.Stopped
+      }),
+    )
+
+    if (allChildrenCompleted.every(completed => completed)) {
+      console.log(`All children of parent execution ${parentId} have completed, marking parent as completed`)
+
+      // All children are done, complete the parent
+      parentInstance.status = ExecutionStatus.Completed
+      parentInstance.completedAt = new Date()
+      await this.store.create(parentInstance)
+
+      // Emit completion event for the parent
+      const eventQueue = this.eventQueues.get(parentId)
+      if (eventQueue) {
+        await eventQueue.publish({
+          index: Date.now(),
+          type: ExecutionEventEnum.FLOW_COMPLETED,
+          timestamp: new Date(),
+          context: parentInstance.context,
+          data: {
+            flow: parentInstance.flow.clone(),
+            executionTime: parentInstance.completedAt.getTime() - parentInstance.createdAt.getTime(),
+          },
+        } as any)
+      }
+    }
   }
 }

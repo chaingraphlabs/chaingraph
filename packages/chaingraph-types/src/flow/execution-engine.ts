@@ -178,6 +178,16 @@ export class ExecutionEngine {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
+          // Check if node has disabledAutoExecution in parent context
+          const metadata = node.metadata
+          const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+          
+          // In parent context, skip nodes with disabledAutoExecution
+          if (isAutoExecutionDisabled && !this.context.isChildExecution) {
+            console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
+            continue
+          }
+          
           this.executingNodes.add(node.id)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
         }
@@ -286,6 +296,20 @@ export class ExecutionEngine {
       this.nodeDependencies.set(dependentNode.id, remainingDeps)
 
       if (remainingDeps === 0) {
+        // Check if node has disabledAutoExecution in parent context
+        const metadata = dependentNode.metadata
+        const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+        
+        // In parent context, skip nodes with disabledAutoExecution
+        if (isAutoExecutionDisabled && !this.context.isChildExecution) {
+          console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
+          // Mark as completed without executing so dependents can proceed
+          this.completedNodes.add(dependentNode.id)
+          // Need to enqueue it to the completed queue so processDependents gets called
+          this.completedQueue.enqueue(dependentNode)
+          continue
+        }
+        
         // Node is ready for execution
         this.executingNodes.add(dependentNode.id)
         this.readyQueue.enqueue(this.executeNode.bind(this, dependentNode))
@@ -404,6 +428,10 @@ export class ExecutionEngine {
       }
 
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
+
+      // Track current executing node for event emission
+      this.context.currentNodeId = node.id
+
       const { backgroundActions } = await withTimeout(
         node.executeWithDefaultPorts(this.context),
         nodeTimeoutMs,
@@ -450,6 +478,8 @@ export class ExecutionEngine {
       this.setNodeError(node, error, nodeStartTime)
     } finally {
       cancel()
+      // Clear current node ID after execution
+      this.context.currentNodeId = undefined
     }
   }
 
