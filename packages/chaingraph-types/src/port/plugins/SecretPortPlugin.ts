@@ -12,21 +12,14 @@ import type { SecretType } from '../base/secret'
 import { z } from 'zod'
 import { ExecutionContext } from '../../execution'
 import { basePortConfigSchema, PortError, PortErrorType } from '../base'
-import { deserialize, serialize } from '../base/secret'
+import { deserialize, secretTypeSchemas, serialize } from '../base/secret'
 
 /**
  * Config schema for secret port.
  */
 const configSchema = basePortConfigSchema.merge(z.object({
   type: z.literal('secret'),
-  secretType: z.union([
-    z.literal('openai'),
-    z.literal('anthropic'),
-    z.literal('deepseek'),
-    z.literal('xAPI'),
-    z.literal('xApp'),
-    z.literal('string'),
-  ]) as z.ZodType<SecretType>,
+  secretType: z.union(Object.keys(secretTypeSchemas).map(t => z.literal(t)) as any),
   defaultValue: z.undefined(),
 })) as z.ZodType<SecretPortConfig>
 

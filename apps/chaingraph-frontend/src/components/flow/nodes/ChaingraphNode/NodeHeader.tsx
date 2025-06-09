@@ -18,7 +18,7 @@ import NodeStatusBadge from './NodeStatusBadge'
 
 interface NodeHeaderProps {
   node: INode
-  icon: CategoryIconName
+  icon: CategoryIconName | (string & {}) // FIXME: extract CategoryIconName to prevent import cycle
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
   context: PortContextValue

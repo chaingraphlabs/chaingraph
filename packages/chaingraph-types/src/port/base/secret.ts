@@ -15,10 +15,16 @@ import { z } from 'zod'
 /**
  * Supported types of secrets.
  */
-const secretTypeSchemas = {
-  openai: z.string().min(1),
-  anthropic: z.string().min(1),
-  deepseek: z.string().min(1),
+export const secretTypeSchemas = {
+  openai: z.object({
+    apiKey: z.string().min(1),
+  }),
+  anthropic: z.object({
+    apiKey: z.string().min(1),
+  }),
+  deepseek: z.object({
+    apiKey: z.string().min(1),
+  }),
   xAPI: z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
@@ -27,8 +33,10 @@ const secretTypeSchemas = {
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
-  string: z.string().min(1),
-} satisfies Record<string, z.ZodType>
+  string: z.object({
+    value: z.string().min(1),
+  }),
+} satisfies Record<string, z.ZodType<Record<string, string>>>
 
 /**
  * Type map of supported secrets.
@@ -39,6 +47,102 @@ export type SecretTypeMap = { [key in keyof typeof secretTypeSchemas]: z.infer<t
  * Discriminators of supported secret types.
  */
 export type SecretType = keyof SecretTypeMap
+
+/**
+ * Metadata for a secret field.
+ */
+interface SecretFieldMetadata {
+  /**
+   * A textual label of a secret field. Used for displaying in human-readable form.
+   */
+  label: string
+}
+
+/**
+ * Metadata for a specific type of secret.
+ */
+export interface SecretTypeMetadata<T extends SecretType> {
+  /**
+   * A URL of the icon associated with this type of secret.
+   */
+  icon: string
+
+  /**
+   * A textual label of a secret. Used for displaying in human-readable form.
+   */
+  label: string
+
+  /**
+   * A collection of metadata associated with the fields of a secret type.
+   */
+  fields: Record<keyof SecretTypeMap[T], SecretFieldMetadata>
+}
+
+/**
+ * Metadata for all secret types used in the application.
+ */
+export const secretTypeMetadata = {
+  string: {
+    icon: 'Type',
+    label: 'String Secret',
+    fields: {
+      value: {
+        label: 'Secret Value',
+      },
+    },
+  },
+  openai: {
+    icon: 'Brain',
+    label: 'OpenAI API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+      },
+    },
+  },
+  anthropic: {
+    icon: 'Brain',
+    label: 'Anthropic API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+      },
+    },
+  },
+  deepseek: {
+    icon: 'Brain',
+    label: 'DeepSeek API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+      },
+    },
+  },
+  xAPI: {
+    icon: 'MessageSquare',
+    label: 'X API',
+    fields: {
+      key: {
+        label: 'API Key',
+      },
+      secretKey: {
+        label: 'Secret Key',
+      },
+    },
+  },
+  xApp: {
+    icon: 'Package',
+    label: 'X App',
+    fields: {
+      key: {
+        label: 'App Key',
+      },
+      secretKey: {
+        label: 'Secret Key',
+      },
+    },
+  },
+} satisfies { [T in SecretType]: SecretTypeMetadata<T> }
 
 /**
  * An encrypted value with a method to decrypt this value.

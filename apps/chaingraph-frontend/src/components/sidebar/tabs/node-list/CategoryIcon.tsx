@@ -11,7 +11,11 @@ import { cn } from '@/lib/utils'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 
 interface CategoryIconProps {
-  name: CategoryIconName
+  // FIXME: preserves autocomplete but allows any string,
+  //  because chaingraph-types/CategoryMetadata has an icon of type string,
+  //  otherwise it'll import CategoryIconName from chaingraph-nodes, which is an import cycle.
+  //  Possible solution is to move this type to chaingraph-types.
+  name: CategoryIconName | (string & {})
   size?: number
   className?: string
   style?: React.CSSProperties
