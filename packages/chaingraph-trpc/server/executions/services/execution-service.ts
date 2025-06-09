@@ -16,6 +16,7 @@ import type {
 } from '@badaitech/chaingraph-types'
 import type { IExecutionStore } from '../store/execution-store'
 import type { ExecutionInstance, ExecutionOptions, ExecutionState } from '../types'
+import { EventEmitter } from 'node:events'
 import {
   createExecutionEventHandler,
   EventQueue,
@@ -38,8 +39,8 @@ export class ExecutionService {
   private eventQueues: Map<string, EventQueue<ExecutionEventImpl>> = new Map()
   // Keep track of child executions
   private childExecutions: Map<string, Set<string>> = new Map() // parentId -> Set<childId>
-  // Keep track of child execution completion promises
-  private childCompletionPromises: Map<string, Map<string, Promise<void>>> = new Map() // parentId -> Map<childId, Promise>
+  // Use event emitters for child completion notifications
+  private childCompletionEmitters: Map<string, EventEmitter> = new Map() // parentId -> EventEmitter
 
   constructor(
     private readonly store: IExecutionStore,
@@ -374,7 +375,7 @@ export class ExecutionService {
     const context = instance.context
     console.log(`[processEmittedEvents] Checking for events in execution ${instance.id}`)
     console.log(`[processEmittedEvents] emittedEvents:`, context.emittedEvents)
-    
+
     if (!context.emittedEvents || context.emittedEvents.length === 0) {
       console.log(`[processEmittedEvents] No events to process`)
       return
@@ -416,18 +417,10 @@ export class ExecutionService {
     // Update event with child execution ID
     event.childExecutionId = childInstance.id
 
-    // Create a promise that will resolve when the child execution completes
-    let resolveChild: () => void
-    const childCompletionPromise = new Promise<void>((resolve) => {
-      resolveChild = resolve
-    })
-
-    // Store the promise with its resolver
-    if (!this.childCompletionPromises.has(parentInstance.id)) {
-      this.childCompletionPromises.set(parentInstance.id, new Map())
+    // Get or create emitter for parent
+    if (!this.childCompletionEmitters.has(parentInstance.id)) {
+      this.childCompletionEmitters.set(parentInstance.id, new EventEmitter())
     }
-    const promiseWithResolver = Object.assign(childCompletionPromise, { resolve: resolveChild! })
-    this.childCompletionPromises.get(parentInstance.id)!.set(childInstance.id, promiseWithResolver)
 
     // Emit child execution spawned event to parent
     const parentEventQueue = this.eventQueues.get(parentInstance.id)
@@ -444,8 +437,8 @@ export class ExecutionService {
             childExecutionId: childInstance.id,
             eventName: event.type,
             eventData: event.data,
-          }
-        )
+          },
+        ),
       )
       console.log(`[spawnChildExecutionForEvent] CHILD_EXECUTION_SPAWNED event published`)
     } else {
@@ -455,8 +448,9 @@ export class ExecutionService {
     // Start child execution asynchronously
     this.startExecution(childInstance.id).catch((error) => {
       console.error(`Failed to start child execution ${childInstance.id}:`, error)
-      // Resolve the promise even on error to prevent hanging
-      this.resolveChildCompletion(parentInstance.id, childInstance.id)
+      // Emit completion event even on error to prevent hanging
+      const emitter = this.childCompletionEmitters.get(parentInstance.id)
+      emitter?.emit('child-completed', childInstance.id)
     })
   }
 
@@ -480,10 +474,11 @@ export class ExecutionService {
         // If this is a child execution completing, notify parent and check if it can complete
         if (instance.parentExecutionId) {
           console.log(`[FLOW_COMPLETED] Child execution ${instance.id} completed, notifying parent ${instance.parentExecutionId}`)
-          
-          // Resolve the child completion promise
-          this.resolveChildCompletion(instance.parentExecutionId, instance.id)
-          
+
+          // Emit child completion event
+          const emitter = this.childCompletionEmitters.get(instance.parentExecutionId)
+          emitter?.emit('child-completed', instance.id)
+
           const parentEventQueue = this.eventQueues.get(instance.parentExecutionId)
           console.log(`[FLOW_COMPLETED] Parent event queue exists: ${!!parentEventQueue}`)
           if (parentEventQueue) {
@@ -498,8 +493,8 @@ export class ExecutionService {
                   parentExecutionId: instance.parentExecutionId,
                   childExecutionId: instance.id,
                   eventName,
-                }
-              )
+                },
+              ),
             )
             console.log(`[FLOW_COMPLETED] CHILD_EXECUTION_COMPLETED event published`)
           }
@@ -518,10 +513,11 @@ export class ExecutionService {
         // If this is a child execution failing, notify parent and check if it can complete
         if (instance.parentExecutionId) {
           console.log(`[FLOW_FAILED] Child execution ${instance.id} failed, notifying parent ${instance.parentExecutionId}`)
-          
-          // Resolve the child completion promise
-          this.resolveChildCompletion(instance.parentExecutionId, instance.id)
-          
+
+          // Emit child completion event
+          const emitter = this.childCompletionEmitters.get(instance.parentExecutionId)
+          emitter?.emit('child-completed', instance.id)
+
           const parentEventQueue = this.eventQueues.get(instance.parentExecutionId)
           console.log(`[FLOW_FAILED] Parent event queue exists: ${!!parentEventQueue}`)
           if (parentEventQueue) {
@@ -537,8 +533,8 @@ export class ExecutionService {
                   childExecutionId: instance.id,
                   eventName,
                   error: data.error,
-                }
-              )
+                },
+              ),
             )
             console.log(`[FLOW_FAILED] CHILD_EXECUTION_FAILED event published`)
           }
@@ -551,10 +547,11 @@ export class ExecutionService {
         instance.completedAt = new Date()
         await this.store.create(instance)
 
-        // If this is a child execution being cancelled, resolve promise and check if parent can complete
+        // If this is a child execution being cancelled, emit completion and check if parent can complete
         if (instance.parentExecutionId) {
-          // Resolve the child completion promise
-          this.resolveChildCompletion(instance.parentExecutionId, instance.id)
+          // Emit child completion event
+          const emitter = this.childCompletionEmitters.get(instance.parentExecutionId)
+          emitter?.emit('child-completed', instance.id)
           await this.checkParentCompletion(instance.parentExecutionId)
         }
       },
@@ -608,6 +605,13 @@ export class ExecutionService {
       await eventQueue.close()
     }
 
+    // Clean up child completion emitter
+    const emitter = this.childCompletionEmitters.get(id)
+    if (emitter) {
+      emitter.removeAllListeners()
+      this.childCompletionEmitters.delete(id)
+    }
+
     await this.store.delete(id)
   }
 
@@ -628,40 +632,39 @@ export class ExecutionService {
   }
 
   /**
-   * Resolve a child execution completion promise
-   */
-  private resolveChildCompletion(parentId: string, childId: string): void {
-    const parentPromises = this.childCompletionPromises.get(parentId)
-    if (parentPromises) {
-      const promise = parentPromises.get(childId)
-      if (promise && typeof (promise as any).resolve === 'function') {
-        (promise as any).resolve()
-        parentPromises.delete(childId)
-        if (parentPromises.size === 0) {
-          this.childCompletionPromises.delete(parentId)
-        }
-      }
-    }
-  }
-
-  /**
-   * Wait for all child executions to complete using promises
+   * Wait for all child executions to complete using event emitter
    */
   async waitForChildExecutions(parentId: string): Promise<void> {
-    const promises = this.childCompletionPromises.get(parentId)
-    if (!promises || promises.size === 0) {
+    const childIds = await this.getChildExecutions(parentId)
+    if (childIds.length === 0)
       return
-    }
 
-    console.log(`[waitForChildExecutions] Waiting for ${promises.size} child executions of ${parentId}`)
-    
-    // Wait for all child completion promises
-    await Promise.all(Array.from(promises.values()))
-    
-    console.log(`[waitForChildExecutions] All child executions of ${parentId} completed`)
-    
-    // Clean up
-    this.childCompletionPromises.delete(parentId)
+    const emitter = this.childCompletionEmitters.get(parentId)
+    if (!emitter)
+      return
+
+    console.log(`[waitForChildExecutions] Waiting for ${childIds.length} child executions of ${parentId}`)
+
+    // Create a promise that resolves when all children complete
+    return new Promise<void>((resolve) => {
+      const completedChildren = new Set<string>()
+
+      const checkCompletion = (childId: string) => {
+        completedChildren.add(childId)
+        console.log(`[waitForChildExecutions] Child ${childId} completed (${completedChildren.size}/${childIds.length})`)
+
+        if (completedChildren.size === childIds.length) {
+          // All children completed
+          console.log(`[waitForChildExecutions] All child executions of ${parentId} completed`)
+          emitter.removeAllListeners('child-completed')
+          this.childCompletionEmitters.delete(parentId)
+          resolve()
+        }
+      }
+
+      // Listen for child completions
+      emitter.on('child-completed', checkCompletion)
+    })
   }
 
   /**
