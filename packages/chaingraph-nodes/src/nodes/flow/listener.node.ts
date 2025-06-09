@@ -86,9 +86,9 @@ class EventListenerNode extends BaseNode {
     const { eventName, payload } = context.eventData
 
     if (eventName !== this.inputFilter.eventName) {
-      // Skip this listener - not for this event
+      // Skip this listener and all downstream nodes - not for this event
       console.log(`EventListenerNode ${this.id} skipping - event type mismatch: expected ${this.inputFilter.eventName}, got ${eventName}`)
-      return {}
+      throw new Error(`Event type mismatch: EventListener '${this.inputFilter.eventName}' cannot process event '${eventName}'`)
     }
 
     // Process event data
