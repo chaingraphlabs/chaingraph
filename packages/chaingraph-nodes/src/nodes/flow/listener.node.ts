@@ -36,8 +36,8 @@ class EventData {
   tags: ['flow', 'event', 'listener', 'trigger', 'action', 'logic'],
   flowPorts: {
     // Disable auto-execution - this node should only execute when explicitly triggered by events
-    disabledAutoExecution: true
-  }
+    disabledAutoExecution: true,
+  },
 })
 class EventListenerNode extends BaseNode {
   @Input()
@@ -66,28 +66,31 @@ class EventListenerNode extends BaseNode {
   outputData: EventData = new EventData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(`EventListenerNode ${this.id} execute called, isChildExecution: ${context.isChildExecution}, hasEventData: ${!!context.eventData}`)
-    
-    // EventListenerNode should ONLY execute in child executions with event data
-    // It should never execute in parent context or without event data
-    if (!context.eventData || !context.isChildExecution) {
-      console.log(`EventListenerNode ${this.id} should not execute - not in event-driven child context`)
-      
+    console.log(`[EventListenerNode ${this.id}] execute called, isChildExecution: ${context.isChildExecution}, hasEventData: ${!!context.eventData}`)
+    console.log(`[EventListenerNode ${this.id}] Filter eventName: "${this.inputFilter.eventName}"`)
+
+    // EventListenerNode should only process when there's event data
+    // This can be either:
+    // 1. Child execution spawned by internal event
+    // 2. Root execution with external event (from API)
+    if (!context.eventData) {
+      console.log(`[EventListenerNode ${this.id}] No event data available - skipping execution and downstream nodes`)
+
       // Clear output data
       this.outputData = new EventData()
-      
-      // Return empty result - the node ran but did nothing
-      return {}
+
+      // Throw exception to skip downstream nodes when there's no event to process
+      throw new Error(`EventListenerNode '${this.id}' has no event data to process`)
     }
 
-    console.log('EventListenerNode executing in child mode with event data:', context.eventData)
+    console.log(`[EventListenerNode ${this.id}] Processing event data:`, JSON.stringify(context.eventData))
 
-    // Child execution mode - we have event data
+    // We have event data - process it
     const { eventName, payload } = context.eventData
 
     if (eventName !== this.inputFilter.eventName) {
       // Skip this listener and all downstream nodes - not for this event
-      console.log(`EventListenerNode ${this.id} skipping - event type mismatch: expected ${this.inputFilter.eventName}, got ${eventName}`)
+      console.log(`[EventListenerNode ${this.id}] Event type mismatch: expected "${this.inputFilter.eventName}", got "${eventName}" - skipping`)
       throw new Error(`Event type mismatch: EventListener '${this.inputFilter.eventName}' cannot process event '${eventName}'`)
     }
 
@@ -95,8 +98,8 @@ class EventListenerNode extends BaseNode {
     // Simply set the eventName on the existing outputData instance
     this.outputData.eventName = eventName
 
-    console.log(`EventListenerNode ${this.id} outputData.eventName after processing:`, this.outputData.eventName)
-    
+    console.log(`[EventListenerNode ${this.id}] Output data after processing:`, JSON.stringify(this.outputData))
+
     // Return empty result - node executed successfully
     return {}
   }

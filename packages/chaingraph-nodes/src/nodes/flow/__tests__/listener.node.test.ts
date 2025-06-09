@@ -21,7 +21,8 @@ function getTestContext(eventData?: EmittedEventContext): ExecutionContext {
     {},
     eventData ? 'parent-execution' : undefined, // parentExecutionId if there's event data
     eventData,
-    !!eventData // isChildExecution = true if there's event data
+    !!eventData, // isChildExecution = true if there's event data
+    1 // executionDepth
   )
   return context
 }
@@ -48,7 +49,7 @@ describe('eventListenerNode', () => {
     expect(node.outputData.eventName).toBe('user-action')
   })
 
-  it('should return success=false when event type does not match filter', async () => {
+  it('should throw exception when event type does not match filter', async () => {
     const node = new EventListenerNode('listener-2')
     node.initialize()
 
@@ -68,17 +69,17 @@ describe('eventListenerNode', () => {
       {},
       'parent-execution',
       eventData,
-      true // isChildExecution
+      true, // isChildExecution
+      1 // executionDepth
     )
 
-    // Execute node
-    const result = await node.execute(context)
-    
-    // Should return empty result for mismatched event
-    expect(result.success).toBeUndefined()
+    // Execute node - should throw exception
+    await expect(node.execute(context)).rejects.toThrow(
+      'Event type mismatch: EventListener \'user-action\' cannot process event \'system-event\''
+    )
   })
 
-  it('should not execute in parent context and return empty result', async () => {
+  it('should throw exception when no event data is available', async () => {
     const node = new EventListenerNode('listener-3')
     node.initialize()
 
@@ -90,13 +91,12 @@ describe('eventListenerNode', () => {
     // Create context without event data (normal execution mode)
     const context = getTestContext()
 
-    // Execute node
-    const result = await node.execute(context)
+    // Execute node - should throw exception
+    await expect(node.execute(context)).rejects.toThrow(
+      `EventListenerNode 'listener-3' has no event data to process`
+    )
     
-    // Verify it returns empty result
-    expect(result.success).toBeUndefined()
-    
-    // Verify output data was cleared
+    // Verify output data was cleared before throwing
     expect(node.outputData.eventName).toBe('')
   })
 
