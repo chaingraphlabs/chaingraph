@@ -75,7 +75,7 @@ export const fetchExecutionTreeFx = executionDomain.createEffect(
     }
 
     const data = await client.execution.getExecutionTree.query({
-      flowId: filters.flowId || activeFlowId || undefined,
+      flowId: filters.flowId || activeFlowId || '',
       status: mapStatusToBackend(filters.status) as any,
       limit: filters.limit,
     })

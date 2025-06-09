@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { setExecutionIdAndReset } from '@/store/execution'
 import { useExecutionTree, useSelectedExecution } from '@/store/execution-tree/hooks/useExecutionTree'
 import { useMemo, useState } from 'react'
 import { EmptyState } from './components/EmptyState'
@@ -112,7 +113,10 @@ export function ExecutionTree() {
                           key={node.id}
                           node={node}
                           depth={0}
-                          onSelect={node => selectExecution(node.id)}
+                          onSelect={(node) => {
+                            selectExecution(node.id)
+                            setExecutionIdAndReset(node.id)
+                          }}
                           selectedId={selectedExecution?.id}
                           expandedAll={expandedAll}
                         />
@@ -130,7 +134,10 @@ export function ExecutionTree() {
                 <div className="p-4">
                   <ExecutionDetails
                     execution={selectedExecution as any}
-                    onClose={() => selectExecution(null)}
+                    onClose={() => {
+                      selectExecution(null)
+                      setExecutionIdAndReset(null)
+                    }}
                   />
                 </div>
               </ScrollArea>

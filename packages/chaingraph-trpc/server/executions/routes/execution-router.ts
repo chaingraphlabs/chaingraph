@@ -6,7 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEventData, Flow } from '@badaitech/chaingraph-types'
+import type {
+  EventQueue,
+  ExecutionEventData,
+  Flow,
+} from '@badaitech/chaingraph-types'
+import type { ExecutionEvent } from '@badaitech/chaingraph-types'
 import * as console from 'node:console'
 import { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
@@ -299,18 +304,6 @@ export const executionRouter = router({
 
       const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
 
-      // TODO: read events from the storage filtered by eventIndex. If eventIndex is 0, start from the beginning
-      // send the events from the service's event queue starting from the eventIndex
-
-      // Get the service's event queue for this execution
-      const serviceEventQueue = ctx.executionService.getEventQueue(input.executionId)
-      if (!serviceEventQueue) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Event queue not found for execution',
-        })
-      }
-
       // Send initial state event
       yield new ExecutionEventImpl(
         -1,
@@ -321,18 +314,71 @@ export const executionRouter = router({
         } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
       )
 
+      // Try to get the service's event queue for this execution
+      let serviceEventQueue: EventQueue<ExecutionEvent> | undefined
       try {
-        // Create async iterator for the service's event queue
-        const iterator = serviceEventQueue.createIterator()
-        for await (const event of iterator) {
-          // Filter by event types if specified
-          if (!isAcceptedEventType(input.eventTypes, event.type)) {
-            continue
-          }
-          yield event
-        }
+        serviceEventQueue = ctx.executionService.getEventQueue(input.executionId)
       } catch (error) {
-        console.error('Error handling execution events:', error)
+        // Event queue doesn't exist - execution already finished
+        console.log(`Event queue not found for execution ${input.executionId}, loading from history`)
+      }
+
+      // If we have an event store and need to load historical events
+      const eventStore = (ctx.executionService as any).eventStore
+      if (eventStore) {
+        try {
+          // Load historical events from the database
+          const historicalEvents = await eventStore.getEvents(
+            input.executionId,
+            eventIndex > 0 ? eventIndex + 1 : 0, // Start from next event if reconnecting
+          )
+
+          // Yield historical events
+          for (const event of historicalEvents) {
+            // Reconstruct ExecutionEventImpl from stored data
+            const eventImpl = new ExecutionEventImpl(
+              event.index,
+              event.type,
+              event.timestamp,
+              event.data,
+            )
+
+            // Filter by event types if specified
+            if (!isAcceptedEventType(input.eventTypes, eventImpl.type)) {
+              continue
+            }
+            yield eventImpl
+          }
+
+          console.log(`Streamed ${historicalEvents.length} historical events for execution ${input.executionId}`)
+        } catch (error) {
+          console.error('Error loading historical events:', error)
+        }
+      }
+
+      // If execution is still running and we have an event queue, stream live events
+      if (serviceEventQueue) {
+        try {
+          // Create async iterator for the service's event queue
+          const iterator = serviceEventQueue.createIterator()
+          for await (const event of iterator) {
+            // Skip events we've already sent from history
+            if (event.index <= eventIndex) {
+              continue
+            }
+
+            // Filter by event types if specified
+            if (!isAcceptedEventType(input.eventTypes, event.type)) {
+              continue
+            }
+            yield event
+          }
+        } catch (error) {
+          console.error('Error handling live execution events:', error)
+        }
+      } else {
+        // No event queue means execution is finished
+        console.log(`Execution ${input.executionId} is complete, closing subscription`)
       }
     }),
 
