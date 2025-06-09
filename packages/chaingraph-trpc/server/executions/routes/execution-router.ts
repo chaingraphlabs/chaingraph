@@ -8,7 +8,7 @@
 
 import type { ExecutionEventData, Flow } from '@badaitech/chaingraph-types'
 import * as console from 'node:console'
-import { EventQueue, ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { zAsyncIterable } from '../../procedures/subscriptions/utils/zAsyncIterable'
@@ -146,7 +146,7 @@ export const executionRouter = router({
 
       const state = await ctx.executionService.getExecutionState(input.executionId)
       const childExecutions = await ctx.executionService.getChildExecutions(input.executionId)
-      
+
       return {
         ...state,
         parentExecutionId: instance.parentExecutionId,
@@ -169,9 +169,110 @@ export const executionRouter = router({
             ...state,
             eventData: instance?.context.eventData,
           }
-        })
+        }),
       )
       return childStates
+    }),
+
+  // Get execution tree - returns the full tree structure for the frontend
+  getExecutionTree: flowContextProcedure
+    .input(z.object({
+      flowId: z.string(), // Filter by flow ID
+      status: z.enum(['all', 'created', 'running', 'completed', 'failed', 'stopped', 'paused']).optional(),
+      limit: z.number().min(1).max(100).default(50),
+    }))
+    .query(async ({ input, ctx }) => {
+      // Get all executions from the store
+      const allExecutions = await ctx.executionStore.list()
+
+      // Filter executions
+      let filteredExecutions = allExecutions
+
+      // Filter by flow ID if provided
+      if (input.flowId) {
+        filteredExecutions = filteredExecutions.filter(exec => exec.flow.id === input.flowId)
+      }
+
+      // Filter by status if provided
+      if (input.status && input.status !== 'all') {
+        filteredExecutions = filteredExecutions.filter(exec => exec.status.toLowerCase() === input.status)
+      }
+
+      // Sort by creation time (newest first)
+      filteredExecutions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+
+      // Limit results
+      filteredExecutions = filteredExecutions.slice(0, input.limit)
+
+      // Build execution tree data
+      return Promise.all(
+        filteredExecutions.map(async (exec) => {
+          const state = await ctx.executionService.getExecutionState(exec.id)
+          const childIds = await ctx.executionService.getChildExecutions(exec.id)
+
+          return {
+            id: exec.id,
+            flowId: exec.flow.id || '',
+            flowName: exec.flow.metadata?.name || 'Unnamed Flow',
+            status: state.status,
+            parentExecutionId: exec.parentExecutionId,
+            executionDepth: exec.executionDepth || 0,
+            createdAt: exec.createdAt,
+            startedAt: state.startTime,
+            completedAt: state.endTime,
+            error: state.error,
+            triggeredByEvent: exec.context.eventData
+              ? {
+                  eventName: exec.context.eventData.eventName,
+                  payload: exec.context.eventData.payload,
+                }
+              : undefined,
+            childCount: childIds.length,
+          }
+        }),
+      )
+    }),
+
+  // Get execution details - for the detail panel
+  getExecutionDetails: executionContextProcedure
+    .input(z.object({
+      executionId: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const instance = await ctx.executionService.getInstance(input.executionId)
+      if (!instance) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Execution with id ${input.executionId} not found`,
+        })
+      }
+
+      const state = await ctx.executionService.getExecutionState(input.executionId)
+      const childIds = await ctx.executionService.getChildExecutions(input.executionId)
+
+      return {
+        id: instance.id,
+        flowId: instance.flow.id || '',
+        flowName: instance.flow.metadata?.name || 'Unnamed Flow',
+        status: state.status,
+        parentExecutionId: instance.parentExecutionId,
+        executionDepth: instance.executionDepth || 0,
+        createdAt: instance.createdAt,
+        startedAt: state.startTime,
+        completedAt: state.endTime,
+        error: state.error,
+        triggeredByEvent: instance.context.eventData
+          ? {
+              eventName: instance.context.eventData.eventName,
+              payload: instance.context.eventData.payload,
+            }
+          : undefined,
+        childCount: childIds.length,
+        // Additional details
+        integrations: instance.context.integrations,
+        options: instance.engine.getOptions(),
+        abortSignal: instance.context.abortController.signal.aborted,
+      }
     }),
 
   // Subscribe to execution events
@@ -197,7 +298,10 @@ export const executionRouter = router({
       }
 
       const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
-      
+
+      // TODO: read events from the storage filtered by eventIndex. If eventIndex is 0, start from the beginning
+      // send the events from the service's event queue starting from the eventIndex
+
       // Get the service's event queue for this execution
       const serviceEventQueue = ctx.executionService.getEventQueue(input.executionId)
       if (!serviceEventQueue) {

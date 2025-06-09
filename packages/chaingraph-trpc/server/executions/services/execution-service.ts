@@ -15,6 +15,7 @@ import type {
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
 import type { IExecutionStore } from '../store/execution-store'
+import type { PostgresEventStore } from '../store/postgres/event-store'
 import type { ExecutionInstance, ExecutionOptions, ExecutionState } from '../types'
 import { EventEmitter } from 'node:events'
 import {
@@ -46,6 +47,7 @@ export class ExecutionService {
 
   constructor(
     private readonly store: IExecutionStore,
+    private readonly eventStore: PostgresEventStore | null = null,
   ) {}
 
   async createExecution(
@@ -102,6 +104,8 @@ export class ExecutionService {
     })
 
     await this.store.create(instance)
+
+    // TODO: persist execution state to store
 
     // Setup event queue for all executions
     // This ensures the queue exists when subscriptions are created
@@ -160,6 +164,18 @@ export class ExecutionService {
       console.log(`[startExecution] Checking for child executions of ${id}`)
       await this.waitForChildExecutions(id)
 
+      // Ensure all events are processed before cleanup
+      if (this.eventStore) {
+        await this.eventStore.flushAll()
+      }
+
+      // If execution completed without setting a final status, ensure it's marked as completed
+      if (instance.status === ExecutionStatus.Running) {
+        instance.status = ExecutionStatus.Completed
+        instance.completedAt = new Date()
+        await this.store.create(instance)
+      }
+
       // Cleanup
       await eventQueue.close()
     } catch (error) {
@@ -167,7 +183,17 @@ export class ExecutionService {
       instance.error = {
         message: error instanceof Error ? error.message : 'Unknown error',
       }
+      instance.completedAt = new Date()
       await this.store.create(instance)
+
+      // Ensure all events are flushed even on error
+      if (this.eventStore) {
+        try {
+          await this.eventStore.flushAll()
+        } catch (flushError) {
+          console.error('Failed to flush events on error:', flushError)
+        }
+      }
 
       // Cleanup event queue on error
       const eventQueue = this.eventQueues.get(id)
@@ -411,7 +437,7 @@ export class ExecutionService {
     }
 
     console.log(`[spawnChildExecutionForEvent] Parent execution depth: ${parentInstance.executionDepth}`)
-    
+
     // Create child execution with parent's depth
     let childInstance: ExecutionInstance
     try {
@@ -436,10 +462,9 @@ export class ExecutionService {
               ExecutionEventEnum.FLOW_FAILED,
               new Date(),
               {
-                error: {
-                  message: `Cycle detected: ${error.message}`,
-                  type: 'CYCLE_DETECTED',
-                },
+                error: new Error(`Cycle detected: ${error.message}`),
+                flow: parentInstance.flow.clone(),
+                executionTime: Date.now() - parentInstance.createdAt.getTime(),
               },
             ),
           )
@@ -613,15 +638,33 @@ export class ExecutionService {
     this.eventQueues.set(instance.id, eventQueue)
 
     const eventHandler = this.createEventHandlers(instance)
-    const unsubscribe = instance.engine.onAll((event) => {
+    const unsubscribe = instance.engine.onAll(async (event) => {
       eventHandler(event)
       // Publish event to queue for subscribers
       eventQueue.publish(event)
+
+      // Persist event if event store is available
+      if (this.eventStore) {
+        try {
+          await this.eventStore.addEvent(instance.id, event)
+        } catch (error) {
+          console.error(`Failed to persist event for execution ${instance.id}:`, error)
+        }
+      }
     })
 
-    eventQueue.onClose(() => {
+    eventQueue.onClose(async () => {
       unsubscribe()
       this.eventQueues.delete(instance.id)
+
+      // Flush any pending events
+      if (this.eventStore) {
+        try {
+          await this.eventStore.flushAll()
+        } catch (error) {
+          console.error('Failed to flush pending events:', error)
+        }
+      }
     })
 
     return eventQueue
@@ -659,9 +702,10 @@ export class ExecutionService {
   }
 
   /**
-   * Get all child executions for a parent execution
+   * Get child executions of a parent
    */
   async getChildExecutions(parentId: string): Promise<string[]> {
+    // Return from in-memory tracking
     const childIds = this.childExecutions.get(parentId)
     return childIds ? Array.from(childIds) : []
   }

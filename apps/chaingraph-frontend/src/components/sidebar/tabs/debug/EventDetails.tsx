@@ -117,7 +117,7 @@ function serializeEvent(event: ExecutionEventImpl) {
     case ExecutionEventEnum.CHILD_EXECUTION_FAILED:
     {
       const data = event.data as ExecutionEventData[ExecutionEventEnum.CHILD_EXECUTION_SPAWNED]
-      
+
       return (
         <div className="p-2 space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -132,7 +132,7 @@ function serializeEvent(event: ExecutionEventImpl) {
               </Badge>
             </div>
           </div>
-          
+
           {data.eventData && (
             <div>
               <div className="text-xs text-muted-foreground mb-1">Event Data</div>
@@ -141,7 +141,7 @@ function serializeEvent(event: ExecutionEventImpl) {
               </pre>
             </div>
           )}
-          
+
           {event.type === ExecutionEventEnum.CHILD_EXECUTION_FAILED && data.error && (
             <div>
               <div className="text-xs text-muted-foreground mb-1">Error</div>

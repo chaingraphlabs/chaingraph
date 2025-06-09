@@ -67,11 +67,11 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
       // Merge provided metadata with decorator metadata
       // Decorator metadata provides defaults, provided metadata overrides specific fields
-      this._metadata = { 
-        ...decoratorMetadata,  // Start with decorator metadata (includes flowPorts)
-        ..._metadata,          // Override with provided metadata
+      this._metadata = {
+        ...decoratorMetadata, // Start with decorator metadata (includes flowPorts)
+        ..._metadata, // Override with provided metadata
         // Preserve flowPorts from decorator if not in provided metadata
-        ...(_metadata.flowPorts || decoratorMetadata.flowPorts ? { flowPorts: _metadata.flowPorts || decoratorMetadata.flowPorts } : {})
+        ...(_metadata.flowPorts || decoratorMetadata.flowPorts ? { flowPorts: _metadata.flowPorts || decoratorMetadata.flowPorts } : {}),
       }
     } else {
       if (!decoratorMetadata.type) {
@@ -187,12 +187,12 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   setMetadata(metadata: NodeMetadata): void {
     // Get decorator metadata to preserve important fields like flowPorts
     const decoratorMetadata = getOrCreateNodeMetadata(this)
-    
+
     // Merge provided metadata with decorator metadata
     this._metadata = {
       ...metadata,
       // Preserve flowPorts from decorator if not in provided metadata
-      ...(metadata.flowPorts || decoratorMetadata?.flowPorts ? { flowPorts: metadata.flowPorts || decoratorMetadata?.flowPorts } : {})
+      ...(metadata.flowPorts || decoratorMetadata?.flowPorts ? { flowPorts: metadata.flowPorts || decoratorMetadata?.flowPorts } : {}),
     }
   }
 

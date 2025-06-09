@@ -7,10 +7,10 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { ExecutionContext } from '../../execution/execution-context'
+import { Input, Node, ObjectSchema, Output, PortObject, String, Title } from '../../decorator'
 import { NodeRegistry } from '../../decorator/registry'
+import { ExecutionContext } from '../../execution/execution-context'
 import { BaseNode } from '../../node/base-node'
-import { Node, Input, Output, ObjectSchema, PortObject, String, Title } from '../../decorator'
 import { ExecutionEngine } from '../execution-engine'
 import { ExecutionEventEnum } from '../execution-events'
 import { Flow } from '../flow'
@@ -204,7 +204,7 @@ describe('eventListener execution with real nodes', () => {
 
     // EventListenerNode should NOT execute
     expect(executedNodes).not.toContain('EventListenerNode:listener1')
-    
+
     // SimpleNode should execute
     expect(executedNodes).toContain('SimpleNode:simple1')
 

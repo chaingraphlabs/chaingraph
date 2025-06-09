@@ -41,7 +41,7 @@ export enum ExecutionEventEnum {
   CHILD_EXECUTION_SPAWNED = 'child:spawned',
   CHILD_EXECUTION_COMPLETED = 'child:completed',
   CHILD_EXECUTION_FAILED = 'child:failed',
-  
+
   // Debug events
   DEBUG_BREAKPOINT_HIT = 'debug:breakpoint-hit',
 }
@@ -134,6 +134,8 @@ export interface ExecutionEventData {
     error: Error
   }
 }
+
+// TODO: add discriminated union with serialize/deserialize functions for event data
 
 // Base event interface
 export interface ExecutionEvent<T extends ExecutionEventEnum = ExecutionEventEnum> {

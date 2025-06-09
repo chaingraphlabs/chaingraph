@@ -22,7 +22,7 @@ function getTestContext(eventData?: EmittedEventContext): ExecutionContext {
     eventData ? 'parent-execution' : undefined, // parentExecutionId if there's event data
     eventData,
     !!eventData, // isChildExecution = true if there's event data
-    1 // executionDepth
+    1, // executionDepth
   )
   return context
 }
@@ -70,12 +70,12 @@ describe('eventListenerNode', () => {
       'parent-execution',
       eventData,
       true, // isChildExecution
-      1 // executionDepth
+      1, // executionDepth
     )
 
     // Execute node - should throw exception
     await expect(node.execute(context)).rejects.toThrow(
-      'Event type mismatch: EventListener \'user-action\' cannot process event \'system-event\''
+      'Event type mismatch: EventListener \'user-action\' cannot process event \'system-event\'',
     )
   })
 
@@ -84,7 +84,7 @@ describe('eventListenerNode', () => {
     node.initialize()
 
     node.inputFilter.eventName = 'test-event'
-    
+
     // Set some initial output data to verify it gets cleared
     node.outputData.eventName = 'old-data'
 
@@ -93,9 +93,9 @@ describe('eventListenerNode', () => {
 
     // Execute node - should throw exception
     await expect(node.execute(context)).rejects.toThrow(
-      `EventListenerNode 'listener-3' has no event data to process`
+      `EventListenerNode 'listener-3' has no event data to process`,
     )
-    
+
     // Verify output data was cleared before throwing
     expect(node.outputData.eventName).toBe('')
   })
@@ -110,7 +110,7 @@ describe('eventListenerNode', () => {
     const eventData: EmittedEventContext = {
       eventName: 'test-event',
       payload: {
-        eventName: 'test-event' // EventEmitterNode sends the whole eventData object
+        eventName: 'test-event', // EventEmitterNode sends the whole eventData object
       },
     }
     const context = getTestContext(eventData)

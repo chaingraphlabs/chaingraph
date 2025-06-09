@@ -7,22 +7,22 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { ExecutionContext } from '../../execution/execution-context'
-import { NodeRegistry } from '../../decorator/registry'
-import { BaseNode } from '../../node/base-node'
 import { Node } from '../../decorator'
+import { NodeRegistry } from '../../decorator/registry'
+import { ExecutionContext } from '../../execution/execution-context'
+import { BaseNode } from '../../node/base-node'
 import { ExecutionEngine } from '../execution-engine'
 import { ExecutionEventEnum } from '../execution-events'
 import { Flow } from '../flow'
 
-describe('EventListener no auto-execution from JSON', () => {
+describe('eventListener no auto-execution from JSON', () => {
   // Register a mock EventListenerNode with disabledAutoExecution
   @Node({
     type: 'EventListenerNode',
     title: 'Event Listener',
     flowPorts: {
-      disabledAutoExecution: true
-    }
+      disabledAutoExecution: true,
+    },
   })
   class MockEventListenerNode extends BaseNode {
     async execute(context: ExecutionContext) {
@@ -33,7 +33,7 @@ describe('EventListener no auto-execution from JSON', () => {
   // Register a normal node
   @Node({
     type: 'DebugLogNode',
-    title: 'Debug Log'
+    title: 'Debug Log',
   })
   class MockDebugLogNode extends BaseNode {
     async execute(context: ExecutionContext) {
@@ -48,64 +48,64 @@ describe('EventListener no auto-execution from JSON', () => {
 
     // Create a flow JSON similar to what the user has
     const flowJSON = {
-      "id": "test-flow",
-      "edges": [],
-      "nodes": [
+      id: 'test-flow',
+      edges: [],
+      nodes: [
         {
-          "id": "EventListenerNode:NOTQjgR49F3P7i7nPa",
-          "ports": {
-            "execute:POi83ma9ibmrGmFJwX": {
-              "value": true,
-              "config": {
-                "key": "__execute",
-                "type": "boolean",
-                "direction": "input",
-                "connections": [],
-                "defaultValue": true
-              }
-            }
+          id: 'EventListenerNode:NOTQjgR49F3P7i7nPa',
+          ports: {
+            'execute:POi83ma9ibmrGmFJwX': {
+              value: true,
+              config: {
+                key: '__execute',
+                type: 'boolean',
+                direction: 'input',
+                connections: [],
+                defaultValue: true,
+              },
+            },
           },
-          "status": "initialized",
-          "metadata": {
-            "type": "EventListenerNode",
-            "title": "Event Listener",
-            "version": 1
-          }
+          status: 'initialized',
+          metadata: {
+            type: 'EventListenerNode',
+            title: 'Event Listener',
+            version: 1,
+          },
         },
         {
-          "id": "DebugLogNode:NOmxDbjrjpFqLDFb3H", 
-          "ports": {
-            "execute:POQ4p4rU7W3UREQxy3": {
-              "value": true,
-              "config": {
-                "key": "__execute",
-                "type": "boolean",
-                "direction": "input",
-                "connections": [],
-                "defaultValue": true
-              }
-            }
+          id: 'DebugLogNode:NOmxDbjrjpFqLDFb3H',
+          ports: {
+            'execute:POQ4p4rU7W3UREQxy3': {
+              value: true,
+              config: {
+                key: '__execute',
+                type: 'boolean',
+                direction: 'input',
+                connections: [],
+                defaultValue: true,
+              },
+            },
           },
-          "status": "initialized",
-          "metadata": {
-            "type": "DebugLogNode",
-            "title": "Debug Log",
-            "version": 1
-          }
-        }
+          status: 'initialized',
+          metadata: {
+            type: 'DebugLogNode',
+            title: 'Debug Log',
+            version: 1,
+          },
+        },
       ],
-      "metadata": {
-        "id": "test-flow",
-        "name": "Test Flow"
-      }
+      metadata: {
+        id: 'test-flow',
+        name: 'Test Flow',
+      },
     }
 
     // Deserialize the flow
     const flow = Flow.deserialize(flowJSON)
-    
+
     // Check what nodes we have
     const eventListenerNode = flow.nodes.get('EventListenerNode:NOTQjgR49F3P7i7nPa')
-    
+
     // Initialize nodes
     for (const node of flow.nodes.values()) {
       node.initialize()
@@ -121,12 +121,12 @@ describe('EventListener no auto-execution from JSON', () => {
       {},
       undefined, // no parent
       undefined, // no event data
-      false // not a child execution
+      false, // not a child execution
     )
 
     // Track which nodes executed
     const executedNodes: string[] = []
-    
+
     // Create and run engine
     const engine = new ExecutionEngine(flow, context)
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
@@ -137,7 +137,7 @@ describe('EventListener no auto-execution from JSON', () => {
 
     // EventListenerNode should NOT execute
     expect(executedNodes).not.toContain('EventListenerNode')
-    
+
     // DebugLogNode should execute
     expect(executedNodes).toContain('DebugLogNode')
   })

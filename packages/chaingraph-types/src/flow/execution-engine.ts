@@ -181,13 +181,13 @@ export class ExecutionEngine {
           // Check if node has disabledAutoExecution in parent context
           const metadata = node.metadata
           const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
-          
+
           // In parent context, skip nodes with disabledAutoExecution
           if (isAutoExecutionDisabled && !this.context.isChildExecution) {
             console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
             continue
           }
-          
+
           this.executingNodes.add(node.id)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
         }
@@ -301,7 +301,7 @@ export class ExecutionEngine {
         // Check if node has disabledAutoExecution in parent context
         const metadata = dependentNode.metadata
         const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
-        
+
         // In parent context, skip nodes with disabledAutoExecution
         if (isAutoExecutionDisabled && !this.context.isChildExecution) {
           console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
@@ -311,7 +311,7 @@ export class ExecutionEngine {
           this.completedQueue.enqueue(dependentNode)
           continue
         }
-        
+
         // Node is ready for execution
         this.executingNodes.add(dependentNode.id)
         this.readyQueue.enqueue(this.executeNode.bind(this, dependentNode))

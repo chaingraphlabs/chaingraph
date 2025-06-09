@@ -9,14 +9,14 @@
 import type { NodeMetadata } from '../../node'
 import type { NodeExecutionResult } from '../../node/types'
 import { describe, expect, it } from 'vitest'
+import { Edge } from '../../edge'
 import { ExecutionContext } from '../../execution/execution-context'
 import { BaseNode } from '../../node/base-node'
-import { Edge } from '../../edge'
 import { ExecutionEngine } from '../execution-engine'
 import { ExecutionEventEnum } from '../execution-events'
 import { Flow } from '../flow'
 
-describe('DisabledAutoExecution', () => {
+describe('disabledAutoExecution', () => {
   // Normal test node
   class TestNode extends BaseNode {
     constructor(id: string, metadata?: NodeMetadata) {
@@ -56,7 +56,7 @@ describe('DisabledAutoExecution', () => {
     const disabledNode = new DisabledAutoExecNode('disabled-1')
     disabledNode.initialize()
     flow.addNode(disabledNode)
-    
+
     // Add a normal node so flow can complete
     const normalNode = new TestNode('normal-1')
     normalNode.initialize()
@@ -77,7 +77,7 @@ describe('DisabledAutoExecution', () => {
 
     // Create and run engine
     const engine = new ExecutionEngine(flow, context)
-    
+
     let nodeExecuted = false
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       if (event.data.node.id === 'disabled-1') {
@@ -113,7 +113,7 @@ describe('DisabledAutoExecution', () => {
 
     // Create and run engine
     const engine = new ExecutionEngine(flow, context)
-    
+
     let nodeExecuted = false
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       if (event.data.node.id === 'disabled-2') {
@@ -130,25 +130,25 @@ describe('DisabledAutoExecution', () => {
   it('should handle mixed nodes correctly', async () => {
     // Create flow with both normal and disabled-auto-exec nodes
     const flow = new Flow({ name: 'test-flow' })
-    
+
     const normalNode = new TestNode('normal-1')
     const disabledNode = new DisabledAutoExecNode('disabled-3')
     const dependentNode = new TestNode('dependent-1')
-    
+
     flow.addNode(normalNode)
     flow.addNode(disabledNode)
     flow.addNode(dependentNode)
-    
+
     // Initialize nodes first
     normalNode.initialize()
     disabledNode.initialize()
     dependentNode.initialize()
-    
+
     // Create edges: normalNode -> dependentNode, disabledNode -> dependentNode
     const normalOutPort = normalNode.getFlowOutPort()
     const disabledOutPort = disabledNode.getFlowOutPort()
     const dependentInPort = dependentNode.getFlowInPort()
-    
+
     if (normalOutPort && dependentInPort) {
       const edge1 = new Edge(
         'edge-1',
@@ -159,7 +159,7 @@ describe('DisabledAutoExecution', () => {
       )
       flow.addEdge(edge1)
     }
-    
+
     if (disabledOutPort && dependentInPort) {
       const edge2 = new Edge(
         'edge-2',
@@ -186,7 +186,7 @@ describe('DisabledAutoExecution', () => {
 
     // Create and run engine
     const engine = new ExecutionEngine(flow, context)
-    
+
     const executedNodes: string[] = []
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       executedNodes.push(event.data.node.id)
@@ -197,7 +197,7 @@ describe('DisabledAutoExecution', () => {
     // Normal node should execute, disabled node should not
     expect(executedNodes).toContain('normal-1')
     expect(executedNodes).not.toContain('disabled-3')
-    
+
     // Dependent node should NOT execute because disabled node never completes
     // (all dependencies must be satisfied for a node to execute)
     expect(executedNodes).not.toContain('dependent-1')

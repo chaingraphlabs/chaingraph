@@ -242,7 +242,9 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
           <div className="text-sm space-y-1">
             <div>Child execution spawned</div>
             <Badge variant="secondary" className="text-xs font-normal">
-              Event: {(event.data as any).eventName}
+              Event:
+              {' '}
+              {(event.data as any).eventName}
             </Badge>
           </div>
         )
@@ -252,7 +254,9 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
           <div className="text-sm space-y-1">
             <div>Child execution completed</div>
             <Badge variant="outline" className="text-xs font-normal">
-              Event: {(event.data as any).eventName}
+              Event:
+              {' '}
+              {(event.data as any).eventName}
             </Badge>
           </div>
         )
@@ -263,7 +267,9 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
             <div>Child execution failed</div>
             <Badge variant="destructive" className="text-xs font-normal">
               <AlertCircle className="w-3 h-3 mr-1" />
-              Event: {(event.data as any).eventName}
+              Event:
+              {' '}
+              {(event.data as any).eventName}
             </Badge>
           </div>
         )

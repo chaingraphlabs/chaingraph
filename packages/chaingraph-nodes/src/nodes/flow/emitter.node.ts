@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { EmittedEventContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, ObjectSchema, PortObject, String, Title } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -38,7 +38,7 @@ class EventEmitterNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const eventName = this.eventData.eventName
     console.log(`[EventEmitterNode] Executing with eventName: ${eventName}`)
-    
+
     if (!eventName) {
       throw new Error('Event name is required to emit an event')
     }
