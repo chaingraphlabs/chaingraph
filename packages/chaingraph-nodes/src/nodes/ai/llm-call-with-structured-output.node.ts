@@ -278,7 +278,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     const llm = this.createLLMInstance()
 
     // Bind structured output to the model
-    const modelWithStructuredOutput = llm.withStructuredOutput(
+    const modelWithStructuredOutput = llm.withStructuredOutput<Record<string, any>>(
       zodSchema,
       {
         strict: true,
