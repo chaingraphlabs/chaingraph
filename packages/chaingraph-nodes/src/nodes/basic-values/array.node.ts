@@ -120,11 +120,6 @@ class ArrayNode extends BaseNode {
     // Generate title for the array port based on targetPorts title otherwise the underlying type
     const title = `Array of ${event.targetPort.getConfig().title || underlyingType.type}`
 
-    // If the underlying type is an array, we use the the itemConfig instead of arry config
-    if (underlyingType.type === 'array') {
-      underlyingType = underlyingType.itemConfig
-    }
-
     // If finally the underlying type is any or stream we dont use the config for the array port
     if (['any', 'stream'].includes(underlyingType.type)) {
       // TODO: Find away to disconnect port
