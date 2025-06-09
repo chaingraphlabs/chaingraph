@@ -41,6 +41,8 @@ export class ExecutionService {
   private childExecutions: Map<string, Set<string>> = new Map() // parentId -> Set<childId>
   // Use event emitters for child completion notifications
   private childCompletionEmitters: Map<string, EventEmitter> = new Map() // parentId -> EventEmitter
+  // Maximum execution depth to prevent infinite cycles
+  private readonly MAX_EXECUTION_DEPTH = 10
 
   constructor(
     private readonly store: IExecutionStore,
@@ -52,8 +54,16 @@ export class ExecutionService {
     integrations?: IntegrationContext,
     parentExecutionId?: string,
     eventData?: EmittedEventContext,
+    parentDepth: number = 0,
   ): Promise<ExecutionInstance> {
     const clonedFlow = flow.clone() as Flow
+    const currentDepth = parentDepth + 1
+
+    // Check for maximum depth
+    if (currentDepth > this.MAX_EXECUTION_DEPTH) {
+      console.warn(`[createExecution] Maximum execution depth (${this.MAX_EXECUTION_DEPTH}) exceeded. Preventing cycle at depth ${currentDepth}`)
+      throw new Error(`Maximum execution depth exceeded: ${currentDepth}. This may indicate an infinite event loop.`)
+    }
 
     const id = generateExecutionID()
     const abortController = new AbortController()
@@ -66,6 +76,7 @@ export class ExecutionService {
       parentExecutionId,
       eventData,
       !!parentExecutionId, // isChildExecution
+      currentDepth,
     )
 
     // Enable event support for all executions
@@ -82,22 +93,19 @@ export class ExecutionService {
       status: ExecutionStatus.Created,
       createdAt: new Date(),
       parentExecutionId,
+      executionDepth: currentDepth,
     }
 
-    // Set up event callback for parent executions
-    if (!parentExecutionId) {
-      engine.setEventCallback(async (ctx) => {
-        await this.processEmittedEvents(instance)
-      })
-    }
+    // Set up event callback for all executions to allow cycles
+    engine.setEventCallback(async (ctx) => {
+      await this.processEmittedEvents(instance)
+    })
 
     await this.store.create(instance)
 
-    // Setup event queue immediately for parent executions
+    // Setup event queue for all executions
     // This ensures the queue exists when subscriptions are created
-    if (!parentExecutionId) {
-      this.setupEventHandling(instance)
-    }
+    this.setupEventHandling(instance)
 
     // Track parent-child relationship
     if (parentExecutionId) {
@@ -148,11 +156,9 @@ export class ExecutionService {
       // Start execution
       await instance.engine.execute()
 
-      // Wait for child executions if this is a parent execution
-      if (!instance.parentExecutionId) {
-        console.log(`[startExecution] Checking for child executions of parent ${id}`)
-        await this.waitForChildExecutions(id)
-      }
+      // Wait for child executions (all executions can have children now)
+      console.log(`[startExecution] Checking for child executions of ${id}`)
+      await this.waitForChildExecutions(id)
 
       // Cleanup
       await eventQueue.close()
@@ -404,15 +410,44 @@ export class ExecutionService {
       payload: event.data,
     }
 
-    // Create child execution
-    const childInstance = await this.createExecution(
-      parentInstance.flow,
-      parentInstance.engine.getOptions(),
-      parentInstance.context.integrations,
-      parentInstance.id,
-      eventContext,
-    )
-    console.log(`Spawning child execution ${childInstance.id} for event ${event.type}`)
+    console.log(`[spawnChildExecutionForEvent] Parent execution depth: ${parentInstance.executionDepth}`)
+    
+    // Create child execution with parent's depth
+    let childInstance: ExecutionInstance
+    try {
+      childInstance = await this.createExecution(
+        parentInstance.flow,
+        parentInstance.engine.getOptions(),
+        parentInstance.context.integrations,
+        parentInstance.id,
+        eventContext,
+        parentInstance.executionDepth,
+      )
+      console.log(`[spawnChildExecutionForEvent] Child execution ${childInstance.id} created at depth ${childInstance.executionDepth} for event ${event.type}`)
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Maximum execution depth exceeded')) {
+        console.warn(`[spawnChildExecutionForEvent] Cycle detected! ${error.message}`)
+        // Emit a special event to indicate cycle detection
+        const parentEventQueue = this.eventQueues.get(parentInstance.id)
+        if (parentEventQueue) {
+          await parentEventQueue.publish(
+            new ExecutionEventImpl(
+              Date.now(),
+              ExecutionEventEnum.FLOW_FAILED,
+              new Date(),
+              {
+                error: {
+                  message: `Cycle detected: ${error.message}`,
+                  type: 'CYCLE_DETECTED',
+                },
+              },
+            ),
+          )
+        }
+        return
+      }
+      throw error
+    }
 
     // Update event with child execution ID
     event.childExecutionId = childInstance.id

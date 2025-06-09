@@ -48,6 +48,7 @@ export interface ExecutionInstance {
     nodeId?: string
   }
   parentExecutionId?: string
+  executionDepth: number
 }
 
 export interface ExecutionEventSubscription {

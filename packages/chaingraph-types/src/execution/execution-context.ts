@@ -48,6 +48,7 @@ export class ExecutionContext {
   public readonly eventData?: EmittedEventContext
   public readonly isChildExecution?: boolean
   public currentNodeId?: string // Track current executing node for event emission
+  public readonly executionDepth: number // Track depth to prevent infinite cycles
 
   // TODO: chat api gql client
   // TODO: agent session
@@ -63,6 +64,7 @@ export class ExecutionContext {
     parentExecutionId?: string,
     eventData?: EmittedEventContext,
     isChildExecution?: boolean,
+    executionDepth?: number,
   ) {
     this.executionId = executionId || uuidv4()
     this.startTime = new Date()
@@ -76,6 +78,7 @@ export class ExecutionContext {
     this.parentExecutionId = parentExecutionId
     this.eventData = eventData
     this.isChildExecution = isChildExecution
+    this.executionDepth = executionDepth || 0
     if (this.eventData || this.parentExecutionId) {
       this.emittedEvents = []
     }
