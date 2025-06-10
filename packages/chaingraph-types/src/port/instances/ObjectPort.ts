@@ -8,12 +8,15 @@
 
 import type {
   IObjectSchema,
+  IPort,
   IPortConfig,
   ObjectPortConfig,
   ObjectPortValue,
 } from '../../port'
+
 import type { JSONValue } from '../../utils/json'
 import { BasePort, ObjectPortPlugin } from '../../port'
+import { generatePortID } from '../id-generate'
 
 /**
  * Concrete implementation of an Object Port.
@@ -297,6 +300,24 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
     if (this.value && Object.hasOwn(this.value, field)) {
       delete this.value[field]
     }
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<ObjectPortConfig<S>> {
+    const newPortID = generatePortID(this.config.key || this.config.id || '')
+    const newConfig: ObjectPortConfig<S> = {
+      ...this.config,
+      id: newPortID,
+      schema: {
+        ...this.config.schema,
+        properties: { ...this.config.schema.properties },
+      },
+    }
+
+    return new ObjectPort<S>(newConfig)
   }
 }
 

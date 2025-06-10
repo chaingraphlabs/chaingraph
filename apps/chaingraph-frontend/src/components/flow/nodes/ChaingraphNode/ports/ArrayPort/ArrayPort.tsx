@@ -20,6 +20,7 @@ import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortT
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, memo, useCallback, useMemo, useState } from 'react'
@@ -125,19 +126,19 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   }, [node.id, port.id, config.itemConfig.defaultValue, appendElementArrayPort])
 
   const handleToggleCollapsible = useCallback(() => {
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: { collapsed: config.ui?.collapsed === undefined ? true : !config.ui.collapsed },
     })
-  }, [node.id, port.id, config.ui?.collapsed, updatePortUI])
+  }, [node.id, port.id, config.ui?.collapsed])
 
   // Handle item config updates
   const handleItemConfigUpdate = useCallback((updatedConfig: ArrayPortConfig) => {
     // Update using context events - this leverages the store's logic
     // for handling complex port updates
     console.debug('Updating item config:', updatedConfig)
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: { ...config.ui },
@@ -149,14 +150,14 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
       portId: port.id,
       value: port.getValue(), // Keep the same array values
     })
-  }, [node.id, config.ui, port, updatePortUI, updatePortValue])
+  }, [node.id, config.ui, port, updatePortValue])
 
   // Handle saving from the schema editor
   const handleSchemaEditorSave = useCallback((newItemConfig: IPortConfig) => {
     console.debug('Schema editor save:', newItemConfig)
 
     // First update the port configuration
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: {
@@ -242,6 +243,8 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
             )}
             isCollapsible={Boolean(isMutable && values.length > 0)}
             onClick={handleToggleCollapsible}
+            node={node}
+            port={port as IPort}
           />
 
           <AnimatePresence initial={false}>

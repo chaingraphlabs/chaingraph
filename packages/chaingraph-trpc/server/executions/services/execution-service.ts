@@ -12,6 +12,8 @@ import type {
   ExecutionEventHandler,
   ExecutionEventImpl,
   Flow,
+  INode,
+
 } from '@badaitech/chaingraph-types'
 import type { IExecutionStore } from '../store/execution-store'
 import type { ExecutionInstance, ExecutionOptions, ExecutionState } from '../types'
@@ -54,6 +56,11 @@ export class ExecutionService {
       undefined,
       id,
       badAIContext,
+      (nodeId: string) => clonedFlow.nodes.get(nodeId),
+      (predicate: (node: INode) => boolean) => {
+        // todo: possible to optimize somehow?
+        return Array.from(clonedFlow.nodes.values()).filter(predicate)
+      },
     )
     const engine = new ExecutionEngine(clonedFlow, context, options)
 

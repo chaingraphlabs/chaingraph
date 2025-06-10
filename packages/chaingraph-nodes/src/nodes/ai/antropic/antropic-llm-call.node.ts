@@ -6,11 +6,29 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type * as BetaAPI from '@anthropic-ai/sdk'
+// import type { BetaToolUnion } from '@anthropic-ai/sdk/src/resources/beta/messages/messages'
+import type {
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import type {
   ContentBlockBase,
+  Tool,
 } from './types'
+import { Buffer } from 'node:buffer'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
+import {
+  Boolean,
+  ObjectSchema,
+} from '@badaitech/chaingraph-types'
+import {
+  findPort,
+} from '@badaitech/chaingraph-types'
+
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -78,6 +96,47 @@ const TAGS = {
   },
 }
 
+@ObjectSchema({
+  description: 'Beta features flags for Anthropic LLM Call Node',
+})
+class AntropicLLMCallNodeFeatures {
+  @Boolean({
+    title: 'code-execution-2025-05-22',
+    description: 'Code execution support (beta)\n'
+      + 'Claude 3.7/4 can execute code in Python, JavaScript, and TypeScript. This allows for dynamic code execution within the conversation.',
+    defaultValue: false,
+  })
+  codeExecution20250522: boolean = false
+
+  @Boolean({
+    title: 'web-search',
+    description: 'When you add the web search tool to your API request:\n'
+      + '\n'
+      + 'Claude decides when to search based on the prompt.\n'
+      + 'The API executes the searches and provides Claude with the results. This process may repeat multiple times throughout a single request.\n'
+      + 'At the end of its turn, Claude provides a final response with cited sources.',
+    defaultValue: false,
+  })
+  webSearchTool: boolean = false
+
+  // files-api-2025-04-14
+  @Boolean({
+    title: 'files-api-2025-04-14',
+    description: 'Code execution can analyze files uploaded via the Files API, such as CSV files, Excel files, and other data formats. This allows Claude to read, process, and generate insights from your data. You can pass multiple files per request.',
+    defaultValue: false,
+  })
+  filesApi20250414: boolean = false
+
+  // interleaved-thinking-2025-05-14
+  @Boolean({
+    title: 'interleaved-thinking-2025-05-14',
+    description: 'Interleaved thinking\n'
+      + 'Claude 4 models support interleaving tool use with extended thinking, allowing for more natural conversations where tool uses and responses can be mixed with regular messages.',
+    defaultValue: false,
+  })
+  interleavedThinking20250514: boolean = false
+}
+
 @Node({
   type: 'AntropicLLMCallNode',
   title: 'Anthropic LLM Call',
@@ -94,6 +153,14 @@ export class AntropicLLMCallNode extends BaseNode {
     required: true,
   })
   config: AntropicConfig = new AntropicConfig()
+
+  @Input()
+  @PortObject({
+    title: 'Features',
+    description: 'Features flags for the Anthropic LLM Call Node',
+    schema: AntropicLLMCallNodeFeatures,
+  })
+  features: AntropicLLMCallNodeFeatures = new AntropicLLMCallNodeFeatures()
 
   @Input()
   @PortArray({
@@ -168,6 +235,13 @@ export class AntropicLLMCallNode extends BaseNode {
           tool_use_id: toolResultBlock.tool_use_id,
           content: toolResultBlock.content,
         }
+      } else if (block.type === 'tool_result') {
+        const toolResultBlock = block as ToolResultBlock
+        return {
+          type: 'tool_result',
+          tool_use_id: toolResultBlock.tool_use_id,
+          content: toolResultBlock.content,
+        }
       }
 
       throw new Error(`Unsupported content block type: ${block.type}`)
@@ -177,7 +251,7 @@ export class AntropicLLMCallNode extends BaseNode {
   /**
    * Process complete response content
    */
-  private processResponseContent(message: Anthropic.Message): void {
+  private processResponseContent(message: Anthropic.Beta.Messages.BetaMessage): void {
     if (!message.content)
       return
 
@@ -259,17 +333,6 @@ export class AntropicLLMCallNode extends BaseNode {
         timeout: 10 * 60 * 1000, // 10 minutes
       })
 
-      // Log the upcoming request
-      await context.sendEvent({
-        index: 0,
-        type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-        timestamp: new Date(),
-        data: {
-          node: this.clone(),
-          log: `Executing Anthropic LLM call with model: ${this.config.model}`,
-        },
-      })
-
       if (this.config.stream) {
         return {
           backgroundActions: [() => this.handleStreamingExecution(client, context)],
@@ -313,9 +376,14 @@ export class AntropicLLMCallNode extends BaseNode {
   /**
    * Build request parameters for Anthropic API
    */
-  private buildRequestParameters(messages: Anthropic.MessageParam[]): Anthropic.MessageCreateParams {
+  private buildRequestParameters(
+    context: ExecutionContext,
+    messages: Anthropic.MessageParam[],
+  ): Anthropic.Beta.MessageCreateParams {
+    // TODO: Prefill assistant message with the prefix if needed
+
     // Build message creation parameters
-    const params: Anthropic.MessageCreateParams = {
+    const params: Anthropic.Beta.MessageCreateParams = {
       model: this.config.model,
       max_tokens: this.config.max_tokens + (this.config.thinking?.budget_tokens || 0),
       messages,
@@ -357,22 +425,71 @@ export class AntropicLLMCallNode extends BaseNode {
     }
 
     if (this.config.tools && this.config.tools.length > 0) {
-      if (this.config.tool_choice) {
-        // params.tool_choice = {
-        //   type: this.config.tool_choice.type,
-        //   disable_parallel_tool_use: this.config.tool_choice.disable_parallel_tool_use,
-        // }
+      // TODO: do we need to support tool_choice?
+      // if (this.config.tool_choice) {
+      // params.tool_choice = {
+      //   type: this.config.tool_choice.type,
+      //   disable_parallel_tool_use: this.config.tool_choice.disable_parallel_tool_use,
+      // }
+      // }
+
+      function convertToolToToolDefinition(tool: Tool): Anthropic.Beta.BetaToolUnion {
+        const nodeId = tool.chaingraph_node_id
+        if (!nodeId) {
+          throw new Error('Tool chaingraph_node_id is required to convert tool to definition')
+        }
+
+        if (context.getNodeById === undefined) {
+          throw new Error('Execution context does not support getNodeById method')
+        }
+
+        const node = context.getNodeById(nodeId)
+        if (!node) {
+          throw new Error(`Node with ID ${nodeId} not found in context`)
+        }
+
+        return {
+          type: 'custom',
+          name: tool.name,
+          description: tool.description,
+          input_schema: {
+            type: tool.input_schema.type as 'object',
+            properties: tool.input_schema.properties,
+            required: tool.input_schema.required,
+          },
+        }
       }
 
-      // params.tools = this.config.tools.map(tool => ({
-      //   name: tool.name,
-      //   description: tool.description,
-      //   input_schema: {
-      //     type: tool.input_schema.type,
-      //     properties: tool.input_schema.properties,
-      //     required: tool.input_schema.required,
-      //   },
-      // }))
+      params.tools = this.config.tools.map((tool) => {
+        return convertToolToToolDefinition(tool)
+      })
+    }
+
+    if (this.features.codeExecution20250522) {
+      if (!params.tools) {
+        params.tools = []
+      }
+
+      params.tools.push(
+        {
+          type: 'code_execution_20250522',
+          name: 'code_execution',
+        },
+      )
+    }
+
+    if (this.features.webSearchTool) {
+      if (!params.tools) {
+        params.tools = []
+      }
+
+      params.tools.push(
+        {
+          type: 'web_search_20250305',
+          name: 'web_search',
+          max_uses: 5,
+        },
+      )
     }
 
     return params
@@ -386,8 +503,6 @@ export class AntropicLLMCallNode extends BaseNode {
     context: ExecutionContext,
   ): Promise<void> {
     try {
-      console.log(`[ANTHROPIC] Streaming enabled, using stream API, config: ${JSON.stringify(this.config)}`)
-
       // Prepare initial messages from input
       const conversationHistory = (this.messages.length > 0
         ? this.messages.map(msg => ({
@@ -405,17 +520,18 @@ export class AntropicLLMCallNode extends BaseNode {
 
       // This tracks the feedback loop when tools are used
       let feedbackLoopCounter = 0
-      const MAX_FEEDBACK_LOOPS = 5 // Prevent infinite loops
+      const MAX_FEEDBACK_LOOPS = 20 // Prevent infinite loops
 
       do {
         // Build request parameters with current conversation history
-        const params = this.buildRequestParameters(conversationHistory)
+        const params = this.buildRequestParameters(context, conversationHistory)
 
         // Process the current message stream
         const result = await this.processMessageStream(client, params, context)
 
         // If the model requested a tool call and we have tools to execute
-        if (result.stopReason === 'tool_use' && result.toolUseBlocks.length > 0
+        if (result.stopReason === 'tool_use'
+          && result.toolUseBlocks.length > 0
           && feedbackLoopCounter < MAX_FEEDBACK_LOOPS) {
           // Save the assistant message that contains tool use
           const assistantMessage = {
@@ -423,33 +539,11 @@ export class AntropicLLMCallNode extends BaseNode {
             content: this.reconstructAssistantMessageContent(result),
           }
 
-          // Add debug log to inspect the reconstructed message
-          await context.sendEvent({
-            index: 0,
-            type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-            timestamp: new Date(),
-            data: {
-              node: this.clone(),
-              log: `Reconstructed assistant message content: ${JSON.stringify(assistantMessage.content)}`,
-            },
-          })
-
           // Add the assistant message to conversation history
           conversationHistory.push(assistantMessage)
 
-          // Log that we're going to execute tools
-          await context.sendEvent({
-            index: 0,
-            type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-            timestamp: new Date(),
-            data: {
-              node: this.clone(),
-              log: `LLM requested tool execution: ${result.toolUseBlocks.map(block => block.name).join(', ')}`,
-            },
-          })
-
           // Execute the tools and get results
-          const toolResults = await this.executeTools(result.toolUseBlocks, context)
+          const toolResults = await this.executeTools(context, result.toolUseBlocks)
 
           // Add the tool results as a new user message to the conversation
           conversationHistory.push({
@@ -565,7 +659,7 @@ export class AntropicLLMCallNode extends BaseNode {
    */
   private async processMessageStream(
     client: Anthropic,
-    params: Anthropic.MessageCreateParams,
+    params: Anthropic.Beta.MessageCreateParams,
     context: ExecutionContext,
   ): Promise<{
       stopReason: string | null
@@ -573,11 +667,24 @@ export class AntropicLLMCallNode extends BaseNode {
       thinkingBlocks: ThinkingResponseBlock[]
       toolUseBlocks: ToolUseResponseBlock[]
     }> {
+    const betas: Array<BetaAPI.Anthropic.AnthropicBeta> = []
+
+    if (this.features.codeExecution20250522) {
+      betas.push('code-execution-2025-05-22')
+    }
+    if (this.features.filesApi20250414) {
+      betas.push('files-api-2025-04-14')
+    }
+    if (this.features.interleavedThinking20250514) {
+      betas.push('interleaved-thinking-2025-05-14')
+    }
+
     // Use Anthropic's streaming API
-    const stream = await client.messages.create(
+    const stream = await client.beta.messages.create(
       {
         ...params,
         stream: true,
+        betas: betas.length > 0 ? betas : undefined,
       },
       {
         headers: {
@@ -607,16 +714,17 @@ export class AntropicLLMCallNode extends BaseNode {
         break
       }
 
-      console.log(`[ANTHROPIC] Streaming event type: ${event.type}, data: ${JSON.stringify(event)}`)
-
       // Process the streaming event based on its type
       if (event.type === 'content_block_start') {
-        await this.handleContentBlockStart(event, contentBlocks, jsonAccumulators)
+        console.log(`[ANTHROPIC] Content block start:  ${event.type}, data: ${JSON.stringify(event)}`)
+        await this.handleContentBlockStart(event, contentBlocks, jsonAccumulators, client)
       } else if (event.type === 'content_block_delta') {
         await this.handleContentBlockDelta(event, contentBlocks, jsonAccumulators)
       } else if (event.type === 'content_block_stop') {
+        console.log(`[ANTHROPIC] Content block stop:  ${event.type}, data: ${JSON.stringify(event)}`)
         await this.handleContentBlockStop(event, contentBlocks, jsonAccumulators)
       } else if (event.type === 'message_delta') {
+        console.log(`[ANTHROPIC] Message delta:  ${event.type}, data: ${JSON.stringify(event)}`)
         // Update token usage if available
         if (event.usage) {
           this.tokenUsage.input_tokens = event.usage.input_tokens || 0
@@ -628,8 +736,11 @@ export class AntropicLLMCallNode extends BaseNode {
           messageStopReason = event.delta.stop_reason
         }
       } else if (event.type === 'message_stop') {
+        console.log(`[ANTHROPIC] Message stop:  ${event.type}, data: ${JSON.stringify(event)}`)
         // End of message, organize the content blocks into their proper categories
         this.organizeContentBlocks(contentBlocks)
+      } else {
+        console.warn(`Unhandled event type: ${event.type}, data: ${JSON.stringify(event)}`)
       }
 
       // await with zero delay to yield control
@@ -654,8 +765,8 @@ export class AntropicLLMCallNode extends BaseNode {
    * Execute tools and return their results
    */
   private async executeTools(
-    toolUseBlocks: ToolUseResponseBlock[],
     context: ExecutionContext,
+    toolUseBlocks: ToolUseResponseBlock[],
   ): Promise<ToolResultBlock[]> {
     const toolResults: ToolResultBlock[] = []
 
@@ -680,15 +791,60 @@ export class AntropicLLMCallNode extends BaseNode {
           throw new Error(`Tool definition not found for: ${toolUseBlock.name}`)
         }
 
-        // In a real implementation, you would execute the tool here
-        // For now, we'll provide a mock result for demonstration
+        if (!toolDefinition.chaingraph_node_type) {
+          throw new Error(`Tool definition for ${toolUseBlock.name} does not have a chaingraph_node_type defined, so it cannot be executed.`)
+        }
+
         let toolResult: string
 
-        // Simple mock implementations for common tools
-        if (toolUseBlock.name === 'weather_today') {
-          toolResult = `Weather for ${toolUseBlock.input.city}, ${toolUseBlock.input.country}: 72°F and sunny.`
-        } else {
-          toolResult = `Mocked result for ${toolUseBlock.name} with input: ${JSON.stringify(toolUseBlock.input)}`
+        try {
+          if (!context.getNodeById || !toolDefinition.chaingraph_node_id) {
+            throw new Error('Execution context does not support getNodeById method or toolDefinition.chaingraph_node_id is missing')
+          }
+
+          const originalNodeToExecute = context.getNodeById(toolDefinition.chaingraph_node_id)
+          if (!originalNodeToExecute) {
+            throw new Error(`Node with ID ${toolDefinition.chaingraph_node_id} not found in context`)
+          }
+
+          const nodeToExecute = originalNodeToExecute.clone() as BaseNode
+
+          // const nodeToExecute = NodeRegistry.getInstance().createNode(toolDefinition.chaingraph_node_type)
+          // nodeToExecute.initialize()
+
+          // fill the node's input ports with the tool use block input
+          for (const [key, value] of Object.entries(toolUseBlock.input)) {
+            const port = findPort(nodeToExecute, (port) => {
+              return port.getConfig().key === key
+                && port.getConfig().direction === 'input'
+                && !port.isSystem()
+                && !port.getConfig().parentId
+            })
+
+            if (port) {
+              port.setValue(value)
+              // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+            } else {
+              throw new Error(`Port ${key} not found in tool node ${toolDefinition.chaingraph_node_type}`)
+            }
+          }
+
+          const executionResult = await nodeToExecute.execute(context)
+          if (executionResult.backgroundActions && executionResult.backgroundActions.length > 0) {
+            await Promise.all(executionResult.backgroundActions.map(action => action()))
+          }
+
+          // Find all outputs of the nodeToExecute and serialize values to JSON
+          const outputValues = Object.fromEntries(
+            Array.from(nodeToExecute.ports.values())
+              .filter(port => port.getConfig().direction === 'output' && !port.isSystem())
+              .map(port => [port.getConfig().key, port.getValue()]),
+          )
+
+          // Use the collected outputs as the tool result
+          toolResult = JSON.stringify(outputValues)
+        } catch (error: any) {
+          toolResult = `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`
         }
 
         // Create a tool result block
@@ -753,15 +909,15 @@ export class AntropicLLMCallNode extends BaseNode {
     const MAX_ITERATIONS = 5
     let iterationCount = 0
 
-    let finalResponse: Anthropic.Message | null = null
+    let finalResponse: Anthropic.Beta.Messages.BetaMessage | null = null
 
     // Tool feedback loop
     while (iterationCount < MAX_ITERATIONS) {
       // Build parameters with current conversation history
-      const params = this.buildRequestParameters(conversationHistory)
+      const params = this.buildRequestParameters(context, conversationHistory)
 
       // Execute the non-streaming request
-      const response = await client.messages.create({
+      const response = await client.beta.messages.create({
         ...params,
         stream: false,
       })
@@ -804,7 +960,7 @@ export class AntropicLLMCallNode extends BaseNode {
           })
 
           // Execute the tools
-          const toolResults = await this.executeTools(toolUseBlocks, context)
+          const toolResults = await this.executeTools(context, toolUseBlocks)
 
           // Add tool results as a new user message
           conversationHistory.push({
@@ -846,6 +1002,7 @@ export class AntropicLLMCallNode extends BaseNode {
     event: any,
     contentBlocks: Record<number, TextResponseBlock | ThinkingResponseBlock | ToolUseResponseBlock>,
     jsonAccumulators: Record<number, string>,
+    client: Anthropic,
   ): Promise<void> {
     const index = event.index
 
@@ -884,6 +1041,124 @@ export class AntropicLLMCallNode extends BaseNode {
       contentBlocks[index] = toolUseBlock
 
       this.responseStream.send(`${TAGS.TOOL_USE.OPEN}${TAGS.TOOL_USE.ID.OPEN}${event.content_block.id}${TAGS.TOOL_USE.ID.CLOSE}${TAGS.TOOL_USE.NAME.OPEN}${event.content_block.name}${TAGS.TOOL_USE.NAME.CLOSE}`)
+    } else if (event.content_block.type === 'server_tool_use') {
+      const content = event.content_block
+      // export interface BetaServerToolUseBlock {
+      //   id: string;
+      //
+      //   input: unknown;
+      //
+      //   name: 'web_search' | 'code_execution';
+      //
+      //   type: 'server_tool_use';
+      // }
+
+      console.log(`[ANTHROPIC] Received server tool use block: ${JSON.stringify(event)}`)
+
+      const toolUseBlock = new ToolUseResponseBlock()
+      toolUseBlock.index = index
+      toolUseBlock.id = event.content_block.id
+      toolUseBlock.name = event.content_block.name
+      toolUseBlock.input = {} // Initialize empty input object that will be filled by JSON deltas
+
+      // Initialize the JSON accumulator for this tool
+      jsonAccumulators[index] = ''
+
+      contentBlocks[index] = toolUseBlock
+
+      this.responseStream.send(`${TAGS.TOOL_USE.OPEN}${TAGS.TOOL_USE.ID.OPEN}${event.content_block.id}${TAGS.TOOL_USE.ID.CLOSE}${TAGS.TOOL_USE.NAME.OPEN}${event.content_block.name}${TAGS.TOOL_USE.NAME.CLOSE}`)
+    } else if (event.content_block.type === 'code_execution_tool_result') {
+      const contentItem = event.content_block
+      //
+      console.log(`[ANTHROPIC] Received code execution tool result block: ${JSON.stringify(event)}`)
+
+      const toolResult = contentItem.content || ''
+
+      // Create a tool result block
+      const toolResultBlock = new ToolResultBlock()
+      toolResultBlock.type = 'code_execution_tool_result'
+      toolResultBlock.tool_use_id = event.content_block.tool_use_id
+      toolResultBlock.content = JSON.stringify(toolResult)
+
+      function extractFileIds(response: any): string[] {
+        const fileIds: string[] = []
+        for (const item of response.content) {
+          if (item.type === 'code_execution_output') {
+            fileIds.push(item.file_id)
+          }
+        }
+        return fileIds
+      }
+
+      if (toolResult.content && typeof toolResult.content === 'object' && Array.isArray(toolResult.content)) {
+        // console.log(`[ANTHROPIC] Tool result content is an array: ${JSON.stringify(toolResult.content)}`)
+
+        const fileIds = extractFileIds(toolResult)
+        // console.log(`[ANTHROPIC] Extracted file IDs: ${JSON.stringify(fileIds)}`)
+        for (const fileId of fileIds) {
+          const fileMetadata = await client.beta.files.retrieveMetadata(fileId)
+          const fileContentResponse = await client.beta.files.download(fileId)
+          const fileContentBlob = await fileContentResponse.blob()
+
+          console.log(`Downloaded file: ${JSON.stringify(fileMetadata)}`)
+
+          // TODO: send file content to the attachments
+
+          // save the file content to the filesystem
+          const filePath = path.join(os.tmpdir(), fileMetadata.filename || `file-${fileId}`)
+          const fileStream = fs.createWriteStream(filePath)
+          fileStream.on('finish', () => {
+            console.log(`File saved to: ${filePath}`)
+          })
+
+          // Convert blob to buffer and write to file
+          const buffer = await fileContentBlob.arrayBuffer()
+          fileStream.write(Buffer.from(buffer))
+          fileStream.end()
+        }
+      }
+
+      // toolResults.push(toolResultBlock)
+      this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolResultBlock.tool_use_id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResultBlock.content}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
+
+      // TODO: needs to send tool result block to the output
+    } else if (event.content_block.type === 'web_search_tool_result') {
+      const contentItem = event.content_block
+      console.log(`[ANTHROPIC] Received web search execution tool result block: ${JSON.stringify(event)}`)
+
+      const toolResult = contentItem.content || {}
+
+      // Create a tool result block
+      const toolResultBlock = new ToolResultBlock()
+      toolResultBlock.type = 'web_search_tool_result'
+      toolResultBlock.tool_use_id = event.content_block.tool_use_id
+      toolResultBlock.content = JSON.stringify(toolResult)
+
+      let toolResultWithoutEncryptedContent: object | object[] = {}
+
+      if (toolResult && typeof toolResult === 'object' && !Array.isArray(toolResult)) {
+        toolResultWithoutEncryptedContent = {
+          ...toolResult,
+          encrypted_content: undefined, // TODO: handle encrypted content if needed
+        }
+      } else if (toolResult && Array.isArray(toolResult) && toolResult.length > 0) {
+        toolResultWithoutEncryptedContent = toolResult.map(item => ({
+          ...item,
+          encrypted_content: undefined, // TODO: handle encrypted content if needed
+        }))
+      } else {
+        console.warn(`[ANTHROPIC] Received web search tool result with unexpected content type: ${typeof toolResult}, content: ${JSON.stringify(toolResult)}`)
+        toolResultWithoutEncryptedContent = toolResult
+      }
+
+      console.log(`[ANTHROPIC] Tool result without encrypted content: ${JSON.stringify(toolResultWithoutEncryptedContent)}`)
+
+      this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolResultBlock.tool_use_id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${JSON.stringify(toolResultWithoutEncryptedContent)}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
+
+      // TODO: needs to send tool result block to the output
+      // like a: toolResults.push(toolResultBlock)
+    } else {
+      console.warn(`[ANTHROPIC] Received unknown content block type: ${event.content_block.type} at index ${index}`)
     }
   }
 
@@ -937,6 +1212,8 @@ export class AntropicLLMCallNode extends BaseNode {
         // Update the signature only if it's different
         thinkingBlock.signature = event.delta.signature || ''
       }
+    } else {
+      console.warn(`[ANTHROPIC] Received unknown content block delta type: ${event.delta.type} for block at index ${index}`)
     }
   }
 
@@ -945,7 +1222,7 @@ export class AntropicLLMCallNode extends BaseNode {
    */
   private async handleContentBlockStop(
     event: any,
-    contentBlocks: Record<number, TextResponseBlock | ThinkingResponseBlock | ToolUseResponseBlock>,
+    contentBlocks: Record<number, TextResponseBlock | ThinkingResponseBlock | ToolUseResponseBlock | any>,
     jsonAccumulators: Record<number, string>,
   ): Promise<void> {
     const index = event.index
@@ -967,17 +1244,24 @@ export class AntropicLLMCallNode extends BaseNode {
         } catch (e) {
           console.warn(`[ANTHROPIC] Failed to parse final tool input JSON: ${e}`)
         }
+      } else {
+        // If no JSON was accumulated, ensure input is an empty object
+        block.input = {}
+
+        console.warn(`[ANTHROPIC] No JSON input accumulated for tool use block at index ${index}, setting input to empty object.`)
       }
     }
 
-    // send </text>, </think>, or </tool_use> to indicate the end of the block
     if (block instanceof TextResponseBlock) {
+    // send </text>, </think>, or </tool_use> to indicate the end of the block
       // this.responseStream.send(TAGS.TEXT.CLOSE)
     } else if (block instanceof ThinkingResponseBlock) {
       this.responseStream.send(`${TAGS.THINK.CLOSE}`)
     } else if (block instanceof ToolUseResponseBlock) {
-      // Close the JSON input tag
-      this.responseStream.send(`${JSON.stringify(block.input, null, 2)}${TAGS.TOOL_USE.INPUT.CLOSE}${TAGS.TOOL_USE.CLOSE}`)
+      this.responseStream.send(`${JSON.stringify(block, null, 2)}${TAGS.TOOL_USE.INPUT.CLOSE}${TAGS.TOOL_USE.CLOSE}`)
+    } else {
+      console.warn(`[ANTHROPIC] Received stop event for unknown block type at index ${index}, typeof block: ${typeof block}, data json: ${JSON.stringify(block)}`)
+      console.warn(`[ANTHROPIC] Received stop event for unknown block type at index ${index}, typeof block: ${typeof block}, EVENT json: ${JSON.stringify(event)}`)
     }
   }
 

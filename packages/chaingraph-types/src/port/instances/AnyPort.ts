@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { AnyPortConfig, AnyPortValue, IPortConfig } from '../base'
+import type { AnyPortConfig, AnyPortValue, IPort, IPortConfig } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { AnyPortPlugin } from '../plugins'
 
 /**
@@ -166,6 +167,17 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    */
   public setUnderlyingType(underlyingType: IPortConfig | undefined) {
     this.config.underlyingType = underlyingType
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<AnyPortConfig> {
+    return new AnyPort({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
   }
 }
 

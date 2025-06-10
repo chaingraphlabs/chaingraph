@@ -21,6 +21,7 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { memo, useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -77,7 +78,18 @@ function BooleanPortComponent(props: BooleanPortProps) {
         'truncate',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className="cursor-pointer"
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? false : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
         </PortTitle>
 

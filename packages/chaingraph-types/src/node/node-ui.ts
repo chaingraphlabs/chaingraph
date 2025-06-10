@@ -34,6 +34,10 @@ export interface NodeUIState {
   isHighlighted?: boolean
   isDisabled?: boolean
   isErrorPortCollapsed?: boolean
+  isHidden?: boolean // indicates if the node is hidden in the UI, also used to skip it in the flow execution
+  // inheritanceNodeId: ID of the node this node inherits from, if not empty, this node
+  // should use the inheritanceNodeId for the edge connections
+  inheritanceNodeId?: string
 }
 
 /**

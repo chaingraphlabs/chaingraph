@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useStore } from '@xyflow/react'
 import {
 
@@ -110,14 +111,14 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       return
     }
 
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: {
         textareaDimensions: newDimensions,
       },
     })
-  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id, updatePortUI])
+  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
 
   if (ui?.hidden)
     return null
@@ -144,9 +145,26 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
         'truncate',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            // if port required and the value is empty, add a red underline
+            port.getConfig().required
+            && (!port.getValue() || !port.validate())
+            && port.getConfig().direction === 'input'
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
-          {' '}
         </PortTitle>
 
         {!ui?.isTextArea && needRenderEditor && (

@@ -7,25 +7,32 @@
  */
 
 import type {
+  AddElementArrayPortParams,
+  AddFieldObjectPortParams,
   PortContextValue,
+  RemoveElementArrayPortParams,
+  RemoveFieldObjectPortParams,
+  UpdatePortUIParams,
+  UpdatePortValueParams,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
-import { useDraggingNodeObjects, useNode } from '@/store/nodes/hooks/useNode'
+import { $activeFlowId } from '@/store/flow'
+import { requestUpdatePortUI } from '@/store/ports'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { filterPorts } from '@badaitech/chaingraph-types'
-import { Cross1Icon } from '@radix-ui/react-icons'
+import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useState } from 'react'
-import NodeBody from '../../NodeBody'
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddPropPopover } from './components/AddPropPopover'
 import PortField from './components/PortField'
 import { PortHeader } from './components/PortHeader'
+import { useNodeSchemaDrop } from './hooks'
 
 export interface ObjectPortProps {
   node: INode
@@ -84,6 +91,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     getEdgesForPort,
   } = context
 
+  const activeFlowId = useUnit($activeFlowId)
   const config = port.getConfig()
   const title = config.title || config.key || port.id
   const isSchemaMutable = config.isSchemaMutable
@@ -100,10 +108,6 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
-  const needRenderObject = useMemo(() => {
-    return connectedEdges.length === 0 || config.direction === 'output'
-  }, [config, connectedEdges])
-
   // Memoize child ports to prevent recalculation
   const childPorts = useMemo(() => {
     return Array.from(node.ports.values())
@@ -112,12 +116,12 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
 
   // Memoize callback functions
   const handleToggleCollapsible = useCallback(() => {
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: { collapsed: config.ui?.collapsed === undefined ? true : !config.ui.collapsed },
     })
-  }, [node.id, port.id, config.ui?.collapsed, updatePortUI])
+  }, [node.id, port.id, config.ui?.collapsed])
 
   const handleOpenPopover = useCallback(() => {
     setIsAddPropOpen(true)
@@ -136,59 +140,14 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     setIsAddPropOpen(false)
   }, [node.id, port.id, addFieldObjectPort])
 
-  const nodeSchemaMode = useMemo(() => {
-    return config?.metadata?.node_schema_mode === true
-  }, [config.metadata])
-
-  const rootNode = useNode(config.nodeId!)
-
-  const draggingNodes = useDraggingNodeObjects()
-  const nodeToCopySchema = useMemo(() => {
-    if (Object.keys(draggingNodes).length !== 1) {
-      console.log('draggingNodes.length != 1')
-      return undefined
-    }
-
-    const draggingNode = Object.values(draggingNodes)[0]
-    if (rootNode && draggingNode.id === rootNode.id) {
-      console.log('draggingNode.id === rootNode.id')
-      return undefined
-    }
-
-    // check if the node within the current nodes rectangle:
-    const rootNodeUI = rootNode?.metadata.ui
-    const draggingNodeUI = draggingNode.metadata.ui
-
-    // Return undefined if either node doesn't have position or dimensions
-    if (!rootNodeUI || !rootNodeUI?.position || !rootNodeUI?.dimensions
-      || !draggingNodeUI?.position || !draggingNodeUI?.dimensions) {
-      console.log('noooo dimensions or position')
-      return undefined
-    }
-
-    // Calculate overlapping area
-    const overlapX = Math.max(0, Math.min(
-      rootNodeUI.position.x + rootNodeUI.dimensions.width,
-      draggingNodeUI.position.x + draggingNodeUI.dimensions.width,
-    ) - Math.max(rootNodeUI.position.x, draggingNodeUI.position.x))
-
-    const overlapY = Math.max(0, Math.min(
-      rootNodeUI.position.y + rootNodeUI.dimensions.height,
-      draggingNodeUI.position.y + draggingNodeUI.dimensions.height,
-    ) - Math.max(rootNodeUI.position.y, draggingNodeUI.position.y))
-
-    const overlapArea = overlapX * overlapY
-    const draggingNodeArea = draggingNodeUI.dimensions.width * draggingNodeUI.dimensions.height
-
-    // Check if overlap is more than 50%
-    if (overlapArea / draggingNodeArea > 0.2) {
-      console.log('overlap area!!!!')
-      return draggingNode
-    }
-
-    console.log('in not fit!')
-    return undefined
-  }, [draggingNodes, rootNode])
+  // Use the new node schema drop hook
+  const {
+    isNodeSchemaCaptureEnabled,
+    previewNode,
+    capturedNode,
+    isShowingDropZone,
+    handleClearSchema,
+  } = useNodeSchemaDrop({ node, port, context })
 
   const defaultCategoryMetadata = {
     id: 'other',
@@ -212,29 +171,88 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     order: 7,
   }
 
-  const style = defaultCategoryMetadata.style
+  // Determine which node to display: preview during drag, captured after drop
+  const displayNode = useMemo(() => {
+    if (previewNode)
+      return previewNode // Show preview during drag
+    if (capturedNode)
+      return capturedNode // Show captured node after drop
+    return undefined // Show placeholder
+  }, [previewNode, capturedNode])
+
+  const needRenderObject = useMemo(() => {
+    return (connectedEdges.length === 0 || config.direction === 'output') && !isNodeSchemaCaptureEnabled
+  }, [config, connectedEdges, isNodeSchemaCaptureEnabled])
+
+  const style = defaultCategoryMetadata.style // TODO: Replace with actual style from context or config
   const Icon = getCategoryIcon(defaultCategoryMetadata.icon)
 
   // Memoize the entire context value to prevent unnecessary renders
   const portContextValue = useMemo(() => {
+    if (!displayNode) {
+      return {
+        updatePortValue: () => {},
+        updatePortUI: () => {},
+        addFieldObjectPort: () => {},
+        removeFieldObjectPort: () => {},
+        appendElementArrayPort: () => {},
+        removeElementArrayPort: () => {},
+        getEdgesForPort: () => [],
+      }
+    }
+
     return {
-      updatePortValue: () => {
+      updatePortValue: (params: UpdatePortValueParams) => {
+        return context.updatePortValue({
+          ...params,
+          nodeId: displayNode.id,
+        })
       },
-      updatePortUI: () => {
+      updatePortUI: (params: UpdatePortUIParams) => {
+        return context.updatePortUI({
+          ...params,
+          nodeId: displayNode.id,
+        })
       },
-      addFieldObjectPort: () => {
+      addFieldObjectPort: (params: AddFieldObjectPortParams) => {
+        return context.addFieldObjectPort({
+          ...params,
+          nodeId: displayNode.id,
+        })
       },
-      removeFieldObjectPort: () => {
+      removeFieldObjectPort: (params: RemoveFieldObjectPortParams) => {
+        return context.removeFieldObjectPort({
+          ...params,
+          nodeId: displayNode.id,
+        })
       },
-      appendElementArrayPort: () => {
+      appendElementArrayPort: (params: AddElementArrayPortParams) => {
+        return context.appendElementArrayPort({
+          ...params,
+          nodeId: displayNode.id,
+        })
       },
-      removeElementArrayPort: () => {
+      removeElementArrayPort: (params: RemoveElementArrayPortParams) => {
+        return context.removeElementArrayPort({
+          ...params,
+          nodeId: displayNode.id,
+        })
       },
-      getEdgesForPort: () => [],
+      getEdgesForPort: (portId: string) => {
+        return context.getEdgesForPort(portId)
+      },
+    }
+  }, [context, displayNode])
+
+  const dropNodeZoneRef = useRef<HTMLDivElement>(null)
+
+  // we need to check if the dropNodeZoneRef is defined then just log the dropNodeZoneRef absolute position
+  useEffect(() => {
+    if (dropNodeZoneRef.current) {
+      const rect = dropNodeZoneRef.current.getBoundingClientRect()
+      console.log('Drop zone position:', rect)
     }
   }, [])
-
-  // console.log(`Dragging nodes: ${JSON.stringify(draggingNodes)}`)
 
   if (ui?.hidden)
     return null
@@ -255,10 +273,92 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
           className={cn(
             'flex flex-col w-full',
             config.direction === 'output' ? 'items-end' : 'items-start',
-            'truncate',
           )}
         >
           <PortTitle>{title}</PortTitle>
+
+          {isNodeSchemaCaptureEnabled && (
+            <motion.div
+              className="w-full rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AnimatePresence mode="wait">
+                {isShowingDropZone
+                  ? (
+                      <motion.div
+                        key="dropzone"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 300,
+                          damping: 25,
+                        }}
+                        className={cn(
+                          'border-2 border-dashed border-muted-foreground/30 rounded-lg p-6',
+                          'flex flex-col items-center justify-center min-h-[150px]',
+                          'bg-muted/5 hover:bg-muted/10 transition-colors duration-300',
+                        )}
+                      >
+                        <motion.div
+                          animate={{
+                            y: [0, -5, 0],
+                            opacity: [0.5, 1, 0.5],
+                          }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 2.5,
+                            ease: 'easeInOut',
+                          }}
+                          className="mb-3 text-muted-foreground/60"
+                        >
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                        </motion.div>
+                        <motion.div
+                          className="text-sm font-medium text-muted-foreground text-center w-full px-4"
+                          animate={{ opacity: [0.7, 1, 0.7] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 3,
+                            ease: 'easeInOut',
+                          }}
+                        >
+                          <p className="break-words whitespace-normal">
+                            Drag and drop a node here to use its schema
+                          </p>
+                        </motion.div>
+                      </motion.div>
+                    )
+                  : (
+                      <div
+                        style={{
+                        // take actual width of the node from the displayNode
+                          width: '100%',
+                          height: displayNode ? `${(displayNode.metadata.ui?.dimensions?.height || 200) + 10}px` : '100%',
+                        }}
+                        ref={dropNodeZoneRef}
+                      >
+                      </div>
+                    )}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       )}
 
@@ -267,8 +367,10 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
           <PortHeader
             title={title}
             isOutput={isOutput}
-            isCollapsible={!!config.ui?.collapsed}
+            isCollapsed={!!config.ui?.collapsed}
             onClick={handleToggleCollapsible}
+            node={node}
+            port={port as IPort}
           />
 
           <AnimatePresence initial={false} mode="wait">
@@ -304,7 +406,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                 />
               ))}
 
-              {!nodeSchemaMode && isSchemaMutable && needRenderEditor && (
+              {!isNodeSchemaCaptureEnabled && isSchemaMutable && needRenderEditor && (
                 <Popover open={isAddPropOpen}>
                   <PopoverTrigger asChild>
                     <button
@@ -331,165 +433,6 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                   )}
                 </Popover>
               )}
-
-              {nodeSchemaMode && (
-                <motion.div
-                  className="w-full rounded-lg overflow-hidden"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-
-                  <AnimatePresence mode="wait">
-                    {!nodeToCopySchema
-                      ? (
-                          <motion.div
-                            key="dropzone"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{
-                              type: 'spring',
-                              stiffness: 300,
-                              damping: 25,
-                            }}
-                            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 flex flex-col items-center justify-center min-h-[120px] bg-muted/5 hover:bg-muted/10 transition-colors duration-300"
-                          >
-                            <motion.div
-                              animate={{
-                                y: [0, -5, 0],
-                                opacity: [0.5, 1, 0.5],
-                              }}
-                              transition={{
-                                repeat: Infinity,
-                                duration: 2.5,
-                                ease: 'easeInOut',
-                              }}
-                              className="mb-3 text-muted-foreground/60"
-                            >
-                              <svg
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                              </svg>
-                            </motion.div>
-                            <motion.span
-                              className="text-sm font-medium text-muted-foreground text-center"
-                              animate={{ opacity: [0.7, 1, 0.7] }}
-                              transition={{
-                                repeat: Infinity,
-                                duration: 3,
-                                ease: 'easeInOut',
-                              }}
-                            >
-                              Drag and drop a node here to use its schema
-                            </motion.span>
-                            <motion.span
-                              className="text-xs text-muted-foreground/60 mt-2"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: 0.5 }}
-                            >
-                              Make sure the node overlaps at least 50% with this area
-                            </motion.span>
-                          </motion.div>
-                        )
-                      : (
-                          <motion.div
-                            key="preview"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{
-                              type: 'spring',
-                              stiffness: 500,
-                              damping: 30,
-                            }}
-                            className="rounded-lg overflow-hidden border border-muted shadow-lg"
-                          >
-                            <motion.div
-                              className={cn(
-                                'px-3 py-2 flex items-center justify-between',
-                                'border-b rounded-t-lg',
-                              )}
-                              style={{
-                                background: style.dark.primary,
-                                borderBottom: `1px solid ${style.dark.secondary}`,
-                              }}
-                              whileHover={{
-                                backgroundColor: style.dark.secondary,
-                              }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <div className="flex items-center gap-2 min-w-0 relative">
-                                <motion.div
-                                  className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
-                                  style={{
-                                    background: `${style.dark.text}20`,
-                                  }}
-                                  whileHover={{ scale: 1.1 }}
-                                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                                >
-                                  <Icon
-                                    className="w-4 h-4"
-                                    style={{ color: style.dark.text }}
-                                  />
-                                </motion.div>
-
-                                <motion.h3
-                                  className="font-medium text-sm truncate"
-                                  style={{ color: style.dark.text }}
-                                  initial={{ x: -5, opacity: 0 }}
-                                  animate={{ x: 0, opacity: 1 }}
-                                  transition={{ delay: 0.1 }}
-                                >
-                                  {nodeToCopySchema.metadata.title || node.metadata.title}
-                                </motion.h3>
-                              </div>
-
-                              {/* Controls */}
-                              <div className="flex items-center gap-1">
-                                <motion.button
-                                  className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors nodrag"
-                                  style={{ color: style.dark.text }}
-                                  onClick={() => {
-                                  }}
-                                  title="Remove schema"
-                                  type="button"
-                                  whileHover={{ scale: 1.1, rotate: 90 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                                >
-                                  <Cross1Icon className="w-3 h-3" />
-                                </motion.button>
-                              </div>
-                            </motion.div>
-
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              transition={{ delay: 0.2, duration: 0.3 }}
-                            >
-                              <NodeBody
-                                node={nodeToCopySchema}
-                                context={portContextValue}
-                              />
-                            </motion.div>
-                          </motion.div>
-                        )}
-                  </AnimatePresence>
-                </motion.div>
-              )}
-
             </motion.div>
           </AnimatePresence>
         </div>

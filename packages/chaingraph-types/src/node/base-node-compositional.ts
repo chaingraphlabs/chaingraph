@@ -139,7 +139,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    */
   async executeWithDefaultPorts(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Check if node should execute based on flow ports
-    if (!this.shouldExecute()) {
+    if (!this.shouldExecute(context)) {
       this.defaultPortManager.getFlowOutPort()?.setValue(false)
       return {}
     }
@@ -486,8 +486,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     return this.defaultPortManager.getErrorMessagePort()
   }
 
-  shouldExecute(): boolean {
-    return this.defaultPortManager.shouldExecute()
+  shouldExecute(context: ExecutionContext): boolean {
+    return this.defaultPortManager.shouldExecute(context)
   }
 
   async updatePortsAfterExecution(success: boolean, errorMessage?: string): Promise<void> {

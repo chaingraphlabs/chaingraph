@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.1.28",
+  "version": "0.1.29-dev.0",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -49,7 +49,7 @@
     "check-types": "tsc -b --noEmit"
   },
   "peerDependencies": {
-    "@xyflow/react": "^12.0.0",
+    "@xyflow/react": "^12.6.4",
     "effector": "^23.0.0",
     "effector-react": "^23.0.0",
     "react": "^19.0.0",
@@ -87,8 +87,8 @@
     "@trpc/server": "11.1.0",
     "@trpc/tanstack-react-query": "^11.1.0",
     "@types/color": "^4.2.0",
-    "@xyflow/react": "^12.6.0",
-    "@xyflow/system": "^0.0.57",
+    "@xyflow/react": "^12.6.4",
+    "@xyflow/system": "^0.0.61",
     "add": "^2.0.6",
     "ahooks": "^3.8.4",
     "class-variance-authority": "^0.7.1",

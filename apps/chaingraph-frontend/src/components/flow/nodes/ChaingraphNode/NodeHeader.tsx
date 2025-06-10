@@ -10,6 +10,7 @@ import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
+import { useNode } from '@/store/nodes'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { Cross1Icon } from '@radix-ui/react-icons'
 import { useCallback, useState } from 'react'
@@ -41,6 +42,8 @@ export function NodeHeader({
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
   const [showStatusBadge, setShowStatusBadge] = useState(false)
 
+  const parentNode = useNode(node.metadata.parentNodeId || '')
+
   // Callback to handle status badge visibility and state
   const handleStatusChange = useCallback((show: boolean, status: NodeStatus | null) => {
     setShowStatusBadge(show)
@@ -65,7 +68,9 @@ export function NodeHeader({
         borderBottom: `1px solid ${style.secondary}`,
       }}
     >
-      <NodeFlowPorts node={node} context={context} />
+      {(!parentNode || parentNode.metadata.category === 'group') && (
+        <NodeFlowPorts node={node} context={context} />
+      )}
 
       <div className="flex items-center gap-2 min-w-0 relative">
         <div

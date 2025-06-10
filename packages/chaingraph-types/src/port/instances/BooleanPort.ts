@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { BooleanPortConfig, BooleanPortValue } from '../base'
+import type { BooleanPortConfig, BooleanPortValue, IPort } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { BooleanPortPlugin } from '../plugins'
 
 /**
@@ -116,5 +117,16 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    */
   protected deserializeValue(data: JSONValue): BooleanPortValue {
     return BooleanPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<BooleanPortConfig> {
+    return new BooleanPort({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
   }
 }

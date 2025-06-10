@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ExecutionContext } from '../../execution'
 import type { IPort, IPortConfig } from '../../port'
 import type { IDefaultPortManager, INodeComposite, IPortManager } from '../interfaces'
 import { errorID, errorMessageID, getDefaultPortConfigs } from '../default-ports'
@@ -92,7 +93,7 @@ export class DefaultPortManager implements IDefaultPortManager {
   /**
    * Determine if node should execute based on flow ports configuration
    */
-  shouldExecute(): boolean {
+  shouldExecute(context: ExecutionContext): boolean {
     // If flow ports are disabled, always execute unless auto-execution is disabled
     if (this.nodeRef.metadata.flowPorts?.disabledFlowPorts) {
       return !this.nodeRef.metadata.flowPorts?.disabledAutoExecution
@@ -101,6 +102,9 @@ export class DefaultPortManager implements IDefaultPortManager {
     // Otherwise, check flowIn port value
     const flowInPort = this.getFlowInPort()
     const flowAllowed = flowInPort?.getValue() === true
+    if (!flowAllowed) {
+      return false
+    }
 
     return flowAllowed
   }

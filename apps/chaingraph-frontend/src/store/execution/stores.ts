@@ -92,8 +92,8 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
       breakpoints: debug ? Array.from(breakpoints) : [],
       execution: {
         maxConcurrency: 10,
-        nodeTimeoutMs: 90000,
-        flowTimeoutMs: 300000,
+        nodeTimeoutMs: 300000,
+        flowTimeoutMs: 900000,
       },
     },
     integration: archAIIntegration

@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { StringPortConfig, StringPortValue } from '../base'
+import type { IPort, StringPortConfig, StringPortValue } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { StringPortPlugin } from '../plugins'
 
 /**
@@ -96,5 +97,16 @@ export class StringPort extends BasePort<StringPortConfig> {
    */
   protected deserializeValue(data: JSONValue): StringPortValue {
     return StringPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<StringPortConfig> {
+    return new StringPort({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
   }
 }

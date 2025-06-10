@@ -43,27 +43,26 @@ class ArchAISetVariableNode extends BaseNode {
   @PortEnum({
     title: 'Namespace',
     description: 'Namespace to set the variable in',
-    defaultValue: VariableNamespace.Chat,
+    defaultValue: VariableNamespace.Execution,
     options: [
       { id: VariableNamespace.Execution, type: 'string', defaultValue: VariableNamespace.Execution, title: 'Execution' },
       { id: VariableNamespace.Agent, type: 'string', defaultValue: VariableNamespace.Agent, title: 'Agent' },
       { id: VariableNamespace.Chat, type: 'string', defaultValue: VariableNamespace.Chat, title: 'Chat' },
       { id: VariableNamespace.ChatAgent, type: 'string', defaultValue: VariableNamespace.ChatAgent, title: 'Chat Agent' },
     ],
+    required: true,
   })
-  namespace: string = VariableNamespace.Chat
+  namespace: string = VariableNamespace.Execution
 
   @Input()
   @PortAny({
     title: 'Value',
-    description: 'Value to set (supports string, number, boolean, array, object)',
+    description: 'Value to set. Types are inferred automatically from JSON types: strings (use quotes), numbers (no quotes), booleans (true/false), arrays, and objects. Examples: "text" (string), 42 (number), true (boolean), [1,2,3] (array), {"key":"value"} (object).',
     required: true,
   })
   value: any = null
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(`[SET VARIABLE] Executing node: ${this.name}`)
-
     // Validate inputs
     if (!this.name) {
       throw new Error('Variable name cannot be empty')
@@ -135,22 +134,6 @@ class ArchAISetVariableNode extends BaseNode {
     const graphQLClient = createGraphQLClient(
       process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
     )
-
-    // Set the variable through the API
-    console.log(`[SET VARIABLE] Setting variable: ${JSON.stringify({
-      session: agentSession,
-      namespace: {
-        type: namespaceType,
-        chat_id: chatId,
-        agent_id: agentId,
-        execution_id: executionId,
-      },
-      key: this.name,
-      value: {
-        type: variableType,
-        value: serializedValue,
-      },
-    }, null, 2)}`)
 
     const { setVariable } = await graphQLClient.request(GraphQL.SetVariableDocument, {
       session: agentSession,

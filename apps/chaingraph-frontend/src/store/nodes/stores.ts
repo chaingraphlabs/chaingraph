@@ -327,71 +327,82 @@ export const $xyflowNodes = combine(
       return 0
     })
 
-    // Transform to XYFlow node format
-    return sortedNodes.map((node): Node => {
-      const nodeId = node.id
-      const nodeCategoryMetadata = getCategoryMetadata(node.metadata.category!)
-      const nodeType = node.metadata.category === NODE_CATEGORIES.GROUP
-        ? 'groupNode'
-        : 'chaingraphNode'
+    // Filter out hidden nodes and transform to XYFlow node format
+    return sortedNodes
+      .filter(node => node.metadata.ui?.state?.isHidden !== true)
+      .map((node): Node => {
+        const nodeId = node.id
+        const nodeCategoryMetadata = getCategoryMetadata(node.metadata.category!)
+        const nodeType = node.metadata.category === NODE_CATEGORIES.GROUP
+          ? 'groupNode'
+          : 'chaingraphNode'
 
-      // Get position from the positions store if available
-      // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
-      const position = node.metadata.ui?.position || DefaultPosition
+        // Get position from the positions store if available
+        // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+        const position = node.metadata.ui?.position || DefaultPosition
 
-      // Round positions to integers for better rendering performance
-      const nodePositionRound = {
-        x: Math.round(position.x),
-        y: Math.round(position.y),
-      }
+        const parentNode = node.metadata.parentNodeId ? nodes[node.metadata.parentNodeId] : undefined
 
-      // Get existing node from cache if it exists and hasn't changed
-      const cacheKey = `${nodeId}-${node.getVersion()}`
-      const cachedNode = nodeCache.get(cacheKey)
-
-      // Check if we can reuse the cached node (only position might have changed)
-      if (cachedNode
-        && (cachedNode.data.node as INode).getVersion() === node.getVersion()
-        && cachedNode.parentId === node.metadata.parentNodeId
-        && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)) {
-        // If only the position changed, just update that and return the same node reference
-        if (cachedNode.position.x !== nodePositionRound.x
-          || cachedNode.position.y !== nodePositionRound.y) {
-          cachedNode.position = nodePositionRound
+        // Round positions to integers for better rendering performance
+        const nodePositionRound = {
+          x: Math.round(position.x),
+          y: Math.round(position.y),
         }
 
-        return cachedNode
-      }
+        // Get existing node from cache if it exists and hasn't changed
+        const cacheKey = `${nodeId}-${node.getVersion()}`
+        const cachedNode = nodeCache.get(cacheKey)
 
-      // Create a new node
-      const reactflowNode: Node = {
-        id: nodeId,
-        type: nodeType,
-        position: nodePositionRound,
-        zIndex: nodeType === 'groupNode' ? -1 : 0,
-        data: {
-          node,
-          categoryMetadata: nodeCategoryMetadata,
-        },
-        parentId: node.metadata.parentNodeId,
-        selected: node.metadata.ui?.state?.isSelected ?? false,
-      }
+        // Check if we can reuse the cached node (only position might have changed)
+        if (cachedNode
+          && (cachedNode.data.node as INode).getVersion() === node.getVersion()
+          && cachedNode.parentId === node.metadata.parentNodeId
+          && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)) {
+          // If only the position changed, just update that and return the same node reference
+          if (cachedNode.position.x !== nodePositionRound.x
+            || cachedNode.position.y !== nodePositionRound.y) {
+            cachedNode.position = nodePositionRound
+          }
 
-      // Set dimensions if available
-      if (
-        node.metadata.ui?.dimensions
-        && node.metadata.ui.dimensions.width > 0
-        && node.metadata.ui.dimensions.height > 0
-      ) {
-        reactflowNode.width = node.metadata.ui.dimensions.width
-        reactflowNode.height = node.metadata.ui.dimensions.height
-      }
+          return cachedNode
+        }
 
-      // Store in cache for future reference
-      nodeCache.set(cacheKey, reactflowNode)
+        // Create a new node
+        const reactflowNode: Node = {
+          id: nodeId,
+          type: nodeType,
+          position: nodePositionRound,
+          zIndex: nodeType === 'groupNode'
+            ? -1
+            : parentNode
+              ? 2
+              : 0,
+          data: {
+            node,
+            categoryMetadata: nodeCategoryMetadata,
+          },
+          parentId: node.metadata.parentNodeId,
+          extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined, // Use parent extent if it has a parent and is not a group
+          selected: node.metadata.ui?.state?.isSelected ?? false,
+          hidden: node.metadata.ui?.state?.isHidden ?? false,
+          selectable: !(parentNode && parentNode.metadata.category !== 'group'),
+        }
 
-      return reactflowNode
-    })
+        // Set dimensions if available
+        if (
+          node.metadata.ui?.dimensions
+          && node.metadata.ui.dimensions.width > 0
+          && node.metadata.ui.dimensions.height > 0
+        ) {
+          reactflowNode.width = node.metadata.ui.dimensions.width
+          reactflowNode.height = node.metadata.ui.dimensions.height
+        }
+
+        // Store in cache for future reference
+        nodeCache.set(cacheKey, reactflowNode)
+
+        return reactflowNode
+      })
   },
 )
 

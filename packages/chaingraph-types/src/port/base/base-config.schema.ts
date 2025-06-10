@@ -73,6 +73,11 @@ export const objectPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
     collapsed: z.boolean().optional(),
     keyDeletable: z.boolean().optional(),
+    // Node schema capture functionality
+    nodeSchemaCapture: z.object({
+      enabled: z.boolean().optional(),
+      capturedNodeId: z.string().optional(),
+    }).optional(),
   }).passthrough(),
 )
 /**

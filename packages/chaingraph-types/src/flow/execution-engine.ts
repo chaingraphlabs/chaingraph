@@ -156,19 +156,42 @@ export class ExecutionEngine {
   }
 
   private initializeDependencies(): void {
-    // Initialize dependency counts
     for (const node of this.flow.nodes.values()) {
+      // Initialize dependency counts
       const incomingEdges = this.flow.getIncomingEdges(node)
       this.nodeDependencies.set(node.id, incomingEdges.length)
-    }
 
-    // Build dependents map
-    for (const node of this.flow.nodes.values()) {
+      // TODO: index for parent nodes
+      // Get children nodes
+      const children = Array.from(this.flow.nodes.values())
+        .filter(n => n.metadata.parentNodeId === node.id)
+      if (children.length > 0) {
+        console.log(`[ExecutionEngine] Node ${node.id} has children: ${children.map(c => c.id).join(', ')}`)
+        const currentNodeDependencies = this.nodeDependencies.get(node.id) ?? 0
+        this.nodeDependencies.set(node.id, currentNodeDependencies + children.length)
+      }
+
+      // Build dependents map
       for (const edge of this.flow.getOutgoingEdges(node)) {
         if (!this.dependentsMap.has(node.id)) {
           this.dependentsMap.set(node.id, [])
         }
         this.dependentsMap.get(node.id)!.push(edge.targetNode)
+      }
+
+      // check if the node has a parent node then add it to the parent node's dependents
+      const parentNodeId = node.metadata.parentNodeId
+      if (parentNodeId) {
+        const parentNode = this.flow.nodes.get(parentNodeId)
+        if (!parentNode) {
+          console.warn(`[ExecutionEngine] Parent node ${parentNodeId} for node ${node.id} not found`)
+          continue
+        }
+
+        if (!this.dependentsMap.has(node.id)) {
+          this.dependentsMap.set(node.id, [])
+        }
+        this.dependentsMap.get(node.id)!.push(parentNode)
       }
     }
 
@@ -177,6 +200,30 @@ export class ExecutionEngine {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
+          // get node parent if it has one
+          // const parentNode = this.flow.nodes.get(node.metadata.parentNodeId ?? '')
+          // if (parentNode) {
+          //   console.log(`Node ${node.id} has parent node ${parentNode.id}`)
+          // }
+          //
+          // if (parentNode && parentNode.metadata.category !== 'group') {
+          //   continue
+          // }
+
+          // if (node.metadata.ui?.state?.isHidden === true) {
+          //   // If the node is  hidden, skip it
+          //   this.setNodeSkipped(node, 'node is hidden')
+          //   continue
+          // }
+
+          // const children = this.context.findNodes(n => n.metadata.parentNodeId === node.id)
+          // if (children && children.length > 0) {
+          //   // if there are children, s
+          //   continue
+          // }
+
+          console.log(`[ExecutionEngine] Enqueuing initial node ${node.id}`)
+
           this.executingNodes.add(node.id)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
         }
@@ -194,6 +241,12 @@ export class ExecutionEngine {
         }))
       }
     }
+
+    //
+    console.log(`[ExecutionEngine] Debug state:
+  - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
+  - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
+  - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
   }
 
   private startWorkers(): Promise<void>[] {
@@ -325,7 +378,7 @@ export class ExecutionEngine {
 
     try {
       const incomingEdges = this.flow.getIncomingEdges(node)
-      if (node.shouldExecute()) {
+      if (node.shouldExecute(this.context)) {
         // First, validate all source nodes statuses before proceeding
         for (const edge of incomingEdges) {
           if (!edge.sourcePort.isSystemError()
@@ -388,8 +441,15 @@ export class ExecutionEngine {
         return
       }
 
+      const nodeParent = this.flow.nodes.get(node.metadata.parentNodeId ?? '')
+      if (nodeParent && nodeParent.metadata.category !== 'group') {
+        // If the node has a parent that is not a group, mark it completed without actually executing
+        this.setNodeCompleted(node, nodeStartTime)
+        return
+      }
+
       // check weathers node should execute
-      if (!node.shouldExecute()) {
+      if (!node.shouldExecute(this.context)) {
         this.setNodeSkipped(node, 'node skipped because flow input port was set to false')
         return
       }

@@ -7,9 +7,10 @@
  */
 
 import type { ExecutionEvent } from '../flow'
+import type { INode } from '../node'
 import { subtle } from 'node:crypto'
-import { v4 as uuidv4 } from 'uuid'
 
+import { v4 as uuidv4 } from 'uuid'
 import { EventQueue } from '../utils'
 
 export interface BadAIContext {
@@ -34,6 +35,10 @@ export class ExecutionContext {
   // integrations
   public readonly badAIContext?: BadAIContext
 
+  public readonly getNodeById: (nodeId: string) => INode | undefined
+  // findNode is a utility function to find a node by a predicate
+  public readonly findNodes: (predicate: (node: INode) => boolean) => INode[] | undefined
+
   // TODO: chat api gql client
   // TODO: agent session
   // TODO: chat room meta + participants agents?
@@ -45,6 +50,8 @@ export class ExecutionContext {
     metadata?: Record<string, unknown>,
     executionId?: string,
     badAIContext?: BadAIContext,
+    getNodeById?: (nodeId: string) => INode | undefined,
+    findNodes?: (predicate: (node: INode) => boolean) => INode[] | undefined,
   ) {
     this.executionId = executionId || uuidv4()
     this.startTime = new Date()
@@ -53,6 +60,8 @@ export class ExecutionContext {
     this.abortController = abortController
     this.badAIContext = badAIContext
     this.eventsQueue = new EventQueue<ExecutionEvent>(10)
+    this.getNodeById = getNodeById || (() => undefined)
+    this.findNodes = findNodes || ((predicate: (node: INode) => boolean) => undefined)
   }
 
   get abortSignal(): AbortSignal {

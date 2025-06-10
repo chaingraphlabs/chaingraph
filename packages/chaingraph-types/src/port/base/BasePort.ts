@@ -223,4 +223,9 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
    * Deserializes a JSONValue into a port value of type T.
    */
   protected abstract deserializeValue(data: JSONValue): ExtractValue<C>
+
+  /**
+   * Clones cloneWithNewId
+   */
+  abstract cloneWithNewId(): IPort<C>
 }

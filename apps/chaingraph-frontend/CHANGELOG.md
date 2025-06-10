@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-frontend
 
+## 0.1.29-dev.0
+
+### Patch Changes
+
+- DEV build
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.1.29-dev.0
+  - @badaitech/chaingraph-types@0.1.29-dev.0
+  - @badaitech/chaingraph-trpc@0.1.29-dev.0
+  - @badaitech/badai-api@0.1.29-dev.0
+
 ## 0.1.28
 
 ### Patch Changes

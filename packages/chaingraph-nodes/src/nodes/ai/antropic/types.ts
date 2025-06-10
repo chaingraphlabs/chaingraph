@@ -10,6 +10,7 @@ import {
   Boolean,
   Number,
   ObjectSchema,
+  PortAny,
   PortArray,
   PortEnum,
   PortObject,
@@ -20,6 +21,8 @@ import {
  * Supported Anthropic Claude models
  */
 export enum AntropicModelTypes {
+  ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
+  ClaudeOpus4_20250514 = 'claude-opus-4-20250514',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
   Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
   Claude37Opus20250213 = 'claude-3-7-opus-20250213',
@@ -38,7 +41,7 @@ export enum AntropicModelTypes {
 export class ImageSource {
   @String({
     title: 'Type',
-    description: 'Type of image source (only base64 is supported)',
+    description: 'Type of image source (base64 or url)',
     required: true,
   })
   type: string = 'base64'
@@ -59,6 +62,14 @@ export class ImageSource {
     },
   })
   data: string = ''
+
+  // url
+  @String({
+    title: 'URL',
+    description: 'URL of the image (if type is url)',
+    required: false,
+  })
+  url?: string
 }
 
 /**
@@ -78,9 +89,9 @@ export class ContentBlockBase {
   @Number({
     title: 'Index',
     description: 'Index of the content block in the message',
-    required: true,
+    required: false,
   })
-  index: number = 0
+  index?: number
 }
 
 /**
@@ -169,13 +180,38 @@ export class ToolSchemaProperty {
     description: 'JSON schema type',
     required: true,
   })
-  type: string = 'string'
+  type?: string
+
+  @String({
+    title: 'Title',
+    description: 'Title of the property',
+  })
+  title?: string
 
   @String({
     title: 'Description',
     description: 'Description of the property',
   })
-  description: string = ''
+  description?: string
+
+  // enum:
+  @PortArray({
+    title: 'Enum',
+    description: 'List of allowed values for this property (if applicable)',
+    itemConfig: {
+      type: 'string',
+      defaultValue: '',
+    },
+    isMutable: true,
+  })
+  enum?: string[]
+
+  // default
+  @PortAny({
+    title: 'Default',
+    description: 'Default value for this property (if applicable)',
+  })
+  default?: string
 }
 
 /**
@@ -257,6 +293,18 @@ export class Tool {
     defaultValue: new ToolInputSchema(),
   })
   input_schema: ToolInputSchema = new ToolInputSchema()
+
+  @String({
+    title: 'Chaingraph Node ID',
+    description: 'ID of the Chaingraph node that defines this tool (optional)',
+  })
+  chaingraph_node_id?: string = undefined
+
+  @String({
+    title: 'Chaingraph Node Type',
+    description: 'Type of the Chaingraph node that defines this tool (optional)',
+  })
+  chaingraph_node_type?: string = undefined
 }
 
 /**
@@ -390,6 +438,8 @@ export class AntropicConfig {
     title: 'Model',
     description: 'The Claude model to use',
     options: [
+      { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4 (2025-05-14)' },
+      { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4 (2025-05-14)' },
       { id: AntropicModelTypes.Claude37Sonnet20250219, type: 'string', defaultValue: AntropicModelTypes.Claude37Sonnet20250219, title: 'Claude 3.7 Sonnet (2025-02-19)' },
       { id: AntropicModelTypes.Claude37Opus20250213, type: 'string', defaultValue: AntropicModelTypes.Claude37Opus20250213, title: 'Claude 3.7 Opus (2025-02-13)' },
       { id: AntropicModelTypes.Claude37Haiku20250304, type: 'string', defaultValue: AntropicModelTypes.Claude37Haiku20250304, title: 'Claude 3.7 Haiku (2025-03-04)' },
@@ -398,10 +448,10 @@ export class AntropicConfig {
       { id: AntropicModelTypes.Claude3Opus20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Opus20240229, title: 'Claude 3 Opus (2024-02-29)' },
       { id: AntropicModelTypes.Claude3Haiku20240307, type: 'string', defaultValue: AntropicModelTypes.Claude3Haiku20240307, title: 'Claude 3 Haiku (2024-03-07)' },
     ],
-    defaultValue: AntropicModelTypes.Claude37Sonnet20250219,
+    defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514,
     required: true,
   })
-  model: AntropicModelTypes = AntropicModelTypes.Claude37Sonnet20250219
+  model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_20250514
 
   @Number({
     title: 'Max Tokens',

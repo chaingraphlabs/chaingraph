@@ -82,6 +82,7 @@ function ChaingraphNodeComponent({
   })
   const { theme } = useTheme()
   const node = useNode(id)
+  const parentNode = useNode(node.metadata.parentNodeId || '')
   const nodeEdges = useEdgesForNode(id)
   const highlightedNodeId = useUnit($highlightedNodeId)
   const isFlowLoaded = useUnit($isFlowLoaded)
@@ -304,11 +305,14 @@ function ChaingraphNodeComponent({
         context={portContextValue}
       />
 
-      <NodeErrorPorts
-        node={nodeToRender}
-        context={portContextValue}
-      />
+      {(!parentNode || (parentNode.metadata.category === 'group')) && (
+        <NodeErrorPorts
+          node={nodeToRender}
+          context={portContextValue}
+        />
+      )}
 
+      {/* Resize control */}
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
         position="right"

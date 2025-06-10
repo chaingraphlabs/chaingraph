@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { NumberPortConfig, NumberPortValue } from '../base'
+import type { IPort, NumberPortConfig, NumberPortValue } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { NumberPortPlugin } from '../plugins'
 
 /**
@@ -117,5 +118,16 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    */
   protected deserializeValue(data: JSONValue): NumberPortValue {
     return NumberPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<NumberPortConfig> {
+    return new NumberPort({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
   }
 }

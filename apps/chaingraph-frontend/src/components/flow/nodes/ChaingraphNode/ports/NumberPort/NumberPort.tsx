@@ -22,6 +22,7 @@ import { NumberInput } from '@/components/ui/number-input'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -93,7 +94,27 @@ export function NumberPort(props: NumberPortProps) {
         'truncate',
       )}
       >
-        <PortTitle>{title}</PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            // if port required and the value is empty, add a red underline
+            port.getConfig().required
+            && (port.getValue() === undefined || port.getValue() === null || !port.validate())
+            && port.getConfig().direction === 'input'
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
+          {title}
+        </PortTitle>
 
         {needRenderEditor && (
           <>

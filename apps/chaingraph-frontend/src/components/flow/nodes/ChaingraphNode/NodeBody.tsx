@@ -18,17 +18,23 @@ import type {
  */
 import type { INode } from '@badaitech/chaingraph-types'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
+import { cn } from '@/lib/utils'
+import { useNode } from '@/store/nodes'
 import { memo, useMemo } from 'react'
 
 export interface NodeBodyProps {
   node: INode
   context: PortContextValue
+  className?: string
 }
 
 function NodeBody({
   node,
   context,
+  className = '',
 }: NodeBodyProps) {
+  const parentNode = useNode(node.metadata.parentNodeId || '')
+
   const inputPorts = useMemo(
     () => node.getInputs().filter(
       port =>
@@ -46,7 +52,7 @@ function NodeBody({
   )
 
   return (
-    <div className="px-3 py-2 space-y-4">
+    <div className={cn('px-3 py-2 space-y-4', className)}>
       <div className="space-y-3">
 
         {/* Input Ports */}
@@ -62,7 +68,7 @@ function NodeBody({
         })}
 
         {/* Output Ports */}
-        {outputPorts.map((port) => {
+        {(!parentNode || parentNode.metadata.category === 'group') && outputPorts.map((port) => {
           return (
             <PortComponent
               key={port.id}
