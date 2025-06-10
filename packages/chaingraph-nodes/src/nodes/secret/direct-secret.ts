@@ -99,6 +99,42 @@ export class DirectSecretOpenAI extends BaseNode {
 }
 
 @Node({
+  title: 'Direct Secret 0G',
+  description: 'Converts 0G private key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your 0G private key without storing it in the secret management panel first.',
+  category: NODE_CATEGORIES.SECRET,
+  tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+})
+export class DirectSecret0G extends BaseNode {
+  @Input()
+  @String({
+    title: '0G Private Key',
+    description: 'Your raw 0G network private key used for authentication and transactions. This will be converted into a secure format that can be safely used throughout your workflow.',
+    ui: {
+      isPassword: true,
+    },
+  })
+  '0GPrivateKey'?: SecretTypeMap['0g']
+
+  @Output()
+  @Secret<'0g'>({
+    title: 'Encrypted 0G Private Key',
+    description: 'The 0G private key encrypted as a secure secret that can be safely passed between nodes. This encrypted format protects your 0G credentials while allowing them to be used by compatible nodes in your workflow.',
+    secretType: '0g',
+  })
+  encrypted0GPrivateKey?: EncryptedSecretValue<'0g'>
+
+  async execute(ctx: ExecutionContext): Promise<NodeExecutionResult> {
+    if (!this['0GPrivateKey']) {
+      throw new Error(`0G Private Key is required`)
+    }
+
+    this.encrypted0GPrivateKey = await encryptDirectSecret(ctx, '0g', this['0GPrivateKey'])
+
+    return {}
+  }
+}
+
+@Node({
   title: 'Direct Secret Anthropic',
   description: 'Converts Anthropic API key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your Anthropic API key without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,

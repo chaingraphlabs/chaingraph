@@ -16,27 +16,30 @@ import { z } from 'zod'
  * Supported types of secrets.
  */
 export const secretTypeSchemas = {
-  openai: z.object({
+  'openai': z.object({
     apiKey: z.string().min(1),
   }),
-  anthropic: z.object({
+  '0g': z.object({
+    privateKey: z.string().length(64).regex(/^[0-9a-z]+$/i),
+  }),
+  'anthropic': z.object({
     apiKey: z.string().min(1),
   }),
-  coinmarketcap: z.object({
+  'coinmarketcap': z.object({
     apiKey: z.string().min(1),
   }),
-  deepseek: z.object({
+  'deepseek': z.object({
     apiKey: z.string().min(1),
   }),
-  xAPI: z.object({
+  'xAPI': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
-  xApp: z.object({
+  'xApp': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
-  string: z.object({
+  'string': z.object({
     value: z.string().min(1),
   }),
 } satisfies Record<string, z.ZodType<Record<string, string>>>
@@ -85,7 +88,7 @@ export interface SecretTypeMetadata<T extends SecretType> {
  * Metadata for all secret types used in the application.
  */
 export const secretTypeMetadata = {
-  string: {
+  'string': {
     icon: 'Type',
     label: 'String Secret',
     fields: {
@@ -94,7 +97,7 @@ export const secretTypeMetadata = {
       },
     },
   },
-  openai: {
+  'openai': {
     icon: 'Brain',
     label: 'OpenAI API',
     fields: {
@@ -103,7 +106,16 @@ export const secretTypeMetadata = {
       },
     },
   },
-  anthropic: {
+  '0g': {
+    icon: 'Package',
+    label: '0G',
+    fields: {
+      privateKey: {
+        label: '0G Private Key',
+      },
+    },
+  },
+  'anthropic': {
     icon: 'Brain',
     label: 'Anthropic API',
     fields: {
@@ -112,7 +124,7 @@ export const secretTypeMetadata = {
       },
     },
   },
-  coinmarketcap: {
+  'coinmarketcap': {
     icon: 'Package',
     label: 'CoinMarketCap API',
     fields: {
@@ -121,7 +133,7 @@ export const secretTypeMetadata = {
       },
     },
   },
-  deepseek: {
+  'deepseek': {
     icon: 'Brain',
     label: 'DeepSeek API',
     fields: {
@@ -130,7 +142,7 @@ export const secretTypeMetadata = {
       },
     },
   },
-  xAPI: {
+  'xAPI': {
     icon: 'MessageSquare',
     label: 'X API',
     fields: {
@@ -142,7 +154,7 @@ export const secretTypeMetadata = {
       },
     },
   },
-  xApp: {
+  'xApp': {
     icon: 'Package',
     label: 'X App',
     fields: {
