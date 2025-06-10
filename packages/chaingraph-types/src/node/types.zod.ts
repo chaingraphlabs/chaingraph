@@ -31,7 +31,6 @@ export const NodeUIMetadataSchema = z.object({
     isDisabled: z.boolean().optional(),
     isErrorPortCollapsed: z.boolean().optional(),
     isHidden: z.boolean().optional(),
-    inheritanceNodeId: z.string().optional(),
   }).optional(),
 }).passthrough()
 

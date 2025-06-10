@@ -33,7 +33,6 @@ export const updateNodeUI = flowContextProcedure
         isDisabled: z.boolean().optional(),
         isErrorPortCollapsed: z.boolean().optional(),
         isHidden: z.boolean().optional(),
-        inheritanceNodeId: z.string().optional(),
       }).optional(),
       title: z.string().optional(),
     }),

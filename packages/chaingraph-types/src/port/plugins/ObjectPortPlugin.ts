@@ -21,6 +21,9 @@ import type {
 import type { JSONObject, JSONValue } from '../../utils/json'
 import { z } from 'zod'
 import {
+  generatePortIDArrayElement,
+} from '..'
+import {
   isStreamPortValue,
 } from '..'
 import {
@@ -39,7 +42,6 @@ import {
   validateNumberValue,
   validateStringValue,
 } from '..'
-import { generatePortIDArrayElement } from '../../node/id-generate'
 
 /**
  * Helper to create an object port value.

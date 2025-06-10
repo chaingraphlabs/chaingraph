@@ -33,6 +33,8 @@ export function PortHeader({
   node,
   port,
 }: PortHeaderProps) {
+  const config = port.getConfig()
+
   return (
     <div className="space-y-1">
       <div className={cn(
@@ -68,9 +70,10 @@ export function PortHeader({
               'font-semibold min-w-0 flex-1',
               isOutput ? 'text-right' : 'text-left',
               // if port required and the value is empty, add a red underline
-              port.getConfig().required
+              config.required
               && (port.getValue() === undefined || port.getValue() === null || port.getValue().length === 0 || !port.validate())
-              && port.getConfig().direction === 'input'
+              && config.direction === 'input'
+              && (config.connections?.length || 0) === 0
               && 'underline decoration-red-500 decoration-2',
             )}
 
@@ -79,7 +82,7 @@ export function PortHeader({
                 nodeId: node.id,
                 portId: port.id,
                 ui: {
-                  hideEditor: port.getConfig().ui?.hideEditor === undefined ? true : !port.getConfig().ui?.hideEditor,
+                  hideEditor: config.ui?.hideEditor === undefined ? true : !config.ui?.hideEditor,
                 },
               })
             }}

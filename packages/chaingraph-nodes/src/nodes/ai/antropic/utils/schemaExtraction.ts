@@ -168,6 +168,7 @@ export function isNeedsToSkipPort(port: IPort): boolean {
  */
 export function portConfigToJsonSchema(port: IPort): SchemaProperty {
   const config = port.getConfig()
+  const value = port.getValue()
 
   // Base properties all ports have
   const baseProperty: SchemaProperty = {
@@ -176,8 +177,10 @@ export function portConfigToJsonSchema(port: IPort): SchemaProperty {
     enum: undefined,
   }
 
-  // Add default value if present
-  if (config.defaultValue !== undefined && config.defaultValue !== null && config.defaultValue !== '') {
+  // Add value as default if it exists
+  if (value !== undefined && value !== null && value !== '' && value !== 0) {
+    baseProperty.default = value
+  } else if (config.defaultValue !== undefined && config.defaultValue !== null && config.defaultValue !== '') {
     baseProperty.default = config.defaultValue
   }
 

@@ -28,5 +28,5 @@ export function isHideEditor(config: IPortConfig, connectedEdges: EdgeData[]) {
     return true
   }
 
-  return false
+  return !!config.ui?.hideEditor
 }

@@ -6,10 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
+import type {
+  ArrayPortConfig,
+  IPort,
+  IPortConfig,
+  ObjectPortConfig,
+} from '../../port'
 import type { INode } from '../interface'
 import type { IComplexPortHandler, IPortBinder, IPortManager } from '../interfaces'
-import { generatePortIDArrayElement } from '../../node/id-generate'
+import {
+  generatePortIDArrayElement,
+} from '../../port'
 import { ObjectPort } from '../../port'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'

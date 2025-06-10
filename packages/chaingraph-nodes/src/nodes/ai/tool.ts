@@ -17,7 +17,7 @@ export class ToolDefinition {
     description: 'The name of the tool',
     minLength: 1,
     ui: {
-      hideEditor: false,
+      hideEditor: true,
     },
     order: 1,
   })
@@ -27,7 +27,7 @@ export class ToolDefinition {
     title: 'Description',
     description: 'A description of what the tool does',
     ui: {
-      hideEditor: false,
+      hideEditor: true,
       isTextArea: true,
     },
     order: 2,
@@ -44,7 +44,7 @@ export class ToolDefinition {
     },
     ui: {
       keyDeletable: true,
-      hideEditor: false,
+      hideEditor: true,
       collapsed: true,
     },
     order: 3,
@@ -61,7 +61,7 @@ export class ToolDefinition {
     },
     ui: {
       keyDeletable: true,
-      hideEditor: false,
+      hideEditor: true,
       collapsed: true,
     },
     order: 4,

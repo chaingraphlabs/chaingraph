@@ -372,6 +372,8 @@ export const $xyflowNodes = combine(
           id: nodeId,
           type: nodeType,
           position: nodePositionRound,
+          width: node.metadata.ui?.dimensions?.width ?? 150, // Default width if not set
+          height: node.metadata.ui?.dimensions?.height ?? 50, // Default height if not set
           zIndex: nodeType === 'groupNode'
             ? -1
             : parentNode

@@ -7,13 +7,7 @@
  */
 
 import type {
-  AddElementArrayPortParams,
-  AddFieldObjectPortParams,
   PortContextValue,
-  RemoveElementArrayPortParams,
-  RemoveFieldObjectPortParams,
-  UpdatePortUIParams,
-  UpdatePortValueParams,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
@@ -22,7 +16,6 @@ import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
 import { $activeFlowId } from '@/store/flow'
 import { requestUpdatePortUI } from '@/store/ports'
-import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -183,66 +176,6 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
   const needRenderObject = useMemo(() => {
     return (connectedEdges.length === 0 || config.direction === 'output') && !isNodeSchemaCaptureEnabled
   }, [config, connectedEdges, isNodeSchemaCaptureEnabled])
-
-  const style = defaultCategoryMetadata.style // TODO: Replace with actual style from context or config
-  const Icon = getCategoryIcon(defaultCategoryMetadata.icon)
-
-  // Memoize the entire context value to prevent unnecessary renders
-  const portContextValue = useMemo(() => {
-    if (!displayNode) {
-      return {
-        updatePortValue: () => {},
-        updatePortUI: () => {},
-        addFieldObjectPort: () => {},
-        removeFieldObjectPort: () => {},
-        appendElementArrayPort: () => {},
-        removeElementArrayPort: () => {},
-        getEdgesForPort: () => [],
-      }
-    }
-
-    return {
-      updatePortValue: (params: UpdatePortValueParams) => {
-        return context.updatePortValue({
-          ...params,
-          nodeId: displayNode.id,
-        })
-      },
-      updatePortUI: (params: UpdatePortUIParams) => {
-        return context.updatePortUI({
-          ...params,
-          nodeId: displayNode.id,
-        })
-      },
-      addFieldObjectPort: (params: AddFieldObjectPortParams) => {
-        return context.addFieldObjectPort({
-          ...params,
-          nodeId: displayNode.id,
-        })
-      },
-      removeFieldObjectPort: (params: RemoveFieldObjectPortParams) => {
-        return context.removeFieldObjectPort({
-          ...params,
-          nodeId: displayNode.id,
-        })
-      },
-      appendElementArrayPort: (params: AddElementArrayPortParams) => {
-        return context.appendElementArrayPort({
-          ...params,
-          nodeId: displayNode.id,
-        })
-      },
-      removeElementArrayPort: (params: RemoveElementArrayPortParams) => {
-        return context.removeElementArrayPort({
-          ...params,
-          nodeId: displayNode.id,
-        })
-      },
-      getEdgesForPort: (portId: string) => {
-        return context.getEdgesForPort(portId)
-      },
-    }
-  }, [context, displayNode])
 
   const dropNodeZoneRef = useRef<HTMLDivElement>(null)
 

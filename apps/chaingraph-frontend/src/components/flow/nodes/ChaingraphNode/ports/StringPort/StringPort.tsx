@@ -149,9 +149,10 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
           className={cn(
             'cursor-pointer',
             // if port required and the value is empty, add a red underline
-            port.getConfig().required
+            config.required
             && (!port.getValue() || !port.validate())
-            && port.getConfig().direction === 'input'
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
           onClick={() => {
@@ -179,9 +180,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
               'placeholder:text-neutral-400 placeholder:opacity-40',
             )}
             placeholder={
-              port.getConfig().ui?.placeholder
-              ?? port.getConfig().title
-              ?? port.getConfig().key
+              config.ui?.placeholder
+              ?? config.title
+              ?? config.key
               ?? 'Text'
             }
             type={ui?.isPassword ? 'password' : undefined}
@@ -218,9 +219,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
                 'placeholder:text-neutral-400 placeholder:opacity-40',
               )}
               placeholder={
-                port.getConfig().ui?.placeholder
-                ?? port.getConfig().title
-                ?? port.getConfig().key
+                config.ui?.placeholder
+                ?? config.title
+                ?? config.key
                 ?? 'Text'
               }
               disabled={executionID ? true : ui?.disabled ?? false}

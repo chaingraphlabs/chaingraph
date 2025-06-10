@@ -338,7 +338,7 @@ export class Flow implements IFlow {
     targetPortId: string,
   ): Promise<Edge> {
     const sourceNode = this.nodes.get(sourceNodeId)
-    let targetNode = this.nodes.get(targetNodeId)
+    const targetNode = this.nodes.get(targetNodeId)
 
     if (!sourceNode) {
       throw new Error(`Source node with ID ${sourceNodeId} does not exist.`)
@@ -348,43 +348,11 @@ export class Flow implements IFlow {
     }
 
     const sourcePort = sourceNode.getPort(sourcePortId)
-    let targetPort = targetNode.getPort(targetPortId)
+    const targetPort = targetNode.getPort(targetPortId)
 
     if (!sourcePort) {
       throw new Error(`Source port with ID ${sourcePortId} does not exist on node ${sourceNodeId}.`)
     }
-    if (!targetPort) {
-      // try to find the target node by inherited ID
-      const inheritedNode = Array.from(this.nodes.values()).find((node) => {
-        return node.metadata.ui?.state?.inheritanceNodeId === targetNodeId
-      })
-
-      console.log(Array.from(this.nodes.values()).map((node) => {
-        return {
-          id: node.id,
-          inheritedId: node.metadata.ui?.state,
-          type: node.metadata.type,
-          title: node.metadata.title,
-          description: node.metadata.description,
-          parentId: node.metadata.parentNodeId,
-        }
-      }))
-
-      // if (!inheritedNode) {
-      //   throw new Error(`Child node with ID ${targetNodeId} does not exist and no inherited node found.`)
-      // }
-
-      if (inheritedNode) {
-        targetPort = inheritedNode.getPort(targetPortId)
-        if (!targetPort) {
-          throw new Error(`Target port with ID ${targetPortId} does not exist on inherited node ${inheritedNode.id}.`)
-        }
-
-        targetNode = inheritedNode
-        console.warn(`!!! Found inherited node ${inheritedNode.id} for target port ${targetPortId}, but it is not the original target node ${targetNodeId}. This may lead to unexpected behavior.`)
-      }
-    }
-
     if (!targetPort) {
       throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
     }

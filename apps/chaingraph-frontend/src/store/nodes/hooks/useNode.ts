@@ -62,6 +62,20 @@ export function useNode(nodeId: string) {
   })
 }
 
+export function useNodeChildren(nodeId: string) {
+  // This hook retrieves the children of a specific node by its ID
+  return useStoreMap({
+    store: $nodes,
+    keys: [nodeId],
+    fn: (nodes, [nodeId]) => {
+      const node = nodes[nodeId]
+      if (!node || !node.metadata.children)
+        return []
+      return node.metadata.children.map(childId => nodes[childId]).filter(Boolean)
+    },
+  })
+}
+
 /**
  * Hook to get IDs of all nodes that are currently being dragged
  * @returns An array of node IDs that are currently being dragged

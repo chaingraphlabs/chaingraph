@@ -267,12 +267,18 @@ export class Tool {
     title: 'Name',
     description: 'Name of the tool',
     required: true,
+    ui: {
+      hideEditor: true,
+    },
   })
   name: string = ''
 
   @String({
     title: 'Type',
     description: 'Type of the tool (optional)',
+    ui: {
+      hideEditor: true,
+    },
   })
   type: string = 'custom'
 
@@ -281,6 +287,7 @@ export class Tool {
     description: 'Detailed description of what the tool does',
     ui: {
       isTextArea: true,
+      hideEditor: true,
     },
   })
   description: string = ''
@@ -291,18 +298,27 @@ export class Tool {
     schema: ToolInputSchema,
     required: true,
     defaultValue: new ToolInputSchema(),
+    ui: {
+      hideEditor: true,
+    },
   })
   input_schema: ToolInputSchema = new ToolInputSchema()
 
   @String({
     title: 'Chaingraph Node ID',
     description: 'ID of the Chaingraph node that defines this tool (optional)',
+    ui: {
+      hideEditor: true,
+    },
   })
   chaingraph_node_id?: string = undefined
 
   @String({
     title: 'Chaingraph Node Type',
     description: 'Type of the Chaingraph node that defines this tool (optional)',
+    ui: {
+      hideEditor: true,
+    },
   })
   chaingraph_node_type?: string = undefined
 }

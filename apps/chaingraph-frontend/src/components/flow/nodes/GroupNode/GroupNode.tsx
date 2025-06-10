@@ -23,7 +23,7 @@ import { EditableTitle } from './components/EditableTitle'
 const defaultColor = 'rgba(147, 51, 234, 0.2)'
 
 function GroupNodeComponent({
-  // data,
+  data,
   selected,
   id,
 }: NodeProps<GroupNode>) {
@@ -73,7 +73,7 @@ function GroupNodeComponent({
     <div
       className={cn(
         'w-full h-full',
-        'min-w-[150px] min-h-[100px]',
+        // 'min-w-[150px] min-h-[100px]',
         'rounded-xl border-2',
         'transition-all duration-200',
         'relative',
@@ -83,6 +83,61 @@ function GroupNodeComponent({
       )}
       style={{ backgroundColor: node.metadata.ui?.style?.backgroundColor ?? defaultColor }}
     >
+
+      <NodeResizer
+        isVisible={selected}
+        minWidth={150}
+        minHeight={100}
+        lineStyle={{
+          border: '3px solid transparent',
+        }}
+        onResizeStart={(e, params) => {
+          console.log('Resize started', e, params)
+        }}
+        onResize={(e, params) => {
+          console.log('Resizing', e, params)
+
+          if (!activeFlow?.id || !id)
+            return
+
+          updateNodeUI({
+            flowId: activeFlow.id,
+            nodeId: id,
+            ui: {
+              dimensions: {
+                width: params.width,
+                height: params.height,
+              },
+              position: {
+                x: params.x,
+                y: params.y,
+              },
+            },
+            version: node.getVersion(),
+          })
+        }}
+        onResizeEnd={(e, params) => {
+          if (!activeFlow?.id || !id)
+            return
+
+          updateNodeUI({
+            flowId: activeFlow.id,
+            nodeId: id,
+            ui: {
+              dimensions: {
+                width: params.width,
+                height: params.height,
+              },
+              position: {
+                x: params.x,
+                y: params.y,
+              },
+            },
+            version: node.getVersion(),
+          })
+        }}
+      />
+
       {/* Color Picker */}
       {selected && (
         <div
@@ -138,14 +193,6 @@ function GroupNodeComponent({
             )}
       </div>
 
-      <NodeResizer
-        isVisible={selected}
-        minWidth={150}
-        minHeight={100}
-        lineStyle={{
-          border: '3px solid transparent',
-        }}
-      />
     </div>
   )
 }

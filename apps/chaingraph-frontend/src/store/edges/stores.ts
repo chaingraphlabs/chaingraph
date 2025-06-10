@@ -75,6 +75,16 @@ export const $edges = edgesDomain.createStore<EdgeData[]>([])
   .reset(globalReset)
   // .reset(clearActiveFlow)
 
+// event connection start
+export const $isConnectingBeginEvent = edgesDomain.createEvent<boolean>()
+export const $isConnectingEndEvent = edgesDomain.createEvent<boolean>()
+
+export const $isConnecting = edgesDomain.createStore(false)
+  .on($isConnectingBeginEvent, () => true)
+  .on($isConnectingEndEvent, () => false)
+  .reset(resetEdges)
+  .reset(globalReset)
+
 /**
  * Store that directly computes XYFlow-compatible edges from the internal stores
  * Separates base edge structure (which rarely changes) from styling (which changes more often)

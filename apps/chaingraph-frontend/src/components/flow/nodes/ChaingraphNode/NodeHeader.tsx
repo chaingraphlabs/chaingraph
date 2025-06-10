@@ -7,13 +7,14 @@
  */
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
-import type { CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
 import { useNode } from '@/store/nodes'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { Cross1Icon } from '@radix-ui/react-icons'
 import { useCallback, useState } from 'react'
+import { NodeDocTooltip } from './NodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
 import NodeStatusBadge from './NodeStatusBadge'
 
@@ -26,6 +27,7 @@ interface NodeHeaderProps {
   debugMode: boolean
   isBreakpointSet: boolean
   onBreakpointToggle: () => void
+  categoryMetadata?: CategoryMetadata
 }
 
 export function NodeHeader({
@@ -37,6 +39,7 @@ export function NodeHeader({
   debugMode,
   isBreakpointSet,
   onBreakpointToggle,
+  categoryMetadata,
 }: NodeHeaderProps) {
   const Icon = getCategoryIcon(icon)
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
@@ -73,17 +76,39 @@ export function NodeHeader({
       )}
 
       <div className="flex items-center gap-2 min-w-0 relative">
-        <div
-          className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
-          style={{
-            background: `${style.text}20`,
-          }}
-        >
-          <Icon
-            className="w-4 h-4"
-            style={{ color: style.text }}
-          />
-        </div>
+        {categoryMetadata
+          ? (
+              <NodeDocTooltip
+                node={node}
+                categoryMetadata={categoryMetadata}
+                className="cursor-pointer"
+              >
+                <div
+                  className="w-6 min-w-6 h-6 rounded flex items-center justify-center hover:opacity-80 transition-opacity"
+                  style={{
+                    background: `${style.text}20`,
+                  }}
+                >
+                  <Icon
+                    className="w-4 h-4"
+                    style={{ color: style.text }}
+                  />
+                </div>
+              </NodeDocTooltip>
+            )
+          : (
+              <div
+                className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
+                style={{
+                  background: `${style.text}20`,
+                }}
+              >
+                <Icon
+                  className="w-4 h-4"
+                  style={{ color: style.text }}
+                />
+              </div>
+            )}
 
         <h3
           className="font-medium text-sm truncate"

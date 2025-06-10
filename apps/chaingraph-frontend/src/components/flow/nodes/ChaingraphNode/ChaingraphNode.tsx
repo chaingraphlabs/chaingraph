@@ -298,6 +298,7 @@ function ChaingraphNodeComponent({
         context={portContextValue}
         icon={categoryMetadata.icon}
         style={style}
+        categoryMetadata={categoryMetadata}
         onDelete={() => removeNodeFromFlow({
           flowId: activeFlow.id!,
           nodeId: id,
@@ -323,7 +324,7 @@ function ChaingraphNodeComponent({
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
         position="right"
-        minWidth={100}
+        minWidth={150}
         style={{
           background: 'transparent',
           border: 'none',

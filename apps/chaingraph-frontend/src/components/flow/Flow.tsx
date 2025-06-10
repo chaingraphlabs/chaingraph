@@ -22,6 +22,7 @@ import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
 import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
+import { $isConnectingBeginEvent, $isConnectingEndEvent } from '@/store/edges/stores'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
 import { $activeFlowId, $flowSubscriptionState, setActiveFlowId, useFlowSubscription } from '@/store/flow'
 import { addNodeToFlow } from '@/store/nodes'
@@ -206,6 +207,14 @@ function Flow({
         // onEdgesChange={onEdgesChange}
         onInit={onInit}
         onConnect={onConnect}
+        onConnectStart={() => {
+          // TODO: probably add an event data to indicate the connection start
+          $isConnectingBeginEvent(true)
+        }}
+        onConnectEnd={() => {
+          // TODO: probably add an event data to indicate the connection end
+          $isConnectingEndEvent(false)
+        }}
         onEdgesChange={onEdgesChange}
         onReconnect={onReconnect}
         onReconnectStart={onReconnectStart}

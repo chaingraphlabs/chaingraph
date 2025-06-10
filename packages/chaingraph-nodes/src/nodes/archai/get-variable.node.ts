@@ -64,6 +64,7 @@ class ArchAIGetVariableNode extends BaseNode {
     title: 'Namespace',
     description: 'Namespace to retrieve the variable from',
     defaultValue: VariableNamespace.Chat,
+    required: true,
     options: [
       {
         id: VariableNamespace.Execution,
@@ -98,6 +99,7 @@ class ArchAIGetVariableNode extends BaseNode {
     title: 'Variable Type',
     description: 'Type of the variable to retrieve',
     defaultValue: VariableValueType.Any,
+    required: true,
     options: [
       {
         id: VariableValueType.String,

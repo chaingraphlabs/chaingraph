@@ -98,9 +98,10 @@ export function NumberPort(props: NumberPortProps) {
           className={cn(
             'cursor-pointer',
             // if port required and the value is empty, add a red underline
-            port.getConfig().required
+            config.required
             && (port.getValue() === undefined || port.getValue() === null || !port.validate())
-            && port.getConfig().direction === 'input'
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
           onClick={() => {
@@ -108,12 +109,16 @@ export function NumberPort(props: NumberPortProps) {
               nodeId: node.id,
               portId: port.id,
               ui: {
-                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+                hideEditor: ui?.hideEditor === undefined ? !needRenderEditor : !ui.hideEditor,
               },
             })
           }}
         >
           {title}
+          {' '}
+          [
+          {ui?.hideEditor ? 'hidden' : 'visible'}
+          ]
         </PortTitle>
 
         {needRenderEditor && (

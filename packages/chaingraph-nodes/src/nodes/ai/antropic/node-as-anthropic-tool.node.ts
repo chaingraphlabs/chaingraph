@@ -59,6 +59,9 @@ class NodeAsAnthropicToolNode extends BaseNode {
     title: 'Tool',
     description: 'The defined tool',
     schema: Tool,
+    ui: {
+      hideEditor: true,
+    },
   })
   tool: Tool = new Tool()
 

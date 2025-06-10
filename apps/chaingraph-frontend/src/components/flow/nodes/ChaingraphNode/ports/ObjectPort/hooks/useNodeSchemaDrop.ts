@@ -9,7 +9,7 @@
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from '../../context/PortContext'
 import { $activeFlowMetadata } from '@/store/flow'
-import { $nodes, updateNodeParent, updateNodePosition } from '@/store/nodes'
+import { $nodes, updateNodeParent, updateNodeUI } from '@/store/nodes'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo } from 'react'
@@ -137,23 +137,38 @@ export function useNodeSchemaDrop({
         flowId: activeFlow?.id || '',
         nodeId: droppedNode.id,
         parentNodeId: node.id,
-        // position: node.metadata.ui!.position!,
         position: {
           x: 20,
           y: 80, // Default position, can be adjusted as needed
+        },
+        version: droppedNode.getVersion() + 1,
+      })
+
+      updateNodeUI({
+        flowId: activeFlow?.id || '',
+        nodeId: droppedNode.id,
+        ui: {
+          position: {
+            x: 20,
+            y: 80, // Default position, can be adjusted as needed
+          },
+          state: {
+            ...droppedNode.metadata.ui?.state,
+            isMovingDisabled: true,
+          },
         },
         version: droppedNode.getVersion(),
       })
 
-      updateNodePosition({
-        flowId: activeFlow?.id || '',
-        nodeId: droppedNode.id,
-        position: {
-          x: 20,
-          y: 80, // Default position, can be adjusted as needed
-        },
-        version: droppedNode.getVersion(),
-      })
+      // updateNodePosition({
+      //   flowId: activeFlow?.id || '',
+      //   nodeId: droppedNode.id,
+      //   position: {
+      //     x: 20,
+      //     y: 80, // Default position, can be adjusted as needed
+      //   },
+      //   version: droppedNode.getVersion(),
+      // })
 
       // iterate over the dropped node's ports and add them as field object ports
       // droppedNode.ports.forEach((port) => {
@@ -182,7 +197,6 @@ export function useNodeSchemaDrop({
       //     state: {
       //       ...droppedNode.metadata.ui?.state,
       //       // isHidden: true,
-      //       // inheritanceNodeId: node.id, // Set this node as the inheritance node
       //     },
       //   },
       //   version: droppedNode.getVersion() + 1,
@@ -254,7 +268,6 @@ export function useNodeSchemaDrop({
         //   ui: {
         //     state: {
         //       // isHidden: false,
-        //       // inheritanceNodeId: undefined, // Clear inheritance
         //     },
         //     position: restorePosition,
         //   },

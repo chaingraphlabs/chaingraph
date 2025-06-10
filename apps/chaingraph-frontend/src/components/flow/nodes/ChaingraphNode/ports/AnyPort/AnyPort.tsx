@@ -62,9 +62,10 @@ function AnyPortComponent(props: AnyPortProps) {
           className={cn(
             'cursor-pointer',
             // if port required and the value is empty, add a red underline
-            port.getConfig().required
+            config.required
             && (port.getValue() === undefined || port.getValue() === null || !port.validate())
-            && port.getConfig().direction === 'input'
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
           onClick={() => {

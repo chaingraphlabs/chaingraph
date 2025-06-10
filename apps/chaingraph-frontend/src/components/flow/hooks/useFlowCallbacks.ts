@@ -75,6 +75,12 @@ export function useFlowCallbacks() {
             if (!node || !change.position || !change.position.x || !change.position.y) {
               return
             }
+
+            if (node.metadata.ui?.state?.isMovingDisabled === true) {
+              console.warn(`[useFlowCallbacks] Node ${node.id} is moving disabled, skipping position update`)
+              return
+            }
+
             // check if the position is the same
             const isSamePosition
               = node.metadata.ui?.position?.x === change.position.x
@@ -85,9 +91,11 @@ export function useFlowCallbacks() {
             }
 
             // check if the node parent exists and this is not a group node
-            if (node.metadata.parentNodeId && node.metadata.category !== 'group') {
-              return
-            }
+            // if (node.metadata.parentNodeId && node.metadata.category !== 'group') {
+            //   return
+            // }
+
+            // console.log(`[useFlowCallbacks] Node position change:`, change)
 
             positionInterpolator.clearNodeState(node.id)
 
@@ -106,23 +114,29 @@ export function useFlowCallbacks() {
           if (!node)
             return
 
+          if (node.metadata.category === 'group') {
+            // ignore group node dimension changes, is is handled by the group node itself
+            return
+          }
+
           if (!change.dimensions || !change.dimensions.width || !change.dimensions.height) {
             console.warn(`[useFlowCallbacks] Invalid dimensions change:`, change)
             return
           }
-
           const isSameDimensions
-            = node.metadata.ui?.dimensions?.width === change.dimensions.width
-              && node.metadata.ui?.dimensions?.height === change.dimensions.height
+              = node.metadata.ui?.dimensions?.width === change.dimensions.width
+                && node.metadata.ui?.dimensions?.height === change.dimensions.height
 
           const isNodeDimensionInitialized
-              = node.metadata.ui?.dimensions !== undefined
-                && node.metadata.ui?.dimensions?.width !== undefined
-                && node.metadata.ui?.dimensions?.height !== undefined
+                = node.metadata.ui?.dimensions !== undefined
+                  && node.metadata.ui?.dimensions?.width !== undefined
+                  && node.metadata.ui?.dimensions?.height !== undefined
 
           if (isSameDimensions) { // || !isNodeDimensionInitialized) {
             return
           }
+
+          // console.log(`[useFlowCallbacks] Node dimensions change:`, change)
 
           // console.log(`[useFlowCallbacks] Setting dimensions for node ${change.id} to:`, change.dimensions)
 
@@ -150,7 +164,7 @@ export function useFlowCallbacks() {
             updateNodeUI({
               flowId: activeFlow.id!,
               nodeId: change.id,
-              version: node.getVersion(),
+              version: node.getVersion() + 1,
               ui: {
                 state: {
                   isSelected: change.selected,
@@ -175,7 +189,7 @@ export function useFlowCallbacks() {
           break
 
         default:
-          console.warn(`[useFlowCallbacks] Unhandled node change:`, change)
+          // console.warn(`[useFlowCallbacks] Unhandled node change:`, change)
           break
       }
     })
