@@ -9,12 +9,12 @@
 import type {
   AnyPort,
   ExecutionContext,
+  IObjectSchema,
   IPortConfig,
   NodeEvent,
   NodeExecutionResult,
   PortConnectedEvent,
   PortDisconnectedEvent,
-  PortType,
 } from '@badaitech/chaingraph-types'
 import { BaseNode, findPort, Input, Node, NodeEventType, Output, PortAny, PortArray } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -31,7 +31,7 @@ class ArrayNode extends BaseNode {
     title: 'Array Items Schema',
     description: 'Schema used for array items. You can connect a port to this port and it will be used to generate the schema for the array items.',
   })
-  outputSchema: any
+  itemSchema: any
 
   @Output()
   @PortArray({
@@ -86,23 +86,21 @@ class ArrayNode extends BaseNode {
     const sourcePort = event.sourcePort
     const sourcePortConfig = sourcePort.getConfig()
 
-    // Only process the outputSchema port and ensure it is an input port without a parent
+    // Only process the itemSchema port and ensure it is an input port without a parent
+    // and of type 'any'
     if (
-      sourcePortConfig.key !== 'outputSchema'
+      !sourcePortConfig
+      || sourcePortConfig.key !== 'itemSchema'
       || sourcePortConfig.direction !== 'input'
       || sourcePortConfig.parentId
+      || sourcePortConfig.type !== 'any'
     ) {
       return
     }
 
-    // Ensure the source port is of type "any"
-    if (!sourcePortConfig || sourcePortConfig.type !== 'any') {
-      return
-    }
-
-    // Get the underlying type from the outputSchema port
-    const outputSchemaPort = sourcePort as AnyPort
-    let underlyingType = outputSchemaPort.getRawConfig().underlyingType
+    // Get the underlying type from the itemSchema port
+    const itemSchemaPort = sourcePort as AnyPort
+    let underlyingType = itemSchemaPort.getRawConfig().underlyingType
     if (!underlyingType) {
       // TODO: Find away to disconnect port
       return
@@ -142,9 +140,9 @@ class ArrayNode extends BaseNode {
     const sourcePort = event.sourcePort
     const sourcePortConfig = sourcePort.getConfig()
 
-    // Only process the outputSchema port and ensure it is an input port without a parent
+    // Only process the itemSchema port and ensure it is an input port without a parent
     if (
-      sourcePortConfig.key !== 'outputSchema'
+      sourcePortConfig.key !== 'itemSchema'
       || sourcePortConfig.direction !== 'input'
       || sourcePortConfig.parentId
     ) {
@@ -152,7 +150,13 @@ class ArrayNode extends BaseNode {
     }
 
     // Set the array port configuration to default any configuration
-    this.setArrayPortConfig('Array', this.getDefaultPortConfig('any'))
+    const anySchema: IPortConfig = {
+      type: 'any',
+      ui: {
+        hideEditor: false,
+      },
+    }
+    this.setArrayPortConfig('Array', anySchema)
   }
 
   /**
@@ -195,198 +199,111 @@ class ArrayNode extends BaseNode {
   }
 
   /**
-   * Get the default port configuration based on port type
-   */
-  private getDefaultPortConfig(portType: PortType): any {
-    switch (portType) {
-      case 'string':
-        return {
-          type: 'string',
-          defaultValue: '',
-          ui: {
-            hideEditor: false,
-          },
-        }
-      case 'number':
-        return {
-          type: 'number',
-          defaultValue: 0,
-          ui: {
-            hideEditor: false,
-          },
-        }
-      case 'enum':
-        return {
-          type: 'enum',
-          options: [],
-          defaultValue: '',
-          ui: {
-            hideEditor: false,
-          },
-        }
-      case 'boolean':
-        return {
-          type: 'boolean',
-          defaultValue: false,
-          ui: {
-            hideEditor: false,
-          },
-        }
-      case 'stream':
-        return {
-          type: 'stream',
-          itemConfig: {},
-          ui: {
-            hideEditor: false,
-          },
-        }
-      case 'object':
-        return {
-          type: 'object',
-          schema: {
-            properties: {},
-            type: 'object' as const,
-            description: 'Object Schema',
-          },
-          defaultValue: {},
-          isSchemaMutable: false,
-          ui: {
-            hideEditor: false,
-            keyDeletable: false,
-          },
-        }
-      case 'array':
-        return {
-          type: 'array',
-          itemConfig: {
-            type: 'string',
-          },
-          defaultValue: [],
-          isMutable: true,
-          ui: {
-            hideEditor: false,
-          },
-        }
-      case 'any':
-        return {
-          type: 'any',
-          defaultValue: '',
-          ui: {
-            hideEditor: false,
-          },
-        }
-      // case 'secret':
-      //   return {
-      //     type: 'secret',
-      //     secretType: 'string',
-      //     defaultValue: undefined,
-      //     ui: {
-      //       hideEditor: true,
-      //     },
-      // }
-      default:
-        return {
-          type: 'string',
-          defaultValue: '',
-          ui: {
-            hideEditor: false,
-          },
-        }
-    }
-  }
-
-  /**
    * Create port configuration based on the provided port configuration and merge it with the default port configuration
    */
   private createPortConfig(portConfig: IPortConfig, isChildConfig: boolean = false): IPortConfig {
-    const basicConfig = this.getDefaultPortConfig(portConfig.type)
-
-    // Fill in the base properties
     let specificSchema: IPortConfig
+
     // Create the appropriate schema object based on port type
     switch (portConfig.type) {
       case 'string': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           defaultValue: portConfig.defaultValue || '',
           minLength: portConfig.minLength,
           maxLength: portConfig.maxLength,
           pattern: portConfig.pattern,
           ui: {
-            ...basicConfig.ui,
             isTextArea: portConfig.ui?.isTextArea,
             isPassword: portConfig.ui?.isPassword,
             textareaDimensions: portConfig.ui?.textareaDimensions,
+            hideEditor: false,
           },
         }
         break
       }
       case 'number': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           defaultValue: portConfig.defaultValue ?? 0,
           min: portConfig.min,
           max: portConfig.max,
           step: portConfig.step,
           integer: portConfig.integer,
           ui: {
-            ...basicConfig.ui,
             isSlider: portConfig.ui?.isSlider,
             leftSliderLabel: portConfig.ui?.leftSliderLabel,
             rightSliderLabel: portConfig.ui?.rightSliderLabel,
+            hideEditor: false,
           },
         }
         break
       }
       case 'boolean': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           defaultValue: portConfig.defaultValue ?? false,
+          ui: {
+            hideEditor: false,
+          },
         }
         break
       }
       case 'array': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           itemConfig: this.createPortConfig(portConfig.itemConfig, true),
           defaultValue: portConfig.defaultValue || [],
           minLength: portConfig.minLength,
           maxLength: portConfig.maxLength,
+          isMutable: true,
+          ui: {
+            hideEditor: false,
+          },
         }
         break
       }
       case 'object': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           schema: this.createObjectSchema(portConfig.schema),
           defaultValue: portConfig.defaultValue || {},
+          isSchemaMutable: false,
+          ui: {
+            hideEditor: false,
+            keyDeletable: false,
+          },
         }
         break
       }
       case 'enum': {
         specificSchema = {
-          ...basicConfig,
-          options: portConfig.options?.map(opt => ({
-            id: opt.id || '',
-            title: opt.title || opt.id || '',
-            type: opt.type || 'string',
-            defaultValue: opt.defaultValue,
-          })) || [],
+          type: portConfig.type,
+          options: portConfig.options || [],
           defaultValue: portConfig.defaultValue || '',
+          ui: {
+            hideEditor: false,
+          },
         }
         break
       }
       case 'stream': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           itemConfig: this.createPortConfig(portConfig.itemConfig, true),
+          ui: {
+            hideEditor: false,
+          },
         }
         break
       }
       case 'any': {
         specificSchema = {
-          ...basicConfig,
+          type: portConfig.type,
           defaultValue: portConfig.defaultValue,
+          ui: {
+            hideEditor: false,
+          },
         }
         break
       }
@@ -407,16 +324,14 @@ class ArrayNode extends BaseNode {
   /**
    * Create object schema for object ports
    */
-  private createObjectSchema(schema?: any): Record<string, any> {
+  private createObjectSchema(schema?: IObjectSchema): IObjectSchema {
     if (!schema || !schema.properties) {
       return { properties: {} }
     }
 
-    const properties: Record<string, any> = {}
-
+    const properties: Record<string, IPortConfig> = {}
     for (const key in schema.properties) {
-      const propConfig = schema.properties[key]
-      properties[key] = this.createPortConfig(propConfig, true)
+      properties[key] = this.createPortConfig(schema.properties[key], true)
     }
 
     return {
