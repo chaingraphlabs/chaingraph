@@ -178,14 +178,33 @@ export class ExecutionEngine {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
-          // Check if node has disabledAutoExecution in parent context
+          // Check if node has disabledAutoExecution
           const metadata = node.metadata
           const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
 
-          // In parent context, skip nodes with disabledAutoExecution
-          if (isAutoExecutionDisabled && !this.context.isChildExecution) {
-            console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
-            continue
+          // Skip nodes with disabledAutoExecution based on context
+          if (isAutoExecutionDisabled) {
+            if (!this.context.isChildExecution) {
+              // In parent context, skip nodes with disabledAutoExecution
+              console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
+              continue
+            }
+            // In child context with event data, only execute if this is an EventListenerNode
+            // that matches the event
+            if (this.context.isChildExecution && this.context.eventData) {
+              const nodeType = metadata?.type
+              if (nodeType !== 'EventListenerNode') {
+                console.log(`Skipping node ${node.id} - not an EventListenerNode in child context`)
+                continue
+              }
+            }
+          } else {
+            // For nodes WITHOUT disabledAutoExecution in child context
+            // Skip them to prevent re-running the entire flow
+            if (this.context.isChildExecution && this.context.eventData) {
+              console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
+              continue
+            }
           }
 
           this.executingNodes.add(node.id)
@@ -298,13 +317,35 @@ export class ExecutionEngine {
       this.nodeDependencies.set(dependentNode.id, remainingDeps)
 
       if (remainingDeps === 0) {
-        // Check if node has disabledAutoExecution in parent context
+        // Check if node has disabledAutoExecution
         const metadata = dependentNode.metadata
         const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
 
-        // In parent context, skip nodes with disabledAutoExecution
-        if (isAutoExecutionDisabled && !this.context.isChildExecution) {
-          console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
+        // Skip nodes based on execution context
+        let shouldSkip = false
+        if (isAutoExecutionDisabled) {
+          if (!this.context.isChildExecution) {
+            // In parent context, skip nodes with disabledAutoExecution
+            console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
+            shouldSkip = true
+          } else if (this.context.isChildExecution && this.context.eventData) {
+            // In child context, only EventListenerNodes should have disabledAutoExecution
+            const nodeType = metadata?.type
+            if (nodeType !== 'EventListenerNode') {
+              console.log(`Skipping dependent node ${dependentNode.id} - not an EventListenerNode in child context`)
+              shouldSkip = true
+            }
+          }
+        } else {
+          // For nodes WITHOUT disabledAutoExecution in child context
+          // Skip them if this is an event-driven child execution and they're not downstream of a listener
+          if (this.context.isChildExecution && this.context.eventData) {
+            // This is tricky - we need to allow nodes downstream of EventListeners to execute
+            // For now, we'll let them through and rely on the initial node filtering
+          }
+        }
+
+        if (shouldSkip) {
           // Mark as completed without executing so dependents can proceed
           this.completedNodes.add(dependentNode.id)
           // Need to enqueue it to the completed queue so processDependents gets called

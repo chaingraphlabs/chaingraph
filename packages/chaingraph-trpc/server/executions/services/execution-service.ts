@@ -35,6 +35,10 @@ function generateExecutionID(): string {
   return `EX${customAlphabet(nolookalikes, 24)()}`
 }
 
+function generateEventID(): string {
+  return `EV${customAlphabet(nolookalikes, 24)()}`
+}
+
 export class ExecutionService {
   // Keep track of event queues per execution
   private eventQueues: Map<string, EventQueue<ExecutionEventImpl>> = new Map()
@@ -126,7 +130,7 @@ export class ExecutionService {
     return this.store.get(id)
   }
 
-  async startExecution(id: string): Promise<void> {
+  async startExecution(id: string, events?: Array<{ type: string, data?: any }>): Promise<void> {
     const instance = await this.getInstance(id)
     if (!instance) {
       throw new TRPCError({
@@ -152,6 +156,11 @@ export class ExecutionService {
         eventQueue = this.setupEventHandling(instance)
       }
 
+      // Process external events if provided
+      if (events && events.length > 0) {
+        await this.processExternalEvents(instance, events)
+      }
+
       // Update instance state
       instance.status = ExecutionStatus.Running
       instance.startedAt = new Date()
@@ -170,7 +179,9 @@ export class ExecutionService {
       }
 
       // If execution completed without setting a final status, ensure it's marked as completed
-      if (instance.status === ExecutionStatus.Running) {
+      // BUT only if this execution has no children (children completion is handled by checkParentCompletion)
+      const childIds = await this.getChildExecutions(id)
+      if (instance.status === ExecutionStatus.Running && childIds.length === 0) {
         instance.status = ExecutionStatus.Completed
         instance.completedAt = new Date()
         await this.store.create(instance)
@@ -401,6 +412,65 @@ export class ExecutionService {
   }
 
   /**
+   * Process external events and spawn child executions optimally
+   * Groups consecutive events: [event1, event2, event1, event1, event3, event2]
+   * -> [[event1, event2], [event1], [event1], [event3, event2]]
+   */
+  private async processExternalEvents(
+    instance: ExecutionInstance,
+    events: Array<{ type: string, data?: any }>,
+  ): Promise<void> {
+    console.log(`[processExternalEvents] Processing ${events.length} external events for execution ${instance.id}`)
+
+    // Group consecutive events optimally
+    const eventGroups: Array<Array<{ type: string, data?: any }>> = []
+    let currentGroup: Array<{ type: string, data?: any }> = []
+    const seenInGroup = new Set<string>()
+
+    for (const event of events) {
+      if (seenInGroup.has(event.type)) {
+        // Start a new group if we've seen this event type in the current group
+        eventGroups.push(currentGroup)
+        currentGroup = [event]
+        seenInGroup.clear()
+        seenInGroup.add(event.type)
+      } else {
+        // Add to current group
+        currentGroup.push(event)
+        seenInGroup.add(event.type)
+      }
+    }
+
+    // Don't forget the last group
+    if (currentGroup.length > 0) {
+      eventGroups.push(currentGroup)
+    }
+
+    console.log(`[processExternalEvents] Created ${eventGroups.length} event groups from ${events.length} events`)
+
+    // Spawn child executions for each group
+    for (let i = 0; i < eventGroups.length; i++) {
+      const group = eventGroups[i]
+      console.log(`[processExternalEvents] Processing group ${i + 1}/${eventGroups.length} with ${group.length} events: ${group.map(e => e.type).join(', ')}`)
+
+      // For now, spawn a child execution for each event in the group
+      // TODO: In the future, we could pass multiple events to a single child execution
+      for (const event of group) {
+        const emittedEvent: EmittedEvent = {
+          id: generateEventID(),
+          type: event.type,
+          data: event.data || {},
+          emittedAt: Date.now(),
+          emittedBy: 'external', // Mark as external event
+          processed: false,
+        }
+
+        await this.spawnChildExecutionForEvent(instance, emittedEvent)
+      }
+    }
+  }
+
+  /**
    * Process emitted events and spawn child executions
    */
   async processEmittedEvents(instance: ExecutionInstance): Promise<void> {
@@ -434,9 +504,12 @@ export class ExecutionService {
     const eventContext: EmittedEventContext = {
       eventName: event.type,
       payload: event.data,
+      emittedBy: event.emittedBy,
     }
 
     console.log(`[spawnChildExecutionForEvent] Parent execution depth: ${parentInstance.executionDepth}`)
+    console.log(`[spawnChildExecutionForEvent] Event emitted by node: ${event.emittedBy}`)
+    console.log(`[spawnChildExecutionForEvent] Creating child for event: ${event.type}`)
 
     // Create child execution with parent's depth
     let childInstance: ExecutionInstance
@@ -505,13 +578,18 @@ export class ExecutionService {
       console.log(`[spawnChildExecutionForEvent] WARNING: No parent event queue found for ${parentInstance.id}`)
     }
 
-    // Start child execution asynchronously
-    this.startExecution(childInstance.id).catch((error) => {
-      console.error(`Failed to start child execution ${childInstance.id}:`, error)
-      // Emit completion event even on error to prevent hanging
-      const emitter = this.childCompletionEmitters.get(parentInstance.id)
-      emitter?.emit('child-completed', childInstance.id)
-    })
+    // Start child execution asynchronously but track it
+    // Don't await here to avoid blocking event processing
+    this.startExecution(childInstance.id)
+      .then(() => {
+        console.log(`[spawnChildExecutionForEvent] Child execution ${childInstance.id} completed`)
+      })
+      .catch((error) => {
+        console.error(`Failed to start child execution ${childInstance.id}:`, error)
+        // Emit completion event even on error to prevent hanging
+        const emitter = this.childCompletionEmitters.get(parentInstance.id)
+        emitter?.emit('child-completed', childInstance.id)
+      })
   }
 
   private createEventHandlers(instance: ExecutionInstance): ExecutionEventHandler<any> {

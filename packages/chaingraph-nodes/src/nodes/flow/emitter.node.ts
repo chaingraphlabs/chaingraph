@@ -22,7 +22,7 @@ class EventData {
 @Node({
   type: 'EventEmitterNode',
   title: 'Event Emitter',
-  description: 'Listens for specific events and triggers actions',
+  description: 'Emits events that can trigger event listeners',
   category: NODE_CATEGORIES.FLOW,
   tags: ['flow', 'event', 'emitter', 'trigger', 'action', 'logic'],
 })
@@ -37,18 +37,19 @@ class EventEmitterNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const eventName = this.eventData.eventName
-    console.log(`[EventEmitterNode] Executing with eventName: ${eventName}`)
+    console.log(`[EventEmitterNode ${this.id}] Executing with eventName: "${eventName}", isChildExecution: ${context.isChildExecution}`)
 
     if (!eventName) {
       throw new Error('Event name is required to emit an event')
     }
 
+
     // Use the new event emission API if available
     if (context.emitEvent) {
-      console.log(`[EventEmitterNode] Emitting event: ${eventName}`)
+      console.log(`[EventEmitterNode ${this.id}] Emitting event: "${eventName}"`)
       context.emitEvent(eventName, this.eventData)
-      console.log(`[EventEmitterNode] Event emitted successfully`)
-      console.log(`[EventEmitterNode] Current emittedEvents:`, context.emittedEvents)
+      console.log(`[EventEmitterNode ${this.id}] Event emitted successfully`)
+      console.log(`[EventEmitterNode ${this.id}] Current emittedEvents:`, context.emittedEvents)
     } else {
       throw new Error('Event emission is not supported in this context')
     }

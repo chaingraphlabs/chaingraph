@@ -67,6 +67,10 @@ export const executionRouter = router({
   start: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
+      events: z.array(z.object({
+        type: z.string(),
+        data: z.record(z.any()).optional(),
+      })).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const instance = await ctx.executionService.getInstance(input.executionId)
@@ -77,7 +81,7 @@ export const executionRouter = router({
         })
       }
 
-      await ctx.executionService.startExecution(input.executionId)
+      await ctx.executionService.startExecution(input.executionId, input.events)
       return { success: true }
     }),
 

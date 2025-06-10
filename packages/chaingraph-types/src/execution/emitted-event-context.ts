@@ -12,4 +12,5 @@
 export interface EmittedEventContext {
   eventName: string
   payload?: Record<string, any>
+  emittedBy?: string  // Node ID that emitted the event
 }
