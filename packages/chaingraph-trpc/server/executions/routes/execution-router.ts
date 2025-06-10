@@ -235,7 +235,16 @@ export const executionRouter = router({
                   eventName: exec.context.eventData.eventName,
                   payload: exec.context.eventData.payload,
                 }
-              : undefined,
+              : exec.externalEvents && exec.externalEvents.length > 0
+                ? {
+                    eventName: exec.externalEvents.map(e => e.type).join(', '),
+                    payload: {
+                      count: exec.externalEvents.length,
+                      source: 'external',
+                      events: exec.externalEvents,
+                    },
+                  }
+                : undefined,
             childCount: childIds.length,
           }
         }),
@@ -275,7 +284,16 @@ export const executionRouter = router({
               eventName: instance.context.eventData.eventName,
               payload: instance.context.eventData.payload,
             }
-          : undefined,
+          : instance.externalEvents && instance.externalEvents.length > 0
+            ? {
+                eventName: instance.externalEvents.map(e => e.type).join(', '),
+                payload: {
+                  count: instance.externalEvents.length,
+                  source: 'external',
+                  events: instance.externalEvents,
+                },
+              }
+            : undefined,
         childCount: childIds.length,
         // Additional details
         integrations: instance.context.integrations,

@@ -158,6 +158,9 @@ export class ExecutionService {
 
       // Process external events if provided
       if (events && events.length > 0) {
+        // Store external events on the instance
+        instance.externalEvents = events
+        
         await this.processExternalEvents(instance, events)
       }
 
@@ -166,8 +169,14 @@ export class ExecutionService {
       instance.startedAt = new Date()
       await this.store.create(instance)
 
-      // Start execution
-      await instance.engine.execute()
+      // If we have external events, the parent execution should not run its flow
+      // It should only act as a container for child executions
+      if (!events || events.length === 0) {
+        // Start execution only if no external events
+        await instance.engine.execute()
+      } else {
+        console.log(`[startExecution] Skipping parent execution flow for ${id} - external events will spawn child executions`)
+      }
 
       // Wait for child executions (all executions can have children now)
       console.log(`[startExecution] Checking for child executions of ${id}`)

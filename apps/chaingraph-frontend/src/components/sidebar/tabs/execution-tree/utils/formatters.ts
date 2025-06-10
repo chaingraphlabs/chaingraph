@@ -61,6 +61,11 @@ export function formatEventPayload(payload: any): string {
   if (typeof payload === 'boolean')
     return payload.toString()
 
+  // Special handling for external events
+  if (payload.source === 'external' && payload.events) {
+    return `${payload.count} external event${payload.count > 1 ? 's' : ''}`
+  }
+
   // For objects, show a compact representation
   const keys = Object.keys(payload)
   if (keys.length === 0)
