@@ -21,6 +21,7 @@ export const secretTypeSchemas = {
   'anthropic': z.string().min(1),
   'coinmarketcap': z.string().min(1),
   'deepseek': z.string().min(1),
+  'groq': z.string().min(1),
   'xAPI': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),

@@ -6,7 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  EncryptedSecretValue,
+  ExecutionContext,
+  NodeExecutionResult,
+  SecretTypeMap,
+} from '@badaitech/chaingraph-types'
+import {
+  Secret,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -86,14 +94,15 @@ class LLMCallNode extends BaseNode {
   model: keyof typeof llmModels = LLMModels.Gpt4oMini
 
   @Input()
-  @String({
+  @Secret<SupportedProviders>({
     title: 'API Key',
     description: 'LLM provider API Key',
+    secretType: 'openai',
     ui: {
-      isPassword: true,
+      ispassword: true,
     },
   })
-  apiKey: string = ''
+  apiKey?: EncryptedSecretValue<SupportedProviders>
 
   @Input()
   @String({
@@ -135,25 +144,28 @@ class LLMCallNode extends BaseNode {
     if (!this.apiKey) {
       throw new Error('API Key is required')
     }
+
+    const apiKey = await this.apiKey.decrypt(context)
+
     let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic
 
-    if (this.model === LLMModels.DeepseekReasoner || this.model === LLMModels.DeepseekChat) {
+    if (isDeepSeek(this.model, apiKey)) {
       llm = new ChatDeepSeek({
-        apiKey: this.apiKey,
+        apiKey,
         model: this.model,
         // temperature: this.temperature,
         streaming: true,
       })
-    } else if (this.model === LLMModels.Claude35Sonnet20241022 || this.model === LLMModels.Claude37Sonnet20250219) {
+    } else if (isAnthropic(this.model, apiKey)) {
       llm = new ChatAnthropic({
-        apiKey: this.apiKey,
+        apiKey,
         model: this.model,
         temperature: this.temperature,
         streaming: true,
       })
-    } else if (this.model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct) {
+    } else if (isGroq(this.model, apiKey)) {
       llm = new ChatOpenAI({
-        apiKey: this.apiKey,
+        apiKey,
         model: this.model.replace(/^groq\//, ''),
         temperature: this.temperature,
         streaming: true,
@@ -163,7 +175,7 @@ class LLMCallNode extends BaseNode {
       })
     } else {
       llm = new ChatOpenAI({
-        apiKey: this.apiKey,
+        apiKey,
         model: this.model,
         temperature: this.model !== LLMModels.GptO3Mini ? this.temperature : undefined,
         streaming: true,
@@ -224,6 +236,37 @@ class LLMCallNode extends BaseNode {
       backgroundActions: [streamingPromise],
     }
   }
+}
+
+/**
+ * Type alias for supported provider names used in the system.
+ */
+export type SupportedProviders = 'openai' | 'anthropic' | 'deepseek' | 'groq'
+
+/**
+ * Represents an API key type that maps to a secret type defined for supported providers.
+ */
+export type APIkey = SecretTypeMap[SupportedProviders]
+
+/**
+ * Determines whether the given model belongs to the DeepSeek category of models.
+ */
+export function isDeepSeek(model: LLMModels, apiKey: APIkey): apiKey is SecretTypeMap['deepseek'] {
+  return [LLMModels.DeepseekReasoner, LLMModels.DeepseekChat].includes(model)
+}
+
+/**
+ * Determines whether the given model belongs to the Anthropic category of models.
+ */
+export function isAnthropic(model: LLMModels, apiKey: APIkey): apiKey is SecretTypeMap['anthropic'] {
+  return [LLMModels.Claude35Sonnet20241022, LLMModels.Claude37Sonnet20250219].includes(model)
+}
+
+/**
+ * Determines whether the given model belongs to the Groq category of models.
+ */
+export function isGroq(model: LLMModels, apiKey: APIkey): apiKey is SecretTypeMap['groq'] {
+  return model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct
 }
 
 export default LLMCallNode

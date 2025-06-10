@@ -25,6 +25,7 @@ const configSchema = basePortConfigSchema.merge(z.object({
     z.literal('anthropic'),
     z.literal('coinmarketcap'),
     z.literal('deepseek'),
+    z.literal('groq'),
     z.literal('xAPI'),
     z.literal('xApp'),
     z.literal('string'),
