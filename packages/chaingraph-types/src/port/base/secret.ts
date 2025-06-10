@@ -31,6 +31,9 @@ export const secretTypeSchemas = {
   'deepseek': z.object({
     apiKey: z.string().min(1),
   }),
+  'groq': z.object({
+    apiKey: z.string().min(1),
+  }),
   'xAPI': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
@@ -136,6 +139,15 @@ export const secretTypeMetadata = {
   'deepseek': {
     icon: 'Brain',
     label: 'DeepSeek API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+      },
+    },
+  },
+  'groq': {
+    icon: 'Brain',
+    label: 'Groq API',
     fields: {
       apiKey: {
         label: 'API Key',
