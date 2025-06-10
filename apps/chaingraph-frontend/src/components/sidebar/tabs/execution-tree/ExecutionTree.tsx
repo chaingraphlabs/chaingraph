@@ -13,6 +13,8 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { setExecutionIdAndReset } from '@/store/execution'
 import { useExecutionTree, useSelectedExecution } from '@/store/execution-tree/hooks/useExecutionTree'
+import { $activeFlowId } from '@/store/flow/stores'
+import { useUnit } from 'effector-react'
 import { useMemo, useState } from 'react'
 import { EmptyState } from './components/EmptyState'
 import { ExecutionDetails } from './components/ExecutionDetails'
@@ -24,6 +26,9 @@ export function ExecutionTree() {
   // Use Effector store for execution data
   const { executions, isLoading, error, filters, refetch, updateFilters } = useExecutionTree()
   const { selectedExecution, selectExecution } = useSelectedExecution()
+  
+  // Get active flow ID to check if a flow is selected
+  const activeFlowId = useUnit($activeFlowId)
 
   // UI State
   const [expandedAll, setExpandedAll] = useState(false)
@@ -76,52 +81,62 @@ export function ExecutionTree() {
       <div className="flex-1 min-h-0 flex flex-col">
         <ScrollArea className="flex-1">
           <div className="py-2">
-            {isLoading
+            {!activeFlowId
               ? (
-            // Loading state
-                  <div className="space-y-2 px-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="space-y-2">
-                        <Skeleton className="h-10 w-full" />
-                        {i % 2 === 0 && (
-                          <div className="ml-6">
-                            <Skeleton className="h-8 w-[95%]" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  // No flow selected state
+                  <div className="px-4 py-8 text-center">
+                    <p className="text-sm text-muted-foreground mb-2">No flow selected</p>
+                    <p className="text-xs text-muted-foreground">
+                      Select a flow from the Flows tab to view its executions
+                    </p>
                   </div>
                 )
-              : error
+              : isLoading
                 ? (
-                    // Error state
-                    <div className="px-4 py-8 text-center">
-                      <p className="text-sm text-destructive mb-2">Failed to load executions</p>
-                      <p className="text-xs text-muted-foreground mb-4">{error.message}</p>
-                      <Button variant="outline" size="sm" onClick={handleRefresh}>
-                        Try Again
-                      </Button>
+                    // Loading state
+                    <div className="space-y-2 px-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="space-y-2">
+                          <Skeleton className="h-10 w-full" />
+                          {i % 2 === 0 && (
+                            <div className="ml-6">
+                              <Skeleton className="h-8 w-[95%]" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )
-                : executionTree.length === 0
+                : error
                   ? (
-                      <EmptyState />
+                      // Error state
+                      <div className="px-4 py-8 text-center">
+                        <p className="text-sm text-destructive mb-2">Failed to load executions</p>
+                        <p className="text-xs text-muted-foreground mb-4">{error.message}</p>
+                        <Button variant="outline" size="sm" onClick={handleRefresh}>
+                          Try Again
+                        </Button>
+                      </div>
                     )
-                  : (
-                      executionTree.map(node => (
-                        <ExecutionNode
-                          key={node.id}
-                          node={node}
-                          depth={0}
-                          onSelect={(node) => {
-                            selectExecution(node.id)
-                            setExecutionIdAndReset(node.id)
-                          }}
-                          selectedId={selectedExecution?.id}
-                          expandedAll={expandedAll}
-                        />
-                      ))
-                    )}
+                  : executionTree.length === 0
+                    ? (
+                        <EmptyState />
+                      )
+                    : (
+                        executionTree.map(node => (
+                          <ExecutionNode
+                            key={node.id}
+                            node={node}
+                            depth={0}
+                            onSelect={(node) => {
+                              selectExecution(node.id)
+                              setExecutionIdAndReset(node.id)
+                            }}
+                            selectedId={selectedExecution?.id}
+                            expandedAll={expandedAll}
+                          />
+                        ))
+                      )}
           </div>
         </ScrollArea>
 

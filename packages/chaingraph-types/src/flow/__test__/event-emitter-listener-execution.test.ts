@@ -189,7 +189,7 @@ describe('eventListener execution with real nodes', () => {
     const executedNodes: string[] = []
 
     // Create and run engine
-    const engine = new ExecutionEngine(flow, context)
+    const engine = new ExecutionEngine(flow as Flow, context)
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       executedNodes.push(event.data.node.id)
     })
@@ -332,9 +332,11 @@ describe('eventListener execution with real nodes', () => {
     context.emittedEvents = []
     context.emitEvent = (eventName: string, data: any) => {
       context.emittedEvents!.push({
+        id: `test-${Date.now()}`,
         type: eventName,
         data,
-        nodeId: context.currentNodeId,
+        emittedAt: Date.now(),
+        emittedBy: context.currentNodeId || 'unknown',
         processed: false,
       })
     }
@@ -344,7 +346,7 @@ describe('eventListener execution with real nodes', () => {
     const childExecutions: { eventName: string, executedNodes: string[] }[] = []
 
     // Create parent engine
-    const engine = new ExecutionEngine(flow, context)
+    const engine = new ExecutionEngine(flow as Flow, context)
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       parentExecutedNodes.push(event.data.node.id)
     })
@@ -368,7 +370,7 @@ describe('eventListener execution with real nodes', () => {
         )
 
         const childExecutedNodes: string[] = []
-        const childEngine = new ExecutionEngine(flow, childContext)
+        const childEngine = new ExecutionEngine(flow as Flow, childContext)
         childEngine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
           childExecutedNodes.push(event.data.node.id)
         })

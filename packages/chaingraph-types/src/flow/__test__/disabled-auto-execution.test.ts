@@ -28,7 +28,7 @@ describe('disabledAutoExecution', () => {
 
     async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
       console.log(`TestNode ${this.id} executing`)
-      return { success: true }
+      return {}
     }
   }
 
@@ -46,7 +46,7 @@ describe('disabledAutoExecution', () => {
 
     async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
       console.log(`DisabledAutoExecNode ${this.id} executing`)
-      return { success: true }
+      return {}
     }
   }
 
@@ -91,14 +91,35 @@ describe('disabledAutoExecution', () => {
     expect(nodeExecuted).toBe(false)
   })
 
-  it('should execute nodes with disabledAutoExecution in child context', async () => {
-    // Create flow with a node that has disabledAutoExecution
+  it('should only execute EventListenerNodes in child context with event data', async () => {
+    // Create flow with both a regular node and an EventListenerNode
     const flow = new Flow({ name: 'test-flow' })
+    
     const disabledNode = new DisabledAutoExecNode('disabled-2')
     disabledNode.initialize()
     flow.addNode(disabledNode)
+    
+    // Add an EventListenerNode so the engine has something to execute
+    class TestEventListenerNode extends BaseNode {
+      constructor(id: string) {
+        super(id, {
+          type: 'EventListenerNode',
+          title: 'Test Event Listener',
+          flowPorts: {
+            disabledAutoExecution: true,
+          },
+        })
+      }
+      async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+        return {}
+      }
+    }
+    
+    const listenerNode = new TestEventListenerNode('listener-1')
+    listenerNode.initialize()
+    flow.addNode(listenerNode)
 
-    // Create child execution context
+    // Create child execution context with event data
     const abortController = new AbortController()
     const context = new ExecutionContext(
       flow.id,
@@ -114,17 +135,17 @@ describe('disabledAutoExecution', () => {
     // Create and run engine
     const engine = new ExecutionEngine(flow, context)
 
-    let nodeExecuted = false
+    const executedNodes: string[] = []
+    
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
-      if (event.data.node.id === 'disabled-2') {
-        nodeExecuted = true
-      }
+      executedNodes.push(event.data.node.id)
     })
 
     await engine.execute()
 
-    // Node should have executed in child context
-    expect(nodeExecuted).toBe(true)
+    // Only the EventListenerNode should have executed
+    expect(executedNodes).toEqual(['listener-1'])
+    expect(executedNodes).not.toContain('disabled-2')
   })
 
   it('should handle mixed nodes correctly', async () => {

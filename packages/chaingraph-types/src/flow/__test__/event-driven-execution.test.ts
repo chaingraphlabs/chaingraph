@@ -32,10 +32,20 @@ class TestListenerNode extends BaseNode {
   eventNameFilter = 'test-event'
   receivedMessage = ''
 
+  constructor(id: string) {
+    super(id, {
+      type: 'EventListenerNode', // Mark as EventListenerNode type
+      title: 'Test Event Listener',
+      flowPorts: {
+        disabledAutoExecution: true, // Event listeners have auto-execution disabled
+      },
+    })
+  }
+
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (context.eventData) {
       const { eventName, payload } = context.eventData
-      if (eventName === this.eventNameFilter) {
+      if (eventName === this.eventNameFilter && payload) {
         this.receivedMessage = payload.message || 'no message'
       }
     }

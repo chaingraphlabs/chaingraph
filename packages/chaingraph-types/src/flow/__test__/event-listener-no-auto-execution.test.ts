@@ -128,7 +128,7 @@ describe('eventListener no auto-execution from JSON', () => {
     const executedNodes: string[] = []
 
     // Create and run engine
-    const engine = new ExecutionEngine(flow, context)
+    const engine = new ExecutionEngine(flow as Flow, context)
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       executedNodes.push(event.data.node.metadata.type)
     })

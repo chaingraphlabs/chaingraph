@@ -60,9 +60,9 @@ export const fetchExecutionTreeFx = executionDomain.createEffect(
       if (status === 'all')
         return undefined
 
-      const statusMap: Record<ExecutionStatus, string> = {
-        [ExecutionStatus.IDLE]: 'idle',
-        [ExecutionStatus.CREATING]: 'creating',
+      const statusMap: Record<ExecutionStatus, string | undefined> = {
+        [ExecutionStatus.IDLE]: 'created', // Map IDLE to CREATED
+        [ExecutionStatus.CREATING]: 'created', // Map CREATING to CREATED
         [ExecutionStatus.CREATED]: 'created',
         [ExecutionStatus.RUNNING]: 'running',
         [ExecutionStatus.PAUSED]: 'paused',
@@ -74,8 +74,14 @@ export const fetchExecutionTreeFx = executionDomain.createEffect(
       return statusMap[status as ExecutionStatus] || undefined
     }
 
+    // If no flowId is available, return empty array instead of querying
+    const flowId = filters.flowId || activeFlowId
+    if (!flowId) {
+      return []
+    }
+
     const data = await client.execution.getExecutionTree.query({
-      flowId: filters.flowId || activeFlowId || '',
+      flowId,
       status: mapStatusToBackend(filters.status) as any,
       limit: filters.limit,
     })

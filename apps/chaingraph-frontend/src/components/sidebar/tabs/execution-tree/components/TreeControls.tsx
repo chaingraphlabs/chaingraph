@@ -60,13 +60,11 @@ export function TreeControls({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value={ExecutionStatus.IDLE}>Idle</SelectItem>
-            <SelectItem value={ExecutionStatus.CREATING}>Creating</SelectItem>
             <SelectItem value={ExecutionStatus.CREATED}>Created</SelectItem>
             <SelectItem value={ExecutionStatus.RUNNING}>Running</SelectItem>
             <SelectItem value={ExecutionStatus.PAUSED}>Paused</SelectItem>
             <SelectItem value={ExecutionStatus.COMPLETED}>Completed</SelectItem>
-            <SelectItem value={ExecutionStatus.ERROR}>Error</SelectItem>
+            <SelectItem value={ExecutionStatus.ERROR}>Failed</SelectItem>
             <SelectItem value={ExecutionStatus.STOPPED}>Stopped</SelectItem>
           </SelectContent>
         </Select>
