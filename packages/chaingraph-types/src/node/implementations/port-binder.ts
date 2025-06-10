@@ -8,6 +8,7 @@
 
 import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
 import type { IComplexPortHandler, INodeComposite, IPortBinder, IPortManager } from '../interfaces'
+import { generatePortIDArrayElement } from '../../node/id-generate'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 
@@ -313,7 +314,7 @@ export class PortBinder implements IPortBinder {
     )
 
     // Create the item port
-    const itemPortId = `${arrayPort.id}[${index}]`
+    const itemPortId = generatePortIDArrayElement(arrayPort.id, index)
     const completeItemConfig = {
       ...itemConfig,
       id: itemPortId,

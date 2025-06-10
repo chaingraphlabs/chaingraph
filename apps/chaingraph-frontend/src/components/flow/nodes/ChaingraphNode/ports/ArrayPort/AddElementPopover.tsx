@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { ArrayPortConfig, IPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -26,9 +26,9 @@ interface Data {
 }
 
 interface Props {
-  port: ArrayPort
+  port: IPort<ArrayPortConfig>
   onClose: () => void
-  onSubmit: (data: Data) => void
+  onSubmit: (newItemConfig: IPortConfig) => void
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -111,8 +111,11 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 export function AddElementPopover(props: Props) {
   const { onClose, onSubmit, port } = props
 
+  const itemType = port.getConfig().itemConfig.type
+  const dropDownValues = (itemType !== 'any' ? [itemType] : (port.getConfig().ui?.allowedTypes || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
+
   const [type, setType] = useState<PortType | undefined>(
-    port.getConfig().itemConfig?.type || 'any',
+    dropDownValues.at(0) || itemType,
   )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
@@ -120,9 +123,7 @@ export function AddElementPopover(props: Props) {
     if (!type)
       return
 
-    onSubmit({
-      config: typeConfigMap[type],
-    })
+    onSubmit(typeConfigMap[type])
   }
 
   return (
@@ -157,8 +158,7 @@ export function AddElementPopover(props: Props) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start">
-          {PORT_TYPES
-            .filter(portType => portType !== 'any')// && portType !== 'secret')
+          {dropDownValues
             .map(portType => (
               <DropdownMenuItem
                 key={portType}

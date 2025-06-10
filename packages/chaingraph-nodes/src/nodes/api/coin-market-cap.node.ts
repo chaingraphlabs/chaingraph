@@ -103,7 +103,6 @@ class CoinMarketCapNode extends BaseNode {
       isSchemaMutable: false,
       hideEditor: false,
       addItemFormHidden: false,
-      enumValues: ['string'],
     },
   })
   cryptoList: string[] = []

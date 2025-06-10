@@ -11,7 +11,6 @@ import type {
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import type {
   ArrayPortConfig,
-  ArrayPort as ArrayPortType,
   INode,
   IPort,
   IPortConfig,
@@ -83,6 +82,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const [isSchemaEditorOpen, setIsSchemaEditorOpen] = useState(false)
   const {
     updatePortUI,
+    updateItemConfigArrayPort,
     appendElementArrayPort,
     removeElementArrayPort,
     updatePortValue,
@@ -95,6 +95,15 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const isOutput = config.direction === 'output'
   const ui = config.ui
   const executionID = useExecutionID()
+
+  // Memoize child ports to prevent recalculation
+  const childPorts = useMemo(() => {
+    return Array.from(node.ports.values())
+      .filter(p => p.getConfig().parentId === config.id)
+  }, [node.ports, config.id])
+
+  // Use firstport config as itemconfig otherwise, arrayports itemConfig
+  const newItemConfig = useMemo(() => childPorts.length > 0 ? childPorts[0].getConfig() : config.itemConfig, [childPorts, config.itemConfig])
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -109,21 +118,38 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
 
   // Memoize callback functions
   const handleAddElement = useCallback(() => {
-    setIsAddPropOpen(true)
-  }, [])
+    // if type is not any you want immediately add element instead of choose type
+    if (newItemConfig.type === 'any') {
+      setIsAddPropOpen(true)
+    } else {
+      // if type is not any you want immediately add element instead of choose type
+      appendElementArrayPort({
+        nodeId: node.id,
+        portId: port.id,
+        value: newItemConfig.defaultValue,
+      })
+    }
+  }, [newItemConfig, appendElementArrayPort, node.id, port.id])
 
   const handleClosePopover = useCallback(() => {
     setIsAddPropOpen(false)
   }, [])
 
-  const handleSubmitPopover = useCallback(() => {
+  const handleSubmitPopover = useCallback((newItemConfig: IPortConfig) => {
+    // Update array ports itemConfig
+    updateItemConfigArrayPort({
+      nodeId: node.id,
+      portId: port.id,
+      itemConfig: newItemConfig,
+    })
+    // Add new array element with the choosen type
     appendElementArrayPort({
       nodeId: node.id,
       portId: port.id,
-      value: config.itemConfig.defaultValue,
+      value: newItemConfig.defaultValue,
     })
     setIsAddPropOpen(false)
-  }, [node.id, port.id, config.itemConfig.defaultValue, appendElementArrayPort])
+  }, [node.id, port.id, appendElementArrayPort, updateItemConfigArrayPort])
 
   const handleToggleCollapsible = useCallback(() => {
     requestUpdatePortUI({
@@ -185,13 +211,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     setIsSchemaEditorOpen(false)
   }, [node.id, port, config.ui, updatePortUI, updatePortValue])
 
-  // Memoize child ports to prevent recalculation
-  const childPorts = useMemo(() => {
-    return Array.from(node.ports.values())
-      .filter(p => p.getConfig().parentId === config.id)
-  }, [node.ports, config.id])
-
-  if (ui?.hide)
+  if (ui?.hidden)
     return null
 
   return (
@@ -299,7 +319,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
                   </PopoverTrigger>
                   {isAddPropOpen && (
                     <AddElementPopover
-                      port={port as ArrayPortType}
+                      port={port}
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
                     />

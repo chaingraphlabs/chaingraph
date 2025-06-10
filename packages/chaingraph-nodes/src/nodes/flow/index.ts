@@ -8,3 +8,4 @@
 
 export * from './branch.node'
 export * from './gate.node'
+export * from './switch.node'

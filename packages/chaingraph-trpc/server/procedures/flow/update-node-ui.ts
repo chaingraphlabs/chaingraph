@@ -35,6 +35,7 @@ export const updateNodeUI = flowContextProcedure
         isHidden: z.boolean().optional(),
         inheritanceNodeId: z.string().optional(),
       }).optional(),
+      title: z.string().optional(),
     }),
     version: z.number(),
   }))

@@ -87,17 +87,16 @@ export function PortHeader({
             {title}
           </PortTitle>
         </button>
-      </div>
-
-      {rightElement && (
-        <div className={cn(
-          'flex',
-          isOutput ? 'justify-end' : 'justify-start',
+        {rightElement && (
+          <div className={cn(
+            'flex',
+            isOutput ? 'justify-end' : 'justify-start',
+          )}
+          >
+            {rightElement}
+          </div>
         )}
-        >
-          {rightElement}
-        </div>
-      )}
+      </div>
     </div>
   )
 }

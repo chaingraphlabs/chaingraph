@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { IPort, IPortConfig, ObjectPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -29,6 +29,7 @@ interface Props {
   onClose: () => void
   onSubmit: (data: Data) => void
   nextOrder?: number
+  port: IPort<ObjectPortConfig>
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -88,6 +89,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     defaultValue: [],
     ui: {
       hideEditor: false,
+      allowedTypes: ['string', 'number', 'boolean'],
     },
     isMutable: true,
   },
@@ -109,10 +111,16 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit } = props
-
+  const { onClose, onSubmit, port } = props
   const [key, setKey] = useState('')
-  const [type, setType] = useState<PortType | undefined>('string')
+
+  // use all porttypes if allowedTypes undefined and filter stream ans any out
+  const dropDownValues = (port.getConfig().ui?.allowedTypes || PORT_TYPES).filter(t => t !== 'stream' && t !== 'any')
+
+  const [type, setType] = useState<PortType | undefined>(
+    // use as initial value first enumvalue if type is any
+    dropDownValues.at(0),
+  )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {
@@ -163,8 +171,7 @@ export function AddPropPopover(props: Props) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          {PORT_TYPES
-            .filter(t => t !== 'stream' && t !== 'any')
+          {dropDownValues
             .map(portType => (
               <DropdownMenuItem
                 key={portType}

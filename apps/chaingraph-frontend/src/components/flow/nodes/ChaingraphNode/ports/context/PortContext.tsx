@@ -37,6 +37,12 @@ export interface RemoveFieldObjectPortParams {
   key: string
 }
 
+export interface UpdateItemConfigArrayPortParams {
+  nodeId: string
+  portId: string
+  itemConfig: IPortConfig
+}
+
 export interface AddElementArrayPortParams {
   nodeId: string
   portId: string
@@ -57,6 +63,7 @@ export interface PortContextValue {
   addFieldObjectPort: (params: AddFieldObjectPortParams) => void
   removeFieldObjectPort: (params: RemoveFieldObjectPortParams) => void
   // Array port callbacks
+  updateItemConfigArrayPort: (params: UpdateItemConfigArrayPortParams) => void
   appendElementArrayPort: (params: AddElementArrayPortParams) => void
   removeElementArrayPort: (params: RemoveElementArrayPortParams) => void
   // Edge utilities
@@ -69,6 +76,7 @@ const defaultContext: PortContextValue = {
   updatePortUI: () => { },
   addFieldObjectPort: () => { },
   removeFieldObjectPort: () => { },
+  updateItemConfigArrayPort: () => { },
   appendElementArrayPort: () => { },
   removeElementArrayPort: () => { },
   getEdgesForPort: () => [],
