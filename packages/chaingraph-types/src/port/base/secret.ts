@@ -16,19 +16,20 @@ import { z } from 'zod'
  * Supported types of secrets.
  */
 export const secretTypeSchemas = {
-  openai: z.string().min(1),
-  anthropic: z.string().min(1),
-  coinmarketcap: z.string().min(1),
-  deepseek: z.string().min(1),
-  xAPI: z.object({
+  '0g': z.string().length(64).regex(/^[0-9a-z]+$/i),
+  'openai': z.string().min(1),
+  'anthropic': z.string().min(1),
+  'coinmarketcap': z.string().min(1),
+  'deepseek': z.string().min(1),
+  'xAPI': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
-  xApp: z.object({
+  'xApp': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
-  string: z.string().min(1),
+  'string': z.string().min(1),
 } satisfies Record<string, z.ZodType>
 
 /**

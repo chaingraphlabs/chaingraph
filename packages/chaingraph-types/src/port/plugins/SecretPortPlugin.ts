@@ -20,6 +20,7 @@ import { deserialize, serialize } from '../base/secret'
 const configSchema = basePortConfigSchema.merge(z.object({
   type: z.literal('secret'),
   secretType: z.union([
+    z.literal('0g'),
     z.literal('openai'),
     z.literal('anthropic'),
     z.literal('coinmarketcap'),
