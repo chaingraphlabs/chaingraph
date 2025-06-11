@@ -83,7 +83,11 @@ class ArrayNode extends BaseNode {
       return
     }
 
+    // Get the source port and its configuration
     const sourcePort = event.sourcePort
+    if (!sourcePort) {
+      return
+    }
     const sourcePortConfig = sourcePort.getConfig()
 
     // Only process the itemSchema port and ensure it is an input port without a parent
