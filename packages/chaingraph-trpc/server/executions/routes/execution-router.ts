@@ -353,6 +353,7 @@ export const executionRouter = router({
           const historicalEvents = await eventStore.getEvents(
             input.executionId,
             eventIndex > 0 ? eventIndex + 1 : 0, // Start from next event if reconnecting
+            10000, // Limit to 10000 events for performance
           )
 
           // Yield historical events

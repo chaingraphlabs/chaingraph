@@ -54,7 +54,7 @@
 //       throw new Error('No secretID provided')
 //     }
 //
-//     if (!context.badAIContext?.agentSession) {
+//     if (!context.archAIContext?.agentSession) {
 //       throw new Error('No agent session provided')
 //     }
 //
@@ -62,7 +62,7 @@
 //     const { secret } = await graphQLClient.request(GraphQL.ReadSecretDocument, {
 //       id: this.secretID,
 //       publicKey: Buffer.from(await subtle.exportKey('raw', keyPair.publicKey)).toString('base64'),
-//       session: context.badAIContext?.agentSession,
+//       session: context.archAIContext?.agentSession,
 //     })
 //
 //     const secretType = secret.secret.metadata.type

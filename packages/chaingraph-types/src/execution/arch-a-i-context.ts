@@ -9,7 +9,7 @@
 /**
  * Context for BadAI integration
  */
-export interface BadAIContext {
+export interface ArchAIContext {
   agentSession?: string
   agentID?: string
   chatID?: string

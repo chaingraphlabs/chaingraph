@@ -204,8 +204,8 @@ sample({
 })
 
 // Auto-refresh when active flow changes - disabled for now
-// sample({
-//   clock: $activeFlowId,
-//   source: $executionTreeFilters,
-//   target: fetchExecutionTreeFx,
-// })
+sample({
+  clock: $activeFlowId,
+  source: $executionTreeFilters,
+  target: fetchExecutionTreeFx,
+})

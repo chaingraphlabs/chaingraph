@@ -99,16 +99,16 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
     },
     integration: archAIIntegration
       ? {
-          badai: archAIIntegration
+          archai: archAIIntegration
             ? {
                 agentID: archAIIntegration.agentID,
                 agentSession: archAIIntegration.agentSession,
                 chatID: archAIIntegration.chatID,
                 messageID: archAIIntegration.messageID,
               }
-            : undefined,
+            : {},
         }
-      : undefined,
+      : {},
   })
   return response.executionId
 })

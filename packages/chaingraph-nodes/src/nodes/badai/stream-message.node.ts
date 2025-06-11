@@ -7,7 +7,7 @@
  */
 
 import type {
-  BadAIContext,
+  ArchAIContext,
   ExecutionContext,
   NodeEvent,
   NodeExecutionResult,
@@ -115,14 +115,14 @@ class BadAIStreamMessageNode extends BaseNode {
   public buffer: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const badAIContext = context.getIntegration<BadAIContext>('badai')
+    const archAIContext = context.getIntegration<ArchAIContext>('archai')
 
-    const chatID = badAIContext?.chatID
+    const chatID = archAIContext?.chatID
     if (!chatID) {
       throw new Error('BadAI chat ID is not available in the context')
     }
 
-    const agentSession = badAIContext?.agentSession
+    const agentSession = archAIContext?.agentSession
     if (!agentSession) {
       throw new Error('BadAI agent session is not available in the context')
     }

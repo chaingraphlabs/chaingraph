@@ -325,6 +325,9 @@ importers:
       color:
         specifier: ^5.0.0
         version: 5.0.0
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       effector:
         specifier: ^23.3.0
         version: 23.3.0
@@ -5335,6 +5338,9 @@ packages:
 
   dataloader@2.2.3:
     resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
+
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
   dayjs@1.11.13:
     resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
@@ -15036,6 +15042,8 @@ snapshots:
 
   dataloader@2.2.3: {}
 
+  date-fns@4.1.0: {}
+
   dayjs@1.11.13: {}
 
   debounce@1.2.1: {}
@@ -16689,7 +16697,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.8.4(debug@4.4.0))
+      retry-axios: 2.6.0(axios@1.8.4)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -18800,7 +18808,7 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
 
-  retry-axios@2.6.0(axios@1.8.4(debug@4.4.0)):
+  retry-axios@2.6.0(axios@1.8.4):
     dependencies:
       axios: 1.8.4(debug@4.4.0)
 

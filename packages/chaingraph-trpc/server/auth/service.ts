@@ -51,17 +51,17 @@ export class AuthService {
 
         if (userProfile && userProfile.id) {
           const user: User = {
-            id: `badai:${userProfile.id}`,
+            id: `archai:${userProfile.id}`,
             displayName: userProfile.name,
             role: this.mapBadAIUserRole(userProfile.role),
-            provider: 'badai',
+            provider: 'archai',
           }
 
           // TODO: add session token to the TTL cache. Check that key TTL time before session expiration
 
           return {
-            userId: `badai:${userProfile.id}`,
-            provider: 'badai',
+            userId: `archai:${userProfile.id}`,
+            provider: 'archai',
             token,
             user,
             // TODO: needs to parse JWT token and get expiration date "exp" field
@@ -89,7 +89,7 @@ export class AuthService {
       return DevUser
     }
 
-    if (session.provider === 'badai') {
+    if (session.provider === 'archai') {
       return session.user
     }
 

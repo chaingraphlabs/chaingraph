@@ -7,7 +7,7 @@
  */
 
 import type {
-  BadAIContext,
+  ArchAIContext,
   ExecutionContext,
 
   NodeExecutionResult,
@@ -85,14 +85,14 @@ class ArchAIChatHistoryNode extends BaseNode {
   chatHistory: Message[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const badAIContext = context.getIntegration<BadAIContext>('badai')
+    const archAIContext = context.getIntegration<ArchAIContext>('archai')
 
-    const chatID = badAIContext?.chatID
+    const chatID = archAIContext?.chatID
     if (!chatID) {
       throw new Error('ArchAI chat ID is not available in the context')
     }
 
-    const agentSession = badAIContext?.agentSession
+    const agentSession = archAIContext?.agentSession
     if (!agentSession) {
       throw new Error('ArchAI agent session is not available in the context')
     }

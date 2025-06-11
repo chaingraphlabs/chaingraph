@@ -142,11 +142,11 @@ function serializeEvent(event: ExecutionEventImpl) {
             </div>
           )}
 
-          {event.type === ExecutionEventEnum.CHILD_EXECUTION_FAILED && data.error && (
+          {event.type === ExecutionEventEnum.CHILD_EXECUTION_FAILED && (data as any).error && (
             <div>
               <div className="text-xs text-muted-foreground mb-1">Error</div>
               <Badge variant="destructive" className="text-xs">
-                {data.error.message}
+                {(data as any).error.message}
               </Badge>
             </div>
           )}
