@@ -89,11 +89,11 @@ class OKXGetSwapDataNode extends BaseNode {
         // maxAutoSlippage: this.swapParams.maxAutoSlippage,
       }
 
-      if (this.swapParams.autoSlippage === false) {
+      if (this.swapParams.slippage !== undefined && this.swapParams.slippage !== null && this.swapParams.slippage !== '') {
         params.slippage = this.swapParams.slippage
-      } else {
+      } else if (this.swapParams.autoSlippage === true) {
         params.autoSlippage = this.swapParams.autoSlippage
-        // params.maxAutoSlippage = this.swapParams.maxAutoSlippage
+        params.maxAutoSlippage = this.swapParams.maxAutoSlippage
       }
 
       console.log(`[OKXGetSwapDataNode] Fetching swap data with params: ${JSON.stringify(params)}`)

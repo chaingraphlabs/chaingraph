@@ -947,6 +947,81 @@ export class AntropicLlmCallNode extends BaseNode {
   }
 
   /**
+   * Recursively merge values into node ports, preserving existing values when new values are partial
+   */
+  private setPortValuesRecursively(
+    node: BaseNode,
+    values: any,
+    parentId: string | undefined,
+    nodeType: string,
+  ): void {
+    for (const [key, value] of Object.entries(values)) {
+      const port = findPort(node, (p) => {
+        return p.getConfig().key === key
+          && p.getConfig().direction === 'input'
+          && !p.isSystem()
+          && p.getConfig().parentId === parentId
+      })
+
+      if (!port) {
+        console.warn(`Port not found for key: ${key} in tool node ${nodeType}`)
+        continue
+      }
+
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // Get current port value to merge with
+        const currentValue = port.getValue()
+
+        if (typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
+          // Deep merge: preserve existing fields, add/update new ones
+          const mergedValue = this.deepMergeObjects(currentValue, value)
+          port.setValue(mergedValue)
+          console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
+        } else {
+          // If current value is not an object, just set the new value and recurse into sub-ports
+          port.setValue(value)
+          console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+        }
+
+        // Recursively handle nested object properties
+        this.setPortValuesRecursively(node, value, port.id, nodeType)
+      } else {
+        // Set primitive values directly
+        port.setValue(value)
+        console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+      }
+    }
+  }
+
+  /**
+   * Deep merge two objects, preserving existing values and adding new ones
+   */
+  private deepMergeObjects(target: any, source: any): any {
+    if (typeof target !== 'object' || target === null || Array.isArray(target)) {
+      return source
+    }
+
+    if (typeof source !== 'object' || source === null || Array.isArray(source)) {
+      return source
+    }
+
+    const result = { ...target }
+
+    for (const [key, value] of Object.entries(source)) {
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)
+        && typeof result[key] === 'object' && result[key] !== null && !Array.isArray(result[key])) {
+        // Recursively merge nested objects
+        result[key] = this.deepMergeObjects(result[key], value)
+      } else {
+        // Replace primitive values or non-object values
+        result[key] = value
+      }
+    }
+
+    return result
+  }
+
+  /**
    * Execute tools and return their results
    */
   private async executeTools(
@@ -994,59 +1069,13 @@ export class AntropicLlmCallNode extends BaseNode {
 
           const nodeToExecute = originalNodeToExecute.clone() as BaseNode
 
-          console.log(`[ANTHROPIC] Executing tool node: ${toolDefinition.chaingraph_node_type} with ID: ${toolDefinition.chaingraph_node_id}: ${JSON.stringify(nodeToExecute.serialize())}`)
+          // console.log(`[ANTHROPIC] Executing tool node: ${toolDefinition.chaingraph_node_type} with ID: ${toolDefinition.chaingraph_node_id}: ${JSON.stringify(nodeToExecute.serialize())}`)
 
           // const nodeToExecute = NodeRegistry.getInstance().createNode(toolDefinition.chaingraph_node_type)
           // nodeToExecute.initialize()
 
           // fill the node's input ports with the tool use block input
-          const parentId: string | undefined = undefined
-          while (true) {
-            let exit = false
-            for (const [key, value] of Object.entries(toolUseBlock.input)) {
-              const port = findPort(nodeToExecute, (p) => {
-                return p.getConfig().key === key
-                  && p.getConfig().direction === 'input'
-                  && !p.isSystem()
-                  && p.getConfig().parentId === parentId
-              })
-
-              if (!port) {
-                console.warn(`Port not found for key: ${key} in tool node ${toolDefinition.chaingraph_node_type}`)
-                continue
-              }
-
-              // check if the values is the object and not array
-              if (typeof value === 'object' && !Array.isArray(value)) {
-                // iterate over the object properties
-                for (const [subKey, subValue] of Object.entries(value)) {
-                  const subPort = findPort(nodeToExecute, (p) => {
-                    return p.getConfig().key === subKey
-                      && p.getConfig().direction === 'input'
-                      && !p.isSystem()
-                      && p.getConfig().parentId === port.id
-                  })
-
-                  if (subPort) {
-                    subPort.setValue(subValue)
-                    console.log(`Setting port ${subKey} to value: ${JSON.stringify(subValue)}`)
-                  } else {
-                    console.warn(`Sub-port not found for key: ${subKey} in tool node ${toolDefinition.chaingraph_node_type}`)
-                  }
-                }
-              } else {
-                // Set the value directly for non-object inputs
-                port.setValue(value)
-                console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
-              }
-
-              exit = true
-            }
-
-            if (exit) {
-              break
-            }
-          }
+          this.setPortValuesRecursively(nodeToExecute, toolUseBlock.input, undefined, toolDefinition.chaingraph_node_type)
 
           const executionResult = await nodeToExecute.execute(context)
           if (executionResult.backgroundActions && executionResult.backgroundActions.length > 0) {
@@ -1258,6 +1287,8 @@ export class AntropicLlmCallNode extends BaseNode {
       }
 
       console.log(`[ANTHROPIC] Tool result without encrypted content: ${JSON.stringify(toolResultWithoutEncryptedContent)}`)
+
+      contentBlocks[index] = toolResultBlock
 
       this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolResultBlock.tool_use_id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${JSON.stringify(toolResultWithoutEncryptedContent)}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
 
