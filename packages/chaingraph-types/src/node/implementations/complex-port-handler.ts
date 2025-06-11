@@ -280,11 +280,10 @@ export class ComplexPortHandler implements IComplexPortHandler {
     // Get current array value
     const currentValue = arrayPort.getValue() || []
 
-    if (currentValue.length === 0)
-      return
-
-    // This recreates all item ports and use the new item configuration from the array port
-    this.recreateArrayItemPorts(arrayPort, currentValue)
+    if (currentValue.length > 0) {
+      // This recreates all item ports and use the new item configuration from the array port
+      this.recreateArrayItemPorts(arrayPort, currentValue)
+    }
 
     // Update the array port
     this.portManager.updatePort(arrayPort)
