@@ -12,6 +12,7 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
+import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
 import type {
   ContentBlockBase,
 } from './types'
@@ -21,12 +22,16 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
+  Secret,
+} from '@badaitech/chaingraph-types'
+import {
   findPort,
 } from '@badaitech/chaingraph-types'
 import {
   Number,
   PortEnum,
 } from '@badaitech/chaingraph-types'
+
 import {
   Boolean,
   ObjectSchema,
@@ -44,7 +49,6 @@ import {
   PortStream,
   String,
 } from '@badaitech/chaingraph-types'
-
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   AntropicModelTypes,
@@ -156,15 +160,14 @@ class AntropicLLMCallNodeFeatures {
   description: 'Configuration for the Anthropic Claude LLM',
 })
 export class LLMConfig {
-  @String({
+  @Input()
+  @Secret<'anthropic'>({
     title: 'API Key',
     description: 'Your Anthropic API key',
+    secretType: 'anthropic',
     required: true,
-    ui: {
-      isPassword: true,
-    },
   })
-  apiKey: string = ''
+  apiKey?: EncryptedSecretValue<'anthropic'>
 
   @PortEnum({
     title: 'Model',
@@ -506,9 +509,11 @@ export class AntropicLlmCallNode extends BaseNode {
       // Validate inputs
       this.validateInputs()
 
+      const apiKey = await this.config.apiKey!.decrypt(context)
+
       // Create Anthropic client
       const client = new Anthropic({
-        apiKey: this.config.apiKey,
+        apiKey,
         maxRetries: 3,
         timeout: 10 * 60 * 1000, // 10 minutes
       })

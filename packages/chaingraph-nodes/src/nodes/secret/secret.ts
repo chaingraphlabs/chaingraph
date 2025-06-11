@@ -7,6 +7,7 @@
  */
 
 import type {
+  ArchAIContext,
   EncryptedSecretValue,
   ExecutionContext,
   NodeExecutionResult,
@@ -55,8 +56,12 @@ export class SecretNode extends BaseNode {
       throw new Error('No secretID provided')
     }
 
-    if (!context.badAIContext?.agentSession) {
-      throw new Error('No agent session provided')
+    // Get required context information
+    const archAIContext = context.getIntegration<ArchAIContext>('archai')
+
+    const agentSession = archAIContext?.agentSession
+    if (!agentSession) {
+      throw new Error('ArchAI agent session is not available in the context')
     }
 
     const graphQLClient = createGraphQLClient(
@@ -67,7 +72,7 @@ export class SecretNode extends BaseNode {
     const { secret } = await graphQLClient.request(GraphQL.ReadSecretDocument, {
       id: this.secretID,
       publicKey: Buffer.from(await subtle.exportKey('raw', keyPair.publicKey)).toString('base64'),
-      session: context.badAIContext?.agentSession,
+      session: agentSession,
     })
 
     const secretType = secret.secret.metadata.type

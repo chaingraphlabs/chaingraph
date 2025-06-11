@@ -7,7 +7,7 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { SecretPortConfig, SecretPortValue } from '../base'
+import type { IPort, SecretPortConfig, SecretPortValue } from '../base'
 import type { SecretType } from '../base/secret'
 import { BasePort } from '../base'
 import { SecretPortPlugin } from '../plugins/SecretPortPlugin'
@@ -75,5 +75,9 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
    */
   protected deserializeValue(data: JSONValue): SecretPortValue<S> {
     return SecretPortPlugin.deserializeValue(data, this.config) as SecretPortValue<S>
+  }
+
+  cloneWithNewId(): IPort<SecretPortConfig<S>> {
+    throw new Error('Method not implemented.')
   }
 }
