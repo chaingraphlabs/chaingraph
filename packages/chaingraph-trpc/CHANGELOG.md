@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.0-dev.1
+
+### Minor Changes
+
+- Claude extended thinking with the tools usage. Execution storage with X-ray history. Secret node types.
+
 ## 0.1.29-dev.0
 
 ### Patch Changes
