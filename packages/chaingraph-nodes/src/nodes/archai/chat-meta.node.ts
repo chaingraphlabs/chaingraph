@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type { BadAIContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import { BaseNode, Node, Output, PortObject } from '@badaitech/chaingraph-types'
@@ -33,12 +33,14 @@ class ArchAIChatMetaNode extends BaseNode {
   chatMeta?: ChatMeta
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const chatID = context.badAIContext?.chatID
+    const badAIContext = context.getIntegration<BadAIContext>('badai')
+
+    const chatID = badAIContext?.chatID
     if (!chatID) {
       throw new Error('ArchAI chat ID is not available in the context')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const agentSession = badAIContext?.agentSession
     if (!agentSession) {
       throw new Error('ArchAI agent session is not available in the context')
     }

@@ -51,6 +51,7 @@ export class ExecutionEngine {
   // private readonly eventQueue: EventQueue<ExecutionEvent>
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
+  private onEventCallback?: (context: ExecutionContext) => Promise<void>
 
   constructor(
     private readonly flow: Flow,
@@ -200,29 +201,34 @@ export class ExecutionEngine {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
-          // get node parent if it has one
-          // const parentNode = this.flow.nodes.get(node.metadata.parentNodeId ?? '')
-          // if (parentNode) {
-          //   console.log(`Node ${node.id} has parent node ${parentNode.id}`)
-          // }
-          //
-          // if (parentNode && parentNode.metadata.category !== 'group') {
-          //   continue
-          // }
+          // Check if node has disabledAutoExecution
+          const metadata = node.metadata
+          const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
 
-          // if (node.metadata.ui?.state?.isHidden === true) {
-          //   // If the node is  hidden, skip it
-          //   this.setNodeSkipped(node, 'node is hidden')
-          //   continue
-          // }
-
-          // const children = this.context.findNodes(n => n.metadata.parentNodeId === node.id)
-          // if (children && children.length > 0) {
-          //   // if there are children, s
-          //   continue
-          // }
-
-          // console.log(`[ExecutionEngine] Enqueuing initial node ${node.id}`)
+          // Skip nodes with disabledAutoExecution based on context
+          if (isAutoExecutionDisabled) {
+            if (!this.context.isChildExecution) {
+              // In parent context, skip nodes with disabledAutoExecution
+              console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
+              continue
+            }
+            // In child context with event data, only execute if this is an EventListenerNode
+            // that matches the event
+            if (this.context.isChildExecution && this.context.eventData) {
+              const nodeType = metadata?.type
+              if (nodeType !== 'EventListenerNode') {
+                console.log(`Skipping node ${node.id} - not an EventListenerNode in child context`)
+                continue
+              }
+            }
+          } else {
+            // For nodes WITHOUT disabledAutoExecution in child context
+            // Skip them to prevent re-running the entire flow
+            if (this.context.isChildExecution && this.context.eventData) {
+              console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
+              continue
+            }
+          }
 
           this.executingNodes.add(node.id)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
@@ -287,6 +293,16 @@ export class ExecutionEngine {
       // Process dependents and potentially enqueue new nodes
       await this.processDependents(completedNode)
 
+      // Check for emitted events after node completion
+      if (this.onEventCallback && this.context.emittedEvents && this.context.emittedEvents.length > 0) {
+        const unprocessedEvents = this.context.emittedEvents.filter(e => !e.processed)
+        console.log(`[ExecutionEngine] After node ${completedNode.metadata.title}, found ${unprocessedEvents.length} unprocessed events`)
+        if (unprocessedEvents.length > 0) {
+          console.log(`[ExecutionEngine] Calling onEventCallback`)
+          await this.onEventCallback(this.context)
+        }
+      }
+
       // Check if execution is complete based on the new requirements
       if (await this.isExecutionComplete()) {
         break
@@ -330,6 +346,42 @@ export class ExecutionEngine {
       this.nodeDependencies.set(dependentNode.id, remainingDeps)
 
       if (remainingDeps === 0) {
+        // Check if node has disabledAutoExecution
+        const metadata = dependentNode.metadata
+        const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+
+        // Skip nodes based on execution context
+        let shouldSkip = false
+        if (isAutoExecutionDisabled) {
+          if (!this.context.isChildExecution) {
+            // In parent context, skip nodes with disabledAutoExecution
+            console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
+            shouldSkip = true
+          } else if (this.context.isChildExecution && this.context.eventData) {
+            // In child context, only EventListenerNodes should have disabledAutoExecution
+            const nodeType = metadata?.type
+            if (nodeType !== 'EventListenerNode') {
+              console.log(`Skipping dependent node ${dependentNode.id} - not an EventListenerNode in child context`)
+              shouldSkip = true
+            }
+          }
+        } else {
+          // For nodes WITHOUT disabledAutoExecution in child context
+          // Skip them if this is an event-driven child execution and they're not downstream of a listener
+          if (this.context.isChildExecution && this.context.eventData) {
+            // This is tricky - we need to allow nodes downstream of EventListeners to execute
+            // For now, we'll let them through and rely on the initial node filtering
+          }
+        }
+
+        if (shouldSkip) {
+          // Mark as completed without executing so dependents can proceed
+          this.completedNodes.add(dependentNode.id)
+          // Need to enqueue it to the completed queue so processDependents gets called
+          this.completedQueue.enqueue(dependentNode)
+          continue
+        }
+
         // Node is ready for execution
         this.executingNodes.add(dependentNode.id)
         this.readyQueue.enqueue(this.executeNode.bind(this, dependentNode))
@@ -455,6 +507,10 @@ export class ExecutionEngine {
       }
 
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
+
+      // Track current executing node for event emission
+      this.context.currentNodeId = node.id
+
       const { backgroundActions } = await withTimeout(
         node.executeWithDefaultPorts(this.context),
         nodeTimeoutMs,
@@ -501,6 +557,8 @@ export class ExecutionEngine {
       this.setNodeError(node, error, nodeStartTime)
     } finally {
       cancel()
+      // Clear current node ID after execution
+      this.context.currentNodeId = undefined
     }
   }
 
@@ -557,6 +615,10 @@ export class ExecutionEngine {
     return this.debugger
   }
 
+  public getOptions(): ExecutionEngineOptions | undefined {
+    return this.options
+  }
+
   public on<T extends ExecutionEventEnum>(
     type: T,
     handler: (event: ExecutionEventImpl<T>) => void,
@@ -570,6 +632,13 @@ export class ExecutionEngine {
 
   public onAll(handler: (event: ExecutionEventImpl) => void): () => void {
     return this.eventQueue.subscribe(handler)
+  }
+
+  /**
+   * Set a callback to be called when events are emitted
+   */
+  public setEventCallback(callback: (context: ExecutionContext) => Promise<void>): void {
+    this.onEventCallback = callback
   }
 
   // protected createEvent<T extends ExecutionEventEnum>(

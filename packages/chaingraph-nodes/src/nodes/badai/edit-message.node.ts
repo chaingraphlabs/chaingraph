@@ -7,6 +7,7 @@
  */
 
 import type {
+  BadAIContext,
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
@@ -65,17 +66,19 @@ class EditMessageBadAINode extends BaseNode {
   public messageIDOutput: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    const badAIContext = context.getIntegration<BadAIContext>('badai')
+
     // Validate message ID
     if (!this.messageID) {
       throw new Error('Message ID is required to edit a message')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const agentSession = badAIContext?.agentSession
     if (!agentSession) {
       throw new Error('BadAI agent session is not available in the context')
     }
 
-    const chatID = context.badAIContext?.chatID
+    const chatID = badAIContext?.chatID
     if (!chatID) {
       throw new Error('BadAI chat ID is not available in the context')
     }

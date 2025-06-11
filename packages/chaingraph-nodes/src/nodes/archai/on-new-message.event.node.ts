@@ -6,14 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type { BadAIContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import { BaseNode, Node, Output, PortObject } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { Attachment } from './types'
-import { Participant } from './types'
-import { Message } from './types'
+import { Attachment, Message, Participant } from './types'
 
 @Node({
   type: 'OnNewMessageEventNode',
@@ -32,17 +30,19 @@ class OnNewMessageEventNode extends BaseNode {
   message?: Message
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const chatID = context.badAIContext?.chatID
+    const badAIContext = context.getIntegration<BadAIContext>('badai')
+
+    const chatID = badAIContext?.chatID
     if (!chatID) {
       throw new Error('ArchAI chat ID is not available in the context')
     }
 
-    const messageID = context.badAIContext?.messageID
+    const messageID = badAIContext?.messageID
     if (!messageID) {
       throw new Error('ArchAI message ID is not available in the context')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const agentSession = badAIContext?.agentSession
     if (!agentSession) {
       throw new Error('ArchAI agent session is not available in the context')
     }

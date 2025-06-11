@@ -39,6 +39,7 @@ export const stepExecution = executionDomain.createEvent<string>() // executionI
 // State events
 export const setExecutionError = executionDomain.createEvent<ExecutionError | null>()
 export const clearExecutionState = executionDomain.createEvent()
+export const setExecutionIdAndReset = executionDomain.createEvent<string | null>()
 
 // Subscription events
 export const setExecutionSubscriptionStatus = executionDomain.createEvent<ExecutionSubscriptionStatus>()
@@ -203,6 +204,7 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(createExecutionFx.doneData)
   .reset(createExecution)
   .reset(globalReset)
+  .reset(setExecutionIdAndReset)
 
 export const $executionNodes = executionDomain
   .createStore<Record<string, NodeExecutionState>>({}, {
@@ -327,6 +329,7 @@ export const $executionNodes = executionDomain
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
   .reset(globalReset)
+  .reset(setExecutionIdAndReset)
 
 export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
   .on(newExecutionEvent, (state, event) => {
@@ -385,6 +388,7 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
   .reset(createExecutionFx.doneData)
+  .reset(setExecutionIdAndReset)
   .reset(globalReset)
 
 // Handle execution status changes
@@ -399,6 +403,15 @@ $executionState
     return state
   })
   .on(createExecutionFx.doneData, (state, executionId) => {
+    return {
+      ...state,
+      executionId,
+      status: ExecutionStatus.CREATED,
+      error: null,
+    }
+  })
+  // setExecutionIdAndReset
+  .on(setExecutionIdAndReset, (state, executionId) => {
     return {
       ...state,
       executionId,
@@ -543,6 +556,7 @@ export const $highlightedNodeId = executionDomain.createStore<string[] | null>(n
       ? [highlightedNodeId]
       : highlightedNodeId)
   .reset(globalReset)
+  .reset(setExecutionIdAndReset)
 
 export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(null)
   .on(setHighlightedEdgeId, (state, highlightedEdgeId) =>
@@ -550,6 +564,7 @@ export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(n
       ? [highlightedEdgeId]
       : highlightedEdgeId)
   .reset(globalReset)
+  .reset(setExecutionIdAndReset)
 
 // Computed stores
 export const $isExecuting = $executionState.map(
@@ -603,7 +618,7 @@ export const $autoStartConditions = combine({
 export const $executionId = $executionState.map(state => state.executionId)
 
 // Store to prevent multiple start attempts
-export const $startAttempted = executionDomain.createStore(false).reset(globalReset)
+export const $startAttempted = executionDomain.createStore(false).reset(globalReset).reset(setExecutionIdAndReset)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)

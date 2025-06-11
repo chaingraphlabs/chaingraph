@@ -7,6 +7,7 @@
  */
 
 import type {
+  BadAIContext,
   ExecutionContext,
   NodeEvent,
   NodeExecutionResult,
@@ -14,24 +15,16 @@ import type {
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
-  findPortByKey,
-} from '@badaitech/chaingraph-types'
-import {
-  Boolean,
-} from '@badaitech/chaingraph-types'
-import {
-  PortVisibility,
-} from '@badaitech/chaingraph-types'
-import {
-  Number as PortNumber,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
+  Boolean,
+  findPortByKey,
   Input,
   MultiChannel,
   Node,
   Output,
+  Number as PortNumber,
   PortStream,
+  PortVisibility,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -122,12 +115,14 @@ class BadAIStreamMessageNode extends BaseNode {
   public buffer: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const chatID = context.badAIContext?.chatID
+    const badAIContext = context.getIntegration<BadAIContext>('badai')
+
+    const chatID = badAIContext?.chatID
     if (!chatID) {
       throw new Error('BadAI chat ID is not available in the context')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const agentSession = badAIContext?.agentSession
     if (!agentSession) {
       throw new Error('BadAI agent session is not available in the context')
     }

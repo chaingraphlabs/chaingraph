@@ -47,6 +47,9 @@ export interface ExecutionInstance {
     message: string
     nodeId?: string
   }
+  parentExecutionId?: string
+  executionDepth: number
+  externalEvents?: Array<{ type: string; data?: any }> // Track external events that started this execution
 }
 
 export interface ExecutionEventSubscription {

@@ -9,6 +9,7 @@
 import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel'
 import { FlowList } from '@/components/sidebar/tabs/flow/FlowList'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
+import { ExecutionTree } from '@/components/sidebar/tabs/execution-tree'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -23,7 +24,7 @@ import {
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { Bug, LayersIcon, Scroll } from 'lucide-react'
+import { Bug, LayersIcon, Scroll, GitBranch } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
 import { EventList } from './tabs/EventList'
@@ -38,13 +39,14 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
-export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai'
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'executions'
 
 const defaultEnabledTabs: tabsType[] = [
   'flows',
   'nodes',
   // 'events',
   // 'variables',
+  'executions',
   'debug',
   'archai',
   // 'settings',
@@ -96,6 +98,12 @@ export function Sidebar({
       icon: <ValueIcon />,
       label: 'Variables',
       content: <VariableList />,
+    },
+    {
+      id: 'executions',
+      icon: <GitBranch />,
+      label: 'Executions',
+      content: <ExecutionTree />,
     },
     {
       id: 'debug',
