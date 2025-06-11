@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.1.29-dev.0",
   "private": false,
-  "description": "tRPC client and server for the BadAi Chaingraph",
+  "description": "tRPC client and server for the Chaingraph V2",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
