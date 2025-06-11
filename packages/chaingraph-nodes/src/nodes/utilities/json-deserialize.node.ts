@@ -9,13 +9,11 @@
 import type {
     ExecutionContext,
     IPort,
-    IPortConfig,
     NodeEvent,
     NodeExecutionResult,
     AnyPort,
     PortConnectedEvent,
     PortDisconnectedEvent,
-    PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
 import {
     BaseNode,
@@ -27,8 +25,12 @@ import {
     Output,
     PortAny,
     String,
+    Number as NumberDecorator,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+
+const nonSupportedTypes = ['any', 'stream'];
+const DEFAULT_MAX_DEPTH = 10;
 
 @Node({
     type: 'JsonDeserializeNode',
@@ -43,7 +45,7 @@ class JsonDeserializeNode extends BaseNode {
         title: 'Output Schema',
         description: 'Schema for the deserialized object. Connect array or object to use its schema for parsing.',
     })
-    outputSchema: any = {}
+    outputSchema: any
 
     @Input()
     @String({
@@ -63,71 +65,243 @@ class JsonDeserializeNode extends BaseNode {
     })
     ignoreMissingFields: boolean = false
 
-    @Output()
-    @PortAny({
-        title: 'Deserialized Object',
-        description: 'The parsed object according to the schema',
+    @Input()
+    @NumberDecorator({
+        title: 'Schema Depth',
+        description: 'Current depth of the schema structure (internal use)',
+        defaultValue: 0,
         ui: {
-            keyDeletable: false,
-            hideEditor: false,
+            hidden: true,
         },
     })
-    deserializedObject: any = {}
+    schemaDepth: number = 0
+
+    @Output()
+    @PortAny({
+        title: 'Deserialized Value',
+        description: 'The parsed object according to the schema',
+        ui: {
+            hideEditor: true,
+        }
+    })
+    deserializedObject: any = null
 
     async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-        throw new Error("Not implemented")
-        /**
         try {
             // Parse the JSON string
-            let parsedJson: Record<string, any>
+            let parsedJson: any;
             try {
-                parsedJson = JSON.parse(this.jsonString)
-            } catch (error) {
-                throw new Error(`Failed to parse JSON string: ${error}`)
+                // Handle single values in JSON like numbers or strings without quotes
+                if (this.jsonString.trim() === '') {
+                    parsedJson = null;
+                } else {
+                    try {
+                        parsedJson = JSON.parse(this.jsonString);
+                    } catch (e) {
+                        // Try to interpret as a primitive value if not valid JSON
+                        if (this.jsonString === 'true') parsedJson = true;
+                        else if (this.jsonString === 'false') parsedJson = false;
+                        else if (!isNaN(Number(this.jsonString))) parsedJson = Number(this.jsonString);
+                        else parsedJson = this.jsonString; // Treat as string if no other type matches
+                    }
+                }
+            } catch (e) {
+                throw new Error(`Failed to parse JSON string: ${e}`);
             }
+
+            await this.debugLog(context, `Parsed JSON: ${JSON.stringify(parsedJson, null, 2)}`);
 
             // Get the output port for deserializedObject and extract its schema
-            const outputPort = this.findPortByKey('deserializedObject')
+            const outputPort = this.findPortByKey('deserializedObject') as AnyPort | null;
             if (!outputPort) {
-                throw new Error('Could not find deserializedObject port')
+                throw new Error('Could not find deserializedObject port');
             }
 
-            const outputPortConfig = outputPort.getConfig()
-            const outputPortSchema = outputPortConfig.type === 'any' 
-                ? (outputPort as AnyPort).getRawConfig().underlyingType?.schema
-                : outputPortConfig.schema
+            const underlyingType = outputPort.getRawConfig().underlyingType;
 
-            await this.debugLog(context, `Got schema for output port: : ${JSON.stringify(outputPortSchema, null, 1)}`)
+            await this.debugLog(context, `Underlying type: ${JSON.stringify(underlyingType, null, 2)}`);
+            await this.debugLog(context, `Schema depth: ${this.schemaDepth}`);
 
-            // Clear previous values
-            this.deserializedObject = {}
-
-            // If schema is empty or not defined, return the parsed JSON as is
-            if (!outputPortSchema || !outputPortSchema.properties || Object.keys(outputPortSchema.properties).length === 0) {
-                this.deserializedObject = parsedJson
-                return {}
+            // If no schema is provided, return the parsed JSON as is
+            if (!underlyingType) {
+                this.deserializedObject = parsedJson;
+                return {};
             }
 
-            // Map properties according to the schema
-            for (const [key, propConfig] of Object.entries(outputPortSchema.properties)) {
-                if (key in parsedJson) {
-                    if (!this.validateType(parsedJson[key], propConfig.type)) {
-                        throw new Error(`Type mismatch for field '${key}': expected ${propConfig.type}, got ${typeof parsedJson[key]}`)
-                    }
-                    this.deserializedObject[key] = parsedJson[key]
-                } else if (!this.ignoreMissingFields) {
-                    throw new Error(`Field '${key}' is required but missing in the JSON`)
+            // Calculate schema depth if not already set
+            if (this.schemaDepth === 0) {
+                this.schemaDepth = this.calculateSchemaDepth(underlyingType);
+                await this.debugLog(context, `Calculated schema depth: ${this.schemaDepth}`);
+            }
+
+            // Deserialize based on the schema
+            this.deserializedObject = this.deserializeValue(
+                parsedJson,
+                underlyingType,
+                this.ignoreMissingFields
+            );
+
+            await this.debugLog(context, `Deserialized object: ${JSON.stringify(this.deserializedObject, null, 2)}`);
+
+            return {};
+        } catch (e) {
+            throw new Error(`Failed to execute JSON Deserializer node: ${e}`);
+        }
+    }
+
+    /**
+     * Calculate the maximum depth of the schema
+     */
+    private calculateSchemaDepth(schema: any, currentDepth: number = 0): number {
+        if (!schema || currentDepth > DEFAULT_MAX_DEPTH) {
+            return currentDepth;
+        }
+
+        const schemaType = schema.type;
+
+        // For primitive types, return current depth
+        if (['string', 'number', 'boolean'].includes(schemaType)) {
+            return currentDepth + 1;
+        }
+
+        // For arrays, calculate depth from item schema
+        if (schemaType === 'array' && schema.itemConfig) {
+            return this.calculateSchemaDepth(schema.itemConfig, currentDepth + 1);
+        }
+
+        // For objects, find the deepest property
+        if (schemaType === 'object' && schema.schema && schema.schema.properties) {
+            let maxPropertyDepth = currentDepth + 1;
+
+            for (const propSchema of Object.values(schema.schema.properties)) {
+                const propertyDepth = this.calculateSchemaDepth(propSchema, currentDepth + 1);
+                maxPropertyDepth = Math.max(maxPropertyDepth, propertyDepth);
+            }
+
+            return maxPropertyDepth;
+        }
+
+        return currentDepth + 1;
+    }
+
+    /**
+     * Recursively deserialize values according to the schema
+     */
+    private deserializeValue(
+        value: any,
+        schema: any,
+        ignoreMissingFields: boolean,
+        currentDepth: number = 0
+    ): any {
+        // Prevent processing beyond max depth
+        if (currentDepth >= DEFAULT_MAX_DEPTH) {
+            return value;
+        }
+
+        if (!schema) {
+            return value; // No schema to validate against
+        }
+
+        const schemaType = schema.type;
+
+        // Handle primitive types
+        if (['string', 'number', 'boolean'].includes(schemaType)) {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            // Type conversion/validation
+            if (schemaType === 'string') {
+                return String(value);
+            } else if (schemaType === 'number') {
+                const num = Number(value);
+                if (isNaN(num)) {
+                    throw new Error(`Cannot convert "${value}" to number`);
+                }
+                return num;
+            } else if (schemaType === 'boolean') {
+                if (typeof value === 'boolean') return value;
+                if (value === 'true') return true;
+                if (value === 'false') return false;
+                if (typeof value === 'number') return value !== 0;
+                throw new Error(`Cannot convert "${value}" to boolean`);
+            }
+            return value;
+        }
+
+        // Handle arrays
+        if (schemaType === 'array') {
+            if (!Array.isArray(value)) {
+                // Try to convert single value to array if possible
+                if (value !== null && value !== undefined) {
+                    value = [value];
                 } else {
-                    this.deserializedObject[key] = null
+                    return [];
                 }
             }
 
-            return {}
-        } catch (error) {
-            const errorMessage = `Failed to execute JSON Desrializer node: ${error}`
-            throw new Error(errorMessage)
+            const itemSchema = schema.itemConfig;
+            if (!itemSchema) {
+                return value; // No schema for array items
+            }
+
+            const result: any[] = [];
+            for (const item of value) {
+                const deserializedItem = this.deserializeValue(
+                    item,
+                    itemSchema,
+                    ignoreMissingFields,
+                    currentDepth + 1
+                );
+                result.push(deserializedItem);
+            }
+            return result;
         }
-        */
+
+        // Handle objects
+        if (schemaType === 'object') {
+            if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+                if (ignoreMissingFields) {
+                    return {}; // Return empty object if input is not an object and we're ignoring errors
+                }
+                throw new Error(`Expected object but got ${typeof value}`);
+            }
+
+            const result: Record<string, any> = {};
+
+            // If schema has no properties, pass through all properties from input
+            if (!schema.schema || !schema.schema.properties || Object.keys(schema.schema.properties).length === 0) {
+                return value;
+            }
+
+            // Process each property according to schema
+            for (const [key, propSchema] of Object.entries(schema.schema.properties)) {
+                if (key in value) {
+                    result[key] = this.deserializeValue(
+                        value[key],
+                        propSchema,
+                        ignoreMissingFields,
+                        currentDepth + 1
+                    );
+                } else if (!ignoreMissingFields) {
+                    throw new Error(`Required field '${key}' is missing in the JSON`);
+                } else {
+                    result[key] = null; // Set missing field to null when ignoring missing fields
+                }
+            }
+
+            // Add additional properties not in schema if they exist in the input
+            for (const key of Object.keys(value)) {
+                if (!(key in result)) {
+                    result[key] = value[key];
+                }
+            }
+
+            return result;
+        }
+
+        // For unsupported types or when type is not specified, return as is
+        return value;
     }
 
     /**
@@ -153,8 +327,37 @@ class JsonDeserializeNode extends BaseNode {
         const targetPort = event.targetPort;
         const sourcePortConfig = event.sourcePort.getConfig();
 
-        if (sourcePortConfig.key === 'outputSchema') {
-            await this.syncSchemaToOutput(targetPort);
+        if (
+            !sourcePortConfig
+            || sourcePortConfig.key !== 'outputSchema'
+            || sourcePortConfig.direction !== 'input'
+            || sourcePortConfig.parentId
+        ) {
+            return
+        }
+
+        const outputPort = this.findPortByKey('deserializedObject')
+        const outputAnyPort = outputPort as AnyPort;
+
+        if (!outputPort || !outputAnyPort || outputAnyPort.getConfig().type !== 'any') {
+            return
+        }
+
+        const targetPortConfig = targetPort.getConfig()
+
+        if (!targetPortConfig || nonSupportedTypes.includes(targetPortConfig.type)) {
+            throw new Error("The port you are trying to connect cannot be used as schema")
+        }
+
+        try {
+            outputAnyPort.setUnderlyingType(targetPortConfig);
+
+            // Calculate and store schema depth
+            this.schemaDepth = this.calculateSchemaDepth(targetPortConfig);
+
+            await this.updatePort(outputAnyPort as IPort);
+        } catch (e) {
+            throw new Error(`Error synchronizing schema: ${e}`);
         }
     }
 
@@ -162,98 +365,28 @@ class JsonDeserializeNode extends BaseNode {
      * Handle port disconnection events to sync schema from input port back
      */
     private async handlePortDisconnected(event: PortDisconnectedEvent): Promise<void> {
-        const disconnectedPortConfig = event.sourcePort.getConfig();
+        const sourcePortConfig = event.sourcePort.getConfig();
 
-        if (disconnectedPortConfig.key === 'outputSchema') {
-            await this.cleanSchemaToOutput();
-        }
-    }
-
-    /**
-     * Synchronize the schema from outputSchema to deserializedObject
-     */
-    private async syncSchemaToOutput(targetPort: IPort): Promise<void> {
-        try {
-            const outputPort = this.findPortByKey('deserializedObject')
-            if (!outputPort) {
-                throw new Error('Could not find deserializedObject port')
-            }
-
-            if (outputPort.getConfig().type !== 'any') {
-                throw new Error('Cannot sync schema: deserializedObject port is not an AnyPort')
-            }
-
-            const outputAnyPort = outputPort as AnyPort;
-
-            if (targetPort.getConfig().type === 'any') {
-                const targetAnyPort = targetPort as AnyPort;
-                const underlyingType = targetAnyPort.getRawConfig().underlyingType;
-
-                if (underlyingType) {
-                    outputAnyPort.setUnderlyingType(underlyingType);
-                }
-            } else {
-                const targetConfig = targetPort.getConfig();
-                outputAnyPort.setUnderlyingType(targetConfig);
-            }
-
-            await this.updatePort(outputPort);
-            this.deserializedObject = {};
-
-        } catch (error) {
-            const errorMessage = `Error synchronizing schema: ${error}`
-            throw new Error(errorMessage)
-        }
-    }
-
-    /**
-     * Clean the schema in the deserializedObject output port when input is disconnected
-     */
-    private async cleanSchemaToOutput(): Promise<void> {
-        try {
-            const outputPort = this.findPortByKey('deserializedObject')
-            if (!outputPort) {
-                throw new Error('Could not find deserializedObject port')
-            }
-
-            if (outputPort.getConfig().type !== 'any') {
-                throw new Error('Cannot sync schema: deserializedObject port is not an AnyPort')
-            }
-
-            const outputAnyPort = outputPort as AnyPort;
-            outputAnyPort.setUnderlyingType(undefined);
-            await this.updatePort(outputPort);
-
-            this.deserializedObject = {};
-
-        } catch (error) {
-            const errorMessage = `Error cleaning schema: ${error}`
-            throw new Error(errorMessage)
-        }
-    }
-
-    /**
-     * Validate if a value matches the expected type
-     */
-    private validateType(value: any, expectedType: string): boolean {
-        if (value === null || value === undefined) {
-            return true // Null/undefined is allowed for any type
+        if (
+            !sourcePortConfig
+            || sourcePortConfig.key !== 'outputSchema'
+            || sourcePortConfig.direction !== 'input'
+            || sourcePortConfig.parentId
+        ) {
+            return
         }
 
-        switch (expectedType) {
-            case 'string':
-                return typeof value === 'string'
-            case 'number':
-                return typeof value === 'number'
-            case 'boolean':
-                return typeof value === 'boolean'
-            case 'object':
-                return typeof value === 'object' && !Array.isArray(value)
-            case 'array':
-                return Array.isArray(value)
-            default:
-                return true // Unknown types will pass validation
+        const outputPort = this.findPortByKey('deserializedObject')
+        const outputAnyPort = outputPort as AnyPort;
+
+        if (!outputPort || !outputAnyPort || outputAnyPort.getConfig().type !== 'any') {
+            return
         }
+
+        outputAnyPort.setUnderlyingType(undefined);
+        this.schemaDepth = 0;
+        await this.updatePort(outputAnyPort as IPort);
+        this.deserializedObject = null;
     }
 
     /**
