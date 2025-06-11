@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
+import type { BaseNode, INode, IPort } from '@badaitech/chaingraph-types'
+import { findPort } from '@badaitech/chaingraph-types'
 import {
   isAnyPortConfig,
   isArrayPortConfig,
@@ -78,12 +79,12 @@ export function extractNodeSchema(node: INode): ExtractedSchema {
     const key = config.key || port.id
 
     // Skip hidden ports
-    if (isNeedsToSkipPort(port)) {
+    if (isNeedsToSkipPort(node, port)) {
       continue
     }
 
     // Extract schema property from port
-    properties[key] = portConfigToJsonSchema(port)
+    properties[key] = portConfigToJsonSchema(node, port)
 
     // Add to required if marked as required
     if (config.required) {
@@ -99,12 +100,12 @@ export function extractNodeSchema(node: INode): ExtractedSchema {
     const config = port.getConfig()
     const key = config.key || port.id
 
-    if (isNeedsToSkipPort(port)) {
+    if (isNeedsToSkipPort(node, port)) {
       continue
     }
 
     // Extract schema property from port
-    outputProperties[key] = portConfigToJsonSchema(port)
+    outputProperties[key] = portConfigToJsonSchema(node, port)
 
     // Add to required if marked as required
     if (config.required) {
@@ -127,36 +128,39 @@ export function extractNodeSchema(node: INode): ExtractedSchema {
   }
 }
 
-export function isNeedsToSkipPort(port: IPort): boolean {
-  if (port.getConfig().connections && (port.getConfig().connections?.length || 0) > 0) {
-    // Skip ports that are connected to other ports
+export function isNeedsToSkipPort(
+  node: INode,
+  port: IPort,
+): boolean {
+  const config = port.getConfig()
+
+  // Skip ports that are connected to other ports
+  if (config.connections && (config.connections?.length || 0) > 0) {
+    console.log(`[isNeedsToSkipPort] Skipping port ${port.id} (${node.id}) because it has connections.`)
     return true
   }
 
-  if (port.getConfig().type === 'string') {
-    if (port.getValue() !== undefined && port.getValue() !== null && port.getValue() !== '') {
+  const value = port.getValue()
+
+  if (config.type === 'string') {
+    if (value !== undefined && value !== null && value !== '') {
       // Skip string properties that are not empty
       return true
     }
-  } else if (port.getConfig().type === 'number') {
-    if (port.getValue() !== undefined && port.getValue() !== null && port.getValue() !== 0) {
+  } else if (config.type === 'number') {
+    if (value !== undefined && value !== null && value !== 0) {
       // Skip number properties that are not null or undefined
       return true
     }
   }
 
-  // Skip ports that are connected to other ports
-  if (port.getConfig().connections && (port.getConfig().connections?.length || 0) > 0) {
-    return true
-  }
-
   // Skip ports that are hidden
-  if (port.getConfig().ui?.hidden) {
+  if (config.ui?.hidden) {
     return true
   }
 
   // Skip system ports
-  if (port.getConfig().metadata?.isSystemPort) {
+  if (config.metadata?.isSystemPort) {
     return true
   }
 
@@ -166,7 +170,10 @@ export function isNeedsToSkipPort(port: IPort): boolean {
 /**
  * Converts a port configuration to JSON schema format
  */
-export function portConfigToJsonSchema(port: IPort): SchemaProperty {
+export function portConfigToJsonSchema(
+  node: INode,
+  port: IPort,
+): SchemaProperty {
   const config = port.getConfig()
   const value = port.getValue()
 
@@ -242,7 +249,8 @@ export function portConfigToJsonSchema(port: IPort): SchemaProperty {
   }
 
   if (isObjectPortConfig(config)) {
-    return processObjectPort(port)
+    // console.log(`[portConfigToJsonSchema] Processing object port: ${port.id} (${node.id}), NODE: ${JSON.stringify(node.serialize())}`)
+    return processObjectPort(node as BaseNode, port)
   }
 
   if (isAnyPortConfig(config)) {
@@ -280,7 +288,10 @@ function processItemConfig(itemConfig: any): SchemaProperty {
 /**
  * Processes an object port recursively
  */
-export function processObjectPort(port: IPort): SchemaProperty {
+export function processObjectPort(
+  node: BaseNode,
+  port: IPort,
+): SchemaProperty {
   const config = port.getConfig()
 
   if (!isObjectPortConfig(config)) {
@@ -297,12 +308,19 @@ export function processObjectPort(port: IPort): SchemaProperty {
   // Process each property in the object schema
   if (config.schema?.properties) {
     for (const [key, propConfig] of Object.entries(config.schema.properties)) {
-      // For basic property configs, create schema properties directly
-      properties[key] = {
-        type: propConfig.type || 'string',
-        description: propConfig.description || propConfig.title || '',
-        ...(propConfig.defaultValue !== undefined && { defaultValue: propConfig.defaultValue }),
+      const originalPort = findPort(node, (p) => {
+        return p.getConfig().key === propConfig.key && p.getConfig().parentId === port.id
+      })
+      if (!originalPort) {
+        // If the port is not found, skip it
+        continue
       }
+
+      if (isNeedsToSkipPort(node, originalPort)) {
+        continue
+      }
+      // For basic property configs, create schema properties directly
+      properties[key] = portConfigToJsonSchema(node, originalPort)
 
       if (propConfig.required) {
         required.push(key)

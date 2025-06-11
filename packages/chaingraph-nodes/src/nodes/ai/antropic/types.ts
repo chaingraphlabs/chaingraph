@@ -359,6 +359,13 @@ export class ToolChoice {
     description: 'Whether to disable parallel tool use',
   })
   disable_parallel_tool_use: boolean = false
+
+  @String({
+    title: 'Tool Name',
+    description: 'Name of the specific tool to use (if type is "tool")',
+    required: false,
+  })
+  name?: string
 }
 
 /**
@@ -368,11 +375,15 @@ export class ToolChoice {
   description: 'Configuration for Claude\'s extended thinking capability',
 })
 export class ThinkingConfig {
-  @String({
-    title: 'Type',
-    description: 'Type of thinking configuration ("enabled" or "disabled")',
-    required: true,
+  @PortEnum({
+    title: 'Thinking Type',
+    description: 'Whether Claude\'s extended thinking capability is enabled or disabled',
+    options: [
+      { id: 'enabled', type: 'string', defaultValue: 'enabled', title: 'Enabled' },
+      { id: 'disabled', type: 'string', defaultValue: 'disabled', title: 'Disabled' },
+    ],
     defaultValue: 'enabled',
+    required: true,
   })
   type: string = 'enabled'
 
@@ -474,8 +485,9 @@ export class AntropicConfig {
     description: 'Maximum number of tokens to generate',
     min: 1,
     required: true,
+    integer: true,
   })
-  max_tokens: number = 1024
+  max_tokens: number = 16000
 
   @Number({
     title: 'Temperature',
@@ -489,7 +501,7 @@ export class AntropicConfig {
       rightSliderLabel: 'More creative',
     },
   })
-  temperature: number = 0.7
+  temperature: number = 0
 
   @Number({
     title: 'Top P',
@@ -522,7 +534,7 @@ export class AntropicConfig {
     description: 'System prompt providing context and instructions to Claude',
     ui: {
       isTextArea: true,
-      textareaDimensions: { height: 150 },
+      textareaDimensions: { height: 250 },
     },
   })
   system?: string
@@ -565,6 +577,9 @@ export class AntropicConfig {
   @Boolean({
     title: 'Stream',
     description: 'Whether to stream the response incrementally',
+    ui: {
+      hidden: true,
+    },
   })
   stream: boolean = true
 }

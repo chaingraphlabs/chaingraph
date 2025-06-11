@@ -324,7 +324,7 @@ function ChaingraphNodeComponent({
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
         position="right"
-        minWidth={150}
+        minWidth={200}
         style={{
           background: 'transparent',
           border: 'none',

@@ -28,6 +28,7 @@ export class TokenInfo {
   @String({
     title: 'Decimal Precision',
     description: 'Number of decimal places used by the token',
+    required: true,
   })
   decimal: string = ''
 
@@ -40,24 +41,28 @@ export class TokenInfo {
   @String({
     title: 'Tax Rate',
     description: 'Fee percentage charged when transferring this token',
+    required: true,
   })
   taxRate: string = ''
 
   @String({
     title: 'Contract Address',
     description: 'Blockchain address where the token smart contract is deployed',
+    required: true,
   })
   tokenContractAddress: string = ''
 
   @String({
     title: 'Token Symbol',
     description: 'Trading symbol for the token (e.g., ETH, BTC)',
+    required: true,
   })
   tokenSymbol: string = ''
 
   @String({
     title: 'Token Unit Price',
     description: 'Current price of one token unit in quote currency',
+    required: true,
   })
   tokenUnitPrice: string = ''
 }
@@ -82,12 +87,14 @@ export class TokenListResponse {
   @String({
     title: 'Decimal Precision',
     description: 'Number of decimal places used by the token',
+    required: true,
   })
   decimals: string = ''
 
   @String({
     title: 'Contract Address',
     description: 'Blockchain address where the token smart contract is deployed',
+    required: true,
   })
   tokenContractAddress: string = ''
 
@@ -106,6 +113,7 @@ export class TokenListResponse {
   @String({
     title: 'Token Symbol',
     description: 'Trading symbol for the token (e.g., ETH, BTC)',
+    required: true,
   })
   tokenSymbol: string = ''
 }
@@ -129,12 +137,14 @@ export class DexProtocol {
   @String({
     title: 'DEX Name',
     description: 'Name of the decentralized exchange (e.g., Uniswap, SushiSwap)',
+    required: true,
   })
   dexName: string = ''
 
   @String({
     title: 'Usage Percentage',
     description: 'Percentage of the total swap that uses this DEX protocol',
+    required: true,
   })
   percent: string = ''
 }
@@ -326,36 +336,42 @@ export class TransactionData {
   @String({
     title: 'Transaction Data',
     description: 'Hex-encoded calldata for the transaction',
+    required: true,
   })
   data: string = ''
 
   @String({
     title: 'Sender Address',
     description: 'Blockchain address initiating the transaction',
+    required: true,
   })
   from: string = ''
 
   @String({
     title: 'Gas Limit',
     description: 'Maximum gas units allowed for transaction execution',
+    required: true,
   })
   gas: string = ''
 
   @String({
     title: 'Gas Price',
     description: 'Price per gas unit in wei',
+    required: true,
   })
   gasPrice: string = ''
 
   @String({
     title: 'Priority Fee',
     description: 'Maximum priority fee per gas (for EIP-1559 transactions)',
+    required: true,
   })
   maxPriorityFeePerGas: string = ''
 
   @String({
     title: 'Minimum Receive Amount',
     description: 'Minimum acceptable amount of tokens to receive',
+    required: true,
   })
   minReceiveAmount: string = ''
 
@@ -363,24 +379,28 @@ export class TransactionData {
     title: 'Signature Data',
     description: 'Digital signatures needed for transaction authorization',
     itemConfig: { type: 'string' },
+    required: true,
   })
   signatureData: string[] = []
 
   @String({
     title: 'Slippage Tolerance',
     description: 'Maximum allowed price movement as a percentage',
+    required: true,
   })
   slippage: string = ''
 
   @String({
     title: 'Recipient Address',
     description: 'Destination contract address for the transaction',
+    required: true,
   })
   to: string = ''
 
   @String({
     title: 'Transaction Value',
     description: 'Amount of native currency (ETH, BNB, etc.) sent with transaction',
+    required: true,
   })
   value: string = ''
 }
@@ -396,6 +416,7 @@ export class QuoteData {
   @String({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
+    required: true,
   })
   chainId: string = ''
 
@@ -412,6 +433,7 @@ export class QuoteData {
   @String({
     title: 'Estimated Gas Fee',
     description: 'Estimated gas fee for executing the swap',
+    required: true,
   })
   estimateGasFee: string = ''
 
@@ -419,6 +441,7 @@ export class QuoteData {
     title: 'Source Token',
     description: 'Token that is being swapped from',
     schema: TokenInfo,
+    required: true,
   })
   fromToken: TokenInfo = new TokenInfo()
 
@@ -426,24 +449,28 @@ export class QuoteData {
     title: 'Destination Token',
     description: 'Token that is being swapped to',
     schema: TokenInfo,
+    required: true,
   })
   toToken: TokenInfo = new TokenInfo()
 
   @String({
     title: 'Source Amount',
-    description: 'Amount of source tokens to swap',
+    description: 'Amount of source tokens to swap (bigint string, e.g., "1000000000000000000" for 1 token for decimal 18)',
+    required: true,
   })
   fromTokenAmount: string = ''
 
   @String({
     title: 'Destination Amount',
     description: 'Amount of destination tokens expected to receive',
+    required: true,
   })
   toTokenAmount: string = ''
 
   @String({
     title: 'Price Impact',
     description: 'Percentage impact on market price caused by this swap',
+    required: true,
   })
   priceImpactPercentage: string = ''
 
@@ -460,6 +487,7 @@ export class QuoteData {
   @String({
     title: 'Trading Fee',
     description: 'Total trading fee for the swap',
+    required: true,
   })
   tradeFee: string = ''
 
@@ -488,18 +516,21 @@ export class ChainData {
   @String({
     title: 'Chain ID',
     description: 'Unique identifier for the blockchain network',
+    required: true,
   })
   chainId: string = ''
 
   @String({
     title: 'Chain Name',
     description: 'Human-readable name of the blockchain network',
+    required: true,
   })
   chainName: string = ''
 
   @String({
     title: 'DEX Token Approval Address',
     description: 'Address used for token approvals on this chain (null if not applicable)',
+    required: true,
   })
   dexTokenApproveAddress: string = ''
 }
@@ -516,6 +547,7 @@ export class SwapExecutionData {
     title: 'Router Result',
     description: 'Detailed routing information for the swap',
     schema: RouterResult,
+    required: true,
   })
   routerResult: RouterResult = new RouterResult()
 
@@ -821,6 +853,7 @@ export class OKXConfig {
     title: 'API Key',
     description: 'Authentication key for the OKX API',
     ui: { isPassword: true },
+    required: true,
   })
   apiKey: string = ''
 
@@ -828,6 +861,7 @@ export class OKXConfig {
     title: 'Secret Key',
     description: 'Secret key for signing API requests',
     ui: { isPassword: true },
+    required: true,
   })
   secretKey: string = ''
 
@@ -835,12 +869,14 @@ export class OKXConfig {
     title: 'API Passphrase',
     description: 'Passphrase for additional authentication',
     ui: { isPassword: true },
+    required: true,
   })
   apiPassphrase: string = ''
 
   @String({
     title: 'Project ID',
     description: 'OKX project identifier',
+    required: true,
   })
   projectId: string = ''
 
@@ -946,24 +982,28 @@ export class SwapParams {
   @String({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
+    required: true,
   })
   chainId: string = ''
 
   @String({
     title: 'Source Token Address',
     description: 'Contract address of the token to swap from',
+    required: true,
   })
   fromTokenAddress: string = ''
 
   @String({
     title: 'Destination Token Address',
     description: 'Contract address of the token to swap to',
+    required: true,
   })
   toTokenAddress: string = ''
 
   @String({
     title: 'Amount',
-    description: 'Amount of source tokens to swap',
+    description: 'Amount of source tokens to swap (bigint string, e.g., "1000000000000000000" for 1 token for decimal 18)',
+    required: true,
   })
   amount: string = ''
 
@@ -1002,24 +1042,28 @@ export class QuoteParams {
   @String({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
+    required: true,
   })
   chainId: string = ''
 
   @String({
     title: 'Source Token Address',
     description: 'Contract address of the token to swap from',
+    required: true,
   })
   fromTokenAddress: string = ''
 
   @String({
     title: 'Destination Token Address',
     description: 'Contract address of the token to swap to',
+    required: true,
   })
   toTokenAddress: string = ''
 
   @String({
     title: 'Amount',
-    description: 'Amount of source tokens to swap',
+    description: 'Amount of source tokens to swap (bigint string, e.g., "1000000000000000000" for 1 token for decimal 18)',
+    required: true,
   })
   amount: string = ''
 
@@ -1032,6 +1076,7 @@ export class QuoteParams {
   @String({
     title: 'Slippage',
     description: 'Slippage percentage for the quote calculation',
+    required: true,
   })
   slippage: string = ''
 }
@@ -1046,18 +1091,21 @@ export class SwapResult {
   @Boolean({
     title: 'Success',
     description: 'Whether the swap was successful',
+    required: true,
   })
   success: boolean = false
 
   @String({
     title: 'Transaction ID',
     description: 'Blockchain transaction identifier',
+    required: true,
   })
   transactionId: string = ''
 
   @String({
     title: 'Explorer URL',
     description: 'URL to view the transaction in a blockchain explorer',
+    required: true,
   })
   explorerUrl: string = ''
 
@@ -1231,18 +1279,21 @@ export class ApproveTokenParams {
   @String({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
+    required: true,
   })
   chainId: string = ''
 
   @String({
     title: 'Token Contract Address',
     description: 'Address of the token contract to approve',
+    required: true,
   })
   tokenContractAddress: string = ''
 
   @String({
     title: 'Approve Amount',
     description: 'Amount of tokens to approve for spending',
+    required: true,
   })
   approveAmount: string = ''
 }
@@ -1257,18 +1308,21 @@ export class ApproveTokenResult {
   @Boolean({
     title: 'Success',
     description: 'Whether the approval transaction was successful',
+    required: true,
   })
   success: boolean = false
 
   @String({
     title: 'Transaction Hash',
     description: 'Blockchain transaction hash/identifier',
+    required: true,
   })
   transactionHash: string = ''
 
   @String({
     title: 'Explorer URL',
     description: 'URL to view the transaction in a blockchain explorer',
+    required: true,
   })
   explorerUrl: string = ''
 }

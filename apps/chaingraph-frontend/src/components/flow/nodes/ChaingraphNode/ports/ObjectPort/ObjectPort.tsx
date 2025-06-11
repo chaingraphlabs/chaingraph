@@ -142,28 +142,6 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     handleClearSchema,
   } = useNodeSchemaDrop({ node, port, context })
 
-  const defaultCategoryMetadata = {
-    id: 'other',
-    label: 'Other',
-    description: 'Other nodes',
-    icon: 'Package',
-    style: {
-      light: {
-        primary: '#F5F5F5', // Soft gray
-        secondary: '#FAFAFA',
-        background: '#FFFFFF',
-        text: '#616161', // Darker gray
-      },
-      dark: {
-        primary: '#2C2C2C',
-        secondary: '#1F1F1F',
-        background: '#1C1C1C',
-        text: '#BDBDBD',
-      },
-    },
-    order: 7,
-  }
-
   // Determine which node to display: preview during drag, captured after drop
   const displayNode = useMemo(() => {
     if (previewNode)
@@ -231,9 +209,10 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                           damping: 25,
                         }}
                         className={cn(
-                          'border-2 border-dashed border-muted-foreground/30 rounded-lg p-6',
+                          'border-2 border-dashed rounded-lg p-6',
                           'flex flex-col items-center justify-center min-h-[150px]',
                           'bg-muted/5 hover:bg-muted/10 transition-colors duration-300',
+                          'border-muted-foreground/30',
                         )}
                       >
                         <motion.div
@@ -274,6 +253,8 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                         >
                           <p className="break-words whitespace-normal">
                             Drag and drop a node here to use its schema
+                            {' '}
+                            {previewNode ? ' NODE PREVIEW' : ''}
                           </p>
                         </motion.div>
                       </motion.div>

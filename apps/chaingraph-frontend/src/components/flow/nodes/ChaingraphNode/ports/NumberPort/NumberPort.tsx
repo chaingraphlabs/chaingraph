@@ -81,6 +81,7 @@ export function NumberPort(props: NumberPortProps) {
     <div
       key={config.id}
       className={cn(
+        'w-full',
         'relative flex gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
         // className,
@@ -89,14 +90,15 @@ export function NumberPort(props: NumberPortProps) {
       {config.direction === 'input' && <PortHandle port={port} />}
 
       <div className={cn(
+        'w-full',
         'flex flex-col',
         config.direction === 'output' ? 'items-end' : 'items-start',
-        'truncate',
       )}
       >
         <PortTitle
           className={cn(
             'cursor-pointer',
+            'truncate',
             // if port required and the value is empty, add a red underline
             config.required
             && (port.getValue() === undefined || port.getValue() === null || !port.validate())
@@ -115,14 +117,13 @@ export function NumberPort(props: NumberPortProps) {
           }}
         >
           {title}
-          {' '}
-          [
-          {ui?.hideEditor ? 'hidden' : 'visible'}
-          ]
         </PortTitle>
 
         {needRenderEditor && (
-          <>
+          <div className={cn(
+            'w-full',
+          )}
+          >
             <NumberInput
               disabled={executionID ? true : ui?.disabled ?? false}
               className={cn(
@@ -156,7 +157,7 @@ export function NumberPort(props: NumberPortProps) {
                 />
               </>
             )}
-          </>
+          </div>
         )}
       </div>
 

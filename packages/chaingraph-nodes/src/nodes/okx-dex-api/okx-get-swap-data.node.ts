@@ -47,6 +47,7 @@ class OKXGetSwapDataNode extends BaseNode {
     title: 'Swap Parameters',
     description: 'Parameters for the token swap',
     schema: SwapParams,
+    defaultValue: new SwapParams(),
   })
   swapParams: SwapParams = new SwapParams()
 
@@ -59,6 +60,8 @@ class OKXGetSwapDataNode extends BaseNode {
   swapResponseData: SwapResponseData = new SwapResponseData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    console.log(`[OKXGetSwapDataNode] Starting execution with swap parameters: ${JSON.stringify(this.swapParams)}`)
+
     // Validate inputs
     this.validateInputs()
 
@@ -81,9 +84,16 @@ class OKXGetSwapDataNode extends BaseNode {
         toTokenAddress: this.swapParams.toTokenAddress,
         amount: this.swapParams.amount,
         userWalletAddress: this.swapParams.userWalletAddress,
-        slippage: this.swapParams.slippage,
-        autoSlippage: this.swapParams.autoSlippage,
-        maxAutoSlippage: this.swapParams.maxAutoSlippage,
+        // slippage: this.swapParams.autoSlippage === true && this.swapParams.maxAutoSlippage ? undefined : this.swapParams.slippage,
+        // autoSlippage: this.swapParams.autoSlippage,
+        // maxAutoSlippage: this.swapParams.maxAutoSlippage,
+      }
+
+      if (this.swapParams.autoSlippage === false) {
+        params.slippage = this.swapParams.slippage
+      } else {
+        params.autoSlippage = this.swapParams.autoSlippage
+        // params.maxAutoSlippage = this.swapParams.maxAutoSlippage
       }
 
       console.log(`[OKXGetSwapDataNode] Fetching swap data with params: ${JSON.stringify(params)}`)

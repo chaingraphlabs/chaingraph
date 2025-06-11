@@ -142,12 +142,12 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       <div className={cn(
         'flex flex-col w-full',
         config.direction === 'output' ? 'items-end' : 'items-start',
-        'truncate',
       )}
       >
         <PortTitle
           className={cn(
             'cursor-pointer',
+            'truncate',
             // if port required and the value is empty, add a red underline
             config.required
             && (!port.getValue() || !port.validate())
@@ -208,12 +208,13 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
                 setFocused(true)
               }}
               style={{
-                width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
+              //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
                 height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,
               }}
               className={cn(
                 'shadow-none text-xs p-1 resize',
                 'nodrag',
+                'w-full',
                 'max-w-full',
                 focused && 'nowheel',
                 'placeholder:text-neutral-400 placeholder:opacity-40',

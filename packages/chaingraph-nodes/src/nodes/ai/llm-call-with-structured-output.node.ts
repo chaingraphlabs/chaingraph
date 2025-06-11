@@ -116,7 +116,8 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
   @Input()
   @PortAny({
     title: 'Output Schema',
-    description: 'Schema for the structured output from the LLM. You can connect object port to this port and it will be used to generate the schema.',
+    description: 'Schema for the structured output from the LLM. You can connect object port to this port and it will be used to generate the schema.\n'
+      + 'Example:\n',
   })
   outputSchema: any = {}
 

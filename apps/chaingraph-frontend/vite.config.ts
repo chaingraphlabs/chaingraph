@@ -87,8 +87,6 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       external: [
-        'react',
-        'react-dom',
         // 'vite-plugin-node-polyfills/shims/global',
       ],
     },

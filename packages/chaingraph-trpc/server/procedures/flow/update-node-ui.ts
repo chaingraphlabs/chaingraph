@@ -33,6 +33,7 @@ export const updateNodeUI = flowContextProcedure
         isDisabled: z.boolean().optional(),
         isErrorPortCollapsed: z.boolean().optional(),
         isHidden: z.boolean().optional(),
+        isMovingDisabled: z.boolean().optional(),
       }).optional(),
       title: z.string().optional(),
     }),
