@@ -439,6 +439,7 @@ export class Flow implements IFlow {
    */
   private removeAllChildConnections(node: INode, port: IPort): void {
     // iterates over port children and check if there is any connections, if so - remove them
+    // usually valid for the object ports in case when edge connects to the object port and we removing the child connections
     const recursiveFindChildConnections = (p: IPort) => {
       const connections: IEdge[] = []
 

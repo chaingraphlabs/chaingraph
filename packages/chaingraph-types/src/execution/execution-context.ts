@@ -7,8 +7,8 @@
  */
 
 import type { ExecutionEvent } from '../flow'
-import type { EmittedEventContext } from './emitted-event-context'
 import type { INode } from '../node'
+import type { EmittedEventContext } from './emitted-event-context'
 import { subtle } from 'node:crypto'
 
 import { v4 as uuidv4 } from 'uuid'
@@ -154,6 +154,7 @@ export class ExecutionContext {
   /**
    * Clone this context for a child execution
    * @param eventData The event data for the child execution
+   * @param childExecutionId The ID for the child execution
    */
   cloneForChildExecution(eventData: EmittedEventContext, childExecutionId: string): ExecutionContext {
     return new ExecutionContext(

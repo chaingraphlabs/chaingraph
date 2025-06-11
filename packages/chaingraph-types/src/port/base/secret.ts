@@ -44,6 +44,28 @@ export type SecretTypeMap = { [key in keyof typeof secretTypeSchemas]: z.infer<t
 export type SecretType = keyof SecretTypeMap
 
 /**
+ * Map for the compatible secret types between each other.
+ * Compatible secret types can be used interchangeably in the same port.
+ * For example, 'openai', 'anthropic' and 'string' are compatible with each other
+ * because they are all strings.
+ */
+export const compatibleSecretTypes: Record<SecretType, SecretType[]> = {
+  '0g': ['0g'],
+  'openai': ['openai', 'anthropic', 'string'],
+  'anthropic': ['openai', 'anthropic', 'string'],
+  'coinmarketcap': ['coinmarketcap'],
+  'deepseek': ['deepseek'],
+  'groq': ['groq'],
+  'xAPI': ['xAPI'],
+  'xApp': ['xApp'],
+  'string': ['openai', 'anthropic', 'string'],
+}
+
+export function isCompatibleSecretType(a: SecretType, b: SecretType): boolean {
+  return compatibleSecretTypes[a].includes(b)
+}
+
+/**
  * An encrypted value with a method to decrypt this value.
  */
 export interface EncryptedSecretValue<T extends SecretType> {

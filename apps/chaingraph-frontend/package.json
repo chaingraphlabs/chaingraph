@@ -43,7 +43,7 @@
     "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
     "lint": "eslint .",
     "fix": "eslint . --fix",
-    "preview": "vite preview",
+    "preview": "vite preview --outDir dist/app",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "check-types": "tsc -b --noEmit"

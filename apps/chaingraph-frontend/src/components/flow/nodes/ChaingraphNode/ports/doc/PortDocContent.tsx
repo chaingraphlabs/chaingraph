@@ -15,9 +15,11 @@ import type {
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
+  SecretPortConfig,
   StreamPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
+
 import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/formatValue'
 import { useTheme } from '@/components/theme'
 import { Badge, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
@@ -392,6 +394,8 @@ function getTypeSpecificInfo(config: IPortConfig): React.ReactElement | null {
       return renderStreamConfig(config as StreamPortConfig)
     case 'any':
       return renderAnyConfig(config as AnyPortConfig)
+    case 'secret':
+      return renderSecretConfig(config as SecretPortConfig)
     default:
       return null
   }
@@ -641,6 +645,18 @@ function renderAnyConfig(config: AnyPortConfig): React.ReactElement {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function renderSecretConfig(config: SecretPortConfig): React.ReactElement {
+  return (
+    <div className="mt-3 space-y-2 border-t pt-2 border-muted/40">
+      <div className="text-xs font-medium">Secret configuration</div>
+      <div className="grid grid-cols-2 gap-1 text-xs">
+        <span className="text-muted-foreground">Secret type:</span>
+        <span>{config.secretType}</span>
+      </div>
     </div>
   )
 }

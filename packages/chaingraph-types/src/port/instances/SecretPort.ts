@@ -9,6 +9,7 @@
 import type { JSONValue } from '../../utils/json'
 import type { IPort, SecretPortConfig, SecretPortValue } from '../base'
 import type { SecretType } from '../base/secret'
+import { isCompatibleSecretType } from '../base'
 import { BasePort } from '../base'
 import { SecretPortPlugin } from '../plugins/SecretPortPlugin'
 
@@ -79,5 +80,28 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
 
   cloneWithNewId(): IPort<SecretPortConfig<S>> {
     throw new Error('Method not implemented.')
+  }
+
+  isCompatibleWith(otherPort: IPort): boolean {
+    const sourcePortKind = this.getConfig().type
+    const targetPortKind = otherPort.getConfig().type
+
+    if (sourcePortKind !== targetPortKind) {
+      throw new Error(`Incompatible secret port types: ${sourcePortKind} -> ${targetPortKind}`)
+    }
+
+    if (sourcePortKind === 'secret' && targetPortKind === 'secret') {
+      const sourceSecretPort = this as SecretPort<S>
+      const targetSecretPort = otherPort as SecretPort<SecretType>
+
+      if (!isCompatibleSecretType(
+        sourceSecretPort.getConfig().secretType,
+        targetSecretPort.getConfig().secretType,
+      )) {
+        throw new Error(`Incompatible secret types: ${sourceSecretPort.getConfig().secretType} -> ${targetSecretPort.getConfig().secretType}`)
+      }
+    }
+
+    return true
   }
 }
