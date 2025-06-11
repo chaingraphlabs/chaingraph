@@ -18,6 +18,7 @@ import type {
   IPort,
   NumberPortConfig,
   ObjectPortConfig,
+  SecretPortConfig,
   StreamPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
@@ -30,6 +31,7 @@ import { AnyPort } from 'components/flow/nodes/ChaingraphNode/ports/AnyPort/AnyP
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
 import { PortContext } from './ports/context/PortContext'
 import { EnumPort } from './ports/EnumPort/EnumPort'
+import { SecretPort } from './ports/SecretPort/SecretPort'
 import { StringPort } from './ports/StringPort/StringPort'
 
 /**
@@ -97,7 +99,10 @@ export function PortComponent(props: PortProps) {
         <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} context={context} />
       )
     }
-    // case 'secret':
+    case 'secret':
+      return (
+        <SecretPort port={port as IPort<SecretPortConfig>} />
+      )
 
     case 'any': {
       return <AnyPort node={node} port={port as IPort<AnyPortConfig>} context={context} />

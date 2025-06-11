@@ -9,7 +9,7 @@
 import 'reflect-metadata'
 
 export * from './decorator'
-// export * from './decorator/secret.decorator'
+export * from './decorator/secret.decorator'
 export * from './edge'
 // export type { EncryptedSecretValue, SecretType } from './port/base/secret'
 // export { isSupportedSecretType, wrapSecret } from './port/base/secret'

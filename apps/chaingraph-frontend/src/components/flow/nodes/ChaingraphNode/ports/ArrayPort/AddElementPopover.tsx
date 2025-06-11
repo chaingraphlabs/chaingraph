@@ -98,14 +98,14 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
       hideEditor: false,
     },
   },
-  // secret: {
-  //   type: 'secret',
-  //   secretType: 'string',
-  //   defaultValue: undefined,
-  //   ui: {
-  //     hideEditor: true,
-  //   },
-  // },
+  secret: {
+    type: 'secret',
+    secretType: 'string',
+    defaultValue: undefined,
+    ui: {
+      hideEditor: true,
+    },
+  },
 }
 
 export function AddElementPopover(props: Props) {

@@ -19,6 +19,11 @@ import type {
   ObjectPortConfig,
   PortConnectedEvent,
 } from '@badaitech/chaingraph-types'
+import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
+import type { APIkey, SupportedProviders } from './llm-call.node'
+import {
+  Secret,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -41,6 +46,7 @@ import { ChatGroq } from '@langchain/groq'
 import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
+import { isAnthropic, isDeepSeek, isGroq } from './llm-call.node'
 import { LLMModels, llmModels } from './llm-call.node'
 
 const llmMaxRetries = 3
@@ -55,14 +61,16 @@ class LLMConfig {
   })
   model: keyof typeof llmModels = LLMModels.Gpt4oMini
 
-  @String({
+  @Input()
+  @Secret<SupportedProviders>({
     title: 'API Key',
-    description: 'API Key for the LLM provider',
+    description: 'LLM provider API Key',
+    secretType: 'openai',
     ui: {
-      isPassword: true,
+      ispassword: true,
     },
   })
-  apiKey: string = ''
+  apiKey?: EncryptedSecretValue<SupportedProviders>
 
   @Input()
   @Number({
@@ -152,9 +160,11 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
+    const apiKey = await this.config.apiKey.decrypt(context)
+
     try {
       // Generate structured response
-      const structuredResponse = await this.generateStructuredResponse(context)
+      const structuredResponse = await this.generateStructuredResponse(context, apiKey)
 
       for (const [key, value] of Object.entries(structuredResponse)) {
         // Set the structured response in the output port
@@ -253,7 +263,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     }
   }
 
-  private async generateStructuredResponse(context: ExecutionContext): Promise<Record<string, any>> {
+  private async generateStructuredResponse(context: ExecutionContext, apiKey: APIkey): Promise<Record<string, any>> {
     // Get the output port for structuredResponse to extract its schema
     const outputPort = this.findPortByKey('structuredResponse')
     if (!outputPort) {
@@ -276,10 +286,10 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     const zodSchema = this.createZodSchemaFromPortSchema(schema)
 
     // Create the appropriate LLM instance
-    const llm = this.createLLMInstance()
+    const llm = this.createLLMInstance(apiKey)
 
     // Bind structured output to the model
-    const modelWithStructuredOutput = llm.withStructuredOutput(
+    const modelWithStructuredOutput = llm.withStructuredOutput<Record<string, any>>(
       zodSchema,
       {
         strict: true,
@@ -307,31 +317,31 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
   /**
    * Create an appropriate LLM instance based on the selected model
    */
-  private createLLMInstance(): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
-    if (this.config.model === LLMModels.DeepseekReasoner || this.config.model === LLMModels.DeepseekChat) {
+  private createLLMInstance(apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
+    if (isDeepSeek(this.config.model, apiKey)) {
       return new ChatDeepSeek({
-        apiKey: this.config.apiKey,
+        apiKey,
         model: this.config.model,
         temperature: this.config.temperature,
         maxRetries: llmMaxRetries,
       })
-    } else if (this.config.model === LLMModels.Claude35Sonnet20241022 || this.config.model === LLMModels.Claude37Sonnet20250219) {
+    } else if (isAnthropic(this.config.model, apiKey)) {
       return new ChatAnthropic({
-        apiKey: this.config.apiKey,
+        apiKey,
         model: this.config.model,
         temperature: this.config.temperature,
         maxRetries: llmMaxRetries,
       })
-    } else if (this.config.model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct) {
+    } else if (isGroq(this.config.model, apiKey)) {
       return new ChatGroq({
-        apiKey: this.config.apiKey,
+        apiKey,
         model: this.config.model.replace(/^groq\//, ''),
         temperature: this.config.temperature,
         maxRetries: llmMaxRetries,
       })
     } else {
       return new ChatOpenAI({
-        apiKey: this.config.apiKey,
+        apiKey,
         model: this.config.model,
         temperature: this.config.model !== LLMModels.GptO3Mini ? this.config.temperature : undefined,
         maxRetries: llmMaxRetries,
