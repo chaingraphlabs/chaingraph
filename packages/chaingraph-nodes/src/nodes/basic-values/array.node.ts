@@ -202,7 +202,10 @@ class ArrayNode extends BaseNode {
    * Create port configuration based on the provided port configuration and merge it with the default port configuration
    */
   private createPortConfig(portConfig: IPortConfig, isChildConfig: boolean = false): IPortConfig {
-    let specificSchema: IPortConfig
+    let specificSchema: IPortConfig = {
+      type: 'any',
+      defaultValue: undefined,
+    }
 
     // Create the appropriate schema object based on port type
     switch (portConfig.type) {
