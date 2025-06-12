@@ -25,7 +25,6 @@ import { Tool } from './types'
   tags: ['anthropic', 'tool', 'claude', 'collector'],
 })
 class AntropicToolCollectorNode extends BaseNode {
-  // Define up to 5 input slots for tools
   @Input()
   @PortArray({
     title: 'Tools Input',
@@ -43,6 +42,23 @@ class AntropicToolCollectorNode extends BaseNode {
   })
   toolsInput: Tool[] = []
 
+  @Input()
+  @PortArray({
+    title: 'Tools Input',
+    description: 'List of tools to be collected',
+    itemConfig: {
+      type: 'object',
+      schema: Tool,
+      defaultValue: new Tool(),
+    },
+    isMutable: true,
+    ui: {
+      addItemFormHidden: false,
+    },
+    defaultValue: [],
+  })
+  toolsInput2: Tool[] = []
+
   @Output()
   @PortArray({
     title: 'Tools',
@@ -59,6 +75,12 @@ class AntropicToolCollectorNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Add all defined tools to the output array
     for (const tool of (this.toolsInput)) {
+      if (tool !== undefined) {
+        this.tools.push(tool)
+      }
+    }
+
+    for (const tool of (this.toolsInput2)) {
       if (tool !== undefined) {
         this.tools.push(tool)
       }

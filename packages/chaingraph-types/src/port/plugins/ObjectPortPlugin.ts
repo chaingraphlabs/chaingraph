@@ -146,7 +146,7 @@ function validateField(
 
           // Validate each nested field found in schema.properties.
           for (const [key, nestedConfig] of Object.entries(objectConfig.schema.properties)) {
-            const nestedValue = objectValue[key]
+            const nestedValue = objectValue![key]
             if (nestedValue === undefined) {
               if (nestedConfig.required) {
                 errors.push(`Missing required field: ${fieldPath}.${key}`)
@@ -181,8 +181,8 @@ function validateField(
           const arrayValue = fieldValue as ArrayPortValue
 
           // Validate each item in the array using the itemConfig.
-          for (let i = 0; i < arrayValue.length; i++) {
-            const itemValue = arrayValue[i]
+          for (let i = 0; i < arrayValue!.length; i++) {
+            const itemValue = arrayValue![i]
             const itemErrors = validateField(
               itemValue,
               arrayConfig.itemConfig,

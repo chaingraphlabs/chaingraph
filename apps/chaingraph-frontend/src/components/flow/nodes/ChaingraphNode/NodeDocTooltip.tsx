@@ -202,6 +202,38 @@ export function NodeDocTooltip({
             <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full w-full">
                 <div className="p-4 space-y-3">
+                  {/* Node ID */}
+                  {node.id && (
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium text-muted-foreground">Node ID</div>
+                      <div className="text-xs text-muted-foreground">{node.id}</div>
+                    </div>
+                  )}
+
+                  {/* Node Type */}
+                  {node.metadata.type && (
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium text-muted-foreground">Node Type</div>
+                      <div className="text-xs text-muted-foreground">{node.metadata.type}</div>
+                    </div>
+                  )}
+
+                  {/* Category */}
+                  {node.metadata.category && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">Category</div>
+                      {/* badge and description on separate rows */}
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 w-fit">
+                          {node.metadata.category}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground">
+                          {categoryMetadata.description}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Description */}
                   {node.metadata.description && (
                     <div className="space-y-1">

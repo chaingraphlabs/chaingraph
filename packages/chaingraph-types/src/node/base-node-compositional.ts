@@ -12,12 +12,13 @@ import type { Dimensions, NodeUIMetadata, Position } from '../node/node-ui'
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
 import type { IPort, IPortConfig } from '../port'
 import type { JSONValue } from '../utils/json'
-import type { IComplexPortHandler, INodeComposite } from './interfaces'
+import type { CloneWithNewIdResult, IComplexPortHandler, INodeComposite } from './interfaces'
 import { applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
 import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
 import {
   ComplexPortHandler,
+  DeepCloneHandler,
   DefaultPortManager,
   NodeEventManager,
   NodeSerializer,
@@ -41,12 +42,12 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   protected _status: NodeStatus = NodeStatus.Idle
 
   // Components
-  private portManager: PortManager
+  private readonly portManager: PortManager
   private portBinder: PortBinder
   private complexPortHandler: ComplexPortHandler
   private eventManager: NodeEventManager
   private uiManager: NodeUIManager
-  private versionManager: NodeVersionManager
+  private readonly versionManager: NodeVersionManager
   private serializer: NodeSerializer
   private defaultPortManager: DefaultPortManager
 
@@ -204,7 +205,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       return
     }
     this.versionManager.incrementVersion()
-    this.emit(this.createEvent(NodeEventType.StatusChange, {
+    void this.emit(this.createEvent(NodeEventType.StatusChange, {
       oldStatus,
       newStatus: status,
     }))
@@ -319,9 +320,9 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    * Event handler for the node
    * This is the key method that derived classes can override to handle events
    *
-   * @param event The event to handle
+   * @param _event The event to handle
    */
-  async onEvent(event: NodeEvent): Promise<void> {
+  async onEvent(_event: NodeEvent): Promise<void> {
     // Apply visibility rules for all events
     return this.applyPortVisibilityRules()
   }
@@ -475,6 +476,155 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     return this.serializer.clone()
   }
 
+  /**
+   * Create a deep clone of the node with new unique identifiers
+   * This method recursively clones all ports with new IDs while preserving
+   * the port hierarchy, values, and metadata
+   *
+   * @returns A result object containing the cloned node and ID mappings
+   */
+  cloneWithNewId(): CloneWithNewIdResult<INodeComposite> {
+    return DeepCloneHandler.cloneNodeWithNewIds(this)
+  }
+
+  /*
+  // Old implementation - commented out for easy rollback if needed
+  cloneWithNewId(): CloneWithNewIdResult<INodeComposite> {
+    // Generate a new unique ID for the cloned node
+    const nodeType = this.metadata.type
+    const newNodeId = `${nodeType}:${generateNodeID()}`
+    const originalNodeId = this.id
+
+    const portIdMapping = new Map<string, string>()
+
+    // Create a new instance of the same node type with the new ID
+    const clonedNode = new (this.constructor as any)(newNodeId, {
+      ...this.metadata,
+    }) as BaseNodeCompositional
+
+    // do not call initializing here we don't want to create any default ports yet
+    // clonedNode.initialize()
+
+    // iterate over top-level ports and get the value and set them in the cloned node
+    for (const port of this.portManager.ports.values()) {
+      if (port.getConfig().parentId) {
+        // If the port has a parentId, it should not be cloned at the top level
+        // It will be handled in the child port cloning logic
+        continue
+      }
+
+      // found a top-level port, clone it with a new ID and iterate over its children to clone them as well with new IDs
+
+      const clonedPort = port.cloneWithNewId()
+
+      // update mapping for the cloned port
+      portIdMapping.set(port.id, clonedPort.id)
+
+      // Iterate over child ports and clone them recursively
+      const childPorts = this.portManager.getChildPorts(port)
+
+      if (clonedPort.getConfig().parentId) {
+        // needs to find new parentID by the mapping
+        const parentPort = this.portManager.getPort(clonedPort.getConfig().parentId!)
+        if (!parentPort) {
+          console.error(`[NODE] Parent port with ID ${clonedPort.getConfig().parentId} not found for cloned port ${clonedPort.id}. This should not happen.`)
+          continue
+        }
+
+        // Set the parentId to the new cloned port ID
+        clonedPort.setConfig({
+          ...clonedPort.getConfig(),
+          parentId: portIdMapping.get(parentPort.id) || parentPort.id, // Use the mapping or original ID
+          nodeId: newNodeId, // Update nodeId to the new cloned node ID
+        })
+      }
+
+      //
+      // if (port.getConfig().key) {
+      //   const portFromClone = findPort(
+      //     clonedNode,
+      //     p =>
+      //       p.getConfig().key === port.getConfig().key,
+      //   )
+      //   if (portFromClone) {
+      //     portFromClone.setConfig({
+      //       ...deepCopy(port.getConfig()),
+      //       id: portFromClone.id, // Ensure the ID is preserved
+      //       parentId: portFromClone.getConfig().parentId, // Ensure parentId is preserved
+      //       nodeId: newNodeId, // Update nodeId to the new cloned node ID
+      //       connections: [], // Clear connections for the cloned port
+      //     })
+      //
+      //     console.log(`[NODE] Cloned port ${port.getConfig().key} with new ID ${portFromClone.id}: ${JSON.stringify(portFromClone.getConfig())}`)
+      //
+      //     const portValue = port.getValue()
+      //     clonedNode[port.getConfig().key!] = deepCopy(portValue)
+      //     clonedNode.portManager.updatePort(port)
+      //     clonedNode.rebuildPortBindings()
+      //   } else {
+      //     console.log(`[NODE] Port with key ${port.getConfig().key} not found in cloned node. This should not happen.`)
+      //   }
+      // }
+    }
+
+    clonedNode.setVersion(this.getVersion())
+
+    return {
+      clonedNode,
+      portIdMapping,
+      nodeIdMapping: {
+        originalId: originalNodeId,
+        newId: newNodeId,
+      },
+    }
+  }
+  */
+
+  /**
+   * Build a mapping of original port IDs to cloned port IDs
+   * This compares the port structures and matches ports by their key and hierarchy
+   */
+  private buildPortIdMapping(originalNode: INodeComposite, clonedNode: INodeComposite): Map<string, string> {
+    const mapping = new Map<string, string>()
+
+    // Helper function to recursively map ports
+    const mapPorts = (originalPorts: IPort[], clonedPorts: IPort[]) => {
+      // Sort both arrays by key to ensure consistent mapping
+      const sortedOriginal = [...originalPorts].sort((a, b) =>
+        (a.getConfig().key || a.id).localeCompare(b.getConfig().key || b.id),
+      )
+      const sortedCloned = [...clonedPorts].sort((a, b) =>
+        (a.getConfig().key || a.id).localeCompare(b.getConfig().key || b.id),
+      )
+
+      for (let i = 0; i < sortedOriginal.length && i < sortedCloned.length; i++) {
+        const originalPort = sortedOriginal[i]
+        const clonedPort = sortedCloned[i]
+
+        // Map this port
+        mapping.set(originalPort.id, clonedPort.id)
+
+        // Recursively map child ports
+        const originalChildren = originalNode.getChildPorts(originalPort)
+        const clonedChildren = clonedNode.getChildPorts(clonedPort)
+
+        if (originalChildren.length > 0 && clonedChildren.length > 0) {
+          mapPorts(originalChildren, clonedChildren)
+        }
+      }
+    }
+
+    // Start with top-level ports (ports without parentId)
+    const originalTopLevelPorts = Array.from(originalNode.ports.values())
+      .filter(p => !p.getConfig().parentId)
+    const clonedTopLevelPorts = Array.from(clonedNode.ports.values())
+      .filter(p => !p.getConfig().parentId)
+
+    mapPorts(originalTopLevelPorts, clonedTopLevelPorts)
+
+    return mapping
+  }
+
   //
   // IDefaultPortManager implementation (delegation to defaultPortManager)
   //
@@ -549,7 +699,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this.rebindAfterDeserialization()
 
     // Apply visibility rules during initialization
-    this.applyPortVisibilityRules()
+    void this.applyPortVisibilityRules()
 
     // Update node status
     this.setStatus(NodeStatus.Initialized, false)

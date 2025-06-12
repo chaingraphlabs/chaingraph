@@ -11,6 +11,7 @@ import type { IPort, SecretPortConfig, SecretPortValue } from '../base'
 import type { SecretType } from '../base/secret'
 import { isCompatibleSecretType } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { SecretPortPlugin } from '../plugins/SecretPortPlugin'
 
 /**
@@ -79,7 +80,14 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
   }
 
   cloneWithNewId(): IPort<SecretPortConfig<S>> {
-    throw new Error('Method not implemented.')
+    const port = new SecretPort<S>({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
+    if (this.value) {
+      port.setValue(this.value) // Set the current value
+    }
+    return port
   }
 
   isCompatibleWith(otherPort: IPort): boolean {

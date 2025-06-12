@@ -8,7 +8,7 @@
 
 import type { INode, Position } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import type { AddNodeEvent, NodeState, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
+import type { AddNodeEvent, NodeState, PasteNodesEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 
@@ -36,6 +36,7 @@ export const updateNodeParent = nodesDomain.createEvent<UpdateNodeParent>()
 
 // Backend operation events
 export const addNodeToFlow = nodesDomain.createEvent<AddNodeEvent>()
+export const pasteNodesToFlow = nodesDomain.createEvent<PasteNodesEvent>()
 export const removeNodeFromFlow = nodesDomain.createEvent<{ flowId: string, nodeId: string }>()
 
 // Bulk operations
@@ -71,6 +72,21 @@ export const addNodeToFlowFx = nodesDomain.createEffect(async (event: AddNodeEve
     nodeType: event.nodeType,
     position: event.position,
     metadata: event.metadata,
+  })
+})
+
+export const pasteNodesToFlowFx = nodesDomain.createEffect(async (event: PasteNodesEvent) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+
+  return client.flow.pasteNodes.mutate({
+    flowId: event.flowId,
+    clipboardData: event.clipboardData,
+    pastePosition: event.pastePosition,
+    positionOffset: event.positionOffset,
+    virtualOrigin: event.virtualOrigin,
   })
 })
 
@@ -526,6 +542,11 @@ export const $nodesError = combine(
 sample({
   clock: addNodeToFlow,
   target: addNodeToFlowFx,
+})
+
+sample({
+  clock: pasteNodesToFlow,
+  target: pasteNodesToFlowFx,
 })
 
 sample({

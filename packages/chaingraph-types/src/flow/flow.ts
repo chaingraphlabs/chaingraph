@@ -105,6 +105,29 @@ export class Flow implements IFlow {
     return node
   }
 
+  addNodes(nodes: INode[], disableEvents?: boolean): INode[] {
+    if (nodes.length === 0) {
+      return []
+    }
+
+    const addedNodes: INode[] = []
+    for (const node of nodes) {
+      addedNodes.push(this.addNode(node, true))
+    }
+
+    // Emit NodesAdded event
+    if (!disableEvents) {
+      this.emitEvent(newEvent(
+        this.getNextEventIndex(),
+        this.id,
+        FlowEventType.NodesAdded,
+        { nodes: addedNodes.map(n => n.clone()) },
+      ))
+    }
+
+    return addedNodes
+  }
+
   updateNode(node: INode): void {
     if (!this.nodes.has(node.id)) {
       throw new Error(`Node with ID ${node.id} does not exist in the flow.`)
@@ -535,7 +558,7 @@ export class Flow implements IFlow {
    * Subscribe to flow events
    * @param handler The event handler
    */
-  public onEvent(handler: (event: FlowEvent) => void): () => void {
+  public onEvent(handler: (event: FlowEvent) => void | Promise<void>): () => void {
     return this.eventQueue.subscribe(handler)
   }
 
@@ -819,6 +842,7 @@ export class Flow implements IFlow {
         flow.addNode(node.deserialize(nodeData), true)
       } catch (error) {
         console.error(`[Flow] Failed to deserialize node: ${nodeData.id}`, error)
+        console.error(`[Flow] Failed to deserialize node data: ${nodeData.id} ${JSON.stringify(nodeData)}`)
         // ignore the error and continue with the next node
       }
     }

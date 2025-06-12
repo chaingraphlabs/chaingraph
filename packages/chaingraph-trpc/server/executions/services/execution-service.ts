@@ -49,7 +49,7 @@ export class ExecutionService {
   // Use event emitters for child completion notifications
   private childCompletionEmitters: Map<string, EventEmitter> = new Map() // parentId -> EventEmitter
   // Maximum execution depth to prevent infinite cycles
-  private readonly MAX_EXECUTION_DEPTH = 10
+  private readonly MAX_EXECUTION_DEPTH = 100
 
   constructor(
     private readonly store: IExecutionStore,
@@ -198,6 +198,7 @@ export class ExecutionService {
       // BUT only if this execution has no children (children completion is handled by checkParentCompletion)
       const childIds = await this.getChildExecutions(id)
       if (instance.status === ExecutionStatus.Running && childIds.length === 0) {
+        console.log(`[startExecution] No child executions found for ${id}, marking as completed`)
         instance.status = ExecutionStatus.Completed
         instance.completedAt = new Date()
         await this.store.create(instance)
@@ -728,11 +729,13 @@ export class ExecutionService {
   }
 
   private setupEventHandling(instance: ExecutionInstance): EventQueue<ExecutionEvent> {
-    const eventQueue = new EventQueue<ExecutionEvent>(200)
+    const eventQueue = new EventQueue<ExecutionEvent>(100)
     this.eventQueues.set(instance.id, eventQueue)
 
     const eventHandler = this.createEventHandlers(instance)
-    const unsubscribe = instance.engine.onAll(async (event) => {
+    const unsubscribe = instance.engine.onAll((event) => {
+      // TODO: when await for the event handlers below then it will brake the logs flushing for some reason. Investigate it later.
+
       eventHandler(event)
       // Publish event to queue for subscribers
       eventQueue.publish(event)
@@ -740,7 +743,7 @@ export class ExecutionService {
       // Persist event if event store is available
       if (this.eventStore) {
         try {
-          await this.eventStore.addEvent(instance.id, event)
+          this.eventStore.addEvent(instance.id, event)
         } catch (error) {
           console.error(`Failed to persist event for execution ${instance.id}:`, error)
         }
@@ -809,8 +812,12 @@ export class ExecutionService {
    */
   async waitForChildExecutions(parentId: string): Promise<void> {
     const childIds = await this.getChildExecutions(parentId)
-    if (childIds.length === 0)
+    if (childIds.length === 0) {
+      console.log(`[waitForChildExecutions] No child executions found for parent ${parentId}`)
       return
+    }
+
+    console.log(`[waitForChildExecutions] Found ${childIds.length} child executions for parent ${parentId}`)
 
     const emitter = this.childCompletionEmitters.get(parentId)
     if (!emitter)

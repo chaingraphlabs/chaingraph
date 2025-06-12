@@ -16,6 +16,7 @@ import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
+import { useFlowCopyPaste } from '@/components/flow/hooks/useFlowCopyPaste'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
@@ -103,6 +104,14 @@ function Flow({
 
   // Setup node drop handling
   useNodeDrop()
+
+  // Setup copy-paste functionality
+  const copyPasteHook = useFlowCopyPaste()
+  // console.log('📋 Copy-paste hook initialized:', {
+  //   hasClipboardData: copyPasteHook.hasClipboardData,
+  //   clipboardNodeCount: copyPasteHook.clipboardNodeCount,
+  //   clipboardEdgeCount: copyPasteHook.clipboardEdgeCount,
+  // })
 
   // Get interaction callbacks
   const {

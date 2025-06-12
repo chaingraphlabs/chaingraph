@@ -73,7 +73,8 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const objectPortTyped = objectPort as ObjectPort
     objectPortTyped.addField(
       key,
-      processedConfig,
+      portConfig,
+      // processedConfig,
     )
     objectPort.setConfig(config)
 

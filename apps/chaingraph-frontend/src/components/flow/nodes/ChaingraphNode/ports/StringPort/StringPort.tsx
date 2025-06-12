@@ -170,7 +170,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
 
         {!ui?.isTextArea && needRenderEditor && (
           <Input
-            value={port.getValue()}
+            value={port.getValue() ?? ''}
             onChange={handleChange}
             className={cn(
               'resize-none shadow-none text-xs p-1',
@@ -195,7 +195,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
           <>
             <Textarea
               ref={textareaRef}
-              value={port.getValue()}
+              value={port.getValue() ?? ''}
               onChange={handleChange}
               onClick={_ => handleResize()}
               onInput={_ => handleResize()}

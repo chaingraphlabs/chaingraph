@@ -152,10 +152,14 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * Useful for creating copies of the port with a unique identifier.
    */
   cloneWithNewId(): IPort<StreamPortConfig<Item>> {
-    return new StreamPort<Item>({
+    const port = new StreamPort<Item>({
       ...this.config,
       id: generatePortID(this.config.key || this.config.id || ''),
     })
+    if (this.value) {
+      port.setValue(this.value) // Set the current value
+    }
+    return port
   }
 }
 

@@ -117,7 +117,7 @@ export class PostgresEventStore {
   async getEvents(
     executionId: string,
     fromIndex?: number,
-    limit = 100,
+    limit = 10000,
   ): Promise<ExecutionEvent[]> {
     const conditions = [eq(executionEventsTable.executionId, executionId)]
 

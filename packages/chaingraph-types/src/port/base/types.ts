@@ -210,17 +210,17 @@ export interface AnyPortConfig extends BasePortConfig {
 /**
  * String port value
  */
-export type StringPortValue = string
+export type StringPortValue = string | undefined | null
 
 /**
  * Number port value
  */
-export type NumberPortValue = number
+export type NumberPortValue = number | undefined | null
 
 /**
  * Array port value
  */
-export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<ExtractValue<Item>>
+export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<ExtractValue<Item>> | undefined | null
 
 /**
  * Secret port value.
@@ -230,7 +230,7 @@ export type SecretPortValue<Secret extends SecretType = 'string'> = EncryptedSec
 /**
  * Object port value
  */
-export type ObjectPortValue<S extends IObjectSchema = IObjectSchema> = ObjectPortValueFromSchema<S>
+export type ObjectPortValue<S extends IObjectSchema = IObjectSchema> = ObjectPortValueFromSchema<S> | undefined | null
 
 /**
  * Object port value from schema
@@ -377,7 +377,7 @@ export function buildUnion<T extends z.ZodTypeAny>(
   if (schemas.length === 0) {
     throw new PortError(
       PortErrorType.RegistryError,
-      'No schemas registered',
+      `No schemas registered: ${JSON.stringify(schemas)}`,
     )
   }
 

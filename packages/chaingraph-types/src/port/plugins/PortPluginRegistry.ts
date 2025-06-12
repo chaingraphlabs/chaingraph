@@ -92,7 +92,8 @@ export class PortPluginRegistry {
    */
   getAllPlugins(): IPortPlugin<any>[] {
     // return Array.from(this.plugins.values())
-    const plugins = [
+
+    const staticPlugins = [
       StringPortPlugin,
       NumberPortPlugin,
       ArrayPortPlugin,
@@ -104,7 +105,7 @@ export class PortPluginRegistry {
       SecretPortPlugin,
     ]
 
-    return plugins
+    return staticPlugins
   }
 
   /**
@@ -118,7 +119,14 @@ export class PortPluginRegistry {
    * Get a union schema for all registered config types
    */
   getConfigUnionSchema(): z.ZodType<IPortConfig> {
-    const schemas = this.getAllPlugins().map(plugin => plugin.configSchema)
+    const plugins = this.getAllPlugins()
+    console.debug(`[getConfigUnionSchema] Registered plugins: ${plugins.map(p => p.typeIdentifier).join(', ')}`)
+
+    const schemas = plugins
+      .filter(plugin => plugin && plugin.configSchema)
+      .map(plugin => plugin.configSchema)
+    console.debug(`[getConfigUnionSchema] Config schemas: ${schemas.map(s => s.toString()).join(', ')}`)
+
     return buildUnion(schemas, basePortConfigSchema)
   }
 
@@ -128,18 +136,26 @@ export class PortPluginRegistry {
   getValueUnionSchema(): z.ZodType<IPortValue> {
     const plugins = this.getAllPlugins()
 
+    console.debug(`[getValueUnionSchema] Registered plugins: ${plugins.map(p => p.typeIdentifier).join(', ')}`)
+
     const schemas = plugins
-      .filter(plugin => !plugin || !plugin.valueSchema)
+      .filter(plugin => plugin && plugin.valueSchema)
       .map((plugin) => {
-        if (plugin.valueSchema) {
+        if (!plugin.valueSchema) {
           throw new PortError(
             PortErrorType.RegistryError,
-            `Plugin for type "${plugin.typeIdentifier}" does not have a value schema`,
+            `Plugin for type "${plugin.typeIdentifier}" does not have a value schema: ${JSON.stringify(plugin)}`,
           )
         }
 
         return plugin.valueSchema
       })
+
+    // add null and undefined schemas
+    schemas.push(z.null(), z.undefined())
+
+    console.debug(`[getValueUnionSchema] Value schemas: ${schemas.map(s => s.toString()).join(', ')}`)
+
     return buildUnion(schemas, defaultValueSchema)
   }
 

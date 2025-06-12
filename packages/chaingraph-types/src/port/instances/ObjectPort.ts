@@ -13,9 +13,12 @@ import type {
   ObjectPortConfig,
   ObjectPortValue,
 } from '../../port'
-
 import type { JSONValue } from '../../utils/json'
+import {
+  cleanupPortConfigFromIds,
+} from '../../port'
 import { BasePort, ObjectPortPlugin } from '../../port'
+import { deepCopy } from '../../utils'
 import { generatePortID } from '../id-generate'
 
 /**
@@ -106,9 +109,13 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
       this.value = undefined
       return
     }
+    if (newValue === null) {
+      this.value = null as ObjectPortValue<S>
+      return
+    }
 
     // Initialize value if it doesn't exist
-    if (this.value === undefined) {
+    if (this.value === undefined || this.value === null) {
       this.value = {} as ObjectPortValue<S>
     }
 
@@ -124,7 +131,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
       if (Object.hasOwn(newValue, key)) {
         const value = newValue[key]
         if (value !== undefined) {
-          this.setValueForKey(this.value, key, value)
+          this.setValueForKey(this.value!, key, value)
         }
       }
     }
@@ -313,11 +320,18 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
       id: newPortID,
       schema: {
         ...this.config.schema,
-        properties: { ...this.config.schema.properties },
+        // iterate over properties and call cleanupPortConfigFromIds function
+        properties: Object.fromEntries(
+          Object.entries(this.config.schema.properties).map(([key, value]) => {
+            return [key, cleanupPortConfigFromIds(value)]
+          }),
+        ),
       },
     }
 
-    return new ObjectPort<S>(newConfig)
+    const port = new ObjectPort<S>(newConfig)
+    port.setValue(deepCopy(this.value)) // Set the current value
+    return port
   }
 }
 

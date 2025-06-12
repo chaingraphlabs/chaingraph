@@ -20,7 +20,7 @@ import { withTimeout } from '../utils/timeout'
 import { FlowDebugger } from './debugger'
 import { ExecutionEventEnum, ExecutionEventImpl } from './execution-events'
 
-const DEFAULT_MAX_CONCURRENCY = 10
+const DEFAULT_MAX_CONCURRENCY = 100
 const DEFAULT_NODE_TIMEOUT_MS = 60000
 const DEFAULT_FLOW_TIMEOUT_MS = 300000
 
@@ -113,6 +113,8 @@ export class ExecutionEngine {
 
       // Wait for all workers to complete
       await Promise.all(workerPromises)
+
+      console.log(`[ExecutionEngine] All workers completed successfully, total nodes executed: ${this.completedNodes.size}`)
 
       // Emit flow completed event
       await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
@@ -303,7 +305,7 @@ export class ExecutionEngine {
         }
       }
 
-      // Check if execution is complete based on the new requirements
+      // Check if execution is complete
       if (await this.isExecutionComplete()) {
         break
       }

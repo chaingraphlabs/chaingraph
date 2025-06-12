@@ -166,6 +166,20 @@ export function PortDocContent<C extends IPortConfig>({
             </div>
           )}
 
+          {/* Port ID */}
+          {config.id && (
+            <div className="pt-1 space-y-1 text-muted-foreground">
+              <div className="text-xs font-medium">Port ID</div>
+              <pre className={cn(
+                'text-[11px] p-1.5 bg-muted/50',
+                'rounded block overflow-x-auto whitespace-pre-wrap break-all',
+              )}
+              >
+                {config.id}
+              </pre>
+            </div>
+          )}
+
           {/* Default value */}
           {hasDefaultValue(config) && (
             <div className="pt-1 space-y-1 text-muted-foreground">

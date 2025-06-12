@@ -34,9 +34,12 @@ export const executionRouter = router({
         debug: z.boolean().optional(),
         breakpoints: z.array(z.string()).optional(),
       }).optional(),
-      integration: z.record(z.string(),
+      integration: z.record(
+        z.string(),
+        // TODO: add proper validation for integration objects
         // For each integration type key, we accept any valid object
-        z.object({}).catchall(z.unknown())).optional(),
+        z.object({}).catchall(z.unknown()),
+      ).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const flow = await ctx.flowStore.getFlow(input.flowId)
@@ -323,7 +326,6 @@ export const executionRouter = router({
           message: `Execution with id ${input.executionId} not found`,
         })
       }
-
       const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
 
       // Send initial state event
@@ -344,6 +346,9 @@ export const executionRouter = router({
         // Event queue doesn't exist - execution already finished
         console.log(`Event queue not found for execution ${input.executionId}, loading from history`)
       }
+
+      // Create async iterator for the service's event queue
+      const iterator = serviceEventQueue ? serviceEventQueue.createIterator() : null
 
       // If we have an event store and need to load historical events
       const eventStore = (ctx.executionService as any).eventStore
@@ -380,10 +385,8 @@ export const executionRouter = router({
       }
 
       // If execution is still running and we have an event queue, stream live events
-      if (serviceEventQueue) {
+      if (serviceEventQueue && iterator) {
         try {
-          // Create async iterator for the service's event queue
-          const iterator = serviceEventQueue.createIterator()
           for await (const event of iterator) {
             // Skip events we've already sent from history
             if (event.index <= eventIndex) {

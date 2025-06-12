@@ -124,9 +124,11 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * Useful for creating copies of the port with a unique identifier.
    */
   cloneWithNewId(): IPort<BooleanPortConfig> {
-    return new BooleanPort({
+    const port = new BooleanPort({
       ...this.config,
       id: generatePortID(this.config.key || this.config.id || ''),
     })
+    port.setValue(this.value) // Set the current value
+    return port
   }
 }

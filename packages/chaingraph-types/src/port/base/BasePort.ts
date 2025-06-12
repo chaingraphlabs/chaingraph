@@ -43,7 +43,7 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     return this.value
   }
 
-  setValue(newValue: ExtractValue<C>): void {
+  setValue(newValue: ExtractValue<C> | undefined): void {
     // if (!this.validateValue(newValue)) {
     //   throw new PortError(
     //     PortErrorType.ValidationError,
@@ -65,10 +65,14 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
   serialize(): JSONValue {
     const config = this.serializeConfig(this.config)
     if (this.value === undefined) {
-      return { config }
+      return {
+        id: this.id,
+        config,
+      }
     }
 
     return {
+      id: this.id,
       config,
       value: this.serializeValue(this.value),
     }

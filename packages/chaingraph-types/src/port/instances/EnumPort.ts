@@ -123,10 +123,12 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * Useful for creating copies of the port with a unique identifier.
    */
   cloneWithNewId(): IPort<EnumPortConfig> {
-    return new EnumPort({
+    const port = new EnumPort({
       ...this.config,
       id: generatePortID(this.config.key || this.config.id || ''),
     })
+    port.setValue(this.value) // Set the current value
+    return port
   }
 }
 

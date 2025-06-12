@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod'
+import { PortPluginRegistry } from '../port'
 import { NodeExecutionStatus, NodeStatus, ValidationMessageType } from './node-enums'
 
 /**
@@ -95,17 +96,20 @@ export const NodeExecutionResultSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 }).passthrough()
 
+export const SerializedPortSchema = z.object({
+  config: PortPluginRegistry.getInstance().getConfigUnionSchema(),
+  value: PortPluginRegistry.getInstance().getValueUnionSchema(),
+}).passthrough()
+
 /**
  * Schema for serialized node
  */
-export const SerializedNodeSchema = z.lazy(() => z.object({
+export const SerializedNodeSchema = z.object({
   id: z.string(),
   metadata: NodeMetadataSchema,
   status: z.nativeEnum(NodeStatus),
-  // ports: z.record(z.string(), z.object({
-  //   config: PortPluginRegistry.getInstance().getConfigUnionSchema(),
-  //   value: PortPluginRegistry.getInstance().getValueUnionSchema(),
-  // })).optional(),
-
+  ports: z.record(z.string(), SerializedPortSchema).optional(),
   ports_values: z.record(z.string(), z.any()).optional(),
-}).passthrough())
+})
+
+export type SerializedNodeType = z.infer<typeof SerializedNodeSchema>

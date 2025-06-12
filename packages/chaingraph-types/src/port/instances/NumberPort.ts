@@ -125,9 +125,11 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * Useful for creating copies of the port with a unique identifier.
    */
   cloneWithNewId(): IPort<NumberPortConfig> {
-    return new NumberPort({
+    const port = new NumberPort({
       ...this.config,
       id: generatePortID(this.config.key || this.config.id || ''),
     })
+    port.setValue(this.value) // Set the current value
+    return port
   }
 }
