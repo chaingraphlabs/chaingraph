@@ -13,6 +13,7 @@ import type {
   IPortConfig,
   NodeEvent,
   NodeExecutionResult,
+  ObjectPortValue,
   PortConnectedEvent,
   PortDisconnectedEvent,
 } from '@badaitech/chaingraph-types'
@@ -215,69 +216,43 @@ class ArrayNode extends BaseNode {
     switch (portConfig.type) {
       case 'string': {
         specificSchema = {
-          type: portConfig.type,
+          ...portConfig,
           defaultValue: portConfig.defaultValue || '',
-          minLength: portConfig.minLength,
-          maxLength: portConfig.maxLength,
-          pattern: portConfig.pattern,
-          ui: {
-            isTextArea: portConfig.ui?.isTextArea,
-            isPassword: portConfig.ui?.isPassword,
-            textareaDimensions: portConfig.ui?.textareaDimensions,
-            hideEditor: false,
-          },
         }
         break
       }
       case 'number': {
         specificSchema = {
-          type: portConfig.type,
+          ...portConfig,
           defaultValue: portConfig.defaultValue ?? 0,
-          min: portConfig.min,
-          max: portConfig.max,
-          step: portConfig.step,
-          integer: portConfig.integer,
-          ui: {
-            isSlider: portConfig.ui?.isSlider,
-            leftSliderLabel: portConfig.ui?.leftSliderLabel,
-            rightSliderLabel: portConfig.ui?.rightSliderLabel,
-            hideEditor: false,
-          },
         }
         break
       }
       case 'boolean': {
         specificSchema = {
-          type: portConfig.type,
+          ...portConfig,
           defaultValue: portConfig.defaultValue ?? false,
-          ui: {
-            hideEditor: false,
-          },
         }
         break
       }
       case 'array': {
         specificSchema = {
-          type: portConfig.type,
+          ...portConfig,
           itemConfig: this.createPortConfig(portConfig.itemConfig, true),
           defaultValue: portConfig.defaultValue || [],
-          minLength: portConfig.minLength,
-          maxLength: portConfig.maxLength,
           isMutable: true,
-          ui: {
-            hideEditor: false,
-          },
         }
         break
       }
       case 'object': {
+        const objectSchema = this.createObjectSchema(portConfig.schema)
+        const defaultValue = this.createObjectDefaultValues(objectSchema)
         specificSchema = {
-          type: portConfig.type,
-          schema: this.createObjectSchema(portConfig.schema),
-          defaultValue: portConfig.defaultValue || {},
+          ...portConfig,
+          schema: objectSchema,
+          defaultValue,
           isSchemaMutable: false,
           ui: {
-            hideEditor: false,
             keyDeletable: false,
           },
         }
@@ -285,44 +260,37 @@ class ArrayNode extends BaseNode {
       }
       case 'enum': {
         specificSchema = {
-          type: portConfig.type,
-          options: portConfig.options || [],
+          ...portConfig,
           defaultValue: portConfig.defaultValue || '',
-          ui: {
-            hideEditor: false,
-          },
         }
         break
       }
       case 'stream': {
         specificSchema = {
-          type: portConfig.type,
+          ...portConfig,
           itemConfig: this.createPortConfig(portConfig.itemConfig, true),
-          ui: {
-            hideEditor: false,
-          },
         }
         break
       }
       case 'any': {
         specificSchema = {
-          type: portConfig.type,
+          ...portConfig,
           defaultValue: portConfig.defaultValue,
-          ui: {
-            hideEditor: false,
-          },
         }
         break
       }
     }
 
-    if (isChildConfig) {
-      specificSchema = {
-        ...specificSchema,
-        title: portConfig.title,
-        description: portConfig.description,
-        order: portConfig.order,
-      }
+    specificSchema = {
+      ...specificSchema,
+      id: undefined,
+      title: isChildConfig ? specificSchema.title : undefined,
+      description: isChildConfig ? specificSchema.description : undefined,
+      direction: 'output',
+      ui: {
+        ...specificSchema.ui,
+        hideEditor: false,
+      },
     }
 
     return specificSchema
@@ -342,12 +310,24 @@ class ArrayNode extends BaseNode {
     }
 
     return {
-      id: schema.id || undefined,
-      type: schema.type || 'object',
-      description: schema.description || undefined,
-      category: schema.category || undefined,
       properties,
     }
+  }
+
+  /**
+   * Create default values for object ports based on the schema
+   */
+  private createObjectDefaultValues(schema?: IObjectSchema): ObjectPortValue<any> {
+    if (!schema || !schema.properties) {
+      return {}
+    }
+
+    const defaultValue: ObjectPortValue<any> = {}
+    for (const key in schema.properties) {
+      defaultValue[key] = schema.properties[key].defaultValue
+    }
+
+    return defaultValue
   }
 }
 
