@@ -378,3 +378,404 @@ export enum VariableValueType {
   Array = 'array',
   Any = 'any',
 }
+
+// Define DocumentMetadataKV schema
+@ObjectSchema({
+  description: 'Represents a key-value pair for document metadata',
+})
+export class DocumentMetadataKV {
+  @String({
+    title: 'Key',
+    description: 'Metadata key',
+    required: true,
+  })
+  key: string = ''
+
+  @String({
+    title: 'Value',
+    description: 'Metadata value',
+    required: true,
+  })
+  value: string = ''
+}
+
+// Define DocumentIndexingState schema
+@ObjectSchema({
+  description: 'Represents the indexing state of a document',
+})
+export class DocumentIndexingState {
+  @Boolean({
+    title: 'Is Indexing',
+    description: 'Whether the document is currently being indexed',
+    required: true,
+  })
+  is_indexing: boolean = false
+
+  @Boolean({
+    title: 'Is Indexing Accepted',
+    description: 'Whether the indexing request has been accepted',
+    required: true,
+  })
+  is_indexing_accepted: boolean = false
+
+  @Boolean({
+    title: 'Is Indexing Failed',
+    description: 'Whether the indexing process has failed',
+    required: true,
+  })
+  is_indexing_failed: boolean = false
+
+  @Boolean({
+    title: 'Is Indexing Finished',
+    description: 'Whether the indexing process has completed',
+    required: true,
+  })
+  is_indexing_finished: boolean = false
+
+  @Boolean({
+    title: 'Is Indexing Paused',
+    description: 'Whether the indexing process is paused',
+    required: true,
+  })
+  is_indexing_paused: boolean = false
+
+  @String({
+    title: 'Failed Reason',
+    description: 'Reason for indexing failure, if any',
+  })
+  failed_reason?: string
+}
+
+// Define IndexingState schema
+@ObjectSchema({
+  description: 'Represents the indexing state of a document or chunk',
+})
+export class IndexingState {
+  @Boolean({
+    title: 'Is Embedded',
+    description: 'Whether the content has been embedded',
+    required: true,
+  })
+  is_embedded: boolean = false
+
+  @Boolean({
+    title: 'Is Indexed QA',
+    description: 'Whether QA pairs have been indexed',
+    required: true,
+  })
+  is_indexed_qa: boolean = false
+
+  @Boolean({
+    title: 'Is Indexed Triplet',
+    description: 'Whether triplets have been indexed',
+    required: true,
+  })
+  is_indexed_triplet: boolean = false
+
+  @Boolean({
+    title: 'Is Parsed',
+    description: 'Whether the content has been parsed',
+    required: true,
+  })
+  is_parsed: boolean = false
+
+  @Boolean({
+    title: 'Is Summarized',
+    description: 'Whether the content has been summarized',
+    required: true,
+  })
+  is_summarized: boolean = false
+
+  @Number({
+    title: 'Completion Cost',
+    description: 'Cost of completion in tokens',
+    required: true,
+  })
+  completion_cost: number = 0
+
+  @Number({
+    title: 'Completion Tokens',
+    description: 'Number of completion tokens',
+    required: true,
+  })
+  completion_tokens: number = 0
+
+  @Number({
+    title: 'Content Tokens',
+    description: 'Number of content tokens',
+    required: true,
+  })
+  content_tokens: number = 0
+
+  @Number({
+    title: 'Embedding Cost',
+    description: 'Cost of embedding in tokens',
+    required: true,
+  })
+  embedding_cost: number = 0
+
+  @Number({
+    title: 'Prompt Cost',
+    description: 'Cost of prompt in tokens',
+    required: true,
+  })
+  prompt_cost: number = 0
+
+  @Number({
+    title: 'Prompt Tokens',
+    description: 'Number of prompt tokens',
+    required: true,
+  })
+  prompt_tokens: number = 0
+}
+
+// Define DocumentMeta schema
+@ObjectSchema({
+  description: 'Represents metadata for a document',
+})
+export class DocumentMeta {
+  @String({
+    title: 'Collection ID',
+    description: 'ID of the collection this document belongs to',
+    required: true,
+  })
+  collection_id: string = ''
+
+  @String({
+    title: 'Created At',
+    description: 'Timestamp when the document was created',
+    required: true,
+  })
+  created_at: string = ''
+
+  @String({
+    title: 'Document ID',
+    description: 'Unique identifier for the document',
+    required: true,
+  })
+  document_id: string = ''
+
+  @PortObject({
+    schema: DocumentIndexingState,
+    title: 'Document Indexing State',
+    description: 'Current indexing state of the document',
+    required: true,
+  })
+  document_indexing_state: DocumentIndexingState = new DocumentIndexingState()
+
+  @PortObject({
+    schema: IndexingState,
+    title: 'Indexing State',
+    description: 'Indexing state details',
+    required: true,
+  })
+  indexing_state: IndexingState = new IndexingState()
+
+  @PortArray({
+    title: 'Metadata',
+    description: 'Additional metadata for the document',
+    itemConfig: {
+      type: 'object',
+      schema: DocumentMetadataKV,
+      defaultValue: new DocumentMetadataKV(),
+    },
+    defaultValue: [],
+    required: true,
+  })
+  metadata: DocumentMetadataKV[] = []
+
+  @String({
+    title: 'Published At',
+    description: 'Timestamp when the document was published',
+    required: true,
+  })
+  published_at: string = ''
+
+  @PortArray({
+    title: 'Tags',
+    description: 'Tags associated with the document',
+    itemConfig: {
+      type: 'string',
+    },
+    defaultValue: [],
+    required: true,
+  })
+  tags: string[] = []
+
+  @String({
+    title: 'Description',
+    description: 'Description of the document',
+  })
+  description?: string
+
+  @String({
+    title: 'Name',
+    description: 'Name of the document',
+  })
+  name?: string
+
+  @String({
+    title: 'URL',
+    description: 'URL to access the document',
+  })
+  url?: string
+}
+
+// Define QA schema
+@ObjectSchema({
+  description: 'Represents a question-answer pair',
+})
+export class QA {
+  @String({
+    title: 'Answer',
+    description: 'Answer to the question',
+    required: true,
+  })
+  answer: string = ''
+
+  @Number({
+    title: 'Answer Tokens',
+    description: 'Number of tokens in the answer',
+    required: true,
+  })
+  answer_tokens: number = 0
+
+  @String({
+    title: 'Chunk ID',
+    description: 'ID of the chunk this QA pair belongs to',
+    required: true,
+  })
+  chunk_id: string = ''
+
+  @Number({
+    title: 'Chunk Number',
+    description: 'Number of the chunk',
+    required: true,
+  })
+  chunk_number: number = 0
+
+  @String({
+    title: 'Created At',
+    description: 'Timestamp when the QA pair was created',
+    required: true,
+  })
+  created_at: string = ''
+
+  @String({
+    title: 'Document ID',
+    description: 'ID of the document this QA pair belongs to',
+    required: true,
+  })
+  document_id: string = ''
+
+  @String({
+    title: 'Document Published At',
+    description: 'Timestamp when the document was published',
+    required: true,
+  })
+  document_published_at: string = ''
+
+  @PortObject({
+    schema: IndexingState,
+    title: 'Indexing State',
+    description: 'Indexing state of the QA pair',
+    required: true,
+  })
+  indexing_state: IndexingState = new IndexingState()
+
+  @Number({
+    title: 'Page Number From',
+    description: 'Starting page number for this QA pair',
+    required: true,
+  })
+  page_number_from: number = 0
+
+  @Number({
+    title: 'Page Number To',
+    description: 'Ending page number for this QA pair',
+    required: true,
+  })
+  page_number_to: number = 0
+
+  @String({
+    title: 'QA ID',
+    description: 'Unique identifier for the QA pair',
+    required: true,
+  })
+  qa_id: string = ''
+
+  @String({
+    title: 'Question',
+    description: 'Question text',
+    required: true,
+  })
+  question: string = ''
+
+  @Number({
+    title: 'Question Tokens',
+    description: 'Number of tokens in the question',
+    required: true,
+  })
+  question_tokens: number = 0
+
+  @String({
+    title: 'Task ID',
+    description: 'ID of the task that generated this QA pair',
+    required: true,
+  })
+  task_id: string = ''
+
+  @String({
+    title: 'Model',
+    description: 'Model used to generate the QA pair',
+  })
+  model?: string
+}
+
+// Define QAWithSimilarity schema
+@ObjectSchema({
+  description: 'Represents a QA pair with similarity score',
+})
+export class QAWithSimilarity {
+  @PortObject({
+    schema: QA,
+    title: 'QA',
+    description: 'Question-answer pair',
+    required: true,
+  })
+  qa: QA = new QA()
+
+  @Number({
+    title: 'Similarity',
+    description: 'Similarity score between the query and the QA pair',
+    required: true,
+  })
+  similarity: number = 0
+}
+
+// Define QAWithSimilarityByDocuments schema
+@ObjectSchema({
+  description: 'Represents QA pairs with similarity scores grouped by document',
+})
+export class QAWithSimilarityByDocuments {
+  @PortObject({
+    schema: DocumentMeta,
+    title: 'Document',
+    description: 'Document metadata',
+    required: true,
+  })
+  document: DocumentMeta = new DocumentMeta()
+
+  @PortArray({
+    title: 'QAs',
+    description: 'Question-answer pairs with similarity scores',
+    itemConfig: {
+      type: 'object',
+      schema: QAWithSimilarity,
+      defaultValue: new QAWithSimilarity(),
+    },
+    defaultValue: [],
+    required: true,
+  })
+  qas: QAWithSimilarity[] = []
+}
