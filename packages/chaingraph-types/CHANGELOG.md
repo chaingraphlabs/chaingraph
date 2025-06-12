@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.2.0-dev.2
+
+### Patch Changes
+
+- feat: comprehensive copy-paste functionality with node cloning, deep structure handling, and improved execution performance
+
 ## 0.2.0-dev.1
 
 ### Minor Changes
