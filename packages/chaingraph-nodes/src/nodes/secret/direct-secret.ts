@@ -78,7 +78,7 @@ export class DirectSecretOpenAI extends BaseNode {
       isPassword: true,
     },
   })
-  openAIAPIKey?: SecretTypeMap['openai']
+  openAIAPIKey?: SecretTypeMap['openai']['apiKey']
 
   @Output()
   @Secret<'openai'>({
@@ -93,7 +93,7 @@ export class DirectSecretOpenAI extends BaseNode {
       throw new Error(`OpenAI APi key is required`)
     }
 
-    this.encryptedOpenAIKey = await encryptDirectSecret(ctx, 'openai', this.openAIAPIKey)
+    this.encryptedOpenAIKey = await encryptDirectSecret(ctx, 'openai', { apiKey: this.openAIAPIKey })
 
     return {}
   }
@@ -152,7 +152,7 @@ export class DirectSecretAnthropic extends BaseNode {
       isPassword: true,
     },
   })
-  anthropicAPIKey?: SecretTypeMap['anthropic']
+  anthropicAPIKey?: SecretTypeMap['anthropic']['apiKey']
 
   @Output()
   @Secret<'anthropic'>({
@@ -167,7 +167,7 @@ export class DirectSecretAnthropic extends BaseNode {
       throw new Error(`Anthropic API key is required`)
     }
 
-    this.encryptedAnthropicKey = await encryptDirectSecret(ctx, 'anthropic', this.anthropicAPIKey)
+    this.encryptedAnthropicKey = await encryptDirectSecret(ctx, 'anthropic', { apiKey: this.anthropicAPIKey })
 
     return {}
   }
@@ -189,7 +189,7 @@ export class DirectSecretDeepSeek extends BaseNode {
       isPassword: true,
     },
   })
-  deepSeekAPIKey?: SecretTypeMap['deepseek']
+  deepSeekAPIKey?: SecretTypeMap['deepseek']['apiKey']
 
   @Output()
   @Secret<'deepseek'>({
@@ -204,7 +204,7 @@ export class DirectSecretDeepSeek extends BaseNode {
       throw new Error(`DeepSeek API key is required`)
     }
 
-    this.encryptedDeepSeekKey = await encryptDirectSecret(ctx, 'deepseek', this.deepSeekAPIKey)
+    this.encryptedDeepSeekKey = await encryptDirectSecret(ctx, 'deepseek', { apiKey: this.deepSeekAPIKey })
 
     return {}
   }
@@ -263,7 +263,7 @@ export class DirectSecret extends BaseNode {
       isPassword: true,
     },
   })
-  stringSecret?: SecretTypeMap['string']
+  stringSecret?: SecretTypeMap['string']['value']
 
   @Output()
   @Secret<'string'>({
@@ -278,7 +278,7 @@ export class DirectSecret extends BaseNode {
       throw new Error(`Secret String is required`)
     }
 
-    this.encryptedStringSecret = await encryptDirectSecret(ctx, 'string', this.stringSecret)
+    this.encryptedStringSecret = await encryptDirectSecret(ctx, 'string', { value: this.stringSecret })
 
     return {}
   }

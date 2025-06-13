@@ -97,7 +97,7 @@ class OGLLMCallNode extends BaseNode {
     description: 'Your 0G network private key used for authentication and transactions. This key is required to access the 0G network services and will be securely encrypted.',
     secretType: '0g',
   })
-  privateKey?: EncryptedSecretValue<'0g'>
+  privateKey: string = ''
 
   @Input()
   @String({
@@ -160,7 +160,7 @@ class OGLLMCallNode extends BaseNode {
 
     const provider = new ethers.JsonRpcProvider('https://evmrpc-testnet.0g.ai')
 
-    const privateKey = await this.privateKey.decrypt(ctx)
+    const { privateKey } = await this.privateKey.decrypt(ctx)
     const wallet = new ethers.Wallet(privateKey, provider)
 
     const broker = await createZGComputeNetworkBroker(wallet)

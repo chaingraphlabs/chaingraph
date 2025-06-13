@@ -9,11 +9,13 @@
 import { executionRouter } from './executions/routes/execution-router'
 import { flowProcedures } from './procedures/flow'
 import { nodeRegistryProcedures } from './procedures/nodeRegistry'
+import { secretProcedures } from './procedures/secrets'
 import { createCallerFactory, router } from './trpc'
 
 export const appRouter = router({
   flow: flowProcedures,
   nodeRegistry: nodeRegistryProcedures,
+  secrets: secretProcedures,
   execution: executionRouter,
 })
 export type AppRouter = typeof appRouter

@@ -124,8 +124,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
   @Input()
   @PortAny({
     title: 'Output Schema',
-    description: 'Schema for the structured output from the LLM. You can connect object port to this port and it will be used to generate the schema.\n'
-      + 'Example:\n',
+    description: 'Schema for the structured output from the LLM. You can connect object port to this port and it will be used to generate the schema.',
   })
   outputSchema: any = {}
 
@@ -160,7 +159,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
-    const apiKey = await this.config.apiKey.decrypt(context)
+    const { apiKey } = await this.config.apiKey.decrypt(context)
 
     try {
       // Generate structured response
@@ -318,21 +317,21 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
    * Create an appropriate LLM instance based on the selected model
    */
   private createLLMInstance(apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
-    if (isDeepSeek(this.config.model, apiKey)) {
+    if (isDeepSeek(this.config.model)) {
       return new ChatDeepSeek({
         apiKey,
         model: this.config.model,
         temperature: this.config.temperature,
         maxRetries: llmMaxRetries,
       })
-    } else if (isAnthropic(this.config.model, apiKey)) {
+    } else if (isAnthropic(this.config.model)) {
       return new ChatAnthropic({
         apiKey,
         model: this.config.model,
         temperature: this.config.temperature,
         maxRetries: llmMaxRetries,
       })
-    } else if (isGroq(this.config.model, apiKey)) {
+    } else if (isGroq(this.config.model)) {
       return new ChatGroq({
         apiKey,
         model: this.config.model.replace(/^groq\//, ''),

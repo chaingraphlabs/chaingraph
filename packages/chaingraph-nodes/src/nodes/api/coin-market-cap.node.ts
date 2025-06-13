@@ -156,7 +156,7 @@ class CoinMarketCapNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
-    const apiKey = await this.apiKey.decrypt(context)
+    const { apiKey } = await this.apiKey.decrypt(context)
 
     const cryptos = this.cryptoList.join(',')
     const url = `${CMC_API_URL}?symbol=${cryptos}`

@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
 import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
@@ -62,7 +63,7 @@ const defaultCategoryMetadata = {
     },
   },
   order: 7,
-}
+} satisfies CategoryMetadata
 
 function ChaingraphNodeComponent({
   data,

@@ -145,25 +145,25 @@ class LLMCallNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
-    const apiKey = await this.apiKey.decrypt(context)
+    const { apiKey } = await this.apiKey.decrypt(context)
 
     let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic
 
-    if (isDeepSeek(this.model, apiKey)) {
+    if (isDeepSeek(this.model)) {
       llm = new ChatDeepSeek({
         apiKey,
         model: this.model,
         // temperature: this.temperature,
         streaming: true,
       })
-    } else if (isAnthropic(this.model, apiKey)) {
+    } else if (isAnthropic(this.model)) {
       llm = new ChatAnthropic({
         apiKey,
         model: this.model,
         temperature: this.temperature,
         streaming: true,
       })
-    } else if (isGroq(this.model, apiKey)) {
+    } else if (isGroq(this.model)) {
       llm = new ChatOpenAI({
         apiKey,
         model: this.model.replace(/^groq\//, ''),
@@ -246,26 +246,26 @@ export type SupportedProviders = 'openai' | 'anthropic' | 'deepseek' | 'groq'
 /**
  * Represents an API key type that maps to a secret type defined for supported providers.
  */
-export type APIkey = SecretTypeMap[SupportedProviders]
+export type APIkey = SecretTypeMap[SupportedProviders]['apiKey']
 
 /**
  * Determines whether the given model belongs to the DeepSeek category of models.
  */
-export function isDeepSeek(model: LLMModels, apiKey: APIkey): apiKey is SecretTypeMap['deepseek'] {
+export function isDeepSeek(model: LLMModels): boolean {
   return [LLMModels.DeepseekReasoner, LLMModels.DeepseekChat].includes(model)
 }
 
 /**
  * Determines whether the given model belongs to the Anthropic category of models.
  */
-export function isAnthropic(model: LLMModels, apiKey: APIkey): apiKey is SecretTypeMap['anthropic'] {
+export function isAnthropic(model: LLMModels): boolean {
   return [LLMModels.Claude35Sonnet20241022, LLMModels.Claude37Sonnet20250219].includes(model)
 }
 
 /**
  * Determines whether the given model belongs to the Groq category of models.
  */
-export function isGroq(model: LLMModels, apiKey: APIkey): apiKey is SecretTypeMap['groq'] {
+export function isGroq(model: LLMModels): boolean {
   return model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct
 }
 

@@ -22,7 +22,7 @@ describe('direct secret node', () => {
 
     await node.execute(ctx)
 
-    expect(await node.encryptedStringSecret!.decrypt(ctx)).toBe(node.stringSecret)
+    expect(await node.encryptedStringSecret!.decrypt(ctx)).toEqual({ value: node.stringSecret })
   })
 
   it('encrypts secret with multiple inputs', async () => {

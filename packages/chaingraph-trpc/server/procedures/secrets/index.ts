@@ -6,8 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export { flowProcedures } from './flow'
-export type { PasteNodesClipboardDataType, PasteNodesInputType } from './flow'
-export { nodeRegistryProcedures } from './nodeRegistry'
-export { secretProcedures } from './secrets'
-export { zAsyncIterable } from './subscriptions/utils/zAsyncIterable'
+import { router } from '../../trpc'
+import { getSecretTypes } from './get-secret-types'
+
+/**
+ * A TRPC router for handling secret-related procedures.
+ */
+export const secretProcedures = router({
+  getSecretTypes,
+})
+
+export { getSecretTypes } from './get-secret-types'
