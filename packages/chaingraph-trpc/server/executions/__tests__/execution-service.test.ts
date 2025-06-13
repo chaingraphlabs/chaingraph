@@ -27,6 +27,7 @@ import { ExecutionStatus } from '../types'
 
 // Simple test node for flow execution
 @Node({
+  type: 'TestNode',
   title: 'Test Node',
 })
 class TestNode extends BaseNode {

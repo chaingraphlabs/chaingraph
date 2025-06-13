@@ -35,6 +35,7 @@ PortPluginRegistry.getInstance().register(EnumPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
+  type: 'ScalarNode',
   title: 'Scalar Node',
   description: 'Node with scalar ports',
 })

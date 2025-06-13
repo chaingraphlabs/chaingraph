@@ -19,7 +19,7 @@ import 'reflect-metadata'
  * It uses the already existing NodeMetadata type.
  */
 export function Node(
-  config: Omit<NodeMetadata, 'type'> & { type?: string },
+  config: NodeMetadata,
   nodeRegistry?: NodeRegistry | null,
 ): ClassDecorator {
   return function (target: Function) {

@@ -39,6 +39,7 @@ class RecordObject implements Record<string, unknown> {
 }
 
 @Node({
+  type: 'ObjectNode',
   title: 'Object Node With dynamic schema',
   description: 'Node with an object port with dynamic schema',
 })

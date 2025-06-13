@@ -67,6 +67,7 @@ async function encryptDirectSecret<T extends SecretType>(
   description: 'Converts OpenAI API key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your OpenAI API key without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecretOpenAI',
 })
 export class DirectSecretOpenAI extends BaseNode {
   @Input()
@@ -103,6 +104,7 @@ export class DirectSecretOpenAI extends BaseNode {
   description: 'Converts 0G private key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your 0G private key without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecret0G',
 })
 export class DirectSecret0G extends BaseNode {
   @Input()
@@ -139,6 +141,7 @@ export class DirectSecret0G extends BaseNode {
   description: 'Converts Anthropic API key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your Anthropic API key without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecretAnthropic',
 })
 export class DirectSecretAnthropic extends BaseNode {
   @Input()
@@ -175,6 +178,7 @@ export class DirectSecretAnthropic extends BaseNode {
   description: 'Converts DeepSeek API key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your DeepSeek API key without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecretDeepSeek',
 })
 export class DirectSecretDeepSeek extends BaseNode {
   @Input()
@@ -211,6 +215,7 @@ export class DirectSecretDeepSeek extends BaseNode {
   description: 'Converts CoinMarketCap API key directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your CoinMarketCap API key without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecretCoinMarketCap',
 })
 export class DirectSecretCoinMarketCap extends BaseNode {
   @Input()
@@ -247,6 +252,7 @@ export class DirectSecretCoinMarketCap extends BaseNode {
   description: 'Converts generic string secret (such as API keys or passwords) directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt sensitive string information without storing it in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecret',
 })
 export class DirectSecret extends BaseNode {
   @Input()
@@ -283,6 +289,7 @@ export class DirectSecret extends BaseNode {
   description: 'Converts XAPI credentials (key and secretKey) directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your XAPI credentials without storing them in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecretXAPI',
 })
 export class DirectSecretXAPI extends BaseNode {
   @Input()
@@ -336,6 +343,7 @@ export class DirectSecretXAPI extends BaseNode {
   description: 'Converts XAPP credentials (key and secretKey) directly into an encrypted secret. Unlike the Secret node, this takes raw text rather than a reference ID. Use this when you need to immediately encrypt your XAPP credentials without storing them in the secret management panel first.',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'encryption', 'security', 'api-keys', 'passwords', 'sensitive-data'],
+  type: 'DirectSecretXAPP',
 })
 export class DirectSecretXAPP extends BaseNode {
   @Input()

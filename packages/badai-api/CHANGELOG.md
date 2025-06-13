@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.2.0-dev.3
+
+### Patch Changes
+
+- feat: Add DirectSecret types for various API keys and update SecretNode type
+
 ## 0.2.0-dev.2
 
 ### Patch Changes

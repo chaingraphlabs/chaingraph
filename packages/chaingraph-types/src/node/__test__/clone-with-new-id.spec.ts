@@ -35,6 +35,7 @@ beforeEach(() => {
  * Complex test node with deeply nested structures for comprehensive cloning tests
  */
 @Node({
+  type: 'ComplexTestNode',
   title: 'Complex Clone Test Node',
   description: 'A node with complex nested structures for cloning tests',
 })

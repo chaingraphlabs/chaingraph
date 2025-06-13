@@ -34,6 +34,7 @@ import { NODE_CATEGORIES } from '../../categories'
   description: 'Retrieves a secret from the secret vault',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'vault'],
+  type: 'SecretNode',
 })
 export class SecretNode extends BaseNode {
   @Input()

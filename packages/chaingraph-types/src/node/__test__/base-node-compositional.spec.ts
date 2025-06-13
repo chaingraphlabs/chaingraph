@@ -37,6 +37,7 @@ beforeEach(() => {
  * A simple test node with various port types for testing purposes
  */
 @Node({
+  type: 'TestNode',
   title: 'Test Node',
   description: 'A test node for unit testing',
 })

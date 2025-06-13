@@ -120,12 +120,9 @@ export class PortPluginRegistry {
    */
   getConfigUnionSchema(): z.ZodType<IPortConfig> {
     const plugins = this.getAllPlugins()
-    console.debug(`[getConfigUnionSchema] Registered plugins: ${plugins.map(p => p.typeIdentifier).join(', ')}`)
-
     const schemas = plugins
       .filter(plugin => plugin && plugin.configSchema)
       .map(plugin => plugin.configSchema)
-    console.debug(`[getConfigUnionSchema] Config schemas: ${schemas.map(s => s.toString()).join(', ')}`)
 
     return buildUnion(schemas, basePortConfigSchema)
   }

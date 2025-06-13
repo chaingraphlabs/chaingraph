@@ -81,6 +81,7 @@ class TestObjectComponent {
  * This helps us simulate a composite node scenario.
  */
 @Node({
+  type: 'TestNode',
   title: 'Test Node',
 })
 class TestNode extends BaseNode {

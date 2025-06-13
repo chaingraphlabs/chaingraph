@@ -91,6 +91,7 @@ interface DynamicConfig {
  * A complex node with deeply nested object structures, arrays, and mixed types
  */
 @Node({
+  type: 'ComplexUserNode',
   title: 'Complex User Node',
   description: 'A node with complex nested data structures for testing',
 })
@@ -310,6 +311,7 @@ class ComplexUserNode extends BaseNodeCompositional {
  * A node with dynamic object properties for testing adding/removing properties
  */
 @Node({
+  type: 'DynamicConfigNode',
   title: 'Dynamic Config Node',
   description: 'A node with dynamically changing object properties',
 })

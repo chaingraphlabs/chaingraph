@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.0-dev.3
+
+### Patch Changes
+
+- feat: Add DirectSecret types for various API keys and update SecretNode type
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.0-dev.3
+  - @badaitech/chaingraph-types@0.2.0-dev.3
+  - @badaitech/chaingraph-trpc@0.2.0-dev.3
+
 ## 0.2.0-dev.2
 
 ### Patch Changes
