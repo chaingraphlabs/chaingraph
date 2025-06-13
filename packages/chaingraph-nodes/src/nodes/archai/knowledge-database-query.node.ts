@@ -72,6 +72,42 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
   })
   tokensLimit: number = 4000
 
+  @Input()
+  @PortArray({
+    itemConfig: {
+      type: 'string',
+    },
+    title: 'Document IDs',
+    description: 'Filter results by specific document IDs',
+    defaultValue: [],
+  })
+  documentIds: string[] = []
+
+  @Input()
+  @PortArray({
+    itemConfig: {
+      type: 'string',
+    },
+    title: 'Keywords',
+    description: 'Filter results by specific keywords',
+    defaultValue: [],
+  })
+  keywords: string[] = []
+
+  @Input()
+  @String({
+    title: 'Published From',
+    description: 'Filter results by publication date (from)',
+  })
+  publishedFrom?: string
+
+  @Input()
+  @String({
+    title: 'Published To',
+    description: 'Filter results by publication date (to)',
+  })
+  publishedTo?: string
+
   @Output()
   @PortArray({
     itemConfig: {
@@ -106,6 +142,16 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
       throw new Error('Tokens limit must be greater than 0')
     }
 
+    // Validate date range if both dates are provided
+    if (this.publishedFrom && this.publishedTo) {
+      const fromDate = new Date(this.publishedFrom)
+      const toDate = new Date(this.publishedTo)
+
+      if (fromDate > toDate) {
+        throw new Error('Published From date must be before Published To date')
+      }
+    }
+
     const archAIContext = context.getIntegration<ArchAIContext>('archai')
     const agentSession = archAIContext?.agentSession
     if (!agentSession) {
@@ -115,6 +161,29 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
     const graphQLClient = createGraphQLClient(
       process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
     )
+
+    // Prepare filters
+    const filters: Record<string, any> = {}
+
+    if (this.documentIds.length > 0) {
+      filters.doc_ids = this.documentIds
+    }
+
+    if (this.keywords.length > 0) {
+      filters.keywords = this.keywords
+    }
+
+    if (this.publishedFrom || this.publishedTo) {
+      filters.published_range = {}
+
+      if (this.publishedFrom) {
+        filters.published_range.from = this.publishedFrom
+      }
+
+      if (this.publishedTo) {
+        filters.published_range.to = this.publishedTo
+      }
+    }
 
     // Query the knowledge database
     const { kdbSearchQAWithDocuments } = await graphQLClient.request(
@@ -126,6 +195,7 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
         limit: this.limit,
         threshold: this.threshold,
         tokens_limit: this.tokensLimit,
+        filters: Object.keys(filters).length > 0 ? filters : undefined,
       },
     )
 
