@@ -22,6 +22,7 @@ export const NODE_CATEGORIES = {
   GROUP: 'group',
   SECRET: 'secret',
   ARCHAI: 'archai',
+  ARCH_RAG: 'arch-rag',
   BADAI: 'badai',
   OKX_DEX: 'okx-dex',
 } as const
@@ -74,6 +75,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     order: 0,
   },
 
+  [NODE_CATEGORIES.ARCH_RAG]: {
+    id: NODE_CATEGORIES.ARCH_RAG,
+    label: 'Knowledge Database',
+    description: 'Knowledge Database query and management nodes',
+    icon: 'Database',
+    style: {
+      light: {
+        primary: '#E3F2FD', // Soft blue
+        secondary: '#F1F8FE',
+        background: '#FFFFFF',
+        text: '#0D47A1', // Deeper blue
+      },
+      dark: {
+        primary: '#0D2A4A', // Deep blue
+        secondary: '#071B30', // Darker blue
+        background: '#1C1C1C',
+        text: '#64B5F6', // Bright blue that's visible on dark
+      },
+    },
+    order: 0,
+  },
+
   [NODE_CATEGORIES.BADAI]: {
     id: NODE_CATEGORIES.BADAI,
     label: 'BadAI',
@@ -96,7 +119,6 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     order: 0,
     hidden: true,
   },
-
   [NODE_CATEGORIES.AI]: {
     id: NODE_CATEGORIES.AI,
     label: 'AI & ML',
@@ -286,6 +308,7 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
     },
     order: 8,
   },
+
   [NODE_CATEGORIES.SECRET]: {
     id: NODE_CATEGORIES.SECRET,
     label: 'Secret',

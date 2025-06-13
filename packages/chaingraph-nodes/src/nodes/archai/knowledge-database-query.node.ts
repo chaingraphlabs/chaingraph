@@ -25,7 +25,7 @@ import { QAWithSimilarityByDocuments } from './types'
   type: 'ArchAIKnowledgeDatabaseQueryNode',
   title: 'ArchAI Knowledge Database Query',
   description: 'Query the ArchAI Knowledge Database',
-  category: NODE_CATEGORIES.ARCHAI,
+  category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'query', 'kdb'],
 })
 class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
