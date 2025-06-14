@@ -89,7 +89,7 @@ class OKXGetLiquidityNode extends BaseNode {
 
       // Decrypt secrets
       if (!this.config.secrets)
-        throw new Error('API Key is required')
+        throw new Error('Secrets configuration is required')
 
       const secrets = await this.config.secrets.decrypt(context)
 
