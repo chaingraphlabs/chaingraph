@@ -35,7 +35,7 @@ export function useExecutionTree() {
   useEffect(() => {
     // Initial load
     initExecutionTree()
-    
+
     // Auto-refresh disabled for now - only manual refresh via button
     // intervalRef.current = setInterval(() => {
     //   refreshExecutionTree()

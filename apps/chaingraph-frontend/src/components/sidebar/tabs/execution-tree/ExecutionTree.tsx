@@ -26,7 +26,7 @@ export function ExecutionTree() {
   // Use Effector store for execution data
   const { executions, isLoading, error, filters, refetch, updateFilters } = useExecutionTree()
   const { selectedExecution, selectExecution } = useSelectedExecution()
-  
+
   // Get active flow ID to check if a flow is selected
   const activeFlowId = useUnit($activeFlowId)
 

@@ -43,7 +43,6 @@ class EventEmitterNode extends BaseNode {
       throw new Error('Event name is required to emit an event')
     }
 
-
     // Use the new event emission API if available
     if (context.emitEvent) {
       console.log(`[EventEmitterNode ${this.id}] Emitting event: "${eventName}"`)

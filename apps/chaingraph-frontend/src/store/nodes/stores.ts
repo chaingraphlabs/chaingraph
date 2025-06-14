@@ -411,7 +411,7 @@ export const $xyflowNodes = combine(
         // Set dimensions if available and valid
         const MIN_NODE_WIDTH = 100
         const MIN_NODE_HEIGHT = 40
-        
+
         if (
           node.metadata.ui?.dimensions
           && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH

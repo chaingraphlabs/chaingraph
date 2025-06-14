@@ -94,11 +94,11 @@ describe('disabledAutoExecution', () => {
   it('should only execute EventListenerNodes in child context with event data', async () => {
     // Create flow with both a regular node and an EventListenerNode
     const flow = new Flow({ name: 'test-flow' })
-    
+
     const disabledNode = new DisabledAutoExecNode('disabled-2')
     disabledNode.initialize()
     flow.addNode(disabledNode)
-    
+
     // Add an EventListenerNode so the engine has something to execute
     class TestEventListenerNode extends BaseNode {
       constructor(id: string) {
@@ -110,11 +110,12 @@ describe('disabledAutoExecution', () => {
           },
         })
       }
+
       async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
         return {}
       }
     }
-    
+
     const listenerNode = new TestEventListenerNode('listener-1')
     listenerNode.initialize()
     flow.addNode(listenerNode)
@@ -136,7 +137,7 @@ describe('disabledAutoExecution', () => {
     const engine = new ExecutionEngine(flow, context)
 
     const executedNodes: string[] = []
-    
+
     engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
       executedNodes.push(event.data.node.id)
     })
