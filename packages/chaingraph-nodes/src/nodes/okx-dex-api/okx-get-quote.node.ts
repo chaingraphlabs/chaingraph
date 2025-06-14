@@ -71,7 +71,7 @@ class OKXGetQuoteNode extends BaseNode {
 
     // Decrypt secrets
     if (!this.config.secrets)
-      throw new Error('API Key is required')
+      throw new Error('Secrets configuration is missing or invalid')
 
     const secrets = await this.config.secrets.decrypt(context)
 
