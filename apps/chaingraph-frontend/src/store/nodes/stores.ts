@@ -408,11 +408,14 @@ export const $xyflowNodes = combine(
           selectable: !(parentNode && parentNode.metadata.category !== 'group'),
         }
 
-        // Set dimensions if available
+        // Set dimensions if available and valid
+        const MIN_NODE_WIDTH = 100
+        const MIN_NODE_HEIGHT = 40
+        
         if (
           node.metadata.ui?.dimensions
-          && node.metadata.ui.dimensions.width > 0
-          && node.metadata.ui.dimensions.height > 0
+          && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH
+          && node.metadata.ui.dimensions.height > MIN_NODE_HEIGHT
         ) {
           reactflowNode.width = node.metadata.ui.dimensions.width
           reactflowNode.height = node.metadata.ui.dimensions.height

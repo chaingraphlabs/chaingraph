@@ -224,9 +224,33 @@ function ChaingraphNodeComponent({
       if (!activeFlow || !activeFlow.id || !node || !isFlowLoaded)
         return
 
+      // Check if element is visible and has reasonable dimensions
+      // This prevents updates when tabs are hidden or during mounting
+      const MIN_WIDTH = 100
+      const MIN_HEIGHT = 40
+
+      if (size.width < MIN_WIDTH || size.height < MIN_HEIGHT) {
+        console.warn(`Node resize ignored: dimensions too small (${size.width}x${size.height})`)
+        return
+      }
+
+      // Check if the element is actually visible
+      const element = cardRef.current
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        const isVisible = rect.width > 0 && rect.height > 0
+          && rect.top < window.innerHeight
+          && rect.bottom > 0
+
+        if (!isVisible) {
+          console.warn('Node resize ignored: element not visible')
+          return
+        }
+      }
+
       const actualDimensions = node.metadata.ui?.dimensions || {
-        width: 0,
-        height: 0,
+        width: 200, // Use reasonable defaults instead of 0
+        height: 50,
       }
 
       const isDimensionsChanged = size.width !== actualDimensions.width
