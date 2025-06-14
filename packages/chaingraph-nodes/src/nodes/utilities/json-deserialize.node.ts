@@ -9,10 +9,10 @@
 import type {
     ExecutionContext,
     IPort,
+    IPortConfig,
     NodeEvent,
     NodeExecutionResult,
     AnyPort,
-    PortConnectedEvent,
     PortDisconnectedEvent,
     PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
@@ -30,8 +30,8 @@ import {
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
-const supportedTypes = ['number', 'boolean', 'string', 'object', 'array'];
-const DEFAULT_MAX_DEPTH = 3;
+const SUPPORTED_TYPES = ['number', 'boolean', 'string', 'object', 'array'];
+const DEFAULT_MAX_DEPTH = 6;
 
 @Node({
     type: 'JsonDeserializeNode',
@@ -61,21 +61,18 @@ class JsonDeserializeNode extends BaseNode {
     @Input()
     @Boolean({
         title: 'Ignore Missing Fields',
-        description: 'If true, missing fields in the JSON objects will be set to null instead of throwing an error',
+        description: 'If true, missing fields in JSON objects will be set to null instead of throwing an error',
         defaultValue: false,
     })
     ignoreMissingFields: boolean = false
 
     @Input()
     @NumberDecorator({
-        title: 'Schema Depth',
-        description: 'Current depth of the schema structure (internal use). Effective for objects and arrays.',
+        title: 'Max Depth',
+        description: `Maximum depth of filtering output by the schema. Effective for objects and arrays. Maximum of ${DEFAULT_MAX_DEPTH} will be used if 0 is provided.`,
         defaultValue: 0,
-        //ui: {
-        //    hidden: true,
-        //},
     })
-    schemaDepth: number = 0
+    maxDepth: number = 0
 
     @Output()
     @PortAny({
@@ -101,196 +98,175 @@ class JsonDeserializeNode extends BaseNode {
                 }
             }
 
-            const outputPort = this.findPortByKey('deserializedObject')
-            const outputAnyPort = outputPort as AnyPort;
+            const outputPort = this.findPortByKey('deserializedObject') as AnyPort;
 
-            if (!outputPort || !outputAnyPort) {
+            if (!outputPort) {
                 throw new Error(`Cannot locate deserializedObject port`);
             }
 
-            await this.assignValue(
-                parsedJson,
-                outputAnyPort,
-                this.ignoreMissingFields,
-                Math.min(this.schemaDepth, DEFAULT_MAX_DEPTH)
-            );
+            const schema = outputPort.getRawConfig().underlyingType
 
+            if (!schema) {
+                throw new Error(`Output port has no schema assigned. Make sure that you've provided a valid schema of one of these types: ${SUPPORTED_TYPES.join(', ')}.`);
+            }
+
+            try {
+                const processedValue = this.filterOutputBySchema(
+                    parsedJson,
+                    schema,
+                    this.ignoreMissingFields,
+                    this.maxDepth === 0 ? DEFAULT_MAX_DEPTH : this.maxDepth
+                )
+                outputPort.setValue(processedValue);
+            } catch (error) {
+                throw new Error(`Error applying value to provided schema: ${error}`);
+            }
             return {};
         } catch (error) {
-            throw new Error(`Failed to execute JSON Deserializer node: ${error}`);
+            throw new Error(`Failed to execute: ${error}`);
         }
     }
 
     /**
-     * Calculate the maximum depth of the schema
+     * Process data strictly according to schema at a specific depth
+     * This ensures we only include the parts of the object defined in the schema
      */
-    private calculateSchemaDepth(schema: any, currentDepth: number = 0): number {
-        if (!schema || currentDepth > DEFAULT_MAX_DEPTH) {
-            return currentDepth;
-        }
-
-        const schemaType = schema.type;
-
-        // For primitive types, return current depth
-        if (['string', 'number', 'boolean'].includes(schemaType)) {
-            return currentDepth + 1;
-        }
-
-        // For arrays, calculate depth from item schema
-        if (schemaType === 'array' && schema.itemConfig) {
-            return this.calculateSchemaDepth(schema.itemConfig, currentDepth + 1);
-        }
-
-        // For objects, find the deepest property
-        if (schemaType === 'object' && schema.schema && schema.schema.properties) {
-            let maxPropertyDepth = currentDepth + 1;
-
-            for (const propSchema of Object.values(schema.schema.properties)) {
-                const propertyDepth = this.calculateSchemaDepth(propSchema, currentDepth + 1);
-                maxPropertyDepth = Math.max(maxPropertyDepth, propertyDepth);
-            }
-
-            return maxPropertyDepth;
-        }
-
-        return currentDepth + 1;
-    }
-
-    /**
-     * Recursively deserialize values according to the schema
-     */
-    private async assignValue(
+    private filterOutputBySchema(
         value: any,
-        port: AnyPort,
+        schema: IPortConfig,
         ignoreMissingFields: boolean,
-        depth: number
-    ): Promise<void> {
-        const schema = port.getRawConfig().underlyingType
-
-        if (!schema) {
-            throw new Error(`No schema provided`);
+        depthLeft: number
+    ): Object | Array<any> | Number | string | number | null {
+        if (value === null || value === undefined) {
+            return null;
         }
 
         const schemaType = schema.type;
 
-        if (value === null || value === undefined) {
-            port.setValue(null);
+        if (schemaType === 'any') {
+            return value;
         }
 
-        const valueType = typeof value
-        if (valueType === schemaType) {
-            port.setValue(value);
-        } else {
-            throw new Error(`Types mismatch: provided value of ${valueType} type cannot be assigned to ${schemaType} port`);
+        if (!SUPPORTED_TYPES.includes(schemaType)) {
+            throw new Error(`Type ${schemaType} is not supported. Supported types are: ${SUPPORTED_TYPES.join(', ')}.`)
         }
 
-        /**
-        // Handle primitive types
+        // For primitive types, just validate and return
         if (['string', 'number', 'boolean'].includes(schemaType)) {
-            if (value === null || value === undefined) {
-                port.setValue(null);
-            }
-
-            const valueType = typeof value
+            const valueType = typeof value;
             if (valueType === schemaType) {
-                port.setValue(value);
+                return value;
             } else {
-                throw new Error(`Types mismatch: provided value of ${valueType} type cannot be assigned to ${schemaType} port`);
+                throw new Error(`Types mismatch: expected ${schemaType} but got ${valueType}`);
             }
         }
-    
-        /**
+
         // Handle arrays
         if (schemaType === 'array') {
-            if (value === null || value === undefined) {
-                port.setValue(null);
-            }
-
-            const valueType = typeof value
             if (!Array.isArray(value)) {
-                throw new Error(`Types mismatch: provided value of ${valueType} type cannot be assigned to array port`);
+                throw new Error(`Types mismatch: Expected array but got ${typeof value}`);
             }
 
-            const itemSchema = schema.itemConfig;
-            if (!itemSchema) {
-                port.setValue(value);
-            } 
-            else if (valueType === itemSchema.type) {
-                if (valueType === 'object' || 'array') {
-                    const currentType = valueType
-                    let remainingDepth: number = depth - 1
-
-                    do {
-                        if (remainingDepth === 1) {
-
-                        }
-
-                        remainingDepth--
-                    } while (remainingDepth > 0)
-                } else {
-                    port.setValue(value);
-                }
-            }
-            else {
-                throw new Error(`Types mismatch: provided array's items don't match array schema`);
-            }
-
-            const result: any[] = [];
-            for (const item of value) {
-                const deserializedItem = this.deserializeValue(
-                    item,
-                    itemSchema,
-                    ignoreMissingFields,
-                    currentDepth + 1
-                );
-                result.push(deserializedItem);
-            }
-            return result;
-        }
-        /**
-        // Handle objects
-        if (schemaType === 'object') {
-            if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
-                if (ignoreMissingFields) {
-                    return {}; // Return empty object if input is not an object and we're ignoring errors
-                }
-                throw new Error(`Expected object but got ${typeof value}`);
-            }
-
-            const result: Record<string, any> = {};
-
-            // If schema has no properties, pass through all properties from input
-            if (!schema.schema || !schema.schema.properties || Object.keys(schema.schema.properties).length === 0) {
+            if (!schema.itemConfig || depthLeft <= 0) {
                 return value;
             }
 
-            // Process each property according to schema
-            for (const [key, propSchema] of Object.entries(schema.schema.properties)) {
-                if (key in value) {
-                    result[key] = this.deserializeValue(
-                        value[key],
-                        propSchema,
-                        ignoreMissingFields,
-                        currentDepth + 1
-                    );
-                } else if (!ignoreMissingFields) {
-                    throw new Error(`Required field '${key}' is missing in the JSON`);
-                } else {
-                    result[key] = null; // Set missing field to null when ignoring missing fields
+            const result: any[] = [];
+            const itemSchema = schema.itemConfig;
+
+            for (const item of value) {
+                try {
+                    // For 'any' type items, add them directly without validation
+                    if (itemSchema.type === 'any') {
+                        result.push(item);
+                    }
+                    // For complex types, process with reduced depth
+                    else if (itemSchema.type === 'object' || itemSchema.type === 'array') {
+                        const processedItem = this.filterOutputBySchema(
+                            item,
+                            itemSchema,
+                            ignoreMissingFields,
+                            depthLeft - 1
+                        );
+                        result.push(processedItem);
+                    }
+                    // For primitive types, just validate the type
+                    else if (['string', 'number', 'boolean'].includes(itemSchema.type)) {
+                        const itemType = typeof item;
+                        if (itemType === itemSchema.type) {
+                            // Direct value assignment for primitive types
+                            result.push(item);
+                        } else if (item === null || item === undefined) {
+                            result.push(null);
+                        } else if (ignoreMissingFields) {
+                            result.push(null);
+                        } else {
+                            throw new Error(`Array item type mismatch: expected ${itemSchema.type} but got ${itemType}`);
+                        }
+                    } else {
+                        // Unsupported item type
+                        if (ignoreMissingFields) {
+                            result.push(null);
+                        } else {
+                            throw new Error(`Unsupported array item type: ${itemSchema.type}`);
+                        }
+                    }
+                } catch (error) {
+                    if (ignoreMissingFields) {
+                        result.push(null);
+                    } else {
+                        throw error;
+                    }
                 }
             }
+            return result;
+        }
 
-            // Add additional properties not in schema if they exist in the input
-            for (const key of Object.keys(value)) {
-                if (!(key in result)) {
-                    result[key] = value[key];
+        // Handle objects
+        if (schemaType === 'object') {
+            if (typeof value !== 'object' || Array.isArray(value)) {
+                throw new Error(`Expected object but got ${Array.isArray(value) ? 'array' : typeof value}`);
+            }
+
+            // If depth is exhausted or no schema properties, return the original object
+            if (depthLeft <= 0 || !schema.schema || !schema.schema.properties) {
+                return value;
+            }
+
+            const result: any = {};
+
+            // Only include properties defined in the schema
+            for (const [key, propSchema] of Object.entries(schema.schema.properties)) {
+                const typedPropSchema = propSchema as IPortConfig;
+
+                if (key in value) {
+                    try {
+                        // Process each property with reduced depth
+                        result[key] = this.filterOutputBySchema(
+                            value[key],
+                            typedPropSchema,
+                            ignoreMissingFields,
+                            depthLeft - 1
+                        );
+                    } catch (error) {
+                        if (ignoreMissingFields) {
+                            result[key] = null;
+                        } else {
+                            throw error;
+                        }
+                    }
+                } else if (!ignoreMissingFields) {
+                    throw new Error(`Required field '${key}' is missing in the input data`);
+                } else {
+                    result[key] = null;
                 }
             }
 
             return result;
         }
-         */
-        // For unsupported types or when type is not specified, return as is
+
+        // Unsupported type - return original value
+        return value;
     }
 
     /**
@@ -337,8 +313,6 @@ class JsonDeserializeNode extends BaseNode {
 
             await outputAnyPort.setUnderlyingType(undefined)
             await this.updatePort(outputAnyPort as IPort);
-
-            this.schemaDepth = 0
         } catch (error) {
             throw new Error(`Error synchronizing schema: ${error}`);
         }
@@ -368,13 +342,12 @@ class JsonDeserializeNode extends BaseNode {
             return
         }
 
-        if (!inputPortRawConfig.underlyingType || !supportedTypes.includes(inputPortRawConfig.underlyingType.type)) {
+        if (!inputPortRawConfig.underlyingType || !SUPPORTED_TYPES.includes(inputPortRawConfig.underlyingType.type)) {
             return
         }
 
         try {
             outputAnyPort.setUnderlyingType(inputPortRawConfig.underlyingType);
-            this.schemaDepth = this.calculateSchemaDepth(outputAnyPort);
             await this.updatePort(outputAnyPort as IPort);
         } catch (error) {
             throw new Error(`Error synchronizing schema: ${error}`);
