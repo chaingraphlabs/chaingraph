@@ -29,7 +29,7 @@ import {
   String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
-import * as yaml from 'js-yaml'
+import * as YAML from 'yaml'
 import { NODE_CATEGORIES } from '../../categories'
 
 const SUPPORTED_TYPES = ['number', 'boolean', 'string', 'object', 'array']
@@ -153,14 +153,14 @@ class JsonYamlDeserializerNode extends BaseNode {
       } catch (jsonError) {
         if (this.inputFormat === 'auto') {
           try {
-            return yaml.load(input)
+            return YAML.parse(input)
           } catch (yamlError) {
             throw new Error(`Format error: Input must be valid JSON or YAML`)
           }
         }
       }
     } else if (this.inputFormat === 'yaml') {
-      return yaml.load(input)
+      return YAML.parse(input)
     }
 
     throw new Error(`Unsupported input format: ${this.inputFormat}`)
