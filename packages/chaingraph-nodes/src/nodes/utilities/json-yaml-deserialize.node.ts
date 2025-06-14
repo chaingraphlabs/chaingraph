@@ -20,7 +20,6 @@ import type {
 import {
   BaseNode,
   Boolean,
-  ExecutionEventEnum,
   Input,
   Node,
   NodeEventType,
@@ -351,21 +350,6 @@ class JsonYamlDeserializerNode extends BaseNode {
     } catch (error) {
       throw new Error(`Error synchronizing schema: ${error}`)
     }
-  }
-
-  /**
-   * Send a debug log event to the execution context
-   */
-  private async debugLog(context: ExecutionContext, message: string): Promise<void> {
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: message,
-      },
-    })
   }
 }
 
