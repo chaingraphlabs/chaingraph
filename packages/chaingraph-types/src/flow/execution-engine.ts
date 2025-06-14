@@ -250,11 +250,10 @@ export class ExecutionEngine {
       }
     }
 
-    //
-    console.log(`[ExecutionEngine] Debug state:
-  - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
-  - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
-  - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
+  //   console.log(`[ExecutionEngine] Debug state:
+  // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
+  // - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
+  // - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
   }
 
   private startWorkers(): Promise<void>[] {

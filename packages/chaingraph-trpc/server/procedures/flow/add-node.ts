@@ -71,8 +71,6 @@ export const addNode = flowContextProcedure
       // Set position
       node.setPosition(position, true)
 
-      console.debug(`[FLOW] Added node ${node.id} to flow ${flowId}`)
-
       const createdNode = flow.addNode(node)
       await ctx.flowStore.updateFlow(flow as Flow)
 
