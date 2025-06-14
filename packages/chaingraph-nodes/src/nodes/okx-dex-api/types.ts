@@ -7,13 +7,13 @@
  */
 
 import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
+import { PortSecret } from '@badaitech/chaingraph-types'
 import {
   Boolean,
   Number,
   ObjectSchema,
   PortArray,
   PortObject,
-  Secret,
   String,
 } from '@badaitech/chaingraph-types'
 
@@ -851,13 +851,13 @@ export class ChainConfig {
   description: 'Main configuration for OKX DEX API integration',
 })
 export class OKXConfig {
-  @Secret<'OkxDexApi'>({
-    title: 'API Key',
+  @PortSecret<'OkxDexApi'>({
+    title: ' API Secrets',
     secretType: 'OkxDexApi',
-    description: 'CoinMarketCap API Key',
+    description: 'API credentials for accessing the OKX DEX API',
     ui: { isPassword: true },
   })
-  apiKey?: EncryptedSecretValue<'OkxDexApi'>
+  secrets?: EncryptedSecretValue<'OkxDexApi'>
 
   @String({
     title: 'Project ID',

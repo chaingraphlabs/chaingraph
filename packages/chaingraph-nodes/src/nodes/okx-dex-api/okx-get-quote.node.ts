@@ -70,10 +70,10 @@ class OKXGetQuoteNode extends BaseNode {
     this.validateInputs()
 
     // Decrypt secrets
-    if (!this.config.apiKey)
+    if (!this.config.secrets)
       throw new Error('API Key is required')
 
-    const secrets = await this.config.apiKey.decrypt(context)
+    const secrets = await this.config.secrets.decrypt(context)
 
     // Initialize the OKX DEX client
     const client = new OKXDexClient({
