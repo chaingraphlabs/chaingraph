@@ -6,7 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow, INode, SerializedEdgeType } from '@badaitech/chaingraph-types'
+import type {
+  Flow,
+  INode,
+  IPort,
+  SerializedEdgeType,
+} from '@badaitech/chaingraph-types'
+import {
+  isObjectPortConfig,
+} from '@badaitech/chaingraph-types'
 import { NodeStatus } from '@badaitech/chaingraph-types'
 import { SerializedEdgeSchema, SerializedNodeSchema } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
@@ -138,8 +146,8 @@ export const pasteNodes = flowContextProcedure
         }
       }
 
-      // iterate over created nodes and fix the parent ID if it exists
       for (const node of createdNodes) {
+      // iterate over created nodes and fix the parent ID if it exists
         if (node.metadata.parentNodeId) {
           const newParentId = nodeIdMapping.get(node.metadata.parentNodeId)
           if (newParentId) {
@@ -148,6 +156,41 @@ export const pasteNodes = flowContextProcedure
             // if there is no new parent ID, remove the parent reference
             node.metadata.parentNodeId = undefined
             console.warn(`[FLOW] Node ${node.id} has a parent node ID ${node.metadata.parentNodeId} that does not exist in the clipboard data`)
+          }
+        }
+
+        // fix the port nodeSchemaCapture for the node with the new actual node ID
+        const ports = node.ports as Map<string, IPort>
+        for (const port of ports.values()) {
+          const portConfig = port.getConfig()
+          if (isObjectPortConfig(portConfig) && portConfig.ui?.nodeSchemaCapture?.capturedNodeId) {
+            const newCapturedNodeId = nodeIdMapping.get(portConfig.ui.nodeSchemaCapture.capturedNodeId)
+            if (newCapturedNodeId) {
+              // If the captured node ID exists, update it
+              port.setConfig({
+                ...portConfig,
+                ui: {
+                  ...portConfig.ui,
+                  nodeSchemaCapture: {
+                    ...portConfig.ui.nodeSchemaCapture,
+                    capturedNodeId: newCapturedNodeId,
+                  },
+                },
+              })
+            } else {
+              // If the captured node ID does not exist, clear it
+              port.setConfig({
+                ...portConfig,
+                ui: {
+                  ...portConfig.ui,
+                  nodeSchemaCapture: {
+                    enabled: true,
+                    capturedNodeId: undefined, // Clear the captured node ID
+                  },
+                },
+              })
+            }
+            node.setPort(port) // Update the port in the node
           }
         }
       }

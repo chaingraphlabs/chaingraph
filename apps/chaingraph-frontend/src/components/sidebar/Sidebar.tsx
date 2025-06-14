@@ -69,7 +69,7 @@ export function Sidebar({
 }: SidebarProps) {
   // Define all available tabs
   const allTabs = {
-    flows: {
+    'flows': {
       id: 'flows',
       icon: <Share1Icon />,
       label: 'Flows',
@@ -82,7 +82,7 @@ export function Sidebar({
         />
       ),
     },
-    nodes: {
+    'nodes': {
       id: 'nodes',
       icon: <LayersIcon />,
       label: 'Nodes',
@@ -94,13 +94,13 @@ export function Sidebar({
     //   label: 'Events',
     //   content: <EventList />,
     // },
-    variables: {
+    'variables': {
       id: 'variables',
       icon: <ValueIcon />,
       label: 'Variables',
       content: <VariableList />,
     },
-    executions: {
+    'executions': {
       id: 'executions',
       icon: <GitBranch />,
       label: 'Executions',
@@ -112,25 +112,25 @@ export function Sidebar({
       label: 'Export/Import',
       content: <ExportImport />,
     },
-    debug: {
+    'debug': {
       id: 'debug',
       icon: <Bug />,
       label: 'Debug',
       content: <DebugPanel />,
     },
-    archai: {
+    'archai': {
       id: 'archai',
       icon: <Scroll />,
       label: 'ArchAI Integration',
       content: <ArchAIIntegration />,
     },
-    settings: {
+    'settings': {
       id: 'settings',
       icon: <GearIcon />,
       label: 'Settings',
       content: <Settings />,
     },
-    help: {
+    'help': {
       id: 'help',
       icon: <QuestionMarkIcon />,
       label: 'Help',

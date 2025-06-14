@@ -31,6 +31,11 @@ export interface UseNodeSchemaDropReturn {
   handleClearSchema: () => void
 }
 
+const defaultPositionOffsetCapturedNode = {
+  x: 20,
+  y: 80, // Default position for captured nodes
+}
+
 /**
  * Hook for handling node schema drop functionality
  * Manages the logic for dropping nodes into ObjectPorts with nodeSchemaCapture enabled
@@ -137,70 +142,22 @@ export function useNodeSchemaDrop({
         flowId: activeFlow?.id || '',
         nodeId: droppedNode.id,
         parentNodeId: node.id,
-        position: {
-          x: 20,
-          y: 80, // Default position, can be adjusted as needed
-        },
-        version: droppedNode.getVersion() + 1,
+        position: defaultPositionOffsetCapturedNode,
+        version: droppedNode.getVersion(),
       })
 
       updateNodeUI({
         flowId: activeFlow?.id || '',
         nodeId: droppedNode.id,
         ui: {
-          position: {
-            x: 20,
-            y: 80, // Default position, can be adjusted as needed
-          },
+          position: defaultPositionOffsetCapturedNode,
           state: {
             ...droppedNode.metadata.ui?.state,
             isMovingDisabled: true,
           },
         },
-        version: droppedNode.getVersion(),
+        version: droppedNode.getVersion() + 1,
       })
-
-      // updateNodePosition({
-      //   flowId: activeFlow?.id || '',
-      //   nodeId: droppedNode.id,
-      //   position: {
-      //     x: 20,
-      //     y: 80, // Default position, can be adjusted as needed
-      //   },
-      //   version: droppedNode.getVersion(),
-      // })
-
-      // iterate over the dropped node's ports and add them as field object ports
-      // droppedNode.ports.forEach((port) => {
-      //   if (port.getConfig().parentId) {
-      //     // Skip child ports
-      //     return
-      //   }
-      //
-      //   // Add each port as a field object port
-      //   addFieldObjectPort({
-      //     nodeId: node.id,
-      //     portId: port.id,
-      //     config: {
-      //       ...port.getConfig(),
-      //     },
-      //     key: port.getConfig().key || port.id, // Use key or fallback to port ID
-      //   })
-      // })
-
-      // Hide the dropped node
-      // updateNodeUI({
-      //   flowId: activeFlow?.id || '',
-      //   nodeId: droppedNode.id,
-      //   ui: {
-      //     ...droppedNode.metadata.ui,
-      //     state: {
-      //       ...droppedNode.metadata.ui?.state,
-      //       // isHidden: true,
-      //     },
-      //   },
-      //   version: droppedNode.getVersion() + 1,
-      // })
 
       console.log('Successfully applied schema and hid source node')
     } catch (error) {
@@ -290,6 +247,32 @@ export function useNodeSchemaDrop({
       console.error('Error clearing schema:', error)
     }
   }, [node.id, node.metadata.ui?.position, port.id, config.ui, activeFlow?.id, nodes])
+
+  // subscribe to capturedNode changes and if the position is not 20, 80 then update it
+  useEffect(() => {
+    if (!capturedNode) {
+      return
+    }
+
+    const isPositionValid = capturedNode.metadata.ui?.position
+      && capturedNode.metadata.ui.position.x === defaultPositionOffsetCapturedNode.x
+      && capturedNode.metadata.ui.position.y === defaultPositionOffsetCapturedNode.y
+
+    if (!isPositionValid) {
+      updateNodeUI({
+        flowId: activeFlow?.id || '',
+        nodeId: capturedNode.id,
+        ui: {
+          position: defaultPositionOffsetCapturedNode,
+          state: {
+            ...capturedNode.metadata.ui?.state,
+            isMovingDisabled: true,
+          },
+        },
+        version: capturedNode.getVersion() + 1,
+      })
+    }
+  }, [activeFlow?.id, capturedNode])
 
   return {
     isNodeSchemaCaptureEnabled,
