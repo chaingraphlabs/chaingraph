@@ -58,11 +58,11 @@ export const pasteNodes = flowContextProcedure
         throw new Error(`Flow ${flowId} not found`)
       }
 
-      // console.debug(`[FLOW] Starting paste operation for flow ${flowId}`)
-      // console.debug(`[FLOW] Pasting ${clipboardData.nodes.length} nodes and ${clipboardData.edges.length} edges`)
-      // console.debug(`[FLOW] Paste position:`, pastePosition)
-      // console.debug(`[FLOW] Virtual origin:`, virtualOrigin)
-      // console.debug(`[FLOW] Virtual origin:`, actualVirtualOrigin)
+      console.debug(`[FLOW] Starting paste operation for flow ${flowId}`)
+      console.debug(`[FLOW] Pasting ${clipboardData.nodes.length} nodes and ${clipboardData.edges.length} edges`)
+      console.debug(`[FLOW] Paste position:`, pastePosition)
+      console.debug(`[FLOW] Virtual origin provided:`, virtualOrigin)
+      console.debug(`[FLOW] Virtual origin actual:`, actualVirtualOrigin)
 
       // Step 1: Clone nodes with new IDs using cloneWithNewId()
       const nodeIdMapping = new Map<string, string>()
@@ -92,18 +92,31 @@ export const pasteNodes = flowContextProcedure
           // console.debug(`[FLOW] Original node ${originalNode.id}: ${JSON.stringify(originalNode.serialize())}`)
           // console.debug(`[FLOW] Cloned node ${clonedNode.id}: ${JSON.stringify(clonedNode.serialize())}`)
 
-          // Calculate new position using virtual origin system
-          const originalPosition = originalNode.metadata.ui?.position || { x: 0, y: 0 }
-          const relativePosition = {
-            x: originalPosition.x - actualVirtualOrigin.x,
-            y: originalPosition.y - actualVirtualOrigin.y,
+          // Only adjust position for root nodes (nodes without parents)
+          // Child nodes keep their relative position to their parent
+          if (!originalNode.metadata.parentNodeId) {
+            // This is a root node, calculate new position using virtual origin system
+            const originalPosition = originalNode.metadata.ui?.position || { x: 0, y: 0 }
+            const relativePosition = {
+              x: originalPosition.x - actualVirtualOrigin.x,
+              y: originalPosition.y - actualVirtualOrigin.y,
+            }
+            const newPosition = {
+              x: pastePosition.x + relativePosition.x,
+              y: pastePosition.y + relativePosition.y,
+            }
+            console.debug(`[FLOW] Root node ${originalNode.id} position calculation:`, {
+              originalPosition,
+              virtualOrigin: actualVirtualOrigin,
+              relativePosition,
+              pastePosition,
+              newPosition,
+            })
+            clonedNode.setPosition(newPosition, true)
+          } else {
+            console.debug(`[FLOW] Child node ${originalNode.id} keeping relative position:`, originalNode.metadata.ui?.position)
           }
-          const newPosition = {
-            x: pastePosition.x + relativePosition.x, // + (positionOffset.x * i),
-            y: pastePosition.y + relativePosition.y, // + (positionOffset.y * i),
-          }
-
-          clonedNode.setPosition(newPosition, true)
+          // For child nodes, keep the original position (relative to parent)
 
           // Store ID mappings
           nodeIdMapping.set(cloneResult.nodeIdMapping.originalId, cloneResult.nodeIdMapping.newId)

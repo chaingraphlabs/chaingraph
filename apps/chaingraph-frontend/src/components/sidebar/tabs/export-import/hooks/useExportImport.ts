@@ -71,6 +71,63 @@ export function useExportImport() {
     )
   }, [nodes])
 
+  // Helper function to get all children of a node recursively
+  const getAllChildrenRecursive = useCallback((nodeId: string, allNodes: Record<string, INode>): INode[] => {
+    const children: INode[] = []
+
+    // Find direct children
+    Object.values(allNodes).forEach((node) => {
+      if (node.metadata.parentNodeId === nodeId) {
+        children.push(node)
+        // Recursively get children of this child
+        children.push(...getAllChildrenRecursive(node.id, allNodes))
+      }
+    })
+
+    return children
+  }, [])
+
+  // Helper function to calculate absolute position of a node (including all parent positions)
+  const getAbsolutePosition = useCallback((node: INode, allNodes: Record<string, INode>): { x: number, y: number } => {
+    const position = { ...(node.metadata.ui?.position || { x: 0, y: 0 }) }
+    let currentNode = node
+
+    // Traverse up the parent chain and sum positions
+    while (currentNode.metadata.parentNodeId) {
+      const parent = allNodes[currentNode.metadata.parentNodeId]
+      if (!parent)
+        break
+
+      const parentPos = parent.metadata.ui?.position || { x: 0, y: 0 }
+      position.x += parentPos.x
+      position.y += parentPos.y
+
+      currentNode = parent
+    }
+
+    return position
+  }, [])
+
+  // Get selected nodes including their children
+  const getSelectedNodesWithChildren = useCallback((selectedNodes: INode[]): INode[] => {
+    const nodesWithChildren = new Map<string, INode>()
+
+    // Add all selected nodes
+    selectedNodes.forEach((node) => {
+      nodesWithChildren.set(node.id, node)
+    })
+
+    // Add all children of selected nodes
+    selectedNodes.forEach((node) => {
+      const children = getAllChildrenRecursive(node.id, nodes)
+      children.forEach((child) => {
+        nodesWithChildren.set(child.id, child)
+      })
+    })
+
+    return Array.from(nodesWithChildren.values())
+  }, [nodes, getAllChildrenRecursive])
+
   // Get internal edges for a set of node IDs
   const getInternalEdges = useCallback((nodeIds: Set<string>): EdgeData[] => {
     return edges.filter(edge =>
@@ -79,15 +136,26 @@ export function useExportImport() {
   }, [edges])
 
   // Calculate virtual origin (top-left corner of bounding box)
+  // Only use root nodes (nodes without parents) for calculation
   const calculateVirtualOrigin = useCallback((nodes: INode[]): { x: number, y: number } => {
     if (nodes.length === 0) {
       return { x: 0, y: 0 }
     }
 
+    // Find root nodes (nodes without parents)
+    let rootNodes = nodes.filter(node => !node.metadata.parentNodeId)
+
+    // If no root nodes exist (e.g., only copying child nodes),
+    // use all nodes as the root layer
+    if (rootNodes.length === 0) {
+      rootNodes = nodes
+    }
+
     let minX = Infinity
     let minY = Infinity
 
-    for (const node of nodes) {
+    // Calculate virtual origin only from root nodes
+    for (const node of rootNodes) {
       const position = node.metadata.ui?.position || { x: 0, y: 0 }
       minX = Math.min(minX, position.x)
       minY = Math.min(minY, position.y)
@@ -111,7 +179,8 @@ export function useExportImport() {
       edgesToExport = edges
     } else {
       // Export only selected nodes and their internal edges
-      nodesToExport = selectedNodes
+      // Include all children of selected nodes
+      nodesToExport = getSelectedNodesWithChildren(selectedNodes)
       if (nodesToExport.length === 0) {
         throw new Error('No nodes selected for export')
       }
@@ -119,8 +188,29 @@ export function useExportImport() {
       edgesToExport = getInternalEdges(selectedNodeIds)
     }
 
-    // Calculate virtual origin
-    const virtualOrigin = calculateVirtualOrigin(nodesToExport)
+    // Prepare nodes for export - adjust positions for orphaned children
+    const exportNodeIds = new Set(nodesToExport.map(n => n.id))
+    const adjustedNodes = nodesToExport.map((node) => {
+      // Clone the node to avoid modifying the original
+      const clonedNode = node.clone()
+
+      // Check if this node has a parent that's not in the selection
+      if (node.metadata.parentNodeId && !exportNodeIds.has(node.metadata.parentNodeId)) {
+        // Calculate absolute position for this node
+        const absolutePos = getAbsolutePosition(node, nodes)
+        clonedNode.metadata.ui = {
+          ...clonedNode.metadata.ui,
+          position: absolutePos,
+        }
+        // Remove parent reference since parent is not included
+        clonedNode.metadata.parentNodeId = undefined
+      }
+
+      return clonedNode
+    })
+
+    // Calculate virtual origin using adjusted positions
+    const virtualOrigin = calculateVirtualOrigin(adjustedNodes)
 
     // Create export data
     const exportData: ExportedFlowData = {
@@ -134,7 +224,7 @@ export function useExportImport() {
         tags: activeFlowMetadata.tags,
       },
       virtualOrigin,
-      nodes: nodesToExport.map(node => node.serialize() as SerializedNodeType),
+      nodes: adjustedNodes.map(node => node.serialize() as SerializedNodeType),
       edges: edgesToExport.map(edge => ({
         id: edge.edgeId,
         metadata: edge.metadata,
@@ -149,7 +239,7 @@ export function useExportImport() {
     }
 
     return JSON.stringify(exportData, null, 2)
-  }, [activeFlowMetadata, nodes, edges, selectedNodes, getInternalEdges, calculateVirtualOrigin])
+  }, [activeFlowMetadata, nodes, edges, selectedNodes, getInternalEdges, calculateVirtualOrigin, getSelectedNodesWithChildren, getAbsolutePosition])
 
   // Validate import data
   const validateImportData = useCallback((jsonString: string): ValidationResult => {
@@ -197,9 +287,13 @@ export function useExportImport() {
 
     // Get the current viewport center as paste position
     const viewport = getViewport()
-    const viewportCenter = {
-      x: -viewport.x + (window.innerWidth / 2) / viewport.zoom,
-      y: -viewport.y + (window.innerHeight / 2) / viewport.zoom,
+    // const viewportCenter = {
+    //   x: -viewport.x + (window.innerWidth / 2) / viewport.zoom,
+    //   y: -viewport.y + (window.innerHeight / 2) / viewport.zoom,
+    // }
+    const viewportLeftTop = {
+      x: -viewport.x / viewport.zoom,
+      y: -viewport.y / viewport.zoom,
     }
 
     // Prepare paste event
@@ -210,7 +304,7 @@ export function useExportImport() {
         edges: importData.edges,
         timestamp: importData.timestamp,
       },
-      pastePosition: viewportCenter,
+      pastePosition: viewportLeftTop,
       virtualOrigin: importData.virtualOrigin,
     }
 

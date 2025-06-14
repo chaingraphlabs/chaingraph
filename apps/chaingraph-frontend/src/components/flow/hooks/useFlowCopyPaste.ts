@@ -107,6 +107,63 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
     )
   }, [nodes])
 
+  // Helper function to get all children of a node recursively
+  const getAllChildrenRecursive = useCallback((nodeId: string): INode[] => {
+    const children: INode[] = []
+
+    // Find direct children
+    Object.values(nodes).forEach((node) => {
+      if (node.metadata.parentNodeId === nodeId) {
+        children.push(node)
+        // Recursively get children of this child
+        children.push(...getAllChildrenRecursive(node.id))
+      }
+    })
+
+    return children
+  }, [nodes])
+
+  // Helper function to calculate absolute position of a node (including all parent positions)
+  const getAbsolutePosition = useCallback((node: INode): { x: number, y: number } => {
+    let position = { ...(node.metadata.ui?.position || { x: 0, y: 0 }) }
+    let currentNode = node
+
+    // Traverse up the parent chain and sum positions
+    while (currentNode.metadata.parentNodeId) {
+      const parent = nodes[currentNode.metadata.parentNodeId]
+      if (!parent) break
+      
+      const parentPos = parent.metadata.ui?.position || { x: 0, y: 0 }
+      position.x += parentPos.x
+      position.y += parentPos.y
+      
+      currentNode = parent
+    }
+
+    return position
+  }, [nodes])
+
+  // Get selected nodes including their children
+  const getSelectedNodesWithChildren = useCallback((): INode[] => {
+    const selectedNodes = getSelectedNodes()
+    const nodesWithChildren = new Map<string, INode>()
+
+    // Add all selected nodes
+    selectedNodes.forEach((node) => {
+      nodesWithChildren.set(node.id, node)
+    })
+
+    // Add all children of selected nodes
+    selectedNodes.forEach((node) => {
+      const children = getAllChildrenRecursive(node.id)
+      children.forEach((child) => {
+        nodesWithChildren.set(child.id, child)
+      })
+    })
+
+    return Array.from(nodesWithChildren.values())
+  }, [getSelectedNodes, getAllChildrenRecursive])
+
   // Helper function to get internal edges for selected nodes
   const getInternalEdges = useCallback((selectedNodeIds: Set<string>): EdgeData[] => {
     return edges.filter(edge =>
@@ -115,15 +172,26 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
   }, [edges])
 
   // Helper function to calculate virtual origin (top-left corner of bounding box)
+  // Only use root nodes (nodes without parents) for calculation
   const calculateVirtualOrigin = useCallback((nodes: INode[]): { x: number, y: number } => {
     if (nodes.length === 0) {
       return { x: 0, y: 0 }
     }
 
+    // Find root nodes (nodes without parents)
+    let rootNodes = nodes.filter(node => !node.metadata.parentNodeId)
+
+    // If no root nodes exist (e.g., only copying child nodes),
+    // use all nodes as the root layer
+    if (rootNodes.length === 0) {
+      rootNodes = nodes
+    }
+
     let minX = Infinity
     let minY = Infinity
 
-    for (const node of nodes) {
+    // Calculate virtual origin only from root nodes
+    for (const node of rootNodes) {
       const position = node.metadata.ui?.position || { x: 0, y: 0 }
       minX = Math.min(minX, position.x)
       minY = Math.min(minY, position.y)
@@ -136,10 +204,11 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
   const copySelectedNodes = useCallback(async (): Promise<CopyPasteResult> => {
     console.log('🔄 Copy operation started...')
     try {
-      const selectedNodes = getSelectedNodes()
-      console.log(`📋 Found ${selectedNodes.length} selected nodes:`, selectedNodes.map(n => ({ id: n.id, title: n.metadata.title })))
+      // Get selected nodes including their children
+      const selectedNodesWithChildren = getSelectedNodesWithChildren()
+      console.log(`📋 Found ${selectedNodesWithChildren.length} nodes (including children):`, selectedNodesWithChildren.map(n => ({ id: n.id, title: n.metadata.title, parent: n.metadata.parentNodeId })))
 
-      if (selectedNodes.length === 0) {
+      if (selectedNodesWithChildren.length === 0) {
         console.log('❌ No nodes selected for copying')
         return {
           success: false,
@@ -150,7 +219,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
       }
 
       // Get node IDs for edge filtering
-      const selectedNodeIds = new Set(selectedNodes.map(node => node.id))
+      const selectedNodeIds = new Set(selectedNodesWithChildren.map(node => node.id))
       console.log('🔗 Selected node IDs:', Array.from(selectedNodeIds))
 
       // Get internal edges (edges between selected nodes only)
@@ -158,11 +227,30 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
       console.log(`🔗 Found ${internalEdges.length} internal edges:`, internalEdges.map(e => ({ id: e.edgeId, source: e.sourceNodeId, target: e.targetNodeId })))
 
       // Clone nodes to avoid reference issues
-      const clonedNodes = selectedNodes.map(node => node.clone())
+      const clonedNodes = selectedNodesWithChildren.map(node => node.clone())
       console.log('📄 Nodes cloned successfully')
 
-      // Calculate virtual origin (top-left bounding box)
-      const virtualOrigin = calculateVirtualOrigin(selectedNodes)
+      // Adjust positions for nodes whose parents aren't included in the selection
+      clonedNodes.forEach(clonedNode => {
+        const originalNode = selectedNodesWithChildren.find(n => n.id === clonedNode.id)
+        if (!originalNode) return
+
+        // Check if this node has a parent that's not in the selection
+        if (originalNode.metadata.parentNodeId && !selectedNodeIds.has(originalNode.metadata.parentNodeId)) {
+          // Calculate absolute position for this node
+          const absolutePos = getAbsolutePosition(originalNode)
+          clonedNode.metadata.ui = {
+            ...clonedNode.metadata.ui,
+            position: absolutePos
+          }
+          // Remove parent reference since parent is not included
+          clonedNode.metadata.parentNodeId = undefined
+          console.log(`📍 Adjusted position for orphaned node ${clonedNode.id}:`, absolutePos)
+        }
+      })
+
+      // Calculate virtual origin (top-left bounding box) using adjusted positions
+      const virtualOrigin = calculateVirtualOrigin(clonedNodes)
       console.log('📐 Calculated virtual origin:', virtualOrigin)
 
       // Store in clipboard
@@ -175,7 +263,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
       setClipboard(clipboardData)
       console.log('✅ Copy operation completed successfully!', {
-        nodeCount: selectedNodes.length,
+        nodeCount: selectedNodesWithChildren.length,
         edgeCount: internalEdges.length,
         timestamp: clipboardData.timestamp,
         virtualOrigin: clipboardData.virtualOrigin,
@@ -184,7 +272,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
       return {
         success: true,
-        nodeCount: selectedNodes.length,
+        nodeCount: selectedNodesWithChildren.length,
         edgeCount: internalEdges.length,
       }
     } catch (error) {
@@ -196,7 +284,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         error: error instanceof Error ? error.message : 'Unknown error occurred',
       }
     }
-  }, [getSelectedNodes, getInternalEdges, calculateVirtualOrigin])
+  }, [getSelectedNodesWithChildren, getInternalEdges, calculateVirtualOrigin, getAbsolutePosition])
 
   // Paste nodes from clipboard
   const pasteNodes = useCallback(async (options?: PasteOptions): Promise<CopyPasteResult> => {
