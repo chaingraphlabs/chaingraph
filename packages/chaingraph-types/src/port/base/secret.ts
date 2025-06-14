@@ -205,12 +205,15 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'API Key for OKX DEX',
       },
       secretKey: {
         label: 'Secret Key',
+        description: 'Secret Key for OKX DEX',
       },
       apiPassphrase: {
         label: 'API Passphrase',
+        description: 'API Passphrase for OKX DEX',
       },
     },
   },

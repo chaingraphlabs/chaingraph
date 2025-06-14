@@ -190,7 +190,7 @@ export class UnencryptedSecretNode extends BaseNode {
     })
     await this.updatePort(secretPort as IPort)
 
-    this.secret = await this.encryptDirectSecret(context, this.secretType, this.unencryptedData as SecretTypeMap[typeof this.secretType])
+    this.secret = await this.encryptDirectSecret(context, this.secretType, this.unencryptedData as SecretTypeMap['openai'])
 
     return {}
   }
