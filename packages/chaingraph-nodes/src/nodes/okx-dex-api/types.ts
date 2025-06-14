@@ -6,12 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
 import {
   Boolean,
   Number,
   ObjectSchema,
   PortArray,
   PortObject,
+  Secret,
   String,
 } from '@badaitech/chaingraph-types'
 
@@ -74,7 +76,7 @@ export class TokenInfo {
 @ObjectSchema({
   description: 'A single token information entry (alias for TokenInfo)',
 })
-export class TokenInfoList extends TokenInfo {}
+export class TokenInfoList extends TokenInfo { }
 
 /**
  * TokenListResponse contains basic information about a token
@@ -124,7 +126,7 @@ export class TokenListResponse {
 @ObjectSchema({
   description: 'Token list information (alias for TokenListResponse)',
 })
-export class TokenListInfo extends TokenListResponse {}
+export class TokenListInfo extends TokenListResponse { }
 
 /**
  * DexProtocol represents a decentralized exchange protocol
@@ -849,29 +851,13 @@ export class ChainConfig {
   description: 'Main configuration for OKX DEX API integration',
 })
 export class OKXConfig {
-  @String({
+  @Secret<'OkxDexApi'>({
     title: 'API Key',
-    description: 'Authentication key for the OKX API',
+    secretType: 'OkxDexApi',
+    description: 'CoinMarketCap API Key',
     ui: { isPassword: true },
-    required: true,
   })
-  apiKey: string = ''
-
-  @String({
-    title: 'Secret Key',
-    description: 'Secret key for signing API requests',
-    ui: { isPassword: true },
-    required: true,
-  })
-  secretKey: string = ''
-
-  @String({
-    title: 'API Passphrase',
-    description: 'Passphrase for additional authentication',
-    ui: { isPassword: true },
-    required: true,
-  })
-  apiPassphrase: string = ''
+  apiKey?: EncryptedSecretValue<'OkxDexApi'>
 
   @String({
     title: 'Project ID',

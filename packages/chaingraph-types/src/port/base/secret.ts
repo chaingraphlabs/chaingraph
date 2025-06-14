@@ -42,6 +42,11 @@ export const secretTypeSchemas = {
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
+  'OkxDexApi': z.object({
+    apiKey: z.string().min(1),
+    secretKey: z.string().min(1),
+    apiPassphrase: z.string().min(1),
+  }),
   'string': z.object({
     value: z.string().min(1),
   }),
@@ -194,6 +199,21 @@ export const secretTypeMetadata = {
       },
     },
   },
+  'OkxDexApi': {
+    icon: 'Okx',
+    label: 'OKX DEX API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+      },
+      secretKey: {
+        label: 'Secret Key',
+      },
+      apiPassphrase: {
+        label: 'API Passphrase',
+      },
+    },
+  },
 } satisfies { [T in SecretType]: SecretTypeMetadata<T> }
 
 /**
@@ -211,6 +231,7 @@ export const compatibleSecretTypes: Record<SecretType, SecretType[]> = {
   'groq': ['groq'],
   'xAPI': ['xAPI'],
   'xApp': ['xApp'],
+  'OkxDexApi': ['OkxDexApi'],
   'string': ['openai', 'anthropic', 'string'],
 }
 

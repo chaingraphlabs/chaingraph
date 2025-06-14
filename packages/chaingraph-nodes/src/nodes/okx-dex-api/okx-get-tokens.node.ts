@@ -74,11 +74,17 @@ class OKXGetTokensNode extends BaseNode {
       // Validate inputs
       this.validateInputs()
 
+      // Decrypt secrets
+      if (!this.config.apiKey)
+        throw new Error('API Key is required')
+
+      const secrets = await this.config.apiKey.decrypt(context)
+
       // Initialize the OKX DEX client
       const client = new OKXDexClient({
-        apiKey: this.config.apiKey,
-        secretKey: this.config.secretKey,
-        apiPassphrase: this.config.apiPassphrase,
+        apiKey: secrets.apiKey,
+        secretKey: secrets.secretKey,
+        apiPassphrase: secrets.apiPassphrase,
         projectId: this.config.projectId,
         // Add other configs as needed
       })
@@ -120,12 +126,6 @@ class OKXGetTokensNode extends BaseNode {
    * Validates the input parameters
    */
   private validateInputs(): void {
-    if (!this.config.apiKey)
-      throw new Error('API Key is required')
-    if (!this.config.secretKey)
-      throw new Error('Secret Key is required')
-    if (!this.config.apiPassphrase)
-      throw new Error('API Passphrase is required')
     if (!this.config.projectId)
       throw new Error('Project ID is required')
 
