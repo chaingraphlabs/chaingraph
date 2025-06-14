@@ -7,9 +7,9 @@
  */
 
 import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel'
+import { ExecutionTree } from '@/components/sidebar/tabs/execution-tree'
 import { FlowList } from '@/components/sidebar/tabs/flow/FlowList'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
-import { ExecutionTree } from '@/components/sidebar/tabs/execution-tree'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -18,16 +18,14 @@ import { initConfig } from '@/store/archai'
 import { setActiveFlowId } from '@/store/flow'
 import {
   ChevronLeftIcon,
-  CodeIcon,
   GearIcon,
   QuestionMarkIcon,
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { Bug, LayersIcon, Scroll, GitBranch } from 'lucide-react'
+import { Bug, GitBranch, LayersIcon, Scroll } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
-import { EventList } from './tabs/EventList'
 import { Help } from './tabs/Help'
 import { Settings } from './tabs/Settings'
 import { VariableList } from './tabs/VariableList'
@@ -87,12 +85,12 @@ export function Sidebar({
       label: 'Nodes',
       content: <NodeList />,
     },
-    {
-      id: 'events',
-      icon: <CodeIcon />,
-      label: 'Events',
-      content: <EventList />,
-    },
+    // {
+    //   id: 'events',
+    //   icon: <CodeIcon />,
+    //   label: 'Events',
+    //   content: <EventList />,
+    // },
     {
       id: 'variables',
       icon: <ValueIcon />,

@@ -509,7 +509,7 @@ export class AntropicLlmCallNode extends BaseNode {
       // Validate inputs
       this.validateInputs()
 
-      const apiKey = await this.config.apiKey!.decrypt(context)
+      const { apiKey } = await this.config.apiKey!.decrypt(context)
 
       // Create Anthropic client
       const client = new Anthropic({
