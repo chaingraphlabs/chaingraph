@@ -27,41 +27,58 @@ import {
     PortAny,
     String,
     Number as NumberDecorator,
+    StringEnum,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import * as yaml from 'js-yaml' // You'll need to add this dependency
 
 const SUPPORTED_TYPES = ['number', 'boolean', 'string', 'object', 'array'];
 const DEFAULT_MAX_DEPTH = 6;
+const INPUT_FORMATS = ['auto', 'json', 'yaml'];
+type InputFormat = typeof INPUT_FORMATS[number];
 
 @Node({
-    type: 'JsonDeserializeNode',
-    title: 'JSON Deserializer',
-    description: 'Deserializes a JSON string into an object based on the provided schema',
+    type: 'JsonYamlDeserializerNode',
+    title: 'JSON/YAML Deserializer',
+    description: 'Deserializes JSON or YAML string into an object based on the provided schema',
     category: NODE_CATEGORIES.UTILITIES,
-    tags: ['json', 'deserialize', 'parse', 'convert', 'object'],
+    tags: ['json', 'yaml', 'deserialize', 'parse', 'convert', 'object'],
 })
-class JsonDeserializeNode extends BaseNode {
+class JsonYamlDeserializerNode extends BaseNode {
     @Input()
     @PortAny({
         title: 'Output Schema',
-        description: 'Schema for the deserialized object. Connect array or object to use its schema for parsing.',
+        description: 'Schema for the deserialized object. Supports complex schemas (array, object) and primitive types (number, string, bool).',
     })
     outputSchema: any
 
     @Input()
     @String({
-        title: 'JSON String',
-        description: 'JSON string to be deserialized',
+        title: 'JSON or YAML',
+        description: 'JSON or YAML string to be deserialized',
         ui: {
             isTextArea: true,
         },
     })
-    jsonString: string = '{}'
+    inputString: string = ''
+
+    @Input()
+    @StringEnum(INPUT_FORMATS, {
+        title: 'Input Format',
+        description: 'Specify the format of the input string.',
+        defaultValue: 'auto',
+        options: [
+            { id: 'auto', type: 'string', title: 'Auto' },
+            { id: 'json', type: 'string', title: 'JSON' },
+            { id: 'yaml', type: 'string', title: 'YAML' },
+        ]
+    })
+    inputFormat: InputFormat = 'auto'
 
     @Input()
     @Boolean({
         title: 'Ignore Missing Fields',
-        description: 'If true, missing fields in JSON objects will be set to null instead of throwing an error',
+        description: 'If true, missing fields in JSON/YAML objects will be set to null instead of throwing an error',
         defaultValue: false,
     })
     ignoreMissingFields: boolean = false
@@ -86,15 +103,15 @@ class JsonDeserializeNode extends BaseNode {
 
     async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
         try {
-            let parsedJson: any;
+            let parsedData: any;
 
-            if (this.jsonString.trim() === '') {
-                parsedJson = null;
+            if (this.inputString.trim() === '') {
+                parsedData = null;
             } else {
                 try {
-                    parsedJson = JSON.parse(this.jsonString);
+                    parsedData = this.parseInputString(this.inputString);
                 } catch (error) {
-                    throw new Error(`Failed to parse JSON string: ${error}`);
+                    throw new Error(`Failed to parse input string: ${error}`);
                 }
             }
 
@@ -112,10 +129,9 @@ class JsonDeserializeNode extends BaseNode {
 
             try {
                 const processedValue = this.filterOutputBySchema(
-                    parsedJson,
+                    parsedData,
                     schema,
-                    this.ignoreMissingFields,
-                    this.maxDepth === 0 ? DEFAULT_MAX_DEPTH : this.maxDepth
+                    (!this.maxDepth || this.maxDepth === 0) ? DEFAULT_MAX_DEPTH : this.maxDepth
                 )
                 outputPort.setValue(processedValue);
             } catch (error) {
@@ -128,13 +144,35 @@ class JsonDeserializeNode extends BaseNode {
     }
 
     /**
+     * Parse input string as JSON or YAML based on the selected format
+     */
+    private parseInputString(input: string): any {
+        if (this.inputFormat === 'auto' || 'json') {
+            try {
+                return JSON.parse(input);
+            } catch (jsonError) {
+                if (this.inputFormat === 'auto') {
+                    try {
+                        return yaml.load(input);
+                    } catch (yamlError) {
+                        throw new Error(`Format error: Input must be valid JSON or YAML`);
+                    }
+                }
+            }
+        } else if (this.inputFormat === 'yaml') {
+            return yaml.load(input);
+        }
+
+        throw new Error(`Unsupported input format: ${this.inputFormat}`);
+    }
+
+    /**
      * Process data strictly according to schema at a specific depth
      * This ensures we only include the parts of the object defined in the schema
      */
     private filterOutputBySchema(
         value: any,
         schema: IPortConfig,
-        ignoreMissingFields: boolean,
         depthLeft: number
     ): Object | Array<any> | Number | string | number | null {
         if (value === null || value === undefined) {
@@ -148,10 +186,10 @@ class JsonDeserializeNode extends BaseNode {
         }
 
         if (!SUPPORTED_TYPES.includes(schemaType)) {
-            throw new Error(`Type ${schemaType} is not supported. Supported types are: ${SUPPORTED_TYPES.join(', ')}.`)
+            throw new Error(`Schema property ${schema.name} has unsupported type: ${schemaType}. Supported types are: ${SUPPORTED_TYPES.join(', ')}.`)
         }
 
-        // For primitive types, just validate and return
+        // Handle primitive types
         if (['string', 'number', 'boolean'].includes(schemaType)) {
             const valueType = typeof value;
             if (valueType === schemaType) {
@@ -176,47 +214,14 @@ class JsonDeserializeNode extends BaseNode {
 
             for (const item of value) {
                 try {
-                    // For 'any' type items, add them directly without validation
-                    if (itemSchema.type === 'any') {
-                        result.push(item);
-                    }
-                    // For complex types, process with reduced depth
-                    else if (itemSchema.type === 'object' || itemSchema.type === 'array') {
-                        const processedItem = this.filterOutputBySchema(
-                            item,
-                            itemSchema,
-                            ignoreMissingFields,
-                            depthLeft - 1
-                        );
-                        result.push(processedItem);
-                    }
-                    // For primitive types, just validate the type
-                    else if (['string', 'number', 'boolean'].includes(itemSchema.type)) {
-                        const itemType = typeof item;
-                        if (itemType === itemSchema.type) {
-                            // Direct value assignment for primitive types
-                            result.push(item);
-                        } else if (item === null || item === undefined) {
-                            result.push(null);
-                        } else if (ignoreMissingFields) {
-                            result.push(null);
-                        } else {
-                            throw new Error(`Array item type mismatch: expected ${itemSchema.type} but got ${itemType}`);
-                        }
-                    } else {
-                        // Unsupported item type
-                        if (ignoreMissingFields) {
-                            result.push(null);
-                        } else {
-                            throw new Error(`Unsupported array item type: ${itemSchema.type}`);
-                        }
-                    }
+                    const processedItem = this.filterOutputBySchema(
+                        item,
+                        itemSchema,
+                        depthLeft - 1
+                    );
+                    result.push(processedItem);
                 } catch (error) {
-                    if (ignoreMissingFields) {
-                        result.push(null);
-                    } else {
-                        throw error;
-                    }
+                    throw error;
                 }
             }
             return result;
@@ -228,45 +233,38 @@ class JsonDeserializeNode extends BaseNode {
                 throw new Error(`Expected object but got ${Array.isArray(value) ? 'array' : typeof value}`);
             }
 
-            // If depth is exhausted or no schema properties, return the original object
             if (depthLeft <= 0 || !schema.schema || !schema.schema.properties) {
                 return value;
             }
 
             const result: any = {};
 
-            // Only include properties defined in the schema
             for (const [key, propSchema] of Object.entries(schema.schema.properties)) {
                 const typedPropSchema = propSchema as IPortConfig;
 
                 if (key in value) {
                     try {
-                        // Process each property with reduced depth
                         result[key] = this.filterOutputBySchema(
                             value[key],
                             typedPropSchema,
-                            ignoreMissingFields,
                             depthLeft - 1
                         );
                     } catch (error) {
-                        if (ignoreMissingFields) {
+                        if (this.ignoreMissingFields) {
                             result[key] = null;
                         } else {
                             throw error;
                         }
                     }
-                } else if (!ignoreMissingFields) {
-                    throw new Error(`Required field '${key}' is missing in the input data`);
-                } else {
+                } else if (this.ignoreMissingFields) {
                     result[key] = null;
+                } else {
+                    throw new Error(`Required field '${key}' is missing in the input data`);
                 }
             }
-
             return result;
         }
-
-        // Unsupported type - return original value
-        return value;
+        return null;
     }
 
     /**
@@ -370,4 +368,4 @@ class JsonDeserializeNode extends BaseNode {
     }
 }
 
-export default JsonDeserializeNode
+export default JsonYamlDeserializerNode
