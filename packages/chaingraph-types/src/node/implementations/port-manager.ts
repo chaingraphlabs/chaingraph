@@ -8,7 +8,7 @@
 
 import type { IPort } from '../../port'
 import type { IPortManager } from '../interfaces'
-import { generatePortIDArrayElement } from '../../node/id-generate'
+import { generatePortIDArrayElement } from '../../port'
 import { PortDirection } from '../../port'
 
 /**

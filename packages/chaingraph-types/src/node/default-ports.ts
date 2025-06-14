@@ -8,8 +8,8 @@
 
 import type { BooleanPortConfig, IPortConfig, StringPortConfig } from '../port'
 import type { FlowPorts } from './types'
+import { generatePortID } from '../port'
 import { PortDirection } from '../port'
-import { generatePortID } from './id-generate'
 
 export const flowInID = '__execute'
 export const flowOutID = '__success'

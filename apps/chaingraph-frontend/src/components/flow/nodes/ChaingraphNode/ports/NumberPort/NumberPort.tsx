@@ -22,6 +22,7 @@ import { NumberInput } from '@/components/ui/number-input'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -80,6 +81,7 @@ export function NumberPort(props: NumberPortProps) {
     <div
       key={config.id}
       className={cn(
+        'w-full',
         'relative flex gap-2 group/port',
         config.direction === 'output' ? 'justify-end' : 'justify-start',
         // className,
@@ -88,15 +90,40 @@ export function NumberPort(props: NumberPortProps) {
       {config.direction === 'input' && <PortHandle port={port} />}
 
       <div className={cn(
+        'w-full',
         'flex flex-col',
         config.direction === 'output' ? 'items-end' : 'items-start',
-        'truncate',
       )}
       >
-        <PortTitle>{title}</PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            'truncate',
+            // if port required and the value is empty, add a red underline
+            config.required
+            && (port.getValue() === undefined || port.getValue() === null || !port.validate())
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? !needRenderEditor : !ui.hideEditor,
+              },
+            })
+          }}
+        >
+          {title}
+        </PortTitle>
 
         {needRenderEditor && (
-          <>
+          <div className={cn(
+            'w-full',
+          )}
+          >
             <NumberInput
               disabled={executionID ? true : ui?.disabled ?? false}
               className={cn(
@@ -130,7 +157,7 @@ export function NumberPort(props: NumberPortProps) {
                 />
               </>
             )}
-          </>
+          </div>
         )}
       </div>
 

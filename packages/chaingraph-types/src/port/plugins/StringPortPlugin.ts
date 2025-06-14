@@ -126,11 +126,11 @@ export function validateStringValue(
   }
 
   // Length validation
-  if (config.minLength !== undefined && value.length < config.minLength) {
+  if (config.minLength !== undefined && value!.length < config.minLength) {
     errors.push(`String must be at least ${config.minLength} characters long`)
   }
 
-  if (config.maxLength !== undefined && value.length > config.maxLength) {
+  if (config.maxLength !== undefined && value!.length > config.maxLength) {
     errors.push(`String must be at most ${config.maxLength} characters long`)
   }
 
@@ -139,7 +139,7 @@ export function validateStringValue(
     const validation = validateRegexPattern(config.pattern)
     if (!validation.valid) {
       errors.push(`Invalid pattern: ${validation.error}`)
-    } else if (!testRegexPattern(value, config.pattern)) {
+    } else if (!testRegexPattern(value!, config.pattern)) {
       errors.push(`String must match pattern: ${config.pattern}`)
     }
   }
@@ -218,7 +218,7 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
         // If the value is a number, convert it to a string
         return {
           ...config,
-          defaultValue: new Decimal(config.defaultValue).toString(),
+          defaultValue: new Decimal(config.defaultValue!).toString(),
         }
       }
 
@@ -255,18 +255,18 @@ export const StringPortPlugin: IPortPlugin<'string'> = {
 
     const errors: string[] = []
 
-    if (typeof config.minLength === 'number' && value.length < config.minLength) {
+    if (typeof config.minLength === 'number' && value!.length < config.minLength) {
       errors.push(`String must be at least ${config.minLength} characters long`)
     }
 
-    if (typeof config.maxLength === 'number' && value.length > config.maxLength) {
+    if (typeof config.maxLength === 'number' && value!.length > config.maxLength) {
       errors.push(`String must be at most ${config.maxLength} characters long`)
     }
 
     if (typeof config.pattern === 'string') {
       try {
         const regex = new RegExp(config.pattern)
-        if (!regex.test(value)) {
+        if (!regex.test(value!)) {
           errors.push(`String must match pattern: ${config.pattern}`)
         }
       } catch (error) {

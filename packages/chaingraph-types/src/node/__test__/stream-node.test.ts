@@ -31,6 +31,7 @@ PortPluginRegistry.getInstance().register(ObjectPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
+  type: 'StreamNode',
   title: 'Stream Node',
   description: 'Node with stream ports',
 })

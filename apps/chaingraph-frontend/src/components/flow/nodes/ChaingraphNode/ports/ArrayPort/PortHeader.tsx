@@ -6,8 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { requestUpdatePortUI } from '@/store/ports'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -17,6 +19,9 @@ interface PortHeaderProps {
   isCollapsible: boolean
   onClick: () => void
   rightElement?: ReactNode
+
+  node: INode
+  port: IPort
 }
 
 export function PortHeader({
@@ -25,7 +30,11 @@ export function PortHeader({
   isCollapsible,
   onClick,
   rightElement,
+  node,
+  port,
 }: PortHeaderProps) {
+  const config = port.getConfig()
+
   return (
     <div className="space-y-1">
       <div className={cn(
@@ -57,9 +66,26 @@ export function PortHeader({
 
           <PortTitle
             className={cn(
+              'cursor-pointer',
               'font-semibold min-w-0 flex-1',
               isOutput ? 'text-right' : 'text-left',
+              // if port required and the value is empty, add a red underline
+              config.required
+              && (port.getValue() === undefined || port.getValue() === null || port.getValue().length === 0 || !port.validate())
+              && config.direction === 'input'
+              && (config.connections?.length || 0) === 0
+              && 'underline decoration-red-500 decoration-2',
             )}
+
+            onClick={() => {
+              requestUpdatePortUI({
+                nodeId: node.id,
+                portId: port.id,
+                ui: {
+                  hideEditor: config.ui?.hideEditor === undefined ? true : !config.ui?.hideEditor,
+                },
+              })
+            }}
           >
             {title}
           </PortTitle>

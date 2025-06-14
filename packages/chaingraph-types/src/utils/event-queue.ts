@@ -106,7 +106,10 @@ export class EventQueue<T> {
         const event = this.buffer[bufferIndex]
 
         try {
-          await subscriber.handler(event)
+          const res = subscriber.handler(event)
+          if (res instanceof Promise) {
+            await res
+          }
         } catch (error) {
           if (subscriber.onError) {
             subscriber.onError(error)

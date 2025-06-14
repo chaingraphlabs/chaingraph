@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { PasteNodesInputType } from '@badaitech/chaingraph-trpc/server'
 import type { NodeMetadata, NodeStatus, NodeUIMetadata, Position } from '@badaitech/chaingraph-types'
 
 // State types
@@ -53,3 +54,5 @@ export interface UpdateNodeParent {
   position: Position
   version: number
 }
+
+export interface PasteNodesEvent extends PasteNodesInputType {}

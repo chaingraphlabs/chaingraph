@@ -33,6 +33,7 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 // Simple test nodes
 @Node({
+  type: 'SourceNode',
   title: 'Source Node',
 })
 class SourceNode extends BaseNode {
@@ -53,6 +54,7 @@ class SourceNode extends BaseNode {
 }
 
 @Node({
+  type: 'TargetNode',
   title: 'Target Node',
 })
 class TargetNode extends BaseNode {

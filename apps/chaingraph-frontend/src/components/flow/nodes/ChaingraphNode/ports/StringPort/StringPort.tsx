@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useStore } from '@xyflow/react'
 import {
 
@@ -110,14 +111,14 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       return
     }
 
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: {
         textareaDimensions: newDimensions,
       },
     })
-  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id, updatePortUI])
+  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
 
   if (ui?.hidden)
     return null
@@ -141,17 +142,35 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       <div className={cn(
         'flex flex-col w-full',
         config.direction === 'output' ? 'items-end' : 'items-start',
-        'truncate',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            'truncate',
+            // if port required and the value is empty, add a red underline
+            config.required
+            && (!port.getValue() || !port.validate())
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
-          {' '}
         </PortTitle>
 
         {!ui?.isTextArea && needRenderEditor && (
           <Input
-            value={port.getValue()}
+            value={port.getValue() ?? ''}
             onChange={handleChange}
             className={cn(
               'resize-none shadow-none text-xs p-1',
@@ -161,9 +180,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
               'placeholder:text-neutral-400 placeholder:opacity-40',
             )}
             placeholder={
-              port.getConfig().ui?.placeholder
-              ?? port.getConfig().title
-              ?? port.getConfig().key
+              config.ui?.placeholder
+              ?? config.title
+              ?? config.key
               ?? 'Text'
             }
             type={ui?.isPassword ? 'password' : undefined}
@@ -176,7 +195,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
           <>
             <Textarea
               ref={textareaRef}
-              value={port.getValue()}
+              value={port.getValue() ?? ''}
               onChange={handleChange}
               onClick={_ => handleResize()}
               onInput={_ => handleResize()}
@@ -189,20 +208,21 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
                 setFocused(true)
               }}
               style={{
-                width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
+              //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
                 height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,
               }}
               className={cn(
                 'shadow-none text-xs p-1 resize',
                 'nodrag',
+                'w-full',
                 'max-w-full',
                 focused && 'nowheel',
                 'placeholder:text-neutral-400 placeholder:opacity-40',
               )}
               placeholder={
-                port.getConfig().ui?.placeholder
-                ?? port.getConfig().title
-                ?? port.getConfig().key
+                config.ui?.placeholder
+                ?? config.title
+                ?? config.key
                 ?? 'Text'
               }
               disabled={executionID ? true : ui?.disabled ?? false}

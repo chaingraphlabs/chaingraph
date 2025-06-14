@@ -7,6 +7,7 @@
  */
 
 export * from './complex-port-handler'
+export * from './deep-clone-handler'
 export * from './default-port-manager'
 export * from './node-event-manager'
 export * from './node-serializer'

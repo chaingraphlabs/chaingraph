@@ -108,6 +108,15 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
   clone: () => IPort<C>
 
   /**
+   * Clones the port instance with a new unique identifier.
+   *
+   * This is useful for creating a copy of the port that can be used independently.
+   *
+   * @returns A new port instance with the same configuration and value, but a new ID.
+   */
+  cloneWithNewId: () => IPort<C>
+
+  /**
    * Check if the port is a system port.
    *
    * @returns True if the port is a system port, otherwise false.

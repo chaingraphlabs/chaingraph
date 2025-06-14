@@ -27,6 +27,7 @@ beforeEach(() => {
  * A test node with default flow ports enabled
  */
 @Node({
+  type: 'DefaultPortsNode',
   title: 'Default Ports Node',
   description: 'A test node with default flow ports',
   // No flowPorts config - should have all default ports
@@ -54,6 +55,7 @@ class DefaultPortsNode extends BaseNodeCompositional {
  * A test node with disabled flow ports
  */
 @Node({
+  type: 'NoFlowPortsNode',
   title: 'No Flow Ports Node',
   description: 'A test node with disabled flow ports',
   flowPorts: {
@@ -84,6 +86,7 @@ class NoFlowPortsNode extends BaseNodeCompositional {
  * A test node with disabled error ports
  */
 @Node({
+  type: 'NoErrorPortsNode',
   title: 'No Error Ports Node',
   description: 'A test node with disabled error ports',
   flowPorts: {
@@ -114,6 +117,7 @@ class NoErrorPortsNode extends BaseNodeCompositional {
  * A test node with both flow and error ports disabled
  */
 @Node({
+  type: 'AllDisabledPortsNode',
   title: 'All Disabled Ports Node',
   description: 'A test node with all default ports disabled',
   flowPorts: {
@@ -355,6 +359,7 @@ describe('default Ports', () => {
     it('should not execute when flow ports are disabled but auto-execution is disabled', async () => {
       // Create a node with disabled flow ports and disabled auto-execution
       @Node({
+        type: 'ManualExecutionNode',
         title: 'Manual Execution Node',
         flowPorts: {
           disabledFlowPorts: true,

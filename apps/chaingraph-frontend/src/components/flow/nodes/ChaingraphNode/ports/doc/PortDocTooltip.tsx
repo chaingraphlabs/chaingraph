@@ -16,7 +16,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { $isConnecting } from '@/store/edges/stores'
 import Color from 'color'
+import { useUnit } from 'effector-react'
+import { useEffect, useState } from 'react'
 import { getPortTypeColor } from './getPortTypeColor'
 import { PortDocContent } from './PortDocContent'
 
@@ -31,6 +34,16 @@ export function PortDocTooltip<C extends IPortConfig>({
   children,
   className,
 }: PortDocTooltipProps<C>) {
+  const isConnecting = useUnit($isConnecting)
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    if (isConnecting) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
+      setIsOpen(false)
+    }
+  }, [isConnecting])
+
   const { theme } = useTheme()
   const portColor = getPortTypeColor(theme, port.getConfig())
 
@@ -49,7 +62,7 @@ export function PortDocTooltip<C extends IPortConfig>({
 
   return (
     <TooltipProvider delayDuration={500}>
-      <Tooltip>
+      <Tooltip open={!isConnecting && isOpen} onOpenChange={setIsOpen}>
         <TooltipTrigger asChild>
           {/* <div className={cn('relative', className)}> */}
           {children}

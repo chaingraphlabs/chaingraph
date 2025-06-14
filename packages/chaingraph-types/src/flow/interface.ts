@@ -35,6 +35,14 @@ export interface IFlow {
   addNode: (node: INode, disableEvents?: boolean) => INode
 
   /**
+   * Adds multiple nodes to the flow.
+   * @param nodes The nodes to add.
+   * @param disableEvents If true, events will not be triggered for each node added.
+   * @returns An array of added nodes.
+   */
+  addNodes: (nodes: INode[], disableEvents?: boolean) => INode[]
+
+  /**
    * Updates a node in the flow and triggers an event.
    * @param node
    */
@@ -94,7 +102,7 @@ export interface IFlow {
    * Subscribe to flow events
    * @param handler Event handler function
    */
-  onEvent: (handler: (event: FlowEvent) => void) => () => void
+  onEvent: (handler: (event: FlowEvent) => | Promise<void>) => () => void
 
   /**
    * Clone the flow

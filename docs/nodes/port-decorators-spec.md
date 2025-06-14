@@ -700,7 +700,6 @@ tags: string[];
 | Property                | Type    | Description                  |
 | ----------------------- | ------- | ---------------------------- |
 | addItemFormHidden       | boolean | Hide the "Add Item" form     |
-| addItemFormSpoilerState | boolean | Show/hide state for the form |
 | itemDeletable           | boolean | Allow deleting array items   |
 
 [UI SCREENSHOT PLACEHOLDER: Array port with items and add item button]
@@ -981,7 +980,6 @@ All port types support a common set of UI configuration properties through the `
 | Property                | Type       | Description                                     |
 | ----------------------- | ---------- | ----------------------------------------------- |
 | addItemFormHidden       | boolean    | Hide the "Add Item" form                        |
-| addItemFormSpoilerState | boolean    | Initial state of the "Add Item" form visibility |
 | itemDeletable           | boolean    | Whether array items can be deleted              |
 | allowedTypes            | PortType[] | Types allowed when adding new items             |
 

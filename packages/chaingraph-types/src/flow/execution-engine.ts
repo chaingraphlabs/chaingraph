@@ -20,7 +20,7 @@ import { withTimeout } from '../utils/timeout'
 import { FlowDebugger } from './debugger'
 import { ExecutionEventEnum, ExecutionEventImpl } from './execution-events'
 
-const DEFAULT_MAX_CONCURRENCY = 10
+const DEFAULT_MAX_CONCURRENCY = 100
 const DEFAULT_NODE_TIMEOUT_MS = 60000
 const DEFAULT_FLOW_TIMEOUT_MS = 300000
 
@@ -51,6 +51,7 @@ export class ExecutionEngine {
   // private readonly eventQueue: EventQueue<ExecutionEvent>
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
+  private onEventCallback?: (context: ExecutionContext) => Promise<void>
 
   constructor(
     private readonly flow: Flow,
@@ -113,6 +114,8 @@ export class ExecutionEngine {
       // Wait for all workers to complete
       await Promise.all(workerPromises)
 
+      console.log(`[ExecutionEngine] All workers completed successfully, total nodes executed: ${this.completedNodes.size}`)
+
       // Emit flow completed event
       await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
         flow: this.flow.clone(),
@@ -156,19 +159,42 @@ export class ExecutionEngine {
   }
 
   private initializeDependencies(): void {
-    // Initialize dependency counts
     for (const node of this.flow.nodes.values()) {
+      // Initialize dependency counts
       const incomingEdges = this.flow.getIncomingEdges(node)
       this.nodeDependencies.set(node.id, incomingEdges.length)
-    }
 
-    // Build dependents map
-    for (const node of this.flow.nodes.values()) {
+      // TODO: index for parent nodes
+      // Get children nodes
+      const children = Array.from(this.flow.nodes.values())
+        .filter(n => n.metadata.parentNodeId === node.id)
+      if (children.length > 0) {
+        console.log(`[ExecutionEngine] Node ${node.id} has children: ${children.map(c => c.id).join(', ')}`)
+        const currentNodeDependencies = this.nodeDependencies.get(node.id) ?? 0
+        this.nodeDependencies.set(node.id, currentNodeDependencies + children.length)
+      }
+
+      // Build dependents map
       for (const edge of this.flow.getOutgoingEdges(node)) {
         if (!this.dependentsMap.has(node.id)) {
           this.dependentsMap.set(node.id, [])
         }
         this.dependentsMap.get(node.id)!.push(edge.targetNode)
+      }
+
+      // check if the node has a parent node then add it to the parent node's dependents
+      const parentNodeId = node.metadata.parentNodeId
+      if (parentNodeId) {
+        const parentNode = this.flow.nodes.get(parentNodeId)
+        if (!parentNode) {
+          console.warn(`[ExecutionEngine] Parent node ${parentNodeId} for node ${node.id} not found`)
+          continue
+        }
+
+        if (!this.dependentsMap.has(node.id)) {
+          this.dependentsMap.set(node.id, [])
+        }
+        this.dependentsMap.get(node.id)!.push(parentNode)
       }
     }
 
@@ -177,6 +203,35 @@ export class ExecutionEngine {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
+          // Check if node has disabledAutoExecution
+          const metadata = node.metadata
+          const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+
+          // Skip nodes with disabledAutoExecution based on context
+          if (isAutoExecutionDisabled) {
+            if (!this.context.isChildExecution) {
+              // In parent context, skip nodes with disabledAutoExecution
+              console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
+              continue
+            }
+            // In child context with event data, only execute if this is an EventListenerNode
+            // that matches the event
+            if (this.context.isChildExecution && this.context.eventData) {
+              const nodeType = metadata?.type
+              if (nodeType !== 'EventListenerNode') {
+                console.log(`Skipping node ${node.id} - not an EventListenerNode in child context`)
+                continue
+              }
+            }
+          } else {
+            // For nodes WITHOUT disabledAutoExecution in child context
+            // Skip them to prevent re-running the entire flow
+            if (this.context.isChildExecution && this.context.eventData) {
+              console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
+              continue
+            }
+          }
+
           this.executingNodes.add(node.id)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
         }
@@ -194,6 +249,11 @@ export class ExecutionEngine {
         }))
       }
     }
+
+  //   console.log(`[ExecutionEngine] Debug state:
+  // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
+  // - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
+  // - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
   }
 
   private startWorkers(): Promise<void>[] {
@@ -234,7 +294,17 @@ export class ExecutionEngine {
       // Process dependents and potentially enqueue new nodes
       await this.processDependents(completedNode)
 
-      // Check if execution is complete based on the new requirements
+      // Check for emitted events after node completion
+      if (this.onEventCallback && this.context.emittedEvents && this.context.emittedEvents.length > 0) {
+        const unprocessedEvents = this.context.emittedEvents.filter(e => !e.processed)
+        console.log(`[ExecutionEngine] After node ${completedNode.metadata.title}, found ${unprocessedEvents.length} unprocessed events`)
+        if (unprocessedEvents.length > 0) {
+          console.log(`[ExecutionEngine] Calling onEventCallback`)
+          await this.onEventCallback(this.context)
+        }
+      }
+
+      // Check if execution is complete
       if (await this.isExecutionComplete()) {
         break
       }
@@ -277,6 +347,42 @@ export class ExecutionEngine {
       this.nodeDependencies.set(dependentNode.id, remainingDeps)
 
       if (remainingDeps === 0) {
+        // Check if node has disabledAutoExecution
+        const metadata = dependentNode.metadata
+        const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+
+        // Skip nodes based on execution context
+        let shouldSkip = false
+        if (isAutoExecutionDisabled) {
+          if (!this.context.isChildExecution) {
+            // In parent context, skip nodes with disabledAutoExecution
+            console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
+            shouldSkip = true
+          } else if (this.context.isChildExecution && this.context.eventData) {
+            // In child context, only EventListenerNodes should have disabledAutoExecution
+            const nodeType = metadata?.type
+            if (nodeType !== 'EventListenerNode') {
+              console.log(`Skipping dependent node ${dependentNode.id} - not an EventListenerNode in child context`)
+              shouldSkip = true
+            }
+          }
+        } else {
+          // For nodes WITHOUT disabledAutoExecution in child context
+          // Skip them if this is an event-driven child execution and they're not downstream of a listener
+          if (this.context.isChildExecution && this.context.eventData) {
+            // This is tricky - we need to allow nodes downstream of EventListeners to execute
+            // For now, we'll let them through and rely on the initial node filtering
+          }
+        }
+
+        if (shouldSkip) {
+          // Mark as completed without executing so dependents can proceed
+          this.completedNodes.add(dependentNode.id)
+          // Need to enqueue it to the completed queue so processDependents gets called
+          this.completedQueue.enqueue(dependentNode)
+          continue
+        }
+
         // Node is ready for execution
         this.executingNodes.add(dependentNode.id)
         this.readyQueue.enqueue(this.executeNode.bind(this, dependentNode))
@@ -325,7 +431,7 @@ export class ExecutionEngine {
 
     try {
       const incomingEdges = this.flow.getIncomingEdges(node)
-      if (node.shouldExecute()) {
+      if (node.shouldExecute(this.context)) {
         // First, validate all source nodes statuses before proceeding
         for (const edge of incomingEdges) {
           if (!edge.sourcePort.isSystemError()
@@ -388,13 +494,24 @@ export class ExecutionEngine {
         return
       }
 
+      const nodeParent = this.flow.nodes.get(node.metadata.parentNodeId ?? '')
+      if (nodeParent && nodeParent.metadata.category !== 'group') {
+        // If the node has a parent that is not a group, mark it completed without actually executing
+        this.setNodeCompleted(node, nodeStartTime)
+        return
+      }
+
       // check weathers node should execute
-      if (!node.shouldExecute()) {
+      if (!node.shouldExecute(this.context)) {
         this.setNodeSkipped(node, 'node skipped because flow input port was set to false')
         return
       }
 
       const nodeTimeoutMs = this.options?.execution?.nodeTimeoutMs ?? DEFAULT_NODE_TIMEOUT_MS
+
+      // Track current executing node for event emission
+      this.context.currentNodeId = node.id
+
       const { backgroundActions } = await withTimeout(
         node.executeWithDefaultPorts(this.context),
         nodeTimeoutMs,
@@ -441,6 +558,8 @@ export class ExecutionEngine {
       this.setNodeError(node, error, nodeStartTime)
     } finally {
       cancel()
+      // Clear current node ID after execution
+      this.context.currentNodeId = undefined
     }
   }
 
@@ -497,6 +616,10 @@ export class ExecutionEngine {
     return this.debugger
   }
 
+  public getOptions(): ExecutionEngineOptions | undefined {
+    return this.options
+  }
+
   public on<T extends ExecutionEventEnum>(
     type: T,
     handler: (event: ExecutionEventImpl<T>) => void,
@@ -510,6 +633,13 @@ export class ExecutionEngine {
 
   public onAll(handler: (event: ExecutionEventImpl) => void): () => void {
     return this.eventQueue.subscribe(handler)
+  }
+
+  /**
+   * Set a callback to be called when events are emitted
+   */
+  public setEventCallback(callback: (context: ExecutionContext) => Promise<void>): void {
+    this.onEventCallback = callback
   }
 
   // protected createEvent<T extends ExecutionEventEnum>(

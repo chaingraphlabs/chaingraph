@@ -76,6 +76,21 @@ export function useXYFlowNodes() {
         const nextVersion = (next.data?.node as INode).getVersion?.() ?? 0
         if (prevVersion !== nextVersion)
           return true
+
+        const prevUi = (prev.data?.node as INode).getUI?.() ?? {}
+        const nextUi = (next.data?.node as INode).getUI?.() ?? {}
+        // Check if any UI properties that affect display have changed
+        if (prevUi.position?.x !== nextUi.position?.x
+          || prevUi.position?.y !== nextUi.position?.y
+          || prevUi.dimensions?.width !== nextUi.dimensions?.width
+          || prevUi.dimensions?.height !== nextUi.dimensions?.height
+          || prevUi.style?.backgroundColor !== nextUi.style?.backgroundColor
+          || prevUi.style?.borderColor !== nextUi.style?.borderColor
+          || prevUi.state?.isSelected !== nextUi.state?.isSelected
+          || prevUi.state?.isHighlighted !== nextUi.state?.isHighlighted
+          || prevUi.state?.isDisabled !== nextUi.state?.isDisabled) {
+          return true
+        }
       }
 
       // No meaningful changes detected

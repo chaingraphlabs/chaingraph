@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -90,7 +91,26 @@ export function EnumPort(props: EnumPortProps) {
         'truncate',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            // if port required and the value is empty, add a red underline
+            config.required
+            && (!port.getValue() || !port.validate())
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
         </PortTitle>
         {needRenderEditor && (

@@ -29,7 +29,7 @@ export type IconProps = SVGProps<SVGSVGElement>
 export type IconComponent = ComponentType<IconProps>
 
 // Registry for all category icons
-export const CategoryIcons: Record<string, IconComponent> = {
+export const CategoryIcons = {
   // Lucide icons
   MessageSquare,
   Brain,
@@ -43,7 +43,7 @@ export const CategoryIcons: Record<string, IconComponent> = {
   Lock,
   FlaskConical,
   Wallet,
-} as const
+} as const satisfies Record<string, IconComponent>
 
 export type CategoryIconName = keyof typeof CategoryIcons
 

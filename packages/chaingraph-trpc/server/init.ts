@@ -19,6 +19,7 @@ import { initializeContext } from './context'
 import { CleanupService } from './executions/services/cleanup-service'
 import { ExecutionService } from './executions/services/execution-service'
 import { InMemoryExecutionStore } from './executions/store/execution-store'
+import { HybridExecutionStore, PostgresEventStore, PostgresExecutionStore } from './executions/store/postgres'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 
@@ -70,8 +71,27 @@ export async function init() {
   }
 
   const nodesCatalog = new NodeCatalog()
-  const executionStore = new InMemoryExecutionStore()
-  const executionService = new ExecutionService(executionStore)
+
+  // Initialize execution stores
+  const memoryExecutionStore = new InMemoryExecutionStore()
+  let executionStore = memoryExecutionStore as any
+  let eventStore: PostgresEventStore | null = null
+
+  // If database is available, use hybrid store
+  if (flowStore instanceof DBFlowStore) {
+    const postgresExecutionStore = new PostgresExecutionStore(db)
+    eventStore = new PostgresEventStore(
+      db,
+      Number(process.env.EXECUTION_EVENT_BATCH_SIZE) || 50,
+      Number(process.env.EXECUTION_EVENT_BATCH_TIMEOUT) || 100,
+    )
+    executionStore = new HybridExecutionStore(memoryExecutionStore, postgresExecutionStore, eventStore)
+    console.log('Using hybrid execution store with PostgreSQL persistence')
+  } else {
+    console.log('Using in-memory execution store only')
+  }
+
+  const executionService = new ExecutionService(executionStore, eventStore)
   const executionCleanup = new CleanupService(executionStore, executionService)
 
   initializeContext(

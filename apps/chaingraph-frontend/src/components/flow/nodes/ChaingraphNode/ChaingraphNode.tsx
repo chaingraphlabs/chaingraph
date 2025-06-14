@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
 import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
@@ -62,7 +63,7 @@ const defaultCategoryMetadata = {
     },
   },
   order: 7,
-}
+} satisfies CategoryMetadata
 
 function ChaingraphNodeComponent({
   data,
@@ -84,6 +85,7 @@ function ChaingraphNodeComponent({
   })
   const { theme } = useTheme()
   const node = useNode(id)
+  const parentNode = useNode(node.metadata.parentNodeId || '')
   const nodeEdges = useEdgesForNode(id)
   const highlightedNodeId = useUnit($highlightedNodeId)
   const isFlowLoaded = useUnit($isFlowLoaded)
@@ -222,9 +224,33 @@ function ChaingraphNodeComponent({
       if (!activeFlow || !activeFlow.id || !node || !isFlowLoaded)
         return
 
+      // Check if element is visible and has reasonable dimensions
+      // This prevents updates when tabs are hidden or during mounting
+      const MIN_WIDTH = 100
+      const MIN_HEIGHT = 40
+
+      if (size.width < MIN_WIDTH || size.height < MIN_HEIGHT) {
+        console.warn(`Node resize ignored: dimensions too small (${size.width}x${size.height})`)
+        return
+      }
+
+      // Check if the element is actually visible
+      const element = cardRef.current
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        const isVisible = rect.width > 0 && rect.height > 0
+          && rect.top < window.innerHeight
+          && rect.bottom > 0
+
+        if (!isVisible) {
+          console.warn('Node resize ignored: element not visible')
+          return
+        }
+      }
+
       const actualDimensions = node.metadata.ui?.dimensions || {
-        width: 0,
-        height: 0,
+        width: 200, // Use reasonable defaults instead of 0
+        height: 50,
       }
 
       const isDimensionsChanged = size.width !== actualDimensions.width
@@ -297,6 +323,7 @@ function ChaingraphNodeComponent({
         context={portContextValue}
         icon={categoryMetadata.icon}
         style={style}
+        categoryMetadata={categoryMetadata}
         onDelete={() => removeNodeFromFlow({
           flowId: activeFlow.id!,
           nodeId: id,
@@ -311,15 +338,18 @@ function ChaingraphNodeComponent({
         context={portContextValue}
       />
 
-      <NodeErrorPorts
-        node={nodeToRender}
-        context={portContextValue}
-      />
+      {(!parentNode || (parentNode.metadata.category === 'group')) && (
+        <NodeErrorPorts
+          node={nodeToRender}
+          context={portContextValue}
+        />
+      )}
 
+      {/* Resize control */}
       <NodeResizeControl
         variant={ResizeControlVariant.Handle}
         position="right"
-        minWidth={100}
+        minWidth={200}
         style={{
           background: 'transparent',
           border: 'none',

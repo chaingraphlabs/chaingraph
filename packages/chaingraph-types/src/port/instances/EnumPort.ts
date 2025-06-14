@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { EnumPortConfig, EnumPortValue } from '../base'
+import type { EnumPortConfig, EnumPortValue, IPort } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { EnumPortPlugin } from '../plugins'
 
 /**
@@ -115,6 +116,19 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    */
   protected deserializeValue(data: JSONValue): EnumPortValue {
     return EnumPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<EnumPortConfig> {
+    const port = new EnumPort({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
+    port.setValue(this.value) // Set the current value
+    return port
   }
 }
 

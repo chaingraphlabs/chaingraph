@@ -38,10 +38,8 @@ export default defineConfig({
   },
   tablesFilter: [
     'chaingraph_*',
-    '!message_queue',
-    '!message_queue_id_seq',
   ],
-  strict: true,
+  strict: false,
   verbose: true,
   schemaFilter: 'public',
 })

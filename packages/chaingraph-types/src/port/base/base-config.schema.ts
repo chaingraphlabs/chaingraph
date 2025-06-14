@@ -52,7 +52,6 @@ export const numberPortConfigUISchema = basePortConfigUISchema.merge(
 export const arrayPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
     addItemFormHidden: z.boolean().optional(),
-    addItemFormSpoilerState: z.boolean().optional(),
     itemDeletable: z.boolean().optional(),
     allowedTypes: z.array(z.enum([
       'string',
@@ -84,6 +83,11 @@ export const objectPortConfigUISchema = basePortConfigUISchema.merge(
       'enum',
       'any',
     ])).optional(),
+    // Node schema capture functionality
+    nodeSchemaCapture: z.object({
+      enabled: z.boolean().optional(),
+      capturedNodeId: z.string().optional(),
+    }).optional(),
   }).passthrough(),
 )
 /**

@@ -8,7 +8,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { AlertOctagon, AlertTriangle, ArrowRightFromLine, ArrowRightToLine, Ban, Bug, CheckCircle2, CircleDot, CircleOff, Cpu, FileText, Pause, Play, PlayCircle, TimerReset, XCircle } from 'lucide-react'
+import { AlertOctagon, AlertTriangle, ArrowRightFromLine, ArrowRightToLine, Ban, Bug, CheckCircle2, CircleDot, CircleOff, Cpu, FileText, GitBranch, GitMerge, GitPullRequest, Pause, Play, PlayCircle, TimerReset, XCircle } from 'lucide-react'
 
 export interface EventTheme {
   icon: LucideIcon
@@ -231,6 +231,41 @@ export const eventThemes: Record<ExecutionEventEnum, EventTheme> = {
     bgColor: {
       light: 'bg-sky-50',
       dark: 'bg-sky-500/10',
+    },
+  },
+
+  // Child Execution Events
+  [ExecutionEventEnum.CHILD_EXECUTION_SPAWNED]: {
+    icon: GitBranch,
+    color: {
+      light: 'text-indigo-700',
+      dark: 'text-indigo-300',
+    },
+    bgColor: {
+      light: 'bg-indigo-50',
+      dark: 'bg-indigo-500/10',
+    },
+  },
+  [ExecutionEventEnum.CHILD_EXECUTION_COMPLETED]: {
+    icon: GitMerge,
+    color: {
+      light: 'text-emerald-700',
+      dark: 'text-emerald-300',
+    },
+    bgColor: {
+      light: 'bg-emerald-50',
+      dark: 'bg-emerald-500/10',
+    },
+  },
+  [ExecutionEventEnum.CHILD_EXECUTION_FAILED]: {
+    icon: GitPullRequest,
+    color: {
+      light: 'text-red-700',
+      dark: 'text-red-300',
+    },
+    bgColor: {
+      light: 'bg-red-50',
+      dark: 'bg-red-500/10',
     },
   },
 }

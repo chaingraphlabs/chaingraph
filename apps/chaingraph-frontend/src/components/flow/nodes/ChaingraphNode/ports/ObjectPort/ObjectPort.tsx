@@ -14,14 +14,18 @@ import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortT
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { $activeFlowId } from '@/store/flow'
+import { requestUpdatePortUI } from '@/store/ports'
 import { filterPorts } from '@badaitech/chaingraph-types'
+import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddPropPopover } from './components/AddPropPopover'
 import PortField from './components/PortField'
 import { PortHeader } from './components/PortHeader'
+import { useNodeSchemaDrop } from './hooks'
 
 export interface ObjectPortProps {
   node: INode
@@ -80,6 +84,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     getEdgesForPort,
   } = context
 
+  const activeFlowId = useUnit($activeFlowId)
   const config = port.getConfig()
   const title = config.title || config.key || port.id
   const isSchemaMutable = config.isSchemaMutable
@@ -96,10 +101,6 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     return !isHideEditor(config, connectedEdges)
   }, [config, connectedEdges])
 
-  const needRenderObject = useMemo(() => {
-    return connectedEdges.length === 0 || config.direction === 'output'
-  }, [config, connectedEdges])
-
   // Memoize child ports to prevent recalculation
   const childPorts = useMemo(() => {
     return Array.from(node.ports.values())
@@ -108,12 +109,12 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
 
   // Memoize callback functions
   const handleToggleCollapsible = useCallback(() => {
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: { collapsed: config.ui?.collapsed === undefined ? true : !config.ui.collapsed },
     })
-  }, [node.id, port.id, config.ui?.collapsed, updatePortUI])
+  }, [node.id, port.id, config.ui?.collapsed])
 
   const handleOpenPopover = useCallback(() => {
     setIsAddPropOpen(true)
@@ -131,6 +132,38 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     })
     setIsAddPropOpen(false)
   }, [node.id, port.id, addFieldObjectPort])
+
+  // Use the new node schema drop hook
+  const {
+    isNodeSchemaCaptureEnabled,
+    previewNode,
+    capturedNode,
+    isShowingDropZone,
+    handleClearSchema,
+  } = useNodeSchemaDrop({ node, port, context })
+
+  // Determine which node to display: preview during drag, captured after drop
+  const displayNode = useMemo(() => {
+    if (previewNode)
+      return previewNode // Show preview during drag
+    if (capturedNode)
+      return capturedNode // Show captured node after drop
+    return undefined // Show placeholder
+  }, [previewNode, capturedNode])
+
+  const needRenderObject = useMemo(() => {
+    return (connectedEdges.length === 0 || config.direction === 'output') && !isNodeSchemaCaptureEnabled
+  }, [config, connectedEdges, isNodeSchemaCaptureEnabled])
+
+  const dropNodeZoneRef = useRef<HTMLDivElement>(null)
+
+  // we need to check if the dropNodeZoneRef is defined then just log the dropNodeZoneRef absolute position
+  useEffect(() => {
+    if (dropNodeZoneRef.current) {
+      const rect = dropNodeZoneRef.current.getBoundingClientRect()
+      console.log('Drop zone position:', rect)
+    }
+  }, [])
 
   if (ui?.hidden)
     return null
@@ -151,10 +184,95 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
           className={cn(
             'flex flex-col w-full',
             config.direction === 'output' ? 'items-end' : 'items-start',
-            'truncate',
           )}
         >
           <PortTitle>{title}</PortTitle>
+
+          {isNodeSchemaCaptureEnabled && (
+            <motion.div
+              className="w-full rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AnimatePresence mode="wait">
+                {isShowingDropZone
+                  ? (
+                      <motion.div
+                        key="dropzone"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 300,
+                          damping: 25,
+                        }}
+                        className={cn(
+                          'border-2 border-dashed rounded-lg p-6',
+                          'flex flex-col items-center justify-center min-h-[150px]',
+                          'bg-muted/5 hover:bg-muted/10 transition-colors duration-300',
+                          'border-muted-foreground/30',
+                        )}
+                      >
+                        <motion.div
+                          animate={{
+                            y: [0, -5, 0],
+                            opacity: [0.5, 1, 0.5],
+                          }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 2.5,
+                            ease: 'easeInOut',
+                          }}
+                          className="mb-3 text-muted-foreground/60"
+                        >
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                        </motion.div>
+                        <motion.div
+                          className="text-sm font-medium text-muted-foreground text-center w-full px-4"
+                          animate={{ opacity: [0.7, 1, 0.7] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 3,
+                            ease: 'easeInOut',
+                          }}
+                        >
+                          <p className="break-words whitespace-normal">
+                            Drag and drop a node here to use its schema
+                            {' '}
+                            {previewNode ? ' NODE PREVIEW' : ''}
+                          </p>
+                        </motion.div>
+                      </motion.div>
+                    )
+                  : (
+                      <div
+                        style={{
+                        // take actual width of the node from the displayNode
+                          width: '100%',
+                          height: displayNode ? `${(displayNode.metadata.ui?.dimensions?.height || 200) + 10}px` : '100%',
+                        }}
+                        ref={dropNodeZoneRef}
+                      >
+                      </div>
+                    )}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       )}
 
@@ -163,8 +281,10 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
           <PortHeader
             title={title}
             isOutput={isOutput}
-            isCollapsible={!!config.ui?.collapsed}
+            isCollapsed={!!config.ui?.collapsed}
             onClick={handleToggleCollapsible}
+            node={node}
+            port={port as IPort}
           />
 
           <AnimatePresence initial={false} mode="wait">
@@ -200,7 +320,7 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
                 />
               ))}
 
-              {isSchemaMutable && needRenderEditor && (
+              {!isNodeSchemaCaptureEnabled && isSchemaMutable && needRenderEditor && (
                 <Popover open={isAddPropOpen}>
                   <PopoverTrigger asChild>
                     <button
@@ -233,7 +353,9 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
         </div>
       )}
 
-      {isOutput && <PortHandle port={port} />}
+      {
+        isOutput && <PortHandle port={port} />
+      }
     </div>
   )
 }

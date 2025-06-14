@@ -150,6 +150,12 @@ export {
   PopoverTrigger,
 } from './popover'
 
+// Radio Group
+export {
+  RadioGroup,
+  RadioGroupItem,
+} from './radio-group'
+
 // Scroll Area
 export {
   ScrollArea,

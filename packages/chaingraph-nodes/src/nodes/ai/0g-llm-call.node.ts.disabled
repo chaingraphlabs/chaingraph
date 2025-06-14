@@ -5,7 +5,11 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  EncryptedSecretValue,
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -14,6 +18,7 @@ import {
   ObjectSchema,
   Output,
   PortEnumFromObject,
+  Secret,
   String,
 } from '@badaitech/chaingraph-types'
 import { Decimal } from 'decimal.js'
@@ -87,12 +92,10 @@ class OGLLMCallNode extends BaseNode {
   model: keyof typeof llmModels = OGLLMModels.LLama
 
   @Input()
-  @String({
-    title: 'Private Key',
-    description: '0G private key',
-    ui: {
-      isPassword: true,
-    },
+  @Secret({
+    title: '0G Private Key',
+    description: 'Your 0G network private key used for authentication and transactions. This key is required to access the 0G network services and will be securely encrypted.',
+    secretType: '0g',
   })
   privateKey: string = ''
 
@@ -145,7 +148,7 @@ class OGLLMCallNode extends BaseNode {
   })
   output: string = ''
 
-  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+  async execute(ctx: ExecutionContext): Promise<NodeExecutionResult> {
     // eslint-disable-next-line ts/no-require-imports
     const { createZGComputeNetworkBroker } = require('@0glabs/0g-serving-broker')
     // eslint-disable-next-line ts/no-require-imports
@@ -154,8 +157,11 @@ class OGLLMCallNode extends BaseNode {
     if (!this.privateKey) {
       throw new Error('API Key is required')
     }
+
     const provider = new ethers.JsonRpcProvider('https://evmrpc-testnet.0g.ai')
-    const wallet = new ethers.Wallet(this.privateKey, provider)
+
+    const { privateKey } = await this.privateKey.decrypt(ctx)
+    const wallet = new ethers.Wallet(privateKey, provider)
 
     const broker = await createZGComputeNetworkBroker(wallet)
     // const services = await broker.inference.listService()

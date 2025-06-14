@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { StringPortConfig, StringPortValue } from '../base'
+import type { IPort, StringPortConfig, StringPortValue } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { StringPortPlugin } from '../plugins'
 
 /**
@@ -28,12 +29,12 @@ import { StringPortPlugin } from '../plugins'
  *   minLength: 3,
  *   maxLength: 50,
  *   pattern: '^[A-Za-z ]+$',
- *   defaultValue: { type: 'string', value: 'Hello' },
+ *   defaultValue: 'Hello',
  * }
  *
  * const port = new StringPort(config)
- * port.setValue({ type: 'string', value: 'John Doe' })
- * console.log(port.getValue()) // => { type: 'string', value: 'John Doe' }
+ * port.setValue('John Doe')
+ * console.log(port.getValue()) // => 'John Doe'
  */
 export class StringPort extends BasePort<StringPortConfig> {
   constructor(config: StringPortConfig) {
@@ -96,5 +97,18 @@ export class StringPort extends BasePort<StringPortConfig> {
    */
   protected deserializeValue(data: JSONValue): StringPortValue {
     return StringPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<StringPortConfig> {
+    const port = new StringPort({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
+    port.setValue(this.value) // Set the current value
+    return port
   }
 }

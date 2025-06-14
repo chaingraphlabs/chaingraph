@@ -10,8 +10,10 @@ import type {
   IPortConfig,
 } from '../port'
 import type { INode } from './interface'
+import {
+  generatePortID,
+} from '../port'
 import { deepCopy } from '../utils'
-import { generatePortID } from './id-generate'
 
 export interface Context {
   nodeId: string

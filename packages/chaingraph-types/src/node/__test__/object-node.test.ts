@@ -48,6 +48,7 @@ class User implements Record<string, unknown> {
 }
 
 @Node({
+  type: 'ObjectNode',
   title: 'Object Node',
   description: 'Node with an object port',
 })
@@ -72,6 +73,7 @@ class ObjectNode extends BaseNode {
 }
 
 @Node({
+  type: 'NestedObjectNode',
   title: 'Nested Object Node',
   description: 'Node with nested object ports',
 })
@@ -106,6 +108,7 @@ class NestedObjectNode extends BaseNode {
 }
 
 @Node({
+  type: 'ComplexNode',
   title: 'Complex Node',
   description: 'Node with nested arrays and objects',
 })

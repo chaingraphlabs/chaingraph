@@ -6,9 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEventData, Flow } from '@badaitech/chaingraph-types'
+import type {
+  EventQueue,
+  ExecutionEventData,
+  Flow,
+} from '@badaitech/chaingraph-types'
+import type { ExecutionEvent } from '@badaitech/chaingraph-types'
 import * as console from 'node:console'
-import { EventQueue, ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ExecutionEventEnum, ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { zAsyncIterable } from '../../procedures/subscriptions/utils/zAsyncIterable'
@@ -29,14 +34,12 @@ export const executionRouter = router({
         debug: z.boolean().optional(),
         breakpoints: z.array(z.string()).optional(),
       }).optional(),
-      integration: z.object({
-        badai: z.object({
-          agentID: z.string().optional(),
-          agentSession: z.string().optional(),
-          chatID: z.string().optional(),
-          messageID: z.number().optional(),
-        }).optional(),
-      }).optional(),
+      integration: z.record(
+        z.string(),
+        // TODO: add proper validation for integration objects
+        // For each integration type key, we accept any valid object
+        z.object({}).catchall(z.unknown()),
+      ).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const flow = await ctx.flowStore.getFlow(input.flowId)
@@ -50,7 +53,7 @@ export const executionRouter = router({
       const instance = await ctx.executionService.createExecution(
         flow as Flow,
         input.options,
-        input.integration?.badai,
+        input.integration,
       )
       if (input.options?.breakpoints) {
         for (const nodeId of input.options.breakpoints) {
@@ -67,6 +70,10 @@ export const executionRouter = router({
   start: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
+      events: z.array(z.object({
+        type: z.string(),
+        data: z.record(z.any()).optional(),
+      })).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const instance = await ctx.executionService.getInstance(input.executionId)
@@ -77,7 +84,7 @@ export const executionRouter = router({
         })
       }
 
-      await ctx.executionService.startExecution(input.executionId)
+      await ctx.executionService.startExecution(input.executionId, input.events)
       return { success: true }
     }),
 
@@ -149,7 +156,153 @@ export const executionRouter = router({
         })
       }
 
-      return ctx.executionService.getExecutionState(input.executionId)
+      const state = await ctx.executionService.getExecutionState(input.executionId)
+      const childExecutions = await ctx.executionService.getChildExecutions(input.executionId)
+
+      return {
+        ...state,
+        parentExecutionId: instance.parentExecutionId,
+        childExecutionIds: childExecutions,
+      }
+    }),
+
+  // Get child executions
+  getChildExecutions: executionContextProcedure
+    .input(z.object({
+      executionId: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const childIds = await ctx.executionService.getChildExecutions(input.executionId)
+      const childStates = await Promise.all(
+        childIds.map(async (childId) => {
+          const state = await ctx.executionService.getExecutionState(childId)
+          const instance = await ctx.executionService.getInstance(childId)
+          return {
+            ...state,
+            eventData: instance?.context.eventData,
+          }
+        }),
+      )
+      return childStates
+    }),
+
+  // Get execution tree - returns the full tree structure for the frontend
+  getExecutionTree: flowContextProcedure
+    .input(z.object({
+      flowId: z.string(), // Filter by flow ID
+      status: z.enum(['all', 'created', 'running', 'completed', 'failed', 'stopped', 'paused']).optional(),
+      limit: z.number().min(1).max(100).default(50),
+    }))
+    .query(async ({ input, ctx }) => {
+      // Get all executions from the store
+      const allExecutions = await ctx.executionStore.list()
+
+      // Filter executions
+      let filteredExecutions = allExecutions
+
+      // Filter by flow ID if provided
+      if (input.flowId) {
+        filteredExecutions = filteredExecutions.filter(exec => exec.flow.id === input.flowId)
+      }
+
+      // Filter by status if provided
+      if (input.status && input.status !== 'all') {
+        filteredExecutions = filteredExecutions.filter(exec => exec.status.toLowerCase() === input.status)
+      }
+
+      // Sort by creation time (newest first)
+      filteredExecutions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+
+      // Limit results
+      filteredExecutions = filteredExecutions.slice(0, input.limit)
+
+      // Build execution tree data
+      return Promise.all(
+        filteredExecutions.map(async (exec) => {
+          const state = await ctx.executionService.getExecutionState(exec.id)
+          const childIds = await ctx.executionService.getChildExecutions(exec.id)
+
+          return {
+            id: exec.id,
+            flowId: exec.flow.id || '',
+            flowName: exec.flow.metadata?.name || 'Unnamed Flow',
+            status: state.status,
+            parentExecutionId: exec.parentExecutionId,
+            executionDepth: exec.executionDepth || 0,
+            createdAt: exec.createdAt,
+            startedAt: state.startTime,
+            completedAt: state.endTime,
+            error: state.error,
+            triggeredByEvent: exec.context.eventData
+              ? {
+                  eventName: exec.context.eventData.eventName,
+                  payload: exec.context.eventData.payload,
+                }
+              : exec.externalEvents && exec.externalEvents.length > 0
+                ? {
+                    eventName: exec.externalEvents.map(e => e.type).join(', '),
+                    payload: {
+                      count: exec.externalEvents.length,
+                      source: 'external',
+                      events: exec.externalEvents,
+                    },
+                  }
+                : undefined,
+            childCount: childIds.length,
+          }
+        }),
+      )
+    }),
+
+  // Get execution details - for the detail panel
+  getExecutionDetails: executionContextProcedure
+    .input(z.object({
+      executionId: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const instance = await ctx.executionService.getInstance(input.executionId)
+      if (!instance) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Execution with id ${input.executionId} not found`,
+        })
+      }
+
+      const state = await ctx.executionService.getExecutionState(input.executionId)
+      const childIds = await ctx.executionService.getChildExecutions(input.executionId)
+
+      return {
+        id: instance.id,
+        flowId: instance.flow.id || '',
+        flowName: instance.flow.metadata?.name || 'Unnamed Flow',
+        status: state.status,
+        parentExecutionId: instance.parentExecutionId,
+        executionDepth: instance.executionDepth || 0,
+        createdAt: instance.createdAt,
+        startedAt: state.startTime,
+        completedAt: state.endTime,
+        error: state.error,
+        triggeredByEvent: instance.context.eventData
+          ? {
+              eventName: instance.context.eventData.eventName,
+              payload: instance.context.eventData.payload,
+            }
+          : instance.externalEvents && instance.externalEvents.length > 0
+            ? {
+                eventName: instance.externalEvents.map(e => e.type).join(', '),
+                payload: {
+                  count: instance.externalEvents.length,
+                  source: 'external',
+                  events: instance.externalEvents,
+                },
+              }
+            : undefined,
+        childCount: childIds.length,
+        // Additional details
+        integrations: instance.context.integrations,
+        options: instance.engine.getOptions(),
+        abortSignal: instance.context.abortController.signal.aborted,
+      }
     }),
 
   // Subscribe to execution events
@@ -173,45 +326,85 @@ export const executionRouter = router({
           message: `Execution with id ${input.executionId} not found`,
         })
       }
-
       const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
-      const eventQueue = new EventQueue<ExecutionEventImpl>(200)
 
+      // Send initial state event
+      yield new ExecutionEventImpl(
+        -1,
+        ExecutionEventEnum.FLOW_SUBSCRIBED,
+        new Date(),
+        {
+          flow: instance.flow,
+        } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
+      )
+
+      // Try to get the service's event queue for this execution
+      let serviceEventQueue: EventQueue<ExecutionEvent> | undefined
       try {
-        // Subscribe to engine events
-        const unsubscribe = instance.engine.onAll((event) => {
-          // Filter by event types if specified
-          if (!isAcceptedEventType(input.eventTypes, event.type)) {
-            return
-          }
-          eventQueue.publish(event)
-        })
+        serviceEventQueue = ctx.executionService.getEventQueue(input.executionId)
+      } catch (error) {
+        // Event queue doesn't exist - execution already finished
+        console.log(`Event queue not found for execution ${input.executionId}, loading from history`)
+      }
 
-        // // Send initial state event
-        // yield tracked(String(eventIndex++), new ExecutionEventImpl(
-        yield new ExecutionEventImpl(
-          -1,
-          ExecutionEventEnum.FLOW_SUBSCRIBED,
-          new Date(),
-          {
-            flow: instance.flow,
-          } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
-        )
+      // Create async iterator for the service's event queue
+      const iterator = serviceEventQueue ? serviceEventQueue.createIterator() : null
 
+      // If we have an event store and need to load historical events
+      const eventStore = (ctx.executionService as any).eventStore
+      if (eventStore) {
         try {
-          // Create async iterator for event queue
-          const iterator = eventQueue.createIterator()
+          // Load historical events from the database
+          const historicalEvents = await eventStore.getEvents(
+            input.executionId,
+            eventIndex > 0 ? eventIndex + 1 : 0, // Start from next event if reconnecting
+            10000, // Limit to 10000 events for performance
+          )
+
+          // Yield historical events
+          for (const event of historicalEvents) {
+            // Reconstruct ExecutionEventImpl from stored data
+            const eventImpl = new ExecutionEventImpl(
+              event.index,
+              event.type,
+              event.timestamp,
+              event.data,
+            )
+
+            // Filter by event types if specified
+            if (!isAcceptedEventType(input.eventTypes, eventImpl.type)) {
+              continue
+            }
+            yield eventImpl
+          }
+
+          console.log(`Streamed ${historicalEvents.length} historical events for execution ${input.executionId}`)
+        } catch (error) {
+          console.error('Error loading historical events:', error)
+        }
+      }
+
+      // If execution is still running and we have an event queue, stream live events
+      if (serviceEventQueue && iterator) {
+        try {
           for await (const event of iterator) {
-            // yield tracked(String(eventIndex++), event)
+            // Skip events we've already sent from history
+            if (event.index <= eventIndex) {
+              continue
+            }
+
+            // Filter by event types if specified
+            if (!isAcceptedEventType(input.eventTypes, event.type)) {
+              continue
+            }
             yield event
           }
         } catch (error) {
-          console.error('Error handling execution events:', error)
-        } finally {
-          unsubscribe()
+          console.error('Error handling live execution events:', error)
         }
-      } finally {
-        await eventQueue.close()
+      } else {
+        // No event queue means execution is finished
+        console.log(`Execution ${input.executionId} is complete, closing subscription`)
       }
     }),
 

@@ -22,7 +22,7 @@ import {
 } from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
 
-@Node({})
+@Node({ type: 'AsyncNode' })
 class AsyncNode extends BaseNode {
   @PortStream({
     direction: PortDirection.Output,
@@ -52,7 +52,7 @@ class AsyncNode extends BaseNode {
   }
 }
 
-@Node({})
+@Node({ type: 'MergerNode' })
 class MergerNode extends BaseNode {
   @PortStream({
     direction: PortDirection.Input,
@@ -103,7 +103,7 @@ class MergerNode extends BaseNode {
   }
 }
 
-@Node({})
+@Node({ type: 'FailingNode' })
 class FailingNode extends BaseNode {
   async execute(): Promise<NodeExecutionResult> {
     return {
@@ -123,7 +123,7 @@ class FailingNode extends BaseNode {
   }
 }
 
-@Node({})
+@Node({ type: 'ManualResolveNode' })
 class ManualResolveNode extends BaseNode {
   get resolve1(): () => void {
     return this._resolve1

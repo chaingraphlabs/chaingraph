@@ -29,6 +29,7 @@ import { createCaller } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
 
 @Node({
+  type: 'ScalarNode',
   title: 'Scalar Node',
   description: 'Node with scalar ports',
 })

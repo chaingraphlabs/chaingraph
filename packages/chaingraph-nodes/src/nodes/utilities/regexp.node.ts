@@ -123,15 +123,15 @@ Examples:
     title: 'Operation Mode',
     description: `How to process the text with the regular expression:
 
-• Match: Find all matching patterns in the text
-• Replace: Replace matched patterns with new text
-• Test: Check if the pattern exists in the text (true/false)
-• Extract Groups: Extract only the parts captured in parentheses`,
+• Match (match): Find all matching patterns in the text
+• Replace (replace): Replace matched patterns with new text
+• Test (test): Check if the pattern exists in the text (true/false)
+• Extract Groups (extract): Extract only the parts captured in parentheses`,
     options: [
-      { type: 'string', title: 'Match', id: RegExpMode.MATCH },
-      { type: 'string', title: 'Replace', id: RegExpMode.REPLACE },
-      { type: 'string', title: 'Test', id: RegExpMode.TEST },
-      { type: 'string', title: 'Extract Groups', id: RegExpMode.EXTRACT },
+      { type: 'string', title: 'Match', id: RegExpMode.MATCH, defaultValue: RegExpMode.MATCH },
+      { type: 'string', title: 'Replace', id: RegExpMode.REPLACE, defaultValue: RegExpMode.REPLACE },
+      { type: 'string', title: 'Test', id: RegExpMode.TEST, defaultValue: RegExpMode.TEST },
+      { type: 'string', title: 'Extract Groups', id: RegExpMode.EXTRACT, defaultValue: RegExpMode.EXTRACT },
     ],
     defaultValue: RegExpMode.MATCH,
   })
@@ -162,7 +162,7 @@ Example: "Name: $1" for pattern "(\\w+)" would replace "John" with "Name: John"`
   @Input()
   @String({
     title: 'Join Delimiter',
-    description: 'String used to join multiple matches or groups together',
+    description: 'String used to join multiple matches or groups together, only in match or extract mode',
     defaultValue: ' ',
   })
   @PortVisibility({

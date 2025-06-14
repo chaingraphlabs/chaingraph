@@ -28,6 +28,7 @@ import { createTestContext } from '../../../test/utils/createTestContext'
 import { createCallerFactory } from '../../../trpc'
 
 @Node({
+  type: 'ScalarNode',
   title: 'Scalar Node',
   description: 'Node with scalar ports',
 }, null)

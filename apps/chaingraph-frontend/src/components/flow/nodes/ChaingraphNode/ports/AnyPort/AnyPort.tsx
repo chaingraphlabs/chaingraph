@@ -23,6 +23,7 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
 import { cn } from '@/lib/utils'
+import { requestUpdatePortUI } from '@/store/ports'
 import { memo } from 'react'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -57,7 +58,26 @@ function AnyPortComponent(props: AnyPortProps) {
         config.direction === 'output' ? 'items-end' : 'items-start',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            // if port required and the value is empty, add a red underline
+            config.required
+            && (port.getValue() === undefined || port.getValue() === null || !port.validate())
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
         </PortTitle>
 

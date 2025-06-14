@@ -1,9 +1,9 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.1.28",
+  "version": "0.2.0",
   "private": false,
-  "description": "tRPC client and server for the BadAi Chaingraph",
+  "description": "tRPC client and server for the Chaingraph V2",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
@@ -31,7 +31,9 @@
     "build": "tsc -b",
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc -b",
-    "migrate": "npx drizzle-kit push --config ./server/drizzle.config.ts"
+    "migrate:push": "npx drizzle-kit push --config ./server/drizzle.config.ts",
+    "migrate:generate": "npx drizzle-kit generate --config ./server/drizzle.config.ts",
+    "migrate:run": "npx drizzle-kit migrate --config ./server/drizzle.config.ts"
   },
   "peerDependencies": {
     "@tanstack/react-query": ">= 5.67.1"
@@ -47,7 +49,9 @@
     "nanoid": "^5.1.5",
     "nanoid-dictionary": "^5.0.0",
     "pg": "^8.14.1",
-    "ws": "^8.18.1"
+    "ws": "^8.18.1",
+    "zod": "^3.25.56",
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
     "@badaitech/badai-api": "workspace:*",

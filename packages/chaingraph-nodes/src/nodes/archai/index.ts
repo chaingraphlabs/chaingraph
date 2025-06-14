@@ -7,6 +7,7 @@
  */
 
 export * from './append-message.node'
+export * from './archai-to-anthropic-converter.node'
 export * from './chat-history.node'
 export * from './chat-meta.node'
 export * from './create-message.node'

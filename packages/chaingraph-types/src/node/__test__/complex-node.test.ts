@@ -179,6 +179,7 @@ export class TestUserObject {
 }
 
 @Node({
+  type: 'UserProfileNode',
   title: 'User Profile',
   description: 'Test node description',
 })
@@ -421,6 +422,7 @@ export class UserProfileNode extends BaseNode {
 }
 
 @Node({
+  type: 'AdvancedNode',
   title: 'Advanced Node',
 })
 export class AdvancedNode extends BaseNode {

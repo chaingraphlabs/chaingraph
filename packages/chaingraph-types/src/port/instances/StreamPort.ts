@@ -7,8 +7,9 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { IPortConfig, StreamPortConfig, StreamPortValue } from '../base'
+import type { IPort, IPortConfig, StreamPortConfig, StreamPortValue } from '../base'
 import { BasePort } from '../base'
+import { generatePortID } from '../id-generate'
 import { StreamPortPlugin } from '../plugins'
 
 /**
@@ -144,6 +145,21 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    */
   protected deserializeValue(data: JSONValue): StreamPortValue<Item> {
     return StreamPortPlugin.deserializeValue(data, this.config) as StreamPortValue<Item>
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<StreamPortConfig<Item>> {
+    const port = new StreamPort<Item>({
+      ...this.config,
+      id: generatePortID(this.config.key || this.config.id || ''),
+    })
+    if (this.value) {
+      port.setValue(this.value) // Set the current value
+    }
+    return port
   }
 }
 

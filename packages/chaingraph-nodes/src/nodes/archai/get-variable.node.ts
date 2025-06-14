@@ -8,6 +8,8 @@
 
 import type {
   AnyPort,
+  ArchAIContext,
+
   ArrayPortConfig,
 
   ExecutionContext,
@@ -64,6 +66,7 @@ class ArchAIGetVariableNode extends BaseNode {
     title: 'Namespace',
     description: 'Namespace to retrieve the variable from',
     defaultValue: VariableNamespace.Chat,
+    required: true,
     options: [
       {
         id: VariableNamespace.Execution,
@@ -98,6 +101,7 @@ class ArchAIGetVariableNode extends BaseNode {
     title: 'Variable Type',
     description: 'Type of the variable to retrieve',
     defaultValue: VariableValueType.Any,
+    required: true,
     options: [
       {
         id: VariableValueType.String,
@@ -441,7 +445,9 @@ class ArchAIGetVariableNode extends BaseNode {
 
     try {
       // Get required context information
-      const agentSession = context.badAIContext?.agentSession
+      const archAIContext = context.getIntegration<ArchAIContext>('archai')
+
+      const agentSession = archAIContext?.agentSession
       if (!agentSession) {
         throw new Error('ArchAI agent session is not available in the context')
       }
@@ -457,14 +463,14 @@ class ArchAIGetVariableNode extends BaseNode {
         executionId = context.executionId
       } else if (this.namespace === VariableNamespace.Agent) {
         namespaceType = GraphQL.NamespaceType.Agent
-        agentId = context.badAIContext?.agentID
+        agentId = archAIContext?.agentID
       } else if (this.namespace === VariableNamespace.Chat) {
         namespaceType = GraphQL.NamespaceType.Chat
-        chatId = context.badAIContext?.chatID
+        chatId = archAIContext?.chatID
       } else if (this.namespace === VariableNamespace.ChatAgent) {
         namespaceType = GraphQL.NamespaceType.ChatAgent
-        agentId = context.badAIContext?.agentID
-        chatId = context.badAIContext?.chatID
+        agentId = archAIContext?.agentID
+        chatId = archAIContext?.chatID
       }
 
       if (!namespaceType) {

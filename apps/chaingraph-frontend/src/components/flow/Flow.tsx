@@ -16,12 +16,14 @@ import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
+import { useFlowCopyPaste } from '@/components/flow/hooks/useFlowCopyPaste'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
 import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
+import { $isConnectingBeginEvent, $isConnectingEndEvent } from '@/store/edges/stores'
 import { $executionState, useExecutionSubscription } from '@/store/execution'
 import { $activeFlowId, $flowSubscriptionState, setActiveFlowId, useFlowSubscription } from '@/store/flow'
 import { addNodeToFlow } from '@/store/nodes'
@@ -103,6 +105,14 @@ function Flow({
   // Setup node drop handling
   useNodeDrop()
 
+  // Setup copy-paste functionality
+  const copyPasteHook = useFlowCopyPaste()
+  // console.log('📋 Copy-paste hook initialized:', {
+  //   hasClipboardData: copyPasteHook.hasClipboardData,
+  //   clipboardNodeCount: copyPasteHook.clipboardNodeCount,
+  //   clipboardEdgeCount: copyPasteHook.clipboardEdgeCount,
+  // })
+
   // Get interaction callbacks
   const {
     onNodesChange,
@@ -111,6 +121,7 @@ function Flow({
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStart,
     onNodeDragStop,
   } = useFlowCallbacks()
 
@@ -205,6 +216,14 @@ function Flow({
         // onEdgesChange={onEdgesChange}
         onInit={onInit}
         onConnect={onConnect}
+        onConnectStart={() => {
+          // TODO: probably add an event data to indicate the connection start
+          $isConnectingBeginEvent(true)
+        }}
+        onConnectEnd={() => {
+          // TODO: probably add an event data to indicate the connection end
+          $isConnectingEndEvent(false)
+        }}
         onEdgesChange={onEdgesChange}
         onReconnect={onReconnect}
         onReconnectStart={onReconnectStart}
@@ -213,6 +232,7 @@ function Flow({
         // onReconnectStart={onReconnectStart}
         // onReconnectEnd={onReconnectEnd}
         // onNodeDrag={onNodeDrag}
+        onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         panOnScroll
         onViewportChange={onViewportChange}

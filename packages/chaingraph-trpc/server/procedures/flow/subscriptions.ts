@@ -45,17 +45,17 @@ export const subscribeToEvents = flowContextProcedure
     }
 
     let eventIndex = Number(lastEventId) || 0
-    const eventQueue = new EventQueue<FlowEvent>(200)
+    const eventQueue = new EventQueue<FlowEvent>(1000)
 
     try {
       // Subscribe to future events
-      const unsubscribe = flow.onEvent((event) => {
+      const unsubscribe = flow.onEvent(async (event) => {
         // Filter by event types if specified
         if (!isAcceptedEventType(eventTypes, event.type)) {
           return
         }
 
-        eventQueue.publish(event)
+        await eventQueue.publish(event)
       })
 
       // Send initial state events

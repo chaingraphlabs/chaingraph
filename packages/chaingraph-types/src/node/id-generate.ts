@@ -9,13 +9,6 @@
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
 
-export function generatePortID(propertyKey: string = ''): string {
-  return `${propertyKey}:PO${customAlphabet(nolookalikes, 16)()}`
-  // generate sortable UUID for now
-  // return uuidv7()
-}
-
-export function generatePortIDArrayElement(portId: string, elementKey: number): string {
-  return `${portId}[${elementKey}]`
-  // return `${portId}[${customAlphabet(nolookalikes, 16)()}]`
+export function generateNodeID(): string {
+  return `NO${customAlphabet(nolookalikes, 16)()}`
 }

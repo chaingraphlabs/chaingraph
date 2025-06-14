@@ -7,6 +7,7 @@
  */
 
 import type {
+  ArchAIContext,
   ExecutionContext,
   NodeEvent,
   NodeExecutionResult,
@@ -122,12 +123,13 @@ class ArchAIStreamMessageNode extends BaseNode {
   public buffer: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const chatID = context.badAIContext?.chatID
+    const archAIContext = context.getIntegration<ArchAIContext>('archai')
+    const chatID = archAIContext?.chatID
     if (!chatID) {
       throw new Error('ArchAI chat ID is not available in the context')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const agentSession = archAIContext?.agentSession
     if (!agentSession) {
       throw new Error('ArchAI agent session is not available in the context')
     }

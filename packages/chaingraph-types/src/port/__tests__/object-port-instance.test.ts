@@ -128,7 +128,7 @@ describe('objectPort Instance', () => {
 
       // Access nested field values directly.
       expect(userPort.getValue()?.name).toBe('Alice')
-      expect(userPort.getValue()?.address.state).toBe('IL')
+      expect(userPort.getValue()?.address?.state).toBe('IL')
     })
 
     it('should validate a complex object port with nested object fields', () => {
@@ -164,8 +164,8 @@ describe('objectPort Instance', () => {
       const errors = PortPluginRegistry.getInstance().getPlugin('object')?.validateValue(port.getValue()!, config)
       expect(errors).toHaveLength(0)
 
-      expect(port.getValue()?.address.city).toBe('New York')
-      expect(port.getValue()?.address.street).toBe('123 Main St')
+      expect(port.getValue()?.address?.city).toBe('New York')
+      expect(port.getValue()?.address?.street).toBe('123 Main St')
 
       // Now introduce an error inside the nested object: too-short city name.
       const badNestedValue = createObjectValue({
