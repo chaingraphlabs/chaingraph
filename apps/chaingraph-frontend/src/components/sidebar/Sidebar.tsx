@@ -8,6 +8,7 @@
 
 import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel'
 import { ExecutionTree } from '@/components/sidebar/tabs/execution-tree'
+import { ExportImport } from '@/components/sidebar/tabs/export-import'
 import { FlowList } from '@/components/sidebar/tabs/flow/FlowList'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
 import { Button } from '@/components/ui/button'
@@ -23,7 +24,7 @@ import {
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { Bug, GitBranch, LayersIcon, Scroll } from 'lucide-react'
+import { Bug, FileJson, GitBranch, LayersIcon, Scroll } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
 import { Help } from './tabs/Help'
@@ -37,7 +38,7 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
-export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'executions'
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'executions' | 'export-import'
 
 const defaultEnabledTabs: tabsType[] = [
   'flows',
@@ -47,6 +48,7 @@ const defaultEnabledTabs: tabsType[] = [
   'executions',
   'debug',
   'archai',
+  'export-import',
   // 'settings',
   // 'help',
 ]
@@ -65,8 +67,9 @@ export function Sidebar({
   onFlowSelected,
   enabledTabs = defaultEnabledTabs,
 }: SidebarProps) {
-  const tabs = [
-    {
+  // Define all available tabs
+  const allTabs = {
+    flows: {
       id: 'flows',
       icon: <Share1Icon />,
       label: 'Flows',
@@ -79,55 +82,68 @@ export function Sidebar({
         />
       ),
     },
-    {
+    nodes: {
       id: 'nodes',
       icon: <LayersIcon />,
       label: 'Nodes',
       content: <NodeList />,
     },
-    // {
+    // events: {
     //   id: 'events',
     //   icon: <CodeIcon />,
     //   label: 'Events',
     //   content: <EventList />,
     // },
-    {
+    variables: {
       id: 'variables',
       icon: <ValueIcon />,
       label: 'Variables',
       content: <VariableList />,
     },
-    {
+    executions: {
       id: 'executions',
       icon: <GitBranch />,
       label: 'Executions',
       content: <ExecutionTree />,
     },
-    {
+    'export-import': {
+      id: 'export-import',
+      icon: <FileJson />,
+      label: 'Export/Import',
+      content: <ExportImport />,
+    },
+    debug: {
       id: 'debug',
       icon: <Bug />,
       label: 'Debug',
       content: <DebugPanel />,
     },
-    {
+    archai: {
       id: 'archai',
       icon: <Scroll />,
       label: 'ArchAI Integration',
       content: <ArchAIIntegration />,
     },
-    {
+    settings: {
       id: 'settings',
       icon: <GearIcon />,
       label: 'Settings',
       content: <Settings />,
     },
-    {
+    help: {
       id: 'help',
       icon: <QuestionMarkIcon />,
       label: 'Help',
       content: <Help />,
     },
-  ].filter(tab => enabledTabs === undefined || enabledTabs.includes(tab.id as tabsType))
+  }
+
+  // Sort tabs according to enabledTabs order
+  const tabs = enabledTabs === undefined
+    ? Object.values(allTabs)
+    : enabledTabs
+        .filter(tabId => tabId in allTabs)
+        .map(tabId => allTabs[tabId])
 
   const [activeTab, setActiveTab] = useState<string | null>(() => {
     return localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB)

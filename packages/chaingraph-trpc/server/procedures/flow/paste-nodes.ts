@@ -30,7 +30,6 @@ export const PasteNodesInputSchema = z.object({
   flowId: z.string(),
   clipboardData: ClipboardDataSchema,
   pastePosition: PositionSchema,
-  positionOffset: PositionSchema.optional().default({ x: 20, y: 20 }),
   virtualOrigin: PositionSchema.optional(),
 })
 
@@ -43,7 +42,7 @@ export type PasteNodesInputType = z.infer<typeof PasteNodesInputSchema>
 export const pasteNodes = flowContextProcedure
   .input(PasteNodesInputSchema)
   .mutation(async ({ input, ctx }) => {
-    const { flowId, clipboardData, pastePosition, positionOffset, virtualOrigin } = input
+    const { flowId, clipboardData, pastePosition, virtualOrigin } = input
 
     if (!virtualOrigin) {
       console.warn(`[FLOW] No virtual origin provided, using default { x: 0, y: 0 }`)
@@ -59,11 +58,11 @@ export const pasteNodes = flowContextProcedure
         throw new Error(`Flow ${flowId} not found`)
       }
 
-      console.debug(`[FLOW] Starting paste operation for flow ${flowId}`)
-      console.debug(`[FLOW] Pasting ${clipboardData.nodes.length} nodes and ${clipboardData.edges.length} edges`)
-      console.debug(`[FLOW] Paste position:`, pastePosition)
-      console.debug(`[FLOW] Virtual origin:`, virtualOrigin)
-      console.debug(`[FLOW] Virtual origin:`, actualVirtualOrigin)
+      // console.debug(`[FLOW] Starting paste operation for flow ${flowId}`)
+      // console.debug(`[FLOW] Pasting ${clipboardData.nodes.length} nodes and ${clipboardData.edges.length} edges`)
+      // console.debug(`[FLOW] Paste position:`, pastePosition)
+      // console.debug(`[FLOW] Virtual origin:`, virtualOrigin)
+      // console.debug(`[FLOW] Virtual origin:`, actualVirtualOrigin)
 
       // Step 1: Clone nodes with new IDs using cloneWithNewId()
       const nodeIdMapping = new Map<string, string>()
@@ -90,8 +89,8 @@ export const pasteNodes = flowContextProcedure
           const cloneResult = originalNode.cloneWithNewId()
           const clonedNode = cloneResult.clonedNode as INode
 
-          console.debug(`[FLOW] Original node ${originalNode.id}: ${JSON.stringify(originalNode.serialize())}`)
-          console.debug(`[FLOW] Cloned node ${clonedNode.id}: ${JSON.stringify(clonedNode.serialize())}`)
+          // console.debug(`[FLOW] Original node ${originalNode.id}: ${JSON.stringify(originalNode.serialize())}`)
+          // console.debug(`[FLOW] Cloned node ${clonedNode.id}: ${JSON.stringify(clonedNode.serialize())}`)
 
           // Calculate new position using virtual origin system
           const originalPosition = originalNode.metadata.ui?.position || { x: 0, y: 0 }
@@ -123,6 +122,20 @@ export const pasteNodes = flowContextProcedure
         } catch (error) {
           console.error(`[FLOW] Failed to clone node ${i}:`, error)
           throw new Error(`Failed to clone node ${i}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+      }
+
+      // iterate over created nodes and fix the parent ID if it exists
+      for (const node of createdNodes) {
+        if (node.metadata.parentNodeId) {
+          const newParentId = nodeIdMapping.get(node.metadata.parentNodeId)
+          if (newParentId) {
+            node.metadata.parentNodeId = newParentId
+          } else {
+            // if there is no new parent ID, remove the parent reference
+            node.metadata.parentNodeId = undefined
+            console.warn(`[FLOW] Node ${node.id} has a parent node ID ${node.metadata.parentNodeId} that does not exist in the clipboard data`)
+          }
         }
       }
 

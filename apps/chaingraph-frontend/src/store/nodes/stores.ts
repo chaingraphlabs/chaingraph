@@ -85,7 +85,6 @@ export const pasteNodesToFlowFx = nodesDomain.createEffect(async (event: PasteNo
     flowId: event.flowId,
     clipboardData: event.clipboardData,
     pastePosition: event.pastePosition,
-    positionOffset: event.positionOffset,
     virtualOrigin: event.virtualOrigin,
   })
 })

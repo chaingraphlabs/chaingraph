@@ -248,7 +248,6 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
           timestamp: clipboard.timestamp,
         },
         pastePosition,
-        positionOffset: { x: 20, y: 20 }, // Default offset between pasted nodes
         virtualOrigin: clipboard.virtualOrigin,
       }
 
