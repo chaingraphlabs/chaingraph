@@ -178,6 +178,18 @@ export class UnencryptedSecretNode extends BaseNode {
       throw new Error('Unencrypted data is empty')
     }
 
+    const secretPort = this.findPortByKey('secret') as SecretPort<any> | undefined
+    if (!secretPort) {
+      throw new Error('Secret port not found')
+    }
+
+    // Update the secret port with the new secret type
+    secretPort.setConfig({
+      ...secretPort.getConfig(),
+      secretType: this.secretType,
+    })
+    await this.updatePort(secretPort as IPort)
+
     this.secret = await this.encryptDirectSecret(context, this.secretType, this.unencryptedData as SecretTypeMap[typeof this.secretType])
 
     return {}
