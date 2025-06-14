@@ -50,7 +50,6 @@ export class UnencryptedSecretNode extends BaseNode {
   @PortEnum({
     title: 'Secret Type',
     description: 'Type of secret to encrypt unencrypted data',
-    // iterate over secretTypeMetadata object to create options
     options: Object.entries(secretTypeMetadata).map(([key, metadata]) => ({
       id: key,
       type: 'string',
@@ -96,7 +95,6 @@ export class UnencryptedSecretNode extends BaseNode {
     if (event.port.key === 'secretType') {
       const secretType = event.port.getValue() as SecretType
       if (!secretType) {
-        // TODO: If no secret type is selected, reset the secret port
         const unencryptedDataPort = this.findPortByKey('unencryptedData') as ObjectPort | undefined
         if (unencryptedDataPort) {
           // Remove all existing fields from the unencryptedData port schema
@@ -104,6 +102,16 @@ export class UnencryptedSecretNode extends BaseNode {
             this.removeObjectProperty(unencryptedDataPort as IPort, fieldKey)
           }
           await this.updatePort(unencryptedDataPort as IPort)
+        }
+
+        const secretPort = this.findPortByKey('secret') as SecretPort<any> | undefined
+        if (secretPort) {
+          // Reset the secret port configuration
+          secretPort.setConfig({
+            ...secretPort.getConfig(),
+            secretType: 'string',
+          })
+          await this.updatePort(secretPort as IPort)
         }
 
         return
