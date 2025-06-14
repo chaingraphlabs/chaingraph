@@ -65,6 +65,11 @@ interface SecretFieldMetadata {
    * A textual label of a secret field. Used for displaying in human-readable form.
    */
   label: string
+
+  /**
+   * Description of the secret field.
+   */
+  description: string
 }
 
 /**
@@ -97,6 +102,7 @@ export const secretTypeMetadata = {
     fields: {
       value: {
         label: 'Secret Value',
+        description: 'Secret Value',
       },
     },
   },
@@ -106,6 +112,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'OpenAI API Key',
       },
     },
   },
@@ -115,6 +122,7 @@ export const secretTypeMetadata = {
     fields: {
       privateKey: {
         label: '0G Private Key',
+        description: '0G Private Key for authentication',
       },
     },
   },
@@ -124,6 +132,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'Anthropic API Key',
       },
     },
   },
@@ -133,6 +142,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'CoinMarketCap API Key',
+        description: 'API Key for CoinMarketCap',
       },
     },
   },
@@ -142,6 +152,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'API Key for DeepSeek',
       },
     },
   },
@@ -151,6 +162,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'API Key for Groq',
       },
     },
   },
@@ -160,9 +172,11 @@ export const secretTypeMetadata = {
     fields: {
       key: {
         label: 'API Key',
+        description: 'API Key for X API',
       },
       secretKey: {
         label: 'Secret Key',
+        description: 'Secret Key for X API',
       },
     },
   },
@@ -172,9 +186,11 @@ export const secretTypeMetadata = {
     fields: {
       key: {
         label: 'App Key',
+        description: 'App Key for X App',
       },
       secretKey: {
         label: 'Secret Key',
+        description: 'Secret Key for X App',
       },
     },
   },

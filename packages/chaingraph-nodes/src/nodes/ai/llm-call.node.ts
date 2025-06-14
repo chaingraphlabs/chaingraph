@@ -13,7 +13,7 @@ import type {
   SecretTypeMap,
 } from '@badaitech/chaingraph-types'
 import {
-  Secret,
+  PortSecret,
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
@@ -94,7 +94,7 @@ class LLMCallNode extends BaseNode {
   model: keyof typeof llmModels = LLMModels.Gpt4oMini
 
   @Input()
-  @Secret<SupportedProviders>({
+  @PortSecret<SupportedProviders>({
     title: 'API Key',
     description: 'LLM provider API Key',
     secretType: 'openai',
