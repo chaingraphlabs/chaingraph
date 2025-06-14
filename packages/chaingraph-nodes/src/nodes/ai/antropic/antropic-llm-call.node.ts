@@ -22,7 +22,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
-  Secret,
+  PortSecret,
 } from '@badaitech/chaingraph-types'
 import {
   findPort,
@@ -161,7 +161,7 @@ class AntropicLLMCallNodeFeatures {
 })
 export class LLMConfig {
   @Input()
-  @Secret<'anthropic'>({
+  @PortSecret<'anthropic'>({
     title: 'API Key',
     description: 'Your Anthropic API key',
     secretType: 'anthropic',
@@ -614,7 +614,7 @@ export class AntropicLlmCallNode extends BaseNode {
       }
     }
 
-    if (this.config.tool_choice) {
+    if (this.config.tool_choice && this.tools && this.tools.length > 0) {
       params.tool_choice = {
         type: this.config.tool_choice.type as any,
         disable_parallel_tool_use: this.config.tool_choice.disable_parallel_tool_use,

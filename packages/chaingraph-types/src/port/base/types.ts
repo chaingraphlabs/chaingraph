@@ -225,7 +225,7 @@ export type ArrayPortValue<Item extends IPortConfig = IPortConfig> = Array<Extra
 /**
  * Secret port value.
  */
-export type SecretPortValue<Secret extends SecretType = 'string'> = EncryptedSecretValue<Secret>
+export type SecretPortValue<Secret extends SecretType> = EncryptedSecretValue<Secret>
 
 /**
  * Object port value
@@ -317,7 +317,7 @@ export type ValueTypeMap = ValidateValueTypeMap<{
   object: ObjectPortValue<any>
   stream: StreamPortValue<any>
   enum: EnumPortValue
-  secret: SecretPortValue
+  secret: SecretPortValue<any>
   any: AnyPortValue
 }>
 

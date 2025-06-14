@@ -19,7 +19,7 @@ type SecretDecoratorConfig<S extends SecretType> =
 /**
  * Decorator to specify a type configuration for type "secret".
  */
-export function Secret<S extends SecretType>(config?: SecretDecoratorConfig<S>): PropertyDecorator {
+export function PortSecret<S extends SecretType>(config?: SecretDecoratorConfig<S>): PropertyDecorator {
   return Port({
     type: 'secret',
     secretType: 'string',

@@ -65,11 +65,17 @@ class OKXGetSwapDataNode extends BaseNode {
     // Validate inputs
     this.validateInputs()
 
+    // Decrypt secrets
+    if (!this.config.secrets)
+      throw new Error('Secrets configuration is required')
+
+    const secrets = await this.config.secrets.decrypt(context)
+
     // Initialize the OKX DEX client
     const client = new OKXDexClient({
-      apiKey: this.config.apiKey,
-      secretKey: this.config.secretKey,
-      apiPassphrase: this.config.apiPassphrase,
+      apiKey: secrets.apiKey,
+      secretKey: secrets.secretKey,
+      apiPassphrase: secrets.apiPassphrase,
       projectId: this.config.projectId,
       // baseUrl: this.config.baseUrl,
       // timeout: this.config.timeout,
@@ -123,15 +129,6 @@ class OKXGetSwapDataNode extends BaseNode {
    */
   private validateInputs(): void {
     // Validate OKX config
-    if (!this.config.apiKey)
-      throw new Error('API Key is required')
-
-    if (!this.config.secretKey)
-      throw new Error('Secret Key is required')
-
-    if (!this.config.apiPassphrase)
-      throw new Error('API Passphrase is required')
-
     if (!this.config.projectId)
       throw new Error('Project ID is required')
 

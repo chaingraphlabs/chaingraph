@@ -42,6 +42,11 @@ export const secretTypeSchemas = {
     key: z.string().min(1),
     secretKey: z.string().min(1),
   }),
+  'OkxDexApi': z.object({
+    apiKey: z.string().min(1),
+    secretKey: z.string().min(1),
+    apiPassphrase: z.string().min(1),
+  }),
   'string': z.object({
     value: z.string().min(1),
   }),
@@ -65,6 +70,11 @@ interface SecretFieldMetadata {
    * A textual label of a secret field. Used for displaying in human-readable form.
    */
   label: string
+
+  /**
+   * Description of the secret field.
+   */
+  description: string
 }
 
 /**
@@ -97,6 +107,7 @@ export const secretTypeMetadata = {
     fields: {
       value: {
         label: 'Secret Value',
+        description: 'Secret Value',
       },
     },
   },
@@ -106,6 +117,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'OpenAI API Key',
       },
     },
   },
@@ -115,6 +127,7 @@ export const secretTypeMetadata = {
     fields: {
       privateKey: {
         label: '0G Private Key',
+        description: '0G Private Key for authentication',
       },
     },
   },
@@ -124,6 +137,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'Anthropic API Key',
       },
     },
   },
@@ -133,6 +147,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'CoinMarketCap API Key',
+        description: 'API Key for CoinMarketCap',
       },
     },
   },
@@ -142,6 +157,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'API Key for DeepSeek',
       },
     },
   },
@@ -151,6 +167,7 @@ export const secretTypeMetadata = {
     fields: {
       apiKey: {
         label: 'API Key',
+        description: 'API Key for Groq',
       },
     },
   },
@@ -160,9 +177,11 @@ export const secretTypeMetadata = {
     fields: {
       key: {
         label: 'API Key',
+        description: 'API Key for X API',
       },
       secretKey: {
         label: 'Secret Key',
+        description: 'Secret Key for X API',
       },
     },
   },
@@ -172,9 +191,29 @@ export const secretTypeMetadata = {
     fields: {
       key: {
         label: 'App Key',
+        description: 'App Key for X App',
       },
       secretKey: {
         label: 'Secret Key',
+        description: 'Secret Key for X App',
+      },
+    },
+  },
+  'OkxDexApi': {
+    icon: 'Okx',
+    label: 'OKX DEX API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+        description: 'API Key for OKX DEX',
+      },
+      secretKey: {
+        label: 'Secret Key',
+        description: 'Secret Key for OKX DEX',
+      },
+      apiPassphrase: {
+        label: 'API Passphrase',
+        description: 'API Passphrase for OKX DEX',
       },
     },
   },
@@ -195,6 +234,7 @@ export const compatibleSecretTypes: Record<SecretType, SecretType[]> = {
   'groq': ['groq'],
   'xAPI': ['xAPI'],
   'xApp': ['xApp'],
+  'OkxDexApi': ['OkxDexApi'],
   'string': ['openai', 'anthropic', 'string'],
 }
 

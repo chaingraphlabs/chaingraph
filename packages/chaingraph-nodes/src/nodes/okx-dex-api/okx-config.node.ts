@@ -88,9 +88,7 @@ class OKXConfigNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Create and populate the configuration object
-    this.config.apiKey = this.configInput.apiKey
-    this.config.secretKey = this.configInput.secretKey
-    this.config.apiPassphrase = this.configInput.apiPassphrase
+    this.config.secrets = this.configInput.secrets
     this.config.projectId = this.configInput.projectId
     this.config.baseUrl = this.configInput.baseUrl
     this.config.networks = this.configInput.networks

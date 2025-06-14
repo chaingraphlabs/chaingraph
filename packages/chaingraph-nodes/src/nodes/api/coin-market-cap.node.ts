@@ -20,7 +20,7 @@ import {
   Output,
   PortArray,
   PortObject,
-  Secret,
+  PortSecret,
   String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
@@ -135,7 +135,7 @@ class CoinMarketCapNode extends BaseNode {
   date: string = ''
 
   @Input()
-  @Secret<'coinmarketcap'>({
+  @PortSecret<'coinmarketcap'>({
     title: 'API Key',
     secretType: 'coinmarketcap',
     description: 'CoinMarketCap API Key',

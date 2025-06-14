@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.1
+
+### Patch Changes
+
+- feat: Replace DirectSecret with UnencryptedSecretNode, rename Secret decorator to PortSecret, migrate OKX to use centralized secret management, and add configurable secret types with encryption support
+
 ## 0.2.0
 
 ### Minor Changes

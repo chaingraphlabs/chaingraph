@@ -10,9 +10,13 @@ import type {
   ArchAIContext,
   EncryptedSecretValue,
   ExecutionContext,
+  IPort,
+
   NodeExecutionResult,
+  SecretPort,
   SecretType,
 } from '@badaitech/chaingraph-types'
+
 import { Buffer } from 'node:buffer'
 import { subtle } from 'node:crypto'
 import process from 'node:process'
@@ -23,7 +27,7 @@ import {
   isSupportedSecretType,
   Node,
   Output,
-  Secret,
+  PortSecret,
   String,
   wrapSecret,
 } from '@badaitech/chaingraph-types'
@@ -45,7 +49,7 @@ export class SecretNode extends BaseNode {
   secretID?: string
 
   @Output()
-  @Secret({
+  @PortSecret({
     title: 'Secret Value',
     description: 'The secret value',
     secretType: 'string',
@@ -85,6 +89,15 @@ export class SecretNode extends BaseNode {
       encrypted: secret.secret.encrypted,
       publicKey: secret.publicKey,
     })
+
+    const secretPort = this.findPortByKey('secret') as SecretPort<SecretType>
+    if (secretPort) {
+      secretPort.setConfig({
+        ...secretPort.getConfig(),
+        secretType,
+      })
+      await this.updatePort(secretPort as IPort)
+    }
 
     return {}
   }
