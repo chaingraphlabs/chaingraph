@@ -7,35 +7,36 @@
  */
 
 import type {
+    AnyPort,
     ExecutionContext,
     IPort,
     IPortConfig,
     NodeEvent,
     NodeExecutionResult,
-    AnyPort,
     PortDisconnectedEvent,
     PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
+
 import {
     BaseNode,
-    ExecutionEventEnum,
     Boolean,
+    ExecutionEventEnum,
     Input,
     Node,
     NodeEventType,
+    Number as NumberDecorator,
     Output,
     PortAny,
     String,
-    Number as NumberDecorator,
     StringEnum,
 } from '@badaitech/chaingraph-types'
+import * as yaml from 'js-yaml'
 import { NODE_CATEGORIES } from '../../categories'
-import * as yaml from 'js-yaml' // You'll need to add this dependency
 
-const SUPPORTED_TYPES = ['number', 'boolean', 'string', 'object', 'array'];
-const DEFAULT_MAX_DEPTH = 6;
-const INPUT_FORMATS = ['auto', 'json', 'yaml'];
-type InputFormat = typeof INPUT_FORMATS[number];
+const SUPPORTED_TYPES = ['number', 'boolean', 'string', 'object', 'array']
+const DEFAULT_MAX_DEPTH = 6
+const INPUT_FORMATS = ['auto', 'json', 'yaml']
+type InputFormat = typeof INPUT_FORMATS[number]
 
 @Node({
     type: 'JsonYamlDeserializerNode',
@@ -71,7 +72,7 @@ class JsonYamlDeserializerNode extends BaseNode {
             { id: 'auto', type: 'string', title: 'Auto' },
             { id: 'json', type: 'string', title: 'JSON' },
             { id: 'yaml', type: 'string', title: 'YAML' },
-        ]
+        ],
     })
     inputFormat: InputFormat = 'auto'
 
@@ -97,49 +98,49 @@ class JsonYamlDeserializerNode extends BaseNode {
         description: 'The parsed object according to the schema',
         ui: {
             hideEditor: true,
-        }
+        },
     })
     deserializedObject: any = null
 
     async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
         try {
-            let parsedData: any;
+            let parsedData: any
 
             if (this.inputString.trim() === '') {
-                parsedData = null;
+                parsedData = null
             } else {
                 try {
-                    parsedData = this.parseInputString(this.inputString);
+                    parsedData = this.parseInputString(this.inputString)
                 } catch (error) {
-                    throw new Error(`Failed to parse input string: ${error}`);
+                    throw new Error(`Failed to parse input string: ${error}`)
                 }
             }
 
-            const outputPort = this.findPortByKey('deserializedObject') as AnyPort;
+            const outputPort = this.findPortByKey('deserializedObject') as AnyPort
 
             if (!outputPort) {
-                throw new Error(`Cannot locate deserializedObject port`);
+                throw new Error(`Cannot locate deserializedObject port`)
             }
 
             const schema = outputPort.getRawConfig().underlyingType
 
             if (!schema) {
-                throw new Error(`Output port has no schema assigned. Make sure that you've provided a valid schema of one of these types: ${SUPPORTED_TYPES.join(', ')}.`);
+                throw new Error(`Output port has no schema assigned. Make sure that you've provided a valid schema of one of these types: ${SUPPORTED_TYPES.join(', ')}.`)
             }
 
             try {
                 const processedValue = this.filterOutputBySchema(
                     parsedData,
                     schema,
-                    (!this.maxDepth || this.maxDepth === 0) ? DEFAULT_MAX_DEPTH : this.maxDepth
+                    (!this.maxDepth || this.maxDepth === 0) ? DEFAULT_MAX_DEPTH : this.maxDepth,
                 )
-                outputPort.setValue(processedValue);
+                outputPort.setValue(processedValue)
             } catch (error) {
-                throw new Error(`Error applying value to provided schema: ${error}`);
+                throw new Error(`Error applying value to provided schema: ${error}`)
             }
-            return {};
+            return {}
         } catch (error) {
-            throw new Error(`Failed to execute: ${error}`);
+            throw new Error(`Failed to execute: ${error}`)
         }
     }
 
@@ -149,21 +150,21 @@ class JsonYamlDeserializerNode extends BaseNode {
     private parseInputString(input: string): any {
         if (this.inputFormat === 'auto' || 'json') {
             try {
-                return JSON.parse(input);
+                return JSON.parse(input)
             } catch (jsonError) {
                 if (this.inputFormat === 'auto') {
                     try {
-                        return yaml.load(input);
+                        return yaml.load(input)
                     } catch (yamlError) {
-                        throw new Error(`Format error: Input must be valid JSON or YAML`);
+                        throw new Error(`Format error: Input must be valid JSON or YAML`)
                     }
                 }
             }
         } else if (this.inputFormat === 'yaml') {
-            return yaml.load(input);
+            return yaml.load(input)
         }
 
-        throw new Error(`Unsupported input format: ${this.inputFormat}`);
+        throw new Error(`Unsupported input format: ${this.inputFormat}`)
     }
 
     /**
@@ -173,16 +174,16 @@ class JsonYamlDeserializerNode extends BaseNode {
     private filterOutputBySchema(
         value: any,
         schema: IPortConfig,
-        depthLeft: number
-    ): Object | Array<any> | Number | string | number | null {
+        depthLeft: number,
+    ): object | Array<any> | number | string | number | null {
         if (value === null || value === undefined) {
-            return null;
+            return null
         }
 
-        const schemaType = schema.type;
+        const schemaType = schema.type
 
         if (schemaType === 'any') {
-            return value;
+            return value
         }
 
         if (!SUPPORTED_TYPES.includes(schemaType)) {
@@ -191,80 +192,80 @@ class JsonYamlDeserializerNode extends BaseNode {
 
         // Handle primitive types
         if (['string', 'number', 'boolean'].includes(schemaType)) {
-            const valueType = typeof value;
+            const valueType = typeof value
             if (valueType === schemaType) {
-                return value;
+                return value
             } else {
-                throw new Error(`Types mismatch: expected ${schemaType} but got ${valueType}`);
+                throw new Error(`Types mismatch: expected ${schemaType} but got ${valueType}`)
             }
         }
 
         // Handle arrays
         if (schemaType === 'array') {
             if (!Array.isArray(value)) {
-                throw new Error(`Types mismatch: Expected array but got ${typeof value}`);
+                throw new TypeError(`Types mismatch: Expected array but got ${typeof value}`)
             }
 
             if (!schema.itemConfig || depthLeft <= 0) {
-                return value;
+                return value
             }
 
-            const result: any[] = [];
-            const itemSchema = schema.itemConfig;
+            const result: any[] = []
+            const itemSchema = schema.itemConfig
 
             for (const item of value) {
                 try {
                     const processedItem = this.filterOutputBySchema(
                         item,
                         itemSchema,
-                        depthLeft - 1
-                    );
-                    result.push(processedItem);
+                        depthLeft - 1,
+                    )
+                    result.push(processedItem)
                 } catch (error) {
-                    throw error;
+                    throw new Error(`Error adding array item to the output: ${error}`)
                 }
             }
-            return result;
+            return result
         }
 
         // Handle objects
         if (schemaType === 'object') {
             if (typeof value !== 'object' || Array.isArray(value)) {
-                throw new Error(`Expected object but got ${Array.isArray(value) ? 'array' : typeof value}`);
+                throw new TypeError(`Expected object but got ${Array.isArray(value) ? 'array' : typeof value}`)
             }
 
             if (depthLeft <= 0 || !schema.schema || !schema.schema.properties) {
-                return value;
+                return value
             }
 
-            const result: any = {};
+            const result: any = {}
 
             for (const [key, propSchema] of Object.entries(schema.schema.properties)) {
-                const typedPropSchema = propSchema as IPortConfig;
+                const typedPropSchema = propSchema as IPortConfig
 
                 if (key in value) {
                     try {
                         result[key] = this.filterOutputBySchema(
                             value[key],
                             typedPropSchema,
-                            depthLeft - 1
-                        );
+                            depthLeft - 1,
+                        )
                     } catch (error) {
                         if (this.ignoreMissingFields) {
-                            result[key] = null;
+                            result[key] = null
                         } else {
-                            throw error;
+                            throw error
                         }
                     }
                 } else if (this.ignoreMissingFields) {
-                    result[key] = null;
+                    result[key] = null
                 } else {
-                    throw new Error(`Required field '${key}' is missing in the input data`);
+                    throw new Error(`Required field '${key}' is missing in the input data`)
                 }
             }
-            return result;
+            return result
         }
-        return null;
+        return null
     }
 
     /**
@@ -287,7 +288,7 @@ class JsonYamlDeserializerNode extends BaseNode {
      * !!! To depecate after disconnections fix
      */
     private async handleDisconnection(event: PortDisconnectedEvent): Promise<void> {
-        const inputPortConfig = event.sourcePort.getConfig();
+        const inputPortConfig = event.sourcePort.getConfig()
         if (
             !inputPortConfig
             || inputPortConfig.key !== 'outputSchema'
@@ -299,7 +300,7 @@ class JsonYamlDeserializerNode extends BaseNode {
 
         const inputAnyPort = event.sourcePort as AnyPort
         const outputPort = this.findPortByKey('deserializedObject')
-        const outputAnyPort = outputPort as AnyPort;
+        const outputAnyPort = outputPort as AnyPort
 
         if (!inputAnyPort || !outputPort || !outputAnyPort) {
             return
@@ -307,12 +308,12 @@ class JsonYamlDeserializerNode extends BaseNode {
 
         try {
             await inputAnyPort.setUnderlyingType(undefined)
-            await this.updatePort(inputAnyPort as IPort);
+            await this.updatePort(inputAnyPort as IPort)
 
             await outputAnyPort.setUnderlyingType(undefined)
-            await this.updatePort(outputAnyPort as IPort);
+            await this.updatePort(outputAnyPort as IPort)
         } catch (error) {
-            throw new Error(`Error synchronizing schema: ${error}`);
+            throw new Error(`Error synchronizing schema: ${error}`)
         }
     }
 
@@ -320,7 +321,7 @@ class JsonYamlDeserializerNode extends BaseNode {
      * Handle input port update events to sync schema to the output port
      */
     private async handleUpdate(event: PortUpdateEvent): Promise<void> {
-        const inputPortConfig = event.port.getConfig();
+        const inputPortConfig = event.port.getConfig()
         if (
             !inputPortConfig
             || inputPortConfig.key !== 'outputSchema'
@@ -334,7 +335,7 @@ class JsonYamlDeserializerNode extends BaseNode {
         const inputPortRawConfig = inputPort.getRawConfig()
 
         const outputPort = this.findPortByKey('deserializedObject')
-        const outputAnyPort = outputPort as AnyPort;
+        const outputAnyPort = outputPort as AnyPort
 
         if (!outputPort || !outputAnyPort) {
             return
@@ -345,10 +346,10 @@ class JsonYamlDeserializerNode extends BaseNode {
         }
 
         try {
-            outputAnyPort.setUnderlyingType(inputPortRawConfig.underlyingType);
-            await this.updatePort(outputAnyPort as IPort);
+            outputAnyPort.setUnderlyingType(inputPortRawConfig.underlyingType)
+            await this.updatePort(outputAnyPort as IPort)
         } catch (error) {
-            throw new Error(`Error synchronizing schema: ${error}`);
+            throw new Error(`Error synchronizing schema: ${error}`)
         }
     }
 
