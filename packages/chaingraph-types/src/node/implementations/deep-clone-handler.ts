@@ -8,6 +8,7 @@
 
 import type { IPort } from '../../port'
 import type { CloneWithNewIdResult, INodeComposite } from '../interfaces'
+import { NodeStatus } from '../../node/node-enums'
 import { generateNodeID } from '../id-generate'
 
 /**
@@ -70,6 +71,7 @@ export class DeepCloneHandler {
     // Rebuild port bindings and apply any post-clone logic
     clonedNode.rebuildPortBindings()
     clonedNode.setVersion(sourceNode.getVersion())
+    clonedNode.setStatus(NodeStatus.Initialized)
 
     return {
       clonedNode,

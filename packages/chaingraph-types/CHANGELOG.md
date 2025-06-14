@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.2.0-dev.4
+
+### Patch Changes
+
+- feat: Enhance node resizing logic with visibility and dimension checks
+
 ## 0.2.0-dev.3
 
 ### Patch Changes

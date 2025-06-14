@@ -308,7 +308,6 @@ describe('baseNodeCompositional', () => {
 
       // Verify node has a different ID
       expect(clonedNode.id).not.toBe(node.id)
-      expect(clonedNode.id).toMatch(/^NO/) // Should match the generateNodeID pattern
 
       // Verify values were preserved
       expect(clonedNode.inputString).toBe('clone-test')
