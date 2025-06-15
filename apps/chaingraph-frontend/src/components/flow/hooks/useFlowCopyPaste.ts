@@ -23,6 +23,7 @@ import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { $edges } from '../../../store/edges/stores'
 import { $activeFlowMetadata } from '../../../store/flow/stores'
+import { $hasAnyFocusedEditor } from '../../../store/focused-editors'
 import { $nodes, pasteNodesToFlowFx } from '../../../store/nodes/stores'
 import { useNodeSelection } from './useNodeSelection'
 
@@ -93,6 +94,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
   const nodes = useUnit($nodes)
   const edges = useUnit($edges)
   const activeFlowMetadata = useUnit($activeFlowMetadata)
+  const hasAnyFocusedEditor = useUnit($hasAnyFocusedEditor)
   const { screenToFlowPosition } = useReactFlow()
 
   // Get node selection utilities
@@ -281,6 +283,12 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
     console.log(`⌨️ Keyboard shortcut detected: ${event.metaKey ? 'Cmd' : 'Ctrl'}+${event.key}`)
 
+    // Skip copy/paste operations if any port editor is focused
+    if (hasAnyFocusedEditor) {
+      console.log('⏭️ Skipping copy/paste operation - port editor is focused')
+      return
+    }
+
     switch (event.key.toLowerCase()) {
       case 'c': {
         console.log('📋 Copy shortcut triggered')
@@ -304,7 +312,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         // Do nothing for other keys
         break
     }
-  }, [copySelectedNodes, pasteNodes])
+  }, [copySelectedNodes, pasteNodes, hasAnyFocusedEditor])
 
   // Set up event listeners
   useEffect(() => {

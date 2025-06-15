@@ -21,6 +21,7 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { requestUpdatePortUI } from '@/store/ports'
 import { memo, useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
@@ -41,6 +42,9 @@ function BooleanPortComponent(props: BooleanPortProps) {
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
 
   // Memoize the edges for this port
   const connectedEdges = useMemo(() => {
@@ -98,6 +102,8 @@ function BooleanPortComponent(props: BooleanPortProps) {
             disabled={executionID ? true : ui?.disabled ?? false}
             checked={port.getValue()}
             onCheckedChange={checked => handleChange(checked)}
+            onFocus={trackFocus}
+            onBlur={trackBlur}
             className={cn('nodrag')}
           />
         )}

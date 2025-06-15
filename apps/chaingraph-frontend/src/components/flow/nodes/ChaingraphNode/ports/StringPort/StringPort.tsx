@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useStore } from '@xyflow/react'
 import {
@@ -63,6 +64,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
   }, [getEdgesForPort, port.id])
 
   const [focused, setFocused] = useState(false)
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
 
   const handleChange = useCallback(<Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
     if (!e.nativeEvent.isTrusted) {
@@ -172,6 +176,8 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
           <Input
             value={port.getValue() ?? ''}
             onChange={handleChange}
+            onFocus={trackFocus}
+            onBlur={trackBlur}
             className={cn(
               'resize-none shadow-none text-xs p-1',
               'w-full',
@@ -202,10 +208,12 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
               onBlur={(_) => {
                 handleResize()
                 setFocused(false)
+                trackBlur()
               }}
               onFocus={(_) => {
                 handleResize()
                 setFocused(true)
+                trackFocus()
               }}
               style={{
               //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
