@@ -31,7 +31,7 @@ class Networks {
     ETHEREUM: { id: 'eth-mainnet', title: 'Ethereum' },
     ARBITRUM: { id: 'arb-mainnet', title: 'Arbitrum' },
     ARBITRUM_NOVA: { id: 'arbnova-mainnet', title: 'Arbitrum Nova' },
-    OPT_MAINNET: { id: 'opt-mainnet', title: 'Optimism' },
+    OPTIMISM: { id: 'opt-mainnet', title: 'Optimism' },
     POLYGON: { id: 'polygon-mainnet', title: 'Polygon PoS' },
     POLYGON_ZKEVM: { id: 'polygonzkevm-mainnet', title: 'Polygon zkEVM' },
     BASE: { id: 'base-mainnet', title: 'Base' },
