@@ -26,6 +26,9 @@ class OnNewMessageEventNode extends BaseNode {
     schema: Message,
     title: 'Message',
     description: 'The received message data from ArchAI chat',
+    ui: {
+      hideEditor: true,
+    },
   })
   message?: Message
 
