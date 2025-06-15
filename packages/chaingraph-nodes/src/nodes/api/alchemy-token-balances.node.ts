@@ -26,29 +26,31 @@ import {
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
-// Network configuration class
 class Networks {
-  // Network definitions with API endpoint and display title
   static networks = {
-    ETH_MAINNET: { id: 'eth-mainnet', title: 'Ethereum Mainnet' },
-    ETH_SEPOLIA: { id: 'eth-sepolia', title: 'Ethereum Sepolia' },
-    ARB_MAINNET: { id: 'arb-mainnet', title: 'Arbitrum Mainnet' },
-    OPT_MAINNET: { id: 'opt-mainnet', title: 'Optimism Mainnet' },
-    POLYGON: { id: 'polygon-mainnet', title: 'Polygon Mainnet' },
-    BASE: { id: 'base-mainnet', title: 'Base Mainnet' },
+    ETHEREUM: { id: 'eth-mainnet', title: 'Ethereum' },
+    ARBITRUM: { id: 'arb-mainnet', title: 'Arbitrum' },
+    ARBITRUM_NOVA: { id: 'arbnova-mainnet', title: 'Arbitrum Nova' },
+    OPT_MAINNET: { id: 'opt-mainnet', title: 'Optimism' },
+    POLYGON: { id: 'polygon-mainnet', title: 'Polygon PoS' },
+    POLYGON_ZKEVM: { id: 'polygonzkevm-mainnet', title: 'Polygon zkEVM' },
+    BASE: { id: 'base-mainnet', title: 'Base' },
+    BSC: { id: 'bnb-mainnet', title: 'Binance Smart Chain' },
+    AVALANCHE: { id: 'avax-mainnet', title: 'Avalanche' },
+    ZKSYNC: { id: 'zksync-mainnet', title: 'ZKsync' },
+    LINEA: { id: 'linea-mainnet', title: 'Linea' },
+    FRAX: { id: 'frax-mainnet', title: 'Frax' },
+    UNICHAIN: { id: 'unichain-mainnet', title: 'Unichain' },
   }
 
-  // Get all network IDs
   static get networkIds() {
     return Object.values(this.networks).map(network => network.id)
   }
 
-  // Get default network ID
   static get defaultNetwork() {
-    return this.networks.ETH_MAINNET.id
+    return this.networks.ETHEREUM.id
   }
 
-  // Generate options array for PortEnum
   static getOptions() {
     return Object.values(this.networks).map(network => ({
       id: network.id,
@@ -59,7 +61,6 @@ class Networks {
   }
 }
 
-// Define the schema for token balance output
 @ObjectSchema({
   description: 'Token Balance Information',
 })
