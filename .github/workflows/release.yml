@@ -49,7 +49,7 @@ jobs:
         id: pnpm-cache
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+          echo "STORE_PATH=$(pnpm store path)" | tee -a $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
@@ -142,30 +142,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push Backend Docker image
-      - name: Build and push Backend Docker image
+      - name: Build and push images (Push to main/develop/tags)
         if: github.ref == 'refs/heads/release'
-        uses: docker/build-push-action@v5
+        uses: docker/bake-action@v6
         with:
-          context: .
-          file: apps/chaingraph-backend/Dockerfile
-          push: ${{ github.ref == 'refs/heads/release' }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.BACK_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Build and push Frontend Docker image
-      - name: Build and push Frontend Docker image
-        if: github.ref == 'refs/heads/release'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/chaingraph-frontend/Dockerfile
-          push: ${{ github.ref == 'refs/heads/release' }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.FRONT_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          files: docker-bake.hcl
+          targets: backend,frontend
+          push: true
+        env:
+          REGISTRY: ghcr.io/${{ github.repository_owner }}
+          BACK_VERSION: ${{ env.BACK_VERSION }}
+          FRONT_VERSION: ${{ env.FRONT_VERSION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

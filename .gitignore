@@ -23,3 +23,5 @@ apps/**/src/**/*.js
 *.d.ts.map
 
 vitest.config.js
+.pnpm-store
+out
