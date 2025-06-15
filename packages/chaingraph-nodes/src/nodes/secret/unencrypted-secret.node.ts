@@ -188,9 +188,14 @@ export class UnencryptedSecretNode extends BaseNode {
       ...secretPort.getConfig(),
       secretType: this.secretType,
     })
+    secretPort.setValue(
+      await this.encryptDirectSecret(
+        context,
+        this.secretType,
+        this.unencryptedData as SecretTypeMap[typeof this.secretType],
+      ),
+    )
     await this.updatePort(secretPort as IPort)
-
-    this.secret = await this.encryptDirectSecret(context, this.secretType, this.unencryptedData as SecretTypeMap['openai'])
 
     return {}
   }
