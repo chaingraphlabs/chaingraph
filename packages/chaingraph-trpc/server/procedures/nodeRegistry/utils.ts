@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid'
  * Creates test node class
  */
 @Node({
+  type: 'TestNode',
   description: 'Test node for testing purposes',
 })
 export class TestNode extends BaseNode {
@@ -30,6 +31,7 @@ export class TestNode extends BaseNode {
  * Creates another test node class
  */
 @Node({
+  type: 'AnotherTestNode',
   description: 'Another test node',
 })
 export class AnotherTestNode extends BaseNode {

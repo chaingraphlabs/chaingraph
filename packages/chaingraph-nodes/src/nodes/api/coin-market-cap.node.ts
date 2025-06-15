@@ -6,7 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  EncryptedSecretValue,
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -16,6 +20,7 @@ import {
   Output,
   PortArray,
   PortObject,
+  PortSecret,
   String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
@@ -48,6 +53,7 @@ class Financials {
   @Number({ title: 'Circulating Supply', description: 'Currently circulating supply' })
   circulating_supply: number = 0
 }
+
 @ObjectSchema({
   description: 'Asset contract addresses, containing blockchain and address pairs',
 })
@@ -58,6 +64,7 @@ class ContractAddress {
   @String({ title: 'Address', description: 'Contract address' })
   address: string = ''
 }
+
 @ObjectSchema({
   description: 'Structured data for cryptocurrency information',
 })
@@ -103,7 +110,6 @@ class CoinMarketCapNode extends BaseNode {
       isSchemaMutable: false,
       hideEditor: false,
       addItemFormHidden: false,
-      enumValues: ['string'],
     },
   })
   cryptoList: string[] = []
@@ -129,12 +135,13 @@ class CoinMarketCapNode extends BaseNode {
   date: string = ''
 
   @Input()
-  @String({
+  @PortSecret<'coinmarketcap'>({
     title: 'API Key',
+    secretType: 'coinmarketcap',
     description: 'CoinMarketCap API Key',
     ui: { isPassword: true },
   })
-  apiKey: string = ''
+  apiKey?: EncryptedSecretValue<'coinmarketcap'>
 
   @Output()
   @PortArray({
@@ -149,13 +156,15 @@ class CoinMarketCapNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
+    const { apiKey } = await this.apiKey.decrypt(context)
+
     const cryptos = this.cryptoList.join(',')
     const url = `${CMC_API_URL}?symbol=${cryptos}`
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-CMC_PRO_API_KEY': this.apiKey,
+        'X-CMC_PRO_API_KEY': apiKey,
         'Accept': 'application/json',
       },
     })

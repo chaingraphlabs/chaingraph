@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type { ArchAIContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
@@ -67,12 +67,13 @@ class AppendMessageBadAINode extends BaseNode {
       throw new Error('Content to append is required')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const archAIContext = context.getIntegration<ArchAIContext>('archai')
+    const agentSession = archAIContext?.agentSession
     if (!agentSession) {
       throw new Error('BadAI agent session is not available in the context')
     }
 
-    const chatID = context.badAIContext?.chatID
+    const chatID = archAIContext?.chatID
     if (!chatID) {
       throw new Error('BadAI chat ID is not available in the context')
     }

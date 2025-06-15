@@ -47,6 +47,9 @@ export interface ExecutionInstance {
     message: string
     nodeId?: string
   }
+  parentExecutionId?: string
+  executionDepth: number
+  externalEvents?: Array<{ type: string, data?: any }> // Track external events that started this execution
 }
 
 export interface ExecutionEventSubscription {
@@ -80,5 +83,5 @@ export interface ExecutionOptions {
 export const DEFAULT_CLEANUP_CONFIG: CleanupConfig = {
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
   interval: 60 * 60 * 1000, // 1 hour
-  maxExecutions: 1000,
+  maxExecutions: 50000,
 }

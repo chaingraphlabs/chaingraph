@@ -1,5 +1,67 @@
 # @badaitech/typescript-config
 
+## 0.2.1
+
+### Patch Changes
+
+- feat: Replace DirectSecret with UnencryptedSecretNode, rename Secret decorator to PortSecret, migrate OKX to use centralized secret management, and add configurable secret types with encryption support
+
+## 0.2.0
+
+### Minor Changes
+
+- 2fbcfe4: Claude extended thinking with the tools usage. Execution storage with X-ray history. Secret node types.
+
+### Patch Changes
+
+- 2fbcfe4: DEV build
+- feat: Add DirectSecret types for various API keys and update SecretNode type
+- feat: Enhance node resizing logic with visibility and dimension checks
+- feat: Refactor node selection logic into a reusable hook and enhance copy/paste functionality
+- 2fbcfe4: feat: comprehensive copy-paste functionality with node cloning, deep structure handling, and improved execution performance
+
+## 0.2.0-dev.5
+
+### Patch Changes
+
+- feat: Refactor node selection logic into a reusable hook and enhance copy/paste functionality
+
+## 0.2.0-dev.4
+
+### Patch Changes
+
+- feat: Enhance node resizing logic with visibility and dimension checks
+
+## 0.2.0-dev.3
+
+### Patch Changes
+
+- feat: Add DirectSecret types for various API keys and update SecretNode type
+
+## 0.2.0-dev.2
+
+### Patch Changes
+
+- feat: comprehensive copy-paste functionality with node cloning, deep structure handling, and improved execution performance
+
+## 0.2.0-dev.1
+
+### Minor Changes
+
+- Claude extended thinking with the tools usage. Execution storage with X-ray history. Secret node types.
+
+## 0.1.29-dev.0
+
+### Patch Changes
+
+- DEV build
+
+## 0.1.28
+
+### Patch Changes
+
+- 0g llm node implementation and fixes
+
 ## 0.1.27
 
 ### Patch Changes

@@ -21,6 +21,9 @@ import type {
 import type { JSONObject, JSONValue } from '../../utils/json'
 import { z } from 'zod'
 import {
+  generatePortIDArrayElement,
+} from '..'
+import {
   isStreamPortValue,
 } from '..'
 import {
@@ -143,7 +146,7 @@ function validateField(
 
           // Validate each nested field found in schema.properties.
           for (const [key, nestedConfig] of Object.entries(objectConfig.schema.properties)) {
-            const nestedValue = objectValue[key]
+            const nestedValue = objectValue![key]
             if (nestedValue === undefined) {
               if (nestedConfig.required) {
                 errors.push(`Missing required field: ${fieldPath}.${key}`)
@@ -178,12 +181,12 @@ function validateField(
           const arrayValue = fieldValue as ArrayPortValue
 
           // Validate each item in the array using the itemConfig.
-          for (let i = 0; i < arrayValue.length; i++) {
-            const itemValue = arrayValue[i]
+          for (let i = 0; i < arrayValue!.length; i++) {
+            const itemValue = arrayValue![i]
             const itemErrors = validateField(
               itemValue,
               arrayConfig.itemConfig,
-              `${fieldPath}[${i}]`,
+              generatePortIDArrayElement(fieldPath, i),
             )
             errors.push(...itemErrors)
           }
@@ -192,7 +195,7 @@ function validateField(
       }
       default:
         {
-        // For other port types, use the plugin's Zod schema validation.
+          // For other port types, use the plugin's Zod schema validation.
           const schemaResult = plugin.valueSchema.safeParse(fieldValue)
           if (!schemaResult.success) {
             for (const issue of schemaResult.error.errors) {
@@ -249,12 +252,13 @@ export function validateObjectValue(
     errors.push(...fieldErrors)
   }
 
+  // TODO: disabled for now because there is the possibility of having objects without or partial schema, so validate only known fields
   // Check for extra fields in the value that are not defined in the schema.
-  for (const key of Object.keys(value)) {
-    if (!config.schema.properties[key]) {
-      errors.push(`Unexpected field: ${key}`)
-    }
-  }
+  // for (const key of Object.keys(value)) {
+  //   if (!config.schema.properties[key]) {
+  //     errors.push(`Unexpected field: ${key}`)
+  //   }
+  // }
 
   return errors
 }
@@ -345,6 +349,15 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         serializedFields[key] = plugin.serializeValue(fieldValue, fieldConfig)
       }
 
+      // Iterate over value and add any extra fields that are not in the schema.
+      for (const [key, fieldValue] of Object.entries(value)) {
+        if (config.schema.properties[key] === undefined) {
+          // If the field is not defined in the schema, add it to the serialized fields.
+          // This is the case of the object without or partial schema.
+          serializedFields[key] = fieldValue
+        }
+      }
+
       return serializedFields
     } catch (error) {
       throw new PortError(
@@ -389,6 +402,15 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         }
         // Use the nested field configuration when deserializing.
         deserialized[key] = plugin.deserializeValue(fieldSerializedValue, fieldConfig)
+      }
+
+      // Iterate over the value and add any extra fields that are not in the schema.
+      for (const [key, fieldValue] of Object.entries(serializedFields)) {
+        if (config.schema.properties[key] === undefined) {
+          // If the field is not defined in the schema, add it to the deserialized fields.
+          // This is the case of the object without or partial schema.
+          deserialized[key] = fieldValue
+        }
       }
 
       return deserialized as ObjectPortValue

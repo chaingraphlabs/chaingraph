@@ -82,7 +82,7 @@ ChainGraph Backend can be configured through environment variables. You can set 
 
 | Variable       | Description                  | Default                                                       | Example                                                     |
 | -------------- | ---------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres@localhost:5431/postgres?sslmode=disable` | `postgres://user:password@host:5432/dbname?sslmode=require` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres@localhost:5432/postgres?sslmode=disable` | `postgres://user:password@host:5432/dbname?sslmode=require` |
 
 #### Authentication Settings
 
@@ -96,6 +96,7 @@ ChainGraph Backend can be configured through environment variables. You can set 
 #### Example .env Files
 
 **Basic Configuration:**
+
 ```env
 # Basic server setup
 TRPC_SERVER_HOST=localhost
@@ -104,6 +105,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/chaingraph
 ```
 
 **Production Configuration:**
+
 ```env
 # Production setup with authentication
 TRPC_SERVER_HOST=0.0.0.0
@@ -118,11 +120,12 @@ BADAI_API_URL=https://api.badai.com/graphql
 ```
 
 **Development Configuration:**
+
 ```env
 # Development setup
 TRPC_SERVER_HOST=localhost
 TRPC_SERVER_PORT=3001
-DATABASE_URL=postgres://postgres@localhost:5431/postgres?sslmode=disable
+DATABASE_URL=postgres://postgres@localhost:5432/postgres?sslmode=disable
 AUTH_ENABLED=true
 AUTH_DEV_MODE=true
 ```

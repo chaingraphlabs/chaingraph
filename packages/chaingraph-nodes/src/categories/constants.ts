@@ -11,6 +11,7 @@ import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 export const NODE_CATEGORIES = {
   MESSAGING: 'messaging',
   AI: 'ai',
+  ANTHROPIC: 'anthropic',
   API: 'api',
   MATH: 'math',
   DATA: 'data',
@@ -136,7 +137,7 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
         text: '#B794F6',
       },
     },
-    order: 1,
+    order: 3,
   },
   [NODE_CATEGORIES.MATH]: {
     id: NODE_CATEGORIES.MATH,
@@ -305,6 +306,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 9,
+  },
+
+  [NODE_CATEGORIES.ANTHROPIC]: {
+    id: NODE_CATEGORIES.ANTHROPIC,
+    label: 'Anthropic',
+    description: 'Anthropic Claude AI integration nodes',
+    icon: 'Brain',
+    style: {
+      light: {
+        primary: '#FFEAA7', // Soft warm yellow
+        secondary: '#FFF9E6',
+        background: '#FFFFFF',
+        text: '#D63031', // Anthropic's signature orange-red
+      },
+      dark: {
+        primary: '#4D3A1A', // Deep warm brown
+        secondary: '#2E220F', // Darker brown
+        background: '#1C1C1C',
+        text: '#FDCB6E', // Bright warm yellow that complements the red
+      },
+    },
+    order: 1.5, // Between AI and API
   },
 
   [NODE_CATEGORIES.OKX_DEX]: {

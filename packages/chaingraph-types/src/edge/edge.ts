@@ -8,7 +8,7 @@
 
 import type { EdgeMetadata, IEdge } from '.'
 import type { INode } from '../node'
-import type { AnyPortConfig, IPort } from '../port'
+import type { AnyPortConfig, IPort, SecretPort } from '../port'
 import { EdgeStatus } from '.'
 import { NodeStatus } from '../node'
 import { PortDirection } from '../port'
@@ -80,6 +80,14 @@ export class Edge implements IEdge {
       throw new Error(`Incompatible port types: ${sourcePortKind} -> ${targetPortKind}`)
     }
 
+    if (sourcePortKind === 'secret' && targetPortKind === 'secret') {
+      const sourceSecretPort = this.sourcePort as SecretPort<any>
+      const targetSecretPort = this.targetPort as SecretPort<any>
+      if (!sourceSecretPort.isCompatibleWith(this.targetPort)) {
+        throw new Error(`Incompatible secret types: ${sourceSecretPort.getConfig().secretType} -> ${targetSecretPort.getConfig().secretType}`)
+      }
+    }
+
     return true
   }
 
@@ -126,6 +134,7 @@ export class Edge implements IEdge {
       throw new Error(`Source port ${this.sourcePort.id} has no data to transfer.`)
     }
     this.targetPort.setValue(data)
+    this.targetNode.updatePort(this.targetPort)
   }
 
   updateMetadata(metadata: Partial<EdgeMetadata>): void {

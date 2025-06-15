@@ -6,18 +6,22 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { INode, IPort } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
+import { requestUpdatePortUI } from '@/store/ports'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { PortTitle } from '../../ui/PortTitle'
 
 interface PortHeaderProps {
   title: string
   isOutput: boolean
-  isCollapsible: boolean
+  isCollapsed: boolean
   onClick: () => void
+  node: INode
+  port: IPort
 }
 
-export function PortHeader({ title, isOutput, isCollapsible, onClick }: PortHeaderProps) {
+export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }: PortHeaderProps) {
   return (
     <div className={cn(
       'flex items-center gap-1',
@@ -41,16 +45,26 @@ export function PortHeader({ title, isOutput, isCollapsible, onClick }: PortHead
           isOutput ? 'order-last' : 'order-first',
         )}
         >
-          {isCollapsible
+          {isCollapsed
             ? <ChevronDown className="w-4 h-4" />
             : <ChevronRight className="w-4 h-4" />}
         </div>
 
         <PortTitle
           className={cn(
+            // 'cursor-pointer',
             'font-semibold min-w-0 flex-1',
             isOutput ? 'text-right' : 'text-left',
           )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: !port.getConfig().ui?.hideEditor,
+              },
+            })
+          }}
         >
           {title}
         </PortTitle>

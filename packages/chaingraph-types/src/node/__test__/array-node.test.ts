@@ -34,6 +34,7 @@ PortPluginRegistry.getInstance().register(EnumPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
+  type: 'ArrayNode',
   title: 'Array Node',
   description: 'Node with an array port',
 })
@@ -54,6 +55,7 @@ class ArrayNode extends BaseNode {
 }
 
 @Node({
+  type: 'ArrayMutateNode',
   title: 'Array Mutate Node',
   description: 'Node with an array port',
 })

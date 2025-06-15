@@ -8,7 +8,7 @@
 
 import type { INode, Position } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import type { AddNodeEvent, NodeState, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
+import type { AddNodeEvent, NodeState, PasteNodesEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 
@@ -36,6 +36,7 @@ export const updateNodeParent = nodesDomain.createEvent<UpdateNodeParent>()
 
 // Backend operation events
 export const addNodeToFlow = nodesDomain.createEvent<AddNodeEvent>()
+export const pasteNodesToFlow = nodesDomain.createEvent<PasteNodesEvent>()
 export const removeNodeFromFlow = nodesDomain.createEvent<{ flowId: string, nodeId: string }>()
 
 // Bulk operations
@@ -71,6 +72,20 @@ export const addNodeToFlowFx = nodesDomain.createEffect(async (event: AddNodeEve
     nodeType: event.nodeType,
     position: event.position,
     metadata: event.metadata,
+  })
+})
+
+export const pasteNodesToFlowFx = nodesDomain.createEffect(async (event: PasteNodesEvent) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+
+  return client.flow.pasteNodes.mutate({
+    flowId: event.flowId,
+    clipboardData: event.clipboardData,
+    pastePosition: event.pastePosition,
+    virtualOrigin: event.virtualOrigin,
   })
 })
 
@@ -327,71 +342,89 @@ export const $xyflowNodes = combine(
       return 0
     })
 
-    // Transform to XYFlow node format
-    return sortedNodes.map((node): Node => {
-      const nodeId = node.id
-      const nodeCategoryMetadata = getCategoryMetadata(node.metadata.category!)
-      const nodeType = node.metadata.category === NODE_CATEGORIES.GROUP
-        ? 'groupNode'
-        : 'chaingraphNode'
+    // Filter out hidden nodes and transform to XYFlow node format
+    return sortedNodes
+      .filter(node => node.metadata.ui?.state?.isHidden !== true)
+      .map((node): Node => {
+        const nodeId = node.id
+        const nodeCategoryMetadata = getCategoryMetadata(node.metadata.category!)
+        const nodeType = node.metadata.category === NODE_CATEGORIES.GROUP
+          ? 'groupNode'
+          : 'chaingraphNode'
 
-      // Get position from the positions store if available
-      // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
-      const position = node.metadata.ui?.position || DefaultPosition
+        // Get position from the positions store if available
+        // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
+        const position = node.metadata.ui?.position || DefaultPosition
 
-      // Round positions to integers for better rendering performance
-      const nodePositionRound = {
-        x: Math.round(position.x),
-        y: Math.round(position.y),
-      }
+        const parentNode = node.metadata.parentNodeId ? nodes[node.metadata.parentNodeId] : undefined
 
-      // Get existing node from cache if it exists and hasn't changed
-      const cacheKey = `${nodeId}-${node.getVersion()}`
-      const cachedNode = nodeCache.get(cacheKey)
-
-      // Check if we can reuse the cached node (only position might have changed)
-      if (cachedNode
-        && (cachedNode.data.node as INode).getVersion() === node.getVersion()
-        && cachedNode.parentId === node.metadata.parentNodeId
-        && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)) {
-        // If only the position changed, just update that and return the same node reference
-        if (cachedNode.position.x !== nodePositionRound.x
-          || cachedNode.position.y !== nodePositionRound.y) {
-          cachedNode.position = nodePositionRound
+        // Round positions to integers for better rendering performance
+        const nodePositionRound = {
+          x: Math.round(position.x),
+          y: Math.round(position.y),
         }
 
-        return cachedNode
-      }
+        // Get existing node from cache if it exists and hasn't changed
+        const cacheKey = `${nodeId}-${node.getVersion()}`
+        const cachedNode = nodeCache.get(cacheKey)
 
-      // Create a new node
-      const reactflowNode: Node = {
-        id: nodeId,
-        type: nodeType,
-        position: nodePositionRound,
-        zIndex: nodeType === 'groupNode' ? -1 : 0,
-        data: {
-          node,
-          categoryMetadata: nodeCategoryMetadata,
-        },
-        parentId: node.metadata.parentNodeId,
-        selected: node.metadata.ui?.state?.isSelected ?? false,
-      }
+        // Check if we can reuse the cached node (only position might have changed)
+        if (cachedNode
+          && (cachedNode.data.node as INode).getVersion() === node.getVersion()
+          && cachedNode.parentId === node.metadata.parentNodeId
+          && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)) {
+          // If only the position changed, just update that and return the same node reference
+          if (cachedNode.position.x !== nodePositionRound.x
+            || cachedNode.position.y !== nodePositionRound.y) {
+            cachedNode.position = nodePositionRound
+          }
 
-      // Set dimensions if available
-      if (
-        node.metadata.ui?.dimensions
-        && node.metadata.ui.dimensions.width > 0
-        && node.metadata.ui.dimensions.height > 0
-      ) {
-        reactflowNode.width = node.metadata.ui.dimensions.width
-        reactflowNode.height = node.metadata.ui.dimensions.height
-      }
+          return cachedNode
+        }
 
-      // Store in cache for future reference
-      nodeCache.set(cacheKey, reactflowNode)
+        // Create a new node
+        const reactflowNode: Node = {
+          id: nodeId,
+          type: nodeType,
+          position: nodePositionRound,
+          width: node.metadata.ui?.dimensions?.width ?? 200, // Default width if not set
+          height: node.metadata.ui?.dimensions?.height ?? 50, // Default height if not set
+          initialWidth: node.metadata.ui?.dimensions?.width ?? 200, // Initial width for resizing
+          initialHeight: node.metadata.ui?.dimensions?.height ?? 50, // Initial height for resizing
+          zIndex: nodeType === 'groupNode'
+            ? -1
+            : parentNode
+              ? 2
+              : 0,
+          data: {
+            node,
+            categoryMetadata: nodeCategoryMetadata,
+          },
+          parentId: node.metadata.parentNodeId,
+          extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined, // Use parent extent if it has a parent and is not a group
+          selected: node.metadata.ui?.state?.isSelected ?? false,
+          hidden: node.metadata.ui?.state?.isHidden ?? false,
+          selectable: !(parentNode && parentNode.metadata.category !== 'group'),
+        }
 
-      return reactflowNode
-    })
+        // Set dimensions if available and valid
+        const MIN_NODE_WIDTH = 100
+        const MIN_NODE_HEIGHT = 40
+
+        if (
+          node.metadata.ui?.dimensions
+          && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH
+          && node.metadata.ui.dimensions.height > MIN_NODE_HEIGHT
+        ) {
+          reactflowNode.width = node.metadata.ui.dimensions.width
+          reactflowNode.height = node.metadata.ui.dimensions.height
+        }
+
+        // Store in cache for future reference
+        nodeCache.set(cacheKey, reactflowNode)
+
+        return reactflowNode
+      })
   },
 )
 
@@ -514,6 +547,11 @@ sample({
 })
 
 sample({
+  clock: pasteNodesToFlow,
+  target: pasteNodesToFlowFx,
+})
+
+sample({
   clock: removeNodeFromFlow,
   target: removeNodeFromFlowFx,
 })
@@ -607,3 +645,23 @@ sample({
   clock: clearNodes,
   target: clearInterpolatorFx,
 })
+
+// Create store for dragging nodes (nodes which user moves right now)
+export const $draggingNodes = nodesDomain.createStore<string[]>([])
+  // Track nodes that start being dragged
+  .on(throttledUpdateNodeUILocal, (state, { nodeId, ui }) => {
+    if (ui?.state?.isSelected) {
+      // check if node id exists in the state:
+      if (!state.includes(nodeId)) {
+        // Add nodeId to the array if it's not already there
+        return [...state, nodeId]
+      }
+    } else {
+      // check if not selected and in the list, then remove from the list
+      if (state.includes(nodeId)) {
+        return state.filter(id => id !== nodeId)
+      }
+    }
+    return state
+  })
+  .reset(globalReset)

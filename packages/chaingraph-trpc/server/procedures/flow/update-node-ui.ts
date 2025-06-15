@@ -32,7 +32,10 @@ export const updateNodeUI = flowContextProcedure
         isHighlighted: z.boolean().optional(),
         isDisabled: z.boolean().optional(),
         isErrorPortCollapsed: z.boolean().optional(),
+        isHidden: z.boolean().optional(),
+        isMovingDisabled: z.boolean().optional(),
       }).optional(),
+      title: z.string().optional(),
     }),
     version: z.number(),
   }))
@@ -40,8 +43,6 @@ export const updateNodeUI = flowContextProcedure
     // TODO: create nodes store
 
     await ctx.flowStore.lockFlow(input.flowId)
-
-    console.log(`[updateNodeUI] Locking flow ${input.flowId} for connection...`)
 
     try {
       const flow = await ctx.flowStore.getFlow(input.flowId)
@@ -125,7 +126,6 @@ export const updateNodeUI = flowContextProcedure
         version: node.getVersion(),
       }
     } finally {
-      console.log(`[updateNodeUI] Unlocking flow ${input.flowId} for connection...`)
       await ctx.flowStore.unlockFlow(input.flowId)
     }
   })

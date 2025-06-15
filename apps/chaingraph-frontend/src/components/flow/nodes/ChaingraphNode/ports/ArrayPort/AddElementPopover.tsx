@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { ArrayPortConfig, IPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { PopoverContent } from '@/components/ui/popover'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
@@ -26,9 +27,9 @@ interface Data {
 }
 
 interface Props {
-  port: ArrayPort
+  port: IPort<ArrayPortConfig>
   onClose: () => void
-  onSubmit: (data: Data) => void
+  onSubmit: (newItemConfig: IPortConfig) => void
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -98,21 +99,31 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
       hideEditor: false,
     },
   },
-  // secret: {
-  //   type: 'secret',
-  //   secretType: 'string',
-  //   defaultValue: undefined,
-  //   ui: {
-  //     hideEditor: true,
-  //   },
-  // },
+  secret: {
+    type: 'secret',
+    secretType: 'string',
+    defaultValue: undefined,
+    ui: {
+      hideEditor: true,
+    },
+  },
 }
 
 export function AddElementPopover(props: Props) {
   const { onClose, onSubmit, port } = props
 
+  // Get nodeId from port config
+  const nodeId = port.getConfig().nodeId || ''
+  const portId = port.id
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
+
+  const itemType = port.getConfig().itemConfig.type
+  const dropDownValues = (itemType !== 'any' ? [itemType] : (port.getConfig().ui?.allowedTypes || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
+
   const [type, setType] = useState<PortType | undefined>(
-    port.getConfig().itemConfig?.type || 'any',
+    dropDownValues.at(0) || itemType,
   )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
@@ -120,9 +131,7 @@ export function AddElementPopover(props: Props) {
     if (!type)
       return
 
-    onSubmit({
-      config: typeConfigMap[type],
-    })
+    onSubmit(typeConfigMap[type])
   }
 
   return (
@@ -151,14 +160,15 @@ export function AddElementPopover(props: Props) {
               readOnly
               className="w-full cursor-pointer"
               onClick={() => setIsDropdownOpen(true)}
+              onFocus={trackFocus}
+              onBlur={trackBlur}
             />
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
           </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start">
-          {PORT_TYPES
-            .filter(portType => portType !== 'any')// && portType !== 'secret')
+          {dropDownValues
             .map(portType => (
               <DropdownMenuItem
                 key={portType}

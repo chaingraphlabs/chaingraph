@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { IPort, IPortConfig, ObjectPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { PopoverContent } from '@/components/ui/popover'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
@@ -29,6 +30,7 @@ interface Props {
   onClose: () => void
   onSubmit: (data: Data) => void
   nextOrder?: number
+  port: IPort<ObjectPortConfig>
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -88,6 +90,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     defaultValue: [],
     ui: {
       hideEditor: false,
+      allowedTypes: ['string', 'number', 'boolean'],
     },
     isMutable: true,
   },
@@ -98,21 +101,34 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
       hideEditor: false,
     },
   },
-  // secret: {
-  //   type: 'secret',
-  //   secretType: 'string',
-  //   defaultValue: undefined,
-  //   ui: {
-  //     hideEditor: true,
-  //   },
-  // },
+  secret: {
+    type: 'secret',
+    secretType: 'string',
+    defaultValue: undefined,
+    ui: {
+      hideEditor: true,
+    },
+  },
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit } = props
-
+  const { onClose, onSubmit, port } = props
   const [key, setKey] = useState('')
-  const [type, setType] = useState<PortType | undefined>('string')
+
+  // Get nodeId from port config
+  const nodeId = port.getConfig().nodeId || ''
+  const portId = port.id
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
+
+  // use all porttypes if allowedTypes undefined and filter stream ans any out
+  const dropDownValues = (port.getConfig().ui?.allowedTypes || PORT_TYPES).filter(t => t !== 'stream' && t !== 'any')
+
+  const [type, setType] = useState<PortType | undefined>(
+    // use as initial value first enumvalue if type is any
+    dropDownValues.at(0),
+  )
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleSubmit = () => {
@@ -146,6 +162,8 @@ export function AddPropPopover(props: Props) {
       <Input
         value={key}
         onChange={e => setKey(e.target.value)}
+        onFocus={trackFocus}
+        onBlur={trackBlur}
         placeholder="key name"
       />
 
@@ -157,14 +175,15 @@ export function AddPropPopover(props: Props) {
               readOnly
               className="w-full cursor-pointer"
               onClick={() => setIsDropdownOpen(true)}
+              onFocus={trackFocus}
+              onBlur={trackBlur}
             />
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
           </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          {PORT_TYPES
-            .filter(t => t !== 'stream' && t !== 'any')
+          {dropDownValues
             .map(portType => (
               <DropdownMenuItem
                 key={portType}

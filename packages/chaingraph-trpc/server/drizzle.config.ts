@@ -13,7 +13,7 @@ import * as dotenv from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
 
 // Check if .env file exists before trying to load it
-const envPath = path.resolve(__dirname, '../../.env')
+const envPath = path.resolve(__dirname, '../../../.env')
 const envExists = fs.existsSync(envPath)
 
 if (envExists) {
@@ -38,10 +38,8 @@ export default defineConfig({
   },
   tablesFilter: [
     'chaingraph_*',
-    '!message_queue',
-    '!message_queue_id_seq',
   ],
-  strict: true,
+  strict: false,
   verbose: true,
   schemaFilter: 'public',
 })

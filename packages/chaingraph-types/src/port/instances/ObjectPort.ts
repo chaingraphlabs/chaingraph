@@ -8,12 +8,18 @@
 
 import type {
   IObjectSchema,
+  IPort,
   IPortConfig,
   ObjectPortConfig,
   ObjectPortValue,
 } from '../../port'
 import type { JSONValue } from '../../utils/json'
+import {
+  cleanupPortConfigFromIds,
+} from '../../port'
 import { BasePort, ObjectPortPlugin } from '../../port'
+import { deepCopy } from '../../utils'
+import { generatePortID } from '../id-generate'
 
 /**
  * Concrete implementation of an Object Port.
@@ -103,9 +109,13 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
       this.value = undefined
       return
     }
+    if (newValue === null) {
+      this.value = null as ObjectPortValue<S>
+      return
+    }
 
     // Initialize value if it doesn't exist
-    if (this.value === undefined) {
+    if (this.value === undefined || this.value === null) {
       this.value = {} as ObjectPortValue<S>
     }
 
@@ -121,7 +131,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
       if (Object.hasOwn(newValue, key)) {
         const value = newValue[key]
         if (value !== undefined) {
-          this.setValueForKey(this.value, key, value)
+          this.setValueForKey(this.value!, key, value)
         }
       }
     }
@@ -297,6 +307,31 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
     if (this.value && Object.hasOwn(this.value, field)) {
       delete this.value[field]
     }
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<ObjectPortConfig<S>> {
+    const newPortID = generatePortID(this.config.key || this.config.id || '')
+    const newConfig: ObjectPortConfig<S> = {
+      ...this.config,
+      id: newPortID,
+      schema: {
+        ...this.config.schema,
+        // iterate over properties and call cleanupPortConfigFromIds function
+        properties: Object.fromEntries(
+          Object.entries(this.config.schema.properties).map(([key, value]) => {
+            return [key, cleanupPortConfigFromIds(value)]
+          }),
+        ),
+      },
+    }
+
+    const port = new ObjectPort<S>(newConfig)
+    port.setValue(deepCopy(this.value)) // Set the current value
+    return port
   }
 }
 

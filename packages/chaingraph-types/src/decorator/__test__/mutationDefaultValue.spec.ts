@@ -20,6 +20,7 @@ interface ObjectSchema {
 // DummyNode class decorated with our new @Node and @Port decorators.
 // The dummyPort property uses a configuration of type "string" with defaultValue "hello".
 @Node({
+  type: 'DummyNode',
   title: 'Dummy Node',
   description: 'A dummy node for testing port initialization',
 })

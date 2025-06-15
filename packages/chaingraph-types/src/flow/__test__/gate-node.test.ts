@@ -41,6 +41,7 @@ PortPluginRegistry.getInstance().register(EnumPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 @Node({
+  type: 'ScalarNode',
   title: 'Scalar Node',
   description: 'Node with scalar ports',
 })
@@ -59,6 +60,7 @@ class ScalarNode extends BaseNode {
 }
 
 @Node({
+  type: 'TestGateNode',
   title: 'TestGate',
   description: 'TestGate with any ports',
 })

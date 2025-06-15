@@ -15,6 +15,7 @@ import 'reflect-metadata'
 
 // Create a dummy node class with decorators
 @Node({
+  type: 'DummyNode',
   title: 'Dummy Node',
   description: 'A dummy node for testing',
 })

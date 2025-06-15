@@ -7,8 +7,8 @@
  */
 
 import type {
+  ArchAIContext,
   ExecutionContext,
-
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
 import process from 'node:process'
@@ -84,12 +84,14 @@ class BadAIChatHistoryNode extends BaseNode {
   chatHistory: Message[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const chatID = context.badAIContext?.chatID
+    const archAIContext = context.getIntegration<ArchAIContext>('archai')
+
+    const chatID = archAIContext?.chatID
     if (!chatID) {
       throw new Error('BadAI chat ID is not available in the context')
     }
 
-    const agentSession = context.badAIContext?.agentSession
+    const agentSession = archAIContext?.agentSession
     if (!agentSession) {
       throw new Error('BadAI agent session is not available in the context')
     }

@@ -12,14 +12,14 @@ export interface User {
   id: string
   displayName?: string
   role: UserRole
-  provider?: 'badai' | 'dev' | 'none'
+  provider?: 'archai' | 'dev' | 'none'
   // Add other user properties as needed
 }
 
 export interface AuthSession {
   userId: string
   token: string
-  provider: 'badai' | 'dev' | 'none'
+  provider: 'archai' | 'dev' | 'none'
   user: User
   expiresAt?: Date
 }

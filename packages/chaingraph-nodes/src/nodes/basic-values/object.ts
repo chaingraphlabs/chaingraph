@@ -20,6 +20,8 @@ import { NODE_CATEGORIES } from '../../categories'
 class ObjectNode extends BaseNode {
   @Output()
   @PortObject({
+    title: 'Object',
+    description: 'The output object.',
     schema: {
       properties: {},
     },

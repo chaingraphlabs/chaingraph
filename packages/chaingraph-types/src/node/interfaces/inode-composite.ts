@@ -14,6 +14,7 @@ import type { NodeExecutionResult } from '../types'
 import type { IComplexPortHandler } from './icomplex-port-handler'
 import type { ICoreNode } from './icore-node'
 import type { IDefaultPortManager } from './idefault-port-manager'
+import type { INodeClonable } from './inode-clonable'
 import type { INodeEvents } from './inode-events'
 import type { INodeUI } from './inode-ui'
 import type { INodeVersioning } from './inode-versioning'
@@ -34,7 +35,8 @@ export interface INodeComposite extends
   INodeEvents,
   Omit<ISerializable<INodeComposite>, 'deserialize' | 'clone'>,
   INodeVersioning,
-  IDefaultPortManager {
+  IDefaultPortManager,
+  INodeClonable<INodeComposite> {
 
   /**
    * Initialize the node with port configurations

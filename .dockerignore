@@ -1,19 +1,158 @@
-.changeset
-.dockerignore
-.editorconfig
-.git
-.github
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+**/dist/
+**/build/
+**/.turbo/
+
+# Testing
+coverage/
+.nyc_output/
+**/coverage/
+**/.nyc_output/
+
+# Development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+.DS_Store
+
+# Git
+.git/
 .gitignore
-.husky
-.idea
-.ops
-.pnpm-store
-.turbo
-.vscode
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation
 *.md
-docs
-docker-compose.yaml
-Dockerfile
-docker-bake.hcl
-out
-node_modules
+docs/
+LICENSE*
+CHANGELOG*
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Project specific
+.changeset/
+.husky/
+storybook-static/
+*.storybook.log
+.eslintcache
+.prettiercache
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+e2e/
+
+# Config files (keep only essential ones in image)
+.eslintrc*
+.prettierrc*
+vitest.config.*
+jest.config.*
+*.config.js
+*.config.ts
+!next.config.js
+!vite.config.ts
+!tsconfig.json
+!turbo.json
+
+# Local dev files
+*.local
+local/
+.env
+
+# Logs
+logs/
+*.log
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Package manager files
+yarn.lock
+package-lock.json
+
+# Misc
+*.pem
+*.key
+*.crt
+*.p12
+.vercel
+.netlify
+
+# Research and documentation files
+CLAUDE.md
+COMMIT_MESSAGE.md
+REFACTORING_PLAN.md
+research.md
+prompts/
+a.json
+a.txt
+asfasf.asfa
+mm.html

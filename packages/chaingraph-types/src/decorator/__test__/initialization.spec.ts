@@ -53,6 +53,7 @@ interface ObjectSchema {
 // DummyNode class decorated with our new @Node and @Port decorators.
 // The dummyPort property uses a configuration of type "string" with defaultValue "hello".
 @Node({
+  type: 'DummyNode',
   title: 'Dummy Node',
   description: 'A dummy node for testing port initialization',
 })
@@ -286,6 +287,7 @@ describe('port Initialization Test', () => {
 
   it('should deserialize from json', () => {
     @Node({
+      type: 'CreateMessageNode',
       title: 'Create Message',
       description: 'Creates a new message with specified content',
       category: NODE_CATEGORIES.MESSAGING,

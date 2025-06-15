@@ -15,9 +15,11 @@ import type {
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
+  SecretPortConfig,
   StreamPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
+
 import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/formatValue'
 import { useTheme } from '@/components/theme'
 import { Badge, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
@@ -161,6 +163,20 @@ export function PortDocContent<C extends IPortConfig>({
               style={{ borderColor: portColor.circleColor }}
             >
               {formatDescriptionWithBreaks(config.description)}
+            </div>
+          )}
+
+          {/* Port ID */}
+          {config.id && (
+            <div className="pt-1 space-y-1 text-muted-foreground">
+              <div className="text-xs font-medium">Port ID</div>
+              <pre className={cn(
+                'text-[11px] p-1.5 bg-muted/50',
+                'rounded block overflow-x-auto whitespace-pre-wrap break-all',
+              )}
+              >
+                {config.id}
+              </pre>
             </div>
           )}
 
@@ -392,6 +408,8 @@ function getTypeSpecificInfo(config: IPortConfig): React.ReactElement | null {
       return renderStreamConfig(config as StreamPortConfig)
     case 'any':
       return renderAnyConfig(config as AnyPortConfig)
+    case 'secret':
+      return renderSecretConfig(config as SecretPortConfig)
     default:
       return null
   }
@@ -641,6 +659,18 @@ function renderAnyConfig(config: AnyPortConfig): React.ReactElement {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function renderSecretConfig(config: SecretPortConfig): React.ReactElement {
+  return (
+    <div className="mt-3 space-y-2 border-t pt-2 border-muted/40">
+      <div className="text-xs font-medium">Secret configuration</div>
+      <div className="grid grid-cols-2 gap-1 text-xs">
+        <span className="text-muted-foreground">Secret type:</span>
+        <span>{config.secretType}</span>
+      </div>
     </div>
   )
 }

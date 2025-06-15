@@ -129,7 +129,9 @@ Profile details: {{{json user.profile}}}`
             },
           })
         }
-        compiledTemplate = Handlebars.compile(this.template)
+        compiledTemplate = Handlebars.compile(this.template, {
+          noEscape: true,
+        })
       } catch (compileError) {
         throw new Error(
           `Template compilation failed: ${compileError instanceof Error ? compileError.message : JSON.stringify(compileError)}`,

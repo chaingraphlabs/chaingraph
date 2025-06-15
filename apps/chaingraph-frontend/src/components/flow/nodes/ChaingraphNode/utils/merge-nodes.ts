@@ -24,7 +24,7 @@ export function mergeNodePortsUi(node: INode, nodeToMerge: INode): INode {
 
     if (port && portToMerge) {
       if (port.getConfig().key !== portToMerge.getConfig().key) {
-        console.warn(`Port keys do not match: ${port.getConfig().key} !== ${portToMerge.getConfig().key}`)
+        // console.warn(`Port keys do not match: ${port.getConfig().key} !== ${portToMerge.getConfig().key}`)
         continue
       }
 

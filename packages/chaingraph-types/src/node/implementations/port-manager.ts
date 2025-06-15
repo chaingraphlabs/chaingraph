@@ -8,6 +8,7 @@
 
 import type { IPort } from '../../port'
 import type { IPortManager } from '../interfaces'
+import { generatePortIDArrayElement } from '../../port'
 import { PortDirection } from '../../port'
 
 /**
@@ -145,7 +146,7 @@ export class PortManager implements IPortManager {
 
       // Build the expected port ID based on the current port
       const nextPortId = isArrayIndex
-        ? `${currentPort.id}[${segment}]`
+        ? generatePortIDArrayElement(currentPort.id, Number.parseInt(segment))
         : `${currentPort.id}.${segment}`
 
       currentPort = this._ports.get(nextPortId)

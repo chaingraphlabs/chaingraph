@@ -9,4 +9,6 @@
 export * from './base-config.schema'
 export * from './BasePort'
 export * from './IPort'
+export * from './secret'
 export * from './types'
+export * from './utils'

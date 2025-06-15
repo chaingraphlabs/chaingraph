@@ -21,7 +21,7 @@ export const appConfig = {
     pongWaitMs: Number.parseInt(process.env.TRPC_SERVER_KEEP_ALIVE_PONG_WAIT_MS || '10000', 10),
   },
 
-  databaseUrl: process.env.DATABASE_URL || 'postgres://postgres@localhost:5431/postgres?sslmode=disable',
+  databaseUrl: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/postgres?sslmode=disable',
   authEnabled: process.env.AUTH_ENABLED === 'true',
   authDevMode: process.env.AUTH_DEV_MODE === 'true',
   badAIAuthEnabled: process.env.BADAI_AUTH_ENABLED === 'true',
@@ -48,8 +48,6 @@ export function prettyPrintConfig() {
   console.log(`  Enabled: ${configCopy.trpcServerKeepAlive.enabled}`)
   console.log(`  Ping Interval: ${configCopy.trpcServerKeepAlive.pingMs}ms`)
   console.log(`  Pong Timeout: ${configCopy.trpcServerKeepAlive.pongWaitMs}ms`)
-  console.log('Database:')
-  console.log(`  URL: ${configCopy.databaseUrl}`)
   console.log('Authentication:')
   console.log(`  Enabled: ${configCopy.authEnabled}`)
   console.log(`  Dev Mode: ${configCopy.authDevMode}`)

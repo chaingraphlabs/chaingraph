@@ -34,6 +34,8 @@ export interface NodeUIState {
   isHighlighted?: boolean
   isDisabled?: boolean
   isErrorPortCollapsed?: boolean
+  isHidden?: boolean // indicates if the node is hidden in the UI, also used to skip it in the flow execution
+  isMovingDisabled?: boolean // indicates if the node is moving disabled in the UI
 }
 
 /**

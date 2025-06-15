@@ -37,6 +37,7 @@ beforeEach(() => {
  * A simple test node with various port types for testing purposes
  */
 @Node({
+  type: 'TestNode',
   title: 'Test Node',
   description: 'A test node for unit testing',
 })
@@ -286,5 +287,150 @@ describe('baseNodeCompositional', () => {
     expect(clonedNode.inputNumber).toBe(555)
     expect(clonedNode.id).toBe(node.id)
     expect(clonedNode.status).toBe(NodeStatus.Initialized)
+  })
+
+  describe('cloneWithNewId', () => {
+    it('should clone node with new unique identifiers', () => {
+      // Update some values to verify they are preserved
+      node.inputString = 'clone-test'
+      node.inputNumber = 999
+      node.inputBoolean = true
+      node.person = { name: 'Cloned', age: 40 }
+      node.stringList = ['cloned', 'list']
+
+      // Set UI properties
+      node.setPosition({ x: 50, y: 75 }, false)
+      node.setDimensions({ width: 200, height: 150 }, false)
+
+      // Clone with new ID
+      const result = node.cloneWithNewId()
+      const clonedNode = result.clonedNode as TestNode
+
+      // Verify node has a different ID
+      expect(clonedNode.id).not.toBe(node.id)
+
+      // Verify values were preserved
+      expect(clonedNode.inputString).toBe('clone-test')
+      expect(clonedNode.inputNumber).toBe(999)
+      expect(clonedNode.inputBoolean).toBe(true)
+      expect(clonedNode.person).toEqual({ name: 'Cloned', age: 40 })
+      expect(clonedNode.stringList).toEqual(['cloned', 'list'])
+
+      // Verify UI properties were preserved
+      expect(clonedNode.getUI()?.position).toEqual({ x: 50, y: 75 })
+      expect(clonedNode.getUI()?.dimensions).toEqual({ width: 200, height: 150 })
+
+      // Verify version and status were preserved
+      expect(clonedNode.getVersion()).toBe(node.getVersion())
+      expect(clonedNode.status).toBe(node.status)
+
+      // Verify the result includes mappings
+      expect(result.portIdMapping).toBeInstanceOf(Map)
+      expect(result.nodeIdMapping.originalId).toBe(node.id)
+      expect(result.nodeIdMapping.newId).toBe(clonedNode.id)
+    })
+
+    it('should clone all ports with new unique identifiers', () => {
+      // Clone with new ID
+      const result = node.cloneWithNewId()
+      const clonedNode = result.clonedNode as TestNode
+
+      // Verify all ports have different IDs
+      const originalPortIds = Array.from(node.ports.keys())
+      const clonedPortIds = Array.from(clonedNode.ports.keys())
+
+      expect(originalPortIds.length).toBe(clonedPortIds.length)
+
+      // No port IDs should match between original and cloned
+      for (const originalId of originalPortIds) {
+        expect(clonedPortIds).not.toContain(originalId)
+      }
+
+      // All cloned port IDs should follow the port ID pattern
+      for (const clonedId of clonedPortIds) {
+        expect(clonedId).toMatch(/PO/) // Should match the generatePortID pattern
+      }
+    })
+
+    it('should preserve port hierarchy and values in complex ports', () => {
+      // Update complex port values
+      node.person = { name: 'Complex', age: 35 }
+      node.stringList = ['item1', 'item2', 'item3']
+
+      // Clone with new ID
+      const result = node.cloneWithNewId()
+      const clonedNode = result.clonedNode as TestNode
+
+      // Verify complex object port values are preserved
+      expect(clonedNode.person).toEqual({ name: 'Complex', age: 35 })
+      expect(clonedNode.stringList).toEqual(['item1', 'item2', 'item3'])
+
+      // Find the object port in both nodes
+      const originalObjectPort = Array.from(node.ports.values())
+        .find(p => p.getConfig().key === 'person')
+      const clonedObjectPort = Array.from(clonedNode.ports.values())
+        .find(p => p.getConfig().key === 'person')
+
+      expect(originalObjectPort).toBeDefined()
+      expect(clonedObjectPort).toBeDefined()
+
+      // Verify port IDs are different but values are the same
+      expect(originalObjectPort!.id).not.toBe(clonedObjectPort!.id)
+      expect(originalObjectPort!.getValue()).toEqual(clonedObjectPort!.getValue())
+
+      // Find the array port in both nodes
+      const originalArrayPort = Array.from(node.ports.values())
+        .find(p => p.getConfig().key === 'stringList')
+      const clonedArrayPort = Array.from(clonedNode.ports.values())
+        .find(p => p.getConfig().key === 'stringList')
+
+      expect(originalArrayPort).toBeDefined()
+      expect(clonedArrayPort).toBeDefined()
+
+      // Verify array port IDs are different but values are the same
+      expect(originalArrayPort!.id).not.toBe(clonedArrayPort!.id)
+      expect(originalArrayPort!.getValue()).toEqual(clonedArrayPort!.getValue())
+    })
+
+    it('should create independent node instances', async () => {
+      // Clone with new ID
+      const result = node.cloneWithNewId()
+      const clonedNode = result.clonedNode as TestNode
+
+      // Modify original node
+      node.inputString = 'original-modified'
+      node.inputNumber = 111
+
+      // Modify cloned node
+      clonedNode.inputString = 'cloned-modified'
+      clonedNode.inputNumber = 222
+
+      // Verify they are independent
+      expect(node.inputString).toBe('original-modified')
+      expect(node.inputNumber).toBe(111)
+      expect(clonedNode.inputString).toBe('cloned-modified')
+      expect(clonedNode.inputNumber).toBe(222)
+
+      // Execute both nodes and verify independence
+      await node.execute({} as ExecutionContext)
+      await clonedNode.execute({} as ExecutionContext)
+
+      expect(node.outputString).toBe('original-modified-111')
+      expect(clonedNode.outputString).toBe('cloned-modified-222')
+    })
+
+    it('should handle cloning without UI metadata', () => {
+      // Create a fresh node without UI properties
+      const freshNode = new TestNode('fresh-node')
+      freshNode.initialize()
+
+      // Clone without UI
+      const result = freshNode.cloneWithNewId()
+      const clonedNode = result.clonedNode as TestNode
+
+      // Should not throw and should have different ID
+      expect(clonedNode.id).not.toBe(freshNode.id)
+      expect(clonedNode.getUI()).toBeUndefined()
+    })
   })
 })

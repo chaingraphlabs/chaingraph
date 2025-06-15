@@ -10,6 +10,7 @@ export * from './icomplex-port-handler'
 // Export all interfaces
 export * from './icore-node'
 export * from './idefault-port-manager'
+export * from './inode-clonable'
 export * from './inode-composite'
 export * from './inode-events'
 export * from './inode-ui'

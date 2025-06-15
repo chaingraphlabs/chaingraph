@@ -39,6 +39,15 @@ export function PortField({
     parentPort.getConfig()?.ui?.keyDeletable
     || parentPort.getConfig()?.ui?.keyDeletable === undefined, [parentPort])
 
+  const portConfig = port.getConfig()
+  port.setConfig({
+    ...portConfig,
+    ui: {
+      ...portConfig.ui || {},
+      hideEditor: parentPort.getConfig()?.ui?.hidePropertyEditor || port.getConfig().ui?.hideEditor || false,
+    },
+  })
+
   return (
     <div className="py-1 w-full relative">
       <div className={cn(

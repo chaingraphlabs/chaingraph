@@ -29,6 +29,7 @@ beforeEach(() => {
  * A test node that implements event handling and port visibility rules
  */
 @Node({
+  type: 'EventTestNode',
   title: 'Event Test Node',
   description: 'A node for testing event handling',
 })

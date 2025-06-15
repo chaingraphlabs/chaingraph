@@ -9,6 +9,7 @@
 export { ArchAIIntegration, useArchAIConfig } from './archai-integration'
 export * from './debug'
 export { EventList } from './EventList'
+export { ExportImport } from './export-import'
 export { FlowList } from './flow'
 export * from './flow'
 export { Help } from './Help'

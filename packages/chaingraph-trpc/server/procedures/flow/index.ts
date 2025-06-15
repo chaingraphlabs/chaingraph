@@ -15,6 +15,7 @@ import { edit } from './flow-edit'
 import { get } from './flow-get'
 import { getMeta } from './flow-get-meta'
 import { list } from './flow-list'
+import { pasteNodes } from './paste-nodes'
 import { removeEdge } from './remove-edge'
 import { removeNode } from './remove-node'
 import { subscribeToEvents } from './subscriptions'
@@ -27,6 +28,7 @@ import {
   appendElementArrayPort,
   removeElementArrayPort,
   removeFieldObjectPort,
+  updateItemConfigArrayPort,
   updatePortValue,
 } from './update-port-value'
 
@@ -40,6 +42,7 @@ export const flowProcedures = router({
   subscribeToEvents,
   addNode,
   removeNode,
+  pasteNodes,
   connectPorts,
   removeEdge,
   updateNodeUI,
@@ -49,6 +52,7 @@ export const flowProcedures = router({
   updatePortUI,
   addFieldObjectPort,
   removeFieldObjectPort,
+  updateItemConfigArrayPort,
   appendElementArrayPort,
   removeElementArrayPort,
 })
@@ -61,6 +65,8 @@ export { edit } from './flow-edit'
 export { get } from './flow-get'
 export { getMeta } from './flow-get-meta'
 export { list } from './flow-list'
+export { pasteNodes } from './paste-nodes'
+export type { PasteNodesClipboardDataType, PasteNodesInputType } from './paste-nodes'
 export { removeEdge } from './remove-edge'
 export { removeNode } from './remove-node'
 export { subscribeToEvents } from './subscriptions'
@@ -73,5 +79,6 @@ export {
   appendElementArrayPort,
   removeElementArrayPort,
   removeFieldObjectPort,
+  updateItemConfigArrayPort,
   updatePortValue,
 } from './update-port-value'

@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ExecutionContext } from '../../execution'
 import type { IPort, IPortConfig } from '../../port'
 
 /**
@@ -50,7 +51,7 @@ export interface IDefaultPortManager {
   /**
    * Determine if node should execute based on flow ports
    */
-  shouldExecute: () => boolean
+  shouldExecute: (context: ExecutionContext) => boolean
 
   /**
    * Update flow ports after execution

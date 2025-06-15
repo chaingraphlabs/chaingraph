@@ -39,6 +39,7 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 
 // Define the AddNode using decorators
 @Node({
+  type: 'AddNode',
   title: 'Add Node',
   description: 'Adds two numbers and outputs the result',
   category: 'math',

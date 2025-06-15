@@ -7,5 +7,7 @@
  */
 
 export { flowProcedures } from './flow'
+export type { PasteNodesClipboardDataType, PasteNodesInputType } from './flow'
 export { nodeRegistryProcedures } from './nodeRegistry'
+export { secretProcedures } from './secrets'
 export { zAsyncIterable } from './subscriptions/utils/zAsyncIterable'

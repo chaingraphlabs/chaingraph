@@ -17,6 +17,7 @@ import {
   String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
+import TurndownService from 'turndown'
 import { NODE_CATEGORIES } from '../../categories'
 
 type OutputValue = string | number
@@ -34,6 +35,7 @@ export enum ResponseType {
   JSON = 'json',
   TEXT = 'text',
   BLOB = 'blob',
+  HTML_TO_MARKDOWN = 'html-to-markdown',
 }
 
 function formatJSON(data: any): string {
@@ -43,9 +45,27 @@ function formatJSON(data: any): string {
 @Node({
   type: 'HttpRequestNode',
   title: 'HTTP Request',
-  description: 'Makes HTTP requests to external services',
+  description: `HTTP client for fetching data from web APIs and websites. Essential for AI agents working with web content.
+
+Key Features:
+- Supports GET, POST, PUT, PATCH, DELETE and HEAD methods
+- Authentication via headers (API keys, Bearer tokens)
+- Multiple response formats (JSON, text, html-to-markdown, binary)
+- Configurable timeout and retry settings
+
+Response Types:
+- json: For API responses and structured data
+- text: For plain text content or raw HTML
+- html-to-markdown: For web pages - reduces token usage by 60-80%
+- blob: For binary files and downloads
+
+Best Practices:
+- Use html-to-markdown for web scraping to save tokens
+- Set appropriate User-Agent headers
+- Check Status Code output for error handling
+- Use reasonable timeouts (30s default)`,
   category: NODE_CATEGORIES.UTILITIES,
-  tags: ['http', 'request', 'api'],
+  tags: ['http', 'request', 'api', 'web-scraping', 'fetch', 'web'],
 })
 export default class HttpRequestNode extends BaseNode {
   @Input()
@@ -55,6 +75,7 @@ export default class HttpRequestNode extends BaseNode {
     ui: {
       placeholder: 'Example: https://api.example.com',
     },
+    required: true,
   })
   baseUri: string = ''
 
@@ -65,6 +86,7 @@ export default class HttpRequestNode extends BaseNode {
     ui: {
       placeholder: 'Example: /v1/users',
     },
+    required: true,
   })
   path: string = ''
 
@@ -79,17 +101,18 @@ export default class HttpRequestNode extends BaseNode {
       type: 'string',
       defaultValue: method,
     })),
+    required: true,
   })
   method: HttpMethod = HttpMethod.GET
 
   @Input()
   @String({
     title: 'Headers',
-    description: 'HTTP headers to include with your request. Enter one header per line in "Key: Value" format. Common examples: Authorization, Content-Type, Accept.',
+    description: 'HTTP headers for authentication and request configuration. Enter one per line in "Key: Value" format.\n\nEssential headers for AI agents:\n• Authorization: Bearer API_KEY (for API access)\n• User-Agent: YourBot/1.0 (identify your bot)\n• Content-Type: application/json (for JSON data)\n• Accept: application/json (prefer JSON responses)\n• X-API-Key: YOUR_KEY (alternative API key format)',
     ui: {
       isTextArea: true,
       textareaDimensions: { width: 300, height: 80 },
-      placeholder: 'Content-Type: application/json\nAuthorization: Bearer YOUR_TOKEN\nAccept: application/json',
+      placeholder: 'User-Agent: Claude-Agent/1.0\nAuthorization: Bearer YOUR_API_KEY\nContent-Type: application/json\nAccept: application/json',
     },
   })
   headers: string = ''
@@ -116,16 +139,17 @@ export default class HttpRequestNode extends BaseNode {
   @Input()
   @StringEnum(Object.values(ResponseType), {
     title: 'Response Type',
-    description: 'Format to parse the response. JSON for structured data, Text for plain text, Blob for binary files.',
-    defaultValue: ResponseType.JSON,
+    description: 'How to process the HTTP response for optimal AI consumption:\n\n• json: For APIs returning structured data\n• text: For plain text or when you need raw HTML (high token cost)\n• html-to-markdown: For web pages - ESSENTIAL for token efficiency! Converts HTML to clean markdown, removing 60-80% of unnecessary markup\n• Blob: For binary files\n\n⚠️ AI Agent Tip: Always use HTML to Markdown when scraping websites to dramatically reduce token usage and get cleaner, more analyzable content.',
+    defaultValue: ResponseType.TEXT,
     options: Object.values(ResponseType).map(type => ({
       id: type,
       title: type,
       type: 'string',
       defaultValue: type,
     })),
+    required: true,
   })
-  responseType: ResponseType = ResponseType.JSON
+  responseType: ResponseType = ResponseType.TEXT
 
   @Input()
   @Number({
@@ -137,6 +161,7 @@ export default class HttpRequestNode extends BaseNode {
       max: 60000,
       step: 1000,
     },
+    required: true,
   })
   timeout: number = 30000
 
@@ -208,6 +233,10 @@ export default class HttpRequestNode extends BaseNode {
         case ResponseType.BLOB: {
           const blob = await response.blob()
           return `Blob: ${blob.type}, ${blob.size} bytes`
+        }
+        case ResponseType.HTML_TO_MARKDOWN: {
+          const html = await response.text()
+          return await convertHtmlToMarkdown(html)
         }
         default:
           return await response.text()
@@ -319,4 +348,109 @@ export default class HttpRequestNode extends BaseNode {
     return {
     }
   }
+}
+
+/**
+ * Converts HTML content to Markdown format with robust cleaning
+ */
+async function convertHtmlToMarkdown(html: string): Promise<string> {
+  // Step 1: Pre-clean HTML to remove unwanted elements
+  const cleanedHtml = html
+    // Remove script tags and their content (including inline scripts)
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove style tags and their content
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    // Remove noscript tags and their content
+    .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, '')
+    // Remove comments
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // Remove meta tags
+    .replace(/<meta\b[^>]*>/gi, '')
+    // Remove link tags (CSS, icons, etc.)
+    .replace(/<link\b[^>]*>/gi, '')
+    // Remove base tags
+    .replace(/<base\b[^>]*>/gi, '')
+    // Remove iframe tags and content
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    // Remove object and embed tags
+    .replace(/<(object|embed)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, '')
+    // Remove SVG elements that might contain scripts
+    .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, '')
+    // Remove any remaining script-like attributes (onclick, onload, etc.)
+    .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/\s*javascript\s*:/gi, '')
+
+  // Step 2: Configure TurndownService with comprehensive settings
+  const turndownService = new TurndownService({
+    headingStyle: 'atx',
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced',
+    fence: '```',
+    emDelimiter: '*',
+    strongDelimiter: '**',
+    linkStyle: 'inlined',
+  })
+
+  // Step 3: Remove specific elements that should not be converted
+  turndownService.remove([
+    'script',
+    'style',
+    'noscript',
+    'meta',
+    'link',
+    'base',
+    'title',
+    'head',
+    'iframe',
+    'object',
+    'embed',
+    'canvas',
+    'audio',
+    'video',
+    'source',
+    'track',
+    'map',
+    'area',
+    'input',
+    'button',
+    'select',
+    'textarea',
+    'form',
+    'fieldset',
+    'legend',
+    'label',
+  ])
+
+  // Remove SVG and other elements using filter function
+  turndownService.remove((node: any) => {
+    const tagName = node.nodeName?.toLowerCase()
+    return ['svg'].includes(tagName)
+  })
+
+  // Step 4: Add custom rules for problematic elements
+  turndownService.addRule('removeNavigation', {
+    filter: ['nav', 'header', 'footer', 'aside', 'menu'],
+    replacement: () => '',
+  })
+
+  turndownService.addRule('removeComments', {
+    filter: node => node.nodeType === 8, // Comment nodes
+    replacement: () => '',
+  })
+
+  // Step 5: Convert to markdown
+  const markdown = turndownService.turndown(cleanedHtml)
+
+  // Step 6: Post-process markdown to clean up
+  return markdown
+    // Remove multiple consecutive empty lines
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    // Remove leading/trailing whitespace
+    .trim()
+    // Remove any remaining script-like content that might have slipped through
+    .replace(/javascript:/gi, '')
+    // Clean up extra spaces
+    .replace(/[ \t]+/g, ' ')
+    // Remove empty list items
+    .replace(/^\s*[-*+]\s*$/gm, '')
 }

@@ -13,6 +13,8 @@ export * from './base'
 // Factory implementation
 export * from './factory'
 
+export * from './id-generate'
+
 // Port instances
 export * from './instances'
 

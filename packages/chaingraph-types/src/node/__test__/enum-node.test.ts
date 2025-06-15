@@ -37,6 +37,7 @@ enum Color {
 }
 
 @Node({
+  type: 'EnumNode',
   title: 'Enum Node',
   description: 'Node with an enum port',
 })

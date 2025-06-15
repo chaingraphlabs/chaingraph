@@ -33,6 +33,7 @@ export const stringPortConfigUISchema = basePortConfigUISchema.merge(
       width: z.number().optional(),
       height: z.number().optional(),
     }).optional(),
+    placeholder: z.string().optional(),
   }).passthrough(),
 )
 /**
@@ -51,9 +52,8 @@ export const numberPortConfigUISchema = basePortConfigUISchema.merge(
 export const arrayPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
     addItemFormHidden: z.boolean().optional(),
-    addItemFormSpoilerState: z.boolean().optional(),
     itemDeletable: z.boolean().optional(),
-    enumValues: z.array(z.enum([
+    allowedTypes: z.array(z.enum([
       'string',
       'number',
       'array',
@@ -72,6 +72,22 @@ export const objectPortConfigUISchema = basePortConfigUISchema.merge(
   z.object({
     collapsed: z.boolean().optional(),
     keyDeletable: z.boolean().optional(),
+    hidePropertyEditor: z.boolean().optional(),
+    allowedTypes: z.array(z.enum([
+      'string',
+      'number',
+      'array',
+      'object',
+      'boolean',
+      'stream',
+      'enum',
+      'any',
+    ])).optional(),
+    // Node schema capture functionality
+    nodeSchemaCapture: z.object({
+      enabled: z.boolean().optional(),
+      capturedNodeId: z.string().optional(),
+    }).optional(),
   }).passthrough(),
 )
 /**

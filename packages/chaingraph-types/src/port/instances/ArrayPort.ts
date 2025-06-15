@@ -7,8 +7,11 @@
  */
 
 import type { JSONValue } from '../../utils/json'
-import type { ArrayPortConfig, ArrayPortValue, IPortConfig } from '../base'
+import type { ArrayPortConfig, ArrayPortValue, IPort, IPortConfig } from '../base'
+import { deepCopy } from '../../utils'
 import { BasePort } from '../base'
+import { cleanupPortConfigFromIds } from '../base/'
+import { generatePortID } from '../id-generate'
 import { ArrayPortPlugin } from '../plugins'
 
 /**
@@ -132,6 +135,23 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    */
   protected deserializeValue(data: JSONValue): ArrayPortValue {
     return ArrayPortPlugin.deserializeValue(data, this.config)
+  }
+
+  /**
+   * Clones the port with a new ID.
+   * Useful for creating copies of the port with a unique identifier.
+   */
+  cloneWithNewId(): IPort<ArrayPortConfig<Item>> {
+    const newPortID = generatePortID(this.config.key || this.config.id || '')
+    const newConfig: ArrayPortConfig<Item> = {
+      ...this.config,
+      id: newPortID,
+      itemConfig: cleanupPortConfigFromIds(this.config.itemConfig),
+    }
+
+    const port = new ArrayPort<Item>(newConfig)
+    port.setValue(deepCopy(this.value)) // Set the current value
+    return port
   }
 }
 

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, Position } from '@badaitech/chaingraph-types'
+import type { INode, ObjectPortConfig, Position } from '@badaitech/chaingraph-types'
 import type { Connection, Edge, EdgeChange, HandleType, Node, NodeChange } from '@xyflow/react'
 import { $edges, requestAddEdge, requestRemoveEdge } from '@/store/edges'
 import { $activeFlowMetadata } from '@/store/flow'
@@ -16,6 +16,25 @@ import { hasCycle } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useCallback, useMemo, useRef } from 'react'
 import { getNodePositionInFlow, getNodePositionInsideParent } from '../utils/node-position'
+
+// Custom event for node schema drop detection
+export interface NodeSchemaDropEvent {
+  droppedNode: INode
+  targetNodeId: string
+  targetPortId: string
+}
+
+// Global event emitter for node schema drops
+const nodeSchemaDropCallbacks = new Set<(event: NodeSchemaDropEvent) => void>()
+
+export function subscribeToNodeSchemaDrop(callback: (event: NodeSchemaDropEvent) => void) {
+  nodeSchemaDropCallbacks.add(callback)
+  return () => nodeSchemaDropCallbacks.delete(callback)
+}
+
+function emitNodeSchemaDrop(event: NodeSchemaDropEvent) {
+  nodeSchemaDropCallbacks.forEach(callback => callback(event))
+}
 
 /**
  * Hook to handle flow interaction callbacks
@@ -56,6 +75,12 @@ export function useFlowCallbacks() {
             if (!node || !change.position || !change.position.x || !change.position.y) {
               return
             }
+
+            if (node.metadata.ui?.state?.isMovingDisabled === true) {
+              console.warn(`[useFlowCallbacks] Node ${node.id} is moving disabled, skipping position update`)
+              return
+            }
+
             // check if the position is the same
             const isSamePosition
               = node.metadata.ui?.position?.x === change.position.x
@@ -64,6 +89,13 @@ export function useFlowCallbacks() {
             if (isSamePosition) {
               return
             }
+
+            // check if the node parent exists and this is not a group node
+            // if (node.metadata.parentNodeId && node.metadata.category !== 'group') {
+            //   return
+            // }
+
+            // console.log(`[useFlowCallbacks] Node position change:`, change)
 
             positionInterpolator.clearNodeState(node.id)
 
@@ -82,23 +114,29 @@ export function useFlowCallbacks() {
           if (!node)
             return
 
+          if (node.metadata.category === 'group') {
+            // ignore group node dimension changes, is is handled by the group node itself
+            return
+          }
+
           if (!change.dimensions || !change.dimensions.width || !change.dimensions.height) {
             console.warn(`[useFlowCallbacks] Invalid dimensions change:`, change)
             return
           }
-
           const isSameDimensions
-            = node.metadata.ui?.dimensions?.width === change.dimensions.width
-              && node.metadata.ui?.dimensions?.height === change.dimensions.height
+              = node.metadata.ui?.dimensions?.width === change.dimensions.width
+                && node.metadata.ui?.dimensions?.height === change.dimensions.height
 
           const isNodeDimensionInitialized
-              = node.metadata.ui?.dimensions !== undefined
-                && node.metadata.ui?.dimensions?.width !== undefined
-                && node.metadata.ui?.dimensions?.height !== undefined
+                = node.metadata.ui?.dimensions !== undefined
+                  && node.metadata.ui?.dimensions?.width !== undefined
+                  && node.metadata.ui?.dimensions?.height !== undefined
 
           if (isSameDimensions) { // || !isNodeDimensionInitialized) {
             return
           }
+
+          // console.log(`[useFlowCallbacks] Node dimensions change:`, change)
 
           // console.log(`[useFlowCallbacks] Setting dimensions for node ${change.id} to:`, change.dimensions)
 
@@ -126,7 +164,7 @@ export function useFlowCallbacks() {
             updateNodeUI({
               flowId: activeFlow.id!,
               nodeId: change.id,
-              version: node.getVersion(),
+              version: node.getVersion() + 1,
               ui: {
                 state: {
                   isSelected: change.selected,
@@ -151,7 +189,7 @@ export function useFlowCallbacks() {
           break
 
         default:
-          console.warn(`[useFlowCallbacks] Unhandled node change:`, change)
+          // console.warn(`[useFlowCallbacks] Unhandled node change:`, change)
           break
       }
     })
@@ -247,6 +285,92 @@ export function useFlowCallbacks() {
     reconnectSuccessful.current = false
   }, [activeFlow?.id])
 
+  // Helper function to check if a node was dropped on a schema-enabled ObjectPort
+  const checkForNodeSchemaDrop = useCallback((
+    droppedNode: Node,
+    droppedPosition: { x: number, y: number },
+    allNodes: Record<string, INode>,
+  ) => {
+    // Find all nodes that might have schema-enabled ObjectPorts
+    const potentialTargetNodes = Object.values(allNodes).filter((node) => {
+      // Look for nodes that have ports with nodeSchemaCapture enabled
+      return Array.from(node.ports.values()).some((port) => {
+        const config = port.getConfig()
+        // Check if it's an object port first, then cast to ObjectPortConfig
+        if (config.type === 'object') {
+          const objectConfig = config as ObjectPortConfig
+          return objectConfig.ui?.nodeSchemaCapture?.enabled === true
+        }
+
+        return false
+      })
+    })
+
+    for (const targetNode of potentialTargetNodes) {
+      const targetPosition = targetNode.metadata.ui?.position
+      const targetDimensions = targetNode.metadata.ui?.dimensions
+
+      if (!targetPosition || !targetDimensions)
+        continue
+
+      // Check if dropped node overlaps with target node
+      const droppedNodeBounds = {
+        x: droppedPosition.x,
+        y: droppedPosition.y,
+        width: droppedNode.width || 200, // Default width if not available
+        height: droppedNode.height || 100, // Default height if not available
+      }
+
+      const targetNodeBounds = {
+        x: targetPosition.x,
+        y: targetPosition.y,
+        width: targetDimensions.width,
+        height: targetDimensions.height,
+      }
+
+      // Calculate overlap area
+      const overlapX = Math.max(0, Math.min(
+        droppedNodeBounds.x + droppedNodeBounds.width,
+        targetNodeBounds.x + targetNodeBounds.width,
+      ) - Math.max(droppedNodeBounds.x, targetNodeBounds.x))
+
+      const overlapY = Math.max(0, Math.min(
+        droppedNodeBounds.y + droppedNodeBounds.height,
+        targetNodeBounds.y + targetNodeBounds.height,
+      ) - Math.max(droppedNodeBounds.y, targetNodeBounds.y))
+
+      const overlapArea = overlapX * overlapY
+      const droppedNodeArea = droppedNodeBounds.width * droppedNodeBounds.height
+
+      // Check if overlap is sufficient (5% threshold)
+      if (overlapArea / droppedNodeArea > 0.05) {
+        // Find the schema-enabled port
+        const schemaPort = Array.from(targetNode.ports.values()).find((port) => {
+          const config = port.getConfig()
+          // Check if it's an object port first, then cast to ObjectPortConfig
+          if (config.type === 'object') {
+            const objectConfig = config as ObjectPortConfig
+            return objectConfig.ui?.nodeSchemaCapture?.enabled === true
+          }
+
+          return false
+        })
+
+        if (schemaPort) {
+          const sourceNode = allNodes[droppedNode.id]
+          if (sourceNode && sourceNode.id !== targetNode.id) {
+            // Emit the schema drop event
+            emitNodeSchemaDrop({
+              droppedNode: sourceNode,
+              targetNodeId: targetNode.id,
+              targetPortId: schemaPort.id,
+            })
+          }
+        }
+      }
+    }
+  }, [])
+
   // Handle node drag end
   const onNodeDragStop = useCallback((
     event: React.MouseEvent,
@@ -285,6 +409,10 @@ export function useFlowCallbacks() {
       }
 
       const flowNode = nodes[nodeDragStop.id]
+
+      if (flowNode) {
+        // TODO: add to node metadata that node is dragged stop!!!
+      }
 
       if (!flowNode || flowNode.metadata.category === 'group')
         continue
@@ -365,20 +493,24 @@ export function useFlowCallbacks() {
           continue
         }
 
-        updateNodePosition({
-          flowId: activeFlow.id,
-          nodeId: nodeDragStop.id,
-          position: roundPosition(absoluteNodePosition as Position),
-          version: flowNode.getVersion(),
-        })
+        // check if nodeDragStop node's parent is the group node, if no, skip
+        const parentNode = nodes[currentParentId]
+        if (parentNode && parentNode.metadata.category === 'group') {
+          updateNodePosition({
+            flowId: activeFlow.id,
+            nodeId: nodeDragStop.id,
+            position: roundPosition(absoluteNodePosition as Position),
+            version: flowNode.getVersion(),
+          })
 
-        updateNodeParent({
-          flowId: activeFlow.id,
-          nodeId: nodeDragStop.id,
-          parentNodeId: undefined,
-          position: roundPosition(absoluteNodePosition as Position),
-          version: flowNode.getVersion() + 1,
-        })
+          updateNodeParent({
+            flowId: activeFlow.id,
+            nodeId: nodeDragStop.id,
+            parentNodeId: undefined,
+            position: roundPosition(absoluteNodePosition as Position),
+            version: flowNode.getVersion() + 1,
+          })
+        }
       } else if (newParentId && targetGroupNode && newParentId !== currentParentId) {
         const newPosition = getNodePositionInsideParent(
           absoluteNodePosition,
@@ -409,8 +541,21 @@ export function useFlowCallbacks() {
           version: flowNode.getVersion() + 1,
         })
       }
+
+      // Check for node schema drop detection
+      checkForNodeSchemaDrop(nodeDragStop, absoluteNodePosition, nodes)
     }
-  }, [activeFlow?.id, nodes])
+  }, [activeFlow?.id, nodes, checkForNodeSchemaDrop])
+
+  // Handle node drag end
+
+  const onNodeDragStart = useCallback((
+    event: React.MouseEvent,
+    nodesDrag: Node,
+    nodesDragStop: Node[],
+  ) => {
+    // TODO: add to node metadata that node is dragged
+  }, [])
 
   return {
     onNodesChange,
@@ -419,6 +564,7 @@ export function useFlowCallbacks() {
     onReconnect,
     onReconnectStart,
     onReconnectEnd,
+    onNodeDragStart,
     onNodeDragStop,
   }
 }

@@ -23,6 +23,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useStore } from '@xyflow/react'
 import {
 
@@ -62,6 +64,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
   }, [getEdgesForPort, port.id])
 
   const [focused, setFocused] = useState(false)
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
 
   const handleChange = useCallback(<Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
     if (!e.nativeEvent.isTrusted) {
@@ -110,14 +115,14 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       return
     }
 
-    updatePortUI({
+    requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
       ui: {
         textareaDimensions: newDimensions,
       },
     })
-  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id, updatePortUI])
+  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
 
   if (ui?.hidden)
     return null
@@ -141,25 +146,51 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
       <div className={cn(
         'flex flex-col w-full',
         config.direction === 'output' ? 'items-end' : 'items-start',
-        'truncate',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            'truncate',
+            // if port required and the value is empty, add a red underline
+            config.required
+            && (!port.getValue() || !port.validate())
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
-          {' '}
         </PortTitle>
 
         {!ui?.isTextArea && needRenderEditor && (
           <Input
-            value={port.getValue()}
+            value={port.getValue() ?? ''}
             onChange={handleChange}
+            onFocus={trackFocus}
+            onBlur={trackBlur}
             className={cn(
               'resize-none shadow-none text-xs p-1',
               'w-full',
               // errorMessage && 'border-red-500',
               'nodrag',
+              'placeholder:text-neutral-400 placeholder:opacity-40',
             )}
-            placeholder={port.getConfig().title ?? 'Text'}
+            placeholder={
+              config.ui?.placeholder
+              ?? config.title
+              ?? config.key
+              ?? 'Text'
+            }
             type={ui?.isPassword ? 'password' : undefined}
             data-1p-ignore
             disabled={executionID ? true : ui?.disabled ?? false}
@@ -170,29 +201,38 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
           <>
             <Textarea
               ref={textareaRef}
-              value={port.getValue()}
+              value={port.getValue() ?? ''}
               onChange={handleChange}
               onClick={_ => handleResize()}
               onInput={_ => handleResize()}
               onBlur={(_) => {
                 handleResize()
                 setFocused(false)
+                trackBlur()
               }}
               onFocus={(_) => {
                 handleResize()
                 setFocused(true)
+                trackFocus()
               }}
               style={{
-                width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
+              //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
                 height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,
               }}
               className={cn(
                 'shadow-none text-xs p-1 resize',
                 'nodrag',
+                'w-full',
                 'max-w-full',
                 focused && 'nowheel',
+                'placeholder:text-neutral-400 placeholder:opacity-40',
               )}
-              placeholder="String"
+              placeholder={
+                config.ui?.placeholder
+                ?? config.title
+                ?? config.key
+                ?? 'Text'
+              }
               disabled={executionID ? true : ui?.disabled ?? false}
             />
           </>

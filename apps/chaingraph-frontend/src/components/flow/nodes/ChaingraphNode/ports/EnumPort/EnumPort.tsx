@@ -27,6 +27,8 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { requestUpdatePortUI } from '@/store/ports'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -45,6 +47,9 @@ export function EnumPort(props: EnumPortProps) {
 
   const config = port.getConfig()
   const ui = config.ui
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
 
   // Memoize edges for this port
   const connectedEdges = useMemo(() => {
@@ -90,7 +95,26 @@ export function EnumPort(props: EnumPortProps) {
         'truncate',
       )}
       >
-        <PortTitle>
+        <PortTitle
+          className={cn(
+            'cursor-pointer',
+            // if port required and the value is empty, add a red underline
+            config.required
+            && (!port.getValue() || !port.validate())
+            && config.direction === 'input'
+            && (config.connections?.length || 0) === 0
+            && 'underline decoration-red-500 decoration-2',
+          )}
+          onClick={() => {
+            requestUpdatePortUI({
+              nodeId: node.id,
+              portId: port.id,
+              ui: {
+                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+              },
+            })
+          }}
+        >
           {title}
         </PortTitle>
         {needRenderEditor && (
@@ -105,6 +129,8 @@ export function EnumPort(props: EnumPortProps) {
                 // errorMessage && 'border-red-500',
                 'nodrag',
               )}
+              onFocus={trackFocus}
+              onBlur={trackBlur}
             >
               <SelectValue placeholder="Select an option" />
             </SelectTrigger>

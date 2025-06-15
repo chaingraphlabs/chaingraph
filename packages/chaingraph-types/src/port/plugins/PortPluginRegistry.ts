@@ -27,6 +27,7 @@ import {
   ObjectPortPlugin,
   PortError,
   PortErrorType,
+  SecretPortPlugin,
   StreamPortPlugin,
   StringPortPlugin,
 } from '../../port'
@@ -91,7 +92,8 @@ export class PortPluginRegistry {
    */
   getAllPlugins(): IPortPlugin<any>[] {
     // return Array.from(this.plugins.values())
-    const plugins = [
+
+    const staticPlugins = [
       StringPortPlugin,
       NumberPortPlugin,
       ArrayPortPlugin,
@@ -100,10 +102,10 @@ export class PortPluginRegistry {
       StreamPortPlugin,
       AnyPortPlugin,
       BooleanPortPlugin,
-      // SecretPortPlugin,
+      SecretPortPlugin,
     ]
 
-    return plugins
+    return staticPlugins
   }
 
   /**
@@ -117,7 +119,11 @@ export class PortPluginRegistry {
    * Get a union schema for all registered config types
    */
   getConfigUnionSchema(): z.ZodType<IPortConfig> {
-    const schemas = this.getAllPlugins().map(plugin => plugin.configSchema)
+    const plugins = this.getAllPlugins()
+    const schemas = plugins
+      .filter(plugin => plugin && plugin.configSchema)
+      .map(plugin => plugin.configSchema)
+
     return buildUnion(schemas, basePortConfigSchema)
   }
 
@@ -128,17 +134,21 @@ export class PortPluginRegistry {
     const plugins = this.getAllPlugins()
 
     const schemas = plugins
-      .filter(plugin => !plugin || !plugin.valueSchema)
+      .filter(plugin => plugin && plugin.valueSchema)
       .map((plugin) => {
-        if (plugin.valueSchema) {
+        if (!plugin.valueSchema) {
           throw new PortError(
             PortErrorType.RegistryError,
-            `Plugin for type "${plugin.typeIdentifier}" does not have a value schema`,
+            `Plugin for type "${plugin.typeIdentifier}" does not have a value schema: ${JSON.stringify(plugin)}`,
           )
         }
 
         return plugin.valueSchema
       })
+
+    // add null and undefined schemas
+    schemas.push(z.null(), z.undefined())
+
     return buildUnion(schemas, defaultValueSchema)
   }
 

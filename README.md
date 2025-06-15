@@ -115,14 +115,14 @@ Use the included Docker Compose configuration to start a PostgreSQL database:
 docker compose up -d postgres
 ```
 
-This will start a PostgreSQL instance accessible on port 5431.
+This will start a PostgreSQL instance accessible on port 5432.
 
 ### 2. Configure Database Connection
 
 Create a `.env` file in the project root with your database connection parameters based on the provided `.env.example`:
 
 ```
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5431/postgres?sslmode=disable
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
 ```
 
 ### 3. Run Database Migrations
@@ -322,8 +322,9 @@ You can manually trigger releases from the GitHub Actions tab:
 1. Navigate to the "Release" workflow
 2. Click "Run workflow"
 3. Choose the desired action:
-  - Create a changeset version PR
-  - Publish packages immediately
+
+- Create a changeset version PR
+- Publish packages immediately
 
 ### Commands for Local Development
 

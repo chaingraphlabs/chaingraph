@@ -6,8 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
+import type {
+  ArrayPortConfig,
+  IPort,
+  IPortConfig,
+  ObjectPortConfig,
+} from '../../port'
 import type { IComplexPortHandler, INodeComposite, IPortBinder, IPortManager } from '../interfaces'
+import {
+  generatePortIDArrayElement,
+} from '../../port'
 import { PortFactory } from '../../port'
 import { PortConfigProcessor } from '../port-config-processor'
 
@@ -313,7 +321,7 @@ export class PortBinder implements IPortBinder {
     )
 
     // Create the item port
-    const itemPortId = `${arrayPort.id}[${index}]`
+    const itemPortId = generatePortIDArrayElement(arrayPort.id, index)
     const completeItemConfig = {
       ...itemConfig,
       id: itemPortId,
