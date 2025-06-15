@@ -36,3 +36,6 @@ export const trpcDomain = createDomain('trpc')
 
 // ArchAI domain for ArchAI integration management
 export const archaiDomain = createDomain('archai')
+
+// Focused editors domain for tracking focused port editors
+export const focusedEditorsDomain = createDomain('focused-editors')

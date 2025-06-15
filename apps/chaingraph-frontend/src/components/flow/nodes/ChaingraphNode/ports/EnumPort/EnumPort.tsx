@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
@@ -46,6 +47,9 @@ export function EnumPort(props: EnumPortProps) {
 
   const config = port.getConfig()
   const ui = config.ui
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
 
   // Memoize edges for this port
   const connectedEdges = useMemo(() => {
@@ -125,6 +129,8 @@ export function EnumPort(props: EnumPortProps) {
                 // errorMessage && 'border-red-500',
                 'nodrag',
               )}
+              onFocus={trackFocus}
+              onBlur={trackBlur}
             >
               <SelectValue placeholder="Select an option" />
             </SelectTrigger>

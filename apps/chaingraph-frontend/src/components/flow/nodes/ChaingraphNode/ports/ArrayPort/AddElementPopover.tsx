@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { PopoverContent } from '@/components/ui/popover'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
@@ -111,6 +112,13 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 export function AddElementPopover(props: Props) {
   const { onClose, onSubmit, port } = props
 
+  // Get nodeId from port config
+  const nodeId = port.getConfig().nodeId || ''
+  const portId = port.id
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
+
   const itemType = port.getConfig().itemConfig.type
   const dropDownValues = (itemType !== 'any' ? [itemType] : (port.getConfig().ui?.allowedTypes || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
 
@@ -152,6 +160,8 @@ export function AddElementPopover(props: Props) {
               readOnly
               className="w-full cursor-pointer"
               onClick={() => setIsDropdownOpen(true)}
+              onFocus={trackFocus}
+              onBlur={trackBlur}
             />
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
           </div>

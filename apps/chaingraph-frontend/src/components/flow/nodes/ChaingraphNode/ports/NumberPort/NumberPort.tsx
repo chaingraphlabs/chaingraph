@@ -22,6 +22,7 @@ import { NumberInput } from '@/components/ui/number-input'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
@@ -41,6 +42,9 @@ export function NumberPort(props: NumberPortProps) {
   const ui = config.ui
   const title = config.title || config.key
   const executionID = useExecutionID()
+
+  // Track focus/blur for global copy-paste functionality
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
 
   // Memoize edges for this port
   const connectedEdges = useMemo(() => {
@@ -136,6 +140,8 @@ export function NumberPort(props: NumberPortProps) {
               max={config.max}
               step={config.step}
               onValueChange={handleNumberInputChange}
+              onFocus={trackFocus}
+              onBlur={trackBlur}
             />
 
             {config.ui?.isSlider && (

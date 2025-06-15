@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-frontend
 
+## 0.2.2
+
+### Patch Changes
+
+- feat: prevent node copy-paste when port editors are focused
+
 ## 0.2.1
 
 ### Patch Changes
