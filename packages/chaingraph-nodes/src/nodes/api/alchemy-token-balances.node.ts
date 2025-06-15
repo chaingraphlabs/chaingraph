@@ -14,7 +14,6 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  ExecutionEventEnum,
   Input,
   Node,
   Number,
@@ -170,7 +169,6 @@ class TokenBalanceFetcherNode extends BaseNode {
         { maxCount: this.maxTokens },
       ],
     }
-    this.debugLog(context, JSON.stringify(payload))
 
     try {
       const response = await fetch(apiUrl, {
@@ -203,21 +201,6 @@ class TokenBalanceFetcherNode extends BaseNode {
     } catch (error) {
       throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
     }
-  }
-
-  /**
-   * Send a debug log event to the execution context
-   */
-  private async debugLog(context: ExecutionContext, message: string): Promise<void> {
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: message,
-      },
-    })
   }
 }
 
