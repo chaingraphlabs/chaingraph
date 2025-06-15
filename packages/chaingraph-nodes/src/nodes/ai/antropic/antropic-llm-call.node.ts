@@ -1097,7 +1097,11 @@ export class AntropicLlmCallNode extends BaseNode {
           // Use the collected outputs as the tool result
           toolResult = JSON.stringify(outputValues)
         } catch (error: any) {
-          toolResult = `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`
+          toolResult = JSON.stringify({
+            error: true,
+            message: `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`,
+          })
+          console.debug(`[ANTHROPIC] Tool ${toolUseBlock.name} execution failed: ${error.message || String(error)}`)
         }
 
         // Create a tool result block
@@ -1120,6 +1124,18 @@ export class AntropicLlmCallNode extends BaseNode {
           },
         })
       } catch (error: any) {
+        // Create a tool result block
+        const toolResultBlock = new ToolResultBlock()
+        toolResultBlock.type = 'tool_result'
+        toolResultBlock.tool_use_id = toolUseBlock.id
+        toolResultBlock.content = JSON.stringify({
+          error: true,
+          message: `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`,
+        })
+
+        toolResults.push(toolResultBlock)
+        this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolUseBlock.id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResultBlock.content}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
+
         // Log error but continue with other tools
         await context.sendEvent({
           index: 0,
@@ -1395,7 +1411,7 @@ export class AntropicLlmCallNode extends BaseNode {
     }
 
     if (block instanceof TextResponseBlock) {
-    // send </text>, </think>, or </tool_use> to indicate the end of the block
+      // send </text>, </think>, or </tool_use> to indicate the end of the block
       // this.responseStream.send(TAGS.TEXT.CLOSE)
     } else if (block instanceof ThinkingResponseBlock) {
       this.responseStream.send(`${TAGS.THINK.CLOSE}`)

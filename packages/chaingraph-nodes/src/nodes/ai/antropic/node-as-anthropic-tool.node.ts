@@ -81,14 +81,6 @@ class NodeAsAnthropicToolNode extends BaseNode {
       throw new Error(`Node with ID ${nodeId} not found in the context.`)
     }
 
-    const schemaNodePortsWithoutSystem = Array.from(schemaNode.ports.values()).filter((port) => {
-      // Filter out system ports (those with metadata.system set to true)
-      return !port.isSystem()
-    })
-
-    // log schemaNodePortsWithoutSystem
-    console.log(`Schema node ports without system: ${JSON.stringify(schemaNodePortsWithoutSystem.map(port => port.serialize()))}`)
-
     // Create tool name (sanitize for Claude API)
     const toolName = (schemaNode.metadata.title || schemaNode.metadata.type || `Node_${nodeId}`)
       .toLowerCase()
