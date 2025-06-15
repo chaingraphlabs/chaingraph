@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
