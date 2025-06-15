@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.2.2
+
+### Patch Changes
+
+- feat: enhance error handling and validation in tool execution and OKX token retrieval
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

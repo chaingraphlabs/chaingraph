@@ -79,6 +79,9 @@ class OKXGetTokensNode extends BaseNode {
         throw new Error('Secrets configuration is required')
 
       const secrets = await this.config.secrets.decrypt(context)
+      if (!secrets || !secrets.apiKey || !secrets.secretKey || !secrets.apiPassphrase || !this.config.projectId) {
+        throw new Error('API credentials are missing or invalid, expected: apiKey, secretKey, apiPassphrase, projectId')
+      }
 
       // Initialize the OKX DEX client
       const client = new OKXDexClient({
