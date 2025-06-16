@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.5
+
+### Patch Changes
+
+- feat: implement ECDH key pair generation and logging for execution context
+
 ## 0.2.4
 
 ### Patch Changes
