@@ -8,7 +8,15 @@
 
 import type { INode, Position } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import type { AddNodeEvent, NodeState, PasteNodesEvent, UpdateNodeParent, UpdateNodePosition, UpdateNodeUIEvent } from './types'
+import type {
+  AddNodeEvent,
+  NodeState,
+  PasteNodesEvent,
+  UpdateNodeParent,
+  UpdateNodePosition,
+  UpdateNodeTitleEvent,
+  UpdateNodeUIEvent,
+} from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 
@@ -52,6 +60,8 @@ export const updateNodeUI = nodesDomain.createEvent<UpdateNodeUIEvent>()
 export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() // For optimistic updates
 export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
 export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
+
+export const updateNodeTitle = nodesDomain.createEvent<UpdateNodeTitleEvent>()
 
 // New event for interpolated position updates
 export const updateNodePositionInterpolated = nodesDomain.createEvent<{
@@ -130,6 +140,24 @@ export const updateNodeUIFx = nodesDomain.createEffect(async (params: UpdateNode
     flowId: params.flowId,
     nodeId: params.nodeId,
     ui: params.ui,
+    version: params.version,
+  })
+})
+
+export const updateNodeTitleFx = nodesDomain.createEffect(async (params: UpdateNodeTitleEvent): Promise<UpdateNodeTitleEvent> => {
+  const client = $trpcClient.getState()
+
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  if (!params.title) {
+    throw new Error('Title is required')
+  }
+
+  return client.flow.updateNodeTitle.mutate({
+    flowId: params.flowId,
+    nodeId: params.nodeId,
+    title: params.title,
     version: params.version,
   })
 })
@@ -609,6 +637,17 @@ sample({
 // * * * * * * * * * * * * * * *
 // Node UI operations
 // * * * * * * * * * * * * * * *
+
+sample({
+  clock: updateNodeTitle,
+  source: $nodes,
+  // set actual node version before sending to the server
+  fn: (nodes, params) => ({
+    ...params,
+    version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
+  }),
+  target: [updateNodeTitleFx],
+})
 
 // Handle optimistic updates
 const throttledUpdateNodeUILocal = accumulateAndSample({

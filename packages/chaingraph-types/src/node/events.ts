@@ -21,6 +21,9 @@ export enum NodeEventType {
   // Parent events
   ParentChange = 'node:parent-change',
 
+  // Title change events
+  TitleChange = 'node:title-change',
+
   // UI events
   UIPositionChange = 'node:ui:position-change',
   UIDimensionsChange = 'node:ui:dimensions-change',
@@ -53,6 +56,15 @@ export interface NodeParentChangeEvent extends NodeEventBase {
   newParentNodeId?: string
   oldPosition?: Position
   newPosition: Position
+}
+
+/**
+ * Event emitted when node title changes
+ */
+export interface NodeTitleChangeEvent extends NodeEventBase {
+  type: NodeEventType.TitleChange
+  oldTitle?: string
+  newTitle: string
 }
 
 /**
@@ -146,6 +158,7 @@ export type NodeEvent =
   | NodeEventBase
   | NodeStatusChangeEvent
   | NodeParentChangeEvent
+  | NodeTitleChangeEvent
   | NodeUIPositionChangeEvent
   | NodeUIDimensionsChangeEvent
   | NodeUIChangeEvent
@@ -158,6 +171,7 @@ export type NodeEvent =
 export interface EventTypeToInterface {
   [NodeEventType.StatusChange]: NodeStatusChangeEvent
   [NodeEventType.ParentChange]: NodeParentChangeEvent
+  [NodeEventType.TitleChange]: NodeTitleChangeEvent
   [NodeEventType.UIChange]: NodeUIChangeEvent
   [NodeEventType.UIPositionChange]: NodeUIPositionChangeEvent
   [NodeEventType.UIDimensionsChange]: NodeUIDimensionsChangeEvent

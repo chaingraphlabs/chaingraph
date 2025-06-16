@@ -15,9 +15,9 @@ import {
   Output,
   PortObject,
 } from '@badaitech/chaingraph-types'
-import { OKXDexClient } from '@okx-dex/okx-dex-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 import { mapSwapResponseData } from './mappers'
+import { createDexApiClient } from './okx-dex-client'
 import { OKXConfig, SwapParams, SwapResponseData } from './types'
 
 /**
@@ -69,18 +69,7 @@ class OKXGetSwapDataNode extends BaseNode {
     if (!this.config.secrets)
       throw new Error('Secrets configuration is required')
 
-    const secrets = await this.config.secrets.decrypt(context)
-
-    // Initialize the OKX DEX client
-    const client = new OKXDexClient({
-      apiKey: secrets.apiKey,
-      secretKey: secrets.secretKey,
-      apiPassphrase: secrets.apiPassphrase,
-      projectId: this.config.projectId,
-      // baseUrl: this.config.baseUrl,
-      // timeout: this.config.timeout,
-      // maxRetries: this.config.maxRetries,
-    })
+    const client = await createDexApiClient(context, this.config)
 
     try {
       // Convert our SwapParams class to a plain object the SDK expects
@@ -90,9 +79,6 @@ class OKXGetSwapDataNode extends BaseNode {
         toTokenAddress: this.swapParams.toTokenAddress,
         amount: this.swapParams.amount,
         userWalletAddress: this.swapParams.userWalletAddress,
-        // slippage: this.swapParams.autoSlippage === true && this.swapParams.maxAutoSlippage ? undefined : this.swapParams.slippage,
-        // autoSlippage: this.swapParams.autoSlippage,
-        // maxAutoSlippage: this.swapParams.maxAutoSlippage,
       }
 
       if (this.swapParams.slippage !== undefined && this.swapParams.slippage !== null && this.swapParams.slippage !== '') {

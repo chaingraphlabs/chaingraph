@@ -19,7 +19,7 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { AntropicMessage, ImageBlock, TextBlock } from './../ai/antropic/types'
+import { AntropicMessage, ImageBlock, TextBlock } from './../ai/anthropic/types'
 import { Message as ArchAIMessage } from './types'
 
 enum RoleAssignment {

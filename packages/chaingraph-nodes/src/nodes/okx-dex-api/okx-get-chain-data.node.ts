@@ -15,9 +15,9 @@ import {
   PortObject,
   String,
 } from '@badaitech/chaingraph-types'
-import { OKXDexClient } from '@okx-dex/okx-dex-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 import { mapArray, mapChainData } from './mappers'
+import { createDexApiClient } from './okx-dex-client'
 import { ChainData, OKXConfig } from './types'
 
 /**
@@ -69,19 +69,7 @@ class OKXGetChainDataNode extends BaseNode {
       if (!this.config.secrets)
         throw new Error('Secrets configuration is required')
 
-      const secrets = await this.config.secrets.decrypt(context)
-
-      // Initialize the OKX DEX client
-      const client = new OKXDexClient({
-        apiKey: secrets.apiKey,
-        secretKey: secrets.secretKey,
-        apiPassphrase: secrets.apiPassphrase,
-        projectId: this.config.projectId,
-        // Add other config options if needed
-        // baseUrl: this.config.baseUrl ?? undefined,
-        // timeout: this.config.timeout ?? undefined,
-        // maxRetries: (this.config.maxRetries || 0) > 0 ? this.config.maxRetries : undefined,
-      })
+      const client = await createDexApiClient(context, this.config)
 
       console.log(`[OKXGetChainDataNode] Fetching chain data for chainId: ${this.chainId}`)
 

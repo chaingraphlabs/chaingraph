@@ -904,8 +904,12 @@ export class AntropicLlmCallNode extends BaseNode {
         break
       }
 
+      console.log(`[ANTHROPIC] Streaming event: ${event.type}, data: ${JSON.stringify(event)}`)
+
       // Process the streaming event based on its type
-      if (event.type === 'content_block_start') {
+      if (event.type === 'message_start') {
+        console.log(`[ANTHROPIC] Message start:  ${event.type}, data: ${JSON.stringify(event)}`)
+      } else if (event.type === 'content_block_start') {
         console.log(`[ANTHROPIC] Content block start:  ${event.type}, data: ${JSON.stringify(event)}`)
         await this.handleContentBlockStart(event, contentBlocks, jsonAccumulators, client)
       } else if (event.type === 'content_block_delta') {
@@ -930,7 +934,7 @@ export class AntropicLlmCallNode extends BaseNode {
         // End of message, organize the content blocks into their proper categories
         this.organizeContentBlocks(contentBlocks)
       } else {
-        console.warn(`Unhandled event type: ${event.type}, data: ${JSON.stringify(event)}`)
+        console.warn(`Unhandled event type: ${event}, data: ${JSON.stringify(event)}`)
       }
 
       // await with zero delay to yield control

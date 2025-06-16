@@ -7,7 +7,7 @@
  */
 
 // export * from './0g-llm-call.node'
-export * from './antropic'
+export * from './anthropic'
 // export * from './0g-llm-call.node'
 // export * from './antropic'
 export * from './llm-call-with-structured-output.node'
