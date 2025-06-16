@@ -79,13 +79,13 @@ class TokenBalance {
 }
 
 @Node({
-  type: 'AlchemyGetTokensByAddress',
+  type: 'AlchemyTokenBalances',
   title: 'Alchemy get ERC20 token balances',
   description: 'Fetches ERC20 token balances for a wallet address using Alchemy API',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'ethereum', 'erc20', 'token', 'balance', 'alchemy'],
 })
-class TokenBalanceFetcherNode extends BaseNode {
+class AlchemyTokenBalances extends BaseNode {
   @Input()
   @StringEnum(Networks.networkIds, {
     name: 'Network',
@@ -194,7 +194,7 @@ class TokenBalanceFetcherNode extends BaseNode {
       this.tokenBalances = data.result.tokenBalances.map((item: any) => {
         return {
           tokenAddress: item.contractAddress,
-          weiBalance: item.tokenBalance ? BigInt(item.tokenBalance).toString() : '0',
+          weiBalance: this.safeBigIntToString(item.tokenBalance),
         }
       })
 
@@ -203,6 +203,16 @@ class TokenBalanceFetcherNode extends BaseNode {
       throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
     }
   }
+
+  private safeBigIntToString(value: string | null): string {
+    if (!value || value === '0x')
+      return '0'
+    try {
+      return BigInt(value).toString()
+    } catch (error) {
+      throw new Error(`Invalid token balance value: ${value}`)
+    }
+  }
 }
 
-export default TokenBalanceFetcherNode
+export default AlchemyTokenBalances
