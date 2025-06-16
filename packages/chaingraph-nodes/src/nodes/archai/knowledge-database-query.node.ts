@@ -11,15 +11,17 @@ import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
+  Boolean,
   Input,
   Node,
   Number,
   Output,
   PortArray,
+  PortVisibility,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { QAWithSimilarityByDocuments } from './types'
+import { QAWithSimilarity, QAWithSimilarityByDocuments } from './types'
 
 @Node({
   type: 'ArchAIKnowledgeDatabaseQueryNode',
@@ -108,17 +110,43 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
   })
   publishedTo?: string
 
+  @Input()
+  @Boolean({
+    title: 'Group by Documents',
+    description: 'Whether to group QA pairs by documents',
+    defaultValue: true,
+  })
+  groupByDocuments: boolean = true
+
   @Output()
+  @PortVisibility({
+    showIf: node => (node as ArchAIKnowledgeDatabaseQueryNode).groupByDocuments,
+  })
   @PortArray({
     itemConfig: {
       type: 'object',
       schema: QAWithSimilarityByDocuments,
     },
-    title: 'Results',
-    description: 'Query results from the knowledge database',
+    title: 'Results (Grouped)',
+    description: 'Query results from the knowledge database grouped by documents',
     defaultValue: [],
   })
-  results: GraphQL.KdbSearchQaWithDocumentsQuery['kdbSearchQAWithDocuments'] = []
+  resultsGrouped: GraphQL.KdbSearchQaWithDocumentsQuery['kdbSearchQAWithDocuments'] = []
+
+  @Output()
+  @PortVisibility({
+    showIf: node => !(node as ArchAIKnowledgeDatabaseQueryNode).groupByDocuments,
+  })
+  @PortArray({
+    itemConfig: {
+      type: 'object',
+      schema: QAWithSimilarity,
+    },
+    title: 'Results (Flat)',
+    description: 'Query results from the knowledge database as a flat array',
+    defaultValue: [],
+  })
+  resultsFlat: GraphQL.QaWithSimilarity[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Validate inputs
@@ -203,8 +231,14 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
       throw new Error('Failed to query knowledge database')
     }
 
-    // Set the results to the output port
-    this.results = kdbSearchQAWithDocuments
+    // Set the results to the appropriate output port based on groupByDocuments
+    if (this.groupByDocuments) {
+      this.resultsGrouped = kdbSearchQAWithDocuments
+      this.resultsFlat = []
+    } else {
+      this.resultsGrouped = []
+      this.resultsFlat = kdbSearchQAWithDocuments.flatMap(doc => doc.qas)
+    }
 
     return {}
   }
