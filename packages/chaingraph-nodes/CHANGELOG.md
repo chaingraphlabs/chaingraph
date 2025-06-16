@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.2.5
+
+### Patch Changes
+
+- feat: implement ECDH key pair generation and logging for execution context
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes
