@@ -194,7 +194,7 @@ class TokenBalanceFetcherNode extends BaseNode {
       this.tokenBalances = data.result.tokenBalances.map((item: any) => {
         return {
           tokenAddress: item.contractAddress,
-          weiBalance: BigInt(item.tokenBalance).toString(),
+          weiBalance: item.tokenBalance ? BigInt(item.tokenBalance).toString() : '0',
         }
       })
 

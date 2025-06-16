@@ -48,7 +48,7 @@ export const secretTypeSchemas = {
     apiPassphrase: z.string().min(1),
   }),
   'alchemy': z.object({
-    apiKey: z.string().length(32).regex(/^[0-9a-z]+$/i),
+    apiKey: z.string().min(32).regex(/^[0-9a-z]+$/i),
   }),
   'string': z.object({
     value: z.string().min(1),
