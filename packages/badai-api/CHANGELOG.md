@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.2.4
+
+### Patch Changes
+
+- feat: enhance secret encryption handling and update allowed tools in configuration
+
 ## 0.2.3
 
 ### Patch Changes

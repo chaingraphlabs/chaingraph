@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.4
+
+### Patch Changes
+
+- feat: enhance secret encryption handling and update allowed tools in configuration
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.4
+  - @badaitech/chaingraph-trpc@0.2.4
+  - @badaitech/chaingraph-types@0.2.4
+
 ## 0.2.3
 
 ### Patch Changes

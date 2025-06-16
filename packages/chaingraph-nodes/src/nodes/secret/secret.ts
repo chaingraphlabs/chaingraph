@@ -85,17 +85,16 @@ export class SecretNode extends BaseNode {
       throw new Error(`Unknown secret type ${secretType}`)
     }
 
-    this.secret = wrapSecret(secretType, {
-      encrypted: secret.secret.encrypted,
-      publicKey: secret.publicKey,
-    })
-
     const secretPort = this.findPortByKey('secret') as SecretPort<SecretType>
     if (secretPort) {
       secretPort.setConfig({
         ...secretPort.getConfig(),
         secretType,
       })
+      secretPort.setValue(wrapSecret(secretType, {
+        encrypted: secret.secret.encrypted,
+        publicKey: secret.publicKey,
+      }))
       await this.updatePort(secretPort as IPort)
     }
 
