@@ -39,3 +39,6 @@ export const archaiDomain = createDomain('archai')
 
 // Focused editors domain for tracking focused port editors
 export const focusedEditorsDomain = createDomain('focused-editors')
+
+// Drag and drop domain for drag and drop state management
+export const dragDropDomain = createDomain('drag-drop')

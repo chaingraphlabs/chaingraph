@@ -357,6 +357,44 @@ export const $xyflowNodes = combine(
     // Create a cache for already created XYFlow nodes to preserve references
     const nodeCache = new Map<string, Node>()
 
+    // Calculate z-index based on node depth and type
+    const calculateZIndex = (node: INode, allNodes: Record<string, INode>): number => {
+      let depth = 0
+      let currentNode = node
+
+      // Calculate depth by traversing up the parent chain
+      while (currentNode.metadata.parentNodeId) {
+        const parentNode = allNodes[currentNode.metadata.parentNodeId]
+        if (!parentNode)
+          break
+        depth++
+        currentNode = parentNode
+
+        // Safety check to prevent infinite loops
+        if (depth > 10)
+          break
+      }
+
+      // Z-index calculation:
+      // - Root groups: 0
+      // - Child groups: parent z-index + 1
+      // - Regular nodes: group z-index + 10 (to appear above groups)
+      // - Schema captured nodes: group z-index + 20 (to appear above regular nodes)
+
+      if (node.metadata.category === 'group') {
+        return depth * 10 // Groups at different depths
+      } else {
+        // Regular nodes should be above their parent group
+        const parentNode = node.metadata.parentNodeId ? allNodes[node.metadata.parentNodeId] : undefined
+        const parentZIndex = parentNode ? calculateZIndex(parentNode, allNodes) : 0
+
+        // Check if this is a schema captured node (has isMovingDisabled)
+        const isSchemaNode = node.metadata.ui?.state?.isMovingDisabled === true
+
+        return parentZIndex + (isSchemaNode ? 20 : 10)
+      }
+    }
+
     // Helper function to get category metadata within this computation
     const getCategoryMetadata = (categoryId: string) =>
       categoryMetadata.get(categoryId) ?? categoryMetadata.get(NODE_CATEGORIES.OTHER)!
@@ -393,14 +431,29 @@ export const $xyflowNodes = combine(
         }
 
         // Get existing node from cache if it exists and hasn't changed
-        const cacheKey = `${nodeId}-${node.getVersion()}`
+        // Include parent hierarchy in cache key since z-index depends on it
+        const getParentChain = (n: INode): string => {
+          const parents: string[] = []
+          let current = n
+          while (current.metadata.parentNodeId) {
+            parents.push(current.metadata.parentNodeId)
+            current = nodes[current.metadata.parentNodeId]
+            if (!current)
+              break
+          }
+          return parents.join('-')
+        }
+
+        const cacheKey = `${nodeId}-${node.getVersion()}-${getParentChain(node)}`
         const cachedNode = nodeCache.get(cacheKey)
 
         // Check if we can reuse the cached node (only position might have changed)
+        const currentZIndex = calculateZIndex(node, nodes)
         if (cachedNode
           && (cachedNode.data.node as INode).getVersion() === node.getVersion()
           && cachedNode.parentId === node.metadata.parentNodeId
-          && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)) {
+          && cachedNode.selected === (node.metadata.ui?.state?.isSelected ?? false)
+          && cachedNode.zIndex === currentZIndex) {
           // If only the position changed, just update that and return the same node reference
           if (cachedNode.position.x !== nodePositionRound.x
             || cachedNode.position.y !== nodePositionRound.y) {
@@ -419,11 +472,7 @@ export const $xyflowNodes = combine(
           height: node.metadata.ui?.dimensions?.height ?? 50, // Default height if not set
           initialWidth: node.metadata.ui?.dimensions?.width ?? 200, // Initial width for resizing
           initialHeight: node.metadata.ui?.dimensions?.height ?? 50, // Initial height for resizing
-          zIndex: nodeType === 'groupNode'
-            ? -1
-            : parentNode
-              ? 2
-              : 0,
+          zIndex: calculateZIndex(node, nodes),
           data: {
             node,
             categoryMetadata: nodeCategoryMetadata,
@@ -432,7 +481,9 @@ export const $xyflowNodes = combine(
           extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined, // Use parent extent if it has a parent and is not a group
           selected: node.metadata.ui?.state?.isSelected ?? false,
           hidden: node.metadata.ui?.state?.isHidden ?? false,
-          selectable: !(parentNode && parentNode.metadata.category !== 'group'),
+          selectable: node.metadata.category === 'group'
+            ? true // All groups should be selectable
+            : !(parentNode && parentNode.metadata.category !== 'group'), // Regular nodes follow existing logic
         }
 
         // Set dimensions if available and valid

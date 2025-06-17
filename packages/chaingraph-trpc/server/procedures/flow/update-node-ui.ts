@@ -62,10 +62,10 @@ export const updateNodeUI = flowContextProcedure
       }
 
       // Log the node title and ID and the input UI
-      console.log('Node title:', node.metadata.title)
-      console.log('Node ID:', node.metadata.id)
+      // console.log('Node title:', node.metadata.title)
+      // console.log('Node ID:', node.metadata.id)
 
-      console.log('Input UI:', input.ui)
+      // console.log('Input UI:', input.ui)
 
       // Log the Node ports erializedJson:
       // console.log('Node ports:', Array.from(node.ports.values()).map((port) => {

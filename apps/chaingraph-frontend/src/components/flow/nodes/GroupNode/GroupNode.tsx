@@ -10,6 +10,7 @@ import type { NodeProps } from '@xyflow/react'
 import type { GroupNode } from './types'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
@@ -29,6 +30,7 @@ function GroupNodeComponent({
 }: NodeProps<GroupNode>) {
   const activeFlow = useUnit($activeFlowMetadata)
   const node = useNode(id)
+  const dropFeedback = useNodeDropFeedback(id)
 
   const [isEditing, setIsEditing] = useState(false)
 
@@ -77,9 +79,16 @@ function GroupNodeComponent({
         'rounded-xl border-2',
         'transition-all duration-200',
         'relative',
-        selected
+        // Drop feedback styling
+        dropFeedback?.canAcceptDrop && [
+          'border-green-500',
+          'shadow-[0_0_20px_rgba(34,197,94,0.4)]',
+          'ring-4 ring-green-500/30',
+        ],
+        // Regular selection styling (only if not accepting drop)
+        !dropFeedback?.canAcceptDrop && selected
           ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
-          : 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.1)]',
+          : !dropFeedback?.canAcceptDrop && 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.1)]',
       )}
       style={{ backgroundColor: node.metadata.ui?.style?.backgroundColor ?? defaultColor }}
     >

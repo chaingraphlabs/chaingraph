@@ -122,6 +122,7 @@ function Flow({
     onReconnectStart,
     onReconnectEnd,
     onNodeDragStart,
+    onNodeDrag,
     onNodeDragStop,
   } = useFlowCallbacks()
 
@@ -231,7 +232,7 @@ function Flow({
         // onReconnect={onReconnect}
         // onReconnectStart={onReconnectStart}
         // onReconnectEnd={onReconnectEnd}
-        // onNodeDrag={onNodeDrag}
+        onNodeDrag={onNodeDrag}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         panOnScroll

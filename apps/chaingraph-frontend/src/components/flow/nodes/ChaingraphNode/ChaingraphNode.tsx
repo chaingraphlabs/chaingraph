@@ -13,6 +13,7 @@ import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/m
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useNodeDropFeedback } from '@/store/drag-drop'
 import { useEdgesForNode } from '@/store/edges/hooks/useEdges'
 import {
   $executionState,
@@ -89,6 +90,7 @@ function ChaingraphNodeComponent({
   const nodeEdges = useEdgesForNode(id)
   const highlightedNodeId = useUnit($highlightedNodeId)
   const isFlowLoaded = useUnit($isFlowLoaded)
+  const dropFeedback = useNodeDropFeedback(id)
 
   const categoryMetadata = data.categoryMetadata ?? defaultCategoryMetadata
 
@@ -292,17 +294,25 @@ function ChaingraphNodeComponent({
         'shadow-none transition-all duration-200',
         'bg-card opacity-95',
         '',
-        selected
+        // Drop feedback styling for schema drops
+        dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' && [
+          'shadow-[0_0_30px_rgba(34,197,94,0.8)]',
+          'ring-4 ring-green-500/40',
+        ],
+        // Regular selection styling (only if not accepting drop)
+        !dropFeedback?.canAcceptDrop && selected
           ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
-          : 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
+          : !dropFeedback?.canAcceptDrop && 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
         executionStateStyle,
 
         isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
         highlightedNodeId !== null && !isHighlighted && 'opacity-40',
       )}
       style={{
-        borderColor: style.secondary,
-        borderWidth: 2,
+        borderColor: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' 
+          ? '#22c55e' // green-500
+          : style.secondary,
+        borderWidth: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' ? 3 : 2,
       }}
     >
       {/* Breakpoint Strip */}

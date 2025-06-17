@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { useReactFlow } from '@xyflow/react'
 import { useConnectionHandling } from './useConnectionHandling'
 import { useEdgeChanges } from './useEdgeChanges'
 import { useEdgeReconnection } from './useEdgeReconnection'
@@ -22,12 +23,14 @@ export { subscribeToNodeSchemaDrop } from './useNodeSchemaDropEvents'
  * This hook orchestrates the different flow operations by composing smaller, focused hooks
  */
 export function useFlowCallbacks() {
+  const { screenToFlowPosition } = useReactFlow()
+
   // Get individual hook functionality
   const { checkForNodeSchemaDrop } = useNodeSchemaDropEvents()
   const { onNodesChange } = useNodeChanges()
   const { onEdgesChange } = useEdgeChanges()
   const { onConnect } = useConnectionHandling()
-  const { onNodeDragStart, onNodeDragStop } = useNodeDragHandling(checkForNodeSchemaDrop)
+  const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useNodeDragHandling(checkForNodeSchemaDrop, screenToFlowPosition)
   const { onReconnectStart, onReconnect, onReconnectEnd } = useEdgeReconnection(onConnect)
 
   return {
@@ -38,6 +41,7 @@ export function useFlowCallbacks() {
     onReconnectStart,
     onReconnectEnd,
     onNodeDragStart,
+    onNodeDrag,
     onNodeDragStop,
   }
 }
