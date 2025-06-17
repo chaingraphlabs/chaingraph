@@ -8,13 +8,13 @@
 
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from '../../context/PortContext'
+import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodeUI } from '@/store/nodes'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo } from 'react'
 import { subscribeToNodeSchemaDrop } from '../../../../../hooks/useFlowCallbacks'
-import { useDragAndDrop } from './useDragAndDrop'
 
 export interface UseNodeSchemaDropParams {
   node: INode
@@ -53,24 +53,27 @@ export function useNodeSchemaDrop({
     return config?.ui?.nodeSchemaCapture?.enabled === true
   }, [config.ui?.nodeSchemaCapture?.enabled])
 
-  const {
-    canDropSingleNode,
-    draggedNode,
-    isValidDrop,
-  } = useDragAndDrop({
-    rootNodeId: config.nodeId,
-    overlapThreshold: 0.05, // 0.05 = 5% overlap
-  })
+  // Use centralized drag/drop feedback
+  const dropFeedback = useNodeDropFeedback(node.id)
 
   const canAcceptDrop = useMemo(() => {
-    // Don't accept drops if there's already a captured node
-    const hasCapturedNode = !!config.ui?.nodeSchemaCapture?.capturedNodeId
-    return isNodeSchemaCaptureEnabled && !hasCapturedNode && canDropSingleNode && isValidDrop && !!draggedNode
-  }, [isNodeSchemaCaptureEnabled, config.ui?.nodeSchemaCapture?.capturedNodeId, canDropSingleNode, isValidDrop, draggedNode])
+    // Check if there's a captured node AND it still exists
+    const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
+    const hasCapturedNode = capturedNodeId ? !!nodes[capturedNodeId] : false
 
+    // Check if this node is a valid schema drop target in the drag/drop system
+    const isValidSchemaTarget = dropFeedback?.dropType === 'schema' && dropFeedback?.canAcceptDrop
+
+    return isNodeSchemaCaptureEnabled && !hasCapturedNode && isValidSchemaTarget
+  }, [isNodeSchemaCaptureEnabled, config.ui?.nodeSchemaCapture?.capturedNodeId, nodes, dropFeedback])
+
+  // For preview, we'll need to get the dragged node from the global store
+  // For now, we'll just use the canAcceptDrop flag
   const previewNode = useMemo(() => {
-    return canAcceptDrop ? draggedNode : undefined
-  }, [canAcceptDrop, draggedNode])
+    // This will be undefined for now - the actual preview logic needs to be implemented
+    // by getting the dragged node from the centralized store
+    return undefined
+  }, [canAcceptDrop])
 
   const capturedNode = useMemo(() => {
     const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
@@ -83,18 +86,25 @@ export function useNodeSchemaDrop({
 
   // Schema extraction handler for drop events
   const handleSchemaExtraction = useCallback((droppedNode: INode) => {
-    // Check if there's already a captured node - if so, ignore the drop
-    if (config.ui?.nodeSchemaCapture?.capturedNodeId) {
-      // check if the node really exists
-      const capturedNode = nodes[config.ui.nodeSchemaCapture.capturedNodeId]
+    // Check if there's already a captured node AND it still exists
+    const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
+    if (capturedNodeId) {
+      const capturedNode = nodes[capturedNodeId]
       if (capturedNode) {
         console.log('Schema drop ignored - port already has a captured node:', {
           targetNode: node.id,
           targetPort: port.id,
-          currentCapturedNodeId: config.ui.nodeSchemaCapture.capturedNodeId,
+          currentCapturedNodeId: capturedNodeId,
           attemptedDropNodeId: droppedNode.id,
         })
         return
+      } else {
+        console.log('Previous captured node no longer exists, accepting new drop:', {
+          targetNode: node.id,
+          targetPort: port.id,
+          previousCapturedNodeId: capturedNodeId,
+          newDropNodeId: droppedNode.id,
+        })
       }
     }
 

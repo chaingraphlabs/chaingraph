@@ -130,9 +130,12 @@ export function useNodeDragHandling(
         if (config.type === 'object') {
           const objectConfig = config as ObjectPortConfig
           if (objectConfig.ui?.nodeSchemaCapture?.enabled === true) {
-            // Don't accept drops if there's already a captured node
-            if (objectConfig.ui?.nodeSchemaCapture?.capturedNodeId)
+            // Check if there's already a captured node AND it still exists
+            const capturedNodeId = objectConfig.ui?.nodeSchemaCapture?.capturedNodeId
+            if (capturedNodeId && nodes[capturedNodeId]) {
+              // Node exists, don't accept new drops
               return
+            }
 
             const nodeDimensions = node.metadata.ui?.dimensions
 
