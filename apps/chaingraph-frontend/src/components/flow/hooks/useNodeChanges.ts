@@ -23,7 +23,7 @@ export function useNodeChanges() {
   const nodes = useUnit($nodes)
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
-    if (!activeFlow || !nodes || !changes || !activeFlow.id === undefined)
+    if (!activeFlow || !nodes || !changes || activeFlow.id === undefined)
       return
 
     // Handle node changes (position, selection, etc)

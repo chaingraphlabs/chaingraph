@@ -19,7 +19,7 @@ import { requestUpdatePortUI } from '@/store/ports'
 import { filterPorts } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useMemo, useRef, useState } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddPropPopover } from './components/AddPropPopover'
@@ -156,14 +156,6 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
   }, [config, connectedEdges, isNodeSchemaCaptureEnabled])
 
   const dropNodeZoneRef = useRef<HTMLDivElement>(null)
-
-  // we need to check if the dropNodeZoneRef is defined then just log the dropNodeZoneRef absolute position
-  useEffect(() => {
-    if (dropNodeZoneRef.current) {
-      const rect = dropNodeZoneRef.current.getBoundingClientRect()
-      console.log('Drop zone position:', rect)
-    }
-  }, [])
 
   if (ui?.hidden)
     return null

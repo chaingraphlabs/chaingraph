@@ -73,7 +73,7 @@ export function useNodeSchemaDrop({
     // This will be undefined for now - the actual preview logic needs to be implemented
     // by getting the dragged node from the centralized store
     return undefined
-  }, [canAcceptDrop])
+  }, [])
 
   const capturedNode = useMemo(() => {
     const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
@@ -91,29 +91,9 @@ export function useNodeSchemaDrop({
     if (capturedNodeId) {
       const capturedNode = nodes[capturedNodeId]
       if (capturedNode) {
-        console.log('Schema drop ignored - port already has a captured node:', {
-          targetNode: node.id,
-          targetPort: port.id,
-          currentCapturedNodeId: capturedNodeId,
-          attemptedDropNodeId: droppedNode.id,
-        })
         return
-      } else {
-        console.log('Previous captured node no longer exists, accepting new drop:', {
-          targetNode: node.id,
-          targetPort: port.id,
-          previousCapturedNodeId: capturedNodeId,
-          newDropNodeId: droppedNode.id,
-        })
       }
     }
-
-    console.log('Schema drop detected via ReactFlow onNodeDragStop:', {
-      targetNode: node.id,
-      targetPort: port.id,
-      sourceNode: droppedNode.id,
-      sourceNodeTitle: droppedNode.metadata.title,
-    })
 
     try {
       // Extract schema from the dropped node
@@ -139,14 +119,7 @@ export function useNodeSchemaDrop({
         },
       })
 
-      // log parent and node position for debugging
-      console.log('Updating node parent and position for schema drop:', {
-        flowId: activeFlow?.id,
-        nodeId: droppedNode.id,
-        parentNodeId: node.id,
-        parentPosition: node.metadata.ui?.position || { x: 0, y: 0 },
-        nodePosition: droppedNode.metadata.ui?.position || { x: 0, y: 0 },
-      })
+      // Update node parent and position for schema drop
 
       updateNodeParent({
         flowId: activeFlow?.id || '',
@@ -168,19 +141,16 @@ export function useNodeSchemaDrop({
         },
         version: droppedNode.getVersion() + 1,
       })
-
-      console.log('Successfully applied schema and hid source node')
     } catch (error) {
       console.error('Error extracting schema from drop:', error)
     }
-  }, [activeFlow?.id, config.ui, node.id, node.metadata.ui?.position, nodes, port.id])
+  }, [activeFlow?.id, config.ui, node.id, nodes, port.id])
 
   // Subscribe to global node schema drop events from ReactFlow
   useEffect(() => {
     const unsubscribe = subscribeToNodeSchemaDrop((event) => {
       // Check if this drop event is for our node and port
       if (event.targetNodeId === node.id && event.targetPortId === port.id) {
-        console.log('Received schema drop event for our port!')
         handleSchemaExtraction(event.droppedNode)
       }
     })
@@ -191,11 +161,6 @@ export function useNodeSchemaDrop({
   }, [node.id, port.id, handleSchemaExtraction])
 
   const handleClearSchema = useCallback(() => {
-    console.log('Clearing schema from ObjectPort:', {
-      targetNode: node.id,
-      targetPort: port.id,
-    })
-
     try {
       // Get the captured node ID from port configuration
       const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
@@ -248,11 +213,7 @@ export function useNodeSchemaDrop({
           position: restorePosition,
           version: (nodes[capturedNodeId]?.getVersion() || 0) + 2,
         })
-
-        console.log('Restored hidden node:', capturedNodeId, 'to position:', restorePosition)
       }
-
-      console.log('Successfully cleared schema')
     } catch (error) {
       console.error('Error clearing schema:', error)
     }

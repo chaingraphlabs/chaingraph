@@ -9,7 +9,6 @@
 import type { ExecutionEvent } from '../flow'
 import type { INode } from '../node'
 import type { EmittedEventContext } from './emitted-event-context'
-import { Buffer } from 'node:buffer'
 import { subtle } from 'node:crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { EventQueue } from '../utils'
@@ -107,16 +106,6 @@ export class ExecutionContext {
   async getECDHKeyPair(): Promise<CryptoKeyPair> {
     if (this.ecdhKeyPair === null || this.ecdhKeyPair === undefined) {
       await this.generateECDHKeyPair()
-      const publicKey = await subtle.exportKey('raw', this.ecdhKeyPair!.publicKey)
-      console.trace(
-        `[ExecutionContext] Generated new ECDH key pair for execution ${this.executionId}, public key: ${Buffer.from(publicKey).toString('base64')}`,
-      )
-    } else {
-      const publicKey = await subtle
-        .exportKey('raw', this.ecdhKeyPair!.publicKey)
-      console.trace(
-        `[ExecutionContext] Using existing ECDH key pair for execution ${this.executionId}, public key: ${Buffer.from(publicKey).toString('base64')}`,
-      )
     }
 
     return this.ecdhKeyPair!

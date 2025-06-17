@@ -13,7 +13,7 @@ import { useDragDrop } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodePosition } from '@/store/nodes'
 import { useUnit } from 'effector-react'
-import { useCallback } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { getNodePositionInFlow, getNodePositionInsideParent } from '../utils/node-position'
 import { calculateDropPriority, calculateNodeDepth, isValidPosition, roundPosition, wouldCreateCircularDependency } from './useFlowUtils'
 
@@ -41,6 +41,18 @@ export function useNodeDragHandling(
     hoveredDropTarget,
   } = useDragDrop()
 
+  // Throttle mouse position updates to improve performance
+  const lastMouseUpdateTime = useRef(0)
+  const mouseUpdateThrottle = 16 // ~60fps
+
+  const throttledUpdateMousePosition = useCallback((position: { x: number, y: number }) => {
+    const now = Date.now()
+    if (now - lastMouseUpdateTime.current >= mouseUpdateThrottle) {
+      updateMousePosition(position)
+      lastMouseUpdateTime.current = now
+    }
+  }, [updateMousePosition])
+
   /**
    * Calculate absolute position for a node, considering all parent positions
    */
@@ -51,7 +63,6 @@ export function useNodeDragHandling(
 
     let absolutePosition = { ...node.metadata.ui.position }
     let currentNode = node
-    const parentChain: string[] = []
 
     // Traverse up the parent chain, adding parent positions
     while (currentNode.metadata.parentNodeId) {
@@ -59,23 +70,46 @@ export function useNodeDragHandling(
       if (!parentNode || !parentNode.metadata.ui?.position)
         break
 
-      parentChain.push(currentNode.metadata.parentNodeId)
       absolutePosition = getNodePositionInFlow(absolutePosition, parentNode.metadata.ui.position)
       currentNode = parentNode
     }
 
-    // Debug logging for nested groups
-    if (parentChain.length > 0 && node.metadata.category === 'group') {
-      console.log('Calculated absolute position for nested group:', {
-        nodeId,
-        title: node.metadata.title,
-        localPosition: node.metadata.ui.position,
-        absolutePosition,
-        parentChain,
-      })
-    }
-
     return absolutePosition
+  }, [nodes])
+
+  // Memoize valid group nodes to avoid recalculating on every drag
+  const validGroupNodes = useMemo(() => {
+    return Object.entries(nodes).filter(([_, node]) =>
+      node.metadata.category === 'group'
+      && node.metadata.ui?.dimensions
+      && node.metadata.ui.dimensions.width
+      && node.metadata.ui.dimensions.height,
+    )
+  }, [nodes])
+
+  // Memoize nodes with schema capture ports
+  const nodesWithSchemaPorts = useMemo(() => {
+    const result: Array<[string, INode, Array<[string, ObjectPortConfig]>]> = []
+
+    Object.entries(nodes).forEach(([nodeId, node]) => {
+      const schemaPorts: Array<[string, ObjectPortConfig]> = []
+
+      Array.from(node.ports.values()).forEach((port) => {
+        const config = port.getConfig()
+        if (config.type === 'object') {
+          const objectConfig = config as ObjectPortConfig
+          if (objectConfig.ui?.nodeSchemaCapture?.enabled === true) {
+            schemaPorts.push([port.id, objectConfig])
+          }
+        }
+      })
+
+      if (schemaPorts.length > 0) {
+        result.push([nodeId, node, schemaPorts])
+      }
+    })
+
+    return result
   }, [nodes])
 
   /**
@@ -87,24 +121,25 @@ export function useNodeDragHandling(
     const targets: DragDropTarget[] = []
 
     // Add group targets (exclude the node being dragged to prevent self-parenting)
-    Object.entries(nodes).forEach(([nodeId, node]) => {
-      if (nodeId !== nodeDragStop.id
-        && node.metadata.category === 'group'
-        && node.metadata.ui?.dimensions
-        && node.metadata.ui.dimensions.width
-        && node.metadata.ui.dimensions.height
-        && !wouldCreateCircularDependency(nodeDragStop.id, nodeId, nodes)) {
+    validGroupNodes.forEach(([nodeId, node]) => {
+      if (nodeId !== nodeDragStop.id && !wouldCreateCircularDependency(nodeDragStop.id, nodeId, nodes)) {
         // Calculate absolute position for nested groups
         const absolutePos = getAbsoluteNodePosition(nodeId)
         if (!absolutePos || !isValidPosition(absolutePos))
+          return
+
+        // Ensure dimensions exist (they should since validGroupNodes filters for this)
+        const width = node.metadata.ui?.dimensions?.width
+        const height = node.metadata.ui?.dimensions?.height
+        if (!width || !height)
           return
 
         const depth = calculateNodeDepth(nodeId, nodes)
         const bounds = {
           x: absolutePos.x,
           y: absolutePos.y,
-          width: node.metadata.ui.dimensions.width,
-          height: node.metadata.ui.dimensions.height,
+          width,
+          height,
         }
 
         const target: DragDropTarget = {
@@ -119,55 +154,51 @@ export function useNodeDragHandling(
     })
 
     // Add schema drop targets
-    Object.entries(nodes).forEach(([nodeId, node]) => {
+    nodesWithSchemaPorts.forEach(([nodeId, node, schemaPorts]) => {
       // Skip the node being dragged
       if (nodeId === nodeDragStop.id)
         return
 
-      // Look for schema-enabled object ports
-      Array.from(node.ports.values()).forEach((port) => {
-        const config = port.getConfig()
-        if (config.type === 'object') {
-          const objectConfig = config as ObjectPortConfig
-          if (objectConfig.ui?.nodeSchemaCapture?.enabled === true) {
-            // Check if there's already a captured node AND it still exists
-            const capturedNodeId = objectConfig.ui?.nodeSchemaCapture?.capturedNodeId
-            if (capturedNodeId && nodes[capturedNodeId]) {
-              // Node exists, don't accept new drops
-              return
-            }
+      const nodeDimensions = node.metadata.ui?.dimensions
+      if (!nodeDimensions)
+        return
 
-            const nodeDimensions = node.metadata.ui?.dimensions
+      // Calculate absolute position once for the node
+      const absolutePos = getAbsoluteNodePosition(nodeId)
+      if (!absolutePos || !isValidPosition(absolutePos))
+        return
 
-            // Calculate absolute position for nested nodes
-            const absolutePos = getAbsoluteNodePosition(nodeId)
+      const depth = calculateNodeDepth(nodeId, nodes)
+      const bounds = {
+        x: absolutePos.x,
+        y: absolutePos.y,
+        width: nodeDimensions.width,
+        height: nodeDimensions.height,
+      }
 
-            if (absolutePos && isValidPosition(absolutePos) && nodeDimensions) {
-              const depth = calculateNodeDepth(nodeId, nodes)
-              const bounds = {
-                x: absolutePos.x,
-                y: absolutePos.y,
-                width: nodeDimensions.width,
-                height: nodeDimensions.height,
-              }
-
-              const target: DragDropTarget = {
-                nodeId,
-                depth,
-                type: 'schema',
-                priority: calculateDropPriority({ depth, type: 'schema' }),
-                bounds,
-                portId: port.id,
-              }
-              targets.push(target)
-            }
-          }
+      // Check each schema port
+      schemaPorts.forEach(([portId, objectConfig]) => {
+        // Check if there's already a captured node AND it still exists
+        const capturedNodeId = objectConfig.ui?.nodeSchemaCapture?.capturedNodeId
+        if (capturedNodeId && nodes[capturedNodeId]) {
+          // Node exists, don't accept new drops
+          return
         }
+
+        const target: DragDropTarget = {
+          nodeId,
+          depth,
+          type: 'schema',
+          priority: calculateDropPriority({ depth, type: 'schema' }),
+          bounds,
+          portId,
+        }
+        targets.push(target)
       })
     })
 
     return targets
-  }, [nodes, getAbsoluteNodePosition])
+  }, [validGroupNodes, nodesWithSchemaPorts, nodes, getAbsoluteNodePosition])
 
   /**
    * Handle group parenting logic
@@ -198,17 +229,6 @@ export function useNodeDragHandling(
         absoluteNodePosition,
         targetGroupAbsolutePos,
       )
-
-      console.log('Group parenting position calculation:', {
-        nodeId: nodeDragStop.id,
-        nodeTitle: flowNode.metadata.title,
-        absoluteNodePosition,
-        targetGroupId,
-        targetGroupTitle: targetGroupNode.metadata.title || targetGroupNode.metadata.ui?.title,
-        targetGroupLocalPos: targetGroupNode.metadata.ui?.position,
-        targetGroupAbsolutePos,
-        calculatedRelativePos: newPosition,
-      })
 
       if (!isValidPosition(newPosition)) {
         console.warn('Invalid position when moving into group:', {
@@ -291,12 +311,6 @@ export function useNodeDragHandling(
     // The drag/drop store already determined the target based on mouse position
     // We just need to check what was selected
     if (hoveredDropTarget) {
-      console.log('Drop on target:', {
-        target: hoveredDropTarget,
-        nodeId: nodeDragStop.id,
-        nodeTitle: flowNode.metadata.title,
-      })
-
       if (hoveredDropTarget.type === 'schema') {
         // Handle schema drop
         checkForNodeSchemaDrop(nodeDragStop, absoluteNodePosition, nodes)
@@ -324,8 +338,8 @@ export function useNodeDragHandling(
       : { x: event.clientX, y: event.clientY }
     updateMousePosition(finalMousePos)
 
-    // Filter valid nodes (but don't use the variable if not needed)
-    nodesDragStop.filter(node =>
+    // Filter valid nodes
+    nodesDragStop = nodesDragStop.filter(node =>
       node.position && isValidPosition(node.position),
     )
 
@@ -379,15 +393,6 @@ export function useNodeDragHandling(
           continue
         }
         absoluteNodePosition = getNodePositionInFlow(nodeDragStop.position, parentAbsolutePos)
-
-        console.log('Drag position calculation for nested node:', {
-          nodeId: nodeDragStop.id,
-          nodeTitle: flowNode.metadata.title,
-          relativePosition: nodeDragStop.position,
-          parentId: currentParentId,
-          parentAbsolutePos,
-          calculatedAbsolutePos: absoluteNodePosition,
-        })
       } else {
         absoluteNodePosition = { ...nodeDragStop.position } // Create new object to avoid mutations
       }
@@ -474,8 +479,8 @@ export function useNodeDragHandling(
       ? screenToFlowPosition({ x: event.clientX, y: event.clientY })
       : { x: event.clientX, y: event.clientY }
 
-    // Update mouse position with flow coordinates
-    updateMousePosition(mousePos)
+    // Update mouse position with flow coordinates (throttled)
+    throttledUpdateMousePosition(mousePos)
 
     // Update drag positions
     const draggedNodes = nodes.length > 0 ? nodes : [node]
@@ -492,7 +497,7 @@ export function useNodeDragHandling(
     if (updates.length > 0) {
       updateDragPosition(updates.length === 1 ? updates[0] : updates)
     }
-  }, [updateMousePosition, updateDragPosition, getAbsoluteNodePosition, screenToFlowPosition])
+  }, [throttledUpdateMousePosition, updateDragPosition, getAbsoluteNodePosition, screenToFlowPosition])
 
   return {
     onNodeDragStart,
