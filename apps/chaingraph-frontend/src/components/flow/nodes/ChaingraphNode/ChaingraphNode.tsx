@@ -309,7 +309,7 @@ function ChaingraphNodeComponent({
         highlightedNodeId !== null && !isHighlighted && 'opacity-40',
       )}
       style={{
-        borderColor: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' 
+        borderColor: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema'
           ? '#22c55e' // green-500
           : style.secondary,
         borderWidth: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' ? 3 : 2,
