@@ -300,8 +300,8 @@ export const executionRouter = router({
         childCount: childIds.length,
         // Additional details
         integrations: instance.context.integrations,
-        options: instance.engine.getOptions(),
-        abortSignal: instance.context.abortController.signal.aborted,
+        options: instance.engine?.getOptions() || {},
+        abortSignal: instance.context.abortController?.signal.aborted || false,
       }
     }),
 
