@@ -33,7 +33,7 @@ export class PostgresExecutionStore implements IExecutionStore {
         executionDepth: instance.executionDepth || 0,
         metadata: {
           flowName: instance.flow.metadata?.name,
-          flowData: instance.flow.serialize(),  // Use serialize method to handle circular deps
+          flowData: instance.flow.serialize(),
           contextData: {
             executionId: instance.context.executionId,
             integrations: instance.context.integrations,
@@ -69,7 +69,7 @@ export class PostgresExecutionStore implements IExecutionStore {
 
     const row = results[0]
     const metadata = row.metadata as any
-    
+
     // Deserialize flow from stored data
     let flow: any
     try {
@@ -78,7 +78,7 @@ export class PostgresExecutionStore implements IExecutionStore {
       // If deserialization fails, use minimal flow object
       flow = { id: row.flowId }
     }
-    
+
     // Return reconstructed ExecutionInstance
     // Note: engine is not stored and will be null for completed executions
     return {
@@ -90,10 +90,12 @@ export class PostgresExecutionStore implements IExecutionStore {
       createdAt: row.createdAt,
       startedAt: row.startedAt || undefined,
       completedAt: row.completedAt || undefined,
-      error: row.errorMessage ? {
-        message: row.errorMessage,
-        nodeId: row.errorNodeId || undefined
-      } : undefined,
+      error: row.errorMessage
+        ? {
+            message: row.errorMessage,
+            nodeId: row.errorNodeId || undefined,
+          }
+        : undefined,
       parentExecutionId: row.parentExecutionId || undefined,
       executionDepth: row.executionDepth,
       externalEvents: row.externalEvents as any,
@@ -104,8 +106,9 @@ export class PostgresExecutionStore implements IExecutionStore {
     const result = await this.db
       .delete(executionsTable)
       .where(eq(executionsTable.id, id))
+      .returning({ id: executionsTable.id })
 
-    return true
+    return result.length > 0
   }
 
   async list(): Promise<ExecutionInstance[]> {
@@ -114,9 +117,9 @@ export class PostgresExecutionStore implements IExecutionStore {
       .from(executionsTable)
       .orderBy(desc(executionsTable.createdAt))
 
-    return results.map(row => {
+    return results.map((row) => {
       const metadata = row.metadata as any
-      
+
       // Deserialize flow from stored data
       let flow: any
       try {
@@ -125,7 +128,7 @@ export class PostgresExecutionStore implements IExecutionStore {
         // If deserialization fails, use minimal flow object
         flow = { id: row.flowId }
       }
-      
+
       return {
         id: row.id,
         flow,
@@ -135,10 +138,12 @@ export class PostgresExecutionStore implements IExecutionStore {
         createdAt: row.createdAt,
         startedAt: row.startedAt || undefined,
         completedAt: row.completedAt || undefined,
-        error: row.errorMessage ? {
-          message: row.errorMessage,
-          nodeId: row.errorNodeId || undefined
-        } : undefined,
+        error: row.errorMessage
+          ? {
+              message: row.errorMessage,
+              nodeId: row.errorNodeId || undefined,
+            }
+          : undefined,
         parentExecutionId: row.parentExecutionId || undefined,
         executionDepth: row.executionDepth,
         externalEvents: row.externalEvents as any,
@@ -156,7 +161,7 @@ export class PostgresExecutionStore implements IExecutionStore {
     status: string
     createdAt: Date
     completedAt?: Date | null
-    error?: { message: string; nodeId?: string } | null
+    error?: { message: string, nodeId?: string } | null
   } | null> {
     const results = await this.db
       .select()
@@ -175,10 +180,12 @@ export class PostgresExecutionStore implements IExecutionStore {
       status: row.status,
       createdAt: row.createdAt,
       completedAt: row.completedAt,
-      error: row.errorMessage ? {
-        message: row.errorMessage,
-        nodeId: row.errorNodeId || undefined
-      } : null
+      error: row.errorMessage
+        ? {
+            message: row.errorMessage,
+            nodeId: row.errorNodeId || undefined,
+          }
+        : null,
     }
   }
 
@@ -203,7 +210,7 @@ export class PostgresExecutionStore implements IExecutionStore {
       flowId: row.flowId,
       status: row.status,
       createdAt: row.createdAt,
-      completedAt: row.completedAt
+      completedAt: row.completedAt,
     }))
   }
 
