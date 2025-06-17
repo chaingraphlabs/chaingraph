@@ -9,6 +9,7 @@
 import type { ArchAIContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
+import { PortEnum } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Boolean,
@@ -17,11 +18,18 @@ import {
   Number,
   Output,
   PortArray,
+  PortEnumFromNative,
   PortVisibility,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { QAWithSimilarity, QAWithSimilarityByDocuments } from './types'
+
+const qaAccessor = {
+  [GraphQL.OrderByField.ChunkNumber]: ({ qa }) => qa.chunk_number,
+  [GraphQL.OrderByField.PublishedDate]: ({ qa }) => new Date(qa.document_published_at).getTime(),
+  [GraphQL.OrderByField.Similarity]: qa => qa.similarity,
+} satisfies Record<GraphQL.OrderByField, (qa: GraphQL.QaWithSimilarity) => number>
 
 @Node({
   type: 'ArchAIKnowledgeDatabaseQueryNode',
@@ -118,6 +126,64 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
   })
   groupByDocuments: boolean = true
 
+  @Input()
+  @PortVisibility({
+    showIf: node => (node as ArchAIKnowledgeDatabaseQueryNode).groupByDocuments,
+  })
+  @PortEnum({
+    title: 'Document Order Field',
+    description: 'Field to order documents by',
+    options: [{
+      id: GraphQL.OrderByField.PublishedDate,
+      type: 'string',
+      defaultValue: GraphQL.OrderByField.PublishedDate,
+    }],
+  })
+  documentOrderField?: GraphQL.OrderByField
+
+  @Input()
+  @PortVisibility({
+    showIf: (node) => {
+      const n = node as ArchAIKnowledgeDatabaseQueryNode
+      return !!(n.groupByDocuments && n.documentOrderField)
+    },
+  })
+  @PortEnumFromNative(GraphQL.OrderDirection, {
+    title: 'Document Order Direction',
+    description: 'Direction to order documents',
+  })
+  documentOrderDirection?: GraphQL.OrderDirection
+
+  @Input()
+  @PortEnum({
+    title: 'QA Order Field',
+    description: 'Field to order QA pairs by',
+    options: [{
+      id: GraphQL.OrderByField.ChunkNumber,
+      type: 'string',
+      defaultValue: GraphQL.OrderByField.ChunkNumber,
+    }, {
+      id: GraphQL.OrderByField.Similarity,
+      type: 'string',
+      defaultValue: GraphQL.OrderByField.Similarity,
+    }, {
+      id: GraphQL.OrderByField.PublishedDate,
+      type: 'string',
+      defaultValue: GraphQL.OrderByField.PublishedDate,
+    }],
+  })
+  qaOrderField?: GraphQL.OrderByField
+
+  @Input()
+  @PortVisibility({
+    showIf: node => !!(node as ArchAIKnowledgeDatabaseQueryNode).qaOrderField,
+  })
+  @PortEnumFromNative(GraphQL.OrderDirection, {
+    title: 'QA Order Direction',
+    description: 'Direction to order QA pairs',
+  })
+  qaOrderDirection?: GraphQL.OrderDirection
+
   @Output()
   @PortVisibility({
     showIf: node => (node as ArchAIKnowledgeDatabaseQueryNode).groupByDocuments,
@@ -213,6 +279,23 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
       }
     }
 
+    // Prepare order_by parameter
+    let orderBy: Record<string, any> | undefined
+
+    if ((this.groupByDocuments && this.documentOrderField) || this.qaOrderField) {
+      orderBy = {}
+
+      if (this.groupByDocuments && this.documentOrderField) {
+        orderBy.document_field = this.documentOrderField
+        orderBy.document_direction = this.documentOrderDirection
+      }
+
+      if (this.qaOrderField) {
+        orderBy.qa_field = this.qaOrderField
+        orderBy.qa_direction = this.qaOrderDirection
+      }
+    }
+
     // Query the knowledge database
     const { kdbSearchQAWithDocuments } = await graphQLClient.request(
       GraphQL.KdbSearchQaWithDocumentsDocument,
@@ -224,6 +307,7 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
         threshold: this.threshold,
         tokens_limit: this.tokensLimit,
         filters: Object.keys(filters).length > 0 ? filters : undefined,
+        order_by: orderBy,
       },
     )
 
@@ -238,6 +322,12 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
     } else {
       this.resultsGrouped = []
       this.resultsFlat = kdbSearchQAWithDocuments.flatMap(doc => doc.qas)
+
+      if (this.qaOrderField) {
+        const accessor = qaAccessor[this.qaOrderField]
+        const directionMultiplier = this.qaOrderDirection === GraphQL.OrderDirection.Asc ? 1 : -1
+        this.resultsFlat.sort((a, b) => (accessor(a) - accessor(b)) * directionMultiplier)
+      }
     }
 
     return {}
