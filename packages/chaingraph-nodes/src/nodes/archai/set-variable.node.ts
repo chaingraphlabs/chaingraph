@@ -15,7 +15,7 @@ import {
   Node,
   PortAny,
   PortEnum,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { VariableNamespace } from './types'
@@ -32,7 +32,7 @@ import { VariableNamespace } from './types'
 })
 class ArchAISetVariableNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Variable Name',
     description: 'Name of the variable to set',
     required: true,

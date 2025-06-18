@@ -13,7 +13,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import { AntropicMessage, ToolResultBlock, ToolUseResponseBlock } from './types'
@@ -35,7 +35,7 @@ class AntropicToolResultNode extends BaseNode {
   toolUse: ToolUseResponseBlock = new ToolUseResponseBlock()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Result Content',
     description: 'The result content from the tool execution',
     ui: {

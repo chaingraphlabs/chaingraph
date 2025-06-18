@@ -10,16 +10,16 @@ import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingrap
 import { Buffer } from 'node:buffer'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
   Output,
   PortArray,
+  PortBoolean,
   PortEnum,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { AntropicMessage, ImageBlock, TextBlock } from './../ai/antropic/types'
+import { AntropicMessage, ImageBlock, TextBlock } from './../ai/anthropic/types'
 import { Message as ArchAIMessage } from './types'
 
 enum RoleAssignment {
@@ -65,7 +65,7 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   roleAssignment: RoleAssignment = RoleAssignment.AUTO
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Skip System Messages',
     description: 'Whether to skip system messages in the conversion',
     defaultValue: true,
@@ -73,7 +73,7 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   skipSystemMessages: boolean = true
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Skip Empty Messages',
     description: 'Whether to skip messages with empty text content',
     defaultValue: true,
@@ -81,7 +81,7 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   skipEmptyMessages: boolean = true
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Include Attachments',
     description: 'Whether to include attachment information in message text',
     defaultValue: false,
@@ -89,7 +89,7 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   includeAttachments: boolean = false
 
   @Input()
-  @String({
+  @PortString({
     title: 'Message Prefix Template',
     description: 'Template for message prefix (use {username}, {timestamp}, {type})',
     defaultValue: '',

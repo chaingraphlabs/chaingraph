@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output, PortAny, PortEnum } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortAny, PortBoolean, PortEnum } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 /**
@@ -79,7 +79,7 @@ class BranchNode extends BaseNode {
   rightValue: any = null
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Result',
     description: 'Comparison result (true/false)',
   })

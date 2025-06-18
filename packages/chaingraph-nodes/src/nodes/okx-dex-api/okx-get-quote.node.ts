@@ -16,9 +16,9 @@ import {
   PortArray,
   PortObject,
 } from '@badaitech/chaingraph-types'
-import { OKXDexClient } from '@okx-dex/okx-dex-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 import { mapArray, mapQuoteData } from './mappers'
+import { createDexApiClient } from './okx-dex-client'
 import { OKXConfig, QuoteData, QuoteParams } from './types'
 
 /**
@@ -73,18 +73,7 @@ class OKXGetQuoteNode extends BaseNode {
     if (!this.config.secrets)
       throw new Error('Secrets configuration is missing or invalid')
 
-    const secrets = await this.config.secrets.decrypt(context)
-
-    // Initialize the OKX DEX client
-    const client = new OKXDexClient({
-      apiKey: secrets.apiKey,
-      secretKey: secrets.secretKey,
-      apiPassphrase: secrets.apiPassphrase,
-      projectId: this.config.projectId,
-      // baseUrl: this.config.baseUrl,
-      // timeout: this.config.timeout,
-      // maxRetries: this.config.maxRetries,
-    })
+    const client = await createDexApiClient(context, this.config)
 
     try {
       // Convert our QuoteParams class to a plain object the SDK expects

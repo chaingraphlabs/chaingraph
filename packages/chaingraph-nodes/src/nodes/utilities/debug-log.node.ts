@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, ExecutionEventEnum, Input, Node, String } from '@badaitech/chaingraph-types'
+import { BaseNode, ExecutionEventEnum, Input, Node, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -19,7 +19,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class DebugLogNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Message',
     description: 'Message to log',
   })

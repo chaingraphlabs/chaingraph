@@ -13,14 +13,14 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Id,
   Input,
   Node,
   NodeRegistry,
-  Number,
   Output,
-  String,
+  PortBoolean,
+  PortNumber,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
@@ -34,28 +34,28 @@ import { createCallerFactory } from '../../../trpc'
 }, null)
 class ScalarNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     defaultValue: 'default string',
   })
   @Id('strInput')
   strInput: string = 'default string'
 
   @Input()
-  @Number({
+  @PortNumber({
     defaultValue: 42,
   })
   @Id('numInput')
   numInput: number = 42
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     defaultValue: true,
   })
   @Id('boolInput')
   boolInput: boolean = true
 
   @Id('strOutput')
-  @String()
+  @PortString()
   @Output()
   strOutput: string = ''
 

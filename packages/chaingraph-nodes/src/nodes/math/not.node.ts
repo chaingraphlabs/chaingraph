@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortBoolean } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -19,7 +19,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class NotNode extends BaseNode {
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Input',
     description: 'Boolean value to negate',
     defaultValue: false,
@@ -27,7 +27,7 @@ class NotNode extends BaseNode {
   input: boolean = false
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Result',
     description: 'Negated (inverted) boolean value',
   })

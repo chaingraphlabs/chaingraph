@@ -40,6 +40,13 @@ export interface UpdateNodeUIEvent {
   version: number
 }
 
+export interface UpdateNodeTitleEvent {
+  flowId: string
+  nodeId: string
+  title: string
+  version: number
+}
+
 export interface UpdateNodePosition {
   flowId: string
   nodeId: string

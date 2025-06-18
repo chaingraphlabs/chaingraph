@@ -14,10 +14,10 @@ import {
   Output,
   PortArray,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
-import { OKXDexClient } from '@okx-dex/okx-dex-sdk'
 import { NODE_CATEGORIES } from '../../categories'
+import { createDexApiClient } from './okx-dex-client'
 import { OKXConfig, TokenListInfo } from './types'
 
 /**
@@ -40,7 +40,7 @@ class OKXGetTokensNode extends BaseNode {
   config: OKXConfig = new OKXConfig()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier (will be deprecated in the future)',
     required: false,
@@ -48,7 +48,7 @@ class OKXGetTokensNode extends BaseNode {
   chainId?: string
 
   @Input()
-  @String({
+  @PortString({
     title: 'Chain Index',
     description: 'Unique identifier for the chain (e.g., 1 for Ethereum)',
     required: false,
@@ -78,19 +78,7 @@ class OKXGetTokensNode extends BaseNode {
       if (!this.config.secrets)
         throw new Error('Secrets configuration is required')
 
-      const secrets = await this.config.secrets.decrypt(context)
-      if (!secrets || !secrets.apiKey || !secrets.secretKey || !secrets.apiPassphrase || !this.config.projectId) {
-        throw new Error('API credentials are missing or invalid, expected: apiKey, secretKey, apiPassphrase, projectId')
-      }
-
-      // Initialize the OKX DEX client
-      const client = new OKXDexClient({
-        apiKey: secrets.apiKey,
-        secretKey: secrets.secretKey,
-        apiPassphrase: secrets.apiPassphrase,
-        projectId: this.config.projectId,
-        // Add other configs as needed
-      })
+      const client = await createDexApiClient(context, this.config)
 
       // Make the API call using the SDK - adjust method name if needed
       const response = await client.dex.getTokens(this.chainId ?? this.chainIndex ?? '1')

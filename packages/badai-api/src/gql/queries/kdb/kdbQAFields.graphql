@@ -43,19 +43,3 @@ fragment QAWithDocumentsFields on QAWithDocuments {
     ...QaWithDistanceFields
   }
 }
-
-fragment QAWithSimilarityFields on QAWithSimilarity {
-  qa {
-    ...QaFields
-  }
-  similarity
-}
-
-fragment QAWithSimilarityByDocumentsFields on QAWithSimilarityByDocuments {
-  document {
-    ...DocumentFields
-  }
-  qas {
-    ...QAWithSimilarityFields
-  }
-}

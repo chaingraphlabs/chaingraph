@@ -14,7 +14,7 @@ import {
   Output,
   PortEnum,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import { ToolSchemaProperty } from './types'
@@ -28,7 +28,7 @@ import { ToolSchemaProperty } from './types'
 })
 class AntropicSchemaPropertyNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Property Name',
     description: 'The name of the schema property',
     required: true,
@@ -52,7 +52,7 @@ class AntropicSchemaPropertyNode extends BaseNode {
   type: string = 'string'
 
   @Input()
-  @String({
+  @PortString({
     title: 'Description',
     description: 'Description of what this property is for',
     ui: {
@@ -71,7 +71,7 @@ class AntropicSchemaPropertyNode extends BaseNode {
   property: ToolSchemaProperty = new ToolSchemaProperty()
 
   @Output()
-  @String({
+  @PortString({
     title: 'Property Name',
     description: 'Name of the property (for use with required properties)',
   })

@@ -10,10 +10,13 @@ import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
-import { useNode } from '@/store/nodes'
+import { $activeFlowMetadata } from '@/store/flow'
+import { updateNodeTitle, useNode } from '@/store/nodes'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
-import { Cross1Icon } from '@radix-ui/react-icons'
-import { useCallback, useState } from 'react'
+import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
+import { useUnit } from 'effector-react'
+import { useCallback, useEffect, useState } from 'react'
+import { EditableNodeTitle } from './EditableNodeTitle'
 import { NodeDocTooltip } from './NodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
 import NodeStatusBadge from './NodeStatusBadge'
@@ -44,6 +47,8 @@ export function NodeHeader({
   const Icon = getCategoryIcon(icon)
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
   const [showStatusBadge, setShowStatusBadge] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const activeFlow = useUnit($activeFlowMetadata)
 
   const parentNode = useNode(node.metadata.parentNodeId || '')
 
@@ -55,10 +60,48 @@ export function NodeHeader({
     }
   }, [])
 
-  const handleDelete = useCallback((e: React.MouseEvent) => {
+  const handleToggleDeleteConfirm = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDeleteConfirm(prev => !prev)
+  }, [])
+
+  const handleConfirmDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     onDelete?.()
+    setShowDeleteConfirm(false)
   }, [onDelete])
+
+  const handleTitleChange = useCallback((title: string) => {
+    if (!activeFlow?.id || !node.id)
+      return
+
+    updateNodeTitle({
+      flowId: activeFlow.id,
+      nodeId: node.id,
+      title,
+      version: node.getVersion(),
+    })
+  }, [activeFlow, node])
+
+  // Hide delete confirmation when clicking outside
+  useEffect(() => {
+    if (!showDeleteConfirm)
+      return
+
+    const handleClickOutside = () => {
+      setShowDeleteConfirm(false)
+    }
+
+    // Small delay to prevent immediate closing
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showDeleteConfirm])
 
   return (
     <div
@@ -110,12 +153,12 @@ export function NodeHeader({
               </div>
             )}
 
-        <h3
-          className="font-medium text-sm truncate"
+        <EditableNodeTitle
+          value={node.metadata.title || node.id}
+          onChange={handleTitleChange}
+          className="min-w-0 flex-1"
           style={{ color: style.text }}
-        >
-          {node.metadata.title}
-        </h3>
+        />
 
         {/* Use the extracted and optimized NodeStatusBadge component */}
         <NodeStatusBadge
@@ -128,11 +171,21 @@ export function NodeHeader({
 
       {/* Controls */}
       <div className="flex items-center gap-1">
+        {showDeleteConfirm && (
+          <button
+            className="p-1 rounded hover:bg-red-500/20 bg-red-500/10 text-red-500 transition-colors nodrag"
+            onClick={handleConfirmDelete}
+            title="Confirm Delete"
+            type="button"
+          >
+            <CheckIcon className="w-3 h-3" />
+          </button>
+        )}
         <button
           className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors nodrag"
           style={{ color: style.text }}
-          onClick={handleDelete}
-          title="Delete"
+          onClick={handleToggleDeleteConfirm}
+          title={showDeleteConfirm ? 'Cancel Delete' : 'Delete Node'}
           type="button"
         >
           <Cross1Icon className="w-3 h-3" />

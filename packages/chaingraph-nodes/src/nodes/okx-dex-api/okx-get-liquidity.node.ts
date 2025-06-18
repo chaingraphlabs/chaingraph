@@ -9,17 +9,16 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
   Output,
   PortArray,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
-import { OKXDexClient } from '@okx-dex/okx-dex-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 import { mapArray, mapQuoteData } from './mappers'
+import { createDexApiClient } from './okx-dex-client'
 import { OKXConfig, QuoteData } from './types'
 
 /**
@@ -45,7 +44,7 @@ class OKXGetLiquidityNode extends BaseNode {
   config: OKXConfig = new OKXConfig()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier (e.g., "1" for Ethereum, "56" for BSC)',
     required: true,
@@ -63,73 +62,37 @@ class OKXGetLiquidityNode extends BaseNode {
   })
   liquidityData: QuoteData[] = []
 
-  @Output()
-  @Boolean({
-    title: 'Success',
-    description: 'Whether the API call was successful',
-  })
-  success: boolean = false
-
-  @Output()
-  @String({
-    title: 'Error Message',
-    description: 'Error message if the API call failed',
-  })
-  errorMessage: string = ''
-
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    // Reset outputs
+    this.liquidityData = []
+
+    // Validate inputs
+    this.validateInputs()
+
+    // Decrypt secrets
+    if (!this.config.secrets)
+      throw new Error('Secrets configuration is required')
+
+    const client = await createDexApiClient(context, this.config)
+
     try {
-      // Reset outputs
-      this.liquidityData = []
-      this.success = false
-      this.errorMessage = ''
+      // Make the API call using the SDK
+      const response = await client.dex.getLiquidity(this.chainId)
 
-      // Validate inputs
-      this.validateInputs()
-
-      // Decrypt secrets
-      if (!this.config.secrets)
-        throw new Error('Secrets configuration is required')
-
-      const secrets = await this.config.secrets.decrypt(context)
-
-      // Initialize the OKX DEX client
-      const client = new OKXDexClient({
-        apiKey: secrets.apiKey,
-        secretKey: secrets.secretKey,
-        apiPassphrase: secrets.apiPassphrase,
-        projectId: this.config.projectId,
-        baseUrl: this.config.baseUrl,
-        timeout: this.config.timeout,
-        maxRetries: this.config.maxRetries,
-      })
-
-      try {
-        // Make the API call using the SDK
-        const response = await client.dex.getLiquidity(this.chainId)
-
-        // Check response validity
-        if (!response || response.code !== '0') {
-          throw new Error(`API returned error: ${response?.msg || 'Unknown error'}`)
-        }
-
-        // Map API response to ChainGraph types
-        if (response.data && Array.isArray(response.data)) {
-          this.liquidityData = mapArray(response.data, mapQuoteData)
-        }
-
-        this.success = true
-      } catch (apiError: any) {
-        throw new Error(`API Error: ${apiError.message || JSON.stringify(apiError)}`)
+      // Check response validity
+      if (!response || response.code !== '0') {
+        throw new Error(`API returned error: ${response?.msg || 'Unknown error'}`)
       }
 
-      return {}
-    } catch (error: any) {
-      this.errorMessage = error.message || 'Unknown error occurred'
-      this.success = false
-      console.error(`[OKXGetLiquidityNode] Error: ${this.errorMessage}`)
-      throw error
+      // Map API response to ChainGraph types
+      if (response.data && Array.isArray(response.data)) {
+        this.liquidityData = mapArray(response.data, mapQuoteData)
+      }
+    } catch (apiError: any) {
+      throw new Error(`API Error: ${apiError.message || JSON.stringify(apiError)}`)
     }
+
+    return {}
   }
 
   /**

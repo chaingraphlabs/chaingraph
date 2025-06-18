@@ -7,13 +7,13 @@
  */
 
 import {
-  Boolean,
-  Number,
   ObjectSchema,
   PortArray,
+  PortBoolean,
   PortEnum,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 
 // Define Participant schema
@@ -21,7 +21,7 @@ import {
   description: 'Represents a participant in a chat conversation',
 })
 export class Participant {
-  @String({
+  @PortString({
     title: 'Participant ID',
     description: 'Unique identifier for the participant',
     minLength: 1,
@@ -29,7 +29,7 @@ export class Participant {
   })
   participant_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Username',
     description: 'Username of the participant',
     minLength: 1,
@@ -37,7 +37,7 @@ export class Participant {
   })
   username: string = ''
 
-  @String({
+  @PortString({
     title: 'First Name',
     description: 'First name of the participant',
     minLength: 1,
@@ -45,7 +45,7 @@ export class Participant {
   })
   first_name: string = ''
 
-  @String({
+  @PortString({
     title: 'Agent ID',
     description: 'ID of the agent if participant is an agent',
     minLength: 1,
@@ -53,7 +53,7 @@ export class Participant {
   })
   agent_id: string = ''
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Agent',
     description: 'Whether this participant is an agent',
     defaultValue: false,
@@ -61,20 +61,20 @@ export class Participant {
   })
   is_agent: boolean = false
 
-  @String({
+  @PortString({
     title: 'Avatar',
     description: 'URL to participant avatar image',
     minLength: 1,
   })
   avatar: string = ''
 
-  @String({
+  @PortString({
     title: 'Last Name',
     description: 'Last name of the participant',
   })
   last_name?: string
 
-  @String({
+  @PortString({
     title: 'Metadata',
     description: 'Additional JSON metadata for the participant',
     defaultValue: '{}',
@@ -90,7 +90,7 @@ export class Participant {
   description: 'Represents a file attachment in a message',
 })
 export class Attachment {
-  @String({
+  @PortString({
     title: 'Attachment ID',
     description: 'Unique identifier for the attachment',
     minLength: 1,
@@ -98,7 +98,7 @@ export class Attachment {
   })
   id: string = ''
 
-  @String({
+  @PortString({
     title: 'Filename',
     description: 'Name of the attached file',
     minLength: 1,
@@ -106,7 +106,7 @@ export class Attachment {
   })
   filename: string = ''
 
-  @String({
+  @PortString({
     title: 'URL',
     description: 'URL to download the attachment',
     minLength: 1,
@@ -114,14 +114,14 @@ export class Attachment {
   })
   url: string = ''
 
-  @String({
+  @PortString({
     title: 'MIME Type',
     description: 'Media type of the attached file',
     minLength: 1,
   })
   mime_type: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Size',
     description: 'Size of the attachment in bytes',
     min: 0,
@@ -136,14 +136,14 @@ export class Attachment {
   description: 'Represents a message in a chat conversation',
 })
 export class Message {
-  @Number({
+  @PortNumber({
     title: 'Message ID',
     description: 'Unique identifier for the message',
     required: true,
   })
   message_id: number = 0
 
-  @String({
+  @PortString({
     title: 'Chat ID',
     description: 'ID of the chat this message belongs to',
     minLength: 1,
@@ -151,7 +151,7 @@ export class Message {
   })
   chat_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Text',
     description: 'Content of the message',
     ui: {
@@ -162,7 +162,7 @@ export class Message {
   })
   text: string = ''
 
-  @String({
+  @PortString({
     title: 'Author ID',
     description: 'ID of the participant who sent the message',
     minLength: 1,
@@ -187,7 +187,7 @@ export class Message {
   })
   type: string = 'common'
 
-  @String({
+  @PortString({
     title: 'Timestamp',
     description: 'Time when the message was sent',
     minLength: 1,
@@ -214,7 +214,7 @@ export class Message {
   })
   attachments: Attachment[] = []
 
-  @Boolean({
+  @PortBoolean({
     title: 'Finished',
     description: 'Whether this message has been completed',
     defaultValue: true,
@@ -222,7 +222,7 @@ export class Message {
   })
   finished: boolean = true
 
-  @Boolean({
+  @PortBoolean({
     title: 'System Message',
     description: 'Whether this is a system message',
     defaultValue: false,
@@ -230,7 +230,7 @@ export class Message {
   })
   is_system: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Needs Answer',
     description: 'Whether this message requires a response',
     defaultValue: false,
@@ -238,7 +238,7 @@ export class Message {
   })
   need_answer: boolean = false
 
-  @Number({
+  @PortNumber({
     title: 'Version',
     description: 'Message schema version',
     min: 1,
@@ -248,7 +248,7 @@ export class Message {
   })
   version: number = 1
 
-  @Number({
+  @PortNumber({
     title: 'Reply To',
     description: 'ID of the message this is replying to',
     defaultValue: 0,
@@ -256,14 +256,14 @@ export class Message {
   })
   reply_to: number = 0
 
-  @String({
+  @PortString({
     title: 'Error',
     description: 'Error message if something went wrong',
     required: true,
   })
   error: string = ''
 
-  @String({
+  @PortString({
     title: 'Metadata',
     description: 'Additional JSON metadata for the message',
     defaultValue: '{}',
@@ -279,7 +279,7 @@ export class Message {
   description: 'Represents a chat room or conversation',
 })
 export class ChatMeta {
-  @String({
+  @PortString({
     title: 'Chat ID',
     description: 'Unique identifier for the chat room',
     minLength: 1,
@@ -287,7 +287,7 @@ export class ChatMeta {
   })
   id: string = ''
 
-  @String({
+  @PortString({
     title: 'Name',
     description: 'Name of the chat room',
     minLength: 1,
@@ -295,7 +295,7 @@ export class ChatMeta {
   })
   name: string = ''
 
-  @String({
+  @PortString({
     title: 'Author',
     description: 'ID of the participant who created the chat room',
     minLength: 1,
@@ -303,7 +303,7 @@ export class ChatMeta {
   })
   author: string = ''
 
-  @String({
+  @PortString({
     title: 'Created At',
     description: 'Timestamp when the chat room was created',
     minLength: 1,
@@ -311,7 +311,7 @@ export class ChatMeta {
   })
   created_at: string = ''
 
-  @String({
+  @PortString({
     title: 'Updated At',
     description: 'Timestamp when the chat room was last updated',
     minLength: 1,
@@ -319,7 +319,7 @@ export class ChatMeta {
   })
   updated_at: string = ''
 
-  @String({
+  @PortString({
     title: 'Metadata',
     description: 'Additional JSON metadata for the chat room',
     defaultValue: '{}',
@@ -350,7 +350,7 @@ export class ChatMeta {
   })
   last_message?: Message
 
-  @String({
+  @PortString({
     title: 'Last Message Time',
     description: 'Timestamp of the last message in the chat room',
   })

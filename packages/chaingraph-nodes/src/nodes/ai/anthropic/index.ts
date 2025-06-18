@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './antropic-llm-call.node'
+export * from './anthropic-llm-call.node'
 // export * from './conversation-buffer.node'
 // export * from './image-message.node'
 // export * from './message-collector.node'

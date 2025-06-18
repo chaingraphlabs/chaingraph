@@ -16,16 +16,16 @@ import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
-  Boolean,
   findPortByKey,
   Input,
   MultiChannel,
   Node,
   Output,
-  Number as PortNumber,
+  PortBoolean,
+  PortNumber,
   PortStream,
+  PortString,
   PortVisibility,
-  String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -90,7 +90,7 @@ class BadAIStreamMessageNode extends BaseNode {
   public inputStream: MultiChannel<string> = new MultiChannel<string>()
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Finish Message',
     description: 'Flag indicating if the message needs to be marked as finished after streaming is done',
     defaultValue: true,
@@ -107,7 +107,7 @@ class BadAIStreamMessageNode extends BaseNode {
 
   // Output port for the concatenated result
   @Output()
-  @String({
+  @PortString({
     title: 'Buffered Output',
     description: 'All received strings concatenated together',
     defaultValue: '',

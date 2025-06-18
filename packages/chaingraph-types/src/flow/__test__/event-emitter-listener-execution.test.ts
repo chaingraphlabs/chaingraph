@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { Input, Node, ObjectSchema, Output, PortObject, String, Title } from '../../decorator'
+import { Input, Node, ObjectSchema, Output, PortObject, PortString, Title } from '../../decorator'
 import { NodeRegistry } from '../../decorator/registry'
 import { ExecutionContext } from '../../execution/execution-context'
 import { BaseNode } from '../../node/base-node'
@@ -21,7 +21,7 @@ import { Flow } from '../flow'
 })
 class EventListenerFilter {
   @Title('Event Name')
-  @String({ defaultValue: '' })
+  @PortString({ defaultValue: '' })
   eventName: string = ''
 }
 
@@ -30,7 +30,7 @@ class EventListenerFilter {
 })
 class EventData {
   @Title('Event Name')
-  @String({ defaultValue: '' })
+  @PortString({ defaultValue: '' })
   eventName: string = ''
 }
 

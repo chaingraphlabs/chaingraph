@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { Boolean } from '@badaitech/chaingraph-types'
+import { PortBoolean } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -38,7 +38,7 @@ class OnStreamStartedNode extends BaseNode {
 
   // Output port for the concatenated result
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Is Stream Started',
     description: 'Indicates if the stream has started',
     defaultValue: false,

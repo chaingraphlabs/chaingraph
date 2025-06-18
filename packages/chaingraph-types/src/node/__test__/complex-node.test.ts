@@ -18,7 +18,6 @@ import {
   Metadata,
   Name,
   Node,
-  Number,
   NumberEnum,
   ObjectSchema,
   Output,
@@ -31,9 +30,10 @@ import {
   PortEnum,
   PortEnumFromNative,
   PortEnumFromObject,
+  PortNumber,
   PortObject,
   PortStream,
-  String,
+  PortString,
   StringEnum,
   Title,
 } from '../../decorator'
@@ -67,7 +67,7 @@ enum Direction {
 
 @ObjectSchema()
 export class UserStatus {
-  @String()
+  @PortString()
   status: string = ''
 
   constructor(status: string = '') {
@@ -95,17 +95,17 @@ type UserStatusOptionId = keyof typeof userStatusOptions
   description: 'Test user address schema',
 })
 export class TestUserAddress {
-  @String({
+  @PortString({
     description: 'Street of the address',
   })
   street?: string = ''
 
-  @String({
+  @PortString({
     description: 'City of the address',
   })
   city?: string = ''
 
-  @String({
+  @PortString({
     description: 'State of the address',
   })
   country?: string = 'EU'
@@ -129,22 +129,22 @@ export class TestUserObject {
     }
   }
 
-  @String({
+  @PortString({
     description: 'Username of the user',
   })
   username: string = ''
 
-  @String({
+  @PortString({
     description: 'Name of the user',
   })
   name: string = ''
 
-  @Number({
+  @PortNumber({
     description: 'Age of the user',
   })
   age: number = 0
 
-  @Number({
+  @PortNumber({
     description: 'Age of the user decimal',
   })
   ageDecimal: number = 0
@@ -429,27 +429,27 @@ export class AdvancedNode extends BaseNode {
   @Input()
   @Name('Username')
   @Description('Enter your username')
-  @String({})
+  @PortString({})
   username: string = ''
 
   @Input()
   @Name('Password')
   @Description('Enter your password')
-  @String({
+  @PortString({
     defaultValue: '',
   })
   password?: string
 
   @Input()
   @DefaultValue(0)
-  @Number({})
+  @PortNumber({})
   progress: number = 0
 
   @Output()
   @Id('user_status')
   @Title('User Status')
   @Metadata('ui:widget', 'status-indicator')
-  @String({})
+  @PortString({})
   userStatus: string = 'active'
 
   execute(context: ExecutionContext): Promise<NodeExecutionResult> {

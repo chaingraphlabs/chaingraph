@@ -708,7 +708,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   //
   // Helper method for creating events
   //
-  protected createEvent<T extends NodeEventType>(
+  createEvent<T extends NodeEventType>(
     type: T,
     data: NodeEventDataType<T>,
   ): EventReturnType<T> {

@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Output, PortArray, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
 import { filter, QueryParser } from 'lucene-kit'
 
 /**
@@ -33,7 +33,7 @@ export class FilterArrayLuceneNode extends BaseNode {
   inputArray: any[] = []
 
   @Input()
-  @String({
+  @PortString({
     title: 'Query Lucene',
     description: 'Lucene-style query string (e.g., "text:*hello* AND NOT is_system:true"). Check the https://github.com/oxdev03/lucene-kit for more details.',
     defaultValue: '',

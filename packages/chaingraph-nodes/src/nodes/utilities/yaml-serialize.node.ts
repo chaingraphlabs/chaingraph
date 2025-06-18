@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output, PortAny, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortAny, PortBoolean, PortString } from '@badaitech/chaingraph-types'
 import { stringify } from 'yaml'
 
 @Node({
@@ -35,7 +35,7 @@ export class YAMLSerializerNode extends BaseNode {
    * Controls whether document directives are included in the output
    */
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Include Directives',
     description: 'Include YAML document directives in the output',
   })
@@ -45,7 +45,7 @@ export class YAMLSerializerNode extends BaseNode {
    * Controls whether to quote strings that resemble YAML keywords
    */
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Quote Strings',
     description: 'Quote strings that might be interpreted as YAML keywords',
   })
@@ -55,7 +55,7 @@ export class YAMLSerializerNode extends BaseNode {
    * The output YAML string representation of the input data
    */
   @Output()
-  @String({
+  @PortString({
     title: 'YAML',
     description: 'The serialized YAML string',
   })

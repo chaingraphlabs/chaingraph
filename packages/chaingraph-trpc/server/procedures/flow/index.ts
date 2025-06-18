@@ -21,6 +21,7 @@ import { removeNode } from './remove-node'
 import { subscribeToEvents } from './subscriptions'
 import { updateNodeParent } from './update-node-parent'
 import { updateNodePosition } from './update-node-position'
+import { updateNodeTitle } from './update-node-title'
 import { updateNodeUI } from './update-node-ui'
 import { updatePortUI } from './update-port-ui'
 import {
@@ -46,6 +47,7 @@ export const flowProcedures = router({
   connectPorts,
   removeEdge,
   updateNodeUI,
+  updateNodeTitle,
   updateNodePosition,
   updateNodeParent,
   updatePortValue,

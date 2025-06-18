@@ -15,35 +15,35 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   findPortByKey,
   Input,
   Node,
   NodeEventType,
-  Number,
   ObjectSchema,
   Output,
+  PortBoolean,
+  PortNumber,
   PortObject,
+  PortString,
   PortVisibility,
-  String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../categories'
 
 @ObjectSchema()
 class Address {
-  @String()
+  @PortString()
   street: string = ''
 
-  @Number()
+  @PortNumber()
   number: number = 0
 }
 
 @ObjectSchema()
 class User {
-  @String()
+  @PortString()
   name: string = ''
 
-  @Number()
+  @PortNumber()
   age: number = 0
 
   @PortObject({
@@ -61,21 +61,21 @@ class User {
 })
 class TestNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Message',
     description: 'Message to log',
   })
   message: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Message suffix',
     description: 'Message suffix',
   })
   messageSuffix: string = ''
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Message',
     description: 'Message to log',
   })

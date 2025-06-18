@@ -24,7 +24,7 @@ import {
 import { Node } from '../node.decorator'
 import { Input, Output } from '../port-config.decorator'
 import { Port } from '../port.decorator'
-import { String } from '../scalar.decorator'
+import { PortString } from '../scalar.decorator'
 import 'reflect-metadata'
 
 const NODE_CATEGORIES = {
@@ -295,14 +295,14 @@ describe('port Initialization Test', () => {
     })
     class CreateMessageNode extends BaseNode {
       @Input()
-      @String({
+      @PortString({
         title: 'Content',
         description: 'Message content to be sent',
       })
       content: string = ''
 
       @Output()
-      @String({
+      @PortString({
         title: 'Message',
         description: 'Created message object',
       })

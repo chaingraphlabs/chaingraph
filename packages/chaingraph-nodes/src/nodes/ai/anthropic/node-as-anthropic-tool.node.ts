@@ -26,7 +26,7 @@ import { extractNodeSchema } from './utils'
   tags: ['anthropic', 'tool', 'claude', 'function'],
   ui: {
     dimensions: {
-      width: 200,
+      width: 300,
       height: 0,
     },
   },

@@ -11,9 +11,9 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
   Output,
   PortArray,
+  PortNumber,
 } from '@badaitech/chaingraph-types'
 
 @Node({
@@ -43,7 +43,7 @@ export class ArrayLengthNode extends BaseNode {
    * The number of elements in the array
    */
   @Output()
-  @Number({
+  @PortNumber({
     title: 'Length',
     description: 'The number of elements in the array',
     defaultValue: 0,

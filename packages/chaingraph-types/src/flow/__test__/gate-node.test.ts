@@ -27,7 +27,7 @@ import {
   NumberPortPlugin,
   ObjectPortPlugin,
   Output,
-  Number as PortNumber,
+  PortNumber,
   PortObject,
   StreamPortPlugin,
   StringPortPlugin,

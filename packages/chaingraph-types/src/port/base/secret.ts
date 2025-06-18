@@ -47,6 +47,9 @@ export const secretTypeSchemas = {
     secretKey: z.string().min(1),
     apiPassphrase: z.string().min(1),
   }),
+  'alchemy': z.object({
+    apiKey: z.string().min(32).regex(/^[0-9a-z]+$/i),
+  }),
   'string': z.object({
     value: z.string().min(1),
   }),
@@ -173,7 +176,7 @@ export const secretTypeMetadata = {
   },
   'xAPI': {
     icon: 'MessageSquare',
-    label: 'X API',
+    label: 'X.com API',
     fields: {
       key: {
         label: 'API Key',
@@ -187,7 +190,7 @@ export const secretTypeMetadata = {
   },
   'xApp': {
     icon: 'Package',
-    label: 'X App',
+    label: 'X.com App',
     fields: {
       key: {
         label: 'App Key',
@@ -217,6 +220,16 @@ export const secretTypeMetadata = {
       },
     },
   },
+  'alchemy': {
+    icon: 'Alchemy',
+    label: 'Alchemy',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+        description: 'API Key for Alchemy',
+      },
+    },
+  },
 } satisfies { [T in SecretType]: SecretTypeMetadata<T> }
 
 /**
@@ -235,7 +248,8 @@ export const compatibleSecretTypes: Record<SecretType, SecretType[]> = {
   'xAPI': ['xAPI'],
   'xApp': ['xApp'],
   'OkxDexApi': ['OkxDexApi'],
-  'string': ['openai', 'anthropic', 'string'],
+  'alchemy': ['alchemy', 'string'],
+  'string': ['openai', 'anthropic', 'alchemy', 'string'],
 }
 
 export function isCompatibleSecretType(a: SecretType, b: SecretType): boolean {

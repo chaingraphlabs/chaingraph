@@ -14,7 +14,7 @@ import {
   Node,
   Output,
   PortStream,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -38,7 +38,7 @@ class StreamBufferNode extends BaseNode {
 
   // Optional configuration for separator between strings
   @Input()
-  @String({
+  @PortString({
     title: 'Separator',
     description: 'String to insert between concatenated values (e.g., newline or space)',
     defaultValue: '',
@@ -47,7 +47,7 @@ class StreamBufferNode extends BaseNode {
 
   // Output port for the concatenated result
   @Output()
-  @String({
+  @PortString({
     title: 'Buffered Output',
     description: 'All received strings concatenated together',
     defaultValue: '',

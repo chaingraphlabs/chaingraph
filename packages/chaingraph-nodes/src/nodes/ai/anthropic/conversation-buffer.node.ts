@@ -9,12 +9,12 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
-  Number,
   Output,
   PortArray,
+  PortBoolean,
+  PortNumber,
   PortObject,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
@@ -45,7 +45,7 @@ class AntropicConversationBufferNode extends BaseNode {
   assistantResponse?: AntropicResponseContent = undefined
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Max History',
     description: 'Maximum number of messages to keep in the history (0 for unlimited)',
     min: 0,
@@ -54,7 +54,7 @@ class AntropicConversationBufferNode extends BaseNode {
   maxHistory: number = 10
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Reset',
     description: 'Clear the conversation history when true',
   })

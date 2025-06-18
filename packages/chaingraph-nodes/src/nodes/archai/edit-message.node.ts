@@ -18,10 +18,10 @@ import {
   BaseNode,
   Input,
   Node,
-  Number as NumberPort,
+  PortNumber as NumberPort,
   Output,
-  Boolean as PortBoolean,
-  String,
+  PortBoolean,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -44,7 +44,7 @@ class EditMessageArchAINode extends BaseNode {
   messageID: number = 0
 
   @Input()
-  @String({
+  @PortString({
     title: 'Text',
     description: 'Updated text content of the message',
   })

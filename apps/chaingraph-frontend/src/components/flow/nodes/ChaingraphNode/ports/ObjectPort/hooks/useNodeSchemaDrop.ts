@@ -8,13 +8,13 @@
 
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from '../../context/PortContext'
+import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodeUI } from '@/store/nodes'
 import { requestUpdatePortUI } from '@/store/ports'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo } from 'react'
 import { subscribeToNodeSchemaDrop } from '../../../../../hooks/useFlowCallbacks'
-import { useDragAndDrop } from './useDragAndDrop'
 
 export interface UseNodeSchemaDropParams {
   node: INode
@@ -53,24 +53,27 @@ export function useNodeSchemaDrop({
     return config?.ui?.nodeSchemaCapture?.enabled === true
   }, [config.ui?.nodeSchemaCapture?.enabled])
 
-  const {
-    canDropSingleNode,
-    draggedNode,
-    isValidDrop,
-  } = useDragAndDrop({
-    rootNodeId: config.nodeId,
-    overlapThreshold: 0.05, // 0.05 = 5% overlap
-  })
+  // Use centralized drag/drop feedback
+  const dropFeedback = useNodeDropFeedback(node.id)
 
   const canAcceptDrop = useMemo(() => {
-    // Don't accept drops if there's already a captured node
-    const hasCapturedNode = !!config.ui?.nodeSchemaCapture?.capturedNodeId
-    return isNodeSchemaCaptureEnabled && !hasCapturedNode && canDropSingleNode && isValidDrop && !!draggedNode
-  }, [isNodeSchemaCaptureEnabled, config.ui?.nodeSchemaCapture?.capturedNodeId, canDropSingleNode, isValidDrop, draggedNode])
+    // Check if there's a captured node AND it still exists
+    const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
+    const hasCapturedNode = capturedNodeId ? !!nodes[capturedNodeId] : false
 
+    // Check if this node is a valid schema drop target in the drag/drop system
+    const isValidSchemaTarget = dropFeedback?.dropType === 'schema' && dropFeedback?.canAcceptDrop
+
+    return isNodeSchemaCaptureEnabled && !hasCapturedNode && isValidSchemaTarget
+  }, [isNodeSchemaCaptureEnabled, config.ui?.nodeSchemaCapture?.capturedNodeId, nodes, dropFeedback])
+
+  // For preview, we'll need to get the dragged node from the global store
+  // For now, we'll just use the canAcceptDrop flag
   const previewNode = useMemo(() => {
-    return canAcceptDrop ? draggedNode : undefined
-  }, [canAcceptDrop, draggedNode])
+    // This will be undefined for now - the actual preview logic needs to be implemented
+    // by getting the dragged node from the centralized store
+    return undefined
+  }, [])
 
   const capturedNode = useMemo(() => {
     const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
@@ -83,27 +86,14 @@ export function useNodeSchemaDrop({
 
   // Schema extraction handler for drop events
   const handleSchemaExtraction = useCallback((droppedNode: INode) => {
-    // Check if there's already a captured node - if so, ignore the drop
-    if (config.ui?.nodeSchemaCapture?.capturedNodeId) {
-      // check if the node really exists
-      const capturedNode = nodes[config.ui.nodeSchemaCapture.capturedNodeId]
+    // Check if there's already a captured node AND it still exists
+    const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
+    if (capturedNodeId) {
+      const capturedNode = nodes[capturedNodeId]
       if (capturedNode) {
-        console.log('Schema drop ignored - port already has a captured node:', {
-          targetNode: node.id,
-          targetPort: port.id,
-          currentCapturedNodeId: config.ui.nodeSchemaCapture.capturedNodeId,
-          attemptedDropNodeId: droppedNode.id,
-        })
         return
       }
     }
-
-    console.log('Schema drop detected via ReactFlow onNodeDragStop:', {
-      targetNode: node.id,
-      targetPort: port.id,
-      sourceNode: droppedNode.id,
-      sourceNodeTitle: droppedNode.metadata.title,
-    })
 
     try {
       // Extract schema from the dropped node
@@ -129,14 +119,7 @@ export function useNodeSchemaDrop({
         },
       })
 
-      // log parent and node position for debugging
-      console.log('Updating node parent and position for schema drop:', {
-        flowId: activeFlow?.id,
-        nodeId: droppedNode.id,
-        parentNodeId: node.id,
-        parentPosition: node.metadata.ui?.position || { x: 0, y: 0 },
-        nodePosition: droppedNode.metadata.ui?.position || { x: 0, y: 0 },
-      })
+      // Update node parent and position for schema drop
 
       updateNodeParent({
         flowId: activeFlow?.id || '',
@@ -158,19 +141,16 @@ export function useNodeSchemaDrop({
         },
         version: droppedNode.getVersion() + 1,
       })
-
-      console.log('Successfully applied schema and hid source node')
     } catch (error) {
       console.error('Error extracting schema from drop:', error)
     }
-  }, [activeFlow?.id, config.ui, node.id, node.metadata.ui?.position, nodes, port.id])
+  }, [activeFlow?.id, config.ui, node.id, nodes, port.id])
 
   // Subscribe to global node schema drop events from ReactFlow
   useEffect(() => {
     const unsubscribe = subscribeToNodeSchemaDrop((event) => {
       // Check if this drop event is for our node and port
       if (event.targetNodeId === node.id && event.targetPortId === port.id) {
-        console.log('Received schema drop event for our port!')
         handleSchemaExtraction(event.droppedNode)
       }
     })
@@ -181,11 +161,6 @@ export function useNodeSchemaDrop({
   }, [node.id, port.id, handleSchemaExtraction])
 
   const handleClearSchema = useCallback(() => {
-    console.log('Clearing schema from ObjectPort:', {
-      targetNode: node.id,
-      targetPort: port.id,
-    })
-
     try {
       // Get the captured node ID from port configuration
       const capturedNodeId = config.ui?.nodeSchemaCapture?.capturedNodeId
@@ -238,11 +213,7 @@ export function useNodeSchemaDrop({
           position: restorePosition,
           version: (nodes[capturedNodeId]?.getVersion() || 0) + 2,
         })
-
-        console.log('Restored hidden node:', capturedNodeId, 'to position:', restorePosition)
       }
-
-      console.log('Successfully cleared schema')
     } catch (error) {
       console.error('Error clearing schema:', error)
     }

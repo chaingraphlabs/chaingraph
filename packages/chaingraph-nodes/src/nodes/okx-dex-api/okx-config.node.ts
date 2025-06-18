@@ -32,7 +32,7 @@ import { OKXConfig } from './types'
 })
 class OKXConfigNode extends BaseNode {
   // @Input()
-  // @String({
+  // @PortString({
   //   title: 'API Key',
   //   description: 'OKX API Key for authentication',
   //   ui: { isPassword: true },
@@ -40,7 +40,7 @@ class OKXConfigNode extends BaseNode {
   // apiKey: string = ''
   //
   // @Input()
-  // @String({
+  // @PortString({
   //   title: 'Secret Key',
   //   description: 'OKX Secret Key for generating signatures',
   //   ui: { isPassword: true },
@@ -48,7 +48,7 @@ class OKXConfigNode extends BaseNode {
   // secretKey: string = ''
   //
   // @Input()
-  // @String({
+  // @PortString({
   //   title: 'API Passphrase',
   //   description: 'OKX API Passphrase for authentication',
   //   ui: { isPassword: true },
@@ -56,14 +56,14 @@ class OKXConfigNode extends BaseNode {
   // apiPassphrase: string = ''
   //
   // @Input()
-  // @String({
+  // @PortString({
   //   title: 'Project ID',
   //   description: 'OKX Project ID for API access',
   // })
   // projectId: string = ''
   //
   // @Input()
-  // @String({
+  // @PortString({
   //   title: 'Base URL',
   //   description: 'Optional custom base URL for API requests',
   //   defaultValue: 'https://web3.okx.com',

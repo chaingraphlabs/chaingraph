@@ -15,13 +15,13 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
   ObjectSchema,
   Output,
   PortArray,
+  PortNumber,
   PortObject,
   PortSecret,
-  String,
+  PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -32,25 +32,25 @@ const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/
   description: 'Financial information for a cryptocurrency',
 })
 class Financials {
-  @Number({ title: 'ATH', description: 'All-time high price' })
+  @PortNumber({ title: 'ATH', description: 'All-time high price' })
   ath: number = 0
 
-  @Number({ title: 'Price', description: 'Current price' })
+  @PortNumber({ title: 'Price', description: 'Current price' })
   price: number = 0
 
-  @Number({ title: '24h Volume', description: 'Trading volume in the last 24 hours' })
+  @PortNumber({ title: '24h Volume', description: 'Trading volume in the last 24 hours' })
   volume_24h: number = 0
 
-  @Number({ title: '24h Change', description: 'Price change in the last 24 hours' })
+  @PortNumber({ title: '24h Change', description: 'Price change in the last 24 hours' })
   change_24h: number = 0
 
-  @Number({ title: 'Market Cap', description: 'Total market capitalization' })
+  @PortNumber({ title: 'Market Cap', description: 'Total market capitalization' })
   market_cap: number = 0
 
-  @Number({ title: 'Total Supply', description: 'Total available supply of the cryptocurrency' })
+  @PortNumber({ title: 'Total Supply', description: 'Total available supply of the cryptocurrency' })
   total_supply: number = 0
 
-  @Number({ title: 'Circulating Supply', description: 'Currently circulating supply' })
+  @PortNumber({ title: 'Circulating Supply', description: 'Currently circulating supply' })
   circulating_supply: number = 0
 }
 
@@ -58,10 +58,10 @@ class Financials {
   description: 'Asset contract addresses, containing blockchain and address pairs',
 })
 class ContractAddress {
-  @String({ title: 'Blockchain', description: 'Blockchain name' })
+  @PortString({ title: 'Blockchain', description: 'Blockchain name' })
   blockchain: string = ''
 
-  @String({ title: 'Address', description: 'Contract address' })
+  @PortString({ title: 'Address', description: 'Contract address' })
   address: string = ''
 }
 
@@ -69,16 +69,16 @@ class ContractAddress {
   description: 'Structured data for cryptocurrency information',
 })
 class CryptoData {
-  @String({ title: 'Name', description: 'Cryptocurrency name' })
+  @PortString({ title: 'Name', description: 'Cryptocurrency name' })
   name: string = ''
 
-  @String({ title: 'Ticker', description: 'Cryptocurrency ticker symbol' })
+  @PortString({ title: 'Ticker', description: 'Cryptocurrency ticker symbol' })
   ticker: string = ''
 
-  @String({ title: 'Description', description: 'Brief description of the cryptocurrency' })
+  @PortString({ title: 'Description', description: 'Brief description of the cryptocurrency' })
   description: string = ''
 
-  @String({ title: 'Website', description: 'Official website URL' })
+  @PortString({ title: 'Website', description: 'Official website URL' })
   website: string = ''
 
   @PortArray({
@@ -127,7 +127,7 @@ class CoinMarketCapNode extends BaseNode {
   blockchain: string = 'none'
 
   @Input()
-  @String({
+  @PortString({
     title: 'Date (optional)',
     description: 'Historical date in YYYY-MM-DD format',
     pattern: '^\\d{4}-\\d{2}-\\d{2}$',

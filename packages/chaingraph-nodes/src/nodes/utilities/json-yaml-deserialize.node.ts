@@ -19,14 +19,14 @@ import type {
 
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
   NodeEventType,
-  Number as NumberDecorator,
+  PortNumber as NumberDecorator,
   Output,
   PortAny,
-  String,
+  PortBoolean,
+  PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import * as YAML from 'yaml'
@@ -53,7 +53,7 @@ class JsonYamlDeserializerNode extends BaseNode {
   outputSchema: any
 
   @Input()
-  @String({
+  @PortString({
     title: 'JSON or YAML',
     description: 'JSON or YAML string to be deserialized',
     ui: {
@@ -76,7 +76,7 @@ class JsonYamlDeserializerNode extends BaseNode {
   inputFormat: InputFormat = 'auto'
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Ignore Missing Fields',
     description: 'If true, missing fields in JSON/YAML objects will be set to null instead of throwing an error',
     defaultValue: false,

@@ -13,7 +13,7 @@ import {
   Node,
   Output,
   PortArray,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import { AntropicMessage, TextBlock } from './types'
@@ -27,7 +27,7 @@ import { AntropicMessage, TextBlock } from './types'
 })
 class AntropicSimplePromptNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Prompt',
     description: 'The prompt text to send to Claude',
     ui: {

@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Node, Output, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Node, Output, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -18,7 +18,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class TextNode extends BaseNode {
   @Output()
-  @String({
+  @PortString({
     title: 'Text',
     description: 'The output text string.',
     ui: {

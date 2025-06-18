@@ -13,9 +13,9 @@ import {
   BaseNode,
   Input,
   Node,
-  Number as NumberPort,
+  PortNumber as NumberPort,
   Output,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -39,7 +39,7 @@ class AppendMessageBadAINode extends BaseNode {
   messageID: number = 0
 
   @Input()
-  @String({
+  @PortString({
     title: 'Content',
     description: 'Text content to append to the message',
     required: true,

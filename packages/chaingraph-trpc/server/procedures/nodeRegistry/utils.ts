@@ -7,7 +7,7 @@
  */
 
 import type { INode, NodeExecutionResult, NodeMetadata } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, NodeRegistry, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeRegistry, PortString } from '@badaitech/chaingraph-types'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -36,7 +36,7 @@ export class TestNode extends BaseNode {
 })
 export class AnotherTestNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Input port',
     description: 'Input port for testing',
     defaultValue: '',

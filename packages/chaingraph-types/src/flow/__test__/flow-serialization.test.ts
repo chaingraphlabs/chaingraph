@@ -10,7 +10,7 @@ import type { ExecutionContext } from '../../execution'
 import type { NodeExecutionResult } from '../../node'
 import superjson from 'superjson'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { Id, Input, Node, NodeRegistry, Number, Output, String } from '../../decorator'
+import { Id, Input, Node, NodeRegistry, Output, PortNumber, PortString } from '../../decorator'
 import { BaseNode, findPort, registerNodeTransformers } from '../../node'
 import {
   ArrayPortPlugin,
@@ -38,12 +38,12 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 })
 class SourceNode extends BaseNode {
   @Input()
-  @String()
+  @PortString()
   @Id('input')
   input: string = 'test'
 
   @Output()
-  @String()
+  @PortString()
   @Id('output')
   output: string = ''
 
@@ -59,17 +59,17 @@ class SourceNode extends BaseNode {
 })
 class TargetNode extends BaseNode {
   @Input()
-  @String()
+  @PortString()
   @Id('textInput')
   textInput: string = ''
 
   @Input()
-  @String()
+  @PortString()
   @Id('textInput2')
   textInput2: string = ''
 
   @Input()
-  @Number()
+  @PortNumber()
   @Id('numberInput')
   numberInput: number = 0
 

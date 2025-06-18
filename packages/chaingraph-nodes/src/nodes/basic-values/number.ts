@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Node, Number, Output } from '@badaitech/chaingraph-types'
+import { BaseNode, Node, Output, PortNumber } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -18,7 +18,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class NumberNode extends BaseNode {
   @Output()
-  @Number({
+  @PortNumber({
     title: 'Number',
     description: 'The output number.',
     ui: {

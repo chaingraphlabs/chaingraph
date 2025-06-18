@@ -14,7 +14,7 @@ import {
   Output,
   PortEnum,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import { AntropicMessage, ImageBlock, TextBlock } from './types'
@@ -28,7 +28,7 @@ import { AntropicMessage, ImageBlock, TextBlock } from './types'
 })
 class AntropicImageMessageNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Text',
     description: 'The text content of the message',
     ui: {
@@ -39,7 +39,7 @@ class AntropicImageMessageNode extends BaseNode {
   text: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Base64 Image',
     description: 'Base64-encoded image data (without prefixes like "data:image/jpeg;base64,")',
     ui: {
