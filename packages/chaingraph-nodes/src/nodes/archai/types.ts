@@ -780,3 +780,69 @@ export class QAWithSimilarityByDocuments {
   })
   qas: QAWithSimilarity[] = []
 }
+
+// Define Page schema
+@ObjectSchema({
+  description: 'Represents a page from a document in the knowledge database',
+})
+export class Page {
+  @PortString({
+    title: 'Content',
+    description: 'Text content of the page',
+    required: true,
+    ui: {
+      isTextArea: true,
+    },
+  })
+  content: string = ''
+
+  @PortString({
+    title: 'Created At',
+    description: 'Timestamp when the page was created',
+    required: true,
+  })
+  created_at: string = ''
+
+  @PortString({
+    title: 'Description',
+    description: 'Description of the page',
+  })
+  description?: string
+
+  @PortString({
+    title: 'Document ID',
+    description: 'ID of the document this page belongs to',
+    required: true,
+  })
+  document_id: string = ''
+
+  @PortObject({
+    schema: IndexingState,
+    title: 'Indexing State',
+    description: 'Indexing state of the page',
+    required: true,
+  })
+  indexing_state: IndexingState = new IndexingState()
+
+  @PortNumber({
+    title: 'Number',
+    description: 'Page number within the document',
+    required: true,
+    integer: true,
+  })
+  number: number = 0
+
+  @PortString({
+    title: 'Page ID',
+    description: 'Unique identifier for the page',
+    required: true,
+  })
+  page_id: string = ''
+
+  @PortString({
+    title: 'Task ID',
+    description: 'ID of the task that processed this page',
+    required: true,
+  })
+  task_id: string = ''
+}
