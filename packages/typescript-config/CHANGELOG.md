@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.2.6
+
+### Patch Changes
+
+- feat: refactor the nodes drag and drop react components and effector store. Add new nodes - kdb QA semantic search. Rename decorators with the "Port" prefix. Some fixes and small changes
+
 ## 0.2.5
 
 ### Patch Changes
