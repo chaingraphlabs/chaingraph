@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Number, ObjectSchema, Output, PortObject, String, Title } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, ObjectSchema, Output, PortNumber, PortObject, PortString, Title } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @ObjectSchema({
@@ -15,7 +15,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class EventListenerFilter {
   @Title('Event Name')
-  @String({ defaultValue: '' })
+  @PortString({ defaultValue: '' })
   eventName: string = ''
 }
 
@@ -24,7 +24,7 @@ class EventListenerFilter {
 })
 class EventData {
   @Title('Event Name')
-  @String({ defaultValue: '' })
+  @PortString({ defaultValue: '' })
   eventName: string = ''
 }
 
@@ -49,7 +49,7 @@ class EventListenerNode extends BaseNode {
   inputFilter: EventListenerFilter = new EventListenerFilter()
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Processed events offset',
     ui: {
       hidden: true,

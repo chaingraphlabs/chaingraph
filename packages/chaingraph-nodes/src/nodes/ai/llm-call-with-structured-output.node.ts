@@ -31,13 +31,13 @@ import {
   Input,
   Node,
   NodeEventType,
-  Number,
   ObjectSchema,
   Output,
   PortAny,
   PortEnumFromObject,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
@@ -59,7 +59,7 @@ class LLMConfig {
     title: 'Model',
     description: 'Language Model to use',
   })
-  model: keyof typeof llmModels = LLMModels.Gpt4oMini
+  model: keyof typeof llmModels = LLMModels.Gpt41Mini
 
   @Input()
   @PortSecret<SupportedProviders>({
@@ -73,7 +73,7 @@ class LLMConfig {
   apiKey?: EncryptedSecretValue<SupportedProviders>
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Temperature',
     description: 'Temperature for sampling',
     min: 0,
@@ -92,13 +92,13 @@ class LLMConfig {
   description: 'LLM Tool configuration for structured output',
 })
 class LLMToolConfig {
-  @String({
+  @PortString({
     title: 'Tool Name',
     description: 'Name of the tool to be used',
   })
   name: string = ''
 
-  @String({
+  @PortString({
     title: 'Tool Description',
     description: 'Description of the tool to be used',
   })
@@ -129,7 +129,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
   outputSchema: any = {}
 
   @Input()
-  @String({
+  @PortString({
     title: 'Prompt',
     description: 'Input prompt for the language model',
     ui: {
@@ -150,6 +150,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     ui: {
       keyDeletable: true,
       hideEditor: false,
+      hidePropertyEditor: true,
     },
   })
   structuredResponse: Record<string, any> = {}
@@ -174,7 +175,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
 
       return {}
     } catch (error: any) {
-      const errorMessage = `Failed to generate structured output: ${error.message || String(error)}`
+      const errorMessage = `Failed to generate structured output: ${error.message || PortString(error)}`
       await this.debugLog(context, `ERROR: ${errorMessage}`)
       console.error('Error processing structured output:', error)
       throw new Error(errorMessage)
@@ -554,7 +555,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
         // Create enum schema from options if available
         if (itemConfig.options && itemConfig.options.length > 0) {
           const enumValues = itemConfig.options.map(opt =>
-            opt.defaultValue ? String(opt.defaultValue) : '',
+            opt.defaultValue ? PortString(opt.defaultValue) : '',
           ).filter(Boolean)
 
           if (enumValues.length > 0) {

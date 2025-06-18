@@ -9,16 +9,16 @@
 import type { ExecutionContext, INode, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
-  Number,
   ObjectSchema,
   Output,
+  PortBoolean,
   PortEnum,
+  PortNumber,
   PortObject,
+  PortString,
   PortVisibility,
-  String,
 } from '@badaitech/chaingraph-types'
 
 /**
@@ -28,31 +28,31 @@ import {
   description: 'Regular expression flags configuration',
 })
 export class RegExpFlags {
-  @Boolean({
+  @PortBoolean({
     title: 'Global (g)',
     description: 'Find all matches rather than stopping after the first match',
   })
   global: boolean = true
 
-  @Boolean({
+  @PortBoolean({
     title: 'Case-insensitive (i)',
     description: 'Make the pattern case-insensitive (matches both "Hello" and "hello")',
   })
   caseInsensitive: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Multi-line (m)',
     description: 'Make ^ and $ match the start/end of each line instead of the whole string',
   })
   multiline: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Dot-all (s)',
     description: 'Make . match newlines as well ("line1\\nline2" would match "line1.line2")',
   })
   dotAll: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Unicode (u)',
     description: 'Treat pattern as a sequence of Unicode code points (useful for emoji and special characters)',
   })
@@ -87,7 +87,7 @@ Common use cases:
 })
 class RegExpNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Source Text',
     description: 'Text to process with the regular expression',
     required: true,
@@ -98,7 +98,7 @@ class RegExpNode extends BaseNode {
   sourceText: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'RegExp Pattern',
     description: `The regular expression pattern to apply.
 
@@ -138,7 +138,7 @@ Examples:
   mode: RegExpMode = RegExpMode.MATCH
 
   @Input()
-  @String({
+  @PortString({
     title: 'Replacement Text',
     description: `Text to use for replacement (only in replace mode).
 
@@ -160,7 +160,7 @@ Example: "Name: $1" for pattern "(\\w+)" would replace "John" with "Name: John"`
   replacementText: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Join Delimiter',
     description: 'String used to join multiple matches or groups together, only in match or extract mode',
     defaultValue: ' ',
@@ -172,21 +172,21 @@ Example: "Name: $1" for pattern "(\\w+)" would replace "John" with "Name: John"`
   joinDelimiter: string = ' '
 
   @Output()
-  @String({
+  @PortString({
     title: 'Result Text',
     description: 'Processed text based on the regular expression and selected mode',
   })
   result: string = ''
 
   @Output()
-  @Number({
+  @PortNumber({
     title: 'Match Count',
     description: 'Number of matches found or capturing groups extracted',
   })
   matchCount: number = 0
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Has Matches',
     description: 'Whether any matches were found in the text',
   })

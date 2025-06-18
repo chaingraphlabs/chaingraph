@@ -14,7 +14,7 @@ import {
   Output,
   PortArray,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { mapArray, mapQuoteData } from './mappers'
@@ -44,7 +44,7 @@ class OKXGetLiquidityNode extends BaseNode {
   config: OKXConfig = new OKXConfig()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier (e.g., "1" for Ethereum, "56" for BSC)',
     required: true,

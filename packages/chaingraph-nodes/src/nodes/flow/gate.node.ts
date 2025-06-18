@@ -32,7 +32,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -84,7 +84,7 @@ class GateNode extends BaseNode {
   outputObject: Record<string, any> = {}
 
   @Input()
-  @String({
+  @PortString({
     title: 'Connections Map',
     description: 'Internal storage for input-output port mappings',
     ui: {

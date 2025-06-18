@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortBoolean, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -19,7 +19,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class TextSearchNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Source Text',
     description: 'Text to search in',
     minLength: 1,
@@ -27,14 +27,14 @@ class TextSearchNode extends BaseNode {
   sourceText: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Search String',
     description: 'String to search for',
   })
   searchText: string = ''
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Is Present',
     description: 'True if the search string is present in the source text',
     defaultValue: false,

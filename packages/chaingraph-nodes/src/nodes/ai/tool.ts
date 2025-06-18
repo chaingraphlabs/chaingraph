@@ -6,13 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { ObjectSchema, PortObject, String } from '@badaitech/chaingraph-types'
+import { ObjectSchema, PortObject, PortString } from '@badaitech/chaingraph-types'
 
 @ObjectSchema({
   description: 'Tool definition for LLM',
 })
 export class ToolDefinition {
-  @String({
+  @PortString({
     title: 'Tool Name',
     description: 'The name of the tool',
     minLength: 1,
@@ -23,7 +23,7 @@ export class ToolDefinition {
   })
   name: string = ''
 
-  @String({
+  @PortString({
     title: 'Description',
     description: 'A description of what the tool does',
     ui: {

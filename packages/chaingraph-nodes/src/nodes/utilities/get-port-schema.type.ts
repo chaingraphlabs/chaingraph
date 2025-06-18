@@ -7,13 +7,13 @@
  */
 
 import {
-  Boolean,
-  Number,
   ObjectSchema,
   PortAny,
   PortArray,
+  PortBoolean,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 
 // Base schema for common port properties
@@ -21,25 +21,25 @@ import {
   description: 'Base schema for common port properties',
 })
 export class BasePortSchema {
-  @String({ description: 'Port type (string, number, boolean, etc.)' })
+  @PortString({ description: 'Port type (string, number, boolean, etc.)' })
   type: string = ''
 
-  @String({ description: 'Port identifier' })
+  @PortString({ description: 'Port identifier' })
   id: string = ''
 
-  @String({ description: 'Key/name of the port' })
+  @PortString({ description: 'Key/name of the port' })
   key: string = ''
 
-  @String({ description: 'Display title' })
+  @PortString({ description: 'Display title' })
   title: string = ''
 
-  @String({ description: 'Detailed description' })
+  @PortString({ description: 'Detailed description' })
   description: string = ''
 
-  @String({ description: 'Port direction (input or output)' })
+  @PortString({ description: 'Port direction (input or output)' })
   direction: string = ''
 
-  @Boolean({ description: 'Whether the port is required' })
+  @PortBoolean({ description: 'Whether the port is required' })
   required: boolean = false
 }
 
@@ -48,16 +48,16 @@ export class BasePortSchema {
   description: 'Schema for string port type',
 })
 export class StringPortSchema extends BasePortSchema {
-  @String({ description: 'Default string value' })
+  @PortString({ description: 'Default string value' })
   defaultValue: string = ''
 
-  @Number({ description: 'Minimum string length' })
+  @PortNumber({ description: 'Minimum string length' })
   minLength?: number
 
-  @Number({ description: 'Maximum string length' })
+  @PortNumber({ description: 'Maximum string length' })
   maxLength?: number
 
-  @String({ description: 'Regular expression pattern' })
+  @PortString({ description: 'Regular expression pattern' })
   pattern?: string
 
   @PortObject({
@@ -80,19 +80,19 @@ export class StringPortSchema extends BasePortSchema {
   description: 'Schema for number port type',
 })
 export class NumberPortSchema extends BasePortSchema {
-  @Number({ description: 'Default number value' })
+  @PortNumber({ description: 'Default number value' })
   defaultValue: number = 0
 
-  @Number({ description: 'Minimum value' })
+  @PortNumber({ description: 'Minimum value' })
   min?: number
 
-  @Number({ description: 'Maximum value' })
+  @PortNumber({ description: 'Maximum value' })
   max?: number
 
-  @Number({ description: 'Step value' })
+  @PortNumber({ description: 'Step value' })
   step?: number
 
-  @Boolean({ description: 'Whether only integers are allowed' })
+  @PortBoolean({ description: 'Whether only integers are allowed' })
   integer?: boolean
 
   @PortObject({
@@ -114,7 +114,7 @@ export class NumberPortSchema extends BasePortSchema {
   description: 'Schema for boolean port type',
 })
 export class BooleanPortSchema extends BasePortSchema {
-  @Boolean({ description: 'Default boolean value' })
+  @PortBoolean({ description: 'Default boolean value' })
   defaultValue: boolean = false
 
   @PortObject({
@@ -149,13 +149,13 @@ export class ArrayPortSchema extends BasePortSchema {
   })
   defaultValue: any[] = []
 
-  @Number({ description: 'Minimum array length' })
+  @PortNumber({ description: 'Minimum array length' })
   minLength?: number
 
-  @Number({ description: 'Maximum array length' })
+  @PortNumber({ description: 'Maximum array length' })
   maxLength?: number
 
-  @Boolean({ description: 'Whether array is mutable' })
+  @PortBoolean({ description: 'Whether array is mutable' })
   isMutable?: boolean
 
   @PortObject({
@@ -197,7 +197,7 @@ export class ObjectPortSchema extends BasePortSchema {
   })
   defaultValue?: Record<string, any> = {}
 
-  @Boolean({ description: 'Whether schema is mutable' })
+  @PortBoolean({ description: 'Whether schema is mutable' })
   isSchemaMutable?: boolean
 
   @PortObject({
@@ -236,7 +236,7 @@ export class EnumPortSchema extends BasePortSchema {
   })
   options: Record<string, any>[] = []
 
-  @String({ description: 'Default selected option ID' })
+  @PortString({ description: 'Default selected option ID' })
   defaultValue?: string = ''
 
   @PortObject({
@@ -309,7 +309,7 @@ export class AnyPortSchema extends BasePortSchema {
   description: 'Combined schema for all port types',
 })
 export class PortSchemaUnion {
-  @String({ description: 'Port type discriminator' })
+  @PortString({ description: 'Port type discriminator' })
   type: string = ''
 
   // Using PortObject for the union, since we don't have a built-in discriminated union type

@@ -28,7 +28,7 @@ import {
   Node,
   Output,
   PortSecret,
-  String,
+  PortString,
   wrapSecret,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -42,7 +42,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 export class SecretNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Secret ID',
     description: 'The ID of the secret to retrieve',
   })

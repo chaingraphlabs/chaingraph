@@ -15,7 +15,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import { Tool, ToolInputSchema, ToolSchemaProperty } from './types'
@@ -29,7 +29,7 @@ import { Tool, ToolInputSchema, ToolSchemaProperty } from './types'
 })
 class AntropicToolDefinerNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Tool Name',
     description: 'Name of the tool (should be unique and reflect function)',
     required: true,
@@ -37,7 +37,7 @@ class AntropicToolDefinerNode extends BaseNode {
   name: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Tool Description',
     description: 'Detailed explanation of what the tool does and when to use it',
     ui: {

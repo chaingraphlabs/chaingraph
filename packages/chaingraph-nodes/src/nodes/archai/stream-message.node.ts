@@ -18,13 +18,13 @@ import {
   findPortByKey,
 } from '@badaitech/chaingraph-types'
 import {
-  Boolean,
+  PortBoolean,
 } from '@badaitech/chaingraph-types'
 import {
   PortVisibility,
 } from '@badaitech/chaingraph-types'
 import {
-  Number as PortNumber,
+  PortNumber,
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
@@ -33,7 +33,7 @@ import {
   Node,
   Output,
   PortStream,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -98,7 +98,7 @@ class ArchAIStreamMessageNode extends BaseNode {
   public inputStream: MultiChannel<string> = new MultiChannel<string>()
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Finish Message',
     description: 'Flag indicating if the message needs to be marked as finished after streaming is done',
     defaultValue: true,
@@ -115,7 +115,7 @@ class ArchAIStreamMessageNode extends BaseNode {
 
   // Output port for the concatenated result
   @Output()
-  @String({
+  @PortString({
     title: 'Buffered Output',
     description: 'All received strings concatenated together',
     defaultValue: '',

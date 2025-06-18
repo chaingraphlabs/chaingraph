@@ -15,7 +15,7 @@ export const updateNodeTitle = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
     nodeId: z.string(),
-    title: z.string(),
+    title: z.string().max(500).trim().optional(),
     version: z.number(),
   }))
   .mutation(async ({ input, ctx }) => {

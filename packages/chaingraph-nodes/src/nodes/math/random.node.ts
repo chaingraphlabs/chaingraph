@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Output, Number as PortNumber } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortNumber } from '@badaitech/chaingraph-types'
 import { Decimal } from 'decimal.js'
 import { NODE_CATEGORIES } from '../../categories'
 

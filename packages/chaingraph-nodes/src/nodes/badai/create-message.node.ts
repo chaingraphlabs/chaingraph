@@ -11,12 +11,12 @@ import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
-  Number as NumberPort,
+  PortNumber as NumberPort,
   Output,
-  String,
+  PortBoolean,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -29,14 +29,14 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class CreateMessageBadAINode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Text',
     description: 'Text content of the message to create',
   })
   text: string = ''
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Finished',
     description: 'Flag indicating if the message is finished',
   })

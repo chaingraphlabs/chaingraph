@@ -12,9 +12,9 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
   Output,
-  String,
+  PortNumber,
+  PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import TurndownService from 'turndown'
@@ -69,7 +69,7 @@ Best Practices:
 })
 export default class HttpRequestNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Base URI',
     description: 'The base URL of the API including protocol (http/https). This forms the foundation of your request URL.',
     ui: {
@@ -80,7 +80,7 @@ export default class HttpRequestNode extends BaseNode {
   baseUri: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Path',
     description: 'The endpoint path that will be appended to the Base URI. Should typically start with a slash (/).',
     ui: {
@@ -106,7 +106,7 @@ export default class HttpRequestNode extends BaseNode {
   method: HttpMethod = HttpMethod.GET
 
   @Input()
-  @String({
+  @PortString({
     title: 'Headers',
     description: 'HTTP headers for authentication and request configuration. Enter one per line in "Key: Value" format.\n\nEssential headers for AI agents:\n• Authorization: Bearer API_KEY (for API access)\n• User-Agent: YourBot/1.0 (identify your bot)\n• Content-Type: application/json (for JSON data)\n• Accept: application/json (prefer JSON responses)\n• X-API-Key: YOUR_KEY (alternative API key format)',
     ui: {
@@ -118,7 +118,7 @@ export default class HttpRequestNode extends BaseNode {
   headers: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Body',
     description: 'Request payload for POST, PUT, or PATCH requests. Format depends on Content-Type header (often JSON).',
     ui: {
@@ -152,7 +152,7 @@ export default class HttpRequestNode extends BaseNode {
   responseType: ResponseType = ResponseType.TEXT
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Timeout',
     description: 'Maximum time (in milliseconds) to wait for a response before aborting the request.',
     defaultValue: 30000,
@@ -166,7 +166,7 @@ export default class HttpRequestNode extends BaseNode {
   timeout: number = 30000
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Retries',
     description: 'Number of times to retry the request if it fails. Uses exponential backoff between attempts.',
     defaultValue: 0,
@@ -179,7 +179,7 @@ export default class HttpRequestNode extends BaseNode {
   retries: number = 0
 
   @Output()
-  @Number({
+  @PortNumber({
     title: 'Status Code',
     description: 'HTTP response status code. 2xx indicates success, 4xx indicates client error, 5xx indicates server error.',
     defaultValue: 0,
@@ -187,7 +187,7 @@ export default class HttpRequestNode extends BaseNode {
   statusCode: number = 0
 
   @Output()
-  @String({
+  @PortString({
     title: 'Response',
     description: 'The response body from the server, formatted according to the selected Response Type.',
     defaultValue: '',

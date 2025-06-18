@@ -18,16 +18,16 @@ import {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
-  Number,
   ObjectSchema,
   Output,
   PortArray,
+  PortBoolean,
   PortEnumFromObject,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
@@ -49,7 +49,7 @@ class LLMConfig {
   })
   model: keyof typeof llmModels = LLMModels.Gpt4oMini
 
-  @String({
+  @PortString({
     title: 'API Key',
     description: 'API Key for the LLM provider',
     ui: {
@@ -59,7 +59,7 @@ class LLMConfig {
   apiKey: string = ''
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Temperature',
     description: 'Temperature for sampling',
     min: 0,
@@ -78,7 +78,7 @@ class LLMConfig {
   description: 'Tool call output from LLM',
 })
 class ToolCallOutput {
-  @String({
+  @PortString({
     title: 'Tool Name',
     description: 'The name of the tool that was called',
   })
@@ -125,7 +125,7 @@ class LLMCallWithToolsNode extends BaseNode {
   tools: ToolDefinition[] = []
 
   @Input()
-  @String({
+  @PortString({
     title: 'Prompt',
     description: 'Input prompt for the language model',
     ui: {
@@ -135,7 +135,7 @@ class LLMCallWithToolsNode extends BaseNode {
   prompt: string = ''
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Force Tool Use',
     description: 'Force the model to use a tool instead of generating a text response',
     defaultValue: false,
@@ -143,7 +143,7 @@ class LLMCallWithToolsNode extends BaseNode {
   forceToolUse: boolean = false
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Strict Validation',
     description: 'Enforce strict validation of tool parameters (OpenAI only)',
     defaultValue: true,
@@ -151,7 +151,7 @@ class LLMCallWithToolsNode extends BaseNode {
   strictValidation: boolean = true
 
   @Output()
-  @String({
+  @PortString({
     title: 'Model Response',
     description: 'Text response from the language model if no tool was called',
   })
@@ -166,7 +166,7 @@ class LLMCallWithToolsNode extends BaseNode {
   toolCall: ToolCallOutput = new ToolCallOutput()
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Tool Used',
     description: 'Whether a tool was called by the model',
     defaultValue: false,
@@ -224,7 +224,7 @@ class LLMCallWithToolsNode extends BaseNode {
         throw error
       }
     } catch (error: any) {
-      const errorMessage = `Failed to execute LLM call with tools: ${error.message || String(error)}`
+      const errorMessage = `Failed to execute LLM call with tools: ${error.message || PortString(error)}`
       await this.debugLog(context, `ERROR: ${errorMessage}`)
       console.error('Error processing LLM call with tools:', error)
       throw new Error(errorMessage)

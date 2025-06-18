@@ -9,12 +9,12 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
-  Number,
   Output,
-  String as StringDecorator,
+  PortBoolean,
+  PortNumber,
+  PortString as StringDecorator,
 } from '@badaitech/chaingraph-types'
 import { Decimal } from 'decimal.js'
 
@@ -30,7 +30,7 @@ export class NumberToStringNode extends BaseNode {
    * The input number that will be converted to a string
    */
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Number',
     description: 'The number to convert to a string',
     defaultValue: 0,
@@ -42,7 +42,7 @@ export class NumberToStringNode extends BaseNode {
    * Controls the decimal places in the output string
    */
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Decimal Places',
     description: 'Number of decimal places to include (-1 for automatic)',
     min: -1,
@@ -56,7 +56,7 @@ export class NumberToStringNode extends BaseNode {
    * Whether to use exponential notation for large or small numbers
    */
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Exponential Notation',
     description: 'Use scientific notation for very large or small numbers',
     defaultValue: false,

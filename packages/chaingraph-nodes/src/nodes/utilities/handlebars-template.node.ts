@@ -19,7 +19,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import Handlebars from 'handlebars'
 import { stringify } from 'yaml'
@@ -57,7 +57,7 @@ Handlebars.registerHelper('lowercase', (str) => {
 })
 class HandlebarsTemplateNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Template',
     description: 'Handlebars template with variables in {{variable}} format',
     ui: {
@@ -102,7 +102,7 @@ Profile details: {{{json user.profile}}}`
   variables: Record<string, any> = {}
 
   @Output()
-  @String({
+  @PortString({
     title: 'Rendered Text',
     description: 'The template with all variables replaced',
   })

@@ -14,7 +14,7 @@ import {
   Output,
   PortEnum,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import { AntropicMessage, TextBlock } from './types'
@@ -41,7 +41,7 @@ class AntropicMessageNode extends BaseNode {
   role: 'user' | 'assistant' = 'user'
 
   @Input()
-  @String({
+  @PortString({
     title: 'Text',
     description: 'The text content of the message',
     ui: {

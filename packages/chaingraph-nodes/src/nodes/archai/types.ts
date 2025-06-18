@@ -7,13 +7,13 @@
  */
 
 import {
-  Boolean,
-  Number,
   ObjectSchema,
   PortArray,
+  PortBoolean,
   PortEnum,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 
 // Define Participant schema
@@ -21,7 +21,7 @@ import {
   description: 'Represents a participant in a chat conversation',
 })
 export class Participant {
-  @String({
+  @PortString({
     title: 'Participant ID',
     description: 'Unique identifier for the participant',
     minLength: 1,
@@ -29,7 +29,7 @@ export class Participant {
   })
   participant_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Username',
     description: 'Username of the participant',
     minLength: 1,
@@ -37,7 +37,7 @@ export class Participant {
   })
   username: string = ''
 
-  @String({
+  @PortString({
     title: 'First Name',
     description: 'First name of the participant',
     minLength: 1,
@@ -45,7 +45,7 @@ export class Participant {
   })
   first_name: string = ''
 
-  @String({
+  @PortString({
     title: 'Agent ID',
     description: 'ID of the agent if participant is an agent',
     minLength: 1,
@@ -53,7 +53,7 @@ export class Participant {
   })
   agent_id: string = ''
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Agent',
     description: 'Whether this participant is an agent',
     defaultValue: false,
@@ -61,20 +61,20 @@ export class Participant {
   })
   is_agent: boolean = false
 
-  @String({
+  @PortString({
     title: 'Avatar',
     description: 'URL to participant avatar image',
     minLength: 1,
   })
   avatar: string = ''
 
-  @String({
+  @PortString({
     title: 'Last Name',
     description: 'Last name of the participant',
   })
   last_name?: string
 
-  @String({
+  @PortString({
     title: 'Metadata',
     description: 'Additional JSON metadata for the participant',
     defaultValue: '{}',
@@ -90,7 +90,7 @@ export class Participant {
   description: 'Represents a file attachment in a message',
 })
 export class Attachment {
-  @String({
+  @PortString({
     title: 'Attachment ID',
     description: 'Unique identifier for the attachment',
     minLength: 1,
@@ -98,7 +98,7 @@ export class Attachment {
   })
   id: string = ''
 
-  @String({
+  @PortString({
     title: 'Filename',
     description: 'Name of the attached file',
     minLength: 1,
@@ -106,7 +106,7 @@ export class Attachment {
   })
   filename: string = ''
 
-  @String({
+  @PortString({
     title: 'URL',
     description: 'URL to download the attachment',
     minLength: 1,
@@ -114,14 +114,14 @@ export class Attachment {
   })
   url: string = ''
 
-  @String({
+  @PortString({
     title: 'MIME Type',
     description: 'Media type of the attached file',
     minLength: 1,
   })
   mime_type: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Size',
     description: 'Size of the attachment in bytes',
     min: 0,
@@ -136,14 +136,14 @@ export class Attachment {
   description: 'Represents a message in a chat conversation',
 })
 export class Message {
-  @Number({
+  @PortNumber({
     title: 'Message ID',
     description: 'Unique identifier for the message',
     required: true,
   })
   message_id: number = 0
 
-  @String({
+  @PortString({
     title: 'Chat ID',
     description: 'ID of the chat this message belongs to',
     minLength: 1,
@@ -151,7 +151,7 @@ export class Message {
   })
   chat_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Text',
     description: 'Content of the message',
     ui: {
@@ -162,7 +162,7 @@ export class Message {
   })
   text: string = ''
 
-  @String({
+  @PortString({
     title: 'Author ID',
     description: 'ID of the participant who sent the message',
     minLength: 1,
@@ -187,7 +187,7 @@ export class Message {
   })
   type: string = 'common'
 
-  @String({
+  @PortString({
     title: 'Timestamp',
     description: 'Time when the message was sent',
     minLength: 1,
@@ -214,7 +214,7 @@ export class Message {
   })
   attachments: Attachment[] = []
 
-  @Boolean({
+  @PortBoolean({
     title: 'Finished',
     description: 'Whether this message has been completed',
     defaultValue: true,
@@ -222,7 +222,7 @@ export class Message {
   })
   finished: boolean = true
 
-  @Boolean({
+  @PortBoolean({
     title: 'System Message',
     description: 'Whether this is a system message',
     defaultValue: false,
@@ -230,7 +230,7 @@ export class Message {
   })
   is_system: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Needs Answer',
     description: 'Whether this message requires a response',
     defaultValue: false,
@@ -238,7 +238,7 @@ export class Message {
   })
   need_answer: boolean = false
 
-  @Number({
+  @PortNumber({
     title: 'Version',
     description: 'Message schema version',
     min: 1,
@@ -248,7 +248,7 @@ export class Message {
   })
   version: number = 1
 
-  @Number({
+  @PortNumber({
     title: 'Reply To',
     description: 'ID of the message this is replying to',
     defaultValue: 0,
@@ -256,14 +256,14 @@ export class Message {
   })
   reply_to: number = 0
 
-  @String({
+  @PortString({
     title: 'Error',
     description: 'Error message if something went wrong',
     required: true,
   })
   error: string = ''
 
-  @String({
+  @PortString({
     title: 'Metadata',
     description: 'Additional JSON metadata for the message',
     defaultValue: '{}',
@@ -279,7 +279,7 @@ export class Message {
   description: 'Represents a chat room or conversation',
 })
 export class ChatMeta {
-  @String({
+  @PortString({
     title: 'Chat ID',
     description: 'Unique identifier for the chat room',
     minLength: 1,
@@ -287,7 +287,7 @@ export class ChatMeta {
   })
   id: string = ''
 
-  @String({
+  @PortString({
     title: 'Name',
     description: 'Name of the chat room',
     minLength: 1,
@@ -295,7 +295,7 @@ export class ChatMeta {
   })
   name: string = ''
 
-  @String({
+  @PortString({
     title: 'Author',
     description: 'ID of the participant who created the chat room',
     minLength: 1,
@@ -303,7 +303,7 @@ export class ChatMeta {
   })
   author: string = ''
 
-  @String({
+  @PortString({
     title: 'Created At',
     description: 'Timestamp when the chat room was created',
     minLength: 1,
@@ -311,7 +311,7 @@ export class ChatMeta {
   })
   created_at: string = ''
 
-  @String({
+  @PortString({
     title: 'Updated At',
     description: 'Timestamp when the chat room was last updated',
     minLength: 1,
@@ -319,7 +319,7 @@ export class ChatMeta {
   })
   updated_at: string = ''
 
-  @String({
+  @PortString({
     title: 'Metadata',
     description: 'Additional JSON metadata for the chat room',
     defaultValue: '{}',
@@ -350,7 +350,7 @@ export class ChatMeta {
   })
   last_message?: Message
 
-  @String({
+  @PortString({
     title: 'Last Message Time',
     description: 'Timestamp of the last message in the chat room',
   })
@@ -384,14 +384,14 @@ export enum VariableValueType {
   description: 'Represents a key-value pair for document metadata',
 })
 export class DocumentMetadataKV {
-  @String({
+  @PortString({
     title: 'Key',
     description: 'Metadata key',
     required: true,
   })
   key: string = ''
 
-  @String({
+  @PortString({
     title: 'Value',
     description: 'Metadata value',
     required: true,
@@ -404,42 +404,42 @@ export class DocumentMetadataKV {
   description: 'Represents the indexing state of a document',
 })
 export class DocumentIndexingState {
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexing',
     description: 'Whether the document is currently being indexed',
     required: true,
   })
   is_indexing: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexing Accepted',
     description: 'Whether the indexing request has been accepted',
     required: true,
   })
   is_indexing_accepted: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexing Failed',
     description: 'Whether the indexing process has failed',
     required: true,
   })
   is_indexing_failed: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexing Finished',
     description: 'Whether the indexing process has completed',
     required: true,
   })
   is_indexing_finished: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexing Paused',
     description: 'Whether the indexing process is paused',
     required: true,
   })
   is_indexing_paused: boolean = false
 
-  @String({
+  @PortString({
     title: 'Failed Reason',
     description: 'Reason for indexing failure, if any',
   })
@@ -451,77 +451,77 @@ export class DocumentIndexingState {
   description: 'Represents the indexing state of a document or chunk',
 })
 export class IndexingState {
-  @Boolean({
+  @PortBoolean({
     title: 'Is Embedded',
     description: 'Whether the content has been embedded',
     required: true,
   })
   is_embedded: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexed QA',
     description: 'Whether QA pairs have been indexed',
     required: true,
   })
   is_indexed_qa: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Indexed Triplet',
     description: 'Whether triplets have been indexed',
     required: true,
   })
   is_indexed_triplet: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Parsed',
     description: 'Whether the content has been parsed',
     required: true,
   })
   is_parsed: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'Is Summarized',
     description: 'Whether the content has been summarized',
     required: true,
   })
   is_summarized: boolean = false
 
-  @Number({
+  @PortNumber({
     title: 'Completion Cost',
     description: 'Cost of completion in tokens',
     required: true,
   })
   completion_cost: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Completion Tokens',
     description: 'Number of completion tokens',
     required: true,
   })
   completion_tokens: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Content Tokens',
     description: 'Number of content tokens',
     required: true,
   })
   content_tokens: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Embedding Cost',
     description: 'Cost of embedding in tokens',
     required: true,
   })
   embedding_cost: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Prompt Cost',
     description: 'Cost of prompt in tokens',
     required: true,
   })
   prompt_cost: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Prompt Tokens',
     description: 'Number of prompt tokens',
     required: true,
@@ -534,21 +534,21 @@ export class IndexingState {
   description: 'Represents metadata for a document',
 })
 export class DocumentMeta {
-  @String({
+  @PortString({
     title: 'Collection ID',
     description: 'ID of the collection this document belongs to',
     required: true,
   })
   collection_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Created At',
     description: 'Timestamp when the document was created',
     required: true,
   })
   created_at: string = ''
 
-  @String({
+  @PortString({
     title: 'Document ID',
     description: 'Unique identifier for the document',
     required: true,
@@ -584,7 +584,7 @@ export class DocumentMeta {
   })
   metadata: DocumentMetadataKV[] = []
 
-  @String({
+  @PortString({
     title: 'Published At',
     description: 'Timestamp when the document was published',
     required: true,
@@ -602,19 +602,19 @@ export class DocumentMeta {
   })
   tags: string[] = []
 
-  @String({
+  @PortString({
     title: 'Description',
     description: 'Description of the document',
   })
   description?: string
 
-  @String({
+  @PortString({
     title: 'Name',
     description: 'Name of the document',
   })
   name?: string
 
-  @String({
+  @PortString({
     title: 'URL',
     description: 'URL to access the document',
   })
@@ -626,106 +626,106 @@ export class DocumentMeta {
   description: 'Represents a question-answer pair',
 })
 export class QA {
-  @String({
+  @PortString({
     title: 'Answer',
     description: 'Answer to the question',
     required: true,
   })
   answer: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Answer Tokens',
     description: 'Number of tokens in the answer',
     required: true,
   })
   answer_tokens: number = 0
 
-  @String({
+  @PortString({
     title: 'Chunk ID',
     description: 'ID of the chunk this QA pair belongs to',
     required: true,
   })
   chunk_id: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Chunk Number',
     description: 'Number of the chunk',
     required: true,
   })
   chunk_number: number = 0
 
-  @String({
+  @PortString({
     title: 'Created At',
     description: 'Timestamp when the QA pair was created',
     required: true,
   })
   created_at: string = ''
 
-  @String({
+  @PortString({
     title: 'Document ID',
     description: 'ID of the document this QA pair belongs to',
     required: true,
   })
   document_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Document Published At',
     description: 'Timestamp when the document was published',
     required: true,
   })
   document_published_at: string = ''
 
-  @PortObject({
-    schema: IndexingState,
-    title: 'Indexing State',
-    description: 'Indexing state of the QA pair',
-    required: true,
-  })
-  indexing_state: IndexingState = new IndexingState()
+  // @PortObject({
+  //   schema: IndexingState,
+  //   title: 'Indexing State',
+  //   description: 'Indexing state of the QA pair',
+  //   required: true,
+  // })
+  // indexing_state: IndexingState = new IndexingState()
 
-  @Number({
+  @PortNumber({
     title: 'Page Number From',
     description: 'Starting page number for this QA pair',
     required: true,
   })
   page_number_from: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Page Number To',
     description: 'Ending page number for this QA pair',
     required: true,
   })
   page_number_to: number = 0
 
-  @String({
+  @PortString({
     title: 'QA ID',
     description: 'Unique identifier for the QA pair',
     required: true,
   })
   qa_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Question',
     description: 'Question text',
     required: true,
   })
   question: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Question Tokens',
     description: 'Number of tokens in the question',
     required: true,
   })
   question_tokens: number = 0
 
-  @String({
+  @PortString({
     title: 'Task ID',
     description: 'ID of the task that generated this QA pair',
     required: true,
   })
   task_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Model',
     description: 'Model used to generate the QA pair',
   })
@@ -745,7 +745,7 @@ export class QAWithSimilarity {
   })
   qa: QA = new QA()
 
-  @Number({
+  @PortNumber({
     title: 'Similarity',
     description: 'Similarity score between the query and the QA pair',
     required: true,

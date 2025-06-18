@@ -9,7 +9,7 @@
 import type { NodeExecutionResult, NodeMetadata } from '../../node'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { Input, Node, String } from '../../decorator'
+import { Input, Node, PortString } from '../../decorator'
 import { ExecutionContext } from '../../execution'
 import { BaseNode, NodeStatus, registerNodeTransformers } from '../../node'
 import {
@@ -102,7 +102,7 @@ describe('executionEventImpl Serialization', () => {
     @Node(mockNodeMetadata)
     class MockNode extends BaseNode {
       @Input()
-      @String()
+      @PortString()
       a: string = 'test'
 
       async execute(context: ExecutionContext): Promise<NodeExecutionResult> {

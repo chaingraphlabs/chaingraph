@@ -11,11 +11,11 @@ import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
-  Number as NumberPort,
+  PortNumber as NumberPort,
   Output,
+  PortBoolean,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -38,7 +38,7 @@ class FinishMessageArchAINode extends BaseNode {
   messageID: number = 0
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Finish',
     description: 'Whether to mark the message as finished (true) or unfinished (false)',
     defaultValue: true,

@@ -13,7 +13,7 @@ import {
   Node,
   Output,
   PortEnum,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -112,7 +112,7 @@ class OKXChainSelectorNode extends BaseNode {
   network: OKXChainNetworks = OKXChainNetworks.ETHEREUM
 
   @Input()
-  @String({
+  @PortString({
     title: 'Custom Chain ID',
     description: 'Optional custom chain ID (overrides selected network)',
     required: false,
@@ -120,7 +120,7 @@ class OKXChainSelectorNode extends BaseNode {
   customChainId?: string
 
   @Input()
-  @String({
+  @PortString({
     title: 'Custom Chain Index',
     description: 'Optional custom chain index (overrides selected network)',
     required: false,
@@ -128,21 +128,21 @@ class OKXChainSelectorNode extends BaseNode {
   customChainIndex?: string
 
   @Output()
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
   })
   chainId: string = '1'
 
   @Output()
-  @String({
+  @PortString({
     title: 'Chain Index',
     description: 'Unique index identifier for the chain',
   })
   chainIndex: string = '1'
 
   @Output()
-  @String({
+  @PortString({
     title: 'Network Name',
     description: 'Human-readable name of the selected network',
   })

@@ -15,10 +15,10 @@ import {
   ExecutionEventEnum,
   Input,
   Node,
-  Number,
   NumberPortPlugin,
   ObjectPortPlugin,
   Output,
+  PortNumber,
   PortPluginRegistry,
   StreamPortPlugin,
   StringPortPlugin,
@@ -46,17 +46,17 @@ PortPluginRegistry.getInstance().register(StreamPortPlugin)
 })
 class AddNode extends BaseNode {
   @Input()
-  @Number({ defaultValue: 0 })
+  @PortNumber({ defaultValue: 0 })
   @Id('inputA')
   inputA: number = 0
 
   @Input()
-  @Number({ defaultValue: 0 })
+  @PortNumber({ defaultValue: 0 })
   @Id('inputB')
   inputB: number = 0
 
   @Output()
-  @Number()
+  @PortNumber()
   @Id('output')
   output: number = 0
 

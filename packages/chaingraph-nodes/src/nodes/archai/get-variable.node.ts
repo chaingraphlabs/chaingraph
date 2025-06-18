@@ -30,14 +30,14 @@ import {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
   NodeEventType,
   Output,
   PortAny,
+  PortBoolean,
   PortEnum,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { VariableNamespace, VariableValueType } from './types'
@@ -54,7 +54,7 @@ import { VariableNamespace, VariableValueType } from './types'
 })
 class ArchAIGetVariableNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Variable Name',
     description: 'Name of the variable to retrieve',
     required: true,
@@ -144,7 +144,7 @@ class ArchAIGetVariableNode extends BaseNode {
   variableType: VariableValueType = VariableValueType.Any
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Use Default Value',
     description: 'Whether to use the default value if the variable does not exist',
     defaultValue: false,
@@ -170,7 +170,7 @@ class ArchAIGetVariableNode extends BaseNode {
   variableValue: any = undefined
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Exists',
     description: 'Whether the variable exists',
     defaultValue: false,

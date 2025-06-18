@@ -13,7 +13,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { NODE_CATEGORIES } from '../../categories'
@@ -42,7 +42,7 @@ class LangchainTemplateNode extends BaseNode {
   variables: Record<string, any> = {}
 
   @Input()
-  @String({
+  @PortString({
     title: 'Template',
     description: 'Template string with variables in {variable_name} format',
     ui: {
@@ -54,7 +54,7 @@ class LangchainTemplateNode extends BaseNode {
   template: string = 'Tell me a joke about {topic}'
 
   @Output()
-  @String({
+  @PortString({
     title: 'Rendered Text',
     description: 'The template with all variables replaced',
   })

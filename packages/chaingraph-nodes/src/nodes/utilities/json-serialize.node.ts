@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output, PortAny, String } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortAny, PortBoolean, PortString } from '@badaitech/chaingraph-types'
 
 @Node({
   type: 'JSONSerializerNode',
@@ -34,7 +34,7 @@ export class JSONSerializerNode extends BaseNode {
    * Controls whether the output JSON should be pretty-printed with indentation
    */
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Pretty Print',
     description: 'Format the JSON with indentation for better readability',
   })
@@ -44,7 +44,7 @@ export class JSONSerializerNode extends BaseNode {
    * The output JSON string representation of the input data
    */
   @Output()
-  @String({
+  @PortString({
     title: 'JSON',
     description: 'The serialized JSON string',
     defaultValue: '',

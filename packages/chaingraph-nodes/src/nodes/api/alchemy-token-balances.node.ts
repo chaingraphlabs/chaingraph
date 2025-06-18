@@ -16,12 +16,12 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
   ObjectSchema,
   Output,
   PortArray,
+  PortNumber,
   PortSecret,
-  String,
+  PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -65,13 +65,13 @@ class Networks {
   description: 'Token Balance Information',
 })
 class TokenBalance {
-  @String({
+  @PortString({
     title: 'Token Address',
     description: 'Contract address of the token',
   })
   tokenAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Balance in Wei',
     description: 'Raw token balance (not divided by decimals)',
   })
@@ -106,7 +106,7 @@ class AlchemyTokenBalances extends BaseNode {
   apiKey?: EncryptedSecretValue<'alchemy'>
 
   @Input()
-  @String({
+  @PortString({
     title: 'Wallet Address',
     description: 'Ethereum wallet address to check token balances for',
     pattern: '^0x[a-fA-F0-9]{40}$',
@@ -115,7 +115,7 @@ class AlchemyTokenBalances extends BaseNode {
   walletAddress: string = ''
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Max Tokens',
     description: 'Limits the amount of tokens in the response',
     defaultValue: 20,

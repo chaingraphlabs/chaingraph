@@ -15,12 +15,12 @@ import {
 
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
   Output,
+  PortBoolean,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -36,7 +36,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class SwitchNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Input',
     description: 'String value to use for matching a list of case values',
     defaultValue: '',
@@ -64,7 +64,7 @@ class SwitchNode extends BaseNode {
   caseObject: Record<string, boolean> = {}
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Default',
     description: 'Whether the string value matches none of the case values',
   })

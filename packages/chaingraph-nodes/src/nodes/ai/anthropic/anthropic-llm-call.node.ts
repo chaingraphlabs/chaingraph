@@ -28,13 +28,13 @@ import {
   findPort,
 } from '@badaitech/chaingraph-types'
 import {
-  Number,
   PortEnum,
+  PortNumber,
 } from '@badaitech/chaingraph-types'
 
 import {
-  Boolean,
   ObjectSchema,
+  PortBoolean,
 } from '@badaitech/chaingraph-types'
 
 import {
@@ -47,7 +47,7 @@ import {
   PortArray,
   PortObject,
   PortStream,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
@@ -116,7 +116,7 @@ const TAGS = {
   description: 'Beta features flags for Anthropic LLM Call Node',
 })
 class AntropicLLMCallNodeFeatures {
-  @Boolean({
+  @PortBoolean({
     title: 'code-execution-2025-05-22',
     description: 'Code execution support (beta)\n'
       + 'Claude 3.7/4 can execute code in Python, JavaScript, and TypeScript. This allows for dynamic code execution within the conversation.',
@@ -124,7 +124,7 @@ class AntropicLLMCallNodeFeatures {
   })
   codeExecution20250522: boolean = false
 
-  @Boolean({
+  @PortBoolean({
     title: 'web-search',
     description: 'When you add the web search tool to your API request:\n'
       + '\n'
@@ -136,7 +136,7 @@ class AntropicLLMCallNodeFeatures {
   webSearchTool: boolean = false
 
   // files-api-2025-04-14
-  @Boolean({
+  @PortBoolean({
     title: 'files-api-2025-04-14',
     description: 'Code execution can analyze files uploaded via the Files API, such as CSV files, Excel files, and other data formats. This allows Claude to read, process, and generate insights from your data. You can pass multiple files per request.',
     defaultValue: false,
@@ -144,7 +144,7 @@ class AntropicLLMCallNodeFeatures {
   filesApi20250414: boolean = false
 
   // interleaved-thinking-2025-05-14
-  @Boolean({
+  @PortBoolean({
     title: 'interleaved-thinking-2025-05-14',
     description: 'Interleaved thinking\n'
       + 'Claude 4 models support interleaving tool use with extended thinking, allowing for more natural conversations where tool uses and responses can be mixed with regular messages.',
@@ -188,7 +188,7 @@ export class LLMConfig {
   })
   model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_20250514
 
-  @Number({
+  @PortNumber({
     title: 'Max Tokens',
     description: 'Maximum number of tokens to generate',
     min: 1,
@@ -197,7 +197,7 @@ export class LLMConfig {
   })
   max_tokens: number = 16000
 
-  @Number({
+  @PortNumber({
     title: 'Temperature',
     description: 'Controls randomness (0.0 to 1.0)',
     min: 0,
@@ -211,7 +211,7 @@ export class LLMConfig {
   })
   temperature: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Top P',
     description: 'Controls diversity via nucleus sampling (0.0 to 1.0)',
     min: 0,
@@ -220,7 +220,7 @@ export class LLMConfig {
   })
   top_p?: number
 
-  @Number({
+  @PortNumber({
     title: 'Top K',
     description: 'Only sample from top K options for each token',
     min: 1,
@@ -262,7 +262,7 @@ export class LLMConfig {
   })
   tool_choice?: ToolChoice
 
-  @Boolean({
+  @PortBoolean({
     title: 'Stream',
     description: 'Whether to stream the response incrementally',
     ui: {
@@ -318,7 +318,7 @@ export class AntropicLlmCallNode extends BaseNode {
   tools: Tool[] = []
 
   @Input()
-  @String({
+  @PortString({
     title: 'System',
     description: 'System prompt providing context and instructions to Claude',
     ui: {
@@ -381,7 +381,7 @@ export class AntropicLlmCallNode extends BaseNode {
   tokenUsage: TokenUsage = new TokenUsage()
 
   @Output()
-  @String({
+  @PortString({
     title: 'Complete Response',
     description: 'Complete text response concatenated from all text blocks',
     ui: {
@@ -534,7 +534,7 @@ export class AntropicLlmCallNode extends BaseNode {
       // }
     } catch (error: any) {
       await this.handleError(context, error)
-      throw new Error(`Anthropic API Error: ${error.message || String(error)}`)
+      throw new Error(`Anthropic API Error: ${error.message || PortString(error)}`)
     }
   }
 
@@ -1103,9 +1103,9 @@ export class AntropicLlmCallNode extends BaseNode {
         } catch (error: any) {
           toolResult = JSON.stringify({
             error: true,
-            message: `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`,
+            message: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
           })
-          console.debug(`[ANTHROPIC] Tool ${toolUseBlock.name} execution failed: ${error.message || String(error)}`)
+          console.debug(`[ANTHROPIC] Tool ${toolUseBlock.name} execution failed: ${error.message || PortString(error)}`)
         }
 
         // Create a tool result block
@@ -1134,7 +1134,7 @@ export class AntropicLlmCallNode extends BaseNode {
         toolResultBlock.tool_use_id = toolUseBlock.id
         toolResultBlock.content = JSON.stringify({
           error: true,
-          message: `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`,
+          message: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
         })
 
         toolResults.push(toolResultBlock)
@@ -1147,7 +1147,7 @@ export class AntropicLlmCallNode extends BaseNode {
           timestamp: new Date(),
           data: {
             node: this.clone(),
-            log: `Error executing tool ${toolUseBlock.name}: ${error.message || String(error)}`,
+            log: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
           },
         })
       }
@@ -1463,7 +1463,7 @@ export class AntropicLlmCallNode extends BaseNode {
       timestamp: new Date(),
       data: {
         node: this.clone(),
-        log: `Error during Anthropic streaming: ${error.message || String(error)}`,
+        log: `Error during Anthropic streaming: ${error.message || PortString(error)}`,
       },
     })
 
@@ -1474,7 +1474,7 @@ export class AntropicLlmCallNode extends BaseNode {
    * Handle errors in the execute method
    */
   private async handleError(context: ExecutionContext, error: any): Promise<void> {
-    const errorMessage = `Anthropic API Error: ${error.message || String(error)}`
+    const errorMessage = `Anthropic API Error: ${error.message || PortString(error)}`
 
     await context.sendEvent({
       index: 0,

@@ -13,16 +13,16 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
   FlowEventType,
   Id,
   Input,
   Node,
   NodeCatalog,
   NodeRegistry,
-  Number,
   Output,
-  String,
+  PortBoolean,
+  PortNumber,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createCaller } from '../../../router'
@@ -35,28 +35,28 @@ import { createTestContext } from '../../../test/utils/createTestContext'
 })
 class ScalarNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     defaultValue: 'default string',
   })
   @Id('strInput')
   strInput: string = 'default string'
 
   @Input()
-  @Number({
+  @PortNumber({
     defaultValue: 42,
   })
   @Id('numInput')
   numInput: number = 42
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     defaultValue: true,
   })
   @Id('boolInput')
   boolInput: boolean = true
 
   @Id('strOutput')
-  @String()
+  @PortString()
   @Output()
   strOutput: string = ''
 

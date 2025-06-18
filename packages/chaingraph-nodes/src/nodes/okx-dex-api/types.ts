@@ -9,12 +9,12 @@
 import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
 import { PortSecret } from '@badaitech/chaingraph-types'
 import {
-  Boolean,
-  Number,
   ObjectSchema,
   PortArray,
+  PortBoolean,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 
 /**
@@ -27,41 +27,41 @@ import {
   description: 'Information about a specific token on the blockchain',
 })
 export class TokenInfo {
-  @String({
+  @PortString({
     title: 'Decimal Precision',
     description: 'Number of decimal places used by the token',
     required: true,
   })
   decimal: string = ''
 
-  @Boolean({
+  @PortBoolean({
     title: 'Honeypot Status',
     description: 'Flag indicating if the token is identified as a scam/honeypot',
   })
   isHoneyPot: boolean = false
 
-  @String({
+  @PortString({
     title: 'Tax Rate',
     description: 'Fee percentage charged when transferring this token',
     required: true,
   })
   taxRate: string = ''
 
-  @String({
+  @PortString({
     title: 'Contract Address',
     description: 'Blockchain address where the token smart contract is deployed',
     required: true,
   })
   tokenContractAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Token Symbol',
     description: 'Trading symbol for the token (e.g., ETH, BTC)',
     required: true,
   })
   tokenSymbol: string = ''
 
-  @String({
+  @PortString({
     title: 'Token Unit Price',
     description: 'Current price of one token unit in quote currency',
     required: true,
@@ -86,33 +86,33 @@ export class TokenInfoList extends TokenInfo { }
   description: 'Basic token information returned in token listing responses',
 })
 export class TokenListResponse {
-  @String({
+  @PortString({
     title: 'Decimal Precision',
     description: 'Number of decimal places used by the token',
     required: true,
   })
   decimals: string = ''
 
-  @String({
+  @PortString({
     title: 'Contract Address',
     description: 'Blockchain address where the token smart contract is deployed',
     required: true,
   })
   tokenContractAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Token Logo URL',
     description: 'URL to the token\'s logo image (optional)',
   })
   tokenLogoUrl?: string
 
-  @String({
+  @PortString({
     title: 'Token Name',
     description: 'Full name of the token (optional)',
   })
   tokenName?: string
 
-  @String({
+  @PortString({
     title: 'Token Symbol',
     description: 'Trading symbol for the token (e.g., ETH, BTC)',
     required: true,
@@ -136,14 +136,14 @@ export class TokenListInfo extends TokenListResponse { }
   description: 'Information about a DEX protocol used in a swap route',
 })
 export class DexProtocol {
-  @String({
+  @PortString({
     title: 'DEX Name',
     description: 'Name of the decentralized exchange (e.g., Uniswap, SushiSwap)',
     required: true,
   })
   dexName: string = ''
 
-  @String({
+  @PortString({
     title: 'Usage Percentage',
     description: 'Percentage of the total swap that uses this DEX protocol',
     required: true,
@@ -192,13 +192,13 @@ export class SubRouterInfo {
   description: 'Information about a DEX router used in swap execution',
 })
 export class DexRouter {
-  @String({
+  @PortString({
     title: 'Router Address',
     description: 'Smart contract address of the DEX router',
   })
   router: string = ''
 
-  @String({
+  @PortString({
     title: 'Router Usage Percentage',
     description: 'Percentage of the total swap amount routed through this router',
   })
@@ -223,25 +223,25 @@ export class DexRouter {
   description: 'Comparative quote from a specific DEX for price comparison',
 })
 export class ComparisonQuote {
-  @String({
+  @PortString({
     title: 'Output Amount',
     description: 'Amount of destination tokens received from this DEX',
   })
   amountOut: string = ''
 
-  @String({
+  @PortString({
     title: 'DEX Logo URL',
     description: 'URL to the logo image of the DEX',
   })
   dexLogo: string = ''
 
-  @String({
+  @PortString({
     title: 'DEX Name',
     description: 'Name of the decentralized exchange',
   })
   dexName: string = ''
 
-  @String({
+  @PortString({
     title: 'Trading Fee',
     description: 'Fee charged by this DEX for the swap',
   })
@@ -256,7 +256,7 @@ export class ComparisonQuote {
   description: 'Detailed result of a swap routing calculation',
 })
 export class RouterResult {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
   })
@@ -272,7 +272,7 @@ export class RouterResult {
   })
   dexRouterList: DexRouter[] = []
 
-  @String({
+  @PortString({
     title: 'Estimated Gas Fee',
     description: 'Estimated gas fee for executing the swap',
   })
@@ -292,19 +292,19 @@ export class RouterResult {
   })
   toToken: TokenInfo = new TokenInfo()
 
-  @String({
+  @PortString({
     title: 'Source Amount',
     description: 'Amount of source tokens to swap',
   })
   fromTokenAmount: string = ''
 
-  @String({
+  @PortString({
     title: 'Destination Amount',
     description: 'Amount of destination tokens expected to receive',
   })
   toTokenAmount: string = ''
 
-  @String({
+  @PortString({
     title: 'Price Impact',
     description: 'Percentage impact on market price caused by this swap',
   })
@@ -320,7 +320,7 @@ export class RouterResult {
   })
   quoteCompareList: ComparisonQuote[] = []
 
-  @String({
+  @PortString({
     title: 'Trading Fee',
     description: 'Total trading fee for the swap',
   })
@@ -335,42 +335,42 @@ export class RouterResult {
   description: 'Raw transaction data needed to execute a swap on the blockchain',
 })
 export class TransactionData {
-  @String({
+  @PortString({
     title: 'Transaction Data',
     description: 'Hex-encoded calldata for the transaction',
     required: true,
   })
   data: string = ''
 
-  @String({
+  @PortString({
     title: 'Sender Address',
     description: 'Blockchain address initiating the transaction',
     required: true,
   })
   from: string = ''
 
-  @String({
+  @PortString({
     title: 'Gas Limit',
     description: 'Maximum gas units allowed for transaction execution',
     required: true,
   })
   gas: string = ''
 
-  @String({
+  @PortString({
     title: 'Gas Price',
     description: 'Price per gas unit in wei',
     required: true,
   })
   gasPrice: string = ''
 
-  @String({
+  @PortString({
     title: 'Priority Fee',
     description: 'Maximum priority fee per gas (for EIP-1559 transactions)',
     required: true,
   })
   maxPriorityFeePerGas: string = ''
 
-  @String({
+  @PortString({
     title: 'Minimum Receive Amount',
     description: 'Minimum acceptable amount of tokens to receive',
     required: true,
@@ -385,21 +385,21 @@ export class TransactionData {
   })
   signatureData: string[] = []
 
-  @String({
+  @PortString({
     title: 'Slippage Tolerance',
     description: 'Maximum allowed price movement as a percentage',
     required: true,
   })
   slippage: string = ''
 
-  @String({
+  @PortString({
     title: 'Recipient Address',
     description: 'Destination contract address for the transaction',
     required: true,
   })
   to: string = ''
 
-  @String({
+  @PortString({
     title: 'Transaction Value',
     description: 'Amount of native currency (ETH, BNB, etc.) sent with transaction',
     required: true,
@@ -415,7 +415,7 @@ export class TransactionData {
   description: 'Complete quote data including route and optional transaction details',
 })
 export class QuoteData {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
     required: true,
@@ -432,7 +432,7 @@ export class QuoteData {
   })
   dexRouterList: DexRouter[] = []
 
-  @String({
+  @PortString({
     title: 'Estimated Gas Fee',
     description: 'Estimated gas fee for executing the swap',
     required: true,
@@ -455,21 +455,21 @@ export class QuoteData {
   })
   toToken: TokenInfo = new TokenInfo()
 
-  @String({
+  @PortString({
     title: 'Source Amount',
     description: 'Amount of source tokens to swap (bigint string, e.g., "1000000000000000000" for 1 token for decimal 18)',
     required: true,
   })
   fromTokenAmount: string = ''
 
-  @String({
+  @PortString({
     title: 'Destination Amount',
     description: 'Amount of destination tokens expected to receive',
     required: true,
   })
   toTokenAmount: string = ''
 
-  @String({
+  @PortString({
     title: 'Price Impact',
     description: 'Percentage impact on market price caused by this swap',
     required: true,
@@ -486,7 +486,7 @@ export class QuoteData {
   })
   quoteCompareList: ComparisonQuote[] = []
 
-  @String({
+  @PortString({
     title: 'Trading Fee',
     description: 'Total trading fee for the swap',
     required: true,
@@ -515,21 +515,21 @@ export class QuoteData {
   description: 'Information about a blockchain network',
 })
 export class ChainData {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Unique identifier for the blockchain network',
     required: true,
   })
   chainId: string = ''
 
-  @String({
+  @PortString({
     title: 'Chain Name',
     description: 'Human-readable name of the blockchain network',
     required: true,
   })
   chainName: string = ''
 
-  @String({
+  @PortString({
     title: 'DEX Token Approval Address',
     description: 'Address used for token approvals on this chain (null if not applicable)',
     required: true,
@@ -578,13 +578,13 @@ export class SwapResponseData {
   })
   data: SwapExecutionData[] = []
 
-  @String({
+  @PortString({
     title: 'Response Code',
     description: 'API response status code (0 indicates success)',
   })
   code: string = ''
 
-  @String({
+  @PortString({
     title: 'Response Message',
     description: 'Human-readable status message or error details',
   })
@@ -599,13 +599,13 @@ export class SwapResponseData {
   description: 'Generic API response wrapper',
 })
 export class APIResponse<T> {
-  @String({
+  @PortString({
     title: 'Response Code',
     description: 'API response status code (0 indicates success)',
   })
   code: string = ''
 
-  @String({
+  @PortString({
     title: 'Response Message',
     description: 'Human-readable status message or error details',
   })
@@ -658,27 +658,27 @@ export class SolanaConfig {
     confirmTransactionInitialTimeout?: number
   } = { rpcUrl: '' }
 
-  @String({
+  @PortString({
     title: 'Wallet Address',
     description: 'Solana wallet public address',
   })
   walletAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Private Key',
     description: 'Private key for the Solana wallet (sensitive data)',
     ui: { isPassword: true },
   })
   privateKey: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Compute Units',
     description: 'Maximum compute units for Solana transactions (optional)',
     integer: true,
   })
   computeUnits?: number
 
-  @Number({
+  @PortNumber({
     title: 'Max Retries',
     description: 'Maximum number of retry attempts for failed requests (optional)',
     integer: true,
@@ -694,14 +694,14 @@ export class SolanaConfig {
   description: 'Configuration for Sui blockchain connections',
 })
 export class SuiConfig {
-  @String({
+  @PortString({
     title: 'Private Key',
     description: 'Private key for the Sui wallet (sensitive data)',
     ui: { isPassword: true },
   })
   privateKey: string = ''
 
-  @String({
+  @PortString({
     title: 'Wallet Address',
     description: 'Sui wallet public address',
   })
@@ -739,20 +739,20 @@ export class SuiConfig {
   description: 'Configuration for EVM-compatible blockchain connections',
 })
 export class EVMConfig {
-  @String({
+  @PortString({
     title: 'Wallet Address',
     description: 'EVM wallet public address',
   })
   walletAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Private Key',
     description: 'Private key for the EVM wallet (sensitive data)',
     ui: { isPassword: true },
   })
   privateKey: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Gas Multiplier',
     description: 'Multiplier applied to estimated gas (optional)',
     min: 1,
@@ -791,45 +791,45 @@ export class EVMConfig {
   description: 'Configuration for a specific blockchain network',
 })
 export class ChainConfig {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Unique identifier for the blockchain network',
   })
   id: string = ''
 
-  @String({
+  @PortString({
     title: 'Block Explorer URL',
     description: 'Base URL for the blockchain explorer',
   })
   explorer: string = ''
 
-  @String({
+  @PortString({
     title: 'Default Slippage',
     description: 'Default slippage percentage for swaps on this chain',
   })
   defaultSlippage: string = ''
 
-  @String({
+  @PortString({
     title: 'Maximum Slippage',
     description: 'Maximum allowed slippage percentage for swaps on this chain',
   })
   maxSlippage: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Compute Units',
     description: 'Computation units for specific chains like Solana (optional)',
     integer: true,
   })
   computeUnits?: number
 
-  @Number({
+  @PortNumber({
     title: 'Confirmation Timeout',
     description: 'Transaction confirmation timeout in milliseconds (optional)',
     integer: true,
   })
   confirmationTimeout?: number
 
-  @Number({
+  @PortNumber({
     title: 'Max Retries',
     description: 'Maximum number of retry attempts for failed requests (optional)',
     integer: true,
@@ -837,7 +837,7 @@ export class ChainConfig {
   })
   maxRetries?: number
 
-  @String({
+  @PortString({
     title: 'DEX Contract Address',
     description: 'Smart contract address for the DEX on this chain (optional)',
   })
@@ -859,14 +859,14 @@ export class OKXConfig {
   })
   secrets?: EncryptedSecretValue<'OkxDexApi'>
 
-  @String({
+  @PortString({
     title: 'Project ID',
     description: 'OKX project identifier',
     required: true,
   })
   projectId: string = ''
 
-  @String({
+  @PortString({
     title: 'Base URL',
     description: 'Base URL for API requests (optional)',
   })
@@ -904,7 +904,7 @@ export class OKXConfig {
   })
   evm?: EVMConfig
 
-  @Number({
+  @PortNumber({
     title: 'Request Timeout',
     description: 'API request timeout in milliseconds (optional)',
     integer: true,
@@ -912,7 +912,7 @@ export class OKXConfig {
   })
   timeout?: number
 
-  @Number({
+  @PortNumber({
     title: 'Max Retries',
     description: 'Maximum number of retry attempts for failed requests (optional)',
     integer: true,
@@ -939,19 +939,19 @@ export class APIRequestParams {
   description: 'Options for configuring slippage tolerance in swaps',
 })
 export class SlippageOptions {
-  @String({
+  @PortString({
     title: 'Slippage',
     description: 'Manual slippage percentage (optional)',
   })
   slippage?: string
 
-  @Boolean({
+  @PortBoolean({
     title: 'Auto Slippage',
     description: 'Whether to use automatic slippage calculation (optional)',
   })
   autoSlippage?: boolean
 
-  @String({
+  @PortString({
     title: 'Max Auto Slippage',
     description: 'Maximum slippage percentage when using auto slippage (optional)',
   })
@@ -965,53 +965,53 @@ export class SlippageOptions {
   description: 'Parameters for executing a token swap',
 })
 export class SwapParams {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
     required: true,
   })
   chainId: string = ''
 
-  @String({
+  @PortString({
     title: 'Source Token Address',
     description: 'Contract address of the token to swap from',
     required: true,
   })
   fromTokenAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Destination Token Address',
     description: 'Contract address of the token to swap to',
     required: true,
   })
   toTokenAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Amount',
     description: 'Amount of source tokens to swap (bigint string, e.g., "1000000000000000000" for 1 token for decimal 18)',
     required: true,
   })
   amount: string = ''
 
-  @String({
+  @PortString({
     title: 'User Wallet Address',
     description: 'Wallet address for the user performing the swap (optional)',
   })
   userWalletAddress?: string
 
-  @String({
+  @PortString({
     title: 'Slippage',
     description: 'Manual slippage percentage (optional)',
   })
   slippage?: string
 
-  @Boolean({
+  @PortBoolean({
     title: 'Auto Slippage',
     description: 'Whether to use automatic slippage calculation (optional)',
   })
   autoSlippage?: boolean
 
-  @String({
+  @PortString({
     title: 'Max Auto Slippage',
     description: 'Maximum slippage percentage when using auto slippage (optional)',
   })
@@ -1025,41 +1025,41 @@ export class SwapParams {
   description: 'Parameters for requesting a swap quote',
 })
 export class QuoteParams {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
     required: true,
   })
   chainId: string = ''
 
-  @String({
+  @PortString({
     title: 'Source Token Address',
     description: 'Contract address of the token to swap from',
     required: true,
   })
   fromTokenAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Destination Token Address',
     description: 'Contract address of the token to swap to',
     required: true,
   })
   toTokenAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Amount',
     description: 'Amount of source tokens to swap (bigint string, e.g., "1000000000000000000" for 1 token for decimal 18)',
     required: true,
   })
   amount: string = ''
 
-  @String({
+  @PortString({
     title: 'User Wallet Address',
     description: 'Wallet address for the user performing the swap (optional)',
   })
   userWalletAddress?: string
 
-  @String({
+  @PortString({
     title: 'Slippage',
     description: 'Slippage percentage for the quote calculation',
     required: true,
@@ -1074,21 +1074,21 @@ export class QuoteParams {
   description: 'Result of a completed swap transaction',
 })
 export class SwapResult {
-  @Boolean({
+  @PortBoolean({
     title: 'Success',
     description: 'Whether the swap was successful',
     required: true,
   })
   success: boolean = false
 
-  @String({
+  @PortString({
     title: 'Transaction ID',
     description: 'Blockchain transaction identifier',
     required: true,
   })
   transactionId: string = ''
 
-  @String({
+  @PortString({
     title: 'Explorer URL',
     description: 'URL to view the transaction in a blockchain explorer',
     required: true,
@@ -1147,7 +1147,7 @@ export class SwapResult {
   description: 'User-friendly formatted swap response with summary',
 })
 export class FormattedSwapResponse {
-  @Boolean({
+  @PortBoolean({
     title: 'Success',
     description: 'Whether the swap quote was successfully generated',
   })
@@ -1234,7 +1234,7 @@ export class FormattedSwapResponse {
       dexRoutes: [],
     }
 
-  @String({
+  @PortString({
     title: 'Summary',
     description: 'Human-readable summary of the swap details',
   })
@@ -1262,21 +1262,21 @@ export class FormattedSwapResponse {
   description: 'Parameters for requesting a token approval transaction',
 })
 export class ApproveTokenParams {
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier',
     required: true,
   })
   chainId: string = ''
 
-  @String({
+  @PortString({
     title: 'Token Contract Address',
     description: 'Address of the token contract to approve',
     required: true,
   })
   tokenContractAddress: string = ''
 
-  @String({
+  @PortString({
     title: 'Approve Amount',
     description: 'Amount of tokens to approve for spending',
     required: true,
@@ -1291,21 +1291,21 @@ export class ApproveTokenParams {
   description: 'Result of a token approval transaction',
 })
 export class ApproveTokenResult {
-  @Boolean({
+  @PortBoolean({
     title: 'Success',
     description: 'Whether the approval transaction was successful',
     required: true,
   })
   success: boolean = false
 
-  @String({
+  @PortString({
     title: 'Transaction Hash',
     description: 'Blockchain transaction hash/identifier',
     required: true,
   })
   transactionHash: string = ''
 
-  @String({
+  @PortString({
     title: 'Explorer URL',
     description: 'URL to view the transaction in a blockchain explorer',
     required: true,

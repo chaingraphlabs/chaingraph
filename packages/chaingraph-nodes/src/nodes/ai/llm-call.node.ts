@@ -20,12 +20,12 @@ import {
   Input,
   MultiChannel,
   Node,
-  Number,
   ObjectSchema,
   Output,
   PortEnumFromObject,
+  PortNumber,
   PortStream,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage } from '@langchain/core/messages'
@@ -34,13 +34,34 @@ import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
 export enum LLMModels {
+  // GPT-4.1 Family
+  Gpt41 = 'gpt-4.1',
+  Gpt41Mini = 'gpt-4.1-mini',
+  Gpt41Nano = 'gpt-4.1-nano',
+
+  // GPT-4o Family
   Gpt4oMini = 'gpt-4o-mini',
   Gpt4o = 'gpt-4o',
+
+  // O-Series Reasoning Models
+  O1 = 'o1',
+  O1Mini = 'o1-mini',
+  O3 = 'o3',
   GptO3Mini = 'o3-mini',
+  O3Pro = 'o3-pro',
+  O4Mini = 'o4-mini',
+
+  // Claude Models
+  ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
+  ClaudeOpus4_20250514 = 'claude-opus-4-20250514',
   Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
+
+  // Deepseek Models
   DeepseekChat = 'deepseek-chat',
   DeepseekReasoner = 'deepseek-reasoner',
+
+  // Groq Models
   GroqMetaLlamaLlama4Scout17b16eInstruct = 'groq/meta-llama/llama-4-scout-17b-16e-instruct',
 }
 
@@ -49,13 +70,13 @@ export enum LLMModels {
   category: 'LLM',
 })
 class LLMModel {
-  @String({
+  @PortString({
     title: 'Model',
     description: 'Language Model',
   })
-  model: LLMModels = LLMModels.Gpt4oMini
+  model: LLMModels = LLMModels.Gpt41Mini
 
-  @Number({
+  @PortNumber({
     title: 'Temperature',
     description: 'Temperature for sampling',
   })
@@ -68,13 +89,34 @@ class LLMModel {
 }
 
 export const llmModels = {
+  // GPT-4.1 Family
+  [LLMModels.Gpt41]: new LLMModel(LLMModels.Gpt41, 0),
+  [LLMModels.Gpt41Mini]: new LLMModel(LLMModels.Gpt41Mini, 0),
+  [LLMModels.Gpt41Nano]: new LLMModel(LLMModels.Gpt41Nano, 0),
+
+  // O-Series Reasoning Models
+  [LLMModels.O4Mini]: new LLMModel(LLMModels.O4Mini, 0),
+  [LLMModels.O3Pro]: new LLMModel(LLMModels.O3Pro, 0),
+  [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
+  [LLMModels.O3]: new LLMModel(LLMModels.O3, 0),
+  [LLMModels.O1]: new LLMModel(LLMModels.O1, 0),
+  [LLMModels.O1Mini]: new LLMModel(LLMModels.O1Mini, 0),
+
+  // GPT-4o Family
   [LLMModels.Gpt4oMini]: new LLMModel(LLMModels.Gpt4oMini, 0),
   [LLMModels.Gpt4o]: new LLMModel(LLMModels.Gpt4o, 0),
-  [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
+
+  // Claude Models
+  [LLMModels.ClaudeSonnet4_20250514]: new LLMModel(LLMModels.ClaudeSonnet4_20250514, 0),
+  [LLMModels.ClaudeOpus4_20250514]: new LLMModel(LLMModels.ClaudeOpus4_20250514, 0),
   [LLMModels.Claude37Sonnet20250219]: new LLMModel(LLMModels.Claude37Sonnet20250219, 0),
   [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
+
+  // Deepseek Models
   [LLMModels.DeepseekChat]: new LLMModel(LLMModels.DeepseekChat, 0),
   [LLMModels.DeepseekReasoner]: new LLMModel(LLMModels.DeepseekReasoner, 0),
+
+  // Groq Models
   [LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct]: new LLMModel(LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct, 0),
 }
 
@@ -91,7 +133,7 @@ class LLMCallNode extends BaseNode {
     title: 'Model',
     description: 'Language Model',
   })
-  model: keyof typeof llmModels = LLMModels.Gpt4oMini
+  model: keyof typeof llmModels = LLMModels.Gpt41Mini
 
   @Input()
   @PortSecret<SupportedProviders>({
@@ -105,7 +147,7 @@ class LLMCallNode extends BaseNode {
   apiKey?: EncryptedSecretValue<SupportedProviders>
 
   @Input()
-  @String({
+  @PortString({
     title: 'Prompt',
     description: 'Input prompt for the language model',
     ui: {
@@ -115,7 +157,7 @@ class LLMCallNode extends BaseNode {
   prompt: string = ''
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Temperature',
     description: 'Temperature for sampling',
     min: 0,
@@ -162,6 +204,9 @@ class LLMCallNode extends BaseNode {
         model: this.model,
         temperature: this.temperature,
         streaming: true,
+        thinking: {
+          type: 'disabled',
+        },
       })
     } else if (isGroq(this.model)) {
       llm = new ChatOpenAI({
@@ -177,7 +222,7 @@ class LLMCallNode extends BaseNode {
       llm = new ChatOpenAI({
         apiKey,
         model: this.model,
-        temperature: this.model !== LLMModels.GptO3Mini ? this.temperature : undefined,
+        temperature: !isOpenAIThinkingModel(this.model) ? this.temperature : undefined,
         streaming: true,
       })
     }
@@ -252,14 +297,21 @@ export type APIkey = SecretTypeMap[SupportedProviders]['apiKey']
  * Determines whether the given model belongs to the DeepSeek category of models.
  */
 export function isDeepSeek(model: LLMModels): boolean {
-  return [LLMModels.DeepseekReasoner, LLMModels.DeepseekChat].includes(model)
+  return [
+    LLMModels.DeepseekReasoner,
+    LLMModels.DeepseekChat,
+  ].includes(model)
 }
 
 /**
  * Determines whether the given model belongs to the Anthropic category of models.
  */
 export function isAnthropic(model: LLMModels): boolean {
-  return [LLMModels.Claude35Sonnet20241022, LLMModels.Claude37Sonnet20250219].includes(model)
+  return [
+    LLMModels.Claude35Sonnet20241022,
+    LLMModels.Claude37Sonnet20250219,
+    LLMModels.ClaudeSonnet4_20250514,
+  ].includes(model)
 }
 
 /**
@@ -267,6 +319,42 @@ export function isAnthropic(model: LLMModels): boolean {
  */
 export function isGroq(model: LLMModels): boolean {
   return model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct
+}
+
+/**
+ * Determines whether the given model belongs to the OpenAI category of models.
+ */
+export function isOpenAI(model: LLMModels): boolean {
+  return [
+    // GPT-4.1 Family
+    LLMModels.Gpt41,
+    LLMModels.Gpt41Mini,
+    LLMModels.Gpt41Nano,
+    // GPT-4o Family
+    LLMModels.Gpt4oMini,
+    LLMModels.Gpt4o,
+    // O-Series Reasoning Models
+    LLMModels.O1,
+    LLMModels.O1Mini,
+    LLMModels.O3,
+    LLMModels.GptO3Mini,
+    LLMModels.O3Pro,
+    LLMModels.O4Mini,
+  ].includes(model)
+}
+
+/**
+ * Determines whether the given model is an OpenAI thinking/reasoning model (O-series).
+ */
+export function isOpenAIThinkingModel(model: LLMModels): boolean {
+  return [
+    LLMModels.O1,
+    LLMModels.O1Mini,
+    LLMModels.O3,
+    LLMModels.GptO3Mini,
+    LLMModels.O3Pro,
+    LLMModels.O4Mini,
+  ].includes(model)
 }
 
 export default LLMCallNode

@@ -17,10 +17,10 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
   Output,
   PortArray,
   PortEnum,
+  PortNumber,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Attachment, Participant } from './types'
@@ -40,7 +40,7 @@ enum Order {
 })
 class BadAIChatHistoryNode extends BaseNode {
   @Input()
-  @Number({
+  @PortNumber({
     title: 'From Message ID',
     description: 'ID of the message from which to start fetching history, which is 0 by default',
     defaultValue: 0,
@@ -48,7 +48,7 @@ class BadAIChatHistoryNode extends BaseNode {
   fromMessageId: number = 0
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Limit',
     description: 'Number of messages to fetch from the chat history',
     defaultValue: 30,

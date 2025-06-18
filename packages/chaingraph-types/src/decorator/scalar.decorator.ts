@@ -17,16 +17,16 @@ import { Port } from './port.decorator'
  * Usage examples:
  *
  *   // Using default configuration:
- *   @String()
+ *   @PortString()
  *   public myPort: string = '';
  *
  *   // With custom configuration:
- *   @String({ defaultValue: 'hello', minLength: 1, maxLength: 100 })
+ *   @PortString({ defaultValue: 'hello', minLength: 1, maxLength: 100 })
  *   public myPort?: string;
  *
  * @param config Optional configuration object for additional options.
  */
-export function String(config?: Omit<PortDecoratorOptions<'string'>, 'type'>): PropertyDecorator {
+export function PortString(config?: Omit<PortDecoratorOptions<'string'>, 'type'>): PropertyDecorator {
   return Port({
     type: 'string',
     ...config,
@@ -41,16 +41,16 @@ export function String(config?: Omit<PortDecoratorOptions<'string'>, 'type'>): P
  * Usage examples:
  *
  *   // Using default configuration:
- *   @Number()
+ *   @PortNumber()
  *   public myNumber: number = 0;
  *
  *   // With custom configuration:
- *   @Number({ defaultValue: 42, min: 0, max: 100, integer: true })
+ *   @PortNumber({ defaultValue: 42, min: 0, max: 100, integer: true })
  *   public myNumber?: number;
  *
  * @param config Optional configuration object for number-specific options.
  */
-export function Number(config?: Omit<PortDecoratorOptions<'number'>, 'type'>): PropertyDecorator {
+export function PortNumber(config?: Omit<PortDecoratorOptions<'number'>, 'type'>): PropertyDecorator {
   return Port({
     type: 'number',
     ...config,
@@ -65,16 +65,16 @@ export function Number(config?: Omit<PortDecoratorOptions<'number'>, 'type'>): P
  * Usage examples:
  *
  *   // Using default configuration:
- *   @Boolean()
+ *   @PortBoolean()
  *   public myFlag: boolean = false;
  *
  *   // With custom configuration:
- *   @Boolean({ defaultValue: true })
+ *   @PortBoolean({ defaultValue: true })
  *   public myFlag?: boolean;
  *
  * @param config Optional configuration object for boolean-specific options.
  */
-export function Boolean(config?: Omit<PortDecoratorOptions<'boolean'>, 'type'>): PropertyDecorator {
+export function PortBoolean(config?: Omit<PortDecoratorOptions<'boolean'>, 'type'>): PropertyDecorator {
   return Port({
     type: 'boolean',
     ...config,

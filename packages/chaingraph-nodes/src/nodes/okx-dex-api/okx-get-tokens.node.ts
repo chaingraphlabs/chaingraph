@@ -14,7 +14,7 @@ import {
   Output,
   PortArray,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { createDexApiClient } from './okx-dex-client'
@@ -40,7 +40,7 @@ class OKXGetTokensNode extends BaseNode {
   config: OKXConfig = new OKXConfig()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Chain ID',
     description: 'Blockchain network identifier (will be deprecated in the future)',
     required: false,
@@ -48,7 +48,7 @@ class OKXGetTokensNode extends BaseNode {
   chainId?: string
 
   @Input()
-  @String({
+  @PortString({
     title: 'Chain Index',
     description: 'Unique identifier for the chain (e.g., 1 for Ethereum)',
     required: false,

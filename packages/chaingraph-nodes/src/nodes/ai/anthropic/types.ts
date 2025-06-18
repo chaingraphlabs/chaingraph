@@ -7,14 +7,14 @@
  */
 
 import {
-  Boolean,
-  Number,
   ObjectSchema,
   PortAny,
   PortArray,
+  PortBoolean,
   PortEnum,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 
 /**
@@ -39,21 +39,21 @@ export enum AntropicModelTypes {
   description: 'Configuration for image source in image content blocks',
 })
 export class ImageSource {
-  @String({
+  @PortString({
     title: 'Type',
     description: 'Type of image source (base64 or url)',
     required: true,
   })
   type: string = 'base64'
 
-  @String({
+  @PortString({
     title: 'Media Type',
     description: 'MIME type of the image (e.g., image/jpeg, image/png, image/gif, image/webp)',
     required: true,
   })
   media_type: string = 'image/jpeg'
 
-  @String({
+  @PortString({
     title: 'Data',
     description: 'Base64-encoded image data',
     required: true,
@@ -64,7 +64,7 @@ export class ImageSource {
   data: string = ''
 
   // url
-  @String({
+  @PortString({
     title: 'URL',
     description: 'URL of the image (if type is url)',
     required: false,
@@ -79,14 +79,14 @@ export class ImageSource {
   description: 'Base content block shared by all content types',
 })
 export class ContentBlockBase {
-  @String({
+  @PortString({
     title: 'Type',
     description: 'Type of content block',
     required: true,
   })
   type: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Index',
     description: 'Index of the content block in the message',
     required: false,
@@ -101,7 +101,7 @@ export class ContentBlockBase {
   description: 'Text content block for messages',
 })
 export class TextBlock extends ContentBlockBase {
-  @String({
+  @PortString({
     title: 'Text',
     description: 'Text content',
     required: true,
@@ -145,14 +145,14 @@ export class ImageBlock extends ContentBlockBase {
   description: 'Tool result content block for providing results back to the model',
 })
 export class ToolResultBlock extends ContentBlockBase {
-  @String({
+  @PortString({
     title: 'Tool Use ID',
     description: 'ID of the tool use this result is for',
     required: true,
   })
   tool_use_id: string = ''
 
-  @String({
+  @PortString({
     title: 'Content',
     description: 'Result content from the tool execution',
     required: true,
@@ -175,20 +175,20 @@ export class ToolResultBlock extends ContentBlockBase {
   description: 'Property in a tool input schema',
 })
 export class ToolSchemaProperty {
-  @String({
+  @PortString({
     title: 'Type',
     description: 'JSON schema type',
     required: true,
   })
   type?: string
 
-  @String({
+  @PortString({
     title: 'Title',
     description: 'Title of the property',
   })
   title?: string
 
-  @String({
+  @PortString({
     title: 'Description',
     description: 'Description of the property',
   })
@@ -221,7 +221,7 @@ export class ToolSchemaProperty {
   description: 'Schema definition for tool input',
 })
 export class ToolInputSchema {
-  @String({
+  @PortString({
     title: 'Type',
     description: 'JSON schema type (must be "object")',
     required: true,
@@ -263,7 +263,7 @@ export class ToolInputSchema {
   description: 'Definition of a tool that the model may use',
 })
 export class Tool {
-  @String({
+  @PortString({
     title: 'Name',
     description: 'Name of the tool',
     required: true,
@@ -273,7 +273,7 @@ export class Tool {
   })
   name: string = ''
 
-  @String({
+  @PortString({
     title: 'Type',
     description: 'Type of the tool (optional)',
     ui: {
@@ -282,7 +282,7 @@ export class Tool {
   })
   type: string = 'custom'
 
-  @String({
+  @PortString({
     title: 'Description',
     description: 'Detailed description of what the tool does',
     ui: {
@@ -304,7 +304,7 @@ export class Tool {
   })
   input_schema: ToolInputSchema = new ToolInputSchema()
 
-  @String({
+  @PortString({
     title: 'Chaingraph Node ID',
     description: 'ID of the Chaingraph node that defines this tool (optional)',
     ui: {
@@ -313,7 +313,7 @@ export class Tool {
   })
   chaingraph_node_id?: string = undefined
 
-  @String({
+  @PortString({
     title: 'Chaingraph Node Type',
     description: 'Type of the Chaingraph node that defines this tool (optional)',
     ui: {
@@ -354,13 +354,13 @@ export class ToolChoice {
   })
   type: ToolChoiceType = ToolChoiceType.Auto
 
-  @Boolean({
+  @PortBoolean({
     title: 'Disable Parallel Tool Use',
     description: 'Whether to disable parallel tool use',
   })
   disable_parallel_tool_use: boolean = false
 
-  @String({
+  @PortString({
     title: 'Tool Name',
     description: 'Name of the specific tool to use (if type is "tool")',
     required: false,
@@ -387,7 +387,7 @@ export class ThinkingConfig {
   })
   type: string = 'enabled'
 
-  @Number({
+  @PortNumber({
     title: 'Budget Tokens',
     description: 'Number of tokens Claude can use for thinking (must be ≥1024)',
     required: true,
@@ -403,7 +403,7 @@ export class ThinkingConfig {
   description: 'Metadata for the message request',
 })
 export class MessageMetadata {
-  @String({
+  @PortString({
     title: 'User ID',
     description: 'External identifier for the user (e.g., hash or UUID)',
     ui: {
@@ -451,7 +451,7 @@ export class AntropicMessage {
   description: 'Configuration for the Anthropic Claude API request',
 })
 export class AntropicConfig {
-  @String({
+  @PortString({
     title: 'API Key',
     description: 'Your Anthropic API key',
     required: true,
@@ -480,7 +480,7 @@ export class AntropicConfig {
   })
   model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_20250514
 
-  @Number({
+  @PortNumber({
     title: 'Max Tokens',
     description: 'Maximum number of tokens to generate',
     min: 1,
@@ -489,7 +489,7 @@ export class AntropicConfig {
   })
   max_tokens: number = 16000
 
-  @Number({
+  @PortNumber({
     title: 'Temperature',
     description: 'Controls randomness (0.0 to 1.0)',
     min: 0,
@@ -503,7 +503,7 @@ export class AntropicConfig {
   })
   temperature: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Top P',
     description: 'Controls diversity via nucleus sampling (0.0 to 1.0)',
     min: 0,
@@ -512,7 +512,7 @@ export class AntropicConfig {
   })
   top_p?: number
 
-  @Number({
+  @PortNumber({
     title: 'Top K',
     description: 'Only sample from top K options for each token',
     min: 1,
@@ -529,7 +529,7 @@ export class AntropicConfig {
   })
   stop_sequences?: string[]
 
-  @String({
+  @PortString({
     title: 'System',
     description: 'System prompt providing context and instructions to Claude',
     ui: {
@@ -574,7 +574,7 @@ export class AntropicConfig {
   })
   tool_choice?: ToolChoice
 
-  @Boolean({
+  @PortBoolean({
     title: 'Stream',
     description: 'Whether to stream the response incrementally',
     ui: {
@@ -591,7 +591,7 @@ export class AntropicConfig {
   description: 'Thinking content block from Claude\'s extended thinking',
 })
 export class ThinkingResponseBlock extends ContentBlockBase {
-  @String({
+  @PortString({
     title: 'Thinking',
     description: 'Thinking text content',
     required: true,
@@ -601,7 +601,7 @@ export class ThinkingResponseBlock extends ContentBlockBase {
   })
   thinking: string = ''
 
-  @String({
+  @PortString({
     title: 'Signature',
     description: 'Signature for the thinking content',
     required: true,
@@ -621,14 +621,14 @@ export class ThinkingResponseBlock extends ContentBlockBase {
   description: 'Tool use content block from Claude',
 })
 export class ToolUseResponseBlock extends ContentBlockBase {
-  @String({
+  @PortString({
     title: 'ID',
     description: 'Unique identifier for this tool use',
     required: true,
   })
   id: string = ''
 
-  @String({
+  @PortString({
     title: 'Name',
     description: 'Name of the tool being used',
     required: true,
@@ -660,41 +660,41 @@ export class ToolUseResponseBlock extends ContentBlockBase {
   description: 'Citation metadata for text responses',
 })
 export class Citation {
-  @String({
+  @PortString({
     title: 'Type',
     description: 'Type of citation',
     required: true,
   })
   type: string = 'char_location'
 
-  @String({
+  @PortString({
     title: 'Cited Text',
     description: 'The text being cited',
     required: true,
   })
   cited_text: string = ''
 
-  @Number({
+  @PortNumber({
     title: 'Document Index',
     description: 'Index of the document being cited',
     required: true,
   })
   document_index: number = 0
 
-  @String({
+  @PortString({
     title: 'Document Title',
     description: 'Title of the document being cited',
   })
   document_title?: string
 
-  @Number({
+  @PortNumber({
     title: 'Start Character Index',
     description: 'Starting index of the citation in the document',
     required: true,
   })
   start_char_index: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'End Character Index',
     description: 'Ending index of the citation in the document',
     required: true,
@@ -709,7 +709,7 @@ export class Citation {
   description: 'Text response block from Claude',
 })
 export class TextResponseBlock extends ContentBlockBase {
-  @String({
+  @PortString({
     title: 'Text',
     description: 'Text content',
     required: true,
@@ -780,14 +780,14 @@ export class AntropicResponseContent {
   description: 'Token usage information',
 })
 export class TokenUsage {
-  @Number({
+  @PortNumber({
     title: 'Input Tokens',
     description: 'Number of input tokens used',
     required: true,
   })
   input_tokens: number = 0
 
-  @Number({
+  @PortNumber({
     title: 'Output Tokens',
     description: 'Number of output tokens generated',
     required: true,

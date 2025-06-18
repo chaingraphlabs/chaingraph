@@ -112,7 +112,7 @@ export function applyVisibilityRules(node: INode): IPort[] {
  * ```typescript
  * class MyNode extends BaseNode {
  *   @Input()
- *   @String({
+ *   @PortString({
  *     title: 'Mode',
  *   })
  *   mode: string = 'replace';
@@ -121,7 +121,7 @@ export function applyVisibilityRules(node: INode): IPort[] {
  *     showIf: (node) => (node as MyNode).mode === 'replace'
  *   })
  *   @Input()
- *   @String({
+ *   @PortString({
  *     title: 'Replacement Text'
  *   })
  *   replacementText: string = '';

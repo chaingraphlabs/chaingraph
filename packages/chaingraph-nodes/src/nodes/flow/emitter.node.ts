@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, ObjectSchema, PortObject, String, Title } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, ObjectSchema, PortObject, PortString, Title } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @ObjectSchema({
@@ -15,7 +15,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class EventData {
   @Title('Event Name')
-  @String({ defaultValue: '' })
+  @PortString({ defaultValue: '' })
   eventName: string = ''
 }
 

@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Boolean, Input, Node, Output } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortBoolean } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -19,7 +19,7 @@ import { NODE_CATEGORIES } from '../../categories'
 })
 class AndNode extends BaseNode {
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Input X',
     description: 'First boolean value to use in the logical AND operation',
     defaultValue: false,
@@ -27,7 +27,7 @@ class AndNode extends BaseNode {
   inputX: boolean = false
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Input Y',
     description: 'Second boolean value to use in the logical AND operation',
     defaultValue: false,
@@ -35,7 +35,7 @@ class AndNode extends BaseNode {
   inputY: boolean = false
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Result',
     description: 'Boolean result of the logical AND operation',
   })
