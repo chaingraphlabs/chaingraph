@@ -48,11 +48,11 @@ class Networks {
 
 class RefinedTokenBalance {
   tokenAddress: string
-  weiBalance: string
+  rawBalance: string
 
-  constructor(tokenAddress: string, weiBalance: string) {
+  constructor(tokenAddress: string, rawBalance: string) {
     this.tokenAddress = tokenAddress
-    this.weiBalance = weiBalance
+    this.rawBalance = rawBalance
   }
 }
 
@@ -128,7 +128,7 @@ class AlchemyTokenBalances extends BaseNode {
             title: 'Token Address',
             description: 'Contract address of the token',
           },
-          weiBalance: {
+          rawBalance: {
             type: 'string',
             title: 'Wei Balance',
             description: 'Token balance in wei format as string',
@@ -171,7 +171,7 @@ class AlchemyTokenBalances extends BaseNode {
       if (this.filterZeroBalances === false)
         this.tokenBalances = allTokens
       else
-        this.tokenBalances = allTokens.filter(token => token.weiBalance !== '0')
+        this.tokenBalances = allTokens.filter(token => token.rawBalance !== '0')
 
       return {}
     } catch (error) {
