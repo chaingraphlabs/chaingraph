@@ -36,6 +36,14 @@ export class GetNativeBalanceNode extends BaseNode {
   })
   address: string = ''
 
+  @Input()
+  @Number({
+    title: 'Chain ID (Optional)',
+    description: 'Chain ID to use (defaults to connected wallet chain or mainnet)',
+    defaultValue: 0,
+  })
+  chainIdOverride: number = 0
+
   @Output()
   @String({
     title: 'Balance (Wei)',
@@ -60,6 +68,14 @@ export class GetNativeBalanceNode extends BaseNode {
   })
   formattedBalance: string = '0'
 
+  @Output()
+  @Number({
+    title: 'Chain ID',
+    description: 'The chain ID used for the balance query',
+    defaultValue: 0,
+  })
+  usedChainId: number = 0
+
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Get wallet context from execution context
     const walletContext = context.getIntegration<WalletContext>('wallet')
@@ -74,11 +90,15 @@ export class GetNativeBalanceNode extends BaseNode {
       throw new Error('No address provided and no wallet connected')
     }
 
-    // Determine RPC URL to use
+    // Determine chain ID and RPC URL to use
+    const chainId = this.chainIdOverride > 0 
+      ? this.chainIdOverride 
+      : (walletContext?.chainId || 1)
+    this.usedChainId = chainId
+    
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
       // Default to public RPC based on chain ID
-      const chainId = walletContext?.chainId || 1
       rpcUrl = this.getDefaultRpcUrl(chainId)
     }
 
@@ -134,6 +154,8 @@ export class GetNativeBalanceNode extends BaseNode {
         return 'https://arb1.arbitrum.io/rpc'
       case 10: // Optimism
         return 'https://mainnet.optimism.io'
+      case 8453: // Base
+        return 'https://mainnet.base.org'
       default:
         throw new Error(`No default RPC URL for chain ID ${chainId}`)
     }
@@ -150,6 +172,8 @@ export class GetNativeBalanceNode extends BaseNode {
       case 42161: // Arbitrum
         return 'ETH'
       case 10: // Optimism
+        return 'ETH'
+      case 8453: // Base
         return 'ETH'
       default:
         return 'ETH' // Default to ETH for unknown chains

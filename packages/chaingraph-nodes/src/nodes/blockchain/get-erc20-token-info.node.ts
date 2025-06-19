@@ -44,6 +44,14 @@ export class GetERC20TokenInfoNode extends BaseNode {
   })
   tokenAddress: string = ''
 
+  @Input()
+  @Number({
+    title: 'Chain ID (Optional)',
+    description: 'Chain ID to use (defaults to connected wallet chain or mainnet)',
+    defaultValue: 0,
+  })
+  chainIdOverride: number = 0
+
   @Output()
   @String({
     title: 'Token Address',
@@ -103,10 +111,13 @@ export class GetERC20TokenInfoNode extends BaseNode {
     // Echo the token address to output
     this.tokenAddressOutput = this.tokenAddress
 
-    // Determine RPC URL to use
+    // Determine chain ID and RPC URL to use
+    const chainId = this.chainIdOverride > 0 
+      ? this.chainIdOverride 
+      : (walletContext?.chainId || 1)
+      
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
-      const chainId = walletContext?.chainId || 1
       rpcUrl = this.getDefaultRpcUrl(chainId)
     }
 
@@ -174,15 +185,16 @@ export class GetERC20TokenInfoNode extends BaseNode {
     // Skip offset (32 bytes) and length (32 bytes)
     const dataHex = hex.slice(128)
     
-    // Convert hex to string
-    let result = ''
+    // Convert hex to string using Buffer
+    const bytes = []
     for (let i = 0; i < dataHex.length; i += 2) {
       const byte = parseInt(dataHex.substr(i, 2), 16)
       if (byte === 0) break
-      result += String.fromCharCode(byte)
+      bytes.push(byte)
     }
     
-    return result
+    // Use Buffer to convert bytes to string
+    return Buffer.from(bytes).toString('utf8')
   }
 
   private getDefaultRpcUrl(chainId: number): string {
@@ -197,6 +209,8 @@ export class GetERC20TokenInfoNode extends BaseNode {
         return 'https://arb1.arbitrum.io/rpc'
       case 10:
         return 'https://mainnet.optimism.io'
+      case 8453: // Base
+        return 'https://mainnet.base.org'
       default:
         throw new Error(`No default RPC URL for chain ID ${chainId}`)
     }

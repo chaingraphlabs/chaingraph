@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { Flow } from './components/flow'
 import { Sidebar } from './components/sidebar'
 import { ThemeToggle } from './components/theme'
+import { WalletConnect } from './components/wallet/WalletConnect'
 
 export function FlowLayout() {
   useFlowUrlSync()
@@ -24,10 +25,13 @@ export function FlowLayout() {
           navigate(`/flow/${flowId}`)
         }}
       />
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <Flow />
+        <div className="absolute top-4 right-4 flex items-center gap-4">
+          <WalletConnect />
+          <ThemeToggle />
+        </div>
       </div>
-      <ThemeToggle />
     </div>
   )
 }

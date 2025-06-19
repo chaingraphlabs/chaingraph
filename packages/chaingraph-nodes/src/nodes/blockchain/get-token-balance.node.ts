@@ -52,6 +52,14 @@ export class GetTokenBalanceNode extends BaseNode {
   })
   decimals: number = -1
 
+  @Input()
+  @Number({
+    title: 'Chain ID (Optional)',
+    description: 'Chain ID to use (defaults to connected wallet chain or mainnet)',
+    defaultValue: 0,
+  })
+  chainIdOverride: number = 0
+
   @Output()
   @String({
     title: 'Balance (Raw)',
@@ -76,6 +84,14 @@ export class GetTokenBalanceNode extends BaseNode {
   })
   formattedBalance: string = '0'
 
+  @Output()
+  @Number({
+    title: 'Chain ID Used',
+    description: 'The chain ID used for the query',
+    defaultValue: 0,
+  })
+  usedChainId: number = 0
+
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     const walletContext = context.getIntegration<WalletContext>('wallet')
 
@@ -93,10 +109,15 @@ export class GetTokenBalanceNode extends BaseNode {
       throw new Error('No address provided and no wallet connected')
     }
 
-    // Determine RPC URL
+    // Determine chain ID and RPC URL
+    const chainId = this.chainIdOverride > 0 
+      ? this.chainIdOverride 
+      : (walletContext?.chainId || 1)
+    
+    this.usedChainId = chainId
+      
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
-      const chainId = walletContext?.chainId || 1
       rpcUrl = this.getDefaultRpcUrl(chainId)
     }
 
@@ -119,7 +140,18 @@ export class GetTokenBalanceNode extends BaseNode {
       const balanceRes = await this.callContract(rpcUrl, this.tokenAddress, data)
       
       // Set outputs
-      this.balanceRaw = BigInt(balanceRes).toString()
+      try {
+        // Handle case where result is "0x" (empty) or "0x0"
+        if (!balanceRes || balanceRes === '0x' || balanceRes === '0x0') {
+          this.balanceRaw = '0'
+        } else {
+          this.balanceRaw = BigInt(balanceRes).toString()
+        }
+      } catch (e) {
+        // If parsing fails, it might be because we're on the wrong chain or contract doesn't exist
+        throw new Error(`Failed to parse balance response "${balanceRes}". Token might not exist on chain ${chainId} or the RPC endpoint returned an error.`)
+      }
+      
       this.balanceDecimal = parseFloat(this.balanceRaw) / Math.pow(10, tokenDecimals)
       this.formattedBalance = this.balanceDecimal.toFixed(6)
 
@@ -152,6 +184,10 @@ export class GetTokenBalanceNode extends BaseNode {
       throw new Error(result.error.message || 'RPC error')
     }
 
+    if (!result.result) {
+      throw new Error(`Invalid RPC response: ${JSON.stringify(result)}`)
+    }
+
     return result.result
   }
 
@@ -167,6 +203,8 @@ export class GetTokenBalanceNode extends BaseNode {
         return 'https://arb1.arbitrum.io/rpc'
       case 10:
         return 'https://mainnet.optimism.io'
+      case 8453: // Base
+        return 'https://mainnet.base.org'
       default:
         throw new Error(`No default RPC URL for chain ID ${chainId}`)
     }

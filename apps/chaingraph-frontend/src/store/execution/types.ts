@@ -58,6 +58,13 @@ export interface CreateExecutionOptions {
     chatID?: string
     messageID?: number
   }
+
+  walletIntegration?: {
+    isConnected: boolean
+    address?: string
+    chainId?: number
+    rpcUrl?: string
+  }
 }
 
 export interface ExecutionOptions {

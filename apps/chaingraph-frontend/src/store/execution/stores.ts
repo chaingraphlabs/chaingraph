@@ -79,11 +79,27 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
   const client = $trpcClient.getState()
   const state = $executionState.getState()
 
-  const { flowId, debug, archAIIntegration } = payload
+  const { flowId, debug, archAIIntegration, walletIntegration } = payload
   const breakpoints = state.breakpoints
 
   if (!client) {
     throw new Error('TRPC client is not initialized')
+  }
+
+  // Build integration object
+  const integration: any = {}
+  
+  if (archAIIntegration) {
+    integration.archai = {
+      agentID: archAIIntegration.agentID,
+      agentSession: archAIIntegration.agentSession,
+      chatID: archAIIntegration.chatID,
+      messageID: archAIIntegration.messageID,
+    }
+  }
+  
+  if (walletIntegration) {
+    integration.wallet = walletIntegration
   }
 
   const response = await client.execution.create.mutate({
@@ -97,18 +113,7 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
         flowTimeoutMs: 900000,
       },
     },
-    integration: archAIIntegration
-      ? {
-          archai: archAIIntegration
-            ? {
-                agentID: archAIIntegration.agentID,
-                agentSession: archAIIntegration.agentSession,
-                chatID: archAIIntegration.chatID,
-                messageID: archAIIntegration.messageID,
-              }
-            : {},
-        }
-      : {},
+    integration,
   })
   return response.executionId
 })

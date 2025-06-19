@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { $archaiConfig } from '@/store'
+import { getWalletContextForExecution } from '@/store/wallet/wallet.store'
 import {
   $executionState,
   $executionSubscriptionState,
@@ -57,11 +58,15 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
           }
         : undefined
 
+      // Get wallet context
+      const walletContext = getWalletContextForExecution()
+
       // Create new execution
       createExecution({
         flowId: activeFlow.id,
         debug: debugMode,
         archAIIntegration,
+        walletIntegration: walletContext,
       })
     } else if (executionStatus === ExecutionStatus.CREATED) {
       // Start newly created execution
