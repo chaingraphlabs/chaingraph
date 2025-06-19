@@ -12,7 +12,7 @@ import type {
   IPortConfig,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { TokenBalance } from 'alchemy-sdk'
+import type { OwnedToken } from 'alchemy-sdk'
 import {
   BaseNode,
   Boolean,
@@ -24,7 +24,7 @@ import {
   String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
-import { Alchemy, Network } from 'alchemy-sdk'
+import { Alchemy, Network, TokenBalanceType } from 'alchemy-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 
 class Networks {
@@ -46,24 +46,14 @@ class Networks {
   }
 }
 
-class RefinedTokenBalance {
-  tokenAddress: string
-  weiBalance: string
-
-  constructor(tokenAddress: string, weiBalance: string) {
-    this.tokenAddress = tokenAddress
-    this.weiBalance = weiBalance
-  }
-}
-
 @Node({
-  type: 'AlchemyTokenBalances',
-  title: 'Alchemy: token balances',
-  description: 'Fetches token balances for a wallet address using Alchemy API',
+  type: 'AlchemyTokenBalancesWithMeta',
+  title: 'Alchemy: token balances with metadata',
+  description: 'Fetches token balances with metadata for a given wallet address using Alchemy API',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy'],
 })
-class AlchemyTokenBalances extends BaseNode {
+class AlchemyTokenBalancesWithMeta extends BaseNode {
   @Input()
   @PortSecret<'alchemy'>({
     title: 'API Key',
@@ -94,7 +84,7 @@ class AlchemyTokenBalances extends BaseNode {
   @Input()
   @String({
     title: 'Wallet Address',
-    description: 'Ethereum wallet address to check token balances for',
+    description: 'Wallet address to check token balances for',
     required: true,
   })
   walletAddress: string = ''
@@ -102,7 +92,7 @@ class AlchemyTokenBalances extends BaseNode {
   @Input()
   @PortArray({
     title: 'Token Addresses',
-    description: 'List of ERC20 token contract addresses to check balances for',
+    description: 'List of token contract addresses to check balances for',
     itemConfig: {
       type: 'string',
       defaultValue: '',
@@ -123,21 +113,17 @@ class AlchemyTokenBalances extends BaseNode {
       type: 'object',
       schema: {
         properties: {
-          tokenAddress: {
-            type: 'string',
-            title: 'Token Address',
-            description: 'Contract address of the token',
-          },
-          weiBalance: {
-            type: 'string',
-            title: 'Wei Balance',
-            description: 'Token balance in wei format as string',
-          },
+          contractAddress: { type: 'string', title: 'Token Address', description: 'Contract address of the token' },
+          rawBalance: { type: 'string', title: 'Raw Balance', description: 'Raw token balance (not divided by decimals)' },
+          decimals: { type: 'number', title: 'Decimals', description: 'Number of decimal places for the token' },
+          name: { type: 'string', title: 'Name', description: 'Token name' },
+          symbol: { type: 'string', title: 'Symbol', description: 'Token symbol' },
+          balance: { type: 'string', title: 'Balance', description: 'Formatted token balance' },
         },
       },
     },
   })
-  tokenBalances: RefinedTokenBalance[] = []
+  tokenBalances: OwnedToken[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.apiKey) {
@@ -157,37 +143,32 @@ class AlchemyTokenBalances extends BaseNode {
     const alchemy = new Alchemy(settings)
 
     try {
-      const response = this.contractAddresses.length > 0
-        ? await alchemy.core.getTokenBalances(this.walletAddress, this.contractAddresses)
-        : await alchemy.core.getTokenBalances(this.walletAddress)
+      let pageKey: string | undefined
+      const tokensList: OwnedToken[] = []
 
-      const allTokens = response.tokenBalances.map(token =>
-        new RefinedTokenBalance(
-          token.contractAddress,
-          this.safeBigIntToString(token.tokenBalance),
-        ),
-      )
+      do {
+        const response = await alchemy.core.getTokensForOwner(
+          this.walletAddress,
+          {
+            ...(this.contractAddresses.length > 0 ? { contractAddresses: this.contractAddresses } : {}),
+            ...(pageKey ? { pageKey } : {}),
+          },
+        )
+
+        pageKey = response.pageKey
+        tokensList.push(...response.tokens)
+      } while (pageKey)
 
       if (this.filterZeroBalances === false)
-        this.tokenBalances = allTokens
+        this.tokenBalances = tokensList
       else
-        this.tokenBalances = allTokens.filter(token => token.weiBalance !== '0')
+        this.tokenBalances = tokensList.filter(token => token.rawBalance !== '0')
 
       return {}
     } catch (error) {
       throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
     }
   }
-
-  private safeBigIntToString(value: string | null): string {
-    if (!value || value === '0x')
-      return '0'
-    try {
-      return BigInt(value).toString()
-    } catch (error) {
-      throw new Error(`Invalid token balance value: ${value}`)
-    }
-  }
 }
 
-export default AlchemyTokenBalances
+export default AlchemyTokenBalancesWithMeta
