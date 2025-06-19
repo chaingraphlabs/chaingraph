@@ -88,7 +88,7 @@ class AlchemyTokenBalances extends BaseNode {
   @Input()
   @String({
     title: 'Wallet Address',
-    description: 'Ethereum wallet address to check token balances for',
+    description: 'Wallet address to check token balances for',
     required: true,
   })
   walletAddress: string = ''
@@ -96,7 +96,7 @@ class AlchemyTokenBalances extends BaseNode {
   @Input()
   @PortArray({
     title: 'Token Addresses',
-    description: 'List of ERC20 token contract addresses to check balances for',
+    description: 'List of token contract addresses to check balances for',
     itemConfig: {
       type: 'string',
       defaultValue: '',

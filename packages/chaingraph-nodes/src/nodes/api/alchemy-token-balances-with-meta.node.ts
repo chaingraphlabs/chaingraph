@@ -24,7 +24,7 @@ import {
   String,
   StringEnum,
 } from '@badaitech/chaingraph-types'
-import { Alchemy, Network, TokenBalanceType } from 'alchemy-sdk'
+import { Alchemy, Network } from 'alchemy-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 
 class Networks {
