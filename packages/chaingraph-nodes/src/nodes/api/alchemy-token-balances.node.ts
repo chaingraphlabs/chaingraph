@@ -12,7 +12,6 @@ import type {
   IPortConfig,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { TokenBalance } from 'alchemy-sdk'
 import {
   BaseNode,
   Boolean,
@@ -46,14 +45,9 @@ class Networks {
   }
 }
 
-class RefinedTokenBalance {
+interface RefinedTokenBalance {
   tokenAddress: string
   rawBalance: string
-
-  constructor(tokenAddress: string, rawBalance: string) {
-    this.tokenAddress = tokenAddress
-    this.rawBalance = rawBalance
-  }
 }
 
 @Node({
@@ -130,7 +124,7 @@ class AlchemyTokenBalances extends BaseNode {
           },
           rawBalance: {
             type: 'string',
-            title: 'Wei Balance',
+            title: 'Raw balance in wei',
             description: 'Token balance in wei format as string',
           },
         },
@@ -161,12 +155,10 @@ class AlchemyTokenBalances extends BaseNode {
         ? await alchemy.core.getTokenBalances(this.walletAddress, this.contractAddresses)
         : await alchemy.core.getTokenBalances(this.walletAddress)
 
-      const allTokens = response.tokenBalances.map(token =>
-        new RefinedTokenBalance(
-          token.contractAddress,
-          this.safeBigIntToString(token.tokenBalance),
-        ),
-      )
+      const allTokens: RefinedTokenBalance[] = response.tokenBalances.map(token => ({
+        tokenAddress: token.contractAddress,
+        rawBalance: this.safeBigIntToString(token.tokenBalance),
+      }))
 
       if (this.filterZeroBalances === false)
         this.tokenBalances = allTokens
