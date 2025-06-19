@@ -15,13 +15,13 @@ import type {
 import type { OwnedToken } from 'alchemy-sdk'
 import {
   BaseNode,
-  Boolean,
   Input,
   Node,
   Output,
   PortArray,
+  PortBoolean,
   PortSecret,
-  String,
+  PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import { Alchemy, Network } from 'alchemy-sdk'
@@ -74,7 +74,7 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
   network: string = Networks.defaultNetwork
 
   @Input()
-  @Boolean({
+  @PortBoolean({
     title: 'Filter zero balances',
     description: 'Remove tokens that user has interacted with, but the current balance is 0',
     defaultValue: true,
@@ -82,7 +82,7 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
   filterZeroBalances: boolean = true
 
   @Input()
-  @String({
+  @PortString({
     title: 'Wallet Address',
     description: 'Wallet address to check token balances for',
     required: true,
