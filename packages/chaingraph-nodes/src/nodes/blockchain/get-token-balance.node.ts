@@ -110,12 +110,12 @@ export class GetTokenBalanceNode extends BaseNode {
     }
 
     // Determine chain ID and RPC URL
-    const chainId = this.chainIdOverride > 0 
-      ? this.chainIdOverride 
+    const chainId = this.chainIdOverride > 0
+      ? this.chainIdOverride
       : (walletContext?.chainId || 1)
-    
+
     this.usedChainId = chainId
-      
+
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
       rpcUrl = this.getDefaultRpcUrl(chainId)
@@ -138,7 +138,7 @@ export class GetTokenBalanceNode extends BaseNode {
       const data = balanceOfSelector + paddedAddress
 
       const balanceRes = await this.callContract(rpcUrl, this.tokenAddress, data)
-      
+
       // Set outputs
       try {
         // Handle case where result is "0x" (empty) or "0x0"
@@ -151,10 +151,9 @@ export class GetTokenBalanceNode extends BaseNode {
         // If parsing fails, it might be because we're on the wrong chain or contract doesn't exist
         throw new Error(`Failed to parse balance response "${balanceRes}". Token might not exist on chain ${chainId} or the RPC endpoint returned an error.`)
       }
-      
-      this.balanceDecimal = parseFloat(this.balanceRaw) / Math.pow(10, tokenDecimals)
-      this.formattedBalance = this.balanceDecimal.toFixed(6)
 
+      this.balanceDecimal = parseFloat(this.balanceRaw) / 10 ** tokenDecimals
+      this.formattedBalance = this.balanceDecimal.toFixed(6)
     } catch (error: any) {
       throw new Error(`Failed to get token balance: ${error.message}`)
     }
@@ -173,7 +172,7 @@ export class GetTokenBalanceNode extends BaseNode {
         method: 'eth_call',
         params: [{
           to: contractAddress,
-          data: data,
+          data,
         }, 'latest'],
         id: 1,
       }),

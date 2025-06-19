@@ -7,6 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult, WalletContext } from '@badaitech/chaingraph-types'
+import type { TransactionRequest } from './types'
 import {
   BaseNode,
   Input,
@@ -17,7 +18,6 @@ import {
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import type { TransactionRequest } from './types'
 
 /**
  * Node for building a native token transfer transaction

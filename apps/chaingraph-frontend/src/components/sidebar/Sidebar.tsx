@@ -27,10 +27,10 @@ import {
 import { Bug, FileJson, GitBranch, LayersIcon, Scroll, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
-import { WalletIntegration } from './tabs/wallet-integration'
 import { Help } from './tabs/Help'
 import { Settings } from './tabs/Settings'
 import { VariableList } from './tabs/VariableList'
+import { WalletIntegration } from './tabs/wallet-integration'
 
 // Constants для localStorage остаются те же
 const STORAGE_KEYS = {

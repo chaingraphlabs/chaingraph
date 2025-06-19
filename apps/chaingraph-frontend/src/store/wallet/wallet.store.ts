@@ -6,13 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { createEffect, createEvent, createStore, sample } from 'effector'
 import type { WalletContext } from '@badaitech/chaingraph-types'
 import type { Config } from 'wagmi'
+import { createEffect, createEvent, createStore, sample } from 'effector'
 import { getAccount, getChainId, watchAccount, watchChainId } from 'wagmi/actions'
 
 // Events
-export const walletConnected = createEvent<{ address: string; chainId: number }>()
+export const walletConnected = createEvent<{ address: string, chainId: number }>()
 export const walletDisconnected = createEvent()
 export const accountChanged = createEvent<{ address: string }>()
 export const chainChanged = createEvent<{ chainId: number }>()
@@ -123,7 +123,7 @@ sample({
 })
 
 // Helper to get wallet context for execution
-export const getWalletContextForExecution = (): WalletContext => {
+export function getWalletContextForExecution(): WalletContext {
   const context = $walletContext.getState()
   return {
     ...context,

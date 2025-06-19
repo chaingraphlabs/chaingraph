@@ -91,11 +91,11 @@ export class GetNativeBalanceNode extends BaseNode {
     }
 
     // Determine chain ID and RPC URL to use
-    const chainId = this.chainIdOverride > 0 
-      ? this.chainIdOverride 
+    const chainId = this.chainIdOverride > 0
+      ? this.chainIdOverride
       : (walletContext?.chainId || 1)
     this.usedChainId = chainId
-    
+
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
       // Default to public RPC based on chain ID
@@ -118,7 +118,7 @@ export class GetNativeBalanceNode extends BaseNode {
       })
 
       const data = await response.json()
-      
+
       if (data.error) {
         throw new Error(data.error.message || 'RPC error')
       }
@@ -126,14 +126,13 @@ export class GetNativeBalanceNode extends BaseNode {
       // Convert hex to decimal string (Wei)
       const balanceHex = data.result
       this.balanceWei = BigInt(balanceHex).toString()
-      
+
       // Convert to decimal (divide by 10^18)
       this.balanceDecimal = parseFloat(this.balanceWei) / 1e18
-      
+
       // Format for display with native token symbol
-      const symbol = this.getNativeTokenSymbol(walletContext?.chainId || 1)
+      const symbol = this.getNativeTokenSymbol(this.usedChainId)
       this.formattedBalance = `${this.balanceDecimal.toFixed(6)} ${symbol}`
-      
     } catch (error: any) {
       throw new Error(`Failed to get native balance: ${error.message}`)
     }

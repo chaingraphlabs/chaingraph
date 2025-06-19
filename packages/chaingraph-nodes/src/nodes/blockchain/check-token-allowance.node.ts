@@ -139,23 +139,22 @@ export class CheckTokenAllowanceNode extends BaseNode {
       const data = allowanceSelector + paddedOwner + paddedSpender
 
       const allowanceRes = await this.callContract(rpcUrl, this.tokenAddress, data)
-      
+
       // Set outputs
       const allowanceBigInt = BigInt(allowanceRes)
       this.allowanceRaw = allowanceBigInt.toString()
-      
+
       // Check if unlimited (max uint256)
       const maxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
       this.isUnlimited = allowanceBigInt === maxUint256
-      
+
       if (this.isUnlimited) {
         this.allowanceDecimal = Number.MAX_SAFE_INTEGER
         this.formattedAllowance = 'Unlimited'
       } else {
-        this.allowanceDecimal = parseFloat(this.allowanceRaw) / Math.pow(10, tokenDecimals)
+        this.allowanceDecimal = parseFloat(this.allowanceRaw) / 10 ** tokenDecimals
         this.formattedAllowance = this.allowanceDecimal.toFixed(6)
       }
-
     } catch (error: any) {
       throw new Error(`Failed to check token allowance: ${error.message}`)
     }
@@ -174,7 +173,7 @@ export class CheckTokenAllowanceNode extends BaseNode {
         method: 'eth_call',
         params: [{
           to: contractAddress,
-          data: data,
+          data,
         }, 'latest'],
         id: 1,
       }),

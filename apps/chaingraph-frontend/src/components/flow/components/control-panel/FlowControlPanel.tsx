@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { $archaiConfig } from '@/store'
-import { getWalletContextForExecution } from '@/store/wallet/wallet.store'
 import {
   $executionState,
   $executionSubscriptionState,
@@ -27,6 +26,7 @@ import {
   toggleDebugMode,
 } from '@/store/execution'
 import { $activeFlowMetadata } from '@/store/flow'
+import { getWalletContextForExecution } from '@/store/wallet/wallet.store'
 import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'

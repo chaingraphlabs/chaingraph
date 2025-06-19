@@ -112,10 +112,10 @@ export class GetERC20TokenInfoNode extends BaseNode {
     this.tokenAddressOutput = this.tokenAddress
 
     // Determine chain ID and RPC URL to use
-    const chainId = this.chainIdOverride > 0 
-      ? this.chainIdOverride 
+    const chainId = this.chainIdOverride > 0
+      ? this.chainIdOverride
       : (walletContext?.chainId || 1)
-      
+
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
       rpcUrl = this.getDefaultRpcUrl(chainId)
@@ -143,9 +143,8 @@ export class GetERC20TokenInfoNode extends BaseNode {
       this.totalSupply = BigInt(totalSupplyRes).toString()
 
       // Format total supply with decimals
-      const totalSupplyNumber = parseFloat(this.totalSupply) / Math.pow(10, this.decimals)
+      const totalSupplyNumber = parseFloat(this.totalSupply) / 10 ** this.decimals
       this.formattedTotalSupply = `${totalSupplyNumber.toLocaleString()} ${this.symbol}`
-
     } catch (error: any) {
       throw new Error(`Failed to get token info: ${error.message}`)
     }
@@ -164,7 +163,7 @@ export class GetERC20TokenInfoNode extends BaseNode {
         method: 'eth_call',
         params: [{
           to: contractAddress,
-          data: data,
+          data,
         }, 'latest'],
         id: 1,
       }),
@@ -181,20 +180,21 @@ export class GetERC20TokenInfoNode extends BaseNode {
   private decodeString(hex: string): string {
     // Remove 0x prefix
     hex = hex.slice(2)
-    
+
     // Skip offset (32 bytes) and length (32 bytes)
     const dataHex = hex.slice(128)
-    
+
     // Convert hex to string using Buffer
     const bytes = []
     for (let i = 0; i < dataHex.length; i += 2) {
       const byte = parseInt(dataHex.substr(i, 2), 16)
-      if (byte === 0) break
+      if (byte === 0)
+        break
       bytes.push(byte)
     }
-    
+
     // Use Buffer to convert bytes to string
-    return Buffer.from(bytes).toString('utf8')
+    return require('buffer').Buffer.from(bytes).toString('utf8')
   }
 
   private getDefaultRpcUrl(chainId: number): string {

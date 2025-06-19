@@ -86,20 +86,19 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
     throw new Error('TRPC client is not initialized')
   }
 
-  // Build integration object
-  const integration: any = {}
-  
-  if (archAIIntegration) {
-    integration.archai = {
-      agentID: archAIIntegration.agentID,
-      agentSession: archAIIntegration.agentSession,
-      chatID: archAIIntegration.chatID,
-      messageID: archAIIntegration.messageID,
-    }
-  }
-  
-  if (walletIntegration) {
-    integration.wallet = walletIntegration
+  // Build integration object - type will be inferred from TRPC schema
+  const integration = {
+    ...(archAIIntegration && {
+      archai: {
+        agentID: archAIIntegration.agentID,
+        agentSession: archAIIntegration.agentSession,
+        chatID: archAIIntegration.chatID,
+        messageID: archAIIntegration.messageID,
+      },
+    }),
+    ...(walletIntegration && {
+      wallet: walletIntegration,
+    }),
   }
 
   const response = await client.execution.create.mutate({

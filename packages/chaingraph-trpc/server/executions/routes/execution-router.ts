@@ -20,6 +20,34 @@ import { zAsyncIterable } from '../../procedures/subscriptions/utils/zAsyncItera
 import { executionContextProcedure, flowContextProcedure, router } from '../../trpc'
 import { debugRouter } from './debug-router'
 
+// Integration schemas
+const archAIContextSchema = z.object({
+  agentSession: z.string().optional(),
+  agentID: z.string().optional(),
+  chatID: z.string().optional(),
+  messageID: z.number().optional(),
+})
+
+const walletContextSchema = z.object({
+  isConnected: z.boolean(),
+  address: z.string().optional(),
+  chainId: z.number().optional(),
+  providerType: z.string().optional(),
+  ensName: z.string().optional(),
+  capabilities: z.object({
+    supportsBatchTransactions: z.boolean().optional(),
+    supportsEIP1559: z.boolean().optional(),
+    supportsEIP712: z.boolean().optional(),
+  }).optional(),
+  lastUpdated: z.number().optional(),
+  rpcUrl: z.string().optional(),
+})
+
+const integrationContextSchema = z.object({
+  archai: archAIContextSchema.optional(),
+  wallet: walletContextSchema.optional(),
+})
+
 export const executionRouter = router({
   // Create execution instance
   create: flowContextProcedure
@@ -34,12 +62,7 @@ export const executionRouter = router({
         debug: z.boolean().optional(),
         breakpoints: z.array(z.string()).optional(),
       }).optional(),
-      integration: z.record(
-        z.string(),
-        // TODO: add proper validation for integration objects
-        // For each integration type key, we accept any valid object
-        z.object({}).catchall(z.unknown()),
-      ).optional(),
+      integration: integrationContextSchema.optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const flow = await ctx.flowStore.getFlow(input.flowId)

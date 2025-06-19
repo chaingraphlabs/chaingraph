@@ -7,16 +7,14 @@
  */
 
 import { createConfig, http } from 'wagmi'
-import { mainnet, polygon, bsc, arbitrum, optimism, base } from 'wagmi/chains'
-import { injected, walletConnect } from 'wagmi/connectors'
+import { arbitrum, base, bsc, mainnet, optimism, polygon } from 'wagmi/chains'
+import { injected } from 'wagmi/connectors'
 
 // Create wagmi config
 export const wagmiConfig = createConfig({
   chains: [mainnet, polygon, bsc, arbitrum, optimism, base],
   connectors: [
     injected(),
-    // You can add WalletConnect if you have a project ID
-    // walletConnect({ projectId: 'YOUR_PROJECT_ID' }),
   ],
   transports: {
     [mainnet.id]: http(),

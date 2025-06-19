@@ -12,53 +12,27 @@
 export interface WalletContext {
   // Connection state
   isConnected: boolean
-  
+
   // Wallet information
   address?: string
   chainId?: number
-  
+
   // Provider type (metamask, walletconnect, etc.)
   providerType?: string
-  
+
   // ENS name if available
   ensName?: string
-  
+
   // Wallet capabilities
   capabilities?: {
     supportsBatchTransactions?: boolean
     supportsEIP1559?: boolean
     supportsEIP712?: boolean
   }
-  
+
   // Last update timestamp
   lastUpdated?: number
-  
+
   // RPC endpoint for read operations (if available)
   rpcUrl?: string
-}
-
-/**
- * Events that can be emitted by wallet
- */
-export enum WalletEventType {
-  CONNECTED = 'wallet:connected',
-  DISCONNECTED = 'wallet:disconnected',
-  ACCOUNT_CHANGED = 'wallet:accountChanged',
-  CHAIN_CHANGED = 'wallet:chainChanged',
-  ERROR = 'wallet:error',
-}
-
-/**
- * Wallet event data
- */
-export interface WalletEvent {
-  type: WalletEventType
-  data: {
-    address?: string
-    chainId?: number
-    error?: string
-    previousAddress?: string
-    previousChainId?: number
-  }
-  timestamp: number
 }
