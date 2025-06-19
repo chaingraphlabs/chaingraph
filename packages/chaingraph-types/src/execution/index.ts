@@ -9,3 +9,4 @@
 export * from './arch-a-i-context'
 export * from './emitted-event-context'
 export * from './execution-context'
+export * from './wallet-context'
