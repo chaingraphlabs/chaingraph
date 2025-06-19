@@ -24,9 +24,10 @@ import {
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { Bug, FileJson, GitBranch, LayersIcon, Scroll } from 'lucide-react'
+import { Bug, FileJson, GitBranch, LayersIcon, Scroll, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
+import { WalletIntegration } from './tabs/wallet-integration'
 import { Help } from './tabs/Help'
 import { Settings } from './tabs/Settings'
 import { VariableList } from './tabs/VariableList'
@@ -38,7 +39,7 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
-export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'executions' | 'export-import'
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'wallet' | 'executions' | 'export-import'
 
 const defaultEnabledTabs: tabsType[] = [
   'flows',
@@ -48,6 +49,7 @@ const defaultEnabledTabs: tabsType[] = [
   'executions',
   'debug',
   'archai',
+  'wallet',
   'export-import',
   // 'settings',
   // 'help',
@@ -123,6 +125,12 @@ export function Sidebar({
       icon: <Scroll />,
       label: 'ArchAI Integration',
       content: <ArchAIIntegration />,
+    },
+    'wallet': {
+      id: 'wallet',
+      icon: <Wallet />,
+      label: 'Wallet',
+      content: <WalletIntegration />,
     },
     'settings': {
       id: 'settings',
