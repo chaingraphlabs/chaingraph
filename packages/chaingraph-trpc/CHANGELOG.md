@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.7
+
+### Patch Changes
+
+- Fix execution secret key race condition
+
 ## 0.2.6
 
 ### Patch Changes
