@@ -174,6 +174,7 @@ export class Message {
     title: 'Message Type',
     description: 'Type of message (common, system, error, etc.)',
     options: [
+      { id: 'agentTrigger', type: 'string', defaultValue: 'agentTrigger', title: 'Agent Trigger' },
       { id: 'common', type: 'string', defaultValue: 'common', title: 'Common' },
       { id: 'error', type: 'string', defaultValue: 'error', title: 'Error' },
       { id: 'scratchpad', type: 'string', defaultValue: 'scratchpad', title: 'Scratchpad' },
