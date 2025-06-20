@@ -34,7 +34,7 @@ export class ExecutionContext {
   public readonly metadata: Record<string, unknown>
   public readonly abortController: AbortController
 
-  private ecdhKeyPair?: CryptoKeyPair | null = null
+  private ecdhKeyPairPromise: Promise<CryptoKeyPair> | null = null
 
   // debug log events queue
   private readonly eventsQueue: EventQueue<ExecutionEvent>
@@ -96,19 +96,15 @@ export class ExecutionContext {
     return this.abortController.signal
   }
 
-  private async generateECDHKeyPair() {
-    this.ecdhKeyPair = await subtle.generateKey({
-      name: 'ECDH',
-      namedCurve: 'P-256',
-    }, false, ['deriveKey'])
-  }
-
   async getECDHKeyPair(): Promise<CryptoKeyPair> {
-    if (this.ecdhKeyPair === null || this.ecdhKeyPair === undefined) {
-      await this.generateECDHKeyPair()
+    if (!this.ecdhKeyPairPromise) {
+      this.ecdhKeyPairPromise = subtle.generateKey({
+        name: 'ECDH',
+        namedCurve: 'P-256',
+      }, false, ['deriveKey'])
     }
 
-    return this.ecdhKeyPair!
+    return this.ecdhKeyPairPromise
   }
 
   async sendEvent(event: ExecutionEvent): Promise<void> {
@@ -167,7 +163,7 @@ export class ExecutionContext {
       eventData,
       true, // Is child execution
     )
-    ctx.ecdhKeyPair = this.ecdhKeyPair // Share key pair if needed
+    ctx.ecdhKeyPairPromise = this.ecdhKeyPairPromise // Share key pair promise
     return ctx
   }
 }
