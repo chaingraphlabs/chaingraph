@@ -306,20 +306,15 @@ export class Flow implements IFlow {
       targetPort.removeConnection(sourceNode.id, sourcePort.id)
     }
 
-    const isSourcePortAny = sourcePort.getConfig().type === 'any' && sourcePort instanceof AnyPort
     const isTargetPortAny = targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort
 
     // if target port is an any port type then remove the underlying type
-    if (isSourcePortAny || isTargetPortAny) {
-      const anyPort = (isSourcePortAny ? sourcePort : targetPort) as AnyPort
+    if (isTargetPortAny) {
+      const anyPort = targetPort as AnyPort
       anyPort.setUnderlyingType(undefined)
       anyPort.setValue(anyPort.getRawConfig().defaultValue)
 
-      if (isSourcePortAny) {
-        sourceNode.updatePort(sourcePort)
-      } else if (isTargetPortAny) {
-        targetNode.updatePort(targetPort)
-      }
+      targetNode.updatePort(targetPort)
     }
 
     targetNode.emit({
@@ -619,7 +614,7 @@ export class Flow implements IFlow {
 
       case NodeEventType.UIDimensionsChange:
         {
-        // Handle node dimensions change event
+          // Handle node dimensions change event
           const nodeUIDimensionsEventData: NodeUIDimensionsChangedEventData = {
             nodeId: node.id,
             oldDimensions: (nodeEvent as any).oldDimensions,
@@ -637,7 +632,7 @@ export class Flow implements IFlow {
 
       case NodeEventType.UIChange:
         {
-        // Handle node UI change event
+          // Handle node UI change event
           const nodeUIDimensionsEventData: NodeUIChangedEventData = {
             nodeId: node.id,
             ui: (nodeEvent as any).ui,
