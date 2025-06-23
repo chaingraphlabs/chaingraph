@@ -11,29 +11,24 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
   Output,
+  Number as PortNumber,
+  PortObject,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-
-// Minimal ERC20 ABI for reading token info
-const ERC20_ABI = [
-  'function name() view returns (string)',
-  'function symbol() view returns (string)',
-  'function decimals() view returns (uint8)',
-  'function totalSupply() view returns (uint256)',
-]
+import { Token } from './schemas'
+import { callContract, decodeString, getDefaultRpcUrl } from './utils'
 
 /**
  * Node for retrieving ERC20 token information
  */
 @Node({
   type: 'GetERC20TokenInfoNode',
-  title: 'Get ERC20 Token Info',
-  description: 'Retrieves information about an ERC20 token including name, symbol, decimals, and total supply',
+  title: 'Token Info',
+  description: 'Get ERC20 token metadata (name, symbol, decimals)',
   category: NODE_CATEGORIES.BLOCKCHAIN,
-  tags: ['token', 'erc20', 'web3', 'blockchain', 'info'],
+  tags: ['token', 'erc20', 'web3', 'blockchain', 'info', 'metadata'],
 })
 export class GetERC20TokenInfoNode extends BaseNode {
   @Input()
@@ -42,83 +37,51 @@ export class GetERC20TokenInfoNode extends BaseNode {
     description: 'The ERC20 token contract address',
     required: true,
   })
-  tokenAddress: string = ''
+  address: string = ''
 
   @Input()
-  @Number({
-    title: 'Chain ID (Optional)',
-    description: 'Chain ID to use (defaults to connected wallet chain or mainnet)',
+  @PortNumber({
+    title: 'Chain ID',
+    description: 'Override chain ID (defaults to connected wallet chain)',
     defaultValue: 0,
   })
-  chainIdOverride: number = 0
+  chainId: number = 0
 
   @Output()
-  @String({
-    title: 'Token Address',
-    description: 'The token contract address (echoed from input)',
-    defaultValue: '',
+  @PortObject({
+    title: 'Token',
+    description: 'Complete token information',
+    schema: Token,
   })
-  tokenAddressOutput: string = ''
-
-  @Output()
-  @String({
-    title: 'Name',
-    description: 'The token name',
-    defaultValue: '',
-  })
-  name: string = ''
-
-  @Output()
-  @String({
-    title: 'Symbol',
-    description: 'The token symbol',
-    defaultValue: '',
-  })
-  symbol: string = ''
-
-  @Output()
-  @Number({
-    title: 'Decimals',
-    description: 'The number of decimals the token uses',
-    defaultValue: 0,
-  })
-  decimals: number = 0
+  token: Token = new Token()
 
   @Output()
   @String({
     title: 'Total Supply',
-    description: 'The total supply of tokens (as a string to handle large numbers)',
+    description: 'Total supply in human-readable format',
     defaultValue: '0',
+    ui: {
+      hidden: true, // Hidden by default
+    },
   })
   totalSupply: string = '0'
-
-  @Output()
-  @String({
-    title: 'Formatted Total Supply',
-    description: 'Human-readable formatted total supply',
-    defaultValue: '0',
-  })
-  formattedTotalSupply: string = '0'
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Get wallet context from execution context
     const walletContext = context.getIntegration<WalletContext>('wallet')
 
-    if (!this.tokenAddress) {
+    if (!this.address) {
       throw new Error('Token address is required')
     }
 
-    // Echo the token address to output
-    this.tokenAddressOutput = this.tokenAddress
-
     // Determine chain ID and RPC URL to use
-    const chainId = this.chainIdOverride > 0
-      ? this.chainIdOverride
+    const chainId = this.chainId > 0
+      ? this.chainId
       : (walletContext?.chainId || 1)
 
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
-      rpcUrl = this.getDefaultRpcUrl(chainId)
+      rpcUrl = getDefaultRpcUrl(chainId)
     }
 
     try {
@@ -130,90 +93,29 @@ export class GetERC20TokenInfoNode extends BaseNode {
 
       // Make parallel RPC calls
       const [nameRes, symbolRes, decimalsRes, totalSupplyRes] = await Promise.all([
-        this.callContract(rpcUrl, this.tokenAddress, nameSelector),
-        this.callContract(rpcUrl, this.tokenAddress, symbolSelector),
-        this.callContract(rpcUrl, this.tokenAddress, decimalsSelector),
-        this.callContract(rpcUrl, this.tokenAddress, totalSupplySelector),
+        callContract(rpcUrl, this.address, nameSelector),
+        callContract(rpcUrl, this.address, symbolSelector),
+        callContract(rpcUrl, this.address, decimalsSelector),
+        callContract(rpcUrl, this.address, totalSupplySelector),
       ])
 
-      // Decode responses
-      this.name = this.decodeString(nameRes)
-      this.symbol = this.decodeString(symbolRes)
-      this.decimals = parseInt(decimalsRes, 16)
-      this.totalSupply = BigInt(totalSupplyRes).toString()
+      // Create token object
+      this.token = new Token()
+      this.token.address = this.address
+      this.token.name = decodeString(nameRes)
+      this.token.symbol = decodeString(symbolRes)
+      this.token.decimals = Number.parseInt(decimalsRes, 16)
+      this.token.chainId = chainId
 
-      // Format total supply with decimals
-      const totalSupplyNumber = parseFloat(this.totalSupply) / 10 ** this.decimals
-      this.formattedTotalSupply = `${totalSupplyNumber.toLocaleString()} ${this.symbol}`
+      // Calculate total supply
+      const totalSupplyRaw = BigInt(totalSupplyRes).toString()
+      const totalSupplyNumber = Number.parseFloat(totalSupplyRaw) / 10 ** this.token.decimals
+      this.totalSupply = `${totalSupplyNumber.toLocaleString()} ${this.token.symbol}`
     } catch (error: any) {
       throw new Error(`Failed to get token info: ${error.message}`)
     }
 
     return {}
-  }
-
-  private async callContract(rpcUrl: string, contractAddress: string, data: string): Promise<string> {
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'eth_call',
-        params: [{
-          to: contractAddress,
-          data,
-        }, 'latest'],
-        id: 1,
-      }),
-    })
-
-    const result = await response.json()
-    if (result.error) {
-      throw new Error(result.error.message || 'RPC error')
-    }
-
-    return result.result
-  }
-
-  private decodeString(hex: string): string {
-    // Remove 0x prefix
-    hex = hex.slice(2)
-
-    // Skip offset (32 bytes) and length (32 bytes)
-    const dataHex = hex.slice(128)
-
-    // Convert hex to string using Buffer
-    const bytes = []
-    for (let i = 0; i < dataHex.length; i += 2) {
-      const byte = parseInt(dataHex.substr(i, 2), 16)
-      if (byte === 0)
-        break
-      bytes.push(byte)
-    }
-
-    // Use Buffer to convert bytes to string
-    return require('buffer').Buffer.from(bytes).toString('utf8')
-  }
-
-  private getDefaultRpcUrl(chainId: number): string {
-    switch (chainId) {
-      case 1:
-        return 'https://eth.llamarpc.com'
-      case 137:
-        return 'https://polygon-rpc.com'
-      case 56:
-        return 'https://bsc-dataseed.binance.org'
-      case 42161:
-        return 'https://arb1.arbitrum.io/rpc'
-      case 10:
-        return 'https://mainnet.optimism.io'
-      case 8453: // Base
-        return 'https://mainnet.base.org'
-      default:
-        throw new Error(`No default RPC URL for chain ID ${chainId}`)
-    }
   }
 }
 

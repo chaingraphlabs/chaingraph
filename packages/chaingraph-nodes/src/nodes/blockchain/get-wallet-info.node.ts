@@ -11,83 +11,70 @@ import {
   BaseNode,
   Boolean,
   Node,
-  Number,
   Output,
-  String,
+  PortObject,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import { getChainName, WalletInfo } from './schemas'
 
 /**
  * Node for retrieving current wallet connection information
  */
 @Node({
   type: 'GetWalletInfoNode',
-  title: 'Get Wallet Info',
-  description: 'Retrieves current wallet connection information including address, chain ID, and connection status',
+  title: 'Wallet Status',
+  description: 'Get current wallet connection status and information',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['wallet', 'web3', 'blockchain', 'address', 'status'],
 })
 export class GetWalletInfoNode extends BaseNode {
   @Output()
+  @PortObject({
+    title: 'Wallet',
+    description: 'Complete wallet information',
+    schema: WalletInfo,
+  })
+  wallet: WalletInfo = new WalletInfo()
+
+  @Output()
   @Boolean({
-    title: 'Is Connected',
-    description: 'Whether a wallet is currently connected',
+    title: 'Connected',
+    description: 'Quick connection status check',
     defaultValue: false,
+    ui: {
+      hidden: true, // Hidden by default, available for simple checks
+    },
   })
   isConnected: boolean = false
-
-  @Output()
-  @String({
-    title: 'Address',
-    description: 'The connected wallet address',
-    defaultValue: '',
-  })
-  address: string = ''
-
-  @Output()
-  @Number({
-    title: 'Chain ID',
-    description: 'The current chain ID',
-    defaultValue: 0,
-  })
-  chainId: number = 0
-
-  @Output()
-  @String({
-    title: 'ENS Name',
-    description: 'ENS name associated with the wallet address (if available)',
-    defaultValue: '',
-  })
-  ensName: string = ''
-
-  @Output()
-  @String({
-    title: 'Provider Type',
-    description: 'The wallet provider type (e.g., metamask, walletconnect)',
-    defaultValue: '',
-  })
-  providerType: string = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Get wallet context from execution context
     const walletContext = context.getIntegration<WalletContext>('wallet')
 
+    // Create wallet info object
+    this.wallet = new WalletInfo()
+
     if (!walletContext) {
       // No wallet context available - wallet not connected
+      this.wallet.isConnected = false
       this.isConnected = false
-      this.address = ''
-      this.chainId = 0
-      this.ensName = ''
-      this.providerType = ''
       return {}
     }
 
-    // Set outputs from wallet context
-    this.isConnected = walletContext.isConnected || false
-    this.address = walletContext.address || ''
-    this.chainId = walletContext.chainId || 0
-    this.ensName = walletContext.ensName || ''
-    this.providerType = walletContext.providerType || ''
+    // Populate wallet info from context
+    this.wallet.isConnected = walletContext.isConnected || false
+    this.wallet.address = walletContext.address || ''
+    this.wallet.chainId = walletContext.chainId || 0
+    this.wallet.ensName = walletContext.ensName || ''
+    this.wallet.provider = walletContext.providerType || ''
+
+    // Set chain name based on chain ID
+    if (this.wallet.chainId > 0) {
+      this.wallet.chainName = getChainName(this.wallet.chainId)
+    }
+
+    // Set simple connected flag
+    this.isConnected = this.wallet.isConnected
 
     return {}
   }

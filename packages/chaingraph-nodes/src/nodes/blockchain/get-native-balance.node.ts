@@ -13,19 +13,22 @@ import {
   Node,
   Number,
   Output,
+  PortObject,
   String,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import { Amount, Token, NativeToken, formatAmount } from './schemas'
+import { getDefaultRpcUrl } from './utils'
 
 /**
  * Node for retrieving native token balance of an address
  */
 @Node({
   type: 'GetNativeBalanceNode',
-  title: 'Get Native Balance',
-  description: 'Retrieves the native token balance (ETH, MATIC, BNB, etc.) of a wallet address',
+  title: 'Native Balance',
+  description: 'Get native token balance (ETH, MATIC, BNB, etc.) for any address',
   category: NODE_CATEGORIES.BLOCKCHAIN,
-  tags: ['wallet', 'web3', 'blockchain', 'balance', 'native', 'evm'],
+  tags: ['wallet', 'web3', 'blockchain', 'balance', 'native', 'eth', 'matic', 'bnb'],
 })
 export class GetNativeBalanceNode extends BaseNode {
   @Input()
@@ -38,43 +41,41 @@ export class GetNativeBalanceNode extends BaseNode {
 
   @Input()
   @Number({
-    title: 'Chain ID (Optional)',
-    description: 'Chain ID to use (defaults to connected wallet chain or mainnet)',
+    title: 'Chain ID',
+    description: 'Override chain ID (defaults to connected wallet chain)',
     defaultValue: 0,
+    ui: {
+      hidden: false, // Visible but optional
+    },
   })
-  chainIdOverride: number = 0
+  chainId: number = 0
+
+  @Output()
+  @PortObject({
+    title: 'Balance',
+    description: 'Native token balance amount',
+    schema: Amount,
+  })
+  balance: Amount = new Amount()
+
+  @Output()
+  @PortObject({
+    title: 'Token',
+    description: 'Native token information',
+    schema: Token,
+  })
+  token: Token = new Token()
 
   @Output()
   @String({
-    title: 'Balance (Wei)',
-    description: 'The native token balance in Wei as a string',
+    title: 'Raw Balance',
+    description: 'Balance in wei as string',
     defaultValue: '0',
+    ui: {
+      hidden: true, // Hidden by default for backwards compatibility
+    },
   })
   balanceWei: string = '0'
-
-  @Output()
-  @Number({
-    title: 'Balance (Decimal)',
-    description: 'The native token balance as a decimal number',
-    defaultValue: 0,
-  })
-  balanceDecimal: number = 0
-
-  @Output()
-  @String({
-    title: 'Formatted Balance',
-    description: 'Human-readable formatted balance with native token symbol',
-    defaultValue: '0',
-  })
-  formattedBalance: string = '0'
-
-  @Output()
-  @Number({
-    title: 'Chain ID',
-    description: 'The chain ID used for the balance query',
-    defaultValue: 0,
-  })
-  usedChainId: number = 0
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Get wallet context from execution context
@@ -91,15 +92,14 @@ export class GetNativeBalanceNode extends BaseNode {
     }
 
     // Determine chain ID and RPC URL to use
-    const chainId = this.chainIdOverride > 0
-      ? this.chainIdOverride
+    const chainId = this.chainId > 0
+      ? this.chainId
       : (walletContext?.chainId || 1)
-    this.usedChainId = chainId
 
     let rpcUrl = walletContext?.rpcUrl
     if (!rpcUrl) {
       // Default to public RPC based on chain ID
-      rpcUrl = this.getDefaultRpcUrl(chainId)
+      rpcUrl = getDefaultRpcUrl(chainId)
     }
 
     try {
@@ -125,58 +125,24 @@ export class GetNativeBalanceNode extends BaseNode {
 
       // Convert hex to decimal string (Wei)
       const balanceHex = data.result
-      this.balanceWei = BigInt(balanceHex).toString()
+      const rawBalance = BigInt(balanceHex).toString()
 
-      // Convert to decimal (divide by 10^18)
-      this.balanceDecimal = parseFloat(this.balanceWei) / 1e18
+      // Create native token for this chain
+      const nativeToken = new NativeToken(chainId)
 
-      // Format for display with native token symbol
-      const symbol = this.getNativeTokenSymbol(this.usedChainId)
-      this.formattedBalance = `${this.balanceDecimal.toFixed(6)} ${symbol}`
+      // Create amount object
+      const amount = formatAmount(rawBalance, nativeToken.decimals)
+
+      // Set outputs
+      this.token = nativeToken
+      this.balance = amount
+      this.balanceWei = rawBalance // For backwards compatibility
+
     } catch (error: any) {
       throw new Error(`Failed to get native balance: ${error.message}`)
     }
 
     return {}
-  }
-
-  private getDefaultRpcUrl(chainId: number): string {
-    // Common public RPC endpoints
-    switch (chainId) {
-      case 1: // Ethereum Mainnet
-        return 'https://eth.llamarpc.com'
-      case 137: // Polygon
-        return 'https://polygon-rpc.com'
-      case 56: // BSC
-        return 'https://bsc-dataseed.binance.org'
-      case 42161: // Arbitrum
-        return 'https://arb1.arbitrum.io/rpc'
-      case 10: // Optimism
-        return 'https://mainnet.optimism.io'
-      case 8453: // Base
-        return 'https://mainnet.base.org'
-      default:
-        throw new Error(`No default RPC URL for chain ID ${chainId}`)
-    }
-  }
-
-  private getNativeTokenSymbol(chainId: number): string {
-    switch (chainId) {
-      case 1: // Ethereum Mainnet
-        return 'ETH'
-      case 137: // Polygon
-        return 'MATIC'
-      case 56: // BSC
-        return 'BNB'
-      case 42161: // Arbitrum
-        return 'ETH'
-      case 10: // Optimism
-        return 'ETH'
-      case 8453: // Base
-        return 'ETH'
-      default:
-        return 'ETH' // Default to ETH for unknown chains
-    }
   }
 }
 
