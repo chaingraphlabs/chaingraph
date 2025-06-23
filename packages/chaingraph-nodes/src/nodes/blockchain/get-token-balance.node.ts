@@ -24,7 +24,7 @@ import { callContract, getDefaultRpcUrl } from './utils'
  */
 @Node({
   type: 'GetTokenBalanceNode',
-  title: 'Token Balance',
+  title: 'ERC20 Token Balance',
   description: 'Get ERC20 token balance for any address',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['token', 'erc20', 'balance', 'web3', 'blockchain', 'usdt', 'usdc'],
@@ -33,7 +33,7 @@ export class GetTokenBalanceNode extends BaseNode {
   @Input()
   @PortObject({
     title: 'Token',
-    description: 'Token information (connect from Token Info or Token Selector)',
+    description: 'Token information (connect from ERC20 Token Info or Token Selector)',
     schema: Token,
     required: true,
   })
@@ -49,8 +49,8 @@ export class GetTokenBalanceNode extends BaseNode {
 
   @Output()
   @PortObject({
-    title: 'Balance',
-    description: 'Token balance amount',
+    title: 'Balance Decimal',
+    description: 'Token balance amount with decimals',
     schema: Amount,
   })
   balance: Amount = new Amount()

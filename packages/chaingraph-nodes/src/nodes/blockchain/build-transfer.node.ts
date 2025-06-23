@@ -24,7 +24,7 @@ import { encodeERC20Transfer, estimateGas, getDefaultRpcUrl, isValidAddress } fr
  */
 @Node({
   type: 'BuildTransferNode',
-  title: 'Build Transfer',
+  title: 'Build Token Transfer',
   description: 'Build a transfer transaction for native or ERC20 tokens',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['transfer', 'transaction', 'token', 'eth', 'erc20', 'send'],
@@ -40,7 +40,7 @@ export class BuildTransferNode extends BaseNode {
 
   @Input()
   @PortObject({
-    title: 'Amount',
+    title: 'Amount Decimal',
     description: 'Amount to transfer',
     schema: Amount,
     required: true,
@@ -54,7 +54,7 @@ export class BuildTransferNode extends BaseNode {
     schema: Token,
     required: false,
   })
-  token?: Token
+  token: Token = new Token()
 
   @Input()
   @String({
@@ -100,8 +100,15 @@ export class BuildTransferNode extends BaseNode {
       throw new Error('Invalid recipient address format')
     }
 
-    if (!this.amount || !this.amount.value) {
+    if (!this.amount || !this.amount.value || this.amount.value === '0') {
       throw new Error('Valid amount is required')
+    }
+    
+    // Validate amount is a valid number string
+    try {
+      BigInt(this.amount.value)
+    } catch (e) {
+      throw new Error(`Invalid amount value: "${this.amount.value}". Must be a valid number string.`)
     }
 
     // Get sender address
@@ -115,7 +122,7 @@ export class BuildTransferNode extends BaseNode {
     }
 
     // Determine chain ID from token or wallet
-    const chainId = this.token?.chainId || walletContext?.chainId || 1
+    const chainId = (this.token && this.token.chainId) || walletContext?.chainId || 1
 
     // Get RPC URL for gas estimation
     let rpcUrl = walletContext?.rpcUrl
@@ -130,8 +137,11 @@ export class BuildTransferNode extends BaseNode {
     this.transaction.amount = this.amount
     this.transaction.token = this.token
 
+    console.log('token', this.token, this.token?.symbol)
+
     // Build transaction based on whether token is provided
-    if (!this.token) {
+    // Check if token has actual data (address is required for ERC20)
+    if (!this.token.address) {
       // Native token transfer
       this.transaction.to = this.recipient
       this.transaction.value = this.amount.value
@@ -140,10 +150,21 @@ export class BuildTransferNode extends BaseNode {
 
       // Create readable description
       const nativeSymbol = chainId === 137 ? 'MATIC' : chainId === 56 ? 'BNB' : 'ETH'
-      this.readable = `Send ${this.amount.formatted} ${nativeSymbol} to ${this.recipient}`
+      // Ensure amount is properly formatted (native tokens typically have 18 decimals)
+      const formattedAmount = this.amount.formatted || this.formatTokenAmount(this.amount.value, 18)
+      this.readable = `Send ${formattedAmount} ${nativeSymbol} to ${this.recipient}`
     } else {
       // ERC20 token transfer
-      this.transaction.to = this.token.address
+      // Reconstruct token data to handle serialization issues
+      const tokenData = {
+        address: this.token.address || this.token.address || '',
+        symbol: this.token.symbol || this.token.symbol || 'TOKEN',
+        name: this.token.name || this.token.name || '',
+        decimals: this.token.decimals || 18,
+        chainId: this.token.chainId || 1,
+      }
+
+      this.transaction.to = tokenData.address
       this.transaction.value = '0' // No ETH value for ERC20 transfers
       this.transaction.data = encodeERC20Transfer(this.recipient, this.amount.value)
 
@@ -164,7 +185,10 @@ export class BuildTransferNode extends BaseNode {
       }
 
       // Create readable description
-      this.readable = `Send ${this.amount.formatted} ${this.token.symbol} to ${this.recipient}`
+      // Ensure amount is properly formatted with token decimals
+      const formattedAmount = this.amount.formatted || this.formatTokenAmount(this.amount.value, tokenData.decimals)
+
+      this.readable = `Send ${formattedAmount} ${tokenData.symbol} to ${this.recipient}`
     }
 
     // Build raw transaction hex
@@ -179,15 +203,40 @@ export class BuildTransferNode extends BaseNode {
     // Note: This is simplified - real implementation would properly encode RLP
     const txData = {
       to: this.transaction.to,
-      value: `0x${BigInt(this.transaction.value).toString(16)}`,
-      data: this.transaction.data,
-      gasLimit: `0x${BigInt(this.transaction.gasLimit).toString(16)}`,
+      value: `0x${BigInt(this.transaction.value || '0').toString(16)}`,
+      data: this.transaction.data || '0x',
+      gasLimit: `0x${BigInt(this.transaction.gasLimit || '21000').toString(16)}`,
       chainId: this.transaction.chainId,
     }
 
     // For demonstration, return a JSON representation
     // In production, this would be properly RLP encoded
-    return `0x${Buffer.from(JSON.stringify(txData)).toString('hex')}`
+    // Convert string to hex without using Buffer (for browser compatibility)
+    const jsonStr = JSON.stringify(txData)
+    let hex = ''
+    for (let i = 0; i < jsonStr.length; i++) {
+      hex += jsonStr.charCodeAt(i).toString(16).padStart(2, '0')
+    }
+    return `0x${hex}`
+  }
+
+  private formatTokenAmount(value: string, decimals: number): string {
+    try {
+      const rawBigInt = BigInt(value)
+      const divisor = BigInt(10 ** decimals)
+      const quotient = rawBigInt / divisor
+      const remainder = rawBigInt % divisor
+
+      // Format with proper decimal places
+      const decimalStr = remainder.toString().padStart(decimals, '0')
+      const trimmedDecimal = decimalStr.replace(/0+$/, '') // Remove trailing zeros
+
+      return trimmedDecimal.length > 0
+        ? `${quotient}.${trimmedDecimal}`
+        : quotient.toString()
+    } catch (e) {
+      return '0'
+    }
   }
 }
 

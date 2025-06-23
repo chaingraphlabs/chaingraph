@@ -22,7 +22,7 @@ import { getChainName, WalletInfo } from './schemas'
  */
 @Node({
   type: 'GetWalletInfoNode',
-  title: 'Wallet Status',
+  title: 'Wallet Info',
   description: 'Get current wallet connection status and information',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['wallet', 'web3', 'blockchain', 'address', 'status'],
@@ -66,7 +66,6 @@ export class GetWalletInfoNode extends BaseNode {
     this.wallet.address = walletContext.address || ''
     this.wallet.chainId = walletContext.chainId || 0
     this.wallet.ensName = walletContext.ensName || ''
-    this.wallet.provider = walletContext.providerType || ''
 
     // Set chain name based on chain ID
     if (this.wallet.chainId > 0) {

@@ -25,7 +25,7 @@ import { getDefaultRpcUrl } from './utils'
  */
 @Node({
   type: 'GetNativeBalanceNode',
-  title: 'Native Balance',
+  title: 'Native Token Balance',
   description: 'Get native token balance (ETH, MATIC, BNB, etc.) for any address',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['wallet', 'web3', 'blockchain', 'balance', 'native', 'eth', 'matic', 'bnb'],
@@ -52,19 +52,12 @@ export class GetNativeBalanceNode extends BaseNode {
 
   @Output()
   @PortObject({
-    title: 'Balance',
-    description: 'Native token balance amount',
+    title: 'Balance Decimal',
+    description: 'Native token balance amount with decimals',
     schema: Amount,
   })
   balance: Amount = new Amount()
 
-  @Output()
-  @PortObject({
-    title: 'Token',
-    description: 'Native token information',
-    schema: Token,
-  })
-  token: Token = new Token()
 
   @Output()
   @String({
@@ -134,7 +127,6 @@ export class GetNativeBalanceNode extends BaseNode {
       const amount = formatAmount(rawBalance, nativeToken.decimals)
 
       // Set outputs
-      this.token = nativeToken
       this.balance = amount
       this.balanceWei = rawBalance // For backwards compatibility
 

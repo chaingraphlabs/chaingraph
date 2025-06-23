@@ -25,7 +25,7 @@ import { callContract, getDefaultRpcUrl } from './utils'
  */
 @Node({
   type: 'CheckTokenAllowanceNode',
-  title: 'Token Allowance',
+  title: 'ERC20 Token Allowance',
   description: 'Check ERC20 token spending allowance for any address',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['token', 'erc20', 'allowance', 'approval', 'web3', 'blockchain'],
@@ -58,8 +58,8 @@ export class CheckTokenAllowanceNode extends BaseNode {
 
   @Output()
   @PortObject({
-    title: 'Allowance',
-    description: 'Token allowance amount',
+    title: 'Allowance Decimal',
+    description: 'Token allowance amount with decimals',
     schema: Amount,
   })
   allowance: Amount = new Amount()

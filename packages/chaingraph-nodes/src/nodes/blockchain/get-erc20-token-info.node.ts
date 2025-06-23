@@ -25,7 +25,7 @@ import { callContract, decodeString, getDefaultRpcUrl } from './utils'
  */
 @Node({
   type: 'GetERC20TokenInfoNode',
-  title: 'Token Info',
+  title: 'ERC20 Token Info',
   description: 'Get ERC20 token metadata (name, symbol, decimals)',
   category: NODE_CATEGORIES.BLOCKCHAIN,
   tags: ['token', 'erc20', 'web3', 'blockchain', 'info', 'metadata'],

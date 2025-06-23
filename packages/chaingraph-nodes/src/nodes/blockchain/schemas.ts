@@ -31,21 +31,21 @@ export class Token {
   @String({
     title: 'Symbol',
     description: 'Token symbol (e.g., USDT, DAI)',
-    required: true,
+    required: false,
   })
   symbol: string = ''
 
   @String({
     title: 'Name',
     description: 'Token full name',
-    required: true,
+    required: false,
   })
   name: string = ''
 
   @PortNumber({
     title: 'Decimals',
     description: 'Number of decimal places',
-    required: true,
+    required: false,
     defaultValue: 18,
   })
   decimals: number = 18
@@ -174,14 +174,6 @@ export class WalletInfo {
     defaultValue: '',
   })
   chainName: string = ''
-
-  @String({
-    title: 'Provider',
-    description: 'Wallet provider type (e.g., MetaMask)',
-    required: false,
-    defaultValue: '',
-  })
-  provider: string = ''
 }
 
 /**
