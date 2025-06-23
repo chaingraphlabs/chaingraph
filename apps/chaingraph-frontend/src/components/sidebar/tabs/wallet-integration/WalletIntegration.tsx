@@ -10,17 +10,22 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { $executionState } from '@/store/execution'
+import { $autoRecreateEnabled, $walletContext, disableAutoRecreate, enableAutoRecreate, initializeWalletConfig, recreateExecutionWithCurrentWallet, walletConnected } from '@/store/wallet'
 import { wagmiConfig } from '@/store/wallet/wagmi.config'
-import { $walletContext, initializeWalletConfig } from '@/store/wallet/wallet.store'
 import { useUnit } from 'effector-react'
-import { AlertCircle, CheckCircle2, Wallet } from 'lucide-react'
+import { AlertCircle, CheckCircle2, RefreshCw, Wallet } from 'lucide-react'
 import { useEffect } from 'react'
 import { formatEther } from 'viem'
 import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from 'wagmi'
 
 export function WalletIntegration() {
   const walletContext = useUnit($walletContext)
+  const autoRecreateEnabled = useUnit($autoRecreateEnabled)
+  const executionState = useUnit($executionState)
   const { address, isConnected, connector } = useAccount()
   const { connectors, connect, isPending } = useConnect()
   const { disconnect } = useDisconnect()
@@ -31,10 +36,20 @@ export function WalletIntegration() {
     initializeWalletConfig(wagmiConfig)
   }, [])
 
+  // Additional check for account changes that might be missed
+  useEffect(() => {
+    // If we have a previous address in wallet context and it's different from current
+    if (walletContext.address && address && walletContext.address !== address) {
+      walletConnected({ address, chainId })
+    }
+  }, [address, chainId, isConnected, walletContext.address])
+
   // Get balance if connected
   const { data: balance } = useBalance({
     address,
-    enabled: !!address,
+    query: {
+      enabled: !!address,
+    },
   })
 
   const getChainName = (id: number) => {
@@ -160,6 +175,58 @@ export function WalletIntegration() {
                   <div>• Multi-chain support</div>
                 </AlertDescription>
               </Alert>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Auto-recreate Executions
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Automatically restart executions when wallet state changes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auto-recreate" className="text-xs">
+                      Enable auto-recreate
+                    </Label>
+                    <Switch
+                      id="auto-recreate"
+                      checked={autoRecreateEnabled}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          enableAutoRecreate()
+                        } else {
+                          disableAutoRecreate()
+                        }
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    When enabled, active executions will automatically restart with updated wallet context when you switch accounts or chains.
+                  </p>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => recreateExecutionWithCurrentWallet()}
+                    className="w-full mt-3"
+                    disabled={!executionState.executionId}
+                  >
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Refresh Execution
+                  </Button>
+                  {executionState.executionId && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Active execution:
+                      {' '}
+                      {executionState.executionId.slice(0, 8)}
+                      ...
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </>
           )}
 

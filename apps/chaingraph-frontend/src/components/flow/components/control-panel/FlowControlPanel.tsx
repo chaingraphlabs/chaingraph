@@ -26,7 +26,7 @@ import {
   toggleDebugMode,
 } from '@/store/execution'
 import { $activeFlowMetadata } from '@/store/flow'
-import { getWalletContextForExecution } from '@/store/wallet/wallet.store'
+import { getWalletContextForExecution } from '@/store/wallet'
 import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'

@@ -40,10 +40,22 @@ const initializeWalletWatchersFx = createEffect((config: Config) => {
 
   // Watch for account changes
   const unsubAccount = watchAccount(config, {
-    onChange(account) {
-      if (account.address) {
-        accountChanged({ address: account.address })
-      } else {
+    onChange(account, prevAccount) {
+      // Check if address actually changed
+      if (prevAccount?.address && account.address && prevAccount.address !== account.address) {
+        // Treat as reconnection with new address
+        walletConnected({
+          address: account.address,
+          chainId: getChainId(config),
+        })
+      } else if (account.address && !prevAccount?.address) {
+        // New connection
+        walletConnected({
+          address: account.address,
+          chainId: getChainId(config),
+        })
+      } else if (!account.address && prevAccount?.address) {
+        // Disconnection
         walletDisconnected()
       }
     },
