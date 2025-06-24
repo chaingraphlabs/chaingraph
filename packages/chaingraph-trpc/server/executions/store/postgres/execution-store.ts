@@ -20,7 +20,7 @@ export class PostgresExecutionStore implements IExecutionStore {
       .values({
         id: instance.id,
         flowId: instance.flow.id || '',
-        ownerId: (instance.context.integrations?.user as any)?.id,
+        ownerId: instance.flow.metadata.ownerID,
         parentExecutionId: instance.parentExecutionId || null,
         status: instance.status,
         startedAt: instance.startedAt || null,
