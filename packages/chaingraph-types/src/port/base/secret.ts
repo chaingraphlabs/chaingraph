@@ -87,7 +87,7 @@ export interface SecretTypeMetadata<T extends SecretType> {
   /**
    * A URL of the icon associated with this type of secret.
    */
-  icon: string
+  icon?: string
 
   /**
    * A textual label of a secret. Used for displaying in human-readable form.
@@ -105,7 +105,6 @@ export interface SecretTypeMetadata<T extends SecretType> {
  */
 export const secretTypeMetadata = {
   'string': {
-    icon: 'Type',
     label: 'String Secret',
     fields: {
       value: {
@@ -115,7 +114,7 @@ export const secretTypeMetadata = {
     },
   },
   'openai': {
-    icon: 'Brain',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmRh59AK1xpgwpSJwexsKNAeibYnVK8TpWZVxMhfoWT8fJ',
     label: 'OpenAI API',
     fields: {
       apiKey: {
@@ -125,7 +124,6 @@ export const secretTypeMetadata = {
     },
   },
   '0g': {
-    icon: 'Package',
     label: '0G',
     fields: {
       privateKey: {
@@ -135,7 +133,7 @@ export const secretTypeMetadata = {
     },
   },
   'anthropic': {
-    icon: 'Brain',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmNhRy7vyrzb6tLGGMdYkKaw8eDH2Q35BPFqvMpTAR5uMh',
     label: 'Anthropic API',
     fields: {
       apiKey: {
@@ -145,7 +143,7 @@ export const secretTypeMetadata = {
     },
   },
   'coinmarketcap': {
-    icon: 'Package',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmdcUK961xCEdissP4dSEBQP2xbxiWV4FnCZYeVFuyu8Gz',
     label: 'CoinMarketCap API',
     fields: {
       apiKey: {
@@ -155,7 +153,7 @@ export const secretTypeMetadata = {
     },
   },
   'deepseek': {
-    icon: 'Brain',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmW64WLBMptJcCT81yYUQkSAJtDSt8m3kB73W29cFnZCBy',
     label: 'DeepSeek API',
     fields: {
       apiKey: {
@@ -165,7 +163,7 @@ export const secretTypeMetadata = {
     },
   },
   'groq': {
-    icon: 'Brain',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmUFzx81osVF6p7HQ3EYPFU1FX6yKdV7KTupCShrS8nR44',
     label: 'Groq API',
     fields: {
       apiKey: {
@@ -175,7 +173,7 @@ export const secretTypeMetadata = {
     },
   },
   'xAPI': {
-    icon: 'MessageSquare',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/Qme4sSRvai1ZLp5JAU6nW99rzBw2n69xRfzSoWoZhVTrC5',
     label: 'X.com API',
     fields: {
       key: {
@@ -189,7 +187,7 @@ export const secretTypeMetadata = {
     },
   },
   'xApp': {
-    icon: 'Package',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/Qme4sSRvai1ZLp5JAU6nW99rzBw2n69xRfzSoWoZhVTrC5',
     label: 'X.com App',
     fields: {
       key: {
@@ -203,7 +201,7 @@ export const secretTypeMetadata = {
     },
   },
   'OkxDexApi': {
-    icon: 'Okx',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmYazRWsyR1uAtEXc1yQkuj3cKyLdhPGeX3kk9bHH2fYgU',
     label: 'OKX DEX API',
     fields: {
       apiKey: {
@@ -221,7 +219,7 @@ export const secretTypeMetadata = {
     },
   },
   'alchemy': {
-    icon: 'Alchemy',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmWHgfZT6RP39Sa6tAAfjHr77h3oqGdbKXoknPqKEPRuia',
     label: 'Alchemy',
     fields: {
       apiKey: {
