@@ -1,5 +1,21 @@
 # @badaitech/chaingraph-nodes
 
+## 0.2.9-dev.2
+
+### Patch Changes
+
+- feat: export additional components and enhance module exports
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.9-dev.2
+
+## 0.2.9-dev.1
+
+### Patch Changes
+
+- feat: add Shadow components and refactor TRPC client naming
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.9-dev.1
+
 ## 0.2.9-dev.0
 
 ### Patch Changes

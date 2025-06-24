@@ -22,6 +22,7 @@ import './index.css'
 import './safelist/tailwind-safelist' // Import the safelist file
 import './safelist/shadcn-safelist' // Import the safelist file
 
+export * from './components/'
 export * from './components/dnd'
 export * from './components/flow'
 export * from './components/sidebar'

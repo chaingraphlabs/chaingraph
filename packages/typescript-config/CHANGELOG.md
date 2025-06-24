@@ -1,5 +1,17 @@
 # @badaitech/typescript-config
 
+## 0.2.9-dev.2
+
+### Patch Changes
+
+- feat: export additional components and enhance module exports
+
+## 0.2.9-dev.1
+
+### Patch Changes
+
+- feat: add Shadow components and refactor TRPC client naming
+
 ## 0.2.9-dev.0
 
 ### Patch Changes
