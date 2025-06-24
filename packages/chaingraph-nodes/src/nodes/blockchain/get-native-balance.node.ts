@@ -11,13 +11,13 @@ import {
   BaseNode,
   Input,
   Node,
-  PortNumber,
   Output,
+  PortNumber,
   PortObject,
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { Amount, Token, NativeToken, formatAmount } from './schemas'
+import { Amount, formatAmount, NativeToken } from './schemas'
 import { getDefaultRpcUrl } from './utils'
 
 /**
@@ -57,7 +57,6 @@ export class GetNativeBalanceNode extends BaseNode {
     schema: Amount,
   })
   balance: Amount = new Amount()
-
 
   @Output()
   @PortString({
@@ -129,7 +128,6 @@ export class GetNativeBalanceNode extends BaseNode {
       // Set outputs
       this.balance = amount
       this.balanceWei = rawBalance // For backwards compatibility
-
     } catch (error: any) {
       throw new Error(`Failed to get native balance: ${error.message}`)
     }
