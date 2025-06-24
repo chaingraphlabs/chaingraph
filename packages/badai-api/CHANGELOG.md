@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.2.9-dev.3
+
+### Patch Changes
+
+- feat: enhance schema extraction and number port handling with improved error parsing
+
 ## 0.2.9-dev.2
 
 ### Patch Changes

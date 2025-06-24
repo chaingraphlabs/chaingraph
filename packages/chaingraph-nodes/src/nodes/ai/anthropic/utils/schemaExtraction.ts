@@ -181,13 +181,12 @@ export function portConfigToJsonSchema(
   const baseProperty: SchemaProperty = {
     title: config.title || port.id,
     description: config.description || config.title || '',
-    enum: undefined,
   }
 
   // Add value as default if it exists
   if (value !== undefined && value !== null && value !== '' && value !== 0) {
     baseProperty.default = value
-  } else if (config.defaultValue !== undefined && config.defaultValue !== null && config.defaultValue !== '') {
+  } else if (config.defaultValue !== undefined && config.defaultValue !== null && config.defaultValue !== '' && config.defaultValue !== 0) {
     baseProperty.default = config.defaultValue
   }
 
@@ -220,10 +219,15 @@ export function portConfigToJsonSchema(
   }
 
   if (isEnumPortConfig(config)) {
-    const enumValues = config.options.map(option => option.defaultValue || option.id).filter((id): id is string => Boolean(id))
-    const enumTitles = config.options.map(option => option.title || option.defaultValue || option.id).filter((title): title is string => Boolean(title))
+    const enumValues = config.options
+      .map(option => option.id || option.defaultValue)
+      .filter((id): id is string => Boolean(id))
 
-    const res = {
+    const enumTitles = config.options
+      .map(option => option.title || option.id || option.defaultValue)
+      .filter((title): title is string => Boolean(title))
+
+    const res: SchemaProperty = {
       ...baseProperty,
       type: 'string',
     }
@@ -232,6 +236,8 @@ export function portConfigToJsonSchema(
       res.enum = enumValues
       res.enumTitles = enumTitles
     }
+
+    return res
   }
 
   if (isArrayPortConfig(config)) {

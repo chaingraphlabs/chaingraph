@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-frontend
 
+## 0.2.9-dev.3
+
+### Patch Changes
+
+- feat: enhance schema extraction and number port handling with improved error parsing
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.9-dev.3
+  - @badaitech/chaingraph-types@0.2.9-dev.3
+  - @badaitech/chaingraph-trpc@0.2.9-dev.3
+  - @badaitech/badai-api@0.2.9-dev.3
+
 ## 0.2.9-dev.2
 
 ### Patch Changes

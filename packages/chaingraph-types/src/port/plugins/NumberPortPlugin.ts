@@ -117,6 +117,15 @@ export function validateNumberValue(
   }
 
   if (!isNumberPortValue(value)) {
+    // try to parse as decimal string:
+    if (typeof value === 'string') {
+      try {
+        value = new Decimal(value)
+      } catch (err) {
+        errors.push(`Invalid number value string: ${value}`)
+        return errors
+      }
+    }
     errors.push(`Invalid number value structure, actual value: ${JSON.stringify(value)}`)
     return errors
   }
@@ -172,10 +181,22 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
 
     try {
       if (!isNumberPortValue(value)) {
-        throw new PortError(
-          PortErrorType.SerializationError,
-          `Invalid number value structure, actual value: ${JSON.stringify(value)}`,
-        )
+        // check if the value is a string decimal
+        if (typeof value === 'string') {
+          try {
+            value = new Decimal(value).toNumber()
+          } catch (err) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Invalid number string value: ${value}`,
+            )
+          }
+        } else {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Invalid number value structure, actual value: ${JSON.stringify(value)}`,
+          )
+        }
       }
       return value
     } catch (error) {
@@ -192,10 +213,23 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
 
     try {
       if (!isNumberPortValue(data)) {
-        throw new PortError(
-          PortErrorType.SerializationError,
-          `Invalid number value for deserialization, actual value: ${JSON.stringify(data)}`,
-        )
+        // check if the data is a string decimal
+        if (typeof data === 'string') {
+          try {
+            data = new Decimal(data).toNumber()
+            return data as NumberPortValue
+          } catch (err) {
+            throw new PortError(
+              PortErrorType.SerializationError,
+              `Invalid number string value for deserialization: ${data}`,
+            )
+          }
+        } else {
+          throw new PortError(
+            PortErrorType.SerializationError,
+            `Invalid number value structure for deserialization, actual value: ${JSON.stringify(data)}`,
+          )
+        }
       }
       return data || 0
     } catch (error) {
