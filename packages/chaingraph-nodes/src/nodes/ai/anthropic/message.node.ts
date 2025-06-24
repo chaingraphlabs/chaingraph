@@ -57,6 +57,9 @@ class AntropicMessageNode extends BaseNode {
     title: 'Message',
     description: 'The created Anthropic message',
     schema: AntropicMessage,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   message: AntropicMessage = new AntropicMessage()
 

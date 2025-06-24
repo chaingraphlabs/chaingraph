@@ -19,50 +19,69 @@ import {
   ObjectSchema,
   Output,
   PortArray,
+  PortBoolean,
   PortNumber,
+  PortObject,
   PortSecret,
   PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
+import { Alchemy, Network } from 'alchemy-sdk'
 import { NODE_CATEGORIES } from '../../categories'
 
 class Networks {
-  static networks = {
-    ETHEREUM: { id: 'eth-mainnet', title: 'Ethereum' },
-    ARBITRUM: { id: 'arb-mainnet', title: 'Arbitrum' },
-    ARBITRUM_NOVA: { id: 'arbnova-mainnet', title: 'Arbitrum Nova' },
-    OPTIMISM: { id: 'opt-mainnet', title: 'Optimism' },
-    POLYGON: { id: 'polygon-mainnet', title: 'Polygon PoS' },
-    POLYGON_ZKEVM: { id: 'polygonzkevm-mainnet', title: 'Polygon zkEVM' },
-    BASE: { id: 'base-mainnet', title: 'Base' },
-    BSC: { id: 'bnb-mainnet', title: 'Binance Smart Chain' },
-    AVALANCHE: { id: 'avax-mainnet', title: 'Avalanche' },
-    ZKSYNC: { id: 'zksync-mainnet', title: 'ZKsync' },
-    LINEA: { id: 'linea-mainnet', title: 'Linea' },
-    FRAX: { id: 'frax-mainnet', title: 'Frax' },
-    UNICHAIN: { id: 'unichain-mainnet', title: 'Unichain' },
-  }
-
   static get networkIds() {
-    return Object.values(this.networks).map(network => network.id)
+    return Object.values(Network)
   }
 
   static get defaultNetwork() {
-    return this.networks.ETHEREUM.id
+    return Network.ETH_MAINNET
   }
 
   static getOptions() {
-    return Object.values(this.networks).map(network => ({
-      id: network.id,
-      title: network.title,
+    return Object.entries(Network).map(([key, value]) => ({
+      id: value,
+      title: key.replace(/_/g, ' '),
       type: 'string',
-      defaultValue: network.id,
+      defaultValue: value,
     })) as IPortConfig[]
   }
 }
 
+/**
+ * Amount with multiple representations
+ */
 @ObjectSchema({
-  description: 'Token Balance Information',
+  description: 'Amount with raw value and formatted display',
+})
+class Amount {
+  @PortString({
+    title: 'Value',
+    description: 'Amount in smallest unit (wei, satoshi, etc.)',
+    required: true,
+    defaultValue: '0',
+  })
+  value: string = '0'
+
+  @PortNumber({
+    title: 'Decimals',
+    description: 'Number of decimal places',
+    required: true,
+    defaultValue: 18,
+  })
+  decimals: number = 18
+
+  @PortString({
+    title: 'Formatted',
+    description: 'Human-readable amount (e.g., "1.5")',
+    required: false,
+    defaultValue: '0.0',
+  })
+  formatted?: string = '0.0'
+}
+
+@ObjectSchema({
+  description: 'Token balance information',
 })
 class TokenBalance {
   @PortString({
@@ -71,30 +90,22 @@ class TokenBalance {
   })
   tokenAddress: string = ''
 
-  @PortString({
-    title: 'Balance in Wei',
-    description: 'Raw token balance (not divided by decimals)',
+  @PortObject({
+    title: 'Balance',
+    description: 'Token balance amount with decimals',
+    schema: Amount,
   })
-  weiBalance: string = ''
+  balance: Amount = new Amount()
 }
 
 @Node({
   type: 'AlchemyTokenBalances',
-  title: 'Alchemy get ERC20 token balances',
-  description: 'Fetches ERC20 token balances for a wallet address using Alchemy API',
+  title: 'Alchemy: token balances',
+  description: 'Fetches token balances for a wallet address using Alchemy API',
   category: NODE_CATEGORIES.API,
-  tags: ['blockchain', 'ethereum', 'erc20', 'token', 'balance', 'alchemy'],
+  tags: ['blockchain', 'token', 'balance', 'alchemy'],
 })
 class AlchemyTokenBalances extends BaseNode {
-  @Input()
-  @StringEnum(Networks.networkIds, {
-    name: 'Network',
-    description: 'EVM network to query',
-    defaultValue: Networks.defaultNetwork,
-    options: Networks.getOptions(),
-  })
-  network: string = Networks.defaultNetwork
-
   @Input()
   @PortSecret<'alchemy'>({
     title: 'API Key',
@@ -106,31 +117,37 @@ class AlchemyTokenBalances extends BaseNode {
   apiKey?: EncryptedSecretValue<'alchemy'>
 
   @Input()
+  @StringEnum(Networks.networkIds, {
+    name: 'Network',
+    description: 'Network to query',
+    defaultValue: Networks.defaultNetwork,
+    options: Networks.getOptions(),
+  })
+  network: string = Networks.defaultNetwork
+
+  @Input()
+  @PortBoolean({
+    title: 'Filter zero balances',
+    description: 'Remove tokens that user has interacted with, but the current balance is 0',
+    defaultValue: true,
+  })
+  filterZeroBalances: boolean = true
+
+  @Input()
   @PortString({
     title: 'Wallet Address',
-    description: 'Ethereum wallet address to check token balances for',
-    pattern: '^0x[a-fA-F0-9]{40}$',
+    description: 'Wallet address to check token balances for',
     required: true,
   })
   walletAddress: string = ''
 
   @Input()
-  @PortNumber({
-    title: 'Max Tokens',
-    description: 'Limits the amount of tokens in the response',
-    defaultValue: 20,
-    min: 1,
-  })
-  maxTokens: number = 20
-
-  @Input()
   @PortArray({
     title: 'Token Addresses',
-    description: 'List of ERC20 token contract addresses to check balances for',
+    description: 'List of token contract addresses to check balances for',
     itemConfig: {
       type: 'string',
       defaultValue: '',
-      pattern: '^0x[a-fA-F0-9]{40}$',
     },
     isMutable: true,
     ui: {
@@ -138,13 +155,16 @@ class AlchemyTokenBalances extends BaseNode {
       addItemFormHidden: false,
     },
   })
-  tokenAddresses: string[] = []
+  contractAddresses: string[] = []
 
   @Output()
   @PortArray({
     title: 'Token Balances',
     description: 'List of token balances for the specified wallet',
-    itemConfig: { type: 'object', schema: TokenBalance },
+    itemConfig: {
+      type: 'object',
+      schema: TokenBalance,
+    },
   })
   tokenBalances: TokenBalance[] = []
 
@@ -158,45 +178,33 @@ class AlchemyTokenBalances extends BaseNode {
     }
 
     const { apiKey } = await this.apiKey.decrypt(context)
-    const apiUrl = `https://${this.network}.g.alchemy.com/v2/${apiKey}`
 
-    const payload = {
-      id: 1,
-      jsonrpc: '2.0',
-      method: 'alchemy_getTokenBalances',
-      params: [
-        this.walletAddress,
-        this.tokenAddresses.length > 0 ? this.tokenAddresses : 'erc20',
-        { maxCount: this.maxTokens },
-      ],
+    const settings = {
+      apiKey,
+      network: this.network as Network,
     }
+    const alchemy = new Alchemy(settings)
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+      const response = this.contractAddresses.length > 0
+        ? await alchemy.core.getTokenBalances(this.walletAddress, this.contractAddresses)
+        : await alchemy.core.getTokenBalances(this.walletAddress)
+
+      const allTokens: TokenBalance[] = response.tokenBalances.map((token) => {
+        const rawBalance = this.safeBigIntToString(token.tokenBalance)
+        // Default to 18 decimals for ERC20 tokens when not specified
+        const decimals = 18
+
+        const tokenBalance = new TokenBalance()
+        tokenBalance.tokenAddress = token.contractAddress
+        tokenBalance.balance = this.formatAmount(rawBalance, decimals)
+        return tokenBalance
       })
 
-      if (!response.ok) {
-        throw new Error(`Alchemy API error: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      if (data.error) {
-        throw new Error(`Alchemy API error: ${data.error.message}`)
-      }
-
-      this.tokenBalances = data.result.tokenBalances.map((item: any) => {
-        return {
-          tokenAddress: item.contractAddress,
-          weiBalance: this.safeBigIntToString(item.tokenBalance),
-        }
-      })
+      if (this.filterZeroBalances === false)
+        this.tokenBalances = allTokens
+      else
+        this.tokenBalances = allTokens.filter(token => token.balance.value !== '0')
 
       return {}
     } catch (error) {
@@ -212,6 +220,31 @@ class AlchemyTokenBalances extends BaseNode {
     } catch (error) {
       throw new Error(`Invalid token balance value: ${value}`)
     }
+  }
+
+  private formatAmount(raw: string, decimals: number): Amount {
+    const amount = new Amount()
+    amount.value = raw
+    amount.decimals = decimals
+
+    try {
+      const rawBigInt = BigInt(raw)
+      const divisor = BigInt(10 ** decimals)
+      const quotient = rawBigInt / divisor
+      const remainder = rawBigInt % divisor
+
+      // Format with proper decimal places
+      const decimalStr = remainder.toString().padStart(decimals, '0')
+      const trimmedDecimal = decimalStr.replace(/0+$/, '') // Remove trailing zeros
+
+      amount.formatted = trimmedDecimal.length > 0
+        ? `${quotient}.${trimmedDecimal}`
+        : quotient.toString()
+    } catch (e) {
+      amount.formatted = '0'
+    }
+
+    return amount
   }
 }
 

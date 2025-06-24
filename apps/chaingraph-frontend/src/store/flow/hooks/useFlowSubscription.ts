@@ -9,7 +9,6 @@
 import type { FlowEventHandlerMap } from '@badaitech/chaingraph-types'
 import { useTRPC } from '@badaitech/chaingraph-trpc/client'
 import { createEventHandler, DefaultPosition, FlowEventType } from '@badaitech/chaingraph-types'
-import { skipToken } from '@tanstack/react-query'
 import { useSubscription } from '@trpc/tanstack-react-query'
 import { useUnit } from 'effector-react'
 import { useEffect, useMemo } from 'react'
@@ -318,13 +317,12 @@ export function useFlowSubscription() {
 
   const trpc = useTRPC()
   const opts = trpc.flow.subscribeToEvents.subscriptionOptions(
-    activeFlowId
-      ? {
-          flowId: activeFlowId,
-          lastEventId: null,
-        }
-      : skipToken,
     {
+      flowId: activeFlowId || '',
+      lastEventId: null,
+    },
+    {
+      enabled: !!activeFlowId,
       onStarted: () => {
         console.debug(`[FLOW SUB] Subscription started for flow ${activeFlowId}`)
 
@@ -342,8 +340,12 @@ export function useFlowSubscription() {
           setFlowSubscriptionStatus(FlowSubscriptionStatus.SUBSCRIBED)
         }
 
-        // console.log('Received event:', trackedData.data)
-        await handleEvent(trackedData.data)
+        if (trackedData && trackedData.data) {
+          console.log('[FLOW SUB] Received data for flow', activeFlowId, trackedData.data)
+          await handleEvent(trackedData.data)
+        } else {
+          console.warn(`[FLOW SUB] No data received for flow ${activeFlowId}`)
+        }
       },
       onError: (error) => {
         console.error(`Error subscribing to flow events for flow ${activeFlowId}:`, error)
@@ -374,7 +376,6 @@ export function useFlowSubscription() {
         subscription.reset()
       }
     }
-    // FIXME
   }, [activeFlowId, subscription])
 
   useEffect(() => {

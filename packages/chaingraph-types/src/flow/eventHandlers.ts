@@ -62,6 +62,11 @@ export async function handleFlowEvent<T extends FlowEventType>(
   handlers: FlowEventHandlerMap,
   options: HandleEventOptions = {},
 ): Promise<void> {
+  if (!event || !event.type || !handlers) {
+    console.error(`[handleFlowEvent] Invalid event or handlers`, { event, handlers })
+    return
+  }
+
   const handler = handlers[event.type] as FlowEventHandler<T> | undefined
   if (!handler)
     return

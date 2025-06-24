@@ -29,6 +29,7 @@ import SuperJSON from 'superjson'
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ThemeProvider } from '../components/theme/ThemeProvider'
+import { WagmiProvider } from '../components/wallet/WagmiProvider'
 import { ZoomProvider } from './ZoomProvider'
 import '../store'
 
@@ -128,21 +129,23 @@ export function RootProvider({
       <ThemeProvider className={className} style={style} theme={theme}>
 
         <TooltipProvider>
-          <QueryClientProvider client={queryClient}>
-            <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-              <ReactFlowProvider>
-                <ZoomProvider>
-                  <DndContextProvider>
-                    <DndProvider>
-                      <MenuPositionProvider>
-                        {children ?? <Outlet />}
-                      </MenuPositionProvider>
-                    </DndProvider>
-                  </DndContextProvider>
-                </ZoomProvider>
-              </ReactFlowProvider>
-            </TRPCProvider>
-          </QueryClientProvider>
+          <WagmiProvider>
+            <QueryClientProvider client={queryClient}>
+              <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+                <ReactFlowProvider>
+                  <ZoomProvider>
+                    <DndContextProvider>
+                      <DndProvider>
+                        <MenuPositionProvider>
+                          {children ?? <Outlet />}
+                        </MenuPositionProvider>
+                      </DndProvider>
+                    </DndContextProvider>
+                  </ZoomProvider>
+                </ReactFlowProvider>
+              </TRPCProvider>
+            </QueryClientProvider>
+          </WagmiProvider>
         </TooltipProvider>
         <div id="chaingraph-portal" />
       </ThemeProvider>

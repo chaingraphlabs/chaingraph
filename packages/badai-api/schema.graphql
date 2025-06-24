@@ -961,6 +961,7 @@ enum Market {
 }
 
 enum MessageType {
+    agentTrigger
     common
     error
     scratchpad

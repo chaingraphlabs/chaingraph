@@ -162,6 +162,9 @@ class LLMCallWithToolsNode extends BaseNode {
     schema: ToolCallOutput,
     title: 'Tool Call',
     description: 'Information about the tool that was called by the LLM',
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   toolCall: ToolCallOutput = new ToolCallOutput()
 

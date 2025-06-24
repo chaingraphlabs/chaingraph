@@ -8,7 +8,6 @@
 
 import { useTRPC } from '@badaitech/chaingraph-trpc/client'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { skipToken } from '@tanstack/react-query'
 import { useSubscription } from '@trpc/tanstack-react-query'
 // import { trpcReact } from '@badaitech/chaingraph-trpc/client'
 import { useUnit } from 'effector-react'
@@ -130,36 +129,35 @@ export function useExecutionSubscription() {
   const trpc = useTRPC()
 
   const opts = trpc.execution.subscribeToEvents.subscriptionOptions(
-    executionId
-      ? {
-          executionId,
-          lastEventId: null,
-          eventTypes: [
-            ExecutionEventEnum.FLOW_SUBSCRIBED,
-            ExecutionEventEnum.FLOW_STARTED,
-            ExecutionEventEnum.FLOW_COMPLETED,
-            ExecutionEventEnum.FLOW_FAILED,
-            ExecutionEventEnum.FLOW_CANCELLED,
-            ExecutionEventEnum.FLOW_PAUSED,
-            ExecutionEventEnum.FLOW_RESUMED,
-            ExecutionEventEnum.NODE_STARTED,
-            ExecutionEventEnum.NODE_BACKGROUNDED,
-            ExecutionEventEnum.NODE_COMPLETED,
-            ExecutionEventEnum.NODE_FAILED,
-            ExecutionEventEnum.NODE_SKIPPED,
-            ExecutionEventEnum.NODE_STATUS_CHANGED,
-            ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-            // ExecutionEventEnum.EDGE_TRANSFER_STARTED,
-            ExecutionEventEnum.EDGE_TRANSFER_COMPLETED,
-            ExecutionEventEnum.EDGE_TRANSFER_FAILED,
-            ExecutionEventEnum.DEBUG_BREAKPOINT_HIT,
-            ExecutionEventEnum.CHILD_EXECUTION_SPAWNED,
-            ExecutionEventEnum.CHILD_EXECUTION_COMPLETED,
-            ExecutionEventEnum.CHILD_EXECUTION_FAILED,
-          ],
-        }
-      : skipToken,
     {
+      executionId: executionId || '',
+      lastEventId: null,
+      eventTypes: [
+        ExecutionEventEnum.FLOW_SUBSCRIBED,
+        ExecutionEventEnum.FLOW_STARTED,
+        ExecutionEventEnum.FLOW_COMPLETED,
+        ExecutionEventEnum.FLOW_FAILED,
+        ExecutionEventEnum.FLOW_CANCELLED,
+        ExecutionEventEnum.FLOW_PAUSED,
+        ExecutionEventEnum.FLOW_RESUMED,
+        ExecutionEventEnum.NODE_STARTED,
+        ExecutionEventEnum.NODE_BACKGROUNDED,
+        ExecutionEventEnum.NODE_COMPLETED,
+        ExecutionEventEnum.NODE_FAILED,
+        ExecutionEventEnum.NODE_SKIPPED,
+        ExecutionEventEnum.NODE_STATUS_CHANGED,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        // ExecutionEventEnum.EDGE_TRANSFER_STARTED,
+        ExecutionEventEnum.EDGE_TRANSFER_COMPLETED,
+        ExecutionEventEnum.EDGE_TRANSFER_FAILED,
+        ExecutionEventEnum.DEBUG_BREAKPOINT_HIT,
+        ExecutionEventEnum.CHILD_EXECUTION_SPAWNED,
+        ExecutionEventEnum.CHILD_EXECUTION_COMPLETED,
+        ExecutionEventEnum.CHILD_EXECUTION_FAILED,
+      ],
+    },
+    {
+      enabled: !!executionId,
       onStarted: () => {
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.CONNECTING)
       },

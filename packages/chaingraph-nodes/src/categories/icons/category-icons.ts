@@ -56,5 +56,16 @@ export function getCategoryIcon(name: string): IconComponent {
     return CategoryIcons[name]!
   }
 
+  // Try to dynamically import from lucide-react
+  try {
+    // eslint-disable-next-line ts/no-require-imports
+    const lucideReact = require('lucide-react')
+    if (lucideReact[name] && typeof lucideReact[name] === 'function') {
+      return lucideReact[name] as IconComponent
+    }
+  } catch {
+    // Fall back to default if import fails
+  }
+
   return CategoryIcons.Type!
 }

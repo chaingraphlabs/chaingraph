@@ -24,10 +24,12 @@ export function FlowLayout() {
           navigate(`/flow/${flowId}`)
         }}
       />
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <Flow />
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
       </div>
-      <ThemeToggle />
     </div>
   )
 }

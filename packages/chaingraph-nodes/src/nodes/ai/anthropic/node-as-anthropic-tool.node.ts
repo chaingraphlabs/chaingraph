@@ -61,6 +61,7 @@ class NodeAsAnthropicToolNode extends BaseNode {
     schema: Tool,
     ui: {
       hideEditor: true,
+      hidePropertyEditor: true,
     },
   })
   tool: Tool = new Tool()

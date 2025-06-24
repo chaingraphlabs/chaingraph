@@ -62,6 +62,9 @@ class AntropicToolDefinerNode extends BaseNode {
     title: 'Tool',
     description: 'The defined tool',
     schema: Tool,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   tool: Tool = new Tool()
 

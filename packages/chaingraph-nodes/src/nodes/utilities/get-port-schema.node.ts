@@ -62,6 +62,9 @@ class GetPortSchemaNode extends BaseNode {
     title: 'Port Schema',
     description: 'Schema details of the connected port',
     schema: PortSchemaUnion,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   portSchema: PortSchemaUnion = new PortSchemaUnion()
 

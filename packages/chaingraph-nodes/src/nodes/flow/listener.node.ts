@@ -62,6 +62,9 @@ class EventListenerNode extends BaseNode {
     title: 'Event Data',
     description: 'Output data when the event is triggered',
     schema: EventData,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   outputData: EventData = new EventData()
 

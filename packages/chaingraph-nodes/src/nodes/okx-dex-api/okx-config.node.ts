@@ -83,6 +83,9 @@ class OKXConfigNode extends BaseNode {
     title: 'OKX Configuration',
     description: 'Complete configuration object for OKX API',
     schema: OKXConfig,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   config: OKXConfig = new OKXConfig()
 

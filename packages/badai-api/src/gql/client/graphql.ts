@@ -745,6 +745,7 @@ export type MessageMetaKv = {
 };
 
 export enum MessageType {
+  AgentTrigger = 'agentTrigger',
   Common = 'common',
   Error = 'error',
   Scratchpad = 'scratchpad',

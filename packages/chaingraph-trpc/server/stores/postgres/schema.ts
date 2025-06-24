@@ -34,10 +34,17 @@ export const executionsTable = pgTable('executions', {
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  errorMessage: text('error_message'),
+  errorNodeId: text('error_node_id'),
+  executionDepth: integer('execution_depth').default(0).notNull(),
+  metadata: jsonb('metadata'),
+  externalEvents: jsonb('external_events'),
 }, table => [
   index('executions_owner_id_created_at_idx').on(table.ownerId, table.createdAt),
   index('executions_parent_execution_id_idx').on(table.parentExecutionId),
   index('executions_flow_id_idx').on(table.flowId),
+  index('executions_status_idx').on(table.status),
+  index('executions_started_at_idx').on(table.startedAt),
 ])
 
 export const executionEventsTable = pgTable('execution_events', {

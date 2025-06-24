@@ -29,6 +29,9 @@ class ArchAIChatMetaNode extends BaseNode {
     schema: ChatMeta,
     title: 'Chat Meta',
     description: 'The chat meta data',
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   chatMeta?: ChatMeta
 

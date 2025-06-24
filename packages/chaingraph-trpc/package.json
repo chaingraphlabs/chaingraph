@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": false,
   "description": "tRPC client and server for the Chaingraph V2",
   "license": "BUSL-1.1",
@@ -36,21 +36,21 @@
     "migrate:run": "npx drizzle-kit migrate --config ./server/drizzle.config.ts"
   },
   "peerDependencies": {
-    "@tanstack/react-query": ">= 5.67.1"
+    "@tanstack/react-query": ">= 5.80.3"
   },
   "dependencies": {
-    "@trpc/client": "11.1.0",
-    "@trpc/react-query": "11.1.0",
-    "@trpc/server": "11.1.0",
-    "@trpc/tanstack-react-query": "^11.1.0",
-    "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.41.0",
-    "graphql-request": "^7.1.2",
+    "@trpc/client": "^11.4.2",
+    "@trpc/react-query": "^11.4.2",
+    "@trpc/server": "^11.4.2",
+    "@trpc/tanstack-react-query": "^11.4.2",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.2",
+    "graphql-request": "^7.2.0",
     "nanoid": "^5.1.5",
     "nanoid-dictionary": "^5.0.0",
-    "pg": "^8.14.1",
-    "ws": "^8.18.1",
-    "zod": "^3.25.56",
+    "pg": "^8.16.2",
+    "ws": "^8.18.2",
+    "zod": "^3.25.51",
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {

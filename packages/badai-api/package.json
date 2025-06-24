@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/badai-api",
   "type": "module",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": false,
   "description": "Bad AI GraphQL API client",
   "license": "BUSL-1.1",
@@ -34,12 +34,12 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
     "@types/node": "^22.14.0",
-    "graphql": "^16.10.0",
-    "graphql-request": "^7.1.2"
+    "graphql": "^16.11.0",
+    "graphql-request": "^7.2.0"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
-    "@graphql-codegen/cli": "5.0.5",
+    "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-document-nodes": "^4.0.16"
   }

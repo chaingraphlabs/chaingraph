@@ -107,7 +107,6 @@ export async function init() {
   getCategoriesMetadata().forEach((metadata: CategoryMetadata) => {
     nodesCatalog.registerCategory(metadata.id, metadata)
   })
-
   // register nodes
   NodeRegistry.getInstance().getNodeTypes().forEach((type) => {
     const node = NodeRegistry.getInstance().createNode(type, `${type}-catalog`)
