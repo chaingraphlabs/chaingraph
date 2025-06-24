@@ -16,9 +16,12 @@ import {
   BaseNode,
   Input,
   Node,
+  ObjectSchema,
   Output,
   PortArray,
   PortBoolean,
+  PortNumber,
+  PortObject,
   PortSecret,
   PortString,
   StringEnum,
@@ -45,9 +48,54 @@ class Networks {
   }
 }
 
-interface RefinedTokenBalance {
-  tokenAddress: string
-  rawBalance: string
+/**
+ * Amount with multiple representations
+ */
+@ObjectSchema({
+  description: 'Amount with raw value and formatted display',
+})
+class Amount {
+  @PortString({
+    title: 'Value',
+    description: 'Amount in smallest unit (wei, satoshi, etc.)',
+    required: true,
+    defaultValue: '0',
+  })
+  value: string = '0'
+
+  @PortNumber({
+    title: 'Decimals',
+    description: 'Number of decimal places',
+    required: true,
+    defaultValue: 18,
+  })
+  decimals: number = 18
+
+  @PortString({
+    title: 'Formatted',
+    description: 'Human-readable amount (e.g., "1.5")',
+    required: false,
+    defaultValue: '0.0',
+  })
+  formatted?: string = '0.0'
+}
+
+@ObjectSchema({
+  description: 'Token balance information',
+})
+class TokenBalance {
+  @PortString({
+    title: 'Token Address',
+    description: 'Contract address of the token',
+  })
+  tokenAddress: string = ''
+
+  @PortObject({
+    title: 'Balance',
+    description: 'Token balance amount with decimals',
+    schema: Amount,
+  })
+  balance: Amount = new Amount()
 }
 
 @Node({
@@ -115,23 +163,10 @@ class AlchemyTokenBalances extends BaseNode {
     description: 'List of token balances for the specified wallet',
     itemConfig: {
       type: 'object',
-      schema: {
-        properties: {
-          tokenAddress: {
-            type: 'string',
-            title: 'Token Address',
-            description: 'Contract address of the token',
-          },
-          rawBalance: {
-            type: 'string',
-            title: 'Raw balance in wei',
-            description: 'Token balance in wei format as string',
-          },
-        },
-      },
+      schema: TokenBalance,
     },
   })
-  tokenBalances: RefinedTokenBalance[] = []
+  tokenBalances: TokenBalance[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.apiKey) {
@@ -155,15 +190,21 @@ class AlchemyTokenBalances extends BaseNode {
         ? await alchemy.core.getTokenBalances(this.walletAddress, this.contractAddresses)
         : await alchemy.core.getTokenBalances(this.walletAddress)
 
-      const allTokens: RefinedTokenBalance[] = response.tokenBalances.map(token => ({
-        tokenAddress: token.contractAddress,
-        rawBalance: this.safeBigIntToString(token.tokenBalance),
-      }))
+      const allTokens: TokenBalance[] = response.tokenBalances.map((token) => {
+        const rawBalance = this.safeBigIntToString(token.tokenBalance)
+        // Default to 18 decimals for ERC20 tokens when not specified
+        const decimals = 18
+
+        const tokenBalance = new TokenBalance()
+        tokenBalance.tokenAddress = token.contractAddress
+        tokenBalance.balance = this.formatAmount(rawBalance, decimals)
+        return tokenBalance
+      })
 
       if (this.filterZeroBalances === false)
         this.tokenBalances = allTokens
       else
-        this.tokenBalances = allTokens.filter(token => token.rawBalance !== '0')
+        this.tokenBalances = allTokens.filter(token => token.balance.value !== '0')
 
       return {}
     } catch (error) {
@@ -179,6 +220,31 @@ class AlchemyTokenBalances extends BaseNode {
     } catch (error) {
       throw new Error(`Invalid token balance value: ${value}`)
     }
+  }
+
+  private formatAmount(raw: string, decimals: number): Amount {
+    const amount = new Amount()
+    amount.value = raw
+    amount.decimals = decimals
+
+    try {
+      const rawBigInt = BigInt(raw)
+      const divisor = BigInt(10 ** decimals)
+      const quotient = rawBigInt / divisor
+      const remainder = rawBigInt % divisor
+
+      // Format with proper decimal places
+      const decimalStr = remainder.toString().padStart(decimals, '0')
+      const trimmedDecimal = decimalStr.replace(/0+$/, '') // Remove trailing zeros
+
+      amount.formatted = trimmedDecimal.length > 0
+        ? `${quotient}.${trimmedDecimal}`
+        : quotient.toString()
+    } catch (e) {
+      amount.formatted = '0'
+    }
+
+    return amount
   }
 }
 

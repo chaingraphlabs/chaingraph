@@ -17,9 +17,12 @@ import {
   BaseNode,
   Input,
   Node,
+  ObjectSchema,
   Output,
   PortArray,
   PortBoolean,
+  PortNumber,
+  PortObject,
   PortSecret,
   PortString,
   StringEnum,
@@ -44,6 +47,102 @@ class Networks {
       defaultValue: value,
     })) as IPortConfig[]
   }
+}
+
+/**
+ * ERC20 Token information
+ */
+@ObjectSchema({
+  description: 'ERC20 Token information including metadata and chain',
+})
+class Token {
+  @PortString({
+    title: 'Address',
+    description: 'Token contract address',
+    required: true,
+  })
+  address: string = ''
+
+  @PortString({
+    title: 'Symbol',
+    description: 'Token symbol (e.g., USDT, DAI)',
+    required: false,
+  })
+  symbol: string = ''
+
+  @PortString({
+    title: 'Name',
+    description: 'Token full name',
+    required: false,
+  })
+  name: string = ''
+
+  @PortNumber({
+    title: 'Decimals',
+    description: 'Number of decimal places',
+    required: false,
+    defaultValue: 18,
+  })
+  decimals: number = 18
+
+  @PortNumber({
+    title: 'Chain ID',
+    description: 'Blockchain network ID',
+    required: true,
+    defaultValue: 1,
+  })
+  chainId: number = 1
+}
+
+/**
+ * Amount with multiple representations
+ */
+@ObjectSchema({
+  description: 'Amount with raw value and formatted display',
+})
+class Amount {
+  @PortString({
+    title: 'Value',
+    description: 'Amount in smallest unit (wei, satoshi, etc.)',
+    required: true,
+    defaultValue: '0',
+  })
+  value: string = '0'
+
+  @PortNumber({
+    title: 'Decimals',
+    description: 'Number of decimal places',
+    required: true,
+    defaultValue: 18,
+  })
+  decimals: number = 18
+
+  @PortString({
+    title: 'Formatted',
+    description: 'Human-readable amount (e.g., "1.5")',
+    required: false,
+    defaultValue: '0.0',
+  })
+  formatted?: string = '0.0'
+}
+
+@ObjectSchema({
+  description: 'Token balance with metadata',
+})
+class TokenBalanceWithMeta {
+  @PortObject({
+    title: 'Token',
+    description: 'Token information',
+    schema: Token,
+  })
+  token: Token = new Token()
+
+  @PortObject({
+    title: 'Balance',
+    description: 'Token balance amount with decimals',
+    schema: Amount,
+  })
+  balance: Amount = new Amount()
 }
 
 @Node({
@@ -111,19 +210,10 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
     description: 'List of token balances for the specified wallet',
     itemConfig: {
       type: 'object',
-      schema: {
-        properties: {
-          contractAddress: { type: 'string', title: 'Token Address', description: 'Contract address of the token' },
-          rawBalance: { type: 'string', title: 'Raw Balance', description: 'Raw token balance (not divided by decimals)' },
-          decimals: { type: 'number', title: 'Decimals', description: 'Number of decimal places for the token' },
-          name: { type: 'string', title: 'Name', description: 'Token name' },
-          symbol: { type: 'string', title: 'Symbol', description: 'Token symbol' },
-          balance: { type: 'string', title: 'Balance', description: 'Formatted token balance' },
-        },
-      },
+      schema: TokenBalanceWithMeta,
     },
   })
-  tokenBalances: OwnedToken[] = []
+  tokenBalances: TokenBalanceWithMeta[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.apiKey) {
@@ -159,15 +249,76 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
         tokensList.push(...response.tokens)
       } while (pageKey)
 
+      const processedTokens = tokensList.map((token) => {
+        const rawBalance = token.rawBalance || '0'
+        const decimals = token.decimals || 18
+
+        const tokenBalance = new TokenBalanceWithMeta()
+
+        // Set token information
+        tokenBalance.token = new Token()
+        tokenBalance.token.address = token.contractAddress
+        tokenBalance.token.symbol = token.symbol || ''
+        tokenBalance.token.name = token.name || ''
+        tokenBalance.token.decimals = decimals
+        tokenBalance.token.chainId = this.getChainId(this.network)
+
+        // Set balance
+        tokenBalance.balance = this.formatAmount(rawBalance, decimals)
+        return tokenBalance
+      })
+
       if (this.filterZeroBalances === false)
-        this.tokenBalances = tokensList
+        this.tokenBalances = processedTokens
       else
-        this.tokenBalances = tokensList.filter(token => token.rawBalance !== '0')
+        this.tokenBalances = processedTokens.filter(token => token.balance.value !== '0')
 
       return {}
     } catch (error) {
       throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
     }
+  }
+
+  private formatAmount(raw: string, decimals: number): Amount {
+    const amount = new Amount()
+    amount.value = raw
+    amount.decimals = decimals
+
+    try {
+      const rawBigInt = BigInt(raw)
+      const divisor = BigInt(10 ** decimals)
+      const quotient = rawBigInt / divisor
+      const remainder = rawBigInt % divisor
+
+      // Format with proper decimal places
+      const decimalStr = remainder.toString().padStart(decimals, '0')
+      const trimmedDecimal = decimalStr.replace(/0+$/, '') // Remove trailing zeros
+
+      amount.formatted = trimmedDecimal.length > 0
+        ? `${quotient}.${trimmedDecimal}`
+        : quotient.toString()
+    } catch (e) {
+      amount.formatted = '0'
+    }
+
+    return amount
+  }
+
+  private getChainId(network: string): number {
+    // Map Alchemy network names to chain IDs
+    const networkToChainId: Record<string, number> = {
+      'eth-mainnet': 1,
+      'eth-sepolia': 11155111,
+      'polygon-mainnet': 137,
+      'polygon-mumbai': 80001,
+      'arb-mainnet': 42161,
+      'arb-sepolia': 421614,
+      'opt-mainnet': 10,
+      'opt-sepolia': 11155420,
+      'base-mainnet': 8453,
+      'base-sepolia': 84532,
+    }
+    return networkToChainId[network] || 1
   }
 }
 
