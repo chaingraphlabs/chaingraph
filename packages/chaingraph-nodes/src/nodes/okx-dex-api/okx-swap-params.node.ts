@@ -44,6 +44,9 @@ class OKXSwapParamsNode extends BaseNode {
     title: 'Swap Parameters',
     description: 'Formatted parameters object for OKX DEX Swap API',
     schema: SwapParams,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   swapParams: SwapParams = new SwapParams()
 

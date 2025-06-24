@@ -69,6 +69,9 @@ export class BuildTransferNode extends BaseNode {
     title: 'Transaction',
     description: 'Complete transaction object ready for signing',
     schema: Transaction,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   transaction: Transaction = new Transaction()
 

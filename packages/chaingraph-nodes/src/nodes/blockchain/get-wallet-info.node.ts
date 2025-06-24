@@ -33,6 +33,9 @@ export class GetWalletInfoNode extends BaseNode {
     title: 'Wallet',
     description: 'Complete wallet information',
     schema: WalletInfo,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   wallet: WalletInfo = new WalletInfo()
 

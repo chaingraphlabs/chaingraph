@@ -56,6 +56,9 @@ class OKXGetSwapDataNode extends BaseNode {
     title: 'Swap Response Data',
     description: 'Comprehensive swap data including transaction details',
     schema: SwapResponseData,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   swapResponseData: SwapResponseData = new SwapResponseData()
 

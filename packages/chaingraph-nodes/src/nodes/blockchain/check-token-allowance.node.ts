@@ -61,6 +61,9 @@ export class CheckTokenAllowanceNode extends BaseNode {
     title: 'Allowance Decimal',
     description: 'Token allowance amount with decimals',
     schema: Amount,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   allowance: Amount = new Amount()
 
@@ -69,6 +72,9 @@ export class CheckTokenAllowanceNode extends BaseNode {
     title: 'Is Unlimited',
     description: 'Whether the allowance is set to maximum (unlimited)',
     defaultValue: false,
+    ui: {
+      hideEditor: true, // Hide editor for this output
+    },
   })
   isUnlimited: boolean = false
 

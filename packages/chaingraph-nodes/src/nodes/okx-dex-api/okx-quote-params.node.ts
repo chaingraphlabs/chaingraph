@@ -44,6 +44,9 @@ class OKXQuoteParamsNode extends BaseNode {
     title: 'Quote Parameters',
     description: 'Formatted parameters object for OKX DEX Quote API',
     schema: QuoteParams,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   quoteParams: QuoteParams = new QuoteParams()
 

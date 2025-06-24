@@ -52,6 +52,9 @@ export class GetTokenBalanceNode extends BaseNode {
     title: 'Balance Decimal',
     description: 'Token balance amount with decimals',
     schema: Amount,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   balance: Amount = new Amount()
 

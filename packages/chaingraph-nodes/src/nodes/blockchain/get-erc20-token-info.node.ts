@@ -52,6 +52,9 @@ export class GetERC20TokenInfoNode extends BaseNode {
     title: 'Token',
     description: 'Complete token information',
     schema: Token,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   token: Token = new Token()
 

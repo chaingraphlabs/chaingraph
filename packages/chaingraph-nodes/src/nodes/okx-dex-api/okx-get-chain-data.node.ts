@@ -55,6 +55,9 @@ class OKXGetChainDataNode extends BaseNode {
     title: 'Chain Data',
     description: 'Information about the specified blockchain',
     schema: ChainData,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   chainData: ChainData = new ChainData()
 

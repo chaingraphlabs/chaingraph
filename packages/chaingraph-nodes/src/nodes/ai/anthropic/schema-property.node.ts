@@ -67,6 +67,9 @@ class AntropicSchemaPropertyNode extends BaseNode {
     title: 'Property',
     description: 'The schema property definition',
     schema: ToolSchemaProperty,
+    ui: {
+      hidePropertyEditor: true,
+    },
   })
   property: ToolSchemaProperty = new ToolSchemaProperty()
 

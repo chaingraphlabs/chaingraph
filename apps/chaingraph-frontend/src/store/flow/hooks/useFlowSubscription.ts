@@ -342,7 +342,7 @@ export function useFlowSubscription() {
           setFlowSubscriptionStatus(FlowSubscriptionStatus.SUBSCRIBED)
         }
 
-        // console.log('Received event:', trackedData.data)
+        console.log('Received event:', trackedData.data)
         await handleEvent(trackedData.data)
       },
       onError: (error) => {

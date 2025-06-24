@@ -79,6 +79,7 @@ class GateNode extends BaseNode {
     },
     ui: {
       collapsed: true,
+      hidePropertyEditor: true,
     },
   })
   outputObject: Record<string, any> = {}
