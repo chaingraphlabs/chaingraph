@@ -9,12 +9,10 @@
 import type { ExecutionEvent } from '../flow'
 import type { INode } from '../node'
 import type { EmittedEventContext } from './emitted-event-context'
+import type { IntegrationContext } from './integration-context'
 import { subtle } from 'node:crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { EventQueue } from '../utils'
-
-// Generic integration interface that can handle any integration type
-export type IntegrationContext = Record<string, unknown>
 
 // Event emitted by nodes for triggering listeners
 export interface EmittedEvent {

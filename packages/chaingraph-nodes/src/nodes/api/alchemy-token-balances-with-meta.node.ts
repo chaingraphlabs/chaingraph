@@ -12,6 +12,7 @@ import type {
   IPortConfig,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
+import type { OwnedToken } from 'alchemy-sdk'
 import {
   BaseNode,
   Input,
@@ -49,6 +50,51 @@ class Networks {
 }
 
 /**
+ * ERC20 Token information
+ */
+@ObjectSchema({
+  description: 'ERC20 Token information including metadata and chain',
+})
+class Token {
+  @PortString({
+    title: 'Address',
+    description: 'Token contract address',
+    required: true,
+  })
+  address: string = ''
+
+  @PortString({
+    title: 'Symbol',
+    description: 'Token symbol (e.g., USDT, DAI)',
+    required: false,
+  })
+  symbol: string = ''
+
+  @PortString({
+    title: 'Name',
+    description: 'Token full name',
+    required: false,
+  })
+  name: string = ''
+
+  @PortNumber({
+    title: 'Decimals',
+    description: 'Number of decimal places',
+    required: false,
+    defaultValue: 18,
+  })
+  decimals: number = 18
+
+  @PortNumber({
+    title: 'Chain ID',
+    description: 'Blockchain network ID',
+    required: true,
+    defaultValue: 1,
+  })
+  chainId: number = 1
+}
+
+/**
  * Amount with multiple representations
  */
 @ObjectSchema({
@@ -81,14 +127,15 @@ class Amount {
 }
 
 @ObjectSchema({
-  description: 'Token balance information',
+  description: 'Token balance with metadata',
 })
-class TokenBalance {
-  @PortString({
-    title: 'Token Address',
-    description: 'Contract address of the token',
+class TokenBalanceWithMeta {
+  @PortObject({
+    title: 'Token',
+    description: 'Token information',
+    schema: Token,
   })
-  tokenAddress: string = ''
+  token: Token = new Token()
 
   @PortObject({
     title: 'Balance',
@@ -99,13 +146,13 @@ class TokenBalance {
 }
 
 @Node({
-  type: 'AlchemyTokenBalances',
-  title: 'Alchemy: token balances',
-  description: 'Fetches token balances for a wallet address using Alchemy API',
+  type: 'AlchemyTokenBalancesWithMeta',
+  title: 'Alchemy: token balances with metadata',
+  description: 'Fetches token balances with metadata for a given wallet address using Alchemy API',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy'],
 })
-class AlchemyTokenBalances extends BaseNode {
+class AlchemyTokenBalancesWithMeta extends BaseNode {
   @Input()
   @PortSecret<'alchemy'>({
     title: 'API Key',
@@ -163,10 +210,10 @@ class AlchemyTokenBalances extends BaseNode {
     description: 'List of token balances for the specified wallet',
     itemConfig: {
       type: 'object',
-      schema: TokenBalance,
+      schema: TokenBalanceWithMeta,
     },
   })
-  tokenBalances: TokenBalance[] = []
+  tokenBalances: TokenBalanceWithMeta[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.apiKey) {
@@ -186,39 +233,49 @@ class AlchemyTokenBalances extends BaseNode {
     const alchemy = new Alchemy(settings)
 
     try {
-      const response = this.contractAddresses.length > 0
-        ? await alchemy.core.getTokenBalances(this.walletAddress, this.contractAddresses)
-        : await alchemy.core.getTokenBalances(this.walletAddress)
+      let pageKey: string | undefined
+      const tokensList: OwnedToken[] = []
 
-      const allTokens: TokenBalance[] = response.tokenBalances.map((token) => {
-        const rawBalance = this.safeBigIntToString(token.tokenBalance)
-        // Default to 18 decimals for ERC20 tokens when not specified
-        const decimals = 18
+      do {
+        const response = await alchemy.core.getTokensForOwner(
+          this.walletAddress,
+          {
+            ...(this.contractAddresses.length > 0 ? { contractAddresses: this.contractAddresses } : {}),
+            ...(pageKey ? { pageKey } : {}),
+          },
+        )
 
-        const tokenBalance = new TokenBalance()
-        tokenBalance.tokenAddress = token.contractAddress
+        pageKey = response.pageKey
+        tokensList.push(...response.tokens)
+      } while (pageKey)
+
+      const processedTokens = tokensList.map((token) => {
+        const rawBalance = token.rawBalance || '0'
+        const decimals = token.decimals || 18
+
+        const tokenBalance = new TokenBalanceWithMeta()
+
+        // Set token information
+        tokenBalance.token = new Token()
+        tokenBalance.token.address = token.contractAddress
+        tokenBalance.token.symbol = token.symbol || ''
+        tokenBalance.token.name = token.name || ''
+        tokenBalance.token.decimals = decimals
+        tokenBalance.token.chainId = this.getChainId(this.network)
+
+        // Set balance
         tokenBalance.balance = this.formatAmount(rawBalance, decimals)
         return tokenBalance
       })
 
       if (this.filterZeroBalances === false)
-        this.tokenBalances = allTokens
+        this.tokenBalances = processedTokens
       else
-        this.tokenBalances = allTokens.filter(token => token.balance.value !== '0')
+        this.tokenBalances = processedTokens.filter(token => token.balance.value !== '0')
 
       return {}
     } catch (error) {
       throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
-    }
-  }
-
-  private safeBigIntToString(value: string | null): string {
-    if (!value || value === '0x')
-      return '0'
-    try {
-      return BigInt(value).toString()
-    } catch (error) {
-      throw new Error(`Invalid token balance value: ${value}`)
     }
   }
 
@@ -246,6 +303,23 @@ class AlchemyTokenBalances extends BaseNode {
 
     return amount
   }
+
+  private getChainId(network: string): number {
+    // Map Alchemy network names to chain IDs
+    const networkToChainId: Record<string, number> = {
+      'eth-mainnet': 1,
+      'eth-sepolia': 11155111,
+      'polygon-mainnet': 137,
+      'polygon-mumbai': 80001,
+      'arb-mainnet': 42161,
+      'arb-sepolia': 421614,
+      'opt-mainnet': 10,
+      'opt-sepolia': 11155420,
+      'base-mainnet': 8453,
+      'base-sepolia': 84532,
+    }
+    return networkToChainId[network] || 1
+  }
 }
 
-export default AlchemyTokenBalances
+export default AlchemyTokenBalancesWithMeta

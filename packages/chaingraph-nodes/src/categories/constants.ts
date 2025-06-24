@@ -25,6 +25,7 @@ export const NODE_CATEGORIES = {
   ARCH_RAG: 'arch-rag',
   BADAI: 'badai',
   OKX_DEX: 'okx-dex',
+  BLOCKCHAIN: 'blockchain',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -373,6 +374,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 10, // After Secret
+  },
+
+  [NODE_CATEGORIES.BLOCKCHAIN]: {
+    id: NODE_CATEGORIES.BLOCKCHAIN,
+    label: 'Blockchain',
+    description: 'Web3 wallet interactions and blockchain operations',
+    icon: 'Wallet',
+    style: {
+      light: {
+        primary: '#E3F2FD', // Soft blue
+        secondary: '#F1F8FE',
+        background: '#FFFFFF',
+        text: '#1565C0', // Deeper blue
+      },
+      dark: {
+        primary: '#1A3A52', // Deep blue
+        secondary: '#0F2438',
+        background: '#1C1C1C',
+        text: '#64B5F6', // Bright blue
+      },
+    },
+    order: 11, // After OKX_DEX
   },
 
 }

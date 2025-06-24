@@ -6,6 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export { default as AlchemyTokenBalancesWithMeta } from './alchemy-token-balances-with-meta.node'
-export { default as AlchemyTokenBalances } from './alchemy-token-balances.node'
-export * from './coin-market-cap.node'
+import type { ArchAIContext } from './arch-a-i-context'
+import type { WalletContext } from './wallet-context'
+
+/**
+ * Integration context that can be passed to executions
+ */
+export interface IntegrationContext {
+  archai?: ArchAIContext
+  wallet?: WalletContext
+}

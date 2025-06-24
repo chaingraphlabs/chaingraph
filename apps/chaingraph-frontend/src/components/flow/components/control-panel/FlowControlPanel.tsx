@@ -26,6 +26,7 @@ import {
   toggleDebugMode,
 } from '@/store/execution'
 import { $activeFlowMetadata } from '@/store/flow'
+import { getWalletContextForExecution } from '@/store/wallet'
 import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -57,11 +58,15 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
           }
         : undefined
 
+      // Get wallet context
+      const walletContext = getWalletContextForExecution()
+
       // Create new execution
       createExecution({
         flowId: activeFlow.id,
         debug: debugMode,
         archAIIntegration,
+        walletIntegration: walletContext,
       })
     } else if (executionStatus === ExecutionStatus.CREATED) {
       // Start newly created execution
