@@ -74,16 +74,44 @@ export const $executionState = executionDomain.createStore<ExecutionState>(initi
   .reset(clearExecutionState)
   .reset(createExecution)
 
+export const addExternalIntegrationConfigEvent = executionDomain.createEvent<{ key: string, value: any }>()
+export const removeExternalIntegrationConfigEvent = executionDomain.createEvent<{ key: string }>()
+export const clearExternalIntegrationConfigEvent = executionDomain.createEvent()
+
+export const $executionExternalIntegrationConfig = executionDomain.createStore<Map<string, any>>(new Map())
+  .on(addExternalIntegrationConfigEvent, (state, { key, value }) => {
+    const newState = new Map(state)
+    newState.set(key, value)
+    return newState
+  })
+  .on(removeExternalIntegrationConfigEvent, (state, { key }) => {
+    const newState = new Map(state)
+    newState.delete(key)
+    return newState
+  })
+  .on(clearExternalIntegrationConfigEvent, () => new Map())
+
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
   const client = $trpcClient.getState()
   const state = $executionState.getState()
+  const externalIntegrationsStoreMap = $executionExternalIntegrationConfig.getState()
 
-  const { flowId, debug, archAIIntegration, walletIntegration } = payload
+  const { flowId, debug, archAIIntegration, walletIntegration, externalIntegrations: externalIntegrationsPayload } = payload
   const breakpoints = state.breakpoints
 
   if (!client) {
     throw new Error('TRPC client is not initialized')
+  }
+
+  // merge external integrations from payload with the store, check for map existence
+  const externalIntegrations = {
+    ...(externalIntegrationsPayload || {}),
+  }
+  if (externalIntegrationsStoreMap && externalIntegrationsStoreMap.size > 0) {
+    externalIntegrationsStoreMap.forEach((value, key) => {
+      externalIntegrations[key] = value
+    })
   }
 
   // Build integration object - type will be inferred from TRPC schema
@@ -99,6 +127,12 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
     ...(walletIntegration && {
       wallet: walletIntegration,
     }),
+  }
+
+  if (externalIntegrations) {
+    Object.entries(externalIntegrations).forEach(([key, value]) => {
+      integration[key] = value
+    })
   }
 
   const response = await client.execution.create.mutate({

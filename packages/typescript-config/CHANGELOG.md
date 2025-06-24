@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.2.9-dev.0
+
+### Patch Changes
+
+- feat: add external integration configuration management hook and related events
+
 ## 0.2.8
 
 ### Patch Changes

@@ -29,3 +29,26 @@ export * from './components/ui'
 export { RootProvider } from './providers/RootProvider'
 export * from './providers/ZoomProvider'
 export * from './store'
+
+// External Integration Utils
+export {
+  clearAllExternalIntegrations,
+  getAllExternalIntegrationConfigurations,
+  getConfiguredExternalIntegrationKeys,
+  getExternalIntegrationConfig,
+  getExternalIntegrationManager,
+  getRegisteredExternalIntegrations,
+  hasExternalIntegration,
+  registerExternalIntegration,
+  removeExternalIntegration,
+  setupExternalIntegration,
+  setupMultipleExternalIntegrations,
+  useExternalIntegrationConfig,
+  validateAllExternalIntegrationConfigurations,
+} from './store/execution'
+
+export type {
+  ExternalIntegrationConfig,
+  IntegrationConfigDefinition,
+  UseExternalIntegrationConfigReturn,
+} from './store/execution'

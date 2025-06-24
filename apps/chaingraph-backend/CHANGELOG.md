@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.9-dev.0
+
+### Patch Changes
+
+- feat: add external integration configuration management hook and related events
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.9-dev.0
+  - @badaitech/chaingraph-trpc@0.2.9-dev.0
+  - @badaitech/chaingraph-nodes@0.2.9-dev.0
+
 ## 0.2.8
 
 ### Patch Changes

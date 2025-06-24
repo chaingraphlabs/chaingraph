@@ -46,7 +46,8 @@ const walletContextSchema = z.object({
 const integrationContextSchema = z.object({
   archai: archAIContextSchema.optional(),
   wallet: walletContextSchema.optional(),
-})
+  // Add other integration contexts as needed
+}).passthrough()
 
 export const executionRouter = router({
   // Create execution instance
