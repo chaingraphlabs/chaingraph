@@ -11,6 +11,7 @@ import type {
   ComparisonQuote as ComparisonQuoteAPI,
   DexProtocol as DexProtocolAPI,
   DexRouter as DexRouterAPI,
+  LiquidityData as LiquidityDataAPI,
   QuoteData as QuoteDataAPI,
   RouterResult as RouterResultAPI,
   SubRouterInfo as SubRouterInfoAPI,
@@ -24,6 +25,7 @@ import {
   ComparisonQuote,
   DexProtocol,
   DexRouter,
+  LiquidityData,
   QuoteData,
   RouterResult,
   SubRouterInfo,
@@ -140,6 +142,20 @@ export function mapRouterResult(source: RouterResultAPI | undefined): RouterResu
   instance.toToken = mapTokenInfo(source.toToken)
   instance.dexRouterList = mapArray(source.dexRouterList, mapDexRouter)
   instance.quoteCompareList = mapArray(source.quoteCompareList, mapComparisonQuote)
+
+  return instance
+}
+
+export function mapLiquidityData(source: LiquidityDataAPI | undefined): LiquidityData {
+  if (!source)
+    return null as unknown as LiquidityData
+
+  const instance = new LiquidityData()
+
+  // Map primitive properties
+  instance.id = source.id || ''
+  instance.name = source.name || ''
+  instance.logo = source.logo || ''
 
   return instance
 }

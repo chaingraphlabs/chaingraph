@@ -407,6 +407,40 @@ export class TransactionData {
   value: string = ''
 }
 
+// export interface LiquidityData {
+//   id: string;
+//   name: string;
+//   logo: string;
+// }
+/**
+ * LiquidityData
+ */
+@ObjectSchema({
+  description: 'Liquidity data for a specific blockchain',
+})
+export class LiquidityData {
+  @PortString({
+    title: 'ID',
+    description: 'Unique identifier for the liquidity data',
+    required: true,
+  })
+  id: string = ''
+
+  @PortString({
+    title: 'Name',
+    description: 'Name of the liquidity data source',
+    required: true,
+  })
+  name: string = ''
+
+  @PortString({
+    title: 'Logo URL',
+    description: 'URL to the logo image of the liquidity data source',
+    required: true,
+  })
+  logo: string = ''
+}
+
 /**
  * QuoteData extends RouterResult to include transaction data
  * Provides complete information for both quote and execution

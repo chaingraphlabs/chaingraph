@@ -17,9 +17,9 @@ import {
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { mapArray, mapQuoteData } from './mappers'
+import { mapArray, mapLiquidityData } from './mappers'
 import { createDexApiClient } from './okx-dex-client'
-import { OKXConfig, QuoteData } from './types'
+import { LiquidityData, OKXConfig } from './types'
 
 /**
  * Node for fetching liquidity information from the OKX DEX API
@@ -57,10 +57,10 @@ class OKXGetLiquidityNode extends BaseNode {
     description: 'Liquidity information for the specified blockchain',
     itemConfig: {
       type: 'object',
-      schema: QuoteData,
+      schema: LiquidityData,
     },
   })
-  liquidityData: QuoteData[] = []
+  liquidityData: LiquidityData[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Reset outputs
@@ -86,7 +86,7 @@ class OKXGetLiquidityNode extends BaseNode {
 
       // Map API response to ChainGraph types
       if (response.data && Array.isArray(response.data)) {
-        this.liquidityData = mapArray(response.data, mapQuoteData)
+        this.liquidityData = mapArray(response.data, mapLiquidityData)
       }
     } catch (apiError: any) {
       throw new Error(`API Error: ${apiError.message || JSON.stringify(apiError)}`)
