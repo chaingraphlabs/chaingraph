@@ -19,15 +19,18 @@ export class HybridExecutionStore implements IExecutionStore {
   ) {}
 
   async create(instance: ExecutionInstance): Promise<void> {
-    // Write to both stores in parallel
-    // Note: create is actually an upsert operation that updates if exists
-    await Promise.all([
-      this.memoryStore.create(instance),
-      this.postgresStore.create(instance).catch((error) => {
-        console.error(`Failed to persist execution ${instance.id} to PostgreSQL:`, error)
+    // Always write to memory store
+    await this.memoryStore.create(instance)
+
+    // Only write completed executions to PostgreSQL
+    // Active executions (created, running, paused) stay in memory only
+    const completedStatuses = ['completed', 'failed', 'stopped']
+    if (completedStatuses.includes(instance.status)) {
+      await this.postgresStore.create(instance).catch((error) => {
+        console.error(`Failed to persist completed execution ${instance.id} to PostgreSQL:`, error)
         // Don't throw - allow operation to continue with in-memory store
-      }),
-    ])
+      })
+    }
   }
 
   async get(id: string): Promise<ExecutionInstance | null> {
@@ -37,9 +40,7 @@ export class HybridExecutionStore implements IExecutionStore {
       return memoryResult
     }
 
-    // For completed executions, we would need to reconstruct from PostgreSQL
-    // For now, return null as full reconstruction requires flow data
-    return null
+    return this.postgresStore.get(id)
   }
 
   async delete(id: string): Promise<boolean> {
@@ -61,8 +62,69 @@ export class HybridExecutionStore implements IExecutionStore {
   }
 
   async list(): Promise<ExecutionInstance[]> {
-    // Return from memory store only (active executions)
-    return this.memoryStore.list()
+    // Get active executions from memory
+    const memoryExecutions = await this.memoryStore.list()
+
+    // Get completed executions from PostgreSQL
+    const postgresExecutions = await this.postgresStore.list()
+
+    // Create a map to avoid duplicates (memory takes precedence)
+    const executionMap = new Map<string, ExecutionInstance>()
+
+    // Add PostgreSQL executions first
+    for (const exec of postgresExecutions) {
+      executionMap.set(exec.id, exec)
+    }
+
+    // Override with memory executions (more up-to-date for active ones)
+    for (const exec of memoryExecutions) {
+      executionMap.set(exec.id, exec)
+    }
+
+    // Return all executions, sorted by createdAt descending
+    return Array.from(executionMap.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  }
+
+  /**
+   * Get execution metadata from PostgreSQL (for completed executions)
+   */
+  async getExecutionMetadata(id: string): Promise<{
+    id: string
+    flowId: string
+    status: string
+    createdAt: Date
+    completedAt?: Date | null
+    error?: { message: string, nodeId?: string } | null
+  } | null> {
+    return this.postgresStore.getExecutionMetadata(id)
+  }
+
+  /**
+   * Get all completed executions from PostgreSQL
+   */
+  async listCompletedExecutions(): Promise<Array<{
+    id: string
+    flowId: string
+    status: string
+    createdAt: Date
+    completedAt?: Date | null
+  }>> {
+    return this.postgresStore.listCompletedExecutions()
+  }
+
+  /**
+   * Get child executions from PostgreSQL
+   */
+  async getChildExecutions(parentId: string): Promise<string[]> {
+    return this.postgresStore.getChildExecutions(parentId)
+  }
+
+  /**
+   * Get execution tree from PostgreSQL
+   */
+  async getExecutionTree(rootId: string): Promise<Array<{ id: string, parentId: string | null, level: number }>> {
+    return this.postgresStore.getExecutionTree(rootId)
   }
 
   /**
