@@ -7,11 +7,11 @@
  */
 
 import {
-  Boolean,
+  PortBoolean,
   ObjectSchema,
-  Number as PortNumber,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 
 /**
@@ -21,21 +21,21 @@ import {
   description: 'ERC20 Token information including metadata and chain',
 })
 export class Token {
-  @String({
+  @PortString({
     title: 'Address',
     description: 'Token contract address',
     required: true,
   })
   address: string = ''
 
-  @String({
+  @PortString({
     title: 'Symbol',
     description: 'Token symbol (e.g., USDT, DAI)',
     required: false,
   })
   symbol: string = ''
 
-  @String({
+  @PortString({
     title: 'Name',
     description: 'Token full name',
     required: false,
@@ -103,7 +103,7 @@ export class NativeToken extends Token {
   description: 'Amount with raw value and formatted display',
 })
 export class Amount {
-  @String({
+  @PortString({
     title: 'Value',
     description: 'Amount in smallest unit (wei, satoshi, etc.)',
     required: true,
@@ -119,7 +119,7 @@ export class Amount {
   })
   decimals: number = 18
 
-  @String({
+  @PortString({
     title: 'Formatted',
     description: 'Human-readable amount (e.g., "1.5")',
     required: false,
@@ -135,7 +135,7 @@ export class Amount {
   description: 'Connected wallet information including address, network, and status',
 })
 export class WalletInfo {
-  @Boolean({
+  @PortBoolean({
     title: 'Connected',
     description: 'Wallet connection status',
     required: true,
@@ -143,7 +143,7 @@ export class WalletInfo {
   })
   isConnected: boolean = false
 
-  @String({
+  @PortString({
     title: 'Address',
     description: 'Wallet address',
     required: false,
@@ -151,7 +151,7 @@ export class WalletInfo {
   })
   address: string = ''
 
-  @String({
+  @PortString({
     title: 'ENS Name',
     description: 'ENS name if available',
     required: false,
@@ -167,7 +167,7 @@ export class WalletInfo {
   })
   chainId: number = 0
 
-  @String({
+  @PortString({
     title: 'Chain Name',
     description: 'Human-readable network name',
     required: false,
@@ -183,7 +183,7 @@ export class WalletInfo {
   description: 'Blockchain transaction ready for signing',
 })
 export class Transaction {
-  @String({
+  @PortString({
     title: 'From',
     description: 'Sender address',
     required: false,
@@ -191,14 +191,14 @@ export class Transaction {
   })
   from: string = ''
 
-  @String({
+  @PortString({
     title: 'To',
     description: 'Recipient address',
     required: true,
   })
   to: string = ''
 
-  @String({
+  @PortString({
     title: 'Value (Wei)',
     description: 'Native token amount in wei',
     required: false,
@@ -206,7 +206,7 @@ export class Transaction {
   })
   value: string = '0'
 
-  @String({
+  @PortString({
     title: 'Data',
     description: 'Encoded transaction data',
     required: false,
@@ -222,7 +222,7 @@ export class Transaction {
   })
   chainId: number = 1
 
-  @String({
+  @PortString({
     title: 'Gas Limit',
     description: 'Estimated gas limit',
     required: false,

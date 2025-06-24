@@ -9,7 +9,7 @@
 import type { ExecutionContext, NodeExecutionResult, WalletContext } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
+  PortBoolean,
   Node,
   Output,
   PortObject,
@@ -37,7 +37,7 @@ export class GetWalletInfoNode extends BaseNode {
   wallet: WalletInfo = new WalletInfo()
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Connected',
     description: 'Quick connection status check',
     defaultValue: false,

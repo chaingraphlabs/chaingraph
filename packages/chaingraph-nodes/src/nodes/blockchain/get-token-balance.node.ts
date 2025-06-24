@@ -13,7 +13,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Amount, formatAmount, Token } from './schemas'
@@ -40,7 +40,7 @@ export class GetTokenBalanceNode extends BaseNode {
   token: Token = new Token()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Address',
     description: 'Wallet address to check (defaults to connected wallet)',
     defaultValue: '',
@@ -56,7 +56,7 @@ export class GetTokenBalanceNode extends BaseNode {
   balance: Amount = new Amount()
 
   @Output()
-  @String({
+  @PortString({
     title: 'Raw Balance',
     description: 'Balance in smallest unit',
     defaultValue: '0',

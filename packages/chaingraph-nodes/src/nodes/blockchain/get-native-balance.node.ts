@@ -11,10 +11,10 @@ import {
   BaseNode,
   Input,
   Node,
-  Number,
+  PortNumber,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Amount, Token, NativeToken, formatAmount } from './schemas'
@@ -32,7 +32,7 @@ import { getDefaultRpcUrl } from './utils'
 })
 export class GetNativeBalanceNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Address',
     description: 'The wallet address to check (defaults to connected wallet if not provided)',
     defaultValue: '',
@@ -40,7 +40,7 @@ export class GetNativeBalanceNode extends BaseNode {
   address: string = ''
 
   @Input()
-  @Number({
+  @PortNumber({
     title: 'Chain ID',
     description: 'Override chain ID (defaults to connected wallet chain)',
     defaultValue: 0,
@@ -60,7 +60,7 @@ export class GetNativeBalanceNode extends BaseNode {
 
 
   @Output()
-  @String({
+  @PortString({
     title: 'Raw Balance',
     description: 'Balance in wei as string',
     defaultValue: '0',

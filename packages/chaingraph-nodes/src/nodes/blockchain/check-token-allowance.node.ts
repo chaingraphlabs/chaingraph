@@ -9,12 +9,12 @@
 import type { ExecutionContext, NodeExecutionResult, WalletContext } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Boolean,
+  PortBoolean,
   Input,
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Amount, formatAmount, Token } from './schemas'
@@ -41,7 +41,7 @@ export class CheckTokenAllowanceNode extends BaseNode {
   token: Token = new Token()
 
   @Input()
-  @String({
+  @PortString({
     title: 'Spender',
     description: 'Address that will spend the tokens',
     required: true,
@@ -49,7 +49,7 @@ export class CheckTokenAllowanceNode extends BaseNode {
   spender: string = ''
 
   @Input()
-  @String({
+  @PortString({
     title: 'Owner',
     description: 'Token owner address (defaults to connected wallet)',
     defaultValue: '',
@@ -65,7 +65,7 @@ export class CheckTokenAllowanceNode extends BaseNode {
   allowance: Amount = new Amount()
 
   @Output()
-  @Boolean({
+  @PortBoolean({
     title: 'Is Unlimited',
     description: 'Whether the allowance is set to maximum (unlimited)',
     defaultValue: false,
@@ -73,7 +73,7 @@ export class CheckTokenAllowanceNode extends BaseNode {
   isUnlimited: boolean = false
 
   @Output()
-  @String({
+  @PortString({
     title: 'Raw Allowance',
     description: 'Allowance in smallest unit',
     defaultValue: '0',

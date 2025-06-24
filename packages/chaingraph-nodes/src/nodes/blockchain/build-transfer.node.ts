@@ -13,7 +13,7 @@ import {
   Node,
   Output,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Amount, Token, Transaction } from './schemas'
@@ -31,7 +31,7 @@ import { encodeERC20Transfer, estimateGas, getDefaultRpcUrl, isValidAddress } fr
 })
 export class BuildTransferNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Recipient',
     description: 'Recipient wallet address',
     required: true,
@@ -57,7 +57,7 @@ export class BuildTransferNode extends BaseNode {
   token: Token = new Token()
 
   @Input()
-  @String({
+  @PortString({
     title: 'From',
     description: 'Sender address (defaults to connected wallet)',
     defaultValue: '',
@@ -73,7 +73,7 @@ export class BuildTransferNode extends BaseNode {
   transaction: Transaction = new Transaction()
 
   @Output()
-  @String({
+  @PortString({
     title: 'Raw Transaction',
     description: 'Raw transaction data as hex string',
     defaultValue: '',
@@ -81,7 +81,7 @@ export class BuildTransferNode extends BaseNode {
   rawTransaction: string = ''
 
   @Output()
-  @String({
+  @PortString({
     title: 'Readable',
     description: 'Human-readable transaction description',
     defaultValue: '',

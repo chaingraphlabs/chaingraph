@@ -12,9 +12,9 @@ import {
   Input,
   Node,
   Output,
-  Number as PortNumber,
+  PortNumber,
   PortObject,
-  String,
+  PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { Token } from './schemas'
@@ -32,7 +32,7 @@ import { callContract, decodeString, getDefaultRpcUrl } from './utils'
 })
 export class GetERC20TokenInfoNode extends BaseNode {
   @Input()
-  @String({
+  @PortString({
     title: 'Token Address',
     description: 'The ERC20 token contract address',
     required: true,
@@ -56,7 +56,7 @@ export class GetERC20TokenInfoNode extends BaseNode {
   token: Token = new Token()
 
   @Output()
-  @String({
+  @PortString({
     title: 'Total Supply',
     description: 'Total supply in human-readable format',
     defaultValue: '0',
