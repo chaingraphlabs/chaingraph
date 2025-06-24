@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.2.9-dev.4
+
+### Patch Changes
+
+- feat: enhance item configuration processing with improved type handling and defaults for the Tool schema extraction
+
 ## 0.2.9-dev.3
 
 ### Patch Changes

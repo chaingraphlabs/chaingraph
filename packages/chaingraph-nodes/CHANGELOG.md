@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.2.9-dev.4
+
+### Patch Changes
+
+- feat: enhance item configuration processing with improved type handling and defaults for the Tool schema extraction
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.9-dev.4
+
 ## 0.2.9-dev.3
 
 ### Patch Changes

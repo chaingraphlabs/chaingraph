@@ -275,12 +275,120 @@ export function portConfigToJsonSchema(
  * Helper function to process item configs for arrays
  */
 function processItemConfig(itemConfig: any): SchemaProperty {
-  // For basic item configs, create a simple schema property
-  if (typeof itemConfig === 'object' && itemConfig.type) {
+  if (!itemConfig || typeof itemConfig !== 'object') {
     return {
+      type: 'string',
+      description: 'Array item',
+    }
+  }
+
+  const baseProperty: SchemaProperty = {
+    title: itemConfig.title || 'Array item',
+    description: itemConfig.description || '',
+  }
+
+  // Add default value if it exists
+  if (itemConfig.defaultValue !== undefined && itemConfig.defaultValue !== null && itemConfig.defaultValue !== '' && itemConfig.defaultValue !== 0) {
+    baseProperty.default = itemConfig.defaultValue
+  }
+
+  // Handle different item config types using the same logic as portConfigToJsonSchema
+  if (isStringPortConfig(itemConfig)) {
+    return {
+      ...baseProperty,
+      type: 'string',
+      ...(itemConfig.minLength !== undefined && { minLength: itemConfig.minLength }),
+      ...(itemConfig.maxLength !== undefined && { maxLength: itemConfig.maxLength }),
+      ...(itemConfig.pattern && { pattern: itemConfig.pattern }),
+    }
+  }
+
+  if (isNumberPortConfig(itemConfig)) {
+    return {
+      ...baseProperty,
+      type: itemConfig.integer ? 'integer' : 'number',
+      ...(itemConfig.min !== undefined && { minimum: itemConfig.min }),
+      ...(itemConfig.max !== undefined && { maximum: itemConfig.max }),
+      ...(itemConfig.step !== undefined && { multipleOf: itemConfig.step }),
+    }
+  }
+
+  if (isBooleanPortConfig(itemConfig)) {
+    return {
+      ...baseProperty,
+      type: 'boolean',
+    }
+  }
+
+  if (isEnumPortConfig(itemConfig)) {
+    const enumValues = itemConfig.options
+      .map(option => option.id || option.defaultValue)
+      .filter((id): id is string => Boolean(id))
+
+    const enumTitles = itemConfig.options
+      .map(option => option.title || option.id || option.defaultValue)
+      .filter((title): title is string => Boolean(title))
+
+    const res: SchemaProperty = {
+      ...baseProperty,
+      type: 'string',
+    }
+
+    if (enumValues.length > 0) {
+      res.enum = enumValues
+      res.enumTitles = enumTitles
+    }
+
+    return res
+  }
+
+  if (isArrayPortConfig(itemConfig)) {
+    // Handle nested arrays recursively
+    const nestedItemProperty = processItemConfig(itemConfig.itemConfig)
+
+    return {
+      ...baseProperty,
+      type: 'array',
+      items: nestedItemProperty,
+      ...(itemConfig.minLength !== undefined && { minItems: itemConfig.minLength }),
+      ...(itemConfig.maxLength !== undefined && { maxItems: itemConfig.maxLength }),
+    }
+  }
+
+  if (isObjectPortConfig(itemConfig)) {
+    // Handle nested objects
+    const properties: Record<string, SchemaProperty> = {}
+    const required: string[] = []
+
+    if (itemConfig.schema?.properties) {
+      for (const [key, propConfig] of Object.entries(itemConfig.schema.properties)) {
+        properties[key] = processItemConfig(propConfig)
+        if (propConfig.required) {
+          required.push(key)
+        }
+      }
+    }
+
+    return {
+      ...baseProperty,
+      type: 'object',
+      properties,
+      ...(required.length > 0 && { required }),
+    }
+  }
+
+  if (isAnyPortConfig(itemConfig)) {
+    return {
+      ...baseProperty,
+      type: 'any',
+    }
+  }
+
+  // Fallback for basic item configs or unknown types
+  if (itemConfig.type) {
+    return {
+      ...baseProperty,
       type: itemConfig.type,
-      description: itemConfig.description || '',
-      ...(itemConfig.defaultValue !== undefined && { defaultValue: itemConfig.defaultValue }),
     }
   }
 

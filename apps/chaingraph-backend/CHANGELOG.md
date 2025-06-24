@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.9-dev.4
+
+### Patch Changes
+
+- feat: enhance item configuration processing with improved type handling and defaults for the Tool schema extraction
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.9-dev.4
+  - @badaitech/chaingraph-types@0.2.9-dev.4
+  - @badaitech/chaingraph-trpc@0.2.9-dev.4
+
 ## 0.2.9-dev.3
 
 ### Patch Changes
