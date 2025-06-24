@@ -127,7 +127,6 @@ export function RootProvider({
   return (
     <ShadowWithStyles className={wrapperClassName}>
       <ThemeProvider className={className} style={style} theme={theme}>
-
         <TooltipProvider>
           <WagmiProvider>
             <QueryClientProvider client={queryClient}>

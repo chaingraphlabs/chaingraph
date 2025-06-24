@@ -179,6 +179,12 @@ export {
 // Separator
 export { Separator } from './separator'
 
+// Shadow
+export {
+  Shadow,
+  ShadowWithStyles,
+} from './shadow'
+
 // Skeleton
 export { Skeleton } from './skeleton'
 
