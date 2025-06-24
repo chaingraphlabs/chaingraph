@@ -7,8 +7,8 @@
  */
 
 import {
-  PortBoolean,
   ObjectSchema,
+  PortBoolean,
   PortNumber,
   PortObject,
   PortString,

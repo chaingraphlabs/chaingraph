@@ -103,7 +103,7 @@ export class BuildTransferNode extends BaseNode {
     if (!this.amount || !this.amount.value || this.amount.value === '0') {
       throw new Error('Valid amount is required')
     }
-    
+
     // Validate amount is a valid number string
     try {
       BigInt(this.amount.value)

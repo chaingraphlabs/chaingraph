@@ -9,10 +9,10 @@
 import type { ExecutionContext, NodeExecutionResult, WalletContext } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  PortBoolean,
   Input,
   Node,
   Output,
+  PortBoolean,
   PortObject,
   PortString,
 } from '@badaitech/chaingraph-types'

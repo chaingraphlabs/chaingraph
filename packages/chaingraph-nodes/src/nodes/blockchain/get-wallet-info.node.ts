@@ -9,9 +9,9 @@
 import type { ExecutionContext, NodeExecutionResult, WalletContext } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  PortBoolean,
   Node,
   Output,
+  PortBoolean,
   PortObject,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
