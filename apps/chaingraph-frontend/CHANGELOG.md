@@ -55,6 +55,17 @@
   - @badaitech/badai-api@0.2.9-dev.0
   - @badaitech/chaingraph-nodes@0.2.9-dev.0
 
+## 0.2.9
+
+### Patch Changes
+
+- Fix PostgreSQL execution store performance by adding default limit of 200 to list() method
+- Updated dependencies
+  - @badaitech/chaingraph-trpc@0.2.9
+  - @badaitech/badai-api@0.2.9
+  - @badaitech/chaingraph-nodes@0.2.9
+  - @badaitech/chaingraph-types@0.2.9
+
 ## 0.2.8
 
 ### Patch Changes

@@ -30,6 +30,12 @@
 
 - feat: add external integration configuration management hook and related events
 
+## 0.2.9
+
+### Patch Changes
+
+- Fix PostgreSQL execution store performance by adding default limit of 200 to list() method
+
 ## 0.2.8
 
 ### Patch Changes
