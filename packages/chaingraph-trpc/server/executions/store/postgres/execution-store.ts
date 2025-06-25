@@ -111,11 +111,12 @@ export class PostgresExecutionStore implements IExecutionStore {
     return result.length > 0
   }
 
-  async list(): Promise<ExecutionInstance[]> {
+  async list(limit?: number): Promise<ExecutionInstance[]> {
     const results = await this.db
       .select()
       .from(executionsTable)
       .orderBy(desc(executionsTable.createdAt))
+      .limit(limit || 200)
 
     return results.map((row) => {
       const metadata = row.metadata as any

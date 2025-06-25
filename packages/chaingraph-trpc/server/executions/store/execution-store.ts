@@ -12,7 +12,7 @@ export interface IExecutionStore {
   create: (instance: ExecutionInstance) => Promise<void>
   get: (id: string) => Promise<ExecutionInstance | null>
   delete: (id: string) => Promise<boolean>
-  list: () => Promise<ExecutionInstance[]>
+  list: (limit?: number) => Promise<ExecutionInstance[]>
 }
 
 export class InMemoryExecutionStore implements IExecutionStore {
@@ -30,7 +30,11 @@ export class InMemoryExecutionStore implements IExecutionStore {
     return this.instances.delete(id)
   }
 
-  async list(): Promise<ExecutionInstance[]> {
-    return Array.from(this.instances.values())
+  async list(limit?: number): Promise<ExecutionInstance[]> {
+    const allInstances = Array.from(this.instances.values())
+    if (limit) {
+      return allInstances.slice(0, limit)
+    }
+    return allInstances
   }
 }
