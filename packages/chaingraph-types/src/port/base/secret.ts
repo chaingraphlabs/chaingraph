@@ -105,6 +105,7 @@ export interface SecretTypeMetadata<T extends SecretType> {
  */
 export const secretTypeMetadata = {
   'string': {
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmckiQuap12Vus4USXsPh3aXUMJsV8AFmYqi5YNfiQ7NLr',
     label: 'String Secret',
     fields: {
       value: {
@@ -124,6 +125,7 @@ export const secretTypeMetadata = {
     },
   },
   '0g': {
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmbPDxWvQ4G5bsdBkpdsDeubF8nN8HiYoYaRd5K5rmjVAx',
     label: '0G',
     fields: {
       privateKey: {
@@ -153,7 +155,7 @@ export const secretTypeMetadata = {
     },
   },
   'deepseek': {
-    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmW64WLBMptJcCT81yYUQkSAJtDSt8m3kB73W29cFnZCBy',
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmQVikh9sjPE2VhFuHTXwZyJinp7XHj3p4FQc7QG9Yrpk7',
     label: 'DeepSeek API',
     fields: {
       apiKey: {
