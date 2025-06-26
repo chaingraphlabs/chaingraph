@@ -138,11 +138,12 @@ class CreateMessageArchAIV2Node extends BaseNode {
     }
 
     // check message id must be a number, try to parse it as well
-    this.messageID = Number.parseInt(createdMessageID, 10)
-    if (Number.isNaN(this.messageID)) {
-      this.messageID = -1
-      throw new TypeError('Failed to parse created message ID as a number')
+    const parsedMessageID = Number.parseInt(createdMessageID, 10)
+    if (Number.isNaN(parsedMessageID)) {
+      throw new TypeError(`Failed to parse created message ID as a number: ${createdMessageID}`)
     }
+
+    this.messageID = parsedMessageID
 
     return {}
   }
