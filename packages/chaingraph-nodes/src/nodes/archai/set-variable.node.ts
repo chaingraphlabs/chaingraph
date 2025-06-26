@@ -6,17 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArchAIContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  ArchAIContext,
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
-import {
-  BaseNode,
-  Input,
-  Node,
-  PortAny,
-  PortEnum,
-  PortString,
-} from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, PortAny, PortEnum, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { VariableNamespace } from './types'
 
@@ -52,7 +49,7 @@ class ArchAISetVariableNode extends BaseNode {
     ],
     required: true,
   })
-  namespace: string = VariableNamespace.Execution
+  namespace: VariableNamespace = VariableNamespace.Execution
 
   @Input()
   @PortAny({
@@ -81,29 +78,6 @@ class ArchAISetVariableNode extends BaseNode {
     const agentSession = archAIContext?.agentSession
     if (!agentSession) {
       throw new Error('ArchAI agent session is not available in the context')
-    }
-
-    // Determine namespace information for API call
-    let namespaceType: GraphQL.NamespaceType | undefined
-    let chatId: string | undefined
-    let agentId: string | undefined
-    let executionId: string | undefined
-
-    if (this.namespace === VariableNamespace.Execution) {
-      namespaceType = GraphQL.NamespaceType.Execution
-      executionId = context.executionId
-    } else if (this.namespace === VariableNamespace.Agent) {
-      namespaceType = GraphQL.NamespaceType.Agent
-      agentId = archAIContext?.agentID
-    } else if (this.namespace === VariableNamespace.Chat) {
-      namespaceType = GraphQL.NamespaceType.Chat
-      chatId = archAIContext?.chatID
-    } else if (this.namespace === VariableNamespace.ChatAgent) {
-      namespaceType = GraphQL.NamespaceType.ChatAgent
-      agentId = archAIContext?.agentID
-      chatId = archAIContext?.chatID
-    } else {
-      throw new Error(`Invalid namespace type: ${this.namespace}`)
     }
 
     // Determine variable type and serialize value
@@ -138,15 +112,7 @@ class ArchAISetVariableNode extends BaseNode {
 
     const { setVariable } = await graphQLClient.request(GraphQL.SetVariableDocument, {
       session: agentSession,
-      namespace: {
-        type: namespaceType,
-        // chat_id: chatId,
-        // agent_id: agentId,
-        // execution_id: executionId,
-        chatID: chatId,
-        agentID: agentId,
-        executionID: executionId,
-      },
+      namespace: getNamespaceInput(context, this.namespace),
       key: this.name,
       value: {
         type: variableType,
@@ -165,3 +131,33 @@ class ArchAISetVariableNode extends BaseNode {
 }
 
 export default ArchAISetVariableNode
+
+export function getNamespaceInput(context: ExecutionContext, namespace: VariableNamespace): GraphQL.NamespaceInput {
+  const archAIContext = context.getIntegration<ArchAIContext>('archai')
+
+  switch (namespace) {
+    case VariableNamespace.Execution:
+      return {
+        type: GraphQL.NamespaceType.Execution,
+        executionID: context.executionId,
+      }
+    case VariableNamespace.Agent:
+      return {
+        type: GraphQL.NamespaceType.Agent,
+        agentID: archAIContext?.agentID,
+      }
+    case VariableNamespace.Chat:
+      return {
+        type: GraphQL.NamespaceType.Chat,
+        chatID: archAIContext?.chatID,
+      }
+    case VariableNamespace.ChatAgent:
+      return {
+        type: GraphQL.NamespaceType.ChatAgent,
+        agentID: archAIContext?.agentID,
+        chatID: archAIContext?.chatID,
+      }
+    default:
+      throw new Error(`Unsupported namespace: ${namespace}`)
+  }
+}
