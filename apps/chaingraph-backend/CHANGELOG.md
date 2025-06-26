@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.10
+
+### Patch Changes
+
+- Fix PostgreSQL execution storage performance and data bloat
+- Updated dependencies
+  - @badaitech/chaingraph-trpc@0.2.10
+  - @badaitech/chaingraph-nodes@0.2.10
+  - @badaitech/chaingraph-types@0.2.10
+
 ## 0.2.9
 
 ### Patch Changes

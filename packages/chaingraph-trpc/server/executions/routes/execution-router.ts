@@ -214,7 +214,7 @@ export const executionRouter = router({
     .input(z.object({
       flowId: z.string(), // Filter by flow ID
       status: z.enum(['all', 'created', 'running', 'completed', 'failed', 'stopped', 'paused']).optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(500).default(50),
     }))
     .query(async ({ input, ctx }) => {
       // Get all executions from the store
@@ -233,29 +233,46 @@ export const executionRouter = router({
         filteredExecutions = filteredExecutions.filter(exec => exec.status.toLowerCase() === input.status)
       }
 
-      // Sort by creation time (newest first)
-      filteredExecutions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      // Sort by execution depth first (root executions first), then by creation time (newest first)
+      filteredExecutions.sort((a, b) => {
+        // First sort by depth (lower depth = higher priority)
+        const depthDiff = (a.executionDepth || 0) - (b.executionDepth || 0)
+        if (depthDiff !== 0)
+          return depthDiff
+
+        // If same depth, sort by creation time (newest first)
+        return b.createdAt.getTime() - a.createdAt.getTime()
+      })
 
       // Limit results
       filteredExecutions = filteredExecutions.slice(0, input.limit)
 
       // Build execution tree data
-      return Promise.all(
+
+      // Build a map of parent->children for efficient lookup
+      const childrenMap = new Map<string, number>()
+      allExecutions.forEach((exec) => {
+        if (exec.parentExecutionId) {
+          const count = childrenMap.get(exec.parentExecutionId) || 0
+          childrenMap.set(exec.parentExecutionId, count + 1)
+        }
+      })
+
+      const result = await Promise.all(
         filteredExecutions.map(async (exec) => {
-          const state = await ctx.executionService.getExecutionState(exec.id)
-          const childIds = await ctx.executionService.getChildExecutions(exec.id)
+          const childCount = childrenMap.get(exec.id) || 0
 
           return {
             id: exec.id,
             flowId: exec.flow.id || '',
             flowName: exec.flow.metadata?.name || 'Unnamed Flow',
-            status: state.status,
+            status: exec.status as any,
             parentExecutionId: exec.parentExecutionId,
             executionDepth: exec.executionDepth || 0,
             createdAt: exec.createdAt,
-            startedAt: state.startTime,
-            completedAt: state.endTime,
-            error: state.error,
+            startedAt: exec.startedAt,
+            completedAt: exec.completedAt,
+            error: exec.error,
             triggeredByEvent: exec.context.eventData
               ? {
                   eventName: exec.context.eventData.eventName,
@@ -271,10 +288,12 @@ export const executionRouter = router({
                     },
                   }
                 : undefined,
-            childCount: childIds.length,
+            childCount,
           }
         }),
       )
+
+      return result
     }),
 
   // Get execution details - for the detail panel
