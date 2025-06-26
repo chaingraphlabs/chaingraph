@@ -187,11 +187,11 @@ export class PostgresExecutionStore implements IExecutionStore {
       return {
         id: row.id,
         flow,
-        context: { 
-          executionId: row.id, 
+        context: {
+          executionId: row.id,
           eventData: row.eventData || undefined,
-          integrations: {}, 
-          metadata: {} 
+          integrations: {},
+          metadata: {},
         } as any,
         engine: null as any, // Engine is not persisted for completed executions
         status: row.status as any,
