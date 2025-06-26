@@ -1,0 +1,3 @@
+mutation AddAgentToChat($session: Session!, $chat_id: ChatID!, $agent_id: AgentID!) {
+  addAgentToChat(session: $session, chat_id: $chat_id, agent_id: $agent_id)
+}
