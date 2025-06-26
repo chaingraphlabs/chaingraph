@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.11
+
+### Patch Changes
+
+- feat: Add agent to chat and Send message v2 nodes
+
 ## 0.2.10
 
 ### Patch Changes

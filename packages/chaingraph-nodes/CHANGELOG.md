@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.2.11
+
+### Patch Changes
+
+- feat: Add agent to chat and Send message v2 nodes
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.11
+
 ## 0.2.10
 
 ### Patch Changes
