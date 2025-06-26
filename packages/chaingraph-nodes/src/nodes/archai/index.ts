@@ -6,10 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+export * from './add-agents-to-chat.node'
 export * from './append-message.node'
 export * from './archai-to-anthropic-converter.node'
 export * from './chat-history.node'
 export * from './chat-meta.node'
+export * from './create-message-v2.node'
 export * from './create-message.node'
 export * from './edit-message.node'
 export * from './finish-message.node'
