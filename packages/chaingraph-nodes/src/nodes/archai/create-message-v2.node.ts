@@ -71,7 +71,7 @@ class CreateMessageArchAIV2Node extends BaseNode {
           message_id: {
             type: 'number',
             title: 'Message ID',
-            description: 'ID of the message to notify about (if not provided, will use the newly created message)',
+            description: 'ID of the message to notify about (0 or not provided will use the newly created message)',
             required: false,
           },
         },
