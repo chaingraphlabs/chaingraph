@@ -61,12 +61,12 @@ export class HybridExecutionStore implements IExecutionStore {
     return memoryResult || postgresResult
   }
 
-  async list(): Promise<ExecutionInstance[]> {
+  async list(limit?: number): Promise<ExecutionInstance[]> {
     // Get active executions from memory
-    const memoryExecutions = await this.memoryStore.list()
+    const memoryExecutions = await this.memoryStore.list(limit)
 
     // Get completed executions from PostgreSQL
-    const postgresExecutions = await this.postgresStore.list()
+    const postgresExecutions = await this.postgresStore.list(limit)
 
     // Create a map to avoid duplicates (memory takes precedence)
     const executionMap = new Map<string, ExecutionInstance>()
@@ -82,8 +82,11 @@ export class HybridExecutionStore implements IExecutionStore {
     }
 
     // Return all executions, sorted by createdAt descending
-    return Array.from(executionMap.values())
+    const allExecutions = Array.from(executionMap.values())
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+
+    // Apply limit if specified
+    return limit ? allExecutions.slice(0, limit) : allExecutions
   }
 
   /**
