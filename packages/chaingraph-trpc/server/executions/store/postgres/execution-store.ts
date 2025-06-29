@@ -14,6 +14,8 @@ import { desc, eq, sql } from 'drizzle-orm'
 import { executionsTable } from '../../../stores/postgres/schema'
 
 export class PostgresExecutionStore implements IExecutionStore {
+  private readonly MAX_EXECUTION_DEPTH = 100
+
   constructor(private readonly db: DBType) {}
 
   async create(instance: ExecutionInstance): Promise<void> {
@@ -33,12 +35,11 @@ export class PostgresExecutionStore implements IExecutionStore {
         executionDepth: instance.executionDepth || 0,
         metadata: {
           flowName: instance.flow.metadata?.name,
-          flowData: instance.flow.serialize(),
+          flowData: instance.parentExecutionId ? null : instance.flow.serialize(),
           contextData: {
             executionId: instance.context.executionId,
-            integrations: instance.context.integrations,
-            metadata: instance.context.metadata,
-            // Store only serializable parts of context
+            // Only store eventData if it exists, skip integrations and metadata to avoid storing agent sessions
+            eventData: (instance.context as any).eventData || null,
           },
         },
         externalEvents: instance.externalEvents || null,
@@ -72,11 +73,47 @@ export class PostgresExecutionStore implements IExecutionStore {
 
     // Deserialize flow from stored data
     let flow: any
-    try {
-      flow = metadata?.flowData ? Flow.deserialize(metadata.flowData) : { id: row.flowId }
-    } catch (e) {
-      // If deserialization fails, use minimal flow object
-      flow = { id: row.flowId }
+
+    if (!metadata?.flowData && row.parentExecutionId) {
+      let currentParentId: string | null = row.parentExecutionId
+      let flowData = null
+      let depth = 0
+      while (currentParentId && !flowData && depth < this.MAX_EXECUTION_DEPTH) {
+        const parentResults = await this.db
+          .select()
+          .from(executionsTable)
+          .where(eq(executionsTable.id, currentParentId))
+          .limit(1)
+
+        if (parentResults.length === 0)
+          break
+
+        const parentRow = parentResults[0]
+        const parentMetadata = parentRow.metadata as any
+
+        if (parentMetadata?.flowData) {
+          flowData = parentMetadata.flowData
+          break
+        }
+
+        currentParentId = parentRow.parentExecutionId
+        depth++
+      }
+      if (flowData) {
+        try {
+          flow = Flow.deserialize(flowData)
+        } catch (e) {
+          flow = new Flow({ id: row.flowId, name: metadata?.flowName })
+        }
+      } else {
+        flow = new Flow({ id: row.flowId, name: metadata?.flowName })
+      }
+    } else {
+      try {
+        flow = metadata?.flowData ? Flow.deserialize(metadata.flowData) : new Flow({ id: row.flowId, name: metadata?.flowName })
+      } catch (e) {
+        flow = new Flow({ id: row.flowId, name: metadata?.flowName })
+      }
     }
 
     // Return reconstructed ExecutionInstance
@@ -84,7 +121,12 @@ export class PostgresExecutionStore implements IExecutionStore {
     return {
       id: row.id,
       flow,
-      context: metadata?.contextData || { executionId: row.id, integrations: {}, metadata: {} },
+      context: {
+        executionId: metadata?.contextData?.executionId || row.id,
+        eventData: metadata?.contextData?.eventData || undefined,
+        integrations: {},
+        metadata: {},
+      } as any,
       engine: null as any, // Engine is not persisted for completed executions
       status: row.status as any,
       createdAt: row.createdAt,
@@ -113,27 +155,44 @@ export class PostgresExecutionStore implements IExecutionStore {
 
   async list(limit?: number): Promise<ExecutionInstance[]> {
     const results = await this.db
-      .select()
+      .select({
+        id: executionsTable.id,
+        flowId: executionsTable.flowId,
+        ownerId: executionsTable.ownerId,
+        parentExecutionId: executionsTable.parentExecutionId,
+        status: executionsTable.status,
+        createdAt: executionsTable.createdAt,
+        startedAt: executionsTable.startedAt,
+        completedAt: executionsTable.completedAt,
+        errorMessage: executionsTable.errorMessage,
+        errorNodeId: executionsTable.errorNodeId,
+        executionDepth: executionsTable.executionDepth,
+        externalEvents: executionsTable.externalEvents,
+        // Select only the flowName from metadata JSONB
+        flowName: sql<string>`${executionsTable.metadata}->>'flowName'`,
+        // Also extract eventData for triggeredByEvent display
+        eventData: sql<any>`${executionsTable.metadata}->'contextData'->'eventData'`,
+      })
       .from(executionsTable)
       .orderBy(desc(executionsTable.createdAt))
       .limit(limit || 200)
 
     return results.map((row) => {
-      const metadata = row.metadata as any
-
-      // Deserialize flow from stored data
-      let flow: any
-      try {
-        flow = metadata?.flowData ? Flow.deserialize(metadata.flowData) : { id: row.flowId }
-      } catch (e) {
-        // If deserialization fails, use minimal flow object
-        flow = { id: row.flowId }
-      }
+      const flow = new Flow({
+        id: row.flowId,
+        name: row.flowName || 'Unnamed Flow',
+        ownerID: row.ownerId || undefined,
+      })
 
       return {
         id: row.id,
         flow,
-        context: metadata?.contextData || { executionId: row.id, integrations: {}, metadata: {} },
+        context: {
+          executionId: row.id,
+          eventData: row.eventData || undefined,
+          integrations: {},
+          metadata: {},
+        } as any,
         engine: null as any, // Engine is not persisted for completed executions
         status: row.status as any,
         createdAt: row.createdAt,

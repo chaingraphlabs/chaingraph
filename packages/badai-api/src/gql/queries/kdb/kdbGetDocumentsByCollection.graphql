@@ -1,0 +1,21 @@
+query KDBGetDocumentsByCollection(
+  $session: Session!
+  $collection_id: CollectionID!
+  $filters: GetDocumentsByCollectionFilters = { published_range: {} }
+  $order_by: GetDocumentsByCollectionOrderByInput = { field: PUBLISHED_AT, direction: Asc }
+  $limit: Int = 1000
+) {
+  kdbGetDocumentsByCollection(
+    session: $session
+    collection_id: $collection_id
+    filters: $filters
+    order_by: $order_by
+    limit: $limit
+  ) {
+    document {
+      ...DocumentFields
+    }
+
+    pagesCount
+  }
+}

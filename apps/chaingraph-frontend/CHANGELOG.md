@@ -1,59 +1,50 @@
 # @badaitech/chaingraph-frontend
 
-## 0.2.9-dev.4
+## 0.2.13-dev.0
 
 ### Patch Changes
 
-- feat: enhance item configuration processing with improved type handling and defaults for the Tool schema extraction
+- Dev release
 - Updated dependencies
-  - @badaitech/chaingraph-nodes@0.2.9-dev.4
-  - @badaitech/chaingraph-types@0.2.9-dev.4
-  - @badaitech/chaingraph-trpc@0.2.9-dev.4
-  - @badaitech/badai-api@0.2.9-dev.4
+  - @badaitech/chaingraph-nodes@0.2.13-dev.0
+  - @badaitech/chaingraph-types@0.2.13-dev.0
+  - @badaitech/chaingraph-trpc@0.2.13-dev.0
+  - @badaitech/badai-api@0.2.13-dev.0
 
-## 0.2.9-dev.3
+## 0.2.12
 
 ### Patch Changes
 
-- feat: enhance schema extraction and number port handling with improved error parsing
+- feat: Server time node implementation
+- cf32439: Update icons for some secret types
 - Updated dependencies
-  - @badaitech/chaingraph-nodes@0.2.9-dev.3
-  - @badaitech/chaingraph-types@0.2.9-dev.3
-  - @badaitech/chaingraph-trpc@0.2.9-dev.3
-  - @badaitech/badai-api@0.2.9-dev.3
+- Updated dependencies [cf32439]
+  - @badaitech/chaingraph-nodes@0.2.12
+  - @badaitech/badai-api@0.2.12
+  - @badaitech/chaingraph-trpc@0.2.12
+  - @badaitech/chaingraph-types@0.2.12
 
-## 0.2.9-dev.2
+## 0.2.11
 
 ### Patch Changes
 
-- feat: export additional components and enhance module exports
+- feat: Add agent to chat and Send message v2 nodes
 - Updated dependencies
-  - @badaitech/chaingraph-nodes@0.2.9-dev.2
-  - @badaitech/chaingraph-types@0.2.9-dev.2
-  - @badaitech/chaingraph-trpc@0.2.9-dev.2
-  - @badaitech/badai-api@0.2.9-dev.2
+  - @badaitech/chaingraph-nodes@0.2.11
+  - @badaitech/chaingraph-types@0.2.11
+  - @badaitech/chaingraph-trpc@0.2.11
+  - @badaitech/badai-api@0.2.11
 
-## 0.2.9-dev.1
+## 0.2.10
 
 ### Patch Changes
 
-- feat: add Shadow components and refactor TRPC client naming
+- Fix PostgreSQL execution storage performance and data bloat
 - Updated dependencies
-  - @badaitech/chaingraph-nodes@0.2.9-dev.1
-  - @badaitech/chaingraph-types@0.2.9-dev.1
-  - @badaitech/chaingraph-trpc@0.2.9-dev.1
-  - @badaitech/badai-api@0.2.9-dev.1
-
-## 0.2.9-dev.0
-
-### Patch Changes
-
-- feat: add external integration configuration management hook and related events
-- Updated dependencies
-  - @badaitech/chaingraph-types@0.2.9-dev.0
-  - @badaitech/chaingraph-trpc@0.2.9-dev.0
-  - @badaitech/badai-api@0.2.9-dev.0
-  - @badaitech/chaingraph-nodes@0.2.9-dev.0
+  - @badaitech/chaingraph-trpc@0.2.10
+  - @badaitech/badai-api@0.2.10
+  - @badaitech/chaingraph-nodes@0.2.10
+  - @badaitech/chaingraph-types@0.2.10
 
 ## 0.2.9
 

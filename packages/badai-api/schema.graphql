@@ -1,24 +1,24 @@
 # This file was generated. Do not edit manually.
 
 schema {
-    query: Query
-    mutation: Mutation
-    subscription: Subscription
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
 }
 
 "Directs the executor to defer this fragment when the `if` argument is true or undefined."
 directive @defer(
-    "Deferred when true or undefined."
-    if: Boolean = true,
-    "Unique name"
-    label: String
+  "Deferred when true or undefined."
+  if: Boolean = true,
+  "Unique name"
+  label: String
 ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
 directive @extends on OBJECT | INTERFACE
 
 directive @external on FIELD_DEFINITION
 
-directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
+directive @key(fields: _FieldSet!) repeatable on OBJECT | INTERFACE
 
 "Indicates exactly one field must be supplied and this field must not be `null`."
 directive @oneOf on INPUT_OBJECT
@@ -28,1012 +28,1034 @@ directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
 directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
 
 type AgentCollection {
-    agents: [AgentMeta!]!
-    collection_id: String!
-    description: String!
-    order: Int!
-    owner_id: UserID!
-    title: String!
-    updated_at: Time!
+  agents: [AgentMeta!]!
+  collection_id: String!
+  description: String!
+  order: Int!
+  owner_id: UserID!
+  title: String!
+  updated_at: Time!
 }
 
 "A meta information about the agent"
 type AgentMeta {
-    agent_id: AgentID!
-    avatar: String!
-    "can_answer is a flag to enable the agent to answer to the messages. If the flag is set to true, then the agent can answer to the messages. If the flag is set to false, then the agent reactions will be disabled"
-    can_answer: Boolean!
-    chain_graph_id: GraphID!
-    chat_history_config: ChatHistoryConfig! @deprecated(reason: "Use template_params instead")
-    deployment_status: DeploymentStatus!
-    first_name: String!
-    is_agent: Boolean!
-    "is_need_reply_to_message is a flag to enable reply to message from the agent. If the flag is set to true, then the messages from the agent will be available for reply"
-    is_need_reply_to_message: Boolean!
-    last_name: String
-    llm_config: LLMConfig!
-    llm_model: String! @deprecated(reason: "Use template_params instead")
-    "owner_id is the user id of the agent owner"
-    owner_id: UserID!
-    prompt: String! @deprecated(reason: "Use template_params instead")
-    purpose: String! @deprecated(reason: "Use template_params instead")
-    "role is the description of the agent role"
-    role: String!
-    self_awareness: String! @deprecated(reason: "Use template_params instead")
-    skeleton: String!
-    social: AgentSocial!
-    stats: AgentStats!
-    template_params: JSON!
-    token_address: String
-    token_metrics: AgentTokenMetrics
-    tools: [Tool!]! @deprecated(reason: "Use template_params instead")
-    username: Username!
+  agent_id: AgentID!
+  avatar: String!
+  "can_answer is a flag to enable the agent to answer to the messages. If the flag is set to true, then the agent can answer to the messages. If the flag is set to false, then the agent reactions will be disabled"
+  can_answer: Boolean!
+  chain_graph_id: GraphID!
+  chat_history_config: ChatHistoryConfig! @deprecated(reason: "Use template_params instead")
+  deployment_status: DeploymentStatus!
+  first_name: String!
+  is_agent: Boolean!
+  "is_need_reply_to_message is a flag to enable reply to message from the agent. If the flag is set to true, then the messages from the agent will be available for reply"
+  is_need_reply_to_message: Boolean!
+  last_name: String
+  llm_config: LLMConfig!
+  llm_model: String! @deprecated(reason: "Use template_params instead")
+  "owner_id is the user id of the agent owner"
+  owner_id: UserID!
+  prompt: String! @deprecated(reason: "Use template_params instead")
+  purpose: String! @deprecated(reason: "Use template_params instead")
+  "role is the description of the agent role"
+  role: String!
+  self_awareness: String! @deprecated(reason: "Use template_params instead")
+  skeleton: String!
+  social: AgentSocial!
+  stats: AgentStats!
+  template_params: JSON!
+  token_address: String
+  token_metrics: AgentTokenMetrics
+  tools: [Tool!]! @deprecated(reason: "Use template_params instead")
+  username: Username!
 }
 
 type AgentSocial {
-    telegram_link: String
-    token_buy_link: String
-    x_link: String
-    youtube_link: String
+  telegram_link: String
+  token_buy_link: String
+  x_link: String
+  youtube_link: String
 }
 
 type AgentStats {
-    total_chats: Int!
-    total_messages: Int!
-    total_users: Int!
+  total_chats: Int!
+  total_messages: Int!
+  total_users: Int!
 }
 
 type AgentTokenMetrics {
-    image_url: String!
-    market_cap: Decimal!
-    name: String!
-    price_change_24h: Decimal!
-    price_usd: Decimal!
-    symbol: String!
-    token_address: String!
-    total_liquidity_usd: Decimal!
-    transactions_24h: Int!
-    volume_24h: Decimal!
+  image_url: String!
+  market_cap: Decimal!
+  name: String!
+  price_change_24h: Decimal!
+  price_usd: Decimal!
+  symbol: String!
+  token_address: String!
+  total_liquidity_usd: Decimal!
+  transactions_24h: Int!
+  volume_24h: Decimal!
 }
 
 type Attachment {
-    filename: String!
-    id: AttachmentID!
-    mime_type: String!
-    size: Int!
-    url: String!
+  filename: String!
+  id: AttachmentID!
+  mime_type: String!
+  size: Int!
+  url: String!
 }
 
 type Balance {
-    daily: BalanceLimitation
-    monthly: BalanceLimitation
-    tariff: UserTariff!
+  daily: BalanceLimitation
+  monthly: BalanceLimitation
+  tariff: UserTariff!
 }
 
 type BalanceLimitation {
-    limit: Credits!
-    remaining: Credits!
-    reset_seconds: Int!
+  limit: Credits!
+  remaining: Credits!
+  reset_seconds: Int!
 }
 
 type BalanceUpdate {
-    balance: Balance!
-    sub_id: BalanceSubscriptionID!
+  balance: Balance!
+  sub_id: BalanceSubscriptionID!
 }
 
 type CTPostReference {
-    avatar: String!
-    published_at: Time!
-    title: String!
-    url: String!
+  avatar: String!
+  published_at: Time!
+  title: String!
+  url: String!
 }
 
 type ChainGraph {
-    author: ParticipantID!
-    created_at: Time!
-    graph: SerializedGraph!
-    graph_id: GraphID!
+  author: ParticipantID!
+  created_at: Time!
+  graph: SerializedGraph!
+  graph_id: GraphID!
 }
 
 type ChainGraphHistory {
-    author_id: ParticipantID!
-    author_name: String!
-    created_at: Time!
-    graph_id: GraphID!
+  author_id: ParticipantID!
+  author_name: String!
+  created_at: Time!
+  graph_id: GraphID!
 }
 
 type ChatHistoryConfig {
-    messages_count: Int!
-    tokens_limit: Int!
+  messages_count: Int!
+  tokens_limit: Int!
 }
 
 type ChatRoom {
-    author: ParticipantID!
-    created_at: Time!
-    deleted: Boolean!
-    deleted_at: Time
-    id: ChatID!
-    last_message: Message
-    last_message_time: Time
-    meta: JSON!
-    name: String!
-    participants: [Participant!]
-    updated_at: Time!
+  author: ParticipantID!
+  created_at: Time!
+  deleted: Boolean!
+  deleted_at: Time
+  id: ChatID!
+  last_message: Message
+  last_message_time: Time
+  meta: JSON!
+  name: String!
+  participants: [Participant!]
+  updated_at: Time!
 }
 
 type ChatRoomEvent {
-    chat_rooms: [ChatRoom!]
-    event: ChatRoomEventType!
-    participants: [Participant!]
-    sub_id: SubscriptionID!
+  chat_rooms: [ChatRoom!]
+  event: ChatRoomEventType!
+  participants: [Participant!]
+  sub_id: SubscriptionID!
 }
 
 type Chunk {
-    chunk_id: ChunkID!
-    chunk_number: Int!
-    content: String!
-    created_at: Time!
-    document_id: DocumentID!
-    indexing_state: IndexingState!
-    page_number_from: Int!
-    page_number_to: Int!
-    task_id: TaskID!
+  chunk_id: ChunkID!
+  chunk_number: Int!
+  content: String!
+  created_at: Time!
+  document_id: DocumentID!
+  indexing_state: IndexingState!
+  page_number_from: Int!
+  page_number_to: Int!
+  task_id: TaskID!
 }
 
 type Collection {
-    agent_id: AgentID!
-    collection_id: CollectionID!
-    created_at: Time!
-    creator_address: String!
-    description: String!
-    indexing_state: IndexingState!
-    name: String!
-    tags: [String!]!
+  agent_id: AgentID!
+  collection_id: CollectionID!
+  created_at: Time!
+  creator_address: String!
+  description: String!
+  indexing_state: IndexingState!
+  name: String!
+  tags: [String!]!
 }
 
 type CollectionWithDocuments {
-    collection: Collection!
-    documents: [DocumentMeta!]!
+  collection: Collection!
+  documents: [DocumentMeta!]!
 }
 
 "Response to the createSecret mutation."
 type CreateSecretResponse {
-    "ID of the created secret."
-    id: SecretID!
+  "ID of the created secret."
+  id: SecretID!
 }
 
 type CurrentPriceResponse {
-    prices: [PairPrice!]!
+  prices: [PairPrice!]!
 }
 
 type DecodingResult {
-    avg_logprob: Float!
-    compression_ratio: Float!
-    language: String!
-    no_speech_prob: Float!
-    temperature: Float!
-    text: String!
-    tokens: [Int!]!
+  avg_logprob: Float!
+  compression_ratio: Float!
+  language: String!
+  no_speech_prob: Float!
+  temperature: Float!
+  text: String!
+  tokens: [Int!]!
 }
 
 "Response to the deleteSecret mutation."
 type DeleteSecretResponse {
-    "ID of the deleted secret."
-    id: SecretID!
+  "ID of the deleted secret."
+  id: SecretID!
 }
 
 type DeployPayment {
-    link: String!
+  link: String!
 }
 
 type DocumentIndexingState {
-    failed_reason: String
-    is_indexing: Boolean!
-    is_indexing_accepted: Boolean!
-    is_indexing_failed: Boolean!
-    is_indexing_finished: Boolean!
-    is_indexing_paused: Boolean!
+  failed_reason: String
+  is_indexing: Boolean!
+  is_indexing_accepted: Boolean!
+  is_indexing_failed: Boolean!
+  is_indexing_finished: Boolean!
+  is_indexing_paused: Boolean!
 }
 
 type DocumentMeta {
-    collection_id: CollectionID!
-    created_at: Time!
-    description: String
-    document_id: DocumentID!
-    document_indexing_state: DocumentIndexingState!
-    indexing_state: IndexingState!
-    metadata: [DocumentMetadataKV!]!
-    name: String
-    published_at: Time!
-    tags: [String!]!
-    url: String
+  collection_id: CollectionID!
+  created_at: Time!
+  description: String
+  document_id: DocumentID!
+  document_indexing_state: DocumentIndexingState!
+  indexing_state: IndexingState!
+  metadata: [DocumentMetadataKV!]!
+  name: String
+  published_at: Time!
+  tags: [String!]!
+  url: String
 }
 
 type DocumentMetadataKV {
-    key: String!
-    value: String!
+  key: String!
+  value: String!
+}
+
+"DocumentWithPagesCount represents a document along with its total page count."
+type DocumentWithPagesCount {
+  "The main document entity containing document-specific information"
+  document: DocumentMeta!
+  "Total number of pages contained in the document"
+  pagesCount: Int!
 }
 
 type DocumentWithTasks {
-    document: DocumentMeta!
-    tasks: [IndexingDocumentTask!]!
+  document: DocumentMeta!
+  tasks: [IndexingDocumentTask!]!
 }
 
 type ExternalAccount {
-    ID: ExternalAccountID!
-    providerID: ProviderID!
+  ID: ExternalAccountID!
+  providerID: ProviderID!
 }
 
 type HistoricalPriceResponse {
-    base_currency: String!
-    close: [Float!]!
-    high: [Float!]!
-    low: [Float!]!
-    market: String!
-    open: [Float!]!
-    quote_currency: String!
-    time: [Int!]!
-    volume: [Float!]!
+  base_currency: String!
+  close: [Float!]!
+  high: [Float!]!
+  low: [Float!]!
+  market: String!
+  open: [Float!]!
+  quote_currency: String!
+  time: [Int!]!
+  volume: [Float!]!
 }
 
 type IndexingDocumentStatistics {
-    chunks_indexed_qa: Int!
-    chunks_indexed_triplet: Int!
-    chunks_total: Int!
-    current_indexing_speed: Float!
-    expected_finish_seconds: Int
-    expected_finished_at: Time
-    indexed_for_seconds: Int
-    indexed_percent: Float!
-    indexing_started_at: Time
-    llm_approximate_cost: Float!
-    llm_stats: IndexingDocumentStatisticsLLM!
-    pages: Int!
-    qa_total: Int!
-    total_tokens: Int!
-    triplets_total: Int!
+  chunks_indexed_qa: Int!
+  chunks_indexed_triplet: Int!
+  chunks_total: Int!
+  current_indexing_speed: Float!
+  expected_finish_seconds: Int
+  expected_finished_at: Time
+  indexed_for_seconds: Int
+  indexed_percent: Float!
+  indexing_started_at: Time
+  llm_approximate_cost: Float!
+  llm_stats: IndexingDocumentStatisticsLLM!
+  pages: Int!
+  qa_total: Int!
+  total_tokens: Int!
+  triplets_total: Int!
 }
 
 type IndexingDocumentStatisticsLLM {
-    completion_cost: Float!
-    embeddings_cost: Float!
-    embeddings_count: Int!
-    prompt_cost: Float!
-    total_cost: Float!
+  completion_cost: Float!
+  embeddings_cost: Float!
+  embeddings_count: Int!
+  prompt_cost: Float!
+  total_cost: Float!
 }
 
 type IndexingDocumentTask {
-    author_id: ParticipantID!
-    chat_id: ChatID!
-    config: IndexingDocumentTaskConfig!
-    confirmed: Boolean!
-    created_at: Time!
-    document_id: DocumentID!
-    error: String
-    message_id: MessageID!
-    statistics: IndexingDocumentStatistics!
-    task_id: TaskID!
-    task_state: IndexingDocumentTaskState!
-    update_at: Time!
-    version: Int!
+  author_id: ParticipantID!
+  chat_id: ChatID!
+  config: IndexingDocumentTaskConfig!
+  confirmed: Boolean!
+  created_at: Time!
+  document_id: DocumentID!
+  error: String
+  message_id: MessageID!
+  statistics: IndexingDocumentStatistics!
+  task_id: TaskID!
+  task_state: IndexingDocumentTaskState!
+  update_at: Time!
+  version: Int!
 }
 
 type IndexingDocumentTaskConfig {
-    chunk_overlap_tokens: Int!
-    chunk_size_tokens: Int!
-    cost_limit: Float!
-    force_confirm: Boolean!
-    instruction_for_qa: String
-    need_qa: Boolean!
-    qa_count_per_run: Int!
-    qa_model: String!
+  chunk_overlap_tokens: Int!
+  chunk_size_tokens: Int!
+  cost_limit: Float!
+  force_confirm: Boolean!
+  instruction_for_qa: String
+  need_qa: Boolean!
+  qa_count_per_run: Int!
+  qa_model: String!
 }
 
 type IndexingState {
-    completion_cost: Float!
-    completion_tokens: Int!
-    content_tokens: Int!
-    embedding_cost: Float!
-    is_embedded: Boolean!
-    is_indexed_qa: Boolean!
-    is_indexed_triplet: Boolean!
-    is_parsed: Boolean!
-    is_summarized: Boolean!
-    prompt_cost: Float!
-    prompt_tokens: Int!
+  completion_cost: Float!
+  completion_tokens: Int!
+  content_tokens: Int!
+  embedding_cost: Float!
+  is_embedded: Boolean!
+  is_indexed_qa: Boolean!
+  is_indexed_triplet: Boolean!
+  is_parsed: Boolean!
+  is_summarized: Boolean!
+  prompt_cost: Float!
+  prompt_tokens: Int!
 }
 
 type LLMConfig {
-    max_tokens: Int!
-    model: String!
-    temperature: Float!
+  max_tokens: Int!
+  model: String!
+  temperature: Float!
 }
 
 type LLMUsage {
-    agent_id: AgentID!
-    chat_id: ChatID!
-    completion_cost: Float!
-    completion_tokens: Int!
-    created_at: Time!
-    duration: Float!
-    message_id: MessageID!
-    model_name: String!
-    parent_run_id: String!
-    participant_id: ParticipantID!
-    prompt: String!
-    prompt_cost: Float!
-    prompt_tokens: Int!
-    response: String!
-    run_id: String!
-    tags: [String!]!
-    usage_id: String!
+  agent_id: AgentID!
+  chat_id: ChatID!
+  completion_cost: Float!
+  completion_tokens: Int!
+  created_at: Time!
+  duration: Float!
+  message_id: MessageID!
+  model_name: String!
+  parent_run_id: String!
+  participant_id: ParticipantID!
+  prompt: String!
+  prompt_cost: Float!
+  prompt_tokens: Int!
+  response: String!
+  run_id: String!
+  tags: [String!]!
+  usage_id: String!
 }
 
 type LoginResult {
-    session: Session!
-    user_profile: UserProfile!
+  session: Session!
+  user_profile: UserProfile!
 }
 
 type Message {
-    attachments: [Attachment!]
-    author: ParticipantID!
-    chat_id: ChatID!
-    deleted: Boolean!
-    error: String
-    finished: Boolean!
-    id: MessageID!
-    is_system: Boolean!
-    meta: JSON!
-    need_answer: Boolean!
-    participant: Participant
-    reply_to: MessageID
-    text: String!
-    time: Time!
-    total_usage_cost: Credits!
-    type: MessageType!
-    version: Int!
+  attachments: [Attachment!]
+  author: ParticipantID!
+  chat_id: ChatID!
+  deleted: Boolean!
+  error: String
+  finished: Boolean!
+  id: MessageID!
+  is_system: Boolean!
+  meta: JSON!
+  need_answer: Boolean!
+  participant: Participant
+  reply_to: MessageID
+  text: String!
+  time: Time!
+  total_usage_cost: Credits!
+  type: MessageType!
+  version: Int!
 }
 
 type MessageEvent {
-    event: Event!
-    message: Message
-    messages: [Message!]
-    sub_id: SubscriptionID!
+  event: Event!
+  message: Message
+  messages: [Message!]
+  sub_id: SubscriptionID!
 }
 
 type Mutation {
-    addAgentTelegramIntegration(agent_id: AgentID!, bot_token: String!, session: Session!): Boolean!
-    addAgentToChat(agent_id: AgentID!, chat_id: ChatID!, session: Session!): Boolean!
-    addDelta(chat_id: ChatID!, delta: String!, id: MessageID!, session: Session!): Message!
-    addMessageAttachment(attachment_id: AttachmentID!, chat_id: ChatID!, id: MessageID!, session: Session!): Message!
-    adminAddMessageToTelegramChatRoom(message: TelegramMessageInput!, session: Session!): [Message!]!
-    adminAddMessageToTwitterChatRoom(messages: [TwitterMessageInput!]!, session: Session!): [Message!]!
-    adminChangeAgentDeploymentStatus(payment_id: PaymentID!, session: Session!): Boolean!
-    adminCreateTelegramChatRoom(input: TelegramChatRoomConfigInput!, session: Session!): ChatRoom!
-    adminDeleteTelegramBot(session: Session!, telegram_bot_id: Int!): Boolean!
-    agentAttachMyXAccount(agent_id: AgentID!, session: Session!, x_api_keys: XApiKeysInput!): Boolean!
-    agentAttachTwitterUsernames(agent_id: AgentID!, session: Session!, usernames: [String!]!): Boolean!
-    agentChangeMyXAccountNotifications(agent_id: AgentID!, notifications: MyXAccountNotificationsInput!, session: Session!): Boolean!
-    agentDetachMyXAccount(agent_id: AgentID!, session: Session!): Boolean!
-    agentDetachTwitterUsernames(agent_id: AgentID!, session: Session!, usernames: [String!]!): Boolean!
-    appendUsages(session: Session!, usages: [UsageInput!]!): Boolean!
-    appendVariable(key: String!, namespace: NamespaceInput!, session: Session!, value: VariableValueInput!): VariableResponse!
-    authAgentLogin(agentID: AgentID!, session: Session!): LoginResult!
-    authGoogleLogin(input: OAuthLoginInput!): LoginResult!
-    authMetamaskLogin(input: MetamaskLoginInput!): LoginResult!
-    authTelegramLogin(input: TelegramLoginInput!): LoginResult!
-    authTwitterLogin(input: OAuthLoginInput!): LoginResult!
-    chainGraphSave(graph: ChainGraphInput!, previous_graph_id: GraphID!, session: Session!): ChainGraph!
-    changeAgentDeploymentType(agent_id: AgentID!, deployment_type: DeploymentType!, session: Session!): Boolean!
-    chatRoomCreateParticipant(chat_id: ChatID!, input: ParticipantInput!, session: Session!): Participant!
-    chatRoomRemoveParticipant(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): Boolean!
-    chatRoomUpdateParticipant(chat_id: ChatID!, input: ParticipantInput!, participant_id: ParticipantID!, session: Session!): Participant!
-    continueCompletion(chat_id: ChatID!, session: Session!): Boolean!
-    createAgent(input: CreateAgentInput!, session: Session!): AgentMeta!
-    createChatRoom(agents: [AgentID!] = [], session: Session!): ChatRoom!
-    createDeployPaymentForAgent(agent_id: AgentID!, session: Session!): DeployPayment!
-    "Create the secret owned by the user."
-    createSecret(params: CreateSecretParams!, session: Session!): CreateSecretResponse!
-    deleteAgent(agent_id: AgentID!, session: Session!): Boolean!
-    deleteChatRoom(id: ChatID!, session: Session!): Boolean!
-    deleteMessage(chat_id: ChatID!, id: MessageID!, session: Session!): Message!
-    "Delete a secret."
-    deleteSecret(params: DeleteSecretParams!, session: Session!): DeleteSecretResponse!
-    deleteVariable(key: String!, namespace: NamespaceInput!, session: Session!): Boolean!
-    deleteVariables(namespace: NamespaceInput!, session: Session!): Boolean!
-    deployAgent(agent_id: AgentID!, deployment_type: DeploymentType!, session: Session!): Boolean!
-    editMessage(chat_id: ChatID!, id: MessageID!, message: MessageEditInput!, session: Session!): Message!
-    finishMessage(chat_id: ChatID!, id: MessageID!, session: Session!): Message!
-    kdbCreateAgentCollection(input: CreateAgentCollectionInput!, session: Session!): Collection!
-    kdbCreateChunk(chunks: [ChunkInput!]!, session: Session!): [Chunk!]!
-    kdbCreateDocument(doc: DocumentMetaInput!, session: Session!): DocumentMeta!
-    kdbCreatePage(pages: [PageInput!]!, session: Session!): [Page!]!
-    kdbCreateQA(qa: CreateQAInput!, session: Session!): [QA!]!
-    kdbCreateTriplet(session: Session!, triplet: CreateTripletInput!): [Triplet!]!
-    kdbDeleteAgentCollection(collection_id: CollectionID!, session: Session!): Boolean!
-    kdbDeleteChunk(chunk_id: ChunkID!, session: Session!): Boolean!
-    kdbDeletePage(page_id: PageID!, session: Session!): Boolean!
-    kdbDeleteQA(qa_id: String!, session: Session!): Boolean!
-    kdbIndexingDocumentTaskConfirm(session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
-    kdbIndexingDocumentTaskCreate(input: KdbIndexingDocumentTaskCreateInput!, session: Session!): IndexingDocumentTask!
-    kdbIndexingDocumentTaskDelete(session: Session!, taskID: TaskID!): Boolean!
-    kdbIndexingDocumentTaskError(error: String!, session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
-    kdbIndexingDocumentTaskPause(session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
-    kdbIndexingDocumentTaskTransitionState(session: Session!, taskID: TaskID!, toState: IndexingDocumentTaskState!, version: Int!): IndexingDocumentTask!
-    kdbIndexingDocumentTaskUpdateConfig(input: KdbIndexingDocumentTaskUpdateConfigInput!, session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
-    kdbRemoveDocument(document_id: DocumentID!, session: Session!): Boolean!
-    kdbUpdateAgentCollection(collection_id: CollectionID!, input: UpdateAgentCollectionInput!, session: Session!): Collection!
-    kdbUpdateDocument(doc: UpdateDocumentMetaInput!, document_id: DocumentID!, session: Session!): DocumentMeta!
-    kdbUpdatePage(page: PageUpdate!, page_id: PageID!, session: Session!): Page!
-    kdbUpdateQA(qa: QAInput!, qa_id: String!, session: Session!): QA!
-    participantPublishToMarketplace(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): AgentMeta!
-    regenerateLastResponse(chat_id: ChatID!, session: Session!): Boolean!
-    removeAgentFromChat(agent_id: AgentID!, chat_id: ChatID!, session: Session!): Boolean!
-    removeAgentTelegramIntegration(agent_id: AgentID!, session: Session!): Boolean!
-    renameChatRoom(id: ChatID!, new_name: String!, session: Session!): ChatRoom!
-    "Replace a secret with the given secret ID with the given secret if they have the same type."
-    replaceSecret(params: ReplaceSecretParams!, session: Session!): ReplaceSecretResponse!
-    sendMessage(chat_id: ChatID!, message: MessageInput!, session: Session!): Message!
-    setMessageMeta(chat_id: ChatID!, id: MessageID!, message_meta: MessageMetaInput!, session: Session!): Message!
-    setVariable(key: String!, namespace: NamespaceInput!, session: Session!, value: VariableValueInput!): VariableResponse!
-    setVariables(namespace: NamespaceInput!, session: Session!, variables: [KeyValueInput!]!): VariablesResponse!
-    stopCompletion(chat_id: ChatID!, session: Session!): Boolean!
-    unsubscribeBalance(session: Session!, sub_id: BalanceSubscriptionID!): Boolean!
-    unsubscribeChatRoom(session: Session!, sub_id: SubscriptionID!): Boolean!
-    unsubscribeMessages(chat_id: ChatID!, session: Session!, sub_id: SubscriptionID!): Boolean!
-    updateAgent(agent_id: AgentID!, input: UpdateAgentInput!, session: Session!): AgentMeta!
-    uploadAttachment(attachment: AttachmentBlob!, session: Session!): Attachment!
-    userSetEmail(email: Email!, session: Session!): Boolean!
-    voiceToText(attachment_id: AttachmentID!, session: Session!): DecodingResult!
+  addAgentTelegramIntegration(agent_id: AgentID!, bot_token: String!, session: Session!): Boolean!
+  addAgentToChat(agent_id: AgentID!, chat_id: ChatID!, session: Session!): Boolean!
+  addDelta(chat_id: ChatID!, delta: String!, id: MessageID!, session: Session!): Message!
+  addMessageAttachment(attachment_id: AttachmentID!, chat_id: ChatID!, id: MessageID!, session: Session!): Message!
+  adminAddMessageToTelegramChatRoom(message: TelegramMessageInput!, session: Session!): [Message!]!
+  adminAddMessageToTwitterChatRoom(messages: [TwitterMessageInput!]!, session: Session!): [Message!]!
+  adminChangeAgentDeploymentStatus(payment_id: PaymentID!, session: Session!): Boolean!
+  adminCreateTelegramChatRoom(input: TelegramChatRoomConfigInput!, session: Session!): ChatRoom!
+  adminDeleteTelegramBot(session: Session!, telegram_bot_id: Int!): Boolean!
+  agentAttachMyXAccount(agent_id: AgentID!, session: Session!, x_api_keys: XApiKeysInput!): Boolean!
+  agentAttachTwitterUsernames(agent_id: AgentID!, session: Session!, usernames: [String!]!): Boolean!
+  agentChangeMyXAccountNotifications(agent_id: AgentID!, notifications: MyXAccountNotificationsInput!, session: Session!): Boolean!
+  agentDetachMyXAccount(agent_id: AgentID!, session: Session!): Boolean!
+  agentDetachTwitterUsernames(agent_id: AgentID!, session: Session!, usernames: [String!]!): Boolean!
+  appendUsages(session: Session!, usages: [UsageInput!]!): Boolean!
+  appendVariable(key: String!, namespace: NamespaceInput!, session: Session!, value: VariableValueInput!): VariableResponse!
+  authAgentLogin(agentID: AgentID!, session: Session!): LoginResult!
+  authGoogleLogin(input: OAuthLoginInput!): LoginResult!
+  authMetamaskLogin(input: MetamaskLoginInput!): LoginResult!
+  authTelegramLogin(input: TelegramLoginInput!): LoginResult!
+  authTwitterLogin(input: OAuthLoginInput!): LoginResult!
+  chainGraphSave(graph: ChainGraphInput!, previous_graph_id: GraphID!, session: Session!): ChainGraph!
+  changeAgentDeploymentType(agent_id: AgentID!, deployment_type: DeploymentType!, session: Session!): Boolean!
+  chatRoomCreateParticipant(chat_id: ChatID!, input: ParticipantInput!, session: Session!): Participant!
+  chatRoomRemoveParticipant(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): Boolean!
+  chatRoomUpdateParticipant(chat_id: ChatID!, input: ParticipantInput!, participant_id: ParticipantID!, session: Session!): Participant!
+  continueCompletion(chat_id: ChatID!, session: Session!): Boolean!
+  createAgent(input: CreateAgentInput!, session: Session!): AgentMeta!
+  createChatRoom(agents: [AgentID!] = [], session: Session!): ChatRoom!
+  createDeployPaymentForAgent(agent_id: AgentID!, session: Session!): DeployPayment!
+  "Create the secret owned by the user."
+  createSecret(params: CreateSecretParams!, session: Session!): CreateSecretResponse!
+  deleteAgent(agent_id: AgentID!, session: Session!): Boolean!
+  deleteChatRoom(id: ChatID!, session: Session!): Boolean!
+  deleteMessage(chat_id: ChatID!, id: MessageID!, session: Session!): Message!
+  "Delete a secret."
+  deleteSecret(params: DeleteSecretParams!, session: Session!): DeleteSecretResponse!
+  deleteVariable(key: String!, namespace: NamespaceInput!, session: Session!): Boolean!
+  deleteVariables(namespace: NamespaceInput!, session: Session!): Boolean!
+  deployAgent(agent_id: AgentID!, deployment_type: DeploymentType!, session: Session!): Boolean!
+  editMessage(chat_id: ChatID!, id: MessageID!, message: MessageEditInput!, session: Session!): Message!
+  finishMessage(chat_id: ChatID!, id: MessageID!, session: Session!): Message!
+  kdbCreateAgentCollection(input: CreateAgentCollectionInput!, session: Session!): Collection!
+  kdbCreateChunk(chunks: [ChunkInput!]!, session: Session!): [Chunk!]!
+  kdbCreateDocument(doc: DocumentMetaInput!, session: Session!): DocumentMeta!
+  kdbCreatePage(pages: [PageInput!]!, session: Session!): [Page!]!
+  kdbCreateQA(qa: CreateQAInput!, session: Session!): [QA!]!
+  kdbCreateTriplet(session: Session!, triplet: CreateTripletInput!): [Triplet!]!
+  kdbDeleteAgentCollection(collection_id: CollectionID!, session: Session!): Boolean!
+  kdbDeleteChunk(chunk_id: ChunkID!, session: Session!): Boolean!
+  kdbDeletePage(page_id: PageID!, session: Session!): Boolean!
+  kdbDeleteQA(qa_id: String!, session: Session!): Boolean!
+  kdbIndexingDocumentTaskConfirm(session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
+  kdbIndexingDocumentTaskCreate(input: KdbIndexingDocumentTaskCreateInput!, session: Session!): IndexingDocumentTask!
+  kdbIndexingDocumentTaskDelete(session: Session!, taskID: TaskID!): Boolean!
+  kdbIndexingDocumentTaskError(error: String!, session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
+  kdbIndexingDocumentTaskPause(session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
+  kdbIndexingDocumentTaskTransitionState(session: Session!, taskID: TaskID!, toState: IndexingDocumentTaskState!, version: Int!): IndexingDocumentTask!
+  kdbIndexingDocumentTaskUpdateConfig(input: KdbIndexingDocumentTaskUpdateConfigInput!, session: Session!, taskID: TaskID!, version: Int!): IndexingDocumentTask!
+  kdbRemoveDocument(document_id: DocumentID!, session: Session!): Boolean!
+  kdbUpdateAgentCollection(collection_id: CollectionID!, input: UpdateAgentCollectionInput!, session: Session!): Collection!
+  kdbUpdateDocument(doc: UpdateDocumentMetaInput!, document_id: DocumentID!, session: Session!): DocumentMeta!
+  kdbUpdatePage(page: PageUpdate!, page_id: PageID!, session: Session!): Page!
+  kdbUpdateQA(qa: QAInput!, qa_id: String!, session: Session!): QA!
+  participantPublishToMarketplace(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): AgentMeta!
+  regenerateLastResponse(chat_id: ChatID!, session: Session!): Boolean!
+  removeAgentFromChat(agent_id: AgentID!, chat_id: ChatID!, session: Session!): Boolean!
+  removeAgentTelegramIntegration(agent_id: AgentID!, session: Session!): Boolean!
+  renameChatRoom(id: ChatID!, new_name: String!, session: Session!): ChatRoom!
+  "Replace a secret with the given secret ID with the given secret if they have the same type."
+  replaceSecret(params: ReplaceSecretParams!, session: Session!): ReplaceSecretResponse!
+  sendMessage(chat_id: ChatID!, message: MessageInput!, session: Session!): Message!
+  setMessageMeta(chat_id: ChatID!, id: MessageID!, message_meta: MessageMetaInput!, session: Session!): Message!
+  setVariable(key: String!, namespace: NamespaceInput!, session: Session!, value: VariableValueInput!): VariableResponse!
+  setVariables(namespace: NamespaceInput!, session: Session!, variables: [KeyValueInput!]!): VariablesResponse!
+  stopCompletion(chat_id: ChatID!, session: Session!): Boolean!
+  unsubscribeBalance(session: Session!, sub_id: BalanceSubscriptionID!): Boolean!
+  unsubscribeChatRoom(session: Session!, sub_id: SubscriptionID!): Boolean!
+  unsubscribeMessages(chat_id: ChatID!, session: Session!, sub_id: SubscriptionID!): Boolean!
+  updateAgent(agent_id: AgentID!, input: UpdateAgentInput!, session: Session!): AgentMeta!
+  uploadAttachment(attachment: AttachmentBlob!, session: Session!): Attachment!
+  userSetEmail(email: Email!, session: Session!): Boolean!
+  voiceToText(attachment_id: AttachmentID!, session: Session!): DecodingResult!
 }
 
 type MyXAccount {
-    notifications: MyXAccountNotifications!
-    twitter_account: TwitterAccount!
-    x_api_keys_hint: XApiKeys!
+  notifications: MyXAccountNotifications!
+  twitter_account: TwitterAccount!
+  x_api_keys_hint: XApiKeys!
 }
 
 type MyXAccountNotifications {
-    enable_mention_notifications: Boolean!
-    enable_post_notifications: Boolean!
-    enable_reply_notifications: Boolean!
+  enable_mention_notifications: Boolean!
+  enable_post_notifications: Boolean!
+  enable_reply_notifications: Boolean!
 }
 
 type OAuthRedirectURLResult {
-    code_verifier: String!
-    redirect_url: String!
+  code_verifier: String!
+  redirect_url: String!
 }
 
 type Page {
-    content: String!
-    created_at: Time!
-    description: String
-    document_id: DocumentID!
-    indexing_state: IndexingState!
-    number: Int!
-    page_id: PageID!
-    task_id: TaskID!
+  content: String!
+  created_at: Time!
+  description: String
+  document_id: DocumentID!
+  indexing_state: IndexingState!
+  number: Int!
+  page_id: PageID!
+  task_id: TaskID!
 }
 
 type PairPrice {
-    base_currency: String!
-    change_24h: Float!
-    high: Float!
-    low: Float!
-    month: Float!
-    open: Float!
-    price: Float!
-    quote_currency: String!
-    time: Time!
-    week: Float!
+  base_currency: String!
+  change_24h: Float!
+  high: Float!
+  low: Float!
+  month: Float!
+  open: Float!
+  price: Float!
+  quote_currency: String!
+  time: Time!
+  week: Float!
 }
 
 type Participant {
-    agent_id: AgentID!
-    avatar: String!
-    first_name: String!
-    is_agent: Boolean!
-    last_name: String
-    llm_model: String!
-    meta: JSON!
-    participant_id: ParticipantID!
-    purpose: String
-    role: String
-    self_awareness: String
-    tools: [Tool!]!
-    username: String!
+  agent_id: AgentID!
+  avatar: String!
+  first_name: String!
+  is_agent: Boolean!
+  last_name: String
+  llm_model: String!
+  meta: JSON!
+  participant_id: ParticipantID!
+  purpose: String
+  role: String
+  self_awareness: String
+  tools: [Tool!]!
+  username: String!
 }
 
 type PartnerAgentMeta {
-    avatar: String!
-    name: String!
-    role: String!
-    social: AgentSocial!
-    token_address: String
-    token_metrics: AgentTokenMetrics
-    url: String!
+  avatar: String!
+  name: String!
+  role: String!
+  social: AgentSocial!
+  token_address: String
+  token_metrics: AgentTokenMetrics
+  url: String!
 }
 
 type QA {
-    answer: String!
-    answer_tokens: Int!
-    chunk_id: ChunkID!
-    chunk_number: Int!
-    created_at: Time!
-    document_id: DocumentID!
-    document_published_at: Time!
-    indexing_state: IndexingState!
-    model: String
-    page_number_from: Int!
-    page_number_to: Int!
-    qa_id: String!
-    question: String!
-    question_tokens: Int!
-    task_id: TaskID!
+  answer: String!
+  answer_tokens: Int!
+  chunk_id: ChunkID!
+  chunk_number: Int!
+  created_at: Time!
+  document_id: DocumentID!
+  document_published_at: Time!
+  indexing_state: IndexingState!
+  model: String
+  page_number_from: Int!
+  page_number_to: Int!
+  qa_id: String!
+  question: String!
+  question_tokens: Int!
+  task_id: TaskID!
 }
 
 type QAWithDistance {
-    distance: Float!
-    qa: QA!
+  distance: Float!
+  qa: QA!
 }
 
 type QAWithDocuments {
-    document: DocumentMeta!
-    qas: [QAWithDistance!]!
+  document: DocumentMeta!
+  qas: [QAWithDistance!]!
 }
 
 type QAWithSimilarity {
-    qa: QA!
-    similarity: Float!
+  qa: QA!
+  similarity: Float!
 }
 
 type QAWithSimilarityByDocuments {
-    document: DocumentMeta!
-    qas: [QAWithSimilarity!]!
+  document: DocumentMeta!
+  qas: [QAWithSimilarity!]!
 }
 
 type Query {
-    CurrentPrice(request: CurrentPriceRequest!): CurrentPriceResponse!
-    HistoricalPrice(request: HistoricalPriceRequest!): [HistoricalPriceResponse!]
-    _service: _Service!
-    adminAgentGetTwitterApiKeys(agent_id: AgentID!, session: Session!): XApiKeys!
-    adminGetParticipantTelegramBotApiKey(chat_id: ChatID!, session: Session!): String!
-    agentCheckUsernameExists(session: Session!, username: Username!): Boolean!
-    agentGetAttachedTwitterAccounts(agent_id: AgentID!, session: Session!): [TwitterAccount!]!
-    agentGetMyXAccount(agent_id: AgentID!, session: Session!): MyXAccount!
-    authGoogleRedirectURL: OAuthRedirectURLResult!
-    authMetamaskMessage(address: MetamaskAddress!): MetamaskMessage!
-    authSessionAlive(session: Session!): Boolean!
-    authTelegramBotID: TelegramBotID!
-    authTwitterRedirectURL: OAuthRedirectURLResult!
-    chainGraphGet(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): ChainGraph
-    chainGraphGetByID(graph_id: GraphID!, session: Session!): ChainGraph
-    chainGraphHistory(graph_id: GraphID!, session: Session!): [ChainGraphHistory!]!
-    chatRoomGetParticipant(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): Participant!
-    chatRoomGetParticipants(chat_id: ChatID!, session: Session!): [Participant!]!
-    ctGetReferences(document_urls: [String!]!, session: Session!): [CTPostReference!]!
-    getChatRoom(chat_id: ChatID!, session: Session!): ChatRoom!
-    getChatRooms(session: Session!): [ChatRoom!]!
-    getLLMUsages(chat_id: ChatID!, message_id: MessageID!, session: Session!): [LLMUsage!]!
-    getTelegramBotInfo(agent_id: AgentID!, session: Session!): TelegramBot!
-    getTweetsFromDB(session: Session!, tweets_ids: [TweetID!]!): [Tweet!]!
-    getVariable(key: String!, namespace: NamespaceInput!, session: Session!): VariableResponse!
-    getVariables(namespace: NamespaceInput!, session: Session!): VariablesResponse!
-    kdbGetAgentCollections(agent_id: AgentID!, session: Session!): [Collection!]!
-    kdbGetAgentCollectionsWithDocuments(agent_id: AgentID!, session: Session!): [CollectionWithDocuments!]!
-    kdbGetChunk(chunk_id: ChunkID!, session: Session!): Chunk!
-    kdbGetChunksByDocument(document_id: DocumentID!, session: Session!): [Chunk!]!
-    kdbGetChunksByTask(session: Session!, task_id: TaskID!): [Chunk!]!
-    kdbGetCollection(collection_id: CollectionID!, session: Session!): Collection!
-    kdbGetCollections(limit: Int! = 200, offset: Int! = 0, session: Session!): [Collection!]! @deprecated(reason: "Use kdbGetCollectionsByIds instead")
-    kdbGetCollectionsByIds(collection_id: [CollectionID!]!, session: Session!): [Collection!]!
-    kdbGetDefaultParticipantCollection(participant_id: ParticipantID!, session: Session!): Collection! @deprecated(reason: "just old")
-    kdbGetDocuments(document_ids: [DocumentID!]!, session: Session!): [DocumentMeta!]!
-    kdbGetDocumentsByCollection(collection_id: CollectionID!, session: Session!): [DocumentMeta!]!
-    kdbGetPagesByDocument(document_id: DocumentID!, session: Session!): [Page!]!
-    kdbGetPagesByTask(session: Session!, task_id: TaskID!): [Page!]!
-    kdbGetParticipantCollections(participant_id: ParticipantID!, session: Session!): [Collection!]! @deprecated(reason: "just old")
-    kdbGetQAByCollection(chunk_from: Int!, chunk_to: Int!, collection_id: CollectionID!, session: Session!): [QA!]!
-    kdbGetQAByDocument(chunk_from: Int!, chunk_to: Int!, document_id: DocumentID!, session: Session!): [QA!]!
-    kdbGetQAByTask(chunk_from: Int!, chunk_to: Int!, session: Session!, task_id: TaskID!): [QA!]!
-    kdbIndexingDocumentTaskGet(session: Session!, taskID: TaskID!): IndexingDocumentTask!
-    kdbIndexingDocumentTaskGetByDocument(document_id: [DocumentID!]!, session: Session!): [IndexingDocumentTask!]!
-    kdbIndexingDocumentTaskGetByState(limit: Int! = 100, session: Session!, state: [IndexingDocumentTaskState!]!): [IndexingDocumentTask!]!
-    kdbIndexingDocumentTasksGet(session: Session!, taskID: [TaskID!]!): [IndexingDocumentTask!]!
-    kdbQueryCollectionQA(collection_id: [CollectionID!], limit: Int! = 20, queryString: String!, session: Session!, threshold: Float! = 0.5, tokensLimit: Int! = 4000): [QAWithDistance!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
-    kdbQueryCollectionQAWithDocuments(collection_id: [CollectionID!], limit: Int! = 20, queryString: String!, session: Session!, threshold: Float! = 0.5, tokensLimit: Int! = 4000): [QAWithDocuments!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
-    kdbQueryParticipantCollectionQA(limit: Int! = 20, participantID: ParticipantID!, queryString: String!, session: Session!, threshold: Float! = 0.5, tokensLimit: Int! = 4000): [QAWithDistance!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
-    kdbSearchQAWithDocuments(collections: [CollectionID!]!, filters: SearchQAFilters = {published_range: {}, doc_ids: [], keywords: []}, options: SearchQAOptions = {qa_count: 20, tokens_limit: 4000, threshold: 0.5, time_weight_decay: {enabled: false, formula: Linear, alpha: 0.5, polynomial_degree: 2}}, order_by: SearchQAOrderBy = {document_field: PublishedDate, document_direction: Asc, qa_field: Similarity, qa_direction: Desc}, queries: [String!]!, queries_weights: [Float!], session: Session!): [QAWithSimilarityByDocuments!]!
-    marketplaceAgent(agent_id: AgentID!, session: Session!): AgentMeta!
-    marketplaceAgents(session: Session!): [AgentCollection!]!
-    marketplaceAgentsByIDs(agent_ids: [AgentID!]!, session: Session!): [AgentMeta!]!
-    message(chat_id: ChatID!, id: MessageID!, session: Session!): Message
-    messages(chat_id: ChatID!, from: MessageID!, limit: Int, order: String, session: Session!): [Message!]!
-    messagesWithoutSystem(chat_id: ChatID!, from: MessageID!, limit: Int, order: String, session: Session!): [Message!]!
-    partnerAgents(partner_id: PartnerID!): [PartnerAgentMeta!]!
-    "Retrieve a secret by ID."
-    secret(id: SecretID!, publicKey: ECDHPublicKeyP256!, session: Session!): SecretResponse!
-    "List of the secrets owned by the user."
-    secrets(session: Session!): SecretsResponse!
-    "Aggregated data of the staking contract."
-    staking: StakingResponse!
-    "Tier of the staker."
-    stakingTier(session: Session!): StakingTierResponse!
-    userProfile(session: Session!): UserProfile!
+  CurrentPrice(request: CurrentPriceRequest!): CurrentPriceResponse!
+  HistoricalPrice(request: HistoricalPriceRequest!): [HistoricalPriceResponse!]
+  _service: _Service!
+  adminAgentGetTwitterApiKeys(agent_id: AgentID!, session: Session!): XApiKeys!
+  adminGetParticipantTelegramBotApiKey(chat_id: ChatID!, session: Session!): String!
+  agentCheckUsernameExists(session: Session!, username: Username!): Boolean!
+  agentGetAttachedTwitterAccounts(agent_id: AgentID!, session: Session!): [TwitterAccount!]!
+  agentGetMyXAccount(agent_id: AgentID!, session: Session!): MyXAccount!
+  authGoogleRedirectURL: OAuthRedirectURLResult!
+  authMetamaskMessage(address: MetamaskAddress!): MetamaskMessage!
+  authSessionAlive(session: Session!): Boolean!
+  authTelegramBotID: TelegramBotID!
+  authTwitterRedirectURL: OAuthRedirectURLResult!
+  chainGraphGet(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): ChainGraph
+  chainGraphGetByID(graph_id: GraphID!, session: Session!): ChainGraph
+  chainGraphHistory(graph_id: GraphID!, session: Session!): [ChainGraphHistory!]!
+  chatRoomGetParticipant(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): Participant!
+  chatRoomGetParticipants(chat_id: ChatID!, session: Session!): [Participant!]!
+  ctGetReferences(document_urls: [String!]!, session: Session!): [CTPostReference!]!
+  getChatRoom(chat_id: ChatID!, session: Session!): ChatRoom!
+  getChatRooms(session: Session!): [ChatRoom!]!
+  getLLMUsages(chat_id: ChatID!, message_id: MessageID!, session: Session!): [LLMUsage!]!
+  getTelegramBotInfo(agent_id: AgentID!, session: Session!): TelegramBot!
+  getTweetsFromDB(session: Session!, tweets_ids: [TweetID!]!): [Tweet!]!
+  getVariable(key: String!, namespace: NamespaceInput!, session: Session!): VariableResponse!
+  getVariables(namespace: NamespaceInput!, session: Session!): VariablesResponse!
+  kdbGetAgentCollections(agent_id: AgentID!, session: Session!): [Collection!]!
+  kdbGetAgentCollectionsWithDocuments(agent_id: AgentID!, session: Session!): [CollectionWithDocuments!]!
+  kdbGetChunk(chunk_id: ChunkID!, session: Session!): Chunk!
+  kdbGetChunksByDocument(document_id: DocumentID!, session: Session!): [Chunk!]!
+  kdbGetChunksByTask(session: Session!, task_id: TaskID!): [Chunk!]!
+  kdbGetCollection(collection_id: CollectionID!, session: Session!): Collection!
+  kdbGetCollections(limit: Int! = 200 @deprecated(reason: "Use kdbGetCollectionsByIds instead"), offset: Int! = 0 @deprecated(reason: "Use kdbGetCollectionsByIds instead"), session: Session! @deprecated(reason: "Use kdbGetCollectionsByIds instead")): [Collection!]! @deprecated(reason: "Use kdbGetCollectionsByIds instead")
+  kdbGetCollectionsByIds(collection_id: [CollectionID!]!, session: Session!): [Collection!]!
+  kdbGetDefaultParticipantCollection(participant_id: ParticipantID! @deprecated(reason: "just old"), session: Session! @deprecated(reason: "just old")): Collection! @deprecated(reason: "just old")
+  kdbGetDocuments(document_ids: [DocumentID!]!, session: Session!): [DocumentMeta!]!
+  kdbGetDocumentsByCollection(collection_id: CollectionID!, filters: GetDocumentsByCollectionFilters! = {published_range: {}}, limit: Int! = 1000, order_by: GetDocumentsByCollectionOrderByInput! = {field: PUBLISHED_AT, direction: Asc}, session: Session!): [DocumentWithPagesCount!]!
+  kdbGetPagesByDocument(document_id: DocumentID!, filters: GetPagesByDocumentFilters! = {pages_range: {}}, session: Session!): [Page!]!
+  kdbGetPagesByTask(session: Session!, task_id: TaskID!): [Page!]!
+  kdbGetParticipantCollections(participant_id: ParticipantID! @deprecated(reason: "just old"), session: Session! @deprecated(reason: "just old")): [Collection!]! @deprecated(reason: "just old")
+  kdbGetQAByCollection(chunk_from: Int!, chunk_to: Int!, collection_id: CollectionID!, session: Session!): [QA!]!
+  kdbGetQAByDocument(chunk_from: Int!, chunk_to: Int!, document_id: DocumentID!, session: Session!): [QA!]!
+  kdbGetQAByTask(chunk_from: Int!, chunk_to: Int!, session: Session!, task_id: TaskID!): [QA!]!
+  kdbIndexingDocumentTaskGet(session: Session!, taskID: TaskID!): IndexingDocumentTask!
+  kdbIndexingDocumentTaskGetByDocument(document_id: [DocumentID!]!, session: Session!): [IndexingDocumentTask!]!
+  kdbIndexingDocumentTaskGetByState(limit: Int! = 100, session: Session!, state: [IndexingDocumentTaskState!]!): [IndexingDocumentTask!]!
+  kdbIndexingDocumentTasksGet(session: Session!, taskID: [TaskID!]!): [IndexingDocumentTask!]!
+  kdbQueryCollectionQA(collection_id: [CollectionID!] @deprecated(reason: "use kdbSearchQAWithDocuments"), limit: Int! = 20 @deprecated(reason: "use kdbSearchQAWithDocuments"), queryString: String! @deprecated(reason: "use kdbSearchQAWithDocuments"), session: Session! @deprecated(reason: "use kdbSearchQAWithDocuments"), threshold: Float! = 0.5 @deprecated(reason: "use kdbSearchQAWithDocuments"), tokensLimit: Int! = 4000 @deprecated(reason: "use kdbSearchQAWithDocuments")): [QAWithDistance!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
+  kdbQueryCollectionQAWithDocuments(collection_id: [CollectionID!] @deprecated(reason: "use kdbSearchQAWithDocuments"), limit: Int! = 20 @deprecated(reason: "use kdbSearchQAWithDocuments"), queryString: String! @deprecated(reason: "use kdbSearchQAWithDocuments"), session: Session! @deprecated(reason: "use kdbSearchQAWithDocuments"), threshold: Float! = 0.5 @deprecated(reason: "use kdbSearchQAWithDocuments"), tokensLimit: Int! = 4000 @deprecated(reason: "use kdbSearchQAWithDocuments")): [QAWithDocuments!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
+  kdbQueryParticipantCollectionQA(limit: Int! = 20 @deprecated(reason: "use kdbSearchQAWithDocuments"), participantID: ParticipantID! @deprecated(reason: "use kdbSearchQAWithDocuments"), queryString: String! @deprecated(reason: "use kdbSearchQAWithDocuments"), session: Session! @deprecated(reason: "use kdbSearchQAWithDocuments"), threshold: Float! = 0.5 @deprecated(reason: "use kdbSearchQAWithDocuments"), tokensLimit: Int! = 4000 @deprecated(reason: "use kdbSearchQAWithDocuments")): [QAWithDistance!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
+  kdbSearchQAWithDocuments(collections: [CollectionID!]!, filters: SearchQAFilters = {published_range: {}, doc_ids: [], keywords: []}, options: SearchQAOptions = {qa_count: 20, tokens_limit: 4000, threshold: 0.5, time_weight_decay: {enabled: false, formula: Linear, alpha: 0.5, polynomial_degree: 2}}, order_by: SearchQAOrderBy = {document_field: PublishedDate, document_direction: Asc, qa_field: Similarity, qa_direction: Desc}, queries: [String!]!, queries_weights: [Float!], session: Session!): [QAWithSimilarityByDocuments!]!
+  marketplaceAgent(agent_id: AgentID!, session: Session!): AgentMeta!
+  marketplaceAgents(session: Session!): [AgentCollection!]!
+  marketplaceAgentsByIDs(agent_ids: [AgentID!]!, session: Session!): [AgentMeta!]!
+  message(chat_id: ChatID!, id: MessageID!, session: Session!): Message
+  messages(chat_id: ChatID!, from: MessageID!, limit: Int, order: String, session: Session!): [Message!]!
+  messagesWithoutSystem(chat_id: ChatID!, from: MessageID!, limit: Int, order: String, session: Session!): [Message!]!
+  partnerAgents(partner_id: PartnerID!): [PartnerAgentMeta!]!
+  "Retrieve a secret by ID."
+  secret(id: SecretID!, publicKey: ECDHPublicKeyP256!, session: Session!): SecretResponse!
+  "List of the secrets owned by the user."
+  secrets(session: Session!): SecretsResponse!
+  "Aggregated data of the staking contract."
+  staking: StakingResponse!
+  "Tier of the staker."
+  stakingTier(session: Session!): StakingTierResponse!
+  userProfile(session: Session!): UserProfile!
 }
 
 "Response to the replaceSecret mutation."
 type ReplaceSecretResponse {
-    "ID of the new secret."
-    id: SecretID!
+  "ID of the new secret."
+  id: SecretID!
 }
 
 "A typed encrypted value that only belongs to its owner."
 type Secret {
-    "Encrypted value of the secret."
-    encrypted: BlobBase64!
-    "Metadata describing the encrypted value."
-    metadata: SecretMetadata!
+  "Encrypted value of the secret."
+  encrypted: BlobBase64!
+  "Metadata describing the encrypted value."
+  metadata: SecretMetadata!
 }
 
 "Unencrypted data which describes a secret."
 type SecretMetadata {
-    "ID of the secret."
-    id: SecretID!
-    "Name of the secret."
-    name: String!
-    "Type of the secret."
-    type: String!
-    "Owner of the secret."
-    userID: UserID!
+  "ID of the secret."
+  id: SecretID!
+  "Name of the secret."
+  name: String!
+  "Type of the secret."
+  type: String!
+  "Owner of the secret."
+  userID: UserID!
 }
 
 "Response to the secret query."
 type SecretResponse {
-    "Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get decryption key of AES-256 in GCM mode."
-    publicKey: ECDHPublicKeyP256!
-    "The secret with the given ID."
-    secret: Secret!
+  "Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get decryption key of AES-256 in GCM mode."
+  publicKey: ECDHPublicKeyP256!
+  "The secret with the given ID."
+  secret: Secret!
 }
 
 "Response to the secrets query."
 type SecretsResponse {
-    "List of the secrets owned by the user."
-    secrets: [SecretMetadata!]!
+  "List of the secrets owned by the user."
+  secrets: [SecretMetadata!]!
 }
 
 "Response to the staking query."
 type StakingResponse {
-    "Annual Percentage Yield (APY) is the ratio between early income and money spent in dollar equivalent."
-    apy: Float!
-    "Price of the reward token in USD."
-    rewardTokenPriceUSD: Decimal!
-    "Amount of reward tokens distributed between all stakers per second in current epoch."
-    rewardTokensPerSecond: Decimal!
-    "Price of the staking token in USD."
-    stakingTokenPriceUSD: Decimal!
-    "List of the available tiers."
-    tiers: [Tier!]!
-    "Amount of unique addresses that are currently have a positive stake."
-    uniqueStakersCount: Int!
+  "Annual Percentage Yield (APY) is the ratio between early income and money spent in dollar equivalent."
+  apy: Float!
+  "Price of the reward token in USD."
+  rewardTokenPriceUSD: Decimal!
+  "Amount of reward tokens distributed between all stakers per second in current epoch."
+  rewardTokensPerSecond: Decimal!
+  "Price of the staking token in USD."
+  stakingTokenPriceUSD: Decimal!
+  "List of the available tiers."
+  tiers: [Tier!]!
+  "Amount of unique addresses that are currently have a positive stake."
+  uniqueStakersCount: Int!
 }
 
 "Response to the stakingTier query."
 type StakingTierResponse {
-    "Tier of the staker. null means that the staker has no tier"
-    Tier: Tier
+  "Tier of the staker. null means that the staker has no tier"
+  Tier: Tier
 }
 
 type Subscription {
-    subscribeBalance(session: Session!): BalanceUpdate!
-    subscribeChatRooms(limit_chats: Int, session: Session!): ChatRoomEvent!
-    subscribeMessages(chat_id: ChatID!, limitMessages: Int! = 100, session: Session!): MessageEvent!
+  subscribeBalance(session: Session!): BalanceUpdate!
+  subscribeChatRooms(limit_chats: Int, session: Session!): ChatRoomEvent!
+  subscribeMessages(chat_id: ChatID!, limitMessages: Int! = 100, session: Session!): MessageEvent!
 }
 
 type TelegramBot {
-    attached_chats: [TelegramBotChat!]!
-    auto_response: Boolean!
-    bot_id: Int!
-    first_name: String!
-    has_bot_token: Boolean!
-    last_name: String!
-    photo_url: String!
-    username: String!
+  attached_chats: [TelegramBotChat!]!
+  auto_response: Boolean!
+  bot_id: Int!
+  first_name: String!
+  has_bot_token: Boolean!
+  last_name: String!
+  photo_url: String!
+  username: String!
 }
 
 type TelegramBotChat {
-    chat_room_id: ChatID!
-    telegram_chat_id: Int!
-    telegram_chat_photo: String!
-    telegram_chat_title: String!
-    telegram_chat_username: String!
+  chat_room_id: ChatID!
+  telegram_chat_id: Int!
+  telegram_chat_photo: String!
+  telegram_chat_title: String!
+  telegram_chat_username: String!
 }
 
 "Category of a staker based on their staking amount."
 type Tier {
-    "A multiplier of how much of the available IDO token allocation is allowed to buy."
-    AllocationWeight: Float!
-    "Duration before a staker can participate in a next launch."
-    CoolOff: Duration!
-    "Minimum amount of tokens that need to be staked for obtaining this tier."
-    MinimumStake: Decimal!
-    "A display name of the tier."
-    Name: String!
-    "The more tickets a staker has, the higher their chance to get into an earlier wave. 0 means guaranteed 1st wave."
-    NumberOfTickets: Int!
+  "A multiplier of how much of the available IDO token allocation is allowed to buy."
+  AllocationWeight: Float!
+  "Duration before a staker can participate in a next launch."
+  CoolOff: Duration!
+  "Minimum amount of tokens that need to be staked for obtaining this tier."
+  MinimumStake: Decimal!
+  "A display name of the tier."
+  Name: String!
+  "The more tickets a staker has, the higher their chance to get into an earlier wave. 0 means guaranteed 1st wave."
+  NumberOfTickets: Int!
 }
 
 type Tool {
-    name: String!
+  name: String!
 }
 
 type Triplet {
-    chunk_id: ChunkID!
-    created_at: Time!
-    document_id: DocumentID!
-    indexing_state: IndexingState!
-    object: String!
-    predicate: String!
-    subject: String!
-    task_id: TaskID!
-    triplet_id: String!
+  chunk_id: ChunkID!
+  created_at: Time!
+  document_id: DocumentID!
+  indexing_state: IndexingState!
+  object: String!
+  predicate: String!
+  subject: String!
+  task_id: TaskID!
+  triplet_id: String!
 }
 
 type Tweet {
-    author: TwitterUser!
-    conversation_id: TweetID
-    created_at: Time!
-    in_reply_to_user_id: TwitterUserID
-    mentioned_users: [TwitterUser!]
-    public_metrics: TweetPublicMetrics
-    quoted_tweet: Tweet
-    reply_to_tweet_id: TweetID
-    reply_tweet: Tweet
-    text: String!
-    tweet_id: TweetID!
+  author: TwitterUser!
+  conversation_id: TweetID
+  created_at: Time!
+  in_reply_to_user_id: TwitterUserID
+  mentioned_users: [TwitterUser!]
+  public_metrics: TweetPublicMetrics
+  quoted_tweet: Tweet
+  reply_to_tweet_id: TweetID
+  reply_tweet: Tweet
+  text: String!
+  tweet_id: TweetID!
 }
 
 type TweetPublicMetrics {
-    like_count: Int
-    quote_count: Int
-    reply_count: Int
-    retweet_count: Int
+  like_count: Int
+  quote_count: Int
+  reply_count: Int
+  retweet_count: Int
 }
 
 type TwitterAccount {
-    created_at: Time!
-    deleted_at: Time
-    description: String
-    followers_count: Int
-    following_count: Int
-    id: ID!
-    initial_sync_hours: Int
-    last_synced_at: Time
-    listed_count: Int
-    location: String
-    most_recent_tweet_id: String
-    name: String
-    owner_user_id: UserID!
-    profile_image: String
-    protected: Boolean
-    sync_error: String
-    sync_status: TwitterSyncStatus!
-    tweet_count: Int
-    twitter_created_at: Time
-    twitter_user_id: String
-    updated_at: Time!
-    url: String
-    username: String!
-    verified: Boolean
+  created_at: Time!
+  deleted_at: Time
+  description: String
+  followers_count: Int
+  following_count: Int
+  id: ID!
+  initial_sync_hours: Int
+  last_synced_at: Time
+  listed_count: Int
+  location: String
+  most_recent_tweet_id: String
+  name: String
+  owner_user_id: UserID!
+  profile_image: String
+  protected: Boolean
+  sync_error: String
+  sync_status: TwitterSyncStatus!
+  tweet_count: Int
+  twitter_created_at: Time
+  twitter_user_id: String
+  updated_at: Time!
+  url: String
+  username: String!
+  verified: Boolean
 }
 
 type TwitterUser {
-    created_at: Time
-    description: String
-    id: String
-    name: String
-    profile_image_url: String
-    public_metrics: TwitterUserPublicMetrics
-    url: String
-    username: String
-    verified: Boolean
+  created_at: Time
+  description: String
+  id: String
+  name: String
+  profile_image_url: String
+  public_metrics: TwitterUserPublicMetrics
+  url: String
+  username: String
+  verified: Boolean
 }
 
 type TwitterUserPublicMetrics {
-    followers_count: Int
-    following_count: Int
-    listed_count: Int
-    tweet_count: Int
+  followers_count: Int
+  following_count: Int
+  listed_count: Int
+  tweet_count: Int
 }
 
 type UserProfile {
-    email: Email!
-    externalAccounts: [ExternalAccount!]!
-    id: UserID!
-    name: String!
-    picture: String!
-    role: UserRole!
-    tariffCurrent: UserTariff!
-    tariffExpires: Time
+  email: Email!
+  externalAccounts: [ExternalAccount!]!
+  id: UserID!
+  name: String!
+  picture: String!
+  role: UserRole!
+  tariffCurrent: UserTariff!
+  tariffExpires: Time
 }
 
 type Variable {
-    createdAt: Time!
-    id: ID!
-    key: String!
-    namespace: String!
-    updatedAt: Time!
-    value: VariableValue!
+  createdAt: Time!
+  id: ID!
+  key: String!
+  namespace: String!
+  updatedAt: Time!
+  value: VariableValue!
 }
 
 type VariableResponse {
-    variable: Variable
+  variable: Variable
 }
 
 type VariableValue {
-    type: VariableType!
-    value: String!
+  type: VariableType!
+  value: String!
 }
 
 type VariablesResponse {
-    variables: [Variable!]
+  variables: [Variable!]
 }
 
 type XApiKeys {
-    access_token: String!
-    access_token_secret: String!
-    consumer_key: String!
-    consumer_secret: String!
+  access_token: String!
+  access_token_secret: String!
+  consumer_key: String!
+  consumer_secret: String!
 }
 
 type _Service {
-    sdl: String
+  sdl: String
 }
 
 enum ChatRoomEventType {
-    CONTINUE_COMPLETION
-    CREATED
-    DELETED
-    EDITED
-    HISTORY_LOADED
-    PARTICIPANT_ADDED
-    PARTICIPANT_REMOVED
-    PARTICIPANT_UPDATED
-    REGENERATE_RESPONSE
-    STOP_COMPLETION
-    SUBSCRIBED
-    UNSUBSCRIBED
+  CONTINUE_COMPLETION
+  CREATED
+  DELETED
+  EDITED
+  HISTORY_LOADED
+  PARTICIPANT_ADDED
+  PARTICIPANT_REMOVED
+  PARTICIPANT_UPDATED
+  REGENERATE_RESPONSE
+  STOP_COMPLETION
+  SUBSCRIBED
+  UNSUBSCRIBED
 }
 
 enum DeploymentStatus {
-    deployed_private
-    deployed_public
-    paid
-    unpaid
+  deployed_private
+  deployed_public
+  paid
+  unpaid
 }
 
 enum DeploymentType {
-    Private
-    Public
+  Private
+  Public
+}
+
+"""
+
+DocumentOrderByField specifies the available fields for sorting document results.
+Represents the field names that can be used to order documents in queries.
+"""
+enum DocumentOrderByField {
+  "Order documents by their creation date and time"
+  CREATED_AT
+  "Order documents by their name in alphabetical order"
+  NAME
+  "Order documents by their publication date and time"
+  PUBLISHED_AT
 }
 
 enum DocumentType {
-    code
-    csv
-    html
-    image
-    json
-    other
-    pdf
-    text
-    web_page
-    xml
+  code
+  csv
+  html
+  image
+  json
+  other
+  pdf
+  text
+  web_page
+  xml
 }
 
 enum Event {
-    HISTORY_LOADED
-    MESSAGE_CREATED
-    MESSAGE_DELETED
-    MESSAGE_DELTA_ADD
-    MESSAGE_EDITED
-    MESSAGE_FINISHED
-    SUBSCRIBED
-    UNSUBSCRIBED
+  HISTORY_LOADED
+  MESSAGE_CREATED
+  MESSAGE_DELETED
+  MESSAGE_DELTA_ADD
+  MESSAGE_EDITED
+  MESSAGE_FINISHED
+  SUBSCRIBED
+  UNSUBSCRIBED
 }
 
 enum IndexingDocumentTaskState {
-    accepted
-    done
-    failed
-    parsing
-    pause_requested
-    paused
-    pending
-    qa_generating
-    rejected
-    waiting_for_confirmation
+  accepted
+  done
+  failed
+  parsing
+  pause_requested
+  paused
+  pending
+  qa_generating
+  rejected
+  waiting_for_confirmation
 }
 
 enum Market {
-    COINBASE
-    INDEX
-    KRAKEN
+  COINBASE
+  INDEX
+  KRAKEN
 }
 
 enum MessageType {
-    agentTrigger
-    common
-    error
-    scratchpad
-    system
-    telegram
-    thoughts
-    twitter
+  agentTrigger
+  common
+  error
+  scratchpad
+  system
+  telegram
+  thoughts
+  twitter
 }
 
 enum NamespaceType {
-    agent
-    chat
-    chat_agent
-    execution
+  agent
+  chat
+  chat_agent
+  execution
 }
 
 enum OrderByField {
-    ChunkNumber
-    PublishedDate
-    Similarity
+  ChunkNumber
+  PublishedDate
+  Similarity
 }
 
 enum OrderDirection {
-    Asc
-    Desc
+  Asc
+  Desc
 }
 
 enum Period {
-    D1
-    H1
+  D1
+  H1
 }
 
 enum ProviderID {
-    google
-    metamask
-    telegram
-    twitter
+  google
+  metamask
+  telegram
+  twitter
 }
 
 enum TimeWeightDecayFormula {
-    Exponential
-    Linear
-    Logarithmic
-    Polynomial
+  Exponential
+  Linear
+  Logarithmic
+  Polynomial
 }
 
 enum TwitterSyncStatus {
-    completed
-    failed
-    pending
-    syncing
+  completed
+  failed
+  pending
+  syncing
 }
 
 enum UserRole {
-    admin
-    agent
-    user
-    waitlist
+  admin
+  agent
+  user
+  waitlist
 }
 
 enum UserTariff {
-    free
-    unlimited
+  free
+  unlimited
 }
 
 enum VariableType {
-    any
-    array
-    boolean
-    number
-    object
-    string
+  any
+  array
+  boolean
+  number
+  object
+  string
 }
 
 scalar AgentID
@@ -1113,407 +1135,467 @@ scalar _Any
 scalar _FieldSet
 
 input AgentSocialInput {
-    telegram_link: String
-    x_link: String
-    youtube_link: String
+  telegram_link: String
+  x_link: String
+  youtube_link: String
 }
 
 input AttachmentBlob {
-    blob: BlobBase64!
-    filename: String!
+  blob: BlobBase64!
+  filename: String!
 }
 
 input ChainGraphInput {
-    graph: String!
-    graph_id: GraphID
+  graph: String!
+  graph_id: GraphID
 }
 
 input ChatHistoryConfigInput {
-    messages_count: Int!
-    tokens_limit: Int!
+  messages_count: Int!
+  tokens_limit: Int!
 }
 
 input ChunkInput {
-    chunk_number: Int!
-    content: String!
-    document_id: DocumentID!
-    page_number_from: Int!
-    page_number_to: Int!
-    task_id: TaskID!
+  chunk_number: Int!
+  content: String!
+  document_id: DocumentID!
+  page_number_from: Int!
+  page_number_to: Int!
+  task_id: TaskID!
 }
 
 input CreateAgentCollectionInput {
-    agent_id: AgentID!
-    description: String!
-    name: String!
-    tags: [String!]!
+  agent_id: AgentID!
+  description: String!
+  name: String!
+  tags: [String!]!
 }
 
 input CreateAgentInput {
-    avatar: String!
-    chain_graph_id: GraphID!
-    chat_history_config: ChatHistoryConfigInput!
-    first_name: String!
-    last_name: String!
-    llm_config: LLMConfigInput!
-    prompt: String!
-    role: String!
-    skeleton: String!
-    social: AgentSocialInput
-    telegram_config: TelegramConfigInput
-    template_params: JSON!
-    token_address: String
-    username: Username!
+  avatar: String!
+  chain_graph_id: GraphID!
+  chat_history_config: ChatHistoryConfigInput!
+  first_name: String!
+  last_name: String!
+  llm_config: LLMConfigInput!
+  prompt: String!
+  role: String!
+  skeleton: String!
+  social: AgentSocialInput
+  telegram_config: TelegramConfigInput
+  template_params: JSON!
+  token_address: String
+  username: Username!
 }
 
 input CreateParticipantCollectionInput {
-    description: String!
-    name: String!
-    participant_id: ParticipantID!
-    tags: [String!]!
+  description: String!
+  name: String!
+  participant_id: ParticipantID!
+  tags: [String!]!
 }
 
 input CreateQAInput {
-    chunk_id: ChunkID!
-    cost: IndexingCost!
-    document_id: DocumentID!
-    model: String
-    page_number_from: Int!
-    page_number_to: Int!
-    qas: [QAInput!]!
-    task_id: TaskID!
+  chunk_id: ChunkID!
+  cost: IndexingCost!
+  document_id: DocumentID!
+  model: String
+  page_number_from: Int!
+  page_number_to: Int!
+  qas: [QAInput!]!
+  task_id: TaskID!
 }
 
 "Parameters of the createSecret mutation."
 input CreateSecretParams {
-    "Name of the secret."
-    name: String!
-    "Type of the secret."
-    type: String!
-    "Unencrypted secret value."
-    value: JSON!
+  "Name of the secret."
+  name: String!
+  "Type of the secret."
+  type: String!
+  "Unencrypted secret value."
+  value: JSON!
 }
 
 input CreateTripletInput {
-    chunk_id: ChunkID!
-    cost: IndexingCost!
-    document_id: DocumentID!
-    task_id: TaskID!
-    triplets: [TripletInput!]!
+  chunk_id: ChunkID!
+  cost: IndexingCost!
+  document_id: DocumentID!
+  task_id: TaskID!
+  triplets: [TripletInput!]!
 }
 
 input CurrentPriceRequest {
-    currency: [String!]!
+  currency: [String!]!
 }
 
 "Parameters of the deleteSecret mutation."
 input DeleteSecretParams {
-    "ID of the secret to be deleted."
-    id: SecretID!
+  "ID of the secret to be deleted."
+  id: SecretID!
 }
 
 input DocumentMetaInput {
-    collection_id: CollectionID!
-    description: String
-    metadata: [DocumentMetadataKVInput!]!
-    name: String!
-    published_at: Time
-    tags: [String!]!
-    url: String!
+  collection_id: CollectionID!
+  description: String
+  metadata: [DocumentMetadataKVInput!]!
+  name: String!
+  published_at: Time
+  tags: [String!]!
+  url: String!
 }
 
 input DocumentMetadataKVInput {
-    key: String!
-    value: String!
+  key: String!
+  value: String!
+}
+
+"Input type defining a date range for filtering documents based on their publication dates."
+input GetDocumentsByCollectionFilterPublishedRange {
+  """
+
+  Starting date/time for the publication range filter.
+  Documents published before this time will be excluded.
+  """
+  from: Time
+  """
+
+  Ending date/time for the publication range filter.
+  Documents published after this time will be excluded.
+  """
+  to: Time
+}
+
+"Input type for filtering documents by collection with various criteria."
+input GetDocumentsByCollectionFilters {
+  "Filter documents based on their publication date range."
+  published_range: GetDocumentsByCollectionFilterPublishedRange! = {}
+}
+
+"""
+
+Input type for specifying the sort order of documents within a collection.
+Defines the field and direction by which documents should be ordered.
+"""
+input GetDocumentsByCollectionOrderByInput {
+  """
+
+  The sort direction for the specified field.
+  Can be either Asc (ascending) or Desc (descending).
+  """
+  direction: OrderDirection! = Asc
+  "The field name by which to sort the documents."
+  field: DocumentOrderByField!
+}
+
+"Defines the inclusive range of page numbers to retrieve from a document."
+input GetPagesByDocumentFilterPagesRange {
+  """
+
+  The starting page number of the range (inclusive).
+  Must be a positive integer and less than or equal to the 'to' value.
+  """
+  from: Int
+  """
+
+  The ending page number of the range (inclusive).
+  Must be a positive integer and greater than or equal to the 'from' value.
+  """
+  to: Int
+}
+
+"Filters for retrieving specific pages from a document."
+input GetPagesByDocumentFilters {
+  "Specifies the range of pages to retrieve from the document."
+  pages_range: GetPagesByDocumentFilterPagesRange! = {}
 }
 
 input HistoricalPriceRequest {
-    currency: [String!]!
-    market: Market! = COINBASE
-    period: Period! = D1
+  currency: [String!]!
+  market: Market! = COINBASE
+  period: Period! = D1
 }
 
 input IndexingCost {
-    completion_cost: Float!
-    completion_tokens: Int!
-    embedding_cost: Float!
-    prompt_cost: Float!
-    prompt_tokens: Int!
+  completion_cost: Float!
+  completion_tokens: Int!
+  embedding_cost: Float!
+  prompt_cost: Float!
+  prompt_tokens: Int!
 }
 
 input KdbIndexingDocumentTaskCreateInput {
-    chat_id: ChatID!
-    chunk_overlap_tokens: Int! = 150
-    chunk_size_tokens: Int! = 500
-    cost_limit: Float! = 0.0
-    document_id: DocumentID!
-    force_confirm: Boolean! = false
-    instruction_for_qa: String! = ""
-    message_id: MessageID!
-    need_qa: Boolean! = false
-    qa_count_per_run: Int! = 15
-    qa_model: String! = "gpt-4o-mini"
+  chat_id: ChatID!
+  chunk_overlap_tokens: Int! = 150
+  chunk_size_tokens: Int! = 500
+  cost_limit: Float! = 0.0
+  document_id: DocumentID!
+  force_confirm: Boolean! = false
+  instruction_for_qa: String! = ""
+  message_id: MessageID!
+  need_qa: Boolean! = false
+  qa_count_per_run: Int! = 15
+  qa_model: String! = "gpt-4o-mini"
 }
 
 input KdbIndexingDocumentTaskUpdateConfigInput {
-    chunk_overlap_tokens: Int! = 150
-    chunk_size_tokens: Int! = 500
-    cost_limit: Float! = 0.0
-    force_confirm: Boolean! = false
-    instruction_for_qa: String! = ""
-    need_qa: Boolean! = false
-    qa_count_per_run: Int! = 15
-    qa_model: String! = "gpt-4o-mini"
+  chunk_overlap_tokens: Int! = 150
+  chunk_size_tokens: Int! = 500
+  cost_limit: Float! = 0.0
+  force_confirm: Boolean! = false
+  instruction_for_qa: String! = ""
+  need_qa: Boolean! = false
+  qa_count_per_run: Int! = 15
+  qa_model: String! = "gpt-4o-mini"
 }
 
 input KeyValueInput {
-    key: String!
-    value: VariableValueInput!
+  key: String!
+  value: VariableValueInput!
 }
 
 input LLMConfigInput {
-    llm_model: String!
-    max_tokens: Int!
-    temperature: Float!
+  llm_model: String!
+  max_tokens: Int!
+  temperature: Float!
 }
 
 input MessageEditInput {
-    attachments: [AttachmentID!]
-    finished: Boolean!
-    is_system: Boolean! = false
-    need_answer: Boolean! = false
-    reply_to: MessageID
-    text: String!
+  attachments: [AttachmentID!]
+  finished: Boolean!
+  is_system: Boolean! = false
+  need_answer: Boolean! = false
+  reply_to: MessageID
+  text: String!
 }
 
 input MessageInput {
-    attachments: [AttachmentID!]
-    error: String = ""
-    finished: Boolean! = true
-    is_system: Boolean! = false
-    need_answer: Boolean! = false
-    reply_to: MessageID
-    text: String!
+  attachments: [AttachmentID!]
+  error: String = ""
+  finished: Boolean! = true
+  is_system: Boolean! = false
+  need_answer: Boolean! = false
+  reply_to: MessageID
+  text: String!
 }
 
 input MessageMetaInput {
-    meta: [MessageMetaKV!]
+  meta: [MessageMetaKV!]
 }
 
 input MessageMetaKV {
-    key: String!
-    value: String!
+  key: String!
+  value: String!
 }
 
 input MetamaskLoginInput {
-    authMessage: MetamaskMessage!
-    sign: String!
+  authMessage: MetamaskMessage!
+  sign: String!
 }
 
 input MyXAccountNotificationsInput {
-    enable_mention_notifications: Boolean!
-    enable_post_notifications: Boolean!
-    enable_reply_notifications: Boolean!
+  enable_mention_notifications: Boolean!
+  enable_post_notifications: Boolean!
+  enable_reply_notifications: Boolean!
 }
 
 input NamespaceInput {
-    agentID: ID
-    chatID: ID
-    executionID: ID
-    type: NamespaceType!
+  agentID: ID
+  chatID: ID
+  executionID: ID
+  type: NamespaceType!
 }
 
 input OAuthLoginInput {
-    code: String!
-    code_verifier: String!
+  code: String!
+  code_verifier: String!
 }
 
 input PageInput {
-    content: String!
-    description: String
-    document_id: DocumentID!
-    number: Int!
-    task_id: TaskID!
+  content: String!
+  description: String
+  document_id: DocumentID!
+  number: Int!
+  task_id: TaskID!
 }
 
 input PageUpdate {
-    content: String!
-    description: String
+  content: String!
+  description: String
 }
 
 input ParticipantInput {
-    avatar: String!
-    first_name: String!
-    last_name: String
-    llm_model: String!
-    purpose: String!
-    role: String!
-    self_awareness: String!
-    tools: [String!]!
-    username: Username!
+  avatar: String!
+  first_name: String!
+  last_name: String
+  llm_model: String!
+  purpose: String!
+  role: String!
+  self_awareness: String!
+  tools: [String!]!
+  username: Username!
 }
 
 input QAInput {
-    answer: String!
-    question: String!
+  answer: String!
+  question: String!
 }
 
 "Parameters of the replaceSecret mutation."
 input ReplaceSecretParams {
-    "ID of the secret to be replaced."
-    id: SecretID!
-    "Type of the secret."
-    type: String!
-    "Unencrypted secret value."
-    value: JSON!
+  "ID of the secret to be replaced."
+  id: SecretID!
+  "Type of the secret."
+  type: String!
+  "Unencrypted secret value."
+  value: JSON!
 }
 
 input SearchQAFilterPublishedRange {
-    from: Time
-    to: Time
+  from: Time
+  to: Time
 }
 
 input SearchQAFilters {
-    doc_ids: [DocumentID!]
-    keywords: [String!]
-    published_range: SearchQAFilterPublishedRange
+  doc_ids: [DocumentID!]
+  keywords: [String!]
+  published_range: SearchQAFilterPublishedRange
 }
 
 input SearchQAOptions {
-    qa_count: Int
-    threshold: Float
-    time_weight_decay: TimeWeightDecay
-    tokens_limit: Int
+  qa_count: Int
+  threshold: Float
+  time_weight_decay: TimeWeightDecay
+  tokens_limit: Int
 }
 
 input SearchQAOrderBy {
-    document_direction: OrderDirection
-    document_field: OrderByField
-    qa_direction: OrderDirection
-    qa_field: OrderByField
+  document_direction: OrderDirection
+  document_field: OrderByField
+  qa_direction: OrderDirection
+  qa_field: OrderByField
 }
 
 input TelegramChatRoomConfigInput {
-    avatar: String!
-    bot_id: Int!
-    chat_username: String!
-    owner_user_id: UserID!
-    telegram_chat_id: Int!
-    title: String!
-    type: String!
+  avatar: String!
+  bot_id: Int!
+  chat_username: String!
+  owner_user_id: UserID!
+  telegram_chat_id: Int!
+  title: String!
+  type: String!
 }
 
 input TelegramConfigInput {
-    auto_response: Boolean!
-    bot_token: String!
-    max_chats: Int = 0
-    max_replies_per_day: Int = 0
+  auto_response: Boolean!
+  bot_token: String!
+  max_chats: Int = 0
+  max_replies_per_day: Int = 0
 }
 
 input TelegramLoginInput {
-    auth_date: String!
-    first_name: String
-    hash: String!
-    id: String!
-    last_name: String
-    photo_url: String
-    username: String
+  auth_date: String!
+  first_name: String
+  hash: String!
+  id: String!
+  last_name: String
+  photo_url: String
+  username: String
 }
 
 input TelegramMessageInput {
-    chat_owner_user_id: UserID!
-    date: Int!
-    from: TelegramParticipantInput!
-    reply_to_telegram_message_id: Int
-    telegram_bot_id: Int!
-    telegram_chat_id: Int!
-    telegram_chat_type: String!
-    telegram_message_id: Int!
-    text: String!
+  chat_owner_user_id: UserID!
+  date: Int!
+  from: TelegramParticipantInput!
+  reply_to_telegram_message_id: Int
+  telegram_bot_id: Int!
+  telegram_chat_id: Int!
+  telegram_chat_type: String!
+  telegram_message_id: Int!
+  text: String!
 }
 
 input TelegramParticipantInput {
-    avatar: String!
-    first_name: String!
-    language_code: String!
-    last_name: String
-    telegram_id: Int!
-    username: String!
+  avatar: String!
+  first_name: String!
+  language_code: String!
+  last_name: String
+  telegram_id: Int!
+  username: String!
 }
 
 input TimeWeightDecay {
-    alpha: Float
-    enabled: Boolean!
-    formula: TimeWeightDecayFormula!
-    polynomial_degree: Int
+  alpha: Float
+  enabled: Boolean!
+  formula: TimeWeightDecayFormula!
+  polynomial_degree: Int
 }
 
 input TripletInput {
-    object: String!
-    predicate: String!
-    subject: String!
+  object: String!
+  predicate: String!
+  subject: String!
 }
 
 input TwitterMessageInput {
-    message_data: JSON!
+  message_data: JSON!
 }
 
 input UpdateAgentCollectionInput {
-    description: String!
-    name: String!
-    tags: [String!]!
+  description: String!
+  name: String!
+  tags: [String!]!
 }
 
 input UpdateAgentInput {
-    avatar: String!
-    chain_graph_id: GraphID!
-    chat_history_config: ChatHistoryConfigInput!
-    first_name: String!
-    last_name: String!
-    llm_config: LLMConfigInput!
-    prompt: String!
-    role: String!
-    skeleton: String!
-    social: AgentSocialInput
-    template_params: JSON!
-    token_address: String
-    username: Username!
+  avatar: String!
+  chain_graph_id: GraphID!
+  chat_history_config: ChatHistoryConfigInput!
+  first_name: String!
+  last_name: String!
+  llm_config: LLMConfigInput!
+  prompt: String!
+  role: String!
+  skeleton: String!
+  social: AgentSocialInput
+  template_params: JSON!
+  token_address: String
+  username: Username!
 }
 
 input UpdateDocumentMetaInput {
-    description: String
-    metadata: [DocumentMetadataKVInput!]!
-    name: String
-    published_at: Time
-    tags: [String!]!
+  description: String
+  metadata: [DocumentMetadataKVInput!]!
+  name: String
+  published_at: Time
+  tags: [String!]!
 }
 
 input UsageInput {
-    agent_id: AgentID!
-    chat_id: ChatID!
-    completion_cost: Float!
-    completion_tokens: Int!
-    duration: Float!
-    message_id: Int!
-    model_name: String!
-    parent_run_id: String!
-    participant_id: ParticipantID!
-    prompt: String!
-    prompt_cost: Float!
-    prompt_tokens: Int!
-    response: String!
-    run_id: String!
-    tags: [String!]!
+  agent_id: AgentID!
+  chat_id: ChatID!
+  completion_cost: Float!
+  completion_tokens: Int!
+  duration: Float!
+  message_id: Int!
+  model_name: String!
+  parent_run_id: String!
+  participant_id: ParticipantID!
+  prompt: String!
+  prompt_cost: Float!
+  prompt_tokens: Int!
+  response: String!
+  run_id: String!
+  tags: [String!]!
 }
 
 input VariableValueInput {
-    type: VariableType!
-    value: String!
+  type: VariableType!
+  value: String!
 }
 
 input XApiKeysInput {
-    access_token: String!
-    access_token_secret: String!
-    consumer_key: String!
-    consumer_secret: String!
+  access_token: String!
+  access_token_secret: String!
+  consumer_key: String!
+  consumer_secret: String!
 }

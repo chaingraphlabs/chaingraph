@@ -1,34 +1,29 @@
 # @badaitech/chaingraph-types
 
-## 0.2.9-dev.4
+## 0.2.13-dev.0
 
 ### Patch Changes
 
-- feat: enhance item configuration processing with improved type handling and defaults for the Tool schema extraction
+- Dev release
 
-## 0.2.9-dev.3
-
-### Patch Changes
-
-- feat: enhance schema extraction and number port handling with improved error parsing
-
-## 0.2.9-dev.2
+## 0.2.12
 
 ### Patch Changes
 
-- feat: export additional components and enhance module exports
+- feat: Server time node implementation
+- cf32439: Update icons for some secret types
 
-## 0.2.9-dev.1
-
-### Patch Changes
-
-- feat: add Shadow components and refactor TRPC client naming
-
-## 0.2.9-dev.0
+## 0.2.11
 
 ### Patch Changes
 
-- feat: add external integration configuration management hook and related events
+- feat: Add agent to chat and Send message v2 nodes
+
+## 0.2.10
+
+### Patch Changes
+
+- Fix PostgreSQL execution storage performance and data bloat
 
 ## 0.2.9
 

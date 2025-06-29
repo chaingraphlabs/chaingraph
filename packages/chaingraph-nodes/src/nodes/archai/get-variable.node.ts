@@ -9,9 +9,7 @@
 import type {
   AnyPort,
   ArchAIContext,
-
   ArrayPortConfig,
-
   ExecutionContext,
   IPort,
   IPortConfig,
@@ -23,13 +21,8 @@ import type {
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
-  PortFactory,
-} from '@badaitech/chaingraph-types'
-import {
-  findPort,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
+  findPort,
   Input,
   Node,
   NodeEventType,
@@ -37,9 +30,11 @@ import {
   PortAny,
   PortBoolean,
   PortEnum,
+  PortFactory,
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import { getNamespaceInput } from './set-variable.node'
 import { VariableNamespace, VariableValueType } from './types'
 
 /**
@@ -446,35 +441,9 @@ class ArchAIGetVariableNode extends BaseNode {
     try {
       // Get required context information
       const archAIContext = context.getIntegration<ArchAIContext>('archai')
-
       const agentSession = archAIContext?.agentSession
       if (!agentSession) {
         throw new Error('ArchAI agent session is not available in the context')
-      }
-
-      // Determine namespace information for API call
-      let namespaceType: GraphQL.NamespaceType | undefined
-      let chatId: string | undefined
-      let agentId: string | undefined
-      let executionId: string | undefined
-
-      if (this.namespace === VariableNamespace.Execution) {
-        namespaceType = GraphQL.NamespaceType.Execution
-        executionId = context.executionId
-      } else if (this.namespace === VariableNamespace.Agent) {
-        namespaceType = GraphQL.NamespaceType.Agent
-        agentId = archAIContext?.agentID
-      } else if (this.namespace === VariableNamespace.Chat) {
-        namespaceType = GraphQL.NamespaceType.Chat
-        chatId = archAIContext?.chatID
-      } else if (this.namespace === VariableNamespace.ChatAgent) {
-        namespaceType = GraphQL.NamespaceType.ChatAgent
-        agentId = archAIContext?.agentID
-        chatId = archAIContext?.chatID
-      }
-
-      if (!namespaceType) {
-        throw new Error(`Invalid namespace type: ${this.namespace}`)
       }
 
       // Create GraphQL client
@@ -485,12 +454,7 @@ class ArchAIGetVariableNode extends BaseNode {
       // Request the variable from the API
       const { getVariable } = await graphQLClient.request(GraphQL.GetVariableDocument, {
         session: agentSession,
-        namespace: {
-          type: namespaceType,
-          chatID: chatId,
-          agentID: agentId,
-          executionID: executionId,
-        },
+        namespace: getNamespaceInput(context, this.namespace),
         key: this.name,
       })
 

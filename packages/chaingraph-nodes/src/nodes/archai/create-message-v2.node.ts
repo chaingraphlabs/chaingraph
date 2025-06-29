@@ -15,19 +15,20 @@ import {
   Node,
   PortNumber as NumberPort,
   Output,
+  PortArray,
   PortBoolean,
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  type: 'CreateMessageArchAINode',
-  title: 'ArchAI Create Message',
-  description: 'Creates a new message with specified content',
+  type: 'CreateMessageArchAIV2Node',
+  title: 'ArchAI Create Message V2',
+  description: 'Creates a new message with specified content and ability to trigger an agent',
   category: NODE_CATEGORIES.ARCHAI,
   tags: ['message', 'create', 'content'],
 })
-class CreateMessageArchAINode extends BaseNode {
+class CreateMessageArchAIV2Node extends BaseNode {
   @Input()
   @PortString({
     title: 'Text',
@@ -51,6 +52,34 @@ class CreateMessageArchAINode extends BaseNode {
     },
   })
   replyTo?: number
+
+  @Input()
+  @PortArray({
+    title: 'Notify Agents',
+    description: 'List of agents to notify about a message',
+    itemConfig: {
+      type: 'object',
+      schema: {
+        type: 'object',
+        properties: {
+          agent_id: {
+            type: 'string',
+            title: 'Agent ID',
+            description: 'ID of the agent to notify',
+            required: true,
+          },
+          message_id: {
+            type: 'number',
+            title: 'Message ID',
+            description: 'ID of the message to notify about (0 or not provided will use the newly created message)',
+            required: false,
+          },
+        },
+      },
+    },
+    isMutable: true,
+  })
+  signals?: Array<{ agent_id: string, message_id?: number }>
 
   @Output()
   @NumberPort({
@@ -76,6 +105,14 @@ class CreateMessageArchAINode extends BaseNode {
       process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
     )
 
+    // Process signals to remove message_id if it's 0 or undefined
+    const processedSignals = this.signals?.map((signal) => {
+      if (!signal.message_id || signal.message_id === 0) {
+        return { agent_id: signal.agent_id }
+      }
+      return signal
+    })
+
     const { sendMessage } = await graphQLClient.request(GraphQL.SendMessageDocument, {
       session: agentSession,
       chat_id: chatID,
@@ -87,6 +124,7 @@ class CreateMessageArchAINode extends BaseNode {
         need_answer: false,
         reply_to: this.replyTo,
         text: this.text,
+        signals: processedSignals,
       },
     })
 
@@ -100,14 +138,15 @@ class CreateMessageArchAINode extends BaseNode {
     }
 
     // check message id must be a number, try to parse it as well
-    this.messageID = Number.parseInt(createdMessageID, 10)
-    if (Number.isNaN(this.messageID)) {
-      this.messageID = -1
-      throw new TypeError('Failed to parse created message ID as a number')
+    const parsedMessageID = Number.parseInt(createdMessageID, 10)
+    if (Number.isNaN(parsedMessageID)) {
+      throw new TypeError(`Failed to parse created message ID as a number: ${createdMessageID}`)
     }
+
+    this.messageID = parsedMessageID
 
     return {}
   }
 }
 
-export default CreateMessageArchAINode
+export default CreateMessageArchAIV2Node
