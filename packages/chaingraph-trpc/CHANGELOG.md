@@ -1,5 +1,18 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.13-dev.0
+
+### Patch Changes
+
+- Dev release
+
+## 0.2.12
+
+### Patch Changes
+
+- feat: Server time node implementation
+- cf32439: Update icons for some secret types
+
 ## 0.2.11
 
 ### Patch Changes
