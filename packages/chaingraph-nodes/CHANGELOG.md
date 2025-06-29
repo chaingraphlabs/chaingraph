@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.2.13-dev.0
+
+### Patch Changes
+
+- Dev release
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.2.13-dev.0
+
 ## 0.2.12
 
 ### Patch Changes

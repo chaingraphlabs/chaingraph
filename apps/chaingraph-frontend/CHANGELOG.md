@@ -1,5 +1,29 @@
 # @badaitech/chaingraph-frontend
 
+## 0.2.13-dev.0
+
+### Patch Changes
+
+- Dev release
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13-dev.0
+  - @badaitech/chaingraph-types@0.2.13-dev.0
+  - @badaitech/chaingraph-trpc@0.2.13-dev.0
+  - @badaitech/badai-api@0.2.13-dev.0
+
+## 0.2.12
+
+### Patch Changes
+
+- feat: Server time node implementation
+- cf32439: Update icons for some secret types
+- Updated dependencies
+- Updated dependencies [cf32439]
+  - @badaitech/chaingraph-nodes@0.2.12
+  - @badaitech/badai-api@0.2.12
+  - @badaitech/chaingraph-trpc@0.2.12
+  - @badaitech/chaingraph-types@0.2.12
+
 ## 0.2.11
 
 ### Patch Changes
