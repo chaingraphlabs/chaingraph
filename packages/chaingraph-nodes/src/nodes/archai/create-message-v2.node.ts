@@ -121,7 +121,7 @@ class CreateMessageArchAIV2Node extends BaseNode {
         error: undefined,
         finished: this.finished,
         is_system: false,
-        need_answer: true,
+        need_answer: false,
         reply_to: this.replyTo,
         text: this.text,
         signals: processedSignals,

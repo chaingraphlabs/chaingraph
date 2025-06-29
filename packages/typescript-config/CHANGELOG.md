@@ -1,5 +1,12 @@
 # @badaitech/typescript-config
 
+## 0.2.12
+
+### Patch Changes
+
+- feat: Server time node implementation
+- cf32439: Update icons for some secret types
+
 ## 0.2.11
 
 ### Patch Changes
