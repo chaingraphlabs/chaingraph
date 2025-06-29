@@ -780,3 +780,420 @@ export class QAWithSimilarityByDocuments {
   })
   qas: QAWithSimilarity[] = []
 }
+
+// Define Page schema
+@ObjectSchema({
+  description: 'Represents a page from a document in the knowledge database',
+})
+export class Page {
+  @PortString({
+    title: 'Content',
+    description: 'Text content of the page',
+    required: true,
+    ui: {
+      isTextArea: true,
+    },
+  })
+  content: string = ''
+
+  @PortString({
+    title: 'Created At',
+    description: 'Timestamp when the page was created',
+    required: true,
+  })
+  created_at: string = ''
+
+  @PortString({
+    title: 'Description',
+    description: 'Description of the page',
+  })
+  description?: string
+
+  @PortString({
+    title: 'Document ID',
+    description: 'ID of the document this page belongs to',
+    required: true,
+  })
+  document_id: string = ''
+
+  @PortObject({
+    schema: IndexingState,
+    title: 'Indexing State',
+    description: 'Indexing state of the page',
+    required: true,
+  })
+  indexing_state: IndexingState = new IndexingState()
+
+  @PortNumber({
+    title: 'Number',
+    description: 'Page number within the document',
+    required: true,
+    integer: true,
+  })
+  number: number = 0
+
+  @PortString({
+    title: 'Page ID',
+    description: 'Unique identifier for the page',
+    required: true,
+  })
+  page_id: string = ''
+
+  @PortString({
+    title: 'Task ID',
+    description: 'ID of the task that processed this page',
+    required: true,
+  })
+  task_id: string = ''
+}
+
+/**
+ * Enum for indexing document task states
+ */
+export enum IndexingDocumentTaskState {
+  Accepted = 'accepted',
+  Done = 'done',
+  Failed = 'failed',
+  Parsing = 'parsing',
+  PauseRequested = 'pause_requested',
+  Paused = 'paused',
+  Pending = 'pending',
+  QaGenerating = 'qa_generating',
+  Rejected = 'rejected',
+  WaitingForConfirmation = 'waiting_for_confirmation',
+}
+
+// Define IndexingDocumentStatisticsLLM schema
+@ObjectSchema({
+  description: 'Represents LLM statistics for document indexing',
+})
+export class IndexingDocumentStatisticsLLM {
+  @PortNumber({
+    title: 'Completion Cost',
+    description: 'Cost of completion in tokens',
+    required: true,
+  })
+  completion_cost: number = 0
+
+  @PortNumber({
+    title: 'Embeddings Cost',
+    description: 'Cost of embeddings in tokens',
+    required: true,
+  })
+  embeddings_cost: number = 0
+
+  @PortNumber({
+    title: 'Embeddings Count',
+    description: 'Number of embeddings',
+    required: true,
+    integer: true,
+  })
+  embeddings_count: number = 0
+
+  @PortNumber({
+    title: 'Prompt Cost',
+    description: 'Cost of prompts in tokens',
+    required: true,
+  })
+  prompt_cost: number = 0
+
+  @PortNumber({
+    title: 'Total Cost',
+    description: 'Total cost in tokens',
+    required: true,
+  })
+  total_cost: number = 0
+}
+
+// Define IndexingDocumentStatistics schema
+@ObjectSchema({
+  description: 'Represents statistics for document indexing',
+})
+export class IndexingDocumentStatistics {
+  @PortNumber({
+    title: 'Chunks Indexed QA',
+    description: 'Number of chunks indexed with QA',
+    required: true,
+    integer: true,
+  })
+  chunks_indexed_qa: number = 0
+
+  @PortNumber({
+    title: 'Chunks Indexed Triplet',
+    description: 'Number of chunks indexed with triplets',
+    required: true,
+    integer: true,
+  })
+  chunks_indexed_triplet: number = 0
+
+  @PortNumber({
+    title: 'Chunks Total',
+    description: 'Total number of chunks',
+    required: true,
+    integer: true,
+  })
+  chunks_total: number = 0
+
+  @PortNumber({
+    title: 'Current Indexing Speed',
+    description: 'Current speed of indexing',
+    required: true,
+  })
+  current_indexing_speed: number = 0
+
+  @PortNumber({
+    title: 'Expected Finish Seconds',
+    description: 'Expected time to finish in seconds',
+    integer: true,
+  })
+  expected_finish_seconds?: number
+
+  @PortString({
+    title: 'Expected Finished At',
+    description: 'Expected timestamp when indexing will finish',
+  })
+  expected_finished_at?: string
+
+  @PortNumber({
+    title: 'Indexed For Seconds',
+    description: 'Time spent indexing in seconds',
+    integer: true,
+  })
+  indexed_for_seconds?: number
+
+  @PortNumber({
+    title: 'Indexed Percent',
+    description: 'Percentage of indexing completed',
+    required: true,
+  })
+  indexed_percent: number = 0
+
+  @PortString({
+    title: 'Indexing Started At',
+    description: 'Timestamp when indexing started',
+  })
+  indexing_started_at?: string
+
+  @PortNumber({
+    title: 'LLM Approximate Cost',
+    description: 'Approximate cost of LLM usage',
+    required: true,
+  })
+  llm_approximate_cost: number = 0
+
+  @PortObject({
+    schema: IndexingDocumentStatisticsLLM,
+    title: 'LLM Stats',
+    description: 'Statistics for LLM usage',
+    required: true,
+  })
+  llm_stats: IndexingDocumentStatisticsLLM = new IndexingDocumentStatisticsLLM()
+
+  @PortNumber({
+    title: 'Pages',
+    description: 'Number of pages',
+    required: true,
+    integer: true,
+  })
+  pages: number = 0
+
+  @PortNumber({
+    title: 'QA Total',
+    description: 'Total number of QA pairs',
+    required: true,
+    integer: true,
+  })
+  qa_total: number = 0
+
+  @PortNumber({
+    title: 'Total Tokens',
+    description: 'Total number of tokens',
+    required: true,
+    integer: true,
+  })
+  total_tokens: number = 0
+
+  @PortNumber({
+    title: 'Triplets Total',
+    description: 'Total number of triplets',
+    required: true,
+    integer: true,
+  })
+  triplets_total: number = 0
+}
+
+// Define IndexingDocumentTaskConfig schema
+@ObjectSchema({
+  description: 'Represents configuration for document indexing task',
+})
+export class IndexingDocumentTaskConfig {
+  @PortNumber({
+    title: 'Chunk Overlap Tokens',
+    description: 'Number of tokens to overlap between chunks',
+    required: true,
+    integer: true,
+  })
+  chunk_overlap_tokens: number = 0
+
+  @PortNumber({
+    title: 'Chunk Size Tokens',
+    description: 'Size of chunks in tokens',
+    required: true,
+    integer: true,
+  })
+  chunk_size_tokens: number = 0
+
+  @PortNumber({
+    title: 'Cost Limit',
+    description: 'Maximum cost allowed for indexing',
+    required: true,
+  })
+  cost_limit: number = 0
+
+  @PortBoolean({
+    title: 'Force Confirm',
+    description: 'Whether to force confirmation',
+    required: true,
+  })
+  force_confirm: boolean = false
+
+  @PortString({
+    title: 'Instruction for QA',
+    description: 'Instructions for generating QA pairs',
+  })
+  instruction_for_qa?: string
+
+  @PortBoolean({
+    title: 'Need QA',
+    description: 'Whether QA pairs should be generated',
+    required: true,
+  })
+  need_qa: boolean = false
+
+  @PortNumber({
+    title: 'QA Count Per Run',
+    description: 'Number of QA pairs to generate per run',
+    required: true,
+    integer: true,
+  })
+  qa_count_per_run: number = 0
+
+  @PortString({
+    title: 'QA Model',
+    description: 'Model to use for generating QA pairs',
+    required: true,
+  })
+  qa_model: string = ''
+}
+
+// Define IndexingDocumentTask schema
+@ObjectSchema({
+  description: 'Represents a document indexing task',
+})
+export class IndexingDocumentTask {
+  @PortString({
+    title: 'Author ID',
+    description: 'ID of the participant who created the task',
+    required: true,
+  })
+  author_id: string = ''
+
+  @PortString({
+    title: 'Chat ID',
+    description: 'ID of the chat where the task was created',
+    required: true,
+  })
+  chat_id: string = ''
+
+  @PortObject({
+    schema: IndexingDocumentTaskConfig,
+    title: 'Config',
+    description: 'Configuration for the indexing task',
+    required: true,
+  })
+  config: IndexingDocumentTaskConfig = new IndexingDocumentTaskConfig()
+
+  @PortBoolean({
+    title: 'Confirmed',
+    description: 'Whether the task has been confirmed',
+    required: true,
+  })
+  confirmed: boolean = false
+
+  @PortString({
+    title: 'Created At',
+    description: 'Timestamp when the task was created',
+    required: true,
+  })
+  created_at: string = ''
+
+  @PortString({
+    title: 'Document ID',
+    description: 'ID of the document to index',
+    required: true,
+  })
+  document_id: string = ''
+
+  @PortString({
+    title: 'Error',
+    description: 'Error message if the task failed',
+  })
+  error?: string
+
+  @PortString({
+    title: 'Message ID',
+    description: 'ID of the message that triggered the task',
+    required: true,
+  })
+  message_id: string = ''
+
+  @PortObject({
+    schema: IndexingDocumentStatistics,
+    title: 'Statistics',
+    description: 'Statistics for the indexing task',
+    required: true,
+  })
+  statistics: IndexingDocumentStatistics = new IndexingDocumentStatistics()
+
+  @PortString({
+    title: 'Task ID',
+    description: 'Unique identifier for the task',
+    required: true,
+  })
+  task_id: string = ''
+
+  @PortEnum({
+    title: 'Task State',
+    description: 'Current state of the task',
+    options: [
+      { id: 'accepted', type: 'string', defaultValue: 'accepted', title: 'Accepted' },
+      { id: 'done', type: 'string', defaultValue: 'done', title: 'Done' },
+      { id: 'failed', type: 'string', defaultValue: 'failed', title: 'Failed' },
+      { id: 'parsing', type: 'string', defaultValue: 'parsing', title: 'Parsing' },
+      { id: 'pause_requested', type: 'string', defaultValue: 'pause_requested', title: 'Pause Requested' },
+      { id: 'paused', type: 'string', defaultValue: 'paused', title: 'Paused' },
+      { id: 'pending', type: 'string', defaultValue: 'pending', title: 'Pending' },
+      { id: 'qa_generating', type: 'string', defaultValue: 'qa_generating', title: 'QA Generating' },
+      { id: 'rejected', type: 'string', defaultValue: 'rejected', title: 'Rejected' },
+      { id: 'waiting_for_confirmation', type: 'string', defaultValue: 'waiting_for_confirmation', title: 'Waiting For Confirmation' },
+    ],
+    defaultValue: 'pending',
+    required: true,
+  })
+  task_state: string = 'pending'
+
+  @PortString({
+    title: 'Update At',
+    description: 'Timestamp when the task was last updated',
+    required: true,
+  })
+  update_at: string = ''
+
+  @PortNumber({
+    title: 'Version',
+    description: 'Version of the task',
+    required: true,
+    integer: true,
+  })
+  version: number = 0
+}

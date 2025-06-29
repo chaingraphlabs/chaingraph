@@ -77,7 +77,7 @@ const valueSchema = z.string()
 // String-specific schema
 const stringSpecificSchema = z.object({
   type: z.literal('string'),
-  defaultValue: valueSchema.optional(),
+  defaultValue: valueSchema.nullish(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
   pattern: z.string().optional(),
