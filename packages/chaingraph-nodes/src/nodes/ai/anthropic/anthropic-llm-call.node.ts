@@ -708,6 +708,17 @@ export class AntropicLlmCallNode extends BaseNode {
             },
           ])
 
+      // Check if the last message is from the assistant then add a user message to the end
+      if (conversationHistory.length > 0
+        && conversationHistory[conversationHistory.length - 1].role === 'assistant') {
+        conversationHistory.push({
+          role: 'user' as const,
+          content: this.convertContentBlocksToAnthropicFormat([
+            AntropicLlmCallNode.createTextBlock('- Empty message, check the conversation history -'),
+          ]),
+        })
+      }
+
       // This tracks the feedback loop when tools are used
       let feedbackLoopCounter = 0
       const MAX_FEEDBACK_LOOPS = 30 // Prevent infinite loops
