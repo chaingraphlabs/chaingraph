@@ -192,7 +192,7 @@ class ServerTimeNode extends BaseNode {
           if (this.timezone === 'UTC') {
             this.formattedTime = now.toISOString()
           } else {
-            // Convert to the specified timezone and format as ISO-like
+            // Convert to the specified timezone and format as ISO-like with proper offset
             const formatter = new Intl.DateTimeFormat('sv-SE', {
               timeZone: this.timezone,
               year: 'numeric',
@@ -201,9 +201,17 @@ class ServerTimeNode extends BaseNode {
               hour: '2-digit',
               minute: '2-digit',
               second: '2-digit',
+              timeZoneName: 'longOffset',
             })
-            const formatted = formatter.format(now).replace(' ', 'T')
-            this.formattedTime = `${formatted}+00:00` // Simplified timezone offset
+            const parts = formatter.formatToParts(now)
+            const date = `${parts.find(p => p.type === 'year')?.value}-`
+              + `${parts.find(p => p.type === 'month')?.value}-`
+              + `${parts.find(p => p.type === 'day')?.value}`
+            const time = `${parts.find(p => p.type === 'hour')?.value}:`
+              + `${parts.find(p => p.type === 'minute')?.value}:`
+              + `${parts.find(p => p.type === 'second')?.value}`
+            const offset = parts.find(p => p.type === 'timeZoneName')?.value || '+00:00'
+            this.formattedTime = `${date}T${time}${offset}`
           }
           break
 
