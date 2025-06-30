@@ -20,6 +20,7 @@ import {
   BaseNode,
   Input,
   Node,
+  Output,
   PortAny,
   PortBoolean,
   PortEnum,
@@ -139,6 +140,13 @@ export class AppendVariableNode extends BaseNode {
     required: false,
   })
   initialValue: any = null
+
+  @Output()
+  @PortAny({
+    title: 'Result',
+    description: 'The result of the append operation',
+  })
+  result: any = null
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Validate inputs
@@ -302,6 +310,9 @@ export class AppendVariableNode extends BaseNode {
     if (!updatedVariable || !updatedVariable.id) {
       throw new Error('Failed to update variable: Variable ID is empty')
     }
+
+    // Set the result output port to the new value
+    this.result = newValue
 
     return {}
   }
