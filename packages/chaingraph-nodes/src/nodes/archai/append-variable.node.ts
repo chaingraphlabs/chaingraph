@@ -148,6 +148,13 @@ export class AppendVariableNode extends BaseNode {
   })
   result: any = null
 
+  @Output()
+  @PortBoolean({
+    title: 'Existed',
+    description: 'Returns true if the variable existed at the moment of the execution start, false otherwise',
+  })
+  existed: boolean = false
+
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Validate inputs
     if (!this.name) {
@@ -201,7 +208,10 @@ export class AppendVariableNode extends BaseNode {
     let variableType: GraphQL.VariableType
     let serializedValue: string
 
-    if (!getVariable || !getVariable.variable) {
+    // Set the existed output port based on whether the variable existed at the start
+    this.existed = !!getVariable?.variable
+
+    if (!getVariable?.variable) {
       if (!this.createIfNotExists) {
         throw new Error(`Variable ${this.name} not found`)
       }
