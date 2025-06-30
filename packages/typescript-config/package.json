@@ -1,6 +1,6 @@
 {
   "name": "@badaitech/typescript-config",
-  "version": "0.2.13-dev.0",
+  "version": "0.2.14",
   "private": true,
   "license": "MIT",
   "files": [

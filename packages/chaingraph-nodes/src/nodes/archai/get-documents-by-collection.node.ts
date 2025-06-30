@@ -38,6 +38,11 @@ import { DocumentMeta } from './types'
   description: 'Retrieve documents from a specific collection in the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'documents', 'collection', 'kdb'],
+  ui: {
+    state: {
+      isHidden: true, // Hide from the UI for now
+    },
+  },
 })
 class ArchAIGetDocumentsByCollectionNode extends BaseNode {
   @Input()

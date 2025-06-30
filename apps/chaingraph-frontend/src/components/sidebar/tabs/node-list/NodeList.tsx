@@ -113,13 +113,17 @@ export function NodeList() {
 
                 <AccordionContent className="pt-1 pb-2">
                   <div className="space-y-1 pl-6">
-                    {category.nodes.map(node => (
-                      <NodeCard
-                        key={node.type}
-                        node={node}
-                        categoryMetadata={category.metadata}
-                      />
-                    ))}
+                    {category.nodes
+                      .filter((node) => {
+                        return node.ui?.state?.isHidden !== true
+                      })
+                      .map(node => (
+                        <NodeCard
+                          key={node.type}
+                          node={node}
+                          categoryMetadata={category.metadata}
+                        />
+                      ))}
                   </div>
                 </AccordionContent>
               </AccordionItem>

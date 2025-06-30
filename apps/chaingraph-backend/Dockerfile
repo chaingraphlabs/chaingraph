@@ -4,6 +4,9 @@ WORKDIR /app
 
 RUN npm install -g pnpm@10.3.0 turbo@2.5.0
 
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
 # First stage: Prune the monorepo
 FROM base AS pruner
 

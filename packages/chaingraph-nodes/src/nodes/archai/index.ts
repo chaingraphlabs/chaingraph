@@ -9,6 +9,7 @@
 export * from './add-agents-to-chat.node'
 export * from './append-message.node'
 export * from './append-variable.node'
+export * from './archai-to-anthropic-converter-v2.node'
 export * from './archai-to-anthropic-converter.node'
 export * from './chat-history.node'
 export * from './chat-meta.node'

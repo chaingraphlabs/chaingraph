@@ -6,10 +6,26 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArchAIContext, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import type {
+  ArchAIContext,
+  ExecutionContext,
+  NodeExecutionResult,
+} from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
-import { BaseNode, Input, Node, PortAny, PortEnum, PortString } from '@badaitech/chaingraph-types'
+import {
+  PortVisibility,
+} from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  Input,
+  Node,
+  Output,
+  PortAny,
+  PortBoolean,
+  PortEnum,
+  PortString,
+} from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { getNamespaceInput } from './set-variable.node'
 import { VariableNamespace, VariableValueType } from './types'
@@ -19,13 +35,14 @@ import { VariableNamespace, VariableValueType } from './types'
  * - For arrays: adds an element to the array
  * - For numbers: sums the current value with the value to append
  * - For strings: concatenates the values
+ * - Can optionally create the variable if it doesn't exist with a specified initial value
  */
 @Node({
   type: 'AppendVariableNode',
-  title: 'Append Variable',
-  description: 'Appends a value to an existing variable (arrays, numbers, or strings)',
+  title: 'ArchAI Append Variable',
+  description: 'Appends a value to an existing variable (arrays, numbers, or strings). Can optionally create the variable if it doesn\'t exist with a specified initial value.',
   category: NODE_CATEGORIES.ARCHAI,
-  tags: ['variable', 'append', 'array', 'number', 'string', 'concatenate'],
+  tags: ['variable', 'append', 'array', 'number', 'string', 'concatenate', 'create'],
 })
 export class AppendVariableNode extends BaseNode {
   @Input()
@@ -76,9 +93,24 @@ export class AppendVariableNode extends BaseNode {
     title: 'Variable Type',
     description: 'Type of the variable to append to',
     options: [
-      { id: VariableValueType.Array, type: 'string', defaultValue: VariableValueType.Array, title: 'Array' },
-      { id: VariableValueType.Number, type: 'string', defaultValue: VariableValueType.Number, title: 'Number' },
-      { id: VariableValueType.String, type: 'string', defaultValue: VariableValueType.String, title: 'String' },
+      {
+        id: VariableValueType.Array,
+        type: 'string',
+        defaultValue: VariableValueType.Array,
+        title: 'Array',
+      },
+      {
+        id: VariableValueType.Number,
+        type: 'string',
+        defaultValue: VariableValueType.Number,
+        title: 'Number',
+      },
+      {
+        id: VariableValueType.String,
+        type: 'string',
+        defaultValue: VariableValueType.String,
+        title: 'String',
+      },
     ],
     required: true,
   })
@@ -91,6 +123,37 @@ export class AppendVariableNode extends BaseNode {
     required: true,
   })
   valueToAppend: any = null
+
+  @Input()
+  @PortBoolean({
+    title: 'Create If Not Exists',
+    description: 'If true, creates the variable if it does not exist instead of throwing an error',
+    defaultValue: false,
+  })
+  createIfNotExists: boolean = false
+
+  @Input()
+  @PortVisibility({ showIf: node => (node as AppendVariableNode).createIfNotExists })
+  @PortAny({
+    title: 'Initial Value',
+    description: 'Initial value to use when creating a variable if it does not exist. Must match the variable type.',
+    required: false,
+  })
+  initialValue: any = null
+
+  @Output()
+  @PortAny({
+    title: 'Result',
+    description: 'The result of the append operation',
+  })
+  result: any = null
+
+  @Output()
+  @PortBoolean({
+    title: 'Existed',
+    description: 'Returns true if the variable existed at the moment of the execution start, false otherwise',
+  })
+  existed: boolean = false
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Validate inputs
@@ -125,27 +188,78 @@ export class AppendVariableNode extends BaseNode {
 
     const namespace = getNamespaceInput(context, this.namespace)
 
-    // First, get the current value of the variable
-    const { getVariable } = await graphQLClient.request(GraphQL.GetVariableDocument, {
-      session: agentSession,
-      namespace,
-      key: this.name,
-    })
-
-    if (!getVariable || !getVariable.variable) {
-      throw new Error(`Variable ${this.name} not found`)
+    let getVariable: GraphQL.GetVariableQuery['getVariable'] | undefined
+    try {
+      ({ getVariable } = await graphQLClient.request(GraphQL.GetVariableDocument, {
+        session: agentSession,
+        namespace,
+        key: this.name,
+      }))
+    } catch (e: unknown) {
+      if (!isVariableNotFoundError(e)) {
+        throw e
+      }
     }
 
-    const variable = getVariable.variable as GraphQL.VariableFieldsFragment
-    const currentVariableType = variable.value.type
+    let variable: GraphQL.VariableFieldsFragment | undefined
+    let currentVariableType: string
     let currentValue: any
     let newValue: any
     let variableType: GraphQL.VariableType
     let serializedValue: string
 
+    // Set the existed output port based on whether the variable existed at the start
+    this.existed = !!getVariable?.variable
+
+    if (!getVariable?.variable) {
+      if (!this.createIfNotExists) {
+        throw new Error(`Variable ${this.name} not found`)
+      }
+
+      // Create the variable if it doesn't exist and the flag is set
+      // Initialize with the provided initial value or a default value based on the variable type
+      switch (this.variableType) {
+        case VariableValueType.Array:
+          // Use initialValue if it's an array, otherwise use an empty array
+          if (this.initialValue !== null && this.initialValue !== undefined && Array.isArray(this.initialValue)) {
+            currentValue = this.initialValue
+          } else {
+            currentValue = []
+          }
+          currentVariableType = 'array'
+          break
+        case VariableValueType.Number:
+          // Use initialValue if it's a number, otherwise use 0
+          if (this.initialValue !== null && this.initialValue !== undefined && !Number.isNaN(Number(this.initialValue))) {
+            currentValue = Number(this.initialValue)
+          } else {
+            currentValue = 0
+          }
+          currentVariableType = 'number'
+          break
+        case VariableValueType.String:
+          // Use initialValue if it's provided, otherwise use empty string
+          if (this.initialValue !== null && this.initialValue !== undefined) {
+            currentValue = String(this.initialValue)
+          } else {
+            currentValue = ''
+          }
+          currentVariableType = 'string'
+          break
+        default:
+          throw new Error(`Unsupported variable type for creation: ${this.variableType}`)
+      }
+    } else {
+      variable = getVariable.variable as GraphQL.VariableFieldsFragment
+      currentVariableType = variable.value.type
+    }
+
     // Parse the current value based on its type
     if (currentVariableType === 'string' && this.variableType === VariableValueType.String) {
-      currentValue = variable.value.value
+      if (variable) {
+        currentValue = variable.value.value
+      }
+      // currentValue is already set to '' if we're creating a new variable
 
       // Validate that the value to append is a string or can be converted to a string
       const appendValue = String(this.valueToAppend)
@@ -155,7 +269,10 @@ export class AppendVariableNode extends BaseNode {
       variableType = GraphQL.VariableType.String
       serializedValue = newValue
     } else if (currentVariableType === 'number' && this.variableType === VariableValueType.Number) {
-      currentValue = Number(variable.value.value)
+      if (variable) {
+        currentValue = Number(variable.value.value)
+      }
+      // currentValue is already set to 0 if we're creating a new variable
 
       // Validate that the value to append is a number or can be converted to a number
       const appendValue = Number(this.valueToAppend)
@@ -168,12 +285,15 @@ export class AppendVariableNode extends BaseNode {
       variableType = GraphQL.VariableType.Number
       serializedValue = newValue.toString()
     } else if (currentVariableType === 'array' && this.variableType === VariableValueType.Array) {
-      currentValue = JSON.parse(variable.value.value)
+      if (variable) {
+        currentValue = JSON.parse(variable.value.value)
 
-      // Validate that the current value is an array
-      if (!Array.isArray(currentValue)) {
-        throw new TypeError('Current variable value is not an array')
+        // Validate that the current value is an array
+        if (!Array.isArray(currentValue)) {
+          throw new TypeError('Current variable value is not an array')
+        }
       }
+      // currentValue is already set to [] if we're creating a new variable
 
       // Add the element to the array
       newValue = [...currentValue, this.valueToAppend]
@@ -201,6 +321,38 @@ export class AppendVariableNode extends BaseNode {
       throw new Error('Failed to update variable: Variable ID is empty')
     }
 
+    // Set the result output port to the new value
+    this.result = newValue
+
     return {}
   }
+}
+
+/**
+ * Determines if the provided error object relates to a "get variable: record not found" error.
+ */
+function isVariableNotFoundError(e: unknown): e is { response: { errors: unknown[] } } {
+  if (e !== null && typeof e === 'object' && 'response' in e) {
+    const response = e.response
+    if (response !== null && typeof response === 'object' && 'errors' in response) {
+      const errors = response.errors
+      if (errors !== null && Array.isArray(errors)) {
+        if (errors.some((error: unknown) => {
+          if (error === null || typeof error !== 'object') {
+            return false
+          }
+
+          if (!('message' in error) || error.message !== 'get variable: record not found') {
+            return false
+          }
+
+          return 'path' in error && Array.isArray(error.path) && error.path.length === 1 && error.path[0] === 'getVariable'
+        })) {
+          return true
+        }
+      }
+    }
+  }
+
+  return false
 }

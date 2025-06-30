@@ -35,7 +35,13 @@ enum RoleAssignment {
   description: 'Converts ArchAI chat history messages to Anthropic message format',
   category: NODE_CATEGORIES.ARCHAI,
   tags: ['anthropic', 'archai', 'converter', 'message', 'history', 'claude'],
+  ui: {
+    state: {
+      isHidden: true,
+    }, // Hide from the UI by default
+  },
 })
+// @deprecated
 class ArchAIToAntropicConverterNode extends BaseNode {
   @Input()
   @PortArray({
@@ -97,7 +103,7 @@ class ArchAIToAntropicConverterNode extends BaseNode {
       placeholder: 'e.g., [{username} at {timestamp}]: ',
     },
   })
-  messagePrefixTemplate: string = ''
+  messagePrefixTemplate: string = '[@{username} at {timestamp}]:'
 
   @Output()
   @PortArray({

@@ -1,5 +1,71 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.14
+
+### Patch Changes
+
+- feat: update node titles and hide some KDB nodes for ArchAI nodes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.14
+  - @badaitech/chaingraph-types@0.2.14
+  - @badaitech/chaingraph-trpc@0.2.14
+
+## 0.2.14-dev.0
+
+### Patch Changes
+
+- feat: update node titles and hide some KDB nodes for ArchAI nodes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.14-dev.0
+  - @badaitech/chaingraph-types@0.2.14-dev.0
+  - @badaitech/chaingraph-trpc@0.2.14-dev.0
+
+## 0.2.13
+
+### Patch Changes
+
+- feat: enhance node filtering and conversation handling in Anthropic LLM integration
+- Dev release
+- feat: rename ArchAI converter nodes and update Dockerfile for production setup
+- fix: add a user message to Anthropic LLM call conversation history if the last message is from assistant
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13
+  - @badaitech/chaingraph-types@0.2.13
+  - @badaitech/chaingraph-trpc@0.2.13
+
+## 0.2.13-dev.3
+
+### Patch Changes
+
+- feat: rename ArchAI converter nodes and update Dockerfile for production setup
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13-dev.3
+  - @badaitech/chaingraph-types@0.2.13-dev.3
+  - @badaitech/chaingraph-trpc@0.2.13-dev.3
+
+## 0.2.13-dev.2
+
+### Patch Changes
+
+- feat: enhance node filtering and conversation handling in Anthropic LLM integration
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13-dev.2
+  - @badaitech/chaingraph-types@0.2.13-dev.2
+  - @badaitech/chaingraph-trpc@0.2.13-dev.2
+
+## 0.2.13-dev.1
+
+### Patch Changes
+
+- fix: add a user message to Anthropic LLM call conversation history if the last message is from assistant
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13-dev.1
+  - @badaitech/chaingraph-trpc@0.2.13-dev.1
+  - @badaitech/chaingraph-types@0.2.13-dev.1
+
 ## 0.2.13-dev.0
 
 ### Patch Changes

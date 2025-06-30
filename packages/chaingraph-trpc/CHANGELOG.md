@@ -1,5 +1,44 @@
 # @badaitech/chaingraph-trpc
 
+## 0.2.14
+
+### Patch Changes
+
+- feat: update node titles and hide some KDB nodes for ArchAI nodes
+
+## 0.2.14-dev.0
+
+### Patch Changes
+
+- feat: update node titles and hide some KDB nodes for ArchAI nodes
+
+## 0.2.13
+
+### Patch Changes
+
+- feat: enhance node filtering and conversation handling in Anthropic LLM integration
+- Dev release
+- feat: rename ArchAI converter nodes and update Dockerfile for production setup
+- fix: add a user message to Anthropic LLM call conversation history if the last message is from assistant
+
+## 0.2.13-dev.3
+
+### Patch Changes
+
+- feat: rename ArchAI converter nodes and update Dockerfile for production setup
+
+## 0.2.13-dev.2
+
+### Patch Changes
+
+- feat: enhance node filtering and conversation handling in Anthropic LLM integration
+
+## 0.2.13-dev.1
+
+### Patch Changes
+
+- fix: add a user message to Anthropic LLM call conversation history if the last message is from assistant
+
 ## 0.2.13-dev.0
 
 ### Patch Changes
