@@ -608,9 +608,15 @@ export class AntropicLlmCallNode extends BaseNode {
     }
 
     if (this.config.thinking) {
-      params.thinking = {
-        type: this.config.thinking.type as 'enabled' | 'disabled',
-        budget_tokens: this.config.thinking.budget_tokens,
+      if (this.config.thinking.type === 'enabled') {
+        params.thinking = {
+          type: this.config.thinking.type as 'enabled',
+          budget_tokens: this.config.thinking.budget_tokens || 1024,
+        }
+      } else {
+        params.thinking = {
+          type: this.config.thinking.type as 'disabled',
+        }
       }
     }
 
@@ -708,15 +714,11 @@ export class AntropicLlmCallNode extends BaseNode {
             },
           ])
 
-      // Check if the last message is from the assistant then add a user message to the end
+      // Check if the last message is from the assistant then change it to user
       if (conversationHistory.length > 0
         && conversationHistory[conversationHistory.length - 1].role === 'assistant') {
-        conversationHistory.push({
-          role: 'user' as const,
-          content: this.convertContentBlocksToAnthropicFormat([
-            AntropicLlmCallNode.createTextBlock('- Empty message, check the conversation history -'),
-          ]),
-        })
+        // Change the last message to user role
+        conversationHistory[conversationHistory.length - 1].role = 'user'
       }
 
       // This tracks the feedback loop when tools are used

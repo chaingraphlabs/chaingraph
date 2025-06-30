@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
+import type { CategorizedNodes, CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Button } from '@/components/ui/button'
@@ -31,22 +31,21 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
 
   const { categories } = useCategories()
 
-  // Filter nodes based on search
+  // Memoize filtered categories based on search
   const filteredCategories = useMemo(() => {
     if (!search)
       return categories
 
-    return categories.map(category => ({
-      ...category,
-      nodes: category.nodes.filter(node =>
+    return categories?.filter((category: CategorizedNodes) => {
+      return category.nodes.some(node =>
         node.title?.toLowerCase().includes(search.toLowerCase())
         || node.description?.toLowerCase().includes(search.toLowerCase())
         || node.tags?.some(tag =>
           tag.toLowerCase().includes(search.toLowerCase()),
         ),
-      ),
-    })).filter(category => category.nodes.length > 0)
-  }, [categories, search])
+      )
+    })
+  }, [search, categories])
 
   // Handle node selection
   const handleSelect = useCallback((node: NodeMetadata, categoryMetadata: CategoryMetadata) => {
@@ -120,57 +119,63 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
           />
 
           <ScrollArea className="h-[300px]">
-            {filteredCategories.map(category => (
-              <CommandGroup
-                key={category.category}
-                heading={(
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon
-                      name={category.metadata.icon}
-                      size={14}
-                      style={{
-                        color: theme === 'dark'
-                          ? category.metadata.style.dark.text
-                          : category.metadata.style.light.text,
-                      }}
-                    />
-                    <span>{category.metadata.label}</span>
-                  </div>
-                )}
-              >
-                {category.nodes.map(node => (
-                  <CommandItem
-                    key={node.type}
-                    value={`${category.category}:${node.title}`}
-                    onSelect={() => handleSelect(node, category.metadata)}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-2 p-0 h-auto font-normal"
-                    >
-                      <span
-                        className={cn(
-                          'h-2 w-2 rounded-full shrink-0',
-                          'ring-[1.5px] ring-background',
-                          'shadow-sm',
-                        )}
+            {filteredCategories
+              .filter(category => !category.metadata.hidden)
+              .map(category => (
+                <CommandGroup
+                  key={category.category}
+                  heading={(
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon
+                        name={category.metadata.icon}
+                        size={14}
                         style={{
-                          backgroundColor: theme === 'dark'
+                          color: theme === 'dark'
                             ? category.metadata.style.dark.text
                             : category.metadata.style.light.text,
-                          boxShadow: `0 1px 3px ${
-                            theme === 'dark'
-                              ? category.metadata.style.dark.text
-                              : category.metadata.style.light.text
-                          }80`,
                         }}
                       />
-                      <span>{node.title}</span>
-                    </Button>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            ))}
+                      <span>{category.metadata.label}</span>
+                    </div>
+                  )}
+                >
+                  {category.nodes
+                    .filter((node) => {
+                      return node.ui?.state?.isHidden !== true
+                    })
+                    .map(node => (
+                      <CommandItem
+                        key={node.type}
+                        value={`${category.category}:${node.title}`}
+                        onSelect={() => handleSelect(node, category.metadata)}
+                      >
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-2 p-0 h-auto font-normal"
+                        >
+                          <span
+                            className={cn(
+                              'h-2 w-2 rounded-full shrink-0',
+                              'ring-[1.5px] ring-background',
+                              'shadow-sm',
+                            )}
+                            style={{
+                              backgroundColor: theme === 'dark'
+                                ? category.metadata.style.dark.text
+                                : category.metadata.style.light.text,
+                              boxShadow: `0 1px 3px ${
+                                theme === 'dark'
+                                  ? category.metadata.style.dark.text
+                                  : category.metadata.style.light.text
+                              }80`,
+                            }}
+                          />
+                          <span>{node.title}</span>
+                        </Button>
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              ))}
 
             <CommandEmpty>No nodes found.</CommandEmpty>
           </ScrollArea>

@@ -1,5 +1,25 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.13-dev.2
+
+### Patch Changes
+
+- feat: enhance node filtering and conversation handling in Anthropic LLM integration
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13-dev.2
+  - @badaitech/chaingraph-types@0.2.13-dev.2
+  - @badaitech/chaingraph-trpc@0.2.13-dev.2
+
+## 0.2.13-dev.1
+
+### Patch Changes
+
+- fix: add a user message to Anthropic LLM call conversation history if the last message is from assistant
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.13-dev.1
+  - @badaitech/chaingraph-trpc@0.2.13-dev.1
+  - @badaitech/chaingraph-types@0.2.13-dev.1
+
 ## 0.2.13-dev.0
 
 ### Patch Changes

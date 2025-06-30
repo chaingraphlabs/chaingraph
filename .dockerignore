@@ -106,7 +106,6 @@ local/
 
 # Logs
 logs/
-*.log
 
 # Editor directories and files
 .vscode/*
@@ -120,12 +119,10 @@ logs/
 *.sw?
 
 # macOS
-.DS_Store
 .AppleDouble
 .LSOverride
 
 # Windows
-Thumbs.db
 ehthumbs.db
 Desktop.ini
 

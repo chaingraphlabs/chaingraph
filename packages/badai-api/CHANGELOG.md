@@ -1,5 +1,17 @@
 # @badaitech/badai-api
 
+## 0.2.13-dev.2
+
+### Patch Changes
+
+- feat: enhance node filtering and conversation handling in Anthropic LLM integration
+
+## 0.2.13-dev.1
+
+### Patch Changes
+
+- fix: add a user message to Anthropic LLM call conversation history if the last message is from assistant
+
 ## 0.2.13-dev.0
 
 ### Patch Changes

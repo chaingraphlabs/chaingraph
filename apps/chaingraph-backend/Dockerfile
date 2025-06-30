@@ -4,6 +4,9 @@ WORKDIR /app
 
 RUN npm install -g pnpm@10.3.0 turbo@2.5.0
 
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
 # First stage: Prune the monorepo
 FROM base AS pruner
 
@@ -43,10 +46,9 @@ COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-types/src/ 
 COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-trpc/client/ ./packages/chaingraph-trpc/client/
 COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-trpc/server/ ./packages/chaingraph-trpc/server/
 
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts && \
-    chown -R nodeuser:nodejs /app
-
 USER nodeuser
+
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 ENV NODE_ENV=${NODE_ENV}
 EXPOSE ${PORT}

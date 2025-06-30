@@ -8,6 +8,7 @@
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { Buffer } from 'node:buffer'
+import { PortNumber } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -15,7 +16,6 @@ import {
   Output,
   PortArray,
   PortBoolean,
-  PortEnum,
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
@@ -35,9 +35,6 @@ enum RoleAssignment {
   description: 'Converts ArchAI chat history messages to Anthropic message format',
   category: NODE_CATEGORIES.ARCHAI,
   tags: ['anthropic', 'archai', 'converter', 'message', 'history', 'claude'],
-  ui: {
-    isHidden: true, // Hide from the UI by default
-  },
 })
 class ArchAIToAntropicConverterNode extends BaseNode {
   @Input()
@@ -52,20 +49,6 @@ class ArchAIToAntropicConverterNode extends BaseNode {
     required: true,
   })
   archaiMessages: ArchAIMessage[] = []
-
-  @Input()
-  @PortEnum({
-    title: 'Role Assignment',
-    description: 'How to assign roles (user/assistant) to messages',
-    options: [
-      { id: RoleAssignment.AUTO, type: 'string', defaultValue: RoleAssignment.AUTO, title: 'Auto (by participant type)' },
-      { id: RoleAssignment.BY_PARTICIPANT, type: 'string', defaultValue: RoleAssignment.BY_PARTICIPANT, title: 'By Participant (agent=assistant)' },
-      { id: RoleAssignment.ALL_USER, type: 'string', defaultValue: RoleAssignment.ALL_USER, title: 'All User' },
-      { id: RoleAssignment.ALL_ASSISTANT, type: 'string', defaultValue: RoleAssignment.ALL_ASSISTANT, title: 'All Assistant' },
-    ],
-    defaultValue: RoleAssignment.AUTO,
-  })
-  roleAssignment: RoleAssignment = RoleAssignment.AUTO
 
   @Input()
   @PortBoolean({
@@ -94,13 +77,35 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   @Input()
   @PortString({
     title: 'Message Prefix Template',
-    description: 'Template for message prefix (use {username}, {timestamp}, {type})',
-    defaultValue: '',
+    description: 'Template for message prefix (use {username}, {time}, {type}, etc. as placeholders)',
+    defaultValue: '[@{username} at {time}]:',
     ui: {
-      placeholder: 'e.g., [{username} at {timestamp}]: ',
+      placeholder: 'e.g., [{username} at {time}]: ',
     },
   })
-  messagePrefixTemplate: string = '[@{username} at {timestamp}]:'
+  messagePrefixTemplate: string = '[@{username} at {time}]:'
+
+  @Input()
+  @PortNumber({
+    title: 'Message ID to Answer',
+    description: 'If set, the message with this ID will be moved to the last position in the output to force LLM to answer it',
+    defaultValue: undefined,
+    ui: {
+      placeholder: 'e.g., 123',
+    },
+  })
+  messageIdToAnswer?: number
+
+  @Input()
+  @PortString({
+    title: 'Assistant ID',
+    description: 'ID of the assistant to mark messages as assistant, if empty, will be determined by message author participant type. Usually needed for muli-agent scenarios',
+    defaultValue: '',
+    ui: {
+      placeholder: 'e.g., assistant-123',
+    },
+  })
+  assistantId?: string
 
   @Output()
   @PortArray({
@@ -121,6 +126,13 @@ class ArchAIToAntropicConverterNode extends BaseNode {
       return {}
     }
 
+    // make sure messages are sorted by time from oldest to newest
+    this.archaiMessages.sort((a, b) => {
+      return new Date(a.time).getTime() - new Date(b.time).getTime()
+    })
+
+    let messageToAnswer: AntropicMessage | undefined
+
     for (const archaiMessage of this.archaiMessages) {
       if (!this.shouldIncludeMessage(archaiMessage)) {
         continue
@@ -130,7 +142,9 @@ class ArchAIToAntropicConverterNode extends BaseNode {
       const role = this.determineMessageRole(archaiMessage)
 
       // Format the message text
-      const formattedText = this.formatMessageText(archaiMessage)
+      const formattedText = role === 'user'
+        ? this.formatMessageText(archaiMessage)
+        : archaiMessage.text.trim()
 
       if (!formattedText) {
         continue
@@ -190,7 +204,17 @@ class ArchAIToAntropicConverterNode extends BaseNode {
         }
       }
 
-      this.anthropicMessages.push(anthropicMessage)
+      if (this.messageIdToAnswer && archaiMessage.message_id === this.messageIdToAnswer) {
+        // If this is the message we want to answer, store it separately
+        messageToAnswer = anthropicMessage
+      } else {
+        this.anthropicMessages.push(anthropicMessage)
+      }
+    }
+
+    // If we have a message to answer, add it at the end
+    if (messageToAnswer) {
+      this.anthropicMessages.push(messageToAnswer)
     }
 
     return {}
@@ -200,27 +224,29 @@ class ArchAIToAntropicConverterNode extends BaseNode {
    * Determine the role for a message based on the role assignment strategy
    */
   private determineMessageRole(archaiMessage: ArchAIMessage): 'user' | 'assistant' {
-    switch (this.roleAssignment) {
-      case RoleAssignment.ALL_USER:
-        return 'user'
-
-      case RoleAssignment.ALL_ASSISTANT:
-        return 'assistant'
-
-      case RoleAssignment.BY_PARTICIPANT:
-        return archaiMessage.participant?.is_agent ? 'assistant' : 'user'
-
-      case RoleAssignment.AUTO:
-      default:
-        // Auto logic: consider agents, system messages, and special types as assistant
-        if (archaiMessage.participant?.is_agent) {
-          return 'assistant'
-        }
-        if (archaiMessage.type === 'system' || archaiMessage.type === 'thoughts') {
-          return 'assistant'
-        }
-        return 'user'
+    if (archaiMessage.message_id === this.messageIdToAnswer) {
+      // If this message is the one we want to answer, treat it as user
+      return 'user'
     }
+
+    if (this.assistantId) {
+      if (
+        archaiMessage.participant?.agent_id === this.assistantId
+        || archaiMessage.participant?.participant_id === this.assistantId
+      ) {
+        // If the participant matches the assistant ID, treat it as an assistant message
+        return 'assistant'
+      } else {
+        // If the participant does not match the assistant ID, treat it as a user message
+        return 'user'
+      }
+    } else if (archaiMessage.participant?.is_agent) {
+      // If participant is an agent and we don't have a specific assistant ID,
+      // treat it as an assistant message
+      return 'assistant'
+    }
+
+    return 'user'
   }
 
   /**
@@ -244,10 +270,45 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   private applyMessagePrefixTemplate(archaiMessage: ArchAIMessage): string {
     let prefix = this.messagePrefixTemplate
 
-    // Replace template variables
-    prefix = prefix.replace('{username}', archaiMessage.participant?.username || 'Unknown')
-    prefix = prefix.replace('{timestamp}', archaiMessage.time || '')
-    prefix = prefix.replace('{type}', archaiMessage.type || 'common')
+    // Replace all available message field template variables
+    const templateData: Record<string, any> = {
+      // Core message fields
+      message_id: archaiMessage.message_id,
+      chat_id: archaiMessage.chat_id,
+      text: archaiMessage.text,
+      author_id: archaiMessage.author_id,
+      type: archaiMessage.type,
+      time: archaiMessage.time,
+      timestamp: archaiMessage.time, // Alias for backward compatibility
+
+      // Participant fields
+      username: archaiMessage.participant?.username,
+      first_name: archaiMessage.participant?.first_name,
+      last_name: archaiMessage.participant?.last_name,
+      participant_id: archaiMessage.participant?.participant_id,
+      agent_id: archaiMessage.participant?.agent_id,
+      is_agent: archaiMessage.participant?.is_agent,
+      avatar: archaiMessage.participant?.avatar,
+      participant_meta: archaiMessage.participant?.meta,
+
+      // Message metadata
+      finished: archaiMessage.finished,
+      is_system: archaiMessage.is_system,
+      need_answer: archaiMessage.need_answer,
+      version: archaiMessage.version,
+      reply_to: archaiMessage.reply_to,
+      error: archaiMessage.error,
+      meta: archaiMessage.meta,
+
+      // Attachment count (useful for templates)
+      attachment_count: archaiMessage.attachments?.length || 0,
+    }
+
+    // Replace template variables using regex for better performance
+    prefix = prefix.replace(/\{(\w+)\}/g, (match, key) => {
+      const value = templateData[key]
+      return value !== undefined && value !== null ? String(value) : match
+    })
 
     return prefix
   }
