@@ -418,13 +418,6 @@ export class AntropicLlmCallNode extends BaseNode {
           tool_use_id: toolResultBlock.tool_use_id,
           content: toolResultBlock.content,
         }
-      } else if (block.type === 'tool_result') {
-        const toolResultBlock = block as ToolResultBlock
-        return {
-          type: 'tool_result',
-          tool_use_id: toolResultBlock.tool_use_id,
-          content: toolResultBlock.content,
-        }
       }
 
       throw new Error(`Unsupported content block type: ${block.type}`)
@@ -917,21 +910,19 @@ export class AntropicLlmCallNode extends BaseNode {
         break
       }
 
-      console.log(`[ANTHROPIC] Streaming event: ${event.type}, data: ${JSON.stringify(event)}`)
-
       // Process the streaming event based on its type
       if (event.type === 'message_start') {
-        console.log(`[ANTHROPIC] Message start:  ${event.type}, data: ${JSON.stringify(event)}`)
+        // console.log(`[ANTHROPIC] Message start:  ${event.type}, data: ${JSON.stringify(event)}`)
       } else if (event.type === 'content_block_start') {
-        console.log(`[ANTHROPIC] Content block start:  ${event.type}, data: ${JSON.stringify(event)}`)
+        // console.log(`[ANTHROPIC] Content block start:  ${event.type}, data: ${JSON.stringify(event)}`)
         await this.handleContentBlockStart(event, contentBlocks, jsonAccumulators, client)
       } else if (event.type === 'content_block_delta') {
         await this.handleContentBlockDelta(event, contentBlocks, jsonAccumulators)
       } else if (event.type === 'content_block_stop') {
-        console.log(`[ANTHROPIC] Content block stop:  ${event.type}, data: ${JSON.stringify(event)}`)
+        // console.log(`[ANTHROPIC] Content block stop:  ${event.type}, data: ${JSON.stringify(event)}`)
         await this.handleContentBlockStop(event, contentBlocks, jsonAccumulators)
       } else if (event.type === 'message_delta') {
-        console.log(`[ANTHROPIC] Message delta:  ${event.type}, data: ${JSON.stringify(event)}`)
+        // console.log(`[ANTHROPIC] Message delta:  ${event.type}, data: ${JSON.stringify(event)}`)
         // Update token usage if available
         if (event.usage) {
           this.tokenUsage.input_tokens = event.usage.input_tokens || 0
@@ -943,7 +934,7 @@ export class AntropicLlmCallNode extends BaseNode {
           messageStopReason = event.delta.stop_reason
         }
       } else if (event.type === 'message_stop') {
-        console.log(`[ANTHROPIC] Message stop:  ${event.type}, data: ${JSON.stringify(event)}`)
+        // console.log(`[ANTHROPIC] Message stop:  ${event.type}, data: ${JSON.stringify(event)}`)
         // End of message, organize the content blocks into their proper categories
         this.organizeContentBlocks(contentBlocks)
       } else {
@@ -998,11 +989,11 @@ export class AntropicLlmCallNode extends BaseNode {
           // Deep merge: preserve existing fields, add/update new ones
           const mergedValue = this.deepMergeObjects(currentValue, value)
           port.setValue(mergedValue)
-          console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
+          // console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
         } else {
           // If current value is not an object, just set the new value and recurse into sub-ports
           port.setValue(value)
-          console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+          // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
         }
 
         // Recursively handle nested object properties
@@ -1010,7 +1001,7 @@ export class AntropicLlmCallNode extends BaseNode {
       } else {
         // Set primitive values directly
         port.setValue(value)
-        console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+        // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
       }
     }
   }
@@ -1118,7 +1109,7 @@ export class AntropicLlmCallNode extends BaseNode {
             error: true,
             message: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
           })
-          console.debug(`[ANTHROPIC] Tool ${toolUseBlock.name} execution failed: ${error.message || PortString(error)}`)
+          // console.debug(`[ANTHROPIC] Tool ${toolUseBlock.name} execution failed: ${error.message || PortString(error)}`)
         }
 
         // Create a tool result block
@@ -1227,7 +1218,7 @@ export class AntropicLlmCallNode extends BaseNode {
       //   type: 'server_tool_use';
       // }
 
-      console.log(`[ANTHROPIC] Received server tool use block: ${JSON.stringify(event)}`)
+      // console.log(`[ANTHROPIC] Received server tool use block: ${JSON.stringify(event)}`)
 
       const toolUseBlock = new ToolUseResponseBlock()
       toolUseBlock.index = index
@@ -1244,7 +1235,7 @@ export class AntropicLlmCallNode extends BaseNode {
     } else if (event.content_block.type === 'code_execution_tool_result') {
       const contentItem = event.content_block
       //
-      console.log(`[ANTHROPIC] Received code execution tool result block: ${JSON.stringify(event)}`)
+      // console.log(`[ANTHROPIC] Received code execution tool result block: ${JSON.stringify(event)}`)
 
       const toolResult = contentItem.content || ''
 
@@ -1268,13 +1259,13 @@ export class AntropicLlmCallNode extends BaseNode {
         // console.log(`[ANTHROPIC] Tool result content is an array: ${JSON.stringify(toolResult.content)}`)
 
         const fileIds = extractFileIds(toolResult)
-        console.log(`[ANTHROPIC] Extracted file IDs: ${JSON.stringify(fileIds)}`)
+        // console.log(`[ANTHROPIC] Extracted file IDs: ${JSON.stringify(fileIds)}`)
         for (const fileId of fileIds) {
           const fileMetadata = await client.beta.files.retrieveMetadata(fileId)
           const fileContentResponse = await client.beta.files.download(fileId)
           const fileContentBlob = await fileContentResponse.blob()
 
-          console.log(`Downloaded file: ${JSON.stringify(fileMetadata)}`)
+          // console.log(`Downloaded file: ${JSON.stringify(fileMetadata)}`)
 
           // TODO: send file content to the attachments
 
@@ -1282,7 +1273,8 @@ export class AntropicLlmCallNode extends BaseNode {
           const filePath = path.join(os.tmpdir(), fileMetadata.filename || `file-${fileId}`)
           const fileStream = fs.createWriteStream(filePath)
           fileStream.on('finish', () => {
-            console.log(`File saved to: ${filePath}`)
+            // console.log(`File saved to: ${filePath}`)
+            // TODO: send file path to the attachments
           })
 
           // Convert blob to buffer and write to file
@@ -1297,7 +1289,7 @@ export class AntropicLlmCallNode extends BaseNode {
       this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolResultBlock.tool_use_id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResultBlock.content}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
     } else if (event.content_block.type === 'web_search_tool_result') {
       const contentItem = event.content_block
-      console.log(`[ANTHROPIC] Received web search execution tool result block: ${JSON.stringify(event)}`)
+      // console.log(`[ANTHROPIC] Received web search execution tool result block: ${JSON.stringify(event)}`)
 
       const toolResult = contentItem.content || {}
 
@@ -1320,11 +1312,11 @@ export class AntropicLlmCallNode extends BaseNode {
           encrypted_content: undefined, // TODO: handle encrypted content if needed
         }))
       } else {
-        console.warn(`[ANTHROPIC] Received web search tool result with unexpected content type: ${typeof toolResult}, content: ${JSON.stringify(toolResult)}`)
+        // console.warn(`[ANTHROPIC] Received web search tool result with unexpected content type: ${typeof toolResult}, content: ${JSON.stringify(toolResult)}`)
         toolResultWithoutEncryptedContent = toolResult
       }
 
-      console.log(`[ANTHROPIC] Tool result without encrypted content: ${JSON.stringify(toolResultWithoutEncryptedContent)}`)
+      // console.log(`[ANTHROPIC] Tool result without encrypted content: ${JSON.stringify(toolResultWithoutEncryptedContent)}`)
 
       contentBlocks[index] = toolResultBlock
 

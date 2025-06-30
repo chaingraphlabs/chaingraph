@@ -167,17 +167,91 @@ class ArchAIMessagesToAnthropicConverterNode extends BaseNode {
         //   .join('\n')
         // text = text + (text ? '\n\n' : '') + attachmentInfo
 
-        // For base64-encoded images
+        // For base64-encoded images with SSRF protection
         async function getBase64Image(url: string): Promise<string> {
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/octet-stream',
-            },
-          })
+          // URL validation and allowlist
+          const parsedUrl = new URL(url)
 
-          const buffer = await response.arrayBuffer()
-          return Buffer.from(buffer).toString('base64')
+          // Define allowed domains/hosts
+          const allowedHosts = [
+            'cdn.discordapp.com',
+            'media.discordapp.net',
+            'discord.com',
+            'githubusercontent.com',
+            's3.amazonaws.com',
+            'storage.googleapis.com',
+            'attachments-okx.chaingraph.io',
+            'okx-attachments.thearch.ai',
+            'thearch.ai',
+            'app.thearch.ai',
+            'attachments.badai.io',
+            'app.badai.io',
+            // Add other trusted domains as needed
+          ]
+
+          // Check if the host is in the allowlist
+          if (!allowedHosts.some(host => parsedUrl.hostname === host || parsedUrl.hostname.endsWith(`.${host}`))) {
+            throw new Error(`Untrusted image host: ${parsedUrl.hostname}`)
+          }
+
+          // Ensure HTTPS only
+          if (parsedUrl.protocol !== 'https:') {
+            throw new Error('Only HTTPS URLs are allowed for images')
+          }
+
+          // Prevent localhost and private IP addresses
+          const hostname = parsedUrl.hostname
+          if (hostname === 'localhost'
+            || hostname === '127.0.0.1'
+            || hostname.startsWith('192.168.')
+            || hostname.startsWith('10.')
+            || hostname.startsWith('172.16.')
+            || hostname.endsWith('.local')) {
+            throw new Error('Internal/private addresses are not allowed')
+          }
+
+          // Size limit (10MB)
+          const MAX_IMAGE_SIZE = 10 * 1024 * 1024
+
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/octet-stream',
+              },
+              signal: controller.signal,
+            })
+
+            clearTimeout(timeout)
+
+            if (!response.ok) {
+              throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`)
+            }
+
+            // Check content length
+            const contentLength = response.headers.get('content-length')
+            if (contentLength && Number.parseInt(contentLength) > MAX_IMAGE_SIZE) {
+              throw new Error(`Image too large: ${contentLength} bytes exceeds ${MAX_IMAGE_SIZE} bytes`)
+            }
+
+            const buffer = await response.arrayBuffer()
+
+            // Double-check size after download
+            if (buffer.byteLength > MAX_IMAGE_SIZE) {
+              throw new Error(`Image too large: ${buffer.byteLength} bytes exceeds ${MAX_IMAGE_SIZE} bytes`)
+            }
+
+            return Buffer.from(buffer).toString('base64')
+          } catch (error) {
+            clearTimeout(timeout)
+            if (error instanceof Error && error.name === 'AbortError') {
+              throw new Error('Image fetch timeout after 5 seconds')
+            }
+            throw error
+          }
         }
 
         const supportedImageTypes = [
@@ -193,14 +267,23 @@ class ArchAIMessagesToAnthropicConverterNode extends BaseNode {
             continue
           }
 
-          const imageBlock = new ImageBlock()
-          imageBlock.source.type = 'base64'
-          imageBlock.source.media_type = attachment.mime_type
-          imageBlock.source.data = await getBase64Image(attachment.url)
+          try {
+            const imageBlock = new ImageBlock()
+            imageBlock.source.type = 'base64'
+            imageBlock.source.media_type = attachment.mime_type
+            imageBlock.source.data = await getBase64Image(attachment.url)
 
-          console.log(`[ArchAIToAntropicConverterNode] Adding image block: ${attachment.filename} (${attachment.mime_type}) - ${attachment.url}`)
+            // console.log(`[ArchAIToAntropicConverterNode] Successfully added image: ${attachment.filename} (${attachment.mime_type})`)
 
-          anthropicMessage.content.push(imageBlock)
+            anthropicMessage.content.push(imageBlock)
+          } catch (error) {
+            // Log error but continue processing other attachments
+            console.error(`[ArchAIToAntropicConverterNode] Failed to fetch image ${attachment.filename} from ${attachment.url}:`, error instanceof Error ? error.message : error)
+            // Optionally add a text block mentioning the failed attachment
+            const errorBlock = new TextBlock()
+            errorBlock.text = `\n[Failed to load image: ${attachment.filename}]`
+            anthropicMessage.content.push(errorBlock)
+          }
         }
       }
 
