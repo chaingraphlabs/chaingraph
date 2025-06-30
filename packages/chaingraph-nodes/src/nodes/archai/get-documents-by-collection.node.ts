@@ -14,12 +14,6 @@ import type {
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
-  PortEnumFromNative,
-} from '@badaitech/chaingraph-types'
-import {
-  PortVisibility,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
   Input,
   Node,
@@ -62,26 +56,43 @@ class ArchAIGetDocumentsByCollectionNode extends BaseNode {
         id: GraphQL.DocumentOrderByField.Name,
         type: 'string',
         defaultValue: GraphQL.DocumentOrderByField.Name,
+        title: 'Document Name',
       },
       {
         id: GraphQL.DocumentOrderByField.CreatedAt,
         type: 'string',
         defaultValue: GraphQL.DocumentOrderByField.CreatedAt,
+        title: 'Creation Date',
       },
       {
         id: GraphQL.DocumentOrderByField.PublishedAt,
         type: 'string',
         defaultValue: GraphQL.DocumentOrderByField.PublishedAt,
+        title: 'Publication Date',
       },
     ],
+    defaultValue: GraphQL.DocumentOrderByField.PublishedAt,
   })
-  sortBy?: GraphQL.DocumentOrderByField
+  sortBy: GraphQL.DocumentOrderByField = GraphQL.DocumentOrderByField.PublishedAt
 
   @Input()
-  @PortVisibility({ showIf: node => !!(node as ArchAIGetDocumentsByCollectionNode).sortBy })
-  @PortEnumFromNative(GraphQL.OrderDirection, {
+  @PortEnum({
     title: 'Sort Order',
     description: 'Direction to sort documents',
+    options: [
+      {
+        id: GraphQL.OrderDirection.Asc,
+        type: 'string',
+        defaultValue: GraphQL.OrderDirection.Asc,
+        title: 'Ascending (A-Z, Oldest First)',
+      },
+      {
+        id: GraphQL.OrderDirection.Desc,
+        type: 'string',
+        defaultValue: GraphQL.OrderDirection.Desc,
+        title: 'Descending (Z-A, Newest First)',
+      },
+    ],
     defaultValue: GraphQL.OrderDirection.Asc,
   })
   sortOrder: GraphQL.OrderDirection = GraphQL.OrderDirection.Asc
@@ -151,15 +162,6 @@ class ArchAIGetDocumentsByCollectionNode extends BaseNode {
       }
     }
 
-    // Prepare order by
-    let orderBy: GraphQL.GetDocumentsByCollectionOrderByInput | undefined
-    if (this.sortBy) {
-      orderBy = {
-        field: this.sortBy,
-        direction: this.sortOrder,
-      }
-    }
-
     // Query the knowledge database for documents in the collection
     const { kdbGetDocumentsByCollection } = await graphQLClient.request(
       GraphQL.KdbGetDocumentsByCollectionDocument,
@@ -167,7 +169,10 @@ class ArchAIGetDocumentsByCollectionNode extends BaseNode {
         session: agentSession,
         collection_id: this.collectionId,
         filters,
-        order_by: orderBy,
+        order_by: {
+          field: this.sortBy,
+          direction: this.sortOrder,
+        },
         limit: this.limit,
       },
     )
