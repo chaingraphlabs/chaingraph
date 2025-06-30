@@ -100,14 +100,14 @@ class ArchAIGetDocumentsByCollectionNode extends BaseNode {
   @Input()
   @PortString({
     title: 'Date From',
-    description: 'Filter documents by date (from)',
+    description: 'Filter documents by date (from). Use ISO 8601 format (YYYY-MM-DD) or any date format that JavaScript can parse.',
   })
   dateFrom?: string
 
   @Input()
   @PortString({
     title: 'Date To',
-    description: 'Filter documents by date (to)',
+    description: 'Filter documents by date (to). Use ISO 8601 format (YYYY-MM-DD) or any date format that JavaScript can parse.',
   })
   dateTo?: string
 
