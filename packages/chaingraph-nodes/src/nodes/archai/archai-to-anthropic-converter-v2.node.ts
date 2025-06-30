@@ -30,13 +30,13 @@ enum RoleAssignment {
 }
 
 @Node({
-  type: 'ArchAIToAntropicConverterNode',
-  title: 'ArchAI to Anthropic Converter',
+  type: 'ArchAIMessagesToAnthropicConverterNode',
+  title: 'ArchAI Messages to Anthropic Converter',
   description: 'Converts ArchAI chat history messages to Anthropic message format',
   category: NODE_CATEGORIES.ARCHAI,
   tags: ['anthropic', 'archai', 'converter', 'message', 'history', 'claude'],
 })
-class ArchAIToAntropicConverterNode extends BaseNode {
+class ArchAIMessagesToAnthropicConverterNode extends BaseNode {
   @Input()
   @PortArray({
     title: 'ArchAI Messages',
@@ -336,4 +336,4 @@ class ArchAIToAntropicConverterNode extends BaseNode {
   }
 }
 
-export default ArchAIToAntropicConverterNode
+export default ArchAIMessagesToAnthropicConverterNode

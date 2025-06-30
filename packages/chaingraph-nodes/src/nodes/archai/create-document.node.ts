@@ -23,6 +23,11 @@ import { DocumentMetadataKV } from './types'
   description: 'Upload a document to the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'documents', 'upload', 'kdb'],
+  ui: {
+    state: {
+      isHidden: true, // Hide from the UI for now
+    },
+  },
 })
 class ArchAICreateDocumentNode extends BaseNode {
   @Input()

@@ -36,9 +36,12 @@ enum RoleAssignment {
   category: NODE_CATEGORIES.ARCHAI,
   tags: ['anthropic', 'archai', 'converter', 'message', 'history', 'claude'],
   ui: {
-    isHidden: true, // Hide from the UI by default
+    state: {
+      isHidden: true,
+    }, // Hide from the UI by default
   },
 })
+// @deprecated
 class ArchAIToAntropicConverterNode extends BaseNode {
   @Input()
   @PortArray({

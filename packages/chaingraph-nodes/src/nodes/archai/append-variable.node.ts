@@ -22,10 +22,15 @@ import { VariableNamespace, VariableValueType } from './types'
  */
 @Node({
   type: 'AppendVariableNode',
-  title: 'Append Variable',
+  title: 'ArchAI Append Variable',
   description: 'Appends a value to an existing variable (arrays, numbers, or strings)',
   category: NODE_CATEGORIES.ARCHAI,
   tags: ['variable', 'append', 'array', 'number', 'string', 'concatenate'],
+  ui: {
+    state: {
+      isHidden: true, // Hide from the UI for now
+    },
+  },
 })
 export class AppendVariableNode extends BaseNode {
   @Input()
