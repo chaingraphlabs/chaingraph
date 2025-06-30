@@ -400,136 +400,6 @@ export class DocumentMetadataKV {
   value: string = ''
 }
 
-// Define DocumentIndexingState schema
-@ObjectSchema({
-  description: 'Represents the indexing state of a document',
-})
-export class DocumentIndexingState {
-  @PortBoolean({
-    title: 'Is Indexing',
-    description: 'Whether the document is currently being indexed',
-    required: true,
-  })
-  is_indexing: boolean = false
-
-  @PortBoolean({
-    title: 'Is Indexing Accepted',
-    description: 'Whether the indexing request has been accepted',
-    required: true,
-  })
-  is_indexing_accepted: boolean = false
-
-  @PortBoolean({
-    title: 'Is Indexing Failed',
-    description: 'Whether the indexing process has failed',
-    required: true,
-  })
-  is_indexing_failed: boolean = false
-
-  @PortBoolean({
-    title: 'Is Indexing Finished',
-    description: 'Whether the indexing process has completed',
-    required: true,
-  })
-  is_indexing_finished: boolean = false
-
-  @PortBoolean({
-    title: 'Is Indexing Paused',
-    description: 'Whether the indexing process is paused',
-    required: true,
-  })
-  is_indexing_paused: boolean = false
-
-  @PortString({
-    title: 'Failed Reason',
-    description: 'Reason for indexing failure, if any',
-  })
-  failed_reason?: string
-}
-
-// Define IndexingState schema
-@ObjectSchema({
-  description: 'Represents the indexing state of a document or chunk',
-})
-export class IndexingState {
-  @PortBoolean({
-    title: 'Is Embedded',
-    description: 'Whether the content has been embedded',
-    required: true,
-  })
-  is_embedded: boolean = false
-
-  @PortBoolean({
-    title: 'Is Indexed QA',
-    description: 'Whether QA pairs have been indexed',
-    required: true,
-  })
-  is_indexed_qa: boolean = false
-
-  @PortBoolean({
-    title: 'Is Indexed Triplet',
-    description: 'Whether triplets have been indexed',
-    required: true,
-  })
-  is_indexed_triplet: boolean = false
-
-  @PortBoolean({
-    title: 'Is Parsed',
-    description: 'Whether the content has been parsed',
-    required: true,
-  })
-  is_parsed: boolean = false
-
-  @PortBoolean({
-    title: 'Is Summarized',
-    description: 'Whether the content has been summarized',
-    required: true,
-  })
-  is_summarized: boolean = false
-
-  @PortNumber({
-    title: 'Completion Cost',
-    description: 'Cost of completion in tokens',
-    required: true,
-  })
-  completion_cost: number = 0
-
-  @PortNumber({
-    title: 'Completion Tokens',
-    description: 'Number of completion tokens',
-    required: true,
-  })
-  completion_tokens: number = 0
-
-  @PortNumber({
-    title: 'Content Tokens',
-    description: 'Number of content tokens',
-    required: true,
-  })
-  content_tokens: number = 0
-
-  @PortNumber({
-    title: 'Embedding Cost',
-    description: 'Cost of embedding in tokens',
-    required: true,
-  })
-  embedding_cost: number = 0
-
-  @PortNumber({
-    title: 'Prompt Cost',
-    description: 'Cost of prompt in tokens',
-    required: true,
-  })
-  prompt_cost: number = 0
-
-  @PortNumber({
-    title: 'Prompt Tokens',
-    description: 'Number of prompt tokens',
-    required: true,
-  })
-  prompt_tokens: number = 0
-}
-
 // Define DocumentMeta schema
 @ObjectSchema({
   description: 'Represents metadata for a document',
@@ -555,22 +425,6 @@ export class DocumentMeta {
     required: true,
   })
   document_id: string = ''
-
-  @PortObject({
-    schema: DocumentIndexingState,
-    title: 'Document Indexing State',
-    description: 'Current indexing state of the document',
-    required: true,
-  })
-  document_indexing_state: DocumentIndexingState = new DocumentIndexingState()
-
-  @PortObject({
-    schema: IndexingState,
-    title: 'Indexing State',
-    description: 'Indexing state details',
-    required: true,
-  })
-  indexing_state: IndexingState = new IndexingState()
 
   @PortArray({
     title: 'Metadata',
@@ -675,14 +529,6 @@ export class QA {
     required: true,
   })
   document_published_at: string = ''
-
-  // @PortObject({
-  //   schema: IndexingState,
-  //   title: 'Indexing State',
-  //   description: 'Indexing state of the QA pair',
-  //   required: true,
-  // })
-  // indexing_state: IndexingState = new IndexingState()
 
   @PortNumber({
     title: 'Page Number From',
@@ -816,14 +662,6 @@ export class Page {
   })
   document_id: string = ''
 
-  @PortObject({
-    schema: IndexingState,
-    title: 'Indexing State',
-    description: 'Indexing state of the page',
-    required: true,
-  })
-  indexing_state: IndexingState = new IndexingState()
-
   @PortNumber({
     title: 'Number',
     description: 'Page number within the document',
@@ -845,22 +683,6 @@ export class Page {
     required: true,
   })
   task_id: string = ''
-}
-
-/**
- * Enum for indexing document task states
- */
-export enum IndexingDocumentTaskState {
-  Accepted = 'accepted',
-  Done = 'done',
-  Failed = 'failed',
-  Parsing = 'parsing',
-  PauseRequested = 'pause_requested',
-  Paused = 'paused',
-  Pending = 'pending',
-  QaGenerating = 'qa_generating',
-  Rejected = 'rejected',
-  WaitingForConfirmation = 'waiting_for_confirmation',
 }
 
 // Define IndexingDocumentStatisticsLLM schema
