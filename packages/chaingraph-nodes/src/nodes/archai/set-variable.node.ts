@@ -13,7 +13,16 @@ import type {
 } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
-import { BaseNode, Input, Node, PortAny, PortEnum, PortString } from '@badaitech/chaingraph-types'
+import {
+  BaseNode,
+  Input,
+  Node,
+  Output,
+  PortAny,
+  PortBoolean,
+  PortEnum,
+  PortString,
+} from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { VariableNamespace } from './types'
 
@@ -42,10 +51,30 @@ class ArchAISetVariableNode extends BaseNode {
     description: 'Namespace to set the variable in',
     defaultValue: VariableNamespace.Execution,
     options: [
-      { id: VariableNamespace.Execution, type: 'string', defaultValue: VariableNamespace.Execution, title: 'Execution' },
-      { id: VariableNamespace.Agent, type: 'string', defaultValue: VariableNamespace.Agent, title: 'Agent' },
-      { id: VariableNamespace.Chat, type: 'string', defaultValue: VariableNamespace.Chat, title: 'Chat' },
-      { id: VariableNamespace.ChatAgent, type: 'string', defaultValue: VariableNamespace.ChatAgent, title: 'Chat Agent' },
+      {
+        id: VariableNamespace.Execution,
+        type: 'string',
+        defaultValue: VariableNamespace.Execution,
+        title: 'Execution',
+      },
+      {
+        id: VariableNamespace.Agent,
+        type: 'string',
+        defaultValue: VariableNamespace.Agent,
+        title: 'Agent',
+      },
+      {
+        id: VariableNamespace.Chat,
+        type: 'string',
+        defaultValue: VariableNamespace.Chat,
+        title: 'Chat',
+      },
+      {
+        id: VariableNamespace.ChatAgent,
+        type: 'string',
+        defaultValue: VariableNamespace.ChatAgent,
+        title: 'Chat Agent',
+      },
     ],
     required: true,
   })
@@ -58,6 +87,13 @@ class ArchAISetVariableNode extends BaseNode {
     required: true,
   })
   value: any = null
+
+  @Output()
+  @PortBoolean({
+    title: 'Success',
+    description: 'Indicates whether the variable was successfully set',
+  })
+  success: boolean = false
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Validate inputs
@@ -122,9 +158,12 @@ class ArchAISetVariableNode extends BaseNode {
 
     const variable = setVariable.variable as GraphQL.VariableFieldsFragment
 
-    if (!variable || !variable || !variable.id) {
+    if (!variable || !variable.id) {
       throw new Error('Failed to set variable: Variable ID is empty')
     }
+
+    // Set the success flag to true since the variable was successfully set
+    this.success = true
 
     return {}
   }
