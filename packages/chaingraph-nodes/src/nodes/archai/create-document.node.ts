@@ -86,6 +86,13 @@ class ArchAICreateDocumentNode extends BaseNode {
   })
   documentMetadata: DocumentMetadataKV[] = []
 
+  @Input()
+  @PortString({
+    title: 'Published At',
+    description: 'Timestamp when the document was published (ISO 8601 format)',
+  })
+  publishedAt?: string
+
   @Output()
   @PortString({
     title: 'Document ID',
@@ -117,13 +124,17 @@ class ArchAICreateDocumentNode extends BaseNode {
     )
 
     // Prepare document metadata input
-    const documentInput = {
+    const documentInput: GraphQL.DocumentMetaInput = {
       collection_id: this.collectionId,
       name: this.name,
       description: this.description,
       url: this.url,
       tags: this.tags,
       metadata: this.documentMetadata,
+    }
+
+    if (this.publishedAt) {
+      documentInput.published_at = new Date(this.publishedAt).toISOString()
     }
 
     // Create a document in the knowledge database
