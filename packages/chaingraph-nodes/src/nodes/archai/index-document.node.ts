@@ -117,6 +117,9 @@ class ArchAIIndexDocumentNode extends BaseNode {
     title: 'Instruction for QA',
     description: 'Instructions for generating QA pairs',
     defaultValue: '',
+    ui: {
+      isTextArea: true,
+    },
   })
   instructionForQA: string = ''
 
