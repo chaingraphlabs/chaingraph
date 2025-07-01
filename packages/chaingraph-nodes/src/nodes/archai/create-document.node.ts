@@ -13,9 +13,11 @@ import type {
 } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
+import {
+  PortObject,
+} from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { DocumentMetadataKV } from './types'
 
 @Node({
   type: 'ArchAICreateDocumentNode',
@@ -78,17 +80,20 @@ class ArchAICreateDocumentNode extends BaseNode {
   tags: string[] = []
 
   @Input()
-  @PortArray({
+  @PortObject({
     title: 'Metadata',
     description: 'Additional metadata for the document as key-value pairs',
-    itemConfig: {
-      type: 'object',
-      schema: DocumentMetadataKV,
-      defaultValue: new DocumentMetadataKV(),
+    schema: {
+      properties: {},
     },
-    defaultValue: [],
+    defaultValue: {},
+    isSchemaMutable: true,
+    ui: {
+      allowedTypes: ['string'],
+      keyDeletable: true,
+    },
   })
-  documentMetadata: DocumentMetadataKV[] = []
+  documentMetadata: Record<string, string> = {}
 
   @Input()
   @PortString({
@@ -134,7 +139,8 @@ class ArchAICreateDocumentNode extends BaseNode {
       description: this.description,
       url: this.url,
       tags: this.tags,
-      metadata: this.documentMetadata,
+      metadata: Object.entries(this.documentMetadata)
+        .map(([key, value]) => ({ key, value })),
     }
 
     if (this.publishedAt) {
