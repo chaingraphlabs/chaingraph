@@ -80,7 +80,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
   @Input()
   @PortNumber({
     title: 'Cost Limit',
-    description: 'Maximum cost allowed for indexing',
+    description: 'Maximum cost allowed for indexing in USD',
     defaultValue: 0.0,
   })
   costLimit: number = 0.0
