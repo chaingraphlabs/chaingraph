@@ -70,6 +70,10 @@ class ArchAICreateDocumentNode extends BaseNode {
       type: 'string',
     },
     defaultValue: [],
+    isMutable: true,
+    ui: {
+      addItemFormHidden: false,
+    },
   })
   tags: string[] = []
 
