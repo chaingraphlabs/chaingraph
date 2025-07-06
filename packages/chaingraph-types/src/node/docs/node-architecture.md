@@ -66,13 +66,14 @@ classDiagram
 
     class IComplexPortHandler {
         <<interface>>
-        +addObjectProperty(objectPort, key, portConfig)
+        +addObjectProperty(objectPort, key, portConfig, useParentUI)
         +removeObjectProperty(objectPort, key)
         +updateArrayItemConfig(arrayPort)
         +appendArrayItem(arrayPort, value)
         +removeArrayItem(arrayPort, index)
         +processPortConfig(config, context)
         +recreateArrayItemPorts(arrayPort, newArray)
+        +refreshAnyPortUnderlyingPorts(anyPort, useParentUI)
     }
 
     class INodeEvents {
@@ -106,12 +107,14 @@ classDiagram
         -portManager: PortManager
         -portBinder: PortBinder
         -nodeId: string
-        +addObjectProperty(objectPort, key, config)
+        +addObjectProperty(objectPort, key, config, useParentUI)
         +removeObjectProperty(objectPort, key)
         +updateArrayItemConfig(arrayPort)
         +appendArrayItem(arrayPort, value)
         +removeArrayItem(arrayPort, index)
         +processPortConfig(config, context)
+        +recreateArrayItemPorts(arrayPort, newArray)
+        +refreshAnyPortUnderlyingPorts(anyPort, useParentUI)
     }
 
     %% Relationships: Interfaces

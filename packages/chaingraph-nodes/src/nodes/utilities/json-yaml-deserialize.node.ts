@@ -13,8 +13,8 @@ import type {
   IPortConfig,
   NodeEvent,
   NodeExecutionResult,
+  PortConnectedEvent,
   PortDisconnectedEvent,
-  PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
 
 import {
@@ -26,6 +26,7 @@ import {
   Output,
   PortAny,
   PortBoolean,
+  PortFactory,
   PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
@@ -273,8 +274,8 @@ class JsonYamlDeserializerNode extends BaseNode {
   async onEvent(event: NodeEvent): Promise<void> {
     await super.onEvent(event)
 
-    if (event.type === NodeEventType.PortUpdate) {
-      await this.handleUpdate(event as PortUpdateEvent)
+    if (event.type === NodeEventType.PortConnected) {
+      await this.handleConnection(event as PortConnectedEvent)
     }
 
     // !!! To depecate after disconnections fix
@@ -297,19 +298,16 @@ class JsonYamlDeserializerNode extends BaseNode {
       return
     }
 
-    const inputAnyPort = event.sourcePort as AnyPort
     const outputPort = this.findPortByKey('deserializedObject')
     const outputAnyPort = outputPort as AnyPort
 
-    if (!inputAnyPort || !outputPort || !outputAnyPort) {
+    if (!outputPort || !outputAnyPort) {
       return
     }
 
     try {
-      await inputAnyPort.setUnderlyingType(undefined)
-      await this.updatePort(inputAnyPort as IPort)
-
       await outputAnyPort.setUnderlyingType(undefined)
+      this.refreshAnyPortUnderlyingPorts(outputAnyPort as IPort, true)
       await this.updatePort(outputAnyPort as IPort)
     } catch (error) {
       throw new Error(`Error synchronizing schema: ${error}`)
@@ -319,8 +317,8 @@ class JsonYamlDeserializerNode extends BaseNode {
   /**
    * Handle input port update events to sync schema to the output port
    */
-  private async handleUpdate(event: PortUpdateEvent): Promise<void> {
-    const inputPortConfig = event.port.getConfig()
+  private async handleConnection(event: PortConnectedEvent): Promise<void> {
+    const inputPortConfig = event.sourcePort.getConfig()
     if (
       !inputPortConfig
       || inputPortConfig.key !== 'outputSchema'
@@ -330,7 +328,7 @@ class JsonYamlDeserializerNode extends BaseNode {
       return
     }
 
-    const inputPort = event.port as AnyPort
+    const inputPort = event.sourcePort as AnyPort
     const inputPortRawConfig = inputPort.getRawConfig()
 
     const outputPort = this.findPortByKey('deserializedObject')
@@ -344,11 +342,37 @@ class JsonYamlDeserializerNode extends BaseNode {
       return
     }
 
-    try {
-      outputAnyPort.setUnderlyingType(inputPortRawConfig.underlyingType)
-      await this.updatePort(outputAnyPort as IPort)
-    } catch (error) {
-      throw new Error(`Error synchronizing schema: ${error}`)
+    if (!outputAnyPort.getConfig().underlyingType) {
+      try {
+        // set some scham settings if underlying type is object
+        let underlyingType = inputPortRawConfig.underlyingType
+        if (underlyingType.type === 'object') {
+          underlyingType = {
+            // ...config,
+            ...PortFactory.create({
+              type: 'object',
+              schema: underlyingType?.schema || {
+                type: 'object',
+                properties: {},
+              },
+              isSchemaMutable: false,
+              defaultValue: underlyingType?.defaultValue ?? {},
+              ui: {
+                ...(underlyingType?.ui || {}),
+                keyDeletable: false,
+                hideEditor: true,
+                collapsed: true,
+                hidePropertyEditor: true,
+              },
+            }).getConfig(),
+          }
+        }
+        outputAnyPort.setUnderlyingType(underlyingType)
+        this.refreshAnyPortUnderlyingPorts(outputAnyPort as IPort, true)
+        await this.updatePort(outputAnyPort as IPort)
+      } catch (error) {
+        throw new Error(`Error synchronizing schema: ${error}`)
+      }
     }
   }
 }

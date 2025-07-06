@@ -385,8 +385,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   //
   // IComplexPortHandler implementation (delegation to complexPortHandler)
   //
-  addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig): IPort {
-    return this.complexPortHandler.addObjectProperty(objectPort, key, portConfig)
+  addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig, useParentUI?: boolean): IPort {
+    return this.complexPortHandler.addObjectProperty(objectPort, key, portConfig, useParentUI)
   }
 
   removeObjectProperty(objectPort: IPort, key: string): void {
@@ -403,6 +403,10 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
   removeArrayItem(arrayPort: IPort, index: number): void {
     this.complexPortHandler.removeArrayItem(arrayPort, index)
+  }
+
+  refreshAnyPortUnderlyingPorts(anyPort: IPort, useParentUI?: boolean): void {
+    this.complexPortHandler.refreshAnyPortUnderlyingPorts(anyPort, useParentUI)
   }
 
   processPortConfig(config: IPortConfig, context: {

@@ -18,8 +18,9 @@ export interface IComplexPortHandler {
    * @param objectPort The parent object port
    * @param key The property key
    * @param portConfig The port configuration for the new property
+   * @param useParentUI indicates whether we want to use the parents UI
    */
-  addObjectProperty: (objectPort: IPort, key: string, portConfig: IPortConfig) => IPort
+  addObjectProperty: (objectPort: IPort, key: string, portConfig: IPortConfig, useParentUI?: boolean) => IPort
 
   /**
    * Remove a property from an object port
@@ -49,6 +50,14 @@ export interface IComplexPortHandler {
    * @param index The index to remove
    */
   removeArrayItem: (arrayPort: IPort, index: number) => void
+
+  /**
+   * Creates or deletes child ports depending on whether the child type is an object.
+   * This allows child ports to be rendered for objects connected to Any ports
+   * @param anyPort The Any port
+   * @param useParentUI indicates whether we want to use the parents UI
+   */
+  refreshAnyPortUnderlyingPorts: (anyPort: IPort, useParentUI?: boolean) => void
 
   /**
    * Process port configurations through PortConfigProcessor

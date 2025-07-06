@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
 import { memo } from 'react'
 import { PortTitle } from '../ui/PortTitle'
+import { AnyObjectPort } from './components/AnyObjectPort'
 
 export interface AnyPortProps {
   node: INode
@@ -39,6 +40,10 @@ function AnyPortComponent(props: AnyPortProps) {
   const config = port.getConfig()
   const ui = config.ui
   const title = config.title || config.key
+
+  if (config.underlyingType?.type === 'object') {
+    return <AnyObjectPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
+  }
 
   if (ui?.hidden)
     return null

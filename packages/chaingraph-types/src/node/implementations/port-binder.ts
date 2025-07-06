@@ -7,6 +7,7 @@
  */
 
 import type {
+  AnyPortConfig,
   ArrayPortConfig,
   IPort,
   IPortConfig,
@@ -142,6 +143,53 @@ export class PortBinder implements IPortBinder {
           }
         }
       }
+    } else if (config.type === 'any' && config.underlyingType?.type === 'object') {
+      // For any ports with underlying type of object, we need to rebind all properties when value changes
+      Object.defineProperty(targetObject, key, {
+        get() {
+          return port.getValue()
+        },
+        set(newValue) {
+          // Set the port value
+          port.setValue(newValue)
+
+          // Re-bind all properties for the new object
+          const objectValue = port.getValue()
+          if (objectValue && typeof objectValue === 'object') {
+            const childPorts = portManager.getChildPorts(port)
+
+            // The critical fix: First update all child port values to match the new object
+            // before rebinding them. This prevents overwriting new values with old ones.
+            for (const childPort of childPorts) {
+              const childKey = childPort.getConfig().key
+              if (childKey) {
+                // First update the child port's value to match the corresponding property
+                // in the new object value
+                if (objectValue[childKey] !== undefined) {
+                  childPort.setValue(objectValue[childKey])
+                }
+
+                // Rebind each child port to the corresponding property
+                self.bindPortToNodeProperty(objectValue, childPort)
+              }
+            }
+          }
+        },
+        configurable: true,
+        enumerable: true,
+      })
+
+      // For each child port, bind it to the new object value
+      const objectValue = port.getValue()
+      if (objectValue && typeof objectValue === 'object') {
+        const childPorts = portManager.getChildPorts(port)
+        for (const childPort of childPorts) {
+          if (childPort.getConfig().key) {
+            // Bind each child port to the corresponding property
+            self.bindPortToNodeProperty(objectValue, childPort)
+          }
+        }
+      }
     } else {
       // For simple types, use standard getter/setter
 
@@ -184,9 +232,9 @@ export class PortBinder implements IPortBinder {
         // Bind this root port to the node property - CRITICAL FIX
         this.bindPortToNodeProperty(this.nodeInstance, port)
 
-        // If this is a complex port (object or array), add it to the list to process
+        // If this is a complex port (object, array, any), add it to the list to process
         const config = port.getConfig()
-        if (config.type === 'object' || config.type === 'array') {
+        if (config.type === 'object' || config.type === 'array' || config.type === 'any') {
           objectPortsToProcess.push(port)
         }
       }
@@ -213,6 +261,8 @@ export class PortBinder implements IPortBinder {
         this.processObjectPort(port, portMap, portsToProcess)
       } else if (config.type === 'array') {
         this.processArrayPort(port, portMap, portsToProcess)
+      } else if (config.type === 'any') {
+        this.processAnyPort(port, portMap, portsToProcess)
       }
     }
   }
@@ -263,7 +313,7 @@ export class PortBinder implements IPortBinder {
       }
 
       // If this child is a complex port, add it to the processing queue
-      if (childConfig.type === 'object' || childConfig.type === 'array') {
+      if (childConfig.type === 'object' || childConfig.type === 'array' || childConfig.type === 'any') {
         portsToProcess.push(childPort)
       }
     }
@@ -293,6 +343,62 @@ export class PortBinder implements IPortBinder {
         portMap,
         portsToProcess,
       )
+    }
+  }
+
+  /**
+   * Process an any port with underlying type object to create child ports for all properties
+   * @param anyPort The object port to process
+   * @param portMap The map to add created ports to
+   * @param portsToProcess List to add any new complex ports to
+   */
+  private processAnyPort(anyPort: IPort, portMap: Map<string, IPort>, portsToProcess: IPort[]): void {
+    const config = anyPort.getConfig() as AnyPortConfig
+    if (!config.underlyingType || config.underlyingType.type !== 'object') {
+      return
+    }
+    const underlyingType = config.underlyingType as ObjectPortConfig
+    if (!underlyingType.schema.properties) {
+      return
+    }
+
+    const anyValue = anyPort.getValue() || {}
+
+    // Process each property in the schema
+    for (const [key, propertyConfig] of Object.entries(underlyingType.schema.properties)) {
+      // Process the port config with the processor to handle nested ports
+      const processedConfig = this.processPortConfig(
+        { ...propertyConfig },
+        {
+          nodeId: this.nodeId,
+          parentPortConfig: config,
+          propertyKey: key,
+          propertyValue: anyValue[key],
+        },
+      )
+
+      // Create the child port
+      const childPortId = `${anyPort.id}.${key}`
+      const childConfig = {
+        ...processedConfig,
+        id: childPortId,
+        parentId: anyPort.id,
+        key,
+        nodeId: this.nodeId,
+      }
+
+      const childPort = PortFactory.createFromConfig(childConfig)
+      portMap.set(childPortId, childPort)
+
+      // Bind to parent object - CRITICAL FIX
+      if (typeof anyValue === 'object' && anyValue !== null) {
+        this.bindPortToNodeProperty(anyValue, childPort)
+      }
+
+      // If this child is a complex port, add it to the processing queue
+      if (childConfig.type === 'object' || childConfig.type === 'array' || childConfig.type === 'any') {
+        portsToProcess.push(childPort)
+      }
     }
   }
 
@@ -341,7 +447,7 @@ export class PortBinder implements IPortBinder {
     }
 
     // If this item is a complex port, add it to processing queue
-    if (completeItemConfig.type === 'object' || completeItemConfig.type === 'array') {
+    if (completeItemConfig.type === 'object' || completeItemConfig.type === 'array' || completeItemConfig.type === 'any') {
       portsToProcess.push(itemPort)
     }
   }

@@ -92,6 +92,101 @@ export class AnyPort extends BasePort<AnyPortConfig> {
     return this.config.defaultValue
   }
 
+  setValue(newValue: any | undefined): void {
+    if (this.config.underlyingType?.type !== 'object') {
+      super.setValue(newValue)
+      return
+    }
+    // Clear the current value if newValue is undefined
+    if (newValue === undefined) {
+      this.value = undefined
+      return
+    }
+    if (newValue === null) {
+      this.value = null
+      return
+    }
+
+    // Initialize value if it doesn't exist
+    if (this.value === undefined || this.value === null) {
+      this.value = {}
+    }
+
+    // Initialize value if it doesn't exist or isn't an object
+    if (typeof newValue !== 'object' || Array.isArray(newValue)) {
+      this.value = {}
+      return
+    }
+
+    if (typeof this.value === 'object' && !Array.isArray(this.value)) {
+      // Delete keys that don't exist in new value
+      for (const key in this.value) {
+        if (Object.hasOwn(this.value, key) && !Object.hasOwn(newValue, key)) {
+          delete this.value[key]
+        }
+      }
+
+      // Set new values and recursively update
+      for (const key in newValue) {
+        if (Object.hasOwn(newValue, key)) {
+          const value = newValue[key]
+          if (value !== undefined) {
+            this.setValueForKey(this.value!, key, value)
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Set a value for a specific key with proper type handling
+   * @param target - The target object to update
+   * @param key - The key to set
+   * @param value - The value to set
+   */
+  private setValueForKey(target: Record<string, any>, key: string, value: any): void {
+    // Handle null values
+    if (value === null) {
+      target[key] = null
+      return
+    }
+
+    // Handle object types (excluding arrays) - update recursively
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      // Initialize target property if it doesn't exist or isn't an object
+      if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+        target[key] = {}
+      }
+
+      // Recursively update the object properties
+      this.setObjectPropertiesRecursively(target[key], value)
+    } else {
+      // For arrays or primitive values, assign directly
+      target[key] = value
+    }
+  }
+
+  /**
+   * Recursively update object properties
+   * @param target - The target object to update
+   * @param source - The source object with new values
+   */
+  private setObjectPropertiesRecursively(target: Record<string, any>, source: Record<string, any>): void {
+    // Delete properties from target that don't exist in source
+    for (const key in target) {
+      if (Object.hasOwn(target, key) && !Object.hasOwn(source, key)) {
+        delete target[key]
+      }
+    }
+
+    // Update or add properties from source to target
+    for (const key in source) {
+      if (Object.hasOwn(source, key)) {
+        this.setValueForKey(target, key, source[key])
+      }
+    }
+  }
+
   /**
    * Validates the any port value.
    * Delegates to AnyPortPlugin.validateValue which in turn delegates
