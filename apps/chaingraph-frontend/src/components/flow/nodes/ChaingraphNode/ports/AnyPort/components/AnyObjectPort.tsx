@@ -20,9 +20,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, memo, useCallback, useMemo, useState } from 'react'
 import { PortHandle } from '../../ui/PortHandle'
 import { isHideEditor } from '../../utils/hide-editor'
+import { AddPropPopover } from './AddPropPopover'
 import PortField from './PortField'
 import { PortHeader } from './PortHeader'
-import { AddPropPopover } from './AddPropPopover'
 
 export interface AnyPortProps {
   node: INode

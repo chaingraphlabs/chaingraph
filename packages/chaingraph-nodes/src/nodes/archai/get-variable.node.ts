@@ -201,12 +201,12 @@ class ArchAIGetVariableNode extends BaseNode {
   ): Promise<void> {
     const defaultValuePort
       = defaultValuePortFromEvent
-      ?? findPort(this, (port) => {
-        return port.getConfig().key === 'defaultValue'
-          && port.getConfig().direction === 'input'
-          && !port.getConfig().parentId
-          && port.getConfig().type === 'any'
-      }) as AnyPort
+        ?? findPort(this, (port) => {
+          return port.getConfig().key === 'defaultValue'
+            && port.getConfig().direction === 'input'
+            && !port.getConfig().parentId
+            && port.getConfig().type === 'any'
+        }) as AnyPort
     if (!defaultValuePort)
       return
 
