@@ -1,5 +1,23 @@
 mutation KDBCreatePage($session: Session!, $pages: [PageInput!]!) {
   kdbCreatePage(session: $session, pages: $pages) {
-    ...PageFields
+    page_id
+    content
+    description
+    document_id
+    task_id
+    indexing_state {
+      completion_cost
+      completion_tokens
+      content_tokens
+      embedding_cost
+      is_embedded
+      is_indexed_qa
+      is_indexed_triplet
+      is_parsed
+      is_summarized
+      prompt_cost
+      prompt_tokens
+    }
+    number
   }
 }
