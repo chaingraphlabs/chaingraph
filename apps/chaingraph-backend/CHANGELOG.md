@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.2.15
+
+### Patch Changes
+
+- Added ca-certificates to chaingraph backend
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.2.15
+  - @badaitech/chaingraph-trpc@0.2.15
+  - @badaitech/chaingraph-types@0.2.15
+
 ## 0.2.14
 
 ### Patch Changes
