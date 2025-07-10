@@ -89,4 +89,87 @@ describe('eventEmitterNode', () => {
       data: { data: 'test' },
     })
   })
+
+  it('should validate payload against schema and allow valid data', async () => {
+    const node = new EventEmitterNode('emitter-5')
+    node.initialize()
+
+    // Set up schema for object with string property
+    const schema = {
+      type: 'object',
+      schema: {
+        properties: {
+          message: { type: 'string' },
+          count: { type: 'number' },
+        },
+      },
+    }
+    
+    // Mock the schema port
+    const schemaPort = node.findPortByKey('eventPayloadSchema')
+    if (schemaPort) {
+      (schemaPort as any).setUnderlyingType(schema)
+    }
+
+    node.eventName = 'test-event'
+    node.eventPayload = { message: 'hello', count: 42 }
+
+    const context = getTestContext()
+
+    // Should execute without error
+    await node.execute(context)
+
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'hello', count: 42 })
+  })
+
+  it('should throw validation error for payload that does not match schema', async () => {
+    const node = new EventEmitterNode('emitter-6')
+    node.initialize()
+
+    // Set up schema for object with string property
+    const schema = {
+      type: 'object',
+      schema: {
+        properties: {
+          message: { type: 'string' },
+          count: { type: 'number' },
+        },
+      },
+    }
+    
+    // Mock the schema port
+    const schemaPort = node.findPortByKey('eventPayloadSchema')
+    if (schemaPort) {
+      (schemaPort as any).setUnderlyingType(schema)
+    }
+
+    node.eventName = 'test-event'
+    // Invalid payload - count should be number but is string
+    node.eventPayload = { message: 'hello', count: 'invalid' }
+
+    const context = getTestContext()
+
+    // Should throw validation error
+    await expect(node.execute(context)).rejects.toThrow('Event payload validation failed: Expected number, got string')
+  })
+
+  it('should allow any payload when no schema is provided', async () => {
+    const node = new EventEmitterNode('emitter-7')
+    node.initialize()
+
+    node.eventName = 'test-event'
+    // Any payload should be fine without schema
+    node.eventPayload = { anything: 'goes', numbers: [1, 2, 3], nested: { deep: true } }
+
+    const context = getTestContext()
+
+    // Should execute without error
+    await node.execute(context)
+
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { 
+      anything: 'goes', 
+      numbers: [1, 2, 3], 
+      nested: { deep: true } 
+    })
+  })
 })

@@ -88,7 +88,7 @@ class EventListenerNode extends BaseNode {
       const schemaPort = this.findPortByKey('outputSchema')
 
       if (outputPort && schemaPort) {
-        const schema = schemaPort.getRawConfig().underlyingType
+        const schema = (schemaPort.getConfig() as any).underlyingType
         if (schema) {
           (outputPort as any).setUnderlyingType(schema)
         }
@@ -127,14 +127,14 @@ class EventListenerNode extends BaseNode {
 
     // Get the schema for output processing
     const schemaPort = this.findPortByKey('outputSchema')
-    const schema = schemaPort?.getRawConfig().underlyingType
+    const schema = (schemaPort?.getConfig() as any)?.underlyingType
 
     // Process event data based on schema
     if (schema) {
       try {
         this.outputData = this.processEventDataWithSchema(payload, schema)
       } catch (error) {
-        throw new Error(`Event data processing failed: ${error.message}`)
+        throw new Error(`Event data processing failed: ${(error as Error).message}`)
       }
     } else {
       // When no schema is provided, output the payload directly
