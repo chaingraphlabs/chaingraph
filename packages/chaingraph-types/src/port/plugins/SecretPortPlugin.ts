@@ -29,6 +29,7 @@ const configSchema = basePortConfigSchema.merge(z.object({
 const valueSchema: z.ZodType<SecretPortValue<any>> = z.object({
   decrypt: z.function().args(z.instanceof(ExecutionContext)).returns(z.promise(z.any())),
   encrypted: z.string(),
+  hkdfNonce: z.string(),
   publicKey: z.string(),
 })
 
