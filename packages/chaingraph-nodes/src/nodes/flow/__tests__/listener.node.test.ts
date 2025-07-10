@@ -33,7 +33,7 @@ describe('eventListenerNode', () => {
     node.initialize()
 
     // Configure listener to listen for 'user-action' events
-    node.inputFilter.eventName = 'user-action'
+    node.eventName = 'user-action'
 
     // Create context with matching event data
     const eventData: EmittedEventContext = {
@@ -54,7 +54,7 @@ describe('eventListenerNode', () => {
     node.initialize()
 
     // Configure listener to listen for 'user-action' events
-    node.inputFilter.eventName = 'user-action'
+    node.eventName = 'user-action'
 
     // Create context with non-matching event in child execution
     const eventData: EmittedEventContext = {
@@ -83,7 +83,7 @@ describe('eventListenerNode', () => {
     const node = new EventListenerNode('listener-3')
     node.initialize()
 
-    node.inputFilter.eventName = 'test-event'
+    node.eventName = 'test-event'
 
     // Set some initial output data to verify it gets cleared
     node.outputData = { eventName: 'old-data' }
@@ -104,7 +104,7 @@ describe('eventListenerNode', () => {
     const node = new EventListenerNode('listener-4')
     node.initialize()
 
-    node.inputFilter.eventName = 'test-event'
+    node.eventName = 'test-event'
 
     // Simulate what EventEmitterNode sends: eventName as type, eventData object as payload
     const eventData: EmittedEventContext = {
@@ -126,7 +126,7 @@ describe('eventListenerNode', () => {
     const node = new EventListenerNode('listener-5')
     node.initialize()
 
-    node.inputFilter.eventName = 'complex-event'
+    node.eventName = 'complex-event'
 
     // Create context with complex payload
     const eventData: EmittedEventContext = {
