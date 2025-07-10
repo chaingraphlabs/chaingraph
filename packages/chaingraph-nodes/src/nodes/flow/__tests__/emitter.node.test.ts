@@ -25,7 +25,7 @@ describe('eventEmitterNode', () => {
 
     // Set event name and payload
     node.eventName = 'test-event'
-    node.eventPayload = { message: 'test payload' }
+    node.payload = { message: 'test payload' }
 
     const context = getTestContext()
 
@@ -70,7 +70,7 @@ describe('eventEmitterNode', () => {
     node.initialize()
 
     node.eventName = 'test-event'
-    node.eventPayload = { data: 'test' }
+    node.payload = { data: 'test' }
 
     // Create real context to test emittedEvents
     const abortController = new AbortController()
@@ -106,13 +106,13 @@ describe('eventEmitterNode', () => {
     }
     
     // Mock the schema port
-    const schemaPort = node.findPortByKey('eventPayloadSchema')
+    const schemaPort = node.findPortByKey('payloadSchema')
     if (schemaPort) {
       (schemaPort as any).setUnderlyingType(schema)
     }
 
     node.eventName = 'test-event'
-    node.eventPayload = { message: 'hello', count: 42 }
+    node.payload = { message: 'hello', count: 42 }
 
     const context = getTestContext()
 
@@ -138,14 +138,14 @@ describe('eventEmitterNode', () => {
     }
     
     // Mock the schema port
-    const schemaPort = node.findPortByKey('eventPayloadSchema')
+    const schemaPort = node.findPortByKey('payloadSchema')
     if (schemaPort) {
       (schemaPort as any).setUnderlyingType(schema)
     }
 
     node.eventName = 'test-event'
     // Invalid payload - count should be number but is string
-    node.eventPayload = { message: 'hello', count: 'invalid' }
+    node.payload = { message: 'hello', count: 'invalid' }
 
     const context = getTestContext()
 
@@ -159,7 +159,7 @@ describe('eventEmitterNode', () => {
 
     node.eventName = 'test-event'
     // Any payload should be fine without schema
-    node.eventPayload = { anything: 'goes', numbers: [1, 2, 3], nested: { deep: true } }
+    node.payload = { anything: 'goes', numbers: [1, 2, 3], nested: { deep: true } }
 
     const context = getTestContext()
 

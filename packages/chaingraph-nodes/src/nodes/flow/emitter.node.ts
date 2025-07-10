@@ -28,20 +28,22 @@ class EventEmitterNode extends BaseNode {
 
   @Input()
   @PortAny({
-    title: 'Event Payload Schema',
-    description: 'Schema for the event payload data structure',
-  })
-  eventPayloadSchema: any = {}
-
-  @Input()
-  @PortAny({
-    title: 'Event Payload',
+    title: 'Payload',
     description: 'Data payload to emit with the event',
+    order: 2,
     ui: {
       hidePropertyEditor: true,
     },
   })
-  eventPayload: any = {}
+  payload: any = {}
+
+  @Input()
+  @PortAny({
+    title: 'Payload Schema',
+    description: 'Optional schema for payload validation - acts as a filter to ensure data integrity',
+    order: 3,
+  })
+  payloadSchema: any = {}
 
   async onEvent(event: NodeEvent): Promise<void> {
     await super.onEvent(event)
@@ -52,9 +54,9 @@ class EventEmitterNode extends BaseNode {
   }
 
   private async handleSchemaUpdate(event: PortUpdateEvent): Promise<void> {
-    if (event.port.key === 'eventPayloadSchema') {
-      const payloadPort = this.findPortByKey('eventPayload')
-      const schemaPort = this.findPortByKey('eventPayloadSchema')
+    if (event.port.key === 'payloadSchema') {
+      const payloadPort = this.findPortByKey('payload')
+      const schemaPort = this.findPortByKey('payloadSchema')
 
       if (payloadPort && schemaPort) {
         const schema = (schemaPort.getConfig() as any).underlyingType
@@ -74,33 +76,22 @@ class EventEmitterNode extends BaseNode {
     }
 
     // Get the schema for payload validation
-    const schemaPort = this.findPortByKey('eventPayloadSchema')
+    const schemaPort = this.findPortByKey('payloadSchema')
     const schema = (schemaPort?.getConfig() as any)?.underlyingType
-
-    console.log(`[EventEmitterNode ${this.id}] VALIDATION DEBUG:`)
-    console.log(`[EventEmitterNode ${this.id}] - Schema port exists:`, !!schemaPort)
-    console.log(`[EventEmitterNode ${this.id}] - Schema value:`, JSON.stringify(schema, null, 2))
-    console.log(`[EventEmitterNode ${this.id}] - Payload value:`, JSON.stringify(this.eventPayload, null, 2))
-    console.log(`[EventEmitterNode ${this.id}] - Schema truthy:`, !!schema)
 
     // Validate payload against schema if schema is provided
     if (schema) {
-      console.log(`[EventEmitterNode ${this.id}] Starting validation...`)
       try {
-        this.validatePayloadAgainstSchema(this.eventPayload, schema)
-        console.log(`[EventEmitterNode ${this.id}] Validation PASSED`)
+        this.validatePayloadAgainstSchema(this.payload, schema)
       } catch (error) {
-        console.log(`[EventEmitterNode ${this.id}] Validation FAILED:`, (error as Error).message)
         throw new Error(`Event payload validation failed: ${(error as Error).message}`)
       }
-    } else {
-      console.log(`[EventEmitterNode ${this.id}] No schema - skipping validation`)
     }
 
     // Use the new event emission API if available
     if (context.emitEvent) {
       console.log(`[EventEmitterNode ${this.id}] Emitting event: "${eventName}"`)
-      context.emitEvent(eventName, this.eventPayload)
+      context.emitEvent(eventName, this.payload)
       console.log(`[EventEmitterNode ${this.id}] Event emitted successfully`)
       console.log(`[EventEmitterNode ${this.id}] Current emittedEvents:`, context.emittedEvents)
     } else {
@@ -146,10 +137,6 @@ class EventEmitterNode extends BaseNode {
 
         const objectSchema = schema as any
         if (objectSchema.schema?.properties) {
-          console.log(`[EventEmitterNode ${this.id}] Validating object properties...`)
-          console.log(`[EventEmitterNode ${this.id}] Expected properties:`, Object.keys(objectSchema.schema.properties))
-          console.log(`[EventEmitterNode ${this.id}] Actual properties:`, Object.keys(payload))
-          
           // Check that payload has the expected properties
           for (const [expectedKey, propSchema] of Object.entries(objectSchema.schema.properties)) {
             if (payload[expectedKey] === undefined) {
