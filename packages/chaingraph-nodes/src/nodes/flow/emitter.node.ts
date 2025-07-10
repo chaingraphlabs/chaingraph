@@ -6,18 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, ObjectSchema, PortObject, PortString, Title } from '@badaitech/chaingraph-types'
+import type { ExecutionContext, NodeEvent, NodeExecutionResult, PortUpdateEvent } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeEventType, PortAny, PortString, Title } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-
-@ObjectSchema({
-  description: 'Event data emitted by the emitter',
-})
-class EventData {
-  @Title('Event Name')
-  @PortString({ defaultValue: '' })
-  eventName: string = ''
-}
 
 @Node({
   type: 'EventEmitterNode',
@@ -28,15 +19,54 @@ class EventData {
 })
 class EventEmitterNode extends BaseNode {
   @Input()
-  @PortObject({
-    title: 'Event Data',
-    description: 'Data to emit when the event is triggered',
-    schema: EventData,
+  @PortString({
+    title: 'Event Name',
+    description: 'Name of the event to emit',
+    defaultValue: '',
   })
-  eventData: EventData = new EventData()
+  eventName: string = ''
+
+  @Input()
+  @PortAny({
+    title: 'Event Payload Schema',
+    description: 'Schema for the event payload data structure',
+  })
+  eventPayloadSchema: any = {}
+
+  @Input()
+  @PortAny({
+    title: 'Event Payload',
+    description: 'Data payload to emit with the event',
+    ui: {
+      hidePropertyEditor: true,
+    },
+  })
+  eventPayload: any = {}
+
+  async onEvent(event: NodeEvent): Promise<void> {
+    await super.onEvent(event)
+
+    if (event.type === NodeEventType.PortUpdate) {
+      await this.handleSchemaUpdate(event as PortUpdateEvent)
+    }
+  }
+
+  private async handleSchemaUpdate(event: PortUpdateEvent): Promise<void> {
+    if (event.port.key === 'eventPayloadSchema') {
+      const payloadPort = this.findPortByKey('eventPayload')
+      const schemaPort = this.findPortByKey('eventPayloadSchema')
+
+      if (payloadPort && schemaPort) {
+        const schema = schemaPort.getRawConfig().underlyingType
+        if (schema) {
+          (payloadPort as any).setUnderlyingType(schema)
+        }
+      }
+    }
+  }
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const eventName = this.eventData.eventName
+    const eventName = this.eventName
     console.log(`[EventEmitterNode ${this.id}] Executing with eventName: "${eventName}", isChildExecution: ${context.isChildExecution}`)
 
     if (!eventName) {
@@ -46,7 +76,7 @@ class EventEmitterNode extends BaseNode {
     // Use the new event emission API if available
     if (context.emitEvent) {
       console.log(`[EventEmitterNode ${this.id}] Emitting event: "${eventName}"`)
-      context.emitEvent(eventName, this.eventData)
+      context.emitEvent(eventName, this.eventPayload)
       console.log(`[EventEmitterNode ${this.id}] Event emitted successfully`)
       console.log(`[EventEmitterNode ${this.id}] Current emittedEvents:`, context.emittedEvents)
     } else {

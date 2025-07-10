@@ -45,8 +45,8 @@ describe('eventListenerNode', () => {
     // Execute node
     await node.execute(context)
 
-    // Verify output
-    expect(node.outputData.eventName).toBe('user-action')
+    // Verify output (payload directly when no schema is provided)
+    expect(node.outputData).toEqual({ eventName: 'user-action' })
   })
 
   it('should throw exception when event type does not match filter', async () => {
@@ -86,7 +86,7 @@ describe('eventListenerNode', () => {
     node.inputFilter.eventName = 'test-event'
 
     // Set some initial output data to verify it gets cleared
-    node.outputData.eventName = 'old-data'
+    node.outputData = { eventName: 'old-data' }
 
     // Create context without event data (normal execution mode)
     const context = getTestContext()
@@ -97,7 +97,7 @@ describe('eventListenerNode', () => {
     )
 
     // Verify output data was cleared before throwing
-    expect(node.outputData.eventName).toBe('')
+    expect(node.outputData).toEqual({})
   })
 
   it('should handle event from EventEmitterNode correctly', async () => {
@@ -118,12 +118,12 @@ describe('eventListenerNode', () => {
     // Execute node
     await node.execute(context)
 
-    // Verify output has the event name
-    expect(node.outputData.eventName).toBe('test-event')
+    // Verify output (payload directly when no schema is provided)
+    expect(node.outputData).toEqual({ eventName: 'test-event' })
   })
 
   it('should handle event data with payload containing additional data', async () => {
-    const node = new EventListenerNode('listener-4')
+    const node = new EventListenerNode('listener-5')
     node.initialize()
 
     node.inputFilter.eventName = 'complex-event'
@@ -142,8 +142,11 @@ describe('eventListenerNode', () => {
     // Execute node
     await node.execute(context)
 
-    // Verify output has correct eventName
-    // Note: EventData class only has eventName property, so additional data is not stored
-    expect(node.outputData.eventName).toBe('complex-event')
+    // Verify output (payload directly when no schema is provided)
+    expect(node.outputData).toEqual({
+      eventName: 'complex-event',
+      additionalData: 'test-data',
+      nested: { value: 123 },
+    })
   })
 })
