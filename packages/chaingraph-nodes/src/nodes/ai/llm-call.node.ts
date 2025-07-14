@@ -195,11 +195,11 @@ class LLMCallNode extends BaseNode {
       })
     } else if (isMoonshot(this.model)) {
       llm = new ChatOpenAI({
+        apiKey,
         model: this.model,
         temperature: this.temperature,
         streaming: true,
         configuration: {
-          apiKey,
           baseURL: 'https://api.moonshot.ai/v1',
         },
       })

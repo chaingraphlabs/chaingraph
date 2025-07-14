@@ -12,6 +12,10 @@ import type {
   NodeExecutionResult,
   ObjectPort,
 } from '@badaitech/chaingraph-types'
+import type { ChatAnthropic } from '@langchain/anthropic'
+import type { ChatDeepSeek } from '@langchain/deepseek'
+import type { ChatGroq } from '@langchain/groq'
+import type { ChatOpenAI } from '@langchain/openai'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -22,55 +26,14 @@ import {
   Output,
   PortArray,
   PortBoolean,
-  PortEnumFromObject,
-  PortNumber,
   PortObject,
   PortString,
 } from '@badaitech/chaingraph-types'
-import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
-import { ChatDeepSeek } from '@langchain/deepseek'
-import { ChatOpenAI } from '@langchain/openai'
+import { createLLMInstance, LLMConfig } from 'src/nodes/ai/llm-call-with-structured-output.node'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
-import { LLMModels, llmModels } from './llm-call.node'
 import { ToolDefinition } from './tool'
-
-// Reusing the same LLMConfig from LLMCallWithStructuredOutputNode
-@ObjectSchema({
-  description: 'Configuration for LLM Call with Tools Node',
-})
-class LLMConfig {
-  @PortEnumFromObject(llmModels, {
-    title: 'Model',
-    description: 'Language Model to use',
-  })
-  model: LLMModels = LLMModels.Gpt4oMini
-
-  @PortString({
-    title: 'API Key',
-    description: 'API Key for the LLM provider',
-    ui: {
-      isPassword: true,
-    },
-  })
-  apiKey: string = ''
-
-  @Input()
-  @PortNumber({
-    title: 'Temperature',
-    description: 'Temperature for sampling',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    ui: {
-      isSlider: true,
-      leftSliderLabel: 'More deterministic',
-      rightSliderLabel: 'More creative',
-    },
-  })
-  temperature: number = 0
-}
 
 @ObjectSchema({
   description: 'Tool call output from LLM',
@@ -183,6 +146,8 @@ class LLMCallWithToolsNode extends BaseNode {
       throw new Error('Prompt is required')
     }
 
+    const { apiKey } = await this.config.apiKey.decrypt(context)
+
     try {
       // Log execution start
       await this.debugLog(context, 'Starting LLM call with tools')
@@ -195,7 +160,7 @@ class LLMCallWithToolsNode extends BaseNode {
       }
 
       // Create the appropriate LLM instance
-      const llm = this.createLLMInstance()
+      const llm = createLLMInstance(this.config, apiKey)
 
       // Bind tools to the model
       const modelWithTools = this.bindToolsToModel(llm, toolDefinitions)
@@ -298,43 +263,12 @@ class LLMCallWithToolsNode extends BaseNode {
   }
 
   /**
-   * Create the appropriate LLM instance based on the selected model
-   */
-  private createLLMInstance(): ChatOpenAI | ChatAnthropic | ChatDeepSeek {
-    if (this.config.model === LLMModels.DeepseekReasoner || this.config.model === LLMModels.DeepseekChat) {
-      return new ChatDeepSeek({
-        apiKey: this.config.apiKey,
-        model: this.config.model,
-        temperature: this.config.temperature,
-      })
-    } else if (this.config.model === LLMModels.Claude35Sonnet20241022 || this.config.model === LLMModels.Claude37Sonnet20250219) {
-      return new ChatAnthropic({
-        apiKey: this.config.apiKey,
-        model: this.config.model,
-        temperature: this.config.temperature,
-      })
-    } else if (this.config.model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct) {
-      return new ChatOpenAI({
-        apiKey: this.config.apiKey,
-        model: this.config.model.replace(/^groq\//, ''),
-        temperature: this.config.temperature,
-        configuration: {
-          baseURL: 'https://api.groq.com/openai/v1',
-        },
-      })
-    } else {
-      return new ChatOpenAI({
-        apiKey: this.config.apiKey,
-        model: this.config.model,
-        temperature: this.config.model !== LLMModels.GptO3Mini ? this.config.temperature : undefined,
-      })
-    }
-  }
-
-  /**
    * Bind tools to the model
    */
-  private bindToolsToModel(llm: ChatOpenAI | ChatAnthropic | ChatDeepSeek, toolDefinitions: any[]): any {
+  private bindToolsToModel(
+    llm: ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq,
+    toolDefinitions: any[],
+  ): any {
     const options: any = {
       strict: this.strictValidation,
     }

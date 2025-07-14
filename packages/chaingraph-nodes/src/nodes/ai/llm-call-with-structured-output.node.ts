@@ -44,14 +44,14 @@ import { ChatGroq } from '@langchain/groq'
 import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
-import { isAnthropic, isDeepSeek, isGroq, LLMModels, llmModels } from './llm-call.node'
+import { isAnthropic, isDeepSeek, isGroq, isMoonshot, LLMModels, llmModels } from './llm-call.node'
 
 const llmMaxRetries = 3
 
 @ObjectSchema({
   description: 'Configuration for LLM Call with Structured Output Node',
 })
-class LLMConfig {
+export class LLMConfig {
   @PortEnumFromObject(llmModels, {
     title: 'Model',
     description: 'Language Model to use',
@@ -283,7 +283,7 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     const zodSchema = this.createZodSchemaFromPortSchema(schema)
 
     // Create the appropriate LLM instance
-    const llm = this.createLLMInstance(apiKey)
+    const llm = createLLMInstance(this.config, apiKey)
 
     // Bind structured output to the model
     const modelWithStructuredOutput = llm.withStructuredOutput<Record<string, any>>(
@@ -309,41 +309,6 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     ]
 
     return await this.invokeModelWithRetries(modelWithStructuredOutput, messages, context)
-  }
-
-  /**
-   * Create an appropriate LLM instance based on the selected model
-   */
-  private createLLMInstance(apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
-    if (isDeepSeek(this.config.model)) {
-      return new ChatDeepSeek({
-        apiKey,
-        model: this.config.model,
-        temperature: this.config.temperature,
-        maxRetries: llmMaxRetries,
-      })
-    } else if (isAnthropic(this.config.model)) {
-      return new ChatAnthropic({
-        apiKey,
-        model: this.config.model,
-        temperature: this.config.temperature,
-        maxRetries: llmMaxRetries,
-      })
-    } else if (isGroq(this.config.model)) {
-      return new ChatGroq({
-        apiKey,
-        model: this.config.model.replace(/^groq\//, ''),
-        temperature: this.config.temperature,
-        maxRetries: llmMaxRetries,
-      })
-    } else {
-      return new ChatOpenAI({
-        apiKey,
-        model: this.config.model,
-        temperature: this.config.model !== LLMModels.GptO3Mini ? this.config.temperature : undefined,
-        maxRetries: llmMaxRetries,
-      })
-    }
   }
 
   /**
@@ -636,6 +601,57 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
 
     return schema
   }
+}
+
+/**
+ * Create an LLM instance based on the selected model.
+ */
+export function createLLMInstance(config: LLMConfig, apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
+  if (isDeepSeek(config.model)) {
+    return new ChatDeepSeek({
+      apiKey,
+      model: config.model,
+      temperature: config.temperature,
+      maxRetries: llmMaxRetries,
+    })
+  }
+
+  if (isAnthropic(config.model)) {
+    return new ChatAnthropic({
+      apiKey,
+      model: config.model,
+      temperature: config.temperature,
+      maxRetries: llmMaxRetries,
+    })
+  }
+
+  if (isGroq(config.model)) {
+    return new ChatGroq({
+      apiKey,
+      model: config.model.replace(/^groq\//, ''),
+      temperature: config.temperature,
+      maxRetries: llmMaxRetries,
+    })
+  }
+
+  if (isMoonshot(config.model)) {
+    return new ChatOpenAI({
+      apiKey,
+      model: config.model,
+      temperature: config.temperature,
+      streaming: true,
+      configuration: {
+        baseURL: 'https://api.moonshot.ai/v1',
+      },
+    })
+  }
+
+  return new ChatOpenAI({
+    apiKey,
+    model: config.model,
+    temperature: config.model !== LLMModels.GptO3Mini ? config.temperature : undefined,
+    maxRetries: llmMaxRetries,
+  })
 }
 
 export default LLMCallWithStructuredOutputNode
