@@ -13,9 +13,11 @@ import type {
 } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
+import {
+  PortObject,
+} from '@badaitech/chaingraph-types'
 import { BaseNode, Input, Node, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { DocumentMetadataKV } from './types'
 
 @Node({
   type: 'ArchAICreateDocumentNode',
@@ -70,21 +72,35 @@ class ArchAICreateDocumentNode extends BaseNode {
       type: 'string',
     },
     defaultValue: [],
+    isMutable: true,
+    ui: {
+      addItemFormHidden: false,
+    },
   })
   tags: string[] = []
 
   @Input()
-  @PortArray({
+  @PortObject({
     title: 'Metadata',
     description: 'Additional metadata for the document as key-value pairs',
-    itemConfig: {
-      type: 'object',
-      schema: DocumentMetadataKV,
-      defaultValue: new DocumentMetadataKV(),
+    schema: {
+      properties: {},
     },
-    defaultValue: [],
+    defaultValue: {},
+    isSchemaMutable: true,
+    ui: {
+      allowedTypes: ['string'],
+      keyDeletable: true,
+    },
   })
-  documentMetadata: DocumentMetadataKV[] = []
+  documentMetadata: Record<string, string> = {}
+
+  @Input()
+  @PortString({
+    title: 'Published At',
+    description: 'Timestamp when the document was published (ISO 8601 format)',
+  })
+  publishedAt?: string
 
   @Output()
   @PortString({
@@ -117,13 +133,18 @@ class ArchAICreateDocumentNode extends BaseNode {
     )
 
     // Prepare document metadata input
-    const documentInput = {
+    const documentInput: GraphQL.DocumentMetaInput = {
       collection_id: this.collectionId,
       name: this.name,
       description: this.description,
       url: this.url,
       tags: this.tags,
-      metadata: this.documentMetadata,
+      metadata: Object.entries(this.documentMetadata)
+        .map(([key, value]) => ({ key, value })),
+    }
+
+    if (this.publishedAt) {
+      documentInput.published_at = new Date(this.publishedAt).toISOString()
     }
 
     // Create a document in the knowledge database
