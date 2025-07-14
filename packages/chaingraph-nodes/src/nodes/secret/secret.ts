@@ -34,7 +34,7 @@ import {
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  title: 'Secret Vault',
+  title: 'ArchAI Secret Vault',
   description: 'Retrieves a secret from the secret vault',
   category: NODE_CATEGORIES.SECRET,
   tags: ['secret', 'vault'],
