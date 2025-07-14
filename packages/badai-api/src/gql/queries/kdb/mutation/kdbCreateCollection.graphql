@@ -1,0 +1,5 @@
+mutation KDBCreateCollection($session: Session!, $input: CreateAgentCollectionInput!) {
+  kdbCreateAgentCollection(session: $session, input: $input) {
+    collection_id
+  }
+}
