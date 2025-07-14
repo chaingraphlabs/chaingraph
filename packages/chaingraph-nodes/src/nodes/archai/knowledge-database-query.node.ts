@@ -235,7 +235,7 @@ const qaAccessor = {
 
 @Node({
   type: 'ArchAIKnowledgeDatabaseQueryNode',
-  title: 'ArchAI Knowledge Database Query',
+  title: 'ArchAI Search QA by Semantics',
   description: 'Enhanced semantic search across document collections using vector similarity. Features improved organization, validation, and statistics. Searches through indexed Q&A pairs to find the most relevant information.',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'query', 'kdb', 'semantic-search', 'vector-search', 'rag'],
