@@ -9,10 +9,8 @@
 import type {
   EncryptedSecretValue,
   ExecutionContext,
-  IPortConfig,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { OwnedToken } from 'alchemy-sdk'
 import {
   BaseNode,
   Input,
@@ -27,27 +25,8 @@ import {
   PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
-import { Alchemy, Network } from 'alchemy-sdk'
 import { NODE_CATEGORIES } from '../../categories'
-
-class Networks {
-  static get networkIds() {
-    return Object.values(Network)
-  }
-
-  static get defaultNetwork() {
-    return Network.ETH_MAINNET
-  }
-
-  static getOptions() {
-    return Object.entries(Network).map(([key, value]) => ({
-      id: value,
-      title: key.replace(/_/g, ' '),
-      type: 'string',
-      defaultValue: value,
-    })) as IPortConfig[]
-  }
-}
+import { formatAmount, getChainId, Networks } from './shared/alchemy-utils'
 
 /**
  * ERC20 Token information
@@ -226,32 +205,55 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
 
     const { apiKey } = await this.apiKey.decrypt(context)
 
-    const settings = {
-      apiKey,
-      network: this.network as Network,
-    }
-    const alchemy = new Alchemy(settings)
+    const url = Networks.getAlchemyUrl(this.network, apiKey)
 
     try {
       let pageKey: string | undefined
-      const tokensList: OwnedToken[] = []
+      const tokensList: any[] = []
 
       do {
-        const response = await alchemy.core.getTokensForOwner(
-          this.walletAddress,
-          {
-            ...(this.contractAddresses.length > 0 ? { contractAddresses: this.contractAddresses } : {}),
-            ...(pageKey ? { pageKey } : {}),
-          },
-        )
+        const requestBody = {
+          jsonrpc: '2.0',
+          method: 'alchemy_getTokensForOwner',
+          params: [
+            this.walletAddress,
+            {
+              ...(this.contractAddresses.length > 0 ? { contractAddresses: this.contractAddresses } : {}),
+              ...(pageKey ? { pageKey } : {}),
+            },
+          ],
+          id: 1,
+        }
 
-        pageKey = response.pageKey
-        tokensList.push(...response.tokens)
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (data.error) {
+          throw new Error(`Alchemy API error: ${data.error.message}`)
+        }
+
+        pageKey = data.result.pageKey
+        tokensList.push(...data.result.tokens)
       } while (pageKey)
 
+      /**
+       * Process each token from the API response to create TokenBalanceWithMeta objects
+       * Handles missing or invalid token metadata gracefully
+       */
       const processedTokens = tokensList.map((token) => {
         const rawBalance = token.rawBalance || '0'
-        const decimals = token.decimals || 18
+        const decimals = token.decimals != null && typeof token.decimals === 'number' ? token.decimals : 18
 
         const tokenBalance = new TokenBalanceWithMeta()
 
@@ -261,64 +263,30 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
         tokenBalance.token.symbol = token.symbol || ''
         tokenBalance.token.name = token.name || ''
         tokenBalance.token.decimals = decimals
-        tokenBalance.token.chainId = this.getChainId(this.network)
+        tokenBalance.token.chainId = getChainId(this.network)
 
         // Set balance
-        tokenBalance.balance = this.formatAmount(rawBalance, decimals)
+        tokenBalance.balance = formatAmount(rawBalance, decimals)
         return tokenBalance
       })
 
-      if (this.filterZeroBalances === false)
-        this.tokenBalances = processedTokens
-      else
+      /**
+       * Filter out tokens with zero balances if requested
+       * This helps reduce noise in the output for users who only want active holdings
+       */
+      if (this.filterZeroBalances) {
         this.tokenBalances = processedTokens.filter(token => token.balance.value !== '0')
+      } else {
+        this.tokenBalances = processedTokens
+      }
 
       return {}
     } catch (error) {
-      throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
+      const errorMessage = (error as Error).message
+      // Remove any potential API key from error messages
+      const sanitizedMessage = errorMessage.replace(new RegExp(apiKey, 'g'), '[REDACTED]')
+      throw new Error(`Failed to fetch token balances: ${sanitizedMessage}`)
     }
-  }
-
-  private formatAmount(raw: string, decimals: number): Amount {
-    const amount = new Amount()
-    amount.value = raw
-    amount.decimals = decimals
-
-    try {
-      const rawBigInt = BigInt(raw)
-      const divisor = BigInt(10 ** decimals)
-      const quotient = rawBigInt / divisor
-      const remainder = rawBigInt % divisor
-
-      // Format with proper decimal places
-      const decimalStr = remainder.toString().padStart(decimals, '0')
-      const trimmedDecimal = decimalStr.replace(/0+$/, '') // Remove trailing zeros
-
-      amount.formatted = trimmedDecimal.length > 0
-        ? `${quotient}.${trimmedDecimal}`
-        : quotient.toString()
-    } catch (e) {
-      amount.formatted = '0'
-    }
-
-    return amount
-  }
-
-  private getChainId(network: string): number {
-    // Map Alchemy network names to chain IDs
-    const networkToChainId: Record<string, number> = {
-      'eth-mainnet': 1,
-      'eth-sepolia': 11155111,
-      'polygon-mainnet': 137,
-      'polygon-mumbai': 80001,
-      'arb-mainnet': 42161,
-      'arb-sepolia': 421614,
-      'opt-mainnet': 10,
-      'opt-sepolia': 11155420,
-      'base-mainnet': 8453,
-      'base-sepolia': 84532,
-    }
-    return networkToChainId[network] || 1
   }
 }
 

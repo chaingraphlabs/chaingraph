@@ -9,7 +9,6 @@
 import type {
   EncryptedSecretValue,
   ExecutionContext,
-  IPortConfig,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
 import {
@@ -26,27 +25,8 @@ import {
   PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
-import { Alchemy, Network } from 'alchemy-sdk'
 import { NODE_CATEGORIES } from '../../categories'
-
-class Networks {
-  static get networkIds() {
-    return Object.values(Network)
-  }
-
-  static get defaultNetwork() {
-    return Network.ETH_MAINNET
-  }
-
-  static getOptions() {
-    return Object.entries(Network).map(([key, value]) => ({
-      id: value,
-      title: key.replace(/_/g, ' '),
-      type: 'string',
-      defaultValue: value,
-    })) as IPortConfig[]
-  }
-}
+import { formatAmount, getChainId, Networks } from './shared/alchemy-utils'
 
 /**
  * Amount with multiple representations
@@ -96,6 +76,14 @@ class TokenBalance {
     schema: Amount,
   })
   balance: Amount = new Amount()
+
+  @PortNumber({
+    title: 'Chain ID',
+    description: 'Blockchain network ID',
+    required: true,
+    defaultValue: 1,
+  })
+  chainId: number = 1
 }
 
 @Node({
@@ -179,36 +167,63 @@ class AlchemyTokenBalances extends BaseNode {
 
     const { apiKey } = await this.apiKey.decrypt(context)
 
-    const settings = {
-      apiKey,
-      network: this.network as Network,
+    const url = Networks.getAlchemyUrl(this.network, apiKey)
+
+    const requestBody = {
+      jsonrpc: '2.0',
+      method: 'alchemy_getTokenBalances',
+      params: this.contractAddresses.length > 0
+        ? [this.walletAddress, this.contractAddresses]
+        : [this.walletAddress],
+      id: 1,
     }
-    const alchemy = new Alchemy(settings)
 
     try {
-      const response = this.contractAddresses.length > 0
-        ? await alchemy.core.getTokenBalances(this.walletAddress, this.contractAddresses)
-        : await alchemy.core.getTokenBalances(this.walletAddress)
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
 
-      const allTokens: TokenBalance[] = response.tokenBalances.map((token) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.error) {
+        throw new Error(`Alchemy API error: ${data.error.message}`)
+      }
+
+      // Fetch token metadata for decimals
+      const tokenAddresses = data.result.tokenBalances.map((token: any) => token.contractAddress)
+      const tokenMetadata = await this.fetchTokenMetadata(url, tokenAddresses)
+
+      const allTokens: TokenBalance[] = data.result.tokenBalances.map((token: any) => {
         const rawBalance = this.safeBigIntToString(token.tokenBalance)
-        // Default to 18 decimals for ERC20 tokens when not specified
-        const decimals = 18
+        const decimals = tokenMetadata[token.contractAddress]?.decimals || 18
 
         const tokenBalance = new TokenBalance()
         tokenBalance.tokenAddress = token.contractAddress
-        tokenBalance.balance = this.formatAmount(rawBalance, decimals)
+        tokenBalance.balance = formatAmount(rawBalance, decimals)
+        tokenBalance.chainId = getChainId(this.network)
         return tokenBalance
       })
 
-      if (this.filterZeroBalances === false)
-        this.tokenBalances = allTokens
-      else
+      if (this.filterZeroBalances) {
         this.tokenBalances = allTokens.filter(token => token.balance.value !== '0')
+      } else {
+        this.tokenBalances = allTokens
+      }
 
       return {}
     } catch (error) {
-      throw new Error(`Failed to fetch token balances: ${(error as Error).message}`)
+      const errorMessage = (error as Error).message
+      // Remove any potential API key from error messages
+      const sanitizedMessage = errorMessage.replace(new RegExp(apiKey, 'g'), '[REDACTED]')
+      throw new Error(`Failed to fetch token balances: ${sanitizedMessage}`)
     }
   }
 
@@ -222,29 +237,48 @@ class AlchemyTokenBalances extends BaseNode {
     }
   }
 
-  private formatAmount(raw: string, decimals: number): Amount {
-    const amount = new Amount()
-    amount.value = raw
-    amount.decimals = decimals
+  /**
+   * Fetches token metadata (decimals) for multiple token contracts
+   * @param url - The Alchemy API endpoint URL
+   * @param tokenAddresses - Array of token contract addresses
+   * @returns Promise resolving to object mapping contract addresses to their metadata
+   */
+  private async fetchTokenMetadata(url: string, tokenAddresses: string[]): Promise<Record<string, { decimals: number }>> {
+    if (tokenAddresses.length === 0)
+      return {}
 
-    try {
-      const rawBigInt = BigInt(raw)
-      const divisor = BigInt(10 ** decimals)
-      const quotient = rawBigInt / divisor
-      const remainder = rawBigInt % divisor
+    const metadata: Record<string, { decimals: number }> = {}
 
-      // Format with proper decimal places
-      const decimalStr = remainder.toString().padStart(decimals, '0')
-      const trimmedDecimal = decimalStr.replace(/0+$/, '') // Remove trailing zeros
+    // Fetch metadata for each token individually
+    await Promise.allSettled(
+      tokenAddresses.map(async (contractAddress) => {
+        try {
+          const requestBody = {
+            jsonrpc: '2.0',
+            method: 'alchemy_getTokenMetadata',
+            params: [contractAddress],
+            id: 1,
+          }
 
-      amount.formatted = trimmedDecimal.length > 0
-        ? `${quotient}.${trimmedDecimal}`
-        : quotient.toString()
-    } catch (e) {
-      amount.formatted = '0'
-    }
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          })
 
-    return amount
+          if (response.ok) {
+            const data = await response.json()
+            if (data.result && typeof data.result.decimals === 'number') {
+              metadata[contractAddress] = { decimals: data.result.decimals }
+            }
+          }
+        } catch {}
+      }),
+    )
+
+    return metadata
   }
 }
 
