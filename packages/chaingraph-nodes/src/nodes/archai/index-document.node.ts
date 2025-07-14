@@ -14,6 +14,9 @@ import type {
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
+  PortEnumFromObject,
+} from '@badaitech/chaingraph-types'
+import {
   BaseNode,
   Input,
   Node,
@@ -23,6 +26,7 @@ import {
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
+import { LLMModels, llmModels } from '../ai'
 
 @Node({
   type: 'ArchAIIndexDocumentNode',
@@ -80,7 +84,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
   @Input()
   @PortNumber({
     title: 'Cost Limit',
-    description: 'Maximum cost allowed for indexing',
+    description: 'Maximum cost allowed for indexing in USD',
     defaultValue: 0.0,
   })
   costLimit: number = 0.0
@@ -102,18 +106,20 @@ class ArchAIIndexDocumentNode extends BaseNode {
   qaCountPerRun: number = 15
 
   @Input()
-  @PortString({
+  @PortEnumFromObject(llmModels, {
     title: 'QA Model',
     description: 'Model to use for generating QA pairs',
-    defaultValue: 'gpt-4o-mini',
   })
-  qaModel: string = 'gpt-4o-mini'
+  qaModel: keyof typeof llmModels = LLMModels.Gpt41Mini
 
   @Input()
   @PortString({
     title: 'Instruction for QA',
     description: 'Instructions for generating QA pairs',
     defaultValue: '',
+    ui: {
+      isTextArea: true,
+    },
   })
   instructionForQA: string = ''
 
