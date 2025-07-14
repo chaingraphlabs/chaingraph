@@ -7,7 +7,8 @@
  */
 
 /* eslint-disable */
-import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core'
+
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -851,6 +852,7 @@ export type Mutation = {
   addAgentToChat: Scalars['Boolean']['output'];
   addDelta: Message;
   addMessageAttachment: Message;
+  addToWhitelist: Scalars['Boolean']['output'];
   adminAddMessageToTelegramChatRoom: Array<Message>;
   adminAddMessageToTwitterChatRoom: Array<Message>;
   adminChangeAgentDeploymentStatus: Scalars['Boolean']['output'];
@@ -915,6 +917,7 @@ export type Mutation = {
   regenerateLastResponse: Scalars['Boolean']['output'];
   removeAgentFromChat: Scalars['Boolean']['output'];
   removeAgentTelegramIntegration: Scalars['Boolean']['output'];
+  removeFromWhitelist: Scalars['Boolean']['output'];
   renameChatRoom: ChatRoom;
   /** Replace a secret with the given secret ID with the given secret if they have the same type. */
   replaceSecret: ReplaceSecretResponse;
@@ -959,6 +962,13 @@ export type MutationAddMessageAttachmentArgs = {
   attachment_id: Scalars['AttachmentID']['input'];
   chat_id: Scalars['ChatID']['input'];
   id: Scalars['MessageID']['input'];
+  session: Scalars['Session']['input'];
+};
+
+
+export type MutationAddToWhitelistArgs = {
+  address: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
   session: Scalars['Session']['input'];
 };
 
@@ -1363,6 +1373,12 @@ export type MutationRemoveAgentTelegramIntegrationArgs = {
 };
 
 
+export type MutationRemoveFromWhitelistArgs = {
+  address: Scalars['String']['input'];
+  session: Scalars['Session']['input'];
+};
+
+
 export type MutationRenameChatRoomArgs = {
   id: Scalars['ChatID']['input'];
   new_name: Scalars['String']['input'];
@@ -1657,6 +1673,7 @@ export type Query = {
   _service: _Service;
   adminAgentGetTwitterApiKeys: XApiKeys;
   adminGetParticipantTelegramBotApiKey: Scalars['String']['output'];
+  adminGetUserProfile: UserProfile;
   agentCheckUsernameExists: Scalars['Boolean']['output'];
   agentGetAttachedTwitterAccounts: Array<TwitterAccount>;
   agentGetMyXAccount: MyXAccount;
@@ -1665,6 +1682,7 @@ export type Query = {
   authSessionAlive: Scalars['Boolean']['output'];
   authTelegramBotID: Scalars['TelegramBotID']['output'];
   authTwitterRedirectURL: OAuthRedirectUrlResult;
+  /** @deprecated use chainGraphGetByID instead */
   chainGraphGet?: Maybe<ChainGraph>;
   chainGraphGetByID?: Maybe<ChainGraph>;
   chainGraphHistory: Array<ChainGraphHistory>;
@@ -1678,6 +1696,8 @@ export type Query = {
   getTweetsFromDB: Array<Tweet>;
   getVariable: VariableResponse;
   getVariables: VariablesResponse;
+  getWhitelistEntries: Array<WhitelistEntry>;
+  isAddressWhitelisted: Scalars['Boolean']['output'];
   kdbGetAgentCollections: Array<Collection>;
   kdbGetAgentCollectionsWithDocuments: Array<CollectionWithDocuments>;
   kdbGetChunk: Chunk;
@@ -1747,6 +1767,12 @@ export type QueryAdminAgentGetTwitterApiKeysArgs = {
 export type QueryAdminGetParticipantTelegramBotApiKeyArgs = {
   chat_id: Scalars['ChatID']['input'];
   session: Scalars['Session']['input'];
+};
+
+
+export type QueryAdminGetUserProfileArgs = {
+  session: Scalars['Session']['input'];
+  user_id: Scalars['UserID']['input'];
 };
 
 
@@ -1856,6 +1882,16 @@ export type QueryGetVariableArgs = {
 export type QueryGetVariablesArgs = {
   namespace: NamespaceInput;
   session: Scalars['Session']['input'];
+};
+
+
+export type QueryGetWhitelistEntriesArgs = {
+  session: Scalars['Session']['input'];
+};
+
+
+export type QueryIsAddressWhitelistedArgs = {
+  address: Scalars['String']['input'];
 };
 
 
@@ -2561,6 +2597,15 @@ export type VariablesResponse = {
   variables?: Maybe<Array<Variable>>;
 };
 
+export type WhitelistEntry = {
+  __typename?: 'WhitelistEntry';
+  address: Scalars['String']['output'];
+  createdAt: Scalars['Time']['output'];
+  createdBy: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+};
+
 export type XApiKeys = {
   __typename?: 'XApiKeys';
   access_token: Scalars['String']['output'];
@@ -2969,7 +3014,7 @@ export type KdbGetDocumentsByCollectionQueryVariables = Exact<{
   session: Scalars['Session']['input'];
   collection_id: Scalars['CollectionID']['input'];
   filters?: InputMaybe<GetDocumentsByCollectionFilters>;
-  order_by?: InputMaybe<GetDocumentsByCollectionOrderByInput>;
+  order_by: GetDocumentsByCollectionOrderByInput;
   limit?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
@@ -3429,7 +3474,169 @@ export const KdbGetChunksByDocumentDocument = {"kind":"Document","definitions":[
 export const KdbGetChunksByTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetChunksByTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TaskID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetChunksByTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"task_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ChunkFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ChunkFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Chunk"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunk_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_number"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"page_number_from"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_to"}}]}}]} as unknown as DocumentNode<KdbGetChunksByTaskQuery, KdbGetChunksByTaskQueryVariables>;
 export const KdbGetCollectionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetCollection"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CollectionID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetCollection"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"collection_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CollectionFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CollectionFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Collection"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"collection_id"}},{"kind":"Field","name":{"kind":"Name","value":"agent_id"}},{"kind":"Field","name":{"kind":"Name","value":"creator_address"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"tags"}}]}}]} as unknown as DocumentNode<KdbGetCollectionQuery, KdbGetCollectionQueryVariables>;
 export const KdbGetDocumentsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetDocuments"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"document_ids"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentID"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetDocuments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"document_ids"},"value":{"kind":"Variable","name":{"kind":"Name","value":"document_ids"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"DocumentFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DocumentFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentMeta"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"collection_id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"published_at"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"metadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}}]}}]} as unknown as DocumentNode<KdbGetDocumentsQuery, KdbGetDocumentsQueryVariables>;
-export const KdbGetDocumentsByCollectionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetDocumentsByCollection"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CollectionID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"GetDocumentsByCollectionFilters"}},"defaultValue":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"published_range"},"value":{"kind":"ObjectValue","fields":[]}}]}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"order_by"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"GetDocumentsByCollectionOrderByInput"}},"defaultValue":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"field"},"value":{"kind":"EnumValue","value":"PUBLISHED_AT"}},{"kind":"ObjectField","name":{"kind":"Name","value":"direction"},"value":{"kind":"EnumValue","value":"Asc"}}]}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"1000"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetDocumentsByCollection"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"collection_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"order_by"},"value":{"kind":"Variable","name":{"kind":"Name","value":"order_by"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"document"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"DocumentFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pagesCount"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DocumentFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentMeta"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"collection_id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"published_at"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"metadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}}]}}]} as unknown as DocumentNode<KdbGetDocumentsByCollectionQuery, KdbGetDocumentsByCollectionQueryVariables>;
+export const KdbGetDocumentsByCollectionDocument = {
+  "kind": "Document", "definitions": [{
+    "kind": "OperationDefinition",
+    "operation": "query",
+    "name": { "kind": "Name", "value": "KDBGetDocumentsByCollection" },
+    "variableDefinitions": [{
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "collection_id" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CollectionID" } }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "filters" } },
+      "type": {
+        "kind": "NamedType",
+        "name": { "kind": "Name", "value": "GetDocumentsByCollectionFilters" }
+      },
+      "defaultValue": {
+        "kind": "ObjectValue",
+        "fields": [{
+          "kind": "ObjectField",
+          "name": { "kind": "Name", "value": "published_range" },
+          "value": { "kind": "ObjectValue", "fields": [] }
+        }]
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "order_by" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": {
+          "kind": "NamedType",
+          "name": { "kind": "Name", "value": "GetDocumentsByCollectionOrderByInput" }
+        }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "limit" } },
+      "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Int" } },
+      "defaultValue": { "kind": "IntValue", "value": "1000" }
+    }],
+    "selectionSet": {
+      "kind": "SelectionSet", "selections": [{
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "kdbGetDocumentsByCollection" },
+        "arguments": [{
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "session" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "collection_id" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "collection_id" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "filters" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "filters" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "order_by" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "order_by" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "limit" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "limit" } }
+        }],
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "document" },
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [{
+                "kind": "FragmentSpread",
+                "name": { "kind": "Name", "value": "DocumentFields" }
+              }]
+            }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "pagesCount" } }]
+        }
+      }]
+    }
+  }, {
+    "kind": "FragmentDefinition",
+    "name": { "kind": "Name", "value": "DocumentFields" },
+    "typeCondition": { "kind": "NamedType", "name": { "kind": "Name", "value": "DocumentMeta" } },
+    "selectionSet": {
+      "kind": "SelectionSet",
+      "selections": [{
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "document_id" }
+      }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "collection_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "url" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "created_at" }
+      }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "published_at" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "name" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "description" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "tags" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "metadata" },
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "key" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "value" } }]
+        }
+      }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "indexing_state" },
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "completion_cost" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "completion_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "content_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "embedding_cost" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "is_embedded" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "is_indexed_qa" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "is_indexed_triplet" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "is_parsed" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "is_summarized" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "prompt_cost" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "prompt_tokens" } }]
+        }
+      }]
+    }
+  }]
+} as unknown as DocumentNode<KdbGetDocumentsByCollectionQuery, KdbGetDocumentsByCollectionQueryVariables>
 export const KdbGetPagesByDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetPagesByDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"GetPagesByDocumentFilters"}},"defaultValue":{"kind":"ObjectValue","fields":[]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetPagesByDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"document_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"page_id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"number"}}]}}]}}]} as unknown as DocumentNode<KdbGetPagesByDocumentQuery, KdbGetPagesByDocumentQueryVariables>;
 export const KdbGetPagesByTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetPagesByTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TaskID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetPagesByTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"task_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"PageFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PageFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Page"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"page_id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"number"}}]}}]} as unknown as DocumentNode<KdbGetPagesByTaskQuery, KdbGetPagesByTaskQueryVariables>;
 export const KdbIndexingDocumentTaskGetDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBIndexingDocumentTaskGet"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"taskID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TaskID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbIndexingDocumentTaskGet"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"taskID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"taskID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"IndexingDocumentTaskFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IndexingDocumentTaskFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTask"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"chat_id"}},{"kind":"Field","name":{"kind":"Name","value":"message_id"}},{"kind":"Field","name":{"kind":"Name","value":"author_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_state"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"update_at"}},{"kind":"Field","name":{"kind":"Name","value":"confirmed"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"statistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_total"}},{"kind":"Field","name":{"kind":"Name","value":"current_indexing_speed"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finish_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finished_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_percent"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_started_at"}},{"kind":"Field","name":{"kind":"Name","value":"llm_approximate_cost"}},{"kind":"Field","name":{"kind":"Name","value":"llm_stats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_count"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"total_cost"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pages"}},{"kind":"Field","name":{"kind":"Name","value":"qa_total"}},{"kind":"Field","name":{"kind":"Name","value":"total_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"triplets_total"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_for_seconds"}}]}},{"kind":"Field","name":{"kind":"Name","value":"config"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunk_overlap_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_size_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"cost_limit"}},{"kind":"Field","name":{"kind":"Name","value":"need_qa"}},{"kind":"Field","name":{"kind":"Name","value":"qa_count_per_run"}},{"kind":"Field","name":{"kind":"Name","value":"qa_model"}},{"kind":"Field","name":{"kind":"Name","value":"force_confirm"}},{"kind":"Field","name":{"kind":"Name","value":"instruction_for_qa"}}]}}]}}]} as unknown as DocumentNode<KdbIndexingDocumentTaskGetQuery, KdbIndexingDocumentTaskGetQueryVariables>;

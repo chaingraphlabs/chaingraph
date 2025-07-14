@@ -2,7 +2,7 @@ query KDBGetDocumentsByCollection(
   $session: Session!
   $collection_id: CollectionID!
   $filters: GetDocumentsByCollectionFilters = { published_range: {} }
-  $order_by: GetDocumentsByCollectionOrderByInput = { field: PUBLISHED_AT, direction: Asc }
+  $order_by: GetDocumentsByCollectionOrderByInput!
   $limit: Int = 1000
 ) {
   kdbGetDocumentsByCollection(
