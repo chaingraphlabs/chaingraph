@@ -13,11 +13,9 @@ import type {
   ObjectPort,
 } from '@badaitech/chaingraph-types'
 import {
+  BaseNode,
   ExecutionEventEnum,
   findPort,
-} from '@badaitech/chaingraph-types'
-import {
-  BaseNode,
   Input,
   Node,
   ObjectSchema,
@@ -47,7 +45,7 @@ class LLMConfig {
     title: 'Model',
     description: 'Language Model to use',
   })
-  model: keyof typeof llmModels = LLMModels.Gpt4oMini
+  model: LLMModels = LLMModels.Gpt4oMini
 
   @PortString({
     title: 'API Key',

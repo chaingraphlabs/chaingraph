@@ -9,6 +9,7 @@
 import type {
   AnyPort,
   ArrayPortConfig,
+  EncryptedSecretValue,
   EnumPortConfig,
   ExecutionContext,
   IObjectSchema,
@@ -19,11 +20,7 @@ import type {
   ObjectPortConfig,
   PortConnectedEvent,
 } from '@badaitech/chaingraph-types'
-import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
 import type { APIkey, SupportedProviders } from './llm-call.node'
-import {
-  PortSecret,
-} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -37,6 +34,7 @@ import {
   PortEnumFromObject,
   PortNumber,
   PortObject,
+  PortSecret,
   PortString,
 } from '@badaitech/chaingraph-types'
 import { ChatAnthropic } from '@langchain/anthropic'
@@ -46,8 +44,7 @@ import { ChatGroq } from '@langchain/groq'
 import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
-import { isAnthropic, isDeepSeek, isGroq } from './llm-call.node'
-import { LLMModels, llmModels } from './llm-call.node'
+import { isAnthropic, isDeepSeek, isGroq, LLMModels, llmModels } from './llm-call.node'
 
 const llmMaxRetries = 3
 
@@ -59,7 +56,7 @@ class LLMConfig {
     title: 'Model',
     description: 'Language Model to use',
   })
-  model: keyof typeof llmModels = LLMModels.Gpt41Mini
+  model: LLMModels = LLMModels.Gpt41Mini
 
   @Input()
   @PortSecret<SupportedProviders>({
