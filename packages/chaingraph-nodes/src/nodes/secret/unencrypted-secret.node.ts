@@ -21,7 +21,7 @@ import type {
 } from '@badaitech/chaingraph-types'
 import { Buffer } from 'node:buffer'
 
-import { subtle } from 'node:crypto'
+import { randomBytes, subtle } from 'node:crypto'
 import {
   wrapSecret,
 } from '@badaitech/chaingraph-types'
@@ -213,15 +213,28 @@ export class UnencryptedSecretNode extends BaseNode {
     }, false, ['deriveKey'])
     const remotePublicKey = await subtle.exportKey('raw', remoteKeyPair.publicKey)
 
-    const encryptionKey = await subtle.deriveKey({
+    const sharedSecret = await subtle.deriveKey({
       name: 'ECDH',
       public: keyPair.publicKey,
     }, remoteKeyPair.privateKey, {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      info: new ArrayBuffer(),
+    }, false, ['deriveKey'])
+
+    const nonce = randomBytes(32)
+
+    const encryptionKey = await subtle.deriveKey({
+      name: 'HKDF',
+      hash: 'SHA-256',
+      info: new ArrayBuffer(),
+      salt: nonce,
+    }, sharedSecret, {
       name: 'AES-GCM',
       length: 256,
     }, false, ['encrypt'])
 
-    const iv = crypto.getRandomValues(new Uint8Array(12))
+    const iv = randomBytes(12)
     const data = new TextEncoder().encode(JSON.stringify(value))
 
     const encrypted = await subtle.encrypt({
@@ -232,6 +245,7 @@ export class UnencryptedSecretNode extends BaseNode {
 
     return wrapSecret(secretType, {
       encrypted: Buffer.concat([iv, Buffer.from(encrypted)]).toString('base64'),
+      hkdfNonce: nonce.toString('base64'),
       publicKey: Buffer.from(remotePublicKey).toString('base64'),
     })
   }

@@ -38,10 +38,4 @@ fragment MessageFields on Message {
   total_usage_cost
   type
   version
-  signals {
-    ... on AgentTriggeredSignal {
-      agent_id
-      message_id
-    }
-  }
 }

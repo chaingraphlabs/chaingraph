@@ -262,6 +262,7 @@ export function isCompatibleSecretType(a: SecretType, b: SecretType): boolean {
 export interface EncryptedSecretValue<T extends SecretType> {
   decrypt: (ctx: ExecutionContext) => Promise<SecretTypeMap[T]>
   encrypted: string
+  hkdfNonce: string
   publicKey: string
 }
 
@@ -281,6 +282,7 @@ type SerializableEncryptedSecretValue<T extends SecretType> =
  */
 const schema = z.object({
   encrypted: z.string(),
+  hkdfNonce: z.string(),
   publicKey: z.string(),
 })
 
@@ -314,6 +316,7 @@ export function serialize<T extends SecretType>(secretType: T, secret: Encrypted
 
   return {
     encrypted: secret.encrypted,
+    hkdfNonce: secret.hkdfNonce,
     publicKey: secret.publicKey,
   } satisfies SerializableEncryptedSecretValue<T>
 }
@@ -324,7 +327,16 @@ export function serialize<T extends SecretType>(secretType: T, secret: Encrypted
 const encryptionAlgorithm = {
   name: 'AES-GCM',
   length: 256,
-}
+} satisfies AesDerivedKeyParams
+
+/**
+ * Algorithm used to derive the encryption key from the ECDH shared secret.
+ */
+const keyDerivationAlgorithm = {
+  name: 'HKDF',
+  hash: 'SHA-256',
+  info: new ArrayBuffer(),
+} satisfies Omit<HkdfParams, 'salt'>
 
 /**
  * Length of IV used in encryption.
@@ -339,13 +351,18 @@ export function wrapSecret<T extends SecretType>(secretType: T, value: Serializa
   const decrypt = async (ctx: ExecutionContext) => {
     const keyPair = await ctx.getECDHKeyPair()
 
-    const encryptionKey = await subtle.deriveKey({
+    const sharedSecret = await subtle.deriveKey({
       name: 'ECDH',
       public: await subtle.importKey('raw', Buffer.from(value.publicKey, 'base64'), {
         name: 'ECDH',
         namedCurve: 'P-256',
       }, false, []),
-    }, keyPair.privateKey, encryptionAlgorithm, false, ['decrypt'])
+    }, keyPair.privateKey, keyDerivationAlgorithm, false, ['deriveKey'])
+
+    const encryptionKey = await subtle.deriveKey({
+      ...keyDerivationAlgorithm,
+      salt: Buffer.from(value.hkdfNonce, 'base64'),
+    }, sharedSecret, encryptionAlgorithm, false, ['decrypt'])
 
     const encrypted = Buffer.from(value.encrypted, 'base64')
 
@@ -356,12 +373,14 @@ export function wrapSecret<T extends SecretType>(secretType: T, value: Serializa
       ...encryptionAlgorithm,
       iv,
     }, encryptionKey, data)
+
     return schema.parse(JSON.parse(Buffer.from(decrypted).toString())) as SecretTypeMap[T]
   }
 
   return {
     decrypt,
     encrypted: value.encrypted,
+    hkdfNonce: value.hkdfNonce,
     publicKey: value.publicKey,
   }
 }

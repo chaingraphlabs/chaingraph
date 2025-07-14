@@ -8,7 +8,7 @@
 
 import type { SecretPortConfig } from '../base'
 import { Buffer } from 'node:buffer'
-import { subtle } from 'node:crypto'
+import { randomBytes, subtle } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { ExecutionContext } from '../../execution'
 import { wrapSecret } from '../base/secret'
@@ -27,17 +27,30 @@ describe('secret port', () => {
 
     const keyPair = await ctx.getECDHKeyPair()
 
-    const encryptionKey = await subtle.deriveKey({
+    const sharedSecret = await subtle.deriveKey({
       name: 'ECDH',
       public: keyPair.publicKey,
     }, remoteKeyPair.privateKey, {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      info: new ArrayBuffer(),
+    }, false, ['deriveKey'])
+
+    const nonce = randomBytes(32)
+
+    const encryptionKey = await subtle.deriveKey({
+      name: 'HKDF',
+      hash: 'SHA-256',
+      info: new ArrayBuffer(),
+      salt: nonce,
+    }, sharedSecret, {
       name: 'AES-GCM',
       length: 256,
     }, false, ['encrypt'])
 
     const apiKey = { key: 'a', secretKey: 'b' }
 
-    const iv = crypto.getRandomValues(new Uint8Array(12))
+    const iv = randomBytes(12)
     const data = new TextEncoder().encode(JSON.stringify(apiKey))
 
     const encrypted = await subtle.encrypt({
@@ -48,6 +61,7 @@ describe('secret port', () => {
 
     const value = wrapSecret('xApp', {
       encrypted: Buffer.concat([iv, Buffer.from(encrypted)]).toString('base64'),
+      hkdfNonce: nonce.toString('base64'),
       publicKey: Buffer.from(remotePublicKey).toString('base64'),
     })
 
@@ -57,8 +71,7 @@ describe('secret port', () => {
       defaultValue: undefined,
     } satisfies SecretPortConfig<'xApp'>
 
-    // TODO: remove "any" cast
-    const jsonValue = SecretPortPlugin.serializeValue(value as any, config)
+    const jsonValue = SecretPortPlugin.serializeValue(value, config)
     const deserialized = SecretPortPlugin.deserializeValue(jsonValue, config)
 
     expect(deserialized.publicKey).toBe(value.publicKey)

@@ -93,6 +93,7 @@ export class SecretNode extends BaseNode {
       })
       secretPort.setValue(wrapSecret(secretType, {
         encrypted: secret.secret.encrypted,
+        hkdfNonce: secret.hkdfNonce,
         publicKey: secret.publicKey,
       }))
       await this.updatePort(secretPort as IPort)

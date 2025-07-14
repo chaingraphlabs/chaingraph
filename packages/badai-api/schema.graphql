@@ -698,6 +698,8 @@ type SecretMetadata {
 
 "Response to the secret query."
 type SecretResponse {
+  "Base64-encoded nonce used in HKDF for deriving the encryption key (AES-256 GCM) from the shared secret."
+  hkdfNonce: BlobBase64!
   "Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get decryption key of AES-256 in GCM mode."
   publicKey: ECDHPublicKeyP256!
   "The secret with the given ID."
