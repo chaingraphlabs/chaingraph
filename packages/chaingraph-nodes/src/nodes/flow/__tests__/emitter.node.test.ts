@@ -104,7 +104,7 @@ describe('eventEmitterNode', () => {
         },
       },
     }
-    
+
     // Mock the schema port
     const schemaPort = node.findPortByKey('payloadSchema')
     if (schemaPort) {
@@ -136,7 +136,7 @@ describe('eventEmitterNode', () => {
         },
       },
     }
-    
+
     // Mock the schema port
     const schemaPort = node.findPortByKey('payloadSchema')
     if (schemaPort) {
@@ -166,10 +166,10 @@ describe('eventEmitterNode', () => {
     // Should execute without error
     await node.execute(context)
 
-    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { 
-      anything: 'goes', 
-      numbers: [1, 2, 3], 
-      nested: { deep: true } 
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', {
+      anything: 'goes',
+      numbers: [1, 2, 3],
+      nested: { deep: true },
     })
   })
 })

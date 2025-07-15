@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, IPortConfig, NodeEvent, NodeExecutionResult, PortUpdateEvent } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, NodeEventType, PortAny, PortString, Title } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, NodeEventType, PortAny, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -144,7 +144,7 @@ class EventEmitterNode extends BaseNode {
             }
             this.validatePayloadAgainstSchema(payload[expectedKey], propSchema as IPortConfig)
           }
-          
+
           // Check for unexpected properties
           for (const actualKey of Object.keys(payload)) {
             if (!(actualKey in objectSchema.schema.properties)) {
