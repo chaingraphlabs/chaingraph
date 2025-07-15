@@ -38,6 +38,24 @@ class ArchAIGetIndexingDocumentTasksByDocumentNode extends BaseNode {
   })
   documentId: string = ''
 
+  @Input()
+  @PortArray({
+    itemConfig: {
+      type: 'enum',
+      options: Object.entries(GraphQL.IndexingDocumentTaskState).map(([key, value]) => ({
+        id: value,
+        type: 'string',
+        defaultValue: value,
+        title: key,
+      })),
+    },
+    title: 'State',
+    description: 'Filter tasks by state (optional)',
+    defaultValue: [],
+    isMutable: true,
+  })
+  state: GraphQL.IndexingDocumentTaskState[] = []
+
   @Output()
   @PortArray({
     itemConfig: {
@@ -73,6 +91,7 @@ class ArchAIGetIndexingDocumentTasksByDocumentNode extends BaseNode {
       {
         session: agentSession,
         document_id: [this.documentId],
+        state: this.state.length > 0 ? this.state : undefined,
       },
     )
 
