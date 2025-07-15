@@ -149,6 +149,12 @@ export type AgentTokenMetrics = {
   volume_24h: Scalars['Decimal']['output'];
 };
 
+export type AgentTriggeredSignal = Signal & {
+  __typename?: 'AgentTriggeredSignal';
+  agent_id: Scalars['AgentID']['output'];
+  message_id?: Maybe<Scalars['MessageID']['output']>;
+};
+
 export type Attachment = {
   __typename?: 'Attachment';
   filename: Scalars['String']['output'];
@@ -658,6 +664,7 @@ export type IndexingDocumentTaskConfig = {
   need_qa: Scalars['Boolean']['output'];
   qa_count_per_run: Scalars['Int']['output'];
   qa_model: Scalars['String']['output'];
+  qa_model_api_token?: Maybe<Scalars['SecretID']['output']>;
 };
 
 export enum IndexingDocumentTaskState {
@@ -700,6 +707,7 @@ export type KdbIndexingDocumentTaskCreateInput = {
   need_qa?: Scalars['Boolean']['input'];
   qa_count_per_run?: Scalars['Int']['input'];
   qa_model?: Scalars['String']['input'];
+  qa_model_api_token?: InputMaybe<Scalars['SecretID']['input']>;
 };
 
 export type KdbIndexingDocumentTaskUpdateConfigInput = {
@@ -711,6 +719,7 @@ export type KdbIndexingDocumentTaskUpdateConfigInput = {
   need_qa?: Scalars['Boolean']['input'];
   qa_count_per_run?: Scalars['Int']['input'];
   qa_model?: Scalars['String']['input'];
+  qa_model_api_token?: InputMaybe<Scalars['SecretID']['input']>;
 };
 
 export type KeyValueInput = {
@@ -778,6 +787,7 @@ export type Message = {
   need_answer: Scalars['Boolean']['output'];
   participant?: Maybe<Participant>;
   reply_to?: Maybe<Scalars['MessageID']['output']>;
+  signals?: Maybe<Array<Signal>>;
   text: Scalars['String']['output'];
   time: Scalars['Time']['output'];
   total_usage_cost: Scalars['Credits']['output'];
@@ -788,9 +798,10 @@ export type Message = {
 export type MessageEditInput = {
   attachments?: InputMaybe<Array<Scalars['AttachmentID']['input']>>;
   finished: Scalars['Boolean']['input'];
-  is_system?: Scalars['Boolean']['input'];
-  need_answer?: Scalars['Boolean']['input'];
+  is_system: Scalars['Boolean']['input'];
+  need_answer: Scalars['Boolean']['input'];
   reply_to?: InputMaybe<Scalars['MessageID']['input']>;
+  signals?: InputMaybe<Array<SignalInput>>;
   text: Scalars['String']['input'];
 };
 
@@ -805,10 +816,11 @@ export type MessageEvent = {
 export type MessageInput = {
   attachments?: InputMaybe<Array<Scalars['AttachmentID']['input']>>;
   error?: InputMaybe<Scalars['String']['input']>;
-  finished?: Scalars['Boolean']['input'];
-  is_system?: Scalars['Boolean']['input'];
-  need_answer?: Scalars['Boolean']['input'];
+  finished: Scalars['Boolean']['input'];
+  is_system: Scalars['Boolean']['input'];
+  need_answer: Scalars['Boolean']['input'];
   reply_to?: InputMaybe<Scalars['MessageID']['input']>;
+  signals?: InputMaybe<Array<SignalInput>>;
   text: Scalars['String']['input'];
 };
 
@@ -1710,6 +1722,8 @@ export type Query = {
   kdbGetQAByDocument: Array<Qa>;
   kdbGetQAByTask: Array<Qa>;
   kdbIndexingDocumentTaskGet: IndexingDocumentTask;
+  /** Retrieves indexing document tasks for specified collections. */
+  kdbIndexingDocumentTaskGetByCollection: Array<IndexingDocumentTask>;
   kdbIndexingDocumentTaskGetByDocument: Array<IndexingDocumentTask>;
   kdbIndexingDocumentTaskGetByState: Array<IndexingDocumentTask>;
   kdbIndexingDocumentTasksGet: Array<IndexingDocumentTask>;
@@ -2005,9 +2019,17 @@ export type QueryKdbIndexingDocumentTaskGetArgs = {
 };
 
 
+export type QueryKdbIndexingDocumentTaskGetByCollectionArgs = {
+  collection_id: Array<Scalars['CollectionID']['input']>;
+  session: Scalars['Session']['input'];
+  state?: Array<IndexingDocumentTaskState>;
+};
+
+
 export type QueryKdbIndexingDocumentTaskGetByDocumentArgs = {
   document_id: Array<Scalars['DocumentID']['input']>;
   session: Scalars['Session']['input'];
+  state?: Array<IndexingDocumentTaskState>;
 };
 
 
@@ -2202,7 +2224,7 @@ export type SecretResponse = {
   __typename?: 'SecretResponse';
   /** Base64-encoded nonce used in HKDF for deriving the encryption key (AES-256 GCM) from the shared secret. */
   hkdfNonce: Scalars['BlobBase64']['output'];
-  /** Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get decryption key of AES-256 in GCM mode. */
+  /** Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get the shared secret as HKDF input. */
   publicKey: Scalars['ECDHPublicKeyP256']['output'];
   /** The secret with the given ID. */
   secret: Secret;
@@ -2213,6 +2235,15 @@ export type SecretsResponse = {
   __typename?: 'SecretsResponse';
   /** List of the secrets owned by the user. */
   secrets: Array<SecretMetadata>;
+};
+
+export type Signal = {
+  message_id?: Maybe<Scalars['MessageID']['output']>;
+};
+
+export type SignalInput = {
+  agent_id: Scalars['AgentID']['input'];
+  message_id?: InputMaybe<Scalars['MessageID']['input']>;
 };
 
 /** Response to the staking query. */
@@ -3041,9 +3072,26 @@ export type KdbIndexingDocumentTaskGetQuery = { __typename?: 'Query', kdbIndexin
     & { ' $fragmentRefs'?: { 'IndexingDocumentTaskFieldsFragment': IndexingDocumentTaskFieldsFragment } }
   ) };
 
+export type KdbIndexingDocumentTaskGetByCollectionQueryVariables = Exact<{
+  session: Scalars['Session']['input'];
+  collections: Array<Scalars['CollectionID']['input']> | Scalars['CollectionID']['input'];
+  states?: InputMaybe<Array<IndexingDocumentTaskState> | IndexingDocumentTaskState>;
+}>;
+
+
+export type KdbIndexingDocumentTaskGetByCollectionQuery = {
+  __typename?: 'Query', kdbIndexingDocumentTaskGetByCollection: Array<(
+    { __typename?: 'IndexingDocumentTask' }
+    & {
+    ' $fragmentRefs'?: { 'IndexingDocumentTaskFieldsFragment': IndexingDocumentTaskFieldsFragment }
+  }
+    )>
+};
+
 export type KdbIndexingDocumentTaskGetByDocumentQueryVariables = Exact<{
   session: Scalars['Session']['input'];
   document_id: Array<Scalars['DocumentID']['input']> | Scalars['DocumentID']['input'];
+  state?: InputMaybe<Array<IndexingDocumentTaskState> | IndexingDocumentTaskState>;
 }>;
 
 
@@ -3629,7 +3677,372 @@ export const KdbGetDocumentsByCollectionDocument = {
 export const KdbGetPagesByDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetPagesByDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"GetPagesByDocumentFilters"}},"defaultValue":{"kind":"ObjectValue","fields":[]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetPagesByDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"document_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"page_id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"number"}}]}}]}}]} as unknown as DocumentNode<KdbGetPagesByDocumentQuery, KdbGetPagesByDocumentQueryVariables>;
 export const KdbGetPagesByTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetPagesByTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TaskID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetPagesByTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"task_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"PageFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PageFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Page"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"page_id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"number"}}]}}]} as unknown as DocumentNode<KdbGetPagesByTaskQuery, KdbGetPagesByTaskQueryVariables>;
 export const KdbIndexingDocumentTaskGetDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBIndexingDocumentTaskGet"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"taskID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TaskID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbIndexingDocumentTaskGet"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"taskID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"taskID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"IndexingDocumentTaskFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IndexingDocumentTaskFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTask"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"chat_id"}},{"kind":"Field","name":{"kind":"Name","value":"message_id"}},{"kind":"Field","name":{"kind":"Name","value":"author_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_state"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"update_at"}},{"kind":"Field","name":{"kind":"Name","value":"confirmed"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"statistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_total"}},{"kind":"Field","name":{"kind":"Name","value":"current_indexing_speed"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finish_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finished_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_percent"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_started_at"}},{"kind":"Field","name":{"kind":"Name","value":"llm_approximate_cost"}},{"kind":"Field","name":{"kind":"Name","value":"llm_stats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_count"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"total_cost"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pages"}},{"kind":"Field","name":{"kind":"Name","value":"qa_total"}},{"kind":"Field","name":{"kind":"Name","value":"total_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"triplets_total"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_for_seconds"}}]}},{"kind":"Field","name":{"kind":"Name","value":"config"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunk_overlap_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_size_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"cost_limit"}},{"kind":"Field","name":{"kind":"Name","value":"need_qa"}},{"kind":"Field","name":{"kind":"Name","value":"qa_count_per_run"}},{"kind":"Field","name":{"kind":"Name","value":"qa_model"}},{"kind":"Field","name":{"kind":"Name","value":"force_confirm"}},{"kind":"Field","name":{"kind":"Name","value":"instruction_for_qa"}}]}}]}}]} as unknown as DocumentNode<KdbIndexingDocumentTaskGetQuery, KdbIndexingDocumentTaskGetQueryVariables>;
-export const KdbIndexingDocumentTaskGetByDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"kdbIndexingDocumentTaskGetByDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentID"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbIndexingDocumentTaskGetByDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"document_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"IndexingDocumentTaskFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IndexingDocumentTaskFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTask"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"chat_id"}},{"kind":"Field","name":{"kind":"Name","value":"message_id"}},{"kind":"Field","name":{"kind":"Name","value":"author_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_state"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"update_at"}},{"kind":"Field","name":{"kind":"Name","value":"confirmed"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"statistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_total"}},{"kind":"Field","name":{"kind":"Name","value":"current_indexing_speed"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finish_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finished_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_percent"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_started_at"}},{"kind":"Field","name":{"kind":"Name","value":"llm_approximate_cost"}},{"kind":"Field","name":{"kind":"Name","value":"llm_stats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_count"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"total_cost"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pages"}},{"kind":"Field","name":{"kind":"Name","value":"qa_total"}},{"kind":"Field","name":{"kind":"Name","value":"total_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"triplets_total"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_for_seconds"}}]}},{"kind":"Field","name":{"kind":"Name","value":"config"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunk_overlap_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_size_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"cost_limit"}},{"kind":"Field","name":{"kind":"Name","value":"need_qa"}},{"kind":"Field","name":{"kind":"Name","value":"qa_count_per_run"}},{"kind":"Field","name":{"kind":"Name","value":"qa_model"}},{"kind":"Field","name":{"kind":"Name","value":"force_confirm"}},{"kind":"Field","name":{"kind":"Name","value":"instruction_for_qa"}}]}}]}}]} as unknown as DocumentNode<KdbIndexingDocumentTaskGetByDocumentQuery, KdbIndexingDocumentTaskGetByDocumentQueryVariables>;
+export const KdbIndexingDocumentTaskGetByCollectionDocument = {
+  "kind": "Document", "definitions": [{
+    "kind": "OperationDefinition",
+    "operation": "query",
+    "name": { "kind": "Name", "value": "kdbIndexingDocumentTaskGetByCollection" },
+    "variableDefinitions": [{
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "collections" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": {
+          "kind": "ListType",
+          "type": {
+            "kind": "NonNullType",
+            "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CollectionID" } }
+          }
+        }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "states" } },
+      "type": {
+        "kind": "ListType",
+        "type": {
+          "kind": "NonNullType",
+          "type": {
+            "kind": "NamedType",
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskState" }
+          }
+        }
+      },
+      "defaultValue": { "kind": "ListValue", "values": [] }
+    }],
+    "selectionSet": {
+      "kind": "SelectionSet",
+      "selections": [{
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "kdbIndexingDocumentTaskGetByCollection" },
+        "arguments": [{
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "session" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "collection_id" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "collections" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "state" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "states" } }
+        }],
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "FragmentSpread",
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" }
+          }]
+        }
+      }]
+    }
+  }, {
+    "kind": "FragmentDefinition",
+    "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" },
+    "typeCondition": {
+      "kind": "NamedType",
+      "name": { "kind": "Name", "value": "IndexingDocumentTask" }
+    },
+    "selectionSet": {
+      "kind": "SelectionSet",
+      "selections": [{
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "task_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "document_id" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "chat_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "message_id" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "author_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "task_state" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "created_at" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "update_at" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "confirmed" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "version" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "error" }
+      }, {
+        "kind": "Field", "name": { "kind": "Name", "value": "statistics" }, "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunks_indexed_qa" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunks_indexed_triplet" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunks_total" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "current_indexing_speed" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "expected_finish_seconds" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "expected_finished_at" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "indexed_percent" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "indexing_started_at" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "llm_approximate_cost" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "llm_stats" },
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [{
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "completion_cost" }
+              }, {
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "embeddings_cost" }
+              }, {
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "embeddings_count" }
+              }, {
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "prompt_cost" }
+              }, { "kind": "Field", "name": { "kind": "Name", "value": "total_cost" } }]
+            }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "pages" } }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "qa_total" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "total_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "triplets_total" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "indexed_for_seconds" } }]
+        }
+      }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "config" },
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunk_overlap_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunk_size_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "cost_limit" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "need_qa" } }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "qa_count_per_run" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "qa_model" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "force_confirm" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "instruction_for_qa" } }]
+        }
+      }]
+    }
+  }]
+} as unknown as DocumentNode<KdbIndexingDocumentTaskGetByCollectionQuery, KdbIndexingDocumentTaskGetByCollectionQueryVariables>
+export const KdbIndexingDocumentTaskGetByDocumentDocument = {
+  "kind": "Document", "definitions": [{
+    "kind": "OperationDefinition",
+    "operation": "query",
+    "name": { "kind": "Name", "value": "kdbIndexingDocumentTaskGetByDocument" },
+    "variableDefinitions": [{
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "document_id" } },
+      "type": {
+        "kind": "NonNullType",
+        "type": {
+          "kind": "ListType",
+          "type": {
+            "kind": "NonNullType",
+            "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "DocumentID" } }
+          }
+        }
+      }
+    }, {
+      "kind": "VariableDefinition",
+      "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "state" } },
+      "type": {
+        "kind": "ListType",
+        "type": {
+          "kind": "NonNullType",
+          "type": {
+            "kind": "NamedType",
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskState" }
+          }
+        }
+      },
+      "defaultValue": { "kind": "ListValue", "values": [] }
+    }],
+    "selectionSet": {
+      "kind": "SelectionSet",
+      "selections": [{
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "kdbIndexingDocumentTaskGetByDocument" },
+        "arguments": [{
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "session" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "document_id" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "document_id" } }
+        }, {
+          "kind": "Argument",
+          "name": { "kind": "Name", "value": "state" },
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "state" } }
+        }],
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "FragmentSpread",
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" }
+          }]
+        }
+      }]
+    }
+  }, {
+    "kind": "FragmentDefinition",
+    "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" },
+    "typeCondition": {
+      "kind": "NamedType",
+      "name": { "kind": "Name", "value": "IndexingDocumentTask" }
+    },
+    "selectionSet": {
+      "kind": "SelectionSet",
+      "selections": [{
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "task_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "document_id" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "chat_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "message_id" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "author_id" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "task_state" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "created_at" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "update_at" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "confirmed" }
+      }, { "kind": "Field", "name": { "kind": "Name", "value": "version" } }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "error" }
+      }, {
+        "kind": "Field", "name": { "kind": "Name", "value": "statistics" }, "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunks_indexed_qa" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunks_indexed_triplet" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunks_total" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "current_indexing_speed" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "expected_finish_seconds" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "expected_finished_at" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "indexed_percent" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "indexing_started_at" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "llm_approximate_cost" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "llm_stats" },
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [{
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "completion_cost" }
+              }, {
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "embeddings_cost" }
+              }, {
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "embeddings_count" }
+              }, {
+                "kind": "Field",
+                "name": { "kind": "Name", "value": "prompt_cost" }
+              }, { "kind": "Field", "name": { "kind": "Name", "value": "total_cost" } }]
+            }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "pages" } }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "qa_total" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "total_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "triplets_total" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "indexed_for_seconds" } }]
+        }
+      }, {
+        "kind": "Field",
+        "name": { "kind": "Name", "value": "config" },
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [{
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunk_overlap_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "chunk_size_tokens" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "cost_limit" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "need_qa" } }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "qa_count_per_run" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "qa_model" }
+          }, {
+            "kind": "Field",
+            "name": { "kind": "Name", "value": "force_confirm" }
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "instruction_for_qa" } }]
+        }
+      }]
+    }
+  }]
+} as unknown as DocumentNode<KdbIndexingDocumentTaskGetByDocumentQuery, KdbIndexingDocumentTaskGetByDocumentQueryVariables>
 export const KdbIndexingDocumentTaskGetByStateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBIndexingDocumentTaskGetByState"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"state"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTaskState"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbIndexingDocumentTaskGetByState"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"state"},"value":{"kind":"Variable","name":{"kind":"Name","value":"state"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"IndexingDocumentTaskFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IndexingDocumentTaskFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTask"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"chat_id"}},{"kind":"Field","name":{"kind":"Name","value":"message_id"}},{"kind":"Field","name":{"kind":"Name","value":"author_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_state"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"update_at"}},{"kind":"Field","name":{"kind":"Name","value":"confirmed"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"statistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_total"}},{"kind":"Field","name":{"kind":"Name","value":"current_indexing_speed"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finish_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finished_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_percent"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_started_at"}},{"kind":"Field","name":{"kind":"Name","value":"llm_approximate_cost"}},{"kind":"Field","name":{"kind":"Name","value":"llm_stats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_count"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"total_cost"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pages"}},{"kind":"Field","name":{"kind":"Name","value":"qa_total"}},{"kind":"Field","name":{"kind":"Name","value":"total_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"triplets_total"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_for_seconds"}}]}},{"kind":"Field","name":{"kind":"Name","value":"config"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunk_overlap_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_size_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"cost_limit"}},{"kind":"Field","name":{"kind":"Name","value":"need_qa"}},{"kind":"Field","name":{"kind":"Name","value":"qa_count_per_run"}},{"kind":"Field","name":{"kind":"Name","value":"qa_model"}},{"kind":"Field","name":{"kind":"Name","value":"force_confirm"}},{"kind":"Field","name":{"kind":"Name","value":"instruction_for_qa"}}]}}]}}]} as unknown as DocumentNode<KdbIndexingDocumentTaskGetByStateQuery, KdbIndexingDocumentTaskGetByStateQueryVariables>;
 export const KdbQueryCollectionQaDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBQueryCollectionQA"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CollectionID"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queryString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"threshold"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}},"defaultValue":{"kind":"FloatValue","value":"0.5"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tokensLimit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"4000"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbQueryCollectionQA"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"collection_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"queryString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queryString"}}},{"kind":"Argument","name":{"kind":"Name","value":"threshold"},"value":{"kind":"Variable","name":{"kind":"Name","value":"threshold"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"tokensLimit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tokensLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QaWithDistanceFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QaFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QA"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"answer"}},{"kind":"Field","name":{"kind":"Name","value":"answer_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_number"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_published_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_from"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_to"}},{"kind":"Field","name":{"kind":"Name","value":"qa_id"}},{"kind":"Field","name":{"kind":"Name","value":"question"}},{"kind":"Field","name":{"kind":"Name","value":"question_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QaWithDistanceFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QAWithDistance"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"qa"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QaFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"distance"}}]}}]} as unknown as DocumentNode<KdbQueryCollectionQaQuery, KdbQueryCollectionQaQueryVariables>;
 export const KdbQueryCollectionQaWithDocumentsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"kdbQueryCollectionQAWithDocuments"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CollectionID"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queryString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"threshold"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}},"defaultValue":{"kind":"FloatValue","value":"0.5"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tokensLimit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"4000"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbQueryCollectionQAWithDocuments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"collection_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"queryString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queryString"}}},{"kind":"Argument","name":{"kind":"Name","value":"threshold"},"value":{"kind":"Variable","name":{"kind":"Name","value":"threshold"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"tokensLimit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tokensLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QAWithDocumentsFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DocumentFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentMeta"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"collection_id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"published_at"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"metadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QaFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QA"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"answer"}},{"kind":"Field","name":{"kind":"Name","value":"answer_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_number"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_published_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_from"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_to"}},{"kind":"Field","name":{"kind":"Name","value":"qa_id"}},{"kind":"Field","name":{"kind":"Name","value":"question"}},{"kind":"Field","name":{"kind":"Name","value":"question_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QaWithDistanceFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QAWithDistance"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"qa"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QaFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"distance"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QAWithDocumentsFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QAWithDocuments"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"document"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"DocumentFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"qas"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QaWithDistanceFields"}}]}}]}}]} as unknown as DocumentNode<KdbQueryCollectionQaWithDocumentsQuery, KdbQueryCollectionQaWithDocumentsQueryVariables>;

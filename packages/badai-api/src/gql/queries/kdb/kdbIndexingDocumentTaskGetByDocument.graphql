@@ -1,5 +1,9 @@
-query kdbIndexingDocumentTaskGetByDocument($session: Session!, $document_id: [DocumentID!]!) {
-  kdbIndexingDocumentTaskGetByDocument(session: $session, document_id: $document_id) {
+query kdbIndexingDocumentTaskGetByDocument(
+  $session: Session!
+  $document_id: [DocumentID!]!
+  $state: [IndexingDocumentTaskState!] = []
+) {
+  kdbIndexingDocumentTaskGetByDocument(session: $session, document_id: $document_id, state: $state) {
     ...IndexingDocumentTaskFields
   }
 }

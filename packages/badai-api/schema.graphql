@@ -6,6 +6,8 @@ schema {
   subscription: Subscription
 }
 
+directive @actionACL(action: String!) on FIELD_DEFINITION
+
 "Directs the executor to defer this fragment when the `if` argument is true or undefined."
 directive @defer(
   "Deferred when true or undefined."
@@ -26,6 +28,10 @@ directive @oneOf on INPUT_OBJECT
 directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
 
 directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+
+interface Signal {
+  message_id: MessageID
+}
 
 type AgentCollection {
   agents: [AgentMeta!]!
@@ -94,6 +100,11 @@ type AgentTokenMetrics {
   total_liquidity_usd: Decimal!
   transactions_24h: Int!
   volume_24h: Decimal!
+}
+
+type AgentTriggeredSignal implements Signal {
+  agent_id: AgentID!
+  message_id: MessageID
 }
 
 type Attachment {
@@ -335,6 +346,7 @@ type IndexingDocumentTaskConfig {
   need_qa: Boolean!
   qa_count_per_run: Int!
   qa_model: String!
+  qa_model_api_token: SecretID
 }
 
 type IndexingState {
@@ -395,6 +407,7 @@ type Message {
   need_answer: Boolean!
   participant: Participant
   reply_to: MessageID
+  signals: [Signal!]
   text: String!
   time: Time!
   total_usage_cost: Credits!
@@ -414,6 +427,7 @@ type Mutation {
   addAgentToChat(agent_id: AgentID!, chat_id: ChatID!, session: Session!): Boolean!
   addDelta(chat_id: ChatID!, delta: String!, id: MessageID!, session: Session!): Message!
   addMessageAttachment(attachment_id: AttachmentID!, chat_id: ChatID!, id: MessageID!, session: Session!): Message!
+  addToWhitelist(address: String!, note: String, session: Session!): Boolean!
   adminAddMessageToTelegramChatRoom(message: TelegramMessageInput!, session: Session!): [Message!]!
   adminAddMessageToTwitterChatRoom(messages: [TwitterMessageInput!]!, session: Session!): [Message!]!
   adminChangeAgentDeploymentStatus(payment_id: PaymentID!, session: Session!): Boolean!
@@ -478,6 +492,7 @@ type Mutation {
   regenerateLastResponse(chat_id: ChatID!, session: Session!): Boolean!
   removeAgentFromChat(agent_id: AgentID!, chat_id: ChatID!, session: Session!): Boolean!
   removeAgentTelegramIntegration(agent_id: AgentID!, session: Session!): Boolean!
+  removeFromWhitelist(address: String!, session: Session!): Boolean!
   renameChatRoom(id: ChatID!, new_name: String!, session: Session!): ChatRoom!
   "Replace a secret with the given secret ID with the given secret if they have the same type."
   replaceSecret(params: ReplaceSecretParams!, session: Session!): ReplaceSecretResponse!
@@ -606,6 +621,7 @@ type Query {
   _service: _Service!
   adminAgentGetTwitterApiKeys(agent_id: AgentID!, session: Session!): XApiKeys!
   adminGetParticipantTelegramBotApiKey(chat_id: ChatID!, session: Session!): String!
+  adminGetUserProfile(session: Session!, user_id: UserID!): UserProfile!
   agentCheckUsernameExists(session: Session!, username: Username!): Boolean!
   agentGetAttachedTwitterAccounts(agent_id: AgentID!, session: Session!): [TwitterAccount!]!
   agentGetMyXAccount(agent_id: AgentID!, session: Session!): MyXAccount!
@@ -614,7 +630,7 @@ type Query {
   authSessionAlive(session: Session!): Boolean!
   authTelegramBotID: TelegramBotID!
   authTwitterRedirectURL: OAuthRedirectURLResult!
-  chainGraphGet(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): ChainGraph
+  chainGraphGet(chat_id: ChatID! @deprecated(reason: "use chainGraphGetByID instead"), participant_id: ParticipantID! @deprecated(reason: "use chainGraphGetByID instead"), session: Session! @deprecated(reason: "use chainGraphGetByID instead")): ChainGraph @deprecated(reason: "use chainGraphGetByID instead")
   chainGraphGetByID(graph_id: GraphID!, session: Session!): ChainGraph
   chainGraphHistory(graph_id: GraphID!, session: Session!): [ChainGraphHistory!]!
   chatRoomGetParticipant(chat_id: ChatID!, participant_id: ParticipantID!, session: Session!): Participant!
@@ -627,6 +643,8 @@ type Query {
   getTweetsFromDB(session: Session!, tweets_ids: [TweetID!]!): [Tweet!]!
   getVariable(key: String!, namespace: NamespaceInput!, session: Session!): VariableResponse!
   getVariables(namespace: NamespaceInput!, session: Session!): VariablesResponse!
+  getWhitelistEntries(session: Session!): [WhitelistEntry!]!
+  isAddressWhitelisted(address: String!): Boolean!
   kdbGetAgentCollections(agent_id: AgentID!, session: Session!): [Collection!]!
   kdbGetAgentCollectionsWithDocuments(agent_id: AgentID!, session: Session!): [CollectionWithDocuments!]!
   kdbGetChunk(chunk_id: ChunkID!, session: Session!): Chunk!
@@ -645,7 +663,16 @@ type Query {
   kdbGetQAByDocument(chunk_from: Int!, chunk_to: Int!, document_id: DocumentID!, session: Session!): [QA!]!
   kdbGetQAByTask(chunk_from: Int!, chunk_to: Int!, session: Session!, task_id: TaskID!): [QA!]!
   kdbIndexingDocumentTaskGet(session: Session!, taskID: TaskID!): IndexingDocumentTask!
-  kdbIndexingDocumentTaskGetByDocument(document_id: [DocumentID!]!, session: Session!): [IndexingDocumentTask!]!
+  "Retrieves indexing document tasks for specified collections."
+  kdbIndexingDocumentTaskGetByCollection(
+    "Array of collection IDs to fetch tasks for."
+    collection_id: [CollectionID!]!,
+    "Active user session token required for authentication."
+    session: Session!,
+    "Optional filter for task states."
+    state: [IndexingDocumentTaskState!]! = []
+  ): [IndexingDocumentTask!]!
+  kdbIndexingDocumentTaskGetByDocument(document_id: [DocumentID!]!, session: Session!, state: [IndexingDocumentTaskState!]! = []): [IndexingDocumentTask!]!
   kdbIndexingDocumentTaskGetByState(limit: Int! = 100, session: Session!, state: [IndexingDocumentTaskState!]!): [IndexingDocumentTask!]!
   kdbIndexingDocumentTasksGet(session: Session!, taskID: [TaskID!]!): [IndexingDocumentTask!]!
   kdbQueryCollectionQA(collection_id: [CollectionID!] @deprecated(reason: "use kdbSearchQAWithDocuments"), limit: Int! = 20 @deprecated(reason: "use kdbSearchQAWithDocuments"), queryString: String! @deprecated(reason: "use kdbSearchQAWithDocuments"), session: Session! @deprecated(reason: "use kdbSearchQAWithDocuments"), threshold: Float! = 0.5 @deprecated(reason: "use kdbSearchQAWithDocuments"), tokensLimit: Int! = 4000 @deprecated(reason: "use kdbSearchQAWithDocuments")): [QAWithDistance!]! @deprecated(reason: "use kdbSearchQAWithDocuments")
@@ -700,7 +727,7 @@ type SecretMetadata {
 type SecretResponse {
   "Base64-encoded nonce used in HKDF for deriving the encryption key (AES-256 GCM) from the shared secret."
   hkdfNonce: BlobBase64!
-  "Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get decryption key of AES-256 in GCM mode."
+  "Ephemeral public key of secp256r1 curve for Diffie-Hellman algorithm to get the shared secret as HKDF input."
   publicKey: ECDHPublicKeyP256!
   "The secret with the given ID."
   secret: Secret!
@@ -887,6 +914,14 @@ type VariableValue {
 
 type VariablesResponse {
   variables: [Variable!]
+}
+
+type WhitelistEntry {
+  address: String!
+  createdAt: Time!
+  createdBy: String!
+  id: ID!
+  note: String
 }
 
 type XApiKeys {
@@ -1337,6 +1372,7 @@ input KdbIndexingDocumentTaskCreateInput {
   need_qa: Boolean! = false
   qa_count_per_run: Int! = 15
   qa_model: String! = "gpt-4o-mini"
+  qa_model_api_token: SecretID
 }
 
 input KdbIndexingDocumentTaskUpdateConfigInput {
@@ -1348,6 +1384,7 @@ input KdbIndexingDocumentTaskUpdateConfigInput {
   need_qa: Boolean! = false
   qa_count_per_run: Int! = 15
   qa_model: String! = "gpt-4o-mini"
+  qa_model_api_token: SecretID
 }
 
 input KeyValueInput {
@@ -1367,6 +1404,7 @@ input MessageEditInput {
   is_system: Boolean! = false
   need_answer: Boolean! = false
   reply_to: MessageID
+  signals: [SignalInput!]
   text: String!
 }
 
@@ -1377,6 +1415,7 @@ input MessageInput {
   is_system: Boolean! = false
   need_answer: Boolean! = false
   reply_to: MessageID
+  signals: [SignalInput!]
   text: String!
 }
 
@@ -1475,6 +1514,11 @@ input SearchQAOrderBy {
   document_field: OrderByField
   qa_direction: OrderDirection
   qa_field: OrderByField
+}
+
+input SignalInput {
+  agent_id: AgentID!
+  message_id: MessageID
 }
 
 input TelegramChatRoomConfigInput {
