@@ -49,12 +49,15 @@ describe('eventListenerNode', () => {
     expect(node.outputData).toEqual({ eventName: 'user-action' })
   })
 
-  it('should throw exception when event type does not match filter', async () => {
+  it('should skip processing when event type does not match filter', async () => {
     const node = new EventListenerNode('listener-2')
     node.initialize()
 
     // Configure listener to listen for 'user-action' events
     node.eventName = 'user-action'
+
+    // Set initial output data to verify it's not changed
+    node.outputData = { initial: 'data' }
 
     // Create context with non-matching event in child execution
     const eventData: EmittedEventContext = {
@@ -73,31 +76,32 @@ describe('eventListenerNode', () => {
       1, // executionDepth
     )
 
-    // Execute node - should throw exception
-    await expect(node.execute(context)).rejects.toThrow(
-      'Event type mismatch: EventListener \'user-action\' cannot process event \'system-event\'',
-    )
+    // Execute node - should return {} and not process the event
+    const result = await node.execute(context)
+    expect(result).toEqual({})
+
+    // Output data should remain unchanged since event was skipped
+    expect(node.outputData).toEqual({ initial: 'data' })
   })
 
-  it('should throw exception when no event data is available', async () => {
+  it('should skip processing when no event data is available', async () => {
     const node = new EventListenerNode('listener-3')
     node.initialize()
 
     node.eventName = 'test-event'
 
-    // Set some initial output data to verify it gets cleared
+    // Set some initial output data to verify it's not changed
     node.outputData = { eventName: 'old-data' }
 
     // Create context without event data (normal execution mode)
     const context = getTestContext()
 
-    // Execute node - should throw exception
-    await expect(node.execute(context)).rejects.toThrow(
-      `EventListenerNode 'listener-3' has no event data to process`,
-    )
+    // Execute node - should return {} and skip processing
+    const result = await node.execute(context)
+    expect(result).toEqual({})
 
-    // Verify output data was cleared before throwing
-    expect(node.outputData).toEqual({})
+    // Output data should remain unchanged since execution was skipped
+    expect(node.outputData).toEqual({ eventName: 'old-data' })
   })
 
   it('should handle event from EventEmitterNode correctly', async () => {

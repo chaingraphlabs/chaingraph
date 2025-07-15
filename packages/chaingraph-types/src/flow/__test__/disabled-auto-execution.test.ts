@@ -101,6 +101,8 @@ describe('disabledAutoExecution', () => {
 
     // Add an EventListenerNode so the engine has something to execute
     class TestEventListenerNode extends BaseNode {
+      eventName: string = 'test-event'
+
       constructor(id: string) {
         super(id, {
           type: 'EventListenerNode',

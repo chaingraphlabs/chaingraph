@@ -29,7 +29,7 @@ class TestEmitterNode extends BaseNode {
 
 // Simple mock event listener node without decorators
 class TestListenerNode extends BaseNode {
-  eventNameFilter = 'test-event'
+  eventName = 'test-event' // This is what the execution engine looks for
   receivedMessage = ''
 
   constructor(id: string) {
@@ -45,7 +45,7 @@ class TestListenerNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (context.eventData) {
       const { eventName, payload } = context.eventData
-      if (eventName === this.eventNameFilter && payload) {
+      if (eventName === this.eventName && payload) {
         this.receivedMessage = payload.message || 'no message'
       }
     }
