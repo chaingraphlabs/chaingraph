@@ -20,13 +20,16 @@ import {
   $deleteFlowError,
   $flows,
   $flowsError,
+  $forkFlowError,
   $isCreatingFlow,
   $isDeletingFlow,
   $isFlowsLoading,
+  $isForkingFlow,
   $isUpdatingFlow,
   $updateFlowError,
   createFlow,
   deleteFlow,
+  forkFlow,
   updateFlow,
 } from '@/store/flow'
 import { Spinner } from '@radix-ui/themes'
@@ -54,9 +57,11 @@ export function FlowList(
     createError,
     updateError,
     deleteError, // TODO: handle delete error
+    forkError,
     isCreatingFlow,
     isDeletingFlow,
     isEditingFlow,
+    isForkingFlow,
   } = useUnit({
     flows: $flows,
     activeFlowId: $activeFlowId,
@@ -65,9 +70,11 @@ export function FlowList(
     createError: $createFlowError,
     updateError: $updateFlowError,
     deleteError: $deleteFlowError,
+    forkError: $forkFlowError,
     isCreatingFlow: $isCreatingFlow,
     isDeletingFlow: $isDeletingFlow,
     isEditingFlow: $isUpdatingFlow,
+    isForkingFlow: $isForkingFlow,
   })
   // const navigate = useNavigate()
 
@@ -92,6 +99,10 @@ export function FlowList(
     setIsCreating(false)
   }, [])
 
+  const handleForkClick = useCallback((flow: FlowMetadata) => {
+    forkFlow({ flowId: flow.id! })
+  }, [])
+
   const handleCreateFlow = useCallback(async (event: CreateFlowEvent) => {
     await createFlow(event)
     setIsCreating(false)
@@ -103,6 +114,7 @@ export function FlowList(
       setEditingFlow(undefined)
     }
   }, [editingFlow])
+
 
   const handleFlowSelect = (flowId: string) => {
     props?.onFlowSelected?.({
@@ -182,7 +194,9 @@ export function FlowList(
                           }}
                           onDelete={() => deleteFlow(flow.id!)}
                           onEdit={() => handleEditClick(flow)}
-                          disabled={isCreatingFlow || isDeletingFlow || isEditingFlow}
+                          onFork={() => handleForkClick(flow)}
+                          disabled={isCreatingFlow || isDeletingFlow || isEditingFlow || isForkingFlow}
+                          isForkingFlow={isForkingFlow}
                         />
                       ))}
                     </div>

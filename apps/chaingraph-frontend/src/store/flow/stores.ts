@@ -32,6 +32,7 @@ export const clearActiveFlow = flowDomain.createEvent()
 export const createFlow = flowDomain.createEvent<CreateFlowEvent>()
 export const updateFlow = flowDomain.createEvent<UpdateFlowEvent>()
 export const deleteFlow = flowDomain.createEvent<string>()
+export const forkFlow = flowDomain.createEvent<{ flowId: string, name?: string }>()
 
 // Subscription events
 export const setFlowSubscriptionStatus = flowDomain.createEvent<FlowSubscriptionStatus>()
@@ -79,6 +80,18 @@ export const deleteFlowFx = flowDomain.createEffect(async (id: string) => {
   }
   return client.flow.delete.mutate({
     flowId: id,
+  })
+})
+
+// Effect for forking flow
+export const forkFlowFx = flowDomain.createEffect(async (event: { flowId: string, name?: string }) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.flow.fork.mutate({
+    flowId: event.flowId,
+    name: event.name,
   })
 })
 
@@ -164,6 +177,11 @@ export const $deleteFlowError = flowDomain.createStore<Error | null>(null)
   .reset(deleteFlowFx.done)
   .reset(globalReset)
 
+export const $forkFlowError = flowDomain.createStore<Error | null>(null)
+  .on(forkFlowFx.failData, (_, error) => error)
+  .reset(forkFlowFx.done)
+  .reset(globalReset)
+
 // Specific operation loading states
 export const $isCreatingFlow = flowDomain.createStore<boolean>(false)
   .on(createFlowFx.pending, (_, isPending) => isPending)
@@ -177,14 +195,19 @@ export const $isDeletingFlow = flowDomain.createStore<boolean>(false)
   .on(deleteFlowFx.pending, (_, isPending) => isPending)
   .reset(globalReset)
 
+export const $isForkingFlow = flowDomain.createStore<boolean>(false)
+  .on(forkFlowFx.pending, (_, isPending) => isPending)
+  .reset(globalReset)
+
 // Combined error store
 export const $allFlowsErrors = combine(
   $flowsError,
   $createFlowError,
   $updateFlowError,
   $deleteFlowError,
-  (loadError, createError, updateError, deleteError) =>
-    loadError || createError || updateError || deleteError,
+  $forkFlowError,
+  (loadError, createError, updateError, deleteError, forkError) =>
+    loadError || createError || updateError || deleteError || forkError,
 )
 
 // Currently active flow metadata
@@ -266,4 +289,15 @@ sample({
       target: clearActiveFlow,
     }),
   ],
+})
+
+// Flow Fork operations
+sample({
+  clock: forkFlow,
+  target: forkFlowFx,
+})
+sample({
+  clock: forkFlowFx.doneData,
+  fn: response => response,
+  target: setFlowMetadata,
 })

@@ -12,6 +12,7 @@ import { connectPorts } from './connect-ports'
 import { create } from './flow-create'
 import { flowDelete } from './flow-delete'
 import { edit } from './flow-edit'
+import { fork } from './flow-fork'
 import { get } from './flow-get'
 import { getMeta } from './flow-get-meta'
 import { list } from './flow-list'
@@ -40,6 +41,7 @@ export const flowProcedures = router({
   list,
   delete: flowDelete,
   edit,
+  fork,
   subscribeToEvents,
   addNode,
   removeNode,
@@ -64,6 +66,7 @@ export { connectPorts } from './connect-ports'
 export { create } from './flow-create'
 export { flowDelete } from './flow-delete'
 export { edit } from './flow-edit'
+export { fork } from './flow-fork'
 export { get } from './flow-get'
 export { getMeta } from './flow-get-meta'
 export { list } from './flow-list'
