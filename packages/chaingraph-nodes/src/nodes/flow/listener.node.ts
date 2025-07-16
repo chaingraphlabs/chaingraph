@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Output, PortAny, PortNumber, PortString } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortNumber, PortObject, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -40,14 +40,21 @@ class EventListenerNode extends BaseNode {
   processedEventsOffset: number = 0
 
   @Output()
-  @PortAny({
+  @PortObject({
     title: 'Event Data',
     description: 'Output data when the event is triggered',
+    isSchemaMutable: true,
+    schema: {
+      type: 'object',
+      properties: {},
+    },
     ui: {
+      keyDeletable: true,
       hideEditor: false,
+      hidePropertyEditor: true,
     },
   })
-  outputData: any = {}
+  outputData: Record<string, any> = {}
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     console.log(`[EventListenerNode ${this.id}] execute called, isChildExecution: ${context.isChildExecution}, hasEventData: ${!!context.eventData}`)
@@ -74,7 +81,7 @@ class EventListenerNode extends BaseNode {
     }
 
     // Output the payload directly without schema processing
-    this.outputData = payload
+    this.outputData = payload || {}
 
     console.log(`[EventListenerNode ${this.id}] Output data after processing:`, JSON.stringify(this.outputData))
 
