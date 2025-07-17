@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.2.16
+
+### Patch Changes
+
+- 844421c: Improve Event Emitter and Listener nodes with editable payload ports
+
 ## 0.2.15
 
 ### Patch Changes
