@@ -23,11 +23,6 @@ import { IndexingDocumentTask } from './types'
   description: 'Retrieve indexing document tasks for a specific document in the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'documents', 'indexing', 'tasks', 'kdb'],
-  ui: {
-    state: {
-      isHidden: true, // Hide from the UI for now
-    },
-  },
 })
 class ArchAIGetIndexingDocumentTasksByDocumentNode extends BaseNode {
   @Input()

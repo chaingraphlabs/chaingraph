@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.3.1-dev.0
+
+### Patch Changes
+
+- Show KDB nodes
+
 ## 0.2.16
 
 ### Patch Changes

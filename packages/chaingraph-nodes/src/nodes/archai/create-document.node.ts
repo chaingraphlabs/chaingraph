@@ -14,9 +14,14 @@ import type {
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
+  BaseNode,
+  Input,
+  Node,
+  Output,
+  PortArray,
   PortObject,
+  PortString,
 } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -25,11 +30,6 @@ import { NODE_CATEGORIES } from '../../categories'
   description: 'Upload a document to the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'documents', 'upload', 'kdb'],
-  ui: {
-    state: {
-      isHidden: true, // Hide from the UI for now
-    },
-  },
 })
 class ArchAICreateDocumentNode extends BaseNode {
   @Input()
