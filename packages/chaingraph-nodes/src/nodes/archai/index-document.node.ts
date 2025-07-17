@@ -14,16 +14,15 @@ import type {
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
-  PortEnumFromObject,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
   Input,
   Node,
   Output,
   PortBoolean,
+  PortEnumFromObject,
   PortNumber,
   PortString,
+  PortVisibility,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 import { LLMModels, llmModels } from '../ai'
@@ -90,6 +89,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
   costLimit: number = 0.0
 
   @Input()
+  @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })
   @PortBoolean({
     title: 'Need QA',
     description: 'Whether QA pairs should be generated',
@@ -98,6 +98,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
   needQA: boolean = false
 
   @Input()
+  @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })
   @PortNumber({
     title: 'QA Count Per Run',
     description: 'Number of QA pairs to generate per run',
@@ -106,6 +107,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
   qaCountPerRun: number = 15
 
   @Input()
+  @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })
   @PortEnumFromObject(llmModels, {
     title: 'QA Model',
     description: 'Model to use for generating QA pairs',
@@ -113,6 +115,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
   qaModel: keyof typeof llmModels = LLMModels.Gpt41Mini
 
   @Input()
+  @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })
   @PortString({
     title: 'Instruction for QA',
     description: 'Instructions for generating QA pairs',
@@ -122,6 +125,14 @@ class ArchAIIndexDocumentNode extends BaseNode {
     },
   })
   instructionForQA: string = ''
+
+  @Input()
+  @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })
+  @PortString({
+    title: 'QA Model API Token',
+    description: 'API token for the QA model',
+  })
+  qaModelApiToken: string = ''
 
   @Input()
   @PortBoolean({
@@ -145,6 +156,10 @@ class ArchAIIndexDocumentNode extends BaseNode {
       throw new Error('Document ID is required')
     }
 
+    if (this.needQA && !this.qaModelApiToken?.trim()) {
+      throw new Error('QA Model API Token is required')
+    }
+
     const archAIContext = context.getIntegration<ArchAIContext>('archai')
     const agentSession = archAIContext?.agentSession
     if (!agentSession) {
@@ -166,6 +181,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
       need_qa: this.needQA,
       qa_count_per_run: this.qaCountPerRun,
       qa_model: this.qaModel,
+      qa_model_api_token: this.qaModelApiToken,
       instruction_for_qa: this.instructionForQA,
       force_confirm: this.forceConfirm,
     }
