@@ -7,26 +7,8 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, ObjectSchema, Output, PortNumber, PortObject, PortString, Title } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, Output, PortNumber, PortObject, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-
-@ObjectSchema({
-  description: 'Filter criteria for event listener',
-})
-class EventListenerFilter {
-  @Title('Event Name')
-  @PortString({ defaultValue: '' })
-  eventName: string = ''
-}
-
-@ObjectSchema({
-  description: 'Event data emitted by the listener',
-})
-class EventData {
-  @Title('Event Name')
-  @PortString({ defaultValue: '' })
-  eventName: string = ''
-}
 
 @Node({
   type: 'EventListenerNode',
@@ -41,12 +23,12 @@ class EventData {
 })
 class EventListenerNode extends BaseNode {
   @Input()
-  @PortObject({
-    title: 'Filter',
-    description: 'Filter criteria for events',
-    schema: EventListenerFilter,
+  @PortString({
+    title: 'Event Name',
+    description: 'Name of the event to listen for',
+    defaultValue: '',
   })
-  inputFilter: EventListenerFilter = new EventListenerFilter()
+  eventName: string = ''
 
   @Input()
   @PortNumber({
@@ -61,29 +43,30 @@ class EventListenerNode extends BaseNode {
   @PortObject({
     title: 'Event Data',
     description: 'Output data when the event is triggered',
-    schema: EventData,
+    isSchemaMutable: true,
+    schema: {
+      type: 'object',
+      properties: {},
+    },
     ui: {
+      keyDeletable: true,
+      hideEditor: false,
       hidePropertyEditor: true,
     },
   })
-  outputData: EventData = new EventData()
+  outputData: Record<string, any> = {}
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     console.log(`[EventListenerNode ${this.id}] execute called, isChildExecution: ${context.isChildExecution}, hasEventData: ${!!context.eventData}`)
-    console.log(`[EventListenerNode ${this.id}] Filter eventName: "${this.inputFilter.eventName}"`)
+    console.log(`[EventListenerNode ${this.id}] Filter eventName: "${this.eventName}"`)
 
     // EventListenerNode should only process when there's event data
     // This can be either:
     // 1. Child execution spawned by internal event
     // 2. Root execution with external event (from API)
     if (!context.eventData) {
-      console.log(`[EventListenerNode ${this.id}] No event data available - skipping execution and downstream nodes`)
-
-      // Clear output data
-      this.outputData = new EventData()
-
-      // Throw exception to skip downstream nodes when there's no event to process
-      throw new Error(`EventListenerNode '${this.id}' has no event data to process`)
+      console.log(`[EventListenerNode ${this.id}] No event data available - skipping execution`)
+      return {}
     }
 
     console.log(`[EventListenerNode ${this.id}] Processing event data:`, JSON.stringify(context.eventData))
@@ -91,15 +74,14 @@ class EventListenerNode extends BaseNode {
     // We have event data - process it
     const { eventName, payload } = context.eventData
 
-    if (eventName !== this.inputFilter.eventName) {
-      // Skip this listener and all downstream nodes - not for this event
-      console.log(`[EventListenerNode ${this.id}] Event type mismatch: expected "${this.inputFilter.eventName}", got "${eventName}" - skipping`)
-      throw new Error(`Event type mismatch: EventListener '${this.inputFilter.eventName}' cannot process event '${eventName}'`)
+    if (eventName !== this.eventName) {
+      // Skip this listener - not for this event
+      console.log(`[EventListenerNode ${this.id}] Event type mismatch: expected "${this.eventName}", got "${eventName}" - skipping`)
+      return {}
     }
 
-    // Process event data
-    // Simply set the eventName on the existing outputData instance
-    this.outputData.eventName = eventName
+    // Output the payload directly without schema processing
+    this.outputData = payload || {}
 
     console.log(`[EventListenerNode ${this.id}] Output data after processing:`, JSON.stringify(this.outputData))
 

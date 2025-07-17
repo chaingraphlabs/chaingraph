@@ -199,6 +199,7 @@ export class ExecutionEngine {
     }
 
     // Enqueue initial nodes (nodes with no dependencies)
+    let nodesEnqueued = 0
     for (const [nodeId, dependencies] of this.nodeDependencies.entries()) {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
@@ -222,6 +223,14 @@ export class ExecutionEngine {
                 console.log(`Skipping node ${node.id} - not an EventListenerNode in child context`)
                 continue
               }
+
+              // Check if the event name matches the listener's event name
+              const eventName = this.context.eventData.eventName
+              const listenerEventName = (node as any).eventName
+              if (eventName !== listenerEventName) {
+                console.log(`Skipping EventListenerNode ${node.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+                continue
+              }
             }
           } else {
             // For nodes WITHOUT disabledAutoExecution in child context
@@ -234,8 +243,20 @@ export class ExecutionEngine {
 
           this.executingNodes.add(node.id)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
+          nodesEnqueued++
         }
       }
+    }
+
+    // Check if any nodes were enqueued for execution in child context
+    // If no matching EventListenerNodes were found, complete execution successfully
+    if (this.context.isChildExecution && this.context.eventData && nodesEnqueued === 0) {
+      console.log(`[ExecutionEngine] No matching EventListenerNodes found for event "${this.context.eventData.eventName}" - completing child execution successfully`)
+
+      // Close queues to signal completion (no error - this is normal behavior)
+      this.readyQueue.close()
+      this.completedQueue.close()
+      return
     }
 
     // Emit node status changed events for initial nodes
@@ -364,6 +385,14 @@ export class ExecutionEngine {
             if (nodeType !== 'EventListenerNode') {
               console.log(`Skipping dependent node ${dependentNode.id} - not an EventListenerNode in child context`)
               shouldSkip = true
+            } else {
+              // Check if the event name matches the listener's event name
+              const eventName = this.context.eventData.eventName
+              const listenerEventName = (dependentNode as any).eventName
+              if (eventName !== listenerEventName) {
+                console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+                shouldSkip = true
+              }
             }
           }
         } else {

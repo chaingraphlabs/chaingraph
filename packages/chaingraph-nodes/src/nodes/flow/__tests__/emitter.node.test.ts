@@ -23,8 +23,9 @@ describe('eventEmitterNode', () => {
     const node = new EventEmitterNode('emitter-1')
     node.initialize()
 
-    // Set event data
-    node.eventData.eventName = 'test-event'
+    // Set event name and payload
+    node.eventName = 'test-event'
+    node.payload = { message: 'test payload' }
 
     const context = getTestContext()
 
@@ -32,7 +33,7 @@ describe('eventEmitterNode', () => {
     await node.execute(context)
 
     // Verify emitEvent was called
-    expect(context.emitEvent).toHaveBeenCalledWith('test-event', node.eventData)
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'test payload' })
   })
 
   it('should throw an error when event name is empty', async () => {
@@ -40,7 +41,7 @@ describe('eventEmitterNode', () => {
     node.initialize()
 
     // Leave event name empty
-    node.eventData.eventName = ''
+    node.eventName = ''
 
     const context = getTestContext()
 
@@ -52,7 +53,7 @@ describe('eventEmitterNode', () => {
     const node = new EventEmitterNode('emitter-3')
     node.initialize()
 
-    node.eventData.eventName = 'test-event'
+    node.eventName = 'test-event'
 
     // Create context without emitEvent
     const abortController = new AbortController()
@@ -68,7 +69,8 @@ describe('eventEmitterNode', () => {
     const node = new EventEmitterNode('emitter-4')
     node.initialize()
 
-    node.eventData.eventName = 'test-event'
+    node.eventName = 'test-event'
+    node.payload = { data: 'test' }
 
     // Create real context to test emittedEvents
     const abortController = new AbortController()
@@ -84,7 +86,58 @@ describe('eventEmitterNode', () => {
     expect(context.emittedEvents![0]).toMatchObject({
       type: 'test-event',
       emittedBy: 'emitter-4',
-      data: node.eventData,
+      data: { data: 'test' },
+    })
+  })
+
+  it('should emit event with object payload', async () => {
+    const node = new EventEmitterNode('emitter-5')
+    node.initialize()
+
+    node.eventName = 'test-event'
+    node.payload = { message: 'hello', count: 42 }
+
+    const context = getTestContext()
+
+    // Should execute without error
+    await node.execute(context)
+
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'hello', count: 42 })
+  })
+
+  it('should handle payload as object (PortObject ensures object type)', async () => {
+    const node = new EventEmitterNode('emitter-6')
+    node.initialize()
+
+    node.eventName = 'test-event'
+    // PortObject will convert any value to an object structure
+    node.payload = { converted: 'value' }
+
+    const context = getTestContext()
+
+    // Should execute without error
+    await node.execute(context)
+
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { converted: 'value' })
+  })
+
+  it('should handle complex object payload', async () => {
+    const node = new EventEmitterNode('emitter-7')
+    node.initialize()
+
+    node.eventName = 'test-event'
+    // Complex object payload with nested structures
+    node.payload = { anything: 'goes', numbers: [1, 2, 3], nested: { deep: true } }
+
+    const context = getTestContext()
+
+    // Should execute without error
+    await node.execute(context)
+
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', {
+      anything: 'goes',
+      numbers: [1, 2, 3],
+      nested: { deep: true },
     })
   })
 })

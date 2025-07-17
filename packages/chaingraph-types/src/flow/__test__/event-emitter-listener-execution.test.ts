@@ -17,15 +17,6 @@ import { Flow } from '../flow'
 
 // Mock EventListenerNode with same structure as real one
 @ObjectSchema({
-  description: 'Filter criteria for event listener',
-})
-class EventListenerFilter {
-  @Title('Event Name')
-  @PortString({ defaultValue: '' })
-  eventName: string = ''
-}
-
-@ObjectSchema({
   description: 'Event data emitted by the listener',
 })
 class EventData {
@@ -43,11 +34,11 @@ class EventData {
 })
 class MockEventListenerNode extends BaseNode {
   @Input()
-  @PortObject({
-    title: 'Filter',
-    schema: EventListenerFilter,
+  @PortString({
+    title: 'Event Name',
+    defaultValue: '',
   })
-  inputFilter: EventListenerFilter = new EventListenerFilter()
+  eventName: string = ''
 
   @Output()
   @PortObject({
@@ -57,13 +48,13 @@ class MockEventListenerNode extends BaseNode {
   outputData: EventData = new EventData()
 
   async execute(context: ExecutionContext) {
-    if (!context.eventData || !context.isChildExecution) {
+    if (!context.eventData) {
       this.outputData = new EventData()
       return {}
     }
 
     const { eventName } = context.eventData
-    if (eventName === this.inputFilter.eventName) {
+    if (eventName === this.eventName) {
       this.outputData.eventName = eventName
     }
     return {}
@@ -274,22 +265,14 @@ describe('eventListener execution with real nodes', () => {
                 defaultValue: true,
               },
             },
-            'inputFilter:POfilter': {
-              value: { eventName: 'test-event' },
+            'eventName:POeventName': {
+              value: 'test-event',
               config: {
-                key: 'inputFilter',
-                type: 'object',
-                schema: {
-                  properties: {
-                    eventName: {
-                      type: 'string',
-                      defaultValue: '',
-                      ui: {
-                        label: 'Event Name',
-                      },
-                    },
-                  },
-                },
+                key: 'eventName',
+                type: 'string',
+                direction: 'input',
+                connections: [],
+                defaultValue: '',
               },
             },
           },

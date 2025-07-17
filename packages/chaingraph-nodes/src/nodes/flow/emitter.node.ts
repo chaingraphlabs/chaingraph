@@ -7,17 +7,8 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, ObjectSchema, PortObject, PortString, Title } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, PortObject, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-
-@ObjectSchema({
-  description: 'Event data emitted by the emitter',
-})
-class EventData {
-  @Title('Event Name')
-  @PortString({ defaultValue: '' })
-  eventName: string = ''
-}
 
 @Node({
   type: 'EventEmitterNode',
@@ -28,25 +19,44 @@ class EventData {
 })
 class EventEmitterNode extends BaseNode {
   @Input()
-  @PortObject({
-    title: 'Event Data',
-    description: 'Data to emit when the event is triggered',
-    schema: EventData,
+  @PortString({
+    title: 'Event Name',
+    description: 'Name of the event to emit',
+    defaultValue: '',
   })
-  eventData: EventData = new EventData()
+  eventName: string = ''
+
+  @Input()
+  @PortObject({
+    title: 'Payload',
+    description: 'Data payload to emit with the event',
+    order: 2,
+    isSchemaMutable: true,
+    schema: {
+      type: 'object',
+      properties: {},
+    },
+    ui: {
+      keyDeletable: true,
+      hidePropertyEditor: true,
+    },
+  })
+  payload: Record<string, any> = {}
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    const eventName = this.eventData.eventName
+    const eventName = this.eventName
     console.log(`[EventEmitterNode ${this.id}] Executing with eventName: "${eventName}", isChildExecution: ${context.isChildExecution}`)
 
     if (!eventName) {
       throw new Error('Event name is required to emit an event')
     }
 
+    // PortObject ensures payload is always an object, so no validation needed
+
     // Use the new event emission API if available
     if (context.emitEvent) {
       console.log(`[EventEmitterNode ${this.id}] Emitting event: "${eventName}"`)
-      context.emitEvent(eventName, this.eventData)
+      context.emitEvent(eventName, this.payload)
       console.log(`[EventEmitterNode ${this.id}] Event emitted successfully`)
       console.log(`[EventEmitterNode ${this.id}] Current emittedEvents:`, context.emittedEvents)
     } else {
