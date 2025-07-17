@@ -34,6 +34,9 @@ export const secretTypeSchemas = {
   'groq': z.object({
     apiKey: z.string().min(1),
   }),
+  'moonshot': z.object({
+    apiKey: z.string().min(1),
+  }),
   'xAPI': z.object({
     key: z.string().min(1),
     secretKey: z.string().min(1),
@@ -230,6 +233,15 @@ export const secretTypeMetadata = {
       },
     },
   },
+  'moonshot': {
+    label: 'Moonshot',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+        description: 'API key for Moonshot',
+      },
+    },
+  },
 } satisfies { [T in SecretType]: SecretTypeMetadata<T> }
 
 /**
@@ -240,11 +252,12 @@ export const secretTypeMetadata = {
  */
 export const compatibleSecretTypes: Record<SecretType, SecretType[]> = {
   '0g': ['0g'],
-  'openai': ['openai', 'anthropic', 'string'],
+  'openai': ['openai', 'anthropic', 'moonshot', 'string'],
   'anthropic': ['openai', 'anthropic', 'string'],
   'coinmarketcap': ['coinmarketcap'],
   'deepseek': ['deepseek'],
   'groq': ['groq'],
+  'moonshot': ['moonshot', 'openai'],
   'xAPI': ['xAPI'],
   'xApp': ['xApp'],
   'OkxDexApi': ['OkxDexApi'],

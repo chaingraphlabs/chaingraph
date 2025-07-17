@@ -13,9 +13,6 @@ import type {
   SecretTypeMap,
 } from '@badaitech/chaingraph-types'
 import {
-  PortSecret,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
   Input,
   MultiChannel,
@@ -24,6 +21,7 @@ import {
   Output,
   PortEnumFromObject,
   PortNumber,
+  PortSecret,
   PortStream,
   PortString,
 } from '@badaitech/chaingraph-types'
@@ -63,6 +61,9 @@ export enum LLMModels {
 
   // Groq Models
   GroqMetaLlamaLlama4Scout17b16eInstruct = 'groq/meta-llama/llama-4-scout-17b-16e-instruct',
+
+  // Moonshot Models
+  MoonshotV1128K = 'moonshot-v1-128k',
 }
 
 @ObjectSchema({
@@ -88,37 +89,11 @@ class LLMModel {
   }
 }
 
-export const llmModels = {
-  // GPT-4.1 Family
-  [LLMModels.Gpt41]: new LLMModel(LLMModels.Gpt41, 0),
-  [LLMModels.Gpt41Mini]: new LLMModel(LLMModels.Gpt41Mini, 0),
-  [LLMModels.Gpt41Nano]: new LLMModel(LLMModels.Gpt41Nano, 0),
-
-  // O-Series Reasoning Models
-  [LLMModels.O4Mini]: new LLMModel(LLMModels.O4Mini, 0),
-  [LLMModels.O3Pro]: new LLMModel(LLMModels.O3Pro, 0),
-  [LLMModels.GptO3Mini]: new LLMModel(LLMModels.GptO3Mini, 0),
-  [LLMModels.O3]: new LLMModel(LLMModels.O3, 0),
-  [LLMModels.O1]: new LLMModel(LLMModels.O1, 0),
-  [LLMModels.O1Mini]: new LLMModel(LLMModels.O1Mini, 0),
-
-  // GPT-4o Family
-  [LLMModels.Gpt4oMini]: new LLMModel(LLMModels.Gpt4oMini, 0),
-  [LLMModels.Gpt4o]: new LLMModel(LLMModels.Gpt4o, 0),
-
-  // Claude Models
-  [LLMModels.ClaudeSonnet4_20250514]: new LLMModel(LLMModels.ClaudeSonnet4_20250514, 0),
-  [LLMModels.ClaudeOpus4_20250514]: new LLMModel(LLMModels.ClaudeOpus4_20250514, 0),
-  [LLMModels.Claude37Sonnet20250219]: new LLMModel(LLMModels.Claude37Sonnet20250219, 0),
-  [LLMModels.Claude35Sonnet20241022]: new LLMModel(LLMModels.Claude35Sonnet20241022, 0),
-
-  // Deepseek Models
-  [LLMModels.DeepseekChat]: new LLMModel(LLMModels.DeepseekChat, 0),
-  [LLMModels.DeepseekReasoner]: new LLMModel(LLMModels.DeepseekReasoner, 0),
-
-  // Groq Models
-  [LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct]: new LLMModel(LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct, 0),
-}
+export const llmModels = Object.fromEntries(
+  Object.entries(LLMModels).map(
+    ([, m]) => [m, new LLMModel(m, 0)],
+  ),
+)
 
 @Node({
   type: 'LLMCallNode',
@@ -133,7 +108,7 @@ class LLMCallNode extends BaseNode {
     title: 'Model',
     description: 'Language Model',
   })
-  model: keyof typeof llmModels = LLMModels.Gpt41Mini
+  model: LLMModels = LLMModels.Gpt41Mini
 
   @Input()
   @PortSecret<SupportedProviders>({
@@ -218,6 +193,16 @@ class LLMCallNode extends BaseNode {
           baseURL: 'https://api.groq.com/openai/v1',
         },
       })
+    } else if (isMoonshot(this.model)) {
+      llm = new ChatOpenAI({
+        apiKey,
+        model: this.model,
+        temperature: this.temperature,
+        streaming: true,
+        configuration: {
+          baseURL: 'https://api.moonshot.ai/v1',
+        },
+      })
     } else {
       llm = new ChatOpenAI({
         apiKey,
@@ -286,7 +271,7 @@ class LLMCallNode extends BaseNode {
 /**
  * Type alias for supported provider names used in the system.
  */
-export type SupportedProviders = 'openai' | 'anthropic' | 'deepseek' | 'groq'
+export type SupportedProviders = 'openai' | 'anthropic' | 'deepseek' | 'groq' | 'moonshot'
 
 /**
  * Represents an API key type that maps to a secret type defined for supported providers.
@@ -319,6 +304,13 @@ export function isAnthropic(model: LLMModels): boolean {
  */
 export function isGroq(model: LLMModels): boolean {
   return model === LLMModels.GroqMetaLlamaLlama4Scout17b16eInstruct
+}
+
+/**
+ * Determines if the given model is one of the Moonshot models.
+ */
+export function isMoonshot(model: LLMModels): boolean {
+  return model === LLMModels.MoonshotV1128K
 }
 
 /**

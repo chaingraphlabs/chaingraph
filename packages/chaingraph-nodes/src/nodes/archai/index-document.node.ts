@@ -112,7 +112,7 @@ class ArchAIIndexDocumentNode extends BaseNode {
     title: 'QA Model',
     description: 'Model to use for generating QA pairs',
   })
-  qaModel: keyof typeof llmModels = LLMModels.Gpt41Mini
+  qaModel: LLMModels = LLMModels.Gpt41Mini
 
   @Input()
   @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })

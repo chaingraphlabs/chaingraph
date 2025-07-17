@@ -3521,30 +3521,30 @@ export const KdbGetDocumentsByCollectionDocument = {
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
       "type": {
         "kind": "NonNullType",
-        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } }
-      }
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "collection_id" } },
       "type": {
         "kind": "NonNullType",
-        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CollectionID" } }
-      }
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CollectionID" } },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "filters" } },
       "type": {
         "kind": "NamedType",
-        "name": { "kind": "Name", "value": "GetDocumentsByCollectionFilters" }
+        "name": { "kind": "Name", "value": "GetDocumentsByCollectionFilters" },
       },
       "defaultValue": {
         "kind": "ObjectValue",
         "fields": [{
           "kind": "ObjectField",
           "name": { "kind": "Name", "value": "published_range" },
-          "value": { "kind": "ObjectValue", "fields": [] }
-        }]
-      }
+          "value": { "kind": "ObjectValue", "fields": [] },
+        }],
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "order_by" } },
@@ -3552,14 +3552,14 @@ export const KdbGetDocumentsByCollectionDocument = {
         "kind": "NonNullType",
         "type": {
           "kind": "NamedType",
-          "name": { "kind": "Name", "value": "GetDocumentsByCollectionOrderByInput" }
-        }
-      }
+          "name": { "kind": "Name", "value": "GetDocumentsByCollectionOrderByInput" },
+        },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "limit" } },
       "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Int" } },
-      "defaultValue": { "kind": "IntValue", "value": "1000" }
+      "defaultValue": { "kind": "IntValue", "value": "1000" },
     }],
     "selectionSet": {
       "kind": "SelectionSet", "selections": [{
@@ -3568,23 +3568,23 @@ export const KdbGetDocumentsByCollectionDocument = {
         "arguments": [{
           "kind": "Argument",
           "name": { "kind": "Name", "value": "session" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "collection_id" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "collection_id" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "collection_id" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "filters" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "filters" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "filters" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "order_by" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "order_by" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "order_by" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "limit" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "limit" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "limit" } },
         }],
         "selectionSet": {
           "kind": "SelectionSet",
@@ -3595,13 +3595,13 @@ export const KdbGetDocumentsByCollectionDocument = {
               "kind": "SelectionSet",
               "selections": [{
                 "kind": "FragmentSpread",
-                "name": { "kind": "Name", "value": "DocumentFields" }
-              }]
-            }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "pagesCount" } }]
-        }
-      }]
-    }
+                "name": { "kind": "Name", "value": "DocumentFields" },
+              }],
+            },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "pagesCount" } }],
+        },
+      }],
+    },
   }, {
     "kind": "FragmentDefinition",
     "name": { "kind": "Name", "value": "DocumentFields" },
@@ -3610,19 +3610,19 @@ export const KdbGetDocumentsByCollectionDocument = {
       "kind": "SelectionSet",
       "selections": [{
         "kind": "Field",
-        "name": { "kind": "Name", "value": "document_id" }
+        "name": { "kind": "Name", "value": "document_id" },
       }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "collection_id" }
+        "name": { "kind": "Name", "value": "collection_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "url" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "created_at" }
+        "name": { "kind": "Name", "value": "created_at" },
       }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "published_at" }
+        "name": { "kind": "Name", "value": "published_at" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "name" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "description" }
+        "name": { "kind": "Name", "value": "description" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "tags" } }, {
         "kind": "Field",
         "name": { "kind": "Name", "value": "metadata" },
@@ -3630,9 +3630,9 @@ export const KdbGetDocumentsByCollectionDocument = {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "Field",
-            "name": { "kind": "Name", "value": "key" }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "value" } }]
-        }
+            "name": { "kind": "Name", "value": "key" },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "value" } }],
+        },
       }, {
         "kind": "Field",
         "name": { "kind": "Name", "value": "indexing_state" },
@@ -3640,39 +3640,39 @@ export const KdbGetDocumentsByCollectionDocument = {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "Field",
-            "name": { "kind": "Name", "value": "completion_cost" }
+            "name": { "kind": "Name", "value": "completion_cost" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "completion_tokens" }
+            "name": { "kind": "Name", "value": "completion_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "content_tokens" }
+            "name": { "kind": "Name", "value": "content_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "embedding_cost" }
+            "name": { "kind": "Name", "value": "embedding_cost" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "is_embedded" }
+            "name": { "kind": "Name", "value": "is_embedded" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "is_indexed_qa" }
+            "name": { "kind": "Name", "value": "is_indexed_qa" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "is_indexed_triplet" }
+            "name": { "kind": "Name", "value": "is_indexed_triplet" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "is_parsed" }
+            "name": { "kind": "Name", "value": "is_parsed" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "is_summarized" }
+            "name": { "kind": "Name", "value": "is_summarized" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "prompt_cost" }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "prompt_tokens" } }]
-        }
-      }]
-    }
-  }]
+            "name": { "kind": "Name", "value": "prompt_cost" },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "prompt_tokens" } }],
+        },
+      }],
+    },
+  }],
 } as unknown as DocumentNode<KdbGetDocumentsByCollectionQuery, KdbGetDocumentsByCollectionQueryVariables>
 export const KdbGetPagesByDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetPagesByDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DocumentID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"GetPagesByDocumentFilters"}},"defaultValue":{"kind":"ObjectValue","fields":[]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetPagesByDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"document_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"document_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"page_id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"number"}}]}}]}}]} as unknown as DocumentNode<KdbGetPagesByDocumentQuery, KdbGetPagesByDocumentQueryVariables>;
 export const KdbGetPagesByTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBGetPagesByTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"TaskID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbGetPagesByTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"task_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"task_id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"PageFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PageFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Page"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"page_id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"number"}}]}}]} as unknown as DocumentNode<KdbGetPagesByTaskQuery, KdbGetPagesByTaskQueryVariables>;
@@ -3687,8 +3687,8 @@ export const KdbIndexingDocumentTaskGetByCollectionDocument = {
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
       "type": {
         "kind": "NonNullType",
-        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } }
-      }
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "collections" } },
@@ -3698,10 +3698,10 @@ export const KdbIndexingDocumentTaskGetByCollectionDocument = {
           "kind": "ListType",
           "type": {
             "kind": "NonNullType",
-            "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CollectionID" } }
-          }
-        }
-      }
+            "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "CollectionID" } },
+          },
+        },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "states" } },
@@ -3711,11 +3711,11 @@ export const KdbIndexingDocumentTaskGetByCollectionDocument = {
           "kind": "NonNullType",
           "type": {
             "kind": "NamedType",
-            "name": { "kind": "Name", "value": "IndexingDocumentTaskState" }
-          }
-        }
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskState" },
+          },
+        },
       },
-      "defaultValue": { "kind": "ListValue", "values": [] }
+      "defaultValue": { "kind": "ListValue", "values": [] },
     }],
     "selectionSet": {
       "kind": "SelectionSet",
@@ -3725,82 +3725,82 @@ export const KdbIndexingDocumentTaskGetByCollectionDocument = {
         "arguments": [{
           "kind": "Argument",
           "name": { "kind": "Name", "value": "session" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "collection_id" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "collections" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "collections" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "state" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "states" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "states" } },
         }],
         "selectionSet": {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "FragmentSpread",
-            "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" }
-          }]
-        }
-      }]
-    }
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" },
+          }],
+        },
+      }],
+    },
   }, {
     "kind": "FragmentDefinition",
     "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" },
     "typeCondition": {
       "kind": "NamedType",
-      "name": { "kind": "Name", "value": "IndexingDocumentTask" }
+      "name": { "kind": "Name", "value": "IndexingDocumentTask" },
     },
     "selectionSet": {
       "kind": "SelectionSet",
       "selections": [{
         "kind": "Field",
-        "name": { "kind": "Name", "value": "task_id" }
+        "name": { "kind": "Name", "value": "task_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "document_id" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "chat_id" }
+        "name": { "kind": "Name", "value": "chat_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "message_id" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "author_id" }
+        "name": { "kind": "Name", "value": "author_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "task_state" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "created_at" }
+        "name": { "kind": "Name", "value": "created_at" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "update_at" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "confirmed" }
+        "name": { "kind": "Name", "value": "confirmed" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "version" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "error" }
+        "name": { "kind": "Name", "value": "error" },
       }, {
         "kind": "Field", "name": { "kind": "Name", "value": "statistics" }, "selectionSet": {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunks_indexed_qa" }
+            "name": { "kind": "Name", "value": "chunks_indexed_qa" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunks_indexed_triplet" }
+            "name": { "kind": "Name", "value": "chunks_indexed_triplet" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunks_total" }
+            "name": { "kind": "Name", "value": "chunks_total" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "current_indexing_speed" }
+            "name": { "kind": "Name", "value": "current_indexing_speed" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "expected_finish_seconds" }
+            "name": { "kind": "Name", "value": "expected_finish_seconds" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "expected_finished_at" }
+            "name": { "kind": "Name", "value": "expected_finished_at" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "indexed_percent" }
+            "name": { "kind": "Name", "value": "indexed_percent" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "indexing_started_at" }
+            "name": { "kind": "Name", "value": "indexing_started_at" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "llm_approximate_cost" }
+            "name": { "kind": "Name", "value": "llm_approximate_cost" },
           }, {
             "kind": "Field",
             "name": { "kind": "Name", "value": "llm_stats" },
@@ -3808,29 +3808,29 @@ export const KdbIndexingDocumentTaskGetByCollectionDocument = {
               "kind": "SelectionSet",
               "selections": [{
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "completion_cost" }
+                "name": { "kind": "Name", "value": "completion_cost" },
               }, {
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "embeddings_cost" }
+                "name": { "kind": "Name", "value": "embeddings_cost" },
               }, {
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "embeddings_count" }
+                "name": { "kind": "Name", "value": "embeddings_count" },
               }, {
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "prompt_cost" }
-              }, { "kind": "Field", "name": { "kind": "Name", "value": "total_cost" } }]
-            }
+                "name": { "kind": "Name", "value": "prompt_cost" },
+              }, { "kind": "Field", "name": { "kind": "Name", "value": "total_cost" } }],
+            },
           }, { "kind": "Field", "name": { "kind": "Name", "value": "pages" } }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "qa_total" }
+            "name": { "kind": "Name", "value": "qa_total" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "total_tokens" }
+            "name": { "kind": "Name", "value": "total_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "triplets_total" }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "indexed_for_seconds" } }]
-        }
+            "name": { "kind": "Name", "value": "triplets_total" },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "indexed_for_seconds" } }],
+        },
       }, {
         "kind": "Field",
         "name": { "kind": "Name", "value": "config" },
@@ -3838,27 +3838,27 @@ export const KdbIndexingDocumentTaskGetByCollectionDocument = {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunk_overlap_tokens" }
+            "name": { "kind": "Name", "value": "chunk_overlap_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunk_size_tokens" }
+            "name": { "kind": "Name", "value": "chunk_size_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "cost_limit" }
+            "name": { "kind": "Name", "value": "cost_limit" },
           }, { "kind": "Field", "name": { "kind": "Name", "value": "need_qa" } }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "qa_count_per_run" }
+            "name": { "kind": "Name", "value": "qa_count_per_run" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "qa_model" }
+            "name": { "kind": "Name", "value": "qa_model" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "force_confirm" }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "instruction_for_qa" } }]
-        }
-      }]
-    }
-  }]
+            "name": { "kind": "Name", "value": "force_confirm" },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "instruction_for_qa" } }],
+        },
+      }],
+    },
+  }],
 } as unknown as DocumentNode<KdbIndexingDocumentTaskGetByCollectionQuery, KdbIndexingDocumentTaskGetByCollectionQueryVariables>
 export const KdbIndexingDocumentTaskGetByDocumentDocument = {
   "kind": "Document", "definitions": [{
@@ -3870,8 +3870,8 @@ export const KdbIndexingDocumentTaskGetByDocumentDocument = {
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
       "type": {
         "kind": "NonNullType",
-        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } }
-      }
+        "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "Session" } },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "document_id" } },
@@ -3881,10 +3881,10 @@ export const KdbIndexingDocumentTaskGetByDocumentDocument = {
           "kind": "ListType",
           "type": {
             "kind": "NonNullType",
-            "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "DocumentID" } }
-          }
-        }
-      }
+            "type": { "kind": "NamedType", "name": { "kind": "Name", "value": "DocumentID" } },
+          },
+        },
+      },
     }, {
       "kind": "VariableDefinition",
       "variable": { "kind": "Variable", "name": { "kind": "Name", "value": "state" } },
@@ -3894,11 +3894,11 @@ export const KdbIndexingDocumentTaskGetByDocumentDocument = {
           "kind": "NonNullType",
           "type": {
             "kind": "NamedType",
-            "name": { "kind": "Name", "value": "IndexingDocumentTaskState" }
-          }
-        }
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskState" },
+          },
+        },
       },
-      "defaultValue": { "kind": "ListValue", "values": [] }
+      "defaultValue": { "kind": "ListValue", "values": [] },
     }],
     "selectionSet": {
       "kind": "SelectionSet",
@@ -3908,82 +3908,82 @@ export const KdbIndexingDocumentTaskGetByDocumentDocument = {
         "arguments": [{
           "kind": "Argument",
           "name": { "kind": "Name", "value": "session" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "session" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "document_id" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "document_id" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "document_id" } },
         }, {
           "kind": "Argument",
           "name": { "kind": "Name", "value": "state" },
-          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "state" } }
+          "value": { "kind": "Variable", "name": { "kind": "Name", "value": "state" } },
         }],
         "selectionSet": {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "FragmentSpread",
-            "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" }
-          }]
-        }
-      }]
-    }
+            "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" },
+          }],
+        },
+      }],
+    },
   }, {
     "kind": "FragmentDefinition",
     "name": { "kind": "Name", "value": "IndexingDocumentTaskFields" },
     "typeCondition": {
       "kind": "NamedType",
-      "name": { "kind": "Name", "value": "IndexingDocumentTask" }
+      "name": { "kind": "Name", "value": "IndexingDocumentTask" },
     },
     "selectionSet": {
       "kind": "SelectionSet",
       "selections": [{
         "kind": "Field",
-        "name": { "kind": "Name", "value": "task_id" }
+        "name": { "kind": "Name", "value": "task_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "document_id" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "chat_id" }
+        "name": { "kind": "Name", "value": "chat_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "message_id" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "author_id" }
+        "name": { "kind": "Name", "value": "author_id" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "task_state" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "created_at" }
+        "name": { "kind": "Name", "value": "created_at" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "update_at" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "confirmed" }
+        "name": { "kind": "Name", "value": "confirmed" },
       }, { "kind": "Field", "name": { "kind": "Name", "value": "version" } }, {
         "kind": "Field",
-        "name": { "kind": "Name", "value": "error" }
+        "name": { "kind": "Name", "value": "error" },
       }, {
         "kind": "Field", "name": { "kind": "Name", "value": "statistics" }, "selectionSet": {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunks_indexed_qa" }
+            "name": { "kind": "Name", "value": "chunks_indexed_qa" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunks_indexed_triplet" }
+            "name": { "kind": "Name", "value": "chunks_indexed_triplet" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunks_total" }
+            "name": { "kind": "Name", "value": "chunks_total" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "current_indexing_speed" }
+            "name": { "kind": "Name", "value": "current_indexing_speed" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "expected_finish_seconds" }
+            "name": { "kind": "Name", "value": "expected_finish_seconds" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "expected_finished_at" }
+            "name": { "kind": "Name", "value": "expected_finished_at" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "indexed_percent" }
+            "name": { "kind": "Name", "value": "indexed_percent" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "indexing_started_at" }
+            "name": { "kind": "Name", "value": "indexing_started_at" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "llm_approximate_cost" }
+            "name": { "kind": "Name", "value": "llm_approximate_cost" },
           }, {
             "kind": "Field",
             "name": { "kind": "Name", "value": "llm_stats" },
@@ -3991,29 +3991,29 @@ export const KdbIndexingDocumentTaskGetByDocumentDocument = {
               "kind": "SelectionSet",
               "selections": [{
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "completion_cost" }
+                "name": { "kind": "Name", "value": "completion_cost" },
               }, {
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "embeddings_cost" }
+                "name": { "kind": "Name", "value": "embeddings_cost" },
               }, {
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "embeddings_count" }
+                "name": { "kind": "Name", "value": "embeddings_count" },
               }, {
                 "kind": "Field",
-                "name": { "kind": "Name", "value": "prompt_cost" }
-              }, { "kind": "Field", "name": { "kind": "Name", "value": "total_cost" } }]
-            }
+                "name": { "kind": "Name", "value": "prompt_cost" },
+              }, { "kind": "Field", "name": { "kind": "Name", "value": "total_cost" } }],
+            },
           }, { "kind": "Field", "name": { "kind": "Name", "value": "pages" } }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "qa_total" }
+            "name": { "kind": "Name", "value": "qa_total" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "total_tokens" }
+            "name": { "kind": "Name", "value": "total_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "triplets_total" }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "indexed_for_seconds" } }]
-        }
+            "name": { "kind": "Name", "value": "triplets_total" },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "indexed_for_seconds" } }],
+        },
       }, {
         "kind": "Field",
         "name": { "kind": "Name", "value": "config" },
@@ -4021,27 +4021,27 @@ export const KdbIndexingDocumentTaskGetByDocumentDocument = {
           "kind": "SelectionSet",
           "selections": [{
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunk_overlap_tokens" }
+            "name": { "kind": "Name", "value": "chunk_overlap_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "chunk_size_tokens" }
+            "name": { "kind": "Name", "value": "chunk_size_tokens" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "cost_limit" }
+            "name": { "kind": "Name", "value": "cost_limit" },
           }, { "kind": "Field", "name": { "kind": "Name", "value": "need_qa" } }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "qa_count_per_run" }
+            "name": { "kind": "Name", "value": "qa_count_per_run" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "qa_model" }
+            "name": { "kind": "Name", "value": "qa_model" },
           }, {
             "kind": "Field",
-            "name": { "kind": "Name", "value": "force_confirm" }
-          }, { "kind": "Field", "name": { "kind": "Name", "value": "instruction_for_qa" } }]
-        }
-      }]
-    }
-  }]
+            "name": { "kind": "Name", "value": "force_confirm" },
+          }, { "kind": "Field", "name": { "kind": "Name", "value": "instruction_for_qa" } }],
+        },
+      }],
+    },
+  }],
 } as unknown as DocumentNode<KdbIndexingDocumentTaskGetByDocumentQuery, KdbIndexingDocumentTaskGetByDocumentQueryVariables>
 export const KdbIndexingDocumentTaskGetByStateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBIndexingDocumentTaskGetByState"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"state"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTaskState"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbIndexingDocumentTaskGetByState"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"state"},"value":{"kind":"Variable","name":{"kind":"Name","value":"state"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"IndexingDocumentTaskFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IndexingDocumentTaskFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"IndexingDocumentTask"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"chat_id"}},{"kind":"Field","name":{"kind":"Name","value":"message_id"}},{"kind":"Field","name":{"kind":"Name","value":"author_id"}},{"kind":"Field","name":{"kind":"Name","value":"task_state"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"update_at"}},{"kind":"Field","name":{"kind":"Name","value":"confirmed"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"error"}},{"kind":"Field","name":{"kind":"Name","value":"statistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_total"}},{"kind":"Field","name":{"kind":"Name","value":"current_indexing_speed"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finish_seconds"}},{"kind":"Field","name":{"kind":"Name","value":"expected_finished_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_percent"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_started_at"}},{"kind":"Field","name":{"kind":"Name","value":"llm_approximate_cost"}},{"kind":"Field","name":{"kind":"Name","value":"llm_stats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_cost"}},{"kind":"Field","name":{"kind":"Name","value":"embeddings_count"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"total_cost"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pages"}},{"kind":"Field","name":{"kind":"Name","value":"qa_total"}},{"kind":"Field","name":{"kind":"Name","value":"total_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"triplets_total"}},{"kind":"Field","name":{"kind":"Name","value":"indexed_for_seconds"}}]}},{"kind":"Field","name":{"kind":"Name","value":"config"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"chunk_overlap_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_size_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"cost_limit"}},{"kind":"Field","name":{"kind":"Name","value":"need_qa"}},{"kind":"Field","name":{"kind":"Name","value":"qa_count_per_run"}},{"kind":"Field","name":{"kind":"Name","value":"qa_model"}},{"kind":"Field","name":{"kind":"Name","value":"force_confirm"}},{"kind":"Field","name":{"kind":"Name","value":"instruction_for_qa"}}]}}]}}]} as unknown as DocumentNode<KdbIndexingDocumentTaskGetByStateQuery, KdbIndexingDocumentTaskGetByStateQueryVariables>;
 export const KdbQueryCollectionQaDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"KDBQueryCollectionQA"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"session"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Session"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CollectionID"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"queryString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"threshold"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}},"defaultValue":{"kind":"FloatValue","value":"0.5"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tokensLimit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"4000"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kdbQueryCollectionQA"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"session"},"value":{"kind":"Variable","name":{"kind":"Name","value":"session"}}},{"kind":"Argument","name":{"kind":"Name","value":"collection_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"collection_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"queryString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"queryString"}}},{"kind":"Argument","name":{"kind":"Name","value":"threshold"},"value":{"kind":"Variable","name":{"kind":"Name","value":"threshold"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"tokensLimit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tokensLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QaWithDistanceFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QaFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QA"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"answer"}},{"kind":"Field","name":{"kind":"Name","value":"answer_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_number"}},{"kind":"Field","name":{"kind":"Name","value":"created_at"}},{"kind":"Field","name":{"kind":"Name","value":"document_id"}},{"kind":"Field","name":{"kind":"Name","value":"document_published_at"}},{"kind":"Field","name":{"kind":"Name","value":"indexing_state"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completion_cost"}},{"kind":"Field","name":{"kind":"Name","value":"completion_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"content_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"embedding_cost"}},{"kind":"Field","name":{"kind":"Name","value":"is_embedded"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_qa"}},{"kind":"Field","name":{"kind":"Name","value":"is_indexed_triplet"}},{"kind":"Field","name":{"kind":"Name","value":"is_parsed"}},{"kind":"Field","name":{"kind":"Name","value":"is_summarized"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_cost"}},{"kind":"Field","name":{"kind":"Name","value":"prompt_tokens"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_from"}},{"kind":"Field","name":{"kind":"Name","value":"page_number_to"}},{"kind":"Field","name":{"kind":"Name","value":"qa_id"}},{"kind":"Field","name":{"kind":"Name","value":"question"}},{"kind":"Field","name":{"kind":"Name","value":"question_tokens"}},{"kind":"Field","name":{"kind":"Name","value":"task_id"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"QaWithDistanceFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"QAWithDistance"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"qa"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"QaFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"distance"}}]}}]} as unknown as DocumentNode<KdbQueryCollectionQaQuery, KdbQueryCollectionQaQueryVariables>;

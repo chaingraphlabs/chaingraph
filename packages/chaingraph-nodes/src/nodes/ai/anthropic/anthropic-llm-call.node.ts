@@ -9,64 +9,48 @@
 import type * as BetaAPI from '@anthropic-ai/sdk'
 // import type { BetaToolUnion } from '@anthropic-ai/sdk/src/resources/beta/messages/messages'
 import type {
+  EncryptedSecretValue,
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
-import type {
-  ContentBlockBase,
-} from './types'
+import type { ContentBlockBase } from './types'
 import { Buffer } from 'node:buffer'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
-  PortSecret,
-} from '@badaitech/chaingraph-types'
-import {
-  findPort,
-} from '@badaitech/chaingraph-types'
-import {
-  PortEnum,
-  PortNumber,
-} from '@badaitech/chaingraph-types'
-
-import {
-  ObjectSchema,
-  PortBoolean,
-} from '@badaitech/chaingraph-types'
-
-import {
   BaseNode,
   ExecutionEventEnum,
+  findPort,
   Input,
   MultiChannel,
   Node,
+  ObjectSchema,
   Output,
   PortArray,
+  PortBoolean,
+  PortEnum,
+  PortNumber,
   PortObject,
+  PortSecret,
   PortStream,
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
-  AntropicModelTypes,
-  MessageMetadata,
-  ThinkingConfig,
-  ToolChoice,
-} from './types'
-import {
-  Tool,
-} from './types'
-import {
   AntropicMessage,
+  AntropicModelTypes,
   AntropicResponseContent,
   ImageBlock,
+  MessageMetadata,
   TextBlock,
   TextResponseBlock,
+  ThinkingConfig,
   ThinkingResponseBlock,
   TokenUsage,
+  Tool,
+  ToolChoice,
   ToolResultBlock,
   ToolUseResponseBlock,
 } from './types'
@@ -159,7 +143,7 @@ class AntropicLLMCallNodeFeatures {
 @ObjectSchema({
   description: 'Configuration for the Anthropic Claude LLM',
 })
-export class LLMConfig {
+export class AnthropicLLMConfig {
   @Input()
   @PortSecret<'anthropic'>({
     title: 'API Key',
@@ -284,10 +268,10 @@ export class AntropicLlmCallNode extends BaseNode {
   @PortObject({
     title: 'Configuration',
     description: 'Configuration for the Anthropic Claude LLM',
-    schema: LLMConfig,
+    schema: AnthropicLLMConfig,
     required: true,
   })
-  config: LLMConfig = new LLMConfig()
+  config: AnthropicLLMConfig = new AnthropicLLMConfig()
   // config: AntropicConfig = new AntropicConfig()
 
   @Input()
