@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-types
 
+## 0.3.0
+
+### Minor Changes
+
+- 7a1bf17: Add Moonshot model support
+
+### Patch Changes
+
+- 844421c: Improve Event Emitter and Listener nodes with editable payload ports
+
 ## 0.2.15
 
 ### Patch Changes

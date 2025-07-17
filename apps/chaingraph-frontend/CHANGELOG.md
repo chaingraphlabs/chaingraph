@@ -1,5 +1,19 @@
 # @badaitech/chaingraph-frontend
 
+## 0.2.16
+
+### Patch Changes
+
+- 844421c: Improve Event Emitter and Listener nodes with editable payload ports
+- Updated dependencies [844421c]
+- Updated dependencies [7a1bf17]
+- Updated dependencies [b9528c9]
+- Updated dependencies [11d0eec]
+  - @badaitech/chaingraph-nodes@0.3.0
+  - @badaitech/chaingraph-types@0.3.0
+  - @badaitech/badai-api@0.2.16
+  - @badaitech/chaingraph-trpc@0.2.16
+
 ## 0.2.15
 
 ### Patch Changes

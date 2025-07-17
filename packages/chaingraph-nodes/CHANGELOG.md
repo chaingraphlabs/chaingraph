@@ -1,5 +1,20 @@
 # @badaitech/chaingraph-nodes
 
+## 0.3.0
+
+### Minor Changes
+
+- 7a1bf17: Add Moonshot model support
+- b9528c9: Require user to provide secret ID on QA generation
+- 11d0eec: Add filter by task state to KDB nodes
+
+### Patch Changes
+
+- 844421c: Improve Event Emitter and Listener nodes with editable payload ports
+- Updated dependencies [844421c]
+- Updated dependencies [7a1bf17]
+  - @badaitech/chaingraph-types@0.3.0
+
 ## 0.2.15
 
 ### Patch Changes
