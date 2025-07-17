@@ -33,11 +33,6 @@ import { LLMModels, llmModels } from '../ai'
   description: 'Index a document in the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'documents', 'indexing', 'kdb'],
-  ui: {
-    state: {
-      isHidden: true, // Hide from the UI for now
-    },
-  },
 })
 class ArchAIIndexDocumentNode extends BaseNode {
   @Input()

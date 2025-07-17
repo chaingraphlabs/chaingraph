@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-frontend
 
+## 0.3.1-dev.0
+
+### Patch Changes
+
+- Show KDB nodes
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.3.1-dev.0
+  - @badaitech/badai-api@0.3.1-dev.0
+  - @badaitech/chaingraph-trpc@0.3.1-dev.0
+  - @badaitech/chaingraph-types@0.3.1-dev.0
+
 ## 0.2.16
 
 ### Patch Changes

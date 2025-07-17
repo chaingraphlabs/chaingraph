@@ -31,11 +31,6 @@ import { Page } from './types'
   description: 'Retrieve pages from a specific document in the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
   tags: ['knowledge', 'database', 'documents', 'pages', 'kdb'],
-  ui: {
-    state: {
-      isHidden: true, // Hide from the UI for now
-    },
-  },
 })
 class ArchAIGetPagesByDocumentNode extends BaseNode {
   @Input()
