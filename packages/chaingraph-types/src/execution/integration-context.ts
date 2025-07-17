@@ -15,4 +15,6 @@ import type { WalletContext } from './wallet-context'
 export interface IntegrationContext {
   archai?: ArchAIContext
   wallet?: WalletContext
+
+  [key: string]: any // Allow additional properties for future integrations
 }

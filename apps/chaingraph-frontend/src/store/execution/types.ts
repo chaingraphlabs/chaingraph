@@ -19,11 +19,6 @@ export enum ExecutionStatus {
   ERROR = 'ERROR',
 }
 
-// export interface ExecutionStateUI {
-//   highlightedNodeId: string[] | null
-//   highlightedEdgeId: string[] | null
-// }
-
 export interface ExecutionState {
   status: ExecutionStatus
   executionId: string | null
@@ -31,9 +26,6 @@ export interface ExecutionState {
   breakpoints: Set<string>
   error: ExecutionError | null
   subscription: ExecutionSubscriptionState
-  // nodeStates: Map<string, NodeExecutionState>
-  // edgeStates: Map<string, EdgeExecutionState>
-  // ui: ExecutionStateUI
 }
 
 export interface ExecutionError {
@@ -41,12 +33,6 @@ export interface ExecutionError {
   code?: string
   timestamp: Date
 }
-
-// export interface ExecutionEvent {
-//   type: ExecutionEventEnum
-//   timestamp: Date
-//   data: any // TODO: We'll type this more specifically as we implement different event handlers
-// }
 
 export interface CreateExecutionOptions {
   flowId: string
@@ -65,6 +51,8 @@ export interface CreateExecutionOptions {
     chainId?: number
     rpcUrl?: string
   }
+
+  externalIntegrations?: Record<string, any>
 }
 
 export interface ExecutionOptions {

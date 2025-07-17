@@ -9,7 +9,7 @@
 import { $trpcClient } from '@/store/trpc/store'
 import { useUnit } from 'effector-react'
 
-export function useTrpCClient() {
+export function useTRPCClient() {
   const trpcClient = useUnit($trpcClient)
   if (!trpcClient) {
     throw new Error('TRPC client is not initialized')

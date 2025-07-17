@@ -98,6 +98,7 @@ class NodeAsAnthropicToolNode extends BaseNode {
     toolInputSchema.required = []
 
     const schema = extractNodeSchema(schemaNode)
+
     const outputProperties = schema?.outputProperties || {}
 
     // Convert schema properties to tool schema properties

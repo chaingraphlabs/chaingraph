@@ -8,4 +8,3 @@
 
 export { Sidebar } from './Sidebar'
 export * from './tabs'
-export * from './tabs'

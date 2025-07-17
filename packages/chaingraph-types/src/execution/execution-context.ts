@@ -119,7 +119,7 @@ export class ExecutionContext {
    * @returns The integration data or undefined if not found
    */
   getIntegration<T = unknown>(type: string): T | undefined {
-    if (!this.integrations) {
+    if (!this.integrations || !this.integrations[type]) {
       return undefined
     }
     return this.integrations[type] as T
