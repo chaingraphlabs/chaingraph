@@ -1,0 +1,9 @@
+query kdbIndexingDocumentTaskGetByCollection(
+  $session: Session!
+  $collections: [CollectionID!]!
+  $states: [IndexingDocumentTaskState!] = []
+) {
+  kdbIndexingDocumentTaskGetByCollection(session: $session, collection_id: $collections, state: $states) {
+    ...IndexingDocumentTaskFields
+  }
+}

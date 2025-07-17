@@ -8,8 +8,7 @@
 
 import type { IPort } from '../../port'
 import type { IPortManager } from '../interfaces'
-import { generatePortIDArrayElement } from '../../port'
-import { PortDirection } from '../../port'
+import { generatePortIDArrayElement, PortDirection } from '../../port'
 
 /**
  * Implementation of IPortManager interface
@@ -54,11 +53,8 @@ export class PortManager implements IPortManager {
    * @returns Array of input ports
    */
   getInputs(): IPort[] {
-    return Array.from(
-      this._ports
-        .values()
-        .filter(port => port.getConfig().direction === PortDirection.Input),
-    )
+    return Array.from(this._ports.values())
+      .filter(port => port.getConfig().direction === PortDirection.Input)
   }
 
   /**
@@ -66,10 +62,8 @@ export class PortManager implements IPortManager {
    * @returns Array of output ports
    */
   getOutputs(): IPort[] {
-    return Array.from(
-      this._ports.values()
-        .filter(port => port.getConfig().direction === PortDirection.Output),
-    )
+    return Array.from(this._ports.values())
+      .filter(port => port.getConfig().direction === PortDirection.Output)
   }
 
   /**

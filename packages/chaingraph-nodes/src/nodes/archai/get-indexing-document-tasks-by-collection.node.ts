@@ -18,25 +18,20 @@ import { NODE_CATEGORIES } from '../../categories'
 import { IndexingDocumentTask } from './types'
 
 @Node({
-  type: 'ArchAIGetIndexingDocumentTasksByDocumentNode',
-  title: 'ArchAI Get Indexing Document Tasks By Document',
-  description: 'Retrieve indexing document tasks for a specific document in the ArchAI Knowledge Database',
+  type: 'ArchAIGetIndexingDocumentTasksByCollectionNode',
+  title: 'ArchAI Get Indexing Document Tasks By Collection',
+  description: 'Retrieve indexing document tasks for a specific collection in the ArchAI Knowledge Database',
   category: NODE_CATEGORIES.ARCH_RAG,
-  tags: ['knowledge', 'database', 'documents', 'indexing', 'tasks', 'kdb'],
-  ui: {
-    state: {
-      isHidden: true, // Hide from the UI for now
-    },
-  },
+  tags: ['knowledge', 'database', 'documents', 'indexing', 'tasks', 'kdb', 'collection'],
 })
-class ArchAIGetIndexingDocumentTasksByDocumentNode extends BaseNode {
+class ArchAIGetIndexingDocumentTasksByCollectionNode extends BaseNode {
   @Input()
   @PortString({
-    title: 'Document ID',
-    description: 'ID of the document to retrieve indexing tasks for',
+    title: 'Collection ID',
+    description: 'ID of the collection to retrieve indexing tasks for',
     defaultValue: '',
   })
-  documentId: string = ''
+  collectionId: string = ''
 
   @Input()
   @PortArray({
@@ -64,15 +59,15 @@ class ArchAIGetIndexingDocumentTasksByDocumentNode extends BaseNode {
       defaultValue: new IndexingDocumentTask(),
     },
     title: 'Tasks',
-    description: 'Indexing document tasks retrieved for the document',
+    description: 'Indexing document tasks retrieved for the collection',
     defaultValue: [],
   })
-  tasks: GraphQL.KdbIndexingDocumentTaskGetByDocumentQuery['kdbIndexingDocumentTaskGetByDocument'] = []
+  tasks: GraphQL.KdbIndexingDocumentTaskGetByCollectionQuery['kdbIndexingDocumentTaskGetByCollection'] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Validate inputs
-    if (!this.documentId?.trim()) {
-      throw new Error('Document ID is required')
+    if (!this.collectionId?.trim()) {
+      throw new Error('Collection ID is required')
     }
 
     const archAIContext = context.getIntegration<ArchAIContext>('archai')
@@ -85,25 +80,25 @@ class ArchAIGetIndexingDocumentTasksByDocumentNode extends BaseNode {
       process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
     )
 
-    // Query the knowledge database for indexing tasks for the document
-    const { kdbIndexingDocumentTaskGetByDocument } = await graphQLClient.request(
-      GraphQL.KdbIndexingDocumentTaskGetByDocumentDocument,
+    // Query the knowledge database for indexing tasks for the collection
+    const { kdbIndexingDocumentTaskGetByCollection } = await graphQLClient.request(
+      GraphQL.KdbIndexingDocumentTaskGetByCollectionDocument,
       {
         session: agentSession,
-        document_id: [this.documentId],
-        state: this.state.length > 0 ? this.state : undefined,
+        collections: [this.collectionId],
+        states: this.state.length > 0 ? this.state : undefined,
       },
     )
 
-    if (!kdbIndexingDocumentTaskGetByDocument) {
-      throw new Error('Failed to retrieve indexing tasks for the document')
+    if (!kdbIndexingDocumentTaskGetByCollection) {
+      throw new Error('Failed to retrieve indexing tasks for the collection')
     }
 
     // Convert GraphQL response to our schema objects
-    this.tasks = kdbIndexingDocumentTaskGetByDocument
+    this.tasks = kdbIndexingDocumentTaskGetByCollection
 
     return {}
   }
 }
 
-export default ArchAIGetIndexingDocumentTasksByDocumentNode
+export default ArchAIGetIndexingDocumentTasksByCollectionNode
