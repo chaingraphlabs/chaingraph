@@ -28,6 +28,7 @@ export const create = authedProcedure
       updatedAt: new Date(),
       tags: input.tags,
       ownerID: userId,
+      forkRule: { '==': [false, true] }, // Default: always false (not forkable)
     })
 
     return flow.metadata

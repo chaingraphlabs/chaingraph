@@ -39,4 +39,7 @@ export interface FlowMetadata {
 
   /** Custom metadata */
   metadata?: Record<string, unknown>
+
+  /** Fork permission rule in JSONLogic format - defaults to false (not forkable) */
+  forkRule?: Record<string, any>
 }
