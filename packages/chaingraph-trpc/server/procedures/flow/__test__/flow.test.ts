@@ -12,6 +12,7 @@ import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'
 import { createTestFlowMetadata } from '../../../test/utils/testHelpers'
 import { createCallerFactory } from '../../../trpc'
+import { FORK_ALLOW_RULE, FORK_DENY_RULE } from '../../../utils/fork-security'
 
 describe('flow Procedures', () => {
   // Create caller factory once
@@ -187,7 +188,7 @@ describe('flow Procedures', () => {
           throw new Error('Flow creation failed')
 
         const fullFlow = await caller.flow.get({ flowId: flow.id! })
-        expect(fullFlow.metadata.forkRule).toEqual({ '==': [false, true] })
+        expect(fullFlow.metadata.forkRule).toEqual(FORK_DENY_RULE)
       })
 
       it('should prevent forking by default', async () => {
@@ -268,11 +269,11 @@ describe('flow Procedures', () => {
 
         const result = await caller.flow.setForkRule({
           flowId: flow.id!,
-          forkRule: { '==': [true, true] }, // Allow everyone to fork
+          forkRule: FORK_ALLOW_RULE, // Allow everyone to fork
         })
 
         expect(result.success).toBe(true)
-        expect(result.forkRule).toEqual({ '==': [true, true] })
+        expect(result.forkRule).toEqual(FORK_ALLOW_RULE)
       })
 
       it('should prevent non-owners from setting fork rules', async () => {
@@ -290,7 +291,7 @@ describe('flow Procedures', () => {
         await expect(
           userCaller.flow.setForkRule({
             flowId: flow.id!,
-            forkRule: { '==': [true, true] },
+            forkRule: FORK_ALLOW_RULE,
           }),
         ).rejects.toThrow('Only the flow owner can set fork rules')
       })
@@ -308,7 +309,7 @@ describe('flow Procedures', () => {
           forkRule: undefined,
         })
 
-        expect(result.forkRule).toEqual({ '==': [false, true] })
+        expect(result.forkRule).toEqual(FORK_DENY_RULE)
       })
     })
 
@@ -324,7 +325,7 @@ describe('flow Procedures', () => {
 
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
-          forkRule: { '==': [true, true] }, // Allow everyone
+          forkRule: FORK_ALLOW_RULE, // Allow everyone
         })
 
         // Fork as different user
@@ -399,7 +400,7 @@ describe('flow Procedures', () => {
 
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
-          forkRule: { '==': [true, true] },
+          forkRule: FORK_ALLOW_RULE,
         })
 
         // Fork the flow
@@ -410,7 +411,7 @@ describe('flow Procedures', () => {
 
         // Get forked flow to check its rule
         const fullForkedFlow = await userCaller.flow.get({ flowId: forkedFlow.id! })
-        expect(fullForkedFlow.metadata.forkRule).toEqual({ '==': [false, true] })
+        expect(fullForkedFlow.metadata.forkRule).toEqual(FORK_DENY_RULE)
       })
     })
 
@@ -426,7 +427,7 @@ describe('flow Procedures', () => {
         // Set permissive rule
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
-          forkRule: { '==': [true, true] },
+          forkRule: FORK_ALLOW_RULE,
         })
 
         // Check as different user
@@ -463,7 +464,7 @@ describe('flow Procedures', () => {
 
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
-          forkRule: { '==': [true, true] },
+          forkRule: FORK_ALLOW_RULE,
         })
 
         // Create unauthenticated context

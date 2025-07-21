@@ -99,48 +99,50 @@ export function FlowListItem({
                   <Pencil1Icon className="h-4 w-4" />
                 </Button>
 
-                {showForkConfirmation ? (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onFork(flow)
-                        setShowForkConfirmation(false)
-                      }}
-                      disabled={disabled || isForkingFlow}
-                      className="h-8 px-2 text-xs"
-                    >
-                      {isForkingFlow ? 'Forking...' : 'Confirm'}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowForkConfirmation(false)
-                      }}
-                      disabled={disabled || isForkingFlow}
-                      className="h-8 px-2 text-xs"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowForkConfirmation(true)
-                    }}
-                    disabled={disabled}
-                    title="Fork flow"
-                  >
-                    <Share1Icon className="h-4 w-4" />
-                  </Button>
-                )}
+                {showForkConfirmation
+                  ? (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onFork(flow)
+                            setShowForkConfirmation(false)
+                          }}
+                          disabled={disabled || isForkingFlow}
+                          className="h-8 px-2 text-xs"
+                        >
+                          {isForkingFlow ? 'Forking...' : 'Confirm'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setShowForkConfirmation(false)
+                          }}
+                          disabled={disabled || isForkingFlow}
+                          className="h-8 px-2 text-xs"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )
+                  : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setShowForkConfirmation(true)
+                        }}
+                        disabled={disabled}
+                        title="Fork flow"
+                      >
+                        <Share1Icon className="h-4 w-4" />
+                      </Button>
+                    )}
 
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>

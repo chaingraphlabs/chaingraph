@@ -7,9 +7,9 @@
  */
 
 import type { Flow } from '@badaitech/chaingraph-types'
-import * as jsonLogic from 'json-logic-js'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
+import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
 
 export const fork = flowContextProcedure
   .input(z.object({
@@ -29,11 +29,18 @@ export const fork = flowContextProcedure
     }
 
     // Check if user is the owner - owners can always fork their own flows
-    const isOwner = originalFlow.metadata.ownerID === userId
+    // Add explicit null/undefined checks to prevent permission bypass
+    const isOwner = !!(
+      userId
+      && originalFlow.metadata.ownerID
+      && typeof userId === 'string'
+      && typeof originalFlow.metadata.ownerID === 'string'
+      && originalFlow.metadata.ownerID === userId
+    )
 
     if (!isOwner) {
-      // Evaluate fork rule for non-owners - default to false (not forkable) if no rule is set
-      const forkRule = originalFlow.metadata.forkRule || { '==': [false, true] } // Always false by default
+      // Evaluate fork rule for non-owners - default to deny if no rule is set
+      const forkRule = originalFlow.metadata.forkRule || FORK_DENY_RULE
       const context = {
         userId,
         ownerID: originalFlow.metadata.ownerID,
@@ -41,8 +48,13 @@ export const fork = flowContextProcedure
         flowId: input.flowId,
       }
 
-      const canFork = jsonLogic.apply(forkRule, context)
-      if (!canFork) {
+      try {
+        const canFork = safeApplyJsonLogic(forkRule, context)
+        if (!canFork) {
+          throw new Error('You do not have permission to fork this flow')
+        }
+      } catch (error) {
+        // Treat any evaluation error as permission denied for security
         throw new Error('You do not have permission to fork this flow')
       }
     }
@@ -56,7 +68,7 @@ export const fork = flowContextProcedure
     clonedFlow.metadata.updatedAt = new Date()
     clonedFlow.metadata.ownerID = userId
     clonedFlow.metadata.parentId = originalFlow.id
-    clonedFlow.metadata.forkRule = { '==': [false, true] } // Reset to default: not forkable
+    clonedFlow.metadata.forkRule = FORK_DENY_RULE // Reset to default: not forkable
 
     // Save the forked flow with all its nodes and edges
     const savedFlow = await ctx.flowStore.updateFlow(clonedFlow)

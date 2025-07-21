@@ -8,11 +8,15 @@
 
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
+import { FORK_DENY_RULE, validateForkRule } from '../../utils/fork-security'
 
 export const setForkRule = flowContextProcedure
   .input(z.object({
     flowId: z.string(),
-    forkRule: z.record(z.any()).optional(),
+    forkRule: z.record(z.any()).optional().refine(
+      rule => rule === undefined || validateForkRule(rule),
+      { message: 'Invalid fork rule format or too complex' },
+    ),
   }))
   .mutation(async ({ input, ctx }) => {
     const userId = ctx.session?.user?.id
@@ -32,7 +36,7 @@ export const setForkRule = flowContextProcedure
     }
 
     // Update the fork rule
-    flow.metadata.forkRule = input.forkRule || { '==': [false, true] } // Default: always false
+    flow.metadata.forkRule = input.forkRule || FORK_DENY_RULE // Default: deny access
     flow.metadata.updatedAt = new Date()
 
     // Save the updated flow
