@@ -7,10 +7,10 @@
  */
 
 import { z } from 'zod'
-import { flowContextProcedure } from '../../trpc'
+import { authedProcedure } from '../../trpc'
 import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
 
-export const getMeta = flowContextProcedure
+export const getMeta = authedProcedure
   .input(z.object({
     flowId: z.string(),
   }))
@@ -19,6 +19,9 @@ export const getMeta = flowContextProcedure
     if (!flow) {
       throw new Error(`Flow ${input.flowId} not found`)
     }
+
+    // For getMeta, allow read access for anyone (needed for fork permission checks)
+    // Write operations (setForkRule) still use flowContextProcedure for owner-only access
 
     const userId = ctx.session?.user?.id
     let canFork = false

@@ -155,9 +155,9 @@ describe('flow Procedures', () => {
   })
 
   describe('fork permission system', () => {
-    // Helper to create a second user context
-    function createSecondUserContext(): AppContext {
-      const ctx = createTestContext()
+    // Helper to create a second user context that shares the same flow store
+    function createSecondUserContext(sharedFlowStore: any): AppContext {
+      const ctx = createTestContext(undefined, undefined, sharedFlowStore)
       return {
         ...ctx,
         session: {
@@ -201,7 +201,7 @@ describe('flow Procedures', () => {
           throw new Error('Flow creation failed')
 
         // Try to fork as different user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         await expect(
@@ -218,7 +218,7 @@ describe('flow Procedures', () => {
           throw new Error('Flow creation failed')
 
         // Check as different user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         const meta = await userCaller.flow.getMeta({ flowId: flow.id! })
@@ -285,7 +285,7 @@ describe('flow Procedures', () => {
           throw new Error('Flow creation failed')
 
         // Try to set rule as different user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         await expect(
@@ -329,7 +329,7 @@ describe('flow Procedures', () => {
         })
 
         // Fork as different user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         const forkedFlow = await userCaller.flow.fork({
@@ -381,7 +381,7 @@ describe('flow Procedures', () => {
         })
 
         // Try to fork as different user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         await expect(
@@ -404,7 +404,7 @@ describe('flow Procedures', () => {
         })
 
         // Fork the flow
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         const forkedFlow = await userCaller.flow.fork({ flowId: flow.id! })
@@ -431,7 +431,7 @@ describe('flow Procedures', () => {
         })
 
         // Check as different user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         const meta = await userCaller.flow.getMeta({ flowId: flow.id! })
@@ -447,7 +447,7 @@ describe('flow Procedures', () => {
           throw new Error('Flow creation failed')
 
         // Keep default restrictive rule
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         const meta = await userCaller.flow.getMeta({ flowId: flow.id! })
@@ -467,8 +467,8 @@ describe('flow Procedures', () => {
           forkRule: FORK_ALLOW_RULE,
         })
 
-        // Create unauthenticated context
-        const unauthCtx = createTestContext()
+        // Create unauthenticated context that shares the same flow store
+        const unauthCtx = createTestContext(undefined, undefined, ownerCtx.flowStore)
         // @ts-expect-error - intentionally setting to null for testing
         unauthCtx.session = null
 
@@ -497,7 +497,7 @@ describe('flow Procedures', () => {
         })
 
         // Check as the specific allowed user
-        const userCtx = createSecondUserContext()
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
         const meta = await userCaller.flow.getMeta({ flowId: flow.id! })

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import * as jsonLogic from 'json-logic-js'
+import jsonLogic from 'json-logic-js'
 
 // Security constants
 export const FORK_DENY_RULE = { '===': [1, 0] } as const // Always false, more explicit than ==

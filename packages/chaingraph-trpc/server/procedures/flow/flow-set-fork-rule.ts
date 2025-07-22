@@ -7,10 +7,10 @@
  */
 
 import { z } from 'zod'
-import { flowContextProcedure } from '../../trpc'
+import { authedProcedure } from '../../trpc'
 import { FORK_DENY_RULE, validateForkRule } from '../../utils/fork-security'
 
-export const setForkRule = flowContextProcedure
+export const setForkRule = authedProcedure
   .input(z.object({
     flowId: z.string(),
     forkRule: z.record(z.any()).optional().refine(

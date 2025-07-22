@@ -8,10 +8,10 @@
 
 import type { Flow } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
-import { flowContextProcedure } from '../../trpc'
+import { authedProcedure } from '../../trpc'
 import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
 
-export const fork = flowContextProcedure
+export const fork = authedProcedure
   .input(z.object({
     flowId: z.string(),
     name: z.string().optional(),
@@ -28,7 +28,7 @@ export const fork = flowContextProcedure
       throw new Error(`Flow ${input.flowId} not found`)
     }
 
-    // Check if user is the owner - owners can always fork their own flows
+    // Fork access control: Allow owners and users who pass fork rules
     // Add explicit null/undefined checks to prevent permission bypass
     const isOwner = !!(
       userId
