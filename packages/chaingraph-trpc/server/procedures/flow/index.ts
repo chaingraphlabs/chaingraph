@@ -17,6 +17,7 @@ import { get } from './flow-get'
 import { getMeta } from './flow-get-meta'
 import { list } from './flow-list'
 import { setForkRule } from './flow-set-fork-rule'
+import { setPublic } from './flow-set-public'
 import { pasteNodes } from './paste-nodes'
 import { removeEdge } from './remove-edge'
 import { removeNode } from './remove-node'
@@ -44,6 +45,7 @@ export const flowProcedures = router({
   edit,
   fork,
   setForkRule,
+  setPublic,
   subscribeToEvents,
   addNode,
   removeNode,
@@ -73,6 +75,7 @@ export { get } from './flow-get'
 export { getMeta } from './flow-get-meta'
 export { list } from './flow-list'
 export { setForkRule } from './flow-set-fork-rule'
+export { setPublic } from './flow-set-public'
 export { pasteNodes } from './paste-nodes'
 export type { PasteNodesClipboardDataType, PasteNodesInputType } from './paste-nodes'
 export { removeEdge } from './remove-edge'

@@ -217,6 +217,9 @@ describe('flow Procedures', () => {
         if (!flow)
           throw new Error('Flow creation failed')
 
+        // Make flow public so non-owner can access it
+        await ownerCaller.flow.setPublic({ flowId: flow.id!, isPublic: true })
+
         // Check as different user
         const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
@@ -242,6 +245,38 @@ describe('flow Procedures', () => {
         expect(forkedFlow.name).toBe('Owner Self Fork')
         expect(forkedFlow.parentId).toBe(flow.id)
         expect(forkedFlow.ownerID).toBe('dev:admin')
+      })
+
+      it('should create forked flow with unique ID different from original', async () => {
+        const ownerCtx = createTestContext()
+        const ownerCaller = createCaller(ownerCtx)
+
+        const originalFlow = await ownerCaller.flow.create({ name: 'Original Flow' })
+        if (!originalFlow)
+          throw new Error('Flow creation failed')
+
+        // Fork the flow
+        const forkedFlow = await ownerCaller.flow.fork({
+          flowId: originalFlow.id!,
+          name: 'Forked Flow',
+        })
+
+        // CRITICAL: Ensure forked flow has different ID than original
+        expect(forkedFlow.id).toBeDefined()
+        expect(forkedFlow.id).not.toBe(originalFlow.id)
+        expect(typeof forkedFlow.id).toBe('string')
+        expect(forkedFlow.id!.length).toBeGreaterThan(0)
+
+        // Verify parent relationship is correct
+        expect(forkedFlow.parentId).toBe(originalFlow.id)
+
+        // Verify we can retrieve both flows independently
+        const retrievedOriginal = await ownerCaller.flow.get({ flowId: originalFlow.id! })
+        const retrievedForked = await ownerCaller.flow.get({ flowId: forkedFlow.id! })
+
+        expect(retrievedOriginal.id).toBe(originalFlow.id)
+        expect(retrievedForked.id).toBe(forkedFlow.id)
+        expect(retrievedOriginal.id).not.toBe(retrievedForked.id)
       })
 
       it('should show canFork: true for owners even with default restrictive rule', async () => {
@@ -424,7 +459,8 @@ describe('flow Procedures', () => {
         if (!flow)
           throw new Error('Flow creation failed')
 
-        // Set permissive rule
+        // Make flow public and set permissive rule
+        await ownerCaller.flow.setPublic({ flowId: flow.id!, isPublic: true })
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
           forkRule: FORK_ALLOW_RULE,
@@ -446,7 +482,9 @@ describe('flow Procedures', () => {
         if (!flow)
           throw new Error('Flow creation failed')
 
-        // Keep default restrictive rule
+        // Make flow public but keep default restrictive rule
+        await ownerCaller.flow.setPublic({ flowId: flow.id!, isPublic: true })
+
         const userCtx = createSecondUserContext(ownerCtx.flowStore)
         const userCaller = createCaller(userCtx)
 
@@ -462,6 +500,8 @@ describe('flow Procedures', () => {
         if (!flow)
           throw new Error('Flow creation failed')
 
+        // Make flow public and set permissive rule
+        await ownerCaller.flow.setPublic({ flowId: flow.id!, isPublic: true })
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
           forkRule: FORK_ALLOW_RULE,
@@ -485,7 +525,8 @@ describe('flow Procedures', () => {
         if (!flow)
           throw new Error('Flow creation failed')
 
-        // Complex rule: allow owner OR specific user
+        // Make flow public and set complex rule: allow owner OR specific user
+        await ownerCaller.flow.setPublic({ flowId: flow.id!, isPublic: true })
         await ownerCaller.flow.setForkRule({
           flowId: flow.id!,
           forkRule: {
@@ -506,6 +547,95 @@ describe('flow Procedures', () => {
         // Check as owner
         const ownerMeta = await ownerCaller.flow.getMeta({ flowId: flow.id! })
         expect(ownerMeta.canFork).toBe(true)
+      })
+    })
+
+    describe('privacy and visibility controls', () => {
+      it('should create flows as private by default', async () => {
+        const ctx = createTestContext()
+        const caller = createCaller(ctx)
+
+        const flow = await caller.flow.create({ name: 'Private Flow' })
+        if (!flow)
+          throw new Error('Flow creation failed')
+
+        const fullFlow = await caller.flow.get({ flowId: flow.id! })
+        expect(fullFlow.metadata.isPublic).toBeUndefined() // undefined = private
+      })
+
+      it('should allow owners to set flow visibility', async () => {
+        const ctx = createTestContext()
+        const caller = createCaller(ctx)
+
+        const flow = await caller.flow.create({ name: 'Test Flow' })
+        if (!flow)
+          throw new Error('Flow creation failed')
+
+        // Make public
+        const result = await caller.flow.setPublic({
+          flowId: flow.id!,
+          isPublic: true,
+        })
+
+        expect(result.success).toBe(true)
+        expect(result.isPublic).toBe(true)
+      })
+
+      it('should prevent non-owners from setting flow visibility', async () => {
+        const ownerCtx = createTestContext()
+        const ownerCaller = createCaller(ownerCtx)
+
+        const flow = await ownerCaller.flow.create({ name: 'Owner Flow' })
+        if (!flow)
+          throw new Error('Flow creation failed')
+
+        // Try to set visibility as different user
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
+        const userCaller = createCaller(userCtx)
+
+        await expect(
+          userCaller.flow.setPublic({
+            flowId: flow.id!,
+            isPublic: true,
+          }),
+        ).rejects.toThrow('User does not have access to this flow or flow not found')
+      })
+
+      it('should deny access to private flows for non-owners', async () => {
+        const ownerCtx = createTestContext()
+        const ownerCaller = createCaller(ownerCtx)
+
+        const flow = await ownerCaller.flow.create({ name: 'Private Flow' })
+        if (!flow)
+          throw new Error('Flow creation failed')
+
+        // Try to access as different user
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
+        const userCaller = createCaller(userCtx)
+
+        await expect(
+          userCaller.flow.getMeta({ flowId: flow.id! }),
+        ).rejects.toThrow('Access denied: Flow is private')
+      })
+
+      it('should allow access to public flows for non-owners', async () => {
+        const ownerCtx = createTestContext()
+        const ownerCaller = createCaller(ownerCtx)
+
+        const flow = await ownerCaller.flow.create({ name: 'Public Flow' })
+        if (!flow)
+          throw new Error('Flow creation failed')
+
+        // Make public
+        await ownerCaller.flow.setPublic({ flowId: flow.id!, isPublic: true })
+
+        // Access as different user should work
+        const userCtx = createSecondUserContext(ownerCtx.flowStore)
+        const userCaller = createCaller(userCtx)
+
+        const meta = await userCaller.flow.getMeta({ flowId: flow.id! })
+        expect(meta.name).toBe('Public Flow')
+        expect(meta.canFork).toBe(false) // Default fork rule is deny
       })
     })
   })

@@ -20,28 +20,32 @@ export const getMeta = authedProcedure
       throw new Error(`Flow ${input.flowId} not found`)
     }
 
-    // For getMeta, allow read access for anyone (needed for fork permission checks)
-    // Write operations (setForkRule) still use flowContextProcedure for owner-only access
-
     const userId = ctx.session?.user?.id
+
+    // Check ownership
+    const isOwner = !!(
+      userId
+      && flow.metadata.ownerID
+      && typeof userId === 'string'
+      && typeof flow.metadata.ownerID === 'string'
+      && flow.metadata.ownerID === userId
+    )
+
+    // Security: Only allow access to owners or if flow is explicitly public
+    const isPublic = flow.metadata.isPublic === true
+    if (!isOwner && !isPublic) {
+      throw new Error('Access denied: Flow is private')
+    }
+
     let canFork = false
 
-    // Evaluate fork rule if user is authenticated
+    // Evaluate fork permissions if user is authenticated
     if (userId) {
-      // Add explicit null/undefined checks to prevent permission bypass
-      const isOwner = !!(
-        userId
-        && flow.metadata.ownerID
-        && typeof userId === 'string'
-        && typeof flow.metadata.ownerID === 'string'
-        && flow.metadata.ownerID === userId
-      )
-
       if (isOwner) {
         // Owners can always fork their own flows
         canFork = true
-      } else {
-        // Evaluate fork rule for non-owners - default to deny if no rule is set
+      } else if (isPublic) {
+        // For public flows, evaluate fork rule for non-owners
         const forkRule = flow.metadata.forkRule || FORK_DENY_RULE
         const context = {
           userId,

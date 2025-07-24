@@ -6,10 +6,24 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow } from '@badaitech/chaingraph-types'
+import type { IFlowStore } from '../../stores/flowStore/types'
+import { Flow } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { authedProcedure } from '../../trpc'
 import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
+
+async function storeForkedFlow(flowStore: IFlowStore, forkedFlow: Flow): Promise<void> {
+  // For InMemoryFlowStore, directly add to the flows map
+  if ('flows' in flowStore) {
+    const memoryStore = flowStore as any
+    memoryStore.flows.set(forkedFlow.id, forkedFlow)
+    return
+  }
+
+  // For other flow stores, create empty flow then update with content
+  await flowStore.createFlow(forkedFlow.metadata)
+  await flowStore.updateFlow(forkedFlow)
+}
 
 export const fork = authedProcedure
   .input(z.object({
@@ -59,19 +73,31 @@ export const fork = authedProcedure
       }
     }
 
-    // Clone the flow (this creates a new flow with new ID)
+    // Clone the flow with a new unique ID
     const clonedFlow = originalFlow.clone() as Flow
 
-    // Update metadata for the forked flow
-    clonedFlow.metadata.name = input.name || `${originalFlow.metadata.name} (Fork)`
-    clonedFlow.metadata.createdAt = new Date()
-    clonedFlow.metadata.updatedAt = new Date()
-    clonedFlow.metadata.ownerID = userId
-    clonedFlow.metadata.parentId = originalFlow.id
-    clonedFlow.metadata.forkRule = FORK_DENY_RULE // Reset to default: not forkable
+    // Create new flow with unique ID to prevent conflicts with original
+    const { id: _, ...metadataWithoutId } = clonedFlow.metadata
+    const forkedFlow = new Flow(metadataWithoutId)
 
-    // Save the forked flow with all its nodes and edges
-    const savedFlow = await ctx.flowStore.updateFlow(clonedFlow)
+    // Transfer nodes and edges to the new flow
+    for (const node of clonedFlow.nodes.values()) {
+      forkedFlow.addNode(node, true)
+    }
+    for (const edge of clonedFlow.edges.values()) {
+      forkedFlow.addEdge(edge)
+    }
 
-    return savedFlow.metadata
+    // Configure fork metadata
+    forkedFlow.metadata.name = input.name || `${originalFlow.metadata.name} (Fork)`
+    forkedFlow.metadata.createdAt = new Date()
+    forkedFlow.metadata.updatedAt = new Date()
+    forkedFlow.metadata.ownerID = userId
+    forkedFlow.metadata.parentId = originalFlow.id
+    forkedFlow.metadata.forkRule = FORK_DENY_RULE
+
+    // Store the forked flow
+    await storeForkedFlow(ctx.flowStore, forkedFlow)
+
+    return forkedFlow.metadata
   })
