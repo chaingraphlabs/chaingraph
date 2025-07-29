@@ -168,11 +168,15 @@ describe('flow Procedures', () => {
             role: 'user',
           },
           session: {
-            ...ctx.session!.session,
+            ...(ctx.session?.session || {}),
             userId: 'dev:user2',
             token: 'user2-token',
             provider: 'dev' as const,
-            user: ctx.session!.session.user!,
+            user: {
+              id: 'dev:user2',
+              displayName: 'User 2',
+              role: 'user' as const,
+            },
           },
         },
       }
