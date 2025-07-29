@@ -39,4 +39,13 @@ export interface FlowMetadata {
 
   /** Custom metadata */
   metadata?: Record<string, unknown>
+
+  /** Fork permission rule in JSONLogic format - defaults to false (not forkable) */
+  forkRule?: Record<string, any>
+
+  /** Whether the flow is publicly visible - defaults to false (private) */
+  isPublic?: boolean
+
+  /** Whether the current user can fork this flow */
+  canFork?: boolean
 }

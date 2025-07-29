@@ -7,6 +7,7 @@
  */
 
 import { authedProcedure } from '../../trpc'
+import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
 
 const defaultFlowLimit = 1000
 
@@ -26,7 +27,37 @@ export const list = authedProcedure
     // TODO: lately we have added a shared flow feature, consider to add a query to get all flows
 
     return flows
-      .map(flow => flow.metadata)
+      .map((flow) => {
+        const metadata = flow.metadata
+
+        // Compute canFork for each flow
+        let canFork = false
+
+        // Owners can always fork their own flows
+        if (metadata.ownerID === userId) {
+          canFork = true
+        } else if (metadata.isPublic) {
+          // For public flows, evaluate fork rule for non-owners
+          const forkRule = metadata.forkRule || FORK_DENY_RULE
+          const context = {
+            userId,
+            isOwner: false,
+            flow: metadata,
+          }
+
+          try {
+            canFork = safeApplyJsonLogic(forkRule, context)
+          } catch (error) {
+            // Treat any evaluation error as permission denied for security
+            canFork = false
+          }
+        }
+
+        return {
+          ...metadata,
+          canFork,
+        }
+      })
       .filter(flowMeta =>
         flowMeta
         && flowMeta.id !== ''
