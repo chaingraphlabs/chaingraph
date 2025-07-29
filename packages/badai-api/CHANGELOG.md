@@ -1,5 +1,12 @@
 # @badaitech/badai-api
 
+## 0.3.1
+
+### Patch Changes
+
+- e58e090: Add flow fork functionality
+- 512098b: Show KDB nodes
+
 ## 0.3.1-dev.0
 
 ### Patch Changes

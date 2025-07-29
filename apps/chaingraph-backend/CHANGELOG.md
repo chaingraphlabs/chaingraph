@@ -1,5 +1,18 @@
 # @badaitech/chaingraph-backend
 
+## 0.3.1
+
+### Patch Changes
+
+- e58e090: Add flow fork functionality
+- 512098b: Show KDB nodes
+- Updated dependencies [e58e090]
+- Updated dependencies [512098b]
+- Updated dependencies [33c16c7]
+  - @badaitech/chaingraph-types@0.3.1
+  - @badaitech/chaingraph-trpc@0.3.1
+  - @badaitech/chaingraph-nodes@0.3.1
+
 ## 0.3.1-dev.0
 
 ### Patch Changes
