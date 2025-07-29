@@ -22,4 +22,10 @@ export * from './executions'
 export { init } from './init'
 export * from './procedures'
 export * from './stores'
+export {
+  FORK_ALLOW_RULE,
+  FORK_DENY_RULE,
+  validateForkRule,
+} from './utils/fork-security'
+
 export { applyWSSHandler } from '@trpc/server/adapters/ws'

@@ -196,6 +196,7 @@ export function FlowList(
                           onFork={() => handleForkClick(flow)}
                           disabled={isCreatingFlow || isDeletingFlow || isEditingFlow || isForkingFlow}
                           isForkingFlow={isForkingFlow}
+                          canFork={flow.canFork}
                         />
                       ))}
                     </div>

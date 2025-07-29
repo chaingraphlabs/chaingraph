@@ -301,3 +301,8 @@ sample({
   fn: response => response,
   target: setFlowMetadata,
 })
+// Reload flow list after fork to get updated canFork values
+sample({
+  clock: forkFlowFx.done,
+  target: loadFlowsListFx,
+})

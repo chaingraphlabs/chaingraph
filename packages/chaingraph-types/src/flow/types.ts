@@ -45,4 +45,7 @@ export interface FlowMetadata {
 
   /** Whether the flow is publicly visible - defaults to false (private) */
   isPublic?: boolean
+
+  /** Whether the current user can fork this flow */
+  canFork?: boolean
 }
