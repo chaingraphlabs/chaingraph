@@ -84,7 +84,6 @@ class ArchAIIndexDocumentNode extends BaseNode {
   costLimit: number = 0.0
 
   @Input()
-  @PortVisibility({ showIf: node => (node as ArchAIIndexDocumentNode).needQA })
   @PortBoolean({
     title: 'Need QA',
     description: 'Whether QA pairs should be generated',
