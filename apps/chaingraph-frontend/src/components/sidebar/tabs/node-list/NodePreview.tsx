@@ -8,95 +8,63 @@
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type {
+  ArrayPortConfig,
   CategoryMetadata,
+  EnumPortConfig,
+  IPortConfig,
   NodeMetadataWithPorts,
+  ObjectPortConfig,
 } from '@badaitech/chaingraph-types'
+import { getPortTypeColor } from '@/components/flow/nodes/ChaingraphNode/ports/doc'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+
 import { cn } from '@/lib/utils'
-import { useCategories } from '@/store/categories'
+
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
-import {
-  PortDirection,
-  PortFactory,
-} from '@badaitech/chaingraph-types'
+import { PortDirection } from '@badaitech/chaingraph-types'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface NodePreviewProps {
   node: NodeMetadataWithPorts
   categoryMetadata: CategoryMetadata
 }
 
-export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
+interface PortPreviewProps {
+  config: IPortConfig
+  depth?: number
+  isLast?: boolean
+}
+
+interface PortGroupProps {
+  title: string
+  ports: IPortConfig[]
+  depth?: number
+}
+
+function RecursivePortPreview({ config, depth = 0, isLast = false }: PortPreviewProps) {
   const { theme } = useTheme()
-  const { getCategoryMetadata } = useCategories()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [containerHeight, setContainerHeight] = useState<number | null>(null)
+  const [isExpanded, setIsExpanded] = useState(depth === 0)
 
-  const style = useMemo(() => (
-    theme === 'dark'
-      ? categoryMetadata.style.dark
-      : categoryMetadata.style.light
-  ), [theme, categoryMetadata])
+  // const portColor = PORT_TYPE_COLORS[config.type] || PORT_TYPE_COLORS.any
+  const portColor = getPortTypeColor(theme, {
+    type: config.type,
+    direction: config.direction,
+  } as IPortConfig)
+  const bgColor = config.ui?.bgColor ?? portColor.circleColor
+  const borderColor = config.ui?.borderColor ?? portColor.borderColor
 
-  const [inputs, setInputs] = useState(
-    Array.from(node.portsConfig?.values() || []).filter(
-      port => port.direction === PortDirection.Input,
-    ),
-  )
-  const [outputs, setOutputs] = useState(
-    Array.from(node.portsConfig?.values() || []).filter(
-      port => port.direction === PortDirection.Output,
-    ),
-  )
-
-  useEffect(() => {
-    setInputs(
-      Array.from(node.portsConfig?.values() || []).filter(
-        config => config.direction === PortDirection.Input,
-      ).map((config) => {
-        return PortFactory.create(config).getConfig()
-      }),
-    )
-    setOutputs(
-      Array.from(node.portsConfig?.values() || []).filter(
-        config => config.direction === PortDirection.Output,
-      ).map((config) => {
-        return PortFactory.create(config).getConfig()
-      }),
-    )
-  }, [node])
-
-  // Calculate available height for component
-  useEffect(() => {
-    const updateHeight = () => {
-      if (containerRef.current) {
-        // Get available viewport height
-        const viewportHeight = window.innerHeight
-        // Set max height to 80% of viewport
-        const maxHeight = Math.round(viewportHeight * 0.9)
-        setContainerHeight(maxHeight)
-      }
-    }
-
-    updateHeight()
-    window.addEventListener('resize', updateHeight)
-    return () => window.removeEventListener('resize', updateHeight)
-  }, [])
-
-  const Icon = useMemo(
-    () => getCategoryIcon(categoryMetadata.icon as CategoryIconName),
-    [categoryMetadata.icon],
-  )
-
-  // Function to format description with proper line breaks
+  // Format description with proper line breaks
   const formatDescription = (description: string) => {
     return description.split('\n').map((line, index) => (
       <div
-        key={index}
+        key={`line-${index}-${line.slice(0, 10)}`}
         className={cn(
-          line.trim() === '' && 'h-2', // Add spacing for empty lines
+          line.trim() === '' && 'h-1',
           'whitespace-pre-wrap',
         )}
       >
@@ -105,11 +73,212 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
     ))
   }
 
+  // Get child configurations from schema
+  const childConfigs = useMemo(() => {
+    if (config.type === 'object') {
+      const objConfig = config as ObjectPortConfig
+      return Object.entries(objConfig.schema?.properties || {}).map(([key, childConfig]) => ({
+        ...childConfig,
+        key: childConfig.key || key,
+        title: childConfig.title || childConfig.key || key,
+      }))
+    }
+    if (config.type === 'array') {
+      const arrConfig = config as ArrayPortConfig
+      if (arrConfig.itemConfig) {
+        return [{
+          ...arrConfig.itemConfig,
+          key: 'item',
+          title: arrConfig.itemConfig.title || 'Item',
+        }]
+      }
+    }
+    if (config.type === 'enum') {
+      const enumConfig = config as EnumPortConfig
+      return (enumConfig.options || []).map((option, index) => ({
+        ...option,
+        // key: option.key || `option-${index}`,
+        // title: option.title || option.key || `Option ${index + 1}`,
+        title: option.id || option.key || `Option ${index + 1}`,
+      }))
+    }
+    return []
+  }, [config])
+
+  const hasChildren = childConfigs.length > 0
+
+  return (
+    <div className="w-full">
+      <div
+        className={cn(
+          'group relative flex items-start gap-2 py-1.5 px-2 rounded transition-colors',
+          'hover:bg-muted/30',
+        )}
+        style={{ marginLeft: depth > 0 ? `${depth * 24}px` : 0 }}
+      >
+        {/* Indentation guide */}
+        {depth > 0 && (
+          <div
+            className={cn(
+              'absolute left-0 top-0 bottom-0 w-px bg-border',
+              isLast && 'h-6',
+            )}
+            style={{ left: '-12px' }}
+          />
+        )}
+        {depth > 0 && (
+          <div
+            className="absolute top-6 w-3 h-px bg-border"
+            style={{ left: '-12px' }}
+          />
+        )}
+
+        {/* Port indicator */}
+        <div
+          className={cn(
+            'w-3 h-3 rounded-full border-2 shadow-sm shrink-0',
+            // hasChildren && 'ml-5',
+          )}
+          style={{
+            backgroundColor: bgColor,
+            borderColor,
+            boxShadow: `0 1px 2px ${borderColor}40`,
+            marginTop: '2px',
+          }}
+        />
+
+        {/* Port content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-foreground">
+              {config.title || config.key}
+            </span>
+            {config.required && (
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            )}
+            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+              {config.type}
+              {config.type === 'array' && childConfigs.length > 0 && `<${childConfigs[0].type}>`}
+            </Badge>
+          </div>
+          {config.description && (
+            <div className="text-[10px] text-muted-foreground mt-0.5">
+              {/* {formatDescription(config.description)} */}
+
+              <Markdown remarkPlugins={[remarkGfm]}>{config.description}</Markdown>
+            </div>
+          )}
+        </div>
+
+        {/* Expand/Collapse toggle */}
+        {hasChildren && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-0.5 hover:bg-muted rounded transition-colors"
+          >
+            {isExpanded
+              ? (
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                )
+              : (
+                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                )}
+          </button>
+        )}
+      </div>
+
+      {/* Render children */}
+      {hasChildren && isExpanded && (
+        <div className="relative">
+          {childConfigs.map((childConfig, index) => (
+            <RecursivePortPreview
+              key={childConfig.key || index}
+              config={childConfig}
+              depth={depth + 1}
+              isLast={index === childConfigs.length - 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PortGroup({ title, ports, depth = 0 }: PortGroupProps) {
+  if (ports.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-medium text-muted-foreground px-2">
+        {title}
+      </div>
+      <div className="space-y-0.5">
+        {ports.map((port, index) => (
+          <RecursivePortPreview
+            key={port.key || port.id || index}
+            config={port}
+            depth={depth}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
+  const { theme } = useTheme()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerHeight, setContainerHeight] = useState<number | null>(null)
+
+  const style = useMemo(
+    () => (theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light),
+    [theme, categoryMetadata],
+  )
+
+  // Group ports by direction
+  const portGroups = useMemo(() => {
+    const configs = Array.from(node.portsConfig?.values() || [])
+      .filter(port => port.ui?.hidden !== true)
+
+    return {
+      inputs: configs.filter(port => port.direction === PortDirection.Input && port.metadata?.isSystemPort !== true),
+      passthroughs: configs.filter(port => port.direction === PortDirection.Passthrough && port.metadata?.isSystemPort !== true),
+      outputs: configs.filter(port => port.direction === PortDirection.Output && port.metadata?.isSystemPort !== true),
+    }
+  }, [node])
+
+  // Calculate available height for component
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        const viewportHeight = window.innerHeight
+        const maxHeight = Math.round(viewportHeight * 0.9)
+        setContainerHeight(maxHeight)
+      }
+    }
+
+    updateHeight()
+    const timeoutId = setTimeout(updateHeight, 0)
+    window.addEventListener('resize', updateHeight)
+    return () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener('resize', updateHeight)
+    }
+  }, [])
+
+  const Icon = useMemo(
+    () => getCategoryIcon(categoryMetadata.icon as CategoryIconName),
+    [categoryMetadata.icon],
+  )
+
   return (
     <div
       ref={containerRef}
       className={cn(
-        'w-[280px] rounded-lg shadow-lg',
+        'w-[360px] rounded-lg shadow-lg',
         'border border-border',
         'bg-card flex flex-col',
       )}
@@ -126,7 +295,7 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
         <div className="flex items-center gap-2">
           <div
             className="w-6 h-6 rounded flex items-center justify-center"
-            style={{ background: `${style.text}20` }} // Using text color with 20% opacity
+            style={{ background: `${style.text}20` }}
           >
             <Icon className="w-4 h-4" style={{ color: style.text }} />
           </div>
@@ -142,99 +311,17 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
           {/* Description */}
           {node.description && (
             <div className="space-y-1">
-              {/* <div className="text-xs font-medium text-muted-foreground">Description</div> */}
               <div className="text-xs text-muted-foreground whitespace-pre-wrap">
-                {formatDescription(node.description)}
+                <Markdown remarkPlugins={[remarkGfm]}>{node.description}</Markdown>
               </div>
             </div>
           )}
 
           {/* Ports */}
           <div className="space-y-3">
-            {/* Input Ports */}
-            {inputs.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-muted-foreground">Inputs</div>
-                {inputs.map(port => (
-                  <div
-                    key={port.key}
-                    className="group relative pl-5 hover:bg-muted/30 rounded p-1 transition-colors"
-                  >
-                    {/* Port Circle */}
-                    <div
-                      className={cn(
-                        'absolute left-0 top-[7px]',
-                        'w-3 h-3 rounded-full border-2',
-                        'shadow-sm',
-                      )}
-                      style={{
-                        backgroundColor: port.ui?.bgColor ?? 'white',
-                        borderColor: port.ui?.borderColor ?? style.background,
-                        boxShadow: `0 1px 2px ${style.background}80`,
-                      }}
-                    />
-
-                    {/* Port Content */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <div className="text-xs font-medium text-foreground">
-                          {port.title}
-                        </div>
-                        {port.required && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                        )}
-                      </div>
-                      {port.description && (
-                        <div className="text-[10px] text-muted-foreground">
-                          {formatDescription(port.description)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Output Ports */}
-            {outputs.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-muted-foreground text-right">Outputs</div>
-                {outputs.map(port => (
-                  <div
-                    key={port.key}
-                    className="group relative pr-5 text-right hover:bg-muted/30 rounded p-1 transition-colors"
-                  >
-                    {/* Port Content */}
-                    <div className="min-w-0">
-                      <div className="flex items-center justify-end gap-1.5 mb-0.5">
-                        <div className="text-xs font-medium text-foreground">
-                          {port.title}
-                        </div>
-                      </div>
-                      {port.description && (
-                        <div className="text-[10px] text-muted-foreground">
-                          {formatDescription(port.description)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Port Circle */}
-                    <div
-                      className={cn(
-                        'absolute right-0 top-[7px]',
-                        'w-3 h-3 rounded-full border-2',
-                        'shadow-sm',
-                      )}
-                      style={{
-                        backgroundColor: port.ui?.bgColor ?? 'white',
-                        borderColor: port.ui?.borderColor ?? style.background,
-                        boxShadow: `0 1px 2px ${style.background}80`,
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+            <PortGroup title="Inputs" ports={portGroups.inputs} />
+            <PortGroup title="Passthroughs" ports={portGroups.passthroughs} />
+            <PortGroup title="Outputs" ports={portGroups.outputs} />
           </div>
 
           {/* Tags */}

@@ -7,7 +7,13 @@
  */
 
 import type { PasteNodesInputType } from '@badaitech/chaingraph-trpc/server'
-import type { NodeMetadata, NodeStatus, NodeUIMetadata, Position } from '@badaitech/chaingraph-types'
+import type {
+  IPortConfig,
+  NodeMetadata,
+  NodeStatus,
+  NodeUIMetadata,
+  Position,
+} from '@badaitech/chaingraph-types'
 
 // State types
 export interface NodeState {
@@ -31,6 +37,7 @@ export interface AddNodeEvent {
     category?: string
     tags?: string[]
   }
+  portsConfig?: Map<string, IPortConfig>
 }
 
 export interface UpdateNodeUIEvent {

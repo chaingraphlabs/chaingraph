@@ -69,7 +69,7 @@ export class DeepCloneHandler {
     }
 
     // Rebuild port bindings and apply any post-clone logic
-    clonedNode.rebuildPortBindings()
+    clonedNode.bindPortBindings()
     clonedNode.setVersion(sourceNode.getVersion())
     clonedNode.setStatus(NodeStatus.Initialized)
 

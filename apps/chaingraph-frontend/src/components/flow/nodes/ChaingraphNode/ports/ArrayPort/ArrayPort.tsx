@@ -103,7 +103,12 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   }, [node.ports, config.id])
 
   // Use firstport config as itemconfig otherwise, arrayports itemConfig
-  const newItemConfig = useMemo(() => childPorts.length > 0 ? childPorts[0].getConfig() : config.itemConfig, [childPorts, config.itemConfig])
+  const newItemConfig = useMemo(
+    () => childPorts.length > 0
+      ? childPorts[0].getConfig()
+      : config.itemConfig,
+    [childPorts, config.itemConfig],
+  )
 
   // Memoize edges
   const connectedEdges = useMemo(() => {
@@ -163,7 +168,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
   const handleItemConfigUpdate = useCallback((updatedConfig: ArrayPortConfig) => {
     // Update using context events - this leverages the store's logic
     // for handling complex port updates
-    console.debug('Updating item config:', updatedConfig)
+    // console.debug('Updating item config:', updatedConfig)
     requestUpdatePortUI({
       nodeId: node.id,
       portId: port.id,
@@ -180,7 +185,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
 
   // Handle saving from the schema editor
   const handleSchemaEditorSave = useCallback((newItemConfig: IPortConfig) => {
-    console.debug('Schema editor save:', newItemConfig)
+    // console.debug('Schema editor save:', newItemConfig)
 
     // First update the port configuration
     requestUpdatePortUI({
@@ -209,7 +214,7 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
       })
     }, 10)
     setIsSchemaEditorOpen(false)
-  }, [node.id, port, config.ui, updatePortUI, updatePortValue])
+  }, [node.id, port, config.ui, updatePortValue])
 
   if (ui?.hidden)
     return null
@@ -223,7 +228,8 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     >
       {!config.ui?.collapsed && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
-      {!isOutput && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       {!needRenderEditor && (
         <div
@@ -331,7 +337,18 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
         </div>
       )}
 
-      {isOutput && <PortHandle port={port} />}
+      {(config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )}
 
       {/* Schema Editor Dialog */}
       <ArrayItemSchemaEditor

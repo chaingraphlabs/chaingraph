@@ -55,6 +55,15 @@ export function Output(): PropertyDecorator {
 }
 
 /**
+ * Passthrough decorator to set the port's direction to "passthrough".
+ */
+export function Passthrough(): PropertyDecorator {
+  return (target: object, propertyKey: string | symbol) => {
+    updatePortMetadata(target.constructor, propertyKey, { direction: PortDirection.Passthrough })
+  }
+}
+
+/**
  * DefaultValue decorator to set a default value for a port.
  * This decorator updates the port metadata with a new "defaultValue" property.
  *

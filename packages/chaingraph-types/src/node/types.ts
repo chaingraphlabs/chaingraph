@@ -86,4 +86,5 @@ export interface NodeValidationResult {
  */
 export interface NodeExecutionResult {
   backgroundActions?: (() => Promise<void>)[]
+  [key: string]: any // Allow any additional properties
 }

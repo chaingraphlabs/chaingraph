@@ -349,10 +349,12 @@ function ChaingraphNodeComponent({
       />
 
       {(!parentNode || (parentNode.metadata.category === 'group')) && (
-        <NodeErrorPorts
-          node={nodeToRender}
-          context={portContextValue}
-        />
+        <div className="mt-2">
+          <NodeErrorPorts
+            node={nodeToRender}
+            context={portContextValue}
+          />
+        </div>
       )}
 
       {/* Resize control */}

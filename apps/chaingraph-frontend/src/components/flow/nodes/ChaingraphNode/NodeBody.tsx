@@ -20,6 +20,7 @@ import type { INode } from '@badaitech/chaingraph-types'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
 import { useNode } from '@/store/nodes'
+import { PortDirection } from '@badaitech/chaingraph-types'
 import { memo, useMemo } from 'react'
 
 export interface NodeBodyProps {
@@ -34,6 +35,17 @@ function NodeBody({
   className = '',
 }: NodeBodyProps) {
   const parentNode = useNode(node.metadata.parentNodeId || '')
+
+  const passthroughPorts = useMemo(
+    () => Array.from(
+      node.ports.values(),
+    ).filter(port =>
+      port.getConfig().direction === PortDirection.Passthrough
+      && !port.getConfig().parentId
+      && !port.isSystem(),
+    ),
+    [node],
+  )
 
   const inputPorts = useMemo(
     () => node.getInputs().filter(
@@ -57,6 +69,18 @@ function NodeBody({
 
         {/* Input Ports */}
         {inputPorts.map((port) => {
+          return (
+            <PortComponent
+              key={port.id}
+              node={node}
+              port={port}
+              context={context}
+            />
+          )
+        })}
+
+        {/* Passthrough Ports */}
+        {passthroughPorts.map((port) => {
           return (
             <PortComponent
               key={port.id}

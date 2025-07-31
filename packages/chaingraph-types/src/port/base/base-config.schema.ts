@@ -73,6 +73,7 @@ export const objectPortConfigUISchema = basePortConfigUISchema.merge(
     collapsed: z.boolean().optional(),
     keyDeletable: z.boolean().optional(),
     hidePropertyEditor: z.boolean().optional(),
+    hideInternalProperties: z.boolean().optional(),
     allowedTypes: z.array(z.enum([
       'string',
       'number',
@@ -126,7 +127,11 @@ export const basePortConfigSchema = z.object({
   key: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
-  direction: z.enum([PortDirection.Input, PortDirection.Output]).optional(),
+  direction: z.enum([
+    PortDirection.Input,
+    PortDirection.Output,
+    PortDirection.Passthrough,
+  ]).optional(),
   ui: basePortConfigUISchema.optional(),
   connections: z.array(z.object({
     nodeId: z.string(),

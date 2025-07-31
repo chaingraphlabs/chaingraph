@@ -229,7 +229,7 @@ export function validateObjectValue(
 
   // Type validation.
   if (!isObjectPortValue(maybeValue)) {
-    errors.push('Invalid object value structure')
+    errors.push(`Invalid object value structure, actual type: ${typeof maybeValue}`)
     return errors
   }
 
@@ -320,10 +320,19 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
 
     try {
       if (!isObjectPortValue(value)) {
-        throw new PortError(
-          PortErrorType.SerializationError,
-          'Invalid object value structure',
-        )
+        // if (Array.isArray(value)) {
+        //   // If the value is an array, we can throw an error or handle it as needed.
+        //   // For now, we throw an error since this plugin expects an object.
+        //   throw new PortError(
+        //     PortErrorType.SerializationError,
+        //     `Invalid object value structure, expected an object but got an array`,
+        //   )
+        // }
+        // throw new PortError(
+        //   PortErrorType.SerializationError,
+        //   `Invalid object value structure, expected an object but got ${typeof value}`,
+        // )
+        return {}
       }
 
       // Use the config's schema to drive serialization for each nested field.

@@ -970,7 +970,7 @@ All port types support a common set of UI configuration properties through the `
 ### Number Port UI
 
 | Property         | Type    | Description                                      |
-| ---------------- | ------- | ------------------------------------------------ |
+|------------------|---------|--------------------------------------------------|
 | isSlider         | boolean | Render as slider control instead of number input |
 | leftSliderLabel  | string  | Label for minimum value of slider                |
 | rightSliderLabel | string  | Label for maximum value of slider                |
@@ -985,12 +985,12 @@ All port types support a common set of UI configuration properties through the `
 
 ### Object Port UI
 
-| Property           | Type       | Description                              |
-|--------------------| -------    | ---------------------------------------- |
-| keyDeletable       | boolean    | Whether object properties can be deleted |
-| collapsed          | boolean    | Whether the object port collapsed        |
-| hidePropertyEditor | boolean    | Whether object properties can be edited  |
-| allowedTypes       | PortType[] | Types allowed when adding new properties |
+| Property               | Type       | Description                              |
+|------------------------|------------|------------------------------------------|
+| keyDeletable           | boolean    | Whether object properties can be deleted |
+| collapsed              | boolean    | Whether the object port collapsed        |
+| hidePropertyEditor     | boolean    | Whether object properties can be edited  |
+| allowedTypes           | PortType[] | Types allowed when adding new properties |
 
 ## 7. Complete Examples
 

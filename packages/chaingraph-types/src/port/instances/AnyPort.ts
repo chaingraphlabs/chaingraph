@@ -12,6 +12,8 @@ import { BasePort } from '../base'
 import { generatePortID } from '../id-generate'
 import { AnyPortPlugin } from '../plugins'
 
+const MAX_UNDERLYING_TYPES = 10 // Prevent infinite loops in case of circular references
+
 /**
  * Concrete implementation of an Any Port.
  *
@@ -58,8 +60,13 @@ export class AnyPort extends BasePort<AnyPortConfig> {
     let underlyingType = this.config.underlyingType
     if (underlyingType) {
       // find actual underlying type by iterate over any port underlying types
+      let depth = 0
       while (underlyingType && underlyingType.type === 'any' && underlyingType.underlyingType) {
         underlyingType = underlyingType.underlyingType
+        depth++
+        if (depth > MAX_UNDERLYING_TYPES) {
+          throw new Error('Maximum depth reached while resolving underlying type')
+        }
       }
 
       return {
@@ -262,6 +269,26 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    */
   public setUnderlyingType(underlyingType: IPortConfig | undefined) {
     this.config.underlyingType = underlyingType
+  }
+
+  /**
+   * Unwraps the underlying type of the any port. It is iterates over the underlying types and while
+   * the underlying type is 'any' and has an underlyingType, it will return the actual underlying type.
+   */
+  public unwrapUnderlyingType(): IPortConfig | undefined {
+    const maxDepth = 10 // Prevent infinite loops in case of circular references
+    let underlyingType = this.config.underlyingType
+    let depth = 0
+    while (underlyingType && underlyingType.type === 'any' && underlyingType.underlyingType && depth < maxDepth) {
+      underlyingType = underlyingType.underlyingType
+      depth++
+    }
+
+    if (depth >= maxDepth) {
+      throw new Error('Maximum depth reached while unwrapping underlying type')
+    }
+
+    return underlyingType
   }
 
   /**

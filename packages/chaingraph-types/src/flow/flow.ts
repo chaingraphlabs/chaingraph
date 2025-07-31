@@ -8,7 +8,7 @@
 
 import type { IEdge } from '../edge'
 import type { INode, NodeEvent } from '../node'
-import type { IPort } from '../port'
+import type { IPort, ObjectPort } from '../port'
 import type { JSONValue } from '../utils/json'
 import type {
   FlowEvent,
@@ -29,7 +29,10 @@ import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
 import { AnyPort } from '../port'
 import { deepCopy, EventQueue } from '../utils'
-import { FlowEventType, newEvent } from './events'
+import {
+  FlowEventType,
+  newEvent,
+} from './events'
 
 function generateFlowID(): string {
   return `V2${customAlphabet(nolookalikes, 24)()}`
@@ -306,14 +309,14 @@ export class Flow implements IFlow {
       targetPort.removeConnection(sourceNode.id, sourcePort.id)
     }
 
+    // const isSourcePortAny = sourcePort.getConfig().type === 'any' && sourcePort instanceof AnyPort
     const isTargetPortAny = targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort
 
     // if target port is an any port type then remove the underlying type
     if (isTargetPortAny) {
-      const anyPort = targetPort as AnyPort
+      const anyPort = (targetPort) as AnyPort
       anyPort.setUnderlyingType(undefined)
-      anyPort.setValue(anyPort.getRawConfig().defaultValue)
-
+      anyPort.setValue(undefined)
       targetNode.updatePort(targetPort)
     }
 
@@ -375,9 +378,41 @@ export class Flow implements IFlow {
       throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
     }
 
-    if ((targetPort.getConfig().connections?.length || 0) > 0) {
-      throw new Error(`Target port with ID ${targetPortId} already has connections.`)
+    if (targetPort.getConfig().direction === 'input') {
+      if ((targetPort.getConfig().connections?.length || 0) > 0) {
+        throw new Error(`Target port with ID ${targetPortId} already has connections.`)
+      }
+    } else if (targetPort.getConfig().direction === 'passthrough') {
+      // check if the target port passthrough and already has connections
+      // so check if the connected port is an input port then we can connect to it
+      const connectedPorts = targetPort.getConfig().connections || []
+      const hasOutputConnection = connectedPorts.some((conn) => {
+        const connectedNode = this.nodes.get(conn.nodeId)
+        if (!connectedNode) {
+          return false
+        }
+        const connectedPort = connectedNode.getPort(conn.portId)
+        return connectedPort && connectedPort.getConfig().direction === 'output'
+      })
+
+      if (hasOutputConnection) {
+        throw new Error(`Target port with ID ${targetPortId} already has input connections.`)
+      }
     }
+
+    const sourcePortConfig = sourcePort.getConfig()
+    const targetPortConfig = targetPort.getConfig()
+
+    const edge = new Edge(
+      generateEdgeID(),
+      sourceNode,
+      sourcePort,
+      targetNode,
+      targetPort,
+    )
+
+    // Edge initialization also validates the edge and port types compatibility
+    await edge.initialize()
 
     this.removeAllChildConnections(targetNode, targetPort)
 
@@ -390,14 +425,14 @@ export class Flow implements IFlow {
     //  or only the ports with the compatible schema.
     //  Same question for the array port schema
 
-    const targetValue = sourcePort.getValue() ?? sourcePort.getConfig().defaultValue ?? undefined
+    const targetValue = sourcePort.getValue() ?? sourcePortConfig.defaultValue ?? undefined
 
     // check if the target port is an any type then set the target port underlying type to the source port
     if (targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort) {
       const targetPortConfig = targetPort.getConfig()
 
       targetPort.setUnderlyingType({
-        ...sourcePort.getConfig(),
+        ...deepCopy(sourcePortConfig),
         id: targetPortConfig.id,
         direction: targetPortConfig.direction,
         parentId: targetPortConfig.parentId,
@@ -406,26 +441,35 @@ export class Flow implements IFlow {
         key: targetPortConfig.key,
         title: targetPortConfig.title,
         description: targetPortConfig.description,
+        defaultValue: deepCopy(targetValue),
       })
 
-      if (targetValue !== undefined) {
-        targetPort.setValue(targetValue)
-      }
-
+      targetPort.setValue(deepCopy(targetValue))
       targetNode.updatePort(targetPort)
     }
 
-    const edge = new Edge(
-      generateEdgeID(),
-      sourceNode,
-      sourcePort,
-      targetNode,
-      targetPort,
-    )
-    await edge.initialize()
+    if (sourcePortConfig.type === 'object' && targetPortConfig.type === 'object') {
+      if (targetPortConfig.isSchemaMutable) {
+        console.log(`Copying object schema from source port ${sourcePortId} to target port ${targetPortId}.`)
+        targetNode.copyObjectSchemaTo(
+          sourceNode,
+          sourcePort as ObjectPort,
+          targetPort as ObjectPort,
+          true,
+        )
+      }
+    }
+
     this.addEdge(edge)
 
-    this.emitEvent(newEvent(
+    // Create and emit the port update event
+    sourceNode.incrementVersion()
+    targetNode.incrementVersion()
+
+    this.updateNode(sourceNode)
+    this.updateNode(targetNode)
+
+    await this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
       FlowEventType.EdgeAdded,
@@ -438,13 +482,6 @@ export class Flow implements IFlow {
         metadata: edge.metadata,
       },
     ))
-
-    // Create and emit the port update event
-    sourceNode.incrementVersion()
-    targetNode.incrementVersion()
-
-    this.updateNode(sourceNode)
-    this.updateNode(targetNode)
 
     return edge
   }
@@ -667,8 +704,6 @@ export class Flow implements IFlow {
         //   break
         // }
 
-        // Handle other node events if needed
-
       case NodeEventType.PortUpdate: {
         const portUpdateEventData: PortUpdatedEventData = {
           port: (nodeEvent as any).port.clone(),
@@ -725,6 +760,42 @@ export class Flow implements IFlow {
 
     if (flowEvent) {
       this.emitEvent(flowEvent)
+
+      // TODO: move to somewhere
+      if (flowEvent.type === FlowEventType.PortUpdated) {
+        const portUpdateEventData = flowEvent.data as PortUpdatedEventData
+        const portConfig = portUpdateEventData.port.getConfig()
+
+        if (portConfig.type === 'object') {
+          // if the node has output ports, we need to check if we need to copy schema to the target port
+          const outgoingEdges = this.getOutgoingEdges(node)
+          for (const edge of outgoingEdges) {
+            if (edge.sourcePort.id !== portUpdateEventData.port.id) {
+              // if the edge source port is not the updated port, skip it
+              continue
+            }
+
+            const targetPortConfig = edge.targetPort.getConfig()
+
+            if (targetPortConfig.type === 'object' && targetPortConfig.isSchemaMutable) {
+              edge.targetNode.copyObjectSchemaTo(
+                edge.sourceNode,
+                edge.sourcePort as ObjectPort,
+                edge.targetPort as ObjectPort,
+                true,
+              )
+              this.updateNode(edge.targetNode)
+            } else if (edge.targetPort instanceof AnyPort) {
+              // if the target port is an any port then set the underlying type to the source port
+              const anyPort = edge.targetPort as AnyPort
+              anyPort.setUnderlyingType(deepCopy(portConfig))
+              anyPort.setValue(deepCopy(portUpdateEventData.port.getValue()))
+              edge.targetNode.updatePort(edge.targetPort)
+              this.updateNode(edge.targetNode)
+            }
+          }
+        }
+      }
     }
   }
 

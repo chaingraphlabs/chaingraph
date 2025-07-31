@@ -30,9 +30,9 @@ import {
   PortString,
 } from '@badaitech/chaingraph-types'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
-import { createLLMInstance, LLMConfig } from 'src/nodes/ai/llm-call-with-structured-output.node'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
+import { createLLMInstance, LLMConfig } from './llm-call-with-structured-output.node'
 import { ToolDefinition } from './tool'
 
 @ObjectSchema({

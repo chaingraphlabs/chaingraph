@@ -67,6 +67,7 @@ export type PortType = (typeof PORT_TYPES)[number]
 export const PortDirection = {
   Input: 'input',
   Output: 'output',
+  Passthrough: 'passthrough',
 } as const
 
 export type PortDirectionEnum = (typeof PortDirection)[keyof typeof PortDirection]
@@ -276,6 +277,7 @@ export type IPortValue =
   | ArrayPortValue<any>
   | ObjectPortValue<any>
   | StreamPortValue<any>
+  | SecretPortValue<any>
   | EnumPortValue
   | AnyPortValue
 

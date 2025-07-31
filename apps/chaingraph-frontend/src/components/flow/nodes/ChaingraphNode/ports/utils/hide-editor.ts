@@ -10,8 +10,9 @@ import type { EdgeData } from '@/store/edges'
 import type { IPortConfig } from '@badaitech/chaingraph-types'
 
 export function isHideEditor(config: IPortConfig, connectedEdges: EdgeData[]) {
-  const hasConnections = connectedEdges.length > 0
-  const isInput = config.direction === 'input'
+  const hasInputConnections = connectedEdges
+    .filter(edge => edge.targetPortId === config.id)
+    .length > 0
   const isOutput = config.direction === 'output'
   const isEditorHiddenExplicit = config.ui?.hideEditor === true
 
@@ -19,7 +20,7 @@ export function isHideEditor(config: IPortConfig, connectedEdges: EdgeData[]) {
     return true
   }
 
-  if (isInput && hasConnections) {
+  if (hasInputConnections) {
     return true
   }
 

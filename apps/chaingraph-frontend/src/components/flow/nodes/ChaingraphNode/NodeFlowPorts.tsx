@@ -9,7 +9,9 @@
 import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
 import { cn } from '@/lib/utils'
+import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
 import { Handle, Position } from '@xyflow/react'
+import { useUnit } from 'effector-react'
 import { memo, useMemo } from 'react'
 import { PortDocTooltip } from './ports/doc'
 
@@ -42,6 +44,8 @@ function NodeFlowPorts({
       port => port.isSystem() && port.getConfig().direction === 'output',
     ), [flowPorts])
 
+  const compatiblePorts = useUnit($compatiblePortsToDraggingEdge)
+
   // Helper to render port handles
   const renderPortHandle = (port: IPort, position: Position) => {
     const config = port.getConfig()
@@ -54,6 +58,8 @@ function NodeFlowPorts({
       position === Position.Left ? '#4a90e2' : '#4a90e2'
     )
 
+    const isDraggingCompatible = compatiblePorts !== null ? compatiblePorts.includes(portId) : true
+
     return (
       <PortDocTooltip port={port}>
         <Handle
@@ -61,7 +67,9 @@ function NodeFlowPorts({
           position={position}
           id={portId}
           style={{
-            background: portColor,
+            background: isDraggingCompatible ? portColor : '#a1a1a1',
+            opacity: isDraggingCompatible ? 1 : 0.1,
+            boxShadow: compatiblePorts !== null && isDraggingCompatible ? '0 0 0 2px rgba(255, 255, 255, 0.5)' : 'none',
             // border: `2px solid ${isConnected ? '#ffffff' : portColor}`,
             top: 16, // Position at header level
             transform: position === Position.Left ? 'translateX(-100%)' : 'translateX(100%)',

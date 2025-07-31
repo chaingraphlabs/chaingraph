@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow } from '@badaitech/chaingraph-types'
+import type { Flow, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import { PortPluginRegistry } from '@badaitech/chaingraph-types'
 import { NodeStatus } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
@@ -37,6 +38,8 @@ export const addNode = flowContextProcedure
     nodeType: z.string(),
     position: NodePositionSchema,
     metadata: NodeMetadataSchema,
+    // portsConfig?: Record<string, IPortConfig>
+    portsConfig: z.map(z.string(), z.any()).optional(),
   }))
   .mutation(async ({ input, ctx }) => {
     const { flowId, nodeType, position, metadata } = input
@@ -55,9 +58,41 @@ export const addNode = flowContextProcedure
       const newNode = ctx.nodeRegistry.createNode(nodeType, `${nodeType}:${nodeId}`)
       const node = newNode.clone()
 
+      // If portsConfig is provided, create a map of ports
+      let portsConfigMap: Map<string, IPortConfig> | undefined
+      if (input.portsConfig && input.portsConfig.size > 0) {
+        portsConfigMap = new Map<string, IPortConfig>()
+
+        // for each input.portsConfig deserialize the config
+        // using PortPluginRegistry to ensure compatibility with the node type
+        for (const [key, value] of input.portsConfig.entries()) {
+          if (!value || typeof value !== 'object') {
+            continue
+          }
+
+          if (!value.type) {
+            throw new Error(`Port config for key "${key}" is missing type property`)
+          }
+
+          const portConfig = PortPluginRegistry.getInstance().deserializeConfig(
+            value.type as PortType,
+            value,
+          )
+
+          portsConfigMap.set(key, {
+            ...portConfig,
+            id: undefined, // Ensure ID is undefined to let the node handle it
+            nodeId: node.id, // Set the node ID to the new node's ID
+            parentId: undefined, // Ensure parentId is undefined to let the node handle it
+          })
+        }
+      }
+
+      // console.log(`[addNode] Ports config map:`, portsConfigMap)
+
       // Initialize node
       // Explicitly provide undefined to use the ports from the decorated node registry
-      node.initialize(undefined)
+      node.initialize(portsConfigMap)
 
       // Set additional metadata if provided
       if (metadata) {
@@ -70,6 +105,9 @@ export const addNode = flowContextProcedure
 
       // Set position
       node.setPosition(position, true)
+
+      const nodeJson = node.serialize()
+      // console.log(`[addNode] Node JSON:`, nodeJson)
 
       const createdNode = flow.addNode(node)
       await ctx.flowStore.updateFlow(flow as Flow)

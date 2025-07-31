@@ -7,7 +7,8 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Node, Output, PortBoolean } from '@badaitech/chaingraph-types'
+import { Passthrough } from '@badaitech/chaingraph-types'
+import { BaseNode, Node, PortBoolean } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -17,7 +18,7 @@ import { NODE_CATEGORIES } from '../../categories'
   category: NODE_CATEGORIES.BASIC_VALUES,
 })
 class BooleanNode extends BaseNode {
-  @Output()
+  @Passthrough()
   @PortBoolean({
     title: 'Boolean',
     description: 'The output boolean flag.',

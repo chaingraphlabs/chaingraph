@@ -145,7 +145,8 @@ export function AnyObjectPort({ node, port, context }: AnyPortProps) {
     >
       {!config.ui?.collapsed && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
-      {!isOutput && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       {!needRenderObject && (
         <div
@@ -236,7 +237,18 @@ export function AnyObjectPort({ node, port, context }: AnyPortProps) {
       )}
 
       {
-        isOutput && <PortHandle port={port} />
+        (config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )
       }
     </div>
   )

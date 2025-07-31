@@ -40,6 +40,7 @@
     "@langchain/deepseek": "^0.0.2",
     "@langchain/groq": "^0.2.3",
     "@langchain/openai": "^0.5.15",
+    "@modelcontextprotocol/sdk": "^1.15.0",
     "@okx-dex/okx-dex-sdk": "^1.0.14",
     "@types/crypto-js": "^4.2.2",
     "@types/turndown": "^5.0.5",
@@ -51,16 +52,20 @@
     "langchain": "^0.3.29",
     "lucene-kit": "^1.2.0",
     "lucide-react": "^0.523.0",
+    "nanoid": "^5.1.5",
+    "nanoid-dictionary": "^5.0.0",
     "openai": "^5.7.0",
     "react": "^19.1.0",
     "superjson": "^2.2.2",
     "turndown": "^7.2.0",
+    "uri-template": "^2.0.0",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
+    "@types/nanoid-dictionary": "^4.2.3",
     "@types/react": "^19.1.0",
     "vitest": "^3.1.1"
   }

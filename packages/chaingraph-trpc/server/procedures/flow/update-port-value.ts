@@ -38,11 +38,12 @@ export const updatePortValue = flowContextProcedure
       if (!node)
         throw new Error('Node not found')
 
+      node.bindPortBindings()
+
       const port = node.ports.get(input.portId)
       if (!port)
         throw new Error('Port not found')
 
-      node.rebuildPortBindings()
       port.setValue(input.value)
       node.updatePort(port)
 
@@ -229,7 +230,6 @@ export const updateItemConfigArrayPort = flowContextProcedure
         ...config,
         itemConfig: input.itemConfig,
       })
-      node.updatePort(port)
 
       node.updateArrayItemConfig(port)
 
@@ -273,6 +273,7 @@ export const appendElementArrayPort = flowContextProcedure
       if (port.getConfig().type !== 'array')
         throw new Error('Port is not an array port')
 
+      console.log('Appending value to array port', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
       node.appendArrayItem(port, input.value)
       flow.updateNode(node)
 

@@ -72,7 +72,7 @@ export function PortHeader({
               // if port required and the value is empty, add a red underline
               config.required
               && (port.getValue() === undefined || port.getValue() === null || port.getValue().length === 0 || !port.validate())
-              && config.direction === 'input'
+              && (config.direction === 'input' || config.direction === 'passthrough')
               && (config.connections?.length || 0) === 0
               && 'underline decoration-red-500 decoration-2',
             )}

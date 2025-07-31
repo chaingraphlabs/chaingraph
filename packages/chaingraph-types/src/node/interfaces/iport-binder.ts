@@ -32,15 +32,10 @@ export interface IPortBinder {
   initializePortsFromConfigs: (portsConfigs: Map<string, IPortConfig>) => void
 
   /**
-   * Rebuild all port bindings
+   * Bind all port bindings
    * Call this after modifying port structure
    */
-  rebuildPortBindings: () => void
-
-  /**
-   * Rebuild all property bindings after deserialization
-   */
-  rebindAfterDeserialization: () => void
+  bindPortBindings: () => void
 
   /**
    * Process a port config through the PortConfigProcessor

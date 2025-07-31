@@ -138,9 +138,9 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
         // className,
       )}
     >
-      {config.direction === 'input'
+      {(config.direction === 'input' || config.direction === 'passthrough')
         && (
-          <PortHandle port={port} />
+          <PortHandle port={port} forceDirection="input" />
         )}
 
       <div className={cn(
@@ -155,7 +155,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
             // if port required and the value is empty, add a red underline
             config.required
             && (!port.getValue() || !port.validate())
-            && config.direction === 'input'
+            && (config.direction === 'input' || config.direction === 'passthrough')
             && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
@@ -239,9 +239,17 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
         )}
       </div>
 
-      {config.direction === 'output'
+      {(config.direction === 'output' || config.direction === 'passthrough')
         && (
-          <PortHandle port={port} />
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
         )}
     </div>
   )

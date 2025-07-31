@@ -9,7 +9,6 @@
 import type {
   AnyPort,
   ArrayPortConfig,
-  EncryptedSecretValue,
   EnumPortConfig,
   ExecutionContext,
   IObjectSchema,
@@ -20,7 +19,7 @@ import type {
   ObjectPortConfig,
   PortConnectedEvent,
 } from '@badaitech/chaingraph-types'
-import type { APIkey, SupportedProviders } from './llm-call.node'
+import type { APIkey } from './llm-call.node'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -28,79 +27,19 @@ import {
   Input,
   Node,
   NodeEventType,
-  ObjectSchema,
   Output,
   PortAny,
-  PortEnumFromObject,
-  PortNumber,
   PortObject,
-  PortSecret,
   PortString,
 } from '@badaitech/chaingraph-types'
-import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
-import { ChatDeepSeek } from '@langchain/deepseek'
-import { ChatGroq } from '@langchain/groq'
-import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
-import { isAnthropic, isDeepSeek, isGroq, isMoonshot, LLMModels, llmModels } from './llm-call.node'
+import { createLLMInstance, LLMConfig } from './llm-call-with-structured-output-v2.node'
 
 const llmMaxRetries = 3
 
-@ObjectSchema({
-  description: 'Configuration for LLM Call with Structured Output Node',
-})
-export class LLMConfig {
-  @PortEnumFromObject(llmModels, {
-    title: 'Model',
-    description: 'Language Model to use',
-  })
-  model: LLMModels = LLMModels.Gpt41Mini
-
-  @Input()
-  @PortSecret<SupportedProviders>({
-    title: 'API Key',
-    description: 'LLM provider API Key',
-    secretType: 'openai',
-    ui: {
-      ispassword: true,
-    },
-  })
-  apiKey?: EncryptedSecretValue<SupportedProviders>
-
-  @Input()
-  @PortNumber({
-    title: 'Temperature',
-    description: 'Temperature for sampling',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    ui: {
-      isSlider: true,
-      leftSliderLabel: 'More deterministic',
-      rightSliderLabel: 'More creative',
-    },
-  })
-  temperature: number = 0
-}
-
-@ObjectSchema({
-  description: 'LLM Tool configuration for structured output',
-})
-class LLMToolConfig {
-  @PortString({
-    title: 'Tool Name',
-    description: 'Name of the tool to be used',
-  })
-  name: string = ''
-
-  @PortString({
-    title: 'Tool Description',
-    description: 'Description of the tool to be used',
-  })
-  description: string = ''
-}
+export { createLLMInstance, LLMConfig } from './llm-call-with-structured-output-v2.node'
 
 @Node({
   type: 'LLMCallWithStructuredOutputNode',
@@ -108,8 +47,13 @@ class LLMToolConfig {
   description: 'Sends prompt to Language Model and parses the response into a structured format based on the defined schema',
   category: NODE_CATEGORIES.AI,
   tags: ['ai', 'llm', 'prompt', 'structured', 'schema', 'json', 'object'],
+  ui: {
+    state: {
+      isHidden: true,
+    },
+  },
 })
-class LLMCallWithStructuredOutputNode extends BaseNode {
+export class LLMCallWithStructuredOutputNode extends BaseNode {
   @Input()
   @PortObject({
     schema: LLMConfig,
@@ -602,56 +546,3 @@ class LLMCallWithStructuredOutputNode extends BaseNode {
     return schema
   }
 }
-
-/**
- * Create an LLM instance based on the selected model.
- */
-export function createLLMInstance(config: LLMConfig, apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
-  if (isDeepSeek(config.model)) {
-    return new ChatDeepSeek({
-      apiKey,
-      model: config.model,
-      temperature: config.temperature,
-      maxRetries: llmMaxRetries,
-    })
-  }
-
-  if (isAnthropic(config.model)) {
-    return new ChatAnthropic({
-      apiKey,
-      model: config.model,
-      temperature: config.temperature,
-      maxRetries: llmMaxRetries,
-    })
-  }
-
-  if (isGroq(config.model)) {
-    return new ChatGroq({
-      apiKey,
-      model: config.model.replace(/^groq\//, ''),
-      temperature: config.temperature,
-      maxRetries: llmMaxRetries,
-    })
-  }
-
-  if (isMoonshot(config.model)) {
-    return new ChatOpenAI({
-      apiKey,
-      model: config.model,
-      temperature: config.temperature,
-      streaming: true,
-      configuration: {
-        baseURL: 'https://api.moonshot.ai/v1',
-      },
-    })
-  }
-
-  return new ChatOpenAI({
-    apiKey,
-    model: config.model,
-    temperature: config.model !== LLMModels.GptO3Mini ? config.temperature : undefined,
-    maxRetries: llmMaxRetries,
-  })
-}
-
-export default LLMCallWithStructuredOutputNode

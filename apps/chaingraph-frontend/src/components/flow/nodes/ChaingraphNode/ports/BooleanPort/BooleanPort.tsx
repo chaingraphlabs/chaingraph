@@ -74,7 +74,8 @@ function BooleanPortComponent(props: BooleanPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {config.direction === 'input' && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       <div className={cn(
         'flex flex-col',
@@ -109,7 +110,18 @@ function BooleanPortComponent(props: BooleanPortProps) {
         )}
       </div>
 
-      {config.direction === 'output' && <PortHandle port={port} />}
+      {(config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )}
     </div>
   )
 }

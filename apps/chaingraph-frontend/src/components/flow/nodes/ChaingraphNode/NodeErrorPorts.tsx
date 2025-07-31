@@ -82,7 +82,7 @@ function NodeErrorPorts({
   }
 
   return (
-    <div className="border-t border-background/20 mt-2">
+    <div className="border-t border-background/20">
       {/* Toggle Button */}
       <button
         type="button"

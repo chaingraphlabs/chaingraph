@@ -26,6 +26,7 @@ export const NODE_CATEGORIES = {
   BADAI: 'badai',
   OKX_DEX: 'okx-dex',
   BLOCKCHAIN: 'blockchain',
+  MCP: 'mcp',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -396,6 +397,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 11, // After OKX_DEX
+  },
+
+  [NODE_CATEGORIES.MCP]: {
+    id: NODE_CATEGORIES.MCP,
+    label: 'MCP Protocol',
+    description: 'Model Context Protocol nodes for tool calling, resources, and prompts',
+    icon: 'Network',
+    style: {
+      light: {
+        primary: '#FFE5CC', // Soft coral/peach
+        secondary: '#FFF2E6',
+        background: '#FFFFFF',
+        text: '#BF5700', // Deep burnt orange
+      },
+      dark: {
+        primary: '#4A2E1F', // Deep warm brown
+        secondary: '#2E1A12', // Darker brown
+        background: '#1C1C1C',
+        text: '#FF9F59', // Bright coral that's visible on dark
+      },
+    },
+    order: 3.5, // Between API and DATA
   },
 
 }

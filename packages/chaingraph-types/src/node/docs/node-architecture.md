@@ -59,7 +59,7 @@ classDiagram
     class IPortBinder {
         <<interface>>
         +bindPortToNodeProperty(targetObject, port)
-        +rebuildPortBindings()
+        +bindPortBindings()
         +initializePortsFromConfigs(portsConfigs)
         +rebindAfterDeserialization()
     }

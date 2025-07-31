@@ -91,7 +91,8 @@ export function NumberPort(props: NumberPortProps) {
         // className,
       )}
     >
-      {config.direction === 'input' && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       <div className={cn(
         'w-full',
@@ -106,7 +107,7 @@ export function NumberPort(props: NumberPortProps) {
             // if port required and the value is empty, add a red underline
             config.required
             && (port.getValue() === undefined || port.getValue() === null || !port.validate())
-            && config.direction === 'input'
+            && (config.direction === 'input' || config.direction === 'passthrough')
             && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
@@ -167,7 +168,18 @@ export function NumberPort(props: NumberPortProps) {
         )}
       </div>
 
-      {config.direction === 'output' && <PortHandle port={port} />}
+      {(config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )}
     </div>
   )
 }

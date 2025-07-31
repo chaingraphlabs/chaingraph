@@ -56,7 +56,8 @@ function AnyPortComponent(props: AnyPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {config.direction === 'input' && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       <div className={cn(
         'flex flex-col',
@@ -69,7 +70,7 @@ function AnyPortComponent(props: AnyPortProps) {
             // if port required and the value is empty, add a red underline
             config.required
             && (port.getValue() === undefined || port.getValue() === null || !port.validate())
-            && config.direction === 'input'
+            && (config.direction === 'input' || config.direction === 'passthrough')
             && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
@@ -88,7 +89,20 @@ function AnyPortComponent(props: AnyPortProps) {
 
       </div>
 
-      {config.direction === 'output' && <PortHandle port={port} />}
+      {
+        (config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )
+      }
     </div>
   )
 }

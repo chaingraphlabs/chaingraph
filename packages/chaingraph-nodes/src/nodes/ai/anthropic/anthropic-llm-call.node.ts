@@ -952,10 +952,13 @@ export class AntropicLlmCallNode extends BaseNode {
     parentId: string | undefined,
     nodeType: string,
   ): void {
+    console.log(`[ANTHROPIC] Setting port values recursively for node type: ${nodeType}, parentId: ${parentId}, values: ${JSON.stringify(values)}`)
+    console.log(`[ANTHROPIC] Node ports: ${JSON.stringify(Array.from(node.ports.values()).map(p => p.getConfig()), null, 2)}`)
+
     for (const [key, value] of Object.entries(values)) {
       const port = findPort(node, (p) => {
         return p.getConfig().key === key
-          && p.getConfig().direction === 'input'
+          && (p.getConfig().direction === 'input' || p.getConfig().direction === 'passthrough')
           && !p.isSystem()
           && p.getConfig().parentId === parentId
       })
@@ -973,11 +976,11 @@ export class AntropicLlmCallNode extends BaseNode {
           // Deep merge: preserve existing fields, add/update new ones
           const mergedValue = this.deepMergeObjects(currentValue, value)
           port.setValue(mergedValue)
-          // console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
+          console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
         } else {
           // If current value is not an object, just set the new value and recurse into sub-ports
           port.setValue(value)
-          // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+          console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
         }
 
         // Recursively handle nested object properties
@@ -985,7 +988,7 @@ export class AntropicLlmCallNode extends BaseNode {
       } else {
         // Set primitive values directly
         port.setValue(value)
-        // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+        console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
       }
     }
   }
