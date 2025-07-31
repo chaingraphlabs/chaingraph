@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-nodes
 
+## 0.3.1
+
+### Patch Changes
+
+- e58e090: Add flow fork functionality
+- 512098b: Show KDB nodes
+- 33c16c7: Fix hidden `needQA` port for `ArchAIIndexDocumentNode`
+- Updated dependencies [e58e090]
+- Updated dependencies [512098b]
+  - @badaitech/chaingraph-types@0.3.1
+
 ## 0.3.1-dev.0
 
 ### Patch Changes

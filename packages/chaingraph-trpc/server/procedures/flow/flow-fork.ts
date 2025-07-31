@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2025 BadLabs
+ *
+ * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
+ */
+
+import type { IFlowStore } from '../../stores/flowStore/types'
+import { Flow } from '@badaitech/chaingraph-types'
+import { z } from 'zod'
+import { authedProcedure } from '../../trpc'
+import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
+
+async function storeForkedFlow(flowStore: IFlowStore, forkedFlow: Flow): Promise<void> {
+  // For InMemoryFlowStore, directly add to the flows map
+  if ('flows' in flowStore) {
+    const memoryStore = flowStore as any
+    memoryStore.flows.set(forkedFlow.id, forkedFlow)
+    return
+  }
+
+  // For other flow stores, create empty flow then update with content
+  await flowStore.createFlow(forkedFlow.metadata)
+  await flowStore.updateFlow(forkedFlow)
+}
+
+export const fork = authedProcedure
+  .input(z.object({
+    flowId: z.string(),
+    name: z.string().optional(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    const userId = ctx.session?.user?.id
+    if (!userId) {
+      throw new Error('User not authenticated')
+    }
+
+    // Get the original flow
+    const originalFlow = await ctx.flowStore.getFlow(input.flowId)
+    if (!originalFlow) {
+      throw new Error(`Flow ${input.flowId} not found`)
+    }
+
+    // Fork access control: Allow owners and users who pass fork rules
+    // Add explicit null/undefined checks to prevent permission bypass
+    const isOwner = !!(
+      userId
+      && originalFlow.metadata.ownerID
+      && typeof userId === 'string'
+      && typeof originalFlow.metadata.ownerID === 'string'
+      && originalFlow.metadata.ownerID === userId
+    )
+
+    if (!isOwner) {
+      // Evaluate fork rule for non-owners - default to deny if no rule is set
+      const forkRule = originalFlow.metadata.forkRule || FORK_DENY_RULE
+      const context = {
+        userId,
+        ownerID: originalFlow.metadata.ownerID,
+        isOwner: false,
+        flowId: input.flowId,
+      }
+
+      try {
+        const canFork = safeApplyJsonLogic(forkRule, context)
+        if (!canFork) {
+          throw new Error('You do not have permission to fork this flow')
+        }
+      } catch (error) {
+        // Treat any evaluation error as permission denied for security
+        throw new Error('You do not have permission to fork this flow')
+      }
+    }
+
+    // Clone the flow with a new unique ID
+    const clonedFlow = originalFlow.clone() as Flow
+
+    // Create new flow with unique ID to prevent conflicts with original
+    const { id: _, ...metadataWithoutId } = clonedFlow.metadata
+    const forkedFlow = new Flow(metadataWithoutId)
+
+    // Transfer nodes and edges to the new flow
+    for (const node of clonedFlow.nodes.values()) {
+      forkedFlow.addNode(node, true)
+    }
+    for (const edge of clonedFlow.edges.values()) {
+      forkedFlow.addEdge(edge)
+    }
+
+    // Configure fork metadata
+    forkedFlow.metadata.name = input.name || `${originalFlow.metadata.name} (Fork)`
+    forkedFlow.metadata.createdAt = new Date()
+    forkedFlow.metadata.updatedAt = new Date()
+    forkedFlow.metadata.ownerID = userId
+    forkedFlow.metadata.parentId = originalFlow.id
+    forkedFlow.metadata.forkRule = FORK_DENY_RULE
+
+    // Store the forked flow
+    await storeForkedFlow(ctx.flowStore, forkedFlow)
+
+    return forkedFlow.metadata
+  })

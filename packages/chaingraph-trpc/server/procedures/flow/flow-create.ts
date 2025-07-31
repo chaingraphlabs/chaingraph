@@ -8,6 +8,7 @@
 
 import { z } from 'zod'
 import { authedProcedure } from '../../trpc'
+import { FORK_DENY_RULE } from '../../utils/fork-security'
 
 export const create = authedProcedure
   .input(z.object({
@@ -28,6 +29,7 @@ export const create = authedProcedure
       updatedAt: new Date(),
       tags: input.tags,
       ownerID: userId,
+      forkRule: FORK_DENY_RULE, // Default: deny access (not forkable)
     })
 
     return flow.metadata
