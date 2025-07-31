@@ -12,6 +12,7 @@ import type { drizzle } from 'drizzle-orm/node-postgres'
 import type { AuthSession, User } from './auth/types'
 import type { ExecutionService } from './executions/services/execution-service'
 import type { IExecutionStore } from './executions/store/execution-store'
+import type { IMCPStore } from './mcp/stores/types'
 import type { IFlowStore } from './stores/flowStore/types'
 import { authService } from './auth/service'
 
@@ -31,6 +32,7 @@ export interface AppContext {
   nodesCatalog: NodeCatalog
   executionService: ExecutionService
   executionStore: IExecutionStore
+  mcpStore: IMCPStore
 }
 
 let db: DBType | null = null
@@ -39,6 +41,7 @@ let nodeRegistry: NodeRegistry | null = null
 let nodesCatalog: NodeCatalog | null = null
 let executionService: ExecutionService | null = null
 let executionStore: IExecutionStore | null = null
+let mcpStore: IMCPStore | null = null
 
 /**
  * Initialize application context with stores
@@ -51,6 +54,7 @@ export function initializeContext(
   _nodesCatalog: NodeCatalog,
   _executionService: ExecutionService,
   _executionStore: IExecutionStore,
+  _mcpStore: IMCPStore,
 ) {
   db = _db
   flowStore = _flowStore
@@ -58,6 +62,7 @@ export function initializeContext(
   nodesCatalog = _nodesCatalog
   executionService = _executionService
   executionStore = _executionStore
+  mcpStore = _mcpStore
 }
 
 /**
@@ -72,6 +77,7 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
     || !nodesCatalog
     || !executionService
     || !executionStore
+    || !mcpStore
   ) {
     throw new Error('Context not initialized. Call initializeContext first.')
   }
@@ -95,6 +101,7 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
     nodesCatalog,
     executionService,
     executionStore,
+    mcpStore,
   }
 }
 

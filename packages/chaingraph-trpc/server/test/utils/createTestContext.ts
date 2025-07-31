@@ -50,5 +50,6 @@ export function createTestContext(
     executionService: null as any,
     executionStore: null as any,
     db: null as any,
+    mcpStore: null as any,
   }
 }

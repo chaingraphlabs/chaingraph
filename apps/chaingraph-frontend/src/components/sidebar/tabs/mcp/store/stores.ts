@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { MCPServer as MCPServerTRPC } from '@badaitech/chaingraph-trpc/server'
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import type { Prompt, Resource, ResourceTemplate, Tool } from '@modelcontextprotocol/sdk/types.js'
 import type {
@@ -15,6 +16,7 @@ import type {
   MCPServerWithCapabilities,
   UpdateMCPServerEvent,
 } from './types'
+import { $trpcClient } from '@/store'
 import { globalReset } from '@/store/common'
 import { mcpDomain } from '@/store/domains'
 import { combine, sample } from 'effector'
@@ -66,110 +68,50 @@ export const $mcpServers = mcpDomain.createStore<MCPServer[]>([])
 // EFFECTS
 
 // Effect for loading MCP servers list
-export const loadMCPServersFx = mcpDomain.createEffect(async () => {
-  // TODO: Replace with actual tRPC call when available
-  // Example:
-  // const client = $trpcClient.getState()
-  // if (!client) {
-  //   throw new Error('TRPC client is not initialized')
-  // }
-  // return client.mcp.listServers.query()
-
-  // Mock data for now - only metadata, no capabilities
-  return [
-    // {
-    //   id: '1',
-    //   title: 'Context7',
-    //   url: 'https://server.smithery.ai/@upstash/context7-mcp/mcp?api_key=178d4172-3bbb-45bf-85b3-8cd60bb0e5aa&profile=spectacular-chimpanzee-JjMDRm',
-    //   authHeaders: [],
-    // },
-    // {
-    //   id: '2',
-    //   title: 'test',
-    //   url: 'https://server.smithery.ai/@marco280690/mcp/mcp?api_key=178d4172-3bbb-45bf-85b3-8cd60bb0e5aa&profile=spectacular-chimpanzee-JjMDRm',
-    //   authHeaders: [],
-    // },
-    // {
-    //   id: '3',
-    //   title: 'Sequential Thinking Tools',
-    //   url: 'https://server.smithery.ai/@xinzhongyouhai/mcp-sequentialthinking-tools/mcp?api_key=178d4172-3bbb-45bf-85b3-8cd60bb0e5aa&profile=spectacular-chimpanzee-JjMDRm',
-    //   authHeaders: [],
-    // },
-    // {
-    //   id: '4',
-    //   title: 'Github',
-    //   url: 'https://server.smithery.ai/@smithery-ai/github/mcp?api_key=178d4172-3bbb-45bf-85b3-8cd60bb0e5aa&profile=spectacular-chimpanzee-JjMDRm',
-    //   authHeaders: [],
-    // },
-    // {
-    //   id: '5',
-    //   title: 'Hugging Face',
-    //   url: 'https://server.smithery.ai/@shreyaskarnik/huggingface-mcp-server/mcp?api_key=178d4172-3bbb-45bf-85b3-8cd60bb0e5aa&profile=spectacular-chimpanzee-JjMDRm',
-    //   authHeaders: [],
-    // },
-    {
-      id: '51212f12dsf',
-      title: 'Test-local',
-      url: 'https://09c607990700.ngrok-free.app/mcp',
-      authHeaders: [],
-    },
-  ] as MCPServer[]
+export const loadMCPServersFx = mcpDomain.createEffect(async (): Promise<MCPServer[]> => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.mcp.listServers.query()
 })
 
 // Effect for creating new MCP server
-export const createMCPServerFx = mcpDomain.createEffect(async (event: CreateMCPServerEvent) => {
-  // TODO: Replace with actual tRPC call when available
-  // Example:
-  // const client = $trpcClient.getState()
-  // if (!client) {
-  //   throw new Error('TRPC client is not initialized')
-  // }
-  // return client.mcp.createServer.mutate({
-  //   title: event.title,
-  //   url: event.url,
-  //   authHeaders: event.authHeaders,
-  // })
+export const createMCPServerFx = mcpDomain.createEffect(async (event: CreateMCPServerEvent): Promise<MCPServerTRPC> => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
 
-  // Mock implementation for now
-  const newServer: MCPServer = {
-    id: Date.now().toString(),
+  return client.mcp.createServer.mutate({
     title: event.title,
     url: event.url,
     authHeaders: event.authHeaders,
-  }
-  return newServer
+  })
 })
 
 // Effect for updating MCP server
-export const updateMCPServerFx = mcpDomain.createEffect(async (event: UpdateMCPServerEvent) => {
-  // TODO: Replace with actual tRPC call when available
-  // Example:
-  // const client = $trpcClient.getState()
-  // if (!client) {
-  //   throw new Error('TRPC client is not initialized')
-  // }
-  // return client.mcp.updateServer.mutate({
-  //   id: event.id,
-  //   url: event.url,
-  //   authHeaders: event.authHeaders,
-  // })
+export const updateMCPServerFx = mcpDomain.createEffect(async (event: UpdateMCPServerEvent): Promise<MCPServerTRPC> => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
 
-  // Mock implementation for now
-  return event as MCPServer
+  return client.mcp.updateServer.mutate({
+    id: event.id,
+    url: event.url,
+    authHeaders: event.authHeaders,
+    title: event.title,
+  })
 })
 
 // Effect for deleting MCP server
 export const deleteMCPServerFx = mcpDomain.createEffect(async (id: string) => {
-  // TODO: Replace with actual tRPC call when available
-  // Example:
-  // const client = $trpcClient.getState()
-  // if (!client) {
-  //   throw new Error('TRPC client is not initialized')
-  // }
-  // return client.mcp.deleteServer.mutate({ id })
-
-  // Mock implementation for now
-  return { success: true }
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+  return client.mcp.deleteServer.mutate({ id })
 })
 
 // Effect for connecting to MCP server
@@ -180,10 +122,10 @@ export const connectMCPServerFx = mcpDomain.createEffect(async (serverId: string
   }
 
   const client = await createMCPClient(server)
+
   return { serverId, client }
 })
 
-// Effect for loading MCP capabilities
 export const loadMCPCapabilitiesFx = mcpDomain.createEffect(async ({
   serverId,
   client,

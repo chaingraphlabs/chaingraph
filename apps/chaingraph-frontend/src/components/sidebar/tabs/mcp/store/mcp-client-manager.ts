@@ -34,6 +34,7 @@ export async function createMCPClient(server: MCPServer): Promise<Client> {
 
   const client = new Client({
     name: 'chaingraph-mcp-client',
+    title: 'Chaingraph MCP Client',
     version: '1.0.0',
   })
 

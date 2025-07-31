@@ -58,3 +58,16 @@ export const executionEventsTable = pgTable('execution_events', {
   timestampIdx: index('execution_events_execution_id_timestamp_idx').on(table.executionId, table.timestamp),
   eventTypeIdx: index('execution_events_execution_id_event_type_idx').on(table.executionId, table.eventType),
 }))
+
+export const mcpServersTable = pgTable('mcp_servers', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  title: text('title').notNull(),
+  url: text('url').notNull(),
+  authHeaders: jsonb('auth_headers').notNull().$type<Array<{ key: string, value: string }>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, table => [
+  index('mcp_servers_user_id_idx').on(table.userId),
+  index('mcp_servers_user_id_updated_at_idx').on(table.userId, table.updatedAt),
+])

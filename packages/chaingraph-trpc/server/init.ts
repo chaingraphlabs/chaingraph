@@ -7,6 +7,7 @@
  */
 
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
+import type { IMCPStore } from './mcp/stores/types'
 import type { IFlowStore } from './stores/flowStore/types'
 import process from 'node:process'
 import { getCategoriesMetadata } from '@badaitech/chaingraph-nodes'
@@ -20,6 +21,7 @@ import { CleanupService } from './executions/services/cleanup-service'
 import { ExecutionService } from './executions/services/execution-service'
 import { InMemoryExecutionStore } from './executions/store/execution-store'
 import { HybridExecutionStore, PostgresEventStore, PostgresExecutionStore } from './executions/store/postgres'
+import { InMemoryMCPStore, PostgresMCPStore } from './mcp/stores'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 
@@ -57,6 +59,7 @@ export async function init() {
   // Initialize stores and context
   const db = drizzle(process.env.DATABASE_URL!)
   let flowStore: IFlowStore = new InMemoryFlowStore()
+  let mcpStore: IMCPStore = new InMemoryMCPStore()
 
   // ping to check if the connection is successful
   try {
@@ -66,6 +69,7 @@ export async function init() {
     }
     console.log('DB connection successful')
     flowStore = new DBFlowStore(db)
+    mcpStore = new PostgresMCPStore(db)
   } catch (error) {
     console.error('DB connection failed, using in-memory store. If you would like to use a database, please set DATABASE_URL environment variable.')
   }
@@ -101,6 +105,7 @@ export async function init() {
     nodesCatalog,
     executionService,
     executionStore,
+    mcpStore,
   )
 
   // register categories

@@ -7,6 +7,7 @@
  */
 
 import { executionRouter } from './executions/routes/execution-router'
+import { mcpProcedures } from './mcp'
 import { flowProcedures } from './procedures/flow'
 import { nodeRegistryProcedures } from './procedures/nodeRegistry'
 import { secretProcedures } from './procedures/secrets'
@@ -17,6 +18,7 @@ export const appRouter = router({
   nodeRegistry: nodeRegistryProcedures,
   secrets: secretProcedures,
   execution: executionRouter,
+  mcp: mcpProcedures,
 })
 export type AppRouter = typeof appRouter
 

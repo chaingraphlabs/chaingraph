@@ -87,6 +87,7 @@ export class MCPToolCallNode extends BaseNode {
     description: 'Tool arguments (schema depends on selected tool)',
     schema: { properties: {} },
     isSchemaMutable: true,
+    required: true,
   })
   arguments: Record<string, any> = {}
 

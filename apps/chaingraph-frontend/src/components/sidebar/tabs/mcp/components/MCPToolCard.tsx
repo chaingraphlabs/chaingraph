@@ -103,14 +103,6 @@ export function MCPToolCard({ tool, server }: MCPToolCardProps) {
 
     console.log(`[MCPToolCard] Connection port set for ${tool.name}:`, connectionPort.serialize())
 
-    // mcpToolNode.connection.serverUrl = server.url
-    // mcpToolNode.connection.headers = authHeaders.reduce((acc, header) => {
-    //   if (header.key && header.value) {
-    //     acc[header.key] = header.value
-    //   }
-    //   return acc
-    // }, {} as Record<string, string>)
-
     /// ///////////////////////////////// toolName ////////////////////////////////////
     // Set the tool name
     const toolNamePort = mcpToolNode.findPort(
