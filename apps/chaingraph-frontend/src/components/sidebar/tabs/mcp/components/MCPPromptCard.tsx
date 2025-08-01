@@ -7,30 +7,19 @@
  */
 
 import type { MCPServerWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
-import type { MCPPromptGetNode } from '@badaitech/chaingraph-nodes'
-import type {
-  IPortConfig,
-  NodeMetadataWithPorts,
-  ObjectPort,
-  StringPort,
-} from '@badaitech/chaingraph-types'
 import type { Prompt } from '@modelcontextprotocol/sdk/types.js'
 import { NodePreview } from '@/components/sidebar'
+import { buildNodeMetadataWithPorts } from '@/components/sidebar/tabs/mcp/utils/node'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useCategoryMetadata } from '@/store/categories/useCategories'
-import { MCPConnectionData } from '@badaitech/chaingraph-nodes'
-import {
-  jsonSchemaToPortConfig,
-} from '@badaitech/chaingraph-types'
-import {
-  NodeRegistry,
-} from '@badaitech/chaingraph-types'
 import { useDraggable } from '@dnd-kit/core'
+import { useUnit } from 'effector-react'
 import { motion } from 'framer-motion'
 import { MessageSquare } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
+import { $mcpServersWithNodes } from '../store'
 
 interface MCPPromptCardProps {
   prompt: Prompt
@@ -38,156 +27,37 @@ interface MCPPromptCardProps {
 }
 
 export function MCPPromptCard({ prompt, server }: MCPPromptCardProps) {
+  const servers = useUnit($mcpServersWithNodes)
+  const serverWithNodes = servers.find(s => s.id === server.id)
+
   const argCount = prompt.arguments?.length || 0
 
-  const preparePromptTemplateNode = useCallback((prompt: Prompt): MCPPromptGetNode => {
-    const promptGetNode = NodeRegistry.getInstance().createNode('MCPPromptGetNode', 'MCPPromptGet-temp') as MCPPromptGetNode
-    if (!promptGetNode) {
-      throw new Error('Failed to create promptGetNode')
-    }
-
-    promptGetNode.initialize()
-
-    if (prompt.title || prompt.name) {
-      // mcpToolNode.metadata.title = `${serverName}: ${(tool.title || tool.name)}`
-      promptGetNode.metadata.title = prompt.title || prompt.name
-    }
-
-    if (prompt.description) {
-      promptGetNode.metadata.description = prompt.description
-    }
-
-    /// ///////////////////////////////// connection ////////////////////////////////////
-    // Configure the connection with server info
-    const connectionPort = promptGetNode.findPort(
-      port => port.getConfig().key === 'connection' && !port.getConfig().parentId,
-    ) as ObjectPort
-    if (!connectionPort) {
-      throw new Error('Connection port not found in MCPToolCallNode')
-    }
-
-    const connectionPortValue = new MCPConnectionData()
-    connectionPortValue.serverUrl = server.url
-    connectionPortValue.headers = []
-
-    connectionPort?.setConfig({
-      ...connectionPort.getConfig(),
-      schema: {
-        ...connectionPort.getConfig().schema,
-        properties: {
-          ...connectionPort.getConfig().schema.properties,
-          serverUrl: {
-            ...connectionPort.getConfig().schema.properties.serverUrl,
-            type: 'string',
-            defaultValue: server.url,
-          },
-          headers: {
-            ...connectionPort.getConfig().schema.properties.headers,
-            type: 'array',
-            defaultValue: server.authHeaders || [],
-            itemConfig: {
-              ...(connectionPort.getConfig().schema.properties as any).headers.itemConfig,
-              type: 'object',
-            },
-          },
-        },
-      },
-      defaultValue: connectionPortValue,
-      ui: {
-        ...connectionPort.getConfig().ui,
-        hidden: true, // Hide the connection port in the UI
-      },
-    })
-    connectionPort?.setValue(connectionPortValue)
-
-    /// ///////////////////////////////// promptName ////////////////////////////////////
-    // Set the prompt name
-    const promptNamePort = promptGetNode.findPort(
-      port => port.getConfig().key === 'promptName' && !port.getConfig().parentId,
-    ) as StringPort
-
-    if (!promptNamePort) {
-      throw new Error('Prompt name port not found in MCPPromptGetNode')
-    }
-
-    promptNamePort?.setConfig({
-      ...promptNamePort.getConfig(),
-      defaultValue: prompt.name,
-      ui: {
-        ...promptNamePort.getConfig().ui,
-        hidden: true, // Hide the tool name port in the UI
-      },
-    })
-    promptNamePort?.setValue(prompt.name)
-
-    /// ////////////////////////////////// arguments /////////////////////////////////////
-    // Prepare the prompt template node with arguments
-    if (prompt.arguments && prompt.arguments.length > 0) {
-      const argumentsPort = promptGetNode.findPort(
-        port => port.getConfig().key === 'arguments' && !port.getConfig().parentId,
-      ) as ObjectPort
-
-      if (!argumentsPort) {
-        throw new Error('Arguments port not found in MCPPromptGetNode')
-      }
-
-      const argumentsConfig: IPortConfig = {
-        ...argumentsPort.getConfig(),
-        defaultValue: prompt.arguments.reduce((acc, arg) => {
-          acc[arg.name] = arg.defaultValue || ''
-          return acc
-        }, {} as Record<string, any>),
-        isSchemaMutable: false,
-        ui: {
-          ...argumentsPort.getConfig().ui,
-          collapsed: true,
-        },
-        schema: {
-          type: 'object',
-          properties: Object.fromEntries(
-            prompt.arguments.map((arg, index) => [
-              arg.name,
-
-              jsonSchemaToPortConfig(
-                arg.name,
-                arg,
-                arg.required ? [arg.name] : undefined,
-                index,
-              ),
-            ]),
-          ),
-        },
-      }
-
-      argumentsPort.setConfig(argumentsConfig)
-      argumentsPort.setValue(argumentsConfig.defaultValue)
-    }
-
-    return promptGetNode
-  }, [server])
-
   const node = useMemo(() => {
-    const promptTemplateNode = preparePromptTemplateNode(prompt)
-    if (!promptTemplateNode) {
-      throw new Error('Failed to create MCPPromptTemplateNode')
-    }
+    if (!serverWithNodes?.nodes)
+      return null
 
-    const portsConfig = new Map<string, IPortConfig>()
-
-    // use mcpToolNode.ports to fill portsConfig
-    promptTemplateNode.ports.forEach((port) => {
-      if (!port.isSystem() && !port.getConfig().parentId) {
-        portsConfig.set(port.key, port.getConfig())
+    // Find the specific prompt node by checking the promptName port value
+    const promptNode = serverWithNodes.nodes.prompts.find((n) => {
+      // The backend stores the prompt name in a port with key 'promptName'
+      const promptNamePort = n.findPort(
+        p => p.getConfig().key === 'promptName' && !p.getConfig().parentId,
+      )
+      if (promptNamePort) {
+        const promptNameValue = promptNamePort.getValue()
+        return promptNameValue === prompt.name
       }
+
+      // Fallback to metadata matching if port not found
+      return n.metadata.title === prompt.name
     })
 
-    const nodeMetadataWithPorts: NodeMetadataWithPorts = {
-      ...promptTemplateNode.metadata,
-      portsConfig,
+    if (!promptNode) {
+      console.warn(`[MCPPromptCard] Could not find pre-built node for prompt: ${prompt.name}`)
+      return null
     }
 
-    return nodeMetadataWithPorts
-  }, [prompt, preparePromptTemplateNode])
+    return buildNodeMetadataWithPorts(promptNode)
+  }, [serverWithNodes, prompt])
 
   const categoryMetadata = useCategoryMetadata('mcp')
 
@@ -197,7 +67,30 @@ export function MCPPromptCard({ prompt, server }: MCPPromptCardProps) {
       node,
       categoryMetadata,
     },
+    disabled: !node, // Disable dragging if node isn't ready
   })
+
+  // Show loading state if nodes aren't loaded yet
+  if (serverWithNodes?.nodesLoadingState?.isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-1 px-2 opacity-50">
+        <MessageSquare className="h-3 w-3 text-muted-foreground animate-pulse" />
+        <span className="text-xs">Loading...</span>
+      </div>
+    )
+  }
+
+  // Show error state if node couldn't be found
+  if (!node) {
+    return (
+      <div className="flex items-center gap-2 py-1 px-2 opacity-50">
+        <MessageSquare className="h-3 w-3 text-muted-foreground" />
+        <span className="text-xs line-through">
+          {prompt.name}
+        </span>
+      </div>
+    )
+  }
 
   return (
     <motion.div
