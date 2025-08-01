@@ -22,7 +22,7 @@ interface CachedCapabilities {
 export class MCPCapabilityService {
   private cache = new Map<string, CachedCapabilities>()
   private activeClients = new Map<string, Client>()
-  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  private readonly CACHE_DURATION = 60 * 1000 // 1 minute
 
   constructor(private mcpStore: IMCPStore) {}
 
@@ -155,8 +155,12 @@ export class MCPCapabilityService {
       // If that fails, try the older SSE transport
       console.warn('StreamableHTTP transport failed, trying SSE transport:', error)
 
-      const sseTransport = new SSEClientTransport(url)
-      await client.connect(sseTransport)
+      try {
+        const sseTransport = new SSEClientTransport(url)
+        await client.connect(sseTransport)
+      } catch (sseError) {
+        throw new Error(`Failed to connect to both StreamableHTTP and SSE transports: HTTP Error: ${error instanceof Error ? error.message : error}, SSE Error: ${sseError instanceof Error ? sseError.message : sseError}`)
+      }
     }
 
     // Verify connection with ping
