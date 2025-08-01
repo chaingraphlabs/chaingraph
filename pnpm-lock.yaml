@@ -631,6 +631,9 @@ importers:
 
   packages/chaingraph-trpc:
     dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.15.0
+        version: 1.17.0
       '@tanstack/react-query':
         specifier: '>= 5.80.3'
         version: 5.81.2(react@19.1.0)
@@ -667,6 +670,9 @@ importers:
       pg:
         specifier: ^8.16.2
         version: 8.16.2
+      uri-template:
+        specifier: ^2.0.0
+        version: 2.0.0
       ws:
         specifier: ^8.18.2
         version: 8.18.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
