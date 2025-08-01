@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { INode } from '@badaitech/chaingraph-types'
 import type { Prompt, Resource, ResourceTemplate, Tool } from '@modelcontextprotocol/sdk/types.js'
 
 export enum MCPServerStatus {
@@ -48,4 +49,20 @@ export interface UpdateMCPServerEvent {
   title: string
   url: string
   authHeaders: Array<{ key: string, value: string }>
+}
+
+export interface MCPServerNodes {
+  tools: INode[]
+  resources: INode[]
+  prompts: INode[]
+}
+
+export interface MCPServerNodesLoadingState {
+  isLoading: boolean
+  error?: Error | null
+}
+
+export interface MCPServerWithNodes extends MCPServerWithCapabilities {
+  nodes?: MCPServerNodes
+  nodesLoadingState?: MCPServerNodesLoadingState
 }

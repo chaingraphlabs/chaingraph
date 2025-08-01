@@ -13,7 +13,10 @@ import type {
   CreateMCPServerEvent,
   MCPCapabilityLoadingState,
   MCPServer,
+  MCPServerNodes,
+  MCPServerNodesLoadingState,
   MCPServerWithCapabilities,
+  MCPServerWithNodes,
   UpdateMCPServerEvent,
 } from './types'
 import { $trpcClient } from '@/store'
@@ -55,6 +58,18 @@ export const setMCPServerCapabilities = mcpDomain.createEvent<{
 export const setMCPCapabilityLoading = mcpDomain.createEvent<{
   id: string
   loading: Partial<MCPCapabilityLoadingState>
+}>()
+
+// MCP nodes events
+export const loadMCPServerNodes = mcpDomain.createEvent<string>() // server id
+export const loadAllMCPServerNodes = mcpDomain.createEvent()
+export const setMCPServerNodes = mcpDomain.createEvent<{
+  serverId: string
+  nodes: MCPServerNodes
+}>()
+export const setMCPServerNodesLoading = mcpDomain.createEvent<{
+  serverId: string
+  loading: MCPServerNodesLoadingState
 }>()
 
 // STORES (Forward declarations needed for effects)
@@ -157,6 +172,24 @@ export const disconnectMCPServerFx = mcpDomain.createEffect(async (serverId: str
   return serverId
 })
 
+// Effect for loading server nodes
+export const loadMCPServerNodesFx = mcpDomain.createEffect(async (serverId: string) => {
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
+  }
+
+  const result = await client.mcp.getAllNodesForServer.query({ serverId })
+  return {
+    serverId,
+    nodes: {
+      tools: result.tools,
+      resources: result.resources,
+      prompts: result.prompts,
+    } as MCPServerNodes,
+  }
+})
+
 // STORES - Event handlers
 
 // Add event handlers to $mcpClients
@@ -221,6 +254,48 @@ export const $mcpServerCapabilities = mcpDomain.createStore<Map<string, {
       ...(prompts !== undefined && { prompts }),
     })
     return newCapabilities
+  })
+  .reset(globalReset)
+
+// Store for MCP server nodes
+export const $mcpServerNodes = mcpDomain.createStore<Map<string, MCPServerNodes>>(new Map())
+  .on(setMCPServerNodes, (nodes, { serverId, nodes: serverNodes }) => {
+    const newNodes = new Map(nodes)
+    newNodes.set(serverId, serverNodes)
+    return newNodes
+  })
+  .on(loadMCPServerNodesFx.doneData, (nodes, { serverId, nodes: serverNodes }) => {
+    const newNodes = new Map(nodes)
+    newNodes.set(serverId, serverNodes)
+    return newNodes
+  })
+  .reset(globalReset)
+
+// Store for MCP server nodes loading states
+export const $mcpServerNodesLoadingStates = mcpDomain.createStore<Map<string, MCPServerNodesLoadingState>>(new Map())
+  .on(setMCPServerNodesLoading, (states, { serverId, loading }) => {
+    const newStates = new Map(states)
+    newStates.set(serverId, loading)
+    return newStates
+  })
+  .on(loadMCPServerNodesFx.pending, (states, isPending) => {
+    // When effect starts, we need to get the serverId from the params
+    return states
+  })
+  .on(loadMCPServerNodesFx, (states, serverId) => {
+    const newStates = new Map(states)
+    newStates.set(serverId, { isLoading: true, error: null })
+    return newStates
+  })
+  .on(loadMCPServerNodesFx.done, (states, { params: serverId }) => {
+    const newStates = new Map(states)
+    newStates.set(serverId, { isLoading: false, error: null })
+    return newStates
+  })
+  .on(loadMCPServerNodesFx.fail, (states, { params: serverId, error }) => {
+    const newStates = new Map(states)
+    newStates.set(serverId, { isLoading: false, error })
+    return newStates
   })
   .reset(globalReset)
 
@@ -298,7 +373,7 @@ sample({
 
 // Automatically connect to newly created server
 sample({
-  clock: createMCPServerFx.doneData,
+  clock: [createMCPServerFx.doneData, updateMCPServerFx.doneData],
   fn: server => server.id,
   target: connectMCPServer,
 })
@@ -389,6 +464,30 @@ loadMCPServersFx.doneData.watch((servers) => {
   servers.forEach(server => connectMCPServer(server.id))
 })
 
+// Load nodes when requested
+sample({
+  clock: loadMCPServerNodes,
+  target: loadMCPServerNodesFx,
+})
+
+// Load all server nodes when requested
+loadAllMCPServerNodes.watch(() => {
+  const servers = $mcpServers.getState()
+  servers.forEach(server => loadMCPServerNodes(server.id))
+})
+
+// Load nodes when servers are loaded
+loadMCPServersFx.doneData.watch((servers) => {
+  servers.forEach(server => loadMCPServerNodes(server.id))
+})
+
+// Reload nodes when server is created or updated
+sample({
+  clock: [createMCPServerFx.doneData, updateMCPServerFx.doneData],
+  fn: server => server.id,
+  target: loadMCPServerNodes,
+})
+
 // Combined store for UI
 export const $mcpServersWithCapabilities = combine(
   $mcpServers,
@@ -410,6 +509,25 @@ export const $mcpServersWithCapabilities = combine(
         error,
         loadingState,
       } as MCPServerWithCapabilities
+    })
+  },
+)
+
+// Combined store for UI with nodes
+export const $mcpServersWithNodes = combine(
+  $mcpServersWithCapabilities,
+  $mcpServerNodes,
+  $mcpServerNodesLoadingStates,
+  (servers, nodes, loadingStates) => {
+    return servers.map((server) => {
+      const serverNodes = nodes.get(server.id)
+      const nodesLoadingState = loadingStates.get(server.id)
+
+      return {
+        ...server,
+        nodes: serverNodes,
+        nodesLoadingState,
+      } as MCPServerWithNodes
     })
   },
 )
