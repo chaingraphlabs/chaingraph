@@ -174,6 +174,7 @@ export function MCPServerForm({
                       onChange={e => handleHeaderChange(index, 'value', e.target.value)}
                       placeholder="Header value"
                       className="flex-1"
+                      type="password"
                       disabled={isLoading || isUpdating || isDeleting}
                     />
                     <Button

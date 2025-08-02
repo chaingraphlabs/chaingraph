@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+export * from './array-element.node'
 export * from './debug-log.node'
 export * from './get-port-schema.node'
 export * from './handlebars-template.node'

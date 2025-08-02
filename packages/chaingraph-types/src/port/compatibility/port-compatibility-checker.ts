@@ -43,24 +43,12 @@ export class PortCompatibilityChecker implements IPortCompatibilityChecker, IRec
     const sourceConfig = sourcePort.getConfig()
     const targetConfig = targetPort.getConfig()
 
-    console.debug(
-      `Checking compatibility: ${sourceConfig.type} -> ${targetConfig.type}`,
-    )
-
     // Find applicable rule
     const rule = this.findRule(sourceConfig.type, targetConfig.type)
     if (!rule) {
-      console.debug(
-        `No specific compatibility rule found for ${sourceConfig.type} -> ${targetConfig.type}`,
-      )
-
       // No specific rule found, check for basic type compatibility
       return sourceConfig.type === targetConfig.type
     }
-
-    console.debug(
-      `Found compatibility rule for ${sourceConfig.type} -> ${targetConfig.type}`,
-    )
 
     return rule.checkCompatibility(sourceConfig, targetConfig, this)
   }

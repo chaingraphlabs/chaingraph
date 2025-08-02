@@ -45,7 +45,22 @@ export const updatePortValue = flowContextProcedure
         throw new Error('Port not found')
 
       port.setValue(input.value)
-      node.updatePort(port)
+
+      const portsToUpdate = [port]
+
+      // find all parents of this port and update their values
+      let currentPort = port
+      while (currentPort.getConfig().parentId) {
+        const parentPort = node.getPort(currentPort.getConfig().parentId!)
+        if (!parentPort) {
+          throw new Error(`Parent port ${currentPort.getConfig().parentId} not found for port ${currentPort.id}`)
+        }
+        portsToUpdate.push(parentPort)
+        currentPort = parentPort
+      }
+
+      node.updatePorts(portsToUpdate)
+      flow.updateNode(node)
 
       // console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 

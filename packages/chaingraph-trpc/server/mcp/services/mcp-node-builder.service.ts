@@ -92,17 +92,26 @@ export class MCPNodeBuilderService {
 
       if (properties.length > 0) {
         mcpToolNode.addObjectProperties(argumentsPort as IPort, properties)
-      }
 
-      argumentsPort.setConfig({
-        ...argumentsPort.getConfig(),
-        isSchemaMutable: false,
-        ui: {
-          ...argumentsPort.getConfig().ui,
-          collapsed: true,
-          hidden: properties.length === 0,
-        },
-      })
+        argumentsPort.setConfig({
+          ...argumentsPort.getConfig(),
+          isSchemaMutable: false,
+          required: true,
+          ui: {
+            ...argumentsPort.getConfig().ui,
+            collapsed: true,
+            hidden: properties.length === 0,
+          },
+        })
+      } else {
+        argumentsPort.setConfig({
+          ...argumentsPort.getConfig(),
+          ui: {
+            ...argumentsPort.getConfig().ui,
+            hidden: true,
+          },
+        })
+      }
     } else {
       argumentsPort.setConfig({
         ...argumentsPort.getConfig(),
@@ -330,14 +339,15 @@ export class MCPNodeBuilderService {
     promptNamePort.setValue(prompt.name)
 
     // Configure arguments
-    if (prompt.arguments && prompt.arguments.length > 0) {
-      const argumentsPort = promptGetNode.findPort(
-        port => port.getConfig().key === 'arguments' && !port.getConfig().parentId,
-      ) as ObjectPort
-      if (!argumentsPort) {
-        throw new Error('Arguments port not found in MCPPromptGetNode')
-      }
 
+    const argumentsPort = promptGetNode.findPort(
+      port => port.getConfig().key === 'arguments' && !port.getConfig().parentId,
+    ) as ObjectPort
+    if (!argumentsPort) {
+      throw new Error('Arguments port not found in MCPPromptGetNode')
+    }
+
+    if (prompt.arguments && prompt.arguments.length > 0) {
       const argumentsConfig: IPortConfig = {
         ...argumentsPort.getConfig(),
         defaultValue: prompt.arguments.reduce((acc, arg) => {
@@ -367,6 +377,15 @@ export class MCPNodeBuilderService {
 
       argumentsPort.setConfig(argumentsConfig)
       argumentsPort.setValue(argumentsConfig.defaultValue)
+    } else {
+      argumentsPort.setConfig({
+        ...argumentsPort.getConfig(),
+        ui: {
+          ...argumentsPort.getConfig().ui,
+          hidden: true,
+        },
+      })
+      argumentsPort.setValue({})
     }
 
     return promptGetNode

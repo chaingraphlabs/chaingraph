@@ -117,7 +117,7 @@ export class PortConfigProcessor {
     // If the node field has an explicit value, override the defaultValue from the config.
     if (propertyValue !== undefined) {
       // Log warning if needed (optional)
-      newPortConfig.defaultValue = deepCopy(propertyValue) || portConfig.defaultValue
+      newPortConfig.defaultValue = deepCopy(propertyValue) ?? portConfig.defaultValue
     } else {
       newPortConfig.defaultValue = portConfig.defaultValue
     }

@@ -150,9 +150,7 @@ export const $compatiblePortsToDraggingEdge = portsDomain.createStore<string[] |
         // Skip if the port is not in the correct direction for the dragging port
         if (draggingPortDirection === 'source' && (port.getConfig().direction !== 'input' && port.getConfig().direction !== 'passthrough')) {
           continue
-        }
-
-        if (draggingPortDirection === 'target' && (port.getConfig().direction !== 'output' && port.getConfig().direction !== 'passthrough')) {
+        } else if (draggingPortDirection === 'target' && (port.getConfig().direction !== 'output' && port.getConfig().direction !== 'passthrough')) {
           continue
         }
 
@@ -161,13 +159,15 @@ export const $compatiblePortsToDraggingEdge = portsDomain.createStore<string[] |
           continue
         }
 
-        // Skip if the port is not compatible with the dragging port
-        if (!checker.canConnect(draggingPort, port)) {
+        // Skip if the port is the same as the dragging port
+        if (port.id === draggingPort.id) {
           continue
         }
 
-        // Skip if the port is the same as the dragging port
-        if (port.id === draggingPort.id) {
+        // Skip if the port is not compatible with the dragging port
+        if (draggingPortDirection === 'source' && !checker.canConnect(draggingPort, port)) {
+          continue
+        } else if (draggingPortDirection === 'target' && !checker.canConnect(port, draggingPort)) {
           continue
         }
 

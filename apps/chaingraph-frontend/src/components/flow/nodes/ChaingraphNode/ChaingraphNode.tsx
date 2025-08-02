@@ -362,6 +362,7 @@ function ChaingraphNodeComponent({
         variant={ResizeControlVariant.Handle}
         position="right"
         minWidth={200}
+        autoScale={false}
         style={{
           background: 'transparent',
           border: 'none',

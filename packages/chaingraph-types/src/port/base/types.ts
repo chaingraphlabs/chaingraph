@@ -11,6 +11,7 @@ import type {
   ArrayPortConfigUIType,
   BasePortConfigUIType,
   BooleanPortConfigUIType,
+  EnumPortConfigUIType,
   NumberPortConfigUIType,
   ObjectPortConfigUIType,
   StreamPortConfigUIType,
@@ -151,6 +152,7 @@ export interface SecretPortConfig<S extends SecretType = 'string'> extends BaseP
  */
 export interface ObjectPortConfig<S extends IObjectSchema = IObjectSchema> extends BasePortConfig {
   type: 'object'
+  // TODO: !!!! Consider removing the schema property and using properties directly for better alignment with JSON Schema !!!!
   schema: S
   isSchemaMutable?: boolean
   defaultValue?: ObjectPortValue<S>
@@ -195,7 +197,7 @@ export interface EnumPortConfig extends BasePortConfig {
   type: 'enum'
   options: IPortConfig[]
   defaultValue?: EnumPortValue
-  ui?: BasePortConfigUIType
+  ui?: BasePortConfigUIType & EnumPortConfigUIType
 }
 
 /**

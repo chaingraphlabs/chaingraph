@@ -166,18 +166,6 @@ class ArrayNode extends BaseNode {
       this.removeArrayItems(arrayPort, arrayPortValue.map((_, index) => index))
     }
 
-    console.log(`[ArrayNode] Setting array port config: ${title}: ${JSON.stringify({
-      ...arrayPortConfig,
-      title,
-      itemConfig: {
-        ...itemConfig,
-        direction: arrayPortConfig.direction,
-      },
-      ui: {
-        ...arrayPortConfig.ui,
-      },
-    })}`)
-
     // Change item configuration for the array port
     arrayPort.setConfig({
       ...arrayPortConfig,

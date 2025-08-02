@@ -119,6 +119,8 @@ export class AnyPort extends BasePort<AnyPortConfig> {
       this.value = {}
     }
 
+    // TODO: Add support for arrays and other types
+
     // Initialize value if it doesn't exist or isn't an object
     if (typeof newValue !== 'object' || Array.isArray(newValue)) {
       this.value = {}

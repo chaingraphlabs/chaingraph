@@ -46,10 +46,6 @@ export class Edge implements IEdge {
   }
 
   async validate(): Promise<boolean> {
-    // Ensure ports are compatible
-    const sourcePortKind = this.sourcePort.getConfig().type
-    const targetPortKind = this.targetPort.getConfig().type
-
     // Check port directions
     if (this.sourcePort.getConfig().direction !== PortDirection.Output && this.sourcePort.getConfig().direction !== PortDirection.Passthrough) {
       throw new Error(`Source port ${this.sourcePort.id} is not an output or passthrough port.`)

@@ -105,18 +105,23 @@ export class SameTypeCompatibilityRule implements ICompatibilityRule {
 }
 
 /**
- * Compatibility rule for 'any' type ports.
+ * Compatibility rule for 'any' type ports with type unwrapping.
  *
- * The 'any' type provides flexibility in the flow graph by allowing dynamic typing.
- * This rule handles two scenarios:
+ * This rule handles 'any' type ports by unwrapping their underlying types when present.
+ * Both source and target ports are unwrapped before applying compatibility rules:
  *
- * 1. Target port is 'any': Can accept data from any source port type
- *    Example: A debug/logging node that can display any data type
+ * After unwrapping, the following rules apply:
+ * 1. any -> any: Allowed - both ports have no concrete type
+ * 2. type -> any: Allowed - typed data can flow to generic receivers
+ * 3. any -> type: Not allowed - cannot validate unknown source against typed target
+ * 4. type -> type: Delegates to standard type compatibility rules
  *
- * 2. Source port is 'any': Can connect to any target, but may have an underlying type
- *    Example: A variable getter that returns different types based on the variable name
+ * Examples:
+ * - A variable getter with underlying type 'string' can connect to a string input
+ * - A generic debug node (any) can receive data from any typed output
+ * - An untyped 'any' output cannot connect to a typed input (type safety)
  *
- * This flexibility is useful for generic nodes but requires careful runtime handling.
+ * This ensures type safety while maintaining flexibility for generic nodes.
  */
 export class AnyTypeCompatibilityRule implements ICompatibilityRule {
   constructor(
@@ -129,41 +134,55 @@ export class AnyTypeCompatibilityRule implements ICompatibilityRule {
     targetConfig: IPortConfig,
     checker?: IRecursiveCompatibilityChecker,
   ): boolean {
-    // If target is 'any', it can accept any source
-    if (targetConfig.type === 'any') {
+    // Unwrap both source and target if they are 'any' types
+    const unwrappedSource = this.unwrapUnderlyingType(sourceConfig)
+    const unwrappedTarget = this.unwrapUnderlyingType(targetConfig)
+
+    // Determine the effective types after unwrapping
+    const sourceIsAny = !unwrappedSource || unwrappedSource.type === 'any'
+    const targetIsAny = !unwrappedTarget || unwrappedTarget.type === 'any'
+
+    // Apply the four compatibility rules:
+    // 1. any -> any: allowed
+    if (sourceIsAny && targetIsAny) {
       return true
     }
 
-    console.log(`[AnyTypeCompatibilityRule] Checking compatibility for source 'any' with underlying type:`, sourceConfig)
-
-    // If source is 'any', check if it has an underlying type
-    if (sourceConfig.type === 'any') {
-      const anyConfig = sourceConfig as AnyPortConfig
-      const underlyingType = this.unwrapUnderlyingType(anyConfig)
-
-      console.log(`[AnyTypeCompatibilityRule] Checking compatibility for source 'any' with underlying type:`, underlyingType)
-
-      if (underlyingType && checker) {
-        // Use the checker to validate underlying type compatibility
-        return checker.checkConfigs(underlyingType, targetConfig, 0)
-      } else if (underlyingType) {
-        // Fallback to simple type check if no checker available
-        return underlyingType.type === targetConfig.type
-      }
-
-      // If no underlying type, allow connection (will be determined at runtime)
+    // 2. type -> any: allowed
+    if (!sourceIsAny && targetIsAny) {
       return true
     }
 
-    return false
+    // 3. any -> type: not allowed (can't validate unknown source type)
+    if (sourceIsAny && !targetIsAny) {
+      return false
+    }
+
+    // 4. type -> type: check with standard rules
+    if (!sourceIsAny && !targetIsAny && checker) {
+      return checker.checkConfigs(unwrappedSource, unwrappedTarget, 0)
+    }
+
+    // Fallback if no checker available
+    return !!unwrappedSource?.type
+      && !!unwrappedTarget?.type
+      && unwrappedSource.type === unwrappedTarget.type
   }
 
-  private unwrapUnderlyingType(anyConfig: AnyPortConfig): IPortConfig | undefined {
+  private unwrapUnderlyingType(config: IPortConfig): IPortConfig | undefined {
+    // If it's not an 'any' type, return the config as-is
+    if (config.type !== 'any') {
+      return config
+    }
+
+    const anyConfig = config as AnyPortConfig
     const maxDepth = 10 // Prevent infinite loops in case of circular references
     let underlyingType = anyConfig.underlyingType
     let depth = 0
-    while (underlyingType && underlyingType.type === 'any' && underlyingType.underlyingType && depth < maxDepth) {
-      underlyingType = underlyingType.underlyingType
+
+    // Keep unwrapping nested 'any' types until we find a concrete type or reach max depth
+    while (underlyingType && underlyingType.type === 'any' && (underlyingType as AnyPortConfig).underlyingType && depth < maxDepth) {
+      underlyingType = (underlyingType as AnyPortConfig).underlyingType
       depth++
     }
 
@@ -175,7 +194,20 @@ export class AnyTypeCompatibilityRule implements ICompatibilityRule {
   }
 
   getErrorMessage(sourceConfig: IPortConfig, targetConfig: IPortConfig): string {
-    return `Incompatible port types: ${sourceConfig.type} -> ${targetConfig.type}`
+    const unwrappedSource = this.unwrapUnderlyingType(sourceConfig)
+    const unwrappedTarget = this.unwrapUnderlyingType(targetConfig)
+
+    const sourceIsAny = !unwrappedSource || unwrappedSource.type === 'any'
+    const targetIsAny = !unwrappedTarget || unwrappedTarget.type === 'any'
+
+    if (sourceIsAny && !targetIsAny) {
+      return `Cannot connect 'any' type without underlying type to '${unwrappedTarget.type}' - unable to validate type compatibility`
+    }
+
+    const sourceType = unwrappedSource?.type || 'any'
+    const targetType = unwrappedTarget?.type || 'any'
+
+    return `Incompatible port types after unwrapping: ${sourceType} -> ${targetType}`
   }
 }
 
@@ -277,9 +309,9 @@ export class ArrayCompatibilityRule implements ICompatibilityRule {
  * Object ports have the most complex compatibility requirements because they contain
  * structured data with multiple properties. This rule performs deep schema validation:
  *
- * - All properties in the source schema must exist in the target schema
+ * - All properties required by the target schema must exist in the source schema
  * - Each property type must be compatible (including nested objects and arrays)
- * - Target can have additional properties (source is a subset of target)
+ * - Source can have additional properties beyond what target requires (source "implements" target)
  *
  * Special case - Schema Capture:
  * If the target port has `isSchemaMutable: true` and an empty schema (no properties),
@@ -287,13 +319,16 @@ export class ArrayCompatibilityRule implements ICompatibilityRule {
  * dynamically adapt their schema based on what's connected to them.
  *
  * Examples:
- * 1. Normal validation: A source with {name: string, age: number} can connect to
- *    a target expecting {name: string, age: number, email?: string}
- * 2. Schema capture: A mutable target with {} can accept any object source and
+ * 1. Normal validation: A source with {name: string, age: number, email: string} can connect to
+ *    a target expecting {name: string, age: number} because source has all required properties
+ * 2. Source can have extra fields: A source with {a: string, b: number, c: {h: number, d: enum}}
+ *    can connect to a target expecting {b: number, c: {d: enum}}
+ * 3. Schema capture: A mutable target with {} can accept any object source and
  *    will capture its schema for runtime processing
  *
- * This ensures that nodes receive all the data they expect to process correctly,
- * while also enabling flexible, generic node implementations.
+ * This follows the principle that the source must "implement" or satisfy all requirements
+ * of the target, while allowing the source to provide additional data that the target
+ * may choose to ignore.
  */
 export class ObjectCompatibilityRule implements ICompatibilityRule {
   sourceType: PortType = 'object'
@@ -332,12 +367,13 @@ export class ObjectCompatibilityRule implements ICompatibilityRule {
     checker?: IRecursiveCompatibilityChecker,
     depth: number = 0,
   ): boolean {
-    // Check if all properties in the source schema exist and are compatible in the target schema
-    for (const [propertyKey, sourcePropertyConfig] of Object.entries(sourceSchema.properties)) {
-      const targetPropertyConfig = targetSchema.properties[propertyKey]
+    // Check if all properties in the target schema exist and are compatible in the source schema
+    // This ensures the source object "implements" or satisfies all requirements of the target
+    for (const [propertyKey, targetPropertyConfig] of Object.entries(targetSchema.properties)) {
+      const sourcePropertyConfig = sourceSchema.properties[propertyKey]
 
-      // Property doesn't exist in target schema
-      if (!targetPropertyConfig) {
+      // Property doesn't exist in source schema
+      if (!sourcePropertyConfig) {
         return false
       }
 
@@ -396,7 +432,7 @@ export class ObjectCompatibilityRule implements ICompatibilityRule {
   }
 
   getErrorMessage(sourceConfig: IPortConfig, targetConfig: IPortConfig): string {
-    return 'Object schemas are not compatible: source properties do not match target schema requirements'
+    return 'Object schemas are not compatible: source does not implement all properties required by target'
   }
 }
 
@@ -423,10 +459,13 @@ export function getCompatibilityRules(): ICompatibilityRule[] {
   rules.push(new ArrayCompatibilityRule())
   rules.push(new ObjectCompatibilityRule())
 
+  // TODO: the Stream port is actually complex port. It is like an array. Change the logic to handle it as such
+
   // Add rules for 'any' type combinations
-  const portTypes: PortType[] = ['string', 'number', 'boolean', 'array', 'object', 'stream', 'enum', 'secret', 'any']
+  const portTypes: PortType[] = ['string', 'number', 'boolean', 'array', 'object', 'stream', 'enum', 'secret']
   for (const type of portTypes) {
     rules.push(new AnyTypeCompatibilityRule(type, 'any'))
+    rules.push(new AnyTypeCompatibilityRule('any', type))
   }
   rules.push(new AnyTypeCompatibilityRule('any', 'any'))
 
