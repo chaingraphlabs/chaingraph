@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { MCPServerWithCapabilities } from '../store/types'
 import { $mcpServersWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
 import {
   Accordion,
@@ -15,7 +16,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useUnit } from 'effector-react'
 import { Server } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import type { MCPServerWithCapabilities } from '../store/types'
 import { MCPServerItem } from './MCPServerItem'
 
 interface MCPServerListProps {
