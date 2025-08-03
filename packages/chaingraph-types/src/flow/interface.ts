@@ -122,4 +122,10 @@ export interface IFlow {
    * @returns Deserialized flow instance
    */
   deserialize: (data: JSONValue) => IFlow
+
+  getIncomingEdges: (node: INode) => IEdge[]
+
+  getOutgoingEdges: (node: INode) => IEdge[]
+
+  filterEdges: (predicate: (edge: IEdge) => boolean) => IEdge[]
 }

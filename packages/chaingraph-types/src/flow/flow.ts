@@ -8,11 +8,9 @@
 
 import type { IEdge } from '../edge'
 import type { INode, NodeEvent } from '../node'
-import type { IPort, ObjectPort } from '../port'
+import type { IPort } from '../port'
 import type { JSONValue } from '../utils/json'
 import type {
-  EdgeAddedEventData,
-  EdgesAddedEventData,
   FlowEvent,
   NodeParentUpdatedEventData,
   NodeUIChangedEventData,
@@ -35,6 +33,7 @@ import {
   FlowEventType,
   newEvent,
 } from './events'
+import { PropagationEngine } from './propagation'
 
 function generateFlowID(): string {
   return `V2${customAlphabet(nolookalikes, 24)()}`
@@ -67,6 +66,11 @@ export class Flow implements IFlow {
    * Key: nodeId, Value: event handler function
    */
   private nodeEventHandlersCancel: Map<string, () => void> = new Map()
+
+  /**
+   * Propagation engine for handling flow events
+   */
+  private propagationEngine = new PropagationEngine()
 
   constructor(metadata: Partial<FlowMetadata> = {}) {
     this.id = metadata.id || generateFlowID()
@@ -424,8 +428,7 @@ export class Flow implements IFlow {
       }
     }
 
-    // const sourcePortConfig = sourcePort.getConfig()
-    // const targetPortConfig = targetPort.getConfig()
+    // TODO: Check dead loops
 
     const edge = new Edge(
       generateEdgeID(),
@@ -434,8 +437,6 @@ export class Flow implements IFlow {
       targetNode,
       targetPort,
     )
-
-    // TODO: Check dead loops
 
     // Edge initialization also validates the edge and port types compatibility
     await edge.initialize()
@@ -903,185 +904,23 @@ export class Flow implements IFlow {
   }
 
   /**
-   * TODO: refactor this method to handle events in a more structured way
-   * Handle flow events, propagating them to the appropriate nodes and edges.
-   * This method is called when a flow event is emitted.
-   * @param flowEvent
+   * Handle flow events using the propagation engine
+   * @param flowEvent The flow event to handle
    * @private
    */
   private async onEventHandler(flowEvent: FlowEvent): Promise<void> {
-    // Handle port update events to propagate changes to connected nodes
+    // Log the event for debugging
     if (flowEvent.type === FlowEventType.PortUpdated) {
       const portUpdateEventData = flowEvent.data as PortUpdatedEventData
-
-      const updatedPort = portUpdateEventData.port
-      let updatedPortConfig = updatedPort.getConfig()
-
-      const nodeId = updatedPort.getConfig().nodeId
-      if (!nodeId) {
-        console.warn(`[Flow] Port update event received without node ID: ${updatedPort.id}`)
-        return
+      const nodeId = portUpdateEventData.port.getConfig().nodeId
+      if (nodeId) {
+        console.log(`[Flow] Event received: ${flowEvent.type}: ${nodeId} : ${portUpdateEventData.port.id}`)
       }
-
-      const node = this.nodes.get(nodeId)
-      if (!node) {
-        console.warn(`[Flow] Node with ID ${nodeId} not found for port update event.`)
-        return
-      }
-
-      console.log(`[Flow] Event received: ${flowEvent.type}: ${node.id} : ${portUpdateEventData.port.id}`)
-
-      if (updatedPortConfig.type === 'any' && updatedPort instanceof AnyPort) {
-        const underlyingType = (updatedPort as AnyPort).unwrapUnderlyingType()
-        if (!underlyingType) {
-          // if the port is an any port and has no underlying type, skip the update
-          return
-        }
-        updatedPortConfig = underlyingType
-      }
-
-      if (updatedPortConfig.type === 'object' || updatedPortConfig.type === 'array') {
-        // if the node has output ports, we need to check if we need to copy schema to the target port
-        const outgoingEdges = this.getOutgoingEdges(node)
-        for (const edge of outgoingEdges) {
-          if (edge.sourcePort.id !== updatedPort.id) {
-            // if the edge source port is not the updated port, skip it
-            continue
-          }
-
-          const targetPortConfig = edge.targetPort instanceof AnyPort
-            ? edge.targetPort.unwrapUnderlyingType() || edge.targetPort.getConfig()
-            : edge.targetPort.getConfig()
-
-          if (targetPortConfig.type === 'object' && targetPortConfig.isSchemaMutable) {
-            edge.targetNode.copyObjectSchemaTo(
-              edge.sourceNode,
-              edge.sourcePort as ObjectPort,
-              edge.targetPort as ObjectPort,
-              true,
-            )
-          } else if (targetPortConfig.type === 'array') {
-            if (updatedPortConfig.type !== 'array') {
-              // if the source port is not an array, skip the update
-              console.warn(
-                `[Flow] Skipping array port update for edge ${edge.id} because source port is not an array.`,
-              )
-              continue
-            }
-
-            edge.targetPort.setConfig({
-              ...targetPortConfig,
-              itemConfig: deepCopy(updatedPortConfig.itemConfig),
-            })
-          } else if (edge.targetPort instanceof AnyPort) {
-            // if the target port is an any port then set the underlying type to the source port
-            const anyPort = edge.targetPort as AnyPort
-            anyPort.setUnderlyingType(deepCopy(updatedPortConfig))
-          }
-
-          edge.targetPort.setValue(deepCopy(updatedPort.getValue()))
-          edge.targetNode.updatePort(edge.targetPort)
-          this.updateNode(edge.targetNode)
-        }
-      }
-
-      this.filterEdges((edge) => {
-        return edge.sourceNode.id === nodeId && edge.sourcePort.id === updatedPort.id
-      }).forEach((edge) => {
-        const sourceValue = updatedPort.getValue() ?? updatedPortConfig.defaultValue ?? undefined
-
-        edge.targetPort.setValue(deepCopy(sourceValue))
-        edge.targetNode.updatePort(edge.targetPort)
-        this.updateNode(edge.targetNode)
-      })
+    } else if (flowEvent.type === FlowEventType.EdgeAdded || flowEvent.type === FlowEventType.EdgesAdded) {
+      console.log(`[Flow] Edge event received: ${flowEvent.type}: ${JSON.stringify(flowEvent.data)}`)
     }
 
-    // Handle node events to propagate changes to the flow
-    if (flowEvent.type === FlowEventType.EdgesAdded || flowEvent.type === FlowEventType.EdgeAdded) {
-      console.log(`[Flow] Edge added event received: ${flowEvent.type}: ${JSON.stringify(flowEvent.data)}`)
-
-      const edges: EdgeAddedEventData[] = []
-
-      if (flowEvent.type === FlowEventType.EdgesAdded) {
-        const edgesAddedEventData = flowEvent.data as EdgesAddedEventData
-        edges.push(...edgesAddedEventData.edges)
-      } else {
-        const edgeAddedEventData = flowEvent.data as EdgeAddedEventData
-        edges.push(edgeAddedEventData)
-      }
-
-      console.log(`[Flow] Processing ${edges.length} edges from event.`)
-
-      for (const edgeData of edges) {
-        const sourceNode = this.nodes.get(edgeData.sourceNodeId)
-        const targetNode = this.nodes.get(edgeData.targetNodeId)
-
-        if (!sourceNode || !targetNode) {
-          console.log(`[Flow] Edge added event received for non-existing nodes: ${edgeData.sourceNodeId} -> ${edgeData.targetNodeId}`)
-          continue
-        }
-
-        const sourcePort = sourceNode.getPort(edgeData.sourcePortId)
-        const targetPort = targetNode.getPort(edgeData.targetPortId)
-
-        if (!sourcePort || !targetPort) {
-          console.log(`[Flow] Edge added event received for non-existing ports: ${edgeData.sourcePortId} -> ${edgeData.targetPortId}`)
-          continue
-        }
-
-        const sourcePortConfig = sourcePort.getConfig()
-        const targetPortConfig = targetPort.getConfig()
-
-        const targetValue = sourcePort.getValue() ?? sourcePortConfig.defaultValue ?? undefined
-
-        // check if the target port is an any type then set the target port underlying type to the source port
-        if (targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort) {
-          const targetPortConfig = targetPort.getConfig()
-
-          targetPort.setUnderlyingType({
-            ...deepCopy(sourcePortConfig),
-            id: targetPortConfig.id,
-            direction: targetPortConfig.direction,
-            parentId: targetPortConfig.parentId,
-            nodeId: targetPortConfig.nodeId,
-            order: targetPortConfig.order,
-            key: targetPortConfig.key,
-            title: targetPortConfig.title,
-            description: targetPortConfig.description,
-            defaultValue: deepCopy(targetValue),
-          })
-        }
-
-        if (sourcePortConfig.type === 'object' && targetPortConfig.type === 'object') {
-          if (
-            targetPortConfig.isSchemaMutable
-            && (
-              !targetPortConfig.schema.properties || Object.keys(targetPortConfig.schema.properties || []).length === 0
-            )
-          ) {
-            targetNode.copyObjectSchemaTo(
-              sourceNode,
-              sourcePort as ObjectPort,
-              targetPort as ObjectPort,
-              true,
-            )
-          }
-        }
-
-        if (sourcePortConfig.type === 'array' && targetPortConfig.type === 'array') {
-          if (
-            !targetPortConfig.itemConfig || targetPortConfig.itemConfig.type === 'any'
-          ) {
-            targetPort.setConfig({
-              ...targetPortConfig,
-              itemConfig: deepCopy(sourcePortConfig.itemConfig),
-            })
-          }
-        }
-
-        targetPort.setValue(deepCopy(targetValue))
-        targetNode.updatePort(targetPort)
-      }
-    }
+    // Delegate to the propagation engine
+    await this.propagationEngine.handleEvent(flowEvent, this)
   }
 }
