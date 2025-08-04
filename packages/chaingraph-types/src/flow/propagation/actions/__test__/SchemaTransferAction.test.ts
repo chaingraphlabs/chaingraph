@@ -380,7 +380,10 @@ describe('schemaTransferAction', () => {
     )
 
     const testValue = { name: 'Bob', age: 35 }
-    sourceNode.findPortByKey('out')!.setValue(testValue)
+    const outPort = sourceNode.findPortByKey('out')!
+    outPort.setValue(testValue)
+    await sourceNode.updatePort(outPort)
+    // sourceNode.findPortByKey('out')!.setValue(testValue)
 
     const event = newEvent(
       1,

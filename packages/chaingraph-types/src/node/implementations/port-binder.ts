@@ -7,13 +7,15 @@
  */
 
 import type {
-  AnyPortConfig,
   ArrayPortConfig,
   IPort,
   IPortConfig,
   ObjectPortConfig,
 } from '../../port'
 import type { IComplexPortHandler, INodeComposite, IPortBinder, IPortManager } from '../interfaces'
+import {
+  AnyPort,
+} from '../../port'
 import {
   generatePortIDArrayElement,
 } from '../../port'
@@ -353,19 +355,31 @@ export class PortBinder implements IPortBinder {
    * @param portsToProcess List to add any new complex ports to
    */
   private processAnyPort(anyPort: IPort, portMap: Map<string, IPort>, portsToProcess: IPort[]): void {
-    const config = anyPort.getConfig() as AnyPortConfig
-    if (!config.underlyingType || config.underlyingType.type !== 'object') {
+    const isAnyPort = anyPort instanceof AnyPort
+    if (!isAnyPort) {
       return
     }
-    const underlyingType = config.underlyingType as ObjectPortConfig
-    if (!underlyingType.schema.properties) {
+
+    const config = anyPort.getConfig()
+    const underlyingType = anyPort.unwrapUnderlyingType()
+
+    if (!underlyingType || underlyingType.type !== 'object') {
+      // TODO: Change behavior to handle other underlying types if needed, e.g. arrays
+      return
+    }
+
+    const objectUnderlyingType = underlyingType as ObjectPortConfig
+
+    const properties = objectUnderlyingType.schema?.properties
+    if (!properties || Object.keys(properties).length === 0) {
+      // If there are no properties, we don't need to create child ports
       return
     }
 
     const anyValue = anyPort.getValue() || {}
 
     // Process each property in the schema
-    for (const [key, propertyConfig] of Object.entries(underlyingType.schema.properties)) {
+    for (const [key, propertyConfig] of Object.entries(properties)) {
       // Process the port config with the processor to handle nested ports
       const processedConfig = this.processPortConfig(
         { ...propertyConfig },

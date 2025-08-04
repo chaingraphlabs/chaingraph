@@ -401,8 +401,10 @@ export async function createConnectedNodes<S extends BaseNode, T extends BaseNod
   const sourceNode = createNode(SourceNodeClass, sourceNodeId)
   const targetNode = createNode(TargetNodeClass, targetNodeId)
 
-  flow.addNode(sourceNode)
-  flow.addNode(targetNode)
+  await Promise.all([
+    flow.addNode(sourceNode),
+    flow.addNode(targetNode),
+  ])
 
   const sourcePort = sourceNode.findPortByKey(sourcePortKey)
   const targetPort = targetNode.findPortByKey(targetPortKey)

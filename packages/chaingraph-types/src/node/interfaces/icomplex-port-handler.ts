@@ -60,7 +60,7 @@ export interface INodeObjectPortOperations {
   copyObjectSchemaTo: (
     sourceNode: IPortManager,
     sourceObjectPort: ObjectPort | AnyPort,
-    targetObjectPort: ObjectPort,
+    targetObjectPort: ObjectPort | AnyPort,
     useParentUI?: boolean
   ) => void
 }

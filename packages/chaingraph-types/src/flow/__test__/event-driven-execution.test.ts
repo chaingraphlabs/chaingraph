@@ -59,7 +59,7 @@ describe('event-driven execution', () => {
 
     const emitterNode = new TestEmitterNode('emitter-1')
     emitterNode.initialize()
-    flow.addNode(emitterNode)
+    await flow.addNode(emitterNode)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
@@ -82,7 +82,7 @@ describe('event-driven execution', () => {
 
     const emitterNode = new TestEmitterNode('emitter-1')
     emitterNode.initialize()
-    flow.addNode(emitterNode)
+    await flow.addNode(emitterNode)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
@@ -105,7 +105,7 @@ describe('event-driven execution', () => {
 
     const emitterNode = new TestEmitterNode('emitter-1')
     emitterNode.initialize()
-    parentFlow.addNode(emitterNode)
+    await parentFlow.addNode(emitterNode)
 
     const abortController = new AbortController()
     const parentContext = new ExecutionContext(parentFlow.id, abortController)
@@ -135,7 +135,7 @@ describe('event-driven execution', () => {
 
     const listenerNode = new TestListenerNode('listener-1')
     listenerNode.initialize()
-    flow.addNode(listenerNode)
+    await flow.addNode(listenerNode)
 
     const abortController = new AbortController()
 

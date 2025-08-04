@@ -475,37 +475,6 @@ export type MCPContentBlock =
   MCPEmbeddedResourceContent |
   MCPResourceLinkContent
 
-// Tool Result Schema
-@ObjectSchema({
-  description: 'MCP Tool Execution Result',
-})
-export class MCPToolResult {
-  @PortArray({
-    title: 'Content',
-    description: 'Result content blocks',
-    itemConfig: {
-      type: 'object',
-      schema: MCPTextContent, // Simplified for now
-    },
-    defaultValue: [],
-  })
-  content: Array<MCPContentBlock> = []
-
-  @PortObject({
-    title: 'Structured Content',
-    description: 'Structured result data (if output schema defined)',
-    schema: { properties: {} },
-  })
-  structuredContent?: Record<string, any>
-
-  @PortBoolean({
-    title: 'Is Error',
-    description: 'Whether the tool execution resulted in an error',
-    defaultValue: false,
-  })
-  isError: boolean = false
-}
-
 // Fields for MCP progress messages
 // progress
 // total

@@ -6,6 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { INode } from '../../..//node'
+import type { IPort } from '../../../port'
 import type { EdgeAddedEventData, EdgesAddedEventData, PortUpdatedEventData } from '../../events'
 import type { ActionContext, PropagationAction } from '../types'
 import { AnyPort } from '../../../port'
@@ -37,7 +39,7 @@ export class ArrayConfigTransferAction implements PropagationAction {
 
       // Handle AnyPort unwrapping
       if (updatedPortConfig.type === 'any' && updatedPort instanceof AnyPort) {
-        const underlyingType = (updatedPort as AnyPort).unwrapUnderlyingType()
+        const underlyingType = updatedPort.unwrapUnderlyingType()
         if (!underlyingType)
           return false
         updatedPortConfig = underlyingType
@@ -51,17 +53,17 @@ export class ArrayConfigTransferAction implements PropagationAction {
     return eventType === FlowEventType.EdgeAdded || eventType === FlowEventType.EdgesAdded
   }
 
-  execute(context: ActionContext): void {
+  async execute(context: ActionContext): Promise<void> {
     const eventType = context.event.type
 
     if (eventType === FlowEventType.PortUpdated) {
-      this.handlePortUpdate(context)
+      return this.handlePortUpdate(context)
     } else {
-      this.handleEdgeCreation(context)
+      return this.handleEdgeCreation(context)
     }
   }
 
-  private handlePortUpdate(context: ActionContext): void {
+  private async handlePortUpdate(context: ActionContext): Promise<void> {
     const eventData = context.event.data as PortUpdatedEventData
     const updatedPort = eventData.port
     let updatedPortConfig = updatedPort.getConfig()
@@ -81,6 +83,7 @@ export class ArrayConfigTransferAction implements PropagationAction {
 
     // Get outgoing edges from this port
     const outgoingEdges = context.flow.getOutgoingEdges(node)
+    const promises: Promise<void>[] = []
 
     for (const edge of outgoingEdges) {
       if (edge.sourcePort.id !== updatedPort.id) {
@@ -105,7 +108,7 @@ export class ArrayConfigTransferAction implements PropagationAction {
         // Update the target node in the flow
         const targetNode = context.flow.nodes.get(edge.targetNode.id)
         if (targetNode) {
-          context.flow.updateNode(targetNode)
+          promises.push(context.flow.updateNode(targetNode))
         }
       } else if (edge.targetPort instanceof AnyPort) {
         // If target is AnyPort, set underlying type
@@ -113,17 +116,17 @@ export class ArrayConfigTransferAction implements PropagationAction {
         anyPort.setUnderlyingType(deepCopy(updatedPortConfig))
 
         edge.targetPort.setValue(deepCopy(updatedPort.getValue()))
-        edge.targetNode.updatePort(edge.targetPort)
+        edge.targetNode.refreshAnyPortUnderlyingPorts(anyPort as IPort, true)
 
         const targetNode = context.flow.nodes.get(edge.targetNode.id)
         if (targetNode) {
-          context.flow.updateNode(targetNode)
+          promises.push(context.flow.updateNode(targetNode))
         }
       }
     }
   }
 
-  private handleEdgeCreation(context: ActionContext): void {
+  private async handleEdgeCreation(context: ActionContext): Promise<void> {
     const edges: EdgeAddedEventData[] = []
 
     if (context.event.type === FlowEventType.EdgesAdded) {
@@ -133,6 +136,8 @@ export class ArrayConfigTransferAction implements PropagationAction {
       const edgeAddedEventData = context.event.data as EdgeAddedEventData
       edges.push(edgeAddedEventData)
     }
+
+    const nodesToUpdate: Record<string, INode> = {}
 
     for (const edgeData of edges) {
       const sourceNode = context.flow.nodes.get(edgeData.sourceNodeId)
@@ -163,8 +168,15 @@ export class ArrayConfigTransferAction implements PropagationAction {
           const targetValue = sourcePort.getValue() ?? sourcePortConfig.defaultValue ?? undefined
           targetPort.setValue(deepCopy(targetValue))
           targetNode.updatePort(targetPort)
+
+          nodesToUpdate[targetNode.id] = targetNode
         }
       }
     }
+
+    // Update all modified nodes in the flow
+    return Promise.all(
+      Object.values(nodesToUpdate).map(node => context.flow.updateNode(node)),
+    ).then(() => {})
   }
 }

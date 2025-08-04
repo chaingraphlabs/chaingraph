@@ -60,8 +60,11 @@ function AnyPortComponent(props: AnyPortProps) {
           required: config.required,
           key: config.key,
           connections: config.connections,
+          title: underlyingType.title || config.title,
+          description: underlyingType.description || config.description,
           ui: {
             ...config,
+            ...underlyingType.ui,
             // bgColor: underlyingType.ui?.bgColor || config.ui?.bgColor,
             // borderColor: underlyingType.ui?.borderColor || config.ui?.borderColor,
             // ...underlyingType.ui,

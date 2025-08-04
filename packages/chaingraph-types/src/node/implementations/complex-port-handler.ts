@@ -62,7 +62,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
   addObjectProperties(objectPort: IPort, properties: IPortConfig[], useParentUI?: boolean): IPort[] {
     const config = objectPort.getConfig() as ObjectPortConfig
     if (config.type !== 'object') {
-      throw new Error('Cannot add property to non-object port')
+      throw new Error(`Cannot add property to non-object port, actual type: ${config.type}`)
     }
 
     // Update the skeleton schema
@@ -218,7 +218,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
   copyObjectSchemaTo(
     sourceNode: IPortManager,
     sourceObjectPort: ObjectPort | AnyPort,
-    targetObjectPort: ObjectPort,
+    targetObjectPort: ObjectPort | AnyPort,
     useParentUI?: boolean,
   ): void {
     const sourceConfig
@@ -226,13 +226,17 @@ export class ComplexPortHandler implements IComplexPortHandler {
         ? sourceObjectPort.unwrapUnderlyingType() || sourceObjectPort.getConfig()
         : sourceObjectPort.getConfig()
 
-    // if (sourceConfig.type !== 'object') {
-    //   throw new Error('Cannot copy schema from non-object port')
-    // }
+    if (sourceConfig.type !== 'object') {
+      throw new Error('Cannot copy schema from non-object port, if you used AnyPort, make sure underlying type is set')
+    }
 
-    const targetConfig = targetObjectPort.getConfig() as ObjectPortConfig
+    const targetConfig
+      = targetObjectPort instanceof AnyPort
+        ? targetObjectPort.unwrapUnderlyingType() || targetObjectPort.getConfig()
+        : targetObjectPort.getConfig()
+
     if (targetConfig.type !== 'object') {
-      throw new Error('Cannot copy schema to non-object port')
+      throw new Error('Cannot copy schema to non-object port, if you used AnyPort, make sure underlying type is set')
     }
 
     const sourceProperties = sourceConfig.type === 'object'
@@ -467,12 +471,16 @@ export class ComplexPortHandler implements IComplexPortHandler {
   removeObjectProperties(objectPort: IPort, keys: string[]): void {
     const portsToRemove: string[] = []
 
-    for (const key of keys) {
-      const config = objectPort.getConfig() as ObjectPortConfig
-      if (config.type !== 'object') {
-        throw new Error('Cannot remove property from non-object port')
-      }
+    const config
+      = objectPort instanceof AnyPort
+        ? objectPort.unwrapUnderlyingType() || objectPort.getConfig()
+        : objectPort.getConfig() as ObjectPortConfig
 
+    if (config.type !== 'object') {
+      throw new Error('Cannot remove property from non-object port')
+    }
+
+    for (const key of keys) {
       // Update the schema
       if (config.schema?.properties) {
         delete config.schema.properties[key]
@@ -488,8 +496,19 @@ export class ComplexPortHandler implements IComplexPortHandler {
         portsToRemove.push(childPort.id)
       }
 
-      const objectPortTyped = objectPort as ObjectPort
-      objectPortTyped.removeField(key)
+      if (objectPort instanceof AnyPort) {
+        objectPort.operateOnUnderlyingType((underlyingPort) => {
+          if (underlyingPort instanceof ObjectPort) {
+            underlyingPort.removeField(key)
+          } else {
+            console.warn(`Underlying port ${underlyingPort.id} is not an ObjectPort, cannot remove field ${key}`)
+          }
+          return underlyingPort
+        })
+      } else if (objectPort instanceof ObjectPort) {
+        const objectPortTyped = objectPort as ObjectPort
+        objectPortTyped.removeField(key)
+      }
 
       // Get the current object value and update it
       const objectValue = objectPort.getValue()

@@ -7,13 +7,13 @@
  */
 
 import type { ExecutionContext } from '../execution'
-import type { EventReturnType, NodeEvent, NodeEventDataType } from '../node/events'
+import type { EventReturnType, NodeEvent, NodeEventDataType, PortUpdateEvent } from '../node/events'
 import type { Dimensions, NodeUIMetadata, Position } from '../node/node-ui'
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
 import type { AnyPort, IPort, IPortConfig, ObjectPort } from '../port'
 import type { JSONValue } from '../utils/json'
 import type { CloneWithNewIdResult, IComplexPortHandler, INodeComposite, IPortManager } from './interfaces'
-import { applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
+import { applyPortUpdateHandlers, applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
 import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
 import {
@@ -95,7 +95,6 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize components with dependencies
     this.portBinder = new PortBinder(this.portManager, this, this.id)
     this.complexPortHandler = new ComplexPortHandler(
-      // this.portManager,
       this,
       this.portBinder,
       this.id,
@@ -307,10 +306,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
     this.versionManager.incrementVersion()
 
-    const promises: Promise<void>[] = []
-
-    // Iterate over each port and emit a port update event
-    for (const port of ports) {
+    const promises = ports.map((port) => {
       // Create and emit the port update event
       const event = this.createEvent(NodeEventType.PortUpdate, {
         portId: port.id,
@@ -318,18 +314,16 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       })
 
       // Emit the event, which will also call onEvent
-      promises.push(this.emit(event))
-    }
+      return this.emit(event)
+    })
 
-    // Wait for all events to be emitted
-    await Promise.all(promises)
-    return Promise.resolve()
+    return Promise.all(promises).then(() => {})
   }
 
   copyObjectSchemaTo(
     sourceNode: IPortManager,
     sourceObjectPort: ObjectPort | AnyPort,
-    targetObjectPort: ObjectPort,
+    targetObjectPort: ObjectPort | AnyPort,
     useParentUI?: boolean,
   ): void {
     this.complexPortHandler.copyObjectSchemaTo(
@@ -344,17 +338,21 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     return this.portManager.findPort(predicate)
   }
 
+  findPorts(predicate: (port: IPort) => boolean): IPort[] {
+    return this.portManager.findPorts(predicate)
+  }
+
   //
   // INodeEvents implementation (delegation to eventManager)
   //
   on<T extends NodeEvent>(
     eventType: T['type'],
-    handler: (event: T) => void,
+    handler: (event: T) => void | Promise<void>,
   ): () => void {
     return this.eventManager.on(eventType, handler)
   }
 
-  onAll(handler: (event: NodeEvent) => void): () => void {
+  onAll(handler: (event: NodeEvent) => void | Promise<void>): () => void {
     return this.eventManager.onAll(handler)
   }
 
@@ -365,6 +363,11 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    * @param _event The event to handle
    */
   async onEvent(_event: NodeEvent): Promise<void> {
+    // Handle port update events first with specific handlers
+    if (_event.type === NodeEventType.PortUpdate) {
+      await applyPortUpdateHandlers(this, _event as PortUpdateEvent)
+    }
+
     // Apply visibility rules for all events
     return this.applyPortVisibilityRules()
   }
@@ -753,7 +756,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this.bindPortBindings()
 
     // Apply visibility rules during initialization
-    void this.applyPortVisibilityRules()
+    this.applyPortVisibilityRules().then(() => {})
 
     // Update node status
     this.setStatus(NodeStatus.Initialized, false)

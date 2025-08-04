@@ -79,9 +79,7 @@ export const updatePortUI = flowContextProcedure
       }
 
       node.updatePort(port)
-      flow.updateNode(node)
-
-      console.log(`[updatePortUI] Updating port ${port.id} UI config`, port.serialize())
+      await flow.updateNode(node)
 
       await ctx.flowStore.updateFlow(flow as Flow)
 

@@ -153,7 +153,7 @@ describe('gate node serialization', () => {
       gateInputAnyPort1.key,
       gateInputAnyPort1.getConfig(),
     )
-    flow.updateNode(gateNode)
+    await flow.updateNode(gateNode)
 
     // connect scalar node output to gate input
     const scalarOutputPort = scalarNode.findPortByKey('numberOutput')!

@@ -53,17 +53,17 @@ export class SchemaTransferAction implements PropagationAction {
     return eventType === FlowEventType.EdgeAdded || eventType === FlowEventType.EdgesAdded
   }
 
-  execute(context: ActionContext): void {
+  async execute(context: ActionContext): Promise<void> {
     const eventType = context.event.type
 
     if (eventType === FlowEventType.PortUpdated) {
-      this.handlePortUpdate(context)
-    } else {
-      this.handleEdgeCreation(context)
+      return this.handlePortUpdate(context)
+    } else if (eventType === FlowEventType.EdgeAdded || eventType === FlowEventType.EdgesAdded) {
+      return this.handleEdgeCreation(context)
     }
   }
 
-  private handlePortUpdate(context: ActionContext): void {
+  private async handlePortUpdate(context: ActionContext): Promise<void> {
     const eventData = context.event.data as PortUpdatedEventData
     const updatedPort = eventData.port
     const nodeId = updatedPort.getConfig().nodeId!
@@ -71,6 +71,8 @@ export class SchemaTransferAction implements PropagationAction {
 
     // Get outgoing edges from this port
     const outgoingEdges = context.flow.getOutgoingEdges(node)
+
+    const promises: Promise<void>[] = []
 
     for (const edge of outgoingEdges) {
       if (edge.sourcePort.id !== updatedPort.id) {
@@ -84,8 +86,8 @@ export class SchemaTransferAction implements PropagationAction {
       if (targetPortConfig.type === 'object' && targetPortConfig.isSchemaMutable) {
         edge.targetNode.copyObjectSchemaTo(
           edge.sourceNode,
-          edge.sourcePort as ObjectPort,
-          edge.targetPort as ObjectPort,
+          edge.sourcePort as ObjectPort | AnyPort,
+          edge.targetPort as ObjectPort | AnyPort,
           true,
         )
 
@@ -96,13 +98,16 @@ export class SchemaTransferAction implements PropagationAction {
         // Update the target node in the flow
         const targetNode = context.flow.nodes.get(edge.targetNode.id)
         if (targetNode) {
-          context.flow.updateNode(targetNode)
+          promises.push(context.flow.updateNode(targetNode))
         }
       }
     }
+
+    // Wait for all updates to complete
+    return Promise.all(promises).then(() => {})
   }
 
-  private handleEdgeCreation(context: ActionContext): void {
+  private async handleEdgeCreation(context: ActionContext): Promise<void> {
     const edges: EdgeAddedEventData[] = []
 
     if (context.event.type === FlowEventType.EdgesAdded) {
@@ -131,14 +136,11 @@ export class SchemaTransferAction implements PropagationAction {
 
       // Check if both are object ports and target is mutable
       if (sourcePortConfig.type === 'object' && targetPortConfig.type === 'object') {
-        if (
-          targetPortConfig.isSchemaMutable
-          && (!targetPortConfig.schema.properties || Object.keys(targetPortConfig.schema.properties || []).length === 0)
-        ) {
+        if (targetPortConfig.isSchemaMutable) {
           targetNode.copyObjectSchemaTo(
             sourceNode,
-            sourcePort as ObjectPort,
-            targetPort as ObjectPort,
+            sourcePort as ObjectPort | AnyPort,
+            targetPort as ObjectPort | AnyPort,
             true,
           )
 

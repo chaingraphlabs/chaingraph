@@ -55,12 +55,12 @@ describe('disabledAutoExecution', () => {
     const flow = new Flow({ name: 'test-flow' })
     const disabledNode = new DisabledAutoExecNode('disabled-1')
     disabledNode.initialize()
-    flow.addNode(disabledNode)
+    await flow.addNode(disabledNode)
 
     // Add a normal node so flow can complete
     const normalNode = new TestNode('normal-1')
     normalNode.initialize()
-    flow.addNode(normalNode)
+    await flow.addNode(normalNode)
 
     // Create parent execution context
     const abortController = new AbortController()
@@ -97,7 +97,7 @@ describe('disabledAutoExecution', () => {
 
     const disabledNode = new DisabledAutoExecNode('disabled-2')
     disabledNode.initialize()
-    flow.addNode(disabledNode)
+    await flow.addNode(disabledNode)
 
     // Add an EventListenerNode so the engine has something to execute
     class TestEventListenerNode extends BaseNode {
@@ -120,7 +120,7 @@ describe('disabledAutoExecution', () => {
 
     const listenerNode = new TestEventListenerNode('listener-1')
     listenerNode.initialize()
-    flow.addNode(listenerNode)
+    await flow.addNode(listenerNode)
 
     // Create child execution context with event data
     const abortController = new AbortController()
@@ -159,9 +159,9 @@ describe('disabledAutoExecution', () => {
     const disabledNode = new DisabledAutoExecNode('disabled-3')
     const dependentNode = new TestNode('dependent-1')
 
-    flow.addNode(normalNode)
-    flow.addNode(disabledNode)
-    flow.addNode(dependentNode)
+    await flow.addNode(normalNode)
+    await flow.addNode(disabledNode)
+    await flow.addNode(dependentNode)
 
     // Initialize nodes first
     normalNode.initialize()

@@ -91,7 +91,7 @@ describe('executionEventImpl Serialization', () => {
     expect(deserialized.timestamp).toEqual(event.timestamp)
   })
 
-  it('should serialize and deserialize ExecutionEventImpl for FLOW_STARTED correctly', () => {
+  it('should serialize and deserialize ExecutionEventImpl for FLOW_STARTED correctly', async () => {
     // Create a mock node
     const mockNodeMetadata: NodeMetadata = {
       id: 'node-1',
@@ -116,7 +116,7 @@ describe('executionEventImpl Serialization', () => {
 
     // Create a Flow and add the node to it
     const flow = new Flow({ name: 'Test Flow' })
-    flow.addNode(mockNode)
+    await flow.addNode(mockNode)
 
     // Create an ExecutionContext
     const abortController = new AbortController()

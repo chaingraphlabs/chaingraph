@@ -107,4 +107,11 @@ export interface IPortManager {
    * @returns The port if found, undefined otherwise
    */
   findPort: (predicate: (port: IPort) => boolean) => IPort | undefined
+
+  /**
+   * Find all ports by a predicate function
+   * @param predicate Predicate function to match the port
+   * @return Array of ports that match the predicate
+   */
+  findPorts: (predicate: (port: IPort) => boolean) => IPort[]
 }

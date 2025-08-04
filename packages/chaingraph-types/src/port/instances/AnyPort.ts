@@ -8,6 +8,7 @@
 
 import type { JSONValue } from '../../utils/json'
 import type { AnyPortConfig, AnyPortValue, IPort, IPortConfig } from '../base'
+import { PortFactory } from '../../port/factory'
 import { BasePort } from '../base'
 import { generatePortID } from '../id-generate'
 import { AnyPortPlugin } from '../plugins'
@@ -56,7 +57,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
     super(mergedConfig)
   }
 
-  getConfig(): AnyPortConfig {
+  getConfig() {
     let underlyingType = this.config.underlyingType
     if (underlyingType) {
       // find actual underlying type by iterate over any port underlying types
@@ -302,6 +303,31 @@ export class AnyPort extends BasePort<AnyPortConfig> {
       ...this.config,
       id: generatePortID(this.config.key || this.config.id || ''),
     })
+  }
+
+  operateOnUnderlyingType<UnderlyingTypeConfig extends IPortConfig = IPortConfig>(
+    operation: (underlyingPort: IPort<UnderlyingTypeConfig>) => IPort<UnderlyingTypeConfig>,
+  ): void {
+    const underlyingType = this.unwrapUnderlyingType() as UnderlyingTypeConfig
+    if (!underlyingType) {
+      throw new Error('No underlying type set for AnyPort')
+    }
+
+    const underlyingPort = PortFactory.createFromConfig(underlyingType) as IPort
+    if (!underlyingPort) {
+      throw new Error('Failed to create underlying port from configuration')
+    }
+
+    // TODO: Find a way to type this properly
+    const changedPort = operation(underlyingPort as unknown as IPort<UnderlyingTypeConfig>)
+    if (!changedPort) {
+      throw new Error('Operation on underlying port returned undefined')
+    }
+
+    // Update the underlying type in the any port configuration
+    this.setUnderlyingType(changedPort.getConfig())
+    // Update the value if it exists
+    this.setValue(changedPort.getValue())
   }
 }
 

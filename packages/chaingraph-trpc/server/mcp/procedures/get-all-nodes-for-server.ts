@@ -60,19 +60,19 @@ export const getAllNodesForServer = authedProcedure
       Promise.all(
         capabilities.tools.map(tool =>
           nodeBuilderService.buildToolNode(server, tool),
-        ),
+        ) || [],
       ),
       // Build resource nodes
       Promise.all(
         capabilities.resources.map(resource =>
           nodeBuilderService.buildResourceNode(server, resource),
-        ),
+        ) || [],
       ),
       // Build prompt nodes
       Promise.all(
         capabilities.prompts.map(prompt =>
           nodeBuilderService.buildPromptNode(server, prompt),
-        ),
+        ) || [],
       ),
     ])
 

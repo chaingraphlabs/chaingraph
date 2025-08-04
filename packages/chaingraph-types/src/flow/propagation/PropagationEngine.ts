@@ -76,7 +76,10 @@ export class PropagationEngine {
       }
 
       // Execute the action
-      await action.execute(context)
+      const res = action.execute(context)
+      if (res instanceof Promise) {
+        await res
+      }
 
       return {
         executed: true,

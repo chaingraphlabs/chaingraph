@@ -228,4 +228,20 @@ export class PortManager implements IPortManager {
     }
     return undefined
   }
+
+  // findPorts: (predicate: (port: IPort) => boolean) => IPort[]/**/
+  /**
+   * Find all ports by a predicate function
+   * @param predicate Predicate function to match the port
+   * @returns Array of ports that match the predicate
+   */
+  findPorts(predicate: (port: IPort) => boolean): IPort[] {
+    const matchingPorts: IPort[] = []
+    for (const port of this._ports.values()) {
+      if (predicate(port)) {
+        matchingPorts.push(port)
+      }
+    }
+    return matchingPorts
+  }
 }

@@ -34,7 +34,7 @@ import {
   StringPort,
 } from '../../port'
 
-export type SupportedPortInstance =
+export type PortInstance =
   | StringPort
   | NumberPort
   | BooleanPort
@@ -43,6 +43,7 @@ export type SupportedPortInstance =
   | StreamPort
   | EnumPort
   | AnyPort
+  | SecretPort<any>
 
 export type PortInstanceFromConfig<T extends IPortConfig> =
   T extends StringPortConfig ? StringPort :

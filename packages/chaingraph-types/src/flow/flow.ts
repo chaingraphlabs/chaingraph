@@ -89,28 +89,34 @@ export class Flow implements IFlow {
     this.edges = new Map()
 
     // Subscribe to all flow events
-    this.cancelGlobalHandler = this.onEvent((flowEvent: FlowEvent): void | Promise<void> => {
-      return this.onEventHandler(flowEvent)
+    this.cancelGlobalHandler = this.onEvent(async (flowEvent: FlowEvent): Promise<void> => {
+      return this.propagationEngine.handleEvent(flowEvent, this).then(() => {})
     })
   }
 
-  addNode(node: INode, disableEvents?: boolean): INode {
+  addNodeSync(node: INode): INode {
     if (this.nodes.has(node.id)) {
       throw new Error(`Node with ID ${node.id} already exists in the flow.`)
     }
     this.nodes.set(node.id, node)
 
     // Create handler for this specific node
-    const cancel = node.onAll((event: NodeEvent) => {
-      this.handleNodeEvent(node, event)
+    const cancel = node.onAll(async (event: NodeEvent) => {
+      return this.handleNodeEvent(node, event)
     })
 
     // Store the handler and subscribe to node events
     this.nodeEventHandlersCancel.set(node.id, cancel)
 
+    return node
+  }
+
+  async addNode(node: INode, disableEvents?: boolean): Promise<INode> {
+    this.addNodeSync(node)
+
     // Emit NodeAdded event
     if (!disableEvents) {
-      this.emitEvent(newEvent(
+      await this.emitEvent(newEvent(
         this.getNextEventIndex(),
         this.id,
         FlowEventType.NodeAdded,
@@ -121,19 +127,18 @@ export class Flow implements IFlow {
     return node
   }
 
-  addNodes(nodes: INode[], disableEvents?: boolean): INode[] {
+  async addNodes(nodes: INode[], disableEvents?: boolean): Promise<INode[]> {
     if (nodes.length === 0) {
       return []
     }
 
-    const addedNodes: INode[] = []
-    for (const node of nodes) {
-      addedNodes.push(this.addNode(node, true))
-    }
+    const addedNodes = await Promise.all(
+      nodes.map(node => this.addNode(node, disableEvents)),
+    )
 
     // Emit NodesAdded event
     if (!disableEvents) {
-      this.emitEvent(newEvent(
+      await this.emitEvent(newEvent(
         this.getNextEventIndex(),
         this.id,
         FlowEventType.NodesAdded,
@@ -144,7 +149,17 @@ export class Flow implements IFlow {
     return addedNodes
   }
 
-  updateNode(node: INode): void {
+  addNodesSync(nodes: INode[]): INode[] {
+    if (nodes.length === 0) {
+      return []
+    }
+
+    return nodes.map((node) => {
+      return this.addNodeSync(node)
+    })
+  }
+
+  async updateNode(node: INode): Promise<void> {
     if (!this.nodes.has(node.id)) {
       throw new Error(`Node with ID ${node.id} does not exist in the flow.`)
     }
@@ -158,15 +173,15 @@ export class Flow implements IFlow {
 
     this.nodes.set(node.id, node)
 
-    const newCancel = node.onAll((event: NodeEvent) => {
-      this.handleNodeEvent(node, event)
+    const newCancel = node.onAll(async (event: NodeEvent) => {
+      return this.handleNodeEvent(node, event)
     })
 
     // Store the handler and subscribe to node events
     this.nodeEventHandlersCancel.set(node.id, newCancel)
 
     // Emit NodeUpdated event
-    this.emitEvent(newEvent(
+    return this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
       FlowEventType.NodeUpdated,
@@ -174,20 +189,22 @@ export class Flow implements IFlow {
     ))
   }
 
-  removeNode(nodeId: string): void {
+  async removeNode(nodeId: string): Promise<void> {
     const node = this.nodes.get(nodeId)
     if (!node) {
       throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
     }
 
     // find all child nodes and remove them
-    Array.from(this.nodes.values())
-      .filter((n) => {
-        return n.metadata.parentNodeId === nodeId
-      })
-      .forEach((n) => {
-        this.removeNode(n.id)
-      })
+    await Promise.all(
+      Array.from(this.nodes.values())
+        .filter((n) => {
+          return n.metadata.parentNodeId === nodeId
+        })
+        .map((n) => {
+          return this.removeNode(n.id)
+        }),
+    )
 
     // Unsubscribe from node events
     const cancel = this.nodeEventHandlersCancel.get(nodeId)
@@ -205,12 +222,14 @@ export class Flow implements IFlow {
         edgesToRemove.push(edgeId)
       }
     }
-    for (const edgeId of edgesToRemove) {
-      this.removeEdge(edgeId)
-    }
+
+    // Remove edges
+    await Promise.all(
+      edgesToRemove.map(edgeId => this.removeEdge(edgeId)),
+    )
 
     // Emit NodeRemoved event
-    this.emitEvent(newEvent(
+    return this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
       FlowEventType.NodeRemoved,
@@ -223,7 +242,7 @@ export class Flow implements IFlow {
    * @param nodeId
    * @param portId
    */
-  removePort(nodeId: string, portId: string): void {
+  async removePort(nodeId: string, portId: string): Promise<void> {
     const node = this.nodes.get(nodeId)
     if (!node) {
       throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
@@ -238,21 +257,25 @@ export class Flow implements IFlow {
     const childPorts = this.findAllChildPorts(node, portId)
 
     // first remove every connection to all found ports
+    const promiseList: Promise<void>[] = []
+
     childPorts.forEach((port) => {
       for (const [edgeId, edge] of this.edges.entries()) {
         if (edge.sourceNode.id === nodeId && edge.sourcePort.id === port.id) {
-          this.removeEdge(edgeId)
+          promiseList.push(this.removeEdge(edgeId))
         }
         if (edge.targetNode.id === nodeId && edge.targetPort.id === port.id) {
-          this.removeEdge(edgeId)
+          promiseList.push(this.removeEdge(edgeId))
         }
       }
     })
 
     // then remove the ports
-    // childPorts.forEach((port) => {
-    //   node.removePort(port.id)
-    // })
+    childPorts.forEach((port) => {
+      node.removePort(port.id)
+    })
+
+    return Promise.all(promiseList).then(() => {})
   }
 
   /**
@@ -284,7 +307,7 @@ export class Flow implements IFlow {
     return childPorts
   }
 
-  addEdge(edge: IEdge): void {
+  addEdgeSync(edge: IEdge): void {
     if (this.edges.has(edge.id)) {
       throw new Error(`Edge with ID ${edge.id} already exists in the flow.`)
     }
@@ -294,32 +317,47 @@ export class Flow implements IFlow {
       edge.targetPort.addConnection(edge.sourceNode.id, edge.sourcePort.id)
     }
 
-    edge.targetNode.emit({
-      type: NodeEventType.PortConnected,
-      sourceNode: edge.targetNode.clone(),
-      sourcePort: edge.targetPort.clone(),
-      targetNode: edge.sourceNode.clone(),
-      targetPort: edge.sourcePort.clone(),
-      nodeId: edge.targetNode.id,
-      timestamp: new Date(),
-      version: edge.targetNode.getVersion(),
-    })
+    this.edges.set(edge.id, edge)
+  }
 
-    edge.sourceNode.emit({
-      type: NodeEventType.PortConnected,
-      sourceNode: edge.sourceNode.clone(),
-      sourcePort: edge.sourcePort.clone(),
-      targetNode: edge.targetNode.clone(),
-      targetPort: edge.targetPort.clone(),
-      nodeId: edge.sourceNode.id,
-      timestamp: new Date(),
-      version: edge.sourceNode.getVersion(),
-    })
+  async addEdge(edge: IEdge): Promise<void> {
+    if (this.edges.has(edge.id)) {
+      throw new Error(`Edge with ID ${edge.id} already exists in the flow.`)
+    }
+
+    if (edge.sourcePort && edge.targetPort) {
+      edge.sourcePort.addConnection(edge.targetNode.id, edge.targetPort.id)
+      edge.targetPort.addConnection(edge.sourceNode.id, edge.sourcePort.id)
+    }
+
+    await Promise.all([
+      edge.targetNode.emit({
+        type: NodeEventType.PortConnected,
+        sourceNode: edge.targetNode.clone(),
+        sourcePort: edge.targetPort.clone(),
+        targetNode: edge.sourceNode.clone(),
+        targetPort: edge.sourcePort.clone(),
+        nodeId: edge.targetNode.id,
+        timestamp: new Date(),
+        version: edge.targetNode.getVersion(),
+      }),
+
+      edge.sourceNode.emit({
+        type: NodeEventType.PortConnected,
+        sourceNode: edge.sourceNode.clone(),
+        sourcePort: edge.sourcePort.clone(),
+        targetNode: edge.targetNode.clone(),
+        targetPort: edge.targetPort.clone(),
+        nodeId: edge.sourceNode.id,
+        timestamp: new Date(),
+        version: edge.sourceNode.getVersion(),
+      }),
+    ])
 
     this.edges.set(edge.id, edge)
   }
 
-  removeEdge(edgeId: string): void {
+  async removeEdge(edgeId: string): Promise<void> {
     const edge = this.edges.get(edgeId)
     if (!edge) {
       throw new Error(`Edge with ID ${edgeId} does not exist in the flow.`)
@@ -337,7 +375,7 @@ export class Flow implements IFlow {
       targetPort.removeConnection(sourceNode.id, sourcePort.id)
     }
 
-    // const isSourcePortAny = sourcePort.getConfig().type === 'any' && sourcePort instanceof AnyPort
+    // TODO: move follow "any" logic to other place
     const isTargetPortAny = targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort
 
     // if target port is an any port type then remove the underlying type
@@ -348,31 +386,33 @@ export class Flow implements IFlow {
       targetNode.updatePort(targetPort)
     }
 
-    targetNode.emit({
-      type: NodeEventType.PortDisconnected,
-      sourceNode: targetNode.clone(),
-      sourcePort: targetPort.clone(),
-      targetNode: sourceNode.clone(),
-      targetPort: sourcePort.clone(),
-      nodeId: targetNode.id,
-      timestamp: new Date(),
-      version: targetNode.getVersion(),
-    })
+    await Promise.all([
+      targetNode.emit({
+        type: NodeEventType.PortDisconnected,
+        sourceNode: targetNode.clone(),
+        sourcePort: targetPort.clone(),
+        targetNode: sourceNode.clone(),
+        targetPort: sourcePort.clone(),
+        nodeId: targetNode.id,
+        timestamp: new Date(),
+        version: targetNode.getVersion(),
+      }),
 
-    sourceNode.emit({
-      type: NodeEventType.PortDisconnected,
-      sourceNode: sourceNode.clone(),
-      sourcePort: sourcePort.clone(),
-      targetNode: targetNode.clone(),
-      targetPort: targetPort.clone(),
-      nodeId: sourceNode.id,
-      timestamp: new Date(),
-      version: sourceNode.getVersion(),
-    })
+      sourceNode.emit({
+        type: NodeEventType.PortDisconnected,
+        sourceNode: sourceNode.clone(),
+        sourcePort: sourcePort.clone(),
+        targetNode: targetNode.clone(),
+        targetPort: targetPort.clone(),
+        nodeId: sourceNode.id,
+        timestamp: new Date(),
+        version: sourceNode.getVersion(),
+      }),
+    ])
 
     this.edges.delete(edgeId)
 
-    this.emitEvent(newEvent(
+    return this.emitEvent(newEvent(
       this.getNextEventIndex(),
       this.id,
       FlowEventType.EdgeRemoved,
@@ -440,17 +480,17 @@ export class Flow implements IFlow {
 
     // Edge initialization also validates the edge and port types compatibility
     await edge.initialize()
-
-    this.removeAllChildConnections(targetNode, targetPort)
-
-    this.addEdge(edge)
+    await this.removeAllChildConnections(targetNode, targetPort)
+    await this.addEdge(edge)
 
     // Create and emit the port update event
     sourceNode.incrementVersion()
     targetNode.incrementVersion()
 
-    this.updateNode(sourceNode)
-    this.updateNode(targetNode)
+    await Promise.all([
+      this.updateNode(sourceNode),
+      this.updateNode(targetNode),
+    ])
 
     await this.emitEvent(newEvent(
       this.getNextEventIndex(),
@@ -475,7 +515,7 @@ export class Flow implements IFlow {
    * @param port
    * @private
    */
-  private removeAllChildConnections(node: INode, port: IPort): void {
+  private async removeAllChildConnections(node: INode, port: IPort): Promise<void> {
     // iterates over port children and check if there is any connections, if so - remove them
     // usually valid for the object ports in case when edge connects to the object port and we removing the child connections
     const recursiveFindChildConnections = (p: IPort) => {
@@ -503,10 +543,13 @@ export class Flow implements IFlow {
 
     const targetPortConnections = recursiveFindChildConnections(port)
     if (targetPortConnections.length > 0) {
-      targetPortConnections.forEach((edge) => {
-        this.removeEdge(edge.id)
+      const promises = targetPortConnections.map((edge) => {
+        return this.removeEdge(edge.id)
       })
+      return Promise.all(promises).then(() => {})
     }
+
+    return Promise.resolve()
   }
 
   async validate(): Promise<boolean> {
@@ -589,7 +632,7 @@ export class Flow implements IFlow {
    * @param node The node emitting the event
    * @param nodeEvent The event emitted by the node
    */
-  private handleNodeEvent = (node: INode, nodeEvent: NodeEvent): void => {
+  private async handleNodeEvent(node: INode, nodeEvent: NodeEvent): Promise<void> {
     // Map node events to flow events
     let flowEvent: FlowEvent | null = null
 
@@ -700,7 +743,7 @@ export class Flow implements IFlow {
           portUpdateEventData,
         )
 
-        this.updateNode(node)
+        await this.updateNode(node)
         break
       }
 
@@ -716,7 +759,7 @@ export class Flow implements IFlow {
           FlowEventType.PortCreated,
           portCreateEventData,
         )
-        this.updateNode(node)
+        await this.updateNode(node)
         break
       }
 
@@ -732,7 +775,7 @@ export class Flow implements IFlow {
           FlowEventType.PortRemoved,
           portRemovedEventData,
         )
-        this.updateNode(node)
+        await this.updateNode(node)
         break
       }
 
@@ -742,7 +785,7 @@ export class Flow implements IFlow {
     }
 
     if (flowEvent) {
-      this.emitEvent(flowEvent)
+      return this.emitEvent(flowEvent)
     }
   }
 
@@ -764,15 +807,16 @@ export class Flow implements IFlow {
     }
   }
 
-  public clone(): IFlow {
+  public async clone(): Promise<IFlow> {
     const newFlow = new Flow(deepCopy(this.metadata))
 
     // Clone nodes
-    for (const node of this.nodes.values()) {
-      newFlow.addNode(node.clone(), true)
-    }
+    await Promise.all(this.nodes.values().map((node) => {
+      return newFlow.addNode(node.clone(), true)
+    }))
 
     // Clone edges
+    const edgePromises: Promise<void>[] = []
     for (const edge of this.edges.values()) {
       // Find the source and target nodes in the new flow
       const sourceNode = newFlow.nodes.get(edge.sourceNode.id)
@@ -802,8 +846,10 @@ export class Flow implements IFlow {
         { ...edge.metadata },
       )
 
-      newFlow.addEdge(clonedEdge)
+      edgePromises.push(newFlow.addEdge(clonedEdge))
     }
+
+    await Promise.all(edgePromises)
 
     return newFlow as IFlow
   }
@@ -852,7 +898,8 @@ export class Flow implements IFlow {
           nodeData.id,
           nodeData.metadata,
         )
-        flow.addNode(node.deserialize(nodeData), true)
+
+        flow.addNodeSync(node.deserialize(nodeData))
       } catch (error) {
         console.error(`[Flow] Failed to deserialize node: ${nodeData.id}`, error)
         console.error(`[Flow] Failed to deserialize node data: ${nodeData.id} ${JSON.stringify(nodeData)}`)
@@ -892,7 +939,8 @@ export class Flow implements IFlow {
         targetPort,
         edgeData.metadata,
       )
-      flow.addEdge(edge)
+
+      flow.addEdgeSync(edge)
     }
 
     return flow as IFlow
@@ -901,26 +949,5 @@ export class Flow implements IFlow {
   static deserialize(data: JSONValue): IFlow {
     const flow = new Flow()
     return flow.deserialize(data)
-  }
-
-  /**
-   * Handle flow events using the propagation engine
-   * @param flowEvent The flow event to handle
-   * @private
-   */
-  private async onEventHandler(flowEvent: FlowEvent): Promise<void> {
-    // Log the event for debugging
-    if (flowEvent.type === FlowEventType.PortUpdated) {
-      const portUpdateEventData = flowEvent.data as PortUpdatedEventData
-      const nodeId = portUpdateEventData.port.getConfig().nodeId
-      if (nodeId) {
-        console.log(`[Flow] Event received: ${flowEvent.type}: ${nodeId} : ${portUpdateEventData.port.id}`)
-      }
-    } else if (flowEvent.type === FlowEventType.EdgeAdded || flowEvent.type === FlowEventType.EdgesAdded) {
-      console.log(`[Flow] Edge event received: ${flowEvent.type}: ${JSON.stringify(flowEvent.data)}`)
-    }
-
-    // Delegate to the propagation engine
-    await this.propagationEngine.handleEvent(flowEvent, this)
   }
 }

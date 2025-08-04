@@ -140,7 +140,7 @@ export interface ArrayPortConfig<
 /**
  * Secret port configuration.
  */
-export interface SecretPortConfig<S extends SecretType = 'string'> extends BasePortConfig {
+export interface SecretPortConfig<S extends SecretType = any> extends BasePortConfig {
   type: 'secret'
   secretType: S
   ui?: BasePortConfigUIType

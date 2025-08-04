@@ -75,10 +75,10 @@ export class MCPCapabilityService {
 
     // Fetch capabilities
     const [toolsResult, resourcesResult, resourceTemplatesResult, promptsResult] = await Promise.all([
-      client.listTools(),
-      client.listResources(),
-      client.listResourceTemplates(),
-      client.listPrompts(),
+      client.listTools().catch(() => ({ tools: [] })),
+      client.listResources().catch(() => ({ resources: [] })),
+      client.listResourceTemplates().catch(() => ({ resourceTemplates: [] })),
+      client.listPrompts().catch(() => ({ prompts: [] })),
     ])
 
     const capabilities: CachedCapabilities = {

@@ -106,14 +106,11 @@ export const addNode = flowContextProcedure
       // Set position
       node.setPosition(position, true)
 
-      const nodeJson = node.serialize()
-      // console.log(`[addNode] Node JSON:`, nodeJson)
-
-      const createdNode = flow.addNode(node)
+      const createdNode = await flow.addNode(node)
       await ctx.flowStore.updateFlow(flow as Flow)
 
       createdNode.setStatus(NodeStatus.Initialized, true)
-      flow.updateNode(createdNode)
+      await flow.updateNode(createdNode)
       await ctx.flowStore.updateFlow(flow as Flow)
 
       return createdNode

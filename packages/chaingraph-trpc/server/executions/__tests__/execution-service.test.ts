@@ -47,7 +47,7 @@ describe('executionService', () => {
   let flow: Flow
   let testNode: INode
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Setup fresh instances for each test
     store = new InMemoryExecutionStore()
     executionService = new ExecutionService(store)
@@ -55,7 +55,7 @@ describe('executionService', () => {
     flow = new Flow({ name: 'Test Flow' })
     testNode = new TestNode('test-node-1')
     testNode.initialize()
-    flow.addNode(testNode)
+    await flow.addNode(testNode)
   })
 
   describe('createExecution', () => {

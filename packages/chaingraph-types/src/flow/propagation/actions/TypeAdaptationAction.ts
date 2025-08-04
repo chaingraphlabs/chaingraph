@@ -95,8 +95,10 @@ export class TypeAdaptationAction implements PropagationAction {
           defaultValue: deepCopy(sourcePortConfig.defaultValue),
         })
 
-        // Set the initial value
         targetPort.setValue(deepCopy(targetValue))
+        targetNode.refreshAnyPortUnderlyingPorts(targetPort, true)
+
+        // Set the initial value
         targetNode.updatePort(targetPort)
       }
     }

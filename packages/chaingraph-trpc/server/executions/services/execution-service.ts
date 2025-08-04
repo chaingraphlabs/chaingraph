@@ -64,7 +64,7 @@ export class ExecutionService {
     eventData?: EmittedEventContext,
     parentDepth: number = 0,
   ): Promise<ExecutionInstance> {
-    const clonedFlow = flow.clone() as Flow
+    const clonedFlow = await flow.clone() as Flow
     const currentDepth = parentDepth + 1
 
     // Check for maximum depth
@@ -553,7 +553,7 @@ export class ExecutionService {
               new Date(),
               {
                 error: new Error(`Cycle detected: ${error.message}`),
-                flow: parentInstance.flow.clone(),
+                flow: await parentInstance.flow.clone(),
                 executionTime: Date.now() - parentInstance.createdAt.getTime(),
               },
             ),
@@ -906,10 +906,10 @@ export class ExecutionService {
           timestamp: new Date(),
           context: parentInstance.context,
           data: {
-            flow: parentInstance.flow.clone(),
+            flow: await parentInstance.flow.clone(),
             executionTime: parentInstance.completedAt.getTime() - parentInstance.createdAt.getTime(),
           },
-        } as any)
+        } as ExecutionEventImpl)
       }
     }
   }

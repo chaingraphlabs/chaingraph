@@ -39,11 +39,14 @@ export class NodeEventManager implements INodeEvents {
    */
   on<T extends NodeEvent>(
     eventType: T['type'],
-    handler: (event: T) => void,
+    handler: (event: T) => void | Promise<void>,
   ): () => void {
-    return this.eventQueue.subscribe((event) => {
+    return this.eventQueue.subscribe(async (event) => {
       if (event.type === eventType) {
-        handler(event as T)
+        const res = handler(event as T)
+        if (res instanceof Promise) {
+          await res
+        }
       }
     })
   }
@@ -53,7 +56,7 @@ export class NodeEventManager implements INodeEvents {
    * @param handler The event handler function
    * @returns A function to unsubscribe
    */
-  onAll(handler: (event: NodeEvent) => void): () => void {
+  onAll(handler: (event: NodeEvent) => void | Promise<void>): () => void {
     return this.eventQueue.subscribe(handler)
   }
 

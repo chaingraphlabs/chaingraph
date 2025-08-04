@@ -20,7 +20,7 @@ export interface INodeEvents {
    */
   on: <T extends NodeEvent>(
     eventType: T['type'],
-    handler: (event: T) => void,
+    handler: (event: T) => void | Promise<void>,
   ) => () => void
 
   /**
@@ -28,7 +28,7 @@ export interface INodeEvents {
    * @param handler The event handler function
    * @returns A function to unsubscribe
    */
-  onAll: (handler: (event: NodeEvent) => void) => () => void
+  onAll: (handler: (event: NodeEvent) => void | Promise<void>) => () => void
 
   /**
    * Handle an event

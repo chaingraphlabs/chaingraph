@@ -35,6 +35,8 @@ export enum NodeEventType {
   PortUpdate = 'node:port-update',
   PortConnected = 'node:port-connected',
   PortDisconnected = 'node:port-disconnected',
+
+  // TODO: add batch port events
 }
 
 /**

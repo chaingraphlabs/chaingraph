@@ -9,10 +9,7 @@
 import type {
   ExecutionContext,
   IPort,
-  NodeEvent,
   NodeExecutionResult,
-  PortDeleteEvent,
-  PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
 import type { CallToolResult, ContentBlock, Progress } from '@modelcontextprotocol/sdk/types.js'
 
@@ -23,21 +20,13 @@ import type {
   MCPResourceLinkContent,
 } from './types'
 import {
-  Passthrough,
-} from '@badaitech/chaingraph-types'
-import {
-  ObjectPort,
-} from '@badaitech/chaingraph-types'
-import { NodeEventType,
-} from '@badaitech/chaingraph-types'
-import {
-  PortArray,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
   MultiChannel,
   Node,
+  ObjectSchemaCopyTo,
   Output,
+  Passthrough,
+  PortArray,
   PortObject,
   PortStream,
   PortString,
@@ -102,15 +91,10 @@ export class MCPToolCallNode extends BaseNode {
       keyDeletable: true,
     },
   })
+  @ObjectSchemaCopyTo((port: IPort): boolean => {
+    return port.getConfig().key === 'structuredContent' && !port.getConfig().parentId
+  })
   outputSchema: Record<string, any> = {}
-
-  // @Output()
-  // @PortObject({
-  //   title: 'Result',
-  //   description: 'Tool execution result',
-  //   schema: MCPToolResult,
-  // })
-  // result?: MCPToolResult
 
   @Output()
   @PortArray({
@@ -118,7 +102,7 @@ export class MCPToolCallNode extends BaseNode {
     description: 'Result content blocks',
     itemConfig: {
       type: 'object',
-      schema: MCPTextContent, // Simplified for now
+      schema: MCPTextContent, // Simplified for now. TODO: Use a union type for all content types
     },
     defaultValue: [],
   })
@@ -142,7 +126,7 @@ export class MCPToolCallNode extends BaseNode {
     description: 'Streaming content from tool execution',
     itemConfig: {
       type: 'object',
-      schema: MCPTextContent, // Simplified for now
+      schema: MCPTextContent, // Simplified for now. TODO: Use a union type for all content types
     },
   })
   contentStream: MultiChannel<ContentBlock> = new MultiChannel<ContentBlock>()
@@ -232,75 +216,6 @@ export class MCPToolCallNode extends BaseNode {
     }
 
     return {}
-  }
-
-  async onEvent(event: NodeEvent): Promise<void> {
-    await super.onEvent(event)
-
-    switch (event.type) {
-      case NodeEventType.PortUpdate:
-        return this.handlePortUpdate(event as PortUpdateEvent)
-      case NodeEventType.PortDelete:
-        return this.handlePortDelete(event as PortDeleteEvent)
-    }
-  }
-
-  async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
-    const sourcePort = event.port
-    if (!this.isOutputSchemaPort(sourcePort)) {
-      return
-    }
-
-    const structuredContentPort = this.getStructuredContentPort()
-    if (!structuredContentPort) {
-      // No structured content port available, nothing to update
-      return
-    }
-
-    this.copyObjectSchemaTo(this, sourcePort as ObjectPort, structuredContentPort, true)
-  }
-
-  async handlePortDelete(event: PortDeleteEvent): Promise<void> {
-    const outputSchemaPort = this.getOutputSchemaPort()
-    const structuredContentPort = this.getStructuredContentPort()
-
-    if (!outputSchemaPort || !structuredContentPort) {
-      // No output schema or structured content port available, nothing to update
-      return
-    }
-
-    // Resync the output schema to the structured content port
-    // This will remove the deleted property from the structured content port
-    this.copyObjectSchemaTo(this, outputSchemaPort, structuredContentPort, true)
-  }
-
-  isOutputSchemaPort(port: IPort): boolean {
-    if (!port) {
-      return false
-    }
-
-    const portConfig = port.getConfig()
-    if (!portConfig || !portConfig.key || !portConfig.type || portConfig.type !== 'object') {
-      return false
-    }
-
-    return portConfig.key === 'outputSchema' && portConfig.direction === 'passthrough'
-  }
-
-  getOutputSchemaPort(): ObjectPort | undefined {
-    const outputPort = this.getInputs().find(p => p.getConfig().key === 'outputSchema')
-    if (outputPort && outputPort instanceof ObjectPort) {
-      return outputPort as ObjectPort
-    }
-    return undefined
-  }
-
-  getStructuredContentPort(): ObjectPort | undefined {
-    const outputPort = this.getOutputs().find(p => p.getConfig().key === 'structuredContent')
-    if (outputPort && outputPort instanceof ObjectPort) {
-      return outputPort as ObjectPort
-    }
-    return undefined
   }
 
   private extractErrorMessage(response: CallToolResult): string {

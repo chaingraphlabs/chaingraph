@@ -11,12 +11,16 @@ import type {
 
   ArrayPort,
   ExecutionContext,
+  INode,
   IPort,
   IPortConfig,
   NodeEvent,
   NodeExecutionResult,
   PortDisconnectedEvent,
   PortUpdateEvent,
+} from '@badaitech/chaingraph-types'
+import {
+  OnPortUpdate,
 } from '@badaitech/chaingraph-types'
 import {
   deepCopy,
@@ -54,6 +58,40 @@ class ArrayElementNode extends BaseNode {
       title: 'Item',
       description: 'The type of items in the array',
     },
+  })
+  @OnPortUpdate(async (node: INode, port: IPort) => {
+    const elementPort = node.findPort(
+      p => p.getConfig().key === 'element'
+        && !p.getConfig().parentId
+        && p.getConfig().direction === 'output',
+    ) as AnyPort | undefined
+
+    if (!elementPort) {
+      return
+    }
+
+    // Get the item type from the array port
+    const arrayPort = port as ArrayPort
+
+    // Get the item configuration from the array
+    const itemConfig = arrayPort.getConfig().itemConfig
+
+    // Generate title for the element port based on the item type
+    const itemTitle = itemConfig.title || itemConfig.type || 'Unknown Type'
+    const title = `Element (${itemTitle})`
+
+    elementPort.setConfig({
+      ...elementPort.getConfig(),
+      title,
+      description: `Extracted element of type ${itemTitle}`,
+    })
+    elementPort.setUnderlyingType(deepCopy({
+      ...itemConfig,
+      direction: arrayPort.getConfig().direction,
+      title,
+      description: `Extracted element of type ${itemTitle}`,
+    }))
+    node.refreshAnyPortUnderlyingPorts(elementPort as IPort)
   })
   array: any[] = []
 
