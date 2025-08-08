@@ -42,3 +42,6 @@ export {
   resolvePortConfig,
   unwrapAnyPort,
 } from './utils/port-resolver'
+export {
+  checkSchemaCompatibility,
+} from './utils/schema-compatibility'

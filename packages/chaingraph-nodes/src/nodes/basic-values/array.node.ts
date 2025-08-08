@@ -15,9 +15,13 @@ import type {
   IPort,
   IPortConfig,
   NodeExecutionResult,
+
   ObjectPortValue,
-  PortDisconnectedEvent,
 } from '@badaitech/chaingraph-types'
+import {
+  checkSchemaCompatibility,
+} from '@badaitech/chaingraph-types'
+
 import { OnPortUpdate,
 } from '@badaitech/chaingraph-types'
 
@@ -25,6 +29,7 @@ import {
   Passthrough,
 } from '@badaitech/chaingraph-types'
 import { BaseNode, findPort, Node, PortAny, PortArray } from '@badaitech/chaingraph-types'
+
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -36,16 +41,15 @@ import { NODE_CATEGORIES } from '../../categories'
 class ArrayNode extends BaseNode {
   @Passthrough()
   @PortAny({
-    title: 'Array Items Schema',
+    title: 'Item Schema',
     description: 'Schema used for array items. You can connect a port to this port and it will be used to generate the schema for the array items.',
   })
   @OnPortUpdate(async (node: INode, port: IPort) => {
     const arrayNode = node as ArrayNode
-
-    // Get the underlying type from the itemSchema port
     const itemSchemaPort = port as AnyPort
+
     const underlyingType = itemSchemaPort.unwrapUnderlyingType()
-    if (!underlyingType) {
+    if (!underlyingType || underlyingType.type === 'any') {
       // reset the array element port configuration to default any configuration
       arrayNode.setArrayPortConfig('Array', {
         type: 'any',
@@ -57,23 +61,15 @@ class ArrayNode extends BaseNode {
       return
     }
 
-    // Generate title for the array port based on targetPorts title otherwise the underlying type
-    const title = `Array of ${underlyingType.title || underlyingType.type || port.getConfig().title || 'Unknown Type'}`
-
-    // If finally the underlying type is any or stream we dont use the config for the array port
-    // if (['any', 'stream'].includes(underlyingType.type)) {
-    //   return
-    // }
-
     // Set the array port configuration based on the underlying type
-    arrayNode.setArrayPortConfig(title, arrayNode.createPortConfig(underlyingType))
+    arrayNode.setArrayPortConfig('Array', arrayNode.createPortConfig(underlyingType))
   })
   itemSchema: any
 
   @Passthrough()
   @PortArray({
     title: 'Array',
-    description: 'The output array.',
+    description: 'The output array',
     defaultValue: [],
     itemConfig: {
       type: 'any',
@@ -82,6 +78,7 @@ class ArrayNode extends BaseNode {
       },
     },
     isMutable: true,
+    isSchemaMutable: true,
     ui: {
       hideEditor: false,
       addItemFormHidden: false,
@@ -93,81 +90,6 @@ class ArrayNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // This node simply outputs the default number value.
     return {}
-  }
-
-  /**
-   * Handle node events to maintain port synchronization
-   */
-  // async onEvent(event: NodeEvent): Promise<void> {
-  //   await super.onEvent(event)
-  //
-  //   switch (event.type) {
-  //     // case NodeEventType.PortUpdate:
-  //     //   await this.handlePortUpdate(event as PortUpdateEvent)
-  //     //   break
-  //
-  //     case NodeEventType.PortDisconnected:
-  //       await this.handlePortDisconnected(event as PortDisconnectedEvent)
-  //       break
-  //   }
-  // }
-  //
-  // private async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
-  //   // check if the source port is the itemSchema port
-  //   if (
-  //     event.port.getConfig().key !== 'itemSchema'
-  //     || event.port.getConfig().parentId
-  //     || event.port.getConfig().direction !== 'passthrough') {
-  //     return
-  //   }
-  //
-  //   // Get the underlying type from the itemSchema port
-  //   const itemSchemaPort = event.port as AnyPort
-  //   const underlyingType = itemSchemaPort.unwrapUnderlyingType()
-  //   if (!underlyingType) {
-  //     // TODO: Find away to disconnect port
-  //     return
-  //   }
-  //
-  //   // Generate title for the array port based on targetPorts title otherwise the underlying type
-  //   // const title = `Array of ${event.port.getConfig().title || underlyingType.type}`
-  //   const title = `Array of ${underlyingType.title || underlyingType.type || event.port.getConfig().title || 'Unknown Type'}`
-  //
-  //   // If finally the underlying type is any or stream we dont use the config for the array port
-  //   if (['any', 'stream'].includes(underlyingType.type)) {
-  //     // TODO: Find away to disconnect port
-  //     return
-  //   }
-  //
-  //   // Set the array port configuration based on the underlying type
-  //   this.setArrayPortConfig(title, this.createPortConfig(underlyingType))
-  // }
-
-  /**
-   * Handle port connection events - specifically for "any" ports
-   */
-  private async handlePortDisconnected(event: PortDisconnectedEvent): Promise<void> {
-    // Only process connections from our own inputs and for "any" ports
-    const sourcePort = event.sourcePort
-    const sourcePortConfig = sourcePort.getConfig()
-
-    // Only process the itemSchema port and ensure it is an input port without a parent
-    if (
-      sourcePortConfig.key !== 'itemSchema'
-      || sourcePortConfig.direction !== 'passthrough'
-      || sourcePortConfig.parentId
-    ) {
-      return
-    }
-
-    // Set the array port configuration to default any configuration
-    const anySchema: IPortConfig = {
-      type: 'any',
-      ui: {
-        hideEditor: false,
-      },
-    }
-    this.setArrayPortConfig('Array', anySchema)
   }
 
   /**
@@ -193,7 +115,8 @@ class ArrayNode extends BaseNode {
     const arrayPortValue = (arrayPort as ArrayPort).getValue()
 
     // if type changed remove all array elements in descending order
-    if (arrayPortConfig.itemConfig.type !== itemConfig.type && arrayPortValue) {
+    if (!checkSchemaCompatibility(arrayPortConfig.itemConfig, itemConfig) && arrayPortValue) {
+      console.log(`[ArrayNode] Removing all items from array port due to incompatible itemConfig change`)
       this.removeArrayItems(arrayPort, arrayPortValue.map((_, index) => index))
     }
 

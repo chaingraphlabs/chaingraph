@@ -486,7 +486,7 @@ export class PortBinder implements IPortBinder {
   bindPortBindings(): void {
     // Find all root ports (those without a parentId)
     const rootPorts = Array.from(this.portManager.ports.values())
-      .filter(port => !port.getConfig().parentId)
+      .filter(port => !port || !('getConfig' in port) || !port.getConfig().parentId)
 
     // Bind each root port to the node
     for (const port of rootPorts) {

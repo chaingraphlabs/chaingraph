@@ -11,7 +11,8 @@ import type { INode } from '../node'
 import type { IPort } from '../port'
 import { EdgeStatus } from '.'
 import { NodeStatus } from '../node'
-import { getDefaultPortCompatibilityChecker, PortDirection } from '../port'
+import { PortDirection } from '../port'
+import { getDefaultTransferEngine } from '../port/transfer-rules'
 import { deepCopy } from '../utils'
 
 export class Edge implements IEdge {
@@ -55,12 +56,13 @@ export class Edge implements IEdge {
       throw new Error(`Target port ${this.targetPort.id} is not an input or passthrough port.`)
     }
 
-    // Use the compatibility checker for type validation
-    const compatibilityChecker = getDefaultPortCompatibilityChecker()
+    // Use the Transfer Rules engine for type validation
+    const engine = getDefaultTransferEngine()
 
-    if (!compatibilityChecker.canConnect(this.sourcePort, this.targetPort)) {
-      const error = compatibilityChecker.getCompatibilityError(this.sourcePort, this.targetPort)
-      throw new Error(error || 'Incompatible port types')
+    if (!engine.canConnect(this.sourcePort, this.targetPort)) {
+      const sourceConfig = this.sourcePort.getConfig()
+      const targetConfig = this.targetPort.getConfig()
+      throw new Error(`Incompatible port types: ${sourceConfig.type} -> ${targetConfig.type}`)
     }
 
     return true

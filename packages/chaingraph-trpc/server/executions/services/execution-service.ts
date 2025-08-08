@@ -65,6 +65,8 @@ export class ExecutionService {
     parentDepth: number = 0,
   ): Promise<ExecutionInstance> {
     const clonedFlow = await flow.clone() as Flow
+    clonedFlow.setIsDisabledPropagationEvents(true)
+
     const currentDepth = parentDepth + 1
 
     // Check for maximum depth

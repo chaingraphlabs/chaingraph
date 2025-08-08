@@ -72,7 +72,7 @@ function NodeErrorPorts({
           isErrorPortCollapsed: isExpanded,
         },
       },
-      version: node.getVersion(),
+      version: node.getVersion() + 1,
     })
   }, [activeFlowId, node, isExpanded])
 

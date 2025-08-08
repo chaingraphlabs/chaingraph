@@ -145,21 +145,25 @@ export class AnyTypeCompatibilityRule implements ICompatibilityRule {
     // Apply the four compatibility rules:
     // 1. any -> any: allowed
     if (sourceIsAny && targetIsAny) {
+      console.warn(`[AnyTypeCompatibilityRule] Connecting 'any' to 'any', ports are compatible`)
       return true
     }
 
     // 2. type -> any: allowed
     if (!sourceIsAny && targetIsAny) {
+      console.warn(`[AnyTypeCompatibilityRule] Connecting typed port '${unwrappedSource.type}' to 'any', ports are compatible`)
       return true
     }
 
     // 3. any -> type: not allowed (can't validate unknown source type)
     if (sourceIsAny && !targetIsAny) {
+      console.warn(`[AnyTypeCompatibilityRule] Cannot connect 'any' type to '${unwrappedTarget.type}' - unable to validate type compatibility`)
       return false
     }
 
     // 4. type -> type: check with standard rules
     if (!sourceIsAny && !targetIsAny && checker) {
+      console.warn(`[AnyTypeCompatibilityRule] Checking compatibility between '${unwrappedSource.type}' and '${unwrappedTarget.type}'`)
       return checker.checkConfigs(unwrappedSource, unwrappedTarget, 0)
     }
 
@@ -348,10 +352,11 @@ export class ObjectCompatibilityRule implements ICompatibilityRule {
 
     // Special case: If target schema is mutable and has no properties,
     // it can accept any source schema (it will capture the schema)
-    if (targetObjectConfig.isSchemaMutable
-      && Object.keys(targetObjectConfig.schema.properties).length === 0) {
-      return true
-    }
+    // if (targetObjectConfig.isSchemaMutable
+    //   && Object.keys(targetObjectConfig.schema.properties).length === 0) {
+    //   console.warn(`[ObjectCompatibilityRule] Target schema is mutable and empty, accepting any source schema`)
+    //   return true
+    // }
 
     return this.checkSchemaCompatibility(
       sourceObjectConfig.schema,
@@ -367,6 +372,11 @@ export class ObjectCompatibilityRule implements ICompatibilityRule {
     checker?: IRecursiveCompatibilityChecker,
     depth: number = 0,
   ): boolean {
+    // console.debug(`[ObjectCompatibilityRule] Checking compatibility at depth ${depth} for schemas:`, {
+    //   source: sourceSchema,
+    //   target: targetSchema,
+    // })
+
     // Check if all properties in the target schema exist and are compatible in the source schema
     // This ensures the source object "implements" or satisfies all requirements of the target
     for (const [propertyKey, targetPropertyConfig] of Object.entries(targetSchema.properties)) {

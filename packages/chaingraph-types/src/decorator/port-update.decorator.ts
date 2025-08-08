@@ -94,7 +94,7 @@ export async function applyPortUpdateHandlers(node: INode, event: PortUpdateEven
     // but the actual node and port will be the correct subtypes at runtime
     await handlerConfig.handler(node, updatedPort, event)
   } catch (error) {
-    console.error(`[OnPortUpdate] Error in port update handler for port '${portKey}':`, error)
+    console.error(`[OnPortUpdate] Error in port update handler for node '${node.id}' and port '${portKey}':`, error)
     // Don't re-throw to avoid breaking the event flow
   }
 }

@@ -29,6 +29,7 @@ import {
 } from '../../nodes'
 import { positionInterpolator } from '../../nodes/position-interpolation-advanced'
 import { updatePort } from '../../ports'
+import { nodeUpdated } from '../../updates'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading, setFlowLoaded, setFlowMetadata, setFlowSubscriptionError, setFlowSubscriptionStatus } from '../stores'
 import { FlowSubscriptionStatus } from '../types'
 
@@ -89,6 +90,9 @@ export function useFlowSubscription() {
       }
 
       updateNode(data.node)
+
+      // Trigger update animation for visual feedback
+      nodeUpdated(data.node.id)
     },
 
     [FlowEventType.NodeRemoved]: (data) => {
@@ -130,6 +134,9 @@ export function useFlowSubscription() {
         nodeId: data.port.getConfig().nodeId!,
         version: data.nodeVersion ?? 1,
       })
+
+      // Trigger update animation for visual feedback on port updates
+      nodeUpdated(data.port.getConfig().nodeId!)
     },
 
     [FlowEventType.EdgeAdded]: (data) => {
@@ -250,7 +257,7 @@ export function useFlowSubscription() {
 
       // ignore outdated events
       if (data.version && data.version <= currentVersion) {
-        console.debug(`Ignoring outdated UI change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
+        // console.debug(`Ignoring outdated UI change event for node ${data.nodeId}, local version: ${currentVersion}, event version: ${data.version}`)
         return
       }
 
@@ -342,7 +349,10 @@ export function useFlowSubscription() {
 
         if (trackedData && trackedData.data) {
           console.log('[FLOW SUB] Received data for flow', activeFlowId, trackedData.data)
-          await handleEvent(trackedData.data)
+          // await handleEvent(trackedData.data)
+          handleEvent(trackedData.data).catch((error) => {
+            console.error(`[FLOW SUB] Error handling event for flow ${activeFlowId}:`, error)
+          })
         } else {
           console.warn(`[FLOW SUB] No data received for flow ${activeFlowId}`)
         }

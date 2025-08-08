@@ -197,6 +197,18 @@ export class TransferEngine {
           console.log(`[TransferEngine] onSourceUpdate successful: ${rule.name}`)
         }
 
+        if (result.schemaTransferred || result.valueTransferred || result.underlyingTypeSet) {
+          // update all the parents ports for the target port
+          let currentPort: IPort | undefined = targetPort
+          while (currentPort) {
+            currentPort = context.targetNode.getPort(currentPort.getConfig().parentId || '')
+            if (currentPort) {
+              context.targetNode.updatePort(currentPort)
+              console.log(`[TransferEngine] update port ${currentPort.getConfig().id} in node ${context.targetNode.id}`)
+            }
+          }
+        }
+
         return result
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)

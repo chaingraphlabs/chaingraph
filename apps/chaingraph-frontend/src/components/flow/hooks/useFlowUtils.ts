@@ -32,7 +32,7 @@ export function isValidPosition(pos: any): pos is { x: number, y: number } {
     && Number.isFinite(pos.y)
 }
 
-export function roundPosition(pos: { x: number, y: number }, precision = 10) {
+export function roundPosition(pos: { x: number, y: number }, precision = 1) {
   return {
     x: Math.round(pos.x / precision) * precision,
     y: Math.round(pos.y / precision) * precision,

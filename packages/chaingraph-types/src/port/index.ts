@@ -12,7 +12,6 @@ export * from './base'
 
 // Port compatibility
 export * from './compatibility'
-
 // Factory implementation
 export * from './factory'
 
@@ -23,6 +22,8 @@ export * from './instances'
 
 // Port plugins
 export * from './plugins'
+
+export * from './transfer-rules'
 
 // Port utilities
 export * from './utils'

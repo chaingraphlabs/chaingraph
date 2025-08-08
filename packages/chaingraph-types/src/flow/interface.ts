@@ -108,6 +108,20 @@ export interface IFlow {
   ) => Promise<Edge>
 
   /**
+   * Disconnects two nodes via their ports.
+   * @param sourceNodeId The ID of the source node.
+   * @param sourcePortId The ID of the source port.
+   * @param targetNodeId The ID of the target node.
+   * @param targetPortId The ID of the target port.
+   */
+  disconnectPorts: (
+    sourceNodeId: string,
+    sourcePortId: string,
+    targetNodeId: string,
+    targetPortId: string
+  ) => Promise<void>
+
+  /**
    * Validates the entire flow.
    * @returns A promise that resolves to true if the flow is valid.
    */
@@ -148,4 +162,10 @@ export interface IFlow {
   getOutgoingEdges: (node: INode) => IEdge[]
 
   filterEdges: (predicate: (edge: IEdge) => boolean) => IEdge[]
+
+  /**
+   * Set the execution state of the flow
+   * @param value True if the flow is currently executing, false otherwise
+   */
+  setIsDisabledPropagationEvents: (value: boolean) => void
 }

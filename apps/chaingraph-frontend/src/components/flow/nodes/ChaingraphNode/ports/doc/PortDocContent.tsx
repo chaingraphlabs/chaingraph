@@ -540,6 +540,12 @@ function renderArrayConfig(config: ArrayPortConfig): React.ReactElement {
             <span>{config.isMutable ? 'Yes' : 'No'}</span>
           </>
         )}
+        {config.isSchemaMutable !== undefined && (
+          <>
+            <span className="text-muted-foreground">Schema mutable:</span>
+            <span>{config.isMutable ? 'Yes' : 'No'}</span>
+          </>
+        )}
       </div>
 
       {/* Item schema visualization */}

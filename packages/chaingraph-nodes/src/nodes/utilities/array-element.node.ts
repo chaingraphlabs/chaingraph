@@ -13,11 +13,7 @@ import type {
   ExecutionContext,
   INode,
   IPort,
-  IPortConfig,
-  NodeEvent,
   NodeExecutionResult,
-  PortDisconnectedEvent,
-  PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
 import {
   OnPortUpdate,
@@ -31,9 +27,7 @@ import {
 
 import {
   BaseNode,
-  findPort,
   Node,
-  NodeEventType,
   Output,
   Passthrough,
   PortAny,
@@ -58,6 +52,8 @@ class ArrayElementNode extends BaseNode {
       title: 'Item',
       description: 'The type of items in the array',
     },
+    isMutable: true,
+    isSchemaMutable: true,
   })
   @OnPortUpdate(async (node: INode, port: IPort) => {
     const elementPort = node.findPort(
@@ -72,26 +68,20 @@ class ArrayElementNode extends BaseNode {
 
     // Get the item type from the array port
     const arrayPort = port as ArrayPort
-
-    // Get the item configuration from the array
     const itemConfig = arrayPort.getConfig().itemConfig
 
-    // Generate title for the element port based on the item type
-    const itemTitle = itemConfig.title || itemConfig.type || 'Unknown Type'
-    const title = `Element (${itemTitle})`
-
-    elementPort.setConfig({
-      ...elementPort.getConfig(),
-      title,
-      description: `Extracted element of type ${itemTitle}`,
-    })
     elementPort.setUnderlyingType(deepCopy({
       ...itemConfig,
-      direction: arrayPort.getConfig().direction,
-      title,
-      description: `Extracted element of type ${itemTitle}`,
+      direction: elementPort.getConfig().direction,
+      ui: {
+        ...itemConfig.ui,
+        keyDeletable: false,
+        hideEditor: true,
+        collapsed: true,
+        hidePropertyEditor: true,
+      },
     }))
-    node.refreshAnyPortUnderlyingPorts(elementPort as IPort)
+    node.refreshAnyPortUnderlyingPorts(elementPort as IPort, true)
   })
   array: any[] = []
 
@@ -129,110 +119,6 @@ class ArrayElementNode extends BaseNode {
     this.element = this.array[this.index]
 
     return {}
-  }
-
-  /**
-   * Handle node events to maintain port synchronization
-   */
-  async onEvent(event: NodeEvent): Promise<void> {
-    await super.onEvent(event)
-
-    switch (event.type) {
-      case NodeEventType.PortUpdate:
-        await this.handlePortUpdate(event as PortUpdateEvent)
-        break
-
-      case NodeEventType.PortDisconnected:
-        await this.handlePortDisconnected(event as PortDisconnectedEvent)
-        break
-    }
-  }
-
-  private async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
-    // Check if the source port is the array port
-    if (
-      event.port.getConfig().key !== 'array'
-      || event.port.getConfig().parentId
-      || event.port.getConfig().direction !== 'passthrough'
-    ) {
-      return
-    }
-
-    // Get the item type from the array port
-    const arrayPort = event.port as ArrayPort
-
-    // Get the item configuration from the array
-    const itemConfig = arrayPort.getConfig().itemConfig
-
-    // Generate title for the element port based on the item type
-    const itemTitle = itemConfig.title || itemConfig.type || 'Unknown Type'
-    const title = `Element (${itemTitle})`
-
-    // Set the element port configuration based on the array's item type
-    this.setElementPortConfig(title, {
-      ...itemConfig,
-      direction: arrayPort.getConfig().direction,
-    })
-  }
-
-  /**
-   * Handle port disconnection events
-   */
-  private async handlePortDisconnected(event: PortDisconnectedEvent): Promise<void> {
-    // Only process disconnections from our own ports
-    const sourcePort = event.sourcePort
-    const sourcePortConfig = sourcePort.getConfig()
-
-    // Only process the array port and ensure it is a passthrough port without a parent
-    if (
-      sourcePortConfig.key !== 'array'
-      || sourcePortConfig.direction !== 'passthrough'
-      || sourcePortConfig.parentId
-    ) {
-      return
-    }
-
-    // Reset the element port configuration to default any configuration
-    this.setElementPortConfig('Element', undefined)
-
-    const arrayPort = sourcePort as ArrayPort
-    arrayPort.setConfig({
-      ...arrayPort.getConfig(),
-      type: 'array',
-      itemConfig: {
-        type: 'any',
-        title: 'Item',
-        description: 'The type of items in the array',
-      },
-    })
-    arrayPort.setValue([])
-    return this.updatePort(sourcePort)
-  }
-
-  /**
-   * Set configuration for the element port
-   */
-  private setElementPortConfig(title: string, itemConfig: IPortConfig | undefined): void {
-    // Get the element port and update its configuration
-    const elementPort = findPort(this, (port) => {
-      return port.getConfig().key === 'element'
-        && !port.getConfig().parentId
-        && port.getConfig().direction === 'output'
-    }) as AnyPort | undefined
-
-    if (!elementPort) {
-      console.warn('[ArrayElementNode] Element port not found')
-      return
-    }
-
-    const elementPortConfig = elementPort.getConfig()
-    if (elementPortConfig.type !== 'any') {
-      return
-    }
-
-    // Update the element port configuration
-    elementPort.setUnderlyingType(deepCopy(itemConfig))
-    this.refreshAnyPortUnderlyingPorts(elementPort as IPort)
   }
 }
 

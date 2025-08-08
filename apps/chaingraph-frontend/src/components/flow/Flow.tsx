@@ -239,7 +239,9 @@ function Flow({
         onNodeDrag={onNodeDrag}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
-        panOnScroll
+        panOnScroll={true}
+        zoomOnDoubleClick={true}
+        connectOnClick={true}
         onViewportChange={onViewportChange}
         fitView={true}
         preventScrolling
@@ -248,7 +250,7 @@ function Flow({
         className="bg-background"
         minZoom={0.05}
         maxZoom={2}
-        nodeDragThreshold={5}
+        nodeDragThreshold={0}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}

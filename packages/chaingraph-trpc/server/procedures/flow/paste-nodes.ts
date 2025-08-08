@@ -57,14 +57,16 @@ export const pasteNodes = flowContextProcedure
     }
     const actualVirtualOrigin = virtualOrigin || { x: 0, y: 0 }
 
+    // Get flow from store
+    const flow = await ctx.flowStore.getFlow(flowId)
+    if (!flow) {
+      throw new Error(`Flow ${flowId} not found`)
+    }
+
     await ctx.flowStore.lockFlow(flowId)
 
     try {
-      // Get flow from store
-      const flow = await ctx.flowStore.getFlow(flowId)
-      if (!flow) {
-        throw new Error(`Flow ${flowId} not found`)
-      }
+      flow.setIsDisabledPropagationEvents(true)
 
       console.debug(`[FLOW] Starting paste operation for flow ${flowId}`)
       console.debug(`[FLOW] Pasting ${clipboardData.nodes.length} nodes and ${clipboardData.edges.length} edges`)
@@ -267,6 +269,7 @@ export const pasteNodes = flowContextProcedure
       console.error(`[FLOW] Paste operation failed:`, error)
       throw new Error(`Paste operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
+      flow.setIsDisabledPropagationEvents(false)
       await ctx.flowStore.unlockFlow(flowId)
     }
   })

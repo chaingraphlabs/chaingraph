@@ -177,7 +177,7 @@ export class PortManager implements IPortManager {
     const parentId = parentPort.id
 
     return Array.from(this._ports.values())
-      .filter(port => port.getConfig().parentId === parentId)
+      .filter(port => 'getConfig' in port && port.getConfig().parentId === parentId)
   }
 
   /**

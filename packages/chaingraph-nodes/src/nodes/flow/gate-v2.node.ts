@@ -53,7 +53,7 @@ class GateNodeV2 extends BaseNode {
     },
     ui: {
       collapsed: true,
-      hidePort: true,
+      // hidePort: true,
       keyDeletable: true,
     },
   })

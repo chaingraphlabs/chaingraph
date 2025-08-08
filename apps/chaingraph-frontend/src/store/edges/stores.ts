@@ -10,7 +10,7 @@ import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { Edge, FinalConnectionState, HandleType } from '@xyflow/react'
 import type { AddEdgeEventData, EdgeData, RemoveEdgeEventData } from './types'
 import { edgesDomain, portsDomain } from '@/store/domains'
-import { getDefaultPortCompatibilityChecker } from '@badaitech/chaingraph-types'
+import { getDefaultTransferEngine } from '@badaitech/chaingraph-types'
 import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
@@ -136,7 +136,7 @@ export const $compatiblePortsToDraggingEdge = portsDomain.createStore<string[] |
 
     const compatiblePorts: string[] = []
 
-    const checker = getDefaultPortCompatibilityChecker()
+    const engine = getDefaultTransferEngine()
 
     // iterate over all ports and find compatible ones
     const nodes = Object.values($nodes.getState())
@@ -165,9 +165,9 @@ export const $compatiblePortsToDraggingEdge = portsDomain.createStore<string[] |
         }
 
         // Skip if the port is not compatible with the dragging port
-        if (draggingPortDirection === 'source' && !checker.canConnect(draggingPort, port)) {
+        if (draggingPortDirection === 'source' && !engine.canConnect(draggingPort, port)) {
           continue
-        } else if (draggingPortDirection === 'target' && !checker.canConnect(port, draggingPort)) {
+        } else if (draggingPortDirection === 'target' && !engine.canConnect(port, draggingPort)) {
           continue
         }
 

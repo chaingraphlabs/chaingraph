@@ -22,6 +22,7 @@ export function DeleteButton({ onClick }: DeleteButtonProps) {
         'self-start group/delete',
         'hover:bg-destructive/20',
         'absolute -right-5 top-0',
+        'nodrag',
       )}
       onClick={onClick}
     >

@@ -163,7 +163,7 @@ function checkObjectCompatibility(
   if (
     options.allowMutableEmptySchema
     && targetConfig.isSchemaMutable
-    && Object.keys(targetSchema.properties).length === 0
+    // && Object.keys(targetSchema.properties).length === 0
   ) {
     if (options.debug) {
       console.log(`[SchemaCompatibility] Target is mutable with empty schema, accepting any source`)

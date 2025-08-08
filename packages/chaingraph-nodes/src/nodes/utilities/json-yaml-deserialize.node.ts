@@ -11,22 +11,23 @@ import type {
   ExecutionContext,
   IPort,
   IPortConfig,
-  NodeEvent,
   NodeExecutionResult,
-  PortConnectedEvent,
-  PortDisconnectedEvent,
+} from '@badaitech/chaingraph-types'
+import {
+  deepCopy,
+} from '@badaitech/chaingraph-types'
+import {
+  OnPortUpdate,
 } from '@badaitech/chaingraph-types'
 
 import {
   BaseNode,
   Input,
   Node,
-  NodeEventType,
   PortNumber as NumberDecorator,
   Output,
   PortAny,
   PortBoolean,
-  PortFactory,
   PortString,
   StringEnum,
 } from '@badaitech/chaingraph-types'
@@ -50,6 +51,35 @@ class JsonYamlDeserializerNode extends BaseNode {
   @PortAny({
     title: 'Output Schema',
     description: 'Schema for the deserialized object. Supports complex schemas (array, object) and primitive types (number, string, bool).',
+  })
+  @OnPortUpdate((node, port) => {
+    const outputSchemaPort = port as AnyPort
+    const deserializedObjectPort = node.findPort(p => p.key === 'deserializedObject') as AnyPort
+    if (!outputSchemaPort || !deserializedObjectPort) {
+      return
+    }
+
+    const underlyingType = outputSchemaPort.unwrapUnderlyingType()
+
+    if (!underlyingType || underlyingType.type === 'any') {
+      // if underlying type is not set or is 'any', we need to reset the deserializedObject port
+      deserializedObjectPort.setUnderlyingType(undefined)
+      deserializedObjectPort.setValue(null)
+      node.refreshAnyPortUnderlyingPorts(deserializedObjectPort as IPort, true)
+    } else {
+      // if underlying type is set, we need to update the deserializedObject port
+      deserializedObjectPort.setUnderlyingType(deepCopy({
+        ...underlyingType,
+        ui: {
+          keyDeletable: false,
+          hideEditor: true,
+          collapsed: true,
+          hidePropertyEditor: true,
+        },
+        direction: deserializedObjectPort.getConfig().direction,
+      }))
+      node.refreshAnyPortUnderlyingPorts(deserializedObjectPort as IPort, true)
+    }
   })
   outputSchema: any
 
@@ -266,114 +296,6 @@ class JsonYamlDeserializerNode extends BaseNode {
       return result
     }
     return null
-  }
-
-  /**
-   * Handle node events to maintain port synchronization
-   */
-  async onEvent(event: NodeEvent): Promise<void> {
-    await super.onEvent(event)
-
-    if (event.type === NodeEventType.PortConnected) {
-      await this.handleConnection(event as PortConnectedEvent)
-    }
-
-    // !!! To depecate after disconnections fix
-    if (event.type === NodeEventType.PortDisconnected) {
-      await this.handleDisconnection(event as PortDisconnectedEvent)
-    }
-  }
-
-  /**
-   * !!! To depecate after disconnections fix
-   */
-  private async handleDisconnection(event: PortDisconnectedEvent): Promise<void> {
-    const inputPortConfig = event.sourcePort.getConfig()
-    if (
-      !inputPortConfig
-      || inputPortConfig.key !== 'outputSchema'
-      || inputPortConfig.direction !== 'input'
-      || inputPortConfig.parentId
-    ) {
-      return
-    }
-
-    const outputPort = this.findPortByKey('deserializedObject')
-    const outputAnyPort = outputPort as AnyPort
-
-    if (!outputPort || !outputAnyPort) {
-      return
-    }
-
-    try {
-      await outputAnyPort.setUnderlyingType(undefined)
-      this.refreshAnyPortUnderlyingPorts(outputAnyPort as IPort, true)
-      await this.updatePort(outputAnyPort as IPort)
-    } catch (error) {
-      throw new Error(`Error synchronizing schema: ${error}`)
-    }
-  }
-
-  /**
-   * Handle input port update events to sync schema to the output port
-   */
-  private async handleConnection(event: PortConnectedEvent): Promise<void> {
-    const inputPortConfig = event.sourcePort.getConfig()
-    if (
-      !inputPortConfig
-      || inputPortConfig.key !== 'outputSchema'
-      || inputPortConfig.direction !== 'input'
-      || inputPortConfig.parentId
-    ) {
-      return
-    }
-
-    const inputPort = event.sourcePort as AnyPort
-    const inputPortRawConfig = inputPort.getRawConfig()
-
-    const outputPort = this.findPortByKey('deserializedObject')
-    const outputAnyPort = outputPort as AnyPort
-
-    if (!outputPort || !outputAnyPort) {
-      return
-    }
-
-    if (!inputPortRawConfig.underlyingType || !SUPPORTED_TYPES.includes(inputPortRawConfig.underlyingType.type)) {
-      return
-    }
-
-    if (!outputAnyPort.getConfig().underlyingType) {
-      try {
-        // set some scham settings if underlying type is object
-        let underlyingType = inputPortRawConfig.underlyingType
-        if (underlyingType.type === 'object') {
-          underlyingType = {
-            // ...config,
-            ...PortFactory.create({
-              type: 'object',
-              schema: underlyingType?.schema || {
-                type: 'object',
-                properties: {},
-              },
-              isSchemaMutable: false,
-              defaultValue: underlyingType?.defaultValue ?? {},
-              ui: {
-                ...(underlyingType?.ui || {}),
-                keyDeletable: false,
-                hideEditor: true,
-                collapsed: true,
-                hidePropertyEditor: true,
-              },
-            }).getConfig(),
-          }
-        }
-        outputAnyPort.setUnderlyingType(underlyingType)
-        this.refreshAnyPortUnderlyingPorts(outputAnyPort as IPort, true)
-        await this.updatePort(outputAnyPort as IPort)
-      } catch (error) {
-        throw new Error(`Error synchronizing schema: ${error}`)
-      }
-    }
   }
 }
 

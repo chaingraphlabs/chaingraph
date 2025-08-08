@@ -50,16 +50,20 @@ export class Flow implements IFlow {
   readonly edges: Map<string, IEdge>
 
   // TODO: store nodes as adjacency list
-
   // TODO: add known object types schemas
-
   // TODO: split implementation into multiple files
 
   // private eventEmitter = new EventEmitter()
   protected eventQueue = new EventQueue<FlowEvent>()
   private eventIndex: number = 1
 
-  private cancelGlobalHandler: () => void
+  private readonly cancelGlobalHandler: () => void
+
+  /**
+   * Flag to indicate if the flow is currently disabled for propagation events
+   * @protected
+   */
+  private _isDisabledPropagationEvents: boolean = false
 
   /**
    * Map to store node event handlers
@@ -90,6 +94,11 @@ export class Flow implements IFlow {
 
     // Subscribe to all flow events
     this.cancelGlobalHandler = this.onEvent(async (flowEvent: FlowEvent): Promise<void> => {
+      if (this._isDisabledPropagationEvents) {
+        // If the flow is currently executing, skip handling the event
+        return
+      }
+
       return this.propagationEngine.handleEvent(flowEvent, this).then(() => {})
     })
   }
@@ -375,15 +384,12 @@ export class Flow implements IFlow {
       targetPort.removeConnection(sourceNode.id, sourcePort.id)
     }
 
-    // TODO: move follow "any" logic to other place
-    const isTargetPortAny = targetPort.getConfig().type === 'any' && targetPort instanceof AnyPort
-
     // if target port is an any port type then remove the underlying type
-    if (isTargetPortAny) {
-      const anyPort = (targetPort) as AnyPort
-      anyPort.setUnderlyingType(undefined)
-      anyPort.setValue(undefined)
-      targetNode.updatePort(targetPort)
+    if (targetPort instanceof AnyPort) {
+      targetPort.setUnderlyingType(undefined)
+      targetPort.setValue(undefined)
+      targetNode.refreshAnyPortUnderlyingPorts(targetPort as IPort, true)
+      // targetNode.updatePort(targetPort)
     }
 
     await Promise.all([
@@ -510,6 +516,36 @@ export class Flow implements IFlow {
   }
 
   /**
+   * Disconnects two nodes via their ports.
+   * @param sourceNodeId The ID of the source node.
+   * @param sourcePortId The ID of the source port.
+   * @param targetNodeId The ID of the target node.
+   * @param targetPortId The ID of the target port.
+   */
+  disconnectPorts(
+    sourceNodeId: string,
+    sourcePortId: string,
+    targetNodeId: string,
+    targetPortId: string,
+  ): Promise<void> {
+    // find edge:
+    const edge = Array.from(this.edges.values()).find((edge) => {
+      return (
+        edge.sourceNode.id === sourceNodeId
+        && edge.sourcePort.id === sourcePortId
+        && edge.targetNode.id === targetNodeId
+        && edge.targetPort.id === targetPortId
+      )
+    })
+
+    if (!edge) {
+      throw new Error(`Edge from ${sourceNodeId}:${sourcePortId} to ${targetNodeId}:${targetPortId} does not exist.`)
+    }
+
+    return this.removeEdge(edge.id)
+  }
+
+  /**
    * Recursively remove all connections to all child ports of a given port
    * @param node
    * @param port
@@ -522,6 +558,10 @@ export class Flow implements IFlow {
       const connections: IEdge[] = []
 
       filterPorts(node, (port) => {
+        if (typeof port !== 'object' || !port.getConfig()) {
+          console.warn(`Port ${port.id} does not have a valid config: ${typeof port}`)
+        }
+
         return port.getConfig().parentId === p.id
       }).forEach((port) => {
         // find connections to this port
@@ -949,5 +989,9 @@ export class Flow implements IFlow {
   static deserialize(data: JSONValue): IFlow {
     const flow = new Flow()
     return flow.deserialize(data)
+  }
+
+  public setIsDisabledPropagationEvents(value: boolean) {
+    this._isDisabledPropagationEvents = value
   }
 }

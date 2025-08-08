@@ -131,6 +131,7 @@ export interface ArrayPortConfig<
   type: 'array'
   itemConfig: IPortConfig
   isMutable?: boolean
+  isSchemaMutable?: boolean
   defaultValue?: ArrayPortValue<Item>
   minLength?: number
   maxLength?: number
@@ -177,6 +178,7 @@ export interface IObjectSchema<T extends Record<string, IPortConfig> = Record<st
 export interface StreamPortConfig<Item extends IPortConfig = IPortConfig> extends BasePortConfig {
   type: 'stream'
   itemConfig: Item
+  isSchemaMutable?: boolean
   defaultValue?: StreamPortValue<Item>
   ui?: BasePortConfigUIType & StreamPortConfigUIType
 }

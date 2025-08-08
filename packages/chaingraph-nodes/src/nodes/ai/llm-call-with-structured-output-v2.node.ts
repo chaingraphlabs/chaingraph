@@ -8,6 +8,7 @@
 
 import type {
   AnyPort,
+
   ArrayPortConfig,
   EncryptedSecretValue,
   EnumPortConfig,
@@ -15,16 +16,16 @@ import type {
   IObjectSchema,
   IPort,
   IPortConfig,
-  NodeEvent,
   NodeExecutionResult,
+  ObjectPort,
   ObjectPortConfig,
   PortConnectedEvent,
   PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
-import type {
-  ObjectPort,
-} from '@badaitech/chaingraph-types'
 import type { APIkey, SupportedProviders } from './llm-call.node'
+import {
+  ObjectSchemaCopyTo,
+} from '@badaitech/chaingraph-types'
 import {
   Passthrough,
 } from '@badaitech/chaingraph-types'
@@ -33,7 +34,6 @@ import {
   ExecutionEventEnum,
   findPort,
   Node,
-  NodeEventType,
   ObjectSchema,
   Output,
   PortEnumFromObject,
@@ -115,6 +115,9 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
       hideEditor: false,
     },
   })
+  @ObjectSchemaCopyTo((port: IPort): boolean => {
+    return port.getConfig().key === 'structuredResponse' && !port.getConfig().parentId
+  })
   outputSchema: Record<string, any> = {}
 
   @Passthrough()
@@ -174,15 +177,15 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
   /**
    * Handle node events to maintain port synchronization
    */
-  async onEvent(event: NodeEvent): Promise<void> {
-    await super.onEvent(event)
-
-    switch (event.type) {
-      case NodeEventType.PortUpdate:
-        await this.handlePortUpdate(event as PortUpdateEvent)
-        break
-    }
-  }
+  // async onEvent(event: NodeEvent): Promise<void> {
+  //   await super.onEvent(event)
+  //
+  //   switch (event.type) {
+  //     case NodeEventType.PortUpdate:
+  //       await this.handlePortUpdate(event as PortUpdateEvent)
+  //       break
+  //   }
+  // }
 
   private async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
     if (!this.isOutputSchemaPort(event.port)) {

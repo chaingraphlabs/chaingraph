@@ -26,6 +26,7 @@ export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }
     <div className={cn(
       'flex items-center gap-1',
       isOutput ? 'flex-row-reverse' : 'flex-row',
+      'nodrag',
     )}
     >
       <button

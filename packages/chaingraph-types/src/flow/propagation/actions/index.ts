@@ -6,26 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export { ArrayConfigTransferAction } from './ArrayConfigTransferAction'
-export { SchemaTransferAction } from './SchemaTransferAction'
-export { TypeAdaptationAction } from './TypeAdaptationAction'
-export { ValuePropagationAction } from './ValuePropagationAction'
+export { TransferRulesAction } from './TransferRulesAction'
 
 import type { PropagationAction } from '../types'
-import { ArrayConfigTransferAction } from './ArrayConfigTransferAction'
-import { SchemaTransferAction } from './SchemaTransferAction'
-import { TypeAdaptationAction } from './TypeAdaptationAction'
-import { ValuePropagationAction } from './ValuePropagationAction'
+import { TransferRulesAction } from './TransferRulesAction'
 
 /**
  * Registry of all available propagation actions
- * Order matters: actions are executed in the order they appear in this array
+ * Now uses the unified TransferRulesAction that handles all transfer types
  */
 export const actionRegistry: PropagationAction[] = [
-  new TypeAdaptationAction(), // Handle type adaptation first
-  new SchemaTransferAction(), // Then schema transfers
-  new ArrayConfigTransferAction(), // Then array config transfers
-  new ValuePropagationAction(), // Finally propagate values
+  new TransferRulesAction(), // Unified action using Transfer Rules System
 ]
 
 /**

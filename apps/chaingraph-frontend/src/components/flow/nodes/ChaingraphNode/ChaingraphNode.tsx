@@ -35,6 +35,7 @@ import {
   requestUpdatePortValue,
   updateItemConfigArrayPort,
 } from '@/store/ports'
+import { $nodesPulseState } from '@/store/updates'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo } from 'react'
@@ -91,6 +92,7 @@ function ChaingraphNodeComponent({
   const highlightedNodeId = useUnit($highlightedNodeId)
   const isFlowLoaded = useUnit($isFlowLoaded)
   const dropFeedback = useNodeDropFeedback(id)
+  const nodesPulseState = useUnit($nodesPulseState)
 
   const categoryMetadata = data.categoryMetadata ?? defaultCategoryMetadata
 
@@ -102,6 +104,8 @@ function ChaingraphNodeComponent({
     () => highlightedNodeId && highlightedNodeId.includes(id),
     [highlightedNodeId, id],
   )
+
+  const nodePulseState = nodesPulseState.get(id)
 
   const { debugMode, executionId } = useUnit($executionState)
   const isBreakpointSet = useBreakpoint(id)
@@ -304,6 +308,10 @@ function ChaingraphNodeComponent({
           ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
           : !dropFeedback?.canAcceptDrop && 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
         executionStateStyle,
+
+        // Update animations (two-phase system)
+        nodePulseState === 'pulse' && 'animate-update-pulse',
+        nodePulseState === 'fade' && 'animate-update-fade',
 
         isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
         highlightedNodeId !== null && !isHighlighted && 'opacity-40',

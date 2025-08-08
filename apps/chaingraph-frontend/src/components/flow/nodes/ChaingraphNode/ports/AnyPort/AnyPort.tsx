@@ -77,8 +77,6 @@ function AnyPortComponent(props: AnyPortProps) {
       newPort.setValue(port.getValue())
     }
 
-    console.log('AnyPortComponent: underlying port created', port)
-
     return newPort
   }, [config, port, underlyingType])
 

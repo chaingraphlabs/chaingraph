@@ -121,11 +121,22 @@ module.exports = {
           '0%, 100%': { boxShadow: '0 0 10px rgba(59,130,246,0.5)' },
           '50%': { boxShadow: '0 0 18px rgba(59,130,246,0.7)' },
         },
+        'update-pulse': {
+          '0%': { boxShadow: '0 0 0 0 rgba(34,197,94,0)' },
+          '50%': { boxShadow: '0 0 20px 2px rgba(34,197,94,0.8)' },
+          '100%': { boxShadow: '0 0 12px 1px rgba(34,197,94,0.6)' },
+        },
+        'update-fade': {
+          'from': { boxShadow: '0 0 12px 1px rgba(34,197,94,0.6)' },
+          'to': { boxShadow: '0 0 0 0 rgba(34,197,94,0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'glow': 'glow 3s ease-in-out infinite',
+        'update-pulse': 'update-pulse 200ms ease-out forwards',
+        'update-fade': 'update-fade 400ms ease-out forwards',
       },
     },
   },

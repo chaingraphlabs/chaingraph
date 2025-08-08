@@ -13,6 +13,9 @@ export {
   deepCopy,
 } from './deep-copy'
 export {
+  isDeepEqual,
+} from './deep-equal'
+export {
   createQueueIterator,
   EventQueue,
 } from './event-queue'

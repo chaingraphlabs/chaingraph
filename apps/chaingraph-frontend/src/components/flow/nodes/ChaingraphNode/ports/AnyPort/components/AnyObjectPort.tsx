@@ -35,7 +35,7 @@ const variants = {
     opacity: 1,
     height: 'auto',
     pointerEvents: 'auto' as const,
-    transition: { duration: 0.2 },
+    transition: { duration: 0 },
     overflow: 'visible' as const,
   },
   closed: {
@@ -43,7 +43,7 @@ const variants = {
     height: 0,
     pointerEvents: 'none' as const,
     overflow: 'hidden' as const,
-    transition: { duration: 0.1 },
+    transition: { duration: 0 },
   },
 } as const
 

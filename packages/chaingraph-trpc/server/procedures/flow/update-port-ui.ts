@@ -43,18 +43,15 @@ export const updatePortUI = flowContextProcedure
         throw new Error('Port not found')
 
       if (port instanceof AnyPort) {
-        console.warn(`[updatePortUI] Updating UI for AnyPort ${port.id} with underlying type`)
         const underlyingType = port.unwrapUnderlyingType()
         if (underlyingType && underlyingType.type !== 'any') {
-          console.log(`[updatePortUI] Updating underlying type UI for port ${port.id}`, underlyingType)
           underlyingType.ui = {
             ...underlyingType.ui,
             ...input.ui,
           }
-          console.log(`[updatePortUI] Setting underlying type for port ${port.id}`, underlyingType)
 
           port.setUnderlyingType(underlyingType)
-          node.refreshAnyPortUnderlyingPorts(port)
+          node.refreshAnyPortUnderlyingPorts(port, true)
         } else {
           console.warn(`[updatePortUI] No underlying type found for AnyPort ${port.id}, updating port UI directly`)
 

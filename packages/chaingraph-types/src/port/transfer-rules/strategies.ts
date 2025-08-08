@@ -12,6 +12,7 @@ import type { TransferContext, TransferResult, TransferStrategy } from './types'
 import { deepCopy } from '../../utils'
 import { AnyPort } from '../instances'
 import { unwrapAnyPort } from './utils/port-resolver'
+import { checkSchemaCompatibility } from './utils/schema-compatibility'
 
 /**
  * Library of reusable transfer strategies
@@ -25,25 +26,41 @@ export const Strategies = {
    * Transfer only the value from source to target
    */
   value: (ctx: TransferContext): TransferResult => {
-    console.log(`[Strategies.value] Transferring value from ${ctx.sourcePort.id} to ${ctx.targetPort.id}: value=${JSON.stringify(ctx.sourcePort.getValue())}`)
-
-    try {
-      const value = ctx.sourcePort.getValue() ?? ctx.sourceConfig.defaultValue ?? undefined
-      ctx.targetPort.setValue(deepCopy(value))
-      ctx.targetNode.updatePort(ctx.targetPort)
-
-      return {
-        success: true,
-        valueTransferred: true,
-        message: 'Value transferred successfully',
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error : new Error(String(error)),
-        message: `Failed to transfer value: ${error}`,
-      }
+    // TODO: skip for now!
+    return {
+      success: true,
+      valueTransferred: false, // Default to false, will be set to true if value actually changes
+      message: 'Value transfer strategy called',
     }
+
+    // try {
+    //   const newValue = ctx.sourcePort.getValue() ?? ctx.sourceConfig.defaultValue ?? undefined
+    //   const currentValue = ctx.targetPort.getValue()
+    //
+    //   // Check if value actually changed
+    //   if (isDeepEqual(currentValue, newValue)) {
+    //     return {
+    //       success: true,
+    //       valueTransferred: false,
+    //       message: 'Value unchanged, skipping update',
+    //     }
+    //   }
+    //
+    //   ctx.targetPort.setValue(deepCopy(newValue))
+    //   ctx.targetNode.updatePort(currentValue)
+    //
+    //   return {
+    //     success: true,
+    //     valueTransferred: true,
+    //     message: 'Value transferred successfully',
+    //   }
+    // } catch (error) {
+    //   return {
+    //     success: false,
+    //     error: error instanceof Error ? error : new Error(String(error)),
+    //     message: `Failed to transfer value: ${error}`,
+    //   }
+    // }
   },
 
   /**
@@ -73,6 +90,24 @@ export const Strategies = {
         return {
           success: false,
           message: 'Target object schema is not mutable',
+        }
+      }
+
+      // Check if schemas are already equal
+      // const sourceSchema = (sourceConfig as ObjectPortConfig).schema
+      // const targetSchema = (targetObjectConfig as ObjectPortConfig).schema
+
+      const result = checkSchemaCompatibility(sourceConfig, targetConfig, {
+        allowMutableEmptySchema: false,
+        allowExtraProperties: false,
+        debug: false,
+      })
+
+      if (result.compatible) {
+        return {
+          success: true,
+          schemaTransferred: false,
+          message: 'Schema unchanged, skipping update',
         }
       }
 
@@ -130,14 +165,33 @@ export const Strategies = {
         }
       }
 
+      const result = checkSchemaCompatibility(sourceArray, targetArray, {
+        allowMutableEmptySchema: false,
+        allowExtraProperties: false,
+        debug: false,
+      }).compatible
+      && checkSchemaCompatibility(targetArray, sourceArray, {
+        allowMutableEmptySchema: false,
+        allowExtraProperties: false,
+        debug: false,
+      }).compatible
+
+      // Check if item configs are already equal
+      if (result) {
+        return {
+          success: true,
+          schemaTransferred: false,
+          message: 'Array item config unchanged, skipping update',
+        }
+      }
+
       // Transfer item configuration
       ctx.targetPort.setConfig({
         ...ctx.targetConfig,
         itemConfig: deepCopy(sourceArray.itemConfig),
       })
 
-      // Update array items if needed
-      ctx.targetNode.updateArrayItemConfig(ctx.targetPort)
+      // Note: updateArrayItemConfig removed - will be called by updateArrayItems strategy
 
       return {
         success: true,
@@ -169,6 +223,24 @@ export const Strategies = {
       const sourceType = ctx.sourcePort instanceof AnyPort
         ? unwrapAnyPort(ctx.sourceConfig) || ctx.sourceConfig
         : ctx.sourceConfig
+
+      const result = checkSchemaCompatibility(sourceType, ctx.targetConfig, {
+        allowMutableEmptySchema: false,
+        allowExtraProperties: false,
+        debug: false,
+      }).compatible
+      && checkSchemaCompatibility(ctx.targetConfig, sourceType, {
+        allowMutableEmptySchema: false,
+        allowExtraProperties: false,
+        debug: false,
+      }).compatible
+
+      if (result) {
+        return {
+          success: true,
+          message: `Source type is compatible with target port, no need to set underlying type`,
+        }
+      }
 
       // Set underlying type
       ctx.targetPort.setUnderlyingType(deepCopy(sourceType))
@@ -279,12 +351,34 @@ export const Strategies = {
   },
 
   /**
+   * Update array items after configuration or value changes
+   */
+  updateArrayItems: (ctx: TransferContext): TransferResult => {
+    try {
+      if (ctx.targetConfig.type === 'array') {
+        ctx.targetNode.updateArrayItemConfig(ctx.targetPort)
+      }
+      return {
+        success: true,
+        message: 'Array items updated',
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+        message: `Failed to update array items: ${error}`,
+      }
+    }
+  },
+
+  /**
    * Transfer array configuration and value
    */
   arrayConfigAndValue: (ctx: TransferContext): Promise<TransferResult> => {
     return Strategies.compose(
       Strategies.arrayItemConfig,
       Strategies.value,
+      Strategies.updateArrayItems, // Update items once after all changes
     )(ctx) as Promise<TransferResult>
   },
 
@@ -320,11 +414,28 @@ export const Strategies = {
         }
       }
 
+      const result = checkSchemaCompatibility(sourceStream, targetStream, {
+        allowMutableEmptySchema: false,
+        allowExtraProperties: false,
+        debug: false,
+      })
+
+      // Check if item configs are already equal
+      if (result.compatible) {
+        return {
+          success: true,
+          schemaTransferred: false,
+          message: 'Stream item config unchanged, skipping update',
+        }
+      }
+
       // Transfer item configuration
       ctx.targetPort.setConfig({
         ...ctx.targetConfig,
         itemConfig: deepCopy(sourceStream.itemConfig),
       })
+
+      // Note: updateStreamItemConfig removed - will be called by updateStreamItems strategy
 
       return {
         success: true,
@@ -347,6 +458,7 @@ export const Strategies = {
     return Strategies.compose(
       Strategies.streamItemConfig,
       Strategies.value,
+      // Strategies.updateStreamItems, // Update items once after all changes
     )(ctx) as Promise<TransferResult>
   },
 
