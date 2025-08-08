@@ -6,24 +6,37 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ObjectPortConfig } from '../../base'
 import type { TransferRule } from '../types'
 import { TransferEngine } from '../engine'
 import { Predicates } from '../predicates'
 import { Strategies } from '../strategies'
+import { isEmptyObjectSchema } from '../utils/schema-compatibility'
 
 const {
   isObject,
-  isMutableObject,
-  isImmutableObject,
   isAny,
   hasUnderlyingObject,
   hasUnderlyingArray,
   hasUnderlyingType,
   isArray,
+  isMutableArray,
   hasAnyItemType,
   hasNoItemConfig,
-  canReceiveSchema,
-  isSchemaCompatible,
+  hasCompatibleArrayItems,
+  hasCompatibleSchemas,
+  isString,
+  isNumber,
+  isBoolean,
+  isSecret,
+  isStream,
+  hasCompatibleSecretTypes,
+  hasUnderlyingSecret,
+  hasUnderlyingStream,
+  isMutableStream,
+  hasAnyStreamItemType,
+  hasNoStreamItemConfig,
+  hasCompatibleStreamItems,
   and,
   or,
   not,
@@ -33,9 +46,8 @@ const {
   value,
   objectSchemaAndValue,
   arrayConfigAndValue,
+  streamConfigAndValue,
   underlyingTypeAndValue,
-  compose,
-  when,
 } = Strategies
 
 /**
@@ -43,208 +55,463 @@ const {
  */
 export const defaultTransferRules: TransferRule[] = [
   // ============================================
-  // Object Transfer Rules
+  // Object Transfer Rule (single rule for all object connections)
   // ============================================
-
-  // object{WithSchema} -> object{mutable,empty}
-  // Mutable objects with empty schemas can receive any object schema
-  TransferEngine.rule('object-to-mutable-empty-object')
+  TransferEngine.rule('object-to-object')
     .from(isObject)
-    .to(and(isMutableObject, Predicates.hasEmptySchema))
-    .transfer(objectSchemaAndValue)
-    .withPriority(110)
-    .withDescription('Transfer schema and value to mutable object with empty schema')
-    .build(),
+    .to(isObject)
+    .behaviors({
+      canConnect: (source, target) => {
+        const targetObj = target as ObjectPortConfig
 
-  // object{WithSchema} -> object{mutable,withSchema}
-  // Mutable objects with existing schemas need compatibility check
-  TransferEngine.rule('object-to-mutable-object')
-    .from(isObject)
-    .to(and(isMutableObject, not(Predicates.hasEmptySchema)))
-    .validate((source, target) => Predicates.hasCompatibleSchemas(source, target))
-    .transfer(objectSchemaAndValue)
+        // Mutable empty can accept anything
+        if (targetObj.isSchemaMutable && isEmptyObjectSchema(target)) {
+          return true
+        }
+
+        // Otherwise check compatibility
+        return hasCompatibleSchemas(source, target)
+      },
+
+      onConnect: (ctx) => {
+        const targetObj = ctx.targetConfig as ObjectPortConfig
+
+        // Mutable: transfer schema and value
+        if (targetObj.isSchemaMutable) {
+          return objectSchemaAndValue(ctx)
+        }
+
+        // Immutable: only value
+        return value(ctx)
+      },
+
+      onSourceUpdate: (ctx) => {
+        const targetObj = ctx.targetConfig as ObjectPortConfig
+
+        // Mutable: ALWAYS sync schema and value (even if incompatible)
+        if (targetObj.isSchemaMutable) {
+          return objectSchemaAndValue(ctx)
+        }
+
+        // Immutable: only sync if compatible
+        if (hasCompatibleSchemas(ctx.sourceConfig, ctx.targetConfig)) {
+          return value(ctx)
+        }
+
+        return {
+          success: false,
+          message: 'Immutable target incompatible with source changes',
+        }
+      },
+    })
     .withPriority(100)
-    .withDescription('Transfer schema and value to mutable object with compatible schema')
-    .build(),
-
-  // object -> object{not mutable}
-  // Immutable objects need strict schema compatibility
-  TransferEngine.rule('object-to-immutable-object')
-    .from(isObject)
-    .to(isImmutableObject)
-    .validate((source, target) => Predicates.hasCompatibleSchemas(source, target))
-    .transfer(value)
-    .withPriority(90)
-    .withDescription('Transfer only value to immutable object with compatible schema')
+    .withDescription('Handle all object to object connections')
     .build(),
 
   // ============================================
-  // Any Port with Underlying Type Rules
+  // Any Port with Underlying Object Rule
   // ============================================
-
-  // any{underlying:object} -> object{mutable,empty}
-  // Unwrap source and transfer schema+value to empty mutable object
-  TransferEngine.rule('any-object-to-mutable-empty-object')
+  TransferEngine.rule('any-with-object-to-object')
     .from(hasUnderlyingObject)
-    .to(and(isMutableObject, Predicates.hasEmptySchema))
-    .transfer(objectSchemaAndValue)
-    .withPriority(105)
-    .withDescription('Unwrap any port with object and transfer to empty mutable object')
-    .build(),
+    .to(isObject)
+    .behaviors({
+      canConnect: (source, target) => {
+        const targetObj = target as ObjectPortConfig
 
-  // any{underlying:object} -> object{mutable,withSchema}
-  // Unwrap source and check compatibility before transfer
-  TransferEngine.rule('any-object-to-mutable-object')
-    .from(hasUnderlyingObject)
-    .to(and(isMutableObject, not(Predicates.hasEmptySchema)))
-    .validate((source, target) => Predicates.hasCompatibleSchemas(source, target))
-    .transfer(objectSchemaAndValue)
+        // Mutable empty can accept anything
+        if (targetObj.isSchemaMutable && isEmptyObjectSchema(target)) {
+          return true
+        }
+
+        // Otherwise check compatibility (source is already unwrapped in hasUnderlyingObject)
+        return hasCompatibleSchemas(source, target)
+      },
+
+      onConnect: (ctx) => {
+        const targetObj = ctx.targetConfig as ObjectPortConfig
+
+        // Mutable: transfer schema and value
+        if (targetObj.isSchemaMutable) {
+          return objectSchemaAndValue(ctx)
+        }
+
+        // Immutable: only value
+        return value(ctx)
+      },
+
+      onSourceUpdate: (ctx) => {
+        const targetObj = ctx.targetConfig as ObjectPortConfig
+
+        // Mutable: ALWAYS sync
+        if (targetObj.isSchemaMutable) {
+          return objectSchemaAndValue(ctx)
+        }
+
+        // Immutable: only sync if compatible
+        if (hasCompatibleSchemas(ctx.sourceConfig, ctx.targetConfig)) {
+          return value(ctx)
+        }
+
+        return {
+          success: false,
+          message: 'Immutable target incompatible with source changes',
+        }
+      },
+    })
     .withPriority(95)
-    .withDescription('Unwrap any port with object and transfer to compatible mutable object')
-    .build(),
-
-  // any{underlying:object} -> object{immutable}
-  // Unwrap source and transfer only value to immutable object with compatibility check
-  TransferEngine.rule('any-object-to-immutable-object')
-    .from(hasUnderlyingObject)
-    .to(isImmutableObject)
-    .validate((source, target) => Predicates.hasCompatibleSchemas(source, target))
-    .transfer(value)
-    .withPriority(85)
-    .withDescription('Unwrap any port with object and transfer value to compatible immutable object')
-    .build(),
-
-  // any{underlying:type} -> any
-  // Set underlying type on target any port
-  TransferEngine.rule('any-with-type-to-any')
-    .from(hasUnderlyingType)
-    .to(isAny)
-    .transfer(underlyingTypeAndValue)
-    .withPriority(80)
-    .withDescription('Transfer underlying type and value between any ports')
+    .withDescription('Handle any port with underlying object to object connections')
     .build(),
 
   // ============================================
-  // Type to Any Port Rules
+  // Object/Array to Any Port Rules
   // ============================================
-
-  // object -> any
-  // Set object as underlying type on any port
   TransferEngine.rule('object-to-any')
     .from(isObject)
     .to(isAny)
-    .transfer(underlyingTypeAndValue)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
     .withPriority(70)
     .withDescription('Set object as underlying type on any port')
     .build(),
 
-  // array -> any
   TransferEngine.rule('array-to-any')
     .from(isArray)
     .to(isAny)
-    .transfer(underlyingTypeAndValue)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
     .withPriority(65)
     .withDescription('Set array as underlying type on any port')
     .build(),
 
   // ============================================
-  // Array Transfer Rules
+  // Any to Any Rules
   // ============================================
+  TransferEngine.rule('any-with-type-to-any')
+    .from(hasUnderlyingType)
+    .to(isAny)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
+    .withPriority(80)
+    .withDescription('Transfer underlying type and value between any ports')
+    .build(),
 
-  // array -> array{any items or no config}
-  // Transfer item configuration when target has flexible items
-  TransferEngine.rule('array-config-transfer')
+  TransferEngine.rule('any-to-any-fallback')
+    .from(and(isAny, not(hasUnderlyingType)))
+    .to(isAny)
+    .behaviors({
+      onConnect: value,
+      onSourceUpdate: value,
+    })
+    .withPriority(20)
+    .withDescription('Transfer value between any ports without underlying type')
+    .build(),
+
+  // ============================================
+  // Array Transfer Rule
+  // ============================================
+  TransferEngine.rule('array-to-array')
     .from(isArray)
-    .to(and(isArray, or(hasAnyItemType, hasNoItemConfig)))
-    .transfer(arrayConfigAndValue)
+    .to(isArray)
+    .behaviors({
+      canConnect: (source, target) => {
+        // If target is mutable, always allow connection
+        if (isMutableArray(target)) {
+          return true
+        }
+
+        // If target accepts any items or has no config, allow
+        if (or(hasAnyItemType, hasNoItemConfig)(target)) {
+          return true
+        }
+
+        // Otherwise check item type compatibility recursively
+        return hasCompatibleArrayItems(source, target)
+      },
+
+      onConnect: (ctx) => {
+        // If target is mutable or can receive config, transfer both
+        if (or(isMutableArray, hasAnyItemType, hasNoItemConfig)(ctx.targetConfig)) {
+          return arrayConfigAndValue(ctx)
+        }
+
+        // Otherwise just value
+        return value(ctx)
+      },
+
+      onSourceUpdate: (ctx) => {
+        // If target is mutable, ALWAYS transfer config and value
+        if (isMutableArray(ctx.targetConfig)) {
+          return arrayConfigAndValue(ctx)
+        }
+
+        // If target can receive config (any type or no config), transfer both
+        if (or(hasAnyItemType, hasNoItemConfig)(ctx.targetConfig)) {
+          return arrayConfigAndValue(ctx)
+        }
+
+        // Otherwise just value
+        return value(ctx)
+      },
+    })
     .withPriority(60)
-    .withDescription('Transfer array item configuration and value')
+    .withDescription('Handle array to array connections')
     .build(),
 
-  // array -> array{specific items}
-  // Only transfer value when target has specific item config
-  TransferEngine.rule('array-value-only')
-    .from(isArray)
-    .to(and(isArray, not(hasAnyItemType), not(hasNoItemConfig)))
-    .transfer(value)
-    .withPriority(55)
-    .withDescription('Transfer only array value when target has specific item config')
-    .build(),
-
-  // any{underlying:array} -> array{flexible}
-  TransferEngine.rule('any-array-to-array-flexible')
+  TransferEngine.rule('any-array-to-array')
     .from(hasUnderlyingArray)
-    .to(and(isArray, or(hasAnyItemType, hasNoItemConfig)))
-    .transfer(arrayConfigAndValue)
+    .to(isArray)
+    .behaviors({
+      canConnect: (source, target) => {
+        // If target is mutable, always allow connection
+        if (isMutableArray(target)) {
+          return true
+        }
+
+        // If target accepts any items or has no config, allow
+        if (or(hasAnyItemType, hasNoItemConfig)(target)) {
+          return true
+        }
+
+        // Get the underlying array from the any port and check compatibility
+        const underlying = (source as any).underlyingType || source
+        if (underlying && underlying.type === 'array') {
+          return hasCompatibleArrayItems(underlying, target)
+        }
+
+        return false
+      },
+
+      onConnect: (ctx) => {
+        if (or(isMutableArray, hasAnyItemType, hasNoItemConfig)(ctx.targetConfig)) {
+          return arrayConfigAndValue(ctx)
+        }
+        return value(ctx)
+      },
+
+      onSourceUpdate: (ctx) => {
+        // If target is mutable, ALWAYS transfer config and value
+        if (isMutableArray(ctx.targetConfig)) {
+          return arrayConfigAndValue(ctx)
+        }
+
+        // If target can receive config, transfer both
+        if (or(hasAnyItemType, hasNoItemConfig)(ctx.targetConfig)) {
+          return arrayConfigAndValue(ctx)
+        }
+        return value(ctx)
+      },
+    })
     .withPriority(58)
-    .withDescription('Unwrap any port with array and transfer to flexible array')
+    .withDescription('Handle any with underlying array to array connections')
     .build(),
 
   // ============================================
   // Simple Type Rules
   // ============================================
-
-  // string -> string
   TransferEngine.rule('string-to-string')
-    .from(Predicates.isString)
-    .to(Predicates.isString)
-    .transfer(value)
+    .from(isString)
+    .to(isString)
+    .behaviors({
+      onConnect: value,
+      onSourceUpdate: value,
+    })
     .withPriority(40)
     .withDescription('Transfer string value')
     .build(),
 
-  // number -> number
   TransferEngine.rule('number-to-number')
-    .from(Predicates.isNumber)
-    .to(Predicates.isNumber)
-    .transfer(value)
+    .from(isNumber)
+    .to(isNumber)
+    .behaviors({
+      onConnect: value,
+      onSourceUpdate: value,
+    })
     .withPriority(40)
     .withDescription('Transfer number value')
     .build(),
 
-  // boolean -> boolean
   TransferEngine.rule('boolean-to-boolean')
-    .from(Predicates.isBoolean)
-    .to(Predicates.isBoolean)
-    .transfer(value)
+    .from(isBoolean)
+    .to(isBoolean)
+    .behaviors({
+      onConnect: value,
+      onSourceUpdate: value,
+    })
     .withPriority(40)
     .withDescription('Transfer boolean value')
     .build(),
 
-  // simple type -> any
   TransferEngine.rule('simple-type-to-any')
-    .from(or(Predicates.isString, Predicates.isNumber, Predicates.isBoolean))
+    .from(or(isString, isNumber, isBoolean))
     .to(isAny)
-    .transfer(underlyingTypeAndValue)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
     .withPriority(35)
     .withDescription('Set simple type as underlying on any port')
     .build(),
 
   // ============================================
-  // Fallback Rules
+  // Secret Transfer Rules
   // ============================================
+  TransferEngine.rule('secret-to-secret')
+    .from(isSecret)
+    .to(isSecret)
+    .behaviors({
+      canConnect: (source, target) => {
+        return hasCompatibleSecretTypes(source, target)
+      },
 
-  // any -> any (without underlying type)
-  TransferEngine.rule('any-to-any-fallback')
-    .from(and(isAny, not(hasUnderlyingType)))
-    .to(isAny)
-    .transfer(value)
-    .withPriority(20)
-    .withDescription('Transfer value between any ports without underlying type')
+      onConnect: value,
+      onSourceUpdate: value,
+    })
+    .withPriority(50)
+    .withDescription('Transfer secret value between compatible secret types')
     .build(),
 
-  // Same type fallback (catch-all for matching types)
-  // TransferEngine.rule('same-type-fallback')
-  //   .from(Predicates.always)
-  //   .to(Predicates.always)
-  //   .transfer(when(
-  //     ctx => ctx.sourceConfig.type === ctx.targetConfig.type,
-  //     value,
-  //     Strategies.noop,
-  //   ))
-  //   .withPriority(10)
-  //   .withDescription('Transfer value between ports of the same type')
-  //   .build(),
+  TransferEngine.rule('any-with-secret-to-secret')
+    .from(hasUnderlyingSecret)
+    .to(isSecret)
+    .behaviors({
+      canConnect: (source, target) => {
+        const underlying = source.type === 'any' ? (source as any).underlyingType : source
+        return underlying && hasCompatibleSecretTypes(underlying, target)
+      },
+
+      onConnect: value,
+      onSourceUpdate: value,
+    })
+    .withPriority(48)
+    .withDescription('Handle any port with underlying secret to secret connections')
+    .build(),
+
+  TransferEngine.rule('secret-to-any')
+    .from(isSecret)
+    .to(isAny)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
+    .withPriority(33)
+    .withDescription('Set secret as underlying type on any port')
+    .build(),
+
+  // ============================================
+  // Stream Transfer Rules
+  // ============================================
+  TransferEngine.rule('stream-to-stream')
+    .from(isStream)
+    .to(isStream)
+    .behaviors({
+      canConnect: (source, target) => {
+        // If target is mutable, always allow connection
+        if (isMutableStream(target)) {
+          return true
+        }
+
+        // If target accepts any items or has no config, allow
+        if (or(hasAnyStreamItemType, hasNoStreamItemConfig)(target)) {
+          return true
+        }
+
+        // Otherwise check item type compatibility recursively
+        return hasCompatibleStreamItems(source, target)
+      },
+
+      onConnect: (ctx) => {
+        // If target is mutable or can receive config, transfer both
+        if (or(isMutableStream, hasAnyStreamItemType, hasNoStreamItemConfig)(ctx.targetConfig)) {
+          return streamConfigAndValue(ctx)
+        }
+
+        // Otherwise just value
+        return value(ctx)
+      },
+
+      onSourceUpdate: (ctx) => {
+        // If target is mutable, ALWAYS transfer config and value
+        if (isMutableStream(ctx.targetConfig)) {
+          return streamConfigAndValue(ctx)
+        }
+
+        // If target can receive config (any type or no config), transfer both
+        if (or(hasAnyStreamItemType, hasNoStreamItemConfig)(ctx.targetConfig)) {
+          return streamConfigAndValue(ctx)
+        }
+
+        // Otherwise just value
+        return value(ctx)
+      },
+    })
+    .withPriority(55)
+    .withDescription('Handle stream to stream connections')
+    .build(),
+
+  TransferEngine.rule('any-stream-to-stream')
+    .from(hasUnderlyingStream)
+    .to(isStream)
+    .behaviors({
+      canConnect: (source, target) => {
+        // If target is mutable, always allow connection
+        if (isMutableStream(target)) {
+          return true
+        }
+
+        // If target accepts any items or has no config, allow
+        if (or(hasAnyStreamItemType, hasNoStreamItemConfig)(target)) {
+          return true
+        }
+
+        // Get the underlying stream from the any port and check compatibility
+        const underlying = (source as any).underlyingType || source
+        if (underlying && underlying.type === 'stream') {
+          return hasCompatibleStreamItems(underlying, target)
+        }
+
+        return false
+      },
+
+      onConnect: (ctx) => {
+        if (or(isMutableStream, hasAnyStreamItemType, hasNoStreamItemConfig)(ctx.targetConfig)) {
+          return streamConfigAndValue(ctx)
+        }
+        return value(ctx)
+      },
+
+      onSourceUpdate: (ctx) => {
+        // If target is mutable, ALWAYS transfer config and value
+        if (isMutableStream(ctx.targetConfig)) {
+          return streamConfigAndValue(ctx)
+        }
+
+        // If target can receive config, transfer both
+        if (or(hasAnyStreamItemType, hasNoStreamItemConfig)(ctx.targetConfig)) {
+          return streamConfigAndValue(ctx)
+        }
+        return value(ctx)
+      },
+    })
+    .withPriority(53)
+    .withDescription('Handle any with underlying stream to stream connections')
+    .build(),
+
+  TransferEngine.rule('stream-to-any')
+    .from(isStream)
+    .to(isAny)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
+    .withPriority(32)
+    .withDescription('Set stream as underlying type on any port')
+    .build(),
 ]
 
 /**

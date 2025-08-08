@@ -6,8 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AnyPortConfig, ArrayPortConfig, IPortConfig, ObjectPortConfig, PortType } from '../base'
+import type { AnyPortConfig, ArrayPortConfig, IPortConfig, ObjectPortConfig, PortType, SecretPortConfig, StreamPortConfig } from '../base'
 import type { PortPredicate } from './types'
+import { isCompatibleSecretType } from '../base/secret'
 import { unwrapAnyPort } from './utils/port-resolver'
 import { checkSchemaCompatibility, isEmptyObjectSchema, isMutableObjectPort } from './utils/schema-compatibility'
 
@@ -60,6 +61,18 @@ export const Predicates = {
    */
   isBoolean: (port: IPortConfig): boolean =>
     port.type === 'boolean',
+
+  /**
+   * Check if port is secret type
+   */
+  isSecret: (port: IPortConfig): boolean =>
+    port.type === 'secret',
+
+  /**
+   * Check if port is stream type
+   */
+  isStream: (port: IPortConfig): boolean =>
+    port.type === 'stream',
 
   // ============================================
   // Object-Specific Predicates
@@ -251,6 +264,16 @@ export const Predicates = {
   // ============================================
 
   /**
+   * Check if array has mutable item schema
+   */
+  isMutableArray: (port: IPortConfig): boolean => {
+    if (port.type !== 'array')
+      return false
+    const arrayPort = port as ArrayPortConfig
+    return arrayPort.isSchemaMutable === true
+  },
+
+  /**
    * Check if array has any item type
    */
   hasAnyItemType: (port: IPortConfig): boolean => {
@@ -279,6 +302,153 @@ export const Predicates = {
       return false
     const arrayPort = port as ArrayPortConfig
     return arrayPort.itemConfig === undefined || !('type' in arrayPort.itemConfig)
+  },
+
+  /**
+   * Check if two arrays have compatible item types
+   * Uses recursive schema checking for complex item types
+   */
+  hasCompatibleArrayItems: (source: IPortConfig, target: IPortConfig): boolean => {
+    if (source.type !== 'array' || target.type !== 'array')
+      return false
+
+    const sourceArray = source as ArrayPortConfig
+    const targetArray = target as ArrayPortConfig
+
+    // If target accepts any items or has no config, it's compatible
+    if (!targetArray.itemConfig || targetArray.itemConfig.type === 'any')
+      return true
+
+    // If source has no item config, it can't match target requirements
+    if (!sourceArray.itemConfig)
+      return false
+
+    // Recursively check item compatibility
+    const result = checkSchemaCompatibility(sourceArray.itemConfig, targetArray.itemConfig, {
+      allowMutableEmptySchema: false,
+      allowExtraProperties: true,
+      debug: false,
+    })
+    return result.compatible
+  },
+
+  // ============================================
+  // Secret-Specific Predicates
+  // ============================================
+
+  /**
+   * Check if two secret ports have compatible secret types
+   */
+  hasCompatibleSecretTypes: (source: IPortConfig, target: IPortConfig): boolean => {
+    if (source.type !== 'secret' || target.type !== 'secret')
+      return false
+    const sourceSecret = source as SecretPortConfig
+    const targetSecret = target as SecretPortConfig
+    return isCompatibleSecretType(sourceSecret.secretType, targetSecret.secretType)
+  },
+
+  /**
+   * Check if secret has specific secret type
+   */
+  hasSecretType: (secretType: string): PortPredicate =>
+    (port) => {
+      if (port.type !== 'secret')
+        return false
+      const secretPort = port as SecretPortConfig
+      return secretPort.secretType === secretType
+    },
+
+  /**
+   * Check if any port has underlying secret type
+   */
+  hasUnderlyingSecret: (port: IPortConfig): boolean => {
+    if (port.type !== 'any')
+      return false
+    const underlying = unwrapAnyPort(port)
+    return underlying?.type === 'secret'
+  },
+
+  // ============================================
+  // Stream-Specific Predicates
+  // ============================================
+
+  /**
+   * Check if stream has mutable item schema
+   */
+  isMutableStream: (port: IPortConfig): boolean => {
+    if (port.type !== 'stream')
+      return false
+    const streamPort = port as StreamPortConfig
+    return streamPort.isSchemaMutable === true
+  },
+
+  /**
+   * Check if stream has any item type
+   */
+  hasAnyStreamItemType: (port: IPortConfig): boolean => {
+    if (port.type !== 'stream')
+      return false
+    const streamPort = port as StreamPortConfig
+    return !streamPort.itemConfig || streamPort.itemConfig.type === 'any'
+  },
+
+  /**
+   * Check if stream has specific item type
+   */
+  hasStreamItemType: (type: PortType): PortPredicate =>
+    (port) => {
+      if (port.type !== 'stream')
+        return false
+      const streamPort = port as StreamPortConfig
+      return streamPort.itemConfig?.type === type
+    },
+
+  /**
+   * Check if stream has no item config
+   */
+  hasNoStreamItemConfig: (port: IPortConfig): boolean => {
+    if (port.type !== 'stream')
+      return false
+    const streamPort = port as StreamPortConfig
+    return streamPort.itemConfig === undefined || !('type' in streamPort.itemConfig)
+  },
+
+  /**
+   * Check if two streams have compatible item types
+   * Uses recursive schema checking for complex item types
+   */
+  hasCompatibleStreamItems: (source: IPortConfig, target: IPortConfig): boolean => {
+    if (source.type !== 'stream' || target.type !== 'stream')
+      return false
+
+    const sourceStream = source as StreamPortConfig
+    const targetStream = target as StreamPortConfig
+
+    // If target accepts any items or has no config, it's compatible
+    if (!targetStream.itemConfig || targetStream.itemConfig.type === 'any')
+      return true
+
+    // If source has no item config, it can't match target requirements
+    if (!sourceStream.itemConfig)
+      return false
+
+    // Recursively check item compatibility
+    const result = checkSchemaCompatibility(sourceStream.itemConfig, targetStream.itemConfig, {
+      allowMutableEmptySchema: false,
+      allowExtraProperties: true,
+      debug: false,
+    })
+    return result.compatible
+  },
+
+  /**
+   * Check if any port has underlying stream type
+   */
+  hasUnderlyingStream: (port: IPortConfig): boolean => {
+    if (port.type !== 'any')
+      return false
+    const underlying = unwrapAnyPort(port)
+    return underlying?.type === 'stream'
   },
 
   // ============================================

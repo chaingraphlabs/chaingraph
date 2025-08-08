@@ -7,8 +7,8 @@
  */
 
 import type { INode } from '../../node'
-import type { IPort, IPortConfig } from '../base'
-import type { PortPredicate, TransferContext, TransferEngineOptions, TransferResult, TransferRule, TransferStrategy } from './types'
+import type { IPort } from '../base'
+import type { PortPredicate, TransferBehaviors, TransferContext, TransferEngineOptions, TransferResult, TransferRule } from './types'
 import { resolvePortConfig } from './utils/port-resolver'
 
 /**
@@ -37,17 +37,33 @@ export class TransferEngine {
     // Find matching rule
     const rule = this.findMatchingRule(sourceConfig, targetConfig)
 
-    if (this.options.debug) {
-      console.log(`[TransferEngine] Checking connection: ${sourceConfig.type} -> ${targetConfig.type}, try rule: ${rule ? rule.name : 'none'} [${rule?.description}]`)
+    if (!rule) {
+      if (this.options.debug) {
+        console.log(`[TransferEngine] No rule found for: ${sourceConfig.type} -> ${targetConfig.type}`)
+      }
+      return false
     }
 
-    return rule !== undefined
+    // If rule has canConnect behavior, use it
+    if (rule.behaviors.canConnect) {
+      const canConnect = rule.behaviors.canConnect(sourceConfig, targetConfig)
+      if (this.options.debug) {
+        console.log(`[TransferEngine] Rule ${rule.name} canConnect: ${canConnect}`)
+      }
+      return canConnect
+    }
+
+    // Default to true if rule exists but no canConnect behavior
+    if (this.options.debug) {
+      console.log(`[TransferEngine] Rule ${rule.name} found, no canConnect behavior, allowing`)
+    }
+    return true
   }
 
   /**
-   * Execute transfer between two ports
+   * Execute when a new connection is created
    */
-  async transfer(
+  async onConnect(
     sourcePort: IPort,
     targetPort: IPort,
     sourceNode: INode,
@@ -80,35 +96,130 @@ export class TransferEngine {
     }
 
     if (this.options.debug) {
-      console.log(`[TransferEngine] Applying rule: ${rule.name}`)
+      console.log(`[TransferEngine] onConnect with rule: ${rule.name}`)
     }
 
-    try {
-      const result = await rule.transfer(context)
+    // Execute onConnect behavior if defined
+    if (rule.behaviors.onConnect) {
+      try {
+        const result = await rule.behaviors.onConnect(context)
 
-      if (this.options.debug && result.success) {
-        console.log(`[TransferEngine] Transfer successful: ${rule.name}`)
+        if (this.options.debug && result.success) {
+          console.log(`[TransferEngine] onConnect successful: ${rule.name}`)
+        }
+
+        return result
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        const message = `Rule '${rule.name}' onConnect failed: ${errorMessage}`
+
+        if (this.options.debug) {
+          console.error(`[TransferEngine] ${message}`)
+        }
+
+        if (this.options.throwOnError) {
+          throw error
+        }
+
+        return {
+          success: false,
+          error: error instanceof Error ? error : new Error(errorMessage),
+          message,
+        }
       }
+    }
 
-      return result
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      const message = `Transfer rule '${rule.name}' failed: ${errorMessage}`
+    // No onConnect behavior defined
+    return { success: true, message: 'No onConnect behavior defined' }
+  }
 
+  /**
+   * Execute when source port updates on existing connection
+   */
+  async onSourceUpdate(
+    sourcePort: IPort,
+    targetPort: IPort,
+    sourceNode: INode,
+    targetNode: INode,
+  ): Promise<TransferResult> {
+    // const sourceConfig = resolvePortConfig(sourcePort)
+    // const targetConfig = resolvePortConfig(targetPort)
+
+    const sourceConfig = sourcePort.getConfig()
+    const targetConfig = targetPort.getConfig()
+
+    const context: TransferContext = {
+      sourcePort,
+      targetPort,
+      sourceConfig,
+      targetConfig,
+      sourceNode,
+      targetNode,
+    }
+
+    // Find matching rule
+    const rule = this.findMatchingRule(sourceConfig, targetConfig)
+
+    if (!rule) {
+      const message = `No transfer rule found for ${sourceConfig.type} -> ${targetConfig.type}`
       if (this.options.debug) {
-        console.error(`[TransferEngine] ${message}`)
+        console.log(`[TransferEngine] ${message}`)
       }
-
-      if (this.options.throwOnError) {
-        throw error
-      }
-
       return {
         success: false,
-        error: error instanceof Error ? error : new Error(errorMessage),
         message,
       }
     }
+
+    // Check canSync if defined
+    if (rule.behaviors.canSync) {
+      if (!rule.behaviors.canSync(sourceConfig, targetConfig)) {
+        if (this.options.debug) {
+          console.log(`[TransferEngine] Rule ${rule.name} canSync returned false`)
+        }
+        return {
+          success: false,
+          message: 'Target cannot accept source changes',
+        }
+      }
+    }
+
+    if (this.options.debug) {
+      console.log(`[TransferEngine] onSourceUpdate with rule: ${rule.name}`)
+    }
+
+    // Execute onSourceUpdate behavior if defined
+    if (rule.behaviors.onSourceUpdate) {
+      try {
+        const result = await rule.behaviors.onSourceUpdate(context)
+
+        if (this.options.debug && result.success) {
+          console.log(`[TransferEngine] onSourceUpdate successful: ${rule.name}`)
+        }
+
+        return result
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        const message = `Rule '${rule.name}' onSourceUpdate failed: ${errorMessage}`
+
+        if (this.options.debug) {
+          console.error(`[TransferEngine] ${message}`)
+        }
+
+        if (this.options.throwOnError) {
+          throw error
+        }
+
+        return {
+          success: false,
+          error: error instanceof Error ? error : new Error(errorMessage),
+          message,
+        }
+      }
+    }
+
+    // No onSourceUpdate behavior defined
+    return { success: true, message: 'No onSourceUpdate behavior defined' }
   }
 
   /**
@@ -168,15 +279,6 @@ export class TransferEngine {
 
       // Check source and target predicates
       if (rule.source(sourceConfig) && rule.target(targetConfig)) {
-        // If rule has validation, check it too
-        if (rule.validate) {
-          if (!rule.validate(sourceConfig, targetConfig)) {
-            if (this.options.debug) {
-              console.log(`[TransferEngine] Rule ${rule.name} matched predicates but failed validation`)
-            }
-            continue
-          }
-        }
         return rule
       }
     }
@@ -226,18 +328,10 @@ export class RuleBuilder {
   }
 
   /**
-   * Set validation function for checking both ports together
+   * Set behaviors for the rule
    */
-  validate(validator: (sourceConfig: IPortConfig, targetConfig: IPortConfig) => boolean): this {
-    this.rule.validate = validator
-    return this
-  }
-
-  /**
-   * Set transfer strategy
-   */
-  transfer(strategy: TransferStrategy): this {
-    this.rule.transfer = strategy
+  behaviors(behaviors: TransferBehaviors): this {
+    this.rule.behaviors = behaviors
     return this
   }
 
@@ -270,8 +364,8 @@ export class RuleBuilder {
     if (!this.rule.target) {
       throw new Error('Target predicate is required')
     }
-    if (!this.rule.transfer) {
-      throw new Error('Transfer strategy is required')
+    if (!this.rule.behaviors) {
+      throw new Error('Behaviors are required')
     }
 
     return this.rule as TransferRule

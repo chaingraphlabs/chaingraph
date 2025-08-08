@@ -13,10 +13,7 @@ export { RuleBuilder, TransferEngine } from './engine'
 export {
   canConnect,
   getDefaultTransferEngine,
-  getTransferRulesCompatibilityChecker,
   resetDefaultEngine,
-  transfer,
-  TransferRulesCompatibilityAdapter,
 } from './integration'
 
 // Predicates library

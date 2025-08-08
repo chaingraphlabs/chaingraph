@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, ObjectPortConfig } from '../base'
+import type { ArrayPortConfig, ObjectPortConfig, StreamPortConfig } from '../base'
 import type { ObjectPort } from '../instances'
 import type { TransferContext, TransferResult, TransferStrategy } from './types'
 import { deepCopy } from '../../utils'
@@ -25,6 +25,8 @@ export const Strategies = {
    * Transfer only the value from source to target
    */
   value: (ctx: TransferContext): TransferResult => {
+    console.log(`[Strategies.value] Transferring value from ${ctx.sourcePort.id} to ${ctx.targetPort.id}: value=${JSON.stringify(ctx.sourcePort.getValue())}`)
+
     try {
       const value = ctx.sourcePort.getValue() ?? ctx.sourceConfig.defaultValue ?? undefined
       ctx.targetPort.setValue(deepCopy(value))
@@ -111,11 +113,20 @@ export const Strategies = {
       const sourceArray = ctx.sourceConfig as ArrayPortConfig
       const targetArray = ctx.targetConfig as ArrayPortConfig
 
-      // Only transfer if target has no item config or any item type
-      if (targetArray.itemConfig && targetArray.itemConfig.type !== 'any') {
+      // Check if target can receive item config updates
+      const canReceiveConfig = (
+        // Target is mutable (can always update)
+        targetArray.isSchemaMutable === true
+        // Or target has no item config
+        || !targetArray.itemConfig
+        // Or target has any item type
+        || targetArray.itemConfig.type === 'any'
+      )
+
+      if (!canReceiveConfig) {
         return {
           success: false,
-          message: 'Target array already has specific item configuration',
+          message: 'Target array cannot receive item configuration updates',
         }
       }
 
@@ -273,6 +284,68 @@ export const Strategies = {
   arrayConfigAndValue: (ctx: TransferContext): Promise<TransferResult> => {
     return Strategies.compose(
       Strategies.arrayItemConfig,
+      Strategies.value,
+    )(ctx) as Promise<TransferResult>
+  },
+
+  /**
+   * Transfer stream item configuration
+   */
+  streamItemConfig: (ctx: TransferContext): TransferResult => {
+    try {
+      if (ctx.sourceConfig.type !== 'stream' || ctx.targetConfig.type !== 'stream') {
+        return {
+          success: false,
+          message: 'Both ports must be stream type for item config transfer',
+        }
+      }
+
+      const sourceStream = ctx.sourceConfig as StreamPortConfig
+      const targetStream = ctx.targetConfig as StreamPortConfig
+
+      // Check if target can receive item config updates
+      const canReceiveConfig = (
+        // Target is mutable (can always update)
+        targetStream.isSchemaMutable === true
+        // Or target has no item config
+        || !targetStream.itemConfig
+        // Or target has any item type
+        || targetStream.itemConfig.type === 'any'
+      )
+
+      if (!canReceiveConfig) {
+        return {
+          success: false,
+          message: 'Target stream cannot receive item configuration updates',
+        }
+      }
+
+      // Transfer item configuration
+      ctx.targetPort.setConfig({
+        ...ctx.targetConfig,
+        itemConfig: deepCopy(sourceStream.itemConfig),
+      })
+
+      return {
+        success: true,
+        schemaTransferred: true,
+        message: 'Stream item configuration transferred successfully',
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+        message: `Failed to transfer stream item config: ${error}`,
+      }
+    }
+  },
+
+  /**
+   * Transfer stream configuration and value
+   */
+  streamConfigAndValue: (ctx: TransferContext): Promise<TransferResult> => {
+    return Strategies.compose(
+      Strategies.streamItemConfig,
       Strategies.value,
     )(ctx) as Promise<TransferResult>
   },

@@ -44,7 +44,24 @@ export interface TransferResult {
 export type TransferStrategy = (context: TransferContext) => TransferResult | Promise<TransferResult>
 
 /**
- * A transfer rule combining predicates and strategy
+ * Behaviors that define how a rule handles different scenarios
+ */
+export interface TransferBehaviors {
+  /** Check if ports can be connected (before edge creation) */
+  canConnect?: (sourceConfig: IPortConfig, targetConfig: IPortConfig) => boolean
+
+  /** Execute when edge is created */
+  onConnect?: (context: TransferContext) => TransferResult | Promise<TransferResult>
+
+  /** Execute when source port updates on existing edge */
+  onSourceUpdate?: (context: TransferContext) => TransferResult | Promise<TransferResult>
+
+  /** Optional: validate before sync (for updates) */
+  canSync?: (sourceConfig: IPortConfig, targetConfig: IPortConfig) => boolean
+}
+
+/**
+ * A transfer rule defining all behaviors for a port type pair
  */
 export interface TransferRule {
   /** Unique rule identifier */
@@ -56,11 +73,8 @@ export interface TransferRule {
   /** Predicate to match target port */
   target: PortPredicate
 
-  /** Optional validation that checks both ports together (e.g., schema compatibility) */
-  validate?: (sourceConfig: IPortConfig, targetConfig: IPortConfig) => boolean
-
-  /** Transfer strategy to execute */
-  transfer: TransferStrategy
+  /** Behaviors for different scenarios */
+  behaviors: TransferBehaviors
 
   /** Rule priority (higher = checked first) */
   priority?: number
