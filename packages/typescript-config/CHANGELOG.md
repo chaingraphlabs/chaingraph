@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.4.0-dev.0
+
+### Minor Changes
+
+- 6c01887: MCP integration and port transfer rules
+
 ## 0.3.1
 
 ### Patch Changes
