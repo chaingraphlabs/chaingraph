@@ -11,6 +11,7 @@
     "@badaitech/typescript-config": "0.3.1"
   },
   "changesets": [
+    "bumpy-chairs-post",
     "forty-boats-shake"
   ]
 }

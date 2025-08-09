@@ -49,6 +49,9 @@ import { NODE_CATEGORIES } from '../../categories'
   description: 'Collects inputs and routes them to matching outputs, acting as a connection hub between different parts of the flow',
   category: NODE_CATEGORIES.FLOW,
   tags: ['flow', 'connect', 'route', 'hub', 'junction'],
+  ui: {
+    state: { isHidden: true },
+  },
 })
 class GateNode extends BaseNode {
   @Input()
