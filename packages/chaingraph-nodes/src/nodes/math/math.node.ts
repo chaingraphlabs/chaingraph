@@ -41,16 +41,16 @@ class MathNode extends BaseNode {
   @Passthrough()
   @PortNumber({
     title: 'A',
-    description: 'First number (passthrough)',
+    description: 'First number',
   })
   a: number = 0
 
   @Passthrough()
   @PortNumber({
     title: 'B',
-    description: 'Second number (passthrough)',
+    description: 'Second number',
   })
-  b: number = 1
+  b: number = 0
 
   @Passthrough()
   @PortEnum({
@@ -70,14 +70,13 @@ class MathNode extends BaseNode {
       { id: MathOperation.Percentage, type: 'string', defaultValue: MathOperation.Percentage, title: 'Percentage ((A ÷ B) × 100)' },
       { id: MathOperation.LogBase, type: 'string', defaultValue: MathOperation.LogBase, title: 'Log Base (log_B(A))' },
     ],
-    defaultValue: MathOperation.Add,
   })
-  operation: MathOperation = MathOperation.Add
+  operation?: MathOperation
 
   @Output()
   @PortNumber({
     title: 'Result',
-    description: 'Result of the mathematical operation (passthrough)',
+    description: 'Result of the mathematical operation',
   })
   result: number = 0
 

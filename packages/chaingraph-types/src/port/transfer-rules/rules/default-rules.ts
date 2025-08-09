@@ -28,6 +28,8 @@ const {
   isString,
   isNumber,
   isBoolean,
+  isEnum,
+  hasUnderlyingEnum,
   isSecret,
   isStream,
   hasCompatibleSecretTypes,
@@ -123,7 +125,7 @@ export const defaultTransferRules: TransferRule[] = [
           return true
         }
 
-        // Otherwise check compatibility (source is already unwrapped in hasUnderlyingObject)
+        // Otherwise check compatibility
         return hasCompatibleSchemas(source, target)
       },
 
@@ -255,8 +257,15 @@ export const defaultTransferRules: TransferRule[] = [
           return arrayConfigAndValue(ctx)
         }
 
-        // Otherwise just value
-        return value(ctx)
+        // Otherwise check compatibility before transferring value
+        if (hasCompatibleArrayItems(ctx.sourceConfig, ctx.targetConfig)) {
+          return value(ctx)
+        }
+
+        return {
+          success: false,
+          message: 'Array item types are incompatible',
+        }
       },
     })
     .withPriority(60)
@@ -304,7 +313,17 @@ export const defaultTransferRules: TransferRule[] = [
         if (or(hasAnyItemType, hasNoItemConfig)(ctx.targetConfig)) {
           return arrayConfigAndValue(ctx)
         }
-        return value(ctx)
+
+        // Check compatibility for any-wrapped arrays
+        const underlying = (ctx.sourceConfig as any).underlyingType || ctx.sourceConfig
+        if (underlying && underlying.type === 'array' && hasCompatibleArrayItems(underlying, ctx.targetConfig)) {
+          return value(ctx)
+        }
+
+        return {
+          success: false,
+          message: 'Array item types are incompatible',
+        }
       },
     })
     .withPriority(58)
@@ -347,6 +366,42 @@ export const defaultTransferRules: TransferRule[] = [
     .withDescription('Transfer boolean value')
     .build(),
 
+  // ============================================
+  // Enum Transfer Rules
+  // ============================================
+  TransferEngine.rule('enum-to-enum')
+    .from(isEnum)
+    .to(isEnum)
+    .behaviors({
+      onConnect: value,
+      onSourceUpdate: value,
+    })
+    .withPriority(40)
+    .withDescription('Transfer enum value')
+    .build(),
+
+  TransferEngine.rule('any-with-enum-to-enum')
+    .from(hasUnderlyingEnum)
+    .to(isEnum)
+    .behaviors({
+      onConnect: value,
+      onSourceUpdate: value,
+    })
+    .withPriority(38)
+    .withDescription('Handle any port with underlying enum to enum connections')
+    .build(),
+
+  TransferEngine.rule('enum-to-any')
+    .from(isEnum)
+    .to(isAny)
+    .behaviors({
+      onConnect: underlyingTypeAndValue,
+      onSourceUpdate: underlyingTypeAndValue,
+    })
+    .withPriority(35)
+    .withDescription('Set enum as underlying type on any port')
+    .build(),
+
   TransferEngine.rule('simple-type-to-any')
     .from(or(isString, isNumber, isBoolean))
     .to(isAny)
@@ -354,7 +409,7 @@ export const defaultTransferRules: TransferRule[] = [
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
     })
-    .withPriority(35)
+    .withPriority(30)
     .withDescription('Set simple type as underlying on any port')
     .build(),
 
@@ -381,7 +436,8 @@ export const defaultTransferRules: TransferRule[] = [
     .to(isSecret)
     .behaviors({
       canConnect: (source, target) => {
-        const underlying = source.type === 'any' ? (source as any).underlyingType : source
+        // Get the actual underlying type (hasUnderlyingSecret already unwraps)
+        const underlying = (source as any).underlyingType || source
         return underlying && hasCompatibleSecretTypes(underlying, target)
       },
 
@@ -446,8 +502,15 @@ export const defaultTransferRules: TransferRule[] = [
           return streamConfigAndValue(ctx)
         }
 
-        // Otherwise just value
-        return value(ctx)
+        // Otherwise check compatibility before transferring value
+        if (hasCompatibleStreamItems(ctx.sourceConfig, ctx.targetConfig)) {
+          return value(ctx)
+        }
+
+        return {
+          success: false,
+          message: 'Stream item types are incompatible',
+        }
       },
     })
     .withPriority(55)

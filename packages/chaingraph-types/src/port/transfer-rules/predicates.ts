@@ -74,6 +74,12 @@ export const Predicates = {
   isStream: (port: IPortConfig): boolean =>
     port.type === 'stream',
 
+  /**
+   * Check if port is enum type
+   */
+  isEnum: (port: IPortConfig): boolean =>
+    port.type === 'enum',
+
   // ============================================
   // Object-Specific Predicates
   // ============================================
@@ -258,6 +264,16 @@ export const Predicates = {
       const underlying = unwrapAnyPort(port)
       return underlying?.type === type
     },
+
+  /**
+   * Check if any port has underlying enum type
+   */
+  hasUnderlyingEnum: (port: IPortConfig): boolean => {
+    if (port.type !== 'any')
+      return false
+    const underlying = unwrapAnyPort(port)
+    return underlying?.type === 'enum'
+  },
 
   // ============================================
   // Array-Specific Predicates

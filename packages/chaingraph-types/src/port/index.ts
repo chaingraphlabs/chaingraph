@@ -10,8 +10,6 @@
 // Core types and interfaces
 export * from './base'
 
-// Port compatibility
-export * from './compatibility'
 // Factory implementation
 export * from './factory'
 
