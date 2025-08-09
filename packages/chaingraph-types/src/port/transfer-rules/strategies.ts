@@ -9,7 +9,7 @@
 import type { ArrayPortConfig, ObjectPortConfig, StreamPortConfig } from '../base'
 import type { ObjectPort } from '../instances'
 import type { TransferContext, TransferResult, TransferStrategy } from './types'
-import { deepCopy, isDeepEqual } from '../../utils'
+import { deepCopy } from '../../utils'
 import { AnyPort } from '../instances'
 import { unwrapAnyPort } from './utils/port-resolver'
 import { checkSchemaCompatibility } from './utils/schema-compatibility'
@@ -27,40 +27,40 @@ export const Strategies = {
    */
   value: (ctx: TransferContext): TransferResult => {
     // TODO: skip for now!
-    // return {
-    //   success: true,
-    //   valueTransferred: false, // Default to false, will be set to true if value actually changes
-    //   message: 'Value transfer strategy called',
-    // }
-
-    try {
-      const newValue = ctx.sourcePort.getValue() ?? ctx.sourceConfig.defaultValue ?? undefined
-      const currentValue = ctx.targetPort.getValue()
-
-      // Check if value actually changed
-      if (isDeepEqual(currentValue, newValue)) {
-        return {
-          success: true,
-          valueTransferred: false,
-          message: 'Value unchanged, skipping update',
-        }
-      }
-
-      ctx.targetPort.setValue(deepCopy(newValue))
-      ctx.targetNode.updatePort(currentValue)
-
-      return {
-        success: true,
-        valueTransferred: true,
-        message: 'Value transferred successfully',
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error : new Error(String(error)),
-        message: `Failed to transfer value: ${error}`,
-      }
+    return {
+      success: true,
+      valueTransferred: false, // Default to false, will be set to true if value actually changes
+      message: 'Value transfer strategy called',
     }
+
+    // try {
+    //   const newValue = ctx.sourcePort.getValue() ?? ctx.sourceConfig.defaultValue ?? undefined
+    //   const currentValue = ctx.targetPort.getValue()
+    //
+    //   // Check if value actually changed
+    //   if (isDeepEqual(currentValue, newValue)) {
+    //     return {
+    //       success: true,
+    //       valueTransferred: false,
+    //       message: 'Value unchanged, skipping update',
+    //     }
+    //   }
+    //
+    //   ctx.targetPort.setValue(deepCopy(newValue))
+    //   ctx.targetNode.updatePort(currentValue)
+    //
+    //   return {
+    //     success: true,
+    //     valueTransferred: true,
+    //     message: 'Value transferred successfully',
+    //   }
+    // } catch (error) {
+    //   return {
+    //     success: false,
+    //     error: error instanceof Error ? error : new Error(String(error)),
+    //     message: `Failed to transfer value: ${error}`,
+    //   }
+    // }
   },
 
   /**
