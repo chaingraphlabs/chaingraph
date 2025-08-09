@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-nodes
 
+## 0.4.0-dev.0
+
+### Minor Changes
+
+- 6c01887: MCP integration and port transfer rules
+
+### Patch Changes
+
+- Updated dependencies [6c01887]
+  - @badaitech/chaingraph-types@0.4.0-dev.0
+
 ## 0.3.1
 
 ### Patch Changes
