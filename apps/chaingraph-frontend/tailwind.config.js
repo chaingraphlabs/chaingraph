@@ -127,8 +127,8 @@ module.exports = {
           '100%': { boxShadow: '0 0 12px 1px rgba(34,197,94,0.6)' },
         },
         'update-fade': {
-          'from': { boxShadow: '0 0 12px 1px rgba(34,197,94,0.6)' },
-          'to': { boxShadow: '0 0 0 0 rgba(34,197,94,0)' },
+          from: { boxShadow: '0 0 12px 1px rgba(34,197,94,0.6)' },
+          to: { boxShadow: '0 0 0 0 rgba(34,197,94,0)' },
         },
       },
       animation: {
