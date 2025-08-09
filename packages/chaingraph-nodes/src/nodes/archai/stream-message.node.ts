@@ -9,7 +9,6 @@
 import type {
   ArchAIContext,
   ExecutionContext,
-  NodeEvent,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
 import process from 'node:process'
@@ -244,10 +243,6 @@ class ArchAIStreamMessageNode extends BaseNode {
     }
 
     return {}
-  }
-
-  async onEvent(event: NodeEvent): Promise<void> {
-    return super.onEvent(event)
   }
 }
 

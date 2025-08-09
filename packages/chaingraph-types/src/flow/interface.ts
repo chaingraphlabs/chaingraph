@@ -32,7 +32,14 @@ export interface IFlow {
    * Adds a node to the flow.
    * @param node The node to add.
    */
-  addNode: (node: INode, disableEvents?: boolean) => INode
+  addNode: (node: INode, disableEvents?: boolean) => Promise<INode>
+
+  /**
+   * Adds a node to the flow synchronously, without triggering events.
+   * @param node The node to add.
+   * @returns The added node.
+   */
+  addNodeSync: (node: INode) => INode
 
   /**
    * Adds multiple nodes to the flow.
@@ -40,38 +47,51 @@ export interface IFlow {
    * @param disableEvents If true, events will not be triggered for each node added.
    * @returns An array of added nodes.
    */
-  addNodes: (nodes: INode[], disableEvents?: boolean) => INode[]
+  addNodes: (nodes: INode[], disableEvents?: boolean) => Promise<INode[]>
+
+  /**
+   * Adds a nodes to the flow synchronously, without triggering events.
+   * @param nodes The nodes to add.
+   * @returns An array of added nodes.
+   */
+  addNodesSync: (nodes: INode[]) => INode[]
 
   /**
    * Updates a node in the flow and triggers an event.
    * @param node
    */
-  updateNode: (node: INode) => void
+  updateNode: (node: INode) => Promise<void>
 
   /**
    * Removes a node from the flow.
    * @param nodeId The ID of the node to remove.
    */
-  removeNode: (nodeId: string) => void
+  removeNode: (nodeId: string) => Promise<void>
 
   /**
    * Adds an edge to the flow.
    * @param edge The edge to add.
    */
-  addEdge: (edge: IEdge) => void
+  addEdge: (edge: IEdge) => Promise<void>
+
+  /**
+   * Adds an edge to the flow synchronously, without triggering events.
+   * @param edge The edge to add.
+   */
+  addEdgeSync: (edge: IEdge) => void
 
   /**
    * Removes an edge from the flow.
    * @param edgeId The ID of the edge to remove.
    */
-  removeEdge: (edgeId: string) => void
+  removeEdge: (edgeId: string) => Promise<void>
 
   /**
    * Remove a port from a node, including all child ports and their connections
    * @param nodeId
    * @param portId
    */
-  removePort: (nodeId: string, portId: string) => void
+  removePort: (nodeId: string, portId: string) => Promise<void>
 
   /**
    * Connects two nodes via their ports.
@@ -86,6 +106,20 @@ export interface IFlow {
     targetNodeId: string,
     targetPortId: string
   ) => Promise<Edge>
+
+  /**
+   * Disconnects two nodes via their ports.
+   * @param sourceNodeId The ID of the source node.
+   * @param sourcePortId The ID of the source port.
+   * @param targetNodeId The ID of the target node.
+   * @param targetPortId The ID of the target port.
+   */
+  disconnectPorts: (
+    sourceNodeId: string,
+    sourcePortId: string,
+    targetNodeId: string,
+    targetPortId: string
+  ) => Promise<void>
 
   /**
    * Validates the entire flow.
@@ -108,7 +142,7 @@ export interface IFlow {
    * Clone the flow
    * @returns A new instance of the flow
    */
-  clone: () => IFlow
+  clone: () => Promise<IFlow>
 
   /**
    * Serialize the flow to JSON
@@ -122,4 +156,16 @@ export interface IFlow {
    * @returns Deserialized flow instance
    */
   deserialize: (data: JSONValue) => IFlow
+
+  getIncomingEdges: (node: INode) => IEdge[]
+
+  getOutgoingEdges: (node: INode) => IEdge[]
+
+  filterEdges: (predicate: (edge: IEdge) => boolean) => IEdge[]
+
+  /**
+   * Set the execution state of the flow
+   * @param value True if the flow is currently executing, false otherwise
+   */
+  setIsDisabledPropagationEvents: (value: boolean) => void
 }

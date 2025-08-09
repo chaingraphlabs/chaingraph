@@ -7,7 +7,7 @@
  */
 
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
-import type { DefaultEdgeOptions } from '@xyflow/react'
+import type { DefaultEdgeOptions, FinalConnectionState, OnConnectStartParams } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
 import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeContextMenu'
 import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel'
@@ -217,13 +217,17 @@ function Flow({
         // onEdgesChange={onEdgesChange}
         onInit={onInit}
         onConnect={onConnect}
-        onConnectStart={() => {
+        onConnectStart={(event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
           // TODO: probably add an event data to indicate the connection start
-          $isConnectingBeginEvent(true)
+          $isConnectingBeginEvent({
+            nodeId: params.nodeId,
+            handleId: params.handleId,
+            handleType: params.handleType,
+          })
         }}
-        onConnectEnd={() => {
+        onConnectEnd={(event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
           // TODO: probably add an event data to indicate the connection end
-          $isConnectingEndEvent(false)
+          $isConnectingEndEvent(connectionState)
         }}
         onEdgesChange={onEdgesChange}
         onReconnect={onReconnect}
@@ -235,7 +239,9 @@ function Flow({
         onNodeDrag={onNodeDrag}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
-        panOnScroll
+        panOnScroll={true}
+        zoomOnDoubleClick={true}
+        connectOnClick={true}
         onViewportChange={onViewportChange}
         fitView={true}
         preventScrolling
@@ -244,7 +250,7 @@ function Flow({
         className="bg-background"
         minZoom={0.05}
         maxZoom={2}
-        nodeDragThreshold={5}
+        nodeDragThreshold={0}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}

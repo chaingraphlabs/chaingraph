@@ -85,7 +85,7 @@ export class ExecutionEngine {
     const contextEventsQueueCancel
       = this.context.getEventsQueue().subscribe(createExecutionEventHandler({
         [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: async (data) => {
-          this.eventQueue.publish(
+          await this.eventQueue.publish(
             this.createEvent(ExecutionEventEnum.NODE_DEBUG_LOG_STRING, data),
           )
         },
@@ -95,11 +95,11 @@ export class ExecutionEngine {
     try {
       // Emit flow started event
       await this.eventQueue.publish(
-        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: this.flow.clone() }),
+        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: await this.flow.clone() }),
       )
 
       // Initialize dependency tracking
-      this.initializeDependencies()
+      await this.initializeDependencies()
 
       // Start worker processes
       const workerPromises = this.startWorkers()
@@ -118,7 +118,7 @@ export class ExecutionEngine {
 
       // Emit flow completed event
       await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
-        flow: this.flow.clone(),
+        flow: await this.flow.clone(),
         executionTime: Date.now() - startTime,
       }))
     } catch (error) {
@@ -138,14 +138,14 @@ export class ExecutionEngine {
       if (this.context.abortSignal.aborted && (!isAbortedDueToError || isAbortedDueToDebugger)) {
         // Emit flow cancelled event
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
-          flow: this.flow.clone(),
+          flow: await this.flow.clone(),
           reason: this.context.abortSignal.reason ?? ExecutionCancelledReason,
           executionTime: Date.now() - startTime,
         }))
       } else {
         // Emit flow failed event
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
-          flow: this.flow.clone(),
+          flow: await this.flow.clone(),
           error: error as Error,
           executionTime: Date.now() - startTime,
         }))
@@ -158,7 +158,7 @@ export class ExecutionEngine {
     }
   }
 
-  private initializeDependencies(): void {
+  private async initializeDependencies(): Promise<void> {
     for (const node of this.flow.nodes.values()) {
       // Initialize dependency counts
       const incomingEdges = this.flow.getIncomingEdges(node)
@@ -169,7 +169,6 @@ export class ExecutionEngine {
       const children = Array.from(this.flow.nodes.values())
         .filter(n => n.metadata.parentNodeId === node.id)
       if (children.length > 0) {
-        console.log(`[ExecutionEngine] Node ${node.id} has children: ${children.map(c => c.id).join(', ')}`)
         const currentNodeDependencies = this.nodeDependencies.get(node.id) ?? 0
         this.nodeDependencies.set(node.id, currentNodeDependencies + children.length)
       }
@@ -260,16 +259,23 @@ export class ExecutionEngine {
     }
 
     // Emit node status changed events for initial nodes
+    const promises: Promise<void>[] = []
+
     for (const nodeId of this.executingNodes) {
       const node = this.flow.nodes.get(nodeId)
       if (node) {
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+        const promise = this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
           node: node.clone(),
           oldStatus: NodeStatus.Idle,
           newStatus: NodeStatus.Initialized,
         }))
+
+        promises.push(promise)
       }
     }
+
+    // Wait for all initial node status changed events to be published
+    await Promise.all(promises)
 
   //   console.log(`[ExecutionEngine] Debug state:
   // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
@@ -450,7 +456,7 @@ export class ExecutionEngine {
     const nodeStartTime = Date.now()
 
     const onStatusChange = (event: NodeStatusChangeEvent) => {
-      this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+      return this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
         node: node.clone(),
         oldStatus: event.oldStatus,
         newStatus: event.newStatus,
@@ -466,14 +472,14 @@ export class ExecutionEngine {
           if (!edge.sourcePort.isSystemError()
             && edge.sourceNode.status !== NodeStatus.Completed
             && edge.sourceNode.status !== NodeStatus.Backgrounding) {
-            this.setNodeSkipped(node, `wrong status of source node: ${edge.sourceNode.status}`)
+            await this.setNodeSkipped(node, `wrong status of source node: ${edge.sourceNode.status}`)
             return
           }
         }
 
         // If all source nodes have valid status, set this node to executing
         node.setStatus(NodeStatus.Executing, true)
-        this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
+        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
       }
 
       // Debug point - before execution
@@ -496,7 +502,7 @@ export class ExecutionEngine {
 
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
-              this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
+              await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
                 edge: edge.clone(),
                 transferTime: Date.now() - transferStartTime,
               }))
@@ -504,7 +510,7 @@ export class ExecutionEngine {
           } catch (error) {
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
-              this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
+              await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
                 edge: edge.clone(),
                 error: error as Error,
               }))
@@ -519,20 +525,20 @@ export class ExecutionEngine {
         await Promise.all(transferFunctions.map(fn => fn()))
       } catch (error) {
         // If any transfer failed, skip the node
-        this.setNodeSkipped(node, 'edge transfer failed')
+        await this.setNodeSkipped(node, 'edge transfer failed')
         return
       }
 
       const nodeParent = this.flow.nodes.get(node.metadata.parentNodeId ?? '')
       if (nodeParent && nodeParent.metadata.category !== 'group') {
         // If the node has a parent that is not a group, mark it completed without actually executing
-        this.setNodeCompleted(node, nodeStartTime)
+        await this.setNodeCompleted(node, nodeStartTime)
         return
       }
 
       // check weathers node should execute
       if (!node.shouldExecute(this.context)) {
-        this.setNodeSkipped(node, 'node skipped because flow input port was set to false')
+        await this.setNodeSkipped(node, 'node skipped because flow input port was set to false')
         return
       }
 
@@ -575,16 +581,16 @@ export class ExecutionEngine {
           const error = node.getErrorPort()?.getValue()
           const errorMessage = node.getErrorMessagePort()?.getValue()
           if (error === true && errorMessage) {
-            this.setNodeError(node, new Error(errorMessage.toString()), nodeStartTime)
+            await this.setNodeError(node, new Error(errorMessage.toString()), nodeStartTime)
           } else {
-            this.setNodeError(node, new Error('node did not complete successfully'), nodeStartTime)
+            await this.setNodeError(node, new Error('node did not complete successfully'), nodeStartTime)
           }
         } else {
-          this.setNodeCompleted(node, nodeStartTime)
+          await this.setNodeCompleted(node, nodeStartTime)
         }
       }
     } catch (error) {
-      this.setNodeError(node, error, nodeStartTime)
+      await this.setNodeError(node, error, nodeStartTime)
     } finally {
       cancel()
       // Clear current node ID after execution
@@ -592,9 +598,9 @@ export class ExecutionEngine {
     }
   }
 
-  private setNodeCompleted(node: INode, nodeStartTime: number) {
+  private async setNodeCompleted(node: INode, nodeStartTime: number): Promise<void> {
     node.setStatus(NodeStatus.Completed, true)
-    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
+    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
       node: node.clone(),
       executionTime: Date.now() - nodeStartTime,
     }))
@@ -604,9 +610,9 @@ export class ExecutionEngine {
     }
   }
 
-  private setNodeBackgrounding(node: INode, nodeStartTime: number) {
+  private async setNodeBackgrounding(node: INode, nodeStartTime: number) {
     node.setStatus(NodeStatus.Backgrounding, true)
-    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
+    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
       node: node.clone(),
     }))
 
@@ -615,9 +621,9 @@ export class ExecutionEngine {
     }
   }
 
-  private setNodeSkipped(node: INode, reason: string) {
+  private async setNodeSkipped(node: INode, reason: string) {
     node.setStatus(NodeStatus.Skipped, true)
-    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
+    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
       node: node.clone(),
       reason,
     }))
@@ -627,10 +633,10 @@ export class ExecutionEngine {
     }
   }
 
-  private setNodeError(node: INode, error: unknown, nodeStartTime: number) {
+  private async setNodeError(node: INode, error: unknown, nodeStartTime: number) {
     node.setStatus(NodeStatus.Error, true)
 
-    this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
+    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
       node: node.clone(),
       error: error as Error,
       executionTime: Date.now() - nodeStartTime,
@@ -651,16 +657,19 @@ export class ExecutionEngine {
 
   public on<T extends ExecutionEventEnum>(
     type: T,
-    handler: (event: ExecutionEventImpl<T>) => void,
+    handler: (event: ExecutionEventImpl<T>) => void | Promise<void>,
   ): () => void {
-    return this.eventQueue.subscribe((event) => {
+    return this.eventQueue.subscribe(async (event) => {
       if (event.type === type) {
-        handler(event as ExecutionEventImpl<T>)
+        const res = handler(event as ExecutionEventImpl<T>)
+        if (res instanceof Promise) {
+          await res
+        }
       }
     })
   }
 
-  public onAll(handler: (event: ExecutionEventImpl) => void): () => void {
+  public onAll(handler: (event: ExecutionEventImpl) => void | Promise<void>): () => void {
     return this.eventQueue.subscribe(handler)
   }
 
@@ -671,18 +680,6 @@ export class ExecutionEngine {
     this.onEventCallback = callback
   }
 
-  // protected createEvent<T extends ExecutionEventEnum>(
-  //   type: T,
-  //   data: ExecutionEventData[T],
-  // ): ExecutionEvent<T> {
-  //   return {
-  //     index: this.eventIndex++,
-  //     type,
-  //     timestamp: new Date(),
-  //     context: this.context,
-  //     data,
-  //   }
-  // }
   protected createEvent<T extends ExecutionEventEnum>(
     type: T,
     data: ExecutionEventData[T],

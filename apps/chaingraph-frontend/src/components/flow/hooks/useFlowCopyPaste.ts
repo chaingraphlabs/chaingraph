@@ -294,7 +294,8 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         console.log('📋 Copy shortcut triggered')
         const copyResult = await copySelectedNodes()
         if (copyResult.success) {
-          event.preventDefault()
+          // Do not prevent default behavior for copy
+          // event.preventDefault()
           console.log(`✅ Successfully copied ${copyResult.nodeCount} nodes and ${copyResult.edgeCount} edges`)
         }
         break
@@ -303,7 +304,8 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         console.log('📋 Paste shortcut triggered')
         const pasteResult = await pasteNodes()
         if (pasteResult.success) {
-          event.preventDefault()
+          // Do not prevent default behavior for paste
+          // event.preventDefault()
           console.log(`✅ Successfully pasted ${pasteResult.nodeCount} nodes and ${pasteResult.edgeCount} edges`)
         }
         break

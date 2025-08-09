@@ -117,22 +117,26 @@ export class DefaultPortManager implements IDefaultPortManager {
     const errorPort = this.getErrorPort()
     const errorMessagePort = this.getErrorMessagePort()
 
+    const portsToUpdate: IPort[] = []
+
     // Update flowOut port
     if (flowOutPort) {
       flowOutPort.setValue(success)
-      this.portManager.updatePort(flowOutPort)
+      portsToUpdate.push(flowOutPort)
     }
 
     // Update error port if execution failed
     if (!success && errorPort) {
       errorPort.setValue(true)
-      this.portManager.updatePort(errorPort)
+      portsToUpdate.push(errorPort)
     }
 
     // Update errorMessage port if provided
     if (!success && errorMessage && errorMessagePort) {
       errorMessagePort.setValue(errorMessage)
-      this.portManager.updatePort(errorMessagePort)
+      portsToUpdate.push(errorMessagePort)
     }
+
+    this.portManager.updatePorts(portsToUpdate)
   }
 }

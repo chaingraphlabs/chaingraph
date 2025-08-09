@@ -21,6 +21,8 @@ export function DeleteButton({ onClick }: DeleteButtonProps) {
         'flex-shrink-0 p-1 rounded-md',
         'self-start group/delete',
         'hover:bg-destructive/20',
+        'absolute -right-5 top-0',
+        'nodrag',
       )}
       onClick={onClick}
     >

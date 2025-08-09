@@ -71,7 +71,7 @@ describe('event-driven Parent Execution Waiting', () => {
 
     const emitterNode = new EventEmitterNode('emitter-1')
     emitterNode.initialize()
-    flow.addNode(emitterNode)
+    await flow.addNode(emitterNode)
 
     const abortController = new AbortController()
     const parentContext = new ExecutionContext(flow.id, abortController)
@@ -121,7 +121,7 @@ describe('event-driven Parent Execution Waiting', () => {
 
     const emitterNode = new EventEmitterNode('emitter-1')
     emitterNode.initialize()
-    flow.addNode(emitterNode)
+    await flow.addNode(emitterNode)
 
     const abortController = new AbortController()
     const parentContext = new ExecutionContext(flow.id, abortController)
@@ -166,7 +166,7 @@ describe('event-driven Parent Execution Waiting', () => {
     }
     const simpleNode = new SimpleNode('simple-1')
     simpleNode.initialize()
-    flow.addNode(simpleNode)
+    await flow.addNode(simpleNode)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)

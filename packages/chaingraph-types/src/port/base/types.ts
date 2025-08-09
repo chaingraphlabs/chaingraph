@@ -11,6 +11,7 @@ import type {
   ArrayPortConfigUIType,
   BasePortConfigUIType,
   BooleanPortConfigUIType,
+  EnumPortConfigUIType,
   NumberPortConfigUIType,
   ObjectPortConfigUIType,
   StreamPortConfigUIType,
@@ -67,6 +68,7 @@ export type PortType = (typeof PORT_TYPES)[number]
 export const PortDirection = {
   Input: 'input',
   Output: 'output',
+  Passthrough: 'passthrough',
 } as const
 
 export type PortDirectionEnum = (typeof PortDirection)[keyof typeof PortDirection]
@@ -129,6 +131,7 @@ export interface ArrayPortConfig<
   type: 'array'
   itemConfig: IPortConfig
   isMutable?: boolean
+  isSchemaMutable?: boolean
   defaultValue?: ArrayPortValue<Item>
   minLength?: number
   maxLength?: number
@@ -138,7 +141,7 @@ export interface ArrayPortConfig<
 /**
  * Secret port configuration.
  */
-export interface SecretPortConfig<S extends SecretType = 'string'> extends BasePortConfig {
+export interface SecretPortConfig<S extends SecretType = any> extends BasePortConfig {
   type: 'secret'
   secretType: S
   ui?: BasePortConfigUIType
@@ -150,6 +153,7 @@ export interface SecretPortConfig<S extends SecretType = 'string'> extends BaseP
  */
 export interface ObjectPortConfig<S extends IObjectSchema = IObjectSchema> extends BasePortConfig {
   type: 'object'
+  // TODO: !!!! Consider removing the schema property and using properties directly for better alignment with JSON Schema !!!!
   schema: S
   isSchemaMutable?: boolean
   defaultValue?: ObjectPortValue<S>
@@ -174,6 +178,7 @@ export interface IObjectSchema<T extends Record<string, IPortConfig> = Record<st
 export interface StreamPortConfig<Item extends IPortConfig = IPortConfig> extends BasePortConfig {
   type: 'stream'
   itemConfig: Item
+  isSchemaMutable?: boolean
   defaultValue?: StreamPortValue<Item>
   ui?: BasePortConfigUIType & StreamPortConfigUIType
 }
@@ -194,7 +199,7 @@ export interface EnumPortConfig extends BasePortConfig {
   type: 'enum'
   options: IPortConfig[]
   defaultValue?: EnumPortValue
-  ui?: BasePortConfigUIType
+  ui?: BasePortConfigUIType & EnumPortConfigUIType
 }
 
 /**
@@ -276,6 +281,7 @@ export type IPortValue =
   | ArrayPortValue<any>
   | ObjectPortValue<any>
   | StreamPortValue<any>
+  | SecretPortValue<any>
   | EnumPortValue
   | AnyPortValue
 

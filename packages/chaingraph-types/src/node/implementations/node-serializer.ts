@@ -110,7 +110,7 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
 
     // Critical: ensure all ports are properly bound to node properties
     if (this.portBinder) {
-      this.portBinder.rebindAfterDeserialization()
+      this.portBinder.bindPortBindings()
     }
 
     return this.nodeRef || this.createInstance(obj.id)

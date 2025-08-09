@@ -82,6 +82,7 @@ export const addNodeToFlowFx = nodesDomain.createEffect(async (event: AddNodeEve
     nodeType: event.nodeType,
     position: event.position,
     metadata: event.metadata,
+    portsConfig: event.portsConfig,
   })
 })
 
@@ -340,6 +341,97 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
   })
   .reset(globalReset)
 
+// Store that tracks the nodes parent layer depth, so nodes without parents are 0 layer, and each child node increases the layer by 1
+export const $nodeLayerDepth = combine(
+  $nodes,
+  (nodes) => {
+    const depthCache = new Map<string, number>()
+
+    // Helper function to calculate depth recursively with cycle detection
+    const calculateDepth = (nodeId: string, visited = new Set<string>()): number => {
+      // Return cached value if already calculated
+      if (depthCache.has(nodeId)) {
+        return depthCache.get(nodeId)!
+      }
+
+      const node = nodes[nodeId]
+      if (!node) {
+        return 0
+      }
+
+      // Nodes without parents are at layer 0
+      if (!node.metadata.parentNodeId) {
+        depthCache.set(nodeId, 0)
+        return 0
+      }
+
+      // Detect circular references
+      if (visited.has(nodeId)) {
+        console.warn(`Circular reference detected for node ${nodeId}, returning depth 0`)
+        depthCache.set(nodeId, 0)
+        return 0
+      }
+
+      // Calculate parent depth recursively
+      visited.add(nodeId)
+      const parentDepth = calculateDepth(node.metadata.parentNodeId, visited)
+      const depth = parentDepth + 1
+
+      depthCache.set(nodeId, depth)
+      return depth
+    }
+
+    // Calculate depths for all nodes
+    const depths: Record<string, number> = {}
+    Object.keys(nodes).forEach((nodeId) => {
+      depths[nodeId] = calculateDepth(nodeId)
+    })
+
+    return depths
+  },
+)
+
+// Store that provides nodes grouped by their layer depth
+export const $nodesByLayer = combine(
+  $nodes,
+  $nodeLayerDepth,
+  (nodes, depths) => {
+    const layers: Map<number, INode[]> = new Map()
+
+    Object.entries(nodes).forEach(([nodeId, node]) => {
+      const depth = depths[nodeId] || 0
+
+      if (!layers.has(depth)) {
+        layers.set(depth, [])
+      }
+
+      layers.get(depth)!.push(node)
+    })
+
+    // Sort layers by depth and convert to array
+    const sortedLayers = Array.from(layers.entries())
+      .sort(([depthA], [depthB]) => depthA - depthB)
+      .map(([depth, nodes]) => ({
+        depth,
+        nodes: nodes.sort((a, b) => a.id.localeCompare(b.id)), // Sort nodes within layer for consistency
+      }))
+
+    return sortedLayers
+  },
+)
+
+// Store that provides the maximum depth in the current flow
+export const $maxNodeDepth = combine(
+  $nodeLayerDepth,
+  (depths) => {
+    if (Object.keys(depths).length === 0) {
+      return 0
+    }
+
+    return Math.max(...Object.values(depths))
+  },
+)
+
 /**
  * Enhanced store for XYFlow nodes that preserves node references when only positions change.
  * This significantly reduces unnecessary re-renders.
@@ -347,9 +439,10 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 export const $xyflowNodes = combine(
   $nodes,
   $categoryMetadata,
+  $nodeLayerDepth,
   // $nodePositions,
   // (nodes, categoryMetadata, nodePositions) => {
-  (nodes, categoryMetadata) => {
+  (nodes, categoryMetadata, nodeLayerDepth) => {
     if (!nodes || Object.keys(nodes).length === 0) {
       return []
     }
@@ -357,49 +450,11 @@ export const $xyflowNodes = combine(
     // Create a cache for already created XYFlow nodes to preserve references
     const nodeCache = new Map<string, Node>()
 
-    // Calculate z-index based on node depth and type
-    const calculateZIndex = (node: INode, allNodes: Record<string, INode>): number => {
-      let depth = 0
-      let currentNode = node
-
-      // Calculate depth by traversing up the parent chain
-      while (currentNode.metadata.parentNodeId) {
-        const parentNode = allNodes[currentNode.metadata.parentNodeId]
-        if (!parentNode)
-          break
-        depth++
-        currentNode = parentNode
-
-        // Safety check to prevent infinite loops
-        if (depth > 10)
-          break
-      }
-
-      // Z-index calculation:
-      // - Root groups: 0
-      // - Child groups: parent z-index + 1
-      // - Regular nodes: group z-index + 10 (to appear above groups)
-      // - Schema captured nodes: group z-index + 20 (to appear above regular nodes)
-
-      if (node.metadata.category === 'group') {
-        return depth * 10 // Groups at different depths
-      } else {
-        // Regular nodes should be above their parent group
-        const parentNode = node.metadata.parentNodeId ? allNodes[node.metadata.parentNodeId] : undefined
-        const parentZIndex = parentNode ? calculateZIndex(parentNode, allNodes) : 0
-
-        // Check if this is a schema captured node (has isMovingDisabled)
-        const isSchemaNode = node.metadata.ui?.state?.isMovingDisabled === true
-
-        return parentZIndex + (isSchemaNode ? 20 : 10)
-      }
-    }
-
     // Helper function to get category metadata within this computation
     const getCategoryMetadata = (categoryId: string) =>
       categoryMetadata.get(categoryId) ?? categoryMetadata.get(NODE_CATEGORIES.OTHER)!
 
-    // Sort nodes to have groups first, then regular nodes
+    // Sort nodes to parent layer. No parent first and then children by layer depth
     const sortedNodes = Object.values(nodes).sort((a, b) => {
       if (a.metadata.category === NODE_CATEGORIES.GROUP)
         return -1
@@ -448,7 +503,7 @@ export const $xyflowNodes = combine(
         const cachedNode = nodeCache.get(cacheKey)
 
         // Check if we can reuse the cached node (only position might have changed)
-        const currentZIndex = calculateZIndex(node, nodes)
+        const currentZIndex = nodeLayerDepth[nodeId] ?? 0
         if (cachedNode
           && (cachedNode.data.node as INode).getVersion() === node.getVersion()
           && cachedNode.parentId === node.metadata.parentNodeId
@@ -472,13 +527,13 @@ export const $xyflowNodes = combine(
           height: node.metadata.ui?.dimensions?.height ?? 50, // Default height if not set
           initialWidth: node.metadata.ui?.dimensions?.width ?? 200, // Initial width for resizing
           initialHeight: node.metadata.ui?.dimensions?.height ?? 50, // Initial height for resizing
-          zIndex: calculateZIndex(node, nodes),
+          zIndex: currentZIndex,
           data: {
             node,
             categoryMetadata: nodeCategoryMetadata,
           },
           parentId: node.metadata.parentNodeId,
-          extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined, // Use parent extent if it has a parent and is not a group
+          extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined,
           selected: node.metadata.ui?.state?.isSelected ?? false,
           hidden: node.metadata.ui?.state?.isHidden ?? false,
           selectable: node.metadata.category === 'group'

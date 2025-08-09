@@ -21,3 +21,8 @@ export function useCategories() {
     getCategoryMetadata,
   }
 }
+
+export function useCategoryMetadata(categoryId: string) {
+  const getCategoryMetadata = useUnit($categoryMetadataGetter)
+  return getCategoryMetadata(categoryId)
+}

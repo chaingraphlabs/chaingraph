@@ -7,6 +7,7 @@
  */
 
 export * from './and.node'
+export * from './math.node'
 export * from './not.node'
 export * from './or.node'
 export * from './random.node'

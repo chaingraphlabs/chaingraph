@@ -106,8 +106,8 @@ describe('flow Serialization', () => {
     targetNode.initialize()
 
     // Add nodes to flow
-    flow.addNode(sourceNode)
-    flow.addNode(targetNode)
+    await flow.addNode(sourceNode)
+    await flow.addNode(targetNode)
 
     const sourcePort = findPort(
       sourceNode,
@@ -192,10 +192,10 @@ describe('flow Serialization', () => {
     target2.initialize()
 
     // Add nodes to flow
-    flow.addNode(source1)
-    flow.addNode(source2)
-    flow.addNode(target1)
-    flow.addNode(target2)
+    await flow.addNode(source1)
+    await flow.addNode(source2)
+    await flow.addNode(target1)
+    await flow.addNode(target2)
 
     // Set initial values
     source1.input = 'Input 1'

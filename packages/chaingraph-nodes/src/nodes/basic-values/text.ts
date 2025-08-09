@@ -7,7 +7,8 @@
  */
 
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Node, Output, PortString } from '@badaitech/chaingraph-types'
+import { Passthrough } from '@badaitech/chaingraph-types'
+import { BaseNode, Node, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
@@ -17,7 +18,7 @@ import { NODE_CATEGORIES } from '../../categories'
   category: NODE_CATEGORIES.BASIC_VALUES,
 })
 class TextNode extends BaseNode {
-  @Output()
+  @Passthrough()
   @PortString({
     title: 'Text',
     description: 'The output text string.',

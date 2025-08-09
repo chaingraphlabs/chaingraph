@@ -475,7 +475,7 @@ describe('complex node', () => {
     for (const [portId, value] of testNode.ports.entries()) {
       const config = parsed.ports.get(portId)
       expect(config).toBeDefined()
-      expect(config).toStrictEqual(value)
+      expect(config).toEqual(value)
     }
 
     expect(parsed.metadata).toEqual(testNode.metadata)

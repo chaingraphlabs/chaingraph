@@ -20,10 +20,12 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
+  Passthrough,
+} from '@badaitech/chaingraph-types'
+import {
   BaseNode,
   ExecutionEventEnum,
   findPort,
-  Input,
   MultiChannel,
   Node,
   ObjectSchema,
@@ -144,7 +146,6 @@ class AntropicLLMCallNodeFeatures {
   description: 'Configuration for the Anthropic Claude LLM',
 })
 export class AnthropicLLMConfig {
-  @Input()
   @PortSecret<'anthropic'>({
     title: 'API Key',
     description: 'Your Anthropic API key',
@@ -264,7 +265,7 @@ export class AnthropicLLMConfig {
   tags: ['ai', 'llm', 'claude', 'anthropic', 'image', 'thinking', 'tools'],
 })
 export class AntropicLlmCallNode extends BaseNode {
-  @Input()
+  @Passthrough()
   @PortObject({
     title: 'Configuration',
     description: 'Configuration for the Anthropic Claude LLM',
@@ -274,7 +275,7 @@ export class AntropicLlmCallNode extends BaseNode {
   config: AnthropicLLMConfig = new AnthropicLLMConfig()
   // config: AntropicConfig = new AntropicConfig()
 
-  @Input()
+  @Passthrough()
   @PortObject({
     title: 'Features',
     description: 'Features flags for the Anthropic LLM Call Node',
@@ -282,7 +283,7 @@ export class AntropicLlmCallNode extends BaseNode {
   })
   features: AntropicLLMCallNodeFeatures = new AntropicLLMCallNodeFeatures()
 
-  @Input()
+  @Passthrough()
   @PortArray({
     title: 'Tools',
     description: 'Definitions of tools that the model may use',
@@ -301,7 +302,7 @@ export class AntropicLlmCallNode extends BaseNode {
   })
   tools: Tool[] = []
 
-  @Input()
+  @Passthrough()
   @PortString({
     title: 'System',
     description: 'System prompt providing context and instructions to Claude',
@@ -312,7 +313,7 @@ export class AntropicLlmCallNode extends BaseNode {
   })
   system?: string
 
-  @Input()
+  @Passthrough()
   @PortArray({
     title: 'Messages',
     description: 'Array of conversation messages (user and assistant)',
@@ -952,10 +953,13 @@ export class AntropicLlmCallNode extends BaseNode {
     parentId: string | undefined,
     nodeType: string,
   ): void {
+    console.log(`[ANTHROPIC] Setting port values recursively for node type: ${nodeType}, parentId: ${parentId}, values: ${JSON.stringify(values)}`)
+    console.log(`[ANTHROPIC] Node ports: ${JSON.stringify(Array.from(node.ports.values()).map(p => p.getConfig()), null, 2)}`)
+
     for (const [key, value] of Object.entries(values)) {
       const port = findPort(node, (p) => {
         return p.getConfig().key === key
-          && p.getConfig().direction === 'input'
+          && (p.getConfig().direction === 'input' || p.getConfig().direction === 'passthrough')
           && !p.isSystem()
           && p.getConfig().parentId === parentId
       })
@@ -973,11 +977,11 @@ export class AntropicLlmCallNode extends BaseNode {
           // Deep merge: preserve existing fields, add/update new ones
           const mergedValue = this.deepMergeObjects(currentValue, value)
           port.setValue(mergedValue)
-          // console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
+          console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
         } else {
           // If current value is not an object, just set the new value and recurse into sub-ports
           port.setValue(value)
-          // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+          console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
         }
 
         // Recursively handle nested object properties
@@ -985,7 +989,7 @@ export class AntropicLlmCallNode extends BaseNode {
       } else {
         // Set primitive values directly
         port.setValue(value)
-        // console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
+        console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
       }
     }
   }
@@ -1072,7 +1076,12 @@ export class AntropicLlmCallNode extends BaseNode {
           // nodeToExecute.initialize()
 
           // fill the node's input ports with the tool use block input
-          this.setPortValuesRecursively(nodeToExecute, toolUseBlock.input, undefined, toolDefinition.chaingraph_node_type)
+          this.setPortValuesRecursively(
+            nodeToExecute,
+            toolUseBlock.input,
+            undefined,
+            toolDefinition.chaingraph_node_type,
+          )
 
           const executionResult = await nodeToExecute.execute(context)
           if (executionResult.backgroundActions && executionResult.backgroundActions.length > 0) {

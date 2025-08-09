@@ -351,15 +351,18 @@ class ArchAIGetVariableNode extends BaseNode {
               type: 'object',
               properties: {},
             },
-            isSchemaMutable: true,
+            isSchemaMutable: false,
             defaultValue: targetUnderlyingConfig?.defaultValue ?? {},
             ui: {
               ...(targetUnderlyingConfig?.ui || {}),
-              hideEditor: false,
+              keyDeletable: false,
+              hideEditor: true,
               collapsed: true,
+              hidePropertyEditor: true,
             },
           }).getConfig(),
         }
+
         console.log(`[ArchAIGetVariableNode] Updating underlying type to object: ${JSON.stringify(underlyingType)}`)
         break
       case VariableValueType.Array:
@@ -399,6 +402,8 @@ class ArchAIGetVariableNode extends BaseNode {
 
     // Update the port's configuration with the new underlying type
     valuePort.setUnderlyingType(underlyingType)
+    // create or remove childports  for the underlying type
+    this.refreshAnyPortUnderlyingPorts(valuePort as IPort, true)
 
     // console.log(`[ArchAIGetVariableNode] Updated underlying type for variableValue port: ${JSON.stringify(underlyingType)}`)
     console.log(`[ArchAIGetVariableNode] Updated underlying type for variableValue port: ${JSON.stringify(valuePort.serialize())}`)

@@ -63,6 +63,12 @@ export interface IPortManager {
   removePort: (portId: string) => void
 
   /**
+   * Remove multiple ports by their IDs
+   * @param portIds Array of port IDs to remove
+   */
+  removePorts: (portIds: string[]) => void
+
+  /**
    * Find a port by following a path of property names from the node root
    * @param path Path segments (property names or array indices)
    * @returns The port if found, undefined otherwise
@@ -77,8 +83,35 @@ export interface IPortManager {
   getChildPorts: (parentPort: IPort) => IPort[]
 
   /**
+   * Get all nested ports of a parent port, including its children and their children recursively
+   * @param parentPort The parent port
+   * @returns Array of all nested ports
+   */
+  getNestedPorts: (parentPort: IPort) => IPort[]
+
+  /**
    * Update a port with new configuration/value
    * @param port The port to update
    */
   updatePort: (port: IPort) => void
+
+  /**
+   * Update multiple ports at once
+   * @param ports Array of ports to update
+   */
+  updatePorts: (ports: IPort[]) => void
+
+  /**
+   * Find a port by a predicate function
+   * @param predicate Predicate function to match the port
+   * @returns The port if found, undefined otherwise
+   */
+  findPort: (predicate: (port: IPort) => boolean) => IPort | undefined
+
+  /**
+   * Find all ports by a predicate function
+   * @param predicate Predicate function to match the port
+   * @return Array of ports that match the predicate
+   */
+  findPorts: (predicate: (port: IPort) => boolean) => IPort[]
 }

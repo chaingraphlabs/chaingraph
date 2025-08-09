@@ -8,10 +8,11 @@
 
 import type { EdgeMetadata, IEdge } from '.'
 import type { INode } from '../node'
-import type { AnyPortConfig, IPort, SecretPort } from '../port'
+import type { IPort } from '../port'
 import { EdgeStatus } from '.'
 import { NodeStatus } from '../node'
 import { PortDirection } from '../port'
+import { getDefaultTransferEngine } from '../port/transfer-rules'
 import { deepCopy } from '../utils'
 
 export class Edge implements IEdge {
@@ -46,46 +47,22 @@ export class Edge implements IEdge {
   }
 
   async validate(): Promise<boolean> {
-    // Ensure ports are compatible
-    const sourcePortKind = this.sourcePort.getConfig().type
-    const targetPortKind = this.targetPort.getConfig().type
-
-    if (this.sourcePort.getConfig().direction !== PortDirection.Output) {
-      throw new Error(`Source port ${this.sourcePort.id} is not an output port.`)
+    // Check port directions
+    if (this.sourcePort.getConfig().direction !== PortDirection.Output && this.sourcePort.getConfig().direction !== PortDirection.Passthrough) {
+      throw new Error(`Source port ${this.sourcePort.id} is not an output or passthrough port.`)
     }
 
-    if (this.targetPort.getConfig().direction !== PortDirection.Input) {
-      throw new Error(`Target port ${this.targetPort.id} is not an input port.`)
+    if (this.targetPort.getConfig().direction !== PortDirection.Input && this.targetPort.getConfig().direction !== PortDirection.Passthrough) {
+      throw new Error(`Target port ${this.targetPort.id} is not an input or passthrough port.`)
     }
 
-    // TODO: Add other validation checks here for example for AnyPort, StreamInputPort, StreamOutputPort, etc.
-    if (sourcePortKind !== targetPortKind) {
-      if (targetPortKind === 'any') {
-        // allow to port with kind "any" to receive any connections
-        return true
-      }
+    // Use the Transfer Rules engine for type validation
+    const engine = getDefaultTransferEngine()
 
-      if (sourcePortKind === 'any') {
-        // get the underlying type of source any port
-        // and check if it is compatible with the target port
-        const sourcePortConfig = this.sourcePort.getConfig() as AnyPortConfig
-        const sourcePortUnderlyingType = sourcePortConfig.underlyingType
-        if (sourcePortUnderlyingType) {
-          if (sourcePortUnderlyingType.type === targetPortKind) {
-            return true
-          }
-        }
-      }
-
-      throw new Error(`Incompatible port types: ${sourcePortKind} -> ${targetPortKind}`)
-    }
-
-    if (sourcePortKind === 'secret' && targetPortKind === 'secret') {
-      const sourceSecretPort = this.sourcePort as SecretPort<any>
-      const targetSecretPort = this.targetPort as SecretPort<any>
-      if (!sourceSecretPort.isCompatibleWith(this.targetPort)) {
-        throw new Error(`Incompatible secret types: ${sourceSecretPort.getConfig().secretType} -> ${targetSecretPort.getConfig().secretType}`)
-      }
+    if (!engine.canConnect(this.sourcePort, this.targetPort)) {
+      const sourceConfig = this.sourcePort.getConfig()
+      const targetConfig = this.targetPort.getConfig()
+      throw new Error(`Incompatible port types: ${sourceConfig.type} -> ${targetConfig.type}`)
     }
 
     return true

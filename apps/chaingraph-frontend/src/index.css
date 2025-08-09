@@ -213,3 +213,8 @@
 .react-flow__attribution {
   @apply hidden;
 }
+
+html,
+body {
+  overscroll-behavior-x: none;
+}

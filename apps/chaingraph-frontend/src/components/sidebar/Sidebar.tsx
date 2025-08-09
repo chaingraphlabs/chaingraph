@@ -10,6 +10,7 @@ import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel'
 import { ExecutionTree } from '@/components/sidebar/tabs/execution-tree'
 import { ExportImport } from '@/components/sidebar/tabs/export-import'
 import { FlowList } from '@/components/sidebar/tabs/flow/FlowList'
+import { MCPTab } from '@/components/sidebar/tabs/mcp/MCPTab'
 import { NodeList } from '@/components/sidebar/tabs/node-list'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -24,7 +25,7 @@ import {
   Share1Icon,
   ValueIcon,
 } from '@radix-ui/react-icons'
-import { Bug, FileJson, GitBranch, LayersIcon, Scroll, Wallet } from 'lucide-react'
+import { Atom, Bug, FileJson, GitBranch, LayersIcon, Scroll, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
 import { Help } from './tabs/Help'
@@ -39,11 +40,12 @@ const STORAGE_KEYS = {
   WIDTH: 'sidebar-width',
 } as const
 
-export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'wallet' | 'executions' | 'export-import'
+export type tabsType = 'flows' | 'nodes' | 'events' | 'variables' | 'debug' | 'settings' | 'help' | 'archai' | 'wallet' | 'executions' | 'export-import' | 'mcp'
 
 const defaultEnabledTabs: tabsType[] = [
   'flows',
   'nodes',
+  'mcp',
   // 'events',
   // 'variables',
   'executions',
@@ -125,6 +127,12 @@ export function Sidebar({
       icon: <Scroll />,
       label: 'ArchAI Integration',
       content: <ArchAIIntegration />,
+    },
+    'mcp': {
+      id: 'mcp',
+      icon: <Atom />,
+      label: 'MCP',
+      content: <MCPTab />,
     },
     'wallet': {
       id: 'wallet',

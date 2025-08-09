@@ -74,6 +74,8 @@ const valueSchema: z.ZodType<ArrayPortValue> = z.array(z.unknown())
 const arraySpecificSchema = z.object({
   type: z.literal('array'),
   defaultValue: valueSchema.optional(),
+  isMutable: z.boolean().optional(),
+  isSchemaMutable: z.boolean().optional(),
   itemConfig: z.custom<IPortConfig>((val) => {
     if (val === undefined || val === null) {
       return true

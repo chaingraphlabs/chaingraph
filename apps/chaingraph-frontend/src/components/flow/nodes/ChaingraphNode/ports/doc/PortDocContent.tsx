@@ -22,9 +22,9 @@ import type {
 
 import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/formatValue'
 import { useTheme } from '@/components/theme'
-import { Badge, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
+import { Badge, Button, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { getPortTypeColor } from './getPortTypeColor'
 
@@ -41,6 +41,10 @@ export function PortDocContent<C extends IPortConfig>({
   const config = port.getConfig()
   const [containerHeight, setContainerHeight] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
 
   // Calculate available height for component
   useEffect(() => {
@@ -149,7 +153,13 @@ export function PortDocContent<C extends IPortConfig>({
           {/* Basic information and direction */}
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">
-              {config.direction === 'input' ? 'Input Port' : 'Output Port'}
+              {config.direction === 'input'
+                ? 'Input Port'
+                : config.direction === 'output'
+                  ? 'Output Port'
+                  : config.direction === 'passthrough'
+                    ? 'Passthrough Port'
+                    : 'Unknown Direction'}
             </span>
             <span className="text-muted-foreground">
               {config.key}
@@ -202,7 +212,19 @@ export function PortDocContent<C extends IPortConfig>({
           {/* Value */}
           {port.getValue() !== undefined && (
             <div className="pt-1 space-y-1 text-muted-foreground">
-              <div className="text-xs font-medium text-muted-foreground">Value</div>
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium text-muted-foreground">Value</div>
+                {!(port.getConfig().type === 'string' && port.getConfig()?.ui?.isPassword === true) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => copyToClipboard(formatValue(port.getValue()))}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               <pre className={cn(
                 'text-[11px] p-1.5 bg-muted/50',
                 'rounded block overflow-x-auto whitespace-pre-wrap break-all',
@@ -518,10 +540,30 @@ function renderArrayConfig(config: ArrayPortConfig): React.ReactElement {
             <span>{config.isMutable ? 'Yes' : 'No'}</span>
           </>
         )}
+        {config.isSchemaMutable !== undefined && (
+          <>
+            <span className="text-muted-foreground">Schema mutable:</span>
+            <span>{config.isMutable ? 'Yes' : 'No'}</span>
+          </>
+        )}
       </div>
 
       {/* Item schema visualization */}
-      <div className="text-xs font-medium mb-1">Item Schema</div>
+      <div className="text-xs font-medium mb-1">
+        Item Schema
+        {
+          config.itemConfig.type === 'object'
+          && config.itemConfig.schema
+          && config.itemConfig.schema.type
+          && (
+            <span className="text-muted-foreground text-[10px] ml-1">
+              {'<'}
+              {config.itemConfig.schema.type}
+              {'>'}
+            </span>
+          )
+        }
+      </div>
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
@@ -569,7 +611,20 @@ function renderObjectConfig(config: ObjectPortConfig): React.ReactElement {
       </div>
 
       {/* Schema visualization */}
-      <div className="text-xs font-medium mb-1">Schema Properties</div>
+      <div className="text-xs font-medium mb-1">
+        Schema Properties
+        {
+          config.schema
+          && config.schema.type
+          && (
+            <span className="text-muted-foreground text-[10px] ml-1">
+              {'<'}
+              {config.schema.type}
+              {'>'}
+            </span>
+          )
+        }
+      </div>
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {propertyCount > 0
           ? (
@@ -611,7 +666,22 @@ function renderStreamConfig(config: StreamPortConfig): React.ReactElement {
       <div className="text-xs font-medium">Stream configuration</div>
 
       {/* Item schema visualization */}
-      <div className="text-xs font-medium mb-1">Stream Item Schema</div>
+      <div className="text-xs font-medium mb-1">
+        Stream Item Schema
+        {
+          config.itemConfig.type === 'object'
+          && config.itemConfig.schema
+          && config.itemConfig.schema.type
+          && (
+            <span className="text-muted-foreground text-[10px] ml-1">
+              {'<'}
+              {config.itemConfig.schema.type}
+              {'>'}
+            </span>
+          )
+        }
+
+      </div>
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (

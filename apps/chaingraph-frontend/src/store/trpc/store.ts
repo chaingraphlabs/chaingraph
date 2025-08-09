@@ -7,6 +7,7 @@
  */
 
 import type { TRPCClient } from '@badaitech/chaingraph-trpc/client'
+import type { StoreWritable } from 'effector'
 import { trpcDomain } from '@/store/domains'
 import { createTRPCClient } from '@badaitech/chaingraph-trpc/client'
 import SuperJSON from 'superjson'
@@ -17,7 +18,9 @@ export const createTRPCClientEvent = trpcDomain.createEvent<{
   superjsonCustom?: typeof SuperJSON
 }>()
 
-export const $trpcClient = trpcDomain.createStore<TRPCClient | null>(null)
+export const $trpcClient: StoreWritable<TRPCClient | null> = trpcDomain.createStore<TRPCClient | null>(null)
+
+$trpcClient
   .on(createTRPCClientEvent, (s, { sessionBadAI, trpcURL, superjsonCustom }) => {
     return createTRPCClient({
       url: trpcURL ?? `ws://localhost:3001`,
@@ -36,5 +39,5 @@ export const $trpcClient = trpcDomain.createStore<TRPCClient | null>(null)
           console.log('[TRPC Client] WebSocket opened')
         },
       },
-    })
+    }) as TRPCClient
   })

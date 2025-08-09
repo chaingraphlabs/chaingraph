@@ -20,7 +20,7 @@ import { deserialize, secretTypeSchemas, serialize } from '../base/secret'
 const configSchema = basePortConfigSchema.merge(z.object({
   type: z.literal('secret'),
   secretType: z.union(Object.keys(secretTypeSchemas).map(t => z.literal(t)) as any),
-  defaultValue: z.undefined(),
+  defaultValue: z.any(),
 })) as z.ZodType<SecretPortConfig>
 
 /**
@@ -68,8 +68,7 @@ export const SecretPortPlugin = {
     if (!result.success) {
       throw new PortError(
         PortErrorType.SerializationError,
-        'Invalid secret configuration for deserialization',
-        result.error,
+        `Invalid secret configuration for deserialization, expected SecretPortConfig, got ${JSON.stringify(data)}: ${result.error}`,
       )
     }
 

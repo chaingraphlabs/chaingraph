@@ -67,7 +67,7 @@ export function extractNodeSchema(node: INode): ExtractedSchema {
     .filter(port => !port.getConfig().parentId) // Only root-level ports
 
   // Separate input and output ports
-  const inputPorts = allPorts.filter(port => port.getConfig().direction === 'input')
+  const inputPorts = allPorts.filter(port => port.getConfig().direction === 'input' || port.getConfig().direction === 'passthrough')
   const outputPorts = allPorts.filter(port => port.getConfig().direction === 'output')
 
   // Process input ports

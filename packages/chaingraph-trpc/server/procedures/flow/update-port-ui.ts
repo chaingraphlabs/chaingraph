@@ -7,6 +7,7 @@
  */
 
 import type { Flow } from '@badaitech/chaingraph-types'
+import { AnyPort } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
 
@@ -41,16 +42,41 @@ export const updatePortUI = flowContextProcedure
       if (!port)
         throw new Error('Port not found')
 
-      const portConfig = port.getConfig()
-      portConfig.ui = {
-        ...portConfig.ui,
-        ...input.ui,
+      if (port instanceof AnyPort) {
+        const underlyingType = port.unwrapUnderlyingType()
+        if (underlyingType && underlyingType.type !== 'any') {
+          underlyingType.ui = {
+            ...underlyingType.ui,
+            ...input.ui,
+          }
+
+          port.setUnderlyingType(underlyingType)
+          node.refreshAnyPortUnderlyingPorts(port, true)
+        } else {
+          console.warn(`[updatePortUI] No underlying type found for AnyPort ${port.id}, updating port UI directly`)
+
+          const portConfig = port.getConfig()
+          portConfig.ui = {
+            ...portConfig.ui,
+            ...input.ui,
+          }
+
+          // set config to the port instance
+          port.setConfig(portConfig)
+        }
+      } else {
+        const portConfig = port.getConfig()
+        portConfig.ui = {
+          ...portConfig.ui,
+          ...input.ui,
+        }
+
+        // set config to the port instance
+        port.setConfig(portConfig)
       }
 
-      // set config to the port instance
-      port.setConfig(portConfig)
       node.updatePort(port)
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       await ctx.flowStore.updateFlow(flow as Flow)
 

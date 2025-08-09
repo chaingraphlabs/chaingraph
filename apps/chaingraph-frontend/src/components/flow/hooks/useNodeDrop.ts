@@ -60,6 +60,7 @@ export function useNodeDrop() {
           category: event.node.category,
           tags: event.node.tags,
         },
+        portsConfig: event.node.portsConfig,
       })
     } catch (error) {
       console.error('Failed to add node:', error)

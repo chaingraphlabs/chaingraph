@@ -83,28 +83,6 @@ export class PortConfigProcessor {
     // Assign basic fields and get a new portConfig
     portConfig = this.assignBasicFields(portConfig, context)
 
-    // Process nested configurations based on port kind
-    // if (portConfig.type === 'object') {
-    //   portConfig = this.processObjectPortConfig(portConfig, context)
-    // } else if (portConfig.type === 'array') {
-    //   portConfig = this.processArrayPortConfig(portConfig, context)
-    // } else if (portConfig.type === 'enum') {
-    //   portConfig = this.processEnumPortConfig(portConfig, context)
-    // } else if (portConfig.type === 'any') {
-    //   portConfig = this.processAnyPortConfig(portConfig, context)
-    // } else if (portConfig.type === 'stream') {
-    //   portConfig = this.processStreamPortConfig(portConfig, context)
-    // } else if (
-    //   portConfig.type === 'string'
-    //   || portConfig.type === 'number'
-    //   || portConfig.type === 'boolean'
-    // ) {
-    //   // For primitive port configs, no further processing is needed
-    //   // All necessary fields have been assigned in 'assignBasicFields'
-    // } else {
-    //   throw new Error(`PortConfigProcessor: unsupported port type: ${(portConfig as any).type}`)
-    // }
-
     return portConfig
   }
 
@@ -139,7 +117,9 @@ export class PortConfigProcessor {
     // If the node field has an explicit value, override the defaultValue from the config.
     if (propertyValue !== undefined) {
       // Log warning if needed (optional)
-      newPortConfig.defaultValue = deepCopy(propertyValue)
+      newPortConfig.defaultValue = deepCopy(propertyValue) ?? portConfig.defaultValue
+    } else {
+      newPortConfig.defaultValue = portConfig.defaultValue
     }
 
     // Assign parentId

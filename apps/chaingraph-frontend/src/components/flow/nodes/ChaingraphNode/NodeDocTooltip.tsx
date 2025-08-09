@@ -38,7 +38,7 @@ interface NodeDocTooltipProps {
 
 interface PortItemProps {
   port: any
-  type: 'input' | 'output'
+  type: 'input' | 'output' | 'passthrough'
 }
 
 function PortItem({ port, type }: PortItemProps) {
@@ -54,7 +54,7 @@ function PortItem({ port, type }: PortItemProps) {
           <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-auto">
             {config.type}
           </Badge>
-          {type === 'input' && config.required && (
+          {(type === 'input' || type === 'passthrough') && config.required && (
             <div className="w-1.5 h-1.5 rounded-full bg-red-500" title="Required"></div>
           )}
         </div>
@@ -109,6 +109,11 @@ export function NodeDocTooltip({
   const inputs = useMemo(() =>
     Array.from(node.ports.values()).filter(
       port => port.getConfig().direction === PortDirection.Input && !port.isSystem(),
+    ), [node.ports])
+
+  const passthroughs = useMemo(() =>
+    Array.from(node.ports.values()).filter(
+      port => port.getConfig().direction === PortDirection.Passthrough && !port.isSystem(),
     ), [node.ports])
 
   const outputs = useMemo(() =>
@@ -245,7 +250,7 @@ export function NodeDocTooltip({
                   )}
 
                   {/* Ports Section - Collapsible */}
-                  {(inputs.length > 0 || outputs.length > 0 || systemPorts.length > 0) && (
+                  {(inputs.length > 0 || passthroughs.length > 0 || outputs.length > 0 || systemPorts.length > 0) && (
                     <div className="border rounded-md">
                       <Collapsible open={portsOpen} onOpenChange={setPortsOpen}>
                         <CollapsibleTrigger className="flex items-center justify-between w-full text-left hover:bg-muted/50 p-3">
@@ -273,6 +278,21 @@ export function NodeDocTooltip({
                                   {inputs
                                     .map(port => (
                                       <PortItem key={port.getConfig().key} port={port} type="input" />
+                                    ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Input Ports */}
+                            {passthroughs.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="text-xs font-medium text-muted-foreground">
+                                  Passthrough Ports
+                                </div>
+                                <div className="space-y-2">
+                                  {passthroughs
+                                    .map(port => (
+                                      <PortItem key={port.getConfig().key} port={port} type="passthrough" />
                                     ))}
                                 </div>
                               </div>

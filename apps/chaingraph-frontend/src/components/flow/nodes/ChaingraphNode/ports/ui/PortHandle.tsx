@@ -7,26 +7,53 @@
  */
 import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import { cn } from '@/lib/utils'
+import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
 import { Handle, Position } from '@xyflow/react'
+import { useUnit } from 'effector-react/effector-react.umd'
 import { PortDocTooltip } from '../doc'
 
 interface Props<C extends IPortConfig> {
   className?: string
   port: IPort<C>
+  isConnectable?: boolean
+  forceDirection?: 'input' | 'output'
 }
 
-export function PortHandle<C extends IPortConfig>({ port, className }: Props<C>) {
+export function PortHandle<C extends IPortConfig>({ port, forceDirection, className, isConnectable }: Props<C>) {
   const config = port.getConfig()
-  const bgColor = config.ui?.bgColor
+
+  const compatiblePorts = useUnit($compatiblePortsToDraggingEdge)
+  const isDraggingCompatible = compatiblePorts && compatiblePorts.includes(port.id)
+
+  const isCompatible = compatiblePorts === null ? true : isDraggingCompatible
+
+  const bgColor = isCompatible
+    ? config.ui?.bgColor
+    : '#a1a1a1'
+
+  const direction = forceDirection ?? config.direction
+  const position = direction === 'input'
+    ? Position.Left
+    : Position.Right
 
   return (
     <PortDocTooltip port={port}>
       <Handle
         id={config.id}
         hidden={config.ui?.hidePort === true}
-        type={config.direction === 'input' ? 'target' : 'source'}
-        position={config.direction === 'input' ? Position.Left : Position.Right}
-        style={bgColor ? { backgroundColor: bgColor } : undefined}
+        isConnectable={isConnectable === undefined || isConnectable}
+        type={direction === 'input' ? 'target' : 'source'}
+        position={position}
+        style={
+          isDraggingCompatible
+            ? {
+                backgroundColor: bgColor,
+                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
+              }
+            : {
+                backgroundColor: bgColor,
+              }
+        }
         className={cn(
           'absolute',
           'w-2 h-2 rounded-full top-2',
@@ -34,9 +61,11 @@ export function PortHandle<C extends IPortConfig>({ port, className }: Props<C>)
           'transition-shadow duration-200',
           'data-[connected=true]:shadow-port-connected',
           'z-50',
-          config.direction === 'input' ? '-left-4' : '-right-4',
+          direction === 'input' ? '-left-4' : '-right-4',
           !bgColor && 'bg-flow-data',
           className,
+          !isCompatible && 'opacity-10 cursor-not-allowed',
+          isCompatible && 'cursor-pointer',
         )}
       />
     </PortDocTooltip>

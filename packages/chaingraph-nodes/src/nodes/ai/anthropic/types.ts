@@ -440,6 +440,7 @@ export class AntropicMessage {
       schema: ContentBlockBase,
     },
     required: true,
+    isMutable: true,
   })
   content: ContentBlockBase[] = []
 }

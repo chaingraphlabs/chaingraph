@@ -6,7 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, NodeMetadataWithPorts } from '@badaitech/chaingraph-types'
+import type {
+  CategoryMetadata,
+  IPortConfig,
+  NodeMetadataWithPorts,
+} from '@badaitech/chaingraph-types'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useDnd } from '@/components/dnd/useDnd'
 import { ZoomContext } from '@/providers/ZoomProvider'
@@ -36,11 +40,12 @@ export function DndProvider({ children }: DndProviderProps) {
   const sensors = useSensors(mouseSensor, touchSensor)
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    const { node, categoryMetadata } = event.active.data.current as {
+    const { node, categoryMetadata, portsConfig } = event.active.data.current as {
       node: NodeMetadataWithPorts
       categoryMetadata: CategoryMetadata
+      portsConfig?: Map<string, IPortConfig>
     }
-    setDraggedNode({ node, categoryMetadata })
+    setDraggedNode({ node, categoryMetadata, portsConfig })
   }, [setDraggedNode])
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -56,6 +61,7 @@ export function DndProvider({ children }: DndProviderProps) {
           x: event.active.rect.current.translated.left,
           y: event.active.rect.current.translated.top,
         },
+        portsConfig: draggedNode.node.portsConfig,
       })
     }
 

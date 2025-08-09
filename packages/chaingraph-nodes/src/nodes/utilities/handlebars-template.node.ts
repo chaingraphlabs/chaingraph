@@ -55,7 +55,7 @@ Handlebars.registerHelper('lowercase', (str) => {
   category: NODE_CATEGORIES.UTILITIES,
   tags: ['template', 'handlebars', 'text', 'formatting', 'nested'],
 })
-class HandlebarsTemplateNode extends BaseNode {
+export class HandlebarsTemplateNode extends BaseNode {
   @Input()
   @PortString({
     title: 'Template',
@@ -147,5 +147,3 @@ Profile details: {{{json user.profile}}}`
     }
   }
 }
-
-export default HandlebarsTemplateNode

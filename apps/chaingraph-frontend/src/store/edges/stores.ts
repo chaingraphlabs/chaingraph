@@ -6,14 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
-import type { Edge } from '@xyflow/react'
+import type { INode, IPort } from '@badaitech/chaingraph-types'
+import type { Edge, FinalConnectionState, HandleType } from '@xyflow/react'
 import type { AddEdgeEventData, EdgeData, RemoveEdgeEventData } from './types'
-import { edgesDomain } from '@/store/domains'
+import { edgesDomain, portsDomain } from '@/store/domains'
+import { getDefaultTransferEngine } from '@badaitech/chaingraph-types'
 import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
-import { $xyflowNodes } from '../nodes'
+import { $nodeLayerDepth, $nodes, $xyflowNodes } from '../nodes'
 import { $trpcClient } from '../trpc/store'
 import { EDGE_STYLES } from './consts'
 
@@ -76,10 +77,108 @@ export const $edges = edgesDomain.createStore<EdgeData[]>([])
   // .reset(clearActiveFlow)
 
 // event connection start
-export const $isConnectingBeginEvent = edgesDomain.createEvent<boolean>()
-export const $isConnectingEndEvent = edgesDomain.createEvent<boolean>()
+interface DraggingEdge {
+  nodeId: string | null
+  handleId: string | null
+  handleType: HandleType | null
+}
 
-export const $isConnecting = edgesDomain.createStore(false)
+export const $isConnectingBeginEvent = edgesDomain.createEvent<DraggingEdge>()
+export const $isConnectingEndEvent = edgesDomain.createEvent<FinalConnectionState>()
+
+export const $draggingEdge = edgesDomain.createStore<DraggingEdge | null>(null)
+  .on($isConnectingBeginEvent, (_, { nodeId, handleId, handleType }) => ({
+    nodeId,
+    handleId,
+    handleType,
+  }))
+  .on($isConnectingEndEvent, () => null)
+  .reset(resetEdges)
+  .reset(globalReset)
+
+export const $draggingEdgePort = edgesDomain.createStore<{
+  draggingEdge: DraggingEdge | null
+  draggingPort: IPort | null
+} | null
+>(null)
+  .on($draggingEdge, (state, draggingEdge) => {
+    if (!draggingEdge || !draggingEdge.nodeId || !draggingEdge.handleId) {
+      return null
+    }
+
+    const node = $nodes.getState()[draggingEdge.nodeId]
+    if (!node) {
+      console.warn(`Node with ID ${draggingEdge.nodeId} not found while getting dragging edge port.`)
+      return null
+    }
+
+    const draggingPort = node.getPort(draggingEdge.handleId)
+    if (!draggingPort) {
+      console.warn(`Port with ID ${draggingEdge.handleId} not found in node ${draggingEdge.nodeId} while getting dragging edge port.`)
+      return null
+    }
+
+    return {
+      draggingEdge,
+      draggingPort,
+    }
+  })
+
+export const $compatiblePortsToDraggingEdge = portsDomain.createStore<string[] | null>(null)
+  .on($draggingEdgePort, (state, draggingEdgePort) => {
+    if (!draggingEdgePort || !draggingEdgePort.draggingPort || !draggingEdgePort.draggingEdge) {
+      // No dragging port or edge, return empty array
+      return null
+    }
+
+    const draggingPortDirection = draggingEdgePort.draggingEdge?.handleType
+    const draggingPort = draggingEdgePort.draggingPort
+
+    const compatiblePorts: string[] = []
+
+    const engine = getDefaultTransferEngine()
+
+    // iterate over all ports and find compatible ones
+    const nodes = Object.values($nodes.getState())
+
+    if (!nodes || nodes.length === 0) {
+      return null
+    }
+
+    nodes.forEach((node) => {
+      for (const port of Array.from(node.ports.values())) {
+        // Skip if the port is not in the correct direction for the dragging port
+        if (draggingPortDirection === 'source' && (port.getConfig().direction !== 'input' && port.getConfig().direction !== 'passthrough')) {
+          continue
+        } else if (draggingPortDirection === 'target' && (port.getConfig().direction !== 'output' && port.getConfig().direction !== 'passthrough')) {
+          continue
+        }
+
+        // Skip if the port same node as the dragging port
+        if (port.getConfig().nodeId === draggingPort.getConfig().nodeId) {
+          continue
+        }
+
+        // Skip if the port is the same as the dragging port
+        if (port.id === draggingPort.id) {
+          continue
+        }
+
+        // Skip if the port is not compatible with the dragging port
+        if (draggingPortDirection === 'source' && !engine.canConnect(draggingPort, port)) {
+          continue
+        } else if (draggingPortDirection === 'target' && !engine.canConnect(port, draggingPort)) {
+          continue
+        }
+
+        compatiblePorts.push(port.id)
+      }
+    })
+
+    return compatiblePorts
+  })
+
+export const $isConnecting = edgesDomain.createStore<boolean>(false)
   .on($isConnectingBeginEvent, () => true)
   .on($isConnectingEndEvent, () => false)
   .reset(resetEdges)
@@ -96,6 +195,7 @@ export const $xyflowEdges = combine(
   $executionState,
   $highlightedNodeId,
   $highlightedEdgeId,
+  $nodeLayerDepth,
   (
     storeEdges,
     nodes,
@@ -126,14 +226,17 @@ export const $xyflowEdges = combine(
           return null
         }
 
-        const sourcePort = (sourceNode.data?.node as INode).getPort(edge.sourcePortId)
-        const targetPort = (targetNode.data?.node as INode).getPort(edge.targetPortId)
+        const sourceINode = sourceNode.data?.node as INode
+        const targetINode = targetNode.data?.node as INode
+
+        const sourcePort = sourceINode.getPort(edge.sourcePortId)
+        const targetPort = targetINode.getPort(edge.targetPortId)
         if (!sourcePort || !targetPort) {
           return null
         }
 
-        const config = sourcePort.getConfig()
-        const edgeColor = config.ui?.bgColor ?? 'currentColor'
+        const sourcePortConfig = sourcePort.getConfig()
+        const edgeColor = sourcePortConfig.ui?.bgColor ?? 'currentColor'
 
         // Get execution state for this edge's target node
         const targetNodeExecution = executionNodes[edge.targetNodeId]
@@ -215,6 +318,11 @@ export const $xyflowEdges = combine(
           edgeStyle = EDGE_STYLES.HIGHLIGHTED
         }
 
+        // edge zIndex is determined by the max zIndex of source and target nodes
+        const sourceZIndex = $nodeLayerDepth[sourceNode.id] ?? 0
+        const targetZIndex = $nodeLayerDepth[targetNode.id] ?? 0
+        const zIndex = Math.max(sourceZIndex, targetZIndex) + 1
+
         // Create final edge with all computed styling
         const reactFlowEdge: Edge = {
           id: edge.edgeId,
@@ -223,6 +331,7 @@ export const $xyflowEdges = combine(
           sourceHandle: edge.sourcePortId,
           targetHandle: edge.targetPortId,
           type: edgeType,
+          zIndex,
           style: {
             stroke: edgeColor,
             strokeWidth: edgeStyle.strokeWidth,

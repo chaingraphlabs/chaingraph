@@ -18,13 +18,18 @@ import type {
  */
 import type {
   AnyPortConfig,
+  AnyPort as AnyPortType,
   INode,
   IPort,
 } from '@badaitech/chaingraph-types'
-import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
+import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
-import { memo } from 'react'
+import {
+  PortFactory,
+} from '@badaitech/chaingraph-types'
+import { memo, useMemo } from 'react'
+import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface AnyPortProps {
@@ -36,9 +41,63 @@ export interface AnyPortProps {
 function AnyPortComponent(props: AnyPortProps) {
   const { port, node, context } = props
 
-  const config = port.getConfig()
+  const config = useMemo(() => (port as AnyPortType).getRawConfig(), [port])
+
+  const underlyingType = useMemo(() => {
+    return (port as AnyPortType).unwrapUnderlyingType()
+  }, [port])
+
+  const underlyingPort = useMemo(() => {
+    if (!underlyingType || underlyingType.type === 'any' || !config.id)
+      return undefined
+
+    const newPort = underlyingType
+      ? PortFactory.create({
+          ...underlyingType,
+          id: config.id,
+          parentId: config.parentId,
+          direction: config.direction,
+          required: config.required,
+          key: config.key,
+          connections: config.connections,
+          title: underlyingType.title || config.title,
+          description: underlyingType.description || config.description,
+          ui: {
+            ...config,
+            ...underlyingType.ui,
+            // bgColor: underlyingType.ui?.bgColor || config.ui?.bgColor,
+            // borderColor: underlyingType.ui?.borderColor || config.ui?.borderColor,
+            // ...underlyingType.ui,
+          },
+        })
+      : undefined
+
+    if (newPort) {
+      // set value from the original port if it exists
+      newPort.setValue(port.getValue())
+    }
+
+    return newPort
+  }, [config, port, underlyingType])
+
   const ui = config.ui
   const title = config.title || config.key
+
+  // if (config.underlyingType?.type === 'object') {
+  //   return <AnyObjectPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
+  // }
+
+  if (underlyingPort && underlyingType?.type !== 'any') {
+    return (
+      <PortComponent node={node} port={underlyingPort as IPort} context={context} />
+    )
+  }
+
+  //
+  // if (underlyingPort && underlyingType?.type === 'array') {
+  //   // return <AnyObjectPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
+  //   return <ArrayPort node={node} port={underlyingPort as IPort<ArrayPortConfig>} context={context} />
+  // }
 
   if (ui?.hidden)
     return null
@@ -51,7 +110,8 @@ function AnyPortComponent(props: AnyPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {config.direction === 'input' && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       <div className={cn(
         'flex flex-col',
@@ -64,7 +124,7 @@ function AnyPortComponent(props: AnyPortProps) {
             // if port required and the value is empty, add a red underline
             config.required
             && (port.getValue() === undefined || port.getValue() === null || !port.validate())
-            && config.direction === 'input'
+            && (config.direction === 'input' || config.direction === 'passthrough')
             && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
@@ -83,7 +143,20 @@ function AnyPortComponent(props: AnyPortProps) {
 
       </div>
 
-      {config.direction === 'output' && <PortHandle port={port} />}
+      {
+        (config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )
+      }
     </div>
   )
 }

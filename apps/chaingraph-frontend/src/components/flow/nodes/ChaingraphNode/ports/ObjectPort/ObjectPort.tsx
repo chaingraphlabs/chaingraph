@@ -38,7 +38,7 @@ const variants = {
     opacity: 1,
     height: 'auto',
     pointerEvents: 'auto' as const,
-    transition: { duration: 0.2 },
+    transition: { duration: 0 },
     overflow: 'visible' as const,
   },
   closed: {
@@ -46,7 +46,7 @@ const variants = {
     height: 0,
     pointerEvents: 'none' as const,
     overflow: 'hidden' as const,
-    transition: { duration: 0.1 },
+    transition: { duration: 0 },
   },
 } as const
 
@@ -67,6 +67,7 @@ const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }
             key={childPort.id}
             port={childPort}
             className={cn('opacity-0')}
+            isConnectable={false}
           />
           <ChildrenHiddenHandles node={node} port={childPort} />
         </Fragment>
@@ -152,7 +153,12 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
   }, [previewNode, capturedNode])
 
   const needRenderObject = useMemo(() => {
-    return (connectedEdges.length === 0 || config.direction === 'output') && !isNodeSchemaCaptureEnabled
+    return (
+      connectedEdges.filter(edge => edge.targetPortId === config.id).length === 0
+      || config.direction === 'output'
+    )
+    && !isNodeSchemaCaptureEnabled
+    && !config.ui?.hideInternalProperties
   }, [config, connectedEdges, isNodeSchemaCaptureEnabled])
 
   const dropNodeZoneRef = useRef<HTMLDivElement>(null)
@@ -169,7 +175,8 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     >
       {!config.ui?.collapsed && <ChildrenHiddenHandles node={node} port={port as IPort} />}
 
-      {!isOutput && <PortHandle port={port} />}
+      {(config.direction === 'input' || config.direction === 'passthrough')
+        && <PortHandle port={port} forceDirection="input" />}
 
       {!needRenderObject && (
         <div
@@ -287,9 +294,17 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
               exit={config.ui?.collapsed ? 'closed' : 'open'}
               className={cn(
                 'relative w-full',
-                isOutput
-                  ? 'pr-[15px] border-r-2 border-muted/95 -mr-[6px]'
-                  : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
+                // isOutput
+                //   ? 'pr-[15px] border-r-2 border-muted/95 -mr-[6px]'
+                //   : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
+
+                config.direction === 'output'
+                  ? 'pr-[15px] -mr-[6px] border-r-2 border-muted/95'
+                  : config.direction === 'input'
+                    ? 'pl-[15px] -ml-[6px] border-l-2 border-muted/95'
+                    : config.direction === 'passthrough'
+                      ? 'pl-[15px] pr-[31px] border-r-2  border-l-2 border-muted/95'
+                      : '',
               )}
             >
 
@@ -346,7 +361,18 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
       )}
 
       {
-        isOutput && <PortHandle port={port} />
+        (config.direction === 'output' || config.direction === 'passthrough')
+        && (
+          <PortHandle
+            port={port}
+            forceDirection="output"
+            className={cn(
+              config.parentId !== undefined
+              && config.direction === 'passthrough'
+              && '-right-8',
+            )}
+          />
+        )
       }
     </div>
   )

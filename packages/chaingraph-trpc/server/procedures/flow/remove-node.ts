@@ -34,7 +34,7 @@ export const removeNode = flowContextProcedure
       }
 
       // Remove node from flow
-      flow.removeNode(nodeId)
+      await flow.removeNode(nodeId)
       await ctx.flowStore.updateFlow(flow as Flow)
 
       return {

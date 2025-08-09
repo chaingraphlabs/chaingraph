@@ -8,9 +8,13 @@
 
 import type { JSONValue } from '../../utils/json'
 import type { AnyPortConfig, AnyPortValue, IPort, IPortConfig } from '../base'
+import { PortFactory } from '../../port/factory'
+import { deepCopy } from '../../utils'
 import { BasePort } from '../base'
 import { generatePortID } from '../id-generate'
 import { AnyPortPlugin } from '../plugins'
+
+const MAX_UNDERLYING_TYPES = 10 // Prevent infinite loops in case of circular references
 
 /**
  * Concrete implementation of an Any Port.
@@ -54,12 +58,17 @@ export class AnyPort extends BasePort<AnyPortConfig> {
     super(mergedConfig)
   }
 
-  getConfig(): AnyPortConfig {
+  getConfig() {
     let underlyingType = this.config.underlyingType
     if (underlyingType) {
       // find actual underlying type by iterate over any port underlying types
+      let depth = 0
       while (underlyingType && underlyingType.type === 'any' && underlyingType.underlyingType) {
         underlyingType = underlyingType.underlyingType
+        depth++
+        if (depth > MAX_UNDERLYING_TYPES) {
+          throw new Error('Maximum depth reached while resolving underlying type')
+        }
       }
 
       return {
@@ -90,6 +99,103 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    */
   protected getDefaultValue(): AnyPortValue | undefined {
     return this.config.defaultValue
+  }
+
+  setValue(newValue: any | undefined): void {
+    if (this.config.underlyingType?.type !== 'object') {
+      super.setValue(newValue)
+      return
+    }
+    // Clear the current value if newValue is undefined
+    if (newValue === undefined) {
+      this.value = undefined
+      return
+    }
+    if (newValue === null) {
+      this.value = null
+      return
+    }
+
+    // Initialize value if it doesn't exist
+    if (this.value === undefined || this.value === null) {
+      this.value = {}
+    }
+
+    // TODO: Add support for arrays and other types
+
+    // Initialize value if it doesn't exist or isn't an object
+    if (typeof newValue !== 'object' || Array.isArray(newValue)) {
+      this.value = {}
+      return
+    }
+
+    if (typeof this.value === 'object' && !Array.isArray(this.value)) {
+      // Delete keys that don't exist in new value
+      for (const key in this.value) {
+        if (Object.hasOwn(this.value, key) && !Object.hasOwn(newValue, key)) {
+          delete this.value[key]
+        }
+      }
+
+      // Set new values and recursively update
+      for (const key in newValue) {
+        if (Object.hasOwn(newValue, key)) {
+          const value = newValue[key]
+          if (value !== undefined) {
+            this.setValueForKey(this.value!, key, value)
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Set a value for a specific key with proper type handling
+   * @param target - The target object to update
+   * @param key - The key to set
+   * @param value - The value to set
+   */
+  private setValueForKey(target: Record<string, any>, key: string, value: any): void {
+    // Handle null values
+    if (value === null) {
+      target[key] = null
+      return
+    }
+
+    // Handle object types (excluding arrays) - update recursively
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      // Initialize target property if it doesn't exist or isn't an object
+      if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+        target[key] = {}
+      }
+
+      // Recursively update the object properties
+      this.setObjectPropertiesRecursively(target[key], value)
+    } else {
+      // For arrays or primitive values, assign directly
+      target[key] = value
+    }
+  }
+
+  /**
+   * Recursively update object properties
+   * @param target - The target object to update
+   * @param source - The source object with new values
+   */
+  private setObjectPropertiesRecursively(target: Record<string, any>, source: Record<string, any>): void {
+    // Delete properties from target that don't exist in source
+    for (const key in target) {
+      if (Object.hasOwn(target, key) && !Object.hasOwn(source, key)) {
+        delete target[key]
+      }
+    }
+
+    // Update or add properties from source to target
+    for (const key in source) {
+      if (Object.hasOwn(source, key)) {
+        this.setValueForKey(target, key, source[key])
+      }
+    }
   }
 
   /**
@@ -170,6 +276,26 @@ export class AnyPort extends BasePort<AnyPortConfig> {
   }
 
   /**
+   * Unwraps the underlying type of the any port. It is iterates over the underlying types and while
+   * the underlying type is 'any' and has an underlyingType, it will return the actual underlying type.
+   */
+  public unwrapUnderlyingType(): IPortConfig | undefined {
+    const maxDepth = 10 // Prevent infinite loops in case of circular references
+    let underlyingType = this.config.underlyingType
+    let depth = 0
+    while (underlyingType && underlyingType.type === 'any' && underlyingType.underlyingType && depth < maxDepth) {
+      underlyingType = underlyingType.underlyingType
+      depth++
+    }
+
+    if (depth >= maxDepth) {
+      throw new Error('Maximum depth reached while unwrapping underlying type')
+    }
+
+    return underlyingType
+  }
+
+  /**
    * Clones the port with a new ID.
    * Useful for creating copies of the port with a unique identifier.
    */
@@ -178,6 +304,45 @@ export class AnyPort extends BasePort<AnyPortConfig> {
       ...this.config,
       id: generatePortID(this.config.key || this.config.id || ''),
     })
+  }
+
+  operateOnUnderlyingType<UnderlyingTypeConfig extends IPortConfig = IPortConfig>(
+    operation: (underlyingPort: IPort<UnderlyingTypeConfig>) => IPort<UnderlyingTypeConfig>,
+  ): void {
+    const underlyingType = this.unwrapUnderlyingType() as UnderlyingTypeConfig
+    if (!underlyingType) {
+      throw new Error('No underlying type set for AnyPort')
+    }
+
+    const underlyingPort = PortFactory.createFromConfig({
+      ...deepCopy(underlyingType),
+      id: this.config.id,
+      parentId: this.config.parentId,
+      key: this.config.key,
+      title: this.config.title,
+      description: this.config.description,
+      connections: this.config.connections,
+      order: this.config.order,
+      nodeId: this.config.nodeId,
+      direction: this.config.direction,
+    }) as IPort
+    if (!underlyingPort) {
+      throw new Error('Failed to create underlying port from configuration')
+    }
+
+    underlyingPort.setValue(this.getValue())
+
+    // TODO: Find a way to type this properly
+    const changedPort = operation(underlyingPort as unknown as IPort<UnderlyingTypeConfig>)
+    if (!changedPort) {
+      throw new Error('Operation on underlying port returned undefined')
+    }
+
+    // Update the underlying type in the any port configuration
+    this.setUnderlyingType(changedPort.getConfig())
+
+    // Update the value if it exists
+    this.setValue(changedPort.getValue())
   }
 }
 

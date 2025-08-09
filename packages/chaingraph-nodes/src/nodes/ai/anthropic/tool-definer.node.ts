@@ -81,7 +81,7 @@ class AntropicToolDefinerNode extends BaseNode {
     const inputSchemaPort = findPort(this, (port) => {
       return port.getConfig().key === 'inputSchema'
         && port.getConfig().type === 'object'
-        && port.getConfig().direction === 'input'
+        && (port.getConfig().direction === 'input' || port.getConfig().direction === 'passthrough')
     })
     if (!inputSchemaPort) {
       throw new Error('Input schema port not found')
@@ -90,7 +90,7 @@ class AntropicToolDefinerNode extends BaseNode {
     const inputSchemaPropertiesPort = findPort(this, (port) => {
       return port.getConfig().key === 'properties'
         && port.getConfig().type === 'object'
-        && port.getConfig().direction === 'input'
+        && (port.getConfig().direction === 'input' || port.getConfig().direction === 'passthrough')
         && port.getConfig().parentId === inputSchemaPort.id
     })
 

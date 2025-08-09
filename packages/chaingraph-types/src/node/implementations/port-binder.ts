@@ -14,6 +14,9 @@ import type {
 } from '../../port'
 import type { IComplexPortHandler, INodeComposite, IPortBinder, IPortManager } from '../interfaces'
 import {
+  AnyPort,
+} from '../../port'
+import {
   generatePortIDArrayElement,
 } from '../../port'
 import { PortFactory } from '../../port'
@@ -142,6 +145,53 @@ export class PortBinder implements IPortBinder {
           }
         }
       }
+    } else if (config.type === 'any' && config.underlyingType?.type === 'object') {
+      // For any ports with underlying type of object, we need to rebind all properties when value changes
+      Object.defineProperty(targetObject, key, {
+        get() {
+          return port.getValue()
+        },
+        set(newValue) {
+          // Set the port value
+          port.setValue(newValue)
+
+          // Re-bind all properties for the new object
+          const objectValue = port.getValue()
+          if (objectValue && typeof objectValue === 'object') {
+            const childPorts = portManager.getChildPorts(port)
+
+            // The critical fix: First update all child port values to match the new object
+            // before rebinding them. This prevents overwriting new values with old ones.
+            for (const childPort of childPorts) {
+              const childKey = childPort.getConfig().key
+              if (childKey) {
+                // First update the child port's value to match the corresponding property
+                // in the new object value
+                if (objectValue[childKey] !== undefined) {
+                  childPort.setValue(objectValue[childKey])
+                }
+
+                // Rebind each child port to the corresponding property
+                self.bindPortToNodeProperty(objectValue, childPort)
+              }
+            }
+          }
+        },
+        configurable: true,
+        enumerable: true,
+      })
+
+      // For each child port, bind it to the new object value
+      const objectValue = port.getValue()
+      if (objectValue && typeof objectValue === 'object') {
+        const childPorts = portManager.getChildPorts(port)
+        for (const childPort of childPorts) {
+          if (childPort.getConfig().key) {
+            // Bind each child port to the corresponding property
+            self.bindPortToNodeProperty(objectValue, childPort)
+          }
+        }
+      }
     } else {
       // For simple types, use standard getter/setter
 
@@ -184,9 +234,9 @@ export class PortBinder implements IPortBinder {
         // Bind this root port to the node property - CRITICAL FIX
         this.bindPortToNodeProperty(this.nodeInstance, port)
 
-        // If this is a complex port (object or array), add it to the list to process
+        // If this is a complex port (object, array, any), add it to the list to process
         const config = port.getConfig()
-        if (config.type === 'object' || config.type === 'array') {
+        if (config.type === 'object' || config.type === 'array' || config.type === 'any') {
           objectPortsToProcess.push(port)
         }
       }
@@ -213,6 +263,8 @@ export class PortBinder implements IPortBinder {
         this.processObjectPort(port, portMap, portsToProcess)
       } else if (config.type === 'array') {
         this.processArrayPort(port, portMap, portsToProcess)
+      } else if (config.type === 'any') {
+        this.processAnyPort(port, portMap, portsToProcess)
       }
     }
   }
@@ -263,7 +315,7 @@ export class PortBinder implements IPortBinder {
       }
 
       // If this child is a complex port, add it to the processing queue
-      if (childConfig.type === 'object' || childConfig.type === 'array') {
+      if (childConfig.type === 'object' || childConfig.type === 'array' || childConfig.type === 'any') {
         portsToProcess.push(childPort)
       }
     }
@@ -293,6 +345,74 @@ export class PortBinder implements IPortBinder {
         portMap,
         portsToProcess,
       )
+    }
+  }
+
+  /**
+   * Process an any port with underlying type object to create child ports for all properties
+   * @param anyPort The object port to process
+   * @param portMap The map to add created ports to
+   * @param portsToProcess List to add any new complex ports to
+   */
+  private processAnyPort(anyPort: IPort, portMap: Map<string, IPort>, portsToProcess: IPort[]): void {
+    const isAnyPort = anyPort instanceof AnyPort
+    if (!isAnyPort) {
+      return
+    }
+
+    const config = anyPort.getConfig()
+    const underlyingType = anyPort.unwrapUnderlyingType()
+
+    if (!underlyingType || underlyingType.type !== 'object') {
+      // TODO: Change behavior to handle other underlying types if needed, e.g. arrays
+      return
+    }
+
+    const objectUnderlyingType = underlyingType as ObjectPortConfig
+
+    const properties = objectUnderlyingType.schema?.properties
+    if (!properties || Object.keys(properties).length === 0) {
+      // If there are no properties, we don't need to create child ports
+      return
+    }
+
+    const anyValue = anyPort.getValue() || {}
+
+    // Process each property in the schema
+    for (const [key, propertyConfig] of Object.entries(properties)) {
+      // Process the port config with the processor to handle nested ports
+      const processedConfig = this.processPortConfig(
+        { ...propertyConfig },
+        {
+          nodeId: this.nodeId,
+          parentPortConfig: config,
+          propertyKey: key,
+          propertyValue: anyValue[key],
+        },
+      )
+
+      // Create the child port
+      const childPortId = `${anyPort.id}.${key}`
+      const childConfig = {
+        ...processedConfig,
+        id: childPortId,
+        parentId: anyPort.id,
+        key,
+        nodeId: this.nodeId,
+      }
+
+      const childPort = PortFactory.createFromConfig(childConfig)
+      portMap.set(childPortId, childPort)
+
+      // Bind to parent object - CRITICAL FIX
+      if (typeof anyValue === 'object' && anyValue !== null) {
+        this.bindPortToNodeProperty(anyValue, childPort)
+      }
+
+      // If this child is a complex port, add it to the processing queue
+      if (childConfig.type === 'object' || childConfig.type === 'array' || childConfig.type === 'any') {
+        portsToProcess.push(childPort)
+      }
     }
   }
 
@@ -341,7 +461,7 @@ export class PortBinder implements IPortBinder {
     }
 
     // If this item is a complex port, add it to processing queue
-    if (completeItemConfig.type === 'object' || completeItemConfig.type === 'array') {
+    if (completeItemConfig.type === 'object' || completeItemConfig.type === 'array' || completeItemConfig.type === 'any') {
       portsToProcess.push(itemPort)
     }
   }
@@ -360,105 +480,17 @@ export class PortBinder implements IPortBinder {
   }
 
   /**
-   * Rebuild all port bindings
+   * Rebind all port bindings
    * Call this after modifying port structure
    */
-  rebuildPortBindings(): void {
-    // First, find all root ports
-    // const rootPorts = Array.from(this.portManager.ports.values())
-    //   .filter(port => !port.getConfig().parentId)
-    //
-    // // Bind each root port to the node
-    // for (const rootPort of rootPorts) {
-    //   this.bindPortToNodeProperty(this.nodeInstance, rootPort)
-    // }
-
-    // Then rebind all complex port children
-    this.rebindAfterDeserialization()
-  }
-
-  /**
-   * Rebuild all property bindings after deserialization
-   */
-  rebindAfterDeserialization(): void {
+  bindPortBindings(): void {
     // Find all root ports (those without a parentId)
     const rootPorts = Array.from(this.portManager.ports.values())
-      .filter(port => !port.getConfig().parentId)
+      .filter(port => !port || !('getConfig' in port) || !port.getConfig().parentId)
 
     // Bind each root port to the node
     for (const port of rootPorts) {
       this.bindPortToNodeProperty(this.nodeInstance, port)
     }
-
-    // Bind object and array properties
-    // for (const port of this.portManager.ports.values()) {
-    //   const config = port.getConfig()
-    //   const parentId = config.parentId
-    //
-    //   if (!parentId)
-    //     continue
-    //
-    //   // Find parent port
-    //   const parentPort = this.portManager.getPort(parentId)
-    //   if (!parentPort)
-    //     continue
-    //
-    //   const parentValue = parentPort.getValue()
-    //   if (!parentValue)
-    //     continue
-    //
-    //   // eslint-disable-next-line ts/no-this-alias
-    //   const self = this
-    //
-    //   // if (parentPort.getConfig().type === 'array') {
-    //   //   // bind "port" value to "parentPort" value by index
-    //   //   const indexString = port.getConfig().key
-    //   //   if (indexString?.length) {
-    //   //     const index = Number.parseInt(indexString)
-    //   //     Object.defineProperty(parentValue, index, {
-    //   //       get() {
-    //   //         return port.getValue()
-    //   //       },
-    //   //       set(newValue) {
-    //   //         // Set the port value
-    //   //         port.setValue(newValue)
-    //   //
-    //   //         // Recreate all array item ports
-    //   //         if (Array.isArray(newValue) && self.complexPortHandler) {
-    //   //           self.complexPortHandler.recreateArrayItemPorts(port, newValue)
-    //   //         }
-    //   //       },
-    //   //       configurable: true,
-    //   //       enumerable: true,
-    //   //     })
-    //   //   }
-    //   // }
-    //
-    //   // TODO: Check if follow logic is actually works
-    //   // For object child ports
-    //   if (parentId.includes('.') || !parentId.includes('[')) {
-    //     // For object properties, bind to the parent object's property
-    //     if (typeof parentValue === 'object' && parentValue !== null && !Array.isArray(parentValue)) {
-    //       const key = config.key
-    //       if (key) {
-    //         this.bindPortToNodeProperty(parentValue, port)
-    //       }
-    //     }
-    //   } else if (parentId.includes('[')) {
-    //     // For array items, bind to the array at the specified index
-    //     if (Array.isArray(parentValue)) {
-    //       const match = port.id.match(/\[(\d+)\]$/)
-    //       if (match) {
-    //         const index = Number.parseInt(match[1], 10)
-    //         if (index < parentValue.length) {
-    //           // If the item is an object, bind ports to its properties
-    //           if (typeof parentValue[index] === 'object' && parentValue[index] !== null) {
-    //             this.bindPortToNodeProperty(parentValue, port)
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
   }
 }

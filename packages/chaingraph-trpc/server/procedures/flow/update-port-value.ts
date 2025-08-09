@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ObjectPort } from '@badaitech/chaingraph-types'
+import type { IPort, ObjectPort } from '@badaitech/chaingraph-types'
 import { generatePortIDArrayElement, NodeEventType } from '@badaitech/chaingraph-types'
 import { findPort } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
@@ -38,13 +38,29 @@ export const updatePortValue = flowContextProcedure
       if (!node)
         throw new Error('Node not found')
 
+      node.bindPortBindings()
+
       const port = node.ports.get(input.portId)
       if (!port)
         throw new Error('Port not found')
 
-      node.rebuildPortBindings()
       port.setValue(input.value)
-      node.updatePort(port)
+
+      const portsToUpdate = [port]
+
+      // find all parents of this port and update their values
+      let currentPort = port
+      while (currentPort.getConfig().parentId) {
+        const parentPort = node.getPort(currentPort.getConfig().parentId!)
+        if (!parentPort) {
+          throw new Error(`Parent port ${currentPort.getConfig().parentId} not found for port ${currentPort.id}`)
+        }
+        portsToUpdate.push(parentPort)
+        currentPort = parentPort
+      }
+
+      node.updatePorts(portsToUpdate)
+      flow.updateNode(node)
 
       // console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 
@@ -181,6 +197,27 @@ export const removeFieldObjectPort = flowContextProcedure
         version: node.getVersion(),
       })
 
+      // emits for all parents port update:
+      let currentPort: IPort | undefined = keyPort
+
+      while (currentPort?.getConfig().parentId) {
+        const parentPort = node.getPort(currentPort.getConfig().parentId!)
+        if (!parentPort) {
+          break
+        }
+
+        node.emit({
+          type: NodeEventType.PortUpdate,
+          portId: parentPort.id,
+          port: parentPort,
+          nodeId: node.id,
+          timestamp: new Date(),
+          version: node.getVersion(),
+        })
+
+        currentPort = parentPort
+      }
+
       // trigger node update
       flow.updateNode(node)
 
@@ -229,9 +266,10 @@ export const updateItemConfigArrayPort = flowContextProcedure
         ...config,
         itemConfig: input.itemConfig,
       })
-      node.updatePort(port)
 
       node.updateArrayItemConfig(port)
+
+      //
 
       flow.updateNode(node)
 
@@ -273,6 +311,7 @@ export const appendElementArrayPort = flowContextProcedure
       if (port.getConfig().type !== 'array')
         throw new Error('Port is not an array port')
 
+      console.log('Appending value to array port', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
       node.appendArrayItem(port, input.value)
       flow.updateNode(node)
 

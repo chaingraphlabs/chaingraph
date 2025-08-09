@@ -6,12 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPortConfig } from '@badaitech/chaingraph-types'
+import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import Color from 'color'
 
 // Get a color based on port type
 export function getPortTypeColor(theme: 'light' | 'dark', portConfig: IPortConfig) {
-  const defaultColorMap: Record<string, string> = {
+  const defaultColorMap: Record<PortType, string> = {
     string: '#e70d0d', // red
     number: '#1f5eec', // blue
     boolean: '#4cd53b', // green
@@ -20,6 +20,7 @@ export function getPortTypeColor(theme: 'light' | 'dark', portConfig: IPortConfi
     stream: '#ffa047', // orange
     enum: '#eedf3c', // yellow
     any: '#cccccc', // gray
+    secret: '#008080', // Teal
   }
 
   let borderColor = portConfig.ui?.borderColor || defaultColorMap[portConfig.type] || '#272727'

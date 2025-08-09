@@ -346,11 +346,11 @@ class ComplexTestNode extends BaseNodeCompositional {
   emptyArray: string[] = []
 
   @Port({
-    type: 'object',
+    type: 'object' as const,
     schema: {
       properties: {
         empty: {
-          type: 'object',
+          type: 'object' as const,
           schema: {
             properties: {},
           },

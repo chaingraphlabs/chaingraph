@@ -8,7 +8,7 @@
 
 import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { OKXConfig as OKXDexClientConfig } from '@okx-dex/okx-dex-sdk/dist/types'
-import type { OKXConfig } from 'src/nodes/okx-dex-api/types'
+import type { OKXConfig } from './types'
 import { OKXDexClient } from '@okx-dex/okx-dex-sdk'
 
 export async function createDexApiClient(

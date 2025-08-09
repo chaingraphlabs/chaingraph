@@ -93,17 +93,33 @@ export class PortManager implements IPortManager {
    * @param portId The ID of the port to remove
    */
   removePort(portId: string): void {
-    // remove all child ports first
-    for (const port of this._ports.values()) {
-      if (port.getConfig().parentId === portId) {
-        this.removePort(port.id)
-      }
+    // remove all nested ports that have this port as parent
+    const port = this._ports.get(portId)
+    if (!port) {
+      // throw new Error(`Port with ID ${portId} does not exist.`)
+      // just ignore the error for now
+      return
+    }
+
+    const nestedPorts = this.getNestedPorts(port)
+    for (const nestedPort of nestedPorts) {
+      this._ports.delete(nestedPort.id)
     }
 
     // remove the port itself
     if (!this._ports.delete(portId)) {
       // throw new Error(`Port with ID ${portId} does not exist.`)
-      // just ignore the error
+      // just ignore the error for now
+    }
+  }
+
+  /**
+   * Remove multiple ports by their IDs
+   * @param portIds Array of port IDs to remove
+   */
+  removePorts(portIds: string[]): void {
+    for (const portId of portIds) {
+      this.removePort(portId)
     }
   }
 
@@ -161,7 +177,24 @@ export class PortManager implements IPortManager {
     const parentId = parentPort.id
 
     return Array.from(this._ports.values())
-      .filter(port => port.getConfig().parentId === parentId)
+      .filter(port => 'getConfig' in port && port.getConfig().parentId === parentId)
+  }
+
+  /**
+   * Get all nested ports of a parent port, including its children and their children recursively
+   * @param parentPort The parent port
+   * @returns Array of all nested ports
+   */
+  getNestedPorts(parentPort: IPort): IPort[] {
+    const childPorts = this.getChildPorts(parentPort)
+    const nestedPorts: IPort[] = []
+
+    for (const child of childPorts) {
+      nestedPorts.push(...this.getNestedPorts(child))
+    }
+    nestedPorts.push(...childPorts)
+
+    return nestedPorts
   }
 
   /**
@@ -169,10 +202,46 @@ export class PortManager implements IPortManager {
    * @param port The port to update
    */
   updatePort(port: IPort): void {
-    // if (!this._ports.has(port.id)) {
-    //   throw new Error(`Port with ID ${port.id} does not exist.`)
-    // }
-
     this._ports.set(port.id, port)
+  }
+
+  /**
+   * Update multiple ports at once
+   * @param ports Array of ports to update
+   */
+  updatePorts(ports: IPort[]): void {
+    for (const port of ports) {
+      this.updatePort(port)
+    }
+  }
+
+  /**
+   * Find a port by a predicate function
+   * @param predicate Predicate function to match the port
+   * @returns The first matching port or undefined
+   */
+  findPort(predicate: (port: IPort) => boolean): IPort | undefined {
+    for (const port of this._ports.values()) {
+      if (predicate(port)) {
+        return port
+      }
+    }
+    return undefined
+  }
+
+  // findPorts: (predicate: (port: IPort) => boolean) => IPort[]/**/
+  /**
+   * Find all ports by a predicate function
+   * @param predicate Predicate function to match the port
+   * @returns Array of ports that match the predicate
+   */
+  findPorts(predicate: (port: IPort) => boolean): IPort[] {
+    const matchingPorts: IPort[] = []
+    for (const port of this._ports.values()) {
+      if (predicate(port)) {
+        matchingPorts.push(port)
+      }
+    }
+    return matchingPorts
   }
 }

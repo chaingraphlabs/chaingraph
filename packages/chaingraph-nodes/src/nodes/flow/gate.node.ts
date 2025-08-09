@@ -183,27 +183,9 @@ class GateNode extends BaseNode {
     if (inputPort.getConfig().type === 'any') {
       // Just ensure we maintain one empty "any" port
       await this.ensureHasOneEmptyAnyPort()
-      return
     }
 
-    // For non-any ports (manually added), immediately create matching output port
-    const connectionMap = this.getConnectionMap()
-
-    // Skip if this input already has a mapping
-    if (connectionMap[inputKey]) {
-      return
-    }
-
-    // Create output port with the same key (or a unique one if needed)
-    // const outputKey = this.getUniquePortKey(inputKey)
-    const outputKey = inputKey
-
-    // Update connection map
-    connectionMap[inputKey] = outputKey
-    this.saveConnectionMap(connectionMap)
-
-    // Create the corresponding output port
-    await this.createOutputPort(inputPort, outputKey, inputPort)
+    // For non-any ports (manually added), will be handled by portUpdate event
   }
 
   /**
@@ -258,6 +240,9 @@ class GateNode extends BaseNode {
         const outputKey = connectionMap[inputKey]
 
         if (!outputKey) {
+          connectionMap[inputKey] = inputKey
+          this.saveConnectionMap(connectionMap)
+
           // If no mapping exists, create a new output port
           await this.createOutputPort(event.port, inputKey, event.port)
         } else {
@@ -478,7 +463,7 @@ class GateNode extends BaseNode {
     }
 
     // Add the port to the output object
-    return this.addObjectProperty(outputObjectPort, outputKey, portConfig)
+    return this.addObjectProperty(outputObjectPort, outputKey, portConfig, true)
   }
 
   /**

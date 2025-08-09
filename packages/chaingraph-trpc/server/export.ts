@@ -20,6 +20,7 @@ export type {
 
 export * from './executions'
 export { init } from './init'
+export * from './mcp'
 export * from './procedures'
 export * from './stores'
 export {

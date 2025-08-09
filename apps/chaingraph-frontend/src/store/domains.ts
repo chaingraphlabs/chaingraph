@@ -42,3 +42,6 @@ export const focusedEditorsDomain = createDomain('focused-editors')
 
 // Drag and drop domain for drag and drop state management
 export const dragDropDomain = createDomain('drag-drop')
+
+// MCP domain for MCP server management
+export const mcpDomain = createDomain('mcp')

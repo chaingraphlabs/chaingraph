@@ -7,13 +7,13 @@
  */
 
 import type { ExecutionContext } from '../execution'
-import type { EventReturnType, NodeEvent, NodeEventDataType } from '../node/events'
+import type { EventReturnType, NodeEvent, NodeEventDataType, PortUpdateEvent } from '../node/events'
 import type { Dimensions, NodeUIMetadata, Position } from '../node/node-ui'
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
-import type { IPort, IPortConfig } from '../port'
+import type { AnyPort, IPort, IPortConfig, ObjectPort } from '../port'
 import type { JSONValue } from '../utils/json'
-import type { CloneWithNewIdResult, IComplexPortHandler, INodeComposite } from './interfaces'
-import { applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
+import type { CloneWithNewIdResult, IComplexPortHandler, INodeComposite, IPortManager } from './interfaces'
+import { applyPortUpdateHandlers, applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
 import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
 import {
@@ -95,7 +95,6 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize components with dependencies
     this.portBinder = new PortBinder(this.portManager, this, this.id)
     this.complexPortHandler = new ComplexPortHandler(
-      // this.portManager,
       this,
       this.portBinder,
       this.id,
@@ -262,11 +261,16 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
   setPorts(ports: Map<string, IPort>): void {
     this.portManager.setPorts(ports)
-    this.rebuildPortBindings()
+    this.bindPortBindings()
   }
 
   removePort(portId: string): void {
     this.portManager.removePort(portId)
+    this.versionManager.incrementVersion()
+  }
+
+  removePorts(portIds: string[]): void {
+    this.portManager.removePorts(portIds)
     this.versionManager.incrementVersion()
   }
 
@@ -278,28 +282,64 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     return this.portManager.getChildPorts(parentPort)
   }
 
+  getNestedPorts(parentPort: IPort): IPort[] {
+    return this.portManager.getNestedPorts(parentPort)
+  }
+
   /**
    * Update a port and emit a port update event
    * This is a critical method that triggers port-related events
    * @param port The port to update
    */
   async updatePort(port: IPort): Promise<void> {
-    this.portManager.updatePort(port)
-    this.rebuildPortBindings()
+    return this.updatePorts([port])
+  }
+
+  /**
+   * Update multiple ports at once
+   * This is useful for batch updates
+   * @param ports Array of ports to update
+   */
+  async updatePorts(ports: IPort[]): Promise<void> {
+    this.portManager.updatePorts(ports)
+    this.bindPortBindings()
 
     this.versionManager.incrementVersion()
 
-    // Create and emit the port update event
-    const event = this.createEvent(NodeEventType.PortUpdate, {
-      portId: port.id,
-      port,
+    const promises = ports.map((port) => {
+      // Create and emit the port update event
+      const event = this.createEvent(NodeEventType.PortUpdate, {
+        portId: port.id,
+        port,
+      })
+
+      // Emit the event, which will also call onEvent
+      return this.emit(event)
     })
 
-    // Emit the event, which will also call onEvent
-    await this.emit(event)
+    return Promise.all(promises).then(() => {})
+  }
 
-    // Return once everything is done
-    return Promise.resolve()
+  copyObjectSchemaTo(
+    sourceNode: IPortManager,
+    sourceObjectPort: ObjectPort | AnyPort,
+    targetObjectPort: ObjectPort | AnyPort,
+    useParentUI?: boolean,
+  ): void {
+    this.complexPortHandler.copyObjectSchemaTo(
+      sourceNode,
+      sourceObjectPort,
+      targetObjectPort,
+      useParentUI,
+    )
+  }
+
+  findPort(predicate: (port: IPort) => boolean): IPort | undefined {
+    return this.portManager.findPort(predicate)
+  }
+
+  findPorts(predicate: (port: IPort) => boolean): IPort[] {
+    return this.portManager.findPorts(predicate)
   }
 
   //
@@ -307,12 +347,12 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   //
   on<T extends NodeEvent>(
     eventType: T['type'],
-    handler: (event: T) => void,
+    handler: (event: T) => void | Promise<void>,
   ): () => void {
     return this.eventManager.on(eventType, handler)
   }
 
-  onAll(handler: (event: NodeEvent) => void): () => void {
+  onAll(handler: (event: NodeEvent) => void | Promise<void>): () => void {
     return this.eventManager.onAll(handler)
   }
 
@@ -323,6 +363,11 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    * @param _event The event to handle
    */
   async onEvent(_event: NodeEvent): Promise<void> {
+    // Handle port update events first with specific handlers
+    if (_event.type === NodeEventType.PortUpdate) {
+      await applyPortUpdateHandlers(this, _event as PortUpdateEvent)
+    }
+
     // Apply visibility rules for all events
     return this.applyPortVisibilityRules()
   }
@@ -370,23 +415,27 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this.portBinder.bindPortToNodeProperty(targetObject, port)
   }
 
-  rebuildPortBindings(): void {
-    this.portBinder.rebuildPortBindings()
+  bindPortBindings(): void {
+    this.portBinder.bindPortBindings()
   }
 
   initializePortsFromConfigs(portsConfigs: Map<string, IPortConfig>): void {
     this.portBinder.initializePortsFromConfigs(portsConfigs)
   }
 
-  rebindAfterDeserialization(): void {
-    this.portBinder.rebindAfterDeserialization()
-  }
-
   //
   // IComplexPortHandler implementation (delegation to complexPortHandler)
   //
-  addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig): IPort {
-    return this.complexPortHandler.addObjectProperty(objectPort, key, portConfig)
+  addObjectProperty(objectPort: IPort, key: string, portConfig: IPortConfig, useParentUI?: boolean): IPort {
+    return this.complexPortHandler.addObjectProperty(objectPort, key, portConfig, useParentUI)
+  }
+
+  addObjectProperties(objectPort: IPort, properties: IPortConfig[], useParentUI?: boolean): IPort[] {
+    return this.complexPortHandler.addObjectProperties(objectPort, properties, useParentUI)
+  }
+
+  removeObjectProperties(objectPort: IPort, keys: string[]): void {
+    this.complexPortHandler.removeObjectProperties(objectPort, keys)
   }
 
   removeObjectProperty(objectPort: IPort, key: string): void {
@@ -403,6 +452,14 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
   removeArrayItem(arrayPort: IPort, index: number): void {
     this.complexPortHandler.removeArrayItem(arrayPort, index)
+  }
+
+  removeArrayItems(arrayPort: IPort, indices: number[]): void {
+    this.complexPortHandler.removeArrayItems(arrayPort, indices)
+  }
+
+  refreshAnyPortUnderlyingPorts(anyPort: IPort, useParentUI?: boolean): void {
+    this.complexPortHandler.refreshAnyPortUnderlyingPorts(anyPort, useParentUI)
   }
 
   processPortConfig(config: IPortConfig, context: {
@@ -560,7 +617,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       //     const portValue = port.getValue()
       //     clonedNode[port.getConfig().key!] = deepCopy(portValue)
       //     clonedNode.portManager.updatePort(port)
-      //     clonedNode.rebuildPortBindings()
+      //     clonedNode.bindPortBindings()
       //   } else {
       //     console.log(`[NODE] Port with key ${port.getConfig().key} not found in cloned node. This should not happen.`)
       //   }
@@ -696,10 +753,10 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     // Initialize ports from configs
     this.initializePortsFromConfigs(portsConfig || new Map())
 
-    this.rebindAfterDeserialization()
+    this.bindPortBindings()
 
     // Apply visibility rules during initialization
-    void this.applyPortVisibilityRules()
+    this.applyPortVisibilityRules().then(() => {})
 
     // Update node status
     this.setStatus(NodeStatus.Initialized, false)
