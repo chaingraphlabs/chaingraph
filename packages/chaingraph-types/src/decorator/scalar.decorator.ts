@@ -15,7 +15,7 @@ import { Port } from './port.decorator'
  * Optional configuration properties (such as defaultValue, minLength, maxLength, etc.) can be passed.
  *
  * Usage examples:
- *
+ * ```
  *   // Using default configuration:
  *   @PortString()
  *   public myPort: string = '';
@@ -23,6 +23,7 @@ import { Port } from './port.decorator'
  *   // With custom configuration:
  *   @PortString({ defaultValue: 'hello', minLength: 1, maxLength: 100 })
  *   public myPort?: string;
+ * ```
  *
  * @param config Optional configuration object for additional options.
  */
