@@ -150,9 +150,15 @@ export const loadMCPCapabilitiesFx = mcpDomain.createEffect(async ({
 }) => {
   // Load all capabilities in parallel
   const [tools, resources, prompts] = await Promise.all([
-    fetchMCPTools(client),
-    fetchMCPResources(client),
-    fetchMCPPrompts(client),
+    fetchMCPTools(client).catch(() => {
+      return [] // Return empty array on error
+    }),
+    fetchMCPResources(client).catch(() => {
+      return [] // Return empty array on error
+    }),
+    fetchMCPPrompts(client).catch(() => {
+      return [] // Return empty array on error
+    }),
   ])
 
   return {

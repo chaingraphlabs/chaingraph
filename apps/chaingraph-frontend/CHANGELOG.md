@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-frontend
 
+## 0.4.0-dev.1
+
+### Patch Changes
+
+- Restore gate node
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.4.0-dev.1
+  - @badaitech/chaingraph-types@0.4.0-dev.1
+  - @badaitech/chaingraph-trpc@0.4.0-dev.1
+  - @badaitech/badai-api@0.4.0-dev.1
+
 ## 0.4.0-dev.0
 
 ### Minor Changes
