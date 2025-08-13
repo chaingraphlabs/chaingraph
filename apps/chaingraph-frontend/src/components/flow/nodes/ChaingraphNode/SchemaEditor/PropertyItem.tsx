@@ -136,6 +136,7 @@ export function PropertyItem({
             title: 'Item',
           },
           isMutable: true,
+          isSchemaMutable: true,
         } as ArrayPortConfig
         break
 

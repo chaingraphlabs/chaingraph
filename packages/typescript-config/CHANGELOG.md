@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.4.0-dev.2
+
+### Patch Changes
+
+- Enhanced edge transfer strategies with disconnect behavior, port configuration improvements, and new EdgeTransferService for better data synchronization
+
 ## 0.4.0-dev.1
 
 ### Patch Changes

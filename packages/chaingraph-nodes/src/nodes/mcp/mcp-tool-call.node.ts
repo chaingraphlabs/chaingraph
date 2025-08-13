@@ -73,7 +73,7 @@ export class MCPToolCallNode extends BaseNode {
   @Passthrough()
   @PortObject({
     title: 'Arguments',
-    description: 'Tool arguments (schema depends on selected tool)',
+    description: 'Tool arguments object with fields matching the selected tool\'s input schema. Required for tool execution - all tool parameters must be provided as properties of this arguments object.',
     schema: { properties: {} },
     isSchemaMutable: true,
     required: true,

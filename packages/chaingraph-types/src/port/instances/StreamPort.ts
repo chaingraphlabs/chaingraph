@@ -8,6 +8,7 @@
 
 import type { JSONValue } from '../../utils/json'
 import type { IPort, IPortConfig, StreamPortConfig, StreamPortValue } from '../base'
+import { deepCopy } from '../../utils'
 import { BasePort } from '../base'
 import { generatePortID } from '../id-generate'
 import { StreamPortPlugin } from '../plugins'
@@ -157,7 +158,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
       id: generatePortID(this.config.key || this.config.id || ''),
     })
     if (this.value) {
-      port.setValue(this.value) // Set the current value
+      port.setValue(deepCopy(this.value)) // Set the current value
     }
     return port
   }

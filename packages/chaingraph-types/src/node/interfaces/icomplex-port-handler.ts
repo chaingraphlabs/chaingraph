@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AnyPort, IPort, IPortConfig, ObjectPort } from '../../port'
+import type { AnyPort, IPort, IPortConfig, ObjectPort, ObjectPortConfig } from '../../port'
 import type { IPortManager } from './iport-manager'
 
 export interface INodeObjectPortOperations {
@@ -62,6 +62,20 @@ export interface INodeObjectPortOperations {
     sourceObjectPort: ObjectPort | AnyPort,
     targetObjectPort: ObjectPort | AnyPort,
     useParentUI?: boolean
+  ) => void
+
+  /**
+   * Create nested object ports for an object value
+   * @param parentPort The parent port to create the nested ports under
+   * @param objectValue The object value to create ports for
+   * @param config The configuration for the object port
+   * @param useParentUI indicates whether we want to use the parents UI
+   */
+  createNestedObjectPorts: (
+    parentPort: IPort,
+    objectValue: any,
+    config: ObjectPortConfig,
+    useParentUI?: boolean,
   ) => void
 }
 

@@ -74,6 +74,8 @@ export class Edge implements IEdge {
     const errorPort = this.sourceNode.getErrorPort()
     const errorMessagePort = this.sourceNode.getErrorMessagePort()
 
+    console.debug(`[Edge] Transferring data from ${this.sourceNode.id}:${this.sourcePort.id} to ${this.targetNode.id}:${this.targetPort.id}. Value JSON: ${JSON.stringify(this.sourcePort.getValue())}`)
+
     const isErrorTransferEdge = this.sourcePort.id === errorPort?.id || this.sourcePort.id === errorMessagePort?.id
 
     if (
@@ -110,8 +112,33 @@ export class Edge implements IEdge {
       // return
       throw new Error(`Source port ${this.sourcePort.id} has no data to transfer.`)
     }
-    this.targetPort.setValue(data)
-    this.targetNode.updatePort(this.targetPort)
+
+    console.debug(`[Edge] Transferring value: ${JSON.stringify(data)} to target port ${this.targetPort.id}`)
+    console.debug(`[Edge] Target port type: ${this.targetPort.getConfig().type}, Target port key: ${this.targetPort.getConfig().key}`)
+    console.debug(`[Edge] Target port value BEFORE setValue: ${JSON.stringify(this.targetPort.getValue())}`)
+
+    // Get the actual port from the target node's port manager
+    const actualTargetPort = this.targetNode.getPort(this.targetPort.id)
+    if (!actualTargetPort) {
+      throw new Error(`Target port ${this.targetPort.id} not found in target node ${this.targetNode.id}`)
+    }
+
+    console.debug(`[Edge] Node's port instance value BEFORE: ${JSON.stringify(actualTargetPort.getValue())}`)
+    console.debug(`[Edge] Edge's port instance === Node's port instance? ${this.targetPort === actualTargetPort}`)
+
+    // Set the value on the actual port from the node
+    actualTargetPort.setValue(data)
+    console.debug(`[Edge] Node's port instance value AFTER setValue: ${JSON.stringify(actualTargetPort.getValue())}`)
+
+    console.debug(`[Edge] Calling updatePort on target node ${this.targetNode.id}`)
+    this.targetNode.updatePort(actualTargetPort, {
+      sourceOfUpdate: `Edge:transfer:${this.sourceNode.id}:${this.sourcePort.id}`,
+    })
+
+    console.debug(`[Edge] Node's port instance value AFTER updatePort: ${JSON.stringify(actualTargetPort.getValue())}`)
+
+    // Update the edge's reference to point to the actual port
+    // this.targetPort = actualTargetPort
   }
 
   updateMetadata(metadata: Partial<EdgeMetadata>): void {

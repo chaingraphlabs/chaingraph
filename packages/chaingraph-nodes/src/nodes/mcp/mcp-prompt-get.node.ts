@@ -88,6 +88,7 @@ export class MCPPromptGetNode extends BaseNode {
     description: 'Prompt arguments (schema depends on selected prompt)',
     schema: { properties: {} },
     isSchemaMutable: true,
+    required: true,
   })
   arguments: Record<string, string> = {}
 

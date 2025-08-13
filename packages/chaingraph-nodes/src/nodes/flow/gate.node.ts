@@ -274,7 +274,9 @@ class GateNode extends BaseNode {
             })
 
             // update the output port
-            await this.updatePort(outputPort)
+            await this.updatePort(outputPort, {
+              sourceOfUpdate: 'GateNode:handlePortUpdate:outputPort',
+            })
           }
         }
       }

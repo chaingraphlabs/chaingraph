@@ -77,6 +77,7 @@ export class MCPResourceReadNode extends BaseNode {
     description: 'Optional arguments for the resource read operation. Passed as key-value pairs.',
     schema: { properties: {} },
     isSchemaMutable: true,
+    required: true,
   })
   arguments: Record<string, string> = {}
 

@@ -193,6 +193,7 @@ function ArrayItemEditorContent({ onSave }: { onSave: (config: IPortConfig) => v
             title: 'Item',
           },
           isMutable: true,
+          isSchemaMutable: true,
         } as ArrayPortConfig
         break
 

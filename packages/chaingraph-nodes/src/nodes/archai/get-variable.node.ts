@@ -231,7 +231,9 @@ class ArchAIGetVariableNode extends BaseNode {
             hidden: false,
           },
         })
-        await this.updatePort(variableTypePort)
+        await this.updatePort(variableTypePort, {
+          sourceOfUpdate: 'ArchAIGetVariableNode:updateDefaultValuePortType:changeToAny',
+        })
       }
 
       return
@@ -266,7 +268,9 @@ class ArchAIGetVariableNode extends BaseNode {
               hidden: false,
             },
           })
-          await this.updatePort(variableTypePort)
+          await this.updatePort(variableTypePort, {
+            sourceOfUpdate: 'ArchAIGetVariableNode:updateDefaultValuePortType:defaultToAny',
+          })
         }
         return
     }
@@ -280,7 +284,9 @@ class ArchAIGetVariableNode extends BaseNode {
           hidden: true,
         },
       })
-      await this.updatePort(variableTypePort)
+      await this.updatePort(variableTypePort, {
+        sourceOfUpdate: 'ArchAIGetVariableNode:updateDefaultValuePortType:hideVariableTypePort',
+      })
     }
 
     // const currentVariableType = this.variableType
@@ -416,7 +422,9 @@ class ArchAIGetVariableNode extends BaseNode {
     // }
 
     // Update the port
-    await this.updatePort(valuePort as IPort)
+    await this.updatePort(valuePort as IPort, {
+      sourceOfUpdate: 'ArchAIGetVariableNode:updateValuePortType',
+    })
   }
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {

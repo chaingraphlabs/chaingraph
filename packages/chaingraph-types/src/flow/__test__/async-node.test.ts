@@ -76,7 +76,7 @@ class MergerNode extends BaseNode {
       type: 'number',
     },
   })
-  output: MultiChannel<number> = new MultiChannel()
+  output: MultiChannel<number> = new MultiChannel<number>()
 
   async execute(): Promise<NodeExecutionResult> {
     return {
@@ -175,6 +175,7 @@ describe('flow with async nodes', () => {
 
   it('supports multiple background actions from several nodes', async () => {
     const flow = new Flow()
+    flow.setIsDisabledPropagationEvents(true)
 
     const evenNumbers = Array.from({ length: 100 })
       .map((_, i) => i * 2)
@@ -210,7 +211,11 @@ describe('flow with async nodes', () => {
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
-    const executionEngine = new ExecutionEngine(flow, context)
+    const executionEngine = new ExecutionEngine(flow, context, {
+      execution: {
+        maxConcurrency: 5,
+      },
+    })
     await executionEngine.execute()
 
     const actual = await Array.fromAsync(mergerNode.output)

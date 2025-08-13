@@ -6,7 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { EdgeAddedEventData, EdgesAddedEventData, PortUpdatedEventData } from '../../events'
+import type {
+  EdgeAddedEventData,
+  EdgeRemovedEventData,
+  EdgesAddedEventData,
+  PortUpdatedEventData,
+} from '../../events'
 import type { ActionContext, PropagationAction } from '../types'
 import { getDefaultTransferEngine } from '../../../port/transfer-rules'
 import { FlowEventType } from '../../events'
@@ -29,6 +34,7 @@ export class TransferRulesAction implements PropagationAction {
     return (
       event.type === FlowEventType.EdgeAdded
       || event.type === FlowEventType.EdgesAdded
+      || event.type === FlowEventType.EdgeRemoved
       || event.type === FlowEventType.PortUpdated
     )
   }
@@ -76,6 +82,48 @@ export class TransferRulesAction implements PropagationAction {
               result.error,
             )
           }
+        }
+
+        break
+      }
+
+      case FlowEventType.EdgeRemoved:
+      {
+        const eventData: EdgeRemovedEventData = event.data as EdgeRemovedEventData
+
+        console.debug(`[TransferRulesAction] Edge removed: ${eventData.edgeId}`)
+
+        const sourceNode = flow.nodes.get(eventData.sourceNodeId)
+        const targetNode = flow.nodes.get(eventData.targetNodeId)
+        if (!sourceNode || !targetNode) {
+          console.warn(
+            `[TransferRulesAction] Source or target node not found for edge ${eventData.edgeId}`,
+          )
+          return
+        }
+
+        const sourcePort = sourceNode.getPort(eventData.sourcePortId)
+        const targetPort = targetNode.getPort(eventData.targetPortId)
+        if (!sourcePort || !targetPort) {
+          console.warn(
+            `[TransferRulesAction] Source or target port not found for edge ${eventData.edgeId}`,
+          )
+          return
+        }
+
+        // Execute onConnect for new edge
+        const result = await engine.onDisconnect(
+          sourcePort,
+          targetPort,
+          sourceNode,
+          targetNode,
+        )
+
+        if (!result.success) {
+          console.warn(
+            `Transfer failed for edge ${eventData.edgeId}: ${result.message}`,
+            result.error,
+          )
         }
 
         break

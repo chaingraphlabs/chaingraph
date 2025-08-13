@@ -115,7 +115,7 @@ class TestNode extends BaseNode {
       }
 
       portMessageSuffix.setValue(`${this.message} [suffix]`)
-      this.updatePort(portMessageSuffix)
+      await this.updatePort(portMessageSuffix)
     }
   }
 

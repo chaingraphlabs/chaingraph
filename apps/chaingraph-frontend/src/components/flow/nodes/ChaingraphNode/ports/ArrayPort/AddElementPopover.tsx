@@ -88,6 +88,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
     },
     defaultValue: [],
     isMutable: true,
+    isSchemaMutable: true,
     ui: {
       hideEditor: false,
     },

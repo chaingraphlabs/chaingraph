@@ -7,9 +7,9 @@
  */
 
 import type { ArrayPortConfig, ObjectPortConfig, StreamPortConfig } from '../base'
-import type { ObjectPort } from '../instances'
 import type { TransferContext, TransferResult, TransferStrategy } from './types'
 import { deepCopy } from '../../utils'
+import { ArrayPort, ObjectPort } from '../instances'
 import { AnyPort } from '../instances'
 import { unwrapAnyPort } from './utils/port-resolver'
 import { checkSchemaCompatibility } from './utils/schema-compatibility'
@@ -133,6 +133,46 @@ export const Strategies = {
     }
   },
 
+  objectSchemaReset: (ctx: TransferContext): Promise<TransferResult> => {
+    if (ctx.targetPort instanceof ObjectPort) {
+      ctx.targetPort.setConfig({
+        ...(ctx.targetConfig as ObjectPortConfig),
+        schema: { properties: {} },
+      })
+      ctx.targetPort.setValue({}) // Reset value to empty object
+
+      const childPorts = ctx.targetNode.getChildPorts(ctx.targetPort)
+      if (childPorts.length) {
+        ctx.targetNode.removePorts(childPorts.map(port => port.id))
+      }
+
+      ctx.targetNode.updatePort(ctx.targetPort)
+
+      return Promise.resolve({
+        success: true,
+        schemaTransferred: true,
+        message: 'Object schema reset successfully',
+      })
+    }
+
+    if (ctx.targetPort instanceof AnyPort) {
+      ctx.targetPort.setUnderlyingType(undefined)
+      ctx.targetPort.setValue(undefined)
+      ctx.targetNode.refreshAnyPortUnderlyingPorts(ctx.targetPort, true)
+
+      return Promise.resolve({
+        success: true,
+        underlyingTypeSet: true,
+        message: 'Underlying type reset successfully',
+      })
+    }
+
+    return Promise.resolve({
+      success: false,
+      message: 'Target port must be ObjectPort or AnyPort to reset schema',
+    })
+  },
+
   /**
    * Transfer array item configuration
    */
@@ -207,6 +247,46 @@ export const Strategies = {
     }
   },
 
+  arraySchemaReset: (ctx: TransferContext): Promise<TransferResult> => {
+    if (ctx.targetPort instanceof AnyPort) {
+      ctx.targetPort.setUnderlyingType(undefined)
+      ctx.targetPort.setValue(undefined)
+      ctx.targetNode.refreshAnyPortUnderlyingPorts(ctx.targetPort, true)
+
+      return Promise.resolve({
+        success: true,
+        underlyingTypeSet: true,
+        message: 'Underlying type reset successfully',
+      })
+    }
+
+    if (ctx.targetPort instanceof ArrayPort) {
+      ctx.targetPort.setConfig({
+        ...(ctx.targetConfig as ArrayPortConfig),
+        itemConfig: { type: 'any' }, // Reset item config to Any
+      })
+      ctx.targetPort.setValue([]) // Reset value to empty object
+
+      const childPorts = ctx.targetNode.getChildPorts(ctx.targetPort)
+      if (childPorts.length) {
+        ctx.targetNode.removePorts(childPorts.map(port => port.id))
+      }
+
+      ctx.targetNode.updatePort(ctx.targetPort)
+
+      return Promise.resolve({
+        success: true,
+        schemaTransferred: true,
+        message: 'Object schema reset successfully',
+      })
+    }
+
+    return Promise.resolve({
+      success: false,
+      message: 'Target port must be ObjectPort or AnyPort to reset schema',
+    })
+  },
+
   /**
    * Set underlying type on AnyPort
    */
@@ -259,6 +339,29 @@ export const Strategies = {
         error: error instanceof Error ? error : new Error(String(error)),
         message: `Failed to set underlying type: ${error}`,
       }
+    }
+  },
+
+  resetUnderlyingType: (ctx: TransferContext): TransferResult => {
+    console.log(`[Strategies.resetUnderlyingType] Resetting underlying type for port ${ctx.targetPort}`)
+
+    if (!(ctx.targetPort instanceof AnyPort)) {
+      return {
+        success: false,
+        message: 'Target must be AnyPort to set underlying type',
+      }
+    }
+
+    ctx.targetPort.setUnderlyingType(undefined)
+    ctx.targetPort.setValue(undefined)
+
+    // Refresh child ports if needed
+    ctx.targetNode.refreshAnyPortUnderlyingPorts(ctx.targetPort, true)
+
+    return {
+      success: true,
+      underlyingTypeSet: true,
+      message: 'Underlying type set successfully',
     }
   },
 
@@ -346,7 +449,7 @@ export const Strategies = {
   objectSchemaAndValue: (ctx: TransferContext): Promise<TransferResult> => {
     return Strategies.compose(
       Strategies.objectSchema,
-      Strategies.value,
+      // Strategies.value,
     )(ctx) as Promise<TransferResult>
   },
 
@@ -377,7 +480,7 @@ export const Strategies = {
   arrayConfigAndValue: (ctx: TransferContext): Promise<TransferResult> => {
     return Strategies.compose(
       Strategies.arrayItemConfig,
-      Strategies.value,
+      // Strategies.value,
       Strategies.updateArrayItems, // Update items once after all changes
     )(ctx) as Promise<TransferResult>
   },
@@ -457,7 +560,7 @@ export const Strategies = {
   streamConfigAndValue: (ctx: TransferContext): Promise<TransferResult> => {
     return Strategies.compose(
       Strategies.streamItemConfig,
-      Strategies.value,
+      // Strategies.value,
       // Strategies.updateStreamItems, // Update items once after all changes
     )(ctx) as Promise<TransferResult>
   },
@@ -468,7 +571,7 @@ export const Strategies = {
   underlyingTypeAndValue: (ctx: TransferContext): Promise<TransferResult> => {
     return Strategies.compose(
       Strategies.setUnderlyingType,
-      Strategies.value,
+      // Strategies.value,
     )(ctx) as Promise<TransferResult>
   },
 

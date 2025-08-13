@@ -44,18 +44,12 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
   }
 
   setValue(newValue: ExtractValue<C> | undefined): void {
-    // if (!this.validateValue(newValue)) {
-    //   throw new PortError(
-    //     PortErrorType.ValidationError,
-    //     'Value validation failed in setValue.',
-    //   )
-    // }
     this.value = newValue
   }
 
   reset(): void {
     // Reset the current value. If a default is available in the config, return that.
-    this.value = this.getDefaultValue()
+    this.value = deepCopy(this.getDefaultValue())
   }
 
   /**

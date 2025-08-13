@@ -104,6 +104,7 @@ export function EditItemConfigPopover({
             title: 'Item',
           },
           isMutable: true,
+          isSchemaMutable: true,
         }
         break
 

@@ -733,10 +733,10 @@ describe('complex Serialization Tests', () => {
           caching: true,
           maxItems: 100,
         },
-      });
+      })
 
       // Modify new property
-      (node.config.advanced as any).maxItems = 250
+      node.config.advanced.maxItems = 250
 
       // Remove original property
       node.removeObjectProperty(configPort, 'enabled')

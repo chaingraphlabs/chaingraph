@@ -40,7 +40,7 @@ export class DeepCloneHandler {
 
     // Separate top-level ports (no parentId) from child ports
     const topLevelPorts = allSourcePorts.filter(port => !port.getConfig().parentId)
-    const childPorts = allSourcePorts.filter(port => port.getConfig().parentId)
+    // const childPorts = allSourcePorts.filter(port => port.getConfig().parentId)
 
     // First pass: Clone all top-level ports
     const clonedTopLevelPorts = new Map<string, IPort>()

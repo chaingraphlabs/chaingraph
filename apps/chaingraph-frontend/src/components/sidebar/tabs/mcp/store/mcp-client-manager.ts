@@ -62,8 +62,13 @@ export async function createMCPClient(server: MCPServer): Promise<Client> {
     // If that fails, try the older SSE transport
     console.warn('StreamableHTTP transport failed, trying SSE transport:', error)
 
-    const sseTransport = new SSEClientTransport(url)
-    await client.connect(sseTransport)
+    try {
+      const sseTransport = new SSEClientTransport(url)
+      await client.connect(sseTransport)
+    } catch (sseError) {
+      console.error('Failed to connect using SSE transport:', sseError)
+      throw new Error('Failed to connect to MCP server using both StreamableHTTP and SSE transports')
+    }
   }
 
   // Verify connection with ping

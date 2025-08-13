@@ -229,13 +229,17 @@ export class ComplexPortHandler implements IComplexPortHandler {
     }
 
     // Update the object port with the new schema
-    this.portManager.updatePorts(childPorts)
+    this.portManager.updatePorts(childPorts, {
+      sourceOfUpdate: 'complex-port-handler:addObjectProperties',
+    })
 
     // check the actual type of the object port from the port manager
     const objectPortFromStore = this.portManager.getPort(objectPort.id)
     if (objectPortFromStore?.getConfig().type === 'object' && objectPortFromStore instanceof ObjectPort) {
       // update the object port only if it is an ObjectPort
-      this.portManager.updatePort(objectPort)
+      this.portManager.updatePort(objectPort, {
+        sourceOfUpdate: 'complex-port-handler:addObjectProperties:updateObjectPort',
+      })
     }
 
     return childPorts
@@ -403,7 +407,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     }
 
     if (portsToUpdate.length > 0) {
-      this.portManager.updatePorts(portsToUpdate)
+      this.portManager.updatePorts(portsToUpdate, {
+        sourceOfUpdate: 'complex-port-handler:copyObjectSchemaTo',
+      })
     }
 
     // Recursively process nested object ports
@@ -418,11 +424,13 @@ export class ComplexPortHandler implements IComplexPortHandler {
     }
 
     // Update target port configuration
-    targetObjectPort.setValue({})
+    // targetObjectPort.setValue({})
     targetObjectPort.setConfig(deepCopy(targetConfig))
-    targetObjectPort.setValue(deepCopy(targetConfig.defaultValue) || {})
+    // targetObjectPort.setValue(deepCopy(targetConfig.defaultValue) || {})
 
-    this.portManager.updatePort(targetObjectPort as IPort)
+    this.portManager.updatePort(targetObjectPort as IPort, {
+      sourceOfUpdate: 'complex-port-handler:copyObjectSchemaTo:updateTargetPort',
+    })
   }
 
   /**
@@ -432,7 +440,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
    * @param config The port configuration for the object
    * @param useParentUI indicates whether we want to use the parents UI
    */
-  private createNestedObjectPorts(
+  createNestedObjectPorts(
     parentPort: IPort,
     objectValue: any,
     config: ObjectPortConfig,
@@ -539,19 +547,6 @@ export class ComplexPortHandler implements IComplexPortHandler {
         portsToRemove.push(childPort.id)
       }
 
-      // TODO: adapt this to AnyPort as well
-      // if (objectPort instanceof AnyPort) {
-      //   objectPort.operateOnUnderlyingType((underlyingPort) => {
-      //     if (underlyingPort instanceof ObjectPort) {
-      //       underlyingPort.removeField(key)
-      //     } else {
-      //       console.warn(`Underlying port ${underlyingPort.id} is not an ObjectPort, cannot remove field ${key}`)
-      //     }
-      //     return underlyingPort
-      //   })
-      //   return
-      // } else
-
       if (objectPort instanceof ObjectPort) {
         const objectPortTyped = objectPort as ObjectPort
         objectPortTyped.removeField(key)
@@ -569,7 +564,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     this.portManager.removePorts(portsToRemove)
 
     // Update the parent port
-    this.portManager.updatePort(objectPort)
+    this.portManager.updatePort(objectPort, {
+      sourceOfUpdate: 'ComplexPortHandler:removeObjectProperties',
+    })
   }
 
   /**
@@ -590,7 +587,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     }
 
     // Update the array port
-    this.portManager.updatePort(arrayPort)
+    this.portManager.updatePort(arrayPort, {
+      sourceOfUpdate: 'ComplexPortHandler:updateArrayItemConfig',
+    })
   }
 
   /**
@@ -632,7 +631,8 @@ export class ComplexPortHandler implements IComplexPortHandler {
       nodeId: this.nodeId,
     }
 
-    let actualValue = deepCopy(value) ?? deepCopy(completeItemConfig.defaultValue) ?? undefined
+    // let actualValue = deepCopy(value) ?? deepCopy(completeItemConfig.defaultValue) ?? undefined
+    let actualValue = value ?? deepCopy(completeItemConfig.defaultValue) ?? undefined
     const itemPort = PortFactory.createFromConfig(completeItemConfig)
     this.portManager.setPort(itemPort)
 
@@ -645,8 +645,12 @@ export class ComplexPortHandler implements IComplexPortHandler {
     arrayPort.setValue(newValue)
 
     // Update the array port
-    this.portManager.updatePort(itemPort)
-    this.portManager.updatePort(arrayPort)
+    this.portManager.updatePort(itemPort, {
+      sourceOfUpdate: 'ComplexPortHandler:appendArrayItem',
+    })
+    this.portManager.updatePort(arrayPort, {
+      sourceOfUpdate: 'ComplexPortHandler:appendArrayItem:updateArrayPort',
+    })
 
     return newLength
   }
@@ -685,7 +689,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
     this.recreateArrayItemPorts(arrayPort, newValue)
 
     // Update the array port
-    this.portManager.updatePort(arrayPort)
+    this.portManager.updatePort(arrayPort, {
+      sourceOfUpdate: 'ComplexPortHandler:removeArrayItem',
+    })
   }
 
   removeArrayItems(arrayPort: IPort, indices: number[]): void {
@@ -752,7 +758,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
       )
     }
 
-    this.portManager.updatePort(arrayPort)
+    this.portManager.updatePort(arrayPort, {
+      sourceOfUpdate: 'ComplexPortHandler:recreateArrayItemPorts',
+    })
   }
 
   /**
@@ -939,7 +947,17 @@ export class ComplexPortHandler implements IComplexPortHandler {
     }
 
     this.createComplexItemChildPorts(anyPort, anyPort.getValue(), useParentUI)
-    this.portManager.updatePort(anyPort)
+    this.portManager.updatePort(anyPort, {
+      sourceOfUpdate: 'ComplexPortHandler:refreshAnyPortUnderlyingPorts',
+    })
+
+    // trigger updates for all child ports
+    const childPortsAfterUpdate = this.portManager.getChildPorts(anyPort)
+    for (const childPort of childPortsAfterUpdate) {
+      this.portManager.updatePort(childPort, {
+        sourceOfUpdate: 'ComplexPortHandler:refreshAnyPortUnderlyingPorts:childPortUpdate',
+      })
+    }
   }
 
   /**

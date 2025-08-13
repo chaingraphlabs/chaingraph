@@ -53,6 +53,9 @@ export interface TransferBehaviors {
   /** Execute when edge is created */
   onConnect?: (context: TransferContext) => TransferResult | Promise<TransferResult>
 
+  /** Execute when edge is removed */
+  onDisconnect?: (context: TransferContext) => TransferResult | Promise<TransferResult>
+
   /** Execute when source port updates on existing edge */
   onSourceUpdate?: (context: TransferContext) => TransferResult | Promise<TransferResult>
 
