@@ -170,7 +170,7 @@ export class TransferEngine {
     }
 
     if (this.options.debug) {
-      console.log(`[TransferEngine] onConnect with rule: ${rule.name}`)
+      console.log(`[TransferEngine] onDisconnect with rule: ${rule.name}`)
     }
 
     // Execute onConnect behavior if defined
@@ -179,13 +179,13 @@ export class TransferEngine {
         const result = await rule.behaviors.onDisconnect(context)
 
         if (this.options.debug && result.success) {
-          console.log(`[TransferEngine] onConnect successful: ${rule.name}`)
+          console.log(`[TransferEngine] onDisconnect successful: ${rule.name}`)
         }
 
         return result
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
-        const message = `Rule '${rule.name}' onConnect failed: ${errorMessage}`
+        const message = `Rule '${rule.name}' onDisconnect failed: ${errorMessage}`
 
         if (this.options.debug) {
           console.error(`[TransferEngine] ${message}`)
