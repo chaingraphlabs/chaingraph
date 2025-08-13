@@ -18,6 +18,7 @@ import { AsyncQueue } from '../utils/async-queue'
 import { Semaphore } from '../utils/semaphore'
 import { withTimeout } from '../utils/timeout'
 import { FlowDebugger } from './debugger'
+import { EdgeTransferService } from './edge-transfer-service'
 import { ExecutionEventEnum, ExecutionEventImpl } from './execution-events'
 
 const DEFAULT_MAX_CONCURRENCY = 100
@@ -47,6 +48,7 @@ export class ExecutionEngine {
   private readonly dependentsMap: Map<string, INode[]>
   private readonly semaphore: Semaphore
   private readonly debugger: FlowDebugger | null = null
+  private readonly transferService: EdgeTransferService
 
   // private readonly eventQueue: EventQueue<ExecutionEvent>
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
@@ -78,6 +80,9 @@ export class ExecutionEngine {
         },
       )
     }
+
+    // Initialize the transfer service with the flow
+    this.transferService = new EdgeTransferService(this.flow)
   }
 
   async execute(): Promise<void> {
@@ -497,13 +502,17 @@ export class ExecutionEngine {
         return async () => {
           const transferStartTime = Date.now()
           try {
-            // Execute the transfer
-            await edge.transfer()
+            // Use the transfer service instead of edge.transfer()
+            // This ensures we always use fresh node and port instances from the flow
+            const updatedEdge = await this.transferService.transfer(edge)
+
+            // Replace the old edge with the updated one in the flow
+            this.flow.replaceEdge(edge.id, updatedEdge)
 
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
               await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
-                edge: edge.clone(),
+                edge: updatedEdge.clone(),
                 transferTime: Date.now() - transferStartTime,
               }))
             }
@@ -555,23 +564,23 @@ export class ExecutionEngine {
 
       const hasBackgroundActions = backgroundActions && backgroundActions.length > 0
       if (hasBackgroundActions) {
-        this.setNodeBackgrounding(node, nodeStartTime)
+        await this.setNodeBackgrounding(node, nodeStartTime)
 
         let completedActions = 0
         for (const action of backgroundActions) {
           this.readyQueue.enqueue(
             () => action()
-              .then(() => {
+              .then(async () => {
                 if (node.status !== NodeStatus.Backgrounding) {
                   return
                 }
 
                 if (++completedActions === backgroundActions.length) {
-                  this.setNodeCompleted(node, nodeStartTime)
+                  await this.setNodeCompleted(node, nodeStartTime)
                 }
               })
-              .catch((e) => {
-                this.setNodeError(node, e, nodeStartTime)
+              .catch(async (e) => {
+                await this.setNodeError(node, e, nodeStartTime)
               }),
           )
         }

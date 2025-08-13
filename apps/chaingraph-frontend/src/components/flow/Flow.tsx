@@ -7,12 +7,17 @@
  */
 
 import type { CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
-import type { DefaultEdgeOptions, FinalConnectionState, OnConnectStartParams } from '@xyflow/react'
+import type {
+  DefaultEdgeOptions,
+  FinalConnectionState,
+  OnConnectStartParams,
+} from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
 import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeContextMenu'
 import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel'
 import { StyledControls } from '@/components/flow/components/controls/StyledControls'
 import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
+import { FPSCounter } from '@/components/flow/components/FPSCounter'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
@@ -30,6 +35,7 @@ import { addNodeToFlow } from '@/store/nodes'
 import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
+
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -88,7 +94,7 @@ function Flow({
 
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition, getZoom } = useReactFlow()
+  const { screenToFlowPosition, getZoom, getViewport } = useReactFlow()
   const { setZoom } = use(ZoomContext)
 
   // State
@@ -96,6 +102,30 @@ function Flow({
   const edges = useXYFlowEdges()
   const activeFlowId = useUnit($activeFlowId)
   const subscriptionState = useUnit($flowSubscriptionState)
+
+  // const selector = (s: ReactFlowState) => {
+  //   return getNodesInside(
+  //     s.nodeLookup,
+  //     { x: 0, y: 0, width: s.width, height: s.height },
+  //     s.transform,
+  //     true,
+  //   ).map(node => node.id)
+  // }
+
+  // const viewport = useMemo(() => getViewport(), [getViewport])
+
+  // const nodesInsideViewport = useMemo(() => {
+  //   // viewport.
+  //
+  //   const nodesMap = new Map(nodes.map(node => [node.id, node]))
+  //
+  //   getNodesInside(
+  //     nodesMap,
+  //     { x: 0, y: 0, width: s.width, height: s.height },
+  //     [viewport.x, viewport.y, viewport.zoom],
+  //     true,
+  //   )
+  // }, [nodes, viewport])
 
   const nodeTypes = useMemo(() => ({
     chaingraphNode: ChaingraphNodeOptimized,
@@ -129,9 +159,9 @@ function Flow({
   // State for a context menu
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null)
 
-  const onInit = useCallback(() => {
-    setZoom(getZoom())
-  }, [getZoom, setZoom])
+  // const onInit = useCallback(() => {
+  //   setZoom(getZoom())
+  // }, [getZoom, setZoom])
 
   // Handle context menu
   const onContextMenu = useCallback((event: React.MouseEvent) => {
@@ -192,6 +222,8 @@ function Flow({
     setActiveFlowId(flowId)
   }, [flowId, activeFlowId])
 
+  // const nodesInside = useStore(useCallback(selector, []), shallow)
+
   return (
     <div
       className={cn(
@@ -215,7 +247,7 @@ function Flow({
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         // onEdgesChange={onEdgesChange}
-        onInit={onInit}
+        // onInit={onInit}
         onConnect={onConnect}
         onConnectStart={(event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
           // TODO: probably add an event data to indicate the connection start
@@ -260,10 +292,10 @@ function Flow({
           <FlowControlPanel />
         )}
 
-        {/* <div className="absolute top-4 left-4 z-50"> */}
-        {/* <ExecutionComponent /> */}
-        {/* <FPSCounter /> */}
-        {/* </div> */}
+        <div className="absolute top-4 left-4 z-50">
+          {/* <ExecutionComponent /> */}
+          <FPSCounter />
+        </div>
       </ReactFlow>
 
       {/* Context Menu */}

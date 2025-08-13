@@ -7,8 +7,9 @@
  */
 
 import type { INode } from '../../node'
-import type { IPort } from '../base'
+import type { IPort, ObjectPortConfig } from '../base'
 import type { PortPredicate, TransferBehaviors, TransferContext, TransferEngineOptions, TransferResult, TransferRule } from './types'
+import { ObjectPort } from '../../port/instances'
 import { resolvePortConfig } from './utils/port-resolver'
 
 /**
@@ -69,8 +70,8 @@ export class TransferEngine {
     sourceNode: INode,
     targetNode: INode,
   ): Promise<TransferResult> {
-    const sourceConfig = resolvePortConfig(sourcePort)
-    const targetConfig = resolvePortConfig(targetPort)
+    const sourceConfig = sourcePort.getConfig()
+    const targetConfig = targetPort.getConfig()
 
     const context: TransferContext = {
       sourcePort,
@@ -134,6 +135,79 @@ export class TransferEngine {
   }
 
   /**
+   * Execute when a connection is removed
+   */
+  async onDisconnect(
+    sourcePort: IPort,
+    targetPort: IPort,
+    sourceNode: INode,
+    targetNode: INode,
+  ): Promise<TransferResult> {
+    const sourceConfig = sourcePort.getConfig()
+    const targetConfig = targetPort.getConfig()
+
+    const context: TransferContext = {
+      sourcePort,
+      targetPort,
+      sourceConfig,
+      targetConfig,
+      sourceNode,
+      targetNode,
+    }
+
+    // Find matching rule
+    const rule = this.findMatchingRule(sourceConfig, targetConfig)
+
+    if (!rule) {
+      const message = `No transfer rule found for ${sourceConfig.type} -> ${targetConfig.type}`
+      if (this.options.debug) {
+        console.log(`[TransferEngine] ${message}`)
+      }
+      return {
+        success: false,
+        message,
+      }
+    }
+
+    if (this.options.debug) {
+      console.log(`[TransferEngine] onDisconnect with rule: ${rule.name}`)
+    }
+
+    // Execute onConnect behavior if defined
+    if (rule.behaviors.onDisconnect) {
+      try {
+        const result = await rule.behaviors.onDisconnect(context)
+
+        if (this.options.debug && result.success) {
+          console.log(`[TransferEngine] onDisconnect successful: ${rule.name}`)
+        }
+
+        return result
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        const message = `Rule '${rule.name}' onDisconnect failed: ${errorMessage}`
+
+        if (this.options.debug) {
+          console.error(`[TransferEngine] ${message}`)
+        }
+
+        if (this.options.throwOnError) {
+          throw error
+        }
+
+        return {
+          success: false,
+          error: error instanceof Error ? error : new Error(errorMessage),
+          message,
+        }
+      }
+    }
+
+    // No onConnect behavior defined
+    return { success: true, message: 'No onConnect behavior defined' }
+  }
+
+  /**
    * Execute when source port updates on existing connection
    */
   async onSourceUpdate(
@@ -142,9 +216,6 @@ export class TransferEngine {
     sourceNode: INode,
     targetNode: INode,
   ): Promise<TransferResult> {
-    // const sourceConfig = resolvePortConfig(sourcePort)
-    // const targetConfig = resolvePortConfig(targetPort)
-
     const sourceConfig = sourcePort.getConfig()
     const targetConfig = targetPort.getConfig()
 
@@ -201,9 +272,34 @@ export class TransferEngine {
           // update all the parents ports for the target port
           let currentPort: IPort | undefined = targetPort
           while (currentPort) {
+            const previousPort = currentPort
             currentPort = context.targetNode.getPort(currentPort.getConfig().parentId || '')
+
             if (currentPort) {
-              context.targetNode.updatePort(currentPort)
+              // check if the current port is the object port
+              if (currentPort instanceof ObjectPort) {
+                const currentPortObjectConfig = currentPort.getConfig() as ObjectPortConfig
+                const targetPortKey = previousPort.getConfig().key
+                if (targetPortKey) {
+                  const targetPortConfig = previousPort.getConfig()
+
+                  // Update parent object port schema from the previous port
+                  currentPort.setConfig({
+                    ...currentPortObjectConfig,
+                    schema: {
+                      ...currentPortObjectConfig.schema,
+                      properties: {
+                        ...currentPortObjectConfig.schema.properties,
+                        [targetPortKey]: targetPortConfig,
+                      },
+                    },
+                  })
+                }
+              }
+
+              context.targetNode.updatePort(currentPort, {
+                sourceOfUpdate: `TransferEngine:onSourceUpdate`,
+              })
               console.log(`[TransferEngine] update port ${currentPort.getConfig().id} in node ${context.targetNode.id}`)
             }
           }

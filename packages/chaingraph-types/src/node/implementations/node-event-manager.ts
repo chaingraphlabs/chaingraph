@@ -10,6 +10,10 @@ import type { NodeEvent } from '../../node/events'
 import type { INodeEvents } from '../interfaces'
 import { EventQueue } from '../../utils'
 
+export interface EventContext {
+  sourceOfUpdate?: string
+}
+
 /**
  * Implementation of INodeEvents interface
  * Manages node event subscription and publishing

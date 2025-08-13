@@ -9,6 +9,7 @@
 import type { IPort } from '../../port'
 import type { JSONValue } from '../../utils/json'
 import type { INodeComposite, IPortBinder, IPortManager, ISerializable } from '../interfaces'
+import type { ComplexPortHandler } from './complex-port-handler'
 import { PortFactory } from '../../port'
 import { deepCopy } from '../../utils'
 import { SerializedNodeSchema } from '../types.zod'
@@ -23,6 +24,7 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
     private createInstance: (id: string) => INodeComposite,
     private portBinder?: IPortBinder,
     private nodeRef?: INodeComposite,
+    private complexPortHandler?: ComplexPortHandler,
   ) { }
 
   /**
@@ -67,7 +69,6 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
 
     // Update metadata
     this.nodeRef.setMetadata(deepCopy(obj.metadata))
-    // Object.assign(this.coreNode.metadata, obj.metadata || {})
 
     // Clear current ports
     this.portManager.setPorts(new Map())
@@ -90,6 +91,14 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
 
       // Add to ports map
       nodePorts.set(portId, newPort)
+
+      // if (newPort instanceof ObjectPort) {
+      //   this.complexPortHandler?.createNestedObjectPorts(
+      //     newPort,
+      //     serializedPort.value,
+      //     newPort.getConfig() as ObjectPortConfig,
+      //   )
+      // }
     }
 
     // Sort map by port order, or if order is undefined or same, sort by key

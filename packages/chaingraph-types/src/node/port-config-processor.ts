@@ -46,7 +46,8 @@ export class PortConfigProcessor {
             nodeId,
             parentPortConfig: null,
             propertyKey,
-            propertyValue: deepCopy((node as any)[propertyKey]),
+            // propertyValue: deepCopy((node as any)[propertyKey]),
+            propertyValue: (node as any)[propertyKey],
           },
         )
 

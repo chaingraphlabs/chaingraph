@@ -137,6 +137,8 @@ export class DefaultPortManager implements IDefaultPortManager {
       portsToUpdate.push(errorMessagePort)
     }
 
-    this.portManager.updatePorts(portsToUpdate)
+    this.portManager.updatePorts(portsToUpdate, {
+      sourceOfUpdate: 'default-port-manager:updatePortsAfterExecution',
+    })
   }
 }

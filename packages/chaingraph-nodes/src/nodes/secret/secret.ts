@@ -96,7 +96,9 @@ export class SecretNode extends BaseNode {
         hkdfNonce: secret.hkdfNonce,
         publicKey: secret.publicKey,
       }))
-      await this.updatePort(secretPort as IPort)
+      await this.updatePort(secretPort as IPort, {
+        sourceOfUpdate: 'SecretNode:execute',
+      })
     }
 
     return {}

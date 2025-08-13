@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { EventContext } from '../../node/implementations/node-event-manager'
 import type { IPort } from '../../port'
 import type { IPortManager } from '../interfaces'
 import { generatePortIDArrayElement, PortDirection } from '../../port'
@@ -200,18 +201,20 @@ export class PortManager implements IPortManager {
   /**
    * Update a port with new configuration/value
    * @param port The port to update
+   * @param eventContext Optional event context for the update
    */
-  updatePort(port: IPort): void {
+  updatePort(port: IPort, eventContext?: EventContext): void {
     this._ports.set(port.id, port)
   }
 
   /**
    * Update multiple ports at once
    * @param ports Array of ports to update
+   * @param eventContext Optional event context for the update
    */
-  updatePorts(ports: IPort[]): void {
+  updatePorts(ports: IPort[], eventContext?: EventContext): void {
     for (const port of ports) {
-      this.updatePort(port)
+      this.updatePort(port, eventContext)
     }
   }
 

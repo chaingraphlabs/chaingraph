@@ -105,6 +105,11 @@ export interface EdgesAddedEventData {
 /** Data for EdgeRemoved event */
 export interface EdgeRemovedEventData {
   edgeId: string
+  sourceNodeId: string
+  sourcePortId: string
+  targetNodeId: string
+  targetPortId: string
+  metadata: EdgeMetadata
 }
 
 /** Data for EdgeUpdated event */

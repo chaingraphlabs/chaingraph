@@ -93,6 +93,7 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
       allowedTypes: ['string', 'number', 'boolean'],
     },
     isMutable: true,
+    isSchemaMutable: true,
   },
   any: {
     type: 'any',

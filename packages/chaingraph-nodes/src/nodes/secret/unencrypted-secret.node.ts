@@ -101,7 +101,9 @@ export class UnencryptedSecretNode extends BaseNode {
           for (const fieldKey of Object.keys(unencryptedDataPort.getConfig().schema.properties)) {
             this.removeObjectProperty(unencryptedDataPort as IPort, fieldKey)
           }
-          await this.updatePort(unencryptedDataPort as IPort)
+          await this.updatePort(unencryptedDataPort as IPort, {
+            sourceOfUpdate: 'UnencryptedSecretNode:handlePortUpdate:unencryptedData',
+          })
         }
 
         const secretPort = this.findPortByKey('secret') as SecretPort<any> | undefined
@@ -111,7 +113,9 @@ export class UnencryptedSecretNode extends BaseNode {
             ...secretPort.getConfig(),
             secretType: 'string',
           })
-          await this.updatePort(secretPort as IPort)
+          await this.updatePort(secretPort as IPort, {
+            sourceOfUpdate: 'UnencryptedSecretNode:handlePortUpdate:secret',
+          })
         }
 
         return
@@ -164,8 +168,12 @@ export class UnencryptedSecretNode extends BaseNode {
         secretType,
       })
 
-      await this.updatePort(secretPort as IPort)
-      await this.updatePort(unencryptedDataPort as IPort)
+      await this.updatePort(secretPort as IPort, {
+        sourceOfUpdate: 'UnencryptedSecretNode:handlePortUpdate:secret',
+      })
+      await this.updatePort(unencryptedDataPort as IPort, {
+        sourceOfUpdate: 'UnencryptedSecretNode:handlePortUpdate:unencryptedData',
+      })
     }
   }
 
@@ -195,7 +203,9 @@ export class UnencryptedSecretNode extends BaseNode {
         this.unencryptedData as SecretTypeMap[typeof this.secretType],
       ),
     )
-    await this.updatePort(secretPort as IPort)
+    await this.updatePort(secretPort as IPort, {
+      sourceOfUpdate: 'UnencryptedSecretNode:execute',
+    })
 
     return {}
   }

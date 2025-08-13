@@ -7,6 +7,7 @@
  */
 
 import type { IPort } from '../../port'
+import type { EventContext } from '../implementations'
 
 /**
  * Interface for managing a node's ports
@@ -93,13 +94,13 @@ export interface IPortManager {
    * Update a port with new configuration/value
    * @param port The port to update
    */
-  updatePort: (port: IPort) => void
+  updatePort: (port: IPort, eventContext?: EventContext) => void
 
   /**
    * Update multiple ports at once
    * @param ports Array of ports to update
    */
-  updatePorts: (ports: IPort[]) => void
+  updatePorts: (ports: IPort[], eventContext?: EventContext) => void
 
   /**
    * Find a port by a predicate function

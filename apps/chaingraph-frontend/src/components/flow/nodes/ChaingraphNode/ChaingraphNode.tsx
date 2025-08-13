@@ -11,6 +11,7 @@ import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
 import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
 import { useTheme } from '@/components/theme/hooks/useTheme'
+import { Skeleton } from '@/components/ui'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useNodeDropFeedback } from '@/store/drag-drop'
@@ -36,6 +37,7 @@ import {
   updateItemConfigArrayPort,
 } from '@/store/ports'
 import { $nodesPulseState } from '@/store/updates'
+import { useStore } from '@xyflow/react'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo } from 'react'
@@ -67,11 +69,15 @@ const defaultCategoryMetadata = {
   order: 7,
 } satisfies CategoryMetadata
 
+const zoomSelector = s => s.transform[2] >= 0.2
+
 function ChaingraphNodeComponent({
   data,
   selected,
   id,
 }: NodeProps<ChaingraphNode>) {
+  const showContent = useStore(zoomSelector)
+
   const activeFlow = useUnit($activeFlowMetadata)
   const nodeExecution = useNodeExecution(id)
   const dispatch = useUnit({
@@ -227,7 +233,7 @@ function ChaingraphNodeComponent({
   const { ref: cardRef } = useElementResize<HTMLDivElement>({
     debounceTime: 500,
     onResize: (size) => {
-      if (!activeFlow || !activeFlow.id || !node || !isFlowLoaded)
+      if (!activeFlow || !activeFlow.id || !node || !isFlowLoaded || !showContent)
         return
 
       // Check if element is visible and has reasonable dimensions
@@ -321,6 +327,9 @@ function ChaingraphNodeComponent({
           ? '#22c55e' // green-500
           : style.secondary,
         borderWidth: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' ? 3 : 2,
+
+        // width: `${node.metadata.ui.dimensions?.width || 200}px`,
+        // height: `${node.metadata.ui.dimensions?.height || 50}px`,
       }}
     >
       {/* Breakpoint Strip */}
@@ -351,10 +360,28 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      <NodeBody
-        node={nodeToRender}
-        context={portContextValue}
-      />
+      {showContent
+        ? (
+            <NodeBody
+              node={nodeToRender}
+              context={portContextValue}
+            />
+          )
+        : (
+            <div
+              className="p-4 text-center text-muted-foreground"
+              style={{
+                width: `${node.metadata.ui?.dimensions?.width || 200}px`,
+                height: `${node.metadata.ui?.dimensions?.height ? node.metadata.ui?.dimensions?.height - 85 : 50}px`,
+              }}
+            >
+              {/* <div>Zoom in to see node details</div> */}
+              {/* <Skeleton className="w-24 h-4 mx-auto mt-2" /> */}
+              <Skeleton className="h-4 w-[95%]" />
+            </div>
+          )}
+
+      {/* Node ports */}
 
       {(!parentNode || (parentNode.metadata.category === 'group')) && (
         <div className="mt-2">
@@ -376,6 +403,9 @@ function ChaingraphNodeComponent({
           border: 'none',
           height: '100%',
           width: 12,
+        }}
+        shouldResize={() => {
+          return showContent
         }}
       />
 

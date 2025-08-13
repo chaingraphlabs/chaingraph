@@ -14,6 +14,9 @@ import type {
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
 import {
+  Passthrough,
+} from '@badaitech/chaingraph-types'
+import {
   deepCopy,
 } from '@badaitech/chaingraph-types'
 import {
@@ -22,7 +25,6 @@ import {
 
 import {
   BaseNode,
-  Input,
   Node,
   PortNumber as NumberDecorator,
   Output,
@@ -47,7 +49,7 @@ type InputFormat = typeof INPUT_FORMATS[number]
   tags: ['json', 'yaml', 'deserialize', 'parse', 'convert', 'object'],
 })
 class JsonYamlDeserializerNode extends BaseNode {
-  @Input()
+  @Passthrough()
   @PortAny({
     title: 'Output Schema',
     description: 'Schema for the deserialized object. Supports complex schemas (array, object) and primitive types (number, string, bool).',
@@ -83,7 +85,7 @@ class JsonYamlDeserializerNode extends BaseNode {
   })
   outputSchema: any
 
-  @Input()
+  @Passthrough()
   @PortString({
     title: 'JSON or YAML',
     description: 'JSON or YAML string to be deserialized',
@@ -93,7 +95,7 @@ class JsonYamlDeserializerNode extends BaseNode {
   })
   inputString: string = ''
 
-  @Input()
+  @Passthrough()
   @StringEnum(INPUT_FORMATS, {
     title: 'Input Format',
     description: 'Specify the format of the input string.',
@@ -106,7 +108,7 @@ class JsonYamlDeserializerNode extends BaseNode {
   })
   inputFormat: InputFormat = 'auto'
 
-  @Input()
+  @Passthrough()
   @PortBoolean({
     title: 'Ignore Missing Fields',
     description: 'If true, missing fields in JSON/YAML objects will be set to null instead of throwing an error',
@@ -114,7 +116,7 @@ class JsonYamlDeserializerNode extends BaseNode {
   })
   ignoreMissingFields: boolean = false
 
-  @Input()
+  @Passthrough()
   @NumberDecorator({
     title: 'Max Depth',
     description: `Maximum depth of filtering output by the schema. Effective for objects and arrays. Maximum of ${DEFAULT_MAX_DEPTH} will be used if 0 is provided.`,

@@ -7,6 +7,7 @@
  */
 
 import type { IPort } from '../port'
+import type { EventContext } from './implementations'
 import type { INode } from './interface'
 import type { NodeStatus } from './node-enums'
 import type { NodeUIMetadata, Position } from './node-ui'
@@ -129,6 +130,7 @@ export interface PortUpdateEvent extends NodeEventBase {
   type: NodeEventType.PortUpdate
   portId: string
   port: IPort
+  eventContext?: EventContext
 }
 
 /**

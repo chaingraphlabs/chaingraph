@@ -82,7 +82,9 @@ class ObjectNode extends BaseNode {
         },
       })
 
-      await this.updatePort(objectPort as IPort)
+      await this.updatePort(objectPort as IPort, {
+        sourceOfUpdate: 'ObjectNode:onEvent:titleChange',
+      })
     }
   }
 

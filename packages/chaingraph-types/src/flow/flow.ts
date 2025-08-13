@@ -7,7 +7,7 @@
  */
 
 import type { IEdge } from '../edge'
-import type { INode, NodeEvent } from '../node'
+import type { INode, NodeEvent, PortUpdateEvent } from '../node'
 import type { IPort } from '../port'
 import type { JSONValue } from '../utils/json'
 import type {
@@ -27,7 +27,6 @@ import { nolookalikes } from 'nanoid-dictionary'
 import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
-import { AnyPort } from '../port'
 import { deepCopy, EventQueue } from '../utils'
 import {
   FlowEventType,
@@ -366,6 +365,22 @@ export class Flow implements IFlow {
     this.edges.set(edge.id, edge)
   }
 
+  /**
+   * Replace an existing edge with a new one.
+   * This is useful when updating edge references after transfer.
+   * @param edgeId The ID of the edge to replace
+   * @param newEdge The new edge to replace with
+   */
+  replaceEdge(edgeId: string, newEdge: IEdge): void {
+    if (!this.edges.has(edgeId)) {
+      throw new Error(`Edge with ID ${edgeId} does not exist in the flow.`)
+    }
+    if (newEdge.id !== edgeId) {
+      throw new Error(`New edge ID ${newEdge.id} does not match the edge being replaced ${edgeId}`)
+    }
+    this.edges.set(edgeId, newEdge)
+  }
+
   async removeEdge(edgeId: string): Promise<void> {
     const edge = this.edges.get(edgeId)
     if (!edge) {
@@ -385,12 +400,12 @@ export class Flow implements IFlow {
     }
 
     // if target port is an any port type then remove the underlying type
-    if (targetPort instanceof AnyPort) {
-      targetPort.setUnderlyingType(undefined)
-      targetPort.setValue(undefined)
-      targetNode.refreshAnyPortUnderlyingPorts(targetPort as IPort, true)
-      // targetNode.updatePort(targetPort)
-    }
+    // if (targetPort instanceof AnyPort) {
+    //   targetPort.setUnderlyingType(undefined)
+    //   targetPort.setValue(undefined)
+    //   targetNode.refreshAnyPortUnderlyingPorts(targetPort as IPort, true)
+    // targetNode.updatePort(targetPort)
+    // }
 
     await Promise.all([
       targetNode.emit({
@@ -422,7 +437,14 @@ export class Flow implements IFlow {
       this.getNextEventIndex(),
       this.id,
       FlowEventType.EdgeRemoved,
-      { edgeId },
+      {
+        edgeId,
+        sourceNodeId: edge.sourceNode.id,
+        sourcePortId: edge.sourcePort.id,
+        targetNodeId: edge.targetNode.id,
+        targetPortId: edge.targetPort.id,
+        metadata: edge.metadata || {},
+      },
     ))
   }
 
@@ -452,26 +474,17 @@ export class Flow implements IFlow {
       throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
     }
 
-    if (targetPort.getConfig().direction === 'input') {
-      if ((targetPort.getConfig().connections?.length || 0) > 0) {
-        throw new Error(`Target port with ID ${targetPortId} already has connections.`)
-      }
-    } else if (targetPort.getConfig().direction === 'passthrough') {
-      // check if the target port passthrough and already has connections
-      // so check if the connected port is an input port then we can connect to it
-      const connectedPorts = targetPort.getConfig().connections || []
-      const hasOutputConnection = connectedPorts.some((conn) => {
-        const connectedNode = this.nodes.get(conn.nodeId)
-        if (!connectedNode) {
-          return false
-        }
-        const connectedPort = connectedNode.getPort(conn.portId)
-        return connectedPort && connectedPort.getConfig().direction === 'output'
-      })
-
-      if (hasOutputConnection) {
-        throw new Error(`Target port with ID ${targetPortId} already has input connections.`)
-      }
+    // check if such connection already exists
+    const existingEdge = Array.from(this.edges.values()).find((edge) => {
+      return (
+        edge.sourceNode.id === sourceNodeId
+        && edge.sourcePort.id === sourcePortId
+        && edge.targetNode.id === targetNodeId
+        && edge.targetPort.id === targetPortId
+      )
+    })
+    if (existingEdge) {
+      throw new Error(`Edge from ${sourceNodeId}:${sourcePortId} to ${targetNodeId}:${targetPortId} already exists.`)
     }
 
     // TODO: Check dead loops
@@ -771,8 +784,9 @@ export class Flow implements IFlow {
         // }
 
       case NodeEventType.PortUpdate: {
+        const eventPort = (nodeEvent as PortUpdateEvent).port as IPort
         const portUpdateEventData: PortUpdatedEventData = {
-          port: (nodeEvent as any).port.clone(),
+          port: eventPort.clone(),
           nodeVersion: nodeEvent.version,
         }
 

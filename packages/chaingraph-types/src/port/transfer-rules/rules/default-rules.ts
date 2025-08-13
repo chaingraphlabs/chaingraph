@@ -6,8 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ObjectPortConfig } from '../../base'
+import type { ArrayPortConfig, ObjectPortConfig } from '../../base'
 import type { TransferRule } from '../types'
+import { ArrayPort, ObjectPort } from '../../instances'
 import { TransferEngine } from '../engine'
 import { Predicates } from '../predicates'
 import { Strategies } from '../strategies'
@@ -47,9 +48,12 @@ const {
 const {
   value,
   objectSchemaAndValue,
+  objectSchemaReset,
   arrayConfigAndValue,
+  arraySchemaReset,
   streamConfigAndValue,
   underlyingTypeAndValue,
+  resetUnderlyingType,
 } = Strategies
 
 /**
@@ -103,6 +107,20 @@ export const defaultTransferRules: TransferRule[] = [
         return {
           success: false,
           message: 'Immutable target incompatible with source changes',
+        }
+      },
+
+      onDisconnect: (ctx) => {
+        // Reset underlying type on disconnect
+        if (ctx.targetPort instanceof ObjectPort) {
+          if ((ctx.targetConfig as ObjectPortConfig).isSchemaMutable) {
+            return objectSchemaReset(ctx)
+          }
+        }
+
+        return {
+          success: true,
+          message: 'Disconnected object port',
         }
       },
     })
@@ -159,6 +177,20 @@ export const defaultTransferRules: TransferRule[] = [
           message: 'Immutable target incompatible with source changes',
         }
       },
+
+      onDisconnect: (ctx) => {
+        // Reset underlying type on disconnect
+        if (ctx.targetPort instanceof ObjectPort) {
+          if ((ctx.targetConfig as ObjectPortConfig).isSchemaMutable) {
+            return objectSchemaReset(ctx)
+          }
+        }
+
+        return {
+          success: true,
+          message: 'Disconnected object port',
+        }
+      },
     })
     .withPriority(95)
     .withDescription('Handle any port with underlying object to object connections')
@@ -173,6 +205,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(70)
     .withDescription('Set object as underlying type on any port')
@@ -184,6 +217,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(65)
     .withDescription('Set array as underlying type on any port')
@@ -198,6 +232,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(80)
     .withDescription('Transfer underlying type and value between any ports')
@@ -209,6 +244,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: value,
       onSourceUpdate: value,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(20)
     .withDescription('Transfer value between any ports without underlying type')
@@ -267,6 +303,20 @@ export const defaultTransferRules: TransferRule[] = [
           message: 'Array item types are incompatible',
         }
       },
+
+      onDisconnect: (ctx) => {
+        // Reset underlying type on disconnect
+        if (ctx.targetPort instanceof ArrayPort) {
+          if ((ctx.targetConfig as ArrayPortConfig).isSchemaMutable) {
+            return arraySchemaReset(ctx)
+          }
+        }
+
+        return {
+          success: true,
+          message: 'Disconnected array port',
+        }
+      },
     })
     .withPriority(60)
     .withDescription('Handle array to array connections')
@@ -323,6 +373,20 @@ export const defaultTransferRules: TransferRule[] = [
         return {
           success: false,
           message: 'Array item types are incompatible',
+        }
+      },
+
+      onDisconnect: (ctx) => {
+        // Reset underlying type on disconnect
+        if (ctx.targetPort instanceof ArrayPort) {
+          if ((ctx.targetConfig as ArrayPortConfig).isSchemaMutable) {
+            return arraySchemaReset(ctx)
+          }
+        }
+
+        return {
+          success: true,
+          message: 'Disconnected array port',
         }
       },
     })
@@ -397,6 +461,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(35)
     .withDescription('Set enum as underlying type on any port')
@@ -408,6 +473,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(30)
     .withDescription('Set simple type as underlying on any port')
@@ -454,6 +520,7 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(33)
     .withDescription('Set secret as underlying type on any port')
@@ -571,10 +638,12 @@ export const defaultTransferRules: TransferRule[] = [
     .behaviors({
       onConnect: underlyingTypeAndValue,
       onSourceUpdate: underlyingTypeAndValue,
+      onDisconnect: resetUnderlyingType,
     })
     .withPriority(32)
     .withDescription('Set stream as underlying type on any port')
     .build(),
+
 ]
 
 /**
