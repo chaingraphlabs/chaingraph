@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IEdge } from '../edge'
 import type { ExecutionContext } from '../execution/execution-context'
 import type { INode, NodeStatusChangeEvent } from '../node'
 import type { DebuggerController } from './debugger-types'
@@ -471,18 +472,22 @@ export class ExecutionEngine {
 
     try {
       const incomingEdges = this.flow.getIncomingEdges(node)
+      let transferableEdges: IEdge[] = []
+
       if (node.shouldExecute(this.context)) {
-        // First, validate all source nodes statuses before proceeding
-        for (const edge of incomingEdges) {
-          if (!edge.sourcePort.isSystemError()
-            && edge.sourceNode.status !== NodeStatus.Completed
-            && edge.sourceNode.status !== NodeStatus.Backgrounding) {
-            await this.setNodeSkipped(node, `wrong status of source node: ${edge.sourceNode.status}`)
-            return
-          }
+        // Resolve which edges can actually transfer based on port-based resolution
+        const { transferableEdges: resolvedEdges, unresolvedPorts } = this.resolveTransferableEdges(incomingEdges)
+
+        // Skip if any target port cannot be resolved
+        if (unresolvedPorts.length > 0) {
+          await this.setNodeSkipped(node, `unresolved ports: ${unresolvedPorts.join(', ')}`)
+          return
         }
 
-        // If all source nodes have valid status, set this node to executing
+        // Store transferable edges for later use
+        transferableEdges = resolvedEdges
+
+        // Set node to executing
         node.setStatus(NodeStatus.Executing, true)
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
       }
@@ -498,7 +503,9 @@ export class ExecutionEngine {
       }
 
       // Prepare transfer functions that properly preserve context
-      const transferFunctions = incomingEdges.map((edge) => {
+      // Only transfer the resolvable edges, not all incoming edges
+      const edgesToTransfer = node.shouldExecute(this.context) ? transferableEdges : incomingEdges
+      const transferFunctions = edgesToTransfer.map((edge) => {
         return async () => {
           const transferStartTime = Date.now()
           try {
@@ -547,7 +554,7 @@ export class ExecutionEngine {
 
       // check weathers node should execute
       if (!node.shouldExecute(this.context)) {
-        await this.setNodeSkipped(node, 'node skipped because flow input port was set to false')
+        await this.setNodeSkipped(node, 'node skipped because shouldExecute returned false')
         return
       }
 
@@ -605,6 +612,61 @@ export class ExecutionEngine {
       // Clear current node ID after execution
       this.context.currentNodeId = undefined
     }
+  }
+
+  /**
+   * Resolves which edges can transfer data based on port-based resolution rules:
+   * - Groups edges by target port
+   * - For each port, finds at least one edge that can transfer
+   * - System error ports can transfer from Error status nodes
+   */
+  private resolveTransferableEdges(edges: IEdge[]): {
+    transferableEdges: IEdge[]
+    unresolvedPorts: string[]
+  } {
+    // Group edges by target port
+    const portGroups = new Map<string, IEdge[]>()
+
+    for (const edge of edges) {
+      const portKey = `${edge.targetNode.id}:${edge.targetPort.id}`
+      if (!portGroups.has(portKey)) {
+        portGroups.set(portKey, [])
+      }
+      portGroups.get(portKey)!.push(edge)
+    }
+
+    // Find at least one transferable edge per port
+    const transferableEdges: IEdge[] = []
+    const unresolvedPorts: string[] = []
+
+    for (const [portKey, portEdges] of portGroups) {
+      const resolvedEdge = portEdges.find(edge => this.canEdgeTransfer(edge))
+      if (resolvedEdge) {
+        transferableEdges.push(resolvedEdge)
+      } else {
+        unresolvedPorts.push(portKey)
+      }
+    }
+
+    return { transferableEdges, unresolvedPorts }
+  }
+
+  /**
+   * Checks if an edge can transfer data based on source node status
+   * and port type (system error ports have special rules)
+   */
+  private canEdgeTransfer(edge: IEdge): boolean {
+    const { sourceNode, sourcePort } = edge
+    const isErrorPort = sourcePort.isSystemError()
+
+    // System error ports can transfer from Error status
+    if (isErrorPort && sourceNode.status === NodeStatus.Error) {
+      return true
+    }
+
+    // All ports can transfer from Completed/Backgrounding
+    return sourceNode.status === NodeStatus.Completed
+      || sourceNode.status === NodeStatus.Backgrounding
   }
 
   private async setNodeCompleted(node: INode, nodeStartTime: number): Promise<void> {

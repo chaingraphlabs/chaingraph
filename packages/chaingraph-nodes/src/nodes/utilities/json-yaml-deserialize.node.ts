@@ -154,9 +154,9 @@ class JsonYamlDeserializerNode extends BaseNode {
         throw new Error(`Cannot locate deserializedObject port`)
       }
 
-      const schema = outputPort.getRawConfig().underlyingType
+      const schema = outputPort.unwrapUnderlyingType()
 
-      if (!schema) {
+      if (!schema || !schema.type || !SUPPORTED_TYPES.includes(schema.type)) {
         throw new Error(`Output port has no schema assigned. Make sure that you've provided a valid schema of one of these types: ${SUPPORTED_TYPES.join(', ')}.`)
       }
 
@@ -167,6 +167,8 @@ class JsonYamlDeserializerNode extends BaseNode {
           (!this.maxDepth || this.maxDepth === 0) ? DEFAULT_MAX_DEPTH : this.maxDepth,
         )
         outputPort.setValue(processedValue)
+        this.refreshAnyPortUnderlyingPorts(outputPort as IPort, true)
+        await this.updatePort(outputPort as IPort)
       } catch (error) {
         throw new Error(`Error applying value to provided schema: ${error}`)
       }
@@ -207,7 +209,7 @@ class JsonYamlDeserializerNode extends BaseNode {
     value: any,
     schema: IPortConfig,
     depthLeft: number,
-  ): object | Array<any> | number | string | number | null {
+  ): object | Array<any> | string | number | null {
     if (value === null || value === undefined) {
       return null
     }
