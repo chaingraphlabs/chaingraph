@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph",
   "type": "module",
-  "version": "0.4.0-dev.1",
+  "version": "0.4.0-dev.3",
   "private": false,
   "packageManager": "pnpm@10.11.1",
   "license": "BUSL-1.1",

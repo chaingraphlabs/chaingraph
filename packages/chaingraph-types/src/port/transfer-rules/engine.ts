@@ -109,6 +109,11 @@ export class TransferEngine {
           console.log(`[TransferEngine] onConnect successful: ${rule.name}`)
         }
 
+        if (result.schemaTransferred || result.valueTransferred || result.underlyingTypeSet) {
+          // update all the parents ports for the target port
+          await this.updateParentPorts(context.targetNode, context.targetPort)
+        }
+
         return result
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
@@ -180,6 +185,11 @@ export class TransferEngine {
 
         if (this.options.debug && result.success) {
           console.log(`[TransferEngine] onDisconnect successful: ${rule.name}`)
+        }
+
+        if (result.schemaTransferred || result.valueTransferred || result.underlyingTypeSet) {
+          // update all the parents ports for the target port
+          await this.updateParentPorts(context.targetNode, context.targetPort)
         }
 
         return result
@@ -270,39 +280,7 @@ export class TransferEngine {
 
         if (result.schemaTransferred || result.valueTransferred || result.underlyingTypeSet) {
           // update all the parents ports for the target port
-          let currentPort: IPort | undefined = targetPort
-          while (currentPort) {
-            const previousPort = currentPort
-            currentPort = context.targetNode.getPort(currentPort.getConfig().parentId || '')
-
-            if (currentPort) {
-              // check if the current port is the object port
-              if (currentPort instanceof ObjectPort) {
-                const currentPortObjectConfig = currentPort.getConfig() as ObjectPortConfig
-                const targetPortKey = previousPort.getConfig().key
-                if (targetPortKey) {
-                  const targetPortConfig = previousPort.getConfig()
-
-                  // Update parent object port schema from the previous port
-                  currentPort.setConfig({
-                    ...currentPortObjectConfig,
-                    schema: {
-                      ...currentPortObjectConfig.schema,
-                      properties: {
-                        ...currentPortObjectConfig.schema.properties,
-                        [targetPortKey]: targetPortConfig,
-                      },
-                    },
-                  })
-                }
-              }
-
-              context.targetNode.updatePort(currentPort, {
-                sourceOfUpdate: `TransferEngine:onSourceUpdate`,
-              })
-              console.log(`[TransferEngine] update port ${currentPort.getConfig().id} in node ${context.targetNode.id}`)
-            }
-          }
+          await this.updateParentPorts(context.targetNode, context.targetPort)
         }
 
         return result
@@ -328,6 +306,49 @@ export class TransferEngine {
 
     // No onSourceUpdate behavior defined
     return { success: true, message: 'No onSourceUpdate behavior defined' }
+  }
+
+  private async updateParentPorts(
+    node: INode,
+    port: IPort,
+  ): Promise<void> {
+    const portsToUpdate: IPort[] = []
+
+    // update all the parents ports for the target port
+    let currentPort: IPort | undefined = port
+    while (currentPort) {
+      const previousPort = currentPort
+      currentPort = node.getPort(currentPort.getConfig().parentId || '')
+
+      if (currentPort) {
+        // check if the current port is the object port
+        if (currentPort instanceof ObjectPort) {
+          const currentPortObjectConfig = currentPort.getConfig() as ObjectPortConfig
+          const targetPortKey = previousPort.getConfig().key
+          if (targetPortKey) {
+            const targetPortConfig = previousPort.getConfig()
+
+            // Update parent object port schema from the previous port
+            currentPort.setConfig({
+              ...currentPortObjectConfig,
+              schema: {
+                ...currentPortObjectConfig.schema,
+                properties: {
+                  ...currentPortObjectConfig.schema.properties,
+                  [targetPortKey]: targetPortConfig,
+                },
+              },
+            })
+          }
+        }
+
+        portsToUpdate.push(currentPort)
+      }
+    }
+
+    node.updatePorts(portsToUpdate, {
+      sourceOfUpdate: `TransferEngine:onSourceUpdate`,
+    })
   }
 
   /**

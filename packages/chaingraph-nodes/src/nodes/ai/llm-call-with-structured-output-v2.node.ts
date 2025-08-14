@@ -7,8 +7,6 @@
  */
 
 import type {
-  AnyPort,
-
   ArrayPortConfig,
   EncryptedSecretValue,
   EnumPortConfig,
@@ -19,8 +17,6 @@ import type {
   NodeExecutionResult,
   ObjectPort,
   ObjectPortConfig,
-  PortConnectedEvent,
-  PortUpdateEvent,
 } from '@badaitech/chaingraph-types'
 import type { APIkey, SupportedProviders } from './llm-call.node'
 import {
@@ -32,7 +28,6 @@ import {
 import {
   BaseNode,
   ExecutionEventEnum,
-  findPort,
   Node,
   ObjectSchema,
   Output,
@@ -171,114 +166,6 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
       await this.debugLog(context, `ERROR: ${errorMessage}`)
       console.error('Error processing structured output:', error)
       throw new Error(errorMessage)
-    }
-  }
-
-  /**
-   * Handle node events to maintain port synchronization
-   */
-  // async onEvent(event: NodeEvent): Promise<void> {
-  //   await super.onEvent(event)
-  //
-  //   switch (event.type) {
-  //     case NodeEventType.PortUpdate:
-  //       await this.handlePortUpdate(event as PortUpdateEvent)
-  //       break
-  //   }
-  // }
-
-  private async handlePortUpdate(event: PortUpdateEvent): Promise<void> {
-    if (!this.isOutputSchemaPort(event.port)) {
-      return
-    }
-
-    const outputSchemaPort = event.port as ObjectPort
-    const structuredResponsePort = findPort(this, (port) => {
-      return port.getConfig().key === 'structuredResponse'
-        && !port.getConfig().parentId
-        && port.getConfig().direction === 'output'
-    }) as ObjectPort | undefined
-
-    if (!structuredResponsePort) {
-      return
-    }
-
-    // Update the structuredResponse port schema based on the outputSchema port
-    this.copyObjectSchemaTo(this, outputSchemaPort, structuredResponsePort, true)
-  }
-
-  private isOutputSchemaPort(port: IPort): boolean {
-    const config = port.getConfig()
-    return config.key === 'outputSchema'
-      && config.direction === 'passthrough'
-      && !config.parentId
-  }
-
-  /**
-   * Handle port connection events - specifically for "any" ports
-   */
-  private async handlePortConnected(event: PortConnectedEvent): Promise<void> {
-    // Only process connections from our own inputs and for "any" ports
-    if (event.sourceNode.id !== this.id) {
-      return
-    }
-
-    const sourcePort = event.sourcePort
-    const sourcePortConfig = sourcePort.getConfig()
-
-    if (
-      sourcePortConfig.key !== 'outputSchema'
-      || sourcePortConfig.direction !== 'input'
-      || sourcePortConfig.parentId
-    ) {
-      return
-    }
-
-    if (!sourcePortConfig || sourcePortConfig.type !== 'any') {
-      return
-    }
-
-    const outputSchemaPort = sourcePort as AnyPort
-    let underlyingType = outputSchemaPort.getRawConfig().underlyingType
-    if (!underlyingType) {
-      return
-    }
-
-    // Iterate through the underlying type to find the actual type
-    if (underlyingType.type === 'any') {
-      while (underlyingType.type === 'any') {
-        if (underlyingType.type === 'any' && underlyingType.underlyingType) {
-          underlyingType = underlyingType.underlyingType
-        }
-      }
-    }
-
-    if (underlyingType.type !== 'object') {
-      return
-    }
-
-    const outputSchemaPortConfig = underlyingType as ObjectPortConfig
-
-    // get the structuredResponse port and update its schema
-    const structuredResponsePort = findPort(this, (port) => {
-      return port.getConfig().key === 'structuredResponse'
-        && !port.getConfig().parentId
-        && port.getConfig().direction === 'output'
-    })
-
-    if (!structuredResponsePort) {
-      return
-    }
-
-    // iterate over the properties of the outputSchema port and add them to the structuredResponse port
-    for (const [key, value] of Object.entries(outputSchemaPortConfig.schema.properties)) {
-      // check if the property already exists in the structuredResponse port
-      const existingProperty = (structuredResponsePort as ObjectPort).getConfig().schema.properties[key]
-      if (existingProperty) {
-        continue
-      }
-
-      this.addObjectProperty(structuredResponsePort, key, value)
     }
   }
 

@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.4.0-dev.3
+
+### Patch Changes
+
+- feat: enhance onSourceUpdate behavior to update parent ports in TransferEngine
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.4.0-dev.3
+
 ## 0.4.0-dev.2
 
 ### Patch Changes

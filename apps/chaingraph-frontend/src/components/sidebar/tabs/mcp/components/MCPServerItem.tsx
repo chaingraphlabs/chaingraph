@@ -75,7 +75,7 @@ export function MCPServerItem({ server, searchQuery, onEdit }: MCPServerItemProp
               {/*  </span> */}
               {/* </div> */}
               {hasError && server.error && (
-                <div className="w-full truncate">
+                <div className="w-full text-ellipsis">
                   <span className="text-xs text-destructive">
                     {server.error}
                   </span>

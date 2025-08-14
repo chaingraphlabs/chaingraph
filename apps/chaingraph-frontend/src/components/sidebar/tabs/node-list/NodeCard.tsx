@@ -42,7 +42,7 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
 
   const inputsLength = useMemo(() =>
     Array.from(node.portsConfig?.values() ?? [])?.filter(
-      port => port.direction === PortDirection.Input,
+      port => port.direction === PortDirection.Input || port.direction === PortDirection.Passthrough,
     ).length, [node])
 
   const outputsLength = useMemo(() =>
@@ -84,7 +84,7 @@ export function NodeCard({ node, categoryMetadata }: NodeCardProps) {
                       boxShadow: `0 1px 3px ${style.text}80`,
                     }}
                   />
-                  <span className="text-sm truncate">
+                  <span className="text-sm text-ellipsis">
                     {node.title}
                   </span>
                 </div>
