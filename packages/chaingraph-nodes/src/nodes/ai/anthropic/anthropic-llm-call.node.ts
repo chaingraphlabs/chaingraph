@@ -11,6 +11,7 @@ import type * as BetaAPI from '@anthropic-ai/sdk'
 import type {
   EncryptedSecretValue,
   ExecutionContext,
+  INode,
   NodeExecutionResult,
   PortType,
 } from '@badaitech/chaingraph-types'
@@ -974,7 +975,8 @@ export class AntropicLlmCallNode extends BaseNode {
    * Recursively merge values into node ports, preserving existing values when new values are partial
    */
   private setPortValuesRecursively(
-    node: BaseNode,
+    // node: BaseNode,
+    node: INode,
     values: any,
     parentId: string | undefined,
     nodeType: string,
@@ -1092,10 +1094,24 @@ export class AntropicLlmCallNode extends BaseNode {
 
           const nodeToExecute = originalNodeToExecute.clone() as BaseNode
 
+          let toolInput: any = toolUseBlock.input
+
+          if (nodeToExecute instanceof MCPToolCallNode) {
+            // Special case for MCPToolCallNode, LLM's very often miss the arguments key in the input for the MCPToolCallNode
+            if (!('arguments' in toolUseBlock.input)) {
+              // the agent did not provide arguments, so we should take all the input keys and values and wrap them in an arguments object
+              toolInput = {
+                arguments: Object.fromEntries(
+                  Object.entries(toolUseBlock.input).map(([key, value]) => [key, value]),
+                ),
+              }
+            }
+          }
+
           // fill the node's input ports with the tool use block input
           this.setPortValuesRecursively(
             nodeToExecute,
-            toolUseBlock.input,
+            toolInput,
             undefined,
             toolDefinition.chaingraph_node_type,
           )
@@ -1172,7 +1188,7 @@ export class AntropicLlmCallNode extends BaseNode {
           timestamp: new Date(),
           data: {
             node: this.clone(),
-            log: `Tool execution result: ${toolResult}`,
+            log: `Tool execution result:\n${toolResult}`,
           },
         })
 

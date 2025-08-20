@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.4.1
+
+### Patch Changes
+
+- feat: enhance MCPToolCallNode input handling by wrapping input keys in arguments object when missing
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
