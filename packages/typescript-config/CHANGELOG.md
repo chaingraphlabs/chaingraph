@@ -1,5 +1,18 @@
 # @badaitech/typescript-config
 
+## 0.4.0
+
+### Minor Changes
+
+- 6c01887: MCP integration and port transfer rules
+
+### Patch Changes
+
+- 3ac2164: Restore gate node
+- 3ac2164: Enhanced edge transfer strategies with disconnect behavior, port configuration improvements, and new EdgeTransferService for better data synchronization
+- feat: update dependencies and remove console logs for cleaner output, add gpt-5 and reasoning section to the llm call.
+- e2cb917: feat: enhance onSourceUpdate behavior to update parent ports in TransferEngine
+
 ## 0.4.0-dev.3
 
 ### Patch Changes

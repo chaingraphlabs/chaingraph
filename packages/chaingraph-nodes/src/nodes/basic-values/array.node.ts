@@ -116,7 +116,6 @@ class ArrayNode extends BaseNode {
 
     // if type changed remove all array elements in descending order
     if (!checkSchemaCompatibility(arrayPortConfig.itemConfig, itemConfig) && arrayPortValue) {
-      console.log(`[ArrayNode] Removing all items from array port due to incompatible itemConfig change`)
       this.removeArrayItems(arrayPort, arrayPortValue.map((_, index) => index))
     }
 

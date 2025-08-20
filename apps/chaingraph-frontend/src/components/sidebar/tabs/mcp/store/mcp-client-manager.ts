@@ -103,8 +103,6 @@ export async function fetchMCPResources(client: Client): Promise<(Resource | Res
       client.listResourceTemplates(),
     ])
 
-    console.log(resultTemplates)
-
     // Combine resources and templates into a single array
     return [...(result.resources || []), ...(resultTemplates.resourceTemplates || [])]
   } catch (error) {

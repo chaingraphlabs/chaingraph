@@ -56,15 +56,12 @@ export class LLMConfig {
     title: 'Model',
     description: 'Language Model to use',
   })
-  model: LLMModels = LLMModels.Gpt41Mini
+  model: LLMModels = LLMModels.Gpt5Mini
 
   @PortSecret<SupportedProviders>({
     title: 'API Key',
     description: 'LLM provider API Key',
     secretType: 'openai',
-    ui: {
-      ispassword: true,
-    },
   })
   apiKey?: EncryptedSecretValue<SupportedProviders>
 

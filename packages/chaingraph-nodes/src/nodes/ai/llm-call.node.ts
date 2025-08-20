@@ -12,6 +12,12 @@ import type {
   NodeExecutionResult,
   SecretTypeMap,
 } from '@badaitech/chaingraph-types'
+import type { ChatOpenAIFields } from '@langchain/openai'
+
+import {
+  PortObject,
+  PortVisibility,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   Input,
@@ -32,6 +38,11 @@ import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
 export enum LLMModels {
+  // gpt-5 family
+  Gpt5 = 'gpt-5',
+  Gpt5Mini = 'gpt-5-mini',
+  Gpt5Nano = 'gpt-5-nano',
+
   // GPT-4.1 Family
   Gpt41 = 'gpt-4.1',
   Gpt41Mini = 'gpt-4.1-mini',
@@ -75,7 +86,7 @@ class LLMModel {
     title: 'Model',
     description: 'Language Model',
   })
-  model: LLMModels = LLMModels.Gpt41Mini
+  model: LLMModels = LLMModels.Gpt5Mini
 
   @PortNumber({
     title: 'Temperature',
@@ -95,6 +106,35 @@ export const llmModels = Object.fromEntries(
   ),
 )
 
+type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | null | 'disable'
+
+@ObjectSchema({
+  description: 'OpenAI Reasoning Configuration',
+})
+class OpenAIReasoning {
+  @PortEnumFromObject({
+    disable: 'disable',
+    minimal: 'minimal',
+    low: 'low',
+    medium: 'medium',
+    high: 'high',
+  }, {
+    title: 'Reasoning Effort',
+    description: 'Constrain effort on reasoning for reasoning models. Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.',
+  })
+  effort?: ReasoningEffort | null = null
+
+  @PortEnumFromObject({
+    auto: 'auto',
+    concise: 'concise',
+    detailed: 'detailed',
+  }, {
+    title: 'Summary',
+    description: 'A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model\'s reasoning process.',
+  })
+  summary?: 'auto' | 'concise' | 'detailed' | null = null
+}
+
 @Node({
   type: 'LLMCallNode',
   title: 'LLM Call',
@@ -102,13 +142,27 @@ export const llmModels = Object.fromEntries(
   category: NODE_CATEGORIES.AI,
   tags: ['ai', 'llm', 'prompt', 'gpt'],
 })
-class LLMCallNode extends BaseNode {
+export class LLMCallNode extends BaseNode {
   @Input()
   @PortEnumFromObject(llmModels, {
     title: 'Model',
     description: 'Language Model',
   })
-  model: LLMModels = LLMModels.Gpt41Mini
+  model: LLMModels = LLMModels.Gpt5Mini
+
+  @Input()
+  @PortObject({
+    title: 'OpenAI Reasoning',
+    description: 'Configuration for OpenAI reasoning models',
+    schema: OpenAIReasoning,
+  })
+  @PortVisibility({
+    showIf: (node) => {
+      const model = (node as LLMCallNode).model
+      return model && isOpenAIThinkingModel(model)
+    },
+  })
+  openaiReasoning?: OpenAIReasoning
 
   @Input()
   @PortSecret<SupportedProviders>({
@@ -204,12 +258,28 @@ class LLMCallNode extends BaseNode {
         },
       })
     } else {
-      llm = new ChatOpenAI({
+      const isThinkingModel = isOpenAIThinkingModel(this.model)
+
+      const config: ChatOpenAIFields = {
         apiKey,
         model: this.model,
-        temperature: !isOpenAIThinkingModel(this.model) ? this.temperature : undefined,
+        temperature: !isThinkingModel ? this.temperature : undefined,
         streaming: true,
-      })
+        // reasoning: {
+        //   effort: 'high',
+        // },
+      }
+
+      if (isThinkingModel && this.openaiReasoning) {
+        if (this.openaiReasoning.effort && this.openaiReasoning.effort !== 'disable') {
+          config.reasoning = {
+            effort: this.openaiReasoning.effort,
+            summary: this.openaiReasoning.summary || 'auto',
+          }
+        }
+      }
+
+      llm = new ChatOpenAI(config)
     }
 
     const messages = [
@@ -318,6 +388,11 @@ export function isMoonshot(model: LLMModels): boolean {
  */
 export function isOpenAI(model: LLMModels): boolean {
   return [
+    // gpt-5 family
+    LLMModels.Gpt5,
+    LLMModels.Gpt5Mini,
+    LLMModels.Gpt5Nano,
+
     // GPT-4.1 Family
     LLMModels.Gpt41,
     LLMModels.Gpt41Mini,
@@ -340,6 +415,9 @@ export function isOpenAI(model: LLMModels): boolean {
  */
 export function isOpenAIThinkingModel(model: LLMModels): boolean {
   return [
+    LLMModels.Gpt5,
+    LLMModels.Gpt5Mini,
+    LLMModels.Gpt5Nano,
     LLMModels.O1,
     LLMModels.O1Mini,
     LLMModels.O3,
@@ -348,5 +426,3 @@ export function isOpenAIThinkingModel(model: LLMModels): boolean {
     LLMModels.O4Mini,
   ].includes(model)
 }
-
-export default LLMCallNode

@@ -188,7 +188,6 @@ export class ExecutionService {
       }
 
       // Wait for child executions (all executions can have children now)
-      console.log(`[startExecution] Checking for child executions of ${id}`)
       await this.waitForChildExecutions(id)
 
       // Ensure all events are processed before cleanup
@@ -494,8 +493,6 @@ export class ExecutionService {
    */
   async processEmittedEvents(instance: ExecutionInstance): Promise<void> {
     const context = instance.context
-    console.log(`[processEmittedEvents] Checking for events in execution ${instance.id}`)
-    console.log(`[processEmittedEvents] emittedEvents:`, context.emittedEvents)
 
     if (!context.emittedEvents || context.emittedEvents.length === 0) {
       console.log(`[processEmittedEvents] No events to process`)

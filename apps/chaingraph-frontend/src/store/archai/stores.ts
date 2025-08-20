@@ -83,7 +83,7 @@ export const loadConfigFromLocalStorageFx = archaiDomain.createEffect(() => {
 export const saveConfigToLocalStorageFx = archaiDomain.createEffect((config: ArchAIConfig) => {
   try {
     localStorage.setItem(ARCHAI_CONFIG_KEY, JSON.stringify(config))
-    console.log('ArchAI config saved to localStorage:', config)
+    // console.log('ArchAI config saved to localStorage:', config)
   } catch (error) {
     console.error('Failed to save ArchAI configuration:', error)
   }
