@@ -39,6 +39,7 @@ import {
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
+import { MCPToolCallNode } from '../../mcp'
 import {
   AntropicMessage,
   AntropicModelTypes,
@@ -1077,7 +1078,7 @@ export class AntropicLlmCallNode extends BaseNode {
           throw new Error(`Tool definition for ${toolUseBlock.name} does not have a chaingraph_node_type defined, so it cannot be executed.`)
         }
 
-        let toolResult: string
+        let toolResult: string = 'empty result'
 
         try {
           if (!context.getNodeById || !toolDefinition.chaingraph_node_id) {
@@ -1104,24 +1105,50 @@ export class AntropicLlmCallNode extends BaseNode {
             await Promise.all(executionResult.backgroundActions.map(action => action()))
           }
 
-          const ignoreOutputPortTypes: PortType[] = [
-            'stream',
-            'secret',
-          ]
-
           // Find all outputs of the nodeToExecute and serialize values to JSON
-          const outputValues = Object.fromEntries(
-            Array.from(nodeToExecute.ports.values())
-              .filter(port =>
-                port.getConfig().direction === 'output'
-                && !port.isSystem()
-                && !ignoreOutputPortTypes.includes(port.getConfig().type as PortType),
-              )
-              .map(port => [port.getConfig().key, port.getValue()]),
-          )
+          if (nodeToExecute instanceof MCPToolCallNode) {
+            // Special case for the mcp tool call node
 
-          // Use the collected outputs as the tool result
-          toolResult = JSON.stringify(outputValues)
+            // check that outputSchema is defined and not empty
+            if (nodeToExecute.outputSchema && Object.keys(nodeToExecute.outputSchema).length > 0) {
+              toolResult = JSON.stringify(nodeToExecute.structuredContent || {})
+            } else if (nodeToExecute.content) {
+              // If content is defined, use it as the tool result
+              const result = nodeToExecute.content.map((content) => {
+                if (content.type === 'text') {
+                  // try to json parse the content text
+                  try {
+                    return JSON.stringify(JSON.parse(content.text))
+                  } catch (e) {
+                    return content.text
+                  }
+                }
+
+                return JSON.stringify(content)
+              })
+
+              toolResult = result.length === 1 ? result[0] : JSON.stringify(result)
+            }
+          } else {
+            const ignoreOutputPortTypes: PortType[] = [
+              'stream',
+              'secret',
+            ]
+
+            const outputValues = Object.fromEntries(
+              Array.from(nodeToExecute.ports.values())
+                .filter(port =>
+                  port.getConfig().direction === 'output'
+                  && !port.getConfig().ui?.hidden
+                  && !port.isSystem()
+                  && !ignoreOutputPortTypes.includes(port.getConfig().type),
+                )
+                .map(port => [port.getConfig().key, port.getValue()]),
+            )
+
+            // Use the collected outputs as the tool result
+            toolResult = JSON.stringify(outputValues)
+          }
         } catch (error: any) {
           toolResult = JSON.stringify({
             error: true,

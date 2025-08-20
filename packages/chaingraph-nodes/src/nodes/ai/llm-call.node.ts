@@ -265,9 +265,6 @@ export class LLMCallNode extends BaseNode {
         model: this.model,
         temperature: !isThinkingModel ? this.temperature : undefined,
         streaming: true,
-        // reasoning: {
-        //   effort: 'high',
-        // },
       }
 
       if (isThinkingModel && this.openaiReasoning) {
