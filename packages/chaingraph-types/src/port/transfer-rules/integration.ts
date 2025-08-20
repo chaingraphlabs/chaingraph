@@ -23,7 +23,7 @@ export function getDefaultTransferEngine(): TransferEngine {
   if (!defaultEngine) {
     defaultEngine = new TransferEngine(defaultTransferRules, {
       // debug: process.env.NODE_ENV === 'development',
-      debug: true,
+      debug: false,
     })
   }
   return defaultEngine

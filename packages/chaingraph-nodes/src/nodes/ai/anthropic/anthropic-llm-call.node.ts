@@ -12,6 +12,7 @@ import type {
   EncryptedSecretValue,
   ExecutionContext,
   NodeExecutionResult,
+  PortType,
 } from '@badaitech/chaingraph-types'
 import type { ContentBlockBase } from './types'
 import { Buffer } from 'node:buffer'
@@ -20,9 +21,6 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
-  Passthrough,
-} from '@badaitech/chaingraph-types'
-import {
   BaseNode,
   ExecutionEventEnum,
   findPort,
@@ -30,6 +28,7 @@ import {
   Node,
   ObjectSchema,
   Output,
+  Passthrough,
   PortArray,
   PortBoolean,
   PortEnum,
@@ -40,6 +39,7 @@ import {
   PortString,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../../categories'
+import { MCPToolCallNode } from '../../mcp'
 import {
   AntropicMessage,
   AntropicModelTypes,
@@ -255,6 +255,15 @@ export class AnthropicLLMConfig {
     },
   })
   stream: boolean = true
+
+  @PortNumber({
+    title: 'Max Tool Calls',
+    description: 'Maximum number of tool calls allowed in a single request',
+    min: 1,
+    integer: true,
+    defaultValue: 20,
+  })
+  max_tool_calls: number = 20
 }
 
 @Node({
@@ -701,7 +710,7 @@ export class AntropicLlmCallNode extends BaseNode {
 
       // This tracks the feedback loop when tools are used
       let feedbackLoopCounter = 0
-      const MAX_FEEDBACK_LOOPS = 30 // Prevent infinite loops
+      const MAX_FEEDBACK_LOOPS = this.config.max_tool_calls || 20
 
       do {
         // Build request parameters with current conversation history
@@ -740,7 +749,7 @@ export class AntropicLlmCallNode extends BaseNode {
         }
       } while (feedbackLoopCounter < MAX_FEEDBACK_LOOPS)
 
-      // If we broke out due to reaching maximum loops, log a warning
+      // If we broke out due to reaching maximum loops, add a system message and continue
       if (feedbackLoopCounter >= MAX_FEEDBACK_LOOPS) {
         await context.sendEvent({
           index: 0,
@@ -751,6 +760,23 @@ export class AntropicLlmCallNode extends BaseNode {
             log: `Warning: Reached maximum tool feedback loops (${MAX_FEEDBACK_LOOPS})`,
           },
         })
+
+        // Add a system message to inform the agent about reaching the limit
+        const systemMessage = {
+          role: 'user' as const,
+          content: this.convertContentBlocksToAnthropicFormat([
+            AntropicLlmCallNode.createTextBlock(
+              `System: Maximum number of tool calls (${MAX_FEEDBACK_LOOPS}) has been reached. `
+              + `Please provide a final response based on the information gathered so far.`,
+            ),
+          ]),
+        }
+
+        conversationHistory.push(systemMessage)
+
+        // Make one final call to get the agent's response
+        const finalParams = this.buildRequestParameters(context, conversationHistory)
+        await this.processMessageStream(client, finalParams, context)
       }
 
       // Close streams
@@ -953,9 +979,6 @@ export class AntropicLlmCallNode extends BaseNode {
     parentId: string | undefined,
     nodeType: string,
   ): void {
-    console.log(`[ANTHROPIC] Setting port values recursively for node type: ${nodeType}, parentId: ${parentId}, values: ${JSON.stringify(values)}`)
-    console.log(`[ANTHROPIC] Node ports: ${JSON.stringify(Array.from(node.ports.values()).map(p => p.getConfig()), null, 2)}`)
-
     for (const [key, value] of Object.entries(values)) {
       const port = findPort(node, (p) => {
         return p.getConfig().key === key
@@ -977,11 +1000,9 @@ export class AntropicLlmCallNode extends BaseNode {
           // Deep merge: preserve existing fields, add/update new ones
           const mergedValue = this.deepMergeObjects(currentValue, value)
           port.setValue(mergedValue)
-          console.log(`Merging port ${key} with value: ${JSON.stringify(value)}, result: ${JSON.stringify(mergedValue)}`)
         } else {
           // If current value is not an object, just set the new value and recurse into sub-ports
           port.setValue(value)
-          console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
         }
 
         // Recursively handle nested object properties
@@ -989,7 +1010,6 @@ export class AntropicLlmCallNode extends BaseNode {
       } else {
         // Set primitive values directly
         port.setValue(value)
-        console.log(`Setting port ${key} to value: ${JSON.stringify(value)}`)
       }
     }
   }
@@ -1029,13 +1049,10 @@ export class AntropicLlmCallNode extends BaseNode {
     context: ExecutionContext,
     toolUseBlocks: ToolUseResponseBlock[],
   ): Promise<ToolResultBlock[]> {
-    const toolResults: ToolResultBlock[] = []
-
-    // For each tool use block, execute the corresponding tool
-    for (const toolUseBlock of toolUseBlocks) {
-      try {
-        // Log that we're executing a tool
-        await context.sendEvent({
+    // Log all tool executions at once
+    await Promise.all(
+      toolUseBlocks.map(toolUseBlock =>
+        context.sendEvent({
           index: 0,
           type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
           timestamp: new Date(),
@@ -1043,8 +1060,13 @@ export class AntropicLlmCallNode extends BaseNode {
             node: this.clone(),
             log: `Executing tool: ${toolUseBlock.name} with input: ${JSON.stringify(toolUseBlock.input)}`,
           },
-        })
+        }),
+      ),
+    )
 
+    // Execute all tools in parallel
+    const toolPromises = toolUseBlocks.map(async (toolUseBlock): Promise<ToolResultBlock> => {
+      try {
         // Find the tool definition in the config
         const toolDefinition = this.tools?.find(tool => tool.name === toolUseBlock.name)
 
@@ -1056,7 +1078,7 @@ export class AntropicLlmCallNode extends BaseNode {
           throw new Error(`Tool definition for ${toolUseBlock.name} does not have a chaingraph_node_type defined, so it cannot be executed.`)
         }
 
-        let toolResult: string
+        let toolResult: string = 'empty result'
 
         try {
           if (!context.getNodeById || !toolDefinition.chaingraph_node_id) {
@@ -1069,11 +1091,6 @@ export class AntropicLlmCallNode extends BaseNode {
           }
 
           const nodeToExecute = originalNodeToExecute.clone() as BaseNode
-
-          // console.log(`[ANTHROPIC] Executing tool node: ${toolDefinition.chaingraph_node_type} with ID: ${toolDefinition.chaingraph_node_id}: ${JSON.stringify(nodeToExecute.serialize())}`)
-
-          // const nodeToExecute = NodeRegistry.getInstance().createNode(toolDefinition.chaingraph_node_type)
-          // nodeToExecute.initialize()
 
           // fill the node's input ports with the tool use block input
           this.setPortValuesRecursively(
@@ -1089,20 +1106,54 @@ export class AntropicLlmCallNode extends BaseNode {
           }
 
           // Find all outputs of the nodeToExecute and serialize values to JSON
-          const outputValues = Object.fromEntries(
-            Array.from(nodeToExecute.ports.values())
-              .filter(port => port.getConfig().direction === 'output' && !port.isSystem())
-              .map(port => [port.getConfig().key, port.getValue()]),
-          )
+          if (nodeToExecute instanceof MCPToolCallNode) {
+            // Special case for the mcp tool call node
 
-          // Use the collected outputs as the tool result
-          toolResult = JSON.stringify(outputValues)
+            // check that outputSchema is defined and not empty
+            if (nodeToExecute.outputSchema && Object.keys(nodeToExecute.outputSchema).length > 0) {
+              toolResult = JSON.stringify(nodeToExecute.structuredContent || {})
+            } else if (nodeToExecute.content) {
+              // If content is defined, use it as the tool result
+              const result = nodeToExecute.content.map((content) => {
+                if (content.type === 'text') {
+                  // try to json parse the content text
+                  try {
+                    return JSON.stringify(JSON.parse(content.text))
+                  } catch (e) {
+                    return content.text
+                  }
+                }
+
+                return JSON.stringify(content)
+              })
+
+              toolResult = result.length === 1 ? result[0] : JSON.stringify(result)
+            }
+          } else {
+            const ignoreOutputPortTypes: PortType[] = [
+              'stream',
+              'secret',
+            ]
+
+            const outputValues = Object.fromEntries(
+              Array.from(nodeToExecute.ports.values())
+                .filter(port =>
+                  port.getConfig().direction === 'output'
+                  && !port.getConfig().ui?.hidden
+                  && !port.isSystem()
+                  && !ignoreOutputPortTypes.includes(port.getConfig().type),
+                )
+                .map(port => [port.getConfig().key, port.getValue()]),
+            )
+
+            // Use the collected outputs as the tool result
+            toolResult = JSON.stringify(outputValues)
+          }
         } catch (error: any) {
           toolResult = JSON.stringify({
             error: true,
             message: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
           })
-          // console.debug(`[ANTHROPIC] Tool ${toolUseBlock.name} execution failed: ${error.message || PortString(error)}`)
         }
 
         // Create a tool result block
@@ -1111,7 +1162,7 @@ export class AntropicLlmCallNode extends BaseNode {
         toolResultBlock.tool_use_id = toolUseBlock.id
         toolResultBlock.content = toolResult
 
-        toolResults.push(toolResultBlock)
+        // Send result to stream immediately
         this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolUseBlock.id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResult}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
 
         // Log the result
@@ -1124,8 +1175,10 @@ export class AntropicLlmCallNode extends BaseNode {
             log: `Tool execution result: ${toolResult}`,
           },
         })
+
+        return toolResultBlock
       } catch (error: any) {
-        // Create a tool result block
+        // Create a tool result block for errors
         const toolResultBlock = new ToolResultBlock()
         toolResultBlock.type = 'tool_result'
         toolResultBlock.tool_use_id = toolUseBlock.id
@@ -1134,10 +1187,9 @@ export class AntropicLlmCallNode extends BaseNode {
           message: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
         })
 
-        toolResults.push(toolResultBlock)
         this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolUseBlock.id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResultBlock.content}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
 
-        // Log error but continue with other tools
+        // Log error
         await context.sendEvent({
           index: 0,
           type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
@@ -1147,10 +1199,13 @@ export class AntropicLlmCallNode extends BaseNode {
             log: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
           },
         })
-      }
-    }
 
-    return toolResults
+        return toolResultBlock
+      }
+    })
+
+    // Wait for all executions to complete and return results in original order
+    return await Promise.all(toolPromises)
   }
 
   /**

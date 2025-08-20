@@ -101,10 +101,10 @@ function GroupNodeComponent({
           border: '3px solid transparent',
         }}
         onResizeStart={(e, params) => {
-          console.log('Resize started', e, params)
+          // console.log('Resize started', e, params)
         }}
         onResize={(e, params) => {
-          console.log('Resizing', e, params)
+          // console.log('Resizing', e, params)
 
           if (!activeFlow?.id || !id)
             return

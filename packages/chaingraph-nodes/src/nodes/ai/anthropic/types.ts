@@ -22,6 +22,7 @@ import {
  */
 export enum AntropicModelTypes {
   ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
+  ClaudeOpus4_1_20250805 = 'claude-opus-4-1-20250805',
   ClaudeOpus4_20250514 = 'claude-opus-4-20250514',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
   Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
@@ -467,6 +468,7 @@ export class AntropicConfig {
     description: 'The Claude model to use',
     options: [
       { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4 (2025-05-14)' },
+      { id: AntropicModelTypes.ClaudeOpus4_1_20250805, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_1_20250805, title: 'Claude Opus 4.1 (2025-08-05)' },
       { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4 (2025-05-14)' },
       { id: AntropicModelTypes.Claude37Sonnet20250219, type: 'string', defaultValue: AntropicModelTypes.Claude37Sonnet20250219, title: 'Claude 3.7 Sonnet (2025-02-19)' },
       { id: AntropicModelTypes.Claude37Opus20250213, type: 'string', defaultValue: AntropicModelTypes.Claude37Opus20250213, title: 'Claude 3.7 Opus (2025-02-13)' },

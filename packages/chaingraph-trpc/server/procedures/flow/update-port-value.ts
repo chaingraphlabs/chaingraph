@@ -311,7 +311,6 @@ export const appendElementArrayPort = flowContextProcedure
       if (port.getConfig().type !== 'array')
         throw new Error('Port is not an array port')
 
-      console.log('Appending value to array port', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
       node.appendArrayItem(port, input.value)
       flow.updateNode(node)
 

@@ -1,5 +1,27 @@
 # @badaitech/chaingraph-frontend
 
+## 0.4.0
+
+### Minor Changes
+
+- 6c01887: MCP integration and port transfer rules
+
+### Patch Changes
+
+- 3ac2164: Restore gate node
+- 3ac2164: Enhanced edge transfer strategies with disconnect behavior, port configuration improvements, and new EdgeTransferService for better data synchronization
+- feat: update dependencies and remove console logs for cleaner output, add gpt-5 and reasoning section to the llm call.
+- e2cb917: feat: enhance onSourceUpdate behavior to update parent ports in TransferEngine
+- Updated dependencies [3ac2164]
+- Updated dependencies [6c01887]
+- Updated dependencies [3ac2164]
+- Updated dependencies
+- Updated dependencies [e2cb917]
+  - @badaitech/chaingraph-nodes@0.4.0
+  - @badaitech/chaingraph-types@0.4.0
+  - @badaitech/chaingraph-trpc@0.4.0
+  - @badaitech/badai-api@0.4.0
+
 ## 0.4.0-dev.3
 
 ### Patch Changes

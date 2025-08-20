@@ -599,8 +599,6 @@ export class ComplexPortHandler implements IComplexPortHandler {
    * @returns The index of the new item
    */
   appendArrayItem(arrayPort: IPort, value: any): number {
-    console.log(`Appending item to array port ${arrayPort.id} with value: ${JSON.stringify(value)}`)
-
     const config = arrayPort.getConfig()
     if (config.type !== 'array') {
       throw new Error('Cannot append item to non-array port')

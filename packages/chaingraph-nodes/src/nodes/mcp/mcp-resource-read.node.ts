@@ -125,14 +125,8 @@ export class MCPResourceReadNode extends BaseNode {
       let uri = this.uri
 
       if (Object.keys(this.arguments).length > 0) {
-        console.log(`[MCPResourceRead] Expanding URI template: ${uri} with arguments: ${JSON.stringify(this.arguments)}`)
         const parsedTemplate = parse(uri)
-
-        console.log(`[MCPResourceRead] Parsed template: ${JSON.stringify(parsedTemplate)}`)
-
         uri = parsedTemplate.expand(this.arguments)
-
-        console.log(`[MCPResourceRead] Expanded URI: ${uri}`)
       }
 
       // Execute the prompt
@@ -150,8 +144,6 @@ export class MCPResourceReadNode extends BaseNode {
               progress: progress.progress,
               message: progress.message,
             }
-
-            console.log(`[MCPromptGet] Progress: ${JSON.stringify(progressMessage)}`)
 
             this.progressStream.send(progressMessage)
           },

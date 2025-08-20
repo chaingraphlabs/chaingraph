@@ -51,7 +51,6 @@ export function useFlowSubscription() {
     [FlowEventType.FlowInitStart]: (data) => {
       // clean up existing flow data
 
-      console.log(`[FlowInitStart] Flow init start for flow ${data.flowId}`)
       clearNodes()
       resetEdges()
 
@@ -60,7 +59,6 @@ export function useFlowSubscription() {
 
     [FlowEventType.FlowInitEnd]: (data) => {
       setFlowLoaded(data.flowId)
-      console.log(`[FlowInitEnd] Flow init end for flow ${data.flowId}`)
     },
 
     [FlowEventType.MetadataUpdated]: (data) => {
@@ -348,7 +346,6 @@ export function useFlowSubscription() {
         }
 
         if (trackedData && trackedData.data) {
-          console.log('[FLOW SUB] Received data for flow', activeFlowId, trackedData.data)
           // await handleEvent(trackedData.data)
           handleEvent(trackedData.data).catch((error) => {
             console.error(`[FLOW SUB] Error handling event for flow ${activeFlowId}:`, error)
