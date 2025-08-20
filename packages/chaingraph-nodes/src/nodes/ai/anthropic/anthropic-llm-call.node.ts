@@ -138,6 +138,18 @@ class AntropicLLMCallNodeFeatures {
     defaultValue: false,
   })
   interleavedThinking20250514: boolean = false
+
+  @PortArray({
+    title: 'Betas',
+    description: 'List of beta features to enable for this node',
+    itemConfig: {
+      type: 'string',
+      defaultValue: '',
+    },
+    defaultValue: [],
+    isMutable: true,
+  })
+  betas?: string[] = []
 }
 
 /**
@@ -779,13 +791,13 @@ export class AntropicLlmCallNode extends BaseNode {
         const finalParams = this.buildRequestParameters(context, conversationHistory)
         await this.processMessageStream(client, finalParams, context)
       }
-
-      // Close streams
-      this.responseStream.close()
     } catch (error: any) {
       // Handle errors during streaming
       await this.handleStreamingError(context, error)
       throw error
+    } finally {
+      // Ensure we close the response stream after execution
+      this.responseStream.close()
     }
   }
 
@@ -885,6 +897,10 @@ export class AntropicLlmCallNode extends BaseNode {
     }
     if (this.features.interleavedThinking20250514) {
       betas.push('interleaved-thinking-2025-05-14')
+    }
+
+    if (this.features.betas && this.features.betas.length > 0) {
+      betas.push(...this.features.betas)
     }
 
     // Use Anthropic's streaming API

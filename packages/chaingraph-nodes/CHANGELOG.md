@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.4.2
+
+### Patch Changes
+
+- feat: add betas feature to enable beta functionalities in Anthropic LLM call, ensure response stream is closed after execution
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.4.2
+
+### Patch Changes
+
+- feat: add betas feature to enable beta functionalities in Anthropic LLM call, ensure response stream is closed after execution
+
 ## 0.4.1
 
 ### Patch Changes
