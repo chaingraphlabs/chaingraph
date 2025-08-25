@@ -311,8 +311,9 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
           {/* Description */}
           {node.description && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground whitespace-pre-wrap">
-                <Markdown remarkPlugins={[remarkGfm]}>{node.description}</Markdown>
+              <div className="text-xs text-muted-foreground whitespace-pre-wrap break-all">
+                {/* <Markdown remarkPlugins={[remarkGfm]}>{node.description}</Markdown> */}
+                {node.description}
               </div>
             </div>
           )}

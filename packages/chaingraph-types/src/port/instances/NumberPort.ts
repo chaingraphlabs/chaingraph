@@ -48,7 +48,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    *
    * @returns The default number value if provided; otherwise, undefined.
    */
-  protected getDefaultValue(): NumberPortValue | undefined {
+  getDefaultValue(): NumberPortValue | undefined {
     return this.config.defaultValue
   }
 
@@ -59,7 +59,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @param value - The number port value to validate.
    * @returns True if the value is valid; otherwise, false.
    */
-  protected validateValue(value: NumberPortValue): boolean {
+  validateValue(value: NumberPortValue): boolean {
     const errors = NumberPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -71,7 +71,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @param config - The number port configuration.
    * @returns True if the configuration is valid; otherwise, false.
    */
-  protected validateConfig(config: NumberPortConfig): boolean {
+  validateConfig(config: NumberPortConfig): boolean {
     const errors = NumberPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -83,7 +83,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @param config - The number port configuration to serialize.
    * @returns The serialized configuration as a JSONValue.
    */
-  protected serializeConfig(config: NumberPortConfig): JSONValue {
+  serializeConfig(config: NumberPortConfig): JSONValue {
     return NumberPortPlugin.serializeConfig(config)
   }
 
@@ -94,7 +94,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @param value - The number port value to serialize.
    * @returns The serialized value as a JSONValue.
    */
-  protected serializeValue(value: NumberPortValue): JSONValue {
+  serializeValue(value: NumberPortValue): JSONValue {
     return NumberPortPlugin.serializeValue(value, this.config)
   }
 
@@ -105,7 +105,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @param data - The JSON data representing the configuration.
    * @returns The deserialized NumberPortConfig.
    */
-  protected deserializeConfig(data: JSONValue): NumberPortConfig {
+  deserializeConfig(data: JSONValue): NumberPortConfig {
     return NumberPortPlugin.deserializeConfig(data)
   }
 
@@ -116,7 +116,7 @@ export class NumberPort extends BasePort<NumberPortConfig> {
    * @param data - The JSON data representing the value.
    * @returns The deserialized NumberPortValue.
    */
-  protected deserializeValue(data: JSONValue): NumberPortValue {
+  deserializeValue(data: JSONValue): NumberPortValue {
     return NumberPortPlugin.deserializeValue(data, this.config)
   }
 

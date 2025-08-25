@@ -75,7 +75,7 @@ export const executionRouter = router({
       }
 
       const instance = await ctx.executionService.createExecution(
-        flow as Flow,
+        await flow.clone() as Flow,
         input.options,
         input.integration,
       )

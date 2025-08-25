@@ -95,7 +95,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * Returns the default value from the configuration.
    * @returns The default AnyPortValue if specified; otherwise undefined.
    */
-  protected getDefaultValue(): AnyPortValue | undefined {
+  getDefaultValue(): AnyPortValue | undefined {
     return this.config.defaultValue
   }
 
@@ -204,7 +204,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param value - The any port value to validate.
    * @returns True if valid; otherwise false.
    */
-  protected validateValue(value: AnyPortValue): boolean {
+  validateValue(value: AnyPortValue): boolean {
     const errors = AnyPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -216,7 +216,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param config - The any port configuration.
    * @returns True if valid; otherwise false.
    */
-  protected validateConfig(config: AnyPortConfig): boolean {
+  validateConfig(config: AnyPortConfig): boolean {
     const errors = AnyPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -228,7 +228,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param config - The any port configuration.
    * @returns The serialized configuration.
    */
-  protected serializeConfig(config: AnyPortConfig): JSONValue {
+  serializeConfig(config: AnyPortConfig): JSONValue {
     return AnyPortPlugin.serializeConfig(config)
   }
 
@@ -239,7 +239,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param value - The any port value.
    * @returns The serialized value.
    */
-  protected serializeValue(value: AnyPortValue): JSONValue {
+  serializeValue(value: AnyPortValue): JSONValue {
     return AnyPortPlugin.serializeValue(value, this.config)
   }
 
@@ -250,7 +250,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param data - The JSON data.
    * @returns The deserialized configuration.
    */
-  protected deserializeConfig(data: JSONValue): AnyPortConfig {
+  deserializeConfig(data: JSONValue): AnyPortConfig {
     return AnyPortPlugin.deserializeConfig(data)
   }
 
@@ -261,7 +261,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
    * @param data - The JSON data.
    * @returns The deserialized port value.
    */
-  protected deserializeValue(data: JSONValue): AnyPortValue {
+  deserializeValue(data: JSONValue): AnyPortValue {
     return AnyPortPlugin.deserializeValue(data, this.config)
   }
 

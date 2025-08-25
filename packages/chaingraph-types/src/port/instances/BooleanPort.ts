@@ -47,7 +47,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    *
    * @returns The default BooleanPortValue if provided; otherwise undefined.
    */
-  protected getDefaultValue(): BooleanPortValue | undefined {
+  getDefaultValue(): BooleanPortValue | undefined {
     return this.config.defaultValue
   }
 
@@ -58,7 +58,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @param value - The boolean port value to validate.
    * @returns True if the value is valid; false otherwise.
    */
-  protected validateValue(value: BooleanPortValue): boolean {
+  validateValue(value: BooleanPortValue): boolean {
     const errors = BooleanPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -70,7 +70,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @param config - The boolean port configuration to validate.
    * @returns True if the configuration is valid; otherwise, false.
    */
-  protected validateConfig(config: BooleanPortConfig): boolean {
+  validateConfig(config: BooleanPortConfig): boolean {
     const errors = BooleanPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -82,7 +82,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @param config - The boolean port configuration to serialize.
    * @returns The serialized configuration as a JSONValue.
    */
-  protected serializeConfig(config: BooleanPortConfig): JSONValue {
+  serializeConfig(config: BooleanPortConfig): JSONValue {
     return BooleanPortPlugin.serializeConfig(config)
   }
 
@@ -93,7 +93,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @param value - The boolean port value to serialize.
    * @returns The serialized value as a JSONValue.
    */
-  protected serializeValue(value: BooleanPortValue): JSONValue {
+  serializeValue(value: BooleanPortValue): JSONValue {
     return BooleanPortPlugin.serializeValue(value, this.config)
   }
 
@@ -104,7 +104,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @param data - The JSON data representing the configuration.
    * @returns The deserialized BooleanPortConfig.
    */
-  protected deserializeConfig(data: JSONValue): BooleanPortConfig {
+  deserializeConfig(data: JSONValue): BooleanPortConfig {
     return BooleanPortPlugin.deserializeConfig(data)
   }
 
@@ -115,7 +115,7 @@ export class BooleanPort extends BasePort<BooleanPortConfig> {
    * @param data - The JSON data representing the value.
    * @returns The deserialized BooleanPortValue.
    */
-  protected deserializeValue(data: JSONValue): BooleanPortValue {
+  deserializeValue(data: JSONValue): BooleanPortValue {
     return BooleanPortPlugin.deserializeValue(data, this.config)
   }
 

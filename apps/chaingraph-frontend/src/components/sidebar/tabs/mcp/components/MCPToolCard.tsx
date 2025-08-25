@@ -9,17 +9,16 @@
 import type { MCPServerWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
 import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import { NodePreview } from '@/components/sidebar'
+import { useMCPServerWithNodes } from '@/components/sidebar/tabs/mcp/store/useMCPServerWithNodes'
 import { buildNodeMetadataWithPorts } from '@/components/sidebar/tabs/mcp/utils/node'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useCategoryMetadata } from '@/store/categories/useCategories'
 import { useDraggable } from '@dnd-kit/core'
-import { useUnit } from 'effector-react'
 import { motion } from 'framer-motion'
 import { Code2 } from 'lucide-react'
 import { useMemo } from 'react'
-import { $mcpServersWithNodes } from '../store'
 
 interface MCPToolCardProps {
   tool: Tool
@@ -27,8 +26,7 @@ interface MCPToolCardProps {
 }
 
 export function MCPToolCard({ tool, server }: MCPToolCardProps) {
-  const servers = useUnit($mcpServersWithNodes)
-  const serverWithNodes = servers.find(s => s.id === server.id)
+  const serverWithNodes = useMCPServerWithNodes(server.id)
 
   const paramCount = Object.keys(tool.inputSchema?.properties || {}).length || 0
 

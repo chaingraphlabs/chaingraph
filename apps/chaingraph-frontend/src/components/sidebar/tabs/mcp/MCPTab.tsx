@@ -64,17 +64,17 @@ export function MCPTab() {
   }, [])
 
   const handleCreateServer = useCallback(async (event: CreateMCPServerEvent) => {
-    await createMCPServer(event)
+    createMCPServer(event)
     setIsCreating(false)
   }, [])
 
   const handleUpdateServer = useCallback(async (event: UpdateMCPServerEvent) => {
-    await updateMCPServer(event)
+    updateMCPServer(event)
     setEditingServer(undefined)
   }, [])
 
   const handleDeleteServer = useCallback(async (id: string) => {
-    await deleteMCPServer(id)
+    deleteMCPServer(id)
     setEditingServer(undefined)
   }, [])
 

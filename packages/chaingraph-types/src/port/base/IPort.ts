@@ -146,6 +146,44 @@ export interface IPort<C extends IPortConfig = IPortConfig> {
    * @param portId - The ID of the port to disconnect from.
    */
   removeConnection: (nodeId: string, portId: string) => void
+
+  /**
+   * Returns the default value.
+   * Concrete implementations can use a default provided by the configuration.
+   */
+  getDefaultValue: () => ExtractValue<C> | undefined
+
+  /**
+   * Validates the port value.
+   * Must return true if the value is valid, false otherwise.
+   */
+  validateValue: (value: ExtractValue<C>) => boolean
+
+  /**
+   * Validates the port configuration.
+   * Must return true if the configuration is valid, false otherwise.
+   */
+  validateConfig: (config: C) => boolean
+
+  /**
+   * Serializes the configuration (of type C) to a JSONValue.
+   */
+  serializeConfig: (config: C) => JSONValue
+
+  /**
+   * Serializes the port value (of type T) to a JSONValue.
+   */
+  serializeValue: (value: ExtractValue<C>) => JSONValue
+
+  /**
+   * Deserializes a JSONValue into a configuration object of type C.
+   */
+  deserializeConfig: (data: JSONValue) => C
+
+  /**
+   * Deserializes a JSONValue into a port value of type T.
+   */
+  deserializeValue: (data: JSONValue) => ExtractValue<C>
 }
 
 /**

@@ -7,7 +7,6 @@
  */
 
 import type { MCPServer as MCPServerTRPC } from '@badaitech/chaingraph-trpc/server'
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import type { Prompt, Resource, ResourceTemplate, Tool } from '@modelcontextprotocol/sdk/types.js'
 import type {
   CreateMCPServerEvent,
@@ -23,13 +22,6 @@ import { $trpcClient } from '@/store'
 import { globalReset } from '@/store/common'
 import { mcpDomain } from '@/store/domains'
 import { combine, sample } from 'effector'
-import {
-  createMCPClient,
-  disconnectMCPClient,
-  fetchMCPPrompts,
-  fetchMCPResources,
-  fetchMCPTools,
-} from './mcp-client-manager'
 import { MCPServerStatus } from './types'
 
 // EVENTS
@@ -46,8 +38,6 @@ export const updateMCPServer = mcpDomain.createEvent<UpdateMCPServerEvent>()
 export const deleteMCPServer = mcpDomain.createEvent<string>()
 
 // MCP connection events
-export const connectMCPServer = mcpDomain.createEvent<string>() // server id
-export const disconnectMCPServer = mcpDomain.createEvent<string>() // server id
 export const setMCPServerStatus = mcpDomain.createEvent<{ id: string, status: MCPServerStatus, error?: string }>()
 export const setMCPServerCapabilities = mcpDomain.createEvent<{
   serverId: string
@@ -73,9 +63,6 @@ export const setMCPServerNodesLoading = mcpDomain.createEvent<{
 }>()
 
 // STORES (Forward declarations needed for effects)
-
-// Store for MCP clients
-export const $mcpClients = mcpDomain.createStore<Map<string, Client>>(new Map())
 
 // Store for all MCP servers list
 export const $mcpServers = mcpDomain.createStore<MCPServer[]>([])
@@ -129,53 +116,16 @@ export const deleteMCPServerFx = mcpDomain.createEffect(async (id: string) => {
   return client.mcp.deleteServer.mutate({ id })
 })
 
-// Effect for connecting to MCP server
-export const connectMCPServerFx = mcpDomain.createEffect(async (serverId: string) => {
-  const server = $mcpServers.getState().find(s => s.id === serverId)
-  if (!server) {
-    throw new Error('Server not found')
-  }
-
-  const client = await createMCPClient(server)
-
-  return { serverId, client }
-})
-
 export const loadMCPCapabilitiesFx = mcpDomain.createEffect(async ({
   serverId,
-  client,
 }: {
   serverId: string
-  client: Client
 }) => {
-  // Load all capabilities in parallel
-  const [tools, resources, prompts] = await Promise.all([
-    fetchMCPTools(client).catch(() => {
-      return [] // Return empty array on error
-    }),
-    fetchMCPResources(client).catch(() => {
-      return [] // Return empty array on error
-    }),
-    fetchMCPPrompts(client).catch(() => {
-      return [] // Return empty array on error
-    }),
-  ])
-
-  return {
-    serverId,
-    tools: tools as Tool[],
-    resources: resources as (Resource | ResourceTemplate)[],
-    prompts: prompts as Prompt[],
+  const client = $trpcClient.getState()
+  if (!client) {
+    throw new Error('TRPC client is not initialized')
   }
-})
-
-// Effect for disconnecting from MCP server
-export const disconnectMCPServerFx = mcpDomain.createEffect(async (serverId: string) => {
-  const client = $mcpClients.getState().get(serverId)
-  if (client) {
-    await disconnectMCPClient(client)
-  }
-  return serverId
+  return await client.mcp.serverCapabilities.query({ serverId })
 })
 
 // Effect for loading server nodes
@@ -197,20 +147,6 @@ export const loadMCPServerNodesFx = mcpDomain.createEffect(async (serverId: stri
 })
 
 // STORES - Event handlers
-
-// Add event handlers to $mcpClients
-$mcpClients
-  .on(connectMCPServerFx.doneData, (clients, { serverId, client }) => {
-    const newClients = new Map(clients)
-    newClients.set(serverId, client)
-    return newClients
-  })
-  .on(disconnectMCPServerFx.done, (clients, { result: serverId }) => {
-    const newClients = new Map(clients)
-    newClients.delete(serverId)
-    return newClients
-  })
-  .reset(globalReset)
 
 // Store for MCP server statuses
 export const $mcpServerStatuses = mcpDomain.createStore<Map<string, MCPServerStatus>>(new Map())
@@ -368,20 +304,13 @@ sample({
 })
 sample({
   clock: loadMCPServersFx.doneData,
-  target: setMCPServers,
+  target: [setMCPServers, loadAllMCPServerNodes],
 })
 
 // Create MCP server
 sample({
   clock: createMCPServer,
   target: createMCPServerFx,
-})
-
-// Automatically connect to newly created server
-sample({
-  clock: [createMCPServerFx.doneData, updateMCPServerFx.doneData],
-  fn: server => server.id,
-  target: connectMCPServer,
 })
 
 // Update MCP server
@@ -394,43 +323,6 @@ sample({
 sample({
   clock: deleteMCPServer,
   target: deleteMCPServerFx,
-})
-
-// Connect to MCP server when requested
-sample({
-  clock: connectMCPServer,
-  target: connectMCPServerFx,
-})
-
-// Set connecting status when starting connection
-sample({
-  clock: connectMCPServer,
-  fn: serverId => ({ id: serverId, status: MCPServerStatus.CONNECTING }),
-  target: setMCPServerStatus,
-})
-
-// Set connected status on successful connection
-sample({
-  clock: connectMCPServerFx.doneData,
-  fn: ({ serverId }) => ({ id: serverId, status: MCPServerStatus.CONNECTED }),
-  target: setMCPServerStatus,
-})
-
-// Set error status on connection failure
-sample({
-  clock: connectMCPServerFx.fail,
-  fn: ({ params: serverId, error }) => ({
-    id: serverId,
-    status: MCPServerStatus.ERROR,
-    error: error.message,
-  }),
-  target: setMCPServerStatus,
-})
-
-// Load capabilities after successful connection
-sample({
-  clock: connectMCPServerFx.doneData,
-  target: loadMCPCapabilitiesFx,
 })
 
 // Set loading states when loading capabilities
@@ -465,11 +357,6 @@ sample({
   target: setMCPCapabilityLoading,
 })
 
-// Automatically connect to all servers after loading
-loadMCPServersFx.doneData.watch((servers) => {
-  servers.forEach(server => connectMCPServer(server.id))
-})
-
 // Load nodes when requested
 sample({
   clock: loadMCPServerNodes,
@@ -480,6 +367,7 @@ sample({
 loadAllMCPServerNodes.watch(() => {
   const servers = $mcpServers.getState()
   servers.forEach(server => loadMCPServerNodes(server.id))
+  servers.forEach(server => loadMCPCapabilitiesFx({ serverId: server.id }))
 })
 
 // Load nodes when servers are loaded

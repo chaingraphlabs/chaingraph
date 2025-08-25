@@ -137,8 +137,10 @@ export class MCPConnectionNode extends BaseNode {
 
     const promises = headers.map(async (header) => {
       if (header.key && header.value) {
-        const { value: headerValue } = await header.value!.decrypt(context)
-        return { key: header.key, value: headerValue }
+        // const { value: headerValue } = await header.value!.decrypt(context)
+        // const { value: headerValue } = await header.value!.decrypt(context)
+        // TODO: implement secret storing
+        return { key: header.key, value: header.value }
       }
     })
 

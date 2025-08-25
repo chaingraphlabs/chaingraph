@@ -7,4 +7,5 @@
  */
 
 export { MCPCapabilityService } from './mcp-capability.service'
+export type { ServerCapabilities } from './mcp-capability.service'
 export { MCPNodeBuilderService } from './mcp-node-builder.service'

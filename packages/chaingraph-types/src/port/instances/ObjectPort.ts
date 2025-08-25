@@ -91,7 +91,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * Retrieves the default value from the configuration.
    * @returns The default ObjectPortValue if specified; otherwise undefined.
    */
-  protected getDefaultValue(): ObjectPortValue<S> | undefined {
+  getDefaultValue(): ObjectPortValue<S> | undefined {
     return this.config.defaultValue
   }
 
@@ -192,7 +192,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * @param value - The object port value.
    * @returns True if valid; otherwise false.
    */
-  protected validateValue(value: ObjectPortValue<S>): boolean {
+  validateValue(value: ObjectPortValue<S>): boolean {
     const errors = ObjectPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -203,7 +203,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * @param config - The object port configuration.
    * @returns True if valid; otherwise false.
    */
-  protected validateConfig(config: ObjectPortConfig<S>): boolean {
+  validateConfig(config: ObjectPortConfig<S>): boolean {
     const errors = ObjectPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -214,7 +214,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * @param config - The object port configuration.
    * @returns The serialized configuration.
    */
-  protected serializeConfig(config: ObjectPortConfig<S>): JSONValue {
+  serializeConfig(config: ObjectPortConfig<S>): JSONValue {
     return ObjectPortPlugin.serializeConfig(config)
   }
 
@@ -224,7 +224,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * @param value - The object port value.
    * @returns The serialized value.
    */
-  protected serializeValue(value: ObjectPortValue<S>): JSONValue {
+  serializeValue(value: ObjectPortValue<S>): JSONValue {
     return ObjectPortPlugin.serializeValue(value, this.config)
   }
 
@@ -234,7 +234,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * @param data - The JSON data.
    * @returns The deserialized configuration.
    */
-  protected deserializeConfig(data: JSONValue): ObjectPortConfig<S> {
+  deserializeConfig(data: JSONValue): ObjectPortConfig<S> {
     return ObjectPortPlugin.deserializeConfig(data) as ObjectPortConfig<S>
   }
 
@@ -244,7 +244,7 @@ export class ObjectPort<S extends IObjectSchema = IObjectSchema> extends BasePor
    * @param data - The JSON data.
    * @returns The deserialized port value.
    */
-  protected deserializeValue(data: JSONValue): ObjectPortValue<S> {
+  deserializeValue(data: JSONValue): ObjectPortValue<S> {
     return ObjectPortPlugin.deserializeValue(data, this.config)
   }
 

@@ -7,6 +7,7 @@
  */
 
 export { mcpProcedures } from './procedures'
+export * from './services'
 export { InMemoryMCPStore, PostgresMCPStore } from './stores'
 export type { IMCPStore } from './stores'
 export type {

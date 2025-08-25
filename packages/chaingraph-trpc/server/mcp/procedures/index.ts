@@ -17,6 +17,7 @@ import { createServer } from './create-server'
 import { deleteServer } from './delete-server'
 import { getAllNodesForServer } from './get-all-nodes-for-server'
 import { listServers } from './list-servers'
+import { serverCapabilities } from './server-capabilities'
 import { updateServer } from './update-server'
 
 export const mcpProcedures = router({
@@ -25,6 +26,9 @@ export const mcpProcedures = router({
   createServer,
   updateServer,
   deleteServer,
+
+  // Capability fetching
+  serverCapabilities,
 
   // Node building
   buildToolNode,

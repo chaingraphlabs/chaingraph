@@ -33,49 +33,49 @@ export class SecretPort<S extends SecretType> extends BasePort<SecretPortConfig<
    *
    * @returns undefined.
    */
-  protected getDefaultValue(): undefined {
+  getDefaultValue(): undefined {
     return undefined
   }
 
   /**
    * @inheritDoc
    */
-  protected validateValue(value: SecretPortValue<S>): boolean {
+  validateValue(value: SecretPortValue<S>): boolean {
     return SecretPortPlugin.validateValue(value, this.config).length === 0
   }
 
   /**
    * @inheritDoc
    */
-  protected validateConfig(config: SecretPortConfig<S>): boolean {
+  validateConfig(config: SecretPortConfig<S>): boolean {
     return SecretPortPlugin.validateConfig(config).length === 0
   }
 
   /**
    * @inheritDoc
    */
-  protected serializeConfig(config: SecretPortConfig<S>): JSONValue {
+  serializeConfig(config: SecretPortConfig<S>): JSONValue {
     return SecretPortPlugin.serializeConfig(config)
   }
 
   /**
    * @inheritDoc
    */
-  protected serializeValue(value: SecretPortValue<S>): JSONValue {
+  serializeValue(value: SecretPortValue<S>): JSONValue {
     return SecretPortPlugin.serializeValue(value, this.config)
   }
 
   /**
    * @inheritDoc
    */
-  protected deserializeConfig(data: JSONValue): SecretPortConfig<S> {
+  deserializeConfig(data: JSONValue): SecretPortConfig<S> {
     return SecretPortPlugin.deserializeConfig(data)
   }
 
   /**
    * @inheritDoc
    */
-  protected deserializeValue(data: JSONValue): SecretPortValue<S> {
+  deserializeValue(data: JSONValue): SecretPortValue<S> {
     return SecretPortPlugin.deserializeValue(data, this.config) as SecretPortValue<S>
   }
 
