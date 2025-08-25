@@ -65,7 +65,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    *
    * @returns The default ArrayPortValue if specified; otherwise undefined.
    */
-  protected getDefaultValue(): ArrayPortValue<Item> | undefined {
+  getDefaultValue(): ArrayPortValue<Item> | undefined {
     return this.config.defaultValue
   }
 
@@ -76,7 +76,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @param value - The array port value to validate.
    * @returns True if the value is valid; otherwise false.
    */
-  protected validateValue(value: ArrayPortValue<Item>): boolean {
+  validateValue(value: ArrayPortValue<Item>): boolean {
     const errors = ArrayPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -88,7 +88,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @param config - The array port configuration to validate.
    * @returns True if the configuration is valid; otherwise false.
    */
-  protected validateConfig(config: ArrayPortConfig<Item>): boolean {
+  validateConfig(config: ArrayPortConfig<Item>): boolean {
     const errors = ArrayPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -100,7 +100,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @param config - The array port configuration to serialize.
    * @returns The serialized configuration as a JSONValue.
    */
-  protected serializeConfig(config: ArrayPortConfig<Item>): JSONValue {
+  serializeConfig(config: ArrayPortConfig<Item>): JSONValue {
     return ArrayPortPlugin.serializeConfig(config)
   }
 
@@ -111,7 +111,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @param value - The array port value to serialize.
    * @returns The serialized value as a JSONValue.
    */
-  protected serializeValue(value: ArrayPortValue<Item>): JSONValue {
+  serializeValue(value: ArrayPortValue<Item>): JSONValue {
     return ArrayPortPlugin.serializeValue(value, this.config)
   }
 
@@ -122,7 +122,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @param data - The JSON data representing the configuration.
    * @returns The deserialized ArrayPortConfig.
    */
-  protected deserializeConfig(data: JSONValue): ArrayPortConfig<Item> {
+  deserializeConfig(data: JSONValue): ArrayPortConfig<Item> {
     return ArrayPortPlugin.deserializeConfig(data) as ArrayPortConfig<Item>
   }
 
@@ -133,7 +133,7 @@ export class ArrayPort<Item extends IPortConfig = IPortConfig> extends BasePort<
    * @param data - The JSON data representing the value.
    * @returns The deserialized ArrayPortValue.
    */
-  protected deserializeValue(data: JSONValue): ArrayPortValue {
+  deserializeValue(data: JSONValue): ArrayPortValue {
     return ArrayPortPlugin.deserializeValue(data, this.config)
   }
 

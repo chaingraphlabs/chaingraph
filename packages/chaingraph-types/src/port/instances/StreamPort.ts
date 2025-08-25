@@ -67,7 +67,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    *
    * @returns The default StreamPortValue, if specified.
    */
-  protected getDefaultValue(): StreamPortValue<Item> | undefined {
+  getDefaultValue(): StreamPortValue<Item> | undefined {
     return this.config.defaultValue
   }
 
@@ -87,7 +87,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @param value - The stream port value to validate.
    * @returns True if valid; otherwise false.
    */
-  protected validateValue(value: StreamPortValue<Item>): boolean {
+  validateValue(value: StreamPortValue<Item>): boolean {
     const errors = StreamPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -99,7 +99,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @param config - The stream port configuration.
    * @returns True if valid; otherwise false.
    */
-  protected validateConfig(config: StreamPortConfig<Item>): boolean {
+  validateConfig(config: StreamPortConfig<Item>): boolean {
     const errors = StreamPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -111,7 +111,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @param config - The stream port configuration.
    * @returns The serialized configuration.
    */
-  protected serializeConfig(config: StreamPortConfig<Item>): JSONValue {
+  serializeConfig(config: StreamPortConfig<Item>): JSONValue {
     return StreamPortPlugin.serializeConfig(config)
   }
 
@@ -122,7 +122,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @param value - The stream port value.
    * @returns The serialized value.
    */
-  protected serializeValue(value: StreamPortValue<Item>): JSONValue {
+  serializeValue(value: StreamPortValue<Item>): JSONValue {
     return StreamPortPlugin.serializeValue(value, this.config)
   }
 
@@ -133,7 +133,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @param data - The JSON data representing the configuration.
    * @returns The deserialized configuration.
    */
-  protected deserializeConfig(data: JSONValue): StreamPortConfig<Item> {
+  deserializeConfig(data: JSONValue): StreamPortConfig<Item> {
     return StreamPortPlugin.deserializeConfig(data) as StreamPortConfig<Item>
   }
 
@@ -144,7 +144,7 @@ export class StreamPort<Item extends IPortConfig = IPortConfig> extends BasePort
    * @param data - The JSON data representing the port value.
    * @returns The deserialized port value.
    */
-  protected deserializeValue(data: JSONValue): StreamPortValue<Item> {
+  deserializeValue(data: JSONValue): StreamPortValue<Item> {
     return StreamPortPlugin.deserializeValue(data, this.config) as StreamPortValue<Item>
   }
 

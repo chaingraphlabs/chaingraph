@@ -99,13 +99,11 @@ export class HeaderPair {
   })
   key: string = ''
 
-  @PortSecret<'string'>({
+  @PortString({
     title: 'Header Value',
     description: 'HTTP header value',
-    secretType: 'string',
-    required: true,
   })
-  value?: EncryptedSecretValue<'string'>
+  value?: string = ''
 }
 
 @ObjectSchema({

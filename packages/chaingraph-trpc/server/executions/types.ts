@@ -39,6 +39,7 @@ export interface ExecutionInstance {
   context: ExecutionContext
   engine: ExecutionEngine
   flow: Flow
+  initialStateFlow: Flow // Keep a copy of the original flow with initial node states
   status: ExecutionStatus
   createdAt: Date
   startedAt?: Date

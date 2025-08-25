@@ -188,39 +188,39 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
    * Returns the default value.
    * Concrete implementations can use a default provided by the configuration.
    */
-  protected abstract getDefaultValue(): ExtractValue<C> | undefined
+  abstract getDefaultValue(): ExtractValue<C> | undefined
 
   /**
    * Validates the port value.
    * Must return true if the value is valid, false otherwise.
    */
-  protected abstract validateValue(value: ExtractValue<C>): boolean
+  abstract validateValue(value: ExtractValue<C>): boolean
 
   /**
    * Validates the port configuration.
    * Must return true if the configuration is valid, false otherwise.
    */
-  protected abstract validateConfig(config: C): boolean
+  abstract validateConfig(config: C): boolean
 
   /**
    * Serializes the configuration (of type C) to a JSONValue.
    */
-  protected abstract serializeConfig(config: C): JSONValue
+  abstract serializeConfig(config: C): JSONValue
 
   /**
    * Serializes the port value (of type T) to a JSONValue.
    */
-  protected abstract serializeValue(value: ExtractValue<C>): JSONValue
+  abstract serializeValue(value: ExtractValue<C>): JSONValue
 
   /**
    * Deserializes a JSONValue into a configuration object of type C.
    */
-  protected abstract deserializeConfig(data: JSONValue): C
+  abstract deserializeConfig(data: JSONValue): C
 
   /**
    * Deserializes a JSONValue into a port value of type T.
    */
-  protected abstract deserializeValue(data: JSONValue): ExtractValue<C>
+  abstract deserializeValue(data: JSONValue): ExtractValue<C>
 
   /**
    * Clones cloneWithNewId

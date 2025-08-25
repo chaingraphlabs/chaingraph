@@ -50,7 +50,7 @@ export class StringPort extends BasePort<StringPortConfig> {
   /**
    * Returns the default value using the plugin's helper.
    */
-  protected getDefaultValue(): StringPortValue | undefined {
+  getDefaultValue(): StringPortValue | undefined {
     return this.config.defaultValue
   }
 
@@ -58,7 +58,7 @@ export class StringPort extends BasePort<StringPortConfig> {
    * Validates the string port value.
    * Delegates to the StringPortPlugin.validateValue method
    */
-  protected validateValue(value: StringPortValue): boolean {
+  validateValue(value: StringPortValue): boolean {
     const errors = StringPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -66,7 +66,7 @@ export class StringPort extends BasePort<StringPortConfig> {
   /**
    * Validates the string port configuration.
    */
-  protected validateConfig(config: StringPortConfig): boolean {
+  validateConfig(config: StringPortConfig): boolean {
     const errors = StringPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -74,28 +74,28 @@ export class StringPort extends BasePort<StringPortConfig> {
   /**
    * Serializes the configuration by delegating to the StringPortPlugin's serializeConfig.
    */
-  protected serializeConfig(config: StringPortConfig): JSONValue {
+  serializeConfig(config: StringPortConfig): JSONValue {
     return StringPortPlugin.serializeConfig(config)
   }
 
   /**
    * Serializes the string port value by delegating to the StringPortPlugin.serializeValue.
    */
-  protected serializeValue(value: StringPortValue): JSONValue {
+  serializeValue(value: StringPortValue): JSONValue {
     return StringPortPlugin.serializeValue(value, this.config)
   }
 
   /**
    * Deserializes the configuration using the StringPortPlugin.deserializeConfig.
    */
-  protected deserializeConfig(data: JSONValue): StringPortConfig {
+  deserializeConfig(data: JSONValue): StringPortConfig {
     return StringPortPlugin.deserializeConfig(data)
   }
 
   /**
    * Deserializes the string port value using the StringPortPlugin.deserializeValue.
    */
-  protected deserializeValue(data: JSONValue): StringPortValue {
+  deserializeValue(data: JSONValue): StringPortValue {
     return StringPortPlugin.deserializeValue(data, this.config)
   }
 

@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.4.3
+
+### Patch Changes
+
+- feat: refactor MCP architecture to server-side, improve execution engine state management
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.4.3
+  - @badaitech/chaingraph-types@0.4.3
+  - @badaitech/chaingraph-trpc@0.4.3
+
 ## 0.4.2
 
 ### Patch Changes

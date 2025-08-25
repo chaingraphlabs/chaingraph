@@ -6,10 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { MCPPromptGetNode, MCPResourceReadNode, MCPToolCallNode } from '@badaitech/chaingraph-nodes'
+import type {
+  MCPPromptGetNode,
+  MCPResourceReadNode,
+  MCPToolCallNode,
+} from '@badaitech/chaingraph-nodes'
 import type { INode, IPort, IPortConfig, NodeRegistry, ObjectPort, StringPort } from '@badaitech/chaingraph-types'
 import type { Prompt, Resource, ResourceTemplate, Tool } from '@modelcontextprotocol/sdk/types.js'
 import type { MCPServer } from '../stores/types'
+import {
+  HeaderPair,
+} from '@badaitech/chaingraph-nodes'
 import { MCPConnectionData } from '@badaitech/chaingraph-nodes'
 import { jsonSchemaToPortConfig } from '@badaitech/chaingraph-types'
 import { parse } from 'uri-template'
@@ -45,7 +52,12 @@ export class MCPNodeBuilderService {
     connectionData.serverUrl = server.url
 
     // TODO: do we really need to support secrets here?
-    // connectionData.headers = server.authHeaders || []
+    connectionData.headers = server.authHeaders.map((header) => {
+      const headerPair = new HeaderPair()
+      headerPair.key = header.key
+      headerPair.value = header.value
+      return headerPair
+    }) || []
 
     this.configureConnectionPort(connectionPort, server, connectionData)
 

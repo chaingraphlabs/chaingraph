@@ -12,7 +12,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
-interface CachedCapabilities {
+export interface ServerCapabilities {
+  serverId: string
   tools: Tool[]
   resources: (Resource | ResourceTemplate)[]
   prompts: Prompt[]
@@ -20,9 +21,9 @@ interface CachedCapabilities {
 }
 
 export class MCPCapabilityService {
-  private cache = new Map<string, CachedCapabilities>()
+  private cache = new Map<string, ServerCapabilities>()
   private activeClients = new Map<string, Client>()
-  private readonly CACHE_DURATION = 60 * 1000 // 1 minute
+  private readonly CACHE_DURATION = 30 * 1000 // 30 seconds
 
   constructor(private mcpStore: IMCPStore) {}
 
@@ -53,11 +54,11 @@ export class MCPCapabilityService {
     return prompt
   }
 
-  async getAllCapabilities(serverId: string, userId: string): Promise<CachedCapabilities> {
+  async getAllCapabilities(serverId: string, userId: string): Promise<ServerCapabilities> {
     return this.getCapabilities(serverId, userId)
   }
 
-  private async getCapabilities(serverId: string, userId: string): Promise<CachedCapabilities> {
+  private async getCapabilities(serverId: string, userId: string): Promise<ServerCapabilities> {
     // Check cache first
     const cached = this.cache.get(serverId)
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
@@ -81,7 +82,8 @@ export class MCPCapabilityService {
       client.listPrompts().catch(() => ({ prompts: [] })),
     ])
 
-    const capabilities: CachedCapabilities = {
+    const capabilities: ServerCapabilities = {
+      serverId: server.id,
       tools: toolsResult.tools || [],
       resources: [...(resourcesResult.resources || []), ...(resourceTemplatesResult.resourceTemplates || [])],
       prompts: promptsResult.prompts || [],
@@ -131,6 +133,8 @@ export class MCPCapabilityService {
       version: '1.0.0',
     })
 
+    console.log(`Connecting to MCP server at ${url.toString()} with headers:`, headers)
+
     // Try StreamableHTTP transport first (newer, more reliable)
     try {
       const transport = new StreamableHTTPClientTransport(url, {
@@ -153,7 +157,7 @@ export class MCPCapabilityService {
       })
     } catch (error) {
       // If that fails, try the older SSE transport
-      console.warn('StreamableHTTP transport failed, trying SSE transport:', error)
+      console.error('StreamableHTTP transport failed, trying SSE transport:', error)
 
       try {
         const sseTransport = new SSEClientTransport(url)

@@ -22,7 +22,7 @@ export interface AllNodesResponse {
 
 // Cache for built nodes
 const nodeCache = new Map<string, { nodes: AllNodesResponse, timestamp: number }>()
-const NODE_CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const NODE_CACHE_DURATION = 30 * 1000 // 30 seconds
 
 export const getAllNodesForServer = authedProcedure
   .input(z.object({

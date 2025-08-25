@@ -52,7 +52,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * Returns the default value from the configuration.
    * @returns The default EnumPortValue if specified; otherwise undefined.
    */
-  protected getDefaultValue(): EnumPortValue | undefined {
+  getDefaultValue(): EnumPortValue | undefined {
     return this.config.defaultValue
   }
 
@@ -62,7 +62,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @param value - The enum port value to validate.
    * @returns True if valid; otherwise false.
    */
-  protected validateValue(value: EnumPortValue): boolean {
+  validateValue(value: EnumPortValue): boolean {
     const errors = EnumPortPlugin.validateValue(value, this.config)
     return errors.length === 0
   }
@@ -73,7 +73,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @param config - The enum port configuration.
    * @returns True if valid; otherwise false.
    */
-  protected validateConfig(config: EnumPortConfig): boolean {
+  validateConfig(config: EnumPortConfig): boolean {
     const errors = EnumPortPlugin.validateConfig(config)
     return errors.length === 0
   }
@@ -84,7 +84,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @param config - The enum port configuration.
    * @returns The serialized configuration.
    */
-  protected serializeConfig(config: EnumPortConfig): JSONValue {
+  serializeConfig(config: EnumPortConfig): JSONValue {
     return EnumPortPlugin.serializeConfig(config)
   }
 
@@ -94,7 +94,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @param value - The enum port value.
    * @returns The serialized value.
    */
-  protected serializeValue(value: EnumPortValue): JSONValue {
+  serializeValue(value: EnumPortValue): JSONValue {
     return EnumPortPlugin.serializeValue(value, this.config)
   }
 
@@ -104,7 +104,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @param data - The JSON data.
    * @returns The deserialized configuration.
    */
-  protected deserializeConfig(data: JSONValue): EnumPortConfig {
+  deserializeConfig(data: JSONValue): EnumPortConfig {
     return EnumPortPlugin.deserializeConfig(data)
   }
 
@@ -114,7 +114,7 @@ export class EnumPort extends BasePort<EnumPortConfig> {
    * @param data - The JSON data.
    * @returns The deserialized port value.
    */
-  protected deserializeValue(data: JSONValue): EnumPortValue {
+  deserializeValue(data: JSONValue): EnumPortValue {
     return EnumPortPlugin.deserializeValue(data, this.config)
   }
 

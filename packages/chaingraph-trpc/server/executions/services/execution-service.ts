@@ -64,8 +64,11 @@ export class ExecutionService {
     eventData?: EmittedEventContext,
     parentDepth: number = 0,
   ): Promise<ExecutionInstance> {
-    const clonedFlow = await flow.clone() as Flow
-    clonedFlow.setIsDisabledPropagationEvents(true)
+    flow.setIsDisabledPropagationEvents(true)
+
+    // Initial state flow needed to keep in memory the original node states
+    const initialStateFlow = await flow.clone() as Flow
+    initialStateFlow.setIsDisabledPropagationEvents(true)
 
     const currentDepth = parentDepth + 1
 
@@ -78,7 +81,7 @@ export class ExecutionService {
     const id = generateExecutionID()
     const abortController = new AbortController()
     const context = new ExecutionContext(
-      clonedFlow.id,
+      flow.id,
       abortController,
       undefined,
       id,
@@ -87,10 +90,10 @@ export class ExecutionService {
       eventData,
       !!parentExecutionId, // isChildExecution
       currentDepth,
-      (nodeId: string) => clonedFlow.nodes.get(nodeId),
+      (nodeId: string) => flow.nodes.get(nodeId),
       (predicate: (node: INode) => boolean) => {
         // todo: possible to optimize somehow?
-        return Array.from(clonedFlow.nodes.values()).filter(predicate)
+        return Array.from(flow.nodes.values()).filter(predicate)
       },
     )
 
@@ -98,13 +101,14 @@ export class ExecutionService {
     if (!context.emittedEvents) {
       context.emittedEvents = []
     }
-    const engine = new ExecutionEngine(clonedFlow, context, options)
+    const engine = new ExecutionEngine(flow, context, options)
 
     const instance: ExecutionInstance = {
       id,
       context,
       engine,
-      flow: clonedFlow,
+      flow,
+      initialStateFlow,
       status: ExecutionStatus.Created,
       createdAt: new Date(),
       parentExecutionId,
@@ -531,7 +535,7 @@ export class ExecutionService {
     let childInstance: ExecutionInstance
     try {
       childInstance = await this.createExecution(
-        parentInstance.flow,
+        await parentInstance.initialStateFlow.clone() as Flow,
         parentInstance.engine.getOptions(),
         parentInstance.context.integrations,
         parentInstance.id,

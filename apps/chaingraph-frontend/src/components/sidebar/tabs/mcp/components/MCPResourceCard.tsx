@@ -9,17 +9,16 @@
 import type { MCPServerWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
 import type { Resource, ResourceTemplate } from '@modelcontextprotocol/sdk/types.js'
 import { NodePreview } from '@/components/sidebar'
+import { useMCPServerWithNodes } from '@/components/sidebar/tabs/mcp/store/useMCPServerWithNodes'
 import { buildNodeMetadataWithPorts } from '@/components/sidebar/tabs/mcp/utils/node'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useCategoryMetadata } from '@/store/categories/useCategories'
 import { useDraggable } from '@dnd-kit/core'
-import { useUnit } from 'effector-react'
 import { motion } from 'framer-motion'
 import { File, FileBox, FileImage, FileJson, FileText } from 'lucide-react'
 import { useMemo } from 'react'
-import { $mcpServersWithNodes } from '../store'
 
 interface MCPResourceCardProps {
   resource: Resource | ResourceTemplate
@@ -27,8 +26,7 @@ interface MCPResourceCardProps {
 }
 
 export function MCPResourceCard({ resource, server }: MCPResourceCardProps) {
-  const servers = useUnit($mcpServersWithNodes)
-  const serverWithNodes = servers.find(s => s.id === server.id)
+  const serverWithNodes = useMCPServerWithNodes(server.id)
 
   // Select icon based on resource type
   const getResourceIcon = (type: string) => {
