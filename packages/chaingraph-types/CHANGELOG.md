@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.4.3
+
+### Patch Changes
+
+- feat: refactor MCP architecture to server-side, improve execution engine state management
+
 ## 0.4.2
 
 ### Patch Changes
