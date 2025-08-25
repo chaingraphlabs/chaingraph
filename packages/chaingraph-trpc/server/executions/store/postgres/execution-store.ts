@@ -121,6 +121,7 @@ export class PostgresExecutionStore implements IExecutionStore {
     return {
       id: row.id,
       flow,
+      initialStateFlow: await flow.clone(),
       context: {
         executionId: metadata?.contextData?.executionId || row.id,
         eventData: metadata?.contextData?.eventData || undefined,
@@ -187,6 +188,7 @@ export class PostgresExecutionStore implements IExecutionStore {
       return {
         id: row.id,
         flow,
+        initialStateFlow: flow,
         context: {
           executionId: row.id,
           eventData: row.eventData || undefined,
