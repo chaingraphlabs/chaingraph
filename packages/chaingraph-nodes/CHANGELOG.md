@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.4.4
+
+### Patch Changes
+
+- Added filtering to OKX DEX Search tokens node
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.4.4
+
 ## 0.4.3
 
 ### Patch Changes
