@@ -13,6 +13,7 @@ import {
   Node,
   Output,
   PortArray,
+  PortNumber,
   PortObject,
   PortString,
 } from '@badaitech/chaingraph-types'
@@ -55,6 +56,22 @@ class OKXGetTokensNode extends BaseNode {
   })
   chainIndex?: string
 
+  @Input()
+  @PortString({
+    title: 'Query',
+    description: 'Filter tokens by name or symbol (case-insensitive, partial match)',
+    required: false,
+  })
+  query?: string
+
+  @Input()
+  @PortNumber({
+    title: 'Limit',
+    description: 'Maximum number of tokens to return',
+    required: false,
+  })
+  limit?: number
+
   @Output()
   @PortArray({
     title: 'Tokens',
@@ -83,10 +100,25 @@ class OKXGetTokensNode extends BaseNode {
       // Make the API call using the SDK - adjust method name if needed
       const response = await client.dex.getTokens(this.chainId ?? this.chainIndex ?? '1')
 
-      // console.log(`[OKXGetTokensNode] API response: ${JSON.stringify(response)}`)
+      // Apply filtering if query is provided
+      let filteredTokens = response.data
+      if (this.query) {
+        const searchQuery = this.query.toLowerCase()
+        filteredTokens = filteredTokens.filter((token: TokenListInfo) => {
+          return (
+            token.tokenName?.toLowerCase().includes(searchQuery)
+            || token.tokenSymbol.toLowerCase().includes(searchQuery)
+          )
+        })
+      }
 
-      for (const row of response.data) {
-        const token = row as any
+      // Apply limit if provided
+      if (this.limit && this.limit > 0) {
+        filteredTokens = filteredTokens.slice(0, this.limit)
+      }
+
+      for (const row of filteredTokens) {
+        const token = row as TokenListInfo
 
         // Map the API response to the desired output format
         const mappedToken = new TokenListInfo()
