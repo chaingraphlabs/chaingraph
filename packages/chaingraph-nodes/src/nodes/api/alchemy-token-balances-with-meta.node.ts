@@ -208,77 +208,122 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
     const url = Networks.getAlchemyUrl(this.network, apiKey)
 
     try {
-      let pageKey: string | undefined
-      const tokensList: any[] = []
+      // Step 1: Get token balances using alchemy_getTokenBalances
+      const balancesParams: any[] = [this.walletAddress]
+      
+      if (this.contractAddresses.length > 0) {
+        balancesParams.push(this.contractAddresses)
+      }
 
-      do {
-        const requestBody = {
-          jsonrpc: '2.0',
-          method: 'alchemy_getTokensForOwner',
-          params: [
-            this.walletAddress,
-            {
-              ...(this.contractAddresses.length > 0 ? { contractAddresses: this.contractAddresses } : {}),
-              ...(pageKey ? { pageKey } : {}),
-            },
-          ],
-          id: 1,
+      const balancesRequestBody = {
+        jsonrpc: '2.0',
+        method: 'alchemy_getTokenBalances',
+        params: balancesParams,
+        id: 1,
+      }
+
+      const balancesResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(balancesRequestBody),
+      })
+
+      if (!balancesResponse.ok) {
+        throw new Error(`HTTP error! status: ${balancesResponse.status}`)
+      }
+
+      const balancesData = await balancesResponse.json()
+
+      if (balancesData.error) {
+        throw new Error(`Alchemy API error: ${balancesData.error.message}`)
+      }
+
+      const tokenBalances = balancesData.result.tokenBalances || []
+
+      // Step 2: Filter tokens and track which ones need metadata
+      const tokensNeedingMetadata: Array<{ token: any; originalIndex: number }> = []
+      
+      tokenBalances.forEach((token: any, index: number) => {
+        const rawBalance = token.tokenBalance || '0x0'
+        // Include token if it has non-zero balance or if we're not filtering
+        if (rawBalance !== '0x0' || !this.filterZeroBalances) {
+          tokensNeedingMetadata.push({ token, originalIndex: index })
         }
+      })
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
+      if (tokensNeedingMetadata.length === 0) {
+        this.tokenBalances = []
+        return {}
+      }
+
+      // Step 3: Get metadata for tokens using batch request
+      const metadataRequests = tokensNeedingMetadata.map((item, index) => ({
+        jsonrpc: '2.0',
+        method: 'alchemy_getTokenMetadata',
+        params: [item.token.contractAddress],
+        id: index + 1,
+      }))
+
+      const metadataResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(metadataRequests),
+      })
+
+      if (!metadataResponse.ok) {
+        throw new Error(`HTTP error! status: ${metadataResponse.status}`)
+      }
+
+      const metadataData = await metadataResponse.json()
+
+      // Create a map of metadata by request id
+      const metadataMap = new Map()
+      if (Array.isArray(metadataData)) {
+        metadataData.forEach((response: any) => {
+          if (response.result) {
+            metadataMap.set(response.id - 1, response.result)
+          }
         })
+      } else if (metadataData.result) {
+        metadataMap.set(0, metadataData.result)
+      }
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        if (data.error) {
-          throw new Error(`Alchemy API error: ${data.error.message}`)
-        }
-
-        pageKey = data.result.pageKey
-        tokensList.push(...data.result.tokens)
-      } while (pageKey)
-
-      /**
-       * Process each token from the API response to create TokenBalanceWithMeta objects
-       * Handles missing or invalid token metadata gracefully
-       */
-      const processedTokens = tokensList.map((token) => {
-        const rawBalance = token.rawBalance || '0'
-        const decimals = token.decimals != null && typeof token.decimals === 'number' ? token.decimals : 18
+      // Step 4: Combine balances with metadata
+      const processedTokens: TokenBalanceWithMeta[] = []
+      
+      tokensNeedingMetadata.forEach((item, index) => {
+        const { token } = item
+        const rawBalance = token.tokenBalance || '0x0'
+        
+        const metadata = metadataMap.get(index) || {}
+        const decimals = metadata.decimals != null && typeof metadata.decimals === 'number' 
+          ? metadata.decimals 
+          : 18
 
         const tokenBalance = new TokenBalanceWithMeta()
 
         // Set token information
         tokenBalance.token = new Token()
         tokenBalance.token.address = token.contractAddress
-        tokenBalance.token.symbol = token.symbol || ''
-        tokenBalance.token.name = token.name || ''
+        tokenBalance.token.symbol = metadata.symbol || ''
+        tokenBalance.token.name = metadata.name || ''
         tokenBalance.token.decimals = decimals
         tokenBalance.token.chainId = getChainId(this.network)
 
+        // Convert hex balance to decimal string
+        const balanceValue = rawBalance === '0x0' ? '0' : BigInt(rawBalance).toString()
+        
         // Set balance
-        tokenBalance.balance = formatAmount(rawBalance, decimals)
-        return tokenBalance
+        tokenBalance.balance = formatAmount(balanceValue, decimals)
+        
+        processedTokens.push(tokenBalance)
       })
 
-      /**
-       * Filter out tokens with zero balances if requested
-       * This helps reduce noise in the output for users who only want active holdings
-       */
-      if (this.filterZeroBalances) {
-        this.tokenBalances = processedTokens.filter(token => token.balance.value !== '0')
-      } else {
-        this.tokenBalances = processedTokens
-      }
+      this.tokenBalances = processedTokens
 
       return {}
     } catch (error) {

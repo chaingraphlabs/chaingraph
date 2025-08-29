@@ -29,6 +29,31 @@ import { NODE_CATEGORIES } from '../../categories'
 import { formatAmount, getChainId, Networks } from './shared/alchemy-utils'
 
 /**
+ * Token decimals configuration
+ */
+@ObjectSchema({
+  description: 'Token address to decimals mapping',
+})
+class TokenDecimalsConfig {
+  @PortString({
+    title: 'Token Address',
+    description: 'Token contract address (e.g., 0xA0b86991...)',
+    required: true,
+  })
+  address: string = ''
+
+  @PortNumber({
+    title: 'Decimals',
+    description: 'Number of decimals for this token',
+    required: true,
+    defaultValue: 18,
+    min: 0,
+    max: 36,
+  })
+  decimals: number = 18
+}
+
+/**
  * Amount with multiple representations
  */
 @ObjectSchema({
@@ -89,7 +114,7 @@ class TokenBalance {
 @Node({
   type: 'AlchemyTokenBalances',
   title: 'Alchemy: token balances',
-  description: 'Fetches token balances for a wallet address using Alchemy API',
+  description: 'Lightweight single-call token balance fetcher. For token metadata (names, symbols, precise decimals), use the "with metadata" variant.',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy'],
 })
@@ -145,6 +170,33 @@ class AlchemyTokenBalances extends BaseNode {
   })
   contractAddresses: string[] = []
 
+  @Input()
+  @PortArray({
+    title: 'Token Decimals',
+    description: 'Optional array of token addresses and their decimals (takes priority over default)',
+    itemConfig: {
+      type: 'object',
+      schema: TokenDecimalsConfig,
+    },
+    isMutable: true,
+    required: false,
+    ui: {
+      hideEditor: false,
+      addItemFormHidden: false,
+    },
+  })
+  tokenDecimals: TokenDecimalsConfig[] = []
+
+  @Input()
+  @PortNumber({
+    title: 'Default Decimals',
+    description: 'Default decimals for tokens not in the array above (standard ERC20 is 18)',
+    defaultValue: 18,
+    min: 0,
+    max: 36,
+  })
+  defaultDecimals: number = 18
+
   @Output()
   @PortArray({
     title: 'Token Balances',
@@ -197,13 +249,20 @@ class AlchemyTokenBalances extends BaseNode {
         throw new Error(`Alchemy API error: ${data.error.message}`)
       }
 
-      // Fetch token metadata for decimals
-      const tokenAddresses = data.result.tokenBalances.map((token: any) => token.contractAddress)
-      const tokenMetadata = await this.fetchTokenMetadata(url, tokenAddresses)
+      // Create a map for quick decimals lookup
+      const decimalsMap = new Map<string, number>()
+      for (const config of this.tokenDecimals) {
+        if (config.address) {
+          decimalsMap.set(config.address.toLowerCase(), config.decimals)
+        }
+      }
 
       const allTokens: TokenBalance[] = data.result.tokenBalances.map((token: any) => {
         const rawBalance = this.safeBigIntToString(token.tokenBalance)
-        const decimals = tokenMetadata[token.contractAddress]?.decimals || 18
+        const tokenAddressLower = token.contractAddress.toLowerCase()
+
+        // Use specific decimals if provided, otherwise use default
+        const decimals = decimalsMap.get(tokenAddressLower) ?? this.defaultDecimals
 
         const tokenBalance = new TokenBalance()
         tokenBalance.tokenAddress = token.contractAddress
@@ -235,50 +294,6 @@ class AlchemyTokenBalances extends BaseNode {
     } catch (error) {
       throw new Error(`Invalid token balance value: ${value}`)
     }
-  }
-
-  /**
-   * Fetches token metadata (decimals) for multiple token contracts
-   * @param url - The Alchemy API endpoint URL
-   * @param tokenAddresses - Array of token contract addresses
-   * @returns Promise resolving to object mapping contract addresses to their metadata
-   */
-  private async fetchTokenMetadata(url: string, tokenAddresses: string[]): Promise<Record<string, { decimals: number }>> {
-    if (tokenAddresses.length === 0)
-      return {}
-
-    const metadata: Record<string, { decimals: number }> = {}
-
-    // Fetch metadata for each token individually
-    await Promise.allSettled(
-      tokenAddresses.map(async (contractAddress) => {
-        try {
-          const requestBody = {
-            jsonrpc: '2.0',
-            method: 'alchemy_getTokenMetadata',
-            params: [contractAddress],
-            id: 1,
-          }
-
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          })
-
-          if (response.ok) {
-            const data = await response.json()
-            if (data.result && typeof data.result.decimals === 'number') {
-              metadata[contractAddress] = { decimals: data.result.decimals }
-            }
-          }
-        } catch {}
-      }),
-    )
-
-    return metadata
   }
 }
 
