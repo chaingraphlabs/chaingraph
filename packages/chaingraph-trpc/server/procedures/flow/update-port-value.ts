@@ -59,7 +59,13 @@ export const updatePortValue = flowContextProcedure
         currentPort = parentPort
       }
 
+      // Start batch update mode to collect all port updates
+      node.startBatchUpdate()
+      
+      // Update ports - these will be collected, not emitted immediately
       node.updatePorts(portsToUpdate)
+      
+      // Commit all updates via flow.updateNode (auto-commits the batch)
       flow.updateNode(node)
 
       // console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
