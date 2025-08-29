@@ -9,6 +9,7 @@
 import type { ExecutionContext } from '../../execution'
 import type { IPortConfig } from '../../port'
 import type { JSONValue } from '../../utils/json'
+import type { EventContext } from '../implementations'
 import type { NodeEvent } from '../events'
 import type { NodeExecutionResult } from '../types'
 import type { IComplexPortHandler } from './icomplex-port-handler'
@@ -70,4 +71,16 @@ export interface INodeComposite extends
    * @returns The execution result
    */
   executeWithDefaultPorts: (context: ExecutionContext) => Promise<NodeExecutionResult>
+
+  /**
+   * Start collecting port updates without emitting events immediately
+   * Used for batch operations where multiple ports are updated
+   */
+  startBatchUpdate: () => void
+
+  /**
+   * Commit all collected port updates and emit events
+   * @param eventContext Optional context to be added to all emitted events
+   */
+  commitBatchUpdate: (eventContext?: EventContext) => Promise<void>
 }

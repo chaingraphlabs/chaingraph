@@ -172,6 +172,12 @@ export class Flow implements IFlow {
       throw new Error(`Node with ID ${node.id} does not exist in the flow.`)
     }
 
+    // Commit any pending batch updates before updating the node
+    // This ensures all collected port updates are emitted before the flow update
+    if ('commitBatchUpdate' in node && typeof node.commitBatchUpdate === 'function') {
+      await node.commitBatchUpdate({ sourceOfUpdate: 'flow:updateNode' })
+    }
+
     // cancel the previous event handler if it exists
     const cancel = this.nodeEventHandlersCancel.get(node.id)
     if (cancel) {
@@ -201,6 +207,11 @@ export class Flow implements IFlow {
     const node = this.nodes.get(nodeId)
     if (!node) {
       throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
+    }
+
+    // Commit any pending batch updates before removing the node
+    if ('commitBatchUpdate' in node && typeof node.commitBatchUpdate === 'function') {
+      await node.commitBatchUpdate({ sourceOfUpdate: 'flow:removeNode' })
     }
 
     // find all child nodes and remove them

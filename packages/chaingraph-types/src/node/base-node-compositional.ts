@@ -27,6 +27,7 @@ import {
   NodeVersionManager,
   PortBinder,
   PortManager,
+  PortUpdateCollector,
 } from './implementations'
 import { PortConfigProcessor } from './port-config-processor'
 import { findPort } from './traverse-ports'
@@ -51,6 +52,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   private readonly versionManager: NodeVersionManager
   private serializer: NodeSerializer
   private defaultPortManager: DefaultPortManager
+  private readonly portUpdateCollector: PortUpdateCollector
 
   constructor(id: string, _metadata?: NodeMetadata) {
     this._id = id
@@ -92,6 +94,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     this.portManager = new PortManager()
     this.eventManager = new NodeEventManager()
     this.versionManager = new NodeVersionManager(this)
+    this.portUpdateCollector = new PortUpdateCollector()
 
     // Initialize components with dependencies
     this.portBinder = new PortBinder(this.portManager, this, this.id)
@@ -305,9 +308,17 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    * @param eventContext Optional event context for additional metadata
    */
   async updatePorts(ports: IPort[], eventContext?: EventContext): Promise<void> {
+    // Always update the port manager and bind port bindings
     this.portManager.updatePorts(ports)
     this.bindPortBindings()
 
+    // If collecting, add to collector and return early
+    if (this.portUpdateCollector.isCollecting()) {
+      ports.forEach(port => this.portUpdateCollector.collect(port, eventContext))
+      return
+    }
+
+    // Otherwise, emit immediately (current behavior)
     this.versionManager.incrementVersion()
 
     const promises = ports.map((port) => {
@@ -423,6 +434,43 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
   async emit<T extends NodeEvent>(event: T): Promise<void> {
     return this.eventManager.emit(event)
+  }
+
+  /**
+   * Start collecting port updates without emitting events immediately
+   * Used for batch operations where multiple ports are updated
+   */
+  startBatchUpdate(): void {
+    this.portUpdateCollector.startCollecting()
+  }
+
+  /**
+   * Commit all collected port updates and emit events
+   * @param eventContext Optional context to be added to all emitted events
+   */
+  async commitBatchUpdate(eventContext?: EventContext): Promise<void> {
+    this.portUpdateCollector.stopCollecting()
+    
+    const updates = this.portUpdateCollector.getPendingUpdates()
+    if (updates.length === 0) {
+      return
+    }
+    
+    // Single version increment for the entire batch
+    this.versionManager.incrementVersion()
+    
+    // Emit all collected events
+    const promises = updates.map(({ port, eventContext: ctx }) => {
+      const event = this.createEvent(NodeEventType.PortUpdate, {
+        portId: port.id,
+        port,
+        eventContext: ctx || eventContext,
+      })
+      return this.emit(event)
+    })
+    
+    await Promise.all(promises)
+    this.portUpdateCollector.clear()
   }
 
   //
