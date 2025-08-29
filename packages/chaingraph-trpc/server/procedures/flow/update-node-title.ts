@@ -56,7 +56,7 @@ export const updateNodeTitle = flowContextProcedure
         oldTitle,
         newTitle: input.title || '',
       })
-      flow.updateNode(node as INode)
+      await flow.updateNode(node as INode)
 
       await ctx.flowStore.updateFlow(flow as Flow)
 

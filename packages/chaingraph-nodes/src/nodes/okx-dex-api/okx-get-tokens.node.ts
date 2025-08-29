@@ -133,11 +133,6 @@ class OKXGetTokensNode extends BaseNode {
       }
 
       return {}
-
-      // Use our mapper to convert API response to ChainGraph types
-      // if (response && response.data && Array.isArray(response.data)) {
-      // this.tokens = mapArray(response.data, mapTokenListResponse)
-      // }
     } catch (apiError: any) {
       throw new Error(`API Error: ${apiError.message || JSON.stringify(apiError)}`)
     }

@@ -499,15 +499,11 @@ export class ExecutionService {
     const context = instance.context
 
     if (!context.emittedEvents || context.emittedEvents.length === 0) {
-      console.log(`[processEmittedEvents] No events to process`)
       return
     }
 
     const unprocessedEvents = context.emittedEvents.filter(e => !e.processed)
-    console.log(`[processEmittedEvents] Found ${unprocessedEvents.length} unprocessed events`)
-
     for (const event of unprocessedEvents) {
-      console.log(`[processEmittedEvents] Processing event: ${event.type}`)
       // Always spawn child execution for each event
       await this.spawnChildExecutionForEvent(instance, event)
       event.processed = true
@@ -527,10 +523,6 @@ export class ExecutionService {
       emittedBy: event.emittedBy,
     }
 
-    console.log(`[spawnChildExecutionForEvent] Parent execution depth: ${parentInstance.executionDepth}`)
-    console.log(`[spawnChildExecutionForEvent] Event emitted by node: ${event.emittedBy}`)
-    console.log(`[spawnChildExecutionForEvent] Creating child for event: ${event.type}`)
-
     // Create child execution with parent's depth
     let childInstance: ExecutionInstance
     try {
@@ -542,7 +534,6 @@ export class ExecutionService {
         eventContext,
         parentInstance.executionDepth,
       )
-      console.log(`[spawnChildExecutionForEvent] Child execution ${childInstance.id} created at depth ${childInstance.executionDepth} for event ${event.type}`)
     } catch (error) {
       if (error instanceof Error && error.message.includes('Maximum execution depth exceeded')) {
         console.warn(`[spawnChildExecutionForEvent] Cycle detected! ${error.message}`)
@@ -577,9 +568,7 @@ export class ExecutionService {
 
     // Emit child execution spawned event to parent
     const parentEventQueue = this.eventQueues.get(parentInstance.id)
-    console.log(`[spawnChildExecutionForEvent] Parent event queue exists: ${!!parentEventQueue}`)
     if (parentEventQueue) {
-      console.log(`[spawnChildExecutionForEvent] Publishing CHILD_EXECUTION_SPAWNED event`)
       await parentEventQueue.publish(
         new ExecutionEventImpl(
           Date.now(),
@@ -593,7 +582,6 @@ export class ExecutionService {
           },
         ),
       )
-      console.log(`[spawnChildExecutionForEvent] CHILD_EXECUTION_SPAWNED event published`)
     } else {
       console.log(`[spawnChildExecutionForEvent] WARNING: No parent event queue found for ${parentInstance.id}`)
     }
@@ -631,17 +619,13 @@ export class ExecutionService {
 
         // If this is a child execution completing, notify parent and check if it can complete
         if (instance.parentExecutionId) {
-          console.log(`[FLOW_COMPLETED] Child execution ${instance.id} completed, notifying parent ${instance.parentExecutionId}`)
-
           // Emit child completion event
           const emitter = this.childCompletionEmitters.get(instance.parentExecutionId)
           emitter?.emit('child-completed', instance.id)
 
           const parentEventQueue = this.eventQueues.get(instance.parentExecutionId)
-          console.log(`[FLOW_COMPLETED] Parent event queue exists: ${!!parentEventQueue}`)
           if (parentEventQueue) {
             const eventName = instance.context.eventData?.eventName || 'unknown'
-            console.log(`[FLOW_COMPLETED] Publishing CHILD_EXECUTION_COMPLETED event for ${eventName}`)
             await parentEventQueue.publish(
               new ExecutionEventImpl(
                 Date.now(),
@@ -654,7 +638,6 @@ export class ExecutionService {
                 },
               ),
             )
-            console.log(`[FLOW_COMPLETED] CHILD_EXECUTION_COMPLETED event published`)
           }
           await this.checkParentCompletion(instance.parentExecutionId)
         }
@@ -670,17 +653,13 @@ export class ExecutionService {
 
         // If this is a child execution failing, notify parent and check if it can complete
         if (instance.parentExecutionId) {
-          console.log(`[FLOW_FAILED] Child execution ${instance.id} failed, notifying parent ${instance.parentExecutionId}`)
-
           // Emit child completion event
           const emitter = this.childCompletionEmitters.get(instance.parentExecutionId)
           emitter?.emit('child-completed', instance.id)
 
           const parentEventQueue = this.eventQueues.get(instance.parentExecutionId)
-          console.log(`[FLOW_FAILED] Parent event queue exists: ${!!parentEventQueue}`)
           if (parentEventQueue) {
             const eventName = instance.context.eventData?.eventName || 'unknown'
-            console.log(`[FLOW_FAILED] Publishing CHILD_EXECUTION_FAILED event for ${eventName}`)
             await parentEventQueue.publish(
               new ExecutionEventImpl(
                 Date.now(),
@@ -694,7 +673,6 @@ export class ExecutionService {
                 },
               ),
             )
-            console.log(`[FLOW_FAILED] CHILD_EXECUTION_FAILED event published`)
           }
           await this.checkParentCompletion(instance.parentExecutionId)
         }

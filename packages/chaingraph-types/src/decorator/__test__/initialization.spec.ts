@@ -64,6 +64,7 @@ class DummyNode extends BaseNode {
       bgColor: '#e70d0d',
       borderColor: '#460707',
     },
+    defaultValue: 'test',
   })
   public dummyPort?: string = 'test'
 
@@ -81,6 +82,7 @@ class DummyNode extends BaseNode {
             bgColor: '#e70d0d',
             borderColor: '#460707',
           },
+          defaultValue: 'hello',
         },
         world: {
           type: 'string',
@@ -88,6 +90,7 @@ class DummyNode extends BaseNode {
             bgColor: '#e70d0d',
             borderColor: '#460707',
           },
+          defaultValue: 'world',
         },
         inner: {
           type: 'object',
@@ -103,6 +106,7 @@ class DummyNode extends BaseNode {
                   bgColor: '#e70d0d',
                   borderColor: '#460707',
                 },
+                defaultValue: 'foo',
               },
               bar: {
                 type: 'number',
@@ -110,10 +114,19 @@ class DummyNode extends BaseNode {
                   bgColor: '#1f5eec',
                   borderColor: '#0c2454',
                 },
+                defaultValue: 42,
               },
             },
           },
         },
+      },
+    },
+    defaultValue: {
+      hello: 'hello',
+      world: 'world',
+      inner: {
+        foo: 'foo',
+        bar: 42,
       },
     },
   })
@@ -129,6 +142,7 @@ class DummyNode extends BaseNode {
   @Port({
     type: 'array',
     itemConfig: { type: 'string' },
+    defaultValue: ['hello', 'world'],
   })
   public helloArray: string[] = ['hello', 'world']
 

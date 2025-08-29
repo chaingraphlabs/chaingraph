@@ -68,12 +68,6 @@ export const pasteNodes = flowContextProcedure
     try {
       flow.setIsDisabledPropagationEvents(true)
 
-      console.debug(`[FLOW] Starting paste operation for flow ${flowId}`)
-      console.debug(`[FLOW] Pasting ${clipboardData.nodes.length} nodes and ${clipboardData.edges.length} edges`)
-      console.debug(`[FLOW] Paste position:`, pastePosition)
-      console.debug(`[FLOW] Virtual origin provided:`, virtualOrigin)
-      console.debug(`[FLOW] Virtual origin actual:`, actualVirtualOrigin)
-
       // Step 1: Clone nodes with new IDs using cloneWithNewId()
       const nodeIdMapping = new Map<string, string>()
       const portIdMapping = new Map<string, string>()
@@ -99,9 +93,6 @@ export const pasteNodes = flowContextProcedure
           const cloneResult = originalNode.cloneWithNewId()
           const clonedNode = cloneResult.clonedNode as INode
 
-          // console.debug(`[FLOW] Original node ${originalNode.id}: ${JSON.stringify(originalNode.serialize())}`)
-          // console.debug(`[FLOW] Cloned node ${clonedNode.id}: ${JSON.stringify(clonedNode.serialize())}`)
-
           // Only adjust position for root nodes (nodes without parents)
           // Child nodes keep their relative position to their parent
           if (!originalNode.metadata.parentNodeId) {
@@ -115,13 +106,7 @@ export const pasteNodes = flowContextProcedure
               x: pastePosition.x + relativePosition.x,
               y: pastePosition.y + relativePosition.y,
             }
-            console.debug(`[FLOW] Root node ${originalNode.id} position calculation:`, {
-              originalPosition,
-              virtualOrigin: actualVirtualOrigin,
-              relativePosition,
-              pastePosition,
-              newPosition,
-            })
+
             clonedNode.setPosition(newPosition, true)
           } else {
             console.debug(`[FLOW] Child node ${originalNode.id} keeping relative position:`, originalNode.metadata.ui?.position)
@@ -136,7 +121,7 @@ export const pasteNodes = flowContextProcedure
             portIdMapping.set(originalPortId, newPortId)
           })
 
-          console.debug(`[FLOW] Cloned node ${cloneResult.nodeIdMapping.originalId} -> ${cloneResult.nodeIdMapping.newId}`)
+          // console.debug(`[FLOW] Cloned node ${cloneResult.nodeIdMapping.originalId} -> ${cloneResult.nodeIdMapping.newId}`)
 
           clonedNode.setStatus(NodeStatus.Initialized, false)
 

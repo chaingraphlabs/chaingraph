@@ -12,16 +12,16 @@ import type { IPort, IPortConfig } from '../../port'
 /**
  * Interface for managing default system ports of a node
  */
-export interface IDefaultPortManager {
+export interface ISystemPortManager {
   /**
    * Get all default ports based on the node's flow configuration
    */
   getDefaultPorts: () => IPort[]
 
   /**
-   * Get default port configurations
+   * Get system port configurations
    */
-  getDefaultPortConfigs: () => IPortConfig[]
+  getSystemPortConfigs: () => IPortConfig[]
 
   /**
    * Check if a port is a system default port

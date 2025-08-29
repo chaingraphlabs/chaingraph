@@ -8,14 +8,14 @@
 
 import type { ExecutionContext } from '../../execution'
 import type { IPort, IPortConfig } from '../../port'
-import type { IDefaultPortManager, INodeComposite, IPortManager } from '../interfaces'
-import { errorID, errorMessageID, getDefaultPortConfigs } from '../default-ports'
+import type { INodeComposite, IPortManager, ISystemPortManager } from '../interfaces'
+import { errorID, errorMessageID, getSystemPortConfigs } from '../default-ports'
 
 /**
- * Implementation of IDefaultPortManager interface
+ * Implementation of ISystemPortManager interface
  * Manages default system ports for nodes
  */
-export class DefaultPortManager implements IDefaultPortManager {
+export class SystemPortManager implements ISystemPortManager {
   constructor(
     private portManager: IPortManager,
     private nodeRef: INodeComposite,
@@ -32,8 +32,8 @@ export class DefaultPortManager implements IDefaultPortManager {
   /**
    * Get default port configurations based on flowPorts settings
    */
-  getDefaultPortConfigs(): IPortConfig[] {
-    return getDefaultPortConfigs(this.nodeRef.metadata.flowPorts)
+  getSystemPortConfigs(): IPortConfig[] {
+    return getSystemPortConfigs(this.nodeRef.metadata.flowPorts)
   }
 
   /**

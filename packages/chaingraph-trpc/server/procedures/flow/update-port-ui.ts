@@ -26,7 +26,7 @@ export const updatePortUI = flowContextProcedure
   .mutation(async ({ input, ctx }) => {
     // TODO: create nodes store
 
-    await ctx.flowStore.lockFlow(input.flowId)
+    // await ctx.flowStore.lockFlow(input.flowId)
 
     console.log(`[updatePortUI] Locking flow ${input.flowId} for connection...`)
     try {
@@ -41,6 +41,8 @@ export const updatePortUI = flowContextProcedure
       const port = node.ports.get(input.portId)
       if (!port)
         throw new Error('Port not found')
+
+      node.startBatchUpdate()
 
       if (port instanceof AnyPort) {
         const underlyingType = port.unwrapUnderlyingType()
@@ -87,6 +89,6 @@ export const updatePortUI = flowContextProcedure
       }
     } finally {
       console.log(`[updatePortUI] Unlocking flow ${input.flowId} after connection...`)
-      await ctx.flowStore.unlockFlow(input.flowId)
+      // await ctx.flowStore.unlockFlow(input.flowId)
     }
   })

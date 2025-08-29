@@ -153,7 +153,7 @@ export interface SecretPortConfig<S extends SecretType = any> extends BasePortCo
  */
 export interface ObjectPortConfig<S extends IObjectSchema = IObjectSchema> extends BasePortConfig {
   type: 'object'
-  // TODO: !!!! Consider removing the schema property and using properties directly for better alignment with JSON Schema !!!!
+  // TODO: !!!! Consider removing the schema.property and using properties directly for better alignment with JSON Schema !!!!
   schema: S
   isSchemaMutable?: boolean
   defaultValue?: ObjectPortValue<S>

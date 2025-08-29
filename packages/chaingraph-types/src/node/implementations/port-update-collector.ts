@@ -55,13 +55,14 @@ export class PortUpdateCollector {
    * @param eventContext Optional context for the update
    */
   collect(port: IPort, eventContext?: EventContext): void {
-    if (!this.collecting) return
-    
+    if (!this.collecting)
+      return
+
     // Store a clone to avoid mutations affecting the collected state
     // Last update wins for the same port ID
-    this.pendingUpdates.set(port.id, { 
-      port: port.clone(), 
-      eventContext 
+    this.pendingUpdates.set(port.id, {
+      port: port.clone(),
+      eventContext,
     })
   }
 

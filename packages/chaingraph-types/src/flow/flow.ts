@@ -174,22 +174,21 @@ export class Flow implements IFlow {
 
     // Commit any pending batch updates before updating the node
     // This ensures all collected port updates are emitted before the flow update
-    if ('commitBatchUpdate' in node && typeof node.commitBatchUpdate === 'function') {
-      await node.commitBatchUpdate({ sourceOfUpdate: 'flow:updateNode' })
-    }
+    await node.commitBatchUpdate({ sourceOfUpdate: 'flow:updateNode' })
 
     // cancel the previous event handler if it exists
-    const cancel = this.nodeEventHandlersCancel.get(node.id)
-    if (cancel) {
-      cancel()
-      this.nodeEventHandlersCancel.delete(node.id)
-    }
+    const oldCancel = this.nodeEventHandlersCancel.get(node.id)
 
     this.nodes.set(node.id, node)
 
     const newCancel = node.onAll(async (event: NodeEvent) => {
       return this.handleNodeEvent(node, event)
     })
+
+    if (oldCancel) {
+      oldCancel()
+      this.nodeEventHandlersCancel.delete(node.id)
+    }
 
     // Store the handler and subscribe to node events
     this.nodeEventHandlersCancel.set(node.id, newCancel)
@@ -210,9 +209,7 @@ export class Flow implements IFlow {
     }
 
     // Commit any pending batch updates before removing the node
-    if ('commitBatchUpdate' in node && typeof node.commitBatchUpdate === 'function') {
-      await node.commitBatchUpdate({ sourceOfUpdate: 'flow:removeNode' })
-    }
+    await node.commitBatchUpdate({ sourceOfUpdate: 'flow:removeNode' })
 
     // find all child nodes and remove them
     await Promise.all(
@@ -808,7 +805,7 @@ export class Flow implements IFlow {
           portUpdateEventData,
         )
 
-        await this.updateNode(node)
+        // await this.updateNode(node)
         break
       }
 

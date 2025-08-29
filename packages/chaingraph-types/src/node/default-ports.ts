@@ -19,11 +19,11 @@ export const errorMessageID = '__errorMessage'
 /**
  * Creates the default flowIn port configuration
  */
-export function createDefaultFlowInPort(): BooleanPortConfig {
+export function createDefaultFlowInPort(id?: string): BooleanPortConfig {
   return {
     type: 'boolean',
     key: flowInID,
-    id: generatePortID('execute'),
+    id: id ?? generatePortID('execute'),
     title: 'Execute',
     description: 'Whether the node should execute',
     direction: PortDirection.Input,
@@ -42,11 +42,11 @@ export function createDefaultFlowInPort(): BooleanPortConfig {
 /**
  * Creates the default flowOut port configuration
  */
-export function createDefaultFlowOutPort(): BooleanPortConfig {
+export function createDefaultFlowOutPort(id?: string): BooleanPortConfig {
   return {
     type: 'boolean',
     key: flowOutID,
-    id: generatePortID('success'),
+    id: id ?? generatePortID('success'),
     title: 'Success',
     description: 'Whether the node executed successfully',
     direction: PortDirection.Output,
@@ -65,11 +65,11 @@ export function createDefaultFlowOutPort(): BooleanPortConfig {
 /**
  * Creates the default error port configuration
  */
-export function createDefaultErrorPort(): BooleanPortConfig {
+export function createDefaultErrorPort(id?: string): BooleanPortConfig {
   return {
     type: 'boolean',
     key: errorID,
-    id: generatePortID('error'),
+    id: id ?? generatePortID('error'),
     title: 'Error',
     description: 'Whether an error occurred during execution',
     direction: PortDirection.Output,
@@ -88,11 +88,11 @@ export function createDefaultErrorPort(): BooleanPortConfig {
 /**
  * Creates the default errorMessage port configuration
  */
-export function createDefaultErrorMessagePort(): StringPortConfig {
+export function createDefaultErrorMessagePort(id?: string): StringPortConfig {
   return {
     type: 'string',
     key: errorMessageID,
-    id: generatePortID('errorMessage'),
+    id: id ?? generatePortID('errorMessage'),
     title: 'Error Message',
     description: 'The error message if an error occurred during execution',
     direction: PortDirection.Output,
@@ -109,23 +109,23 @@ export function createDefaultErrorMessagePort(): StringPortConfig {
 }
 
 /**
- * Gets all default port configurations based on the provided FlowPorts settings
+ * Gets all system port configurations based on the provided FlowPorts settings
  * @param flowPorts FlowPorts configuration
  * @returns Array of default port configurations
  */
-export function getDefaultPortConfigs(flowPorts?: FlowPorts): IPortConfig[] {
+export function getSystemPortConfigs(flowPorts?: FlowPorts): IPortConfig[] {
   const configs: IPortConfig[] = []
 
   // Add flow ports if not disabled
   if (!flowPorts?.disabledFlowPorts) {
-    configs.push(createDefaultFlowInPort())
-    configs.push(createDefaultFlowOutPort())
+    configs.push(createDefaultFlowInPort(flowPorts?.portsConfig?.flowIn?.id ?? undefined))
+    configs.push(createDefaultFlowOutPort(flowPorts?.portsConfig?.flowOut?.id ?? undefined))
   }
 
   // Add error ports if not disabled
   if (!flowPorts?.disabledError) {
-    configs.push(createDefaultErrorPort())
-    configs.push(createDefaultErrorMessagePort())
+    configs.push(createDefaultErrorPort(flowPorts?.portsConfig?.error?.id ?? undefined))
+    configs.push(createDefaultErrorMessagePort(flowPorts?.portsConfig?.errorMessage?.id ?? undefined))
   }
 
   return configs

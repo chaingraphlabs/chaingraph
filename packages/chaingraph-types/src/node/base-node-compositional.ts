@@ -20,7 +20,6 @@ import { NodeStatus } from '../node/node-enums'
 import {
   ComplexPortHandler,
   DeepCloneHandler,
-  DefaultPortManager,
   NodeEventManager,
   NodeSerializer,
   NodeUIManager,
@@ -29,6 +28,7 @@ import {
   PortManager,
   PortUpdateCollector,
 } from './implementations'
+import { SystemPortManager } from './implementations/system-port-manager'
 import { PortConfigProcessor } from './port-config-processor'
 import { findPort } from './traverse-ports'
 import 'reflect-metadata'
@@ -51,7 +51,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   private uiManager: NodeUIManager
   private readonly versionManager: NodeVersionManager
   private serializer: NodeSerializer
-  private defaultPortManager: DefaultPortManager
+  private systemPortManager: SystemPortManager
   private readonly portUpdateCollector: PortUpdateCollector
 
   constructor(id: string, _metadata?: NodeMetadata) {
@@ -126,8 +126,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       this.complexPortHandler,
     )
 
-    // Initialize default port manager
-    this.defaultPortManager = new DefaultPortManager(
+    // Initialize system port manager
+    this.systemPortManager = new SystemPortManager(
       this.portManager,
       this,
     )
@@ -144,16 +144,16 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   abstract execute(context: ExecutionContext): Promise<NodeExecutionResult>
 
   /**
-   * Runtime execute that wraps the abstract execute to handle default ports.
+   * Runtime execute that wraps the abstract execute to handle system ports.
    * This is an internal method used by the execution engine.
    *
    * @param context The execution context
    * @returns The execution result
    */
-  async executeWithDefaultPorts(context: ExecutionContext): Promise<NodeExecutionResult> {
+  async executeWithSystemPorts(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Check if node should execute based on flow ports
     if (!this.shouldExecute(context)) {
-      this.defaultPortManager.getFlowOutPort()?.setValue(false)
+      this.systemPortManager.getFlowOutPort()?.setValue(false)
       return {}
     }
 
@@ -450,15 +450,15 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    */
   async commitBatchUpdate(eventContext?: EventContext): Promise<void> {
     this.portUpdateCollector.stopCollecting()
-    
+
     const updates = this.portUpdateCollector.getPendingUpdates()
     if (updates.length === 0) {
       return
     }
-    
+
     // Single version increment for the entire batch
     this.versionManager.incrementVersion()
-    
+
     // Emit all collected events
     const promises = updates.map(({ port, eventContext: ctx }) => {
       const event = this.createEvent(NodeEventType.PortUpdate, {
@@ -468,7 +468,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
       })
       return this.emit(event)
     })
-    
+
     await Promise.all(promises)
     this.portUpdateCollector.clear()
   }
@@ -614,42 +614,42 @@ export abstract class BaseNodeCompositional implements INodeComposite {
   }
 
   //
-  // IDefaultPortManager implementation (delegation to defaultPortManager)
+  // ISystemPortManager implementation (delegation to systemPortManager)
   //
   getDefaultPorts(): IPort[] {
-    return this.defaultPortManager.getDefaultPorts()
+    return this.systemPortManager.getDefaultPorts()
   }
 
-  getDefaultPortConfigs(): IPortConfig[] {
-    return this.defaultPortManager.getDefaultPortConfigs()
+  getSystemPortConfigs(): IPortConfig[] {
+    return this.systemPortManager.getSystemPortConfigs()
   }
 
   isDefaultPort(portId: string): boolean {
-    return this.defaultPortManager.isDefaultPort(portId)
+    return this.systemPortManager.isDefaultPort(portId)
   }
 
   getFlowInPort(): IPort | undefined {
-    return this.defaultPortManager.getFlowInPort()
+    return this.systemPortManager.getFlowInPort()
   }
 
   getFlowOutPort(): IPort | undefined {
-    return this.defaultPortManager.getFlowOutPort()
+    return this.systemPortManager.getFlowOutPort()
   }
 
   getErrorPort(): IPort | undefined {
-    return this.defaultPortManager.getErrorPort()
+    return this.systemPortManager.getErrorPort()
   }
 
   getErrorMessagePort(): IPort | undefined {
-    return this.defaultPortManager.getErrorMessagePort()
+    return this.systemPortManager.getErrorMessagePort()
   }
 
   shouldExecute(context: ExecutionContext): boolean {
-    return this.defaultPortManager.shouldExecute(context)
+    return this.systemPortManager.shouldExecute(context)
   }
 
   async updatePortsAfterExecution(success: boolean, errorMessage?: string): Promise<void> {
-    return this.defaultPortManager.updatePortsAfterExecution(success, errorMessage)
+    return this.systemPortManager.updatePortsAfterExecution(success, errorMessage)
   }
 
   //
@@ -667,7 +667,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     }
 
     // Add default ports to the configuration
-    const defaultPorts = this.getDefaultPortConfigs()
+    const defaultPorts = this.getSystemPortConfigs()
     for (const portConfig of defaultPorts) {
       if (portConfig.key && !portsConfig.has(portConfig.key)) {
         portsConfig.set(portConfig.key, portConfig)

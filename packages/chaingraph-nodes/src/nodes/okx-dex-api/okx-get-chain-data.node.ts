@@ -62,8 +62,6 @@ class OKXGetChainDataNode extends BaseNode {
   chainData: ChainData = new ChainData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(`[OKXGetChainDataNode] Executing with chainId: ${this.chainId}`)
-
     try {
       // Validate inputs
       this.validateInputs()
@@ -74,16 +72,8 @@ class OKXGetChainDataNode extends BaseNode {
 
       const client = await createDexApiClient(context, this.config)
 
-      console.log(`[OKXGetChainDataNode] Fetching chain data for chainId: ${this.chainId}`)
-
       // Make the API call using the SDK
       const response = await client.dex.getChainData(this.chainId)
-
-      console.log(`[OKXGetChainDataNode] API response: ${JSON.stringify(
-        response.data[0],
-      )}`)
-
-      // response.data[0].chainId
 
       // Check response validity
       if (!response || response.code !== '0') {

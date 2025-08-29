@@ -110,7 +110,7 @@ export const ExecutionNode = memo(function ExecutionNode({
               <span className="text-xs text-muted-foreground">
                 {node.triggeredByEvent.eventName}
                 {node.triggeredByEvent.payload && (
-                  <span className="ml-1 text-muted-foreground/70">
+                  <span className="ml-1 text-muted-foreground/70 brake-all">
                     (
                     {formatEventPayload(node.triggeredByEvent.payload)}
                     )
@@ -154,7 +154,7 @@ export const ExecutionNode = memo(function ExecutionNode({
           {node.children.length > 1 && (
             <div
               className="absolute top-0 bottom-4 w-px bg-border/50"
-              style={{ left: `${indentWidth + 20}px` }}
+              style={{ left: `${indentWidth + 10}px` }}
             />
           )}
 
@@ -164,7 +164,7 @@ export const ExecutionNode = memo(function ExecutionNode({
               <div
                 className="absolute top-4 h-px bg-border/50"
                 style={{
-                  left: `${indentWidth + 20}px`,
+                  left: `${indentWidth + 10}px`,
                   width: '12px',
                 }}
               />

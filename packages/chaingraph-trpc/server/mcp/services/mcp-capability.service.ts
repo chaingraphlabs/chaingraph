@@ -133,7 +133,7 @@ export class MCPCapabilityService {
       version: '1.0.0',
     })
 
-    console.log(`Connecting to MCP server at ${url.toString()} with headers:`, headers)
+    // console.log(`Connecting to MCP server at ${url.toString()} with headers:`, headers)
 
     // Try StreamableHTTP transport first (newer, more reliable)
     try {

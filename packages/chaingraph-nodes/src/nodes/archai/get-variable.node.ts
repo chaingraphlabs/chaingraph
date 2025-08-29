@@ -318,8 +318,6 @@ class ArchAIGetVariableNode extends BaseNode {
     // Set the underlying type based on the selected variable type
     switch (this.variableType) {
       case VariableValueType.String:
-        console.log(`[ArchAIGetVariableNode] Updating underlying type to string`)
-
         underlyingType = {
           // ...config,
           ...PortFactory.create({
@@ -329,7 +327,6 @@ class ArchAIGetVariableNode extends BaseNode {
         }
         break
       case VariableValueType.Number:
-        console.log(`[ArchAIGetVariableNode] Updating underlying type to number`)
         underlyingType = {
           // ...config,
           ...PortFactory.create({
@@ -339,7 +336,6 @@ class ArchAIGetVariableNode extends BaseNode {
         }
         break
       case VariableValueType.Boolean:
-        console.log(`[ArchAIGetVariableNode] Updating underlying type to boolean`)
         underlyingType = {
           // ...config,
           ...PortFactory.create({
@@ -369,10 +365,8 @@ class ArchAIGetVariableNode extends BaseNode {
           }).getConfig(),
         }
 
-        console.log(`[ArchAIGetVariableNode] Updating underlying type to object: ${JSON.stringify(underlyingType)}`)
         break
       case VariableValueType.Array:
-        console.log(`[ArchAIGetVariableNode] Updating underlying type to array`)
         underlyingType = {
           // ...config,
           ...PortFactory.create({
@@ -410,16 +404,6 @@ class ArchAIGetVariableNode extends BaseNode {
     valuePort.setUnderlyingType(underlyingType)
     // create or remove childports  for the underlying type
     this.refreshAnyPortUnderlyingPorts(valuePort as IPort, true)
-
-    // console.log(`[ArchAIGetVariableNode] Updated underlying type for variableValue port: ${JSON.stringify(underlyingType)}`)
-    console.log(`[ArchAIGetVariableNode] Updated underlying type for variableValue port: ${JSON.stringify(valuePort.serialize())}`)
-
-    // Reset value to match the new type
-    // if (underlyingType) {
-    //   valuePort.setValue(underlyingType.defaultValue ?? undefined)
-    // } else {
-    //   valuePort.setValue(undefined)
-    // }
 
     // Update the port
     await this.updatePort(valuePort as IPort, {

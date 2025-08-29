@@ -101,15 +101,58 @@ export const SerializedPortSchema = z.object({
   value: PortPluginRegistry.getInstance().getValueUnionSchema(),
 }).passthrough()
 
+//
+// export interface SerializedSystemPorts {
+//   error: {
+//     id: string
+//     value?: boolean
+//   }
+//   errorMessage: {
+//     id: string
+//     value?: string
+//   }
+//   execute: {
+//     id: string
+//     value?: boolean
+//   }
+//   success: {
+//     id: string
+//     value?: boolean
+//   }
+// }
+
 /**
  * Schema for serialized node
  */
 export const SerializedNodeSchema = z.object({
   id: z.string(),
+  type: z.string(),
   metadata: NodeMetadataSchema,
   status: z.nativeEnum(NodeStatus),
-  ports: z.record(z.string(), SerializedPortSchema).optional(),
-  ports_values: z.record(z.string(), z.any()).optional(),
+  ports: z.array(SerializedPortSchema),
+  systemPorts: z.object({
+    error: z.object({
+      id: z.string(),
+      value: z.boolean().optional(),
+    }),
+    errorMessage: z.object({
+      id: z.string(),
+      value: z.string().optional(),
+    }),
+    execute: z.object({
+      id: z.string(),
+      value: z.boolean().optional(),
+    }),
+    success: z.object({
+      id: z.string(),
+      value: z.boolean().optional(),
+    }),
+  }).optional(),
+  connections: z.record(z.string(), z.array(z.object({
+    nodeId: z.string(),
+    portId: z.string(),
+  }))).optional(),
+  schemaVersion: z.string().optional(),
 })
 
 export type SerializedNodeType = z.infer<typeof SerializedNodeSchema>

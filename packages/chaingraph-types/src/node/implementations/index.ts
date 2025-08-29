@@ -8,7 +8,6 @@
 
 export * from './complex-port-handler'
 export * from './deep-clone-handler'
-export * from './default-port-manager'
 export * from './node-event-manager'
 export * from './node-serializer'
 export * from './node-ui-manager'
@@ -16,3 +15,4 @@ export * from './node-version-manager'
 export * from './port-binder'
 export * from './port-manager'
 export * from './port-update-collector'
+export * from './system-port-manager'

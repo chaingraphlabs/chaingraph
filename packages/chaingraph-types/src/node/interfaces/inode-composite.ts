@@ -9,12 +9,12 @@
 import type { ExecutionContext } from '../../execution'
 import type { IPortConfig } from '../../port'
 import type { JSONValue } from '../../utils/json'
-import type { EventContext } from '../implementations'
 import type { NodeEvent } from '../events'
+import type { EventContext } from '../implementations'
 import type { NodeExecutionResult } from '../types'
+import type { ISystemPortManager } from './i-system-port-manager'
 import type { IComplexPortHandler } from './icomplex-port-handler'
 import type { ICoreNode } from './icore-node'
-import type { IDefaultPortManager } from './idefault-port-manager'
 import type { INodeClonable } from './inode-clonable'
 import type { INodeEvents } from './inode-events'
 import type { INodeUI } from './inode-ui'
@@ -36,7 +36,7 @@ export interface INodeComposite extends
   INodeEvents,
   Omit<ISerializable<INodeComposite>, 'deserialize' | 'clone'>,
   INodeVersioning,
-  IDefaultPortManager,
+  ISystemPortManager,
   INodeClonable<INodeComposite> {
 
   /**
@@ -70,7 +70,7 @@ export interface INodeComposite extends
    * @param context The execution context
    * @returns The execution result
    */
-  executeWithDefaultPorts: (context: ExecutionContext) => Promise<NodeExecutionResult>
+  executeWithSystemPorts: (context: ExecutionContext) => Promise<NodeExecutionResult>
 
   /**
    * Start collecting port updates without emitting events immediately

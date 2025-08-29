@@ -81,21 +81,21 @@ export function createTRPCClient(
             sessionBadAI: token,
           },
           onOpen: () => {
-            console.log('WebSocket connection opened')
+            // console.log('WebSocket connection opened')
             opts.wsClientCallbacks?.onOpen && opts.wsClientCallbacks.onOpen()
           },
           onError: (event) => {
-            console.error('WebSocket error event:', event)
+            // console.error('WebSocket error event:', event)
             opts.wsClientCallbacks?.onError && opts.wsClientCallbacks.onError(event)
           },
           onClose: (cause) => {
-            console.error('WebSocket connection closed:', cause)
+            // console.error('WebSocket connection closed:', cause)
             opts.wsClientCallbacks?.onClose && opts.wsClientCallbacks.onClose(cause)
           },
           keepAlive: {
             enabled: true,
             intervalMs: 5000,
-            pongTimeoutMs: 1000,
+            pongTimeoutMs: 3000,
           },
         }),
       }),

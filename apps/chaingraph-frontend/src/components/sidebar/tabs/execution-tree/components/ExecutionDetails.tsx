@@ -133,8 +133,8 @@ export function ExecutionDetails({ execution, onClose, className }: ExecutionDet
               {execution.triggeredByEvent.payload && (
                 <div className="mt-2">
                   <span className="text-xs text-muted-foreground">Payload</span>
-                  <pre className="mt-1 text-xs font-mono bg-background rounded p-2 overflow-auto max-h-32">
-                    {JSON.stringify(execution.triggeredByEvent.payload, null, 2)}
+                  <pre className="mt-1 text-xs font-mono bg-background rounded p-2 overflow-auto max-h-32 break-all">
+                    { tryToPrettyPrint(execution.triggeredByEvent.payload) }
                   </pre>
                 </div>
               )}
@@ -223,4 +223,33 @@ export function ExecutionDetails({ execution, onClose, className }: ExecutionDet
       )}
     </div>
   )
+}
+
+function tryParseJSON(str: string) {
+  try {
+    return JSON.parse(str)
+  } catch {
+    return null
+  }
+}
+
+function prettyPrintJSON(obj: any) {
+  try {
+    return JSON.stringify(obj, null, 2)
+  } catch {
+    return String(obj)
+  }
+}
+
+function tryToPrettyPrint(payload: any) {
+  if (typeof payload === 'string') {
+    const parsed = tryParseJSON(payload)
+    if (parsed) {
+      return prettyPrintJSON(parsed)
+    }
+    return payload // return as is if not JSON
+  } else if (typeof payload === 'object') {
+    return prettyPrintJSON(payload)
+  }
+  return String(payload) // for other types, convert to string
 }

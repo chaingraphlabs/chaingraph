@@ -464,7 +464,7 @@ describe('complex node', () => {
 
   it('instantiates a user profile node', async () => {
     const testNode = new UserProfileNode('test-node')
-    await testNode.initialize()
+    testNode.initialize()
 
     const json = superjson.serialize(testNode)
     const parsed = superjson.deserialize(json) as UserProfileNode

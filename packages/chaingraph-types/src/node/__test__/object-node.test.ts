@@ -171,7 +171,7 @@ describe('object node serialization', () => {
 
   it('serializes and deserializes a node with an object port', async () => {
     const objectNode = new ObjectNode('object-node')
-    await objectNode.initialize()
+    objectNode.initialize()
 
     const json = superjson.serialize(objectNode)
     const parsed = superjson.deserialize(json) as ObjectNode
@@ -183,7 +183,7 @@ describe('object node serialization', () => {
 
   it('serializes and deserializes a node with nested object ports', async () => {
     const nestedObjectNode = new NestedObjectNode('nested-object-node')
-    await nestedObjectNode.initialize()
+    nestedObjectNode.initialize()
 
     const json = superjson.serialize(nestedObjectNode)
     const parsed = superjson.deserialize(json) as NestedObjectNode
@@ -195,7 +195,7 @@ describe('object node serialization', () => {
 
   it('serializes and deserializes a node with nested arrays and objects', async () => {
     const complexNode = new ComplexNode('complex-node')
-    await complexNode.initialize()
+    complexNode.initialize()
 
     const json = superjson.serialize(complexNode)
     const parsed = superjson.deserialize(json) as ComplexNode

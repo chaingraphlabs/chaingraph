@@ -233,7 +233,7 @@ export class ExecutionEngine {
               const eventName = this.context.eventData.eventName
               const listenerEventName = (node as any).eventName
               if (eventName !== listenerEventName) {
-                console.log(`Skipping EventListenerNode ${node.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+                // console.log(`Skipping EventListenerNode ${node.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
                 continue
               }
             }
@@ -330,9 +330,7 @@ export class ExecutionEngine {
       // Check for emitted events after node completion
       if (this.onEventCallback && this.context.emittedEvents && this.context.emittedEvents.length > 0) {
         const unprocessedEvents = this.context.emittedEvents.filter(e => !e.processed)
-        console.log(`[ExecutionEngine] After node ${completedNode.metadata.title}, found ${unprocessedEvents.length} unprocessed events`)
         if (unprocessedEvents.length > 0) {
-          console.log(`[ExecutionEngine] Calling onEventCallback`)
           await this.onEventCallback(this.context)
         }
       }
@@ -402,7 +400,7 @@ export class ExecutionEngine {
               const eventName = this.context.eventData.eventName
               const listenerEventName = (dependentNode as any).eventName
               if (eventName !== listenerEventName) {
-                console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+                // console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
                 shouldSkip = true
               }
             }
@@ -564,7 +562,7 @@ export class ExecutionEngine {
       this.context.currentNodeId = node.id
 
       const { backgroundActions } = await withTimeout(
-        node.executeWithDefaultPorts(this.context),
+        node.executeWithSystemPorts(this.context),
         nodeTimeoutMs,
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )

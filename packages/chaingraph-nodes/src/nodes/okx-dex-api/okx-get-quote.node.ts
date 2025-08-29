@@ -86,14 +86,8 @@ class OKXGetQuoteNode extends BaseNode {
         userWalletAddress: this.quoteParams.userWalletAddress,
       }
 
-      console.log(`[OKXGetQuoteNode] Fetching quote with params: ${JSON.stringify(params)}`)
-
       // Make the API call using the SDK
       const response = await client.dex.getQuote(params)
-
-      console.log(`[OKXGetQuoteNode] API response: ${JSON.stringify(response)}`)
-
-      // return {}
 
       // Check response validity
       if (!response || response.code !== '0') {

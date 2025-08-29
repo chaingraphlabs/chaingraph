@@ -46,7 +46,6 @@ export class PortConfigProcessor {
             nodeId,
             parentPortConfig: null,
             propertyKey,
-            // propertyValue: deepCopy((node as any)[propertyKey]),
             propertyValue: (node as any)[propertyKey],
           },
         )
@@ -110,10 +109,6 @@ export class PortConfigProcessor {
     }
 
     // Assign defaultValue
-    // TODO: assign defaultValue???
-    // if (newPortConfig.defaultValue === undefined && propertyKey && propertyValue !== undefined) {
-    //   newPortConfig.defaultValue = deepCopy(propertyValue)
-    // }
 
     // If the node field has an explicit value, override the defaultValue from the config.
     if (propertyValue !== undefined) {
