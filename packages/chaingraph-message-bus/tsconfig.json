@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@badaitech/typescript-config/trpc.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "preserveSymlinks": true,
+    "paths": {
+      "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
+      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
+      "@badaitech/chaingraph-trpc/*": ["../chaingraph-trpc/*"],
+      "@badaitech/typescript-config/*": ["../typescript-config/*"]
+    },
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    /** Emit types for internal packages to speed up editor performance. */
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "outDir": "dist",
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["server", "client", "test"],
+  "exclude": ["node_modules"]
+}
