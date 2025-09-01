@@ -48,17 +48,27 @@ export class StringToEnumNode extends BaseNode {
     itemConfig: { type: 'string' },
     defaultValue: undefined,
     required: false,
+    isMutable: true,
+    ui: {
+      hideEditor: false,
+      addItemFormHidden: false,
+    },
   })
   allowedValues?: string[]
 
   /**
-   * The output enum with the same value as the input string
+   * The output enum with the same value as the input string.
+   *
+   * Note: The empty options array is intentional. The Chaingraph framework
+   * dynamically populates enum options at runtime based on the actual values
+   * passed through the port. This allows the node to work with any string value
+   * without predefined restrictions.
    */
   @Output()
   @PortEnum({
     title: 'Enum Output',
     description: 'The enum output with the same value as the input string',
-    options: [], // Start with empty options - will be populated dynamically
+    options: [], // Dynamic enum: populated at runtime by the framework
     defaultValue: undefined,
     required: false,
   })
@@ -68,7 +78,8 @@ export class StringToEnumNode extends BaseNode {
    * Execute the node logic: convert the input string to an enum output
    */
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    // If no input string is provided, clear the output
+    // Handle empty input: undefined, null, or empty string all clear the output
+    // Empty strings are treated as no value to prevent downstream issues
     if (this.inputString === undefined || this.inputString === null || this.inputString === '') {
       this.outputEnum = undefined
       return {}
@@ -76,8 +87,15 @@ export class StringToEnumNode extends BaseNode {
 
     // If allowed values are provided, validate the input
     if (this.allowedValues && this.allowedValues.length > 0) {
-      if (!this.allowedValues.includes(this.inputString)) {
-        throw new Error(`Invalid value: "${this.inputString}". Allowed values are: ${this.allowedValues.join(', ')}`)
+      // Use Set for O(1) lookup performance with large arrays
+      const allowedSet = new Set(this.allowedValues)
+      if (!allowedSet.has(this.inputString)) {
+        // Limit displayed values to prevent overly long error messages
+        const maxDisplay = 10
+        const displayValues = this.allowedValues.length <= maxDisplay
+          ? this.allowedValues.join(', ')
+          : `${this.allowedValues.slice(0, maxDisplay).join(', ')}... (${this.allowedValues.length} total)`
+        throw new Error(`Invalid value: "${this.inputString}". Allowed values are: ${displayValues}`)
       }
     }
 
