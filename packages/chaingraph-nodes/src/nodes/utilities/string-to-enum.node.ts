@@ -12,6 +12,7 @@ import {
   Input,
   Node,
   Output,
+  PortArray,
   PortEnum,
   PortString,
 } from '@badaitech/chaingraph-types'
@@ -20,9 +21,9 @@ import { NODE_CATEGORIES } from '../../categories'
 @Node({
   type: 'StringToEnumNode',
   title: 'String to Enum',
-  description: 'Converts a string input to an enum output. The output enum will dynamically accept any string value.',
+  description: 'Converts a string input to an enum output with optional validation against allowed values.',
   category: NODE_CATEGORIES.UTILITIES,
-  tags: ['conversion', 'string', 'enum', 'type', 'transform'],
+  tags: ['conversion', 'string', 'enum', 'type', 'transform', 'validation'],
 })
 export class StringToEnumNode extends BaseNode {
   /**
@@ -36,6 +37,19 @@ export class StringToEnumNode extends BaseNode {
     required: false,
   })
   inputString?: string
+
+  /**
+   * Optional array of allowed values for validation
+   */
+  @Input()
+  @PortArray({
+    title: 'Allowed Values',
+    description: 'Optional array of allowed string values. If provided, the input will be validated against these values.',
+    itemConfig: { type: 'string' },
+    defaultValue: undefined,
+    required: false,
+  })
+  allowedValues?: string[]
 
   /**
    * The output enum with the same value as the input string
@@ -58,6 +72,13 @@ export class StringToEnumNode extends BaseNode {
     if (this.inputString === undefined || this.inputString === null || this.inputString === '') {
       this.outputEnum = undefined
       return {}
+    }
+
+    // If allowed values are provided, validate the input
+    if (this.allowedValues && this.allowedValues.length > 0) {
+      if (!this.allowedValues.includes(this.inputString)) {
+        throw new Error(`Invalid value: "${this.inputString}". Allowed values are: ${this.allowedValues.join(', ')}`)
+      }
     }
 
     // Set the enum output to the input string value

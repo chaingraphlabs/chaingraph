@@ -131,6 +131,7 @@ describe('stringToEnumNode', () => {
       // Check that the properties exist on the node
       expect('inputString' in node).toBe(true)
       expect('outputEnum' in node).toBe(true)
+      expect('allowedValues' in node).toBe(true)
     })
 
     it('should convert string values correctly', () => {
@@ -140,6 +141,86 @@ describe('stringToEnumNode', () => {
 
       // After execution, the enum should have the same value
       // This test verifies the core behavior works
+    })
+  })
+
+  describe('validation with allowed values', () => {
+    it('should allow valid values when allowedValues is provided', async () => {
+      node.allowedValues = ['option1', 'option2', 'option3']
+      node.inputString = 'option2'
+
+      const result = await node.execute(mockContext)
+
+      expect(result).toEqual({})
+      expect(node.outputEnum).toBe('option2')
+    })
+
+    it('should throw error for invalid values when allowedValues is provided', async () => {
+      node.allowedValues = ['option1', 'option2', 'option3']
+      node.inputString = 'invalid-option'
+
+      await expect(node.execute(mockContext)).rejects.toThrow(
+        'Invalid value: "invalid-option". Allowed values are: option1, option2, option3',
+      )
+    })
+
+    it('should accept any value when allowedValues is undefined', async () => {
+      node.allowedValues = undefined
+      node.inputString = 'any-value'
+
+      const result = await node.execute(mockContext)
+
+      expect(result).toEqual({})
+      expect(node.outputEnum).toBe('any-value')
+    })
+
+    it('should accept any value when allowedValues is empty array', async () => {
+      node.allowedValues = []
+      node.inputString = 'any-value'
+
+      const result = await node.execute(mockContext)
+
+      expect(result).toEqual({})
+      expect(node.outputEnum).toBe('any-value')
+    })
+
+    it('should validate against multiple allowed values', async () => {
+      const allowedValues = ['value1', 'value2', 'value3', 'value4', 'value5']
+      node.allowedValues = allowedValues
+
+      // Test all valid values
+      for (const value of allowedValues) {
+        node.inputString = value
+        const result = await node.execute(mockContext)
+        expect(result).toEqual({})
+        expect(node.outputEnum).toBe(value)
+      }
+
+      // Test invalid value
+      node.inputString = 'invalid'
+      await expect(node.execute(mockContext)).rejects.toThrow(
+        'Invalid value: "invalid". Allowed values are: value1, value2, value3, value4, value5',
+      )
+    })
+
+    it('should handle empty string with validation', async () => {
+      node.allowedValues = ['option1', 'option2']
+      node.inputString = ''
+
+      const result = await node.execute(mockContext)
+
+      expect(result).toEqual({})
+      expect(node.outputEnum).toBeUndefined()
+    })
+
+    it('should handle undefined input with validation', async () => {
+      node.allowedValues = ['option1', 'option2']
+      node.inputString = undefined
+
+      const result = await node.execute(mockContext)
+
+      expect(result).toEqual({})
+      expect(node.outputEnum).toBeUndefined()
     })
   })
 })
