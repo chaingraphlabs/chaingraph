@@ -7,7 +7,6 @@
  */
 
 import type { ExecutionContext } from '@badaitech/chaingraph-types'
-import { findPortByKey } from '@badaitech/chaingraph-types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { StringToEnumNode } from '../string-to-enum.node'
 
@@ -20,12 +19,7 @@ describe('stringToEnumNode', () => {
     node.initialize()
 
     // Create a mock execution context
-    mockContext = {
-      startTime: new Date(),
-      nodeId: 'test-id',
-      flowId: 'test-flow',
-      executionId: 'test-execution',
-    } as ExecutionContext
+    mockContext = {} as ExecutionContext
   })
 
   afterEach(() => {
@@ -82,17 +76,12 @@ describe('stringToEnumNode', () => {
       }
     })
 
-    it('should dynamically update enum options', async () => {
+    it('should handle dynamic values', async () => {
       node.inputString = 'dynamic-value'
 
       await node.execute(mockContext)
 
-      const outputPort = findPortByKey(node, 'outputEnum')
-      if (outputPort && outputPort.type === 'enum' && outputPort.config.options) {
-        const option = outputPort.config.options.find(opt => opt.id === 'dynamic-value')
-        expect(option).toBeDefined()
-        expect(option?.title).toBe('dynamic-value')
-      }
+      expect(node.outputEnum).toBe('dynamic-value')
     })
 
     it('should handle special characters in strings', async () => {

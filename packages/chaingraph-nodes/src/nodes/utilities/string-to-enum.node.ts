@@ -9,7 +9,6 @@
 import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  findPortByKey,
   Input,
   Node,
   Output,
@@ -63,24 +62,6 @@ export class StringToEnumNode extends BaseNode {
 
     // Set the enum output to the input string value
     this.outputEnum = this.inputString
-
-    // Dynamically update the enum options to include the current value
-    const outputPort = findPortByKey(this, 'outputEnum')
-    if (outputPort && outputPort.type === 'enum' && outputPort.config.options) {
-      const currentValue = this.inputString
-      const existingOption = outputPort.config.options.find(opt => opt.id === currentValue)
-
-      if (!existingOption) {
-        // Set the options to only contain the current value
-        // This makes it a valid enum with the exact value we need
-        outputPort.config.options = [{
-          id: currentValue,
-          type: 'string',
-          defaultValue: currentValue,
-          title: currentValue,
-        }]
-      }
-    }
 
     return {}
   }
