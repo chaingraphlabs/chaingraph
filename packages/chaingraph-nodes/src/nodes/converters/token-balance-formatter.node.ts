@@ -19,51 +19,14 @@ import {
   PortArray,
   PortBoolean,
   PortNumber,
+  PortObject,
   PortString,
 } from '@badaitech/chaingraph-types'
+import { Amount, Token } from '../blockchain/schemas'
 import { NODE_CATEGORIES } from '../../categories'
 
 /**
- * Token configuration with decimals and optional metadata
- */
-@ObjectSchema({
-  description: 'Token configuration for formatting',
-})
-class TokenConfig {
-  @PortString({
-    title: 'Token Address',
-    description: 'Contract address of the token',
-    required: true,
-  })
-  address: string = ''
-
-  @PortNumber({
-    title: 'Decimals',
-    description: 'Number of decimals for this token',
-    required: true,
-    defaultValue: 18,
-    min: 0,
-    max: 36,
-  })
-  decimals: number = 18
-
-  @PortString({
-    title: 'Symbol',
-    description: 'Token symbol (e.g., USDC, ETH)',
-    required: false,
-  })
-  symbol?: string = ''
-
-  @PortString({
-    title: 'Name',
-    description: 'Token name',
-    required: false,
-  })
-  name?: string = ''
-}
-
-/**
- * Raw balance input
+ * Raw balance input matching the output of alchemy-raw-balances node
  */
 @ObjectSchema({
   description: 'Raw token balance input',
@@ -77,11 +40,11 @@ class RawBalanceInput {
   tokenAddress: string = ''
 
   @PortString({
-    title: 'Balance Hex',
-    description: 'Raw balance in hexadecimal format',
+    title: 'Balance',
+    description: 'Raw balance as stringified BigInt (smallest unit)',
     required: true,
   })
-  balanceHex: string = '0x0'
+  balance: string = '0'
 
   @PortNumber({
     title: 'Chain ID',
@@ -93,66 +56,33 @@ class RawBalanceInput {
 }
 
 /**
- * Formatted balance output
+ * Token balance with amount and token info
  */
 @ObjectSchema({
-  description: 'Formatted token balance',
+  description: 'Token balance with formatted amount and metadata',
 })
-class FormattedBalance {
-  @PortString({
-    title: 'Token Address',
-    description: 'Contract address of the token',
+class TokenBalance {
+  @PortObject({
+    title: 'Token',
+    description: 'Token information',
+    schema: Token,
     required: true,
   })
-  tokenAddress: string = ''
+  token: Token = new Token()
 
-  @PortString({
-    title: 'Raw Value',
-    description: 'Balance in smallest unit (wei)',
+  @PortObject({
+    title: 'Amount',
+    description: 'Balance amount with formatting',
+    schema: Amount,
     required: true,
   })
-  rawValue: string = '0'
-
-  @PortString({
-    title: 'Formatted Value',
-    description: 'Human-readable balance',
-    required: true,
-  })
-  formattedValue: string = '0.0'
-
-  @PortNumber({
-    title: 'Decimals',
-    description: 'Number of decimal places used',
-    required: true,
-  })
-  decimals: number = 18
-
-  @PortString({
-    title: 'Symbol',
-    description: 'Token symbol',
-    required: false,
-  })
-  symbol?: string = ''
-
-  @PortString({
-    title: 'Name',
-    description: 'Token name',
-    required: false,
-  })
-  name?: string = ''
-
-  @PortNumber({
-    title: 'Chain ID',
-    description: 'Blockchain network ID',
-    required: false,
-  })
-  chainId?: number = 1
+  amount: Amount = new Amount()
 }
 
 @Node({
   type: 'TokenBalanceFormatter',
   title: 'Token Balance Formatter',
-  description: 'Converts raw hex balances to formatted human-readable values using token configuration',
+  description: 'Converts raw balances (stringified BigInt) to formatted amounts using token configuration',
   category: NODE_CATEGORIES.CONVERTERS,
   tags: ['formatter', 'token', 'balance', 'converter'],
 })
@@ -160,7 +90,7 @@ class TokenBalanceFormatter extends BaseNode {
   @Input()
   @PortArray({
     title: 'Raw Balances',
-    description: 'Array of raw token balances in hex format',
+    description: 'Array of raw token balances as stringified BigInt',
     itemConfig: {
       type: 'object',
       schema: RawBalanceInput,
@@ -172,14 +102,14 @@ class TokenBalanceFormatter extends BaseNode {
   @Input()
   @PortArray({
     title: 'Token Configurations',
-    description: 'Token address to decimals and metadata mapping',
+    description: 'Token information including decimals and metadata',
     itemConfig: {
       type: 'object',
-      schema: TokenConfig,
+      schema: Token,
     },
     required: false,
   })
-  tokenConfigs: TokenConfig[] = []
+  tokens: Token[] = []
 
   @Input()
   @PortNumber({
@@ -201,107 +131,99 @@ class TokenBalanceFormatter extends BaseNode {
 
   @Output()
   @PortArray({
-    title: 'Formatted Balances',
+    title: 'Token Balances',
     description: 'Array of formatted token balances',
     itemConfig: {
       type: 'object',
-      schema: FormattedBalance,
+      schema: TokenBalance,
     },
   })
-  formattedBalances: FormattedBalance[] = []
+  tokenBalances: TokenBalance[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (!this.rawBalances || this.rawBalances.length === 0) {
-      this.formattedBalances = []
+      this.tokenBalances = []
       return {}
     }
 
-    // Create config map for quick lookup
-    const configMap = new Map<string, TokenConfig>()
-    for (const config of this.tokenConfigs) {
-      if (config.address) {
-        configMap.set(config.address.toLowerCase(), config)
+    // Create token map for quick lookup
+    const tokenMap = new Map<string, Token>()
+    for (const token of this.tokens) {
+      if (token.address) {
+        tokenMap.set(token.address.toLowerCase(), token)
       }
     }
 
-    const allBalances: FormattedBalance[] = []
+    const allBalances: TokenBalance[] = []
 
     for (const rawBalance of this.rawBalances) {
       const tokenAddressLower = rawBalance.tokenAddress.toLowerCase()
-      const config = configMap.get(tokenAddressLower)
-
-      // Get decimals from config or use default
-      const decimals = config?.decimals ?? this.defaultDecimals
-
-      // Convert hex to decimal string
-      const rawValue = this.hexToDecimal(rawBalance.balanceHex)
-
+      
       // Skip zero balances if filter is enabled
-      if (this.filterZeroBalances && rawValue === '0') {
+      if (this.filterZeroBalances && rawBalance.balance === '0') {
         continue
       }
-
+      
+      // Get token config or create a default one
+      let tokenInfo = tokenMap.get(tokenAddressLower)
+      if (!tokenInfo) {
+        tokenInfo = new Token()
+        tokenInfo.address = rawBalance.tokenAddress
+        tokenInfo.decimals = this.defaultDecimals
+        tokenInfo.chainId = rawBalance.chainId || 1
+      }
+      
       // Format the balance
-      const formattedValue = this.formatBalance(rawValue, decimals)
-
-      const formattedBalance = new FormattedBalance()
-      formattedBalance.tokenAddress = rawBalance.tokenAddress
-      formattedBalance.rawValue = rawValue
-      formattedBalance.formattedValue = formattedValue
-      formattedBalance.decimals = decimals
-      formattedBalance.symbol = config?.symbol
-      formattedBalance.name = config?.name
-      formattedBalance.chainId = rawBalance.chainId
-
-      allBalances.push(formattedBalance)
+      const amount = this.formatAmount(rawBalance.balance, tokenInfo.decimals)
+      
+      const tokenBalance = new TokenBalance()
+      tokenBalance.token = tokenInfo
+      tokenBalance.amount = amount
+      
+      allBalances.push(tokenBalance)
     }
 
-    this.formattedBalances = allBalances
+    this.tokenBalances = allBalances
     return {}
   }
 
-  private hexToDecimal(hex: string): string {
-    if (!hex || hex === '0x' || hex === '0x0') {
-      return '0'
-    }
-    try {
-      return BigInt(hex).toString()
-    } catch (error) {
-      console.warn(`Invalid hex value: ${hex}`)
-      return '0'
-    }
-  }
-
-  private formatBalance(rawValue: string, decimals: number): string {
+  private formatAmount(rawValue: string, decimals: number): Amount {
+    const amount = new Amount()
+    amount.value = rawValue
+    amount.decimals = decimals
+    
     if (rawValue === '0') {
-      return '0.0'
+      amount.formatted = '0.0'
+      return amount
     }
-
+    
     try {
       const value = BigInt(rawValue)
       const divisor = BigInt(10 ** decimals)
-
+      
       const integerPart = value / divisor
       const fractionalPart = value % divisor
-
+      
       if (fractionalPart === 0n) {
-        return `${integerPart.toString()}.0`
+        amount.formatted = `${integerPart.toString()}.0`
+      } else {
+        // Convert fractional part to string with leading zeros
+        const fractionalStr = fractionalPart.toString().padStart(decimals, '0')
+        // Remove trailing zeros
+        const trimmedFractional = fractionalStr.replace(/0+$/, '')
+        
+        if (trimmedFractional === '') {
+          amount.formatted = `${integerPart.toString()}.0`
+        } else {
+          amount.formatted = `${integerPart.toString()}.${trimmedFractional}`
+        }
       }
-
-      // Convert fractional part to string with leading zeros
-      const fractionalStr = fractionalPart.toString().padStart(decimals, '0')
-      // Remove trailing zeros
-      const trimmedFractional = fractionalStr.replace(/0+$/, '')
-
-      if (trimmedFractional === '') {
-        return `${integerPart.toString()}.0`
-      }
-
-      return `${integerPart.toString()}.${trimmedFractional}`
     } catch (error) {
       console.warn(`Failed to format balance: ${rawValue} with decimals: ${decimals}`)
-      return '0.0'
+      amount.formatted = '0.0'
     }
+    
+    return amount
   }
 }
 

@@ -27,10 +27,10 @@ import { NODE_CATEGORIES } from '../../categories'
 import { getChainId, Networks } from './shared/alchemy-utils'
 
 /**
- * Raw token balance without any formatting
+ * Raw token balance as stringified BigInt
  */
 @ObjectSchema({
-  description: 'Raw token balance in hex format',
+  description: 'Raw token balance as stringified BigInt',
 })
 class RawTokenBalance {
   @PortString({
@@ -41,11 +41,11 @@ class RawTokenBalance {
   tokenAddress: string = ''
 
   @PortString({
-    title: 'Balance Hex',
-    description: 'Raw balance in hexadecimal format (e.g., 0x1234)',
+    title: 'Balance',
+    description: 'Raw balance as stringified BigInt (smallest unit)',
     required: true,
   })
-  balanceHex: string = '0x0'
+  balance: string = '0'
 
   @PortNumber({
     title: 'Chain ID',
@@ -59,7 +59,7 @@ class RawTokenBalance {
 @Node({
   type: 'AlchemyRawBalances',
   title: 'Alchemy: raw balances',
-  description: 'Fetches raw token balances in hex format. Single API call, no formatting or decimals conversion.',
+  description: 'Fetches raw token balances as stringified BigInt values. Single API call, no formatting or decimals conversion.',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy', 'raw'],
 })
@@ -111,7 +111,7 @@ class AlchemyRawBalances extends BaseNode {
   @Output()
   @PortArray({
     title: 'Raw Balances',
-    description: 'List of raw token balances in hex format',
+    description: 'List of raw token balances as stringified BigInt',
     itemConfig: {
       type: 'object',
       schema: RawTokenBalance,
@@ -161,11 +161,24 @@ class AlchemyRawBalances extends BaseNode {
 
       const chainId = getChainId(this.network)
 
-      // Return raw balances without any processing
+      // Convert hex to stringified BigInt
       this.rawBalances = data.result.tokenBalances.map((token: any) => {
         const rawBalance = new RawTokenBalance()
         rawBalance.tokenAddress = token.contractAddress
-        rawBalance.balanceHex = token.tokenBalance || '0x0'
+        
+        // Convert hex to stringified BigInt
+        const hexBalance = token.tokenBalance || '0x0'
+        if (!hexBalance || hexBalance === '0x' || hexBalance === '0x0') {
+          rawBalance.balance = '0'
+        } else {
+          try {
+            rawBalance.balance = BigInt(hexBalance).toString()
+          } catch (e) {
+            console.warn(`Failed to parse balance ${hexBalance} for token ${token.contractAddress}`)
+            rawBalance.balance = '0'
+          }
+        }
+        
         rawBalance.chainId = chainId
         return rawBalance
       })

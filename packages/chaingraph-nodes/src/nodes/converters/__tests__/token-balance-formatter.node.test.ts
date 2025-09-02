@@ -8,6 +8,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import TokenBalanceFormatter from '../token-balance-formatter.node'
+import { Token } from '../../blockchain/schemas'
 
 describe('token balance formatter node', () => {
   let node: TokenBalanceFormatter

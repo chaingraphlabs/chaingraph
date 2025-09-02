@@ -65,7 +65,7 @@ describe('alchemy raw balances node', () => {
       expect(options.body).not.toContain('alchemy_getTokenMetadata')
     })
 
-    it('should return raw hex balances without formatting', async () => {
+    it('should return stringified BigInt balances instead of hex', async () => {
       const mockApiKey = { decrypt: vi.fn().mockResolvedValue({ apiKey: 'test-key' }) }
       node.apiKey = mockApiKey as any
       node.walletAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7'
@@ -87,11 +87,11 @@ describe('alchemy raw balances node', () => {
 
       expect(node.rawBalances).toHaveLength(2)
       expect(node.rawBalances[0].tokenAddress).toBe('0xA0b86991c084e71824Dc9a28A19D0cba1638Ec82')
-      expect(node.rawBalances[0].balanceHex).toBe('0xde0b6b3a7640000')
+      expect(node.rawBalances[0].balance).toBe('1000000000000000000') // Converted from hex to string
       expect(node.rawBalances[0].chainId).toBe(1)
 
       expect(node.rawBalances[1].tokenAddress).toBe('0x6B175474E89094C44Da98b954EedeAC495271d0F')
-      expect(node.rawBalances[1].balanceHex).toBe('0x0')
+      expect(node.rawBalances[1].balance).toBe('0')
       expect(node.rawBalances[1].chainId).toBe(1)
     })
 
@@ -117,8 +117,8 @@ describe('alchemy raw balances node', () => {
       await node.execute(mockContext as any)
 
       expect(node.rawBalances).toHaveLength(3)
-      expect(node.rawBalances[1].balanceHex).toBe('0x0')
-      expect(node.rawBalances[2].balanceHex).toBe('0x0') // null becomes '0x0'
+      expect(node.rawBalances[1].balance).toBe('0')
+      expect(node.rawBalances[2].balance).toBe('0') // null becomes '0'
     })
 
     it('should handle specific contract addresses', async () => {
@@ -192,7 +192,7 @@ describe('alchemy raw balances node', () => {
       expect(Array.isArray(node.rawBalances)).toBe(true)
       if (node.rawBalances.length > 0) {
         expect(node.rawBalances[0].tokenAddress).toMatch(/^0x[a-fA-F0-9]{40}$/)
-        expect(node.rawBalances[0].balanceHex).toMatch(/^0x[a-fA-F0-9]*$/)
+        expect(node.rawBalances[0].balance).toMatch(/^\d+$/) // Should be a decimal string
         expect(node.rawBalances[0].chainId).toBe(1)
       }
     })
