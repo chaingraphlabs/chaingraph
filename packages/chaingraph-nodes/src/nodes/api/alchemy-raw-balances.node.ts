@@ -58,7 +58,7 @@ class RawTokenBalance {
 
 @Node({
   type: 'AlchemyRawBalances',
-  title: 'Alchemy: raw balances',
+  title: 'Alchemy: Raw Balances',
   description: 'Fetches raw token balances as stringified BigInt values. Single API call, no formatting or decimals conversion.',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy', 'raw'],
@@ -165,7 +165,7 @@ class AlchemyRawBalances extends BaseNode {
       this.rawBalances = data.result.tokenBalances.map((token: any) => {
         const rawBalance = new RawTokenBalance()
         rawBalance.tokenAddress = token.contractAddress
-        
+
         // Convert hex to stringified BigInt
         const hexBalance = token.tokenBalance || '0x0'
         if (!hexBalance || hexBalance === '0x' || hexBalance === '0x0') {
@@ -178,7 +178,7 @@ class AlchemyRawBalances extends BaseNode {
             rawBalance.balance = '0'
           }
         }
-        
+
         rawBalance.chainId = chainId
         return rawBalance
       })

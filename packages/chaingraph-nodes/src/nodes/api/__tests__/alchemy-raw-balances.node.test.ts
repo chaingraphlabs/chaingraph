@@ -17,7 +17,7 @@ describe('alchemy raw balances node', () => {
   }
 
   beforeEach(() => {
-    node = new AlchemyRawBalances()
+    node = new AlchemyRawBalances(mockContext as any)
     vi.clearAllMocks()
   })
 

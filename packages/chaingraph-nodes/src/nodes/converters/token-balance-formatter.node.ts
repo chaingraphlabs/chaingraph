@@ -17,13 +17,12 @@ import {
   ObjectSchema,
   Output,
   PortArray,
-  PortBoolean,
   PortNumber,
   PortObject,
   PortString,
 } from '@badaitech/chaingraph-types'
-import { Amount, Token } from '../blockchain/schemas'
 import { NODE_CATEGORIES } from '../../categories'
+import { Amount, Token } from '../blockchain/schemas'
 
 /**
  * Raw balance input matching the output of alchemy-raw-balances node
@@ -82,7 +81,7 @@ class TokenBalance {
 @Node({
   type: 'TokenBalanceFormatter',
   title: 'Token Balance Formatter',
-  description: 'Converts raw balances (stringified BigInt) to formatted amounts using token configuration',
+  description: 'Converts raw balances to formatted amounts using token metadata. Only processes tokens present in configuration.',
   category: NODE_CATEGORIES.CONVERTERS,
   tags: ['formatter', 'token', 'balance', 'converter'],
 })
@@ -101,33 +100,20 @@ class TokenBalanceFormatter extends BaseNode {
 
   @Input()
   @PortArray({
-    title: 'Token Configurations',
-    description: 'Token information including decimals and metadata',
+    title: 'Tokens Meta',
+    description: 'Token metadata including decimals, symbol, and name. Only tokens in this list will be processed.',
     itemConfig: {
       type: 'object',
       schema: Token,
     },
-    required: false,
+    isMutable: true,
+    required: true,
+    ui: {
+      hideEditor: false,
+      addItemFormHidden: false,
+    },
   })
   tokens: Token[] = []
-
-  @Input()
-  @PortNumber({
-    title: 'Default Decimals',
-    description: 'Default decimals for tokens not in configuration (standard ERC20 is 18)',
-    defaultValue: 18,
-    min: 0,
-    max: 36,
-  })
-  defaultDecimals: number = 18
-
-  @Input()
-  @PortBoolean({
-    title: 'Filter Zero Balances',
-    description: 'Remove tokens with zero balance',
-    defaultValue: true,
-  })
-  filterZeroBalances: boolean = true
 
   @Output()
   @PortArray({
@@ -158,28 +144,25 @@ class TokenBalanceFormatter extends BaseNode {
 
     for (const rawBalance of this.rawBalances) {
       const tokenAddressLower = rawBalance.tokenAddress.toLowerCase()
-      
-      // Skip zero balances if filter is enabled
-      if (this.filterZeroBalances && rawBalance.balance === '0') {
+
+      // Skip tokens not in configuration
+      const tokenInfo = tokenMap.get(tokenAddressLower)
+      if (!tokenInfo) {
         continue
       }
-      
-      // Get token config or create a default one
-      let tokenInfo = tokenMap.get(tokenAddressLower)
-      if (!tokenInfo) {
-        tokenInfo = new Token()
-        tokenInfo.address = rawBalance.tokenAddress
-        tokenInfo.decimals = this.defaultDecimals
-        tokenInfo.chainId = rawBalance.chainId || 1
+
+      // Skip zero balances
+      if (rawBalance.balance === '0') {
+        continue
       }
-      
+
       // Format the balance
       const amount = this.formatAmount(rawBalance.balance, tokenInfo.decimals)
-      
+
       const tokenBalance = new TokenBalance()
       tokenBalance.token = tokenInfo
       tokenBalance.amount = amount
-      
+
       allBalances.push(tokenBalance)
     }
 
@@ -191,19 +174,19 @@ class TokenBalanceFormatter extends BaseNode {
     const amount = new Amount()
     amount.value = rawValue
     amount.decimals = decimals
-    
+
     if (rawValue === '0') {
       amount.formatted = '0.0'
       return amount
     }
-    
+
     try {
       const value = BigInt(rawValue)
       const divisor = BigInt(10 ** decimals)
-      
+
       const integerPart = value / divisor
       const fractionalPart = value % divisor
-      
+
       if (fractionalPart === 0n) {
         amount.formatted = `${integerPart.toString()}.0`
       } else {
@@ -211,7 +194,7 @@ class TokenBalanceFormatter extends BaseNode {
         const fractionalStr = fractionalPart.toString().padStart(decimals, '0')
         // Remove trailing zeros
         const trimmedFractional = fractionalStr.replace(/0+$/, '')
-        
+
         if (trimmedFractional === '') {
           amount.formatted = `${integerPart.toString()}.0`
         } else {
@@ -222,7 +205,7 @@ class TokenBalanceFormatter extends BaseNode {
       console.warn(`Failed to format balance: ${rawValue} with decimals: ${decimals}`)
       amount.formatted = '0.0'
     }
-    
+
     return amount
   }
 }
