@@ -9,6 +9,7 @@
 import type { DBType } from '../../../context'
 import type { ExecutionInstance } from '../../types'
 import type { IExecutionStore } from '../execution-store'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Flow } from '@badaitech/chaingraph-types'
 import { desc, eq, sql } from 'drizzle-orm'
 import { executionsTable } from '../../../stores/postgres/schema'
@@ -16,7 +17,10 @@ import { executionsTable } from '../../../stores/postgres/schema'
 export class PostgresExecutionStore implements IExecutionStore {
   private readonly MAX_EXECUTION_DEPTH = 100
 
-  constructor(private readonly db: DBType) {}
+  constructor(
+    private readonly db: DBType,
+    private nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
+  ) {}
 
   async create(instance: ExecutionInstance): Promise<void> {
     await this.db.insert(executionsTable)
@@ -101,7 +105,7 @@ export class PostgresExecutionStore implements IExecutionStore {
       }
       if (flowData) {
         try {
-          flow = Flow.deserialize(flowData)
+          flow = Flow.deserialize(flowData, this.nodeRegistry)
         } catch (e) {
           flow = new Flow({ id: row.flowId, name: metadata?.flowName })
         }
@@ -110,7 +114,9 @@ export class PostgresExecutionStore implements IExecutionStore {
       }
     } else {
       try {
-        flow = metadata?.flowData ? Flow.deserialize(metadata.flowData) : new Flow({ id: row.flowId, name: metadata?.flowName })
+        flow = metadata?.flowData
+          ? Flow.deserialize(metadata.flowData, this.nodeRegistry)
+          : new Flow({ id: row.flowId, name: metadata?.flowName })
       } catch (e) {
         flow = new Flow({ id: row.flowId, name: metadata?.flowName })
       }

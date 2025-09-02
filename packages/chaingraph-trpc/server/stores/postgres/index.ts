@@ -7,7 +7,19 @@
  */
 
 export { db } from './connection'
-export { flowsTable } from './schema'
+export {
+  executionClaimsTable,
+  executionsTable,
+  flowsTable,
+  mcpServersTable,
+} from './schema'
+export type {
+  ExecutionClaimRow,
+  ExecutionEventRow,
+  ExecutionRow,
+  FlowRow,
+  MCPServerRow,
+} from './schema'
 export {
   deleteFlow,
   listFlows,

@@ -11,10 +11,11 @@ import type {
   EmittedEventContext,
   ExecutionEvent,
   ExecutionEventHandler,
+  ExecutionEventImpl,
   Flow,
   INode,
-  IntegrationContext,
 
+  IntegrationContext,
 } from '@badaitech/chaingraph-types'
 import type { IExecutionStore } from '../store/execution-store'
 import type { PostgresEventStore } from '../store/postgres/event-store'
@@ -26,7 +27,6 @@ import {
   ExecutionContext,
   ExecutionEngine,
   ExecutionEventEnum,
-  ExecutionEventImpl,
 } from '@badaitech/chaingraph-types'
 import { TRPCError } from '@trpc/server'
 import { customAlphabet } from 'nanoid'
@@ -541,13 +541,11 @@ export class ExecutionService {
         const parentEventQueue = this.eventQueues.get(parentInstance.id)
         if (parentEventQueue) {
           await parentEventQueue.publish(
-            new ExecutionEventImpl(
-              Date.now(),
+            parentInstance.engine.createEvent(
               ExecutionEventEnum.FLOW_FAILED,
-              new Date(),
               {
                 error: new Error(`Cycle detected: ${error.message}`),
-                flow: await parentInstance.flow.clone(),
+                flowMetadata: parentInstance.flow.metadata,
                 executionTime: Date.now() - parentInstance.createdAt.getTime(),
               },
             ),
@@ -570,10 +568,8 @@ export class ExecutionService {
     const parentEventQueue = this.eventQueues.get(parentInstance.id)
     if (parentEventQueue) {
       await parentEventQueue.publish(
-        new ExecutionEventImpl(
-          Date.now(),
+        parentInstance.engine.createEvent(
           ExecutionEventEnum.CHILD_EXECUTION_SPAWNED,
-          new Date(),
           {
             parentExecutionId: parentInstance.id,
             childExecutionId: childInstance.id,
@@ -627,10 +623,8 @@ export class ExecutionService {
           if (parentEventQueue) {
             const eventName = instance.context.eventData?.eventName || 'unknown'
             await parentEventQueue.publish(
-              new ExecutionEventImpl(
-                Date.now(),
+              instance.engine.createEvent(
                 ExecutionEventEnum.CHILD_EXECUTION_COMPLETED,
-                new Date(),
                 {
                   parentExecutionId: instance.parentExecutionId,
                   childExecutionId: instance.id,
@@ -661,10 +655,8 @@ export class ExecutionService {
           if (parentEventQueue) {
             const eventName = instance.context.eventData?.eventName || 'unknown'
             await parentEventQueue.publish(
-              new ExecutionEventImpl(
-                Date.now(),
+              instance.engine.createEvent(
                 ExecutionEventEnum.CHILD_EXECUTION_FAILED,
-                new Date(),
                 {
                   parentExecutionId: instance.parentExecutionId,
                   childExecutionId: instance.id,
@@ -881,16 +873,15 @@ export class ExecutionService {
       // Emit completion event for the parent
       const eventQueue = this.eventQueues.get(parentId)
       if (eventQueue) {
-        await eventQueue.publish({
-          index: Date.now(),
-          type: ExecutionEventEnum.FLOW_COMPLETED,
-          timestamp: new Date(),
-          context: parentInstance.context,
-          data: {
-            flow: await parentInstance.flow.clone(),
-            executionTime: parentInstance.completedAt.getTime() - parentInstance.createdAt.getTime(),
-          },
-        } as ExecutionEventImpl)
+        await eventQueue.publish(
+          parentInstance.engine.createEvent(
+            ExecutionEventEnum.FLOW_COMPLETED,
+            {
+              flowMetadata: parentInstance.flow.metadata,
+              executionTime: parentInstance.completedAt.getTime() - parentInstance.createdAt.getTime(),
+            },
+          ),
+        )
       }
     }
   }

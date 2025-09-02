@@ -357,7 +357,7 @@ export const executionRouter = router({
     }))
     .output(
       zAsyncIterable({
-        yield: z.custom<ExecutionEventImpl>(),
+        yield: z.custom<ExecutionEventImpl[]>(),
         tracked: false,
       }),
     )
@@ -372,14 +372,14 @@ export const executionRouter = router({
       const eventIndex = input.lastEventId ? Number(input.lastEventId) : 0
 
       // Send initial state event
-      yield new ExecutionEventImpl(
+      yield [new ExecutionEventImpl(
         -1,
         ExecutionEventEnum.FLOW_SUBSCRIBED,
         new Date(),
         {
-          flow: instance.flow,
+          flowMetadata: instance.flow.metadata,
         } as ExecutionEventData[ExecutionEventEnum.FLOW_SUBSCRIBED],
-      )
+      )]
 
       // Try to get the service's event queue for this execution
       let serviceEventQueue: EventQueue<ExecutionEvent> | undefined
@@ -398,13 +398,20 @@ export const executionRouter = router({
       if (eventStore) {
         try {
           // Load historical events from the database
+          console.log(`Loading historical events for execution ${input.executionId} from index ${eventIndex}`)
+          const startLoadTime = Date.now()
           const historicalEvents = await eventStore.getEvents(
             input.executionId,
             eventIndex > 0 ? eventIndex + 1 : 0, // Start from next event if reconnecting
             10000, // Limit to 10000 events for performance
           )
+          const loadDuration = Date.now() - startLoadTime
+          console.log(`Loaded ${historicalEvents.length} historical events for execution ${input.executionId} in ${loadDuration}ms`)
 
-          // Yield historical events
+          // Yield historical events in batches
+          const batchSize = 100
+          let batch: ExecutionEventImpl[] = []
+
           for (const event of historicalEvents) {
             // Reconstruct ExecutionEventImpl from stored data
             const eventImpl = new ExecutionEventImpl(
@@ -418,10 +425,23 @@ export const executionRouter = router({
             if (!isAcceptedEventType(input.eventTypes, eventImpl.type)) {
               continue
             }
-            yield eventImpl
+
+            batch.push(eventImpl)
+
+            // Yield batch when it reaches the size limit
+            if (batch.length >= batchSize) {
+              yield batch
+              batch = []
+            }
           }
 
-          console.log(`Streamed ${historicalEvents.length} historical events for execution ${input.executionId}`)
+          // Yield any remaining events in the final batch
+          if (batch.length > 0) {
+            yield batch
+          }
+
+          const loadDuration2 = Date.now() - startLoadTime
+          console.log(`Streamed ${historicalEvents.length} historical events for execution ${input.executionId} in ${loadDuration2}ms`)
         } catch (error) {
           console.error('Error loading historical events:', error)
         }
@@ -440,7 +460,7 @@ export const executionRouter = router({
             if (!isAcceptedEventType(input.eventTypes, event.type)) {
               continue
             }
-            yield event
+            yield [event]
           }
         } catch (error) {
           console.error('Error handling live execution events:', error)

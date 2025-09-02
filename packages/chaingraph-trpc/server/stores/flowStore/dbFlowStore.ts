@@ -10,6 +10,7 @@ import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import type { DBType } from '../../context'
 import type { ListOrderBy } from '../postgres/store'
 import type { IFlowStore } from './types'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Flow } from '@badaitech/chaingraph-types'
 import { serializableFlow } from '../postgres/store'
 import { deleteFlow, listFlows, loadFlow, saveFlow } from '../postgres/store'
@@ -29,7 +30,10 @@ export class DBFlowStore implements IFlowStore {
     waitQueue: Array<{ resolve: () => void, reject: (error: Error) => void }>
   }> = new Map()
 
-  constructor(db: DBType) {
+  constructor(
+    db: DBType,
+    private nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
+  ) {
     this.db = db
   }
 
@@ -63,7 +67,7 @@ export class DBFlowStore implements IFlowStore {
     }
 
     const flowFromDB = await loadFlow(this.db, flowId, (data) => {
-      return Flow.deserialize(data)
+      return Flow.deserialize(data, this.nodeRegistry)
     })
     if (!flowFromDB) {
       return null
@@ -89,7 +93,7 @@ export class DBFlowStore implements IFlowStore {
       orderBy,
       limit || defaultFlowLimit,
       (data) => {
-        return Flow.deserialize(data)
+        return Flow.deserialize(data, this.nodeRegistry)
       },
     )
 

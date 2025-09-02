@@ -37,8 +37,8 @@ export const executionsTable = pgTable('executions', {
   errorMessage: text('error_message'),
   errorNodeId: text('error_node_id'),
   executionDepth: integer('execution_depth').default(0).notNull(),
-  metadata: jsonb('metadata'),
-  externalEvents: jsonb('external_events'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  externalEvents: jsonb('external_events').$type<Record<string, any>>(),
 }, table => [
   index('executions_owner_id_created_at_idx').on(table.ownerId, table.createdAt),
   index('executions_parent_execution_id_idx').on(table.parentExecutionId),
@@ -53,11 +53,12 @@ export const executionEventsTable = pgTable('execution_events', {
   eventType: text('event_type').notNull(),
   timestamp: timestamp('timestamp').notNull(),
   data: jsonb('data').notNull(),
-}, table => ({
-  pk: primaryKey({ columns: [table.executionId, table.eventIndex] }),
-  timestampIdx: index('execution_events_execution_id_timestamp_idx').on(table.executionId, table.timestamp),
-  eventTypeIdx: index('execution_events_execution_id_event_type_idx').on(table.executionId, table.eventType),
-}))
+}, table => [
+  primaryKey({ columns: [table.executionId, table.eventIndex] }),
+  index('execution_events_execution_id_timestamp_idx').on(table.executionId, table.timestamp),
+  index('execution_events_execution_id_event_type_idx').on(table.executionId, table.eventType),
+  index('execution_events_execution_id_event_index_idx').on(table.executionId, table.eventIndex),
+])
 
 export const mcpServersTable = pgTable('mcp_servers', {
   id: text('id').primaryKey(),
@@ -71,3 +72,22 @@ export const mcpServersTable = pgTable('mcp_servers', {
   index('mcp_servers_user_id_idx').on(table.userId),
   index('mcp_servers_user_id_updated_at_idx').on(table.userId, table.updatedAt),
 ])
+
+export const executionClaimsTable = pgTable('execution_claims', {
+  executionId: text('execution_id').primaryKey(),
+  workerId: text('worker_id').notNull(),
+  claimedAt: timestamp('claimed_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  heartbeatAt: timestamp('heartbeat_at').defaultNow().notNull(),
+  status: text('status').notNull().$type<'active' | 'released' | 'expired'>(),
+}, table => [
+  index('execution_claims_worker_id_idx').on(table.workerId),
+  index('execution_claims_expires_at_idx').on(table.expiresAt),
+  index('execution_claims_status_idx').on(table.status),
+])
+
+export type FlowRow = typeof flowsTable.$inferSelect
+export type ExecutionRow = typeof executionsTable.$inferSelect
+export type ExecutionClaimRow = typeof executionClaimsTable.$inferSelect
+export type MCPServerRow = typeof mcpServersTable.$inferSelect
+export type ExecutionEventRow = typeof executionsTable.$inferSelect

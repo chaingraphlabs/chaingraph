@@ -125,12 +125,17 @@ export class PostgresEventStore {
       conditions.push(gte(executionEventsTable.eventIndex, fromIndex))
     }
 
+    const startLoadTime = Date.now()
     const results = await this.db
       .select()
       .from(executionEventsTable)
       .where(and(...conditions))
       .orderBy(executionEventsTable.eventIndex)
       .limit(limit)
+
+    const endLoadTime = Date.now()
+    const loadDuration = endLoadTime - startLoadTime
+    console.warn(`Loading ${results.length} events for execution ${executionId} took ${loadDuration}ms`)
 
     return results.map(row => ({
       index: row.eventIndex,

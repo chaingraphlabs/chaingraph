@@ -10,7 +10,7 @@ import type {
   Flow,
   INode,
   IPort,
-  SerializedEdgeType,
+  SerializedEdge,
 } from '@badaitech/chaingraph-types'
 import {
   isObjectPortConfig,
@@ -185,7 +185,7 @@ export const pasteNodes = flowContextProcedure
       const addedNodes = flow.addNodes(createdNodes)
 
       // Step 2: Recreate edges using new IDs
-      const createdEdges: SerializedEdgeType[] = []
+      const createdEdges: SerializedEdge[] = []
 
       for (const edgeData of clipboardData.edges) {
         try {

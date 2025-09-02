@@ -6,8 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow } from '@badaitech/chaingraph-types'
-import type { JSONValue } from '../../../../chaingraph-types/src/utils/json'
+import type { Flow, JSONValue } from '@badaitech/chaingraph-types'
 import type { DBType } from '../../context'
 import { asc, desc, eq, sql } from 'drizzle-orm'
 

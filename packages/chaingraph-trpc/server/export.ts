@@ -23,6 +23,7 @@ export { init } from './init'
 export * from './mcp'
 export * from './procedures'
 export * from './stores'
+export * from './trpc'
 export {
   FORK_ALLOW_RULE,
   FORK_DENY_RULE,
