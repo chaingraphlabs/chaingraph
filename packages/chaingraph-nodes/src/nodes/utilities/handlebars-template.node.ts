@@ -11,6 +11,9 @@ import type {
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
 import {
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+import {
   ExecutionEventEnum,
 } from '@badaitech/chaingraph-types'
 import {
@@ -119,15 +122,17 @@ Profile details: {{{json user.profile}}}`
       try {
         Handlebars.logger.log = (level: number, obj: string) => {
           console.log(`[Handlebars debug] ${obj}`)
-          context.sendEvent({
-            index: 0,
-            type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-            timestamp: new Date(),
-            data: {
-              node: this.clone(),
-              log: `[Handlebars] [${level}] ${obj}`,
-            },
-          })
+          context.sendEvent(
+            new ExecutionEventImpl(
+              0,
+              ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+              new Date(),
+              {
+                nodeId: this.id || 'unknown',
+                log: `[Handlebars] [${level}] ${obj}`,
+              },
+            ),
+          )
         }
         compiledTemplate = Handlebars.compile(this.template, {
           noEscape: true,

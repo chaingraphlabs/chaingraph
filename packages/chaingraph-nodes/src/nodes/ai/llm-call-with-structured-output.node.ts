@@ -21,6 +21,9 @@ import type {
 } from '@badaitech/chaingraph-types'
 import type { APIkey } from './llm-call.node'
 import {
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+import {
   BaseNode,
   ExecutionEventEnum,
   findPort,
@@ -297,15 +300,17 @@ export class LLMCallWithStructuredOutputNode extends BaseNode {
    * Send a debug log event to the execution context
    */
   private async debugLog(context: ExecutionContext, message: string): Promise<void> {
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: message,
-      },
-    })
+    await context.sendEvent(
+      new ExecutionEventImpl(
+        0,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        new Date(),
+        {
+          nodeId: this.id || 'unknown',
+          log: message,
+        },
+      ),
+    )
   }
 
   /**

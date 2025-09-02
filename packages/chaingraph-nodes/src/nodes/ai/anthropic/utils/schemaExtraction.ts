@@ -134,6 +134,10 @@ export function isNeedsToSkipPort(
 ): boolean {
   const config = port.getConfig()
 
+  if (port.getConfig().type === 'stream' || port.getConfig().type === 'secret') {
+    return true
+  }
+
   // Skip ports that are connected to other ports
   if (config.connections && (config.connections?.length || 0) > 0) {
     console.log(`[isNeedsToSkipPort] Skipping port ${port.id} (${node.id}) because it has connections.`)

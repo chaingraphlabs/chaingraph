@@ -13,6 +13,9 @@ import type {
 } from '@badaitech/chaingraph-types'
 import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
+import {
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
@@ -339,9 +342,6 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
     // Reset outputs
     this.resetOutputs()
 
-    // Log search parameters
-    await this.logSearchStart(context)
-
     // Perform the search
     const results = await this.performSearch(context)
 
@@ -431,28 +431,18 @@ class ArchAIKnowledgeDatabaseQueryNode extends BaseNode {
     this.statistics = new SearchStatistics()
   }
 
-  private async logSearchStart(context: ExecutionContext): Promise<void> {
-    await context.sendEvent({
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      data: {
-        node: this.clone(),
-        log: `KDB Search started: Query="${this.searchConfig.query}" | Collections=${this.searchConfig.collectionIds.length} | Threshold=${this.searchConfig.threshold}`,
-      },
-      index: 0,
-      timestamp: new Date(),
-    })
-  }
-
   private async logSearchComplete(context: ExecutionContext): Promise<void> {
-    await context.sendEvent({
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      data: {
-        node: this.clone(),
-        log: `KDB Search completed: Documents=${this.statistics.totalDocuments} | Q&A Pairs=${this.statistics.totalQAPairs} | Avg Similarity=${this.statistics.averageSimilarity.toFixed(3)} | Duration=${this.statistics.searchDuration}ms`,
-      },
-      index: 0,
-      timestamp: new Date(),
-    })
+    await context.sendEvent(
+      new ExecutionEventImpl(
+        0,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        new Date(),
+        {
+          nodeId: this.id || 'unknown',
+          log: `KDB Search completed: Documents=${this.statistics.totalDocuments} | Q&A Pairs=${this.statistics.totalQAPairs} | Avg Similarity=${this.statistics.averageSimilarity.toFixed(3)} | Duration=${this.statistics.searchDuration}ms`,
+        },
+      ),
+    )
   }
 
   private async performSearch(context: ExecutionContext): Promise<GraphQL.KdbSearchQaWithDocumentsQuery['kdbSearchQAWithDocuments']> {
