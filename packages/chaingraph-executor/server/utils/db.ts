@@ -16,9 +16,10 @@ const logger = createLogger('database')
 const { Pool } = pg
 
 let pool: pg.Pool | null = null
-let db: ReturnType<typeof drizzle> | null = null
+export type DBType = ReturnType<typeof drizzle>
+let db: DBType | null = null
 
-export async function getDatabase() {
+export async function getDatabase(): Promise<DBType> {
   if (!db) {
     pool = new Pool({
       connectionString: config.database.url,

@@ -25,29 +25,29 @@ const topicConfigs: TopicConfig[] = [
     topic: KafkaTopics.COMMANDS,
     numPartitions: 10,
     replicationFactor: 1, // Changed from 3 to 1 for local development
-    // configEntries: [
-    //   { name: 'retention.ms', value: '604800000' }, // 7 days
-    //   { name: 'cleanup.policy', value: 'delete' },
-    // ],
+    configEntries: [
+      { name: 'retention.ms', value: '604800000' }, // 7 days
+      { name: 'cleanup.policy', value: 'delete' },
+    ],
   },
   {
     topic: KafkaTopics.EVENTS,
     numPartitions: 50,
     replicationFactor: 1, // Changed from 3 to 1 for local development
-    // configEntries: [
-    //   { name: 'retention.ms', value: '2592000000' }, // 30 days
-    //   { name: 'compression.type', value: 'lz4' },
-    // { name: 'cleanup.policy', value: 'delete' },
-    // ],
+    configEntries: [
+      { name: 'retention.ms', value: '2592000000' }, // 30 days
+      { name: 'compression.type', value: 'lz4' },
+      { name: 'cleanup.policy', value: 'delete' },
+    ],
   },
   {
     topic: KafkaTopics.TASKS,
     numPartitions: 20,
     replicationFactor: 1, // Changed from 3 to 1 for local development
-    // configEntries: [
-    //   { name: 'retention.ms', value: '259200000' }, // 3 days
-    //   { name: 'cleanup.policy', value: 'delete' },
-    // ],
+    configEntries: [
+      { name: 'retention.ms', value: '259200000' }, // 3 days
+      { name: 'cleanup.policy', value: 'delete' },
+    ],
   },
 ]
 

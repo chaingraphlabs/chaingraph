@@ -7,38 +7,43 @@
  */
 
 import type {
+  EmittedEventContext,
   ExecutionEventImpl,
   ExecutionOptions,
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
 
 /**
- * Event data context for child executions
- */
-export interface EmittedEventContext {
-  eventName: string
-  payload: any
-  emittedBy: string
-}
-
-/**
  * Command to control execution lifecycle
  */
 export interface ExecutionCommand {
   id: string // Command ID for idempotency
-  executionId?: string // Target execution ID
-  command: 'CREATE' | 'START' | 'STOP' | 'PAUSE' | 'RESUME'
+  executionId?: string // Target execution ID (required for control commands)
+  workerId?: string // Target worker ID (optional, for routing)
+  command: 'CREATE' | 'START' | 'STOP' | 'PAUSE' | 'RESUME' | 'HEARTBEAT'
   payload: {
-    flowId: string // Just the ID, not the flow!
+    flowId?: string // Required for CREATE, optional for others
     options?: ExecutionOptions
     integrations?: IntegrationContext
     parentExecutionId?: string
     eventData?: EmittedEventContext
     externalEvents?: Array<{ type: string, data: any }>
     executionDepth?: number
+    reason?: string // Optional reason for stop/pause
   }
   timestamp: number
   requestId: string
+  issuedBy: string // Who issued the command (user, system, worker)
+}
+
+/**
+ * Retry history entry for debugging
+ */
+export interface RetryHistoryEntry {
+  attempt: number
+  error: string
+  timestamp: number
+  workerId?: string
 }
 
 /**
@@ -56,6 +61,10 @@ export interface ExecutionTask {
   options: ExecutionOptions
   priority: number
   timestamp: number
+  retryCount?: number
+  maxRetries?: number
+  retryDelayMs?: number
+  retryHistory?: RetryHistoryEntry[]
 }
 
 /**
@@ -64,7 +73,6 @@ export interface ExecutionTask {
 export interface ExecutionEventMessage {
   executionId: string
   event: ExecutionEventImpl // Existing ExecutionEvent type
-  // event: any // TODO: fix
   timestamp: number
   workerId: string // Which worker produced this
 }

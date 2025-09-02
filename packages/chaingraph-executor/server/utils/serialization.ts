@@ -17,7 +17,7 @@ setMaxListeners(100000)
 process.setMaxListeners(0)
 // setupPolyfills()
 initializeNodes((nodeRegistry) => {
-  NodeRegistry.setInstance(nodeRegistry as any)
+  NodeRegistry.setInstance(nodeRegistry)
 })
 registerSuperjsonTransformers(SuperJSON, NodeRegistry.getInstance())
 

@@ -6,22 +6,23 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { PostgresExecutionStore } from '@badaitech/chaingraph-trpc/server'
+import type { IExecutionStore } from './interfaces/IExecutionStore'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { getDatabase } from '../utils/db'
 import { createLogger } from '../utils/logger'
+import { PostgresExecutionStore } from './postgres/postgres-execution-store'
 
 const logger = createLogger('execution-store')
 
-let executionStore: PostgresExecutionStore | null = null
+let executionStore: IExecutionStore | null = null
 
 export async function getExecutionStore(
   nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
-): Promise<PostgresExecutionStore> {
+): Promise<IExecutionStore> {
   if (!executionStore) {
     const db = await getDatabase()
     executionStore = new PostgresExecutionStore(
-      db as any,
+      db,
       nodeRegistry,
     )
     logger.info('Execution store initialized')
