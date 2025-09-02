@@ -6,7 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionEventData,
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
 import type {
   CreateExecutionOptions,
   EdgeExecutionState,
@@ -15,7 +18,10 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
+import {
+  ExecutionEventEnum,
+  NodeStatus,
+} from '@badaitech/chaingraph-types'
 import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { executionDomain } from '../domains'
@@ -345,12 +351,20 @@ export const $executionNodes = executionDomain
       case ExecutionEventEnum.NODE_SKIPPED:
       {
         const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
+        const nodeState = state[eventData.nodeId]
+        if (!nodeState || !nodeState.node) {
+          // skip if node state doesn't exist
+          break
+        }
+
+        nodeState.node.setStatus(NodeStatus.Skipped, false)
+
         finalState = {
           ...state,
-          [eventData.node.id]: {
+          [eventData.nodeId]: {
             status: 'skipped',
             endTime: event.timestamp,
-            node: eventData.node,
+            node: nodeState.node,
           },
         }
         stateChanged = true
@@ -380,9 +394,9 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
         const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
         finalState = {
           ...state,
-          [eventData.edge.id]: {
+          [eventData.serializedEdge.id]: {
             status: 'transferring',
-            edge: eventData.edge,
+            serializedEdge: eventData.serializedEdge,
           },
         }
         stateChanged = true
@@ -394,9 +408,9 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
         const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
         finalState = {
           ...state,
-          [eventData.edge.id]: {
+          [eventData.serializedEdge.id]: {
             status: 'completed',
-            edge: eventData.edge,
+            serializedEdge: eventData.serializedEdge,
           },
         }
         stateChanged = true
@@ -408,9 +422,9 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
         const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
         finalState = {
           ...state,
-          [eventData.edge.id]: {
+          [eventData.serializedEdge.id]: {
             status: 'failed',
-            edge: eventData.edge,
+            serializedEdge: eventData.serializedEdge,
           },
         }
         stateChanged = true

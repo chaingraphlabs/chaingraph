@@ -24,8 +24,6 @@ function serializeEvent(event: ExecutionEventImpl) {
     case ExecutionEventEnum.NODE_FAILED:
     case ExecutionEventEnum.NODE_COMPLETED:
     case ExecutionEventEnum.NODE_BACKGROUNDED:
-    case ExecutionEventEnum.NODE_SKIPPED:
-    case ExecutionEventEnum.NODE_STATUS_CHANGED:
     case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
     {
       const data = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
@@ -97,14 +95,16 @@ function serializeEvent(event: ExecutionEventImpl) {
       )
     }
 
+    case ExecutionEventEnum.NODE_SKIPPED:
+    case ExecutionEventEnum.NODE_STATUS_CHANGED:
     case ExecutionEventEnum.NODE_DEBUG_LOG_STRING:
     {
       const data = event.data as ExecutionEventData[ExecutionEventEnum.NODE_DEBUG_LOG_STRING]
-      const node = data.node
+      const node = data.nodeId
 
       return (
         <div className="p-2">
-          <div className="text-sm font-medium">{node.metadata.title ?? node.metadata.id}</div>
+          <div className="text-sm font-medium">{node}</div>
           <pre className="text-sm font-mono bg-muted/10 p-2 rounded border overflow-auto max-h-[350px] whitespace-pre-wrap break-all">
             {data.log}
           </pre>
@@ -159,15 +159,7 @@ function serializeEvent(event: ExecutionEventImpl) {
     case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
     {
       const data = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
-      const edge = data.edge
-
-      const sourceNodeName = edge.sourceNode.metadata.title ?? edge.sourceNode.metadata.id
-      const targetNodeName = edge.targetNode.metadata.title ?? edge.targetNode.metadata.id
-      const sourcePortName = edge.sourcePort.getConfig().title ?? edge.sourcePort.getConfig().key
-      const targetPortName = edge.targetPort.getConfig().title ?? edge.targetPort.getConfig().key
-
-      const value = edge.sourcePort.getValue()
-      const portConfig = edge.sourcePort.getConfig()
+      const edge = data.serializedEdge
 
       return (
         <div className="p-2">
@@ -177,13 +169,13 @@ function serializeEvent(event: ExecutionEventImpl) {
             <div className="flex items-center justify-between gap-2 bg-muted/20 p-3 rounded-md border">
               {/* Source node and port */}
               <div className="flex-1 bg-muted/30 p-2 rounded-md border">
-                <div className="text-sm font-medium">{sourceNodeName}</div>
+                <div className="text-sm font-medium">{edge.sourceNodeId}</div>
                 <div className="flex items-center mt-1 gap-1">
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: edge.sourcePort.getConfig()?.ui?.bgColor ?? '#d3d3d3' }}
+                    // style={{ backgroundColor: edge.sourcePort.getConfig()?.ui?.bgColor ?? '#d3d3d3' }}
                   />
-                  <span className="text-xs">{sourcePortName}</span>
+                  <span className="text-xs">{edge.sourcePortId}</span>
                 </div>
               </div>
 
@@ -196,36 +188,15 @@ function serializeEvent(event: ExecutionEventImpl) {
 
               {/* Target node and port */}
               <div className="flex-1 bg-muted/30 p-2 rounded-md border">
-                <div className="text-sm font-medium">{targetNodeName}</div>
+                <div className="text-sm font-medium">{edge.targetNodeId}</div>
                 <div className="flex items-center mt-1 gap-1">
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: edge.targetPort.getConfig()?.ui?.bgColor ?? '#d3d3d3' }}
+                    // style={{ backgroundColor: edge.targetPort.getConfig()?.ui?.bgColor ?? '#d3d3d3' }}
                   />
-                  <span className="text-xs">{targetPortName}</span>
+                  <span className="text-xs">{edge.targetPortId}</span>
                 </div>
               </div>
-            </div>
-
-            {/* Transferred value */}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant="secondary">Transferred Value</Badge>
-                <Badge variant="outline" className="text-xs">{portConfig.type}</Badge>
-              </div>
-              <ScrollArea className="flex-grow overflow-scroll max-h-[200px]">
-                <div className="bg-muted/10 p-3 rounded-md border">
-                  {portConfig.type === 'string' && portConfig?.ui?.isPassword === true
-                    ? (
-                        <div className="text-muted-foreground italic">**** hidden ****</div>
-                      )
-                    : (
-                        <pre className="text-sm font-mono overflow-auto whitespace-pre-wrap break-all">
-                          {formatValue(value)}
-                        </pre>
-                      )}
-                </div>
-              </ScrollArea>
             </div>
           </div>
         </div>

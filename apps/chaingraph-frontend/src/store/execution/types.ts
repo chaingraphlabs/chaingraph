@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge, INode } from '@badaitech/chaingraph-types'
+import type { INode, SerializedEdge } from '@badaitech/chaingraph-types'
 
 export enum ExecutionStatus {
   IDLE = 'IDLE',
@@ -100,5 +100,6 @@ export interface NodeExecutionState {
 
 export interface EdgeExecutionState {
   status: 'idle' | 'transferring' | 'completed' | 'failed'
-  edge: IEdge
+  // edge: IEdge
+  serializedEdge: SerializedEdge
 }

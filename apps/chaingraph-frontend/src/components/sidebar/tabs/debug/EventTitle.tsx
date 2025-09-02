@@ -22,7 +22,7 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
         return (
           <span className="text-sm font-medium">
             Subscribed to flow "
-            <span className="font-semibold">{(event.data as any).flow.metadata.name}</span>
+            <span className="font-semibold">{(event.data as any).flowMetadata.name}</span>
             "
           </span>
         )
@@ -31,7 +31,7 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
         return (
           <span className="text-sm font-medium">
             Flow started "
-            <span className="font-semibold">{(event.data as any).flow.metadata.name}</span>
+            <span className="font-semibold">{(event.data as any).flowMetadata.name}</span>
             "
           </span>
         )
@@ -130,7 +130,7 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
           <div className="text-sm space-y-1">
             <div>
               Node "
-              <span className="font-medium">{(event.data as any).node.metadata.title}</span>
+              <span className="font-medium">{(event.data as any).nodeId}</span>
               " skipped
             </div>
             <Badge variant="secondary" className="text-xs font-normal">
@@ -142,7 +142,7 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
       case ExecutionEventEnum.NODE_STATUS_CHANGED:
         return (
           <span className="text-sm">
-            <span className="font-medium">{(event.data as any).node.metadata.title}</span>
+            <span className="font-medium">{(event.data as any).nodeId}</span>
             <span className="text-muted-foreground"> status changed </span>
             <Badge variant="outline" className="text-xs font-normal mx-1">
               {(event.data as any).oldStatus}
@@ -180,27 +180,27 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
       }
 
       case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED: {
-        const edge = (event.data as any).edge
+        const edge = (event.data as any).serializedEdge
         return (
           <div className="text-sm space-y-1">
             <div className="text-muted-foreground text-xs">Transfer completed</div>
             <div className="flex items-center gap-1">
-              <span className="font-medium">{edge.sourceNode.metadata.title}</span>
+              <span className="font-medium">{edge.sourceNodeId}</span>
               <ArrowRightCircle className="w-3 h-3 mx-1" />
-              <span className="font-medium">{edge.targetNode.metadata.title}</span>
+              <span className="font-medium">{edge.targetNodeId}</span>
             </div>
           </div>
         )
       }
 
       case ExecutionEventEnum.EDGE_TRANSFER_FAILED: {
-        const edge = (event.data as any).edge
+        const edge = (event.data as any).serializedEdge
         return (
           <div className="text-sm space-y-1">
             <div className="flex items-center gap-1">
-              <span className="font-medium">{edge.sourceNode.metadata.title}</span>
+              <span className="font-medium">{edge.sourceNodeId}</span>
               <ArrowRightCircle className="w-3 h-3 mx-1" />
-              <span className="font-medium">{edge.targetNode.metadata.title}</span>
+              <span className="font-medium">{edge.targetNodeId}</span>
             </div>
             <Badge variant="destructive" className="text-xs font-normal flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
@@ -215,7 +215,7 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
         return (
           <span className="text-sm">
             Breakpoint hit at node "
-            <span className="font-medium">{(event.data as any).node.metadata.title}</span>
+            <span className="font-medium">{(event.data as any).node.id}</span>
             "
           </span>
         )
@@ -226,7 +226,7 @@ export const EventTitle = memo(({ event }: { event: ExecutionEventImpl }) => {
             <div className="flex items-center gap-1 flex-wrap">
               <span className="font-medium truncate max-w-full">
                 Log from "
-                {(event.data as any).node.metadata.title}
+                {(event.data as any).nodeId}
                 "
               </span>
             </div>

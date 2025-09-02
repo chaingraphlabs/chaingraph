@@ -8,7 +8,7 @@
 
 import type { EdgeData } from '@/store/edges/types'
 import type { PasteNodesEvent } from '@/store/nodes'
-import type { INode, SerializedEdgeType, SerializedNodeType } from '@badaitech/chaingraph-types'
+import type { INode, SerializedEdge, SerializedNodeType } from '@badaitech/chaingraph-types'
 import { useNodeSelection } from '@/components/flow/hooks/useNodeSelection'
 import { $edges } from '@/store/edges/stores'
 import { $activeFlowMetadata } from '@/store/flow/stores'
@@ -33,7 +33,7 @@ export interface ExportedFlowData {
   }
   virtualOrigin: { x: number, y: number }
   nodes: SerializedNodeType[]
-  edges: SerializedEdgeType[]
+  edges: SerializedEdge[]
   nodeCount: number
   edgeCount: number
 }

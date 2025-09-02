@@ -10,7 +10,7 @@ import type { PasteNodesEvent } from '@/store/nodes'
 
 import type {
   INode,
-  SerializedEdgeType,
+  SerializedEdge,
   SerializedNodeType,
 } from '@badaitech/chaingraph-types'
 import type { EdgeData } from '../../../store/edges/types'
@@ -223,7 +223,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         clipboardData: {
           nodes: clipboard.nodes.map(node => node.serialize() as SerializedNodeType), // Serialize nodes
           edges: clipboard.edges.map((e) => {
-            const edgeSerialized: SerializedEdgeType = {
+            const edgeSerialized: SerializedEdge = {
               id: e.edgeId,
               metadata: e.metadata,
               status: EdgeStatus.Active,

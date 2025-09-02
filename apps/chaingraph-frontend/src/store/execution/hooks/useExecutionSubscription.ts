@@ -162,13 +162,16 @@ export function useExecutionSubscription() {
         setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.CONNECTING)
       },
       onData: async (trackedData) => {
-        if (trackedData.type === ExecutionEventEnum.FLOW_SUBSCRIBED) {
-          setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
-        }
-        if (trackedData.type !== ExecutionEventEnum.NODE_STATUS_CHANGED) {
-          newExecutionEvent(trackedData)
-        }
-        // await handleEvent(trackedData)
+        trackedData.forEach((data) => {
+          // Handle incoming events
+          if (data.type === ExecutionEventEnum.FLOW_SUBSCRIBED) {
+            setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
+          }
+          if (data.type !== ExecutionEventEnum.NODE_STATUS_CHANGED) {
+            newExecutionEvent(data)
+          }
+          // await handleEvent(trackedData)
+        })
       },
       onError: (error) => {
         // debugger
