@@ -8,6 +8,7 @@
 
 import type { IPort } from '../port'
 import SuperJSON from 'superjson'
+import { NodeRegistry } from '../decorator'
 import { registerEdgeTransformers } from '../edge'
 import { BasePort, PortFactory } from '../port'
 import { ExecutionEventImpl } from './execution-events'
@@ -18,6 +19,7 @@ import { Flow } from './flow'
  */
 export function registerFlowTransformers(
   superjsonCustom: typeof SuperJSON = SuperJSON,
+  nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
 ) {
   superjsonCustom.registerCustom<IPort, any>(
     {
@@ -47,7 +49,7 @@ export function registerFlowTransformers(
       deserialize: (v) => {
         try {
           // Deserialize flow from JSON string
-          return Flow.deserialize(v) as Flow
+          return Flow.deserialize(v, nodeRegistry) as Flow
         } catch (e) {
           console.error('Failed to deserialize flow', e)
           throw e
@@ -91,4 +93,16 @@ export function registerFlowTransformers(
   )
 
   registerEdgeTransformers(superjsonCustom)
+}
+
+export function getSuperJSONInstance(
+  superjsonCustom?: typeof SuperJSON,
+): typeof SuperJSON {
+  return superjsonCustom ?? SuperJSON
+}
+
+export function getNodeRegistryInstance(
+  nodeRegistry?: NodeRegistry,
+): NodeRegistry {
+  return nodeRegistry ?? NodeRegistry.getInstance()
 }

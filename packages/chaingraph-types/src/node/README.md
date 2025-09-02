@@ -267,7 +267,7 @@ Each phase is handled by specific components working together through the facade
 
 ```typescript
 import { BaseNodeCompositional, ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types';
-import { Port, Node } from '@badaitech/chaingraph-types/decorator';
+import { Port, Node } from '@badaitech/chaingraph-types';
 
 @Node({
   title: 'Custom Node',

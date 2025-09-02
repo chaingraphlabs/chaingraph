@@ -940,7 +940,7 @@ export class Flow implements IFlow {
     }
   }
 
-  public deserialize(data: JSONValue): IFlow {
+  public deserialize(data: JSONValue, nodeRegistry?: NodeRegistry): IFlow {
     const flowData = data as any
 
     if (!flowData.metadata) {
@@ -953,9 +953,11 @@ export class Flow implements IFlow {
       updatedAt: new Date(flowData.metadata.updatedAt ?? new Date()),
     })
 
+    const nodeRegistryInstance = nodeRegistry || NodeRegistry.getInstance()
+
     for (const nodeData of flowData.nodes) {
       try {
-        const node = NodeRegistry.getInstance().createNode(
+        const node = nodeRegistryInstance.createNode(
           nodeData.metadata.type,
           nodeData.id,
           nodeData.metadata,
@@ -1008,9 +1010,9 @@ export class Flow implements IFlow {
     return flow as IFlow
   }
 
-  static deserialize(data: JSONValue): IFlow {
+  static deserialize(data: JSONValue, nodeRegistry?: NodeRegistry): IFlow {
     const flow = new Flow()
-    return flow.deserialize(data)
+    return flow.deserialize(data, nodeRegistry)
   }
 
   public setIsDisabledPropagationEvents(value: boolean) {

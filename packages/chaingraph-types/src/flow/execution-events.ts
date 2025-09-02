@@ -6,9 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge } from '../edge'
+import type { SerializedEdge } from '../edge'
+import type { FlowMetadata } from '../flow/types'
 import type { INode, NodeStatus } from '../node'
-import type { IFlow } from './interface'
+import type { JSONValue } from '../utils/json'
+import SuperJSON from 'superjson'
 
 export enum ExecutionEventEnum {
   // Flow events
@@ -48,31 +50,31 @@ export enum ExecutionEventEnum {
 
 export interface ExecutionEventData {
   [ExecutionEventEnum.FLOW_SUBSCRIBED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
   }
   [ExecutionEventEnum.FLOW_STARTED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
   }
   [ExecutionEventEnum.FLOW_COMPLETED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
     executionTime: number
   }
   [ExecutionEventEnum.FLOW_FAILED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
     error: Error
     executionTime: number
   }
   [ExecutionEventEnum.FLOW_CANCELLED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
     reason: string
     executionTime: number
   }
   [ExecutionEventEnum.FLOW_PAUSED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
     reason: string
   }
   [ExecutionEventEnum.FLOW_RESUMED]: {
-    flow: IFlow
+    flowMetadata: FlowMetadata
   }
   [ExecutionEventEnum.NODE_STARTED]: {
     node: INode
@@ -90,27 +92,27 @@ export interface ExecutionEventData {
     executionTime: number
   }
   [ExecutionEventEnum.NODE_SKIPPED]: {
-    node: INode
+    nodeId: string
     reason: string
   }
   [ExecutionEventEnum.NODE_STATUS_CHANGED]: {
-    node: INode
+    nodeId: string
     oldStatus: NodeStatus
     newStatus: NodeStatus
   }
   [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: {
-    node: INode
+    nodeId: string
     log: string
   }
   [ExecutionEventEnum.EDGE_TRANSFER_STARTED]: {
-    edge: IEdge
+    serializedEdge: SerializedEdge
   }
   [ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]: {
-    edge: IEdge
+    serializedEdge: SerializedEdge
     transferTime: number
   }
   [ExecutionEventEnum.EDGE_TRANSFER_FAILED]: {
-    edge: IEdge
+    serializedEdge: SerializedEdge
     error: Error
   }
   [ExecutionEventEnum.DEBUG_BREAKPOINT_HIT]: {
@@ -120,7 +122,7 @@ export interface ExecutionEventData {
     parentExecutionId: string
     childExecutionId: string
     eventName: string
-    eventData: any
+    eventData: any // TODO: specific type?
   }
   [ExecutionEventEnum.CHILD_EXECUTION_COMPLETED]: {
     parentExecutionId: string
@@ -143,6 +145,9 @@ export interface ExecutionEvent<T extends ExecutionEventEnum = ExecutionEventEnu
   type: T
   timestamp: Date
   data: ExecutionEventData[T]
+
+  serialize: () => JSONValue
+  deserialize: (v: JSONValue) => ExecutionEventImpl<T>
 }
 
 export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnum> implements ExecutionEvent<T> {
@@ -152,6 +157,40 @@ export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnu
     public timestamp: Date,
     public data: ExecutionEventData[T],
   ) { }
+
+  serialize(): JSONValue {
+    return {
+      index: this.index,
+      type: this.type,
+      timestamp: this.timestamp.toISOString(),
+      data: SuperJSON.serialize(this.data),
+    }
+  }
+
+  deserialize(v: JSONValue): ExecutionEventImpl<T> {
+    if (typeof v !== 'object' || v === null) {
+      throw new Error('Invalid serialized ExecutionEvent')
+    }
+    const obj = v as { index: number, type: T, timestamp: string, data: any }
+    this.index = obj.index
+    this.type = obj.type
+    this.timestamp = new Date(obj.timestamp)
+    this.data = SuperJSON.deserialize(obj.data) as ExecutionEventData[T]
+    return this
+  }
+
+  static deserializeStatic<T extends ExecutionEventEnum = ExecutionEventEnum>(v: JSONValue): ExecutionEventImpl<T> {
+    if (typeof v !== 'object' || v === null) {
+      throw new Error('Invalid serialized ExecutionEvent')
+    }
+    const obj = v as { index: number, type: T, timestamp: string, data: any }
+    return new ExecutionEventImpl<T>(
+      obj.index,
+      obj.type,
+      new Date(obj.timestamp),
+      SuperJSON.deserialize(obj.data) as ExecutionEventData[T],
+    )
+  }
 }
 
 export type AllExecutionEvents = {

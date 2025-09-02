@@ -86,7 +86,9 @@ export class ExecutionEngine {
     this.transferService = new EdgeTransferService(this.flow)
   }
 
-  async execute(): Promise<void> {
+  async execute(
+    onComplete?: (context: ExecutionContext, eventQueue: EventQueue<ExecutionEventImpl>) => Promise<void>,
+  ): Promise<void> {
     // Handle context NODE_DEBUG_LOG_STRING events and send it to execution events queue
     const contextEventsQueueCancel
       = this.context.getEventsQueue().subscribe(createExecutionEventHandler({
@@ -101,7 +103,7 @@ export class ExecutionEngine {
     try {
       // Emit flow started event
       await this.eventQueue.publish(
-        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: await this.flow.clone() }),
+        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flowMetadata: { ...this.flow.metadata } }),
       )
 
       // Initialize dependency tracking
@@ -124,7 +126,7 @@ export class ExecutionEngine {
 
       // Emit flow completed event
       await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
-        flow: await this.flow.clone(),
+        flowMetadata: this.flow.metadata,
         executionTime: Date.now() - startTime,
       }))
     } catch (error) {
@@ -144,14 +146,14 @@ export class ExecutionEngine {
       if (this.context.abortSignal.aborted && (!isAbortedDueToError || isAbortedDueToDebugger)) {
         // Emit flow cancelled event
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
-          flow: await this.flow.clone(),
+          flowMetadata: this.flow.metadata,
           reason: this.context.abortSignal.reason ?? ExecutionCancelledReason,
           executionTime: Date.now() - startTime,
         }))
       } else {
         // Emit flow failed event
         await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
-          flow: await this.flow.clone(),
+          flowMetadata: this.flow.metadata,
           error: error as Error,
           executionTime: Date.now() - startTime,
         }))
@@ -161,6 +163,10 @@ export class ExecutionEngine {
     } finally {
       contextEventsQueueCancel()
       await this.eventQueue.close()
+
+      if (onComplete) {
+        await onComplete(this.context, this.eventQueue)
+      }
     }
   }
 
@@ -271,7 +277,7 @@ export class ExecutionEngine {
       const node = this.flow.nodes.get(nodeId)
       if (node) {
         const promise = this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-          node: node.clone(),
+          nodeId: node.id,
           oldStatus: NodeStatus.Idle,
           newStatus: NodeStatus.Initialized,
         }))
@@ -461,7 +467,7 @@ export class ExecutionEngine {
 
     const onStatusChange = (event: NodeStatusChangeEvent) => {
       return this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-        node: node.clone(),
+        nodeId: node.id,
         oldStatus: event.oldStatus,
         newStatus: event.newStatus,
       }))
@@ -478,7 +484,7 @@ export class ExecutionEngine {
 
         // Skip if any target port cannot be resolved
         if (unresolvedPorts.length > 0) {
-          await this.setNodeSkipped(node, `unresolved ports: ${unresolvedPorts.join(', ')}`)
+          await this.setNodeSkipped(node, `there are unresolved input ports`)
           return
         }
 
@@ -517,7 +523,15 @@ export class ExecutionEngine {
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
               await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
-                edge: updatedEdge.clone(),
+                serializedEdge: {
+                  id: updatedEdge.id,
+                  metadata: { ...updatedEdge.metadata },
+                  status: updatedEdge.status,
+                  sourceNodeId: updatedEdge.sourceNode.id,
+                  sourcePortId: updatedEdge.sourcePort.id,
+                  targetNodeId: updatedEdge.targetNode.id,
+                  targetPortId: updatedEdge.targetPort.id,
+                },
                 transferTime: Date.now() - transferStartTime,
               }))
             }
@@ -525,7 +539,15 @@ export class ExecutionEngine {
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
               await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
-                edge: edge.clone(),
+                serializedEdge: {
+                  id: edge.id,
+                  metadata: { ...edge.metadata },
+                  status: edge.status,
+                  sourceNodeId: edge.sourceNode.id,
+                  sourcePortId: edge.sourcePort.id,
+                  targetNodeId: edge.targetNode.id,
+                  targetPortId: edge.targetPort.id,
+                },
                 error: error as Error,
               }))
             }
@@ -693,7 +715,7 @@ export class ExecutionEngine {
   private async setNodeSkipped(node: INode, reason: string) {
     node.setStatus(NodeStatus.Skipped, true)
     await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
-      node: node.clone(),
+      nodeId: node.id,
       reason,
     }))
 
@@ -749,7 +771,7 @@ export class ExecutionEngine {
     this.onEventCallback = callback
   }
 
-  protected createEvent<T extends ExecutionEventEnum>(
+  public createEvent<T extends ExecutionEventEnum>(
     type: T,
     data: ExecutionEventData[T],
   ): ExecutionEventImpl<T> {

@@ -124,7 +124,7 @@ describe('executionEventImpl Serialization', () => {
 
     // Create example data for the event
     const data = {
-      flow, // Include the flow in the event data
+      flowMetadata: flow.metadata, // Include the flow in the event data
     }
 
     // Create an ExecutionEventImpl instance

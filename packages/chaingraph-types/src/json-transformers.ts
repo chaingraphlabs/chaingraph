@@ -35,5 +35,5 @@ export function registerSuperjsonTransformers(
   )
 
   registerNodeTransformers(nodeRegistry, superjsonCustom)
-  registerFlowTransformers(superjsonCustom)
+  registerFlowTransformers(superjsonCustom, nodeRegistry)
 }

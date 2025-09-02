@@ -116,7 +116,7 @@ export async function applyPortUpdateHandlers(node: INode, event: PortUpdateEven
  *     schema: { properties: {} },
  *     isSchemaMutable: true,
  *   })
- *   @OnPortUpdate(async (node: INode, port: IPort => {
+ *   @OnPortUpdate(async (node: INode, port: IPort) => {
  *     const targetPort = node.getOutputs().find(p => p.getConfig().key === 'result')
  *     if (targetPort instanceof ObjectPort) {
  *       node.copyObjectSchemaTo(node, port, targetPort)
