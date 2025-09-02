@@ -210,7 +210,7 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
     try {
       // Step 1: Get token balances using alchemy_getTokenBalances
       const balancesParams: any[] = [this.walletAddress]
-      
+
       if (this.contractAddresses.length > 0) {
         balancesParams.push(this.contractAddresses)
       }
@@ -243,8 +243,8 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
       const tokenBalances = balancesData.result.tokenBalances || []
 
       // Step 2: Filter tokens and track which ones need metadata
-      const tokensNeedingMetadata: Array<{ token: any; originalIndex: number }> = []
-      
+      const tokensNeedingMetadata: Array<{ token: any, originalIndex: number }> = []
+
       tokenBalances.forEach((token: any, index: number) => {
         const rawBalance = token.tokenBalance || '0x0'
         // Include token if it has non-zero balance or if we're not filtering
@@ -294,14 +294,14 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
 
       // Step 4: Combine balances with metadata
       const processedTokens: TokenBalanceWithMeta[] = []
-      
+
       tokensNeedingMetadata.forEach((item, index) => {
         const { token } = item
         const rawBalance = token.tokenBalance || '0x0'
-        
+
         const metadata = metadataMap.get(index) || {}
-        const decimals = metadata.decimals != null && typeof metadata.decimals === 'number' 
-          ? metadata.decimals 
+        const decimals = metadata.decimals != null && typeof metadata.decimals === 'number'
+          ? metadata.decimals
           : 18
 
         const tokenBalance = new TokenBalanceWithMeta()
@@ -316,10 +316,10 @@ class AlchemyTokenBalancesWithMeta extends BaseNode {
 
         // Convert hex balance to decimal string
         const balanceValue = rawBalance === '0x0' ? '0' : BigInt(rawBalance).toString()
-        
+
         // Set balance
         tokenBalance.balance = formatAmount(balanceValue, decimals)
-        
+
         processedTokens.push(tokenBalance)
       })
 

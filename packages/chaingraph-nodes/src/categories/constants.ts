@@ -27,6 +27,7 @@ export const NODE_CATEGORIES = {
   OKX_DEX: 'okx-dex',
   BLOCKCHAIN: 'blockchain',
   MCP: 'mcp',
+  CONVERTERS: 'converters',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -419,6 +420,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 3.5, // Between API and DATA
+  },
+
+  [NODE_CATEGORIES.CONVERTERS]: {
+    id: NODE_CATEGORIES.CONVERTERS,
+    label: 'Converters',
+    description: 'Data conversion and formatting nodes',
+    icon: 'ArrowRightLeft',
+    style: {
+      light: {
+        primary: '#E8F5E9', // Soft green
+        secondary: '#F1F8F2',
+        background: '#FFFFFF',
+        text: '#2E7D32', // Deeper green
+      },
+      dark: {
+        primary: '#1B4D1E',
+        secondary: '#0F2911',
+        background: '#1C1C1C',
+        text: '#81C784',
+      },
+    },
+    order: 4.5, // Between FLOW and UTILITIES
   },
 
 }

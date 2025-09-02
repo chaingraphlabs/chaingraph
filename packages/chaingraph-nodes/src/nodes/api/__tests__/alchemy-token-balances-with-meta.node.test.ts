@@ -84,7 +84,7 @@ describe('alchemyTokenBalancesWithMeta - Unit Tests', () => {
 
     // Verify the correct API methods were called
     expect(globalThis.fetch).toHaveBeenCalledTimes(2)
-    
+
     // First call should be alchemy_getTokenBalances
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       1,
@@ -94,7 +94,7 @@ describe('alchemyTokenBalancesWithMeta - Unit Tests', () => {
         body: expect.stringContaining('alchemy_getTokenBalances'),
       }),
     )
-    
+
     // Second call should be batch alchemy_getTokenMetadata
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2,
