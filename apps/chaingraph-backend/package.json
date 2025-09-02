@@ -31,9 +31,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@badaitech/chaingraph-nodes": "workspace:*",
-    "@badaitech/chaingraph-trpc": "workspace:*",
-    "@badaitech/chaingraph-types": "workspace:*",
     "@types/ws": "^8.18.1",
     "bigint-crypto-utils": "^3.3.0",
     "cors": "^2.8.5",
@@ -44,6 +41,9 @@
     "yaml": "^2.8.0"
   },
   "devDependencies": {
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@types/cors": "^2.8.17",
     "@types/node": "^22.14.0",

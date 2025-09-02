@@ -27,6 +27,7 @@
     "dev": "turbo run dev --parallel --no-cache",
     "build:front": "turbo run build --filter=@badaitech/chaingraph-frontend",
     "dev:front": "turbo run dev --filter=@badaitech/chaingraph-frontend",
+    "dev:execution-worker": "turbo run dev --filter=@badaitech/chaingraph-message-bus",
     "build:back": "turbo run build --filter=@badaitech/chaingraph-backend",
     "dev:back": "turbo run dev --filter=@badaitech/chaingraph-backend",
     "test": "vitest run",
@@ -54,7 +55,7 @@
     "ts-node": "^10.9.2",
     "tslog": "^4.9.3",
     "uuid": "^11.1.0",
-    "zod": "^3.25.51"
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.11.0",
