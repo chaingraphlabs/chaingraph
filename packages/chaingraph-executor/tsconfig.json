@@ -7,7 +7,6 @@
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "preserveSymlinks": true,
     "paths": {
       "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
       "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
@@ -24,6 +23,7 @@
     "noEmit": true,
     "outDir": "dist",
     "isolatedModules": true,
+    "preserveSymlinks": true,
     "skipLibCheck": true,
     "noUncheckedSideEffectImports": true
   },
