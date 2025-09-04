@@ -6,13 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionTreeError, ExecutionTreeFilters, ExecutionTreeItem } from './types'
+import type { ExecutionTreeNode } from '@badaitech/chaingraph-executor/types'
+import type { ExecutionTreeError, ExecutionTreeFilters } from './types'
 import { combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { executionDomain } from '../domains'
 import { ExecutionStatus } from '../execution/types'
 import { $activeFlowId } from '../flow/stores'
-import { $trpcClient } from '../trpc/store'
+import { $trpcExecutionClient } from '../trpc/execution-client'
 
 // EVENTS
 export const setExecutionTreeFilters = executionDomain.createEvent<Partial<ExecutionTreeFilters>>()
@@ -48,7 +49,7 @@ export const $executionTreeError = executionDomain
 // EFFECTS
 export const fetchExecutionTreeFx = executionDomain.createEffect(
   async (filters: ExecutionTreeFilters) => {
-    const client = $trpcClient.getState()
+    const client = $trpcExecutionClient.getState()
     const activeFlowId = $activeFlowId.getState()
 
     if (!client) {
@@ -80,7 +81,7 @@ export const fetchExecutionTreeFx = executionDomain.createEffect(
       return []
     }
 
-    const data = await client.execution.getExecutionTree.query({
+    const data = await client.getExecutionsTree.query({
       flowId,
       status: mapStatusToBackend(filters.status) as any,
       limit: filters.limit,
@@ -98,34 +99,34 @@ export const fetchExecutionTreeFx = executionDomain.createEffect(
 
 export const fetchExecutionDetailsFx = executionDomain.createEffect(
   async (executionId: string) => {
-    const client = $trpcClient.getState()
+    const client = $trpcExecutionClient.getState()
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
 
-    const data = await client.execution.getExecutionDetails.query({
+    const data = await client.getState.query({
       executionId,
     })
 
     // Transform dates to proper Date objects
     return {
       ...data,
-      createdAt: new Date(data.createdAt),
-      startedAt: data.startedAt ? new Date(data.startedAt) : undefined,
-      completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
+      createdAt: data.startTime ? new Date(data.startTime) : undefined,
+      startedAt: data.startTime ? new Date(data.startTime) : undefined,
+      completedAt: data.endTime ? new Date(data.endTime) : undefined,
     }
   },
 )
 
 // Store for execution tree data
 export const $executionTree = executionDomain
-  .createStore<ExecutionTreeItem[]>([])
+  .createStore<ExecutionTreeNode[]>([])
   .on(fetchExecutionTreeFx.doneData, (_, data) => data)
   .reset(globalReset)
 
 // Store for selected execution details
 export const $selectedExecutionDetails = executionDomain
-  .createStore<ExecutionTreeItem | null>(null)
+  .createStore<ExecutionTreeNode | null>(null)
   .on(fetchExecutionDetailsFx.doneData, (_, data) => data)
   .on(setSelectedExecutionId, (state, id) => {
     if (!id)

@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { useTRPC } from '@badaitech/chaingraph-trpc/client'
+// import { useTRPC } from '@badaitech/chaingraph-trpc/client'
+import { useTRPC } from '@badaitech/chaingraph-executor/client'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useSubscription } from '@trpc/tanstack-react-query'
 // import { trpcReact } from '@badaitech/chaingraph-trpc/client'
@@ -128,10 +129,10 @@ export function useExecutionSubscription() {
   // Subscribe to execution events using tRPC
   const trpc = useTRPC()
 
-  const opts = trpc.execution.subscribeToEvents.subscriptionOptions(
+  const opts = trpc.subscribeToExecutionEvents.subscriptionOptions(
     {
       executionId: executionId || '',
-      lastEventId: null,
+      fromIndex: 0,
       eventTypes: [
         ExecutionEventEnum.FLOW_SUBSCRIBED,
         ExecutionEventEnum.FLOW_STARTED,

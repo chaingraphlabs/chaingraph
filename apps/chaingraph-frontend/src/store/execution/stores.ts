@@ -25,7 +25,8 @@ import {
 import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { executionDomain } from '../domains'
-import { $trpcClient } from '../trpc/store'
+// import { $trpcClient } from '../trpc/store'
+import { $trpcExecutionClient } from '../trpc/execution-client'
 import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
 
 // EVENTS
@@ -99,7 +100,7 @@ export const $executionExternalIntegrationConfig = executionDomain.createStore<M
 
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
-  const client = $trpcClient.getState()
+  const client = $trpcExecutionClient.getState()
   const state = $executionState.getState()
   const externalIntegrationsStoreMap = $executionExternalIntegrationConfig.getState()
 
@@ -141,7 +142,7 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
     })
   }
 
-  const response = await client.execution.create.mutate({
+  const response = await client.create.mutate({
     flowId,
     options: {
       debug,
@@ -158,53 +159,53 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
 })
 
 export const startExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.start.mutate({ executionId })
+    return client.start.mutate({ executionId })
   },
 })
 
 export const pauseExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.pause.mutate({ executionId })
+    return client.pause.mutate({ executionId })
   },
 })
 
 export const resumeExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.resume.mutate({ executionId })
+    return client.resume.mutate({ executionId })
   },
 })
 
 export const stopExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.stop.mutate({ executionId })
+    return client.stop.mutate({ executionId })
   },
 })
 
 // Debug effects
 export const addBreakpointFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, params: { executionId: string, nodeId: string }) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.debug.addBreakpoint.mutate({
+    return client.debug.addBreakpoint.mutate({
       executionId: params.executionId,
       nodeId: params.nodeId,
     })
@@ -212,12 +213,12 @@ export const addBreakpointFx = attach({
 })
 
 export const removeBreakpointFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, params: { executionId: string, nodeId: string }) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.debug.removeBreakpoint.mutate({
+    return client.debug.removeBreakpoint.mutate({
       executionId: params.executionId,
       nodeId: params.nodeId,
     })
@@ -225,12 +226,12 @@ export const removeBreakpointFx = attach({
 })
 
 export const stepExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcExecutionClient,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.debug.step.mutate({ executionId })
+    return client.debug.step.mutate({ executionId })
   },
 })
 

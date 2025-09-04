@@ -10,6 +10,7 @@ import type { CSSProperties } from 'react'
 import { TooltipProvider } from '@/components/ui'
 import { ShadowWithStyles } from '@/components/ui/shadow'
 import { initializeStores, reset } from '@/store/init'
+import { createTRPCExecutionClientEvent } from '@/store/trpc/execution-client'
 import { $trpcClient, createTRPCClientEvent } from '@/store/trpc/store'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import {
@@ -101,6 +102,12 @@ export function RootProvider({
       )
 
       createTRPCClientEvent({
+        sessionBadAI: sessionTokenRef.current,
+        trpcURL: trpcURL ?? DefaultTRPCURL,
+        superjsonCustom: superjsonCustom ?? SuperJSON,
+      })
+
+      createTRPCExecutionClientEvent({
         sessionBadAI: sessionTokenRef.current,
         trpcURL: trpcURL ?? DefaultTRPCURL,
         superjsonCustom: superjsonCustom ?? SuperJSON,

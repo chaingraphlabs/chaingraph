@@ -8,30 +8,30 @@
 
 import type { ExecutionStatus } from '../execution/types'
 
-export interface ExecutionTreeItem {
-  id: string
-  flowId: string
-  flowName: string
-  status: string // We receive string from backend
-  parentExecutionId?: string
-  executionDepth: number
-  createdAt: Date
-  startedAt?: Date
-  completedAt?: Date
-  error?: {
-    message: string
-    nodeId?: string
-  }
-  triggeredByEvent?: {
-    eventName: string
-    payload?: any
-  }
-  childCount: number
-  // Additional details (only populated for selected execution)
-  integrations?: any
-  options?: any
-  abortSignal?: boolean
-}
+// export interface ExecutionTreeItem {
+//   id: string
+//   flowId: string
+//   flowName: string
+//   status: string // We receive string from backend
+//   parentExecutionId?: string
+//   executionDepth: number
+//   createdAt: Date
+//   startedAt?: Date
+//   completedAt?: Date
+//   error?: {
+//     message: string
+//     nodeId?: string
+//   }
+//   triggeredByEvent?: {
+//     eventName: string
+//     payload?: any
+//   }
+//   childCount: number
+//   // Additional details (only populated for selected execution)
+//   integrations?: any
+//   options?: any
+//   abortSignal?: boolean
+// }
 
 export interface ExecutionTreeFilters {
   flowId?: string

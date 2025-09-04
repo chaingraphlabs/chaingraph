@@ -21,7 +21,12 @@ export { initializeStores } from './init'
 export * from './nodes'
 export * from './ports'
 export {
+  $trpcExecutionClient,
+  createTRPCExecutionClientEvent,
+} from './trpc/execution-client'
+export {
   useTRPCClient,
+  useTRPCExecutionClient,
 } from './trpc/hook/useTRPCClient'
 export {
   $trpcClient,
