@@ -15,11 +15,12 @@ import type { ListOrderBy } from '../postgres/store'
 export interface IFlowStore {
   createFlow: (metadata: FlowMetadata) => Promise<Flow>
   getFlow: (flowId: string) => Promise<Flow | null>
+  getFlowMetadata: (flowId: string) => Promise<FlowMetadata | null>
   listFlows: (
     ownerId: string,
     orderBy: ListOrderBy,
     limit: number,
-  ) => Promise<Flow[]>
+  ) => Promise<FlowMetadata[]>
   deleteFlow: (flowId: string) => Promise<boolean>
   updateFlow: (flow: Flow) => Promise<Flow>
   hasAccess: (flowId: string, userId: string) => Promise<boolean>

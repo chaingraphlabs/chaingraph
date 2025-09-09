@@ -25,7 +25,7 @@
   "scripts": {
     "dev": "tsc -b --watch",
     "build": "tsc -b",
-    "check-types": "tsc -b",
+    "typecheck": "tsc -b",
     "graphql-codegen": "graphql-codegen --config graphql-codegen.ts"
   },
   "publishConfig": {

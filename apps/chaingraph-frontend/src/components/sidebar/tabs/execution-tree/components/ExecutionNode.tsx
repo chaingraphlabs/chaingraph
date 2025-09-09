@@ -6,43 +6,143 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionTreeNode } from '../utils/tree-builder'
+import type { ExecutionTreeNode, RootExecution } from '@badaitech/chaingraph-executor/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight, Zap } from 'lucide-react'
+import { ChevronDown, ChevronRight, Loader2, Zap } from 'lucide-react'
 import { memo, useEffect, useState } from 'react'
-import { formatDuration, formatEventPayload, formatExecutionId } from '../utils/formatters'
+import { formatDuration, formatExecutionId } from '../utils/formatters'
 import { ExecutionStatusIndicator } from './ExecutionStatus'
 
 interface ExecutionNodeProps {
-  node: ExecutionTreeNode
+  // Either a root execution or a tree node
+  node: RootExecution | ExecutionTreeNode
+  isRoot?: boolean
   depth: number
-  onSelect: (node: ExecutionTreeNode) => void
+  // For root nodes, these come from the parent
+  hasChildren?: boolean
+  isExpanded?: boolean
+  isLoading?: boolean
+  children?: ExecutionTreeNode[]
+  // Callbacks
+  onSelect: (nodeId: string) => void
+  onExpand?: (nodeId: string) => void
+  onCollapse?: (nodeId: string) => void
   selectedId?: string
   expandedAll?: boolean
 }
 
 export const ExecutionNode = memo(function ExecutionNode({
   node,
+  isRoot = false,
   depth,
+  hasChildren: hasChildrenProp,
+  isExpanded: isExpandedProp,
+  isLoading,
+  children = [],
   onSelect,
+  onExpand,
+  onCollapse,
   selectedId,
   expandedAll = false,
 }: ExecutionNodeProps) {
-  const [isExpanded, setIsExpanded] = useState(expandedAll)
-  const hasChildren = node.children.length > 0
-  const isSelected = selectedId === node.id
+  // Determine execution data based on node type
+  const execution = isRoot ? (node as RootExecution).execution : (node as ExecutionTreeNode).execution
+  const executionId = isRoot ? execution.id : (node as ExecutionTreeNode).id
 
-  // Update expansion state when expandedAll changes
+  // For root nodes, use prop values; for tree nodes, check children array
+  const hasChildren = isRoot
+    ? hasChildrenProp || false
+    : children.length > 0
+
+  // Local expansion state for tree nodes (root nodes are controlled by parent)
+  const [localExpanded, setLocalExpanded] = useState(expandedAll)
+
+  const isExpanded = isRoot ? isExpandedProp : localExpanded
+  const isSelected = selectedId === executionId
+
+  // Update local expansion state when expandedAll changes (for tree nodes)
   useEffect(() => {
-    if (hasChildren) {
-      setIsExpanded(expandedAll)
+    if (!isRoot && hasChildren) {
+      setLocalExpanded(expandedAll)
     }
-  }, [expandedAll, hasChildren])
+  }, [expandedAll, hasChildren, isRoot])
 
   // Calculate visual depth with indentation
   const indentWidth = depth * 24
+
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (isRoot) {
+      // For root nodes, use the expand/collapse callbacks
+      if (isExpanded && onCollapse) {
+        onCollapse(executionId)
+      } else if (!isExpanded && onExpand) {
+        onExpand(executionId)
+      }
+    } else {
+      // For tree nodes, toggle local state
+      setLocalExpanded(!localExpanded)
+    }
+  }
+
+  // Build tree structure for nested nodes
+  const buildChildTree = (treeNodes: ExecutionTreeNode[], parentId: string): ExecutionTreeNode[] => {
+    return treeNodes.filter(n => n.parentId === parentId)
+  }
+
+  const renderChildren = () => {
+    if (!isExpanded || !hasChildren) return null
+
+    if (isLoading) {
+      return (
+        <div className="ml-6 py-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Loading execution tree...
+        </div>
+      )
+    }
+
+    if (isRoot) {
+      // For root nodes, render the fetched tree
+      const rootChildren = children.filter(n => n.parentId === executionId)
+      return rootChildren.map(child => (
+        <ExecutionNode
+          key={child.id}
+          node={child}
+          isRoot={false}
+          depth={depth + 1}
+          children={buildChildTree(children, child.id)}
+          onSelect={onSelect}
+          selectedId={selectedId}
+          expandedAll={expandedAll}
+        />
+      ))
+    } else {
+      // For tree nodes, render their children
+      return children.map(child => (
+        <ExecutionNode
+          key={child.id}
+          node={child}
+          isRoot={false}
+          depth={depth + 1}
+          children={buildChildTree(children, child.id)}
+          onSelect={onSelect}
+          selectedId={selectedId}
+          expandedAll={expandedAll}
+        />
+      ))
+    }
+  }
+
+  // Get status from execution
+  const status = execution.status
+
+  // Format timestamps
+  const startedAt = execution.startedAt ? new Date(execution.startedAt) : undefined
+  const completedAt = execution.completedAt ? new Date(execution.completedAt) : undefined
 
   return (
     <div className="group">
@@ -53,7 +153,7 @@ export const ExecutionNode = memo(function ExecutionNode({
           'hover:bg-accent/50 rounded-sm',
           isSelected && 'bg-accent ring-1 ring-accent-foreground/10',
         )}
-        onClick={() => onSelect(node)}
+        onClick={() => onSelect(executionId)}
         style={{ paddingLeft: `${indentWidth + 8}px` }}
       >
         {/* Tree Line Connector */}
@@ -71,18 +171,19 @@ export const ExecutionNode = memo(function ExecutionNode({
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 p-0"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsExpanded(!isExpanded)
-                }}
+                onClick={handleToggleExpand}
               >
-                {isExpanded
+                {isLoading
                   ? (
-                      <ChevronDown className="h-3 w-3" />
+                      <Loader2 className="h-3 w-3 animate-spin" />
                     )
-                  : (
-                      <ChevronRight className="h-3 w-3" />
-                    )}
+                  : isExpanded
+                    ? (
+                        <ChevronDown className="h-3 w-3" />
+                      )
+                    : (
+                        <ChevronRight className="h-3 w-3" />
+                      )}
               </Button>
             )
           : (
@@ -90,32 +191,25 @@ export const ExecutionNode = memo(function ExecutionNode({
             )}
 
         {/* Status Icon */}
-        <ExecutionStatusIndicator status={node.status} size="sm" />
+        <ExecutionStatusIndicator status={status} size="sm" />
 
         {/* Flow Name and ID */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium truncate">
-              {node.flowName}
+              Flow Execution
             </span>
             <span className="text-xs text-muted-foreground">
-              {formatExecutionId(node.id)}
+              {formatExecutionId(executionId)}
             </span>
           </div>
 
-          {/* Event Trigger Info */}
-          {node.triggeredByEvent && (
+          {/* External Events Info (if available) */}
+          {execution.externalEvents && execution.externalEvents.length > 0 && (
             <div className="flex items-center gap-1 mt-0.5">
               <Zap className="w-3 h-3 text-orange-500" />
               <span className="text-xs text-muted-foreground">
-                {node.triggeredByEvent.eventName}
-                {node.triggeredByEvent.payload && (
-                  <span className="ml-1 text-muted-foreground/70 brake-all">
-                    (
-                    {formatEventPayload(node.triggeredByEvent.payload)}
-                    )
-                  </span>
-                )}
+                {execution.externalEvents[0].eventName}
               </span>
             </div>
           )}
@@ -125,22 +219,32 @@ export const ExecutionNode = memo(function ExecutionNode({
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {/* Duration */}
           <span className="font-mono">
-            {formatDuration(node.startedAt, node.completedAt)}
+            {formatDuration(startedAt, completedAt)}
           </span>
 
-          {/* Child Count Badge */}
-          {hasChildren && (
+          {/* Child Count Badge (for root nodes with statistics) */}
+          {isRoot && (node as RootExecution).totalNested > 0 && (
             <Badge
               variant="secondary"
               className="h-5 px-1.5 text-xs font-mono"
             >
-              {node.childCount}
+              {(node as RootExecution).totalNested}
+            </Badge>
+          )}
+
+          {/* Depth Badge (for root nodes with levels) */}
+          {isRoot && (node as RootExecution).levels > 0 && (
+            <Badge
+              variant="outline"
+              className="h-5 px-1.5 text-xs font-mono"
+            >
+              L{(node as RootExecution).levels}
             </Badge>
           )}
         </div>
 
         {/* Error Indicator */}
-        {node.error && (
+        {execution.errorMessage && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
           </div>
@@ -148,38 +252,7 @@ export const ExecutionNode = memo(function ExecutionNode({
       </div>
 
       {/* Children */}
-      {isExpanded && hasChildren && (
-        <div className="relative">
-          {/* Vertical connector line for children */}
-          {node.children.length > 1 && (
-            <div
-              className="absolute top-0 bottom-4 w-px bg-border/50"
-              style={{ left: `${indentWidth + 10}px` }}
-            />
-          )}
-
-          {node.children.map((child, index) => (
-            <div key={child.id} className="relative">
-              {/* Horizontal connector to child */}
-              <div
-                className="absolute top-4 h-px bg-border/50"
-                style={{
-                  left: `${indentWidth + 10}px`,
-                  width: '12px',
-                }}
-              />
-
-              <ExecutionNode
-                node={child}
-                depth={depth + 1}
-                onSelect={onSelect}
-                selectedId={selectedId}
-                expandedAll={expandedAll}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      {renderChildren()}
     </div>
   )
 })

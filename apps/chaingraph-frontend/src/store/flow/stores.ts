@@ -28,6 +28,8 @@ export const setFlowLoaded = flowDomain.createEvent<string>()
 export const setActiveFlowId = flowDomain.createEvent<string>()
 export const clearActiveFlow = flowDomain.createEvent()
 
+// Removed debugging - issue identified and fixed
+
 // Flow CRUD events
 export const createFlow = flowDomain.createEvent<CreateFlowEvent>()
 export const updateFlow = flowDomain.createEvent<UpdateFlowEvent>()

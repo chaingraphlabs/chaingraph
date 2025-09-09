@@ -29,7 +29,7 @@
     "dev": "tsc -b --watch",
     "build": "tsc -b",
     "test": "vitest",
-    "check-types": "tsc -b"
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",

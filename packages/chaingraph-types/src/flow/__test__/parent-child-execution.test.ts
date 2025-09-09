@@ -32,7 +32,7 @@ class TestEmitterNode extends BaseNode {
           message: `Event ${i + 1}`,
           nodeId: this.id,
           index: i,
-        })
+        }, this.id)
       }
     }
     return {}

@@ -43,7 +43,8 @@
     "release": "make publish",
     "changeset": "changeset",
     "changeset:version": "changeset version",
-    "changeset:publish": "changeset publish"
+    "changeset:publish": "changeset publish",
+    "typecheck": "turbo run typecheck"
   },
   "dependencies": {
     "@changesets/cli": "^2.28.1",

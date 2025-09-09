@@ -11,6 +11,8 @@ import type { INode } from '../node'
 import type { EmittedEventContext } from './emitted-event-context'
 import type { IntegrationContext } from './integration-context'
 import { subtle } from 'node:crypto'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { v4 as uuidv4 } from 'uuid'
 import { EventQueue } from '../utils'
 
@@ -27,6 +29,9 @@ export interface EmittedEvent {
 
 export class ExecutionContext {
   public readonly executionId: string
+  public readonly rootExecutionId?: string
+  public readonly parentExecutionId?: string
+
   public readonly startTime: Date
   public readonly flowId?: string
   public readonly metadata: Record<string, unknown>
@@ -40,8 +45,7 @@ export class ExecutionContext {
   // integrations
   public readonly integrations: IntegrationContext
 
-  // Event-driven execution support (optional)
-  public readonly parentExecutionId?: string
+  // Event-driven execution support
   public emittedEvents?: EmittedEvent[]
   public readonly eventData?: EmittedEventContext
   public readonly isChildExecution?: boolean
@@ -57,12 +61,14 @@ export class ExecutionContext {
   // TODO: chat room meta + participants agents?
   // TODO: input chat message / event / tweet / telegram message / some external events
 
+  // TODO: rewrite the constructor to take a single object parameter
   constructor(
     flowId: string,
     abortController: AbortController,
     metadata?: Record<string, unknown>,
     executionId?: string,
     integrations?: IntegrationContext,
+    rootExecutionId?: string,
     parentExecutionId?: string,
     eventData?: EmittedEventContext,
     isChildExecution?: boolean,
@@ -82,6 +88,7 @@ export class ExecutionContext {
 
     // Event-driven execution support
     this.parentExecutionId = parentExecutionId
+    this.rootExecutionId = rootExecutionId
     this.eventData = eventData
     this.isChildExecution = isChildExecution
     this.executionDepth = executionDepth || 0
@@ -129,18 +136,19 @@ export class ExecutionContext {
    * Emit an event that can trigger listener nodes
    * @param eventType The type of event to emit
    * @param data The event data
+   * @param nodeId The ID of the node emitting the event (for tracking)
    */
-  emitEvent(eventType: string, data: any): void {
+  emitEvent(eventType: string, data: any, nodeId: string): void {
     if (!this.emittedEvents) {
       this.emittedEvents = []
     }
 
     this.emittedEvents.push({
-      id: uuidv4(),
+      id: `EV${customAlphabet(nolookalikes, 24)()}`,
       type: eventType,
       data,
       emittedAt: Date.now(),
-      emittedBy: this.currentNodeId || 'unknown',
+      emittedBy: nodeId || this.currentNodeId || 'unknown',
     })
   }
 
@@ -157,9 +165,13 @@ export class ExecutionContext {
       { ...this.metadata, parentExecutionId: this.executionId },
       childExecutionId,
       this.integrations, // Share integrations
+      this.rootExecutionId, // Parent execution ID
       this.executionId, // Parent execution ID
       eventData,
       true, // Is child execution
+      this.executionDepth + 1,
+      this.getNodeById,
+      this.findNodes,
     )
     ctx.ecdhKeyPairPromise = this.ecdhKeyPairPromise // Share key pair promise
     return ctx

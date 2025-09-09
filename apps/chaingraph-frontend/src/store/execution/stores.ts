@@ -26,7 +26,7 @@ import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { executionDomain } from '../domains'
 // import { $trpcClient } from '../trpc/store'
-import { $trpcExecutionClient } from '../trpc/execution-client'
+import { $trpcClientExecutor } from '../trpc/execution-client'
 import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
 
 // EVENTS
@@ -53,7 +53,8 @@ export const setExecutionSubscriptionStatus = executionDomain.createEvent<Execut
 export const setExecutionSubscriptionError = executionDomain.createEvent<ExecutionError | null>()
 
 export const setExecutionStatus = executionDomain.createEvent<ExecutionStatus>()
-export const newExecutionEvent = executionDomain.createEvent<ExecutionEventImpl>()
+// export const newExecutionEvent = executionDomain.createEvent<ExecutionEventImpl>()
+export const newExecutionEvents = executionDomain.createEvent<ExecutionEventImpl[]>()
 
 export const resetAutoStart = executionDomain.createEvent()
 export const markStartAttempted = executionDomain.createEvent()
@@ -100,7 +101,7 @@ export const $executionExternalIntegrationConfig = executionDomain.createStore<M
 
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
-  const client = $trpcExecutionClient.getState()
+  const client = $trpcClientExecutor.getState()
   const state = $executionState.getState()
   const externalIntegrationsStoreMap = $executionExternalIntegrationConfig.getState()
 
@@ -159,7 +160,7 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
 })
 
 export const startExecutionFx = attach({
-  source: $trpcExecutionClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
@@ -169,7 +170,7 @@ export const startExecutionFx = attach({
 })
 
 export const pauseExecutionFx = attach({
-  source: $trpcExecutionClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
@@ -179,7 +180,7 @@ export const pauseExecutionFx = attach({
 })
 
 export const resumeExecutionFx = attach({
-  source: $trpcExecutionClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
@@ -189,7 +190,7 @@ export const resumeExecutionFx = attach({
 })
 
 export const stopExecutionFx = attach({
-  source: $trpcExecutionClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
@@ -198,42 +199,28 @@ export const stopExecutionFx = attach({
   },
 })
 
-// Debug effects
-export const addBreakpointFx = attach({
-  source: $trpcExecutionClient,
-  effect: async (client, params: { executionId: string, nodeId: string }) => {
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
-    return client.debug.addBreakpoint.mutate({
-      executionId: params.executionId,
-      nodeId: params.nodeId,
-    })
+// Debug effects - Currently disabled as debug endpoints are not available in the new tRPC API
+// TODO: Re-enable when debug endpoints are added back
+export const addBreakpointFx = executionDomain.createEffect(
+  async (params: { executionId: string, nodeId: string }) => {
+    console.warn('Debug breakpoints are not yet available in the new API')
+    return { success: false }
   },
-})
+)
 
-export const removeBreakpointFx = attach({
-  source: $trpcExecutionClient,
-  effect: async (client, params: { executionId: string, nodeId: string }) => {
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
-    return client.debug.removeBreakpoint.mutate({
-      executionId: params.executionId,
-      nodeId: params.nodeId,
-    })
+export const removeBreakpointFx = executionDomain.createEffect(
+  async (params: { executionId: string, nodeId: string }) => {
+    console.warn('Debug breakpoints are not yet available in the new API')
+    return { success: false }
   },
-})
+)
 
-export const stepExecutionFx = attach({
-  source: $trpcExecutionClient,
-  effect: async (client, executionId: string) => {
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
-    return client.debug.step.mutate({ executionId })
+export const stepExecutionFx = executionDomain.createEffect(
+  async (executionId: string) => {
+    console.warn('Debug stepping is not yet available in the new API')
+    return { success: false }
   },
-})
+)
 
 // effect for checking terminal status
 export const checkTerminalStatusFx = executionDomain.createEffect((status: ExecutionStatus) => {
@@ -241,8 +228,8 @@ export const checkTerminalStatusFx = executionDomain.createEffect((status: Execu
 })
 
 export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]>([])
-  .on(newExecutionEvent, (state, event) => {
-    return [...state, event]
+  .on(newExecutionEvents, (state, events) => {
+    return [...state, ...events]
   })
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
@@ -281,95 +268,97 @@ export const $executionNodes = executionDomain
       return false
     },
   })
-  .on(newExecutionEvent, (state, event) => {
+  .on(newExecutionEvents, (state, events) => {
     let finalState = state
     let stateChanged = false
 
-    switch (event.type) {
-      case ExecutionEventEnum.NODE_STARTED:
+    for (const event of events) {
+      switch (event.type) {
+        case ExecutionEventEnum.NODE_STARTED:
+          {
+            const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
+            finalState = {
+              ...state,
+              [eventData.node.id]: {
+                status: 'running',
+                startTime: event.timestamp,
+                node: eventData.node,
+              },
+            }
+            stateChanged = true
+          }
+          break
+
+        case ExecutionEventEnum.NODE_COMPLETED:
         {
-          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
+
+          const prevState = state[eventData.node.id]
+          if (!prevState) {
+            finalState = {
+              ...state,
+              [eventData.node.id]: {
+                status: 'completed',
+                startTime: event.timestamp,
+                endTime: event.timestamp,
+                executionTime: eventData.executionTime,
+                node: eventData.node,
+              },
+            }
+          } else {
+            finalState = {
+              ...state,
+              [eventData.node.id]: {
+                ...prevState,
+                status: 'completed',
+                endTime: event.timestamp,
+                executionTime: eventData.executionTime,
+                node: eventData.node,
+              },
+            }
+          }
+          stateChanged = true
+          break
+        }
+
+        case ExecutionEventEnum.NODE_FAILED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
           finalState = {
             ...state,
             [eventData.node.id]: {
-              status: 'running',
-              startTime: event.timestamp,
+              status: 'failed',
+              endTime: event.timestamp,
+              error: eventData.error,
               node: eventData.node,
             },
           }
           stateChanged = true
-        }
-        break
-
-      case ExecutionEventEnum.NODE_COMPLETED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
-
-        const prevState = state[eventData.node.id]
-        if (!prevState) {
-          finalState = {
-            ...state,
-            [eventData.node.id]: {
-              status: 'completed',
-              startTime: event.timestamp,
-              endTime: event.timestamp,
-              executionTime: eventData.executionTime,
-              node: eventData.node,
-            },
-          }
-        } else {
-          finalState = {
-            ...state,
-            [eventData.node.id]: {
-              ...prevState,
-              status: 'completed',
-              endTime: event.timestamp,
-              executionTime: eventData.executionTime,
-              node: eventData.node,
-            },
-          }
-        }
-        stateChanged = true
-        break
-      }
-
-      case ExecutionEventEnum.NODE_FAILED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
-        finalState = {
-          ...state,
-          [eventData.node.id]: {
-            status: 'failed',
-            endTime: event.timestamp,
-            error: eventData.error,
-            node: eventData.node,
-          },
-        }
-        stateChanged = true
-        break
-      }
-
-      case ExecutionEventEnum.NODE_SKIPPED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
-        const nodeState = state[eventData.nodeId]
-        if (!nodeState || !nodeState.node) {
-          // skip if node state doesn't exist
           break
         }
 
-        nodeState.node.setStatus(NodeStatus.Skipped, false)
+        case ExecutionEventEnum.NODE_SKIPPED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
+          const nodeState = state[eventData.nodeId]
+          if (!nodeState || !nodeState.node) {
+          // skip if node state doesn't exist
+            break
+          }
 
-        finalState = {
-          ...state,
-          [eventData.nodeId]: {
-            status: 'skipped',
-            endTime: event.timestamp,
-            node: nodeState.node,
-          },
+          nodeState.node.setStatus(NodeStatus.Skipped, false)
+
+          finalState = {
+            ...state,
+            [eventData.nodeId]: {
+              status: 'skipped',
+              endTime: event.timestamp,
+              node: nodeState.node,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
       }
     }
 
@@ -385,51 +374,53 @@ export const $executionNodes = executionDomain
   .reset(setExecutionIdAndReset)
 
 export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
-  .on(newExecutionEvent, (state, event) => {
+  .on(newExecutionEvents, (state, events) => {
     let finalState = state
     let stateChanged = false
 
-    switch (event.type) {
-      case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
-        finalState = {
-          ...state,
-          [eventData.serializedEdge.id]: {
-            status: 'transferring',
-            serializedEdge: eventData.serializedEdge,
-          },
+    for (const event of events) {
+      switch (event.type) {
+        case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
+          finalState = {
+            ...state,
+            [eventData.serializedEdge.id]: {
+              status: 'transferring',
+              serializedEdge: eventData.serializedEdge,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
-      }
 
-      case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
-        finalState = {
-          ...state,
-          [eventData.serializedEdge.id]: {
-            status: 'completed',
-            serializedEdge: eventData.serializedEdge,
-          },
+        case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
+          finalState = {
+            ...state,
+            [eventData.serializedEdge.id]: {
+              status: 'completed',
+              serializedEdge: eventData.serializedEdge,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
-      }
 
-      case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
-        finalState = {
-          ...state,
-          [eventData.serializedEdge.id]: {
-            status: 'failed',
-            serializedEdge: eventData.serializedEdge,
-          },
+        case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
+          finalState = {
+            ...state,
+            [eventData.serializedEdge.id]: {
+              status: 'failed',
+              serializedEdge: eventData.serializedEdge,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
       }
     }
 
@@ -472,45 +463,46 @@ $executionState
       error: null,
     }
   })
-  .on(newExecutionEvent, (state, event) => {
-    switch (event.type) {
+  .on(newExecutionEvents, (state, events) => {
+    for (const event of events) {
+      switch (event.type) {
       // case ExecutionEventEnum.FLOW_SUBSCRIBED:
       //   console.log('Flow subscribed:', event.data)
       //   return { ...state, status: ExecutionStatus.CREATED }
 
-      case ExecutionEventEnum.FLOW_STARTED:
-        console.debug('Flow started:', event.data)
-        return { ...state, status: ExecutionStatus.RUNNING }
+        case ExecutionEventEnum.FLOW_STARTED:
+          console.debug('Flow started:', event.data)
+          return { ...state, status: ExecutionStatus.RUNNING }
 
-      case ExecutionEventEnum.FLOW_COMPLETED:
-        console.debug('Flow completed:', event.data)
-        return { ...state, status: ExecutionStatus.COMPLETED }
+        case ExecutionEventEnum.FLOW_COMPLETED:
+          console.debug('Flow completed:', event.data)
+          return { ...state, status: ExecutionStatus.COMPLETED }
 
-      case ExecutionEventEnum.FLOW_FAILED:
-        console.debug('Flow failed:', event.data)
-        return {
-          ...state,
-          status: ExecutionStatus.ERROR,
-          error: {
-            message: (event.data as ExecutionEventData[ExecutionEventEnum.FLOW_FAILED]).error.message,
-            timestamp: event.timestamp,
-          },
-        }
+        case ExecutionEventEnum.FLOW_FAILED:
+          console.debug('Flow failed:', event.data)
+          return {
+            ...state,
+            status: ExecutionStatus.ERROR,
+            error: {
+              message: (event.data as ExecutionEventData[ExecutionEventEnum.FLOW_FAILED]).error.message,
+              timestamp: event.timestamp,
+            },
+          }
 
-      case ExecutionEventEnum.FLOW_CANCELLED:
-        console.debug('Flow cancelled:', event.data)
-        return {
-          ...state,
-          status: ExecutionStatus.STOPPED,
-        }
+        case ExecutionEventEnum.FLOW_CANCELLED:
+          console.debug('Flow cancelled:', event.data)
+          return {
+            ...state,
+            status: ExecutionStatus.STOPPED,
+          }
 
-      case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
-        return {
-          ...state,
-          status: ExecutionStatus.PAUSED,
-        }
+        case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+          return {
+            ...state,
+            status: ExecutionStatus.PAUSED,
+          }
+      }
     }
-
     return state
   })
 

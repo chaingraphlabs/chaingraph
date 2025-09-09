@@ -8,4 +8,5 @@
 
 export const appConfig = {
   chaingraphTRPCWSUrl: import.meta.env.VITE_CHAINGRAPH_TRPC_WS_URL || 'ws://localhost:3001',
+  chaingraphExecutorWSUrl: import.meta.env.VITE_CHAINGRAPH_EXECUTOR_WS_URL || 'ws://localhost:4021',
 }

@@ -6,4 +6,4 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export { useFlowSubscription } from './useFlowSubscription'
+// export { useFlowSubscription } from './useFlowSubscription' // DEPRECATED: Subscriptions are now managed by Effector stores

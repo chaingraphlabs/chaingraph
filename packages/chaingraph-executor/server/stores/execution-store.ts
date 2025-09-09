@@ -7,7 +7,6 @@
  */
 
 import type { IExecutionStore } from './interfaces/IExecutionStore'
-import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { getDatabase } from '../utils/db'
 import { createLogger } from '../utils/logger'
 import { PostgresExecutionStore } from './postgres/postgres-execution-store'
@@ -16,15 +15,10 @@ const logger = createLogger('execution-store')
 
 let executionStore: IExecutionStore | null = null
 
-export async function getExecutionStore(
-  nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
-): Promise<IExecutionStore> {
+export async function getExecutionStore(): Promise<IExecutionStore> {
   if (!executionStore) {
     const db = await getDatabase()
-    executionStore = new PostgresExecutionStore(
-      db,
-      nodeRegistry,
-    )
+    executionStore = new PostgresExecutionStore(db)
     logger.info('Execution store initialized')
   }
   return executionStore

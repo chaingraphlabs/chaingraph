@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { DBType, IFlowStore } from '@badaitech/chaingraph-trpc/server'
 import type { Flow } from '@badaitech/chaingraph-types'
 import { DBFlowStore } from '@badaitech/chaingraph-trpc/server'
 import { getDatabase } from '../utils/db'
@@ -15,10 +16,12 @@ const logger = createLogger('flow-store')
 
 let flowStore: DBFlowStore | null = null
 
-export async function getFlowStore(): Promise<DBFlowStore> {
+export async function getFlowStore(
+  db?: DBType,
+): Promise<IFlowStore> {
   if (!flowStore) {
-    const db = await getDatabase()
-    flowStore = new DBFlowStore(db)
+    const _db = db ?? await getDatabase()
+    flowStore = new DBFlowStore(_db)
     logger.info('Flow store initialized')
   }
   return flowStore

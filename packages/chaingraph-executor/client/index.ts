@@ -21,7 +21,7 @@ export const trpcReact = createTRPCReact<ExecutionRouter>()
 
 export {
   createTRPCClient,
-  getQueryClient,
+  getExecutorQueryClient,
   TRPCProvider,
   useTRPC,
   useTRPCClient,

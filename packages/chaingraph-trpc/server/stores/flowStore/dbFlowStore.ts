@@ -12,8 +12,10 @@ import type { ListOrderBy } from '../postgres/store'
 import type { IFlowStore } from './types'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Flow } from '@badaitech/chaingraph-types'
+import { listFlowsMetadata } from '../postgres/store'
+import { loadFlowMetadata } from '../postgres/store'
 import { serializableFlow } from '../postgres/store'
-import { deleteFlow, listFlows, loadFlow, saveFlow } from '../postgres/store'
+import { deleteFlow, loadFlow, saveFlow } from '../postgres/store'
 
 const defaultFlowLimit = 1000
 
@@ -77,6 +79,15 @@ export class DBFlowStore implements IFlowStore {
     return flowFromDB as Flow
   }
 
+  async getFlowMetadata(flowId: string): Promise<FlowMetadata | null> {
+    const flowFromDB = await loadFlowMetadata(this.db, flowId)
+    if (!flowFromDB) {
+      return null
+    }
+
+    return flowFromDB
+  }
+
   /**
    * Lists all available flows ordered by updatedAt desc
    * @returns Array of flows
@@ -85,25 +96,16 @@ export class DBFlowStore implements IFlowStore {
     ownerId: string,
     orderBy: ListOrderBy,
     limit: number,
-  ): Promise<Flow[]> {
+  ): Promise<FlowMetadata[]> {
     // load all flows from DB and cache which is not in cache
-    const flows = await listFlows(
+    const flows = await listFlowsMetadata(
       this.db,
       ownerId,
       orderBy,
       limit || defaultFlowLimit,
-      (data) => {
-        return Flow.deserialize(data, this.nodeRegistry)
-      },
     )
 
-    flows.forEach((flow) => {
-      if (!this.flows.has(flow.id)) {
-        this.flows.set(flow.id, flow as Flow)
-      }
-    })
-
-    return Array.from(this.flows.values())
+    return flows
   }
 
   /**
@@ -126,22 +128,6 @@ export class DBFlowStore implements IFlowStore {
    * @returns Updated flow
    */
   async updateFlow(flow: Flow): Promise<Flow> {
-    console.log(`[Flow] updateFlow flow ${flow.id}`)
-    // stacktrace:
-    //
-    // function logStackTrace(): void {
-    //   const stack = new Error('stack').stack
-    //   if (stack) {
-    //     const stackLines = stack.split('\n')
-    //     console.log('Stack trace:')
-    //     for (const line of stackLines) {
-    //       console.log(line)
-    //     }
-    //   }
-    // }
-    //
-    // logStackTrace()
-
     // flow.metadata.version = await saveFlow(
     await saveFlow(
       this.db,

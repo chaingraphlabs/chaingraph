@@ -7,6 +7,7 @@
  */
 
 import type { ExecutionStatus } from '@/store/execution'
+import type { RootExecution } from '@badaitech/chaingraph-executor/types'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -15,16 +16,27 @@ import { setExecutionIdAndReset } from '@/store/execution'
 import { useExecutionTree, useSelectedExecution } from '@/store/execution-tree/hooks/useExecutionTree'
 import { $activeFlowId } from '@/store/flow/stores'
 import { useUnit } from 'effector-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { EmptyState } from './components/EmptyState'
 import { ExecutionDetails } from './components/ExecutionDetails'
 import { ExecutionNode } from './components/ExecutionNode'
 import { TreeControls } from './components/TreeControls'
-import { buildExecutionTree } from './utils/tree-builder'
 
 export function ExecutionTree() {
-  // Use Effector store for execution data
-  const { executions, isLoading, error, filters, refetch, updateFilters } = useExecutionTree()
+  const {
+    rootExecutions,
+    isLoadingRoots,
+    isTreeLoading,
+    error,
+    filters,
+    updateFilters,
+    handleExpand,
+    handleCollapse,
+    getExecutionTree,
+    isExpanded,
+    refetch,
+  } = useExecutionTree()
+
   const { selectedExecution, selectExecution } = useSelectedExecution()
 
   // Get active flow ID to check if a flow is selected
@@ -32,16 +44,6 @@ export function ExecutionTree() {
 
   // UI State
   const [expandedAll, setExpandedAll] = useState(false)
-
-  // Build tree structure
-  const executionTree = useMemo(() => {
-    // Map executions to the expected interface and build tree
-    const mappedExecutions = executions.map(exec => ({
-      ...exec,
-      status: exec.status.toUpperCase() as ExecutionStatus, // Convert backend status to frontend enum
-    }))
-    return buildExecutionTree(mappedExecutions as any)
-  }, [executions])
 
   const handleRefresh = () => {
     refetch()
@@ -57,7 +59,52 @@ export function ExecutionTree() {
   }
 
   const handleToggleExpandAll = () => {
+    if (!expandedAll) {
+      // Expand all root executions that have children
+      rootExecutions.forEach((rootExec) => {
+        if ((rootExec.levels > 0 || rootExec.totalNested > 0) && !isExpanded(rootExec.execution.id)) {
+          handleExpand(rootExec.execution.id)
+        }
+      })
+    } else {
+      // Collapse all
+      rootExecutions.forEach((rootExec) => {
+        if (isExpanded(rootExec.execution.id)) {
+          handleCollapse(rootExec.execution.id)
+        }
+      })
+    }
     setExpandedAll(!expandedAll)
+  }
+
+  const handleNodeSelect = (nodeId: string) => {
+    selectExecution(nodeId)
+    setExecutionIdAndReset(nodeId)
+  }
+
+  const renderRootExecution = (rootExec: RootExecution) => {
+    const hasChildren = rootExec.levels > 0 || rootExec.totalNested > 0
+    const expanded = isExpanded(rootExec.execution.id)
+    const loading = isTreeLoading(rootExec.execution.id)
+    const tree = getExecutionTree(rootExec.execution.id)
+
+    return (
+      <ExecutionNode
+        key={rootExec.execution.id}
+        node={rootExec}
+        isRoot
+        depth={0}
+        hasChildren={hasChildren}
+        isExpanded={expanded}
+        isLoading={loading}
+        children={tree}
+        onSelect={handleNodeSelect}
+        onExpand={handleExpand}
+        onCollapse={handleCollapse}
+        selectedId={selectedExecution?.id}
+        expandedAll={expandedAll}
+      />
+    )
   }
 
   return (
@@ -91,7 +138,7 @@ export function ExecutionTree() {
                     </p>
                   </div>
                 )
-              : isLoading
+              : isLoadingRoots
                 ? (
                     // Loading state
                     <div className="space-y-2 px-4">
@@ -118,24 +165,13 @@ export function ExecutionTree() {
                         </Button>
                       </div>
                     )
-                  : executionTree.length === 0
+                  : rootExecutions.length === 0
                     ? (
                         <EmptyState />
                       )
                     : (
-                        executionTree.map(node => (
-                          <ExecutionNode
-                            key={node.id}
-                            node={node}
-                            depth={0}
-                            onSelect={(node) => {
-                              selectExecution(node.id)
-                              setExecutionIdAndReset(node.id)
-                            }}
-                            selectedId={selectedExecution?.id}
-                            expandedAll={expandedAll}
-                          />
-                        ))
+                        // Render root executions with lazy loading
+                        rootExecutions.map(renderRootExecution)
                       )}
           </div>
         </ScrollArea>

@@ -13,6 +13,16 @@ import type {
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
 
+export enum ExecutionCommandType {
+  CREATE = 'CREATE',
+  START = 'START',
+  STOP = 'STOP',
+  PAUSE = 'PAUSE',
+  STEP = 'STEP',
+  RESUME = 'RESUME',
+  HEARTBEAT = 'HEARTBEAT',
+}
+
 /**
  * Command to control execution lifecycle
  */
@@ -20,7 +30,7 @@ export interface ExecutionCommand {
   id: string // Command ID for idempotency
   executionId?: string // Target execution ID (required for control commands)
   workerId?: string // Target worker ID (optional, for routing)
-  command: 'CREATE' | 'START' | 'STOP' | 'PAUSE' | 'RESUME' | 'HEARTBEAT'
+  command: ExecutionCommandType
   payload: {
     flowId?: string // Required for CREATE, optional for others
     options?: ExecutionOptions
@@ -51,15 +61,7 @@ export interface RetryHistoryEntry {
  */
 export interface ExecutionTask {
   executionId: string
-  flowId: string // Just the ID!
-  context: {
-    integrations?: IntegrationContext
-    parentExecutionId?: string
-    eventData?: EmittedEventContext
-    executionDepth: number
-  }
-  options: ExecutionOptions
-  priority: number
+  flowId: string
   timestamp: number
   retryCount?: number
   maxRetries?: number

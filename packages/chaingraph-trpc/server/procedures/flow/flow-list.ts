@@ -26,23 +26,21 @@ export const list = authedProcedure
 
     // TODO: lately we have added a shared flow feature, consider to add a query to get all flows
 
-    return flows
+    const flowsMetadata = flows
       .map((flow) => {
-        const metadata = flow.metadata
-
         // Compute canFork for each flow
         let canFork = false
 
         // Owners can always fork their own flows
-        if (metadata.ownerID === userId) {
+        if (flow.ownerID === userId) {
           canFork = true
-        } else if (metadata.isPublic) {
+        } else if (flow.isPublic) {
           // For public flows, evaluate fork rule for non-owners
-          const forkRule = metadata.forkRule || FORK_DENY_RULE
+          const forkRule = flow.forkRule || FORK_DENY_RULE
           const context = {
             userId,
             isOwner: false,
-            flow: metadata,
+            flow,
           }
 
           try {
@@ -54,9 +52,9 @@ export const list = authedProcedure
         }
 
         return {
-          ...metadata,
+          ...flow,
           canFork,
-        }
+        } as const
       })
       .filter(flowMeta =>
         flowMeta
@@ -64,4 +62,6 @@ export const list = authedProcedure
         && flowMeta.createdAt !== null
         && flowMeta.updatedAt !== null,
       )
+
+    return flowsMetadata
   })

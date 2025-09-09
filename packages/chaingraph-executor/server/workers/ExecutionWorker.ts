@@ -6,18 +6,26 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type {
+  EventQueue,
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { Consumer } from 'kafkajs'
+import type { ExecutionCommand, ExecutionInstance, ExecutionTask } from 'types'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
-import type { ExecutionCommand, ExecutionTask } from '../types'
-import { NodeRegistry } from '@badaitech/chaingraph-types'
+import {
+
+  NodeRegistry,
+} from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
+import { ExecutionStatus } from 'types'
+import { KafkaTopics } from 'types/messages'
 import { getKafkaClient } from '../kafka/client'
 import { ExecutionService } from '../services/ExecutionService'
 import { loadFlow } from '../stores/flow-store'
-import { ExecutionStatus } from '../types'
-import { KafkaTopics } from '../types/messages'
 import { config } from '../utils/config'
 import { createLogger } from '../utils/logger'
 import { safeSuperJSONParse } from '../utils/serialization'
@@ -32,7 +40,12 @@ export class ExecutionWorker {
   private isRunning = false
   private executionService: ExecutionService | null = null
   private commandConsumer: Consumer | null = null
-  private activeExecutions: Map<string, { task: ExecutionTask, heartbeatInterval?: NodeJS.Timeout }> = new Map()
+  private activeExecutions: Map<string, {
+    task: ExecutionTask
+    instance: ExecutionInstance
+    heartbeatInterval?: NodeJS.Timeout
+  }> = new Map()
+
   private readonly workerId: string
   private readonly CLAIM_TIMEOUT_MS = config.worker.claimTimeoutMs
   private readonly HEARTBEAT_INTERVAL_MS = config.worker.heartbeatIntervalMs
@@ -111,9 +124,21 @@ export class ExecutionWorker {
       task.retryDelayMs = 1000
     }
 
+    const executionRow = await this.store.get(task.executionId)
+    if (!executionRow) {
+      logger.error({
+        executionId: task.executionId,
+        workerId: this.workerId,
+      }, 'Execution not found in store, cannot process task')
+
+      // TODO: dead letter queue for such tasks?
+
+      return
+    }
+
     // Try to claim the execution
     const claimed = await this.store.claimExecution(
-      task.executionId,
+      executionRow.id,
       this.workerId,
       this.CLAIM_TIMEOUT_MS,
     )
@@ -129,8 +154,6 @@ export class ExecutionWorker {
     logger.info({
       executionId: task.executionId,
       flowId: task.flowId,
-      parentExecutionId: task.context.parentExecutionId,
-      executionDepth: task.context.executionDepth,
       workerId: this.workerId,
     }, 'Claimed and processing execution task')
 
@@ -158,8 +181,6 @@ export class ExecutionWorker {
       }
     }, this.HEARTBEAT_INTERVAL_MS)
 
-    this.activeExecutions.set(task.executionId, { task, heartbeatInterval })
-
     try {
       // Load flow from database
       const flow = await loadFlow(task.flowId)
@@ -168,21 +189,27 @@ export class ExecutionWorker {
       }
 
       // Create execution instance with predetermined ID
-      const instance = await this.executionService!.createExecution({
+      const abortController = new AbortController()
+      const instance = await this.executionService!.createExecutionInstance({
+        task,
         flow,
-        executionId: task.executionId,
-        options: { execution: task.options },
-        integrations: task.context.integrations,
-        parentExecutionId: task.context.parentExecutionId,
-        eventData: task.context.eventData,
-        parentDepth: task.context.executionDepth - 1, // Subtract 1 since createExecution adds 1
+        executionRow,
+        abortController,
       })
 
-      // Store the instance (ID is already set correctly)
-      await this.store.create(instance)
+      this.activeExecutions.set(task.executionId, {
+        task,
+        instance,
+        heartbeatInterval,
+      })
 
       // Start execution
-      await this.executionService!.startExecution(task.executionId)
+      await instance.engine!.execute(async (
+        context: ExecutionContext,
+        eventQueue: EventQueue<ExecutionEventImpl>,
+      ) => {
+        // execution complete callback
+      })
 
       const executionTime = Date.now() - startTime
       logger.info({
@@ -232,18 +259,15 @@ export class ExecutionWorker {
         }, 'Scheduling task retry')
 
         // Re-publish task with retry info
-        setTimeout(async () => {
-          await this.taskQueue.publishTask(task)
-        }, retryDelay)
+        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        await this.taskQueue.publishTask(task)
       } else {
         // Max retries exceeded, mark as failed
         try {
           const instance = await this.store.get(task.executionId)
           if (instance) {
             instance.status = ExecutionStatus.Failed
-            instance.error = {
-              message: error instanceof Error ? error.message : 'Unknown error',
-            }
+            instance.errorMessage = error instanceof Error ? error.message : 'Unknown error'
             instance.completedAt = new Date()
             await this.store.create(instance)
           }
@@ -380,19 +404,22 @@ export class ExecutionWorker {
 
   private async handleCommand(command: ExecutionCommand): Promise<void> {
     // Only handle commands for executions we own
-    if (command.executionId) {
-      // Always re-verify claim ownership before executing commands
-      const claim = await this.store.getClaimForExecution(command.executionId)
-      if (!claim || claim.workerId !== this.workerId || claim.status !== 'active') {
-        logger.debug({
-          command: command.command,
-          executionId: command.executionId,
-          claimWorkerId: claim?.workerId,
-          ourWorkerId: this.workerId,
-          claimStatus: claim?.status,
-        }, 'Ignoring command - not our execution or claim not active')
-        return
-      }
+    if (!command.executionId) {
+      logger.warn('Received command with no executionId, ignoring')
+      return
+    }
+
+    // Always re-verify claim ownership before executing commands
+    const claim = await this.store.getClaimForExecution(command.executionId)
+    if (!claim || claim.workerId !== this.workerId || claim.status !== 'active') {
+      logger.debug({
+        command: command.command,
+        executionId: command.executionId,
+        claimWorkerId: claim?.workerId,
+        ourWorkerId: this.workerId,
+        claimStatus: claim?.status,
+      }, 'Ignoring command - not our execution or claim not active')
+      return
     }
 
     logger.debug({
@@ -401,24 +428,34 @@ export class ExecutionWorker {
       workerId: this.workerId,
     }, 'Handling command')
 
+    const active = this.activeExecutions.get(command.executionId)
+    if (!active) {
+      logger.warn({
+        executionId: command.executionId,
+        workerId: this.workerId,
+        command: command.command,
+      }, 'No active execution instance found for command')
+      return
+    }
+
     switch (command.command) {
       case 'STOP':
-        if (command.executionId) {
-          await this.executionService?.stopExecution(command.executionId)
-          await this.releaseExecution(command.executionId)
-        }
+        active.instance.context.abortController.abort('Execution stopped by external command')
+        active.instance.engine?.getDebugger()?.stop()
+        await this.releaseExecution(command.executionId)
         break
 
       case 'PAUSE':
-        if (command.executionId) {
-          await this.executionService?.pauseExecution(command.executionId)
-        }
+        active.instance.engine?.getDebugger()?.pause()
         break
 
+      case 'START':
       case 'RESUME':
-        if (command.executionId) {
-          await this.executionService?.resumeExecution(command.executionId)
-        }
+        active.instance.engine?.getDebugger()?.continue()
+        break
+
+      case 'STEP':
+        active.instance.engine?.getDebugger()?.step()
         break
 
       default:
@@ -447,12 +484,6 @@ export class ExecutionWorker {
 
     // Stop consuming tasks
     await this.taskQueue.stopConsuming()
-
-    // Shutdown execution service
-    if (this.executionService) {
-      await this.executionService.shutdown()
-      this.executionService = null
-    }
 
     this.isRunning = false
     logger.info('Execution worker stopped')

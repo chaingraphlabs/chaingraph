@@ -11,6 +11,8 @@ import type {
   ExecutionEngine,
   Flow,
 } from '@badaitech/chaingraph-types'
+import type { ExecutionRow } from 'server/stores/postgres/schema'
+import type { ExecutionTask } from 'types/messages'
 
 export enum ExecutionStatus {
   Created = 'created',
@@ -27,45 +29,34 @@ export interface ExecutionError {
   stack?: string
 }
 
-export interface ExecutionOptions {
-  execution?: {
-    maxConcurrency?: number
-    nodeTimeoutMs?: number
-    flowTimeoutMs?: number
-  }
-  debug?: boolean
-  breakpoints?: string[]
-}
-
 export interface ExecutionInstance {
-  id: string
+  task: ExecutionTask
+  row: ExecutionRow
+  context: ExecutionContext
   flow: Flow
   initialStateFlow: Flow
-  context: ExecutionContext
   engine: ExecutionEngine | null
-  status: ExecutionStatus
-  createdAt: Date
-  startedAt?: Date
-  completedAt?: Date
-  error?: ExecutionError
-  parentExecutionId?: string
-  executionDepth: number
-  externalEvents?: Array<{ type: string, data?: any }>
 }
 
-export interface ExecutionState {
-  id: string
-  status: ExecutionStatus
-  startTime?: Date
-  endTime?: Date
-  error?: ExecutionError
-}
-
+export type ExecutionClaimStatus = 'active' | 'released' | 'expired'
 export interface ExecutionClaim {
   executionId: string
   workerId: string
   claimedAt: Date
   expiresAt: Date
   heartbeatAt: Date
-  status: 'active' | 'released' | 'expired'
+  status: ExecutionClaimStatus
+}
+
+export interface ExecutionTreeNode {
+  id: string
+  parentId: string | null
+  level: number
+  execution: ExecutionRow
+}
+
+export interface RootExecution {
+  execution: ExecutionRow
+  levels: number
+  totalNested: number
 }

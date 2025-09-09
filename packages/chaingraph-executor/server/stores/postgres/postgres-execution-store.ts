@@ -6,63 +6,35 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionRow } from '@badaitech/chaingraph-trpc/server'
-import type { ExecutionContext, IFlow } from '@badaitech/chaingraph-types'
 import type { DBType } from 'server/utils/db'
-import type { ExecutionClaim, ExecutionInstance, ExecutionStatus } from '../../types'
+import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from 'types'
 import type { IExecutionStore } from '../interfaces/IExecutionStore'
-import { executionClaimsTable, executionsTable } from '@badaitech/chaingraph-trpc/server'
-import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { Flow } from '@badaitech/chaingraph-types'
-import { and, desc, eq, lt, sql } from 'drizzle-orm'
+import type { ExecutionClaimRow, ExecutionRow } from './schema'
+import { and, desc, eq, getTableColumns, lt, sql } from 'drizzle-orm'
+import { executionClaimsTable, executionsTable } from './schema'
 
 export class PostgresExecutionStore implements IExecutionStore {
-  private readonly MAX_EXECUTION_DEPTH = 100
-
   constructor(
     private readonly db: DBType,
-    private nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
   ) {}
 
-  async create(instance: ExecutionInstance): Promise<void> {
+  async create(row: ExecutionRow): Promise<void> {
     await this.db.insert(executionsTable)
       .values({
-        id: instance.id,
-        flowId: instance.flow.id || '',
-        ownerId: instance.flow.metadata.ownerID,
-        parentExecutionId: instance.parentExecutionId || null,
-        status: instance.status,
-        startedAt: instance.startedAt || null,
-        completedAt: instance.completedAt || null,
-        createdAt: instance.createdAt,
+        ...row,
+        createdAt: new Date(),
         updatedAt: new Date(),
-        errorMessage: instance.error?.message || null,
-        errorNodeId: instance.error?.nodeId || null,
-        executionDepth: instance.executionDepth || 0,
-        metadata: {
-          flowName: instance.flow.metadata?.name,
-          flowData: instance.parentExecutionId ? null : instance.flow.serialize(),
-          contextData: {
-            executionId: instance.context.executionId,
-            eventData: instance.context.eventData || null,
-          },
-        },
-        externalEvents: instance.externalEvents || null,
       })
       .onConflictDoUpdate({
         target: executionsTable.id,
         set: {
-          status: instance.status,
-          startedAt: instance.startedAt || null,
-          completedAt: instance.completedAt || null,
+          ...row,
           updatedAt: new Date(),
-          errorMessage: instance.error?.message || null,
-          errorNodeId: instance.error?.nodeId || null,
         },
       })
   }
 
-  async get(id: string): Promise<ExecutionInstance | null> {
+  async get(id: string): Promise<ExecutionRow | null> {
     const results = await this.db
       .select()
       .from(executionsTable)
@@ -73,82 +45,7 @@ export class PostgresExecutionStore implements IExecutionStore {
       return null
     }
 
-    const row = results[0] as ExecutionRow
-    const metadata = row.metadata
-
-    // Deserialize flow from stored data
-    let flow: IFlow
-
-    if (!metadata?.flowData && row.parentExecutionId) {
-      let currentParentId: string | null = row.parentExecutionId
-      let flowData = null
-      let depth = 0
-      while (currentParentId && !flowData && depth < this.MAX_EXECUTION_DEPTH) {
-        const parentResults = await this.db
-          .select()
-          .from(executionsTable)
-          .where(eq(executionsTable.id, currentParentId))
-          .limit(1)
-
-        if (parentResults.length === 0)
-          break
-
-        const parentRow = parentResults[0] as ExecutionRow
-        const parentMetadata = parentRow.metadata
-
-        if (parentMetadata?.flowData) {
-          flowData = parentMetadata.flowData
-          break
-        }
-
-        currentParentId = parentRow.parentExecutionId
-        depth++
-      }
-      if (flowData) {
-        try {
-          flow = Flow.deserialize(flowData, this.nodeRegistry)
-        } catch (e) {
-          flow = new Flow({ id: row.flowId, name: metadata?.flowName })
-        }
-      } else {
-        flow = new Flow({ id: row.flowId, name: metadata?.flowName })
-      }
-    } else {
-      try {
-        flow = metadata?.flowData
-          ? Flow.deserialize(metadata.flowData, this.nodeRegistry)
-          : new Flow({ id: row.flowId, name: metadata?.flowName })
-      } catch (e) {
-        flow = new Flow({ id: row.flowId, name: metadata?.flowName })
-      }
-    }
-
-    // Return reconstructed ExecutionInstance
-    return {
-      id: row.id,
-      flow: flow as Flow,
-      initialStateFlow: await flow.clone() as Flow,
-      context: {
-        executionId: metadata?.contextData?.executionId || row.id,
-        eventData: metadata?.contextData?.eventData || undefined,
-        integrations: {},
-        metadata: {},
-      } as ExecutionContext,
-      engine: null,
-      status: row.status as ExecutionStatus,
-      createdAt: row.createdAt,
-      startedAt: row.startedAt || undefined,
-      completedAt: row.completedAt || undefined,
-      error: row.errorMessage
-        ? {
-            message: row.errorMessage,
-            nodeId: row.errorNodeId || undefined,
-          }
-        : undefined,
-      parentExecutionId: row.parentExecutionId || undefined,
-      executionDepth: row.executionDepth,
-      externalEvents: row.externalEvents as Array<{ type: string, data?: any }>,
-    }
+    return results[0] as ExecutionRow
   }
 
   async delete(id: string): Promise<boolean> {
@@ -160,59 +57,44 @@ export class PostgresExecutionStore implements IExecutionStore {
     return result.length > 0
   }
 
-  async list(limit?: number): Promise<ExecutionInstance[]> {
+  async getRootExecutions(
+    flowId: string,
+    limit = 50,
+    after: Date | null = null,
+  ): Promise<RootExecution[]> {
     const results = await this.db
       .select({
-        id: executionsTable.id,
-        flowId: executionsTable.flowId,
-        ownerId: executionsTable.ownerId,
-        parentExecutionId: executionsTable.parentExecutionId,
-        status: executionsTable.status,
-        createdAt: executionsTable.createdAt,
-        startedAt: executionsTable.startedAt,
-        completedAt: executionsTable.completedAt,
-        errorMessage: executionsTable.errorMessage,
-        errorNodeId: executionsTable.errorNodeId,
-        executionDepth: executionsTable.executionDepth,
-        externalEvents: executionsTable.externalEvents,
-        flowName: sql<string>`${executionsTable.metadata}->>'flowName'`,
-        eventData: sql<any>`${executionsTable.metadata}->'contextData'->'eventData'`,
+        // All execution fields using getTableColumns utility
+        ...getTableColumns(executionsTable),
+        // Calculated fields using subqueries
+        levels: sql<number>`(
+          SELECT COALESCE(MAX(${executionsTable.executionDepth}), 0)
+          FROM ${executionsTable} children
+          WHERE children.root_execution_id = ${executionsTable.id}
+        )`.as('levels'),
+        totalNested: sql<number>`(
+          SELECT COUNT(*)::int
+          FROM ${executionsTable} children
+          WHERE children.root_execution_id = ${executionsTable.id}
+        )`.as('totalNested'),
       })
       .from(executionsTable)
+      .where(
+        and(
+          eq(executionsTable.flowId, flowId),
+          eq(executionsTable.executionDepth, 0),
+          after ? lt(executionsTable.createdAt, after) : undefined,
+        ),
+      )
       .orderBy(desc(executionsTable.createdAt))
-      .limit(limit || 200)
+      .limit(limit)
 
     return results.map((row) => {
-      const flow = new Flow({
-        id: row.flowId,
-        name: row.flowName || 'Unnamed Flow',
-        ownerID: row.ownerId || undefined,
-      })
-
+      const { levels, totalNested, ...executionFields } = row
       return {
-        id: row.id,
-        flow,
-        initialStateFlow: flow,
-        context: {
-          executionId: row.id,
-          eventData: row.eventData || undefined,
-          integrations: {},
-          metadata: {},
-        } as any,
-        engine: null as any,
-        status: row.status as any,
-        createdAt: row.createdAt,
-        startedAt: row.startedAt || undefined,
-        completedAt: row.completedAt || undefined,
-        error: row.errorMessage
-          ? {
-              message: row.errorMessage,
-              nodeId: row.errorNodeId || undefined,
-            }
-          : undefined,
-        parentExecutionId: row.parentExecutionId || undefined,
-        executionDepth: row.executionDepth,
-        externalEvents: row.externalEvents as any,
+        execution: executionFields,
+        levels: levels ?? 0,
+        totalNested: totalNested ?? 0,
       }
     })
   }
@@ -220,53 +102,73 @@ export class PostgresExecutionStore implements IExecutionStore {
   /**
    * Get all child executions of a parent
    */
-  async getChildExecutions(parentId: string): Promise<string[]> {
-    const results = await this.db
-      .select({ id: executionsTable.id })
+  async getChildExecutions(parentId: string): Promise<ExecutionRow[]> {
+    return await this.db
+      .select()
       .from(executionsTable)
       .where(eq(executionsTable.parentExecutionId, parentId))
-
-    return results.map((r: any) => r.id)
   }
 
   /**
-   * Get the entire execution tree recursively
+   * Get the entire execution tree
    */
-  async getExecutionTree(rootId: string): Promise<Array<{ id: string, parentId: string | null, level: number }>> {
-    const query = this.db.$with('execution_tree').as(
-      this.db
-        .select({
-          id: executionsTable.id,
-          parentId: executionsTable.parentExecutionId,
-          level: sql`0`.as('level'),
-        })
-        .from(executionsTable)
-        .where(eq(executionsTable.id, rootId))
-        .unionAll(
-          this.db
-            .select({
-              id: executionsTable.id,
-              parentId: executionsTable.parentExecutionId,
-              level: sql`et.level + 1`.as('level'),
-            })
-            .from(executionsTable)
-            .innerJoin(
-              sql`execution_tree et`,
-              eq(executionsTable.parentExecutionId, sql`et.id`),
-            ),
-        ),
-    )
-
+  async getExecutionTree(rootId: string): Promise<Array<ExecutionTreeNode>> {
     const results = await this.db
-      .with(query)
       .select()
-      .from(query)
+      .from(executionsTable)
+      .where(eq(executionsTable.rootExecutionId, rootId))
 
-    return results.map((r: any) => ({
-      id: r.id,
-      parentId: r.parentId,
-      level: Number(r.level),
-    }))
+    const rawExecutions = results as ExecutionRow[]
+
+    if (rawExecutions.length === 0) {
+      return []
+    }
+
+    const executionMap = new Map<string, ExecutionRow>()
+    const childrenMap = new Map<string, string[]>()
+
+    for (const execution of rawExecutions) {
+      executionMap.set(execution.id, execution)
+
+      const parentId = execution.parentExecutionId
+      if (parentId) {
+        if (!childrenMap.has(parentId)) {
+          childrenMap.set(parentId, [])
+        }
+        childrenMap.get(parentId)!.push(execution.id)
+      }
+    }
+
+    const result: Array<ExecutionTreeNode> = []
+
+    const traverse = (executionId: string, parentId: string | null, level: number) => {
+      const execution = executionMap.get(executionId)
+      if (!execution)
+        return
+
+      result.push({
+        id: executionId,
+        parentId,
+        level,
+        execution,
+      })
+
+      const children = childrenMap.get(executionId) || []
+      for (const childId of children) {
+        traverse(childId, executionId, level + 1)
+      }
+    }
+
+    traverse(rootId, null, 0)
+
+    result.sort((a, b) => {
+      if (a.level !== b.level) {
+        return a.level - b.level
+      }
+      return a.id.localeCompare(b.id)
+    })
+
+    return result
   }
 
   /**
@@ -278,7 +180,7 @@ export class PostgresExecutionStore implements IExecutionStore {
 
     try {
       // Use a transaction for atomicity
-      const result = await this.db.transaction(async (tx: any) => {
+      return await this.db.transaction(async (tx) => {
         // Check if execution exists and is not already claimed
         const existingClaim = await tx
           .select()
@@ -319,8 +221,6 @@ export class PostgresExecutionStore implements IExecutionStore {
         })
         return true
       })
-
-      return result
     } catch (error) {
       // Handle unique constraint violation (race condition)
       if ((error as any).code === '23505') {
@@ -380,13 +280,13 @@ export class PostgresExecutionStore implements IExecutionStore {
       .from(executionClaimsTable)
       .where(eq(executionClaimsTable.status, 'active'))
 
-    return results.map((row: any) => ({
+    return results.map((row: ExecutionClaimRow) => ({
       executionId: row.executionId,
       workerId: row.workerId,
       claimedAt: row.claimedAt,
       expiresAt: row.expiresAt,
       heartbeatAt: row.heartbeatAt,
-      status: row.status as 'active' | 'released' | 'expired',
+      status: row.status,
     }))
   }
 
@@ -404,14 +304,14 @@ export class PostgresExecutionStore implements IExecutionStore {
       return null
     }
 
-    const row = results[0]
+    const row = results[0] as ExecutionClaimRow
     return {
       executionId: row.executionId,
       workerId: row.workerId,
       claimedAt: row.claimedAt,
       expiresAt: row.expiresAt,
       heartbeatAt: row.heartbeatAt,
-      status: row.status as 'active' | 'released' | 'expired',
+      status: row.status,
     }
   }
 

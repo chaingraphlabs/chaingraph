@@ -121,6 +121,7 @@ export interface ExecutionEventData {
   [ExecutionEventEnum.CHILD_EXECUTION_SPAWNED]: {
     parentExecutionId: string
     childExecutionId: string
+    rootExecutionId: string
     eventName: string
     eventData: any // TODO: specific type?
   }

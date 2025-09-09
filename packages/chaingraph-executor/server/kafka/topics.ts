@@ -7,7 +7,7 @@
  */
 
 import type { Admin } from 'kafkajs'
-import { KafkaTopics } from '../types/messages'
+import { KafkaTopics } from 'types/messages'
 import { createLogger } from '../utils/logger'
 import { getKafkaClient } from './client'
 

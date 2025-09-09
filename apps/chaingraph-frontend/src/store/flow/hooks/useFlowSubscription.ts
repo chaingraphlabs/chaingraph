@@ -33,13 +33,6 @@ import { nodeUpdated } from '../../updates'
 import { $activeFlowId, $flowSubscriptionState, $isFlowsLoading, setFlowLoaded, setFlowMetadata, setFlowSubscriptionError, setFlowSubscriptionStatus } from '../stores'
 import { FlowSubscriptionStatus } from '../types'
 
-// export function useFlowSubscription2() {
-//   const trpc = useTRPC()
-//   const activeFlowId = useUnit($activeFlowId)
-//
-//
-// }
-
 export function useFlowSubscription() {
   const activeFlowId = useUnit($activeFlowId)
   const isFlowsLoading = useUnit($isFlowsLoading)

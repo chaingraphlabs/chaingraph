@@ -109,6 +109,7 @@ describe('disabledAutoExecution', () => {
       'test-execution',
       {},
       undefined, // no parent
+      undefined, // no parent
       undefined, // no event data
       false, // not a child execution
     )
@@ -152,6 +153,7 @@ describe('disabledAutoExecution', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       'parent-execution', // has parent
       { eventName: 'test-event', payload: {} }, // has event data
       true, // is a child execution
@@ -225,6 +227,7 @@ describe('disabledAutoExecution', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined,
       undefined,
       false,

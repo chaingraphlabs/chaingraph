@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionRouter } from '../server/trpc/router'
+import type { ExecutionRouter } from 'server'
 import { QueryClient } from '@tanstack/react-query'
 import {
   createTRPCClient as _createTRPCClient,
@@ -36,9 +36,9 @@ function makeQueryClient() {
   })
 }
 
-let browserQueryClient: QueryClient | undefined
+let browserExecutorQueryClient: QueryClient | undefined
 
-export function getQueryClient() {
+export function getExecutorQueryClient() {
   if (typeof window === 'undefined') {
     // Server: always make a new query client
     return makeQueryClient()
@@ -47,11 +47,14 @@ export function getQueryClient() {
     // This is very important, so we don't re-make a new client if React
     // suspends during the initial render. This may not be needed if we
     // have a suspense boundary BELOW the creation of the query client
-    if (!browserQueryClient)
-      browserQueryClient = makeQueryClient()
-    return browserQueryClient
+    if (!browserExecutorQueryClient)
+      browserExecutorQueryClient = makeQueryClient()
+    return browserExecutorQueryClient
   }
 }
+
+// Keep old export for backward compatibility
+export const getQueryClient = getExecutorQueryClient
 
 export function createTRPCClient(
   opts: {
@@ -65,7 +68,7 @@ export function createTRPCClient(
       onClose?: (cause?: { code?: number }) => void
     }
   } = {
-    url: `ws://localhost:3002`,
+    url: `ws://localhost:4021`,
     superjsonCustom: SuperJSON,
   },
 ) {

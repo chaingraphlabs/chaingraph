@@ -8,17 +8,16 @@
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type { Consumer, Producer } from 'kafkajs'
+import type { ExecutionEventMessage } from 'types/messages'
 import type { IEventBus } from '../../interfaces/IEventBus'
-import type { ExecutionEventMessage } from '../../types/messages'
 import { ExecutionEventImpl as EventImpl } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
+import { KafkaTopics } from 'types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getEventProducer } from '../../kafka/producers/event-producer'
-import { KafkaTopics } from '../../types/messages'
 import { config } from '../../utils/config'
 import { createLogger } from '../../utils/logger'
-import { safeSuperJSONParse } from '../../utils/serialization'
 
 const logger = createLogger('kafka-event-bus')
 
@@ -37,6 +36,14 @@ export class KafkaEventBus implements IEventBus {
   private subscriptions: Map<string, ActiveSubscription> = new Map()
   private cleanupInterval: NodeJS.Timeout | null = null
 
+  constructor(options?: {
+    producer?: Producer
+  }) {
+    if (options?.producer) {
+      this.producer = options.producer
+    }
+  }
+
   publishEvent = async (executionId: string, event: ExecutionEventImpl): Promise<void> => {
     if (!this.producer) {
       this.producer = await getEventProducer()
@@ -49,16 +56,18 @@ export class KafkaEventBus implements IEventBus {
       workerId: config.worker.id,
     }
 
+    const value = JSON.stringify({
+      executionId: message.executionId,
+      timestamp: message.timestamp,
+      workerId: message.workerId,
+      event: message.event.serialize(),
+    })
+
     await this.producer.send({
       topic: KafkaTopics.EVENTS,
       messages: [{
         key: executionId, // Use executionId as partition key for ordering
-        value: JSON.stringify({
-          executionId: message.executionId,
-          timestamp: message.timestamp,
-          workerId: message.workerId,
-          event: message.event.serialize(),
-        }),
+        value,
         timestamp: Date.now().toString(),
       }],
       acks: -1,
@@ -69,6 +78,7 @@ export class KafkaEventBus implements IEventBus {
       executionId,
       eventType: event.type,
       eventIndex: event.index,
+      value,
     }, 'Event published to Kafka')
   }
 
@@ -84,7 +94,39 @@ export class KafkaEventBus implements IEventBus {
       groupId: subscriptionId,
       sessionTimeout: 10000,
       heartbeatInterval: 3000,
-      maxWaitTimeInMs: 100,
+      maxWaitTimeInMs: 10, // Reduced for faster batching
+      retry: {
+        initialRetryTime: 100, // Start with 100ms retry delay
+        maxRetryTime: 5000, // Max 5 seconds between retries
+        multiplier: 1.5, // Moderate exponential backoff
+        retries: 8, // Allow up to 8 retries
+        restartOnFailure: async (error: Error) => {
+          logger.error({
+            error: error.message,
+            subscriptionId,
+            executionId,
+          }, 'Consumer failed, evaluating restart')
+
+          // Restart on retriable errors, but not on authorization/authentication errors
+          const nonRetriableErrors = [
+            'SASL_AUTHENTICATION_FAILED',
+            'INVALID_CONFIG',
+            'TOPIC_AUTHORIZATION_FAILED',
+          ]
+
+          const shouldRestart = !nonRetriableErrors.some(errType =>
+            error.message.includes(errType),
+          )
+
+          if (shouldRestart) {
+            logger.info({ subscriptionId, executionId }, 'Restarting consumer after failure')
+          } else {
+            logger.warn({ subscriptionId, executionId }, 'Not restarting consumer due to non-retriable error')
+          }
+
+          return shouldRestart
+        },
+      },
     })
 
     // Store subscription with timestamp for cleanup
@@ -202,27 +244,84 @@ export class KafkaEventBus implements IEventBus {
       let resolver: ((value: ExecutionEventImpl[]) => void) | null = null
       let rejecter: ((error: Error) => void) | null = null
 
-      // Start consuming
+      // Start consuming with batch processing
       await consumer.run({
-        eachMessage: async ({ message }) => {
-          if (!message.value)
-            return
+        eachBatch: async ({ batch }) => {
+          const batchEvents: ExecutionEventImpl[] = []
+          let hasError = false
+          let batchError: Error | null = null
 
-          try {
-            const parsedMessage = safeSuperJSONParse<any>(message.value.toString())
+          // Process all messages in the batch
+          for (const message of batch.messages) {
+            if (!message.value)
+              continue
 
-            // Filter by executionId
-            if (parsedMessage.executionId !== executionId)
-              return
+            try {
+              // const parsedMessage = safeSuperJSONParse<any>(message.value.toString())
+              // const parsedMessage = SuperJSON.deserialize(message.value as any) as any
+              const parsedMessage = JSON.parse(message.value.toString())
 
-            // Deserialize event
-            const event = EventImpl.deserializeStatic(parsedMessage.event)
+              // Check if parsing was successful
+              if (!parsedMessage) {
+                logger.debug({
+                  executionId,
+                  messageValue: message.value.toString().substring(0, 200),
+                  messageType: typeof message.value,
+                }, 'Skipping message - failed to parse')
+                continue
+              }
 
-            // Skip events before fromIndex
-            if (event.index < fromIndex)
-              return
+              // Filter by executionId
+              if (parsedMessage.executionId !== executionId)
+                continue
 
-            eventBuffer.push(event)
+              // Check if event data exists
+              if (!parsedMessage.event) {
+                logger.warn({
+                  executionId,
+                  parsedMessage,
+                }, 'Kafka message missing event data')
+                continue
+              }
+
+              // Deserialize event
+              const event = EventImpl.deserializeStatic(parsedMessage.event)
+
+              console.log(`Deserialized event: ${JSON.stringify(event)}`)
+
+              if (!event) {
+                logger.warn({
+                  executionId,
+                  parsedMessage,
+                }, 'Failed to deserialize event from Kafka message')
+                continue
+              }
+
+              // Skip events before fromIndex
+              if (event.index < fromIndex)
+                continue
+
+              batchEvents.push(event)
+            } catch (error) {
+              logger.error({
+                error: error instanceof Error
+                  ? {
+                      message: error.message,
+                      stack: error.stack,
+                      name: error.name,
+                    }
+                  : String(error),
+                executionId,
+                messageValue: message.value ? message.value.toString().substring(0, 200) : 'null',
+              }, 'Failed to process Kafka message in batch')
+              hasError = true
+              batchError = error as Error
+            }
+          }
+
+          // Add all valid events from this batch to the buffer
+          if (batchEvents.length > 0) {
+            eventBuffer.push(...batchEvents)
 
             // Update last activity
             const subscription = this.subscriptions.get(subscriptionId)
@@ -230,21 +329,28 @@ export class KafkaEventBus implements IEventBus {
               subscription.lastActivity = Date.now()
             }
 
-            // If we have a waiting resolver, resolve it
-            if (resolver && eventBuffer.length > 0) {
-              const events = [...eventBuffer]
-              eventBuffer.length = 0
-              resolver(events)
-              resolver = null
-              rejecter = null
-            }
-          } catch (error) {
-            logger.error({ error }, 'Failed to process Kafka message')
-            if (rejecter) {
-              rejecter(error as Error)
-              resolver = null
-              rejecter = null
-            }
+            logger.debug({
+              executionId,
+              batchSize: batch.messages.length,
+              validEvents: batchEvents.length,
+              bufferSize: eventBuffer.length,
+            }, 'Processed event batch')
+          }
+
+          // If we have a waiting resolver and events, resolve it
+          if (resolver && eventBuffer.length > 0) {
+            const events = [...eventBuffer]
+            eventBuffer.length = 0
+            resolver(events)
+            resolver = null
+            rejecter = null
+          }
+
+          // Handle batch-level errors
+          if (hasError && batchError && rejecter) {
+            rejecter(batchError)
+            resolver = null
+            rejecter = null
           }
         },
       })

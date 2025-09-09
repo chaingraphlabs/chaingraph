@@ -6,15 +6,31 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ExecutionRow } from 'server/stores/postgres/schema'
+import type { ExecutionCommand, ExecutionTask } from 'types'
 import type { createContext } from './context'
-import process from 'node:process'
+import {
+  ExecutionExternalEventSchema,
+  IntegrationContextSchema,
+} from '@badaitech/chaingraph-types'
+import { ExecutionOptionsSchema } from '@badaitech/chaingraph-types'
 import { initTRPC, TRPCError } from '@trpc/server'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
+import { publishExecutionCommand } from 'server/kafka/producers/command-producer'
+import { generateExecutionID } from 'server/services/ExecutionService'
+import { config } from 'server/utils/config'
 import SuperJSON from 'superjson'
+import {
+  ExecutionCommandType,
+  ExecutionStatus,
+} from 'types'
 import { z } from 'zod'
-import { config } from '../utils/config'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('trpc-router')
+
+const defaultExecutionMaxRetries = 3
 
 // Initialize tRPC
 const t = initTRPC.context<typeof createContext>().create({
@@ -34,294 +50,409 @@ const t = initTRPC.context<typeof createContext>().create({
   },
 })
 
-const router = t.router
-const procedure = t.procedure
+// const procedure = t.procedure
 
-// Integration context schemas
-const integrationContextSchema = z.object({
-  // Add integration contexts as needed
-}).passthrough()
+export const router = t.router
+export const publicProcedure = t.procedure
 
-// Execution options schema
-const executionOptionsSchema = z.object({
-  execution: z.object({
-    maxConcurrency: z.number().optional(),
-    nodeTimeoutMs: z.number().optional(),
-    flowTimeoutMs: z.number().optional(),
-  }).optional(),
-  debug: z.boolean().optional(),
-  breakpoints: z.array(z.string()).optional(),
+export const authedProcedure = publicProcedure.use(async (opts) => {
+  const { ctx } = opts
+
+  // If auth is globally disabled or in dev mode, allow the request
+  if (!config.authConfig.enabled || config.authConfig.devMode) {
+    // console.debug('authedProcedure: Auth is disabled or in dev mode, skipping auth check')
+    return opts.next()
+  }
+
+  // Check if user is authenticated
+  if (!ctx.session.isAuthenticated) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' })
+  }
+
+  return opts.next({
+    ctx: {
+      ...ctx,
+      user: ctx.session.user,
+    },
+  })
+})
+
+export const executionContextProcedure = authedProcedure.use(async (opts) => {
+  const rawInput = await opts.getRawInput()
+  const executionId: string | null = rawInput
+    && typeof rawInput === 'object'
+    && 'executionId' in rawInput
+    && typeof rawInput.executionId === 'string'
+    ? rawInput.executionId
+    : null
+
+  if (!executionId) {
+    throw new Error('Parameter executionId is required for this procedure')
+  }
+
+  // Check if user has access to the flow
+  const { ctx } = opts
+
+  if (!ctx.session.user?.id) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'User not authenticated',
+    })
+  }
+
+  if (ctx.session.user.role === 'admin') {
+    // Admins have access to all flows
+    return opts.next(opts)
+  }
+
+  // TODO: make sure that we read from the cache when persistent storage is implemented
+  const execution = await ctx.executionStore.get(executionId)
+  if (!execution) {
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: 'Execution not found',
+    })
+  }
+
+  if (!await ctx.flowStore.hasAccess(execution.flowId, ctx.session.user.id)) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'User does not have access to this flow',
+    })
+  }
+
+  return opts.next(opts)
 })
 
 export const executionRouter = router({
-  // Create execution instance
-  create: procedure
+  // Create execution record in store
+  create: authedProcedure
     .input(z.object({
       flowId: z.string(),
-      options: executionOptionsSchema.optional(),
-      integration: integrationContextSchema.optional(),
+      options: ExecutionOptionsSchema.optional(),
+      integration: IntegrationContextSchema.optional(),
+      events: z.array(ExecutionExternalEventSchema).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionService } = ctx
+      const { executionStore, flowStore } = ctx
 
-      // Load flow from store
-      const { loadFlow } = await import('../stores/flow-store')
-      const flow = await loadFlow(input.flowId)
-
-      if (!flow) {
+      const flowMetadata = await flowStore.getFlowMetadata(input.flowId)
+      if (!flowMetadata) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: `Flow with id ${input.flowId} not found`,
         })
       }
 
-      const instance = await executionService.createExecution({
-        flow,
-        options: input.options,
-        integrations: input.integration,
-      })
+      if (!flowMetadata.id) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Flow metadata is missing ID`,
+        })
+      }
 
-      if (input.options?.breakpoints) {
-        for (const nodeId of input.options.breakpoints) {
-          await executionService.addBreakpoint(instance.id, nodeId)
+      if (!flowMetadata.ownerID) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Flow metadata is missing ownerID`,
+        })
+      }
+
+      if (ctx.session.user?.id !== flowMetadata.ownerID) {
+        if (ctx.session.user?.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'User does not own the flow',
+          })
         }
       }
 
+      // Create execution record
+
+      const executionId = generateExecutionID()
+
+      const executionRow: ExecutionRow = {
+        id: executionId,
+        flowId: flowMetadata.id!,
+        ownerId: flowMetadata.ownerID,
+        rootExecutionId: executionId,
+        parentExecutionId: null,
+        status: ExecutionStatus.Created,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        startedAt: null,
+        completedAt: null,
+        errorMessage: null,
+        errorNodeId: null,
+        executionDepth: 0,
+        options: input.options || {},
+        integration: input.integration || {},
+        externalEvents: input.events || [],
+      }
+
+      try {
+        await executionStore.create(executionRow)
+      } catch (error) {
+        logger.error({ error, executionId }, 'Failed to create execution record')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create execution record',
+        })
+      }
+
+      // TODO: later we could emit an event here for execution created to provide clients ability to subscribe to new executions
+
       return {
-        executionId: instance.id,
+        executionId,
       }
     }),
 
   // Start execution
-  start: procedure
+  start: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
-      events: z.array(z.object({
-        type: z.string(),
-        data: z.record(z.any()).optional(),
-      })).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionService } = ctx
+      const { taskQueue, executionStore } = ctx
 
-      const instance = await executionService.getInstance(input.executionId)
-      if (!instance) {
+      const executionRow = await executionStore.get(input.executionId)
+      if (!executionRow) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: `Execution with id ${input.executionId} not found`,
+          message: `Execution with id ${input.executionId} not found, create it first`,
         })
       }
 
-      await executionService.startExecution(input.executionId, input.events)
+      const executionTask: ExecutionTask = {
+        executionId: input.executionId,
+        flowId: executionRow.flowId,
+        timestamp: Date.now(),
+        maxRetries: defaultExecutionMaxRetries,
+      }
+
+      try {
+        await taskQueue.publishTask(executionTask)
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to publish execution task')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to publish execution task',
+        })
+      }
+
       return { success: true }
     }),
 
   // Stop execution
-  stop: procedure
+  stop: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
       reason: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionService } = ctx
+      const { executionStore } = ctx
 
-      const instance = await executionService.getInstance(input.executionId)
-      if (!instance) {
+      const executionRow = await executionStore.get(input.executionId)
+      if (!executionRow) {
         throw new TRPCError({
-          code: 'NOT_FOUND',
+          code: 'BAD_REQUEST',
           message: `Execution with id ${input.executionId} not found`,
         })
       }
 
-      await executionService.stopExecution(input.executionId, input.reason)
+      const deniedStatuses = [
+        ExecutionStatus.Completed,
+        ExecutionStatus.Failed,
+        ExecutionStatus.Stopped,
+      ]
+
+      if (deniedStatuses.includes(executionRow.status)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot stop execution in status ${executionRow.status}`,
+        })
+      }
+
+      // Create STOP command
+      const command: ExecutionCommand = {
+        id: `CMD${customAlphabet(nolookalikes, 24)()}`,
+        executionId: input.executionId,
+        command: ExecutionCommandType.STOP,
+        payload: {
+          reason: input.reason || 'User requested stop',
+        },
+        timestamp: Date.now(),
+        requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
+        issuedBy: 'user',
+      }
+
+      await publishExecutionCommand(command)
+
       return { success: true }
     }),
 
   // Pause execution
-  pause: procedure
+  pause: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
       reason: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionService } = ctx
+      const { executionStore } = ctx
 
-      const instance = await executionService.getInstance(input.executionId)
-      if (!instance) {
+      const executionRow = await executionStore.get(input.executionId)
+      if (!executionRow) {
         throw new TRPCError({
-          code: 'NOT_FOUND',
+          code: 'BAD_REQUEST',
           message: `Execution with id ${input.executionId} not found`,
         })
       }
 
-      await executionService.pauseExecution(input.executionId, input.reason)
+      const deniedStatuses = [
+        ExecutionStatus.Created,
+        ExecutionStatus.Paused,
+        ExecutionStatus.Completed,
+        ExecutionStatus.Failed,
+        ExecutionStatus.Stopped,
+      ]
+
+      if (deniedStatuses.includes(executionRow.status)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot pause execution in status ${executionRow.status}`,
+        })
+      }
+
+      // Create STOP command
+      const command: ExecutionCommand = {
+        id: `CMD${customAlphabet(nolookalikes, 24)()}`,
+        executionId: input.executionId,
+        command: ExecutionCommandType.PAUSE,
+        payload: {
+          reason: input.reason || 'User requested pause',
+        },
+        timestamp: Date.now(),
+        requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
+        issuedBy: 'user',
+      }
+
+      await publishExecutionCommand(command)
+
       return { success: true }
     }),
 
   // Resume execution
-  resume: procedure
+  resume: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionService } = ctx
+      const { executionStore } = ctx
 
-      const instance = await executionService.getInstance(input.executionId)
-      if (!instance) {
+      const executionRow = await executionStore.get(input.executionId)
+      if (!executionRow) {
         throw new TRPCError({
-          code: 'NOT_FOUND',
+          code: 'BAD_REQUEST',
           message: `Execution with id ${input.executionId} not found`,
         })
       }
 
-      await executionService.resumeExecution(input.executionId)
+      const deniedStatuses = [
+        ExecutionStatus.Created,
+        ExecutionStatus.Running,
+        ExecutionStatus.Completed,
+        ExecutionStatus.Failed,
+        ExecutionStatus.Stopped,
+      ]
+
+      if (deniedStatuses.includes(executionRow.status)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot resume execution in status ${executionRow.status}`,
+        })
+      }
+
+      // Create RESUME command
+      const command: ExecutionCommand = {
+        id: `CMD${customAlphabet(nolookalikes, 24)()}`,
+        executionId: input.executionId,
+        command: ExecutionCommandType.RESUME,
+        payload: {},
+        timestamp: Date.now(),
+        requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
+        issuedBy: 'user',
+      }
+
+      await publishExecutionCommand(command)
+
       return { success: true }
     }),
 
-  // Get execution state
-  getState: procedure
-    .input(z.object({
-      executionId: z.string(),
-    }))
-    .query(async ({ input, ctx }) => {
-      const { executionService } = ctx
-
-      const instance = await executionService.getInstance(input.executionId)
-      if (!instance) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: `Execution with id ${input.executionId} not found`,
-        })
-      }
-
-      const state = await executionService.getExecutionState(input.executionId)
-      const childExecutions = await executionService.getChildExecutions(input.executionId)
-
-      return {
-        ...state,
-        parentExecutionId: instance.parentExecutionId,
-        childExecutionIds: childExecutions,
-      }
-    }),
-
   // Get child executions
-  getChildExecutions: procedure
+  getExecutionsTree: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
-    }))
-    .query(async ({ input, ctx }) => {
-      const { executionService } = ctx
-
-      const childIds = await executionService.getChildExecutions(input.executionId)
-      const childStates = await Promise.all(
-        childIds.map(async (childId) => {
-          const state = await executionService.getExecutionState(childId)
-          const instance = await executionService.getInstance(childId)
-          return {
-            ...state,
-            eventData: instance?.context.eventData,
-          }
-        }),
-      )
-      return childStates
-    }),
-
-  // Get execution tree
-  getExecutionTree: procedure
-    .input(z.object({
-      flowId: z.string(),
-      status: z.enum(['all', 'created', 'running', 'completed', 'failed', 'stopped', 'paused']).optional(),
-      limit: z.number().min(1).max(500).default(50),
     }))
     .query(async ({ input, ctx }) => {
       const { executionStore } = ctx
 
-      // Get all executions from the store
-      const allExecutions = await executionStore.list()
-
-      // Filter executions
-      let filteredExecutions = allExecutions
-
-      // Filter by flow ID if provided
-      if (input.flowId) {
-        filteredExecutions = filteredExecutions.filter(exec => exec.flow.id === input.flowId)
+      const executionTree = await executionStore.getExecutionTree(input.executionId)
+      if (!executionTree || executionTree.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Execution tree with root id ${input.executionId} not found`,
+        })
       }
 
-      // Filter by status if provided
-      if (input.status && input.status !== 'all') {
-        filteredExecutions = filteredExecutions.filter(exec =>
-          exec.status.toLowerCase() === input.status,
-        )
+      return executionTree
+    }),
+
+  // Get execution tree
+  getRootExecutions: authedProcedure
+    .input(z.object({
+      flowId: z.string(),
+      limit: z.number().min(1).max(100).default(50),
+      after: z.date().optional(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const { executionStore, flowStore } = ctx
+
+      const flowMetadata = await flowStore.getFlowMetadata(input.flowId)
+      if (!flowMetadata) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Flow with id ${input.flowId} not found`,
+        })
       }
 
-      // Sort by execution depth first, then by creation time
-      filteredExecutions.sort((a, b) => {
-        const depthDiff = (a.executionDepth || 0) - (b.executionDepth || 0)
-        if (depthDiff !== 0)
-          return depthDiff
-        return b.createdAt.getTime() - a.createdAt.getTime()
-      })
-
-      // Limit results
-      filteredExecutions = filteredExecutions.slice(0, input.limit)
-
-      // Build execution tree data
-      const childrenMap = new Map<string, number>()
-      allExecutions.forEach((exec) => {
-        if (exec.parentExecutionId) {
-          const count = childrenMap.get(exec.parentExecutionId) || 0
-          childrenMap.set(exec.parentExecutionId, count + 1)
+      if (ctx.session.user?.id !== flowMetadata.ownerID) {
+        if (ctx.session.user?.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'User does not own the flow',
+          })
         }
-      })
+      }
 
-      const result = await Promise.all(
-        filteredExecutions.map(async (exec) => {
-          const childCount = childrenMap.get(exec.id) || 0
-
-          return {
-            id: exec.id,
-            flowId: exec.flow.id || '',
-            flowName: exec.flow.metadata?.name || 'Unnamed Flow',
-            status: exec.status,
-            parentExecutionId: exec.parentExecutionId,
-            executionDepth: exec.executionDepth || 0,
-            createdAt: exec.createdAt,
-            startedAt: exec.startedAt,
-            completedAt: exec.completedAt,
-            error: exec.error,
-            triggeredByEvent: exec.context.eventData
-              ? {
-                  eventName: exec.context.eventData.eventName,
-                  payload: exec.context.eventData.payload,
-                }
-              : exec.externalEvents && exec.externalEvents.length > 0
-                ? {
-                    eventName: exec.externalEvents.map(e => e.type).join(', '),
-                    payload: {
-                      count: exec.externalEvents.length,
-                      source: 'external',
-                      events: exec.externalEvents,
-                    },
-                  }
-                : undefined,
-            childCount,
-          }
-        }),
+      // Get all root executions for the flow
+      return await executionStore.getRootExecutions(
+        input.flowId,
+        input.limit,
+        input.after || null,
       )
-
-      return result
     }),
 
   // Subscribe to execution events
-  subscribeToEvents: procedure
+  subscribeToExecutionEvents: executionContextProcedure
     .input(z.object({
       executionId: z.string(),
       fromIndex: z.number().optional().default(0),
+      eventTypes: z.array(z.string()).optional().default([]),
     }))
     .subscription(async function* ({ input, ctx }) {
-      const { executionService, eventBus } = ctx
+      const { executionStore, eventBus } = ctx
 
-      const instance = await executionService.getInstance(input.executionId)
+      const instance = await executionStore.get(input.executionId)
       if (!instance) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -335,11 +466,19 @@ export const executionRouter = router({
       }, 'Starting event subscription')
 
       // Subscribe to events from the event bus
-      const iterator = eventBus.subscribeToEvents(input.executionId, input.fromIndex)
+      const iterator = eventBus.subscribeToEvents(
+        input.executionId,
+        input.fromIndex,
+      )
 
       try {
         for await (const events of iterator) {
-          yield events
+          yield events.filter((event) => {
+            if (input.eventTypes.length === 0) {
+              return true
+            }
+            return input.eventTypes.includes(event.type)
+          })
         }
       } catch (error) {
         logger.error({
@@ -354,195 +493,53 @@ export const executionRouter = router({
       }
     }),
 
-  // Health check procedures
-  health: router({
-    // Basic health check
-    check: procedure
-      .query(async ({ ctx }) => {
-        const { executionStore, eventBus } = ctx
-
-        const checks = {
-          server: true,
-          database: false,
-          kafka: false,
-          mode: config.mode,
-          workerId: config.worker.id,
-          timestamp: Date.now(),
-        }
-
-        // Check database connectivity
-        try {
-          await executionStore.list() // Simple query to check DB
-          checks.database = true
-        } catch (error) {
-          logger.error({ error }, 'Database health check failed')
-        }
-
-        // Check Kafka connectivity if in distributed mode
-        if (config.mode === 'distributed') {
-          try {
-            const { getKafkaClient } = await import('../kafka/client')
-            const kafka = getKafkaClient()
-            const admin = kafka.admin()
-            await admin.connect()
-            await admin.listTopics()
-            await admin.disconnect()
-            checks.kafka = true
-          } catch (error) {
-            logger.error({ error }, 'Kafka health check failed')
-          }
-        } else {
-          checks.kafka = true // Not applicable in local mode
-        }
-
-        const isHealthy = checks.server && checks.database && checks.kafka
-
-        return {
-          status: isHealthy ? 'healthy' : 'unhealthy',
-          checks,
-        }
-      }),
-
-    // Detailed worker status
-    workerStatus: procedure
-      .query(async ({ ctx }) => {
-        const { executionStore } = ctx
-
-        // Get all active claims for this worker
-        const allExecutions = await executionStore.list()
-        const activeClaims: Array<{
-          executionId: string
-          claimedAt: Date
-          expiresAt: Date
-          heartbeatAt: Date
-        }> = []
-
-        for (const exec of allExecutions) {
-          const claim = await executionStore.getClaimForExecution(exec.id)
-          if (claim && claim.workerId === config.worker.id && claim.status === 'active') {
-            activeClaims.push({
-              executionId: exec.id,
-              claimedAt: claim.claimedAt,
-              expiresAt: claim.expiresAt,
-              heartbeatAt: claim.heartbeatAt,
-            })
-          }
-        }
-
-        return {
-          workerId: config.worker.id,
-          mode: config.mode,
-          activeExecutions: activeClaims.length,
-          claims: activeClaims,
-          config: {
-            concurrency: config.worker.concurrency,
-            claimTimeoutMs: config.worker.claimTimeoutMs,
-            heartbeatIntervalMs: config.worker.heartbeatIntervalMs,
-          },
-          uptime: process.uptime(),
-          memory: process.memoryUsage(),
-        }
-      }),
-
-    // System metrics
-    metrics: procedure
-      .query(async ({ ctx }) => {
-        const { executionStore } = ctx
-
-        const allExecutions = await executionStore.list()
-        const metrics = {
-          total: allExecutions.length,
-          byStatus: {
-            created: 0,
-            running: 0,
-            paused: 0,
-            completed: 0,
-            failed: 0,
-            stopped: 0,
-          },
-          avgDuration: 0,
-          successRate: 0,
-        }
-
-        let totalDuration = 0
-        let completedCount = 0
-
-        for (const exec of allExecutions) {
-          // Count by status
-          const status = exec.status.toLowerCase()
-          if (status in metrics.byStatus) {
-            metrics.byStatus[status as keyof typeof metrics.byStatus]++
-          }
-
-          // Calculate duration for completed executions
-          if (exec.completedAt && exec.startedAt) {
-            const duration = exec.completedAt.getTime() - exec.startedAt.getTime()
-            totalDuration += duration
-            completedCount++
-          }
-        }
-
-        // Calculate averages
-        if (completedCount > 0) {
-          metrics.avgDuration = totalDuration / completedCount
-        }
-
-        const totalFinished = metrics.byStatus.completed + metrics.byStatus.failed + metrics.byStatus.stopped
-        if (totalFinished > 0) {
-          metrics.successRate = metrics.byStatus.completed / totalFinished
-        }
-
-        return metrics
-      }),
-  }),
-
   // Debug procedures
-  debug: router({
-    // Add breakpoint
-    addBreakpoint: procedure
-      .input(z.object({
-        executionId: z.string(),
-        nodeId: z.string(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const { executionService } = ctx
-        await executionService.addBreakpoint(input.executionId, input.nodeId)
-        return { success: true }
-      }),
-
-    // Remove breakpoint
-    removeBreakpoint: procedure
-      .input(z.object({
-        executionId: z.string(),
-        nodeId: z.string(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const { executionService } = ctx
-        await executionService.removeBreakpoint(input.executionId, input.nodeId)
-        return { success: true }
-      }),
-
-    // Step execution
-    step: procedure
-      .input(z.object({
-        executionId: z.string(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const { executionService } = ctx
-        await executionService.stepExecution(input.executionId)
-        return { success: true }
-      }),
-
-    // Get breakpoints
-    getBreakpoints: procedure
-      .input(z.object({
-        executionId: z.string(),
-      }))
-      .query(async ({ input, ctx }) => {
-        const { executionService } = ctx
-        return await executionService.getBreakpoints(input.executionId)
-      }),
-  }),
+  // debug: router({
+  //   // Add breakpoint
+  //   addBreakpoint: procedure
+  //     .input(z.object({
+  //       executionId: z.string(),
+  //       nodeId: z.string(),
+  //     }))
+  //     .mutation(async ({ input, ctx }) => {
+  //       const { executionService } = ctx
+  //       await executionService.addBreakpoint(input.executionId, input.nodeId)
+  //       return { success: true }
+  //     }),
+  //
+  //   // Remove breakpoint
+  //   removeBreakpoint: procedure
+  //     .input(z.object({
+  //       executionId: z.string(),
+  //       nodeId: z.string(),
+  //     }))
+  //     .mutation(async ({ input, ctx }) => {
+  //       const { executionService } = ctx
+  //       await executionService.removeBreakpoint(input.executionId, input.nodeId)
+  //       return { success: true }
+  //     }),
+  //
+  //   // Step execution
+  //   step: procedure
+  //     .input(z.object({
+  //       executionId: z.string(),
+  //     }))
+  //     .mutation(async ({ input, ctx }) => {
+  //       const { executionService } = ctx
+  //       await executionService.stepExecution(input.executionId)
+  //       return { success: true }
+  //     }),
+  //
+  //   // Get breakpoints
+  //   getBreakpoints: procedure
+  //     .input(z.object({
+  //       executionId: z.string(),
+  //     }))
+  //     .query(async ({ input, ctx }) => {
+  //       const { executionService } = ctx
+  //       return await executionService.getBreakpoints(input.executionId)
+  //     }),
+  // }),
 })
 
 export type ExecutionRouter = typeof executionRouter

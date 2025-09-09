@@ -6,50 +6,59 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { MockExecution } from './mock-data'
+import type { ExecutionTreeNode } from '@badaitech/chaingraph-executor/types'
 
-export interface ExecutionTreeNode extends MockExecution {
-  children: ExecutionTreeNode[]
+/**
+ * Build a tree structure from flat execution nodes
+ * This is used when we have fetched a complete tree from getExecutionsTree
+ * and need to organize it hierarchically
+ */
+export function buildExecutionTree(nodes: ExecutionTreeNode[]): ExecutionTreeNode[] {
+  // Find root nodes (nodes without parent or with parent not in the list)
+  const nodeIds = new Set(nodes.map(n => n.id))
+  const rootNodes = nodes.filter(node => 
+    !node.parentId || !nodeIds.has(node.parentId)
+  )
+  
+  return rootNodes
 }
 
-export function buildExecutionTree(executions: MockExecution[]): ExecutionTreeNode[] {
-  const nodeMap = new Map<string, ExecutionTreeNode>()
-  const rootNodes: ExecutionTreeNode[] = []
+/**
+ * Get immediate children of a node
+ */
+export function getNodeChildren(nodes: ExecutionTreeNode[], parentId: string): ExecutionTreeNode[] {
+  return nodes.filter(node => node.parentId === parentId)
+}
 
-  // First pass: create all nodes
-  executions.forEach((exec) => {
-    nodeMap.set(exec.id, {
-      ...exec,
-      children: [],
-    })
-  })
-
-  // Second pass: build tree structure
-  executions.forEach((exec) => {
-    const node = nodeMap.get(exec.id)!
-
-    if (exec.parentExecutionId) {
-      const parent = nodeMap.get(exec.parentExecutionId)
-      if (parent) {
-        parent.children.push(node)
-      } else {
-        // Orphaned node - add to root
-        rootNodes.push(node)
-      }
-    } else {
-      // Root node
-      rootNodes.push(node)
-    }
-  })
-
-  // Sort children by creation time (newest first)
-  const sortChildren = (node: ExecutionTreeNode) => {
-    node.children.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    node.children.forEach(sortChildren)
+/**
+ * Count total descendants of a node
+ */
+export function countDescendants(nodes: ExecutionTreeNode[], nodeId: string): number {
+  const children = getNodeChildren(nodes, nodeId)
+  let count = children.length
+  
+  for (const child of children) {
+    count += countDescendants(nodes, child.id)
   }
+  
+  return count
+}
 
-  rootNodes.forEach(sortChildren)
-  rootNodes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-
-  return rootNodes
+/**
+ * Get max depth level from a node
+ */
+export function getMaxDepth(nodes: ExecutionTreeNode[], nodeId: string, currentDepth = 0): number {
+  const children = getNodeChildren(nodes, nodeId)
+  
+  if (children.length === 0) {
+    return currentDepth
+  }
+  
+  let maxDepth = currentDepth
+  for (const child of children) {
+    const childDepth = getMaxDepth(nodes, child.id, currentDepth + 1)
+    maxDepth = Math.max(maxDepth, childDepth)
+  }
+  
+  return maxDepth
 }

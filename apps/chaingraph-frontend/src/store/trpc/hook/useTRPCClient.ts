@@ -8,7 +8,7 @@
 
 import type { TRPCClient as TRPCExecutionClient } from '@badaitech/chaingraph-executor/client'
 import type { TRPCClient } from '@badaitech/chaingraph-trpc/client'
-import { $trpcExecutionClient } from '@/store/trpc/execution-client'
+import { $trpcClientExecutor } from '@/store/trpc/execution-client'
 import { $trpcClient } from '@/store/trpc/store'
 import { useUnit } from 'effector-react'
 
@@ -22,7 +22,7 @@ export function useTRPCClient(): TRPCClient {
 }
 
 export function useTRPCExecutionClient(): TRPCExecutionClient {
-  const trpcClient = useUnit($trpcExecutionClient)
+  const trpcClient = useUnit($trpcClientExecutor)
   if (!trpcClient) {
     throw new Error('TRPC client is not initialized')
   }

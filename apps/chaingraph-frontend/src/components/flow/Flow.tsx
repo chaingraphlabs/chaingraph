@@ -29,8 +29,8 @@ import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
 import { $isConnectingBeginEvent, $isConnectingEndEvent } from '@/store/edges/stores'
-import { $executionState, useExecutionSubscription } from '@/store/execution'
-import { $activeFlowId, $flowSubscriptionState, setActiveFlowId, useFlowSubscription } from '@/store/flow'
+import { $executionState, $executionSubscriptionState, ExecutionSubscriptionStatus } from '@/store/execution'
+import { $activeFlowId, $flowSubscriptionState, setActiveFlowId } from '@/store/flow'
 import { addNodeToFlow } from '@/store/nodes'
 import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
@@ -53,7 +53,10 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 
 function ExecutionComponent() {
   const { status: executionStatus } = useUnit($executionState)
-  const { isSubscribed, isConnecting, status: subscriptionStatus, error } = useExecutionSubscription()
+  const { status: subscriptionStatus, error } = useUnit($executionSubscriptionState)
+
+  const isSubscribed = subscriptionStatus === ExecutionSubscriptionStatus.SUBSCRIBED
+  const isConnecting = subscriptionStatus === ExecutionSubscriptionStatus.CONNECTING
 
   return (
     <div>
@@ -89,8 +92,8 @@ function Flow({
 }: FlowProps) {
   // useFlowDebug()
 
-  useFlowSubscription()
-  useExecutionSubscription()
+  // Subscriptions are now managed automatically by Effector stores
+  // No need for subscription hooks here!
 
   // Refs and hooks
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
@@ -103,30 +106,6 @@ function Flow({
   const activeFlowId = useUnit($activeFlowId)
   const subscriptionState = useUnit($flowSubscriptionState)
 
-  // const selector = (s: ReactFlowState) => {
-  //   return getNodesInside(
-  //     s.nodeLookup,
-  //     { x: 0, y: 0, width: s.width, height: s.height },
-  //     s.transform,
-  //     true,
-  //   ).map(node => node.id)
-  // }
-
-  // const viewport = useMemo(() => getViewport(), [getViewport])
-
-  // const nodesInsideViewport = useMemo(() => {
-  //   // viewport.
-  //
-  //   const nodesMap = new Map(nodes.map(node => [node.id, node]))
-  //
-  //   getNodesInside(
-  //     nodesMap,
-  //     { x: 0, y: 0, width: s.width, height: s.height },
-  //     [viewport.x, viewport.y, viewport.zoom],
-  //     true,
-  //   )
-  // }, [nodes, viewport])
-
   const nodeTypes = useMemo(() => ({
     chaingraphNode: ChaingraphNodeOptimized,
     groupNode: memo(GroupNode),
@@ -137,11 +116,6 @@ function Flow({
 
   // Setup copy-paste functionality
   const copyPasteHook = useFlowCopyPaste()
-  // console.log('📋 Copy-paste hook initialized:', {
-  //   hasClipboardData: copyPasteHook.hasClipboardData,
-  //   clipboardNodeCount: copyPasteHook.clipboardNodeCount,
-  //   clipboardEdgeCount: copyPasteHook.clipboardEdgeCount,
-  // })
 
   // Get interaction callbacks
   const {

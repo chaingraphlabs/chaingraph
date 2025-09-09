@@ -23,8 +23,8 @@ import { Flow } from '../flow'
 })
 class EventEmitterNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    context.emitEvent('user-action', { action: 'click', target: 'button' })
-    context.emitEvent('user-action', { action: 'hover', target: 'link' })
+    context.emitEvent('user-action', { action: 'click', target: 'button' }, this.id)
+    context.emitEvent('user-action', { action: 'hover', target: 'link' }, this.id)
     return {}
   }
 }

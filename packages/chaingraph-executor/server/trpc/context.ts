@@ -6,27 +6,32 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IFlowStore, Session } from '@badaitech/chaingraph-trpc/server'
 import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
+import type { IExecutionService } from 'server/services/IExecutionService'
 import type { IEventBus, ITaskQueue } from '../interfaces'
-import type { ExecutionService } from '../services/ExecutionService'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
+import { authService } from '@badaitech/chaingraph-trpc/server'
+import { getAuthToken } from '@badaitech/chaingraph-trpc/server'
 import { getServices } from '../services/ServiceFactory'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('trpc-context')
 
-export interface MessageBusContext {
-  executionService: ExecutionService
+export interface ExecutorContext {
+  session: Session
+  executionService: IExecutionService
   executionStore: IExecutionStore
   eventBus: IEventBus
   taskQueue: ITaskQueue
+  flowStore: IFlowStore
 }
 
 /**
  * Creates context for tRPC procedures in the message bus
  * Uses the ServiceFactory to get service instances
  */
-export async function createContext(opts: CreateHTTPContextOptions): Promise<MessageBusContext> {
+export async function createContext(opts: CreateHTTPContextOptions): Promise<ExecutorContext> {
   const services = getServices()
 
   if (!services) {
@@ -34,19 +39,22 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<Mes
     throw new Error('Services not initialized')
   }
 
-  // For distributed execution, we need to create ExecutionService here
-  // since it's not part of the ServiceFactory yet
-  const { ExecutionService } = await import('../services/ExecutionService')
+  // Get token from request headers or websocket
+  const token = getAuthToken(opts)
 
-  const executionService = new ExecutionService(
-    services.executionStore,
-    services.eventBus,
-    services.taskQueue,
-  )
+  // Validate session
+  const session = await authService.validateSession(token)
+  const user = await authService.getUserFromSession(session)
 
   return {
-    executionService,
+    session: {
+      user: user ?? undefined,
+      session: session ?? undefined,
+      isAuthenticated: !!user && !!session,
+    },
+    executionService: services.executionService,
     executionStore: services.executionStore,
+    flowStore: services.flowStore,
     eventBus: services.eventBus,
     taskQueue: services.taskQueue,
   }

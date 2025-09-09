@@ -15,9 +15,13 @@ export function useFlowUrlSync() {
   const { flowId } = useParams()
   const activeFlowId = useUnit($activeFlowId)
 
-  // Sync URL to store
+  // Only sync URL to store on initial load, not on every change
+  // This prevents React StrictMode double-invoke issues
   useEffect(() => {
-    if (flowId && flowId !== activeFlowId)
+    // Only set if we have a URL flowId and no active flow (initial load)
+    if (flowId && activeFlowId === null) {
+      console.debug(`[URL SYNC] Initial load: setting active flow to ${flowId}`)
       setActiveFlowId(flowId)
-  }, [activeFlowId, flowId])
+    }
+  }, [flowId]) // Remove activeFlowId from deps to avoid loops
 }

@@ -7,11 +7,11 @@
  */
 
 import type { Consumer, Producer } from 'kafkajs'
+import type { ExecutionTask } from 'types/messages'
 import type { ITaskQueue } from '../../interfaces/ITaskQueue'
-import type { ExecutionTask } from '../../types/messages'
+import { KafkaTopics } from 'types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getTaskProducer } from '../../kafka/producers/task-producer'
-import { KafkaTopics } from '../../types/messages'
 import { config } from '../../utils/config'
 import { createLogger } from '../../utils/logger'
 import { safeSuperJSONParse, safeSuperJSONStringify } from '../../utils/serialization'
@@ -79,7 +79,14 @@ export class KafkaTaskQueue implements ITaskQueue {
         }
 
         try {
-          const task: ExecutionTask = safeSuperJSONParse(message.value.toString())
+          const task = safeSuperJSONParse<ExecutionTask>(message.value.toString())
+
+          if (!task) {
+            logger.error({
+              messageValue: message.value.toString().substring(0, 200),
+            }, 'Failed to parse task message - result is undefined')
+            return
+          }
 
           logger.debug({
             executionId: task.executionId,
@@ -94,7 +101,14 @@ export class KafkaTaskQueue implements ITaskQueue {
           }, 'Task processed successfully')
         } catch (error) {
           logger.error({
-            error: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error
+              ? {
+                  message: error.message,
+                  stack: error.stack,
+                  name: error.name,
+                }
+              : String(error),
+            messageValue: message.value ? message.value.toString().substring(0, 200) : 'null',
           }, 'Failed to process task')
           // In distributed mode, Kafka will retry based on consumer configuration
         }

@@ -8,15 +8,10 @@
 
 export { db } from './connection'
 export {
-  executionClaimsTable,
-  executionsTable,
   flowsTable,
   mcpServersTable,
 } from './schema'
 export type {
-  ExecutionClaimRow,
-  ExecutionEventRow,
-  ExecutionRow,
   FlowRow,
   MCPServerRow,
 } from './schema'

@@ -12,6 +12,7 @@ import type { INode, NodeStatusChangeEvent } from '../node'
 import type { DebuggerController } from './debugger-types'
 import type { ExecutionEventData } from './execution-events'
 import type { Flow } from './flow'
+import { z } from 'zod'
 import { createExecutionEventHandler } from '../flow/execution-handlers'
 import { NodeEventType, NodeStatus } from '../node'
 import { EventQueue } from '../utils'
@@ -29,16 +30,17 @@ const DEFAULT_FLOW_TIMEOUT_MS = 300000
 export const ExecutionCancelledReason = 'Execution cancelled'
 export const ExecutionStoppedByDebugger = 'Stopped by debugger'
 
-export interface ExecutionOptions {
-  maxConcurrency?: number
-  nodeTimeoutMs?: number
-  flowTimeoutMs?: number
-}
+export const ExecutionOptionsSchema = z.object({
+  execution: z.object({
+    maxConcurrency: z.number().optional(),
+    nodeTimeoutMs: z.number().optional(),
+    flowTimeoutMs: z.number().optional(),
+  }).optional(),
+  debug: z.boolean().optional(),
+  breakpoints: z.array(z.string()).optional(),
+})
 
-export interface ExecutionEngineOptions {
-  execution?: ExecutionOptions
-  debug?: boolean
-}
+export type ExecutionOptions = z.infer<typeof ExecutionOptionsSchema>
 
 export class ExecutionEngine {
   private readonly readyQueue: AsyncQueue<() => Promise<void>>
@@ -59,7 +61,7 @@ export class ExecutionEngine {
   constructor(
     private readonly flow: Flow,
     private readonly context: ExecutionContext,
-    private readonly options?: ExecutionEngineOptions,
+    private readonly options?: ExecutionOptions,
     onBreakpointHit?: (node: INode) => void,
   ) {
     this.readyQueue = new AsyncQueue()
@@ -161,8 +163,8 @@ export class ExecutionEngine {
 
       return Promise.reject(error)
     } finally {
-      contextEventsQueueCancel()
       await this.eventQueue.close()
+      contextEventsQueueCancel()
 
       if (onComplete) {
         await onComplete(this.context, this.eventQueue)
@@ -742,7 +744,7 @@ export class ExecutionEngine {
     return this.debugger
   }
 
-  public getOptions(): ExecutionEngineOptions | undefined {
+  public getOptions(): ExecutionOptions | undefined {
     return this.options
   }
 

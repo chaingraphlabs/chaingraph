@@ -26,7 +26,11 @@ class TestEmitterNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (context.emitEvent) {
-      context.emitEvent(this.eventName, { message: 'Hello from emitter', nodeId: this.id })
+      context.emitEvent(
+        this.eventName,
+        { message: 'Hello from emitter', nodeId: this.id },
+        this.id,
+      )
     }
     this.statusOutput = 'emitted'
     return {}
@@ -161,6 +165,7 @@ describe('event-driven execution', () => {
       {},
       'child-execution-1',
       {},
+      'parent-execution-1',
       'parent-execution-1',
       eventData,
       true,

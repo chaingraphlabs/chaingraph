@@ -6,9 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IFlowStore } from '@badaitech/chaingraph-trpc/server'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { ExecutionService } from 'server/services/ExecutionService'
+import { getFlowStore } from 'server/stores/flow-store'
 import { KafkaEventBus, KafkaTaskQueue } from '../implementations/distributed'
 import { InMemoryEventBus, InMemoryTaskQueue } from '../implementations/local'
 import { getExecutionStore } from '../stores/execution-store'
@@ -21,6 +24,8 @@ export interface ServiceInstances {
   eventBus: IEventBus
   taskQueue: ITaskQueue
   executionStore: IExecutionStore
+  executionService: ExecutionService
+  flowStore: IFlowStore
 }
 
 let serviceInstances: ServiceInstances | null = null
@@ -39,28 +44,47 @@ export async function createServices(
   logger.info({ mode: config.mode }, 'Creating services for execution mode')
 
   // Always use PostgreSQL for execution storage
-  const executionStore = await getExecutionStore(nodeRegistry)
+  const executionStore = await getExecutionStore()
+  const flowStore = await getFlowStore()
 
   if (config.mode === 'local') {
     logger.info('Initializing local mode services (no Kafka required)')
 
+    const eventBus = new InMemoryEventBus()
+    const taskQueue = new InMemoryTaskQueue()
+
     serviceInstances = {
-      eventBus: new InMemoryEventBus(),
-      taskQueue: new InMemoryTaskQueue(),
+      eventBus,
+      taskQueue,
       executionStore,
+      flowStore,
+      executionService: new ExecutionService(
+        executionStore,
+        eventBus,
+        taskQueue,
+      ),
     }
   } else {
     logger.info('Initializing distributed mode services (Kafka-based)')
 
+    const eventBus = new KafkaEventBus()
+    const taskQueue = new KafkaTaskQueue()
+
     serviceInstances = {
-      eventBus: new KafkaEventBus(),
-      taskQueue: new KafkaTaskQueue(),
+      eventBus,
+      taskQueue,
       executionStore,
+      flowStore,
+      executionService: new ExecutionService(
+        executionStore,
+        eventBus,
+        taskQueue,
+      ),
     }
   }
 
   logger.info({ mode: config.mode }, 'Services initialized successfully')
-  return serviceInstances
+  return serviceInstances!
 }
 
 /**

@@ -77,7 +77,7 @@ class MockEventEmitterNode extends BaseNode {
   async execute(context: ExecutionContext) {
     const eventName = this.eventData.eventName
     if (eventName && context.emitEvent) {
-      context.emitEvent(eventName, this.eventData)
+      context.emitEvent(eventName, this.eventData, this.id)
     }
     return {}
   }
@@ -171,6 +171,7 @@ describe('eventListener execution with real nodes', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined, // no parent
       undefined, // no event data
       false, // not a child execution
@@ -306,6 +307,7 @@ describe('eventListener execution with real nodes', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined,
       undefined,
       false,
@@ -347,6 +349,7 @@ describe('eventListener execution with real nodes', () => {
           undefined,
           'child-execution',
           {},
+          'test-execution', // parent ID
           'test-execution', // parent ID
           { eventName: event.type, payload: event.data },
           true, // is child execution

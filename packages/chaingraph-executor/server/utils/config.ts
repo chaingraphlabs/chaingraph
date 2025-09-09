@@ -7,6 +7,7 @@
  */
 
 import process from 'node:process'
+import { authConfig } from '@badaitech/chaingraph-trpc/server'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -48,6 +49,8 @@ export const config = {
   // maxEventHistory: Number.parseInt(process.env.LOCAL_MAX_EVENT_HISTORY || '1000', 10),
   // taskQueueSize: Number.parseInt(process.env.LOCAL_TASK_QUEUE_SIZE || '100', 10),
   // },
+
+  authConfig,
 
   // Logging
   logging: {

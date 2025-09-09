@@ -79,7 +79,6 @@ export function Sidebar({
       label: 'Flows',
       content: (
         <FlowList onFlowSelected={({ flowId }) => {
-          // navigate(`/flow/${flowId}`)
           setActiveFlowId(flowId)
           onFlowSelected?.(flowId)
         }}

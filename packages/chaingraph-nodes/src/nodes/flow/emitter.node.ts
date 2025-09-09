@@ -53,7 +53,7 @@ class EventEmitterNode extends BaseNode {
 
     // Use the new event emission API if available
     if (context.emitEvent) {
-      context.emitEvent(eventName, this.payload)
+      context.emitEvent(eventName, this.payload, this.id)
     } else {
       throw new Error('Event emission is not supported in this context')
     }

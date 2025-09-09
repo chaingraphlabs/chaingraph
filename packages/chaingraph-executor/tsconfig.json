@@ -1,32 +1,25 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@badaitech/typescript-config/trpc.json",
+  "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["dom", "ESNext", "ESNext.AsyncIterable"],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "baseUrl": ".",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "rootDir": ".",
     "paths": {
       "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
       "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
       "@badaitech/chaingraph-trpc/*": ["../chaingraph-trpc/*"],
       "@badaitech/typescript-config/*": ["../typescript-config/*"]
     },
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
     /** Emit types for internal packages to speed up editor performance. */
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
-    "noEmit": true,
-    "outDir": "dist",
-    "isolatedModules": true,
-    "preserveSymlinks": true,
-    "skipLibCheck": true,
-    "noUncheckedSideEffectImports": true
+    "outDir": "dist"
   },
-  "include": ["server", "client", "test"],
-  "exclude": ["node_modules"]
+  "include": ["server", "client"],
+  "exclude": ["node_modules", "dist"]
 }

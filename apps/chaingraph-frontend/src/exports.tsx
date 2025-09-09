@@ -31,3 +31,9 @@ export * from './components/wallet/WagmiProvider'
 export { RootProvider } from './providers/RootProvider'
 export * from './providers/ZoomProvider'
 export * from './store'
+export {
+  type ChainGraphConfig,
+  initChainGraph,
+  type SessionProvider,
+  sessionProviders,
+} from './store/initialization'

@@ -8,10 +8,8 @@
 
 import process from 'node:process'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { createHTTPServer } from '@trpc/server/adapters/standalone'
 import { config, createLogger, createServices, createTopicsIfNotExist, ExecutionWorker } from './index'
-import { createContext } from './trpc/context'
-import { executionRouter } from './trpc/router'
+import { createWSServer } from './ws-server'
 
 const logger = createLogger('startup')
 
@@ -44,17 +42,11 @@ async function main() {
     )
     await worker.start()
 
-    // Start tRPC server for API
-    const PORT = Number(process.env.TRPC_PORT) || 4000
+    // Start WebSocket server for tRPC API
+    const PORT = Number(process.env.TRPC_PORT) || 4021
+    const HOST = process.env.TRPC_HOST || '0.0.0.0'
 
-    const server = createHTTPServer({
-      router: executionRouter,
-      createContext,
-    })
-
-    server.listen(PORT, () => {
-      logger.info({ port: PORT }, 'tRPC server listening')
-    })
+    const wsServer = createWSServer(PORT, HOST)
 
     logger.info({
       mode: config.mode,
@@ -63,10 +55,11 @@ async function main() {
         inMemory: config.mode === 'local',
         postgres: true,
         trpc: true,
+        websocket: true,
         claims: true,
       },
       endpoints: {
-        trpc: `http://localhost:${PORT}`,
+        trpc: `ws://${HOST}:${PORT}`,
       },
     }, 'Execution system is running')
 
@@ -82,10 +75,8 @@ async function main() {
         await services.eventBus.close()
         await services.taskQueue.close()
 
-        // Close HTTP server
-        await new Promise<void>((resolve) => {
-          server.close(() => resolve())
-        })
+        // Close WebSocket server
+        wsServer.shutdown()
 
         logger.info('Shutdown complete')
         process.exit(0)

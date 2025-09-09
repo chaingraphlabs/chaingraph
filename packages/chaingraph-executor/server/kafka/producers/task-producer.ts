@@ -7,9 +7,9 @@
  */
 
 import type { Producer } from 'kafkajs'
-import type { ExecutionTask } from '../../types/messages'
+import type { ExecutionTask } from 'types/messages'
 import { safeSuperJSONStringify } from 'server/utils/serialization'
-import { KafkaTopics } from '../../types/messages'
+import { KafkaTopics } from 'types/messages'
 import { createLogger } from '../../utils/logger'
 import { getKafkaClient } from '../client'
 

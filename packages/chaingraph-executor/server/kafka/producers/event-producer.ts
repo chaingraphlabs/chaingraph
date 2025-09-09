@@ -8,9 +8,9 @@
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type { Producer } from 'kafkajs'
-import type { ExecutionEventMessage } from '../../types/messages'
+import type { ExecutionEventMessage } from 'types/messages'
 import { safeSuperJSONStringify } from 'server/utils/serialization'
-import { KafkaTopics } from '../../types/messages'
+import { KafkaTopics } from 'types/messages'
 import { createLogger } from '../../utils/logger'
 import { getKafkaClient } from '../client'
 
