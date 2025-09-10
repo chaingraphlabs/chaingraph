@@ -6,13 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionStatus } from '@/store/execution'
 import type { RootExecution } from '@badaitech/chaingraph-executor/types'
+import type { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { setExecutionIdAndReset } from '@/store/execution'
+import { $executionId, setExecutionIdAndReset } from '@/store/execution'
 import { useExecutionTree, useSelectedExecution } from '@/store/execution-tree/hooks/useExecutionTree'
 import { $activeFlowId } from '@/store/flow/stores'
 import { useUnit } from 'effector-react'
@@ -41,6 +41,8 @@ export function ExecutionTree() {
 
   // Get active flow ID to check if a flow is selected
   const activeFlowId = useUnit($activeFlowId)
+  // Get current execution ID from execution store
+  const currentExecutionId = useUnit($executionId)
 
   // UI State
   const [expandedAll, setExpandedAll] = useState(false)
@@ -79,11 +81,17 @@ export function ExecutionTree() {
 
   const handleNodeSelect = (nodeId: string) => {
     selectExecution(nodeId)
-    setExecutionIdAndReset(nodeId)
+
+    // Only reset stores if switching to a different execution
+    // This prevents clearing stores when clicking the same execution twice
+    if (currentExecutionId !== nodeId) {
+      setExecutionIdAndReset(nodeId)
+    }
+    // If it's the same execution, do nothing - keep the current state
   }
 
   const renderRootExecution = (rootExec: RootExecution) => {
-    const hasChildren = rootExec.levels > 0 || rootExec.totalNested > 0
+    const hasChildren = rootExec.levels > 1 || rootExec.totalNested > 1
     const expanded = isExpanded(rootExec.execution.id)
     const loading = isTreeLoading(rootExec.execution.id)
     const tree = getExecutionTree(rootExec.execution.id)
@@ -184,7 +192,12 @@ export function ExecutionTree() {
               <ScrollArea className="h-full">
                 <div className="p-4">
                   <ExecutionDetails
-                    execution={selectedExecution as any}
+                    execution={{
+                      id: selectedExecution.id,
+                      parentId: selectedExecution.parentExecutionId,
+                      level: selectedExecution.executionDepth,
+                      execution: selectedExecution,
+                    }}
                     onClose={() => {
                       selectExecution(null)
                       setExecutionIdAndReset(null)

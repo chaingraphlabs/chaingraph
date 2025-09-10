@@ -16,10 +16,10 @@ import type { ExecutionTreeNode } from '@badaitech/chaingraph-executor/types'
 export function buildExecutionTree(nodes: ExecutionTreeNode[]): ExecutionTreeNode[] {
   // Find root nodes (nodes without parent or with parent not in the list)
   const nodeIds = new Set(nodes.map(n => n.id))
-  const rootNodes = nodes.filter(node => 
-    !node.parentId || !nodeIds.has(node.parentId)
+  const rootNodes = nodes.filter(node =>
+    !node.parentId || !nodeIds.has(node.parentId),
   )
-  
+
   return rootNodes
 }
 
@@ -36,11 +36,11 @@ export function getNodeChildren(nodes: ExecutionTreeNode[], parentId: string): E
 export function countDescendants(nodes: ExecutionTreeNode[], nodeId: string): number {
   const children = getNodeChildren(nodes, nodeId)
   let count = children.length
-  
+
   for (const child of children) {
     count += countDescendants(nodes, child.id)
   }
-  
+
   return count
 }
 
@@ -49,16 +49,16 @@ export function countDescendants(nodes: ExecutionTreeNode[], nodeId: string): nu
  */
 export function getMaxDepth(nodes: ExecutionTreeNode[], nodeId: string, currentDepth = 0): number {
   const children = getNodeChildren(nodes, nodeId)
-  
+
   if (children.length === 0) {
     return currentDepth
   }
-  
+
   let maxDepth = currentDepth
   for (const child of children) {
     const childDepth = getMaxDepth(nodes, child.id, currentDepth + 1)
     maxDepth = Math.max(maxDepth, childDepth)
   }
-  
+
   return maxDepth
 }

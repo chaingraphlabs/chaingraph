@@ -17,7 +17,6 @@ import {
   $executionSubscriptionState,
   clearExecutionState,
   createExecution,
-  ExecutionStatus,
   isTerminalStatus,
   pauseExecution,
   resumeExecution,
@@ -27,6 +26,7 @@ import {
 } from '@/store/execution'
 import { $activeFlowMetadata } from '@/store/flow'
 import { getWalletContextForExecution } from '@/store/wallet'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -48,7 +48,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
     if (!activeFlow?.id)
       return
 
-    if (!executionId || executionStatus === ExecutionStatus.IDLE || isTerminalStatus(executionStatus)) {
+    if (!executionId || executionStatus === ExecutionStatus.Idle || isTerminalStatus(executionStatus)) {
       const archAIIntegration = archAIConfig
         ? {
             agentID: archAIConfig.agentID,
@@ -68,17 +68,17 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
         archAIIntegration,
         walletIntegration: walletContext,
       })
-    } else if (executionStatus === ExecutionStatus.CREATED) {
+    } else if (executionStatus === ExecutionStatus.Created) {
       // Start newly created execution
       startExecution(executionId)
-    } else if (executionStatus === ExecutionStatus.PAUSED) {
+    } else if (executionStatus === ExecutionStatus.Paused) {
       // Resume execution
       resumeExecution(executionId)
     }
   }, [activeFlow?.id, executionId, executionStatus, debugMode, archAIConfig])
 
   const handlePause = useCallback(() => {
-    if (executionId && executionStatus === ExecutionStatus.RUNNING) {
+    if (executionId && executionStatus === ExecutionStatus.Running) {
       pauseExecution(executionId)
     }
   }, [executionId, executionStatus])
@@ -118,7 +118,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
         <div className="relative flex items-center justify-center">
           {/* Status Panel (Left Side) */}
           <AnimatePresence>
-            {executionStatus !== ExecutionStatus.IDLE && (
+            {executionStatus !== ExecutionStatus.Idle && (
               <motion.div
                 className={cn(
                   'absolute right-full mr-2',
@@ -155,10 +155,10 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                   variant="ghost"
                   size="icon"
                   onClick={handlePlay}
-                  disabled={!activeFlow?.id || executionStatus === ExecutionStatus.RUNNING}
+                  disabled={!activeFlow?.id || executionStatus === ExecutionStatus.Running}
                   className={cn(
                     'relative rounded-full',
-                    executionStatus === ExecutionStatus.RUNNING && 'text-primary',
+                    executionStatus === ExecutionStatus.Running && 'text-primary',
                   )}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -176,7 +176,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                   </AnimatePresence>
 
                   {/* Play button glow effect */}
-                  {executionStatus === ExecutionStatus.RUNNING && (
+                  {executionStatus === ExecutionStatus.Running && (
                     <motion.div
                       className="absolute inset-0 rounded-full bg-primary/20"
                       animate={{
@@ -193,7 +193,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                 </MotionButton>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                {executionStatus === ExecutionStatus.PAUSED
+                {executionStatus === ExecutionStatus.Paused
                   ? 'Resume Flow'
                   : 'Start Flow'}
               </TooltipContent>
@@ -210,7 +210,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                   transition={{ duration: 0.3 }}
                 >
                   {/* Stop Button */}
-                  {executionStatus === ExecutionStatus.RUNNING && (
+                  {executionStatus === ExecutionStatus.Running && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <MotionButton
@@ -282,8 +282,8 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
           <AnimatePresence>
             {debugMode
               && executionId
-              && executionStatus !== ExecutionStatus.COMPLETED
-              && executionStatus !== ExecutionStatus.ERROR && (
+              && executionStatus !== ExecutionStatus.Completed
+              && executionStatus !== ExecutionStatus.Failed && (
               <motion.div
                 className={cn(
                   'absolute left-full ml-2',

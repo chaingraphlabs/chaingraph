@@ -90,10 +90,6 @@ export class InMemoryTaskQueue implements ITaskQueue {
         }, 'Processing task from in-memory queue')
 
         await this.handler(task)
-
-        logger.debug({
-          executionId: task.executionId,
-        }, 'Task processed successfully')
       } catch (error) {
         logger.error({
           error: error instanceof Error ? error.message : String(error),

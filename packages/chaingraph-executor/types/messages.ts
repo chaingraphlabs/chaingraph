@@ -83,9 +83,9 @@ export interface ExecutionEventMessage {
  * Kafka topic names
  */
 export const KafkaTopics = {
-  COMMANDS: 'chaingraph.execution.commands',
-  EVENTS: 'chaingraph.execution.events',
-  TASKS: 'chaingraph.execution.tasks',
+  COMMANDS: '2.chaingraph.execution.commands',
+  EVENTS: '2.chaingraph.execution.events',
+  TASKS: '2.chaingraph.execution.tasks',
 } as const
 
 export type KafkaTopicName = typeof KafkaTopics[keyof typeof KafkaTopics]

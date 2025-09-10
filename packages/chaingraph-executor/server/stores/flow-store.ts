@@ -21,7 +21,7 @@ export async function getFlowStore(
 ): Promise<IFlowStore> {
   if (!flowStore) {
     const _db = db ?? await getDatabase()
-    flowStore = new DBFlowStore(_db)
+    flowStore = new DBFlowStore(_db, false)
     logger.info('Flow store initialized')
   }
   return flowStore
@@ -36,6 +36,5 @@ export async function loadFlow(flowId: string): Promise<Flow | null> {
     return null
   }
 
-  logger.debug({ flowId, flowName: flow.metadata?.name }, 'Flow loaded')
   return flow
 }

@@ -35,6 +35,14 @@ export { getExecutionStore } from './stores/execution-store'
 export { getFlowStore, loadFlow } from './stores/flow-store'
 export type { IExecutionStore } from './stores/interfaces/IExecutionStore'
 export { PostgresExecutionStore } from './stores/postgres/postgres-execution-store'
+export type {
+  ExecutionClaimRow,
+  ExecutionRow,
+} from './stores/postgres/schema'
+export {
+  executionClaimsTable,
+  executionsTable,
+} from './stores/postgres/schema'
 export { createContext as createTRPCContext } from './trpc/context'
 
 export type { ExecutorContext, Context as TRPCContext } from './trpc/context'

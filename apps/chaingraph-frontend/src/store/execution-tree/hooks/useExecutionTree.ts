@@ -7,9 +7,9 @@
  */
 
 import type { ExecutionTreeFilters } from '../types'
+import { $activeFlowId } from '@/store/flow/stores'
 import { useUnit } from 'effector-react'
 import { useEffect } from 'react'
-import { $activeFlowId } from '@/store/flow/stores'
 import {
   $executionTreeError,
   $executionTreeFilters,
@@ -80,18 +80,18 @@ export function useExecutionTree() {
     // Data
     rootExecutions,
     expandedTrees,
-    
+
     // Loading states
     isLoadingRoots,
     isTreeLoading,
-    
+
     // Error state
     error,
-    
+
     // Filters
     filters,
     updateFilters,
-    
+
     // Actions
     handleExpand,
     handleCollapse,

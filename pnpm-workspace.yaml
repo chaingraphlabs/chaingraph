@@ -6,6 +6,7 @@ onlyBuiltDependencies:
   - blake-hash
   - bufferutil
   - es5-ext
+  - esbuild
   - keccak
   - protobufjs
   - secp256k1

@@ -52,7 +52,7 @@ export function getKafkaClient(): Kafka {
       clientId: config.kafka.clientId,
       brokers: config.kafka.brokers,
       // logLevel: config.logging.level === 'debug' ? logLevel.DEBUG : logLevel.INFO,
-      logLevel: logLevel.INFO,
+      logLevel: logLevel.WARN,
       logCreator: customLogCreator,
       retry: {
         initialRetryTime: 100,

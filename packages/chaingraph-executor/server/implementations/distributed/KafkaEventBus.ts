@@ -13,6 +13,7 @@ import type { IEventBus } from '../../interfaces/IEventBus'
 import { ExecutionEventImpl as EventImpl } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
+import { safeSuperJSONParse, safeSuperJSONStringify } from 'server/utils/serialization'
 import { KafkaTopics } from 'types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getEventProducer } from '../../kafka/producers/event-producer'
@@ -56,7 +57,8 @@ export class KafkaEventBus implements IEventBus {
       workerId: config.worker.id,
     }
 
-    const value = JSON.stringify({
+    // const value = JSON.stringify({
+    const value = safeSuperJSONStringify({
       executionId: message.executionId,
       timestamp: message.timestamp,
       workerId: message.workerId,
@@ -73,13 +75,6 @@ export class KafkaEventBus implements IEventBus {
       acks: -1,
       timeout: 30000,
     })
-
-    logger.debug({
-      executionId,
-      eventType: event.type,
-      eventIndex: event.index,
-      value,
-    }, 'Event published to Kafka')
   }
 
   subscribeToEvents = (
@@ -257,19 +252,11 @@ export class KafkaEventBus implements IEventBus {
               continue
 
             try {
-              // const parsedMessage = safeSuperJSONParse<any>(message.value.toString())
-              // const parsedMessage = SuperJSON.deserialize(message.value as any) as any
-              const parsedMessage = JSON.parse(message.value.toString())
+              const messageValue = message.value.toString()
 
-              // Check if parsing was successful
-              if (!parsedMessage) {
-                logger.debug({
-                  executionId,
-                  messageValue: message.value.toString().substring(0, 200),
-                  messageType: typeof message.value,
-                }, 'Skipping message - failed to parse')
-                continue
-              }
+              // Parse message
+              // Use safe parsing to handle potential issues
+              const parsedMessage = safeSuperJSONParse<any>(messageValue)
 
               // Filter by executionId
               if (parsedMessage.executionId !== executionId)
@@ -286,8 +273,6 @@ export class KafkaEventBus implements IEventBus {
 
               // Deserialize event
               const event = EventImpl.deserializeStatic(parsedMessage.event)
-
-              console.log(`Deserialized event: ${JSON.stringify(event)}`)
 
               if (!event) {
                 logger.warn({
@@ -328,13 +313,6 @@ export class KafkaEventBus implements IEventBus {
             if (subscription) {
               subscription.lastActivity = Date.now()
             }
-
-            logger.debug({
-              executionId,
-              batchSize: batch.messages.length,
-              validEvents: batchEvents.length,
-              bufferSize: eventBuffer.length,
-            }, 'Processed event batch')
           }
 
           // If we have a waiting resolver and events, resolve it

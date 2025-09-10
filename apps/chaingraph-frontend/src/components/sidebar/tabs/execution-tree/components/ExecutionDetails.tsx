@@ -30,6 +30,7 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
   const execution = node.execution
   const nodeId = node.id
   const parentId = node.parentId
+  const rootId = execution.rootExecutionId
   const level = node.level
 
   // Format timestamps
@@ -45,13 +46,6 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
           <h3 className="text-lg font-semibold">Execution Details</h3>
           <div className="flex items-center gap-2">
             <ExecutionStatusIndicator status={execution.status} showLabel />
-            {level > 0 && (
-              <Badge variant="outline" className="text-xs">
-                Level:
-                {' '}
-                {level}
-              </Badge>
-            )}
             {execution.executionDepth > 0 && (
               <Badge variant="outline" className="text-xs">
                 Depth:
@@ -125,6 +119,28 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
                 size="icon"
                 className="h-6 w-6"
                 onClick={() => copyToClipboard(parentId)}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {rootId && rootId !== nodeId && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Root ID</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                {rootId}
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => copyToClipboard(rootId)}
               >
                 <Copy className="h-3 w-3" />
               </Button>

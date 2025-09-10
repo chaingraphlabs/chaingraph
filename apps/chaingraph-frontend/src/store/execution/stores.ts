@@ -10,6 +10,7 @@ import type {
   ExecutionEventData,
   ExecutionEventImpl,
 } from '@badaitech/chaingraph-types'
+
 import type {
   CreateExecutionOptions,
   EdgeExecutionState,
@@ -18,6 +19,7 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import {
   ExecutionEventEnum,
   NodeStatus,
@@ -25,9 +27,10 @@ import {
 import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { executionDomain } from '../domains'
+import { $nodes } from '../nodes/stores'
 // import { $trpcClient } from '../trpc/store'
 import { $trpcClientExecutor } from '../trpc/execution-client'
-import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
+import { ExecutionSubscriptionStatus, isTerminalStatus } from './types'
 
 // EVENTS
 // Control events
@@ -53,7 +56,6 @@ export const setExecutionSubscriptionStatus = executionDomain.createEvent<Execut
 export const setExecutionSubscriptionError = executionDomain.createEvent<ExecutionError | null>()
 
 export const setExecutionStatus = executionDomain.createEvent<ExecutionStatus>()
-// export const newExecutionEvent = executionDomain.createEvent<ExecutionEventImpl>()
 export const newExecutionEvents = executionDomain.createEvent<ExecutionEventImpl[]>()
 
 export const resetAutoStart = executionDomain.createEvent()
@@ -62,10 +64,14 @@ export const markStartAttempted = executionDomain.createEvent()
 export const setHighlightedNodeId = executionDomain.createEvent<string | string[] | null>()
 export const setHighlightedEdgeId = executionDomain.createEvent<string | string[] | null>()
 
+// Events for tracking newly created executions (to distinguish from selected existing ones)
+export const setNewlyCreatedExecutionId = executionDomain.createEvent<string | null>()
+export const clearNewlyCreatedExecutionId = executionDomain.createEvent()
+
 // STORES
 
 const initialState: ExecutionState = {
-  status: ExecutionStatus.IDLE,
+  status: ExecutionStatus.Idle,
   executionId: null,
   debugMode: false,
   breakpoints: new Set(),
@@ -239,35 +245,7 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(setExecutionIdAndReset)
 
 export const $executionNodes = executionDomain
-  .createStore<Record<string, NodeExecutionState>>({}, {
-    updateFilter: (prev, next) => {
-    // If either is null/undefined
-      if (!prev || !next)
-        return true
-
-      // Check for different node IDs
-      const prevIds = Object.keys(prev)
-      const nextIds = Object.keys(next)
-
-      // If number of nodes changed
-      if (prevIds.length !== nextIds.length)
-        return true
-
-      // Check if any node has a different status
-      for (const nodeId of prevIds) {
-      // If node doesn't exist in next
-        if (!next[nodeId])
-          return true
-
-        // If status changed
-        if (prev[nodeId]?.status !== next[nodeId]?.status)
-          return true
-      }
-
-      // No relevant changes detected
-      return false
-    },
-  })
+  .createStore<Record<string, NodeExecutionState>>({}, {})
   .on(newExecutionEvents, (state, events) => {
     let finalState = state
     let stateChanged = false
@@ -278,7 +256,7 @@ export const $executionNodes = executionDomain
           {
             const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
             finalState = {
-              ...state,
+              ...finalState,
               [eventData.node.id]: {
                 status: 'running',
                 startTime: event.timestamp,
@@ -293,10 +271,10 @@ export const $executionNodes = executionDomain
         {
           const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
 
-          const prevState = state[eventData.node.id]
+          const prevState = finalState[eventData.node.id]
           if (!prevState) {
             finalState = {
-              ...state,
+              ...finalState,
               [eventData.node.id]: {
                 status: 'completed',
                 startTime: event.timestamp,
@@ -307,7 +285,7 @@ export const $executionNodes = executionDomain
             }
           } else {
             finalState = {
-              ...state,
+              ...finalState,
               [eventData.node.id]: {
                 ...prevState,
                 status: 'completed',
@@ -325,7 +303,7 @@ export const $executionNodes = executionDomain
         {
           const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
           finalState = {
-            ...state,
+            ...finalState,
             [eventData.node.id]: {
               status: 'failed',
               endTime: event.timestamp,
@@ -340,20 +318,33 @@ export const $executionNodes = executionDomain
         case ExecutionEventEnum.NODE_SKIPPED:
         {
           const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
-          const nodeState = state[eventData.nodeId]
-          if (!nodeState || !nodeState.node) {
-          // skip if node state doesn't exist
-            break
+
+          // Get the node from the nodes store if it exists
+          const nodesStore = $nodes.getState()
+          const prevState = finalState[eventData.nodeId]
+
+          let node = nodesStore[eventData.nodeId]
+          if (!node) {
+            if (prevState && prevState.node) {
+              node = prevState.node
+            } else {
+              // create mock node
+              // node = NodeRegistry.getInstance().createNode()
+            }
           }
 
-          nodeState.node.setStatus(NodeStatus.Skipped, false)
+          const newNode = node.clone()
+          newNode.setStatus(NodeStatus.Skipped, false)
+
+          //
 
           finalState = {
-            ...state,
+            ...finalState,
             [eventData.nodeId]: {
               status: 'skipped',
+              startTime: prevState?.startTime || event.timestamp,
               endTime: event.timestamp,
-              node: nodeState.node,
+              node: node || prevState?.node, // Use node from store or preserve existing
             },
           }
           stateChanged = true
@@ -365,7 +356,7 @@ export const $executionNodes = executionDomain
     if (stateChanged) {
       return finalState
     }
-    return state
+    return finalState
   })
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
@@ -384,7 +375,7 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
         {
           const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
           finalState = {
-            ...state,
+            ...finalState,
             [eventData.serializedEdge.id]: {
               status: 'transferring',
               serializedEdge: eventData.serializedEdge,
@@ -398,7 +389,7 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
         {
           const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
           finalState = {
-            ...state,
+            ...finalState,
             [eventData.serializedEdge.id]: {
               status: 'completed',
               serializedEdge: eventData.serializedEdge,
@@ -412,7 +403,7 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
         {
           const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
           finalState = {
-            ...state,
+            ...finalState,
             [eventData.serializedEdge.id]: {
               status: 'failed',
               serializedEdge: eventData.serializedEdge,
@@ -438,10 +429,10 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
 // Handle execution status changes
 $executionState
   .on(createExecutionFx.pending, (state) => {
-    if (state.status === ExecutionStatus.IDLE) {
+    if (state.status === ExecutionStatus.Idle) {
       return {
         ...state,
-        status: ExecutionStatus.CREATING,
+        status: ExecutionStatus.Creating,
       }
     }
     return state
@@ -450,7 +441,7 @@ $executionState
     return {
       ...state,
       executionId,
-      status: ExecutionStatus.CREATED,
+      status: ExecutionStatus.Created,
       error: null,
     }
   })
@@ -459,51 +450,60 @@ $executionState
     return {
       ...state,
       executionId,
-      status: ExecutionStatus.CREATED,
+      status: ExecutionStatus.Created,
       error: null,
     }
   })
   .on(newExecutionEvents, (state, events) => {
+    let newState = state
+
+    // Process ALL events in the batch, not just the first one
     for (const event of events) {
       switch (event.type) {
       // case ExecutionEventEnum.FLOW_SUBSCRIBED:
       //   console.log('Flow subscribed:', event.data)
-      //   return { ...state, status: ExecutionStatus.CREATED }
+      //   newState = { ...newState, status: ExecutionStatus.CREATED }
+      //   break
 
         case ExecutionEventEnum.FLOW_STARTED:
           console.debug('Flow started:', event.data)
-          return { ...state, status: ExecutionStatus.RUNNING }
+          newState = { ...newState, status: ExecutionStatus.Running }
+          break
 
         case ExecutionEventEnum.FLOW_COMPLETED:
           console.debug('Flow completed:', event.data)
-          return { ...state, status: ExecutionStatus.COMPLETED }
+          newState = { ...newState, status: ExecutionStatus.Completed }
+          break
 
         case ExecutionEventEnum.FLOW_FAILED:
           console.debug('Flow failed:', event.data)
-          return {
-            ...state,
-            status: ExecutionStatus.ERROR,
+          newState = {
+            ...newState,
+            status: ExecutionStatus.Failed,
             error: {
               message: (event.data as ExecutionEventData[ExecutionEventEnum.FLOW_FAILED]).error.message,
               timestamp: event.timestamp,
             },
           }
+          break
 
         case ExecutionEventEnum.FLOW_CANCELLED:
           console.debug('Flow cancelled:', event.data)
-          return {
-            ...state,
-            status: ExecutionStatus.STOPPED,
+          newState = {
+            ...newState,
+            status: ExecutionStatus.Stopped,
           }
+          break
 
         case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
-          return {
-            ...state,
-            status: ExecutionStatus.PAUSED,
+          newState = {
+            ...newState,
+            status: ExecutionStatus.Paused,
           }
+          break
       }
     }
-    return state
+    return newState
   })
 
 // .on(startExecutionFx.pending, state => ({
@@ -521,7 +521,7 @@ $executionState
   .on(stopExecutionFx.done, (state) => {
     return {
       ...state,
-      status: ExecutionStatus.STOPPED,
+      status: ExecutionStatus.Stopped,
       error: null,
     }
   })
@@ -550,7 +550,7 @@ $executionState
   .on(setExecutionError, (state, error) => ({
     ...state,
     error,
-    status: error ? ExecutionStatus.ERROR : state.status,
+    status: error ? ExecutionStatus.Failed : state.status,
   }))
 
   // Reset state
@@ -613,18 +613,19 @@ export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(n
 
 // Computed stores
 export const $isExecuting = $executionState.map(
-  state => state.status === ExecutionStatus.RUNNING,
+  state => state.status === ExecutionStatus.Running,
 )
 
 export const $isPaused = $executionState.map(
-  state => state.status === ExecutionStatus.PAUSED,
+  state => state.status === ExecutionStatus.Paused,
 )
 
 export const $canStart = $executionState.map(
-  state => state.status === ExecutionStatus.IDLE
-    || state.status === ExecutionStatus.CREATED
-    || state.status === ExecutionStatus.STOPPED
-    || state.status === ExecutionStatus.COMPLETED,
+  state => !state.status
+    || state.status === ExecutionStatus.Idle
+    || state.status === ExecutionStatus.Created
+    || state.status === ExecutionStatus.Stopped
+    || state.status === ExecutionStatus.Completed,
 )
 
 export const $executionStatus = combine({
@@ -663,7 +664,17 @@ export const $autoStartConditions = combine({
 export const $executionId = $executionState.map(state => state.executionId)
 
 // Store to prevent multiple start attempts
-export const $startAttempted = executionDomain.createStore(false).reset(globalReset).reset(setExecutionIdAndReset)
+export const $startAttempted = executionDomain.createStore(false)
+  .reset(globalReset)
+  .reset(setExecutionIdAndReset)
+
+// Store for tracking newly created executions (to distinguish from selected existing ones)
+export const $newlyCreatedExecutionId = executionDomain.createStore<string | null>(null)
+  .on(setNewlyCreatedExecutionId, (_, id) => id)
+  .reset(clearNewlyCreatedExecutionId)
+  .reset(globalReset)
+  .reset(clearExecutionState)
+  .reset(setExecutionIdAndReset)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)
@@ -672,6 +683,12 @@ export const $startAttempted = executionDomain.createStore(false).reset(globalRe
 sample({
   clock: createExecution,
   target: createExecutionFx,
+})
+
+// Set newly created execution ID when execution is created
+sample({
+  clock: createExecutionFx.doneData,
+  target: setNewlyCreatedExecutionId,
 })
 
 // Handle execution control
@@ -775,17 +792,18 @@ $startAttempted
     }),
   ])
 
-// Auto-start logic
+// Auto-start logic - only for newly created executions (not selected existing ones)
 sample({
   clock: $autoStartConditions,
-  source: $startAttempted,
-  filter: (attempted, conditions) => {
+  source: combine($startAttempted, $newlyCreatedExecutionId),
+  filter: ([attempted, newlyCreatedId], conditions) => {
     return (
       !attempted
-      && conditions.executionStatus === ExecutionStatus.CREATED
+      && conditions.executionStatus === ExecutionStatus.Created
       && conditions.subscriptionStatus === ExecutionSubscriptionStatus.SUBSCRIBED
       && !conditions.hasError
       && !!conditions.executionId
+      && conditions.executionId === newlyCreatedId // Only auto-start if this is the newly created execution
     )
   },
   fn: (_, conditions) => conditions.executionId!,
@@ -793,6 +811,22 @@ sample({
     startExecution,
     markStartAttempted,
   ],
+})
+
+// Clear newly created execution ID when execution starts successfully
+sample({
+  clock: startExecutionFx.done,
+  target: clearNewlyCreatedExecutionId,
+})
+
+// Clear newly created execution ID on terminal states or errors
+sample({
+  clock: [
+    stopExecutionFx.done,
+    createExecutionFx.failData,
+    startExecutionFx.failData,
+  ],
+  target: clearNewlyCreatedExecutionId,
 })
 
 // Reset auto-start when needed

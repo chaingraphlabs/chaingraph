@@ -34,6 +34,7 @@ export class DBFlowStore implements IFlowStore {
 
   constructor(
     db: DBType,
+    private cacheEnabled: boolean = true,
     private nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
   ) {
     this.db = db
@@ -51,7 +52,9 @@ export class DBFlowStore implements IFlowStore {
       await serializableFlow(flow),
     )
 
-    this.flows.set(flow.id, flow)
+    if (this.cacheEnabled) {
+      this.flows.set(flow.id, flow)
+    }
 
     return flow
   }
@@ -63,9 +66,11 @@ export class DBFlowStore implements IFlowStore {
    */
   async getFlow(flowId: string): Promise<Flow | null> {
     // get from cache first if not found then fetch from db
-    const flow = this.flows.get(flowId)
-    if (flow) {
-      return flow
+    if (this.cacheEnabled) {
+      const flow = this.flows.get(flowId)
+      if (flow) {
+        return flow
+      }
     }
 
     const flowFromDB = await loadFlow(this.db, flowId, (data) => {
@@ -75,7 +80,10 @@ export class DBFlowStore implements IFlowStore {
       return null
     }
 
-    this.flows.set(flowFromDB.id, flowFromDB as Flow)
+    if (this.cacheEnabled) {
+      this.flows.set(flowFromDB.id, flowFromDB as Flow)
+    }
+
     return flowFromDB as Flow
   }
 
@@ -115,7 +123,9 @@ export class DBFlowStore implements IFlowStore {
    */
   async deleteFlow(flowId: string): Promise<boolean> {
     // delete from cache first
-    this.flows.delete(flowId)
+    if (this.cacheEnabled) {
+      this.flows.delete(flowId)
+    }
 
     // delete from db
     await deleteFlow(this.db, flowId)
@@ -133,7 +143,10 @@ export class DBFlowStore implements IFlowStore {
       this.db,
       await serializableFlow(flow),
     )
-    this.flows.set(flow.id, flow)
+
+    if (this.cacheEnabled) {
+      this.flows.set(flow.id, flow)
+    }
 
     return flow
   }
@@ -144,18 +157,25 @@ export class DBFlowStore implements IFlowStore {
    * @param userId User identifier
    * @returns true if user has access, false otherwise
    */
-  async hasAccess(flowId: string, userId: string): Promise<boolean> {
-    // get flow from cache
-    let flow = this.flows.get(flowId)
+  async hasAccess(flowId: string, userId: string, cacheEnabled = true): Promise<boolean> {
+    let flow: Flow | undefined
+
+    if (cacheEnabled) {
+      // Try to get flow from cache
+      flow = this.flows.get(flowId)
+    }
+
     if (!flow) {
-      // check if flow exists in db
+      // Check if flow exists in db
       const flowFromDB = await this.getFlow(flowId)
       if (!flowFromDB) {
         return false
       }
 
-      // add to cache
-      this.flows.set(flowFromDB.id, flowFromDB)
+      // Add to cache only if caching is enabled
+      if (cacheEnabled) {
+        this.flows.set(flowFromDB.id, flowFromDB)
+      }
       flow = flowFromDB
     }
 
@@ -163,7 +183,7 @@ export class DBFlowStore implements IFlowStore {
       return false
     }
 
-    // check if user has access to flow
+    // Check if user has access to flow
     const hasAccess = flow.metadata.ownerID === userId
 
     // TODO: add another checks for access for example if flow is public or user is in group

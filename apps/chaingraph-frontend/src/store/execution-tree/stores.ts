@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionTreeNode, RootExecution } from '@badaitech/chaingraph-executor/types'
+import type { ExecutionRow } from '@badaitech/chaingraph-executor/server'
+import type { RootExecution } from '@badaitech/chaingraph-executor/types'
 import type { ExecutionTreeError, ExecutionTreeFilters, ExpandedTreesMap } from './types'
 import { combine, sample } from 'effector'
 import { globalReset } from '../common'
@@ -124,12 +125,12 @@ export const fetchExecutionDetailsFx = executionDomain.createEffect(
 
     // For now, we'll use the tree endpoint to get details
     // In the future, we might want a separate endpoint for single execution details
-    const data = await client.getExecutionsTree.query({
+    const data = await client.getExecutionDetails.query({
       executionId,
     })
 
     // Return the root node from the tree
-    return data.find(node => node.id === executionId) || null
+    return data
   },
 )
 
@@ -164,8 +165,8 @@ $loadingTrees
 
 // Store for selected execution details
 export const $selectedExecutionDetails = executionDomain
-  .createStore<ExecutionTreeNode | null>(null)
-  .on(fetchExecutionDetailsFx.doneData, (_, data) => data)
+  .createStore<ExecutionRow | null>(null)
+  .on(fetchExecutionDetailsFx.doneData, (_, data) => data as ExecutionRow)
   .on(setSelectedExecutionId, (state, id) => {
     if (!id)
       return null

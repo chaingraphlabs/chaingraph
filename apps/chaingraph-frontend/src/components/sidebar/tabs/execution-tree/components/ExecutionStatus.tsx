@@ -7,7 +7,8 @@
  */
 
 import { cn } from '@/lib/utils'
-import { ExecutionStatus } from '@/store/execution'
+
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import {
   CheckCircle2,
   Circle,
@@ -39,56 +40,56 @@ export function ExecutionStatusIndicator({
 
   const getStatusConfig = () => {
     switch (status) {
-      case ExecutionStatus.IDLE:
+      case ExecutionStatus.Idle:
         return {
           icon: Circle,
           color: 'text-gray-400',
           label: 'Idle',
           pulse: false,
         }
-      case ExecutionStatus.CREATING:
+      case ExecutionStatus.Creating:
         return {
           icon: Loader2,
           color: 'text-purple-500',
           label: 'Creating',
           pulse: true,
         }
-      case ExecutionStatus.CREATED:
+      case ExecutionStatus.Created:
         return {
           icon: Circle,
           color: 'text-muted-foreground',
           label: 'Created',
           pulse: false,
         }
-      case ExecutionStatus.RUNNING:
+      case ExecutionStatus.Running:
         return {
           icon: Loader2,
           color: 'text-blue-500',
           label: 'Running',
           pulse: true,
         }
-      case ExecutionStatus.PAUSED:
+      case ExecutionStatus.Paused:
         return {
           icon: PauseCircle,
           color: 'text-orange-500',
           label: 'Paused',
           pulse: false,
         }
-      case ExecutionStatus.COMPLETED:
+      case ExecutionStatus.Completed:
         return {
           icon: CheckCircle2,
           color: 'text-green-500',
           label: 'Completed',
           pulse: false,
         }
-      case ExecutionStatus.ERROR:
+      case ExecutionStatus.Failed:
         return {
           icon: XCircle,
           color: 'text-red-500',
           label: 'Error',
           pulse: false,
         }
-      case ExecutionStatus.STOPPED:
+      case ExecutionStatus.Stopped:
         return {
           icon: StopCircle,
           color: 'text-muted-foreground',
@@ -99,7 +100,8 @@ export function ExecutionStatusIndicator({
         return {
           icon: Clock,
           color: 'text-muted-foreground',
-          label: 'Unknown',
+          // label: 'Unknown',
+          label: status,
           pulse: false,
         }
     }

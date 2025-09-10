@@ -41,11 +41,6 @@ export class KafkaTaskQueue implements ITaskQueue {
       acks: -1,
       timeout: 30000,
     })
-
-    logger.debug({
-      executionId: task.executionId,
-      flowId: task.flowId,
-    }, 'Task published to Kafka')
   }
 
   consumeTasks = async (handler: (task: ExecutionTask) => Promise<void>): Promise<void> => {
@@ -88,17 +83,7 @@ export class KafkaTaskQueue implements ITaskQueue {
             return
           }
 
-          logger.debug({
-            executionId: task.executionId,
-            flowId: task.flowId,
-            partition,
-          }, 'Processing task from Kafka')
-
           await handler(task)
-
-          logger.debug({
-            executionId: task.executionId,
-          }, 'Task processed successfully')
         } catch (error) {
           logger.error({
             error: error instanceof Error

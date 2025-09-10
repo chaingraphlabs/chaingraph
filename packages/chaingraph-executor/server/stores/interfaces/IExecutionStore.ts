@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionRow } from 'server/stores/postgres/schema'
-import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from 'types'
+import type { ExecutionClaim, ExecutionStatus, ExecutionTreeNode, RootExecution } from 'types'
 
 // export interface GetRootExecutionsForOwnerInput {
 //   ownerId: string
@@ -15,10 +15,20 @@ import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from 'types'
 //   offset?: number
 // }
 
+export interface UpdateExecutionStatusParams {
+  executionId: string
+  status: ExecutionStatus
+  errorMessage?: string
+  errorNodeId?: string
+  startedAt?: Date
+  completedAt?: Date
+}
+
 export interface IExecutionStore {
   create: (instance: ExecutionRow) => Promise<void>
   get: (id: string) => Promise<ExecutionRow | null>
   delete: (id: string) => Promise<boolean>
+  updateExecutionStatus: (params: UpdateExecutionStatusParams) => Promise<boolean>
 
   // Additional methods for parent-child tracking
   getRootExecutions: (

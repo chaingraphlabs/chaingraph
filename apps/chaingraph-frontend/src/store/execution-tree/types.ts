@@ -7,7 +7,8 @@
  */
 
 import type { ExecutionTreeNode, RootExecution } from '@badaitech/chaingraph-executor/types'
-import type { ExecutionStatus } from '../execution/types'
+
+import type { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 
 // Re-export backend types for convenience
 export type { ExecutionTreeNode, RootExecution } from '@badaitech/chaingraph-executor/types'

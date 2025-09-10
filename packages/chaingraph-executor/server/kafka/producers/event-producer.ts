@@ -8,6 +8,7 @@
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type { Producer } from 'kafkajs'
+import { Partitioners } from 'kafkajs'
 import type { ExecutionEventMessage } from 'types/messages'
 import { safeSuperJSONStringify } from 'server/utils/serialization'
 import { KafkaTopics } from 'types/messages'
@@ -35,16 +36,13 @@ export async function getEventProducer(): Promise<Producer> {
     producer = kafka.producer({
       allowAutoTopicCreation: false,
       idempotent: true,
-      retry: {
-        initialRetryTime: 100,
-        retries: 10,
-      },
+      createPartitioner: Partitioners.DefaultPartitioner,
+      maxInFlightRequests: 5,
     })
 
     // Store the connection promise to avoid multiple connection attempts
     connectionPromise = producer.connect().then(() => {
       isConnected = true
-      logger.info('Event producer connected')
     }).catch((error) => {
       logger.error({ error }, 'Failed to connect event producer')
       producer = null

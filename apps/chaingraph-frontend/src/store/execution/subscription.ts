@@ -31,8 +31,6 @@ export const $activeExecutionSubscription = createStore<ExecutionSubscription | 
 // Base effect for creating subscription
 const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: TRPCExecutorClient }, ExecutionSubscription>(
   async ({ executionId, client }) => {
-    console.debug(`[EXEC SUB] subscribeToExecutionBaseFx called with executionId: ${executionId}, client exists: ${!!client}`)
-
     if (!client) {
       console.error('[EXEC SUB] TRPC executor client not initialized!')
       throw new Error('Executor TRPC client not initialized')
@@ -59,7 +57,7 @@ const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: T
             ExecutionEventEnum.NODE_COMPLETED,
             ExecutionEventEnum.NODE_FAILED,
             ExecutionEventEnum.NODE_SKIPPED,
-            ExecutionEventEnum.NODE_STATUS_CHANGED,
+            // ExecutionEventEnum.NODE_STATUS_CHANGED,
             ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
             ExecutionEventEnum.EDGE_TRANSFER_COMPLETED,
             ExecutionEventEnum.EDGE_TRANSFER_FAILED,
@@ -75,16 +73,9 @@ const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: T
             setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
           },
           onData: (events) => {
-            console.debug(`[EXEC SUB] Received data for execution ${executionId}`)
+            console.debug(`[EXEC SUB] Received data for execution ${executionId}`, events)
 
-            if (Array.isArray(events)) {
-              newExecutionEvents(events)
-              // data.forEach((event) => {
-              // Handle incoming events
-              // if (event.type !== ExecutionEventEnum.NODE_STATUS_CHANGED) {
-              // }
-              // })
-            }
+            newExecutionEvents(events)
           },
           onError: (error: any) => {
             console.error(`[EXEC SUB] Subscription error for execution ${executionId}:`, error)

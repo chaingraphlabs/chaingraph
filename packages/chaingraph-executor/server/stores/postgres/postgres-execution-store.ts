@@ -8,7 +8,7 @@
 
 import type { DBType } from 'server/utils/db'
 import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from 'types'
-import type { IExecutionStore } from '../interfaces/IExecutionStore'
+import type { IExecutionStore, UpdateExecutionStatusParams } from '../interfaces/IExecutionStore'
 import type { ExecutionClaimRow, ExecutionRow } from './schema'
 import { and, desc, eq, getTableColumns, lt, sql } from 'drizzle-orm'
 import { executionClaimsTable, executionsTable } from './schema'
@@ -57,6 +57,48 @@ export class PostgresExecutionStore implements IExecutionStore {
     return result.length > 0
   }
 
+  /**
+   * Atomically update execution status and related fields
+   * This method avoids the need to fetch the execution first
+   */
+  async updateExecutionStatus(params: UpdateExecutionStatusParams): Promise<boolean> {
+    const updateData: Partial<typeof executionsTable.$inferInsert> = {
+      status: params.status,
+      updatedAt: new Date(),
+    }
+
+    // Conditionally set error fields
+    if (params.errorMessage !== undefined) {
+      updateData.errorMessage = params.errorMessage
+    }
+    if (params.errorNodeId !== undefined) {
+      updateData.errorNodeId = params.errorNodeId
+    }
+
+    // Handle timestamps - use provided values or set defaults based on status
+    if (params.startedAt) {
+      updateData.startedAt = params.startedAt
+    } else if (params.status === 'running' && !params.completedAt) {
+      // Only set default startedAt if status is running and we're not setting completedAt
+      updateData.startedAt = new Date()
+    }
+
+    if (params.completedAt) {
+      updateData.completedAt = params.completedAt
+    } else if (params.status === 'completed' || params.status === 'failed' || params.status === 'stopped') {
+      // Set default completedAt for terminal states
+      updateData.completedAt = new Date()
+    }
+
+    const result = await this.db
+      .update(executionsTable)
+      .set(updateData)
+      .where(eq(executionsTable.id, params.executionId))
+      .returning({ id: executionsTable.id })
+
+    return result.length > 0
+  }
+
   async getRootExecutions(
     flowId: string,
     limit = 50,
@@ -68,14 +110,14 @@ export class PostgresExecutionStore implements IExecutionStore {
         ...getTableColumns(executionsTable),
         // Calculated fields using subqueries
         levels: sql<number>`(
-          SELECT COALESCE(MAX(${executionsTable.executionDepth}), 0)
-          FROM ${executionsTable} children
-          WHERE children.root_execution_id = ${executionsTable.id}
+          SELECT COALESCE(MAX(children.execution_depth), 0)
+          FROM chaingraph_executions children
+          WHERE children.root_execution_id = chaingraph_executions.id
         )`.as('levels'),
         totalNested: sql<number>`(
           SELECT COUNT(*)::int
-          FROM ${executionsTable} children
-          WHERE children.root_execution_id = ${executionsTable.id}
+          FROM chaingraph_executions children
+          WHERE children.root_execution_id = chaingraph_executions.id
         )`.as('totalNested'),
       })
       .from(executionsTable)
@@ -91,6 +133,7 @@ export class PostgresExecutionStore implements IExecutionStore {
 
     return results.map((row) => {
       const { levels, totalNested, ...executionFields } = row
+
       return {
         execution: executionFields,
         levels: levels ?? 0,

@@ -7,6 +7,7 @@
  */
 
 import type { Producer } from 'kafkajs'
+import { Partitioners } from 'kafkajs'
 import type { ExecutionCommand } from 'types/messages'
 import { KafkaTopics } from 'types/messages'
 import { createLogger } from '../../utils/logger'
@@ -25,16 +26,13 @@ export async function getCommandProducer(): Promise<Producer> {
     producer = kafka.producer({
       allowAutoTopicCreation: false,
       idempotent: true,
-      retry: {
-        initialRetryTime: 100,
-        retries: 10,
-      },
+      createPartitioner: Partitioners.DefaultPartitioner,
+      maxInFlightRequests: 5,
     })
 
     // Store the connection promise to avoid multiple connection attempts
     connectionPromise = producer.connect().then(() => {
       isConnected = true
-      logger.info('Command producer connected')
     }).catch((error) => {
       logger.error({ error }, 'Failed to connect command producer')
       producer = null

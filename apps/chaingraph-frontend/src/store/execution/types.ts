@@ -7,17 +7,18 @@
  */
 
 import type { INode, SerializedEdge } from '@badaitech/chaingraph-types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 
-export enum ExecutionStatus {
-  IDLE = 'IDLE',
-  CREATING = 'CREATING',
-  CREATED = 'CREATED',
-  RUNNING = 'RUNNING',
-  PAUSED = 'PAUSED',
-  STOPPED = 'STOPPED',
-  COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR',
-}
+// export enum ExecutionStatus {
+//   IDLE = 'IDLE',
+//   CREATING = 'CREATING',
+//   CREATED = 'CREATED',
+//   RUNNING = 'RUNNING',
+//   PAUSED = 'PAUSED',
+//   STOPPED = 'STOPPED',
+//   COMPLETED = 'COMPLETED',
+//   ERROR = 'ERROR',
+// }
 
 export interface ExecutionState {
   status: ExecutionStatus
@@ -78,9 +79,9 @@ export interface ExecutionSubscriptionState {
 }
 
 export const TERMINAL_EXECUTION_STATUSES = [
-  ExecutionStatus.COMPLETED,
-  ExecutionStatus.ERROR,
-  ExecutionStatus.STOPPED,
+  ExecutionStatus.Completed,
+  ExecutionStatus.Failed,
+  ExecutionStatus.Stopped,
 ] as const
 
 export type TerminalExecutionStatus = typeof TERMINAL_EXECUTION_STATUSES[number]

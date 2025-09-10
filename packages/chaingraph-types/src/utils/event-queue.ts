@@ -10,7 +10,8 @@ interface Subscriber<T> {
   id: string
   position: number
   handler: (event: T) => void | Promise<void>
-  onError?: (error: any) => void
+  onError?: (error: Error) => void
+  onComplete?: () => void | Promise<void>
   processing: boolean
 }
 
@@ -22,6 +23,7 @@ export class EventQueue<T> {
   private currentPosition: number = 0
   private closingPromise: Promise<void> | null = null
   private isClosed: boolean = false
+  private isClosing: boolean = false
 
   constructor(maxBufferSize: number = 1000) {
     this.maxBufferSize = maxBufferSize
@@ -29,11 +31,12 @@ export class EventQueue<T> {
 
   subscribe(
     handler: (event: T) => void | Promise<void>,
-    onError?: (error: any) => void,
+    onError?: (error: Error) => void,
+    onComplete?: () => void | Promise<void>,
   ): () => void {
-    if (this.isClosed) {
+    if (this.isClosed || this.isClosing) {
       if (onError) {
-        onError(new Error('EventQueue is closed.'))
+        onError(new Error('EventQueue is closed or closing.'))
       }
       return () => {}
     }
@@ -44,6 +47,7 @@ export class EventQueue<T> {
       position: this.currentPosition,
       handler,
       onError,
+      onComplete,
       processing: false,
     }
 
@@ -51,7 +55,7 @@ export class EventQueue<T> {
 
     this.processSubscriberEvents(subscriber).catch((error) => {
       if (onError)
-        onError(error)
+        onError(error as Error)
     })
 
     return () => {
@@ -61,7 +65,13 @@ export class EventQueue<T> {
 
   async publish(event: T): Promise<void> {
     if (this.isClosed) {
+      console.warn('Attempted to publish to closed EventQueue - event dropped')
       return Promise.resolve()
+    }
+
+    if (this.isClosing) {
+      // During closing, we can still accept events but log for debugging
+      console.debug('Publishing to closing EventQueue - event will be processed')
     }
 
     this.buffer.push(event)
@@ -112,7 +122,7 @@ export class EventQueue<T> {
           }
         } catch (error) {
           if (subscriber.onError) {
-            subscriber.onError(error)
+            subscriber.onError(error as Error)
           }
         }
         subscriber.position++
@@ -146,29 +156,43 @@ export class EventQueue<T> {
       return this.closingPromise || Promise.resolve()
     }
 
-    this.isClosed = true
+    if (this.isClosing) {
+      return this.closingPromise || Promise.resolve()
+    }
+
+    // Step 1: Mark as closing (not closed yet!) - this prevents new subscriptions
+    // but allows pending publishes to complete
+    this.isClosing = true
 
     const promises: Promise<void>[] = []
 
-    // Process remaining events for subscribers
+    // Step 2: Process remaining events for all subscribers
     for (const subscriber of this.subscribers.values()) {
       promises.push(this.processSubscriberEvents(subscriber))
     }
 
-    // Execute close handlers
+    // Step 3: Execute close handlers
     for (const handler of this.closeHandlers) {
       promises.push(Promise.resolve(handler()))
     }
 
-    this.closingPromise = Promise.all(promises).then(() => {
-      // Notify subscribers about closure
+    // Step 4: Create closing promise that waits for everything
+    this.closingPromise = Promise.all(promises).then(async () => {
+      // Step 5: Wait for all subscribers to acknowledge completion
+      // Give subscribers time to process their local buffers
+      const subscriberCompletions: Promise<void>[] = []
+
       for (const subscriber of this.subscribers.values()) {
-        if (subscriber.onError) {
-          subscriber.onError(new Error('EventQueue is closed.'))
+        // Instead of sending error, send a completion signal
+        if (subscriber.onComplete) {
+          subscriberCompletions.push(Promise.resolve(subscriber.onComplete()))
         }
       }
 
-      // Clear everything
+      await Promise.all(subscriberCompletions)
+
+      // Step 6: NOW we can mark as fully closed and clear resources
+      this.isClosed = true
       this.subscribers.clear()
       this.buffer.length = 0
       this.closeHandlers = []
@@ -221,7 +245,7 @@ export function createQueueIterator<T>(
   signal?: AbortSignal,
 ): AsyncIterableIterator<T> {
   let resolveNext: ((value: IteratorResult<T>) => void) | null = null
-  let rejectNext: ((reason?: any) => void) | null = null
+  let rejectNext: ((reason?: Error) => void) | null = null
   let done = false
 
   let unsubscribe: () => void
@@ -229,27 +253,29 @@ export function createQueueIterator<T>(
   const eventQueue: T[] = []
   let ended = false // Indicates if the queue has been closed
 
-  const onError = (error: any) => {
-    if (error.message === 'EventQueue is closed.') {
-      ended = true
-      if (eventQueue.length === 0 && resolveNext) {
-        done = true
-        resolveNext({ value: undefined, done: true })
-        resolveNext = null
-      }
-      // Don't unsubscribe here; let the iterator process all events
-    } else {
-      // Handle other errors
+  const onComplete = async () => {
+    // Graceful completion - no error!
+    ended = true
+
+    // Drain any remaining events in local buffer
+    if (eventQueue.length === 0 && resolveNext) {
       done = true
-      if (rejectNext) {
-        rejectNext(error)
-        rejectNext = null
-      } else if (resolveNext) {
-        resolveNext({ value: undefined, done: true })
-        resolveNext = null
-      }
-      unsubscribe()
+      resolveNext({ value: undefined, done: true })
+      resolveNext = null
     }
+  }
+
+  const onError = (error: Error) => {
+    // Only treat actual errors as errors, not queue closure
+    done = true
+    if (rejectNext) {
+      rejectNext(error)
+      rejectNext = null
+    } else if (resolveNext) {
+      resolveNext({ value: undefined, done: true })
+      resolveNext = null
+    }
+    unsubscribe()
   }
 
   unsubscribe = queue.subscribe(
@@ -267,6 +293,7 @@ export function createQueueIterator<T>(
       }
     },
     onError,
+    onComplete,
   )
 
   if (signal) {

@@ -111,7 +111,7 @@ export class ExecutionWorker {
   }
 
   private async processTask(task: ExecutionTask): Promise<void> {
-    const startTime = Date.now()
+    const startProcessTime = Date.now()
 
     // Initialize retry count if not set
     if (task.retryCount === undefined) {
@@ -147,7 +147,8 @@ export class ExecutionWorker {
       logger.debug({
         executionId: task.executionId,
         workerId: this.workerId,
-      }, 'Failed to claim execution, another worker got it')
+        executionStatus: executionRow.status,
+      }, 'Failed to claim execution, another worker got it or already executed')
       return
     }
 
@@ -203,15 +204,27 @@ export class ExecutionWorker {
         heartbeatInterval,
       })
 
+      const startTime = Date.now()
+      const runningStatusPromise = this.setExecutionStatus(task.executionId, {
+        status: ExecutionStatus.Running,
+        startedAt: new Date(startTime),
+      })
+
       // Start execution
       await instance.engine!.execute(async (
         context: ExecutionContext,
         eventQueue: EventQueue<ExecutionEventImpl>,
       ) => {
         // execution complete callback
+        // The eventQueue is already closed at this point, and all events should be processed
+        // Clean up the event handling (wait for Kafka publishes to complete)
+        if (instance.cleanupEventHandling) {
+          await instance.cleanupEventHandling()
+        }
       })
 
-      const executionTime = Date.now() - startTime
+      const completeTime = Date.now()
+      const executionTime = completeTime - startTime
       logger.info({
         executionId: task.executionId,
         executionTime,
@@ -219,10 +232,17 @@ export class ExecutionWorker {
         workerId: this.workerId,
       }, 'Task execution completed')
 
+      // Mark execution as completed in store if not already marked
+      await runningStatusPromise
+      await this.setExecutionStatus(task.executionId, {
+        status: ExecutionStatus.Completed,
+        completedAt: new Date(completeTime),
+      })
+
       // Release claim and clean up
       await this.releaseExecution(task.executionId)
     } catch (error) {
-      const executionTime = Date.now() - startTime
+      const executionTime = Date.now() - startProcessTime
       logger.error({
         error: error instanceof Error ? error.message : String(error),
         executionId: task.executionId,
@@ -231,6 +251,22 @@ export class ExecutionWorker {
         retryCount: task.retryCount,
         maxRetries: task.maxRetries,
       }, 'Task execution failed')
+
+      // Try to cleanup event handling even on error
+      try {
+        const activeExec = this.activeExecutions.get(task.executionId)
+        if (activeExec?.instance.cleanupEventHandling) {
+          await activeExec.instance.cleanupEventHandling()
+          logger.debug({
+            executionId: task.executionId,
+          }, 'Event handling cleanup completed after error')
+        }
+      } catch (cleanupError) {
+        logger.error({
+          error: cleanupError,
+          executionId: task.executionId,
+        }, 'Failed to cleanup event handling after error')
+      }
 
       // Release claim and clean up
       await this.releaseExecution(task.executionId)
@@ -264,13 +300,10 @@ export class ExecutionWorker {
       } else {
         // Max retries exceeded, mark as failed
         try {
-          const instance = await this.store.get(task.executionId)
-          if (instance) {
-            instance.status = ExecutionStatus.Failed
-            instance.errorMessage = error instanceof Error ? error.message : 'Unknown error'
-            instance.completedAt = new Date()
-            await this.store.create(instance)
-          }
+          await this.setExecutionStatus(task.executionId, {
+            status: ExecutionStatus.Failed,
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          })
 
           logger.error({
             executionId: task.executionId,
@@ -286,6 +319,42 @@ export class ExecutionWorker {
     }
   }
 
+  private async setExecutionStatus(
+    executionId: string,
+    options: {
+      status: ExecutionStatus
+      errorMessage?: string
+      errorNodeId?: string
+      startedAt?: Date
+      completedAt?: Date
+    },
+  ): Promise<void> {
+    try {
+      // Use the new atomic update method
+      const success = await this.store.updateExecutionStatus({
+        executionId,
+        status: options.status,
+        errorMessage: options.errorMessage,
+        errorNodeId: options.errorNodeId,
+        startedAt: options.startedAt,
+        completedAt: options.completedAt,
+      })
+
+      if (!success) {
+        logger.warn({
+          executionId,
+          status: options.status,
+        }, 'Execution not found when updating status')
+      }
+    } catch (error) {
+      logger.error({
+        error,
+        executionId,
+        status: options.status,
+      }, 'Error updating execution status in store')
+    }
+  }
+
   private async releaseExecution(executionId: string): Promise<void> {
     try {
       // Clear heartbeat interval
@@ -297,11 +366,6 @@ export class ExecutionWorker {
 
       // Release claim in database
       await this.store.releaseExecution(executionId, this.workerId)
-
-      logger.debug({
-        executionId,
-        workerId: this.workerId,
-      }, 'Released execution claim')
     } catch (error) {
       logger.error({
         error,
@@ -442,16 +506,19 @@ export class ExecutionWorker {
       case 'STOP':
         active.instance.context.abortController.abort('Execution stopped by external command')
         active.instance.engine?.getDebugger()?.stop()
+        await this.setExecutionStatus(command.executionId, { status: ExecutionStatus.Stopped })
         await this.releaseExecution(command.executionId)
         break
 
       case 'PAUSE':
         active.instance.engine?.getDebugger()?.pause()
+        await this.setExecutionStatus(command.executionId, { status: ExecutionStatus.Paused })
         break
 
       case 'START':
       case 'RESUME':
         active.instance.engine?.getDebugger()?.continue()
+        await this.setExecutionStatus(command.executionId, { status: ExecutionStatus.Running })
         break
 
       case 'STEP':

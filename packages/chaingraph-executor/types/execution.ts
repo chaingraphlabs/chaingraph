@@ -15,6 +15,8 @@ import type { ExecutionRow } from 'server/stores/postgres/schema'
 import type { ExecutionTask } from 'types/messages'
 
 export enum ExecutionStatus {
+  Idle = 'idle',
+  Creating = 'creating',
   Created = 'created',
   Running = 'running',
   Paused = 'paused',
@@ -36,6 +38,7 @@ export interface ExecutionInstance {
   flow: Flow
   initialStateFlow: Flow
   engine: ExecutionEngine | null
+  cleanupEventHandling?: () => Promise<void>
 }
 
 export type ExecutionClaimStatus = 'active' | 'released' | 'expired'

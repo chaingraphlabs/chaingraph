@@ -18,9 +18,7 @@ import type { IExecutionStore } from 'server/stores/interfaces/IExecutionStore'
 import type { ExecutionRow } from 'server/stores/postgres/schema'
 import type { ExecutionInstance, ExecutionTask } from 'types'
 import type { CreateExecutionParams, IExecutionService } from './IExecutionService'
-import {
-  ExecutionEventEnum,
-} from '@badaitech/chaingraph-types'
+
 import {
   ExecutionContext,
   ExecutionEngine,
@@ -89,7 +87,8 @@ export class ExecutionService implements IExecutionService {
       executionRow.integration || undefined,
       executionRow.parentExecutionId || undefined,
       executionRow.rootExecutionId || executionRow.id,
-      undefined, // TODO: do we really want to provide event data to the context?
+      executionRow.externalEvents?.[0] || undefined,
+      // undefined, // TODO: do we really want to provide event data to the context?
       !!executionRow.parentExecutionId, // isChildExecution
       currentDepth,
       (nodeId: string) => flow.nodes.get(nodeId),
@@ -129,8 +128,8 @@ export class ExecutionService implements IExecutionService {
     // Store in memory for active tracking
     // this.activeExecutions.set(instance.row.id, instance)
 
-    // Setup event handling
-    const unsubscribe = this.setupEventHandling(instance)
+    // Setup event handling and store cleanup function on the instance
+    instance.cleanupEventHandling = this.setupEventHandling(instance)
 
     // Parent-child relationship is tracked via parentExecutionId in the store
 
@@ -164,6 +163,9 @@ export class ExecutionService implements IExecutionService {
     const unprocessedEvents = context.emittedEvents.filter(e => !e.processed)
 
     for (const event of unprocessedEvents) {
+      if (event.processed) {
+        continue
+      }
       event.processed = true
       await this.spawnChildExecutionForEvent(instance, event)
     }
@@ -172,30 +174,38 @@ export class ExecutionService implements IExecutionService {
   /**
    * Setup event handling for an execution
    */
-  private setupEventHandling(instance: ExecutionInstance): (() => void) | undefined {
+  private setupEventHandling(instance: ExecutionInstance): (() => Promise<void>) | undefined {
+    const publishPromises: Promise<void>[] = []
+
     // Subscribe to all events from the execution engine
     const unsubscribe = instance.engine?.onAll(async (event) => {
-      console.debug(`[EVENT] Execution ${instance.row.id} emitted event:`, event)
+      // Track the publish promise
+      const publishPromise = this.eventBus.publishEvent(instance.row.id, event)
+        .catch((error) => {
+          logger.error({
+            error,
+            executionId: instance.row.id,
+            eventType: event.type,
+            eventIndex: event.index,
+          }, 'Failed to publish event to Kafka')
 
-      // Publish event to event bus for subscribers
-      await this.eventBus.publishEvent(instance.row.id, event)
+          // TODO: Handle publish failure (e.g., retry, dead-letter queue, etc.)
+        })
 
-      // Log specific events
-      switch (event.type) {
-        case ExecutionEventEnum.FLOW_COMPLETED:
-          logger.debug({ executionId: instance.row.id }, 'Flow completed event')
-          break
-        case ExecutionEventEnum.FLOW_FAILED:
-          logger.debug({ executionId: instance.row.id, error: event.data }, 'Flow failed event')
-          break
-        case ExecutionEventEnum.FLOW_CANCELLED:
-          logger.debug({ executionId: instance.row.id }, 'Flow cancelled event')
-          break
-      }
+      publishPromises.push(publishPromise)
+
+      // Wait for the publish to complete
+      await publishPromise
     })
 
-    // Store unsubscribe function for cleanup (could be added to instance if needed)
-    return unsubscribe
+    // Return enhanced unsubscribe that waits for pending publishes
+    return async () => {
+      // Wait for all pending Kafka publishes
+      if (publishPromises.length > 0) {
+        await Promise.allSettled(publishPromises)
+      }
+      unsubscribe?.()
+    }
   }
 
   /**

@@ -74,7 +74,7 @@ export const ExecutionNode = memo(function ExecutionNode({
 
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation()
-    
+
     if (isRoot) {
       // For root nodes, use the expand/collapse callbacks
       if (isExpanded && onCollapse) {
@@ -89,12 +89,16 @@ export const ExecutionNode = memo(function ExecutionNode({
   }
 
   // Build tree structure for nested nodes
-  const buildChildTree = (treeNodes: ExecutionTreeNode[], parentId: string): ExecutionTreeNode[] => {
-    return treeNodes.filter(n => n.parentId === parentId)
+  // const buildChildTree = (treeNodes: ExecutionTreeNode[], parentId: string): ExecutionTreeNode[] => {
+  //   return treeNodes.filter(n => n.parentId === parentId)
+  // }
+  const buildChildTree = (treeNodes: ExecutionTreeNode[], parentLevel: number): ExecutionTreeNode[] => {
+    return treeNodes.filter(n => n.level > parentLevel)
   }
 
   const renderChildren = () => {
-    if (!isExpanded || !hasChildren) return null
+    if (!isExpanded || !hasChildren)
+      return null
 
     if (isLoading) {
       return (
@@ -114,7 +118,7 @@ export const ExecutionNode = memo(function ExecutionNode({
           node={child}
           isRoot={false}
           depth={depth + 1}
-          children={buildChildTree(children, child.id)}
+          children={buildChildTree(children, child.level)}
           onSelect={onSelect}
           selectedId={selectedId}
           expandedAll={expandedAll}
@@ -122,18 +126,20 @@ export const ExecutionNode = memo(function ExecutionNode({
       ))
     } else {
       // For tree nodes, render their children
-      return children.map(child => (
-        <ExecutionNode
-          key={child.id}
-          node={child}
-          isRoot={false}
-          depth={depth + 1}
-          children={buildChildTree(children, child.id)}
-          onSelect={onSelect}
-          selectedId={selectedId}
-          expandedAll={expandedAll}
-        />
-      ))
+      return children
+        .filter(n => n.parentId === executionId)
+        .map(child => (
+          <ExecutionNode
+            key={child.id}
+            node={child}
+            isRoot={false}
+            depth={depth + 1}
+            children={buildChildTree(children, child.level)}
+            onSelect={onSelect}
+            selectedId={selectedId}
+            expandedAll={expandedAll}
+          />
+        ))
     }
   }
 
@@ -218,29 +224,36 @@ export const ExecutionNode = memo(function ExecutionNode({
         {/* Metrics */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {/* Duration */}
+          {startedAt && completedAt && (
+            <span className="font-mono">
+              {formatDuration(startedAt, completedAt)}
+            </span>
+          )}
+
           <span className="font-mono">
-            {formatDuration(startedAt, completedAt)}
+            {(node as RootExecution).execution.level}
           </span>
 
           {/* Child Count Badge (for root nodes with statistics) */}
-          {isRoot && (node as RootExecution).totalNested > 0 && (
+          {isRoot && (node as RootExecution).totalNested > 1 && (
             <Badge
               variant="secondary"
               className="h-5 px-1.5 text-xs font-mono"
             >
-              {(node as RootExecution).totalNested}
+              {(node as RootExecution).totalNested - 1}
             </Badge>
           )}
 
           {/* Depth Badge (for root nodes with levels) */}
-          {isRoot && (node as RootExecution).levels > 0 && (
-            <Badge
-              variant="outline"
-              className="h-5 px-1.5 text-xs font-mono"
-            >
-              L{(node as RootExecution).levels}
-            </Badge>
-          )}
+          {/* {isRoot && (node as RootExecution).levels > 0 && ( */}
+          {/*  <Badge */}
+          {/*    variant="outline" */}
+          {/*    className="h-5 px-1.5 text-xs font-mono" */}
+          {/*  > */}
+          {/*    Levels: */}
+          {/*    {(node as RootExecution).levels} */}
+          {/*  </Badge> */}
+          {/* )} */}
         </div>
 
         {/* Error Indicator */}

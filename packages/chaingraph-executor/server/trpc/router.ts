@@ -388,6 +388,25 @@ export const executionRouter = router({
       return { success: true }
     }),
 
+  // Get execution details
+  getExecutionDetails: executionContextProcedure
+    .input(z.object({
+      executionId: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const { executionStore } = ctx
+
+      const executionRow = await executionStore.get(input.executionId)
+      if (!executionRow) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Execution with id ${input.executionId} not found`,
+        })
+      }
+
+      return executionRow
+    }),
+
   // Get child executions
   getExecutionsTree: executionContextProcedure
     .input(z.object({
@@ -459,11 +478,6 @@ export const executionRouter = router({
           message: `Execution with id ${input.executionId} not found`,
         })
       }
-
-      logger.info({
-        executionId: input.executionId,
-        fromIndex: input.fromIndex,
-      }, 'Starting event subscription')
 
       // Subscribe to events from the event bus
       const iterator = eventBus.subscribeToEvents(

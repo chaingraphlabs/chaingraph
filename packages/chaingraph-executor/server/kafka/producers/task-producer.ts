@@ -8,6 +8,7 @@
 
 import type { Producer } from 'kafkajs'
 import type { ExecutionTask } from 'types/messages'
+import { Partitioners } from 'kafkajs'
 import { safeSuperJSONStringify } from 'server/utils/serialization'
 import { KafkaTopics } from 'types/messages'
 import { createLogger } from '../../utils/logger'
@@ -25,16 +26,13 @@ export async function getTaskProducer(): Promise<Producer> {
     producer = kafka.producer({
       allowAutoTopicCreation: false,
       idempotent: true,
-      retry: {
-        initialRetryTime: 100,
-        retries: 10,
-      },
+      createPartitioner: Partitioners.DefaultPartitioner,
+      maxInFlightRequests: 5,
     })
 
     // Store the connection promise to avoid multiple connection attempts
     connectionPromise = producer.connect().then(() => {
       isConnected = true
-      logger.info('Task producer connected')
     }).catch((error) => {
       logger.error({ error }, 'Failed to connect task producer')
       producer = null
@@ -66,8 +64,6 @@ export async function publishExecutionTask(task: ExecutionTask): Promise<void> {
       acks: -1, // Wait for all in-sync replicas to acknowledge
       timeout: 30000, // 30 second timeout
     })
-
-    logger.debug({ executionId: task.executionId, flowId: task.flowId }, 'Task published')
   } catch (error) {
     logger.error({ error, executionId: task.executionId }, 'Failed to publish task')
     throw error

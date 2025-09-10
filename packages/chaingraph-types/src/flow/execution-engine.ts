@@ -57,6 +57,7 @@ export class ExecutionEngine {
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
   private onEventCallback?: (context: ExecutionContext) => Promise<void>
+  private pendingEventPublishes: Promise<void>[] = []
 
   constructor(
     private readonly flow: Flow,
@@ -76,9 +77,7 @@ export class ExecutionEngine {
     if (options?.debug) {
       this.debugger = new FlowDebugger(
         async (node) => {
-          await this.eventQueue.publish(
-            this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node: node.clone() }),
-          )
+          await this.publishEventTracked(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node: node.clone() })
           onBreakpointHit?.(node)
         },
       )
@@ -95,18 +94,14 @@ export class ExecutionEngine {
     const contextEventsQueueCancel
       = this.context.getEventsQueue().subscribe(createExecutionEventHandler({
         [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: async (data) => {
-          await this.eventQueue.publish(
-            this.createEvent(ExecutionEventEnum.NODE_DEBUG_LOG_STRING, data),
-          )
+          await this.publishEventTracked(ExecutionEventEnum.NODE_DEBUG_LOG_STRING, data)
         },
       }))
 
     const startTime = Date.now()
     try {
       // Emit flow started event
-      await this.eventQueue.publish(
-        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flowMetadata: { ...this.flow.metadata } }),
-      )
+      await this.publishEventTracked(ExecutionEventEnum.FLOW_STARTED, { flowMetadata: { ...this.flow.metadata } })
 
       // Initialize dependency tracking
       await this.initializeDependencies()
@@ -124,13 +119,11 @@ export class ExecutionEngine {
       // Wait for all workers to complete
       await Promise.all(workerPromises)
 
-      console.log(`[ExecutionEngine] All workers completed successfully, total nodes executed: ${this.completedNodes.size}`)
-
       // Emit flow completed event
-      await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
+      await this.publishEventTracked(ExecutionEventEnum.FLOW_COMPLETED, {
         flowMetadata: this.flow.metadata,
         executionTime: Date.now() - startTime,
-      }))
+      })
     } catch (error) {
       // Ensure queues are closed on error
       this.readyQueue.close()
@@ -147,22 +140,28 @@ export class ExecutionEngine {
       // check if execution was cancelled or failed
       if (this.context.abortSignal.aborted && (!isAbortedDueToError || isAbortedDueToDebugger)) {
         // Emit flow cancelled event
-        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
+        await this.publishEventTracked(ExecutionEventEnum.FLOW_CANCELLED, {
           flowMetadata: this.flow.metadata,
           reason: this.context.abortSignal.reason ?? ExecutionCancelledReason,
           executionTime: Date.now() - startTime,
-        }))
+        })
       } else {
         // Emit flow failed event
-        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
+        await this.publishEventTracked(ExecutionEventEnum.FLOW_FAILED, {
           flowMetadata: this.flow.metadata,
           error: error as Error,
           executionTime: Date.now() - startTime,
-        }))
+        })
       }
 
       return Promise.reject(error)
     } finally {
+      // Wait for all pending event publishes to complete
+      if (this.pendingEventPublishes.length > 0) {
+        await Promise.allSettled(this.pendingEventPublishes)
+      }
+
+      // NOW close the event queue - all events are in!
       await this.eventQueue.close()
       contextEventsQueueCancel()
 
@@ -249,7 +248,7 @@ export class ExecutionEngine {
             // For nodes WITHOUT disabledAutoExecution in child context
             // Skip them to prevent re-running the entire flow
             if (this.context.isChildExecution && this.context.eventData) {
-              console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
+              // console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
               continue
             }
           }
@@ -278,11 +277,11 @@ export class ExecutionEngine {
     for (const nodeId of this.executingNodes) {
       const node = this.flow.nodes.get(nodeId)
       if (node) {
-        const promise = this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+        const promise = this.publishEventTracked(ExecutionEventEnum.NODE_STATUS_CHANGED, {
           nodeId: node.id,
           oldStatus: NodeStatus.Idle,
           newStatus: NodeStatus.Initialized,
-        }))
+        })
 
         promises.push(promise)
       }
@@ -406,7 +405,7 @@ export class ExecutionEngine {
             } else {
               // Check if the event name matches the listener's event name
               const eventName = this.context.eventData.eventName
-              const listenerEventName = (dependentNode as any).eventName
+              const listenerEventName = (dependentNode as any)?.eventName
               if (eventName !== listenerEventName) {
                 // console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
                 shouldSkip = true
@@ -468,11 +467,12 @@ export class ExecutionEngine {
     const nodeStartTime = Date.now()
 
     const onStatusChange = (event: NodeStatusChangeEvent) => {
-      return this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+      // Use tracked publish to ensure this event is captured
+      this.publishEventTracked(ExecutionEventEnum.NODE_STATUS_CHANGED, {
         nodeId: node.id,
         oldStatus: event.oldStatus,
         newStatus: event.newStatus,
-      }))
+      })
     }
     const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
@@ -495,7 +495,7 @@ export class ExecutionEngine {
 
         // Set node to executing
         node.setStatus(NodeStatus.Executing, true)
-        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
+        await this.publishEventTracked(ExecutionEventEnum.NODE_STARTED, { node: node.clone() })
       }
 
       // Debug point - before execution
@@ -524,7 +524,7 @@ export class ExecutionEngine {
 
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
-              await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
+              await this.publishEventTracked(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
                 serializedEdge: {
                   id: updatedEdge.id,
                   metadata: { ...updatedEdge.metadata },
@@ -535,12 +535,12 @@ export class ExecutionEngine {
                   targetPortId: updatedEdge.targetPort.id,
                 },
                 transferTime: Date.now() - transferStartTime,
-              }))
+              })
             }
           } catch (error) {
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
-              await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
+              await this.publishEventTracked(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
                 serializedEdge: {
                   id: edge.id,
                   metadata: { ...edge.metadata },
@@ -551,7 +551,7 @@ export class ExecutionEngine {
                   targetPortId: edge.targetPort.id,
                 },
                 error: error as Error,
-              }))
+              })
             }
             throw error // Rethrow to be caught by Promise.all
           }
@@ -693,10 +693,10 @@ export class ExecutionEngine {
 
   private async setNodeCompleted(node: INode, nodeStartTime: number): Promise<void> {
     node.setStatus(NodeStatus.Completed, true)
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_COMPLETED, {
       node: node.clone(),
       executionTime: Date.now() - nodeStartTime,
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -705,9 +705,9 @@ export class ExecutionEngine {
 
   private async setNodeBackgrounding(node: INode, nodeStartTime: number) {
     node.setStatus(NodeStatus.Backgrounding, true)
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_BACKGROUNDED, {
       node: node.clone(),
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -716,10 +716,10 @@ export class ExecutionEngine {
 
   private async setNodeSkipped(node: INode, reason: string) {
     node.setStatus(NodeStatus.Skipped, true)
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_SKIPPED, {
       nodeId: node.id,
       reason,
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -729,11 +729,11 @@ export class ExecutionEngine {
   private async setNodeError(node: INode, error: unknown, nodeStartTime: number) {
     node.setStatus(NodeStatus.Error, true)
 
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_FAILED, {
       node: node.clone(),
       error: error as Error,
       executionTime: Date.now() - nodeStartTime,
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -783,5 +783,26 @@ export class ExecutionEngine {
       new Date(),
       data,
     )
+  }
+
+  // Helper method to publish and track event promises
+  private async publishEventTracked<T extends ExecutionEventEnum>(
+    type: T,
+    data: ExecutionEventData[T],
+  ): Promise<void> {
+    const promise = this.eventQueue.publish(
+      this.createEvent(type, data),
+    )
+    this.pendingEventPublishes.push(promise)
+
+    try {
+      await promise
+    } finally {
+      // Remove from pending list after completion
+      const index = this.pendingEventPublishes.indexOf(promise)
+      if (index > -1) {
+        this.pendingEventPublishes.splice(index, 1)
+      }
+    }
   }
 }
