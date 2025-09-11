@@ -130,6 +130,11 @@ class TokenBalanceWithMeta {
   description: 'Fetches token balances with metadata for a given wallet address using Alchemy API',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy'],
+  ui: {
+    state: {
+      isHidden: true,
+    },
+  },
 })
 class AlchemyTokenBalancesWithMeta extends BaseNode {
   @Input()
