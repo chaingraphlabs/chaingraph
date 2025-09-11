@@ -329,6 +329,7 @@ describe('port Initialization Test', () => {
 
     const nodeJson = {
       id: 'CreateMessageNode:0194ed3f-6b90-7279-8395-e148f3341251',
+      type: 'CreateMessageNode',
       metadata: {
         type: 'CreateMessageNode',
         portsConfig: {

@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
 import { useStoreMap } from 'effector-react'
 import { useMemo, useRef } from 'react'
@@ -28,74 +27,74 @@ export function useXYFlowNodes() {
     store: $xyflowNodes,
     keys: [], // No external dependencies
     fn: nodes => nodes,
-    updateFilter: (prevNodes, nextNodes) => {
-      // Store the previous nodes for our reference preservation
-      prevNodesRef.current = prevNodes
-
-      // Quick reference check
-      if (prevNodes === nextNodes)
-        return false
-
-      // Length check
-      if (prevNodes.length !== nextNodes.length)
-        return true
-
-      // Only check essential properties to determine if an update is needed
-      for (let i = 0; i < nextNodes.length; i++) {
-        const prev = prevNodes[i]
-        const next = nextNodes[i]
-
-        // ID check (if order changed)
-        if (prev.id !== next.id)
-          return true
-
-        // Position changed?
-        if (prev.position.x !== next.position.x
-          || prev.position.y !== next.position.y) {
-          return true
-        }
-
-        // Dimensions changed?
-        if (prev.width !== next.width || prev.height !== next.height)
-          return true
-
-        // Selection state changed?
-        if (prev.selected !== next.selected)
-          return true
-
-        // Parent changed?
-        if (prev.parentId !== next.parentId)
-          return true
-
-        // Type changed?
-        if (prev.type !== next.type)
-          return true
-
-        // Version check (most important - detects any data changes)
-        const prevVersion = (prev.data?.node as INode).getVersion?.() ?? 0
-        const nextVersion = (next.data?.node as INode).getVersion?.() ?? 0
-        if (prevVersion !== nextVersion)
-          return true
-
-        const prevUi = (prev.data?.node as INode).getUI?.() ?? {}
-        const nextUi = (next.data?.node as INode).getUI?.() ?? {}
-        // Check if any UI properties that affect display have changed
-        if (prevUi.position?.x !== nextUi.position?.x
-          || prevUi.position?.y !== nextUi.position?.y
-          || prevUi.dimensions?.width !== nextUi.dimensions?.width
-          || prevUi.dimensions?.height !== nextUi.dimensions?.height
-          || prevUi.style?.backgroundColor !== nextUi.style?.backgroundColor
-          || prevUi.style?.borderColor !== nextUi.style?.borderColor
-          || prevUi.state?.isSelected !== nextUi.state?.isSelected
-          || prevUi.state?.isHighlighted !== nextUi.state?.isHighlighted
-          || prevUi.state?.isDisabled !== nextUi.state?.isDisabled) {
-          return true
-        }
-      }
-
-      // No meaningful changes detected
-      return false
-    },
+    // updateFilter: (prevNodes, nextNodes) => {
+    //   // Store the previous nodes for our reference preservation
+    //   prevNodesRef.current = prevNodes
+    //
+    //   // Quick reference check
+    //   if (prevNodes === nextNodes)
+    //     return false
+    //
+    //   // Length check
+    //   if (prevNodes.length !== nextNodes.length)
+    //     return true
+    //
+    //   // Only check essential properties to determine if an update is needed
+    //   for (let i = 0; i < nextNodes.length; i++) {
+    //     const prev = prevNodes[i]
+    //     const next = nextNodes[i]
+    //
+    //     // ID check (if order changed)
+    //     if (prev.id !== next.id)
+    //       return true
+    //
+    //     // Position changed?
+    //     if (prev.position.x !== next.position.x
+    //       || prev.position.y !== next.position.y) {
+    //       return true
+    //     }
+    //
+    //     // Dimensions changed?
+    //     if (prev.width !== next.width || prev.height !== next.height)
+    //       return true
+    //
+    //     // Selection state changed?
+    //     if (prev.selected !== next.selected)
+    //       return true
+    //
+    //     // Parent changed?
+    //     if (prev.parentId !== next.parentId)
+    //       return true
+    //
+    //     // Type changed?
+    //     if (prev.type !== next.type)
+    //       return true
+    //
+    //     // Version check (most important - detects any data changes)
+    //     const prevVersion = (prev.data?.node as INode).getVersion?.() ?? 0
+    //     const nextVersion = (next.data?.node as INode).getVersion?.() ?? 0
+    //     if (prevVersion !== nextVersion)
+    //       return true
+    //
+    //     const prevUi = (prev.data?.node as INode).getUI?.() ?? {}
+    //     const nextUi = (next.data?.node as INode).getUI?.() ?? {}
+    //     // Check if any UI properties that affect display have changed
+    //     if (prevUi.position?.x !== nextUi.position?.x
+    //       || prevUi.position?.y !== nextUi.position?.y
+    //       || prevUi.dimensions?.width !== nextUi.dimensions?.width
+    //       || prevUi.dimensions?.height !== nextUi.dimensions?.height
+    //       || prevUi.style?.backgroundColor !== nextUi.style?.backgroundColor
+    //       || prevUi.style?.borderColor !== nextUi.style?.borderColor
+    //       || prevUi.state?.isSelected !== nextUi.state?.isSelected
+    //       || prevUi.state?.isHighlighted !== nextUi.state?.isHighlighted
+    //       || prevUi.state?.isDisabled !== nextUi.state?.isDisabled) {
+    //       return true
+    //     }
+    //   }
+    //
+    //   // No meaningful changes detected
+    //   return false
+    // },
   })
 
   // This final memoization step ensures we return a stable reference

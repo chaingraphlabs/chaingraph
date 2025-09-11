@@ -36,7 +36,7 @@ export class EventQueue<T> {
   ): () => void {
     if (this.isClosed || this.isClosing) {
       if (onError) {
-        onError(new Error('EventQueue is closed or closing.'))
+        onError(new Error('EventQueue is closed.'))
       }
       return () => {}
     }

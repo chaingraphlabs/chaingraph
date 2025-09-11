@@ -96,17 +96,15 @@ export const $draggingEdge = edgesDomain.createStore<DraggingEdge | null>(null)
   .reset(resetEdges)
   .reset(globalReset)
 
-export const $draggingEdgePort = edgesDomain.createStore<{
-  draggingEdge: DraggingEdge | null
-  draggingPort: IPort | null
-} | null
->(null)
-  .on($draggingEdge, (state, draggingEdge) => {
+const $draggingEdgePortUpdated = sample({
+  source: $nodes,
+  clock: $draggingEdge,
+  fn: (nodes, draggingEdge) => {
     if (!draggingEdge || !draggingEdge.nodeId || !draggingEdge.handleId) {
       return null
     }
 
-    const node = $nodes.getState()[draggingEdge.nodeId]
+    const node = nodes[draggingEdge.nodeId]
     if (!node) {
       console.warn(`Node with ID ${draggingEdge.nodeId} not found while getting dragging edge port.`)
       return null
@@ -122,7 +120,17 @@ export const $draggingEdgePort = edgesDomain.createStore<{
       draggingEdge,
       draggingPort,
     }
-  })
+  },
+})
+
+export const $draggingEdgePort = edgesDomain.createStore<{
+  draggingEdge: DraggingEdge | null
+  draggingPort: IPort | null
+} | null
+>(null)
+  .on($draggingEdgePortUpdated, (_, draggingEdgePort) => draggingEdgePort)
+  .reset(resetEdges)
+  .reset(globalReset)
 
 export const $compatiblePortsToDraggingEdge = portsDomain.createStore<string[] | null>(null)
   .on($draggingEdgePort, (state, draggingEdgePort) => {

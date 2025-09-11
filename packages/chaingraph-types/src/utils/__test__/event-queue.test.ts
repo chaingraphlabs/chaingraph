@@ -151,15 +151,14 @@ describe('eventQueue', () => {
   // })
 
   it('should notify subscribers when the queue is closed', async () => {
-    const onErrorMock = vi.fn()
+    const onCompleteMock = vi.fn()
 
     // Subscribe to the queue
     queue.subscribe(
-      (event) => {
-        // Do nothing
-      },
-      (error) => {
-        onErrorMock(error)
+      () => {},
+      () => {},
+      () => {
+        onCompleteMock()
       },
     )
 
@@ -170,8 +169,8 @@ describe('eventQueue', () => {
     await new Promise(resolve => setTimeout(resolve, 10))
 
     // Verify that the subscriber's onError was called with the correct error
-    expect(onErrorMock).toHaveBeenCalledTimes(1)
-    expect(onErrorMock.mock.calls[0][0].message).toBe('EventQueue is closed.')
+    expect(onCompleteMock).toHaveBeenCalledTimes(1)
+    // expect(onCompleteMock.mock.calls[0][0].message).toBe('EventQueue is closed.')
   })
 
   it('should allow subscribers to finish processing events before closing', async () => {

@@ -14,7 +14,7 @@ import type { ComplexPortHandler } from './complex-port-handler'
 import { PortFactory } from '../..//port'
 import { deepCopy } from '../..//utils'
 import { FlowSerializer } from '../../flow/serializer/flow-serializer'
-import { SerializedNodeSchema } from '../types.zod'
+import { SerializedNodeSchemaV1Legacy } from '../types.zod'
 
 /**
  * Implementation of ISerializable interface
@@ -102,7 +102,7 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
     }
 
     // Validate incoming data using the Zod schema
-    const obj = SerializedNodeSchema.parse(data)
+    const obj = SerializedNodeSchemaV1Legacy.parse(data)
 
     // Update status (id is immutable)
     this.nodeRef.setStatus(obj.status, false)
