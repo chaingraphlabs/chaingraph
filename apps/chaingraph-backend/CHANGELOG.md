@@ -1,5 +1,19 @@
 # @badaitech/chaingraph-backend
 
+## 0.4.5
+
+### Patch Changes
+
+- 507ab12: Add dynamic enum options based on connected ports
+- feat: implement argument cleaning in MCPToolCallNode to remove empty optional fields
+- 93566e5: Split Alchemy token balance functionality into separate nodes
+- Updated dependencies [507ab12]
+- Updated dependencies
+- Updated dependencies [93566e5]
+  - @badaitech/chaingraph-nodes@0.4.5
+  - @badaitech/chaingraph-trpc@0.4.5
+  - @badaitech/chaingraph-types@0.4.5
+
 ## 0.4.4
 
 ### Patch Changes

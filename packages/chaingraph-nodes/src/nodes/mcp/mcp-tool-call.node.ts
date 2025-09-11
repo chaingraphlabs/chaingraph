@@ -9,16 +9,21 @@
 import type {
   ExecutionContext,
   IPort,
+  IPortConfig,
   NodeExecutionResult,
+  ObjectPort,
 } from '@badaitech/chaingraph-types'
 import type { CallToolResult, ContentBlock, Progress } from '@modelcontextprotocol/sdk/types.js'
-
 import type {
   MCPAudioContent,
   MCPEmbeddedResourceContent,
   MCPImageContent,
   MCPResourceLinkContent,
 } from './types'
+
+import {
+  deepCopy,
+} from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   MultiChannel,
@@ -161,13 +166,14 @@ export class MCPToolCallNode extends BaseNode {
 
       const progressToken = nanoid(16)
 
-      // TODO: Validate arguments against tool schema if available
+      // Build clean arguments object with optional empty fields removed
+      const cleanArguments = this.buildArguments()
 
       // Execute the tool
       const result = await client.callTool(
         {
           name: this.toolName,
-          arguments: this.arguments,
+          arguments: cleanArguments,
           _meta: {
             progressToken,
           },
@@ -216,6 +222,94 @@ export class MCPToolCallNode extends BaseNode {
     }
 
     return {}
+  }
+
+  private buildArguments(): Record<string, any> {
+    const argumentsPort = this.findPort(
+      port => port.getConfig().key === 'arguments' && !port.getConfig().parentId,
+    )
+
+    if (!argumentsPort) {
+      return {}
+    }
+
+    const argumentsPortObject = argumentsPort as ObjectPort
+    const cleanedArgs = deepCopy(this.arguments)
+
+    // Clean the arguments object recursively based on schema
+    this.cleanArgumentsRecursively(cleanedArgs, argumentsPortObject.getConfig().schema.properties)
+
+    return cleanedArgs
+  }
+
+  /**
+   * Recursively clean arguments object by removing empty optional fields
+   * @param args - The arguments object to clean
+   * @param schemaProperties - The schema properties defining the structure
+   * @param visited - Set to track visited objects and prevent infinite recursion
+   */
+  private cleanArgumentsRecursively(
+    args: Record<string, any>,
+    schemaProperties: Record<string, IPortConfig>,
+    visited: WeakSet<object> = new WeakSet(),
+  ): void {
+    // Prevent infinite recursion for circular references
+    if (visited.has(args)) {
+      return
+    }
+    visited.add(args)
+
+    // Iterate over schema properties
+    for (const [propertyKey, propertyConfig] of Object.entries(schemaProperties)) {
+      const key = propertyConfig.key || propertyKey
+      const isArgumentExists = Object.prototype.hasOwnProperty.call(args, key)
+      const isPropertyRequired = propertyConfig.required === true
+      const argumentValue = args[key]
+
+      // Check if the value is empty
+      const isArgumentEmpty = this.isValueEmpty(argumentValue)
+
+      // Remove empty optional fields
+      if (isArgumentExists && !isPropertyRequired && isArgumentEmpty) {
+        delete args[key]
+        continue
+      }
+
+      // If value exists and is not empty, recursively clean nested structures
+      if (argumentValue !== undefined && argumentValue !== null && !isArgumentEmpty) {
+        // Handle nested objects
+        if (propertyConfig.type === 'object' && propertyConfig.schema?.properties) {
+          if (typeof argumentValue === 'object' && !Array.isArray(argumentValue)) {
+            this.cleanArgumentsRecursively(argumentValue, propertyConfig.schema.properties, visited)
+          }
+        } else if (propertyConfig.type === 'array' && Array.isArray(argumentValue)) {
+        // Handle arrays containing objects
+          const itemConfig = propertyConfig.itemConfig
+          if (itemConfig?.type === 'object' && itemConfig.schema?.properties) {
+            // Clean each object in the array
+            for (const item of argumentValue) {
+              if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+                this.cleanArgumentsRecursively(item, itemConfig.schema.properties, visited)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Check if a value is considered empty
+   * @param value - The value to check
+   * @returns true if the value is empty, false otherwise
+   */
+  private isValueEmpty(value: any): boolean {
+    return value === undefined
+      || value === null
+      || value === ''
+      || value === 0
+      || (Array.isArray(value) && value.length === 0)
+      || (typeof value === 'object' && Object.keys(value).length === 0)
   }
 
   private extractErrorMessage(response: CallToolResult): string {
