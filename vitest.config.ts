@@ -23,6 +23,13 @@ export default defineConfig({
       '@badaitech/chaingraph-executor': resolve(__dirname, './packages/chaingraph-executor'),
       '@badaitech/badai-api': resolve(__dirname, './packages/badai-api/src'),
     },
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/*.d.ts',
+    ],
     isolate: true,
     typecheck: {
       enabled: true,

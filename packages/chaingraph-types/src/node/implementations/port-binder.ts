@@ -309,7 +309,7 @@ export class PortBinder implements IPortBinder {
       const childPort = PortFactory.createFromConfig(childConfig)
       portMap.set(childPortId, childPort)
 
-      // Bind to parent object - CRITICAL FIX
+      // Bind to parent object
       if (typeof objectValue === 'object' && objectValue !== null) {
         this.bindPortToNodeProperty(objectValue, childPort)
       }

@@ -218,6 +218,26 @@ export class FlowSerializer {
     node.initializePortsFromConfigs(portsConfigProcessed || new Map())
     // node.initializePortsFromConfigs(portsConfig)
 
+    // Update node properties from the actual port values
+    for (const serializedPort of serializedNode.ports || []) {
+      if (serializedPort.config?.parentId) {
+        // Child ports are handled by their parent port
+        continue
+      }
+
+      const port = node.getPort(serializedPort.config.id)
+      if (!port) {
+        continue
+      }
+
+      if (serializedPort.value !== undefined && serializedPort.config.key) {
+        nodeAsAny[serializedPort.config.key] = PortFactory.deserializeValue(
+          port.getConfig(),
+          serializedPort.value,
+        )
+      }
+    }
+
     const sortedNodePorts = new Map([...node.ports.entries()]
       .sort(
         (a, b) => {

@@ -7,23 +7,16 @@
  */
 
 import type { TRPCClient } from '@badaitech/chaingraph-trpc/client'
-import type {
-  FlowEvent,
-} from '@badaitech/chaingraph-types'
+import type { FlowEvent } from '@badaitech/chaingraph-types'
 
 import { attach, createEffect } from 'effector'
 
 import { flowDomain } from '../domains'
 import { resetEdges } from '../edges'
-import {
-  clearNodes,
-} from '../nodes'
+import { clearNodes } from '../nodes'
 import { positionInterpolator } from '../nodes/position-interpolation-advanced'
 import { $trpcClient } from '../trpc/store'
-import {
-  setFlowSubscriptionError,
-  setFlowSubscriptionStatus,
-} from './stores'
+import { setFlowSubscriptionError, setFlowSubscriptionStatus } from './stores'
 import { FlowSubscriptionStatus } from './types'
 
 interface FlowSubscription {
@@ -122,12 +115,7 @@ export const switchSubscriptionFx = createEffect<{ oldSub: FlowSubscription | nu
 
     // Start new subscription if flowId is provided
     if (newFlowId) {
-      try {
-        const result = await subscribeToFlowFx(newFlowId)
-        return result
-      } catch (error) {
-        throw error
-      }
+      return await subscribeToFlowFx(newFlowId)
     }
 
     return null

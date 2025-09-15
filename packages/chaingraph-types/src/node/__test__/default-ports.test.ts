@@ -278,7 +278,6 @@ describe('default Ports', () => {
       // Create a new node and deserialize
       const newNode = new DefaultPortsNode('test-node')
       newNode.deserialize(serialized)
-      newNode.initialize()
 
       // Check that default port values were preserved
       const newFlowInPort = newNode.getFlowInPort()
