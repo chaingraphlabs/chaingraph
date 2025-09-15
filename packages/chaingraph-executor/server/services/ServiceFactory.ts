@@ -41,15 +41,11 @@ export async function createServices(
     return serviceInstances
   }
 
-  logger.info({ mode: config.mode }, 'Creating services for execution mode')
-
   // Always use PostgreSQL for execution storage
   const executionStore = await getExecutionStore()
   const flowStore = await getFlowStore()
 
   if (config.mode === 'local') {
-    logger.info('Initializing local mode services (no Kafka required)')
-
     const eventBus = new InMemoryEventBus()
     const taskQueue = new InMemoryTaskQueue()
 
@@ -65,8 +61,6 @@ export async function createServices(
       ),
     }
   } else {
-    logger.info('Initializing distributed mode services (Kafka-based)')
-
     const eventBus = new KafkaEventBus()
     const taskQueue = new KafkaTaskQueue()
 
@@ -83,7 +77,6 @@ export async function createServices(
     }
   }
 
-  logger.info({ mode: config.mode }, 'Services initialized successfully')
   return serviceInstances!
 }
 

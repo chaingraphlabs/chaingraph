@@ -59,8 +59,6 @@ export function getKafkaClient(): Kafka {
         retries: 8,
       },
     })
-
-    logger.info({ brokers: config.kafka.brokers }, 'Kafka client initialized')
   }
 
   return kafkaClient

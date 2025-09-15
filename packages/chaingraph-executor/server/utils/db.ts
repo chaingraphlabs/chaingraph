@@ -28,7 +28,6 @@ export async function getDatabase(): Promise<DBType> {
     // Test connection
     try {
       await pool.query('SELECT 1')
-      logger.info('Database connected successfully')
     } catch (error) {
       logger.error({ error }, 'Failed to connect to database')
       throw error

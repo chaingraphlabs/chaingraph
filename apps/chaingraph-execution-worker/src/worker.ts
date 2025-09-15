@@ -18,7 +18,6 @@ let isShuttingDown = false
 
 export async function startWorker(): Promise<void> {
   const workerId = process.env.WORKER_ID || `worker-${process.pid}`
-  logger.info({ workerId, pid: process.pid }, '🔧 Worker starting...')
 
   try {
     // Set environment variables for the executor package

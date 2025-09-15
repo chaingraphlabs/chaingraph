@@ -67,11 +67,6 @@ export class ExecutionWorker {
       return
     }
 
-    logger.info({
-      workerId: this.workerId,
-      mode: config.mode,
-    }, 'Starting execution worker')
-
     // Create execution service with injected dependencies
     this.executionService = new ExecutionService(
       this.store,
@@ -102,11 +97,6 @@ export class ExecutionWorker {
     await this.taskQueue.consumeTasks(async (task) => {
       await this.processTask(task)
     })
-
-    logger.info({
-      workerId: this.workerId,
-      mode: config.mode,
-    }, 'Execution worker started')
   }
 
   private async processTask(task: ExecutionTask): Promise<void> {
@@ -405,7 +395,6 @@ export class ExecutionWorker {
 
       // Reset reconnect attempts on successful connection
       this.reconnectAttempts = 0
-      logger.info({ workerId: this.workerId }, 'Command consumer started')
     } catch (error) {
       logger.error({ error, workerId: this.workerId }, 'Failed to start command consumer')
       await this.handleConnectionLoss()

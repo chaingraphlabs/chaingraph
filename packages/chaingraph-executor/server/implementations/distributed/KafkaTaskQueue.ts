@@ -64,7 +64,6 @@ export class KafkaTaskQueue implements ITaskQueue {
     })
 
     this.isConsuming = true
-    logger.info('Started consuming tasks from Kafka')
 
     await this.consumer.run({
       eachMessage: async ({ message, partition }) => {

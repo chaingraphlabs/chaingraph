@@ -408,12 +408,10 @@ sample({
   filter: ({ currentSub, isEffectPending }, newFlowId) => {
     // Prevent concurrent executions
     if (isEffectPending) {
-      console.debug(`[FLOW SUB] Skipping flow change to ${newFlowId} - effect already pending`)
       return false
     }
     // Only proceed if flowId is valid and different from current subscription
     const shouldSwitch = Boolean(newFlowId) && currentSub?.flowId !== newFlowId
-    console.debug(`[FLOW SUB] Flow ID changed to ${newFlowId}, current sub: ${currentSub?.flowId || 'none'}, should switch: ${shouldSwitch}`)
     return shouldSwitch
   },
   fn: ({ currentSub }, newFlowId) => ({ oldSub: currentSub, newFlowId: newFlowId! }),

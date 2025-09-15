@@ -172,8 +172,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2
       ws:
-        specifier: ^8.18.2
-        version: 8.18.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^8.18.3
+        version: 8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       yaml:
         specifier: ^2.8.0
         version: 2.8.0
@@ -233,8 +233,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2
       ws:
-        specifier: ^8.18.2
-        version: 8.18.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^8.18.3
+        version: 8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       yaml:
         specifier: ^2.8.0
         version: 2.8.0
@@ -552,6 +552,52 @@ importers:
       vite-plugin-svgr:
         specifier: ^4.3.0
         version: 4.3.0(rollup@4.39.0)(typescript@5.8.3)(vite@6.3.3(@types/node@22.14.0)(jiti@2.4.2)(terser@5.39.0)(tsx@4.20.5)(yaml@2.8.0))
+
+  apps/chaingraph-trpc-server:
+    dependencies:
+      '@badaitech/chaingraph-executor':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-executor
+      '@badaitech/chaingraph-trpc':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-trpc
+      '@badaitech/chaingraph-types':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-types
+      '@trpc/server':
+        specifier: 11.5.0
+        version: 11.5.0(typescript@5.8.3)
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.5.0
+      superjson:
+        specifier: ^2.2.2
+        version: 2.2.2
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      zod:
+        specifier: ^3.25.56
+        version: 3.25.67
+    devDependencies:
+      '@badaitech/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.17
+      '@types/node':
+        specifier: ^22.14.0
+        version: 22.14.0
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
+      vite-plugin-top-level-await:
+        specifier: ^1.5.0
+        version: 1.5.0(@swc/helpers@0.5.15)(rollup@4.39.0)(vite@6.3.3(@types/node@22.14.0)(jiti@2.4.2)(terser@5.39.0)(tsx@4.20.5)(yaml@2.8.0))
 
   packages/badai-api:
     dependencies:

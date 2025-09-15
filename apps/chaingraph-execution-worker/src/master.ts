@@ -91,7 +91,7 @@ function spawnWorker(restarts = 0): void {
   }
 
   workers.set(worker.id, workerInfo)
-  logger.info({ workerId: worker.id, pid: worker.process.pid }, 'Spawned worker')
+  logger.debug({ workerId: worker.id, pid: worker.process.pid }, 'Spawned worker')
 }
 
 async function gracefulShutdown(): Promise<void> {

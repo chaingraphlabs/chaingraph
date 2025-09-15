@@ -19,7 +19,6 @@ export async function getExecutionStore(): Promise<IExecutionStore> {
   if (!executionStore) {
     const db = await getDatabase()
     executionStore = new PostgresExecutionStore(db)
-    logger.info('Execution store initialized')
   }
   return executionStore
 }

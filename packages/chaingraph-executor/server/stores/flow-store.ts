@@ -22,7 +22,6 @@ export async function getFlowStore(
   if (!flowStore) {
     const _db = db ?? await getDatabase()
     flowStore = new DBFlowStore(_db, false)
-    logger.info('Flow store initialized')
   }
   return flowStore
 }

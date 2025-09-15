@@ -37,7 +37,6 @@ const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: T
     }
 
     setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.CONNECTING)
-    console.debug(`[EXEC SUB] Creating actual subscription for execution ${executionId}`)
 
     try {
       const subscription = client.subscribeToExecutionEvents.subscribe(
@@ -69,16 +68,12 @@ const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: T
         },
         {
           onStarted: (opts) => {
-            console.debug(`[EXEC SUB] Subscription started for execution ${executionId}`, opts)
             setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.SUBSCRIBED)
           },
           onData: (events) => {
-            console.debug(`[EXEC SUB] Received data for execution ${executionId}`, events)
-
             newExecutionEvents(events)
           },
           onError: (error: any) => {
-            console.error(`[EXEC SUB] Subscription error for execution ${executionId}:`, error)
             setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.ERROR)
             setExecutionSubscriptionError({
               message: error.message,
@@ -87,25 +82,19 @@ const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: T
             })
           },
           onStopped: () => {
-            console.debug(`[EXEC SUB] Subscription stopped for execution ${executionId}`)
             setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.DISCONNECTED)
           },
           onComplete: () => {
-            console.debug(`[EXEC SUB] Subscription completed for execution ${executionId}`)
             setExecutionSubscriptionStatus(ExecutionSubscriptionStatus.DISCONNECTED)
           },
           onConnectionStateChange: (state) => {
-            console.debug(`[EXEC SUB] Connection state changed for execution ${executionId}:`, state)
             // Could track connection health here if needed
           },
         },
       )
 
-      console.debug(`[EXEC SUB] Subscription created successfully for execution ${executionId}, subscription type: ${typeof subscription}`)
-
       // The subscription object has an unsubscribe method
       const unsubscribe = () => {
-        console.debug(`[EXEC SUB] Calling unsubscribe for execution ${executionId}`)
         if (subscription && subscription.unsubscribe) {
           subscription.unsubscribe()
         }
@@ -124,7 +113,6 @@ const subscribeToExecutionFx = attach({
   source: $trpcClientExecutor,
   effect: subscribeToExecutionBaseFx,
   mapParams: (executionId: string, client) => {
-    console.debug(`[EXEC SUB] subscribeToExecutionFx attach: executionId=${executionId}, client exists=${!!client}`)
     return { executionId, client: client! }
   },
 })
@@ -134,20 +122,15 @@ const switchExecutionSubscriptionFx = createEffect<
   { oldSub: ExecutionSubscription | null, newExecutionId: string },
   ExecutionSubscription | null
 >(async ({ oldSub, newExecutionId }) => {
-  console.debug(`[EXEC SUB] switchExecutionSubscriptionFx started: cleanup ${oldSub?.executionId || 'none'} → start ${newExecutionId || 'none'}`)
-
   // Cleanup old subscription
   if (oldSub && oldSub.unsubscribe) {
-    console.debug(`[EXEC SUB] Unsubscribing from ${oldSub.executionId}`)
     oldSub.unsubscribe()
   }
 
   // Start new subscription if executionId is provided
   if (newExecutionId) {
-    console.debug(`[EXEC SUB] Starting new subscription for ${newExecutionId}`)
     try {
       const result = await subscribeToExecutionFx(newExecutionId)
-      console.debug(`[EXEC SUB] New subscription created for ${newExecutionId}`)
       return result
     } catch (error) {
       console.error(`[EXEC SUB] Failed to create subscription for ${newExecutionId}:`, error)
@@ -155,7 +138,6 @@ const switchExecutionSubscriptionFx = createEffect<
     }
   }
 
-  console.debug(`[EXEC SUB] No new subscription needed`)
   return null
 })
 
@@ -170,12 +152,10 @@ sample({
   filter: ({ currentSub, isEffectPending }, state) => {
     // Prevent concurrent executions
     if (isEffectPending) {
-      console.debug(`[EXEC SUB] Skipping execution change to ${state.executionId} - effect already pending`)
       return false
     }
     // Only proceed if executionId is valid and different from current subscription
     const shouldSwitch = Boolean(state.executionId) && currentSub?.executionId !== state.executionId
-    console.debug(`[EXEC SUB] Execution ID changed to ${state.executionId}, current sub: ${currentSub?.executionId || 'none'}, should switch: ${shouldSwitch}`)
     return shouldSwitch
   },
   fn: ({ currentSub }, state) => ({
@@ -200,28 +180,8 @@ sample({
 // Update active subscription store
 $activeExecutionSubscription
   .on(subscribeToExecutionFx.doneData, (_, subscription) => {
-    console.debug('[EXEC SUB] $activeExecutionSubscription updated from subscribeToExecutionFx:', subscription)
     return subscription
   })
   .on(switchExecutionSubscriptionFx.doneData, (_, subscription) => {
-    console.debug('[EXEC SUB] $activeExecutionSubscription updated from switchExecutionSubscriptionFx:', subscription)
     return subscription
   })
-
-// Add error handling for effects
-subscribeToExecutionFx.failData.watch((error) => {
-  console.error('[EXEC SUB] subscribeToExecutionFx failed:', error)
-})
-
-switchExecutionSubscriptionFx.failData.watch((error) => {
-  console.error('[EXEC SUB] switchExecutionSubscriptionFx failed:', error)
-})
-
-// Log effect state changes
-subscribeToExecutionFx.pending.watch((pending) => {
-  console.debug(`[EXEC SUB] subscribeToExecutionFx pending: ${pending}`)
-})
-
-switchExecutionSubscriptionFx.pending.watch((pending) => {
-  console.debug(`[EXEC SUB] switchExecutionSubscriptionFx pending: ${pending}`)
-})
