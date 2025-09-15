@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import process from 'node:process'
 import { createServices, createWSServer } from '@badaitech/chaingraph-executor/server'
 import { config } from '../config'
 import { createLogger } from '../logger'
