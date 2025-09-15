@@ -17,7 +17,7 @@ import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useState } from 'react'
 import { EditableNodeTitle } from './EditableNodeTitle'
-import { NodeDocTooltip } from './NodeDocTooltip'
+import { LazyNodeDocTooltip } from './LazyNodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
 import NodeStatusBadge from './NodeStatusBadge'
 
@@ -121,7 +121,7 @@ export function NodeHeader({
       <div className="flex items-center gap-2 min-w-0 relative">
         {categoryMetadata
           ? (
-              <NodeDocTooltip
+              <LazyNodeDocTooltip
                 node={node}
                 categoryMetadata={categoryMetadata}
                 className="cursor-pointer"
@@ -137,7 +137,7 @@ export function NodeHeader({
                     style={{ color: style.text }}
                   />
                 </div>
-              </NodeDocTooltip>
+              </LazyNodeDocTooltip>
             )
           : (
               <div
