@@ -553,7 +553,7 @@ importers:
         specifier: ^4.3.0
         version: 4.3.0(rollup@4.39.0)(typescript@5.8.3)(vite@6.3.3(@types/node@22.14.0)(jiti@2.4.2)(terser@5.39.0)(tsx@4.20.5)(yaml@2.8.0))
 
-  apps/chaingraph-trpc-server:
+  apps/chaingraph-execution-api:
     dependencies:
       '@badaitech/chaingraph-executor':
         specifier: workspace:*

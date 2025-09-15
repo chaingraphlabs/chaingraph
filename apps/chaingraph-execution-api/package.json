@@ -1,5 +1,5 @@
 {
-  "name": "@badaitech/chaingraph-trpc-server",
+  "name": "@badaitech/chaingraph-execution-api",
   "type": "module",
   "version": "0.4.4",
   "private": false,
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/badaitech/chaingraph.git",
-    "directory": "./apps/chaingraph-trpc-server"
+    "directory": "./apps/chaingraph-execution-api"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

@@ -53,20 +53,20 @@ pnpm start
 
 ```bash
 # Build the Docker image
-docker build -t chaingraph-trpc-server .
+docker build -t chaingraph-execution-api .
 
 # Run with default settings (4 instances)
 docker run -p 8080:80 \
   -e DATABASE_URL="postgres://user:pass@host:5432/db" \
   -e KAFKA_BROKERS="kafka:9092" \
-  chaingraph-trpc-server
+  chaingraph-execution-api
 
 # Run with custom number of instances
 docker run -p 8080:80 \
   -e INSTANCES=8 \
   -e DATABASE_URL="postgres://user:pass@host:5432/db" \
   -e KAFKA_BROKERS="kafka:9092" \
-  chaingraph-trpc-server
+  chaingraph-execution-api
 ```
 
 ### Docker Compose
@@ -203,7 +203,7 @@ For large-scale deployments:
 # docker-compose.prod.yml
 services:
   trpc-server:
-    image: chaingraph-trpc-server:latest
+    image: chaingraph-execution-api:latest
     environment:
       - INSTANCES=8  # Adjust based on CPU cores
       - NODE_ENV=production
@@ -258,7 +258,7 @@ ports:
 ### Project Structure
 
 ```
-apps/chaingraph-trpc-server/
+apps/chaingraph-execution-api/
 ├── src/
 │   ├── index.ts           # Entry point
 │   ├── config.ts          # Configuration
@@ -280,8 +280,8 @@ apps/chaingraph-trpc-server/
 1. Implement in TypeScript (`src/`)
 2. Build: `pnpm build`
 3. Test locally: `pnpm dev`
-4. Build Docker image: `docker build -t chaingraph-trpc-server .`
-5. Test in Docker: `docker run -p 8080:80 chaingraph-trpc-server`
+4. Build Docker image: `docker build -t chaingraph-execution-api .`
+5. Test in Docker: `docker run -p 8080:80 chaingraph-execution-api`
 
 ## License
 
