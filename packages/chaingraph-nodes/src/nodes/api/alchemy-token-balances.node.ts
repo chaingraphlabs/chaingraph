@@ -92,6 +92,11 @@ class TokenBalance {
   description: 'Fetches token balances for a wallet address using Alchemy API',
   category: NODE_CATEGORIES.API,
   tags: ['blockchain', 'token', 'balance', 'alchemy'],
+  ui: {
+    state: {
+      isHidden: true,
+    },
+  },
 })
 class AlchemyTokenBalances extends BaseNode {
   @Input()
