@@ -31,6 +31,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@badaitech/chaingraph-executor": "workspace:*",
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
