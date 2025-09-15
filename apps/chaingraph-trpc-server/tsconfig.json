@@ -1,0 +1,19 @@
+{
+  "extends": "@badaitech/typescript-config/trpc.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@badaitech/chaingraph-trpc/*": ["../../packages/chaingraph-trpc/*"],
+      "@badaitech/chaingraph-types/*": ["../../packages/chaingraph-types/src/*"],
+      "@badaitech/chaingraph-executor/*": ["../../packages/chaingraph-executor/*"],
+      "@badaitech/typescript-config/*": ["../../packages/typescript-config/*"]
+    },
+    "noEmit": true,
+    "outDir": "./dist",
+    "esModuleInterop": true
+  },
+  "include": ["src"]
+}
