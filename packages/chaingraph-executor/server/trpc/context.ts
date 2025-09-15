@@ -8,7 +8,7 @@
 
 import type { IFlowStore, Session } from '@badaitech/chaingraph-trpc/server'
 import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
-import type { IExecutionService } from 'server/services/IExecutionService'
+import type { IExecutionService } from '../../server/services/IExecutionService'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import { authService } from '@badaitech/chaingraph-trpc/server'

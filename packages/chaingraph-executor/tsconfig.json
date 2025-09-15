@@ -7,7 +7,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "baseUrl": ".",
-    "rootDir": ".",
     "paths": {
       "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
       "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],

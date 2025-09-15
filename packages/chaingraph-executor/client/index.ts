@@ -17,7 +17,8 @@ export type RouterInputs = inferRouterInputs<ExecutionRouter>
 export type RouterOutputs = inferRouterOutputs<ExecutionRouter>
 
 // Create tRPC client with type safety
-export const trpcReact = createTRPCReact<ExecutionRouter>()
+export type TRPCReact = ReturnType<typeof createTRPCReact<ExecutionRouter>>
+export const trpcReact: TRPCReact = createTRPCReact<ExecutionRouter>()
 
 export {
   createTRPCClient,

@@ -13,10 +13,10 @@ import type {
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
 
-import type { IEventBus, ITaskQueue } from 'server/interfaces'
-import type { IExecutionStore } from 'server/stores/interfaces/IExecutionStore'
-import type { ExecutionRow } from 'server/stores/postgres/schema'
-import type { ExecutionInstance, ExecutionTask } from 'types'
+import type { IEventBus, ITaskQueue } from '../../server/interfaces'
+import type { IExecutionStore } from '../../server/stores/interfaces/IExecutionStore'
+import type { ExecutionRow } from '../../server/stores/postgres/schema'
+import type { ExecutionInstance, ExecutionTask } from '../../types'
 import type { CreateExecutionParams, IExecutionService } from './IExecutionService'
 
 import {
@@ -25,7 +25,7 @@ import {
 } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
-import { ExecutionStatus } from 'types'
+import { ExecutionStatus } from '../../types'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('execution-service')

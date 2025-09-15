@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionRouter } from 'server'
+import type { ExecutionRouter } from '../server'
 import { QueryClient } from '@tanstack/react-query'
 import {
   createTRPCClient as _createTRPCClient,

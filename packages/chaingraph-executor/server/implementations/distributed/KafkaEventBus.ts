@@ -8,17 +8,17 @@
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type { Consumer, Producer } from 'kafkajs'
-import type { ExecutionEventMessage } from 'types/messages'
+import type { ExecutionEventMessage } from '../../../types/messages'
 import type { IEventBus } from '../../interfaces/IEventBus'
 import { ExecutionEventImpl as EventImpl } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
-import { safeSuperJSONParse, safeSuperJSONStringify } from 'server/utils/serialization'
-import { KafkaTopics } from 'types/messages'
+import { KafkaTopics } from '../../../types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getEventProducer } from '../../kafka/producers/event-producer'
 import { config } from '../../utils/config'
 import { createLogger } from '../../utils/logger'
+import { safeSuperJSONParse, safeSuperJSONStringify } from '../../utils/serialization'
 
 const logger = createLogger('kafka-event-bus')
 

@@ -12,17 +12,16 @@ import type {
 } from '@badaitech/chaingraph-types'
 import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { Consumer } from 'kafkajs'
-import type { ExecutionCommand, ExecutionInstance, ExecutionTask } from 'types'
+import type { ExecutionCommand, ExecutionInstance, ExecutionTask } from '../../types'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import {
-
   NodeRegistry,
 } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
-import { ExecutionStatus } from 'types'
-import { KafkaTopics } from 'types/messages'
+import { ExecutionStatus } from '../../types'
+import { KafkaTopics } from '../../types/messages'
 import { getKafkaClient } from '../kafka/client'
 import { ExecutionService } from '../services/ExecutionService'
 import { loadFlow } from '../stores/flow-store'

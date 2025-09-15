@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { DBType } from 'server/utils/db'
-import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from 'types'
+import type { DBType } from '../../../server/utils/db'
+import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from '../../../types'
 import type { IExecutionStore, UpdateExecutionStatusParams } from '../interfaces/IExecutionStore'
 import type { ExecutionClaimRow, ExecutionRow } from './schema'
 import { and, desc, eq, getTableColumns, lt, sql } from 'drizzle-orm'

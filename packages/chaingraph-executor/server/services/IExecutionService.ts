@@ -7,8 +7,8 @@
  */
 
 import type { Flow } from '@badaitech/chaingraph-types'
-import type { ExecutionRow } from 'server/stores/postgres/schema'
-import type { ExecutionInstance, ExecutionTask } from 'types'
+import type { ExecutionRow } from '../../server/stores/postgres/schema'
+import type { ExecutionInstance, ExecutionTask } from '../../types'
 
 export interface CreateExecutionParams {
   task: ExecutionTask

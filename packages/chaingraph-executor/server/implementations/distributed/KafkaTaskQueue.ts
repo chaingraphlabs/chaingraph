@@ -7,9 +7,9 @@
  */
 
 import type { Consumer, Producer } from 'kafkajs'
-import type { ExecutionTask } from 'types/messages'
+import type { ExecutionTask } from '../../../types/messages'
 import type { ITaskQueue } from '../../interfaces/ITaskQueue'
-import { KafkaTopics } from 'types/messages'
+import { KafkaTopics } from '../../../types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getTaskProducer } from '../../kafka/producers/task-producer'
 import { config } from '../../utils/config'

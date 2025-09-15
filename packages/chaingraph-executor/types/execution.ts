@@ -11,8 +11,8 @@ import type {
   ExecutionEngine,
   Flow,
 } from '@badaitech/chaingraph-types'
-import type { ExecutionRow } from 'server/stores/postgres/schema'
-import type { ExecutionTask } from 'types/messages'
+import type { ExecutionRow } from '../server/stores/postgres/schema'
+import type { ExecutionTask } from './messages'
 
 export enum ExecutionStatus {
   Idle = 'idle',

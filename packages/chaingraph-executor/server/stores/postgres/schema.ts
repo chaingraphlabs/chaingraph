@@ -13,7 +13,7 @@ import type {
 } from '@badaitech/chaingraph-types'
 import type {
   ExecutionStatus,
-} from 'types'
+} from '../../../types'
 import { index, integer, jsonb, pgTableCreator, text, timestamp } from 'drizzle-orm/pg-core'
 
 const pgTable = pgTableCreator(name => `chaingraph_${name}`)
