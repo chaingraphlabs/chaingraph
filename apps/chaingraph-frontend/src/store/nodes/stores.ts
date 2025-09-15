@@ -808,6 +808,16 @@ sample({
   target: clearInterpolatorFx,
 })
 
+// Derived store that provides only the IDs of selected nodes
+export const $selectedNodeIds = combine(
+  $nodes,
+  (nodes): string[] => {
+    return Object.entries(nodes)
+      .filter(([_, node]) => node.metadata.ui?.state?.isSelected === true)
+      .map(([nodeId]) => nodeId)
+  },
+)
+
 // Create store for dragging nodes (nodes which user moves right now)
 export const $draggingNodes = nodesDomain.createStore<string[]>([])
   // Track nodes that start being dragged
@@ -879,14 +889,3 @@ sample({
     baseUpdatePortUIFx,
   ],
 })
-
-// sample({
-//   clock: requestUpdatePortValue,
-//   source: combine({
-//     activeFlowId: $activeFlowId,
-//     nodes: $nodes,
-//   }),
-//   fn: ({ activeFlowId, nodes }, { nodeId, portId, value }) => {
-//
-//   },
-// })
