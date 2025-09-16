@@ -9,7 +9,7 @@ FROM base AS build
 COPY . /usr/src/app
 WORKDIR /usr/src/app
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV NODE_OPTIONS="--max-old-space-size=12288"
 ENV NODE_ENV=production
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm deploy --filter @badaitech/chaingraph-backend --prod --legacy /prod/backend

@@ -1,4 +1,8 @@
-FROM node:22.12.0-alpine AS base
+# Use the base packages image
+ARG PACKAGES_IMAGE=ghcr.io/badaitech/chaingraph-packages:latest
+FROM ${PACKAGES_IMAGE} AS packages
+
+FROM node:22.14.0-alpine AS base
 
 WORKDIR /app
 
@@ -20,6 +24,9 @@ COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 RUN pnpm install --frozen-lockfile
+
+# Copy built packages from base image
+COPY --from=packages /packages/ ./packages/
 
 COPY --from=pruner /app/out/full/ .
 RUN pnpm turbo run build --filter=@badaitech/chaingraph-frontend...

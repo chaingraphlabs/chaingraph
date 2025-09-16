@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.4.5",
   "private": false,
-  "packageManager": "pnpm@10.11.1",
+  "packageManager": "pnpm@10.16.1",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
@@ -44,7 +44,13 @@
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "changeset publish",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "docker:packages": "docker build -f Dockerfile.packages -t chaingraph-packages:latest .",
+    "docker:backend": "docker build -f apps/chaingraph-backend/Dockerfile -t chaingraph-backend:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
+    "docker:frontend": "docker build -f apps/chaingraph-frontend/Dockerfile -t chaingraph-frontend:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
+    "docker:execution-api": "docker build -f apps/chaingraph-execution-api/Dockerfile -t chaingraph-execution-api:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
+    "docker:execution-worker": "docker build -f apps/chaingraph-execution-worker/Dockerfile -t chaingraph-execution-worker:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
+    "docker:build-all": "pnpm run docker:packages && pnpm run docker:backend & pnpm run docker:frontend & pnpm run docker:execution-api & pnpm run docker:execution-worker & wait"
   },
   "dependencies": {
     "@changesets/cli": "^2.28.1",

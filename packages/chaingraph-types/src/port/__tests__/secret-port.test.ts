@@ -33,7 +33,7 @@ describe('secret port', () => {
     }, remoteKeyPair.privateKey, {
       name: 'HKDF',
       hash: 'SHA-256',
-      info: new ArrayBuffer(),
+      // info: new ArrayBuffer(),
     }, false, ['deriveKey'])
 
     const nonce = randomBytes(32)

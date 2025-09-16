@@ -19,6 +19,6 @@
     "emitDeclarationOnly": false,
     "outDir": "dist"
   },
-  "include": ["server", "client"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["server", "client", "types"],
+  "exclude": ["node_modules", "dist", "drizzle"]
 }

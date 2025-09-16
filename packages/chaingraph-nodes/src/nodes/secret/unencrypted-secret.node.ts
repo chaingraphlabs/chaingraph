@@ -229,7 +229,6 @@ export class UnencryptedSecretNode extends BaseNode {
     }, remoteKeyPair.privateKey, {
       name: 'HKDF',
       hash: 'SHA-256',
-      info: new ArrayBuffer(),
     }, false, ['deriveKey'])
 
     const nonce = randomBytes(32)
