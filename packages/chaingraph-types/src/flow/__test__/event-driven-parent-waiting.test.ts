@@ -8,6 +8,7 @@
 
 import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
+import { Node } from '../../decorator'
 import { ExecutionContext } from '../../execution'
 import { BaseNode } from '../../node/base-node'
 import { ExecutionEngine } from '../execution-engine'
@@ -15,10 +16,15 @@ import { ExecutionEventEnum } from '../execution-events'
 import { Flow } from '../flow'
 
 // Mock event emitter that emits events
+@Node({
+  type: 'EventEmitterNode',
+  title: 'Event Emitter Node',
+  description: 'A node that emits events to spawn child executions',
+})
 class EventEmitterNode extends BaseNode {
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    context.emitEvent('user-action', { action: 'click', target: 'button' })
-    context.emitEvent('user-action', { action: 'hover', target: 'link' })
+    context.emitEvent('user-action', { action: 'click', target: 'button' }, this.id)
+    context.emitEvent('user-action', { action: 'hover', target: 'link' }, this.id)
     return {}
   }
 }
@@ -71,7 +77,7 @@ describe('event-driven Parent Execution Waiting', () => {
 
     const emitterNode = new EventEmitterNode('emitter-1')
     emitterNode.initialize()
-    await flow.addNode(emitterNode)
+    await flow.addNode(emitterNode, true)
 
     const abortController = new AbortController()
     const parentContext = new ExecutionContext(flow.id, abortController)
@@ -121,7 +127,7 @@ describe('event-driven Parent Execution Waiting', () => {
 
     const emitterNode = new EventEmitterNode('emitter-1')
     emitterNode.initialize()
-    await flow.addNode(emitterNode)
+    await flow.addNode(emitterNode, true)
 
     const abortController = new AbortController()
     const parentContext = new ExecutionContext(flow.id, abortController)
@@ -159,6 +165,11 @@ describe('event-driven Parent Execution Waiting', () => {
     const flow = new Flow({ name: 'Simple Flow' })
 
     // Node that doesn't emit events
+    @Node({
+      type: 'SimpleNode',
+      title: 'Simple Node',
+      description: 'A simple node that does not emit events',
+    })
     class SimpleNode extends BaseNode {
       async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
         return {}
@@ -166,7 +177,7 @@ describe('event-driven Parent Execution Waiting', () => {
     }
     const simpleNode = new SimpleNode('simple-1')
     simpleNode.initialize()
-    await flow.addNode(simpleNode)
+    await flow.addNode(simpleNode, true)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)

@@ -8,16 +8,16 @@
 
 import type { NodeProps } from '@xyflow/react'
 import type { GroupNode } from './types'
+import { NodeResizer } from '@xyflow/react'
+import { useUnit } from 'effector-react'
+import { Plus } from 'lucide-react'
+import { memo, useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
-import { NodeResizer } from '@xyflow/react'
-import { useUnit } from 'effector-react'
-import { Plus } from 'lucide-react'
-import { memo, useCallback, useState } from 'react'
 import { ColorPicker } from './components/ColorPicker'
 import { EditableTitle } from './components/EditableTitle'
 
@@ -35,7 +35,7 @@ function GroupNodeComponent({
   const [isEditing, setIsEditing] = useState(false)
 
   const handleTitleChange = useCallback((title: string) => {
-    if (!activeFlow?.id || !id)
+    if (!activeFlow?.id || !id || !node)
       return
 
     // Always update the title, even if empty
@@ -48,10 +48,10 @@ function GroupNodeComponent({
       version: node.metadata.version ?? 0,
     })
     setIsEditing(false)
-  }, [activeFlow, node.metadata.version, id])
+  }, [activeFlow, node, id])
 
   const handleColorChange = useCallback((color: string) => {
-    if (!activeFlow?.id || !id)
+    if (!activeFlow?.id || !id || !node)
       return
 
     if (node.metadata.ui?.style?.backgroundColor === color)
@@ -69,7 +69,7 @@ function GroupNodeComponent({
     })
   }, [activeFlow, node, id])
 
-  const hasTitle = !!node.metadata.ui?.title
+  const hasTitle = !!node?.metadata.ui?.title
 
   return (
     <div
@@ -90,7 +90,7 @@ function GroupNodeComponent({
           ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
           : !dropFeedback?.canAcceptDrop && 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.1)]',
       )}
-      style={{ backgroundColor: node.metadata.ui?.style?.backgroundColor ?? defaultColor }}
+      style={{ backgroundColor: node?.metadata.ui?.style?.backgroundColor ?? defaultColor }}
     >
 
       <NodeResizer
@@ -122,7 +122,7 @@ function GroupNodeComponent({
                 y: params.y,
               },
             },
-            version: node.getVersion(),
+            version: node?.getVersion() || 0,
           })
         }}
         onResizeEnd={(e, params) => {
@@ -142,7 +142,7 @@ function GroupNodeComponent({
                 y: params.y,
               },
             },
-            version: node.getVersion(),
+            version: node?.getVersion() || 0,
           })
         }}
       />
@@ -154,7 +154,7 @@ function GroupNodeComponent({
           onMouseDown={e => e.stopPropagation()}
         >
           <ColorPicker
-            color={node.metadata.ui?.style?.backgroundColor ?? defaultColor}
+            color={node?.metadata.ui?.style?.backgroundColor ?? defaultColor}
             onChange={handleColorChange}
           />
         </div>
@@ -173,7 +173,7 @@ function GroupNodeComponent({
         {hasTitle || isEditing
           ? (
               <EditableTitle
-                value={node.metadata.ui?.title || ''}
+                value={node?.metadata.ui?.title || ''}
                 onChange={handleTitleChange}
                 isEditing={isEditing}
                 onEditingChange={setIsEditing}

@@ -19,9 +19,17 @@ export default defineConfig({
       '@badaitech/chaingraph-backend': resolve(__dirname, './packages/chaingraph-backend/src'),
       '@badaitech/chaingraph-frontend': resolve(__dirname, './packages/chaingraph-frontend/src'),
       '@badaitech/chaingraph-nodes': resolve(__dirname, './packages/chaingraph-nodes/src'),
-      '@badaitech/chaingraph-trpc': resolve(__dirname, './packages/trpc'),
+      '@badaitech/chaingraph-trpc': resolve(__dirname, './packages/chaingraph-trpc'),
+      '@badaitech/chaingraph-executor': resolve(__dirname, './packages/chaingraph-executor'),
       '@badaitech/badai-api': resolve(__dirname, './packages/badai-api/src'),
     },
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/*.d.ts',
+    ],
     isolate: true,
     typecheck: {
       enabled: true,

@@ -137,7 +137,8 @@ class NodeAsAnthropicToolNode extends BaseNode {
     const tool = new Tool()
     tool.name = toolName
     tool.type = 'custom'
-    tool.description = `${schema.metadata.nodeDescription}\n\nOriginal node: ${schema.metadata.nodeTitle}\n\nOutput schema:\n\n${JSON.stringify(outputProperties, null, 2)}`
+    // tool.description = `${schema.metadata.nodeDescription}\n\nOriginal node: ${schema.metadata.nodeTitle}\n\nOutput schema:\n\n${JSON.stringify(outputProperties, null, 2)}`
+    tool.description = `${schema.metadata.nodeDescription}`
     tool.input_schema = toolInputSchema
     tool.chaingraph_node_id = nodeId
     tool.chaingraph_node_type = schemaNode.metadata.type || 'unknown-node-type'

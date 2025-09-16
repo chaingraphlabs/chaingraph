@@ -71,7 +71,7 @@ describe('object node with dynamic schema serialization', () => {
 
   it('serializes and deserializes a node with an object port', async () => {
     const objectNode = new ObjectNode('object-node')
-    await objectNode.initialize()
+    objectNode.initialize()
 
     const recordsPort = objectNode.getPort('records')
     if (!recordsPort) {

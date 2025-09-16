@@ -57,33 +57,25 @@ class EventListenerNode extends BaseNode {
   outputData: Record<string, any> = {}
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(`[EventListenerNode ${this.id}] execute called, isChildExecution: ${context.isChildExecution}, hasEventData: ${!!context.eventData}`)
-    console.log(`[EventListenerNode ${this.id}] Filter eventName: "${this.eventName}"`)
-
     // EventListenerNode should only process when there's event data
     // This can be either:
     // 1. Child execution spawned by internal event
     // 2. Root execution with external event (from API)
     if (!context.eventData) {
-      console.log(`[EventListenerNode ${this.id}] No event data available - skipping execution`)
+      // console.log(`[EventListenerNode ${this.id}] No event data available - skipping execution`)
       return {}
     }
-
-    console.log(`[EventListenerNode ${this.id}] Processing event data:`, JSON.stringify(context.eventData))
 
     // We have event data - process it
     const { eventName, payload } = context.eventData
 
     if (eventName !== this.eventName) {
       // Skip this listener - not for this event
-      console.log(`[EventListenerNode ${this.id}] Event type mismatch: expected "${this.eventName}", got "${eventName}" - skipping`)
       return {}
     }
 
     // Output the payload directly without schema processing
     this.outputData = payload || {}
-
-    console.log(`[EventListenerNode ${this.id}] Output data after processing:`, JSON.stringify(this.outputData))
 
     // Return empty result - node executed successfully
     return {}

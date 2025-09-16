@@ -7,8 +7,8 @@
  */
 
 import type { IPort, SecretPortConfig } from '@badaitech/chaingraph-types'
-import { cn } from '@/lib/utils'
 import { memo } from 'react'
+import { cn } from '@/lib/utils'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 

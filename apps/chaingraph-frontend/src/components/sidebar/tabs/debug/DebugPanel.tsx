@@ -6,19 +6,21 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { useExecutionEvents } from '@/store/execution/hooks/useExecutionEvents'
-import { $activeFlowMetadata } from '@/store/flow'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
 import { $executionState } from 'store/execution'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { useExecutionEvents } from '@/store/execution/hooks/useExecutionEvents'
+import { $activeFlowMetadata } from '@/store/flow'
+import { $selectedNodeIds } from '@/store/nodes'
 import { ExecutionTimeline } from './ExecutionTimeline'
 import { FilterBar } from './FilterBar'
 
 export function DebugPanel() {
   const activeFlow = useUnit($activeFlowMetadata)
   const { executionId } = useUnit($executionState)
+  const selectedNodeIds = useUnit($selectedNodeIds)
   // const executionEvents = useUnit($executionEvents)
 
   const [selectedEventTypes, setSelectedEventTypes] = useState<Set<ExecutionEventEnum>>(
@@ -27,6 +29,7 @@ export function DebugPanel() {
 
   const executionEvents = useExecutionEvents({
     selectedEventTypes,
+    selectedNodeIds: selectedNodeIds.length > 0 ? selectedNodeIds : undefined,
     bufferTimeMs: 250,
     maxEvents: 1000,
     newestFirst: true,
@@ -50,6 +53,7 @@ export function DebugPanel() {
         <FilterBar
           selectedTypes={selectedEventTypes}
           onSelectionChange={setSelectedEventTypes}
+          selectedNodeIds={selectedNodeIds}
         />
       </div>
 

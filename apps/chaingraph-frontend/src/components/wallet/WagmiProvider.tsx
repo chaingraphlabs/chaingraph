@@ -7,9 +7,9 @@
  */
 
 import type { ReactNode } from 'react'
-import { wagmiConfig } from '@/store/wallet/wagmi.config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider as WagmiProviderBase } from 'wagmi'
+import { wagmiConfig } from '@/store/wallet/wagmi.config'
 
 const queryClient = new QueryClient()
 

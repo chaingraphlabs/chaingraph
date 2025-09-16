@@ -6,10 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import type {
+  FlowMetadata,
+} from '@badaitech/chaingraph-types'
 import type { CreateFlowEvent, FlowSubscriptionError, UpdateFlowEvent } from './types'
+import { combine } from 'effector'
 import { flowDomain } from '@/store/domains'
-import { combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { $trpcClient } from '../trpc/store'
 import { FlowSubscriptionStatus } from './types'
@@ -27,6 +29,8 @@ export const setFlowLoaded = flowDomain.createEvent<string>()
 // Active flow events
 export const setActiveFlowId = flowDomain.createEvent<string>()
 export const clearActiveFlow = flowDomain.createEvent()
+
+// Removed debugging - issue identified and fixed
 
 // Flow CRUD events
 export const createFlow = flowDomain.createEvent<CreateFlowEvent>()
@@ -240,69 +244,4 @@ export const $flowSubscriptionState = combine({
   status: $flowSubscriptionStatus,
   error: $flowSubscriptionError,
   isSubscribed: $isFlowSubscribed,
-})
-
-// SAMPLES
-
-// Flow List operations
-sample({
-  clock: loadFlowsList,
-  target: loadFlowsListFx,
-})
-sample({
-  clock: loadFlowsListFx.doneData,
-  target: setFlowsList,
-})
-
-// Flow Create operations
-sample({
-  clock: createFlow,
-  target: createFlowFx,
-})
-sample({
-  clock: createFlowFx.doneData,
-  fn: response => response,
-  target: setFlowMetadata,
-})
-
-// Flow Update operations
-sample({
-  clock: updateFlow,
-  target: editFlowFx,
-})
-sample({
-  clock: editFlowFx.doneData,
-  fn: response => response.metadata,
-  target: setFlowMetadata,
-})
-
-// Flow Delete operations
-sample({
-  clock: deleteFlow,
-  target: [
-    deleteFlowFx,
-    // If we need to clear active flow after deletion
-    sample({
-      clock: deleteFlow,
-      source: $activeFlowId,
-      filter: (activeId, deletedId) => activeId === deletedId,
-      target: clearActiveFlow,
-    }),
-  ],
-})
-
-// Flow Fork operations
-sample({
-  clock: forkFlow,
-  target: forkFlowFx,
-})
-sample({
-  clock: forkFlowFx.doneData,
-  fn: response => response,
-  target: setFlowMetadata,
-})
-// Reload flow list after fork to get updated canFork values
-sample({
-  clock: forkFlowFx.done,
-  target: loadFlowsListFx,
 })

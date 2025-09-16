@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cn } from '@/lib/utils'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
-
 import * as React from 'react'
+
+import { cn } from '@/lib/utils'
 import { useShadowRoot } from './useShadowRoot'
 
 const Select = SelectPrimitive.Root

@@ -6,11 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-/**
- * Context for emitted events context for triggering event listener nodes.
- */
-export interface EmittedEventContext {
-  eventName: string
-  payload?: Record<string, any>
-  emittedBy?: string // Node ID that emitted the event
-}
+import { z } from 'zod'
+
+export const ExecutionExternalEventSchema = z.object({
+  eventName: z.string(),
+  payload: z.any().optional(),
+})
+
+export type ExecutionExternalEvent = z.infer<typeof ExecutionExternalEventSchema>
+export type EmittedEventContext = z.infer<typeof ExecutionExternalEventSchema>

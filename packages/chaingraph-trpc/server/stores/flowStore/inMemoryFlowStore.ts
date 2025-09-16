@@ -48,6 +48,20 @@ export class InMemoryFlowStore implements IFlowStore {
   }
 
   /**
+   * Retrieves flow metadata by ID
+   * @param flowId Flow identifier
+   * @returns Flow metadata
+   * @throws Error if flow not found
+   */
+  async getFlowMetadata(flowId: string): Promise<FlowMetadata> {
+    const flow = this.flows.get(flowId)
+    if (!flow) {
+      throw new Error(`Flow with ID ${flowId} not found`)
+    }
+    return flow.metadata
+  }
+
+  /**
    * Lists all available flows
    * @returns Array of flows
    */
@@ -55,33 +69,36 @@ export class InMemoryFlowStore implements IFlowStore {
     ownerId: string,
     orderBy: ListOrderBy,
     limit: number,
-  ): Promise<Flow[]> {
+  ): Promise<FlowMetadata[]> {
     // Convert iterator to array first
     const flowsArray = Array.from(this.flows.values())
+      .map((flow) => {
+        return flow.metadata
+      })
       .filter((flow) => {
-        if (!flow.metadata.ownerID) {
+        if (!flow.ownerID) {
           return true
         }
-        return flow.metadata.ownerID === ownerId
+        return flow.ownerID === ownerId
       })
 
     // Sort based on orderBy parameter
     switch (orderBy) {
       case 'createdAtAsc':
         flowsArray.sort((a, b) =>
-          a.metadata.createdAt.getTime() - b.metadata.createdAt.getTime())
+          a.createdAt.getTime() - b.createdAt.getTime())
         break
       case 'createdAtDesc':
         flowsArray.sort((a, b) =>
-          b.metadata.createdAt.getTime() - a.metadata.createdAt.getTime())
+          b.createdAt.getTime() - a.createdAt.getTime())
         break
       case 'updatedAtAsc':
         flowsArray.sort((a, b) =>
-          a.metadata.updatedAt.getTime() - b.metadata.updatedAt.getTime())
+          a.updatedAt.getTime() - b.updatedAt.getTime())
         break
       case 'updatedAtDesc':
         flowsArray.sort((a, b) =>
-          b.metadata.updatedAt.getTime() - a.metadata.updatedAt.getTime())
+          b.updatedAt.getTime() - a.updatedAt.getTime())
         break
       default:
         throw new Error(`Unsupported orderBy value: ${orderBy}`)

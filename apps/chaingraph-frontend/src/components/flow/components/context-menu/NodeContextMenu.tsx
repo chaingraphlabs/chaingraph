@@ -7,6 +7,8 @@
  */
 
 import type { CategorizedNodes, CategoryMetadata, NodeMetadata } from '@badaitech/chaingraph-types'
+import { motion } from 'framer-motion'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Button } from '@/components/ui/button'
@@ -14,8 +16,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
-import { motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 interface NodeContextMenuProps {
   position: { x: number, y: number }

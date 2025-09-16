@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { executionRouter } from './executions/routes/execution-router'
 import { mcpProcedures } from './mcp'
 import { flowProcedures } from './procedures/flow'
 import { nodeRegistryProcedures } from './procedures/nodeRegistry'
@@ -17,7 +16,7 @@ export const appRouter = router({
   flow: flowProcedures,
   nodeRegistry: nodeRegistryProcedures,
   secrets: secretProcedures,
-  execution: executionRouter,
+  // execution: executionRouter,
   mcp: mcpProcedures,
 })
 export type AppRouter = typeof appRouter

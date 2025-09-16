@@ -362,6 +362,7 @@ export class ChatMeta {
  * Enum for variable namespaces in ArchAI
  */
 export enum VariableNamespace {
+  Local = 'local',
   Execution = 'execution',
   Agent = 'agent',
   Chat = 'chat',

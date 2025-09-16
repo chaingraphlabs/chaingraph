@@ -33,7 +33,7 @@ describe('eventEmitterNode', () => {
     await node.execute(context)
 
     // Verify emitEvent was called
-    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'test payload' })
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'test payload' }, 'emitter-1')
   })
 
   it('should throw an error when event name is empty', async () => {
@@ -102,7 +102,7 @@ describe('eventEmitterNode', () => {
     // Should execute without error
     await node.execute(context)
 
-    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'hello', count: 42 })
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { message: 'hello', count: 42 }, 'emitter-5')
   })
 
   it('should handle payload as object (PortObject ensures object type)', async () => {
@@ -118,7 +118,7 @@ describe('eventEmitterNode', () => {
     // Should execute without error
     await node.execute(context)
 
-    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { converted: 'value' })
+    expect(context.emitEvent).toHaveBeenCalledWith('test-event', { converted: 'value' }, 'emitter-6')
   })
 
   it('should handle complex object payload', async () => {
@@ -138,6 +138,6 @@ describe('eventEmitterNode', () => {
       anything: 'goes',
       numbers: [1, 2, 3],
       nested: { deep: true },
-    })
+    }, 'emitter-7')
   })
 })

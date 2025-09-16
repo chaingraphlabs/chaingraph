@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { combine, createEvent, createStore, sample } from 'effector'
 import { $executionState, clearExecutionState, createExecution, createExecutionFx, startExecution, stopExecution } from '../execution/stores'
-import { ExecutionStatus } from '../execution/types'
 import { chainChanged, getWalletContextForExecution, walletConnected, walletDisconnected } from './wallet.store'
 
 // Events
@@ -38,7 +38,7 @@ sample({
   clock: createExecution,
   source: $executionState,
   fn: (state, options) => {
-    const wasRunning = state.status === ExecutionStatus.RUNNING
+    const wasRunning = state.status === ExecutionStatus.Running
     const config = {
       flowId: options.flowId,
       debugMode: state.debugMode,
@@ -59,9 +59,9 @@ sample({
 
 // Helper to check if execution is active and needs recreation
 function needsRecreation(status: ExecutionStatus): boolean {
-  return status === ExecutionStatus.RUNNING
-    || status === ExecutionStatus.PAUSED
-    || status === ExecutionStatus.CREATED
+  return status === ExecutionStatus.Running
+    || status === ExecutionStatus.Paused
+    || status === ExecutionStatus.Created
 }
 
 // When wallet disconnects, stop execution
@@ -178,7 +178,7 @@ sample({
     clearExecutionState()
 
     const walletContext = getWalletContextForExecution()
-    const wasRunning = execution.status === ExecutionStatus.RUNNING
+    const wasRunning = execution.status === ExecutionStatus.Running
 
     // Track if it was running for auto-start
     setManualRefreshWasRunning(wasRunning)

@@ -7,22 +7,22 @@
  */
 
 import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import type {
   ArrayPortConfig,
   INode,
   IPort,
   IPortConfig,
 } from '@badaitech/chaingraph-types'
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
+import { filterPorts } from '@badaitech/chaingraph-types'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Fragment, memo, useCallback, useMemo, useState } from 'react'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
 import { requestUpdatePortUI } from '@/store/ports'
-import { filterPorts } from '@badaitech/chaingraph-types'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useState } from 'react'
 import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'

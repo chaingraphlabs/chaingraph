@@ -19,4 +19,4 @@ export const SerializedEdgeSchema = z.object({
   targetPortId: z.string(),
 })
 
-export type SerializedEdgeType = z.infer<typeof SerializedEdgeSchema>
+export type SerializedEdge = z.infer<typeof SerializedEdgeSchema>

@@ -8,13 +8,13 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
+import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
+import { useUnit } from 'effector-react'
+import { memo, useCallback, useMemo } from 'react'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
 import { $activeFlowId } from '@/store/flow'
 import { updateNodeUI } from '@/store/nodes'
-import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
-import { useUnit } from 'effector-react'
-import { memo, useCallback, useMemo } from 'react'
 
 export interface NodeErrorPortsProps {
   node: INode

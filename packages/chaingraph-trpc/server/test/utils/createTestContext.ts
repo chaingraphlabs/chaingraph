@@ -47,8 +47,6 @@ export function createTestContext(
     nodeRegistry,
     nodesCatalog,
     flowStore: flowStore ?? new InMemoryFlowStore(),
-    executionService: null as any,
-    executionStore: null as any,
     db: null as any,
     mcpStore: null as any,
   }

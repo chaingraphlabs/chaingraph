@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cn } from '@/lib/utils'
-import { ExecutionStatus } from '@/store/execution'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
 interface StatusIndicatorProps {
   status: ExecutionStatus
@@ -17,35 +17,35 @@ interface StatusIndicatorProps {
 
 export function StatusIndicator({ status, debugMode }: StatusIndicatorProps) {
   const statusConfig = {
-    [ExecutionStatus.IDLE]: {
+    [ExecutionStatus.Idle]: {
       label: 'Idle',
       color: 'bg-gray-400 dark:bg-gray-500',
     },
-    [ExecutionStatus.CREATING]: {
+    [ExecutionStatus.Creating]: {
       label: 'Creating',
       color: 'bg-blue-500',
     },
-    [ExecutionStatus.CREATED]: {
+    [ExecutionStatus.Created]: {
       label: 'Created',
       color: 'bg-emerald-500',
     },
-    [ExecutionStatus.RUNNING]: {
+    [ExecutionStatus.Running]: {
       label: 'Running',
       color: 'bg-emerald-500',
     },
-    [ExecutionStatus.PAUSED]: {
+    [ExecutionStatus.Paused]: {
       label: debugMode ? 'Debug Paused' : 'Paused',
       color: debugMode ? 'bg-yellow-500' : 'bg-blue-500',
     },
-    [ExecutionStatus.STOPPED]: {
+    [ExecutionStatus.Stopped]: {
       label: 'Stopped',
       color: 'bg-gray-400 dark:bg-gray-500',
     },
-    [ExecutionStatus.COMPLETED]: {
+    [ExecutionStatus.Completed]: {
       label: 'Completed',
       color: 'bg-emerald-500',
     },
-    [ExecutionStatus.ERROR]: {
+    [ExecutionStatus.Failed]: {
       label: 'Error',
       color: 'bg-red-500',
     },
@@ -62,7 +62,7 @@ export function StatusIndicator({ status, debugMode }: StatusIndicatorProps) {
         )}
         />
 
-        {status === ExecutionStatus.RUNNING && (
+        {status === ExecutionStatus.Running && (
           <motion.div
             className={cn(
               'absolute inset-0 rounded-full',

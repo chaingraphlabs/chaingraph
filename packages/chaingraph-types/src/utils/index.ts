@@ -19,6 +19,7 @@ export {
   createQueueIterator,
   EventQueue,
 } from './event-queue'
+export * from './json'
 export { MultiChannel, MultiChannelSchema } from './multi-channel'
 export { Semaphore } from './semaphore'
 export {

@@ -9,11 +9,10 @@
       "dependsOn": ["^publish", "build"],
       "outputs": []
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
     },
     "dev": {
-      "dependsOn": ["^dev"],
       "persistent": true,
       "cache": false
     },

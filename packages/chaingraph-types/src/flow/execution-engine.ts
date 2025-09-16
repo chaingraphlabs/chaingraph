@@ -12,6 +12,7 @@ import type { INode, NodeStatusChangeEvent } from '../node'
 import type { DebuggerController } from './debugger-types'
 import type { ExecutionEventData } from './execution-events'
 import type { Flow } from './flow'
+import { z } from 'zod'
 import { createExecutionEventHandler } from '../flow/execution-handlers'
 import { NodeEventType, NodeStatus } from '../node'
 import { EventQueue } from '../utils'
@@ -29,16 +30,17 @@ const DEFAULT_FLOW_TIMEOUT_MS = 300000
 export const ExecutionCancelledReason = 'Execution cancelled'
 export const ExecutionStoppedByDebugger = 'Stopped by debugger'
 
-export interface ExecutionOptions {
-  maxConcurrency?: number
-  nodeTimeoutMs?: number
-  flowTimeoutMs?: number
-}
+export const ExecutionOptionsSchema = z.object({
+  execution: z.object({
+    maxConcurrency: z.number().optional(),
+    nodeTimeoutMs: z.number().optional(),
+    flowTimeoutMs: z.number().optional(),
+  }).optional(),
+  debug: z.boolean().optional(),
+  breakpoints: z.array(z.string()).optional(),
+})
 
-export interface ExecutionEngineOptions {
-  execution?: ExecutionOptions
-  debug?: boolean
-}
+export type ExecutionOptions = z.infer<typeof ExecutionOptionsSchema>
 
 export class ExecutionEngine {
   private readonly readyQueue: AsyncQueue<() => Promise<void>>
@@ -55,11 +57,12 @@ export class ExecutionEngine {
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
   private onEventCallback?: (context: ExecutionContext) => Promise<void>
+  private pendingEventPublishes: Promise<void>[] = []
 
   constructor(
     private readonly flow: Flow,
     private readonly context: ExecutionContext,
-    private readonly options?: ExecutionEngineOptions,
+    private readonly options?: ExecutionOptions,
     onBreakpointHit?: (node: INode) => void,
   ) {
     this.readyQueue = new AsyncQueue()
@@ -74,9 +77,7 @@ export class ExecutionEngine {
     if (options?.debug) {
       this.debugger = new FlowDebugger(
         async (node) => {
-          await this.eventQueue.publish(
-            this.createEvent(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node: node.clone() }),
-          )
+          await this.publishEventTracked(ExecutionEventEnum.DEBUG_BREAKPOINT_HIT, { node: node.clone() })
           onBreakpointHit?.(node)
         },
       )
@@ -86,23 +87,21 @@ export class ExecutionEngine {
     this.transferService = new EdgeTransferService(this.flow)
   }
 
-  async execute(): Promise<void> {
+  async execute(
+    onComplete?: (context: ExecutionContext, eventQueue: EventQueue<ExecutionEventImpl>) => Promise<void>,
+  ): Promise<void> {
     // Handle context NODE_DEBUG_LOG_STRING events and send it to execution events queue
     const contextEventsQueueCancel
       = this.context.getEventsQueue().subscribe(createExecutionEventHandler({
         [ExecutionEventEnum.NODE_DEBUG_LOG_STRING]: async (data) => {
-          await this.eventQueue.publish(
-            this.createEvent(ExecutionEventEnum.NODE_DEBUG_LOG_STRING, data),
-          )
+          await this.publishEventTracked(ExecutionEventEnum.NODE_DEBUG_LOG_STRING, data)
         },
       }))
 
     const startTime = Date.now()
     try {
       // Emit flow started event
-      await this.eventQueue.publish(
-        this.createEvent(ExecutionEventEnum.FLOW_STARTED, { flow: await this.flow.clone() }),
-      )
+      await this.publishEventTracked(ExecutionEventEnum.FLOW_STARTED, { flowMetadata: { ...this.flow.metadata } })
 
       // Initialize dependency tracking
       await this.initializeDependencies()
@@ -120,13 +119,11 @@ export class ExecutionEngine {
       // Wait for all workers to complete
       await Promise.all(workerPromises)
 
-      console.log(`[ExecutionEngine] All workers completed successfully, total nodes executed: ${this.completedNodes.size}`)
-
       // Emit flow completed event
-      await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_COMPLETED, {
-        flow: await this.flow.clone(),
+      await this.publishEventTracked(ExecutionEventEnum.FLOW_COMPLETED, {
+        flowMetadata: this.flow.metadata,
         executionTime: Date.now() - startTime,
-      }))
+      })
     } catch (error) {
       // Ensure queues are closed on error
       this.readyQueue.close()
@@ -143,24 +140,34 @@ export class ExecutionEngine {
       // check if execution was cancelled or failed
       if (this.context.abortSignal.aborted && (!isAbortedDueToError || isAbortedDueToDebugger)) {
         // Emit flow cancelled event
-        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_CANCELLED, {
-          flow: await this.flow.clone(),
+        await this.publishEventTracked(ExecutionEventEnum.FLOW_CANCELLED, {
+          flowMetadata: this.flow.metadata,
           reason: this.context.abortSignal.reason ?? ExecutionCancelledReason,
           executionTime: Date.now() - startTime,
-        }))
+        })
       } else {
         // Emit flow failed event
-        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.FLOW_FAILED, {
-          flow: await this.flow.clone(),
+        await this.publishEventTracked(ExecutionEventEnum.FLOW_FAILED, {
+          flowMetadata: this.flow.metadata,
           error: error as Error,
           executionTime: Date.now() - startTime,
-        }))
+        })
       }
 
       return Promise.reject(error)
     } finally {
-      contextEventsQueueCancel()
+      // Wait for all pending event publishes to complete
+      if (this.pendingEventPublishes.length > 0) {
+        await Promise.allSettled(this.pendingEventPublishes)
+      }
+
+      // NOW close the event queue - all events are in!
       await this.eventQueue.close()
+      contextEventsQueueCancel()
+
+      if (onComplete) {
+        await onComplete(this.context, this.eventQueue)
+      }
     }
   }
 
@@ -233,7 +240,7 @@ export class ExecutionEngine {
               const eventName = this.context.eventData.eventName
               const listenerEventName = (node as any).eventName
               if (eventName !== listenerEventName) {
-                console.log(`Skipping EventListenerNode ${node.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+                // console.log(`Skipping EventListenerNode ${node.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
                 continue
               }
             }
@@ -241,7 +248,7 @@ export class ExecutionEngine {
             // For nodes WITHOUT disabledAutoExecution in child context
             // Skip them to prevent re-running the entire flow
             if (this.context.isChildExecution && this.context.eventData) {
-              console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
+              // console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
               continue
             }
           }
@@ -270,11 +277,11 @@ export class ExecutionEngine {
     for (const nodeId of this.executingNodes) {
       const node = this.flow.nodes.get(nodeId)
       if (node) {
-        const promise = this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-          node: node.clone(),
+        const promise = this.publishEventTracked(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+          nodeId: node.id,
           oldStatus: NodeStatus.Idle,
           newStatus: NodeStatus.Initialized,
-        }))
+        })
 
         promises.push(promise)
       }
@@ -330,9 +337,7 @@ export class ExecutionEngine {
       // Check for emitted events after node completion
       if (this.onEventCallback && this.context.emittedEvents && this.context.emittedEvents.length > 0) {
         const unprocessedEvents = this.context.emittedEvents.filter(e => !e.processed)
-        console.log(`[ExecutionEngine] After node ${completedNode.metadata.title}, found ${unprocessedEvents.length} unprocessed events`)
         if (unprocessedEvents.length > 0) {
-          console.log(`[ExecutionEngine] Calling onEventCallback`)
           await this.onEventCallback(this.context)
         }
       }
@@ -400,9 +405,9 @@ export class ExecutionEngine {
             } else {
               // Check if the event name matches the listener's event name
               const eventName = this.context.eventData.eventName
-              const listenerEventName = (dependentNode as any).eventName
+              const listenerEventName = (dependentNode as any)?.eventName
               if (eventName !== listenerEventName) {
-                console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+                // console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
                 shouldSkip = true
               }
             }
@@ -462,11 +467,12 @@ export class ExecutionEngine {
     const nodeStartTime = Date.now()
 
     const onStatusChange = (event: NodeStatusChangeEvent) => {
-      return this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STATUS_CHANGED, {
-        node: node.clone(),
+      // Use tracked publish to ensure this event is captured
+      this.publishEventTracked(ExecutionEventEnum.NODE_STATUS_CHANGED, {
+        nodeId: node.id,
         oldStatus: event.oldStatus,
         newStatus: event.newStatus,
-      }))
+      })
     }
     const cancel = node.on(NodeEventType.StatusChange, onStatusChange)
 
@@ -480,7 +486,7 @@ export class ExecutionEngine {
 
         // Skip if any target port cannot be resolved
         if (unresolvedPorts.length > 0) {
-          await this.setNodeSkipped(node, `unresolved ports: ${unresolvedPorts.join(', ')}`)
+          await this.setNodeSkipped(node, `there are unresolved input ports`)
           return
         }
 
@@ -489,7 +495,7 @@ export class ExecutionEngine {
 
         // Set node to executing
         node.setStatus(NodeStatus.Executing, true)
-        await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_STARTED, { node: node.clone() }))
+        await this.publishEventTracked(ExecutionEventEnum.NODE_STARTED, { node: node.clone() })
       }
 
       // Debug point - before execution
@@ -518,18 +524,34 @@ export class ExecutionEngine {
 
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
-              await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
-                edge: updatedEdge.clone(),
+              await this.publishEventTracked(ExecutionEventEnum.EDGE_TRANSFER_COMPLETED, {
+                serializedEdge: {
+                  id: updatedEdge.id,
+                  metadata: { ...updatedEdge.metadata },
+                  status: updatedEdge.status,
+                  sourceNodeId: updatedEdge.sourceNode.id,
+                  sourcePortId: updatedEdge.sourcePort.id,
+                  targetNodeId: updatedEdge.targetNode.id,
+                  targetPortId: updatedEdge.targetPort.id,
+                },
                 transferTime: Date.now() - transferStartTime,
-              }))
+              })
             }
           } catch (error) {
             // Only publish event if the execution wasn't aborted
             if (!this.context.abortSignal.aborted) {
-              await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
-                edge: edge.clone(),
+              await this.publishEventTracked(ExecutionEventEnum.EDGE_TRANSFER_FAILED, {
+                serializedEdge: {
+                  id: edge.id,
+                  metadata: { ...edge.metadata },
+                  status: edge.status,
+                  sourceNodeId: edge.sourceNode.id,
+                  sourcePortId: edge.sourcePort.id,
+                  targetNodeId: edge.targetNode.id,
+                  targetPortId: edge.targetPort.id,
+                },
                 error: error as Error,
-              }))
+              })
             }
             throw error // Rethrow to be caught by Promise.all
           }
@@ -564,7 +586,7 @@ export class ExecutionEngine {
       this.context.currentNodeId = node.id
 
       const { backgroundActions } = await withTimeout(
-        node.executeWithDefaultPorts(this.context),
+        node.executeWithSystemPorts(this.context),
         nodeTimeoutMs,
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
@@ -671,10 +693,10 @@ export class ExecutionEngine {
 
   private async setNodeCompleted(node: INode, nodeStartTime: number): Promise<void> {
     node.setStatus(NodeStatus.Completed, true)
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_COMPLETED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_COMPLETED, {
       node: node.clone(),
       executionTime: Date.now() - nodeStartTime,
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -683,9 +705,9 @@ export class ExecutionEngine {
 
   private async setNodeBackgrounding(node: INode, nodeStartTime: number) {
     node.setStatus(NodeStatus.Backgrounding, true)
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_BACKGROUNDED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_BACKGROUNDED, {
       node: node.clone(),
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -694,10 +716,10 @@ export class ExecutionEngine {
 
   private async setNodeSkipped(node: INode, reason: string) {
     node.setStatus(NodeStatus.Skipped, true)
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_SKIPPED, {
-      node: node.clone(),
+    await this.publishEventTracked(ExecutionEventEnum.NODE_SKIPPED, {
+      nodeId: node.id,
       reason,
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -707,11 +729,11 @@ export class ExecutionEngine {
   private async setNodeError(node: INode, error: unknown, nodeStartTime: number) {
     node.setStatus(NodeStatus.Error, true)
 
-    await this.eventQueue.publish(this.createEvent(ExecutionEventEnum.NODE_FAILED, {
+    await this.publishEventTracked(ExecutionEventEnum.NODE_FAILED, {
       node: node.clone(),
       error: error as Error,
       executionTime: Date.now() - nodeStartTime,
-    }))
+    })
 
     if (!this.completedQueue.isClosed()) {
       this.completedQueue.enqueue(node)
@@ -722,7 +744,7 @@ export class ExecutionEngine {
     return this.debugger
   }
 
-  public getOptions(): ExecutionEngineOptions | undefined {
+  public getOptions(): ExecutionOptions | undefined {
     return this.options
   }
 
@@ -751,7 +773,7 @@ export class ExecutionEngine {
     this.onEventCallback = callback
   }
 
-  protected createEvent<T extends ExecutionEventEnum>(
+  public createEvent<T extends ExecutionEventEnum>(
     type: T,
     data: ExecutionEventData[T],
   ): ExecutionEventImpl<T> {
@@ -761,5 +783,26 @@ export class ExecutionEngine {
       new Date(),
       data,
     )
+  }
+
+  // Helper method to publish and track event promises
+  private async publishEventTracked<T extends ExecutionEventEnum>(
+    type: T,
+    data: ExecutionEventData[T],
+  ): Promise<void> {
+    const promise = this.eventQueue.publish(
+      this.createEvent(type, data),
+    )
+    this.pendingEventPublishes.push(promise)
+
+    try {
+      await promise
+    } finally {
+      // Remove from pending list after completion
+      const index = this.pendingEventPublishes.indexOf(promise)
+      if (index > -1) {
+        this.pendingEventPublishes.splice(index, 1)
+      }
+    }
   }
 }

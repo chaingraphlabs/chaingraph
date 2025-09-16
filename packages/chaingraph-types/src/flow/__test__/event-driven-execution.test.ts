@@ -8,19 +8,29 @@
 
 import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { describe, expect, it, vi } from 'vitest'
+import { Node } from '../../decorator'
 import { ExecutionContext } from '../../execution'
 import { BaseNode } from '../../node/base-node'
 import { ExecutionEngine } from '../execution-engine'
 import { Flow } from '../flow'
 
 // Simple mock event emitter node without decorators
+@Node({
+  type: 'TestEmitterNode',
+  title: 'Test Emitter Node',
+  description: 'A node that emits events to spawn child executions',
+})
 class TestEmitterNode extends BaseNode {
   eventName = 'test-event'
   statusOutput = ''
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     if (context.emitEvent) {
-      context.emitEvent(this.eventName, { message: 'Hello from emitter', nodeId: this.id })
+      context.emitEvent(
+        this.eventName,
+        { message: 'Hello from emitter', nodeId: this.id },
+        this.id,
+      )
     }
     this.statusOutput = 'emitted'
     return {}
@@ -28,6 +38,11 @@ class TestEmitterNode extends BaseNode {
 }
 
 // Simple mock event listener node without decorators
+@Node({
+  type: 'EventListenerNode',
+  title: 'Test Event Listener',
+  description: 'A node that listens for events and processes them',
+})
 class TestListenerNode extends BaseNode {
   eventName = 'test-event' // This is what the execution engine looks for
   receivedMessage = ''
@@ -150,6 +165,7 @@ describe('event-driven execution', () => {
       {},
       'child-execution-1',
       {},
+      'parent-execution-1',
       'parent-execution-1',
       eventData,
       true,

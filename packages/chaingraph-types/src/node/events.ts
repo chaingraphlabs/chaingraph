@@ -158,19 +158,19 @@ export interface PortDisconnectedEvent extends NodeEventBase {
 /**
  * Union type of all possible node events
  */
-export type NodeEvent =
-  | NodeEventBase
-  | NodeStatusChangeEvent
-  | NodeParentChangeEvent
-  | NodeTitleChangeEvent
-  | NodeUIPositionChangeEvent
-  | NodeUIDimensionsChangeEvent
-  | NodeUIChangeEvent
-  | PortCreateEvent
-  | PortDeleteEvent
-  | PortUpdateEvent
-  | PortConnectedEvent
-  | PortDisconnectedEvent
+export type NodeEvent
+  = | NodeEventBase
+    | NodeStatusChangeEvent
+    | NodeParentChangeEvent
+    | NodeTitleChangeEvent
+    | NodeUIPositionChangeEvent
+    | NodeUIDimensionsChangeEvent
+    | NodeUIChangeEvent
+    | PortCreateEvent
+    | PortDeleteEvent
+    | PortUpdateEvent
+    | PortConnectedEvent
+    | PortDisconnectedEvent
 
 export interface EventTypeToInterface {
   [NodeEventType.StatusChange]: NodeStatusChangeEvent

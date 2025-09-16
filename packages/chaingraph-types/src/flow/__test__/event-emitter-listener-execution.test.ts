@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IPortConfig } from '../../port'
 import { describe, expect, it } from 'vitest'
 import { Input, Node, ObjectSchema, Output, PortObject, PortString, Title } from '../../decorator'
 import { NodeRegistry } from '../../decorator/registry'
@@ -76,8 +77,8 @@ class MockEventEmitterNode extends BaseNode {
 
   async execute(context: ExecutionContext) {
     const eventName = this.eventData.eventName
-    if (eventName && context.emitEvent) {
-      context.emitEvent(eventName, this.eventData)
+    if (eventName) {
+      context.emitEvent?.(eventName, this.eventData, this.id)
     }
     return {}
   }
@@ -171,6 +172,7 @@ describe('eventListener execution with real nodes', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined, // no parent
       undefined, // no event data
       false, // not a child execution
@@ -224,6 +226,7 @@ describe('eventListener execution with real nodes', () => {
                 direction: 'input',
                 connections: [],
                 defaultValue: true,
+                metadata: { isSystemPort: true },
               },
             },
             'eventData:POevent': {
@@ -235,7 +238,7 @@ describe('eventListener execution with real nodes', () => {
                   properties: {
                     eventName: {
                       type: 'string',
-                      defaultValue: '',
+                      defaultValue: 'test-event',
                       ui: {
                         label: 'Event Name',
                       },
@@ -263,6 +266,7 @@ describe('eventListener execution with real nodes', () => {
                 direction: 'input',
                 connections: [],
                 defaultValue: true,
+                metadata: { isSystemPort: true },
               },
             },
             'eventName:POeventName': {
@@ -272,7 +276,7 @@ describe('eventListener execution with real nodes', () => {
                 type: 'string',
                 direction: 'input',
                 connections: [],
-                defaultValue: '',
+                defaultValue: 'test-event',
               },
             },
           },
@@ -295,7 +299,11 @@ describe('eventListener execution with real nodes', () => {
 
     // Initialize all nodes
     for (const node of flow.nodes.values()) {
-      node.initialize()
+      const portsConfig = new Map<string, IPortConfig>()
+      for (const port of node.ports.values()) {
+        portsConfig.set(port.getConfig().key!, port.getConfig())
+      }
+      node.initialize(portsConfig)
     }
 
     // Create parent execution context
@@ -306,6 +314,7 @@ describe('eventListener execution with real nodes', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined,
       undefined,
       false,
@@ -347,6 +356,7 @@ describe('eventListener execution with real nodes', () => {
           undefined,
           'child-execution',
           {},
+          'test-execution', // parent ID
           'test-execution', // parent ID
           { eventName: event.type, payload: event.data },
           true, // is child execution

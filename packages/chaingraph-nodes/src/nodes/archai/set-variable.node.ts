@@ -175,10 +175,15 @@ export function getNamespaceInput(context: ExecutionContext, namespace: Variable
   const archAIContext = context.getIntegration<ArchAIContext>('archai')
 
   switch (namespace) {
-    case VariableNamespace.Execution:
+    case VariableNamespace.Local:
       return {
         type: GraphQL.NamespaceType.Execution,
         executionID: context.executionId,
+      }
+    case VariableNamespace.Execution:
+      return {
+        type: GraphQL.NamespaceType.Execution,
+        executionID: context.rootExecutionId,
       }
     case VariableNamespace.Agent:
       return {

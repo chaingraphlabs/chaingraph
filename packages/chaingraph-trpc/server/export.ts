@@ -6,6 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+export * from './auth/config'
+export * from './auth/service'
+export * from './auth/types'
+
 export {
   createContext,
   initializeContext,
@@ -18,11 +22,15 @@ export type {
   Session,
 } from './context'
 
-export * from './executions'
+export {
+  getAuthToken,
+} from './context'
+// export * from './executions'
 export { init } from './init'
 export * from './mcp'
 export * from './procedures'
 export * from './stores'
+export * from './trpc'
 export {
   FORK_ALLOW_RULE,
   FORK_DENY_RULE,

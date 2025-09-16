@@ -62,11 +62,11 @@ class AntropicImageMessageNode extends BaseNode {
     defaultValue: 'image/jpeg',
   })
   imageType:
-    'image/jpeg' |
-    'image/png' |
-    'image/gif' |
-    'image/webp'
-    = 'image/jpeg'
+    'image/jpeg'
+    | 'image/png'
+    | 'image/gif'
+    | 'image/webp'
+      = 'image/jpeg'
 
   @Output()
   @PortObject({

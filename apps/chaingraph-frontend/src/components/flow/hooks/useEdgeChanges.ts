@@ -7,10 +7,10 @@
  */
 
 import type { EdgeChange } from '@xyflow/react'
-import { requestRemoveEdge } from '@/store/edges'
-import { $activeFlowMetadata } from '@/store/flow'
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
+import { requestRemoveEdge } from '@/store/edges'
+import { $activeFlowMetadata } from '@/store/flow'
 
 /**
  * Hook for handling edge changes (removal, selection)

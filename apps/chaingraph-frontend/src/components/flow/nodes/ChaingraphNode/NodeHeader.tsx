@@ -9,15 +9,15 @@
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
-import { cn } from '@/lib/utils'
-import { $activeFlowMetadata } from '@/store/flow'
-import { updateNodeTitle, useNode } from '@/store/nodes'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
+import { $activeFlowMetadata } from '@/store/flow'
+import { updateNodeTitle, useNode } from '@/store/nodes'
 import { EditableNodeTitle } from './EditableNodeTitle'
-import { NodeDocTooltip } from './NodeDocTooltip'
+import { LazyNodeDocTooltip } from './LazyNodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
 import NodeStatusBadge from './NodeStatusBadge'
 
@@ -121,7 +121,7 @@ export function NodeHeader({
       <div className="flex items-center gap-2 min-w-0 relative">
         {categoryMetadata
           ? (
-              <NodeDocTooltip
+              <LazyNodeDocTooltip
                 node={node}
                 categoryMetadata={categoryMetadata}
                 className="cursor-pointer"
@@ -137,7 +137,7 @@ export function NodeHeader({
                     style={{ color: style.text }}
                   />
                 </div>
-              </NodeDocTooltip>
+              </LazyNodeDocTooltip>
             )
           : (
               <div

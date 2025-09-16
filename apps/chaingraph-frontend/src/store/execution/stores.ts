@@ -6,7 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import type {
+  ExecutionEventData,
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+
 import type {
   CreateExecutionOptions,
   EdgeExecutionState,
@@ -15,12 +19,18 @@ import type {
   ExecutionSubscriptionState,
   NodeExecutionState,
 } from './types'
-import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
+import {
+  ExecutionEventEnum,
+  NodeStatus,
+} from '@badaitech/chaingraph-types'
 import { attach, combine, sample } from 'effector'
 import { globalReset } from '../common'
 import { executionDomain } from '../domains'
-import { $trpcClient } from '../trpc/store'
-import { ExecutionStatus, ExecutionSubscriptionStatus, isTerminalStatus } from './types'
+import { $nodes } from '../nodes/stores'
+// import { $trpcClient } from '../trpc/store'
+import { $trpcClientExecutor } from '../trpc/execution-client'
+import { ExecutionSubscriptionStatus, isTerminalStatus } from './types'
 
 // EVENTS
 // Control events
@@ -46,7 +56,7 @@ export const setExecutionSubscriptionStatus = executionDomain.createEvent<Execut
 export const setExecutionSubscriptionError = executionDomain.createEvent<ExecutionError | null>()
 
 export const setExecutionStatus = executionDomain.createEvent<ExecutionStatus>()
-export const newExecutionEvent = executionDomain.createEvent<ExecutionEventImpl>()
+export const newExecutionEvents = executionDomain.createEvent<ExecutionEventImpl[]>()
 
 export const resetAutoStart = executionDomain.createEvent()
 export const markStartAttempted = executionDomain.createEvent()
@@ -54,10 +64,14 @@ export const markStartAttempted = executionDomain.createEvent()
 export const setHighlightedNodeId = executionDomain.createEvent<string | string[] | null>()
 export const setHighlightedEdgeId = executionDomain.createEvent<string | string[] | null>()
 
+// Events for tracking newly created executions (to distinguish from selected existing ones)
+export const setNewlyCreatedExecutionId = executionDomain.createEvent<string | null>()
+export const clearNewlyCreatedExecutionId = executionDomain.createEvent()
+
 // STORES
 
 const initialState: ExecutionState = {
-  status: ExecutionStatus.IDLE,
+  status: ExecutionStatus.Idle,
   executionId: null,
   debugMode: false,
   breakpoints: new Set(),
@@ -93,7 +107,7 @@ export const $executionExternalIntegrationConfig = executionDomain.createStore<M
 
 // Control effects
 export const createExecutionFx = executionDomain.createEffect(async (payload: CreateExecutionOptions) => {
-  const client = $trpcClient.getState()
+  const client = $trpcClientExecutor.getState()
   const state = $executionState.getState()
   const externalIntegrationsStoreMap = $executionExternalIntegrationConfig.getState()
 
@@ -135,7 +149,7 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
     })
   }
 
-  const response = await client.execution.create.mutate({
+  const response = await client.create.mutate({
     flowId,
     options: {
       debug,
@@ -152,81 +166,67 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
 })
 
 export const startExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.start.mutate({ executionId })
+    return client.start.mutate({ executionId })
   },
 })
 
 export const pauseExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.pause.mutate({ executionId })
+    return client.pause.mutate({ executionId })
   },
 })
 
 export const resumeExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.resume.mutate({ executionId })
+    return client.resume.mutate({ executionId })
   },
 })
 
 export const stopExecutionFx = attach({
-  source: $trpcClient,
+  source: $trpcClientExecutor,
   effect: async (client, executionId: string) => {
     if (!client) {
       throw new Error('TRPC client is not initialized')
     }
-    return client.execution.stop.mutate({ executionId })
+    return client.stop.mutate({ executionId })
   },
 })
 
-// Debug effects
-export const addBreakpointFx = attach({
-  source: $trpcClient,
-  effect: async (client, params: { executionId: string, nodeId: string }) => {
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
-    return client.execution.debug.addBreakpoint.mutate({
-      executionId: params.executionId,
-      nodeId: params.nodeId,
-    })
+// Debug effects - Currently disabled as debug endpoints are not available in the new tRPC API
+// TODO: Re-enable when debug endpoints are added back
+export const addBreakpointFx = executionDomain.createEffect(
+  async (params: { executionId: string, nodeId: string }) => {
+    console.warn('Debug breakpoints are not yet available in the new API')
+    return { success: false }
   },
-})
+)
 
-export const removeBreakpointFx = attach({
-  source: $trpcClient,
-  effect: async (client, params: { executionId: string, nodeId: string }) => {
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
-    return client.execution.debug.removeBreakpoint.mutate({
-      executionId: params.executionId,
-      nodeId: params.nodeId,
-    })
+export const removeBreakpointFx = executionDomain.createEffect(
+  async (params: { executionId: string, nodeId: string }) => {
+    console.warn('Debug breakpoints are not yet available in the new API')
+    return { success: false }
   },
-})
+)
 
-export const stepExecutionFx = attach({
-  source: $trpcClient,
-  effect: async (client, executionId: string) => {
-    if (!client) {
-      throw new Error('TRPC client is not initialized')
-    }
-    return client.execution.debug.step.mutate({ executionId })
+export const stepExecutionFx = executionDomain.createEffect(
+  async (executionId: string) => {
+    console.warn('Debug stepping is not yet available in the new API')
+    return { success: false }
   },
-})
+)
 
 // effect for checking terminal status
 export const checkTerminalStatusFx = executionDomain.createEffect((status: ExecutionStatus) => {
@@ -234,8 +234,8 @@ export const checkTerminalStatusFx = executionDomain.createEffect((status: Execu
 })
 
 export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]>([])
-  .on(newExecutionEvent, (state, event) => {
-    return [...state, event]
+  .on(newExecutionEvents, (state, events) => {
+    return [...state, ...events]
   })
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
@@ -245,123 +245,118 @@ export const $executionEvents = executionDomain.createStore<ExecutionEventImpl[]
   .reset(setExecutionIdAndReset)
 
 export const $executionNodes = executionDomain
-  .createStore<Record<string, NodeExecutionState>>({}, {
-    updateFilter: (prev, next) => {
-    // If either is null/undefined
-      if (!prev || !next)
-        return true
-
-      // Check for different node IDs
-      const prevIds = Object.keys(prev)
-      const nextIds = Object.keys(next)
-
-      // If number of nodes changed
-      if (prevIds.length !== nextIds.length)
-        return true
-
-      // Check if any node has a different status
-      for (const nodeId of prevIds) {
-      // If node doesn't exist in next
-        if (!next[nodeId])
-          return true
-
-        // If status changed
-        if (prev[nodeId]?.status !== next[nodeId]?.status)
-          return true
-      }
-
-      // No relevant changes detected
-      return false
-    },
-  })
-  .on(newExecutionEvent, (state, event) => {
+  .createStore<Record<string, NodeExecutionState>>({}, {})
+  .on(newExecutionEvents, (state, events) => {
     let finalState = state
     let stateChanged = false
 
-    switch (event.type) {
-      case ExecutionEventEnum.NODE_STARTED:
+    for (const event of events) {
+      switch (event.type) {
+        case ExecutionEventEnum.NODE_STARTED:
+          {
+            const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
+            finalState = {
+              ...finalState,
+              [eventData.node.id]: {
+                status: 'running',
+                startTime: event.timestamp,
+                node: eventData.node,
+              },
+            }
+            stateChanged = true
+          }
+          break
+
+        case ExecutionEventEnum.NODE_COMPLETED:
         {
-          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_STARTED]
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
+
+          const prevState = finalState[eventData.node.id]
+          if (!prevState) {
+            finalState = {
+              ...finalState,
+              [eventData.node.id]: {
+                status: 'completed',
+                startTime: event.timestamp,
+                endTime: event.timestamp,
+                executionTime: eventData.executionTime,
+                node: eventData.node,
+              },
+            }
+          } else {
+            finalState = {
+              ...finalState,
+              [eventData.node.id]: {
+                ...prevState,
+                status: 'completed',
+                endTime: event.timestamp,
+                executionTime: eventData.executionTime,
+                node: eventData.node,
+              },
+            }
+          }
+          stateChanged = true
+          break
+        }
+
+        case ExecutionEventEnum.NODE_FAILED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
           finalState = {
-            ...state,
+            ...finalState,
             [eventData.node.id]: {
-              status: 'running',
-              startTime: event.timestamp,
+              status: 'failed',
+              endTime: event.timestamp,
+              error: eventData.error,
               node: eventData.node,
             },
           }
           stateChanged = true
+          break
         }
-        break
 
-      case ExecutionEventEnum.NODE_COMPLETED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
+        case ExecutionEventEnum.NODE_SKIPPED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
 
-        const prevState = state[eventData.node.id]
-        if (!prevState) {
+          // Get the node from the nodes store if it exists
+          const nodesStore = $nodes.getState()
+          const prevState = finalState[eventData.nodeId]
+
+          let node = nodesStore[eventData.nodeId]
+          if (!node) {
+            if (prevState && prevState.node) {
+              node = prevState.node
+            } else {
+              // create mock node
+              // node = NodeRegistry.getInstance().createNode()
+            }
+          }
+
+          const newNode = node.clone()
+          newNode.setStatus(NodeStatus.Skipped, false)
+
+          //
+
           finalState = {
-            ...state,
-            [eventData.node.id]: {
-              status: 'completed',
-              startTime: event.timestamp,
+            ...finalState,
+            [eventData.nodeId]: {
+              status: 'skipped',
+              startTime: prevState?.startTime || event.timestamp,
               endTime: event.timestamp,
-              executionTime: eventData.executionTime,
-              node: eventData.node,
+              node: node || prevState?.node, // Use node from store or preserve existing
             },
           }
-        } else {
-          finalState = {
-            ...state,
-            [eventData.node.id]: {
-              ...prevState,
-              status: 'completed',
-              endTime: event.timestamp,
-              executionTime: eventData.executionTime,
-              node: eventData.node,
-            },
-          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
-      }
-
-      case ExecutionEventEnum.NODE_FAILED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_FAILED]
-        finalState = {
-          ...state,
-          [eventData.node.id]: {
-            status: 'failed',
-            endTime: event.timestamp,
-            error: eventData.error,
-            node: eventData.node,
-          },
-        }
-        stateChanged = true
-        break
-      }
-
-      case ExecutionEventEnum.NODE_SKIPPED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.NODE_SKIPPED]
-        finalState = {
-          ...state,
-          [eventData.node.id]: {
-            status: 'skipped',
-            endTime: event.timestamp,
-            node: eventData.node,
-          },
-        }
-        stateChanged = true
-        break
       }
     }
 
     if (stateChanged) {
       return finalState
     }
-    return state
+    return finalState
   })
   .reset(clearExecutionState)
   .reset(stopExecutionFx.done)
@@ -370,51 +365,53 @@ export const $executionNodes = executionDomain
   .reset(setExecutionIdAndReset)
 
 export const $executionEdges = executionDomain.createStore<Record<string, EdgeExecutionState>>({})
-  .on(newExecutionEvent, (state, event) => {
+  .on(newExecutionEvents, (state, events) => {
     let finalState = state
     let stateChanged = false
 
-    switch (event.type) {
-      case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
-        finalState = {
-          ...state,
-          [eventData.edge.id]: {
-            status: 'transferring',
-            edge: eventData.edge,
-          },
+    for (const event of events) {
+      switch (event.type) {
+        case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_STARTED]
+          finalState = {
+            ...finalState,
+            [eventData.serializedEdge.id]: {
+              status: 'transferring',
+              serializedEdge: eventData.serializedEdge,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
-      }
 
-      case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
-        finalState = {
-          ...state,
-          [eventData.edge.id]: {
-            status: 'completed',
-            edge: eventData.edge,
-          },
+        case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_COMPLETED]
+          finalState = {
+            ...finalState,
+            [eventData.serializedEdge.id]: {
+              status: 'completed',
+              serializedEdge: eventData.serializedEdge,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
-      }
 
-      case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
-      {
-        const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
-        finalState = {
-          ...state,
-          [eventData.edge.id]: {
-            status: 'failed',
-            edge: eventData.edge,
-          },
+        case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
+        {
+          const eventData = event.data as ExecutionEventData[ExecutionEventEnum.EDGE_TRANSFER_FAILED]
+          finalState = {
+            ...finalState,
+            [eventData.serializedEdge.id]: {
+              status: 'failed',
+              serializedEdge: eventData.serializedEdge,
+            },
+          }
+          stateChanged = true
+          break
         }
-        stateChanged = true
-        break
       }
     }
 
@@ -432,10 +429,10 @@ export const $executionEdges = executionDomain.createStore<Record<string, EdgeEx
 // Handle execution status changes
 $executionState
   .on(createExecutionFx.pending, (state) => {
-    if (state.status === ExecutionStatus.IDLE) {
+    if (state.status === ExecutionStatus.Idle) {
       return {
         ...state,
-        status: ExecutionStatus.CREATING,
+        status: ExecutionStatus.Creating,
       }
     }
     return state
@@ -444,7 +441,7 @@ $executionState
     return {
       ...state,
       executionId,
-      status: ExecutionStatus.CREATED,
+      status: ExecutionStatus.Created,
       error: null,
     }
   })
@@ -453,50 +450,60 @@ $executionState
     return {
       ...state,
       executionId,
-      status: ExecutionStatus.CREATED,
+      status: ExecutionStatus.Created,
       error: null,
     }
   })
-  .on(newExecutionEvent, (state, event) => {
-    switch (event.type) {
+  .on(newExecutionEvents, (state, events) => {
+    let newState = state
+
+    // Process ALL events in the batch, not just the first one
+    for (const event of events) {
+      switch (event.type) {
       // case ExecutionEventEnum.FLOW_SUBSCRIBED:
       //   console.log('Flow subscribed:', event.data)
-      //   return { ...state, status: ExecutionStatus.CREATED }
+      //   newState = { ...newState, status: ExecutionStatus.CREATED }
+      //   break
 
-      case ExecutionEventEnum.FLOW_STARTED:
-        console.debug('Flow started:', event.data)
-        return { ...state, status: ExecutionStatus.RUNNING }
+        case ExecutionEventEnum.FLOW_STARTED:
+          console.debug('Flow started:', event.data)
+          newState = { ...newState, status: ExecutionStatus.Running }
+          break
 
-      case ExecutionEventEnum.FLOW_COMPLETED:
-        console.debug('Flow completed:', event.data)
-        return { ...state, status: ExecutionStatus.COMPLETED }
+        case ExecutionEventEnum.FLOW_COMPLETED:
+          console.debug('Flow completed:', event.data)
+          newState = { ...newState, status: ExecutionStatus.Completed }
+          break
 
-      case ExecutionEventEnum.FLOW_FAILED:
-        console.debug('Flow failed:', event.data)
-        return {
-          ...state,
-          status: ExecutionStatus.ERROR,
-          error: {
-            message: (event.data as ExecutionEventData[ExecutionEventEnum.FLOW_FAILED]).error.message,
-            timestamp: event.timestamp,
-          },
-        }
+        case ExecutionEventEnum.FLOW_FAILED:
+          console.debug('Flow failed:', event.data)
+          newState = {
+            ...newState,
+            status: ExecutionStatus.Failed,
+            error: {
+              message: (event.data as ExecutionEventData[ExecutionEventEnum.FLOW_FAILED]).error.message,
+              timestamp: event.timestamp,
+            },
+          }
+          break
 
-      case ExecutionEventEnum.FLOW_CANCELLED:
-        console.debug('Flow cancelled:', event.data)
-        return {
-          ...state,
-          status: ExecutionStatus.STOPPED,
-        }
+        case ExecutionEventEnum.FLOW_CANCELLED:
+          console.debug('Flow cancelled:', event.data)
+          newState = {
+            ...newState,
+            status: ExecutionStatus.Stopped,
+          }
+          break
 
-      case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
-        return {
-          ...state,
-          status: ExecutionStatus.PAUSED,
-        }
+        case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+          newState = {
+            ...newState,
+            status: ExecutionStatus.Paused,
+          }
+          break
+      }
     }
-
-    return state
+    return newState
   })
 
 // .on(startExecutionFx.pending, state => ({
@@ -514,7 +521,7 @@ $executionState
   .on(stopExecutionFx.done, (state) => {
     return {
       ...state,
-      status: ExecutionStatus.STOPPED,
+      status: ExecutionStatus.Stopped,
       error: null,
     }
   })
@@ -543,7 +550,7 @@ $executionState
   .on(setExecutionError, (state, error) => ({
     ...state,
     error,
-    status: error ? ExecutionStatus.ERROR : state.status,
+    status: error ? ExecutionStatus.Failed : state.status,
   }))
 
   // Reset state
@@ -606,18 +613,19 @@ export const $highlightedEdgeId = executionDomain.createStore<string[] | null>(n
 
 // Computed stores
 export const $isExecuting = $executionState.map(
-  state => state.status === ExecutionStatus.RUNNING,
+  state => state.status === ExecutionStatus.Running,
 )
 
 export const $isPaused = $executionState.map(
-  state => state.status === ExecutionStatus.PAUSED,
+  state => state.status === ExecutionStatus.Paused,
 )
 
 export const $canStart = $executionState.map(
-  state => state.status === ExecutionStatus.IDLE
-    || state.status === ExecutionStatus.CREATED
-    || state.status === ExecutionStatus.STOPPED
-    || state.status === ExecutionStatus.COMPLETED,
+  state => !state.status
+    || state.status === ExecutionStatus.Idle
+    || state.status === ExecutionStatus.Created
+    || state.status === ExecutionStatus.Stopped
+    || state.status === ExecutionStatus.Completed,
 )
 
 export const $executionStatus = combine({
@@ -656,7 +664,17 @@ export const $autoStartConditions = combine({
 export const $executionId = $executionState.map(state => state.executionId)
 
 // Store to prevent multiple start attempts
-export const $startAttempted = executionDomain.createStore(false).reset(globalReset).reset(setExecutionIdAndReset)
+export const $startAttempted = executionDomain.createStore(false)
+  .reset(globalReset)
+  .reset(setExecutionIdAndReset)
+
+// Store for tracking newly created executions (to distinguish from selected existing ones)
+export const $newlyCreatedExecutionId = executionDomain.createStore<string | null>(null)
+  .on(setNewlyCreatedExecutionId, (_, id) => id)
+  .reset(clearNewlyCreatedExecutionId)
+  .reset(globalReset)
+  .reset(clearExecutionState)
+  .reset(setExecutionIdAndReset)
 
 // export const $highlightedNodeId = $executionState.map(state => state.ui.highlightedNodeId)
 // export const $highlightedEdgeId = $executionState.map(state => state.ui.highlightedEdgeId)
@@ -665,6 +683,12 @@ export const $startAttempted = executionDomain.createStore(false).reset(globalRe
 sample({
   clock: createExecution,
   target: createExecutionFx,
+})
+
+// Set newly created execution ID when execution is created
+sample({
+  clock: createExecutionFx.doneData,
+  target: setNewlyCreatedExecutionId,
 })
 
 // Handle execution control
@@ -768,17 +792,18 @@ $startAttempted
     }),
   ])
 
-// Auto-start logic
+// Auto-start logic - only for newly created executions (not selected existing ones)
 sample({
   clock: $autoStartConditions,
-  source: $startAttempted,
-  filter: (attempted, conditions) => {
+  source: combine($startAttempted, $newlyCreatedExecutionId),
+  filter: ([attempted, newlyCreatedId], conditions) => {
     return (
       !attempted
-      && conditions.executionStatus === ExecutionStatus.CREATED
+      && conditions.executionStatus === ExecutionStatus.Created
       && conditions.subscriptionStatus === ExecutionSubscriptionStatus.SUBSCRIBED
       && !conditions.hasError
       && !!conditions.executionId
+      && conditions.executionId === newlyCreatedId // Only auto-start if this is the newly created execution
     )
   },
   fn: (_, conditions) => conditions.executionId!,
@@ -786,6 +811,22 @@ sample({
     startExecution,
     markStartAttempted,
   ],
+})
+
+// Clear newly created execution ID when execution starts successfully
+sample({
+  clock: startExecutionFx.done,
+  target: clearNewlyCreatedExecutionId,
+})
+
+// Clear newly created execution ID on terminal states or errors
+sample({
+  clock: [
+    stopExecutionFx.done,
+    createExecutionFx.failData,
+    startExecutionFx.failData,
+  ],
+  target: clearNewlyCreatedExecutionId,
 })
 
 // Reset auto-start when needed

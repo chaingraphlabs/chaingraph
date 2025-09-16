@@ -9,6 +9,7 @@
 import type { NodeMetadata } from '../../node'
 import type { NodeExecutionResult } from '../../node/types'
 import { describe, expect, it } from 'vitest'
+import { Node, NodeRegistry } from '../../decorator'
 import { Edge } from '../../edge'
 import { ExecutionContext } from '../../execution/execution-context'
 import { BaseNode } from '../../node/base-node'
@@ -18,6 +19,11 @@ import { Flow } from '../flow'
 
 describe('disabledAutoExecution', () => {
   // Normal test node
+  @Node({
+    type: 'TestNode',
+    title: 'Test Node',
+    description: 'A simple test node',
+  })
   class TestNode extends BaseNode {
     constructor(id: string, metadata?: NodeMetadata) {
       super(id, metadata || {
@@ -33,6 +39,11 @@ describe('disabledAutoExecution', () => {
   }
 
   // Node with disabledAutoExecution should not execute in parent context
+  @Node({
+    type: 'DisabledAutoExecNode',
+    title: 'Disabled Auto Exec Node',
+    description: 'A node that should not auto-execute in parent context',
+  })
   class DisabledAutoExecNode extends BaseNode {
     constructor(id: string) {
       super(id, {
@@ -50,12 +61,39 @@ describe('disabledAutoExecution', () => {
     }
   }
 
+  // Add an EventListenerNode so the engine has something to execute
+  @Node({
+    type: 'EventListenerNode',
+    title: 'Event Listener Node',
+    description: 'A node that listens for events to trigger execution',
+  })
+  class TestEventListenerNode extends BaseNode {
+    eventName: string = 'test-event'
+
+    constructor(id: string) {
+      super(id, {
+        type: 'EventListenerNode',
+        title: 'Test Event Listener',
+        flowPorts: {
+          disabledAutoExecution: true,
+        },
+      })
+    }
+
+    async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+      return {}
+    }
+  }
+
   it('should not execute nodes with disabledAutoExecution in parent context', async () => {
+    NodeRegistry.getInstance().registerNode(DisabledAutoExecNode)
+    NodeRegistry.getInstance().registerNode(TestNode)
+
     // Create flow with a node that has disabledAutoExecution
     const flow = new Flow({ name: 'test-flow' })
     const disabledNode = new DisabledAutoExecNode('disabled-1')
     disabledNode.initialize()
-    await flow.addNode(disabledNode)
+    await flow.addNode(disabledNode, false)
 
     // Add a normal node so flow can complete
     const normalNode = new TestNode('normal-1')
@@ -70,6 +108,7 @@ describe('disabledAutoExecution', () => {
       undefined,
       'test-execution',
       {},
+      undefined, // no parent
       undefined, // no parent
       undefined, // no event data
       false, // not a child execution
@@ -97,30 +136,14 @@ describe('disabledAutoExecution', () => {
 
     const disabledNode = new DisabledAutoExecNode('disabled-2')
     disabledNode.initialize()
-    await flow.addNode(disabledNode)
+    await flow.addNode(disabledNode, true)
 
-    // Add an EventListenerNode so the engine has something to execute
-    class TestEventListenerNode extends BaseNode {
-      eventName: string = 'test-event'
-
-      constructor(id: string) {
-        super(id, {
-          type: 'EventListenerNode',
-          title: 'Test Event Listener',
-          flowPorts: {
-            disabledAutoExecution: true,
-          },
-        })
-      }
-
-      async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-        return {}
-      }
-    }
+    NodeRegistry.getInstance().registerNode(TestEventListenerNode)
+    // NodeRegistry.getInstance().registerNode(EventListenerNode)
 
     const listenerNode = new TestEventListenerNode('listener-1')
     listenerNode.initialize()
-    await flow.addNode(listenerNode)
+    await flow.addNode(listenerNode, true)
 
     // Create child execution context with event data
     const abortController = new AbortController()
@@ -130,6 +153,7 @@ describe('disabledAutoExecution', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       'parent-execution', // has parent
       { eventName: 'test-event', payload: {} }, // has event data
       true, // is a child execution
@@ -181,7 +205,7 @@ describe('disabledAutoExecution', () => {
         dependentNode,
         dependentInPort,
       )
-      flow.addEdge(edge1)
+      await flow.addEdge(edge1)
     }
 
     if (disabledOutPort && dependentInPort) {
@@ -192,7 +216,7 @@ describe('disabledAutoExecution', () => {
         dependentNode,
         dependentInPort,
       )
-      flow.addEdge(edge2)
+      await flow.addEdge(edge2)
     }
 
     // Create parent execution context
@@ -203,6 +227,7 @@ describe('disabledAutoExecution', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined,
       undefined,
       false,

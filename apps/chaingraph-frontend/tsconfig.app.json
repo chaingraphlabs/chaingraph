@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
     "target": "ESNext",
@@ -17,6 +18,7 @@
     "paths": {
       "@/*": ["./*"],
       "@badaitech/chaingraph-trpc/*": ["../../packages/chaingraph-trpc/*"],
+      "@badaitech/chaingraph-executor/*": ["../../packages/chaingraph-executor/*"],
       "@badaitech/chaingraph-types/*": ["../../packages/chaingraph-types/src/*"],
       "@badaitech/chaingraph-nodes/*": ["../../packages/chaingraph-nodes/src/*"],
       "@badaitech/typescript-config/*": ["../../packages/typescript-config/*"],

@@ -25,10 +25,10 @@ export function formatDuration(start?: Date, end?: Date): string {
 
   if (!end) {
     // Still running
-    return formatDistanceToNow(start, { addSuffix: false })
+    return formatDistanceToNow(new Date(start), { addSuffix: false })
   }
 
-  const duration = end.getTime() - start.getTime()
+  const duration = new Date(end).getTime() - new Date(start).getTime()
 
   if (duration < 1000) {
     return `${duration}ms`

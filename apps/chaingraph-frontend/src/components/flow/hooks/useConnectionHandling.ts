@@ -7,12 +7,12 @@
  */
 
 import type { Connection } from '@xyflow/react'
-import { $edges, requestAddEdge } from '@/store/edges'
-import { $activeFlowMetadata } from '@/store/flow'
-import { $nodes } from '@/store/nodes'
 import { hasCycle } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useCallback, useMemo } from 'react'
+import { $edges, requestAddEdge } from '@/store/edges'
+import { $activeFlowMetadata } from '@/store/flow'
+import { $nodes } from '@/store/nodes'
 
 /**
  * Hook for handling connection creation and cycle detection

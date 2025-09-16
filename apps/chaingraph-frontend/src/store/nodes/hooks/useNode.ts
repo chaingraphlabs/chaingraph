@@ -23,23 +23,33 @@ export function useNode(nodeId: string) {
     store: $nodes,
     keys: [nodeId],
     fn: (nodes, [nodeId]) => {
+      // Handle empty/undefined nodeId gracefully
+      if (!nodeId)
+        return undefined
       return nodes[nodeId]
     },
-    // TODO: we could use this to update the node only when the version changes
-    // TODO: but before we needs to implement local version changes in the node
-    // TODO: so this local version have to be updated when the local node state changes
     updateFilter: (prev, next) => {
-      if (!prev || !next)
+      // Handle empty nodeId case
+      if (!nodeId) {
+        return false
+      }
+
+      // If node doesn't exist or was added/removed
+      if (!prev || !next) {
         return true
+      }
 
       // Check if the node version has changed
-      if (prev.getVersion() !== next.getVersion())
+      const prevVersion = prev.getVersion()
+      const nextVersion = next.getVersion()
+      if (prevVersion !== nextVersion) {
         return true
+      }
 
+      // Check if UI properties changed
       const prevUi = prev.getUI()
       const nextUi = next.getUI()
 
-      // Quick checks for common updates
       if (
         prevUi?.position?.x !== nextUi?.position?.x
         || prevUi?.position?.y !== nextUi?.position?.y
@@ -53,11 +63,8 @@ export function useNode(nodeId: string) {
         return true
       }
 
+      // No changes detected - skip re-render
       return false
-      // const prevJson = JSON.stringify(prev.metadata)
-      // const nextJson = JSON.stringify(next.metadata)
-      //
-      // return prevJson !== nextJson
     },
   })
 }

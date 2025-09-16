@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { secretTypeSchemas } from '@badaitech/chaingraph-types/port'
+import { secretTypeSchemas } from '@badaitech/chaingraph-types'
 import { describe, expect, it } from 'vitest'
 import { appRouter } from '../../../router'
 import { createTestContext } from '../../../test/utils/createTestContext'

@@ -22,6 +22,34 @@
       "when": 1754003181625,
       "tag": "0002_organic_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1756563983181,
+      "tag": "0003_worried_jack_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1756838065703,
+      "tag": "0004_sloppy_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1756844307227,
+      "tag": "0005_early_pete_wisdom",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1756844735717,
+      "tag": "0006_furry_norman_osborn",
+      "breakpoints": true
     }
   ]
 }

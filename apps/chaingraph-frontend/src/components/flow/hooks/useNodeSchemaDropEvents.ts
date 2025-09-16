@@ -8,9 +8,9 @@
 
 import type { INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
-import { $hoveredDropTarget } from '@/store/drag-drop'
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
+import { $hoveredDropTarget } from '@/store/drag-drop'
 
 // Custom event for node schema drop detection
 export interface NodeSchemaDropEvent {

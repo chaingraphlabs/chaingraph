@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PasteNodesEvent } from '@/store/nodes'
-
 import type {
   INode,
-  SerializedEdgeType,
+  SerializedEdge,
   SerializedNodeType,
 } from '@badaitech/chaingraph-types'
+
 import type { EdgeData } from '../../../store/edges/types'
+import type { PasteNodesEvent } from '@/store/nodes'
 import {
   EdgeStatus,
 } from '@badaitech/chaingraph-types'
@@ -223,7 +223,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         clipboardData: {
           nodes: clipboard.nodes.map(node => node.serialize() as SerializedNodeType), // Serialize nodes
           edges: clipboard.edges.map((e) => {
-            const edgeSerialized: SerializedEdgeType = {
+            const edgeSerialized: SerializedEdge = {
               id: e.edgeId,
               metadata: e.metadata,
               status: EdgeStatus.Active,

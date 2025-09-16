@@ -10,6 +10,7 @@ import type { NodeEvent, NodeEventType } from '../../node/events'
 import type { Dimensions, NodeUIMetadata, Position } from '../../node/node-ui'
 import type { INodeComposite, INodeUI, INodeVersioning } from '../interfaces'
 import { NodeEventType as EventType } from '../../node/events'
+import { DefaultPosition } from '../../node/node-ui'
 
 /**
  * Implementation of INodeUI interface
@@ -43,6 +44,17 @@ export class NodeUIManager implements INodeUI {
       this.nodeRef.metadata.ui = {
         ...this.nodeRef.metadata.ui ?? {},
         ...ui ?? {},
+        position: {
+          ...this.nodeRef.metadata.ui.position ?? DefaultPosition,
+          ...ui.position ?? {},
+        },
+        dimensions: {
+          ...this.nodeRef.metadata.ui.dimensions ?? {
+            width: 200,
+            height: 200,
+          },
+          ...ui.dimensions ?? {},
+        },
         state: {
           ...this.nodeRef.metadata.ui.state ?? {},
           ...ui.state ?? {},

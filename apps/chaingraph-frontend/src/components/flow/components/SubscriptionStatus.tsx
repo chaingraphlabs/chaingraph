@@ -7,6 +7,7 @@
  */
 
 import type { FlowSubscriptionStatus } from '@/store/flow'
+import { motion } from 'framer-motion'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import {
   Tooltip,
@@ -15,7 +16,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { motion } from 'framer-motion'
 
 interface SubscriptionStatusProps {
   status: FlowSubscriptionStatus

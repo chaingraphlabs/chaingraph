@@ -14,6 +14,7 @@ import { $executionEvents } from 'store/execution'
 
 interface UseExecutionEventsOptions {
   selectedEventTypes?: Set<ExecutionEventEnum>
+  selectedNodeIds?: string[]
   bufferTimeMs?: number
   maxEvents?: number
   newestFirst?: boolean
@@ -21,6 +22,7 @@ interface UseExecutionEventsOptions {
 
 export function useExecutionEvents({
   selectedEventTypes = new Set(Object.values(ExecutionEventEnum)),
+  selectedNodeIds,
   bufferTimeMs = 150,
   maxEvents = 1000,
   newestFirst = true,
@@ -53,9 +55,30 @@ export function useExecutionEvents({
   // Process events (filter, limit, sort) - only when necessary
   return useMemo(() => {
     // Filter events by selected types
-    const filtered = selectedEventTypes.size === Object.values(ExecutionEventEnum).length
+    let filtered = selectedEventTypes.size === Object.values(ExecutionEventEnum).length
       ? bufferedEvents // No filtering needed if all types are selected
       : bufferedEvents.filter(event => selectedEventTypes.has(event.type))
+
+    // Filter by selected node IDs if provided
+    if (selectedNodeIds && selectedNodeIds.length > 0) {
+      const nodeIdSet = new Set(selectedNodeIds)
+      filtered = filtered.filter((event) => {
+        // Check if the event has a nodeId in its data
+        const eventData = event.data as any
+
+        // Handle different event types that have node information
+        if ('nodeId' in eventData) {
+          return nodeIdSet.has(eventData.nodeId)
+        }
+        if ('node' in eventData && eventData.node?.id) {
+          return nodeIdSet.has(eventData.node.id)
+        }
+
+        // For events without node information, include them if no node filter is active
+        // This ensures flow-level events are still shown
+        return false
+      })
+    }
 
     // Apply limit if needed (keep most recent events)
     let result = filtered.length > maxEvents
@@ -68,5 +91,5 @@ export function useExecutionEvents({
     }
 
     return result
-  }, [bufferedEvents, selectedEventTypes, maxEvents, newestFirst])
+  }, [bufferedEvents, selectedEventTypes, selectedNodeIds, maxEvents, newestFirst])
 }

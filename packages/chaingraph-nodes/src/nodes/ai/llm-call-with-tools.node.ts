@@ -17,6 +17,9 @@ import type { ChatDeepSeek } from '@langchain/deepseek'
 import type { ChatGroq } from '@langchain/groq'
 import type { ChatOpenAI } from '@langchain/openai'
 import {
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+import {
   BaseNode,
   ExecutionEventEnum,
   findPort,
@@ -203,15 +206,17 @@ class LLMCallWithToolsNode extends BaseNode {
   private async debugLog(context: ExecutionContext, message: string): Promise<void> {
     console.log(`[LLMCallWithTools:${this.id}] ${message}`)
 
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: message,
-      },
-    })
+    await context.sendEvent(
+      new ExecutionEventImpl(
+        0,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        new Date(),
+        {
+          nodeId: this.id || 'unknown',
+          log: message,
+        },
+      ),
+    )
   }
 
   /**

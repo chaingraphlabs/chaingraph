@@ -20,6 +20,7 @@ function getTestContext(eventData?: EmittedEventContext): ExecutionContext {
     'test-execution',
     {},
     eventData ? 'parent-execution' : undefined, // parentExecutionId if there's event data
+    eventData ? 'parent-execution' : undefined, // parentExecutionId if there's event data
     eventData,
     !!eventData, // isChildExecution = true if there's event data
     1, // executionDepth
@@ -70,6 +71,7 @@ describe('eventListenerNode', () => {
       {},
       'test-execution',
       {},
+      'parent-execution',
       'parent-execution',
       eventData,
       true, // isChildExecution

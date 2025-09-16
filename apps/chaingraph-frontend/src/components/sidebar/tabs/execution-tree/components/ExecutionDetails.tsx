@@ -6,12 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionTreeNode } from '../utils/tree-builder'
+import type { ExecutionTreeNode } from '@badaitech/chaingraph-executor/types'
+import { AlertCircle, Clock, Copy, ExternalLink, Hash, Layers, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { AlertCircle, Clock, Copy, ExternalLink, Hash, Layers, Zap } from 'lucide-react'
 import { formatDuration, formatTimestamp } from '../utils/formatters'
 import { ExecutionStatusIndicator } from './ExecutionStatus'
 
@@ -21,17 +21,29 @@ interface ExecutionDetailsProps {
   className?: string
 }
 
-export function ExecutionDetails({ execution, onClose, className }: ExecutionDetailsProps) {
+export function ExecutionDetails({ execution: node, onClose, className }: ExecutionDetailsProps) {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
   }
+
+  // Access the actual execution data
+  const execution = node.execution
+  const nodeId = node.id
+  const parentId = node.parentId
+  const rootId = execution.rootExecutionId
+  const level = node.level
+
+  // Format timestamps
+  const createdAt = execution.createdAt ? new Date(execution.createdAt) : undefined
+  const startedAt = execution.startedAt ? new Date(execution.startedAt) : undefined
+  const completedAt = execution.completedAt ? new Date(execution.completedAt) : undefined
 
   return (
     <div className={cn('space-y-4', className)}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{execution.flowName}</h3>
+          <h3 className="text-lg font-semibold">Execution Details</h3>
           <div className="flex items-center gap-2">
             <ExecutionStatusIndicator status={execution.status} showLabel />
             {execution.executionDepth > 0 && (
@@ -59,13 +71,13 @@ export function ExecutionDetails({ execution, onClose, className }: ExecutionDet
           </div>
           <div className="flex items-center gap-1">
             <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
-              {execution.id}
+              {nodeId}
             </code>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => copyToClipboard(execution.id)}
+              onClick={() => copyToClipboard(nodeId)}
             >
               <Copy className="h-3 w-3" />
             </Button>
@@ -92,7 +104,7 @@ export function ExecutionDetails({ execution, onClose, className }: ExecutionDet
           </div>
         </div>
 
-        {execution.parentExecutionId && (
+        {parentId && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               <ExternalLink className="w-4 h-4 text-muted-foreground" />
@@ -100,13 +112,35 @@ export function ExecutionDetails({ execution, onClose, className }: ExecutionDet
             </div>
             <div className="flex items-center gap-1">
               <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                {execution.parentExecutionId}
+                {parentId}
               </code>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6"
-                onClick={() => copyToClipboard(execution.parentExecutionId!)}
+                onClick={() => copyToClipboard(parentId)}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {rootId && rootId !== nodeId && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Root ID</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                {rootId}
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => copyToClipboard(rootId)}
               >
                 <Copy className="h-3 w-3" />
               </Button>
@@ -115,109 +149,110 @@ export function ExecutionDetails({ execution, onClose, className }: ExecutionDet
         )}
       </div>
 
-      <Separator />
-
-      {/* Trigger Event */}
-      {execution.triggeredByEvent && (
+      {/* Event Info */}
+      {execution.externalEvents && execution.externalEvents.length > 0 && (
         <>
+          <Separator />
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Zap className="w-4 h-4 text-orange-500" />
-              Triggered by Event
+              <span>Triggered by Event</span>
             </div>
-            <div className="bg-muted/50 rounded-md p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Event Name</span>
-                <Badge variant="secondary">{execution.triggeredByEvent.eventName}</Badge>
+            <div className="bg-muted/50 rounded-md p-3 space-y-1">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Event:</span>
+                {' '}
+                <span className="font-mono">{execution.externalEvents[0].eventName}</span>
               </div>
-              {execution.triggeredByEvent.payload && (
-                <div className="mt-2">
-                  <span className="text-xs text-muted-foreground">Payload</span>
-                  <pre className="mt-1 text-xs font-mono bg-background rounded p-2 overflow-auto max-h-32">
-                    {JSON.stringify(execution.triggeredByEvent.payload, null, 2)}
+              {execution.externalEvents[0].payload && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Payload:</span>
+                  <pre className="mt-1 text-xs font-mono overflow-x-auto">
+                    {JSON.stringify(execution.externalEvents[0].payload, null, 2)}
                   </pre>
                 </div>
               )}
             </div>
           </div>
-          <Separator />
         </>
       )}
 
-      {/* Timing Information */}
-      <div className="space-y-3">
+      {/* Timestamps */}
+      <Separator />
+      <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Clock className="w-4 h-4 text-muted-foreground" />
-          Timing
+          <span>Timestamps</span>
         </div>
-
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
+        <div className="space-y-1 text-sm">
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Created</span>
-            <div className="font-mono text-xs mt-1">
-              {formatTimestamp(execution.createdAt)}
-            </div>
+            <span className="font-mono">{createdAt ? formatTimestamp(createdAt) : '-'}</span>
           </div>
-
-          {execution.startedAt && (
-            <div>
+          {startedAt && (
+            <div className="flex justify-between">
               <span className="text-muted-foreground">Started</span>
-              <div className="font-mono text-xs mt-1">
-                {formatTimestamp(execution.startedAt)}
-              </div>
+              <span className="font-mono">{formatTimestamp(startedAt)}</span>
             </div>
           )}
-
-          {execution.completedAt && (
-            <div>
+          {completedAt && (
+            <div className="flex justify-between">
               <span className="text-muted-foreground">Completed</span>
-              <div className="font-mono text-xs mt-1">
-                {formatTimestamp(execution.completedAt)}
-              </div>
+              <span className="font-mono">{formatTimestamp(completedAt)}</span>
             </div>
           )}
-
-          <div>
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Duration</span>
-            <div className="font-mono text-xs mt-1">
-              {formatDuration(execution.startedAt, execution.completedAt)}
-            </div>
+            <span className="font-mono">
+              {formatDuration(startedAt, completedAt)}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Error Information */}
-      {execution.error && (
+      {/* Error Info */}
+      {execution.errorMessage && (
         <>
           <Separator />
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-red-500">
+            <div className="flex items-center gap-2 text-sm font-medium text-destructive">
               <AlertCircle className="w-4 h-4" />
-              Error
+              <span>Error</span>
             </div>
-            <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3">
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {execution.error.message}
-              </p>
-              {execution.error.nodeId && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Node:
+            <div className="bg-destructive/10 rounded-md p-3 space-y-1">
+              <div className="text-sm text-destructive">{execution.errorMessage}</div>
+              {execution.errorNodeId && (
+                <div className="text-xs text-muted-foreground">
+                  Node ID:
                   {' '}
-                  {execution.error.nodeId}
-                </p>
+                  <code className="font-mono">{execution.errorNodeId}</code>
+                </div>
               )}
             </div>
           </div>
         </>
       )}
 
-      {/* Statistics */}
-      {execution.childCount > 0 && (
+      {/* Additional Info */}
+      {(execution.rootExecutionId || execution.parentExecutionId) && (
         <>
           <Separator />
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Child Executions</span>
-            <Badge>{execution.childCount}</Badge>
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Additional Info</div>
+            <div className="space-y-1 text-sm">
+              {execution.rootExecutionId && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Root Execution</span>
+                  <code className="font-mono text-xs">{execution.rootExecutionId}</code>
+                </div>
+              )}
+              {execution.parentExecutionId && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Parent Execution</span>
+                  <code className="font-mono text-xs">{execution.parentExecutionId}</code>
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

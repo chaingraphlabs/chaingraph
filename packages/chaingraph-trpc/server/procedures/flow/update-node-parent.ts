@@ -50,7 +50,7 @@ export const updateNodeParent = flowContextProcedure
         input.parentNodeId ?? undefined,
         true,
       )
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       // console.log(`[FLOW] Updated parent for node ${input.nodeId} to ${input.parentNodeId}`)
 

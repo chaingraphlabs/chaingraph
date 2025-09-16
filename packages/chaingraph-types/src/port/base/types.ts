@@ -153,7 +153,7 @@ export interface SecretPortConfig<S extends SecretType = any> extends BasePortCo
  */
 export interface ObjectPortConfig<S extends IObjectSchema = IObjectSchema> extends BasePortConfig {
   type: 'object'
-  // TODO: !!!! Consider removing the schema property and using properties directly for better alignment with JSON Schema !!!!
+  // TODO: !!!! Consider removing the schema.property and using properties directly for better alignment with JSON Schema !!!!
   schema: S
   isSchemaMutable?: boolean
   defaultValue?: ObjectPortValue<S>
@@ -274,16 +274,16 @@ export type IPortConfig = ConfigTypeMap[keyof ConfigTypeMap]
 /**
  * Union type of all port values
  */
-export type IPortValue =
-  | StringPortValue
-  | NumberPortValue
-  | BooleanPortValue
-  | ArrayPortValue<any>
-  | ObjectPortValue<any>
-  | StreamPortValue<any>
-  | SecretPortValue<any>
-  | EnumPortValue
-  | AnyPortValue
+export type IPortValue
+  = | StringPortValue
+    | NumberPortValue
+    | BooleanPortValue
+    | ArrayPortValue<any>
+    | ObjectPortValue<any>
+    | StreamPortValue<any>
+    | SecretPortValue<any>
+    | EnumPortValue
+    | AnyPortValue
 
 export type PortConfigByType<T extends PortType> = ConfigTypeMap[T]
 
@@ -360,18 +360,18 @@ export interface RegistryPlugin {
 /**
  * Extract the value type from a port config
  */
-export type ExtractValue<C extends IPortConfig> =
-  C extends StringPortConfig ? StringPortValue :
-    C extends NumberPortConfig ? NumberPortValue :
-      C extends BooleanPortConfig ? BooleanPortValue :
-        C extends ArrayPortConfig<infer E> ? ArrayPortValue<E> :
-          C extends ObjectPortConfig<infer S> ? ObjectPortValue<S> :
-            C extends StreamPortConfig<infer T> ? StreamPortValue<T> :
-              C extends EnumPortConfig ? EnumPortValue :
-                C extends SecretPortConfig<infer S> ? SecretPortValue<S> :
-                  C extends AnyPortConfig ? AnyPortValue :
-                    C extends undefined ? undefined :
-                      never
+export type ExtractValue<C extends IPortConfig>
+  = C extends StringPortConfig ? StringPortValue
+    : C extends NumberPortConfig ? NumberPortValue
+      : C extends BooleanPortConfig ? BooleanPortValue
+        : C extends ArrayPortConfig<infer E> ? ArrayPortValue<E>
+          : C extends ObjectPortConfig<infer S> ? ObjectPortValue<S>
+            : C extends StreamPortConfig<infer T> ? StreamPortValue<T>
+              : C extends EnumPortConfig ? EnumPortValue
+                : C extends SecretPortConfig<infer S> ? SecretPortValue<S>
+                  : C extends AnyPortConfig ? AnyPortValue
+                    : C extends undefined ? undefined
+                      : never
 
 /**
  * Helper function to build a union schema

@@ -24,7 +24,22 @@ import { combine, sample } from 'effector'
 import { $categoryMetadata } from '../categories'
 import { globalReset } from '../common'
 import { nodesDomain } from '../domains'
-import { updatePort, updatePortUI, updatePortValue } from '../ports'
+import {
+  $activeFlowId,
+  // baseUpdatePortUIFx,
+  // preBaseUpdatePortUiFx,
+  // throttledRequestUpdatePortUi,
+} from '../flow/stores'
+import {
+  baseUpdatePortUIFx,
+  baseUpdatePortValueFx,
+  preBaseUpdatePortUiFx,
+  preBaseUpdatePortValueFx,
+  requestUpdatePortValue,
+  throttledRequestUpdatePortUi,
+  updatePort,
+  updatePortUI,
+} from '../ports/stores'
 import { $trpcClient } from '../trpc/store'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
 import { accumulateAndSample } from './operators/accumulate-and-sample'
@@ -196,22 +211,21 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Single node operations - only clone the affected node and preserve others
   .on(addNode, (state, node) => {
-    return { ...state, [node.id]: node.clone() }
+    return { ...state, [node.id]: node }
   })
 
   // Add nodes operation
   .on(addNodes, (state, nodes) => {
     const newState = { ...state }
     nodes.forEach((node) => {
-      newState[node.id] = node.clone()
+      newState[node.id] = node
     })
 
     return newState
   })
 
   .on(updateNode, (state, node) => {
-    // Create a new state object, but only clone the node we're updating
-    return { ...state, [node.id]: node.clone() }
+    return { ...state, [node.id]: node }
   })
 
   .on(removeNode, (state, id) => {
@@ -247,7 +261,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     }
 
     // Only clone the node we're updating
-    const updatedNode = node.clone()
+    const updatedNode = node// .clone()
     updatedNode.setVersion(version)
 
     // Return new state with just the updated node changed
@@ -272,15 +286,14 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     try {
-      // Clone both node and port to maintain immutability
-      const updatedNode = node.clone()
+      const updatedNode = node// .clone()
       const updatedPort = port.clone()
 
       updatedPort.setConfig(data.config)
       updatedPort.setValue(data.value)
 
       updatedNode.setPort(updatedPort)
-      updatedNode.setVersion(nodeVersion)
+      // updatedNode.setVersion(nodeVersion)
 
       return { ...state, [nodeId]: updatedNode }
     } catch (e: any) {
@@ -289,7 +302,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     }
   })
 
-  .on(updatePortValue, (state, { nodeId, portId, value }) => {
+  .on(requestUpdatePortValue, (state, { nodeId, portId, value }) => {
     const node = state[nodeId]
     if (!node)
       return state
@@ -299,12 +312,14 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     try {
-      // Clone both node and port
+    // Clone both node and port
       const updatedNode = node.clone()
-      const updatedPort = port.clone()
+      const updatedPort = port
 
       updatedPort.setValue(value)
       updatedNode.setPort(updatedPort)
+
+      console.log(`Updating port value locally for node ${nodeId}, port ${portId}:`, value)
 
       return { ...state, [nodeId]: updatedNode }
     } catch (e: any) {
@@ -716,8 +731,8 @@ const throttledUpdatePosition = accumulateAndSample({
 
 // Update local node version and send the updated position to the server
 sample({
-  clock: throttledUpdatePosition,
   source: $nodes,
+  clock: throttledUpdatePosition,
   fn: (nodes, params) => ({
     ...params,
     version: (nodes[params.nodeId]?.getVersion() ?? 0) + 1,
@@ -731,8 +746,8 @@ sample({
 
 // On node parent update, update the local node version and send the updated parent to the server
 sample({
-  clock: updateNodeParent,
   source: $nodes,
+  clock: updateNodeParent,
   fn: (nodes, params) => ({
     ...params,
     version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
@@ -791,6 +806,16 @@ sample({
   target: clearInterpolatorFx,
 })
 
+// Derived store that provides only the IDs of selected nodes
+export const $selectedNodeIds = combine(
+  $nodes,
+  (nodes): string[] => {
+    return Object.entries(nodes)
+      .filter(([_, node]) => node.metadata.ui?.state?.isSelected === true)
+      .map(([nodeId]) => nodeId)
+  },
+)
+
 // Create store for dragging nodes (nodes which user moves right now)
 export const $draggingNodes = nodesDomain.createStore<string[]>([])
   // Track nodes that start being dragged
@@ -810,3 +835,55 @@ export const $draggingNodes = nodesDomain.createStore<string[]>([])
     return state
   })
   .reset(globalReset)
+
+sample({
+  source: combine({
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  }),
+  clock: requestUpdatePortValue,
+  // fn: ({ portId, nodeId, value }) => {
+  fn: (source, event) => {
+    const activeFlowId = source.activeFlowId
+    const nodes = source.nodes
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    return {
+      flowId: activeFlowId,
+      nodeId: event.nodeId,
+      portId: event.portId,
+      value: event.value,
+      nodeVersion: (nodes[event.nodeId]?.getVersion() ?? 0) + 1, // Optimistic version increment
+    }
+  },
+  target: [
+    preBaseUpdatePortValueFx,
+    baseUpdatePortValueFx,
+  ],
+})
+
+sample({
+  source: combine({
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  }),
+  clock: throttledRequestUpdatePortUi,
+  fn: ({ activeFlowId, nodes }, { nodeId, portId, ui }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+
+    return {
+      flowId: activeFlowId,
+      nodeId,
+      portId,
+      ui,
+      nodeVersion: (nodes[nodeId]?.getVersion() ?? 0) + 1,
+    }
+  },
+  target: [
+    preBaseUpdatePortUiFx,
+    baseUpdatePortUIFx,
+  ],
+})

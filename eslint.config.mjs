@@ -35,6 +35,7 @@ export default antfu(
       'packages/badai-api/src/gql/client/**/*',
       'packages/badai-api/schema.graphql',
       '**/*.md',
+      '**/ecosystem.config.js',
     ],
   },
   // Add custom rules

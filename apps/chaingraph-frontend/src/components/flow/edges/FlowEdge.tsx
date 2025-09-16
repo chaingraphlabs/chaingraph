@@ -7,10 +7,10 @@
  */
 
 import type { EdgeProps } from '@xyflow/react'
-import { useTheme } from '@/components/theme/hooks/useTheme'
 import { getBezierPath } from '@xyflow/react'
 import { motion } from 'framer-motion'
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useTheme } from '@/components/theme/hooks/useTheme'
 
 // Static store to maintain particle positions across component remounts
 // Using a Map with edge IDs as keys to maintain separate positions for each edge

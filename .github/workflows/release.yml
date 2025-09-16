@@ -115,21 +115,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract backend version from package.json
+      - name: Extract app versions from package.json
         if: github.ref == 'refs/heads/release'
-        id: backend-package-version
+        id: extract-versions
         run: |
           BACK_VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
-          echo "BACK_VERSION=$BACK_VERSION" >> $GITHUB_ENV
-          echo "Extracted backend version: $BACK_VERSION"
-
-      - name: Extract frontend version from package.json
-        if: github.ref == 'refs/heads/release'
-        id: frontend-package-version
-        run: |
           FRONT_VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
+          EXEC_API_VERSION=$(node -p "require('./apps/chaingraph-execution-api/package.json').version")
+          EXEC_WORKER_VERSION=$(node -p "require('./apps/chaingraph-execution-worker/package.json').version")
+
+          echo "BACK_VERSION=$BACK_VERSION" >> $GITHUB_ENV
           echo "FRONT_VERSION=$FRONT_VERSION" >> $GITHUB_ENV
-          echo "Extracted frontend version: $FRONT_VERSION"
+          echo "EXEC_API_VERSION=$EXEC_API_VERSION" >> $GITHUB_ENV
+          echo "EXEC_WORKER_VERSION=$EXEC_WORKER_VERSION" >> $GITHUB_ENV
+
+          echo "Extracted versions:"
+          echo "  Backend: $BACK_VERSION"
+          echo "  Frontend: $FRONT_VERSION"
+          echo "  Execution API: $EXEC_API_VERSION"
+          echo "  Execution Worker: $EXEC_WORKER_VERSION"
 
       - name: Set up Docker Buildx
         if: github.ref == 'refs/heads/release'
@@ -143,33 +147,83 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push Backend Docker image
-      - name: Build and push Backend Docker image
+      # Build and push base packages image
+      - name: Build and push base packages image
         if: github.ref == 'refs/heads/release'
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/chaingraph-backend/Dockerfile
+          file: Dockerfile.packages
           push: ${{ github.ref == 'refs/heads/release' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-backend:${{ env.BACK_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository_owner }}/chaingraph-packages:latest
+            ghcr.io/${{ github.repository_owner }}/chaingraph-packages:${{ github.sha }}
+          cache-from: type=gha,scope=packages
+          cache-to: type=gha,mode=max,scope=packages
 
-      # Build and push Frontend Docker image
-      - name: Build and push Frontend Docker image
-        if: github.ref == 'refs/heads/release'
+  # Build all application Docker images in parallel
+  build-apps:
+    name: Build Application Images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/release'
+    needs: release
+    strategy:
+      matrix:
+        app:
+          - name: backend
+            dockerfile: apps/chaingraph-backend/Dockerfile
+            version_env: BACK_VERSION
+          - name: frontend
+            dockerfile: apps/chaingraph-frontend/Dockerfile
+            version_env: FRONT_VERSION
+          - name: execution-api
+            dockerfile: apps/chaingraph-execution-api/Dockerfile
+            version_env: EXEC_API_VERSION
+          - name: execution-worker
+            dockerfile: apps/chaingraph-execution-worker/Dockerfile
+            version_env: EXEC_WORKER_VERSION
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract app versions from package.json
+        id: extract-versions
+        run: |
+          BACK_VERSION=$(node -p "require('./apps/chaingraph-backend/package.json').version")
+          FRONT_VERSION=$(node -p "require('./apps/chaingraph-frontend/package.json').version")
+          EXEC_API_VERSION=$(node -p "require('./apps/chaingraph-execution-api/package.json').version")
+          EXEC_WORKER_VERSION=$(node -p "require('./apps/chaingraph-execution-worker/package.json').version")
+
+          echo "BACK_VERSION=$BACK_VERSION" >> $GITHUB_ENV
+          echo "FRONT_VERSION=$FRONT_VERSION" >> $GITHUB_ENV
+          echo "EXEC_API_VERSION=$EXEC_API_VERSION" >> $GITHUB_ENV
+          echo "EXEC_WORKER_VERSION=$EXEC_WORKER_VERSION" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.app.name }} Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/chaingraph-frontend/Dockerfile
-          push: ${{ github.ref == 'refs/heads/release' }}
+          file: ${{ matrix.app.dockerfile }}
+          push: true
+          build-args: |
+            PACKAGES_IMAGE=ghcr.io/${{ github.repository_owner }}/chaingraph-packages:${{ github.sha }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-frontend:${{ env.FRONT_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository_owner }}/chaingraph-${{ matrix.app.name }}:latest
+            ghcr.io/${{ github.repository_owner }}/chaingraph-${{ matrix.app.name }}:${{ env[matrix.app.version_env] }}
+          cache-from: type=gha,scope=${{ matrix.app.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app.name }}
 
       # - name: Build and push images (Push to main/develop/tags)
       #   if: github.ref == 'refs/heads/release'

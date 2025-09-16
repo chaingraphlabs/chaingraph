@@ -8,15 +8,17 @@
 
 import type { IPort, NodeExecutionResult } from '../..'
 import { describe, expect, it } from 'vitest'
+import { Node } from '../..'
 import { AnyPort } from '../..'
 import { BaseNode, Edge, Flow } from '../..'
 import { hasCycle } from '../cycleDetection'
 
-class Node extends BaseNode {
-  constructor(id: string) {
-    super(id, { type: 'I don\'t know' })
-  }
-
+@Node({
+  type: 'TestNode',
+  title: 'Test Node',
+  description: 'A simple test node',
+})
+class TestNode extends BaseNode {
   async execute(): Promise<NodeExecutionResult> {
     return {}
   }
@@ -134,11 +136,11 @@ async function parseFlow(input: string): Promise<Flow> {
     const [from, to] = edge.split(' -> ', 2)
 
     if (from && !flow.nodes.has(from)) {
-      await flow.addNode(new Node(from))
+      await flow.addNode(new TestNode(from), true)
     }
 
     if (to && !flow.nodes.has(to)) {
-      await flow.addNode(new Node(to))
+      await flow.addNode(new TestNode(to), true)
     }
 
     if (from && to) {

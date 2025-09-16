@@ -7,14 +7,6 @@
  */
 
 import type { ChangeEvent } from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
-import { $activeFlowMetadata } from '@/store/flow/stores'
 import { useUnit } from 'effector-react'
 import {
   AlertCircleIcon,
@@ -25,6 +17,14 @@ import {
   UploadIcon,
 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
+import { $activeFlowMetadata } from '@/store/flow/stores'
 import { useExportImport } from './hooks/useExportImport'
 
 type ExportMode = 'all' | 'selected'

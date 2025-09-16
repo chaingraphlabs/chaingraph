@@ -7,7 +7,14 @@
  */
 
 export { db } from './connection'
-export { flowsTable } from './schema'
+export {
+  flowsTable,
+  mcpServersTable,
+} from './schema'
+export type {
+  FlowRow,
+  MCPServerRow,
+} from './schema'
 export {
   deleteFlow,
   listFlows,

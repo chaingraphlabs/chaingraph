@@ -18,8 +18,8 @@ const PORT_UPDATE_METADATA_KEY = 'chaingraph:port-update'
  * @template TNode The node type
  * @template TPort The port type
  */
-export type PortUpdateHandler<TNode extends INode = INode, TPort extends IPort = IPort> =
-  (node: TNode, port: TPort, event: PortUpdateEvent) => Promise<void> | void
+export type PortUpdateHandler<TNode extends INode = INode, TPort extends IPort = IPort>
+  = (node: TNode, port: TPort, event: PortUpdateEvent) => Promise<void> | void
 
 /**
  * Interface for configuration of port update handlers
@@ -116,7 +116,7 @@ export async function applyPortUpdateHandlers(node: INode, event: PortUpdateEven
  *     schema: { properties: {} },
  *     isSchemaMutable: true,
  *   })
- *   @OnPortUpdate(async (node: INode, port: IPort => {
+ *   @OnPortUpdate(async (node: INode, port: IPort) => {
  *     const targetPort = node.getOutputs().find(p => p.getConfig().key === 'result')
  *     if (targetPort instanceof ObjectPort) {
  *       node.copyObjectSchemaTo(node, port, targetPort)

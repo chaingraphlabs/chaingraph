@@ -106,10 +106,46 @@ export const SerializedPortSchema = z.object({
  */
 export const SerializedNodeSchema = z.object({
   id: z.string(),
+  type: z.string(),
+  metadata: NodeMetadataSchema,
+  status: z.nativeEnum(NodeStatus),
+  ports: z.array(SerializedPortSchema),
+  systemPorts: z.object({
+    error: z.object({
+      id: z.string(),
+      value: z.boolean().optional(),
+    }),
+    errorMessage: z.object({
+      id: z.string(),
+      value: z.string().optional(),
+    }),
+    execute: z.object({
+      id: z.string(),
+      value: z.boolean().optional(),
+    }),
+    success: z.object({
+      id: z.string(),
+      value: z.boolean().optional(),
+    }),
+  }).optional(),
+  connections: z.record(z.string(), z.array(z.object({
+    nodeId: z.string(),
+    portId: z.string(),
+  }))).optional(),
+  schemaVersion: z.string().optional(),
+})
+
+export type SerializedNodeType = z.infer<typeof SerializedNodeSchema>
+
+/**
+ * Schema for serialized node
+ */
+export const SerializedNodeSchemaV1Legacy = z.object({
+  id: z.string(),
   metadata: NodeMetadataSchema,
   status: z.nativeEnum(NodeStatus),
   ports: z.record(z.string(), SerializedPortSchema).optional(),
   ports_values: z.record(z.string(), z.any()).optional(),
 })
 
-export type SerializedNodeType = z.infer<typeof SerializedNodeSchema>
+export type SerializedNodeTypeV1Legacy = z.infer<typeof SerializedNodeSchemaV1Legacy>

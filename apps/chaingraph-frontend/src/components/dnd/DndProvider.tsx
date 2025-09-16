@@ -12,10 +12,10 @@ import type {
   NodeMetadataWithPorts,
 } from '@badaitech/chaingraph-types'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
-import { useDnd } from '@/components/dnd/useDnd'
-import { ZoomContext } from '@/providers/ZoomProvider'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { use, useCallback } from 'react'
+import { useDnd } from '@/components/dnd/useDnd'
+import { ZoomContext } from '@/providers/ZoomProvider'
 import { NodePreview } from '../sidebar/tabs/node-list/NodePreview'
 
 interface DndProviderProps {

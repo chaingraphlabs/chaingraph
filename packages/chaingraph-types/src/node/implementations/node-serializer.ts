@@ -6,13 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { SerializedNode } from '../../flow/serializer/flow-serializer'
 import type { IPort } from '../../port'
 import type { JSONValue } from '../../utils/json'
 import type { INodeComposite, IPortBinder, IPortManager, ISerializable } from '../interfaces'
 import type { ComplexPortHandler } from './complex-port-handler'
-import { PortFactory } from '../../port'
-import { deepCopy } from '../../utils'
-import { SerializedNodeSchema } from '../types.zod'
+import { PortFactory } from '../..//port'
+import { deepCopy } from '../..//utils'
+import { FlowSerializer } from '../../flow/serializer/flow-serializer'
+import { SerializedNodeSchemaV1Legacy } from '../types.zod'
 
 /**
  * Implementation of ISerializable interface
@@ -36,20 +38,29 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       throw new Error('Node reference is required for serialization')
     }
 
-    const serializedPorts: Record<string, JSONValue> = {}
-
-    // Serialize all ports
-    for (const [portId, port] of this.portManager.ports.entries()) {
-      serializedPorts[portId] = port.serialize()
-    }
-
-    return {
-      id: this.nodeRef.id,
-      metadata: { ...this.nodeRef.metadata },
-      status: this.nodeRef.status.toString(),
-      ports: serializedPorts,
-    }
+    const serializer = new FlowSerializer()
+    return serializer.serializeNode(this.nodeRef)
   }
+
+  // serializeV1(): JSONValue {
+  //   if (!this.nodeRef) {
+  //     throw new Error('Node reference is required for serialization')
+  //   }
+  //
+  //   const serializedPorts: Record<string, JSONValue> = {}
+  //
+  //   // Serialize all ports
+  //   for (const [portId, port] of this.portManager.ports.entries()) {
+  //     serializedPorts[portId] = port.serialize()
+  //   }
+  //
+  //   return {
+  //     id: this.nodeRef.id,
+  //     metadata: { ...this.nodeRef.metadata },
+  //     status: this.nodeRef.status.toString(),
+  //     ports: serializedPorts,
+  //   }
+  // }
 
   /**
    * Deserialize from JSON data
@@ -61,8 +72,37 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       throw new Error('Node reference is required for deserialization')
     }
 
+    if (
+      !data
+      || typeof data !== 'object'
+      || !('schemaVersion' in data)
+      || typeof data.schemaVersion !== 'string'
+      || data.schemaVersion !== 'v2'
+    ) {
+      return this.deserializeV1(data)
+    }
+
+    // Deserialize using FlowSerializer for v2 schema
+    const serializer = new FlowSerializer()
+
+    const node = serializer.deserializeNode(
+      data as SerializedNode, // TODO: find more type safe way
+      this.nodeRef,
+    )
+    if (!node) {
+      throw new Error('Failed to deserialize node')
+    }
+
+    return this.nodeRef || this.createInstance(node.id)
+  }
+
+  deserializeV1(data: JSONValue): INodeComposite {
+    if (!this.nodeRef) {
+      throw new Error('Node reference is required for deserialization')
+    }
+
     // Validate incoming data using the Zod schema
-    const obj = SerializedNodeSchema.parse(data)
+    const obj = SerializedNodeSchemaV1Legacy.parse(data)
 
     // Update status (id is immutable)
     this.nodeRef.setStatus(obj.status, false)
@@ -135,8 +175,6 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
     }
 
     const serialized = this.serialize()
-    const node = this.createInstance(this.nodeRef.id)
-    node.deserialize(serialized)
-    return node
+    return this.createInstance(this.nodeRef.id).deserialize(serialized)
   }
 }

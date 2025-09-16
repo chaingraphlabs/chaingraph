@@ -8,12 +8,12 @@
 
 import type { INode, IPort, ObjectPortConfig } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from '../../context/PortContext'
+import { useUnit } from 'effector-react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodeUI } from '@/store/nodes'
 import { requestUpdatePortUI } from '@/store/ports'
-import { useUnit } from 'effector-react'
-import { useCallback, useEffect, useMemo } from 'react'
 import { subscribeToNodeSchemaDrop } from '../../../../../hooks/useFlowCallbacks'
 
 export interface UseNodeSchemaDropParams {

@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -46,7 +46,7 @@
     "preview": "vite preview --outDir dist/app",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "check-types": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit"
   },
   "peerDependencies": {
     "@xyflow/react": "^12.8.2",
@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@badaitech/badai-api": "workspace:*",
+    "@badaitech/chaingraph-executor": "workspace:*",
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
@@ -85,10 +86,10 @@
     "@radix-ui/themes": "^3.2.1",
     "@tanstack/react-query": "^5.80.3",
     "@tanstack/react-query-devtools": "^5.80.3",
-    "@trpc/client": "^11.4.4",
-    "@trpc/react-query": "^11.4.4",
-    "@trpc/server": "^11.4.4",
-    "@trpc/tanstack-react-query": "^11.4.4",
+    "@trpc/client": "^11.5.1",
+    "@trpc/react-query": "^11.5.1",
+    "@trpc/server": "^11.5.1",
+    "@trpc/tanstack-react-query": "^11.5.1",
     "@types/color": "^4.2.0",
     "@xyflow/react": "^12.8.2",
     "@xyflow/system": "^0.0.66",

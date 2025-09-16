@@ -8,45 +8,65 @@
 
 import type { ExecutionTreeFilters } from '../types'
 import { useUnit } from 'effector-react'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
+import { $activeFlowId } from '@/store/flow/stores'
 import {
   $executionTreeError,
   $executionTreeFilters,
-  $filteredExecutionTree,
+  $expandedTrees,
+  $filteredRootExecutions,
   $isExecutionDetailsLoading,
-  $isExecutionTreeLoading,
+  $loadingTrees,
+  $rootExecutions,
   $selectedExecutionDetails,
   $selectedExecutionId,
+  collapseExecution,
+  expandExecution,
+  fetchRootExecutionsFx,
   initExecutionTree,
   refreshExecutionTree,
   setExecutionTreeFilters,
   setSelectedExecutionId,
 } from '../stores'
 
+/**
+ * Hook for managing the execution tree with lazy loading
+ */
 export function useExecutionTree() {
-  const executions = useUnit($filteredExecutionTree)
-  const isLoading = useUnit($isExecutionTreeLoading)
+  const rootExecutions = useUnit($filteredRootExecutions)
+  const expandedTrees = useUnit($expandedTrees)
+  const loadingTrees = useUnit($loadingTrees)
+  const isLoadingRoots = useUnit(fetchRootExecutionsFx.pending)
   const error = useUnit($executionTreeError)
   const filters = useUnit($executionTreeFilters)
-
-  // Auto-refresh interval
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const activeFlowId = useUnit($activeFlowId)
 
   useEffect(() => {
-    // Initial load
-    initExecutionTree()
+    // Initial load when component mounts
+    if (activeFlowId) {
+      initExecutionTree()
+    }
+  }, [activeFlowId])
 
-    // Auto-refresh disabled for now - only manual refresh via button
-    // intervalRef.current = setInterval(() => {
-    //   refreshExecutionTree()
-    // }, 5000)
+  const handleExpand = (executionId: string) => {
+    expandExecution(executionId)
+  }
 
-    // return () => {
-    //   if (intervalRef.current) {
-    //     clearInterval(intervalRef.current)
-    //   }
-    // }
-  }, [])
+  const handleCollapse = (executionId: string) => {
+    collapseExecution(executionId)
+  }
+
+  const isTreeLoading = (executionId: string): boolean => {
+    return loadingTrees.has(executionId)
+  }
+
+  const getExecutionTree = (executionId: string) => {
+    return expandedTrees.get(executionId) || []
+  }
+
+  const isExpanded = (executionId: string): boolean => {
+    return expandedTrees.has(executionId)
+  }
 
   const refetch = () => {
     refreshExecutionTree()
@@ -57,15 +77,33 @@ export function useExecutionTree() {
   }
 
   return {
-    executions,
-    isLoading,
+    // Data
+    rootExecutions,
+    expandedTrees,
+
+    // Loading states
+    isLoadingRoots,
+    isTreeLoading,
+
+    // Error state
     error,
+
+    // Filters
     filters,
-    refetch,
     updateFilters,
+
+    // Actions
+    handleExpand,
+    handleCollapse,
+    getExecutionTree,
+    isExpanded,
+    refetch,
   }
 }
 
+/**
+ * Hook for managing selected execution details
+ */
 export function useSelectedExecution() {
   const selectedExecutionId = useUnit($selectedExecutionId)
   const selectedExecution = useUnit($selectedExecutionDetails)
@@ -80,5 +118,31 @@ export function useSelectedExecution() {
     selectedExecution,
     isLoading,
     selectExecution,
+  }
+}
+
+/**
+ * Hook for getting all execution tree data (for compatibility)
+ * This combines root executions with their expanded trees
+ */
+export function useExecutionTreeData() {
+  const rootExecutions = useUnit($rootExecutions)
+  const expandedTrees = useUnit($expandedTrees)
+  const loadingTrees = useUnit($loadingTrees)
+
+  // Build a combined tree structure for components that need it
+  const buildFullTree = () => {
+    return rootExecutions.map(rootExec => ({
+      root: rootExec,
+      isExpanded: expandedTrees.has(rootExec.execution.id),
+      isLoading: loadingTrees.has(rootExec.execution.id),
+      children: expandedTrees.get(rootExec.execution.id) || [],
+    }))
+  }
+
+  return {
+    fullTree: buildFullTree(),
+    rootExecutions,
+    expandedTrees,
   }
 }

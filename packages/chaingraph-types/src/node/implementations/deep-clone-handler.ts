@@ -46,7 +46,11 @@ export class DeepCloneHandler {
     const clonedTopLevelPorts = new Map<string, IPort>()
     for (const sourcePort of topLevelPorts) {
       try {
-        const clonedPort = this.clonePort(sourcePort, newNodeId, portIdMapping)
+        const clonedPort = this.clonePort(sourcePort, newNodeId)
+
+        // Record the ID mapping
+        portIdMapping.set(sourcePort.id, clonedPort.id)
+
         clonedTopLevelPorts.set(sourcePort.id, clonedPort)
         clonedNode.setPort(clonedPort)
       } catch (error) {
@@ -86,7 +90,7 @@ export class DeepCloneHandler {
   /**
    * Clones a single port with a new ID and proper nodeId reference
    */
-  private static clonePort(sourcePort: IPort, newNodeId: string, portIdMapping: Map<string, string>): IPort {
+  private static clonePort(sourcePort: IPort, newNodeId: string): IPort {
     const clonedPort = sourcePort.cloneWithNewId()
 
     // Update the port configuration with new nodeId
@@ -96,9 +100,6 @@ export class DeepCloneHandler {
       nodeId: newNodeId,
       connections: [], // Clear connections for cloned port
     })
-
-    // Record the ID mapping
-    portIdMapping.set(sourcePort.id, clonedPort.id)
 
     return clonedPort
   }
@@ -129,16 +130,21 @@ export class DeepCloneHandler {
     for (const childPort of childPorts) {
       try {
         // Clone the child port
-        const clonedChildPort = this.clonePort(childPort, newNodeId, portIdMapping)
+        const clonedChildPort = this.clonePort(childPort, newNodeId)
 
         // Update parentId to point to the cloned parent
         const childConfig = clonedChildPort.getConfig()
         clonedChildPort.setConfig({
           ...childConfig,
+          id: clonedParentPort.getConfig().type === 'array'
+            ? `${clonedParentPort.id}[${childConfig.key || childConfig.id || ''}]` // Array style ID
+            : `${clonedParentPort.id}.${childConfig.key || childConfig.id || ''}`, // New ID based on parent
           parentId: clonedParentPort.id,
           nodeId: newNodeId,
           connections: [], // Clear connections
         })
+
+        portIdMapping.set(childPort.id, clonedChildPort.id)
 
         // Add the cloned child port to the cloned node
         clonedNode.setPort(clonedChildPort)

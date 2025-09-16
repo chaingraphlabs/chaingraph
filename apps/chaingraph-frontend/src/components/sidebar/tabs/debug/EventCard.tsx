@@ -7,14 +7,13 @@
  */
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { eventThemes } from '@/components/sidebar/tabs/debug/theme'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { setHighlightedEdgeId, setHighlightedNodeId } from '@/store/execution'
-import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { ChevronDownIcon, Clock } from 'lucide-react'
-import React, { memo, useCallback, useMemo, useState } from 'react'
 import { EventDetails } from './EventDetails'
 import { EventTitle } from './EventTitle'
 import 'react-json-view-lite/dist/index.css'
@@ -30,18 +29,21 @@ function getNodeDataFromEvent(event: ExecutionEventImpl): string | string[] | nu
   switch (event.type) {
     case ExecutionEventEnum.NODE_STARTED:
     case ExecutionEventEnum.NODE_COMPLETED:
+    case ExecutionEventEnum.NODE_BACKGROUNDED:
     case ExecutionEventEnum.NODE_FAILED:
+    case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
+      return (event.data as any).node.id
+
     case ExecutionEventEnum.NODE_SKIPPED:
     case ExecutionEventEnum.NODE_STATUS_CHANGED:
-    case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
     case ExecutionEventEnum.NODE_DEBUG_LOG_STRING:
-      return (event.data as any).node.id
+      return (event.data as any).nodeId
 
     case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
     case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
     case ExecutionEventEnum.EDGE_TRANSFER_FAILED: {
-      const edge = (event.data as any).edge
-      return [edge.sourceNode.id, edge.targetNode.id]
+      const edge = (event.data as any).serializedEdge
+      return [edge.sourceNodeId, edge.targetNodeId]
     }
 
     default:
@@ -54,7 +56,7 @@ function getEdgeDataFromEvent(event: ExecutionEventImpl): string | null {
     case ExecutionEventEnum.EDGE_TRANSFER_STARTED:
     case ExecutionEventEnum.EDGE_TRANSFER_COMPLETED:
     case ExecutionEventEnum.EDGE_TRANSFER_FAILED:
-      return (event.data as any).edge.id
+      return (event.data as any).serializedEdge.id
 
     default:
       return null
@@ -136,23 +138,23 @@ export const OptimizedEventCard = memo(({ event, index }: EventCardProps) => {
           </div>
 
           {/* Content */}
-          <div className="flex-1">
+          <div className="flex-1 break-all">
             <EventTitle event={event} />
           </div>
 
           {/* Timestamp */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <time className="text-xs text-muted-foreground flex items-center">
-              <Clock className="w-3 h-3 mr-1 opacity-70" />
-              {formattedTime}
-            </time>
-            <ChevronDownIcon
-              className={cn(
-                'w-4 h-4 text-muted-foreground transition-transform duration-200',
-                isExpanded ? 'rotate-180' : '',
-              )}
-            />
-          </div>
+          {/*  <div className="flex items-center gap-2 flex-shrink-0"> */}
+          {/*    <time className="text-xs text-muted-foreground flex items-center"> */}
+          {/*      <Clock className="w-3 h-3 mr-1 opacity-70" /> */}
+          {/*      {formattedTime} */}
+          {/*    </time> */}
+          {/*    <ChevronDownIcon */}
+          {/*      className={cn( */}
+          {/*        'w-4 h-4 text-muted-foreground transition-transform duration-200', */}
+          {/*        isExpanded ? 'rotate-180' : '', */}
+          {/*      )} */}
+          {/*    /> */}
+          {/*  </div> */}
         </div>
 
         {/* Expanded content - only render when expanded */}
@@ -162,7 +164,7 @@ export const OptimizedEventCard = memo(({ event, index }: EventCardProps) => {
             isExpanded ? 'opacity-100 max-h-[550px]' : 'opacity-0 max-h-0',
           )}
         >
-          <div className="pl-7 border-t dark:border-border/30 pt-2">
+          <div className="pl-7 border-t dark:border-border/30 pt-2 break-all">
             <EventDetails event={event} isVisible={isExpanded} />
           </div>
         </div>

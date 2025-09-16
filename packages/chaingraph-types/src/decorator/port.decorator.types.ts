@@ -42,8 +42,8 @@ export interface ArrayPortItemConfigObject { type: 'object', schema: ObjectPortS
 /**
  * Branch for nested array items: the inner array's itemConfig is defined recursively.
  */
-export type ArrayPortItemConfigArray =
-  Omit<ConfigTypeMap['array'], 'itemConfig'> & { itemConfig: ArrayPortItemConfig }
+export type ArrayPortItemConfigArray
+  = Omit<ConfigTypeMap['array'], 'itemConfig'> & { itemConfig: ArrayPortItemConfig }
 
 /**
  * The overall union for array port item configuration is then the union of:
@@ -51,10 +51,10 @@ export type ArrayPortItemConfigArray =
  *   • the recursive array branch,
  *   • and the default definition for array items.
  */
-export type ArrayPortItemConfig =
-  | ArrayPortItemConfigObject
-  | ArrayPortItemConfigArray
-  | ConfigTypeMap['array']['itemConfig']
+export type ArrayPortItemConfig
+  = | ArrayPortItemConfigObject
+    | ArrayPortItemConfigArray
+    | ConfigTypeMap['array']['itemConfig']
 
 /**
  * Finally, the overall PortDecoratorOptions is:
@@ -62,7 +62,7 @@ export type ArrayPortItemConfig =
  * - For type "array", we require an "itemConfig" property that accepts our union.
  * - For all other port types, the configuration is unchanged.
  */
-export type PortDecoratorOptions<T extends PortType> =
-  T extends 'object' ? ObjectPortOptions
+export type PortDecoratorOptions<T extends PortType>
+  = T extends 'object' ? ObjectPortOptions
     : T extends 'array' ? Omit<ConfigTypeMap['array'], 'itemConfig'> & { itemConfig: ArrayPortItemConfig }
       : ConfigTypeMap[T]

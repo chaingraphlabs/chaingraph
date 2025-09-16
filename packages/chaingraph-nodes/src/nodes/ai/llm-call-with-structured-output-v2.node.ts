@@ -20,6 +20,9 @@ import type {
 } from '@badaitech/chaingraph-types'
 import type { APIkey, SupportedProviders } from './llm-call.node'
 import {
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+import {
   ObjectSchemaCopyTo,
 } from '@badaitech/chaingraph-types'
 import {
@@ -44,6 +47,7 @@ import { ChatGroq } from '@langchain/groq'
 import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
+import { isOpenAI } from './llm-call.node'
 import { isAnthropic, isDeepSeek, isGroq, isMoonshot, LLMModels, llmModels } from './llm-call.node'
 
 const llmMaxRetries = 3
@@ -195,7 +199,9 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     const modelWithStructuredOutput = llm.withStructuredOutput<Record<string, any>>(
       zodSchema,
       {
+        method: isOpenAI(this.config.model) ? 'functionCalling' : 'functionCalling',
         strict: true,
+        // strict: isOpenAI(this.config.model) ? undefined : true,
       },
     )
 
@@ -259,15 +265,17 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
    * Send a debug log event to the execution context
    */
   private async debugLog(context: ExecutionContext, message: string): Promise<void> {
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: message,
-      },
-    })
+    await context.sendEvent(
+      new ExecutionEventImpl(
+        0,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        new Date(),
+        {
+          nodeId: this.metadata.id || 'unknown',
+          log: message,
+        },
+      ),
+    )
   }
 
   /**
@@ -321,7 +329,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
   /**
    * Create a Zod schema for string properties
    */
-  private createStringSchema(config: IPortConfig): z.ZodString {
+  private createStringSchema(config: IPortConfig): z.ZodNullable<z.ZodString> | z.ZodString {
     let schema = z.string()
 
     if (config.description) {
@@ -329,7 +337,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.nullable().optional() as any
+      return schema.nullable()
     }
 
     return schema
@@ -338,7 +346,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
   /**
    * Create a Zod schema for number properties
    */
-  private createNumberSchema(config: IPortConfig): z.ZodNumber {
+  private createNumberSchema(config: IPortConfig): z.ZodNullable<z.ZodNumber> | z.ZodNumber {
     let schema = z.number()
 
     if (config.description) {
@@ -346,7 +354,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.nullable().optional() as any
+      return schema.nullable()
     }
 
     return schema
@@ -355,7 +363,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
   /**
    * Create a Zod schema for boolean properties
    */
-  private createBooleanSchema(config: IPortConfig): z.ZodBoolean {
+  private createBooleanSchema(config: IPortConfig): z.ZodNullable<z.ZodBoolean> | z.ZodBoolean {
     let schema = z.boolean()
 
     if (config.description) {
@@ -363,7 +371,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.nullable().optional() as any
+      return schema.nullable()
     }
 
     return schema
@@ -372,7 +380,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
   /**
    * Create a Zod schema for array properties
    */
-  private createArraySchema(config: ArrayPortConfig): z.ZodArray<z.ZodTypeAny> {
+  private createArraySchema(config: ArrayPortConfig): z.ZodArray<z.ZodTypeAny> | z.ZodNullable<z.ZodArray<z.ZodTypeAny>> {
     // Determine the item schema
     let itemSchema: z.ZodTypeAny = z.any()
 
@@ -388,7 +396,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     }
 
     if (!config.required) {
-      return arraySchema.nullable().optional() as any
+      return arraySchema.nullable()
     }
 
     return arraySchema
@@ -449,7 +457,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
       }
 
       if (!config.required) {
-        return objSchema.nullable().optional()
+        return objSchema.nullable()
       }
 
       return objSchema
@@ -457,13 +465,14 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
 
     // For objects without defined properties, use a generic record schema
     let recordSchema = z.record(z.any())
+    // let recordSchema = z.record(z.unknown())
 
     if (config.description) {
       recordSchema = recordSchema.describe(config.description)
     }
 
     if (!config.required) {
-      return recordSchema.nullable().optional()
+      return recordSchema.nullable()
     }
 
     return recordSchema
@@ -472,7 +481,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
   /**
    * Create a Zod schema for enum properties
    */
-  private createEnumSchema(config: EnumPortConfig): z.ZodEnum<[string, ...string[]]> | z.ZodString {
+  private createEnumSchema(config: EnumPortConfig): z.ZodEnum<[string, ...string[]]> | z.ZodString | z.ZodNullable<z.ZodEnum<[string, ...string[]]>> {
     const enumValues = config.options.map((option) => {
       return option.defaultValue.toString() || ''
     }) as [string, ...string[]]
@@ -485,7 +494,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     }
 
     if (!config.required) {
-      enumSchema = enumSchema.nullable().optional() as any
+      return enumSchema.nullable()
     }
 
     return enumSchema
@@ -502,7 +511,7 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
     }
 
     if (!config.required) {
-      return schema.nullable().optional()
+      return schema.nullable()
     }
 
     return schema

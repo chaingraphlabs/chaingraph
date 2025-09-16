@@ -8,22 +8,23 @@
 
 import { useUnit } from 'effector-react'
 import { $executionState, $executionSubscriptionState } from '../stores'
-import { useExecutionSubscription } from './useExecutionSubscription'
+import { ExecutionSubscriptionStatus } from '../types'
 
 export function useExecution() {
   const executionState = useUnit($executionState)
   const subscriptionState = useUnit($executionSubscriptionState)
 
-  // Use the subscription hook
-  const { isSubscribed, isConnecting, status: subscriptionStatus, error } = useExecutionSubscription()
+  // Derive subscription status from Effector store
+  const isSubscribed = subscriptionState.status === ExecutionSubscriptionStatus.SUBSCRIBED
+  const isConnecting = subscriptionState.status === ExecutionSubscriptionStatus.CONNECTING
 
   return {
     ...executionState,
     subscription: subscriptionState,
     isSubscribed,
     isConnecting,
-    subscriptionStatus,
-    error,
+    subscriptionStatus: subscriptionState.status,
+    error: subscriptionState.error,
   }
 }
 

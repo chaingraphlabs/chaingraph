@@ -20,5 +20,5 @@
     "outDir": "dist"
   },
   "include": ["server", "client"],
-  "exclude": ["node_modules"]
+  "exclude": ["server/node_modules"]
 }

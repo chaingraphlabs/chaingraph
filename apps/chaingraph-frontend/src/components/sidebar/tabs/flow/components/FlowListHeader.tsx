@@ -7,13 +7,13 @@
  */
 
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import { PlusIcon } from '@radix-ui/react-icons'
+import { Spinner } from '@radix-ui/themes'
 import { Button } from '@/components/ui/button'
 import {
   Command,
   CommandInput,
 } from '@/components/ui/command'
-import { PlusIcon } from '@radix-ui/react-icons'
-import { Spinner } from '@radix-ui/themes'
 
 interface FlowListHeaderProps {
   selectedFlow?: FlowMetadata

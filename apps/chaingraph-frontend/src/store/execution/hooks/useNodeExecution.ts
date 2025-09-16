@@ -18,7 +18,6 @@ export function useNodeExecution(nodeId: string) {
       if (!state) {
         return null
       }
-
       return {
         status: state?.status ?? 'idle',
         isExecuting: state?.status === 'running',

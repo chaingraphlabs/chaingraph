@@ -22,6 +22,9 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
+  ExecutionEventImpl,
+} from '@badaitech/chaingraph-types'
+import {
   BaseNode,
   ExecutionEventEnum,
   findPort,
@@ -764,15 +767,10 @@ export class AntropicLlmCallNode extends BaseNode {
 
       // If we broke out due to reaching maximum loops, add a system message and continue
       if (feedbackLoopCounter >= MAX_FEEDBACK_LOOPS) {
-        await context.sendEvent({
-          index: 0,
-          type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-          timestamp: new Date(),
-          data: {
-            node: this.clone(),
-            log: `Warning: Reached maximum tool feedback loops (${MAX_FEEDBACK_LOOPS})`,
-          },
-        })
+        await this.debugLogToEngine(
+          context,
+          `Warning: Reached maximum tool feedback loops (${MAX_FEEDBACK_LOOPS})`,
+        )
 
         // Add a system message to inform the agent about reaching the limit
         const systemMessage = {
@@ -799,6 +797,18 @@ export class AntropicLlmCallNode extends BaseNode {
       // Ensure we close the response stream after execution
       this.responseStream.close()
     }
+  }
+
+  private debugLogToEngine(context: ExecutionContext, log: string): Promise<void> {
+    return context.sendEvent(new ExecutionEventImpl(
+      0,
+      ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+      new Date(),
+      {
+        nodeId: this.id || 'unknown',
+        log,
+      },
+    ))
   }
 
   /**
@@ -882,11 +892,11 @@ export class AntropicLlmCallNode extends BaseNode {
     params: Anthropic.Beta.MessageCreateParams,
     context: ExecutionContext,
   ): Promise<{
-      stopReason: string | null
-      textBlocks: TextResponseBlock[]
-      thinkingBlocks: ThinkingResponseBlock[]
-      toolUseBlocks: ToolUseResponseBlock[]
-    }> {
+    stopReason: string | null
+    textBlocks: TextResponseBlock[]
+    thinkingBlocks: ThinkingResponseBlock[]
+    toolUseBlocks: ToolUseResponseBlock[]
+  }> {
     const betas: Array<BetaAPI.Anthropic.AnthropicBeta> = []
 
     if (this.features.codeExecution20250522) {
@@ -1070,15 +1080,10 @@ export class AntropicLlmCallNode extends BaseNode {
     // Log all tool executions at once
     await Promise.all(
       toolUseBlocks.map(toolUseBlock =>
-        context.sendEvent({
-          index: 0,
-          type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-          timestamp: new Date(),
-          data: {
-            node: this.clone(),
-            log: `Executing tool: ${toolUseBlock.name} with input: ${JSON.stringify(toolUseBlock.input)}`,
-          },
-        }),
+        this.debugLogToEngine(
+          context,
+          `Executing tool: ${toolUseBlock.name} with input: ${JSON.stringify(toolUseBlock.input)}`,
+        ),
       ),
     )
 
@@ -1198,15 +1203,17 @@ export class AntropicLlmCallNode extends BaseNode {
         this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolUseBlock.id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResult}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
 
         // Log the result
-        await context.sendEvent({
-          index: 0,
-          type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-          timestamp: new Date(),
-          data: {
-            node: this.clone(),
-            log: `Tool execution result:\n${toolResult}`,
-          },
-        })
+        await context.sendEvent(
+          new ExecutionEventImpl(
+            0,
+            ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+            new Date(),
+            {
+              nodeId: this.id || 'unknown',
+              log: `Tool execution result:\n${toolResult}`,
+            },
+          ),
+        )
 
         return toolResultBlock
       } catch (error: any) {
@@ -1222,15 +1229,10 @@ export class AntropicLlmCallNode extends BaseNode {
         this.responseStream.send(`${TAGS.TOOL_RESULT.OPEN}${TAGS.TOOL_RESULT.ID.OPEN}${toolUseBlock.id}${TAGS.TOOL_RESULT.ID.CLOSE}${TAGS.TOOL_RESULT.CONTENT.OPEN}${toolResultBlock.content}${TAGS.TOOL_RESULT.CONTENT.CLOSE}${TAGS.TOOL_RESULT.CLOSE}`)
 
         // Log error
-        await context.sendEvent({
-          index: 0,
-          type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-          timestamp: new Date(),
-          data: {
-            node: this.clone(),
-            log: `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
-          },
-        })
+        await this.debugLogToEngine(
+          context,
+          `Error executing tool ${toolUseBlock.name}: ${error.message || PortString(error)}`,
+        )
 
         return toolResultBlock
       }
@@ -1542,15 +1544,17 @@ export class AntropicLlmCallNode extends BaseNode {
    * Handle streaming errors
    */
   private async handleStreamingError(context: ExecutionContext, error: any): Promise<void> {
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: `Error during Anthropic streaming: ${error.message || PortString(error)}`,
-      },
-    })
+    await context.sendEvent(
+      new ExecutionEventImpl(
+        0,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        new Date(),
+        {
+          nodeId: this.id || 'unknown',
+          log: `Error during Anthropic streaming: ${error.message || PortString(error)}`,
+        },
+      ),
+    )
 
     this.responseStream.setError(error)
   }
@@ -1561,15 +1565,10 @@ export class AntropicLlmCallNode extends BaseNode {
   private async handleError(context: ExecutionContext, error: any): Promise<void> {
     const errorMessage = `Anthropic API Error: ${error.message || PortString(error)}`
 
-    await context.sendEvent({
-      index: 0,
-      type: ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
-      timestamp: new Date(),
-      data: {
-        node: this.clone(),
-        log: errorMessage,
-      },
-    })
+    await this.debugLogToEngine(
+      context,
+      errorMessage,
+    )
 
     // Make sure streams are closed with error
     this.responseStream.setError(error)

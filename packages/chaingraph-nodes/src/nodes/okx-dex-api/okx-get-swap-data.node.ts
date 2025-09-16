@@ -91,16 +91,11 @@ class OKXGetSwapDataNode extends BaseNode {
         params.maxAutoSlippage = this.swapParams.maxAutoSlippage
       }
 
-      console.log(`[OKXGetSwapDataNode] Fetching swap data with params: ${JSON.stringify(params)}`)
-
       // Make the API call using the SDK
       const response = await client.dex.getSwapData(params)
 
-      console.log(`[OKXGetSwapDataNode] API response: ${JSON.stringify(response)}`)
-
       // Check response validity
       if (!response || response.code !== '0') {
-        console.error(`[OKXGetSwapDataNode] API error: ${JSON.stringify(response)}`)
         throw new Error(`API returned error: ${response?.msg || 'Unknown error'}`)
       }
 

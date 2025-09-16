@@ -8,12 +8,18 @@
 
 import type { NodeExecutionResult } from '@badaitech/chaingraph-types'
 import { describe, expect, it, vi } from 'vitest'
+import { Node } from '../../decorator'
 import { ExecutionContext } from '../../execution'
 import { BaseNode } from '../../node/base-node'
 import { ExecutionEngine } from '../execution-engine'
 import { Flow } from '../flow'
 
 // Mock event emitter node
+@Node({
+  type: 'TestEmitterNode',
+  title: 'Test Emitter Node',
+  description: 'A node that emits events to spawn child executions',
+})
 class TestEmitterNode extends BaseNode {
   eventName = 'test-event'
   emitCount = 1
@@ -26,7 +32,7 @@ class TestEmitterNode extends BaseNode {
           message: `Event ${i + 1}`,
           nodeId: this.id,
           index: i,
-        })
+        }, this.id)
       }
     }
     return {}
@@ -40,7 +46,7 @@ describe('parent-Child Execution Context', () => {
     const emitterNode = new TestEmitterNode('emitter-1')
     emitterNode.emitCount = 3
     emitterNode.initialize()
-    flow.addNode(emitterNode)
+    await flow.addNode(emitterNode, true)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
@@ -73,12 +79,12 @@ describe('parent-Child Execution Context', () => {
     const emitter1 = new TestEmitterNode('emitter-1')
     emitter1.emitCount = 2
     emitter1.initialize()
-    flow.addNode(emitter1)
+    await flow.addNode(emitter1, true)
 
     const emitter2 = new TestEmitterNode('emitter-2')
     emitter2.emitCount = 1
     emitter2.initialize()
-    flow.addNode(emitter2)
+    await flow.addNode(emitter2, true)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)
@@ -104,7 +110,7 @@ describe('parent-Child Execution Context', () => {
 
     const emitterNode = new TestEmitterNode('emitter-1')
     emitterNode.initialize()
-    parentFlow.addNode(emitterNode)
+    await parentFlow.addNode(emitterNode, true)
 
     const abortController = new AbortController()
     const parentContext = new ExecutionContext(parentFlow.id, abortController)
@@ -142,7 +148,7 @@ describe('parent-Child Execution Context', () => {
     const emitterNode = new TestEmitterNode('emitter-1')
     emitterNode.emitCount = 5
     emitterNode.initialize()
-    flow.addNode(emitterNode)
+    await flow.addNode(emitterNode, true)
 
     const abortController = new AbortController()
     const context = new ExecutionContext(flow.id, abortController)

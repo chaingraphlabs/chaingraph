@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cn } from '@/lib/utils'
 import * as SwitchPrimitives from '@radix-ui/react-switch'
-
 import * as React from 'react'
+
+import { cn } from '@/lib/utils'
 
 function Switch({ ref, className, ...props }: React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> & { ref?: React.RefObject<React.ElementRef<typeof SwitchPrimitives.Root> | null> }) {
   return (

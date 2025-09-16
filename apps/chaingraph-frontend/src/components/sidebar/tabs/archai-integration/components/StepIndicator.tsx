@@ -8,11 +8,11 @@
 
 import { Badge } from '../../../../ui/badge'
 
-export type ConfigStep =
-  | 'userSession'
-  | 'agentSelection'
-  | 'chatSelection'
-  | 'messageSelection'
+export type ConfigStep
+  = | 'userSession'
+    | 'agentSelection'
+    | 'chatSelection'
+    | 'messageSelection'
 
 interface StepIndicatorProps {
   currentStep: ConfigStep

@@ -10,8 +10,6 @@ import type { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
 import type { drizzle } from 'drizzle-orm/node-postgres'
 import type { AuthSession, User } from './auth/types'
-import type { ExecutionService } from './executions/services/execution-service'
-import type { IExecutionStore } from './executions/store/execution-store'
 import type { IMCPStore } from './mcp/stores/types'
 import type { IFlowStore } from './stores/flowStore/types'
 import { authService } from './auth/service'
@@ -30,8 +28,6 @@ export interface AppContext {
   flowStore: IFlowStore
   nodeRegistry: NodeRegistry
   nodesCatalog: NodeCatalog
-  executionService: ExecutionService
-  executionStore: IExecutionStore
   mcpStore: IMCPStore
 }
 
@@ -39,8 +35,6 @@ let db: DBType | null = null
 let flowStore: IFlowStore | null = null
 let nodeRegistry: NodeRegistry | null = null
 let nodesCatalog: NodeCatalog | null = null
-let executionService: ExecutionService | null = null
-let executionStore: IExecutionStore | null = null
 let mcpStore: IMCPStore | null = null
 
 /**
@@ -52,16 +46,12 @@ export function initializeContext(
   _flowStore: IFlowStore,
   _nodeRegistry: NodeRegistry,
   _nodesCatalog: NodeCatalog,
-  _executionService: ExecutionService,
-  _executionStore: IExecutionStore,
   _mcpStore: IMCPStore,
 ) {
   db = _db
   flowStore = _flowStore
   nodeRegistry = _nodeRegistry
   nodesCatalog = _nodesCatalog
-  executionService = _executionService
-  executionStore = _executionStore
   mcpStore = _mcpStore
 }
 
@@ -75,8 +65,6 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
     || !flowStore
     || !nodeRegistry
     || !nodesCatalog
-    || !executionService
-    || !executionStore
     || !mcpStore
   ) {
     throw new Error('Context not initialized. Call initializeContext first.')
@@ -99,14 +87,12 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
     flowStore,
     nodeRegistry,
     nodesCatalog,
-    executionService,
-    executionStore,
     mcpStore,
   }
 }
 
 // Extract token from HTTP headers or WebSocket
-function getAuthToken(opts: CreateHTTPContextOptions): string | undefined {
+export function getAuthToken(opts: CreateHTTPContextOptions): string | undefined {
   // try to get from connection params
   if (opts.info.connectionParams?.sessionBadAI && opts.info.connectionParams?.sessionBadAI.length > 0) {
     return opts.info.connectionParams.sessionBadAI

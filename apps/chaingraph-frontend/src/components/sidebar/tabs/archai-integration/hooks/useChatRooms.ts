@@ -8,9 +8,9 @@
 
 import type { GraphQL } from '@badaitech/badai-api'
 import type { UserSession } from '../utils/api'
-import { $archaiConfig } from '@/store'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useState } from 'react'
+import { $archaiConfig } from '@/store'
 import { fetchChatRooms } from '../utils/api'
 
 /**

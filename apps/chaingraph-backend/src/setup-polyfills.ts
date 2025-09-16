@@ -134,6 +134,6 @@ class TextEncoderStream {
 }
 
 export function setupPolyfills() {
-  globalThis.TextDecoderStream = TextDecoderStream
-  globalThis.TextEncoderStream = TextEncoderStream
+  globalThis.TextDecoderStream = TextDecoderStream as unknown as typeof globalThis.TextDecoderStream
+  globalThis.TextEncoderStream = TextEncoderStream as unknown as typeof globalThis.TextEncoderStream
 }

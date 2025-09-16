@@ -6,17 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store/flow'
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
+import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store/flow'
+import { Cross1Icon, FrameIcon, PlusIcon, TextIcon } from '@radix-ui/react-icons'
+import { Spinner } from '@radix-ui/themes' // оставляем пока
+import { AnimatePresence, motion } from 'framer-motion'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Cross1Icon, FrameIcon, PlusIcon, TextIcon } from '@radix-ui/react-icons'
-import { Spinner } from '@radix-ui/themes' // оставляем пока
-import { AnimatePresence, motion } from 'framer-motion'
-import React, { useState } from 'react'
 import { FlowTag } from './FlowTag'
 
 interface FlowFormProps {

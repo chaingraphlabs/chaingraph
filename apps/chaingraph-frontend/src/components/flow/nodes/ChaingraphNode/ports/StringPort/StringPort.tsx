@@ -6,26 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
+import type { ChangeEvent, PropsWithChildren } from 'react'
 import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-/*
- * Copyright (c) 2025 BadLabs
- *
- * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
- *
- * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
- */
-import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
-import type { ChangeEvent, PropsWithChildren } from 'react'
-import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
-import { useExecutionID } from '@/store/execution'
-import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
-import { requestUpdatePortUI } from '@/store/ports'
-import { useStore } from '@xyflow/react'
+// import { useStore } from '@xyflow/react'
 import {
 
   useCallback,
@@ -33,6 +19,13 @@ import {
   useRef,
   useState,
 } from 'react'
+import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
+import { useExecutionID } from '@/store/execution'
+import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { requestUpdatePortUI } from '@/store/ports'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
@@ -42,7 +35,7 @@ export interface StringPortProps {
   context: PortContextValue
 }
 
-const zoomSelector = s => s.transform[2] ?? 1
+// const zoomSelector = s => s.transform[2] ?? 1
 
 export function StringPort(props: PropsWithChildren<StringPortProps>) {
   const executionID = useExecutionID()
@@ -56,7 +49,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
   const config = port.getConfig()
   const ui = useMemo(() => config.ui, [config.ui])
 
-  const zoom = useStore(zoomSelector)
+  // const zoom = useStore(zoomSelector)
 
   // Memoize connected edges to prevent unnecessary calculations
   const connectedEdges = useMemo(() => {
@@ -90,39 +83,39 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
    * Textarea resizing
    */
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const handleResize = useCallback(() => {
-    // get with and height of the textarea
-    const { current: textarea } = textareaRef
-    if (!textarea) {
-      return
-    }
-    if (!port.getConfig().nodeId) {
-      return
-    }
-
-    const { width, height } = textarea.getBoundingClientRect()
-
-    // Using zoom directly from context
-    const newDimensions = {
-      width: Math.round(width / zoom),
-      height: Math.round(height / zoom),
-    }
-    const isDimensionsChanged = (
-      ui?.textareaDimensions?.width !== newDimensions.width
-      || ui?.textareaDimensions?.height !== newDimensions.height
-    )
-    if (!isDimensionsChanged) {
-      return
-    }
-
-    requestUpdatePortUI({
-      nodeId: node.id,
-      portId: port.id,
-      ui: {
-        textareaDimensions: newDimensions,
-      },
-    })
-  }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
+  // const handleResize = useCallback(() => {
+  //   // get with and height of the textarea
+  //   const { current: textarea } = textareaRef
+  //   if (!textarea) {
+  //     return
+  //   }
+  //   if (!port.getConfig().nodeId) {
+  //     return
+  //   }
+  //
+  //   const { width, height } = textarea.getBoundingClientRect()
+  //
+  //   // Using zoom directly from context
+  //   const newDimensions = {
+  //     width: Math.round(width / zoom),
+  //     height: Math.round(height / zoom),
+  //   }
+  //   const isDimensionsChanged = (
+  //     ui?.textareaDimensions?.width !== newDimensions.width
+  //     || ui?.textareaDimensions?.height !== newDimensions.height
+  //   )
+  //   if (!isDimensionsChanged) {
+  //     return
+  //   }
+  //
+  //   requestUpdatePortUI({
+  //     nodeId: node.id,
+  //     portId: port.id,
+  //     ui: {
+  //       textareaDimensions: newDimensions,
+  //     },
+  //   })
+  // }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
 
   if (ui?.hidden)
     return null
@@ -203,18 +196,18 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
               ref={textareaRef}
               value={port.getValue() ?? ''}
               onChange={handleChange}
-              onClick={_ => handleResize()}
-              onInput={_ => handleResize()}
-              onBlur={(_) => {
-                handleResize()
-                setFocused(false)
-                trackBlur()
-              }}
-              onFocus={(_) => {
-                handleResize()
-                setFocused(true)
-                trackFocus()
-              }}
+              // onClick={_ => handleResize()}
+              // onInput={_ => handleResize()}
+              // onBlur={(_) => {
+              //   handleResize()
+              //   setFocused(false)
+              //   trackBlur()
+              // }}
+              // onFocus={(_) => {
+              //   handleResize()
+              //   setFocused(true)
+              //   trackFocus()
+              // }}
               style={{
               //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
                 height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,

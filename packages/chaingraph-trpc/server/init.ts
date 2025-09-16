@@ -17,10 +17,6 @@ import { drizzle } from 'drizzle-orm/node-postgres'
 import SuperJSON from 'superjson'
 import { authConfig } from './auth/config'
 import { initializeContext } from './context'
-import { CleanupService } from './executions/services/cleanup-service'
-import { ExecutionService } from './executions/services/execution-service'
-import { InMemoryExecutionStore } from './executions/store/execution-store'
-import { HybridExecutionStore, PostgresEventStore, PostgresExecutionStore } from './executions/store/postgres'
 import { InMemoryMCPStore, PostgresMCPStore } from './mcp/stores'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
@@ -76,35 +72,11 @@ export async function init() {
 
   const nodesCatalog = new NodeCatalog()
 
-  // Initialize execution stores
-  const memoryExecutionStore = new InMemoryExecutionStore()
-  let executionStore = memoryExecutionStore as any
-  let eventStore: PostgresEventStore | null = null
-
-  // If database is available, use hybrid store
-  if (flowStore instanceof DBFlowStore) {
-    const postgresExecutionStore = new PostgresExecutionStore(db)
-    eventStore = new PostgresEventStore(
-      db,
-      Number(process.env.EXECUTION_EVENT_BATCH_SIZE) || 50,
-      Number(process.env.EXECUTION_EVENT_BATCH_TIMEOUT) || 100,
-    )
-    executionStore = new HybridExecutionStore(memoryExecutionStore, postgresExecutionStore, eventStore)
-    console.log('Using hybrid execution store with PostgreSQL persistence')
-  } else {
-    console.log('Using in-memory execution store only')
-  }
-
-  const executionService = new ExecutionService(executionStore, eventStore)
-  const executionCleanup = new CleanupService(executionStore, executionService)
-
   initializeContext(
     db,
     flowStore,
     NodeRegistry.getInstance(),
     nodesCatalog,
-    executionService,
-    executionStore,
     mcpStore,
   )
 
@@ -117,6 +89,4 @@ export async function init() {
     const node = NodeRegistry.getInstance().createNode(type, `${type}-catalog`)
     nodesCatalog.registerNode(type, node)
   })
-
-  executionCleanup.start()
 }

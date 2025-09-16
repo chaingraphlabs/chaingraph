@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { NodeRegistry } from '../decorator'
 import type { Edge, IEdge } from '../edge'
 import type { INode } from '../node'
 import type { JSONValue } from '../utils/json'
@@ -153,9 +154,10 @@ export interface IFlow {
   /**
    * Deserialize the flow from JSON
    * @param data JSON data to deserialize
+   * @param nodeRegistry Optional node registry for custom node types
    * @returns Deserialized flow instance
    */
-  deserialize: (data: JSONValue) => IFlow
+  deserialize: (data: JSONValue, nodeRegistry?: NodeRegistry) => IFlow
 
   getIncomingEdges: (node: INode) => IEdge[]
 

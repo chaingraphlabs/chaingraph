@@ -18,10 +18,16 @@ export * from './flow'
 export * from './focused-editors'
 export * from './focused-editors'
 export { initializeStores } from './init'
+export * from './initialization'
 export * from './nodes'
 export * from './ports'
 export {
+  $trpcClientExecutor,
+  createTRPCExecutionClientEvent,
+} from './trpc/execution-client'
+export {
   useTRPCClient,
+  useTRPCExecutionClient,
 } from './trpc/hook/useTRPCClient'
 export {
   $trpcClient,

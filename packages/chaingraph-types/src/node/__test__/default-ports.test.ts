@@ -180,7 +180,7 @@ describe('default Ports', () => {
       expect(flowInPort).toBeDefined()
       flowInPort!.setValue(true)
 
-      const result = await node.executeWithDefaultPorts({
+      const result = await node.executeWithSystemPorts({
         startTime: new Date(),
         flowId: 'test-flow',
         executionId: 'test-execution',
@@ -198,7 +198,7 @@ describe('default Ports', () => {
       expect(flowInPort).toBeDefined()
       flowInPort!.setValue(false)
 
-      const result = await node.executeWithDefaultPorts({
+      const result = await node.executeWithSystemPorts({
         startTime: new Date(),
         flowId: 'test-flow',
         executionId: 'test-execution',
@@ -222,7 +222,7 @@ describe('default Ports', () => {
       flowOutPort!.setValue(false)
 
       // Execute the node
-      await node.executeWithDefaultPorts({
+      await node.executeWithSystemPorts({
         startTime: new Date(),
         flowId: 'test-flow',
         executionId: 'test-execution',
@@ -245,7 +245,7 @@ describe('default Ports', () => {
       vi.spyOn(node, 'execute').mockRejectedValueOnce(new Error('Test error'))
 
       // Execute the node
-      const result = await node.executeWithDefaultPorts({
+      const result = await node.executeWithSystemPorts({
         startTime: new Date(),
         flowId: 'test-flow',
         executionId: 'test-execution',
@@ -278,7 +278,6 @@ describe('default Ports', () => {
       // Create a new node and deserialize
       const newNode = new DefaultPortsNode('test-node')
       newNode.deserialize(serialized)
-      newNode.initialize()
 
       // Check that default port values were preserved
       const newFlowInPort = newNode.getFlowInPort()
@@ -342,7 +341,7 @@ describe('default Ports', () => {
       const node = new NoFlowPortsNode('test-node')
       node.initialize()
 
-      const result = await node.executeWithDefaultPorts({
+      const result = await node.executeWithSystemPorts({
         startTime: new Date(),
         flowId: 'test-flow',
         executionId: 'test-execution',
@@ -382,7 +381,7 @@ describe('default Ports', () => {
       const node = new ManualExecutionNode('test-node')
       node.initialize()
 
-      const result = await node.executeWithDefaultPorts({
+      const result = await node.executeWithSystemPorts({
         startTime: new Date(),
         flowId: 'test-flow',
         executionId: 'test-execution',

@@ -22,6 +22,7 @@ export const trpcReact = createTRPCReact<AppRouter>()
 
 export {
   createTRPCClient,
+  getMainQueryClient,
   getQueryClient,
   TRPCProvider,
   useTRPC,

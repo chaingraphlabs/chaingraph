@@ -1,0 +1,52 @@
+{
+  "name": "@badaitech/chaingraph-execution-api",
+  "type": "module",
+  "version": "0.5.0",
+  "private": false,
+  "description": "Chaingraph tRPC Server - Scalable API server for Chaingraph execution management",
+  "license": "BUSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badaitech/chaingraph.git",
+    "directory": "./apps/chaingraph-execution-api"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.cjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "bun --watch run src/index.ts",
+    "build": "tsc -b && vite build",
+    "start": "node ./dist/index.cjs",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@badaitech/chaingraph-executor": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@trpc/server": "11.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "superjson": "^2.2.2",
+    "ws": "^8.18.3",
+    "zod": "^3.25.56"
+  },
+  "devDependencies": {
+    "@badaitech/typescript-config": "workspace:*",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^22.14.0",
+    "@types/ws": "^8.18.1",
+    "vite-plugin-top-level-await": "^1.5.0"
+  }
+}

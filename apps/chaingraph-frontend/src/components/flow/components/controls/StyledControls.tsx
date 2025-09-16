@@ -7,13 +7,13 @@
  */
 
 import type { MouseEvent } from 'react'
-import { cn } from '@/lib/utils'
 import {
   EnterFullScreenIcon,
   MinusIcon,
   PlusIcon,
 } from '@radix-ui/react-icons'
 import { ControlButton, Controls, useReactFlow } from '@xyflow/react'
+import { cn } from '@/lib/utils'
 
 interface StyledControlsProps {
   className?: string

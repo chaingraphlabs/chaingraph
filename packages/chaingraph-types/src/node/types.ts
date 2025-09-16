@@ -57,6 +57,28 @@ export interface FlowPorts {
    * disabledError - boolean, false by default. Indicates flag if the node error ports are disabled
    */
   disabledError?: boolean
+
+  /**
+   * portsConfig - Optional configuration for each system port
+   */
+  portsConfig?: {
+    error?: {
+      id?: string
+      value?: boolean
+    }
+    errorMessage?: {
+      id?: string
+      value?: string
+    }
+    flowIn?: {
+      id?: string
+      value?: boolean
+    }
+    flowOut?: {
+      id?: string
+      value?: boolean
+    }
+  }
 }
 
 export interface NodeMetadataWithPorts extends NodeMetadata {

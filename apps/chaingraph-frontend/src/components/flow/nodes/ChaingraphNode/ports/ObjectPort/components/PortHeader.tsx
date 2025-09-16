@@ -7,9 +7,9 @@
  */
 
 import type { INode, IPort } from '@badaitech/chaingraph-types'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { PortTitle } from '../../ui/PortTitle'
 
 interface PortHeaderProps {

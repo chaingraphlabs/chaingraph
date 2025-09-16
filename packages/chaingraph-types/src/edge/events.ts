@@ -11,12 +11,12 @@ import type { EdgeStatus } from './types'
 /**
  * Edge event types
  */
-export type EdgeEventType =
-  | 'status-change'
-  | 'transfer-start'
-  | 'transfer-complete'
-  | 'error'
-  | 'validation'
+export type EdgeEventType
+  = | 'status-change'
+    | 'transfer-start'
+    | 'transfer-complete'
+    | 'error'
+    | 'validation'
 
 /**
  * Base edge event interface
@@ -67,8 +67,8 @@ export interface EdgeValidationEvent extends EdgeEvent {
 /**
  * Union of all edge events
  */
-export type EdgeEvents =
-  | EdgeStatusChangeEvent
-  | EdgeTransferEvent
-  | EdgeErrorEvent
-  | EdgeValidationEvent
+export type EdgeEvents
+  = | EdgeStatusChangeEvent
+    | EdgeTransferEvent
+    | EdgeErrorEvent
+    | EdgeValidationEvent

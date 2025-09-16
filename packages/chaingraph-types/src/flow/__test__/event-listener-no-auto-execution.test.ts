@@ -119,6 +119,7 @@ describe('eventListener no auto-execution from JSON', () => {
       undefined,
       'test-execution',
       {},
+      'test-execution',
       undefined, // no parent
       undefined, // no event data
       false, // not a child execution

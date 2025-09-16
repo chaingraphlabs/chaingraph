@@ -7,6 +7,7 @@
  */
 
 import type { MCPServerWithCapabilities } from '../store/types'
+import { AlertCircle, FileText, Loader2, Package, Pencil, Server, TerminalSquare } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
@@ -16,7 +17,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { AlertCircle, FileText, Loader2, Package, Pencil, Server, TerminalSquare } from 'lucide-react'
 import { MCPServerStatus } from '../store/types'
 import { MCPPromptCard } from './MCPPromptCard'
 import { MCPResourceCard } from './MCPResourceCard'

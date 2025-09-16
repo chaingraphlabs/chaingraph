@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cn } from '@/lib/utils'
 import { PlusIcon, Share1Icon } from '@radix-ui/react-icons'
 import { Button } from '@radix-ui/themes'
 import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
 interface EmptyFlowStateProps {
   onCreateClick: () => void

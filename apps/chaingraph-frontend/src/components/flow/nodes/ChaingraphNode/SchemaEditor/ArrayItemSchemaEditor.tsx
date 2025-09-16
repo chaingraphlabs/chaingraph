@@ -15,6 +15,11 @@ import type {
   ObjectPortConfig,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
+import {
+  PORT_TYPES,
+} from '@badaitech/chaingraph-types'
+import { AlignLeft, FileCode, Hash, Layers, Save, ToggleLeft, Type, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -31,11 +36,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import {
-  PORT_TYPES,
-} from '@badaitech/chaingraph-types'
-import { AlignLeft, FileCode, Hash, Layers, Save, ToggleLeft, Type, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
 import { PropertyItem } from './PropertyItem'
 import { SchemaEditorProvider, useSchemaEditor } from './SchemaEditorContext'
 

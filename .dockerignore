@@ -149,7 +149,16 @@ COMMIT_MESSAGE.md
 REFACTORING_PLAN.md
 research.md
 prompts/
-a.json
-a.txt
-asfasf.asfa
-mm.html
+
+# Additional space-saving exclusions for Docker build
+**/.storybook/
+**/storybook-static/
+**/*.stories.*
+**/.nyc_output/
+**/test-results/
+**/playwright-report/
+**/.vitest/
+**/.conductor/
+KAFKA_ARCHITECTURE.md
+proposal-architecture.md
+OPTIMIZATION_PLAN.md

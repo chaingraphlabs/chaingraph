@@ -8,11 +8,11 @@
 
 import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { PortContextValue } from './ports/context/PortContext'
-import { cn } from '@/lib/utils'
-import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
 import { Handle, Position } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useMemo } from 'react'
+import { cn } from '@/lib/utils'
+import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
 import { PortDocTooltip } from './ports/doc'
 
 export interface NodeFlowPortsProps {

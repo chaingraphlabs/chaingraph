@@ -1,0 +1,82 @@
+{
+  "name": "@badaitech/chaingraph-executor",
+  "type": "module",
+  "version": "0.5.0",
+  "private": false,
+  "description": "Chaingraph Message Bus for inter-service communication",
+  "license": "BUSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badaitech/chaingraph.git",
+    "directory": "./packages/chaingraph-executor"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "exports": {
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc -b --watch",
+    "dev:worker": "bun --watch run server/workers/index.ts",
+    "dev:stream": "bun --watch run server/event-stream/index.ts",
+    "build": "tsc -b",
+    "start:worker": "node dist/server/workers/index.js",
+    "start:stream": "node dist/server/event-stream/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:execution": "tsx test/test-execution.ts",
+    "test:flow": "tsx test/test-with-flow.ts",
+    "typecheck": "tsc -b",
+    "migrate:push": "npx drizzle-kit push --config ./server/drizzle.config.ts",
+    "migrate:generate": "npx drizzle-kit generate --config ./server/drizzle.config.ts",
+    "migrate:run": "npx drizzle-kit migrate --config ./server/drizzle.config.ts"
+  },
+  "dependencies": {
+    "@badaitech/chaingraph-trpc": "workspace:*",
+    "@tanstack/react-query": "^5.80.3",
+    "@trpc/client": "^11.5.1",
+    "@trpc/react-query": "^11.5.1",
+    "@trpc/server": "^11.5.1",
+    "@trpc/tanstack-react-query": "^11.5.1",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.5",
+    "kafkajs": "^2.2.4",
+    "kafkajs-lz4": "2.0.0-beta.0",
+    "nanoid": "^5.1.5",
+    "nanoid-dictionary": "^5.0.0",
+    "pg": "^8.16.3",
+    "pino": "^9.9.0",
+    "pino-pretty": "^13.1.1",
+    "superjson": "^2.2.2",
+    "ws": "^8.18.3",
+    "zod": "^3.25.56"
+  },
+  "devDependencies": {
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/typescript-config": "workspace:*",
+    "@types/node": "^22.14.0",
+    "@types/pg": "^8.11.11",
+    "@types/ws": "^8.18.1",
+    "@vitest/ui": "^3.1.1",
+    "drizzle-kit": "^0.30.6",
+    "nodemon": "^3.1.10",
+    "tsx": "^4.20.5",
+    "vitest": "^3.1.1"
+  }
+}

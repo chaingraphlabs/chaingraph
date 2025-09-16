@@ -8,11 +8,11 @@
 
 import type { CreateMCPServerEvent, UpdateMCPServerEvent } from '../store'
 import type { MCPServerWithCapabilities } from '../store/types'
-import { Button, Card, Input, Label } from '@/components/ui'
 import { Cross1Icon, PlusIcon, TrashIcon } from '@radix-ui/react-icons'
 import { motion } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
+import { Button, Card, Input, Label } from '@/components/ui'
 
 interface MCPServerFormProps {
   server?: MCPServerWithCapabilities

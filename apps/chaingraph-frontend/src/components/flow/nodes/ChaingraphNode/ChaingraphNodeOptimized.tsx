@@ -34,10 +34,10 @@ const ChaingraphNodeOptimized = memo(
       return false
 
     // Dimensions check
-    if (prevProps.positionAbsoluteX !== nextProps.positionAbsoluteX
-      || prevProps.positionAbsoluteY !== nextProps.positionAbsoluteY) {
-      return false
-    }
+    // if (prevProps.positionAbsoluteX !== nextProps.positionAbsoluteX
+    //   || prevProps.positionAbsoluteY !== nextProps.positionAbsoluteY) {
+    //   return false
+    // }
 
     if (prevProps.width !== nextProps.width
       || prevProps.height !== nextProps.height) {

@@ -172,18 +172,23 @@ export class Flow implements IFlow {
       throw new Error(`Node with ID ${node.id} does not exist in the flow.`)
     }
 
+    // Commit any pending batch updates before updating the node
+    // This ensures all collected port updates are emitted before the flow update
+    await node.commitBatchUpdate({ sourceOfUpdate: 'flow:updateNode' })
+
     // cancel the previous event handler if it exists
-    const cancel = this.nodeEventHandlersCancel.get(node.id)
-    if (cancel) {
-      cancel()
-      this.nodeEventHandlersCancel.delete(node.id)
-    }
+    const oldCancel = this.nodeEventHandlersCancel.get(node.id)
 
     this.nodes.set(node.id, node)
 
     const newCancel = node.onAll(async (event: NodeEvent) => {
       return this.handleNodeEvent(node, event)
     })
+
+    if (oldCancel) {
+      oldCancel()
+      this.nodeEventHandlersCancel.delete(node.id)
+    }
 
     // Store the handler and subscribe to node events
     this.nodeEventHandlersCancel.set(node.id, newCancel)
@@ -202,6 +207,9 @@ export class Flow implements IFlow {
     if (!node) {
       throw new Error(`Node with ID ${nodeId} does not exist in the flow.`)
     }
+
+    // Commit any pending batch updates before removing the node
+    await node.commitBatchUpdate({ sourceOfUpdate: 'flow:removeNode' })
 
     // find all child nodes and remove them
     await Promise.all(
@@ -797,7 +805,7 @@ export class Flow implements IFlow {
           portUpdateEventData,
         )
 
-        await this.updateNode(node)
+        // await this.updateNode(node)
         break
       }
 
@@ -932,7 +940,7 @@ export class Flow implements IFlow {
     }
   }
 
-  public deserialize(data: JSONValue): IFlow {
+  public deserialize(data: JSONValue, nodeRegistry?: NodeRegistry): IFlow {
     const flowData = data as any
 
     if (!flowData.metadata) {
@@ -945,9 +953,11 @@ export class Flow implements IFlow {
       updatedAt: new Date(flowData.metadata.updatedAt ?? new Date()),
     })
 
+    const nodeRegistryInstance = nodeRegistry || NodeRegistry.getInstance()
+
     for (const nodeData of flowData.nodes) {
       try {
-        const node = NodeRegistry.getInstance().createNode(
+        const node = nodeRegistryInstance.createNode(
           nodeData.metadata.type,
           nodeData.id,
           nodeData.metadata,
@@ -1000,9 +1010,9 @@ export class Flow implements IFlow {
     return flow as IFlow
   }
 
-  static deserialize(data: JSONValue): IFlow {
+  static deserialize(data: JSONValue, nodeRegistry?: NodeRegistry): IFlow {
     const flow = new Flow()
-    return flow.deserialize(data)
+    return flow.deserialize(data, nodeRegistry)
   }
 
   public setIsDisabledPropagationEvents(value: boolean) {

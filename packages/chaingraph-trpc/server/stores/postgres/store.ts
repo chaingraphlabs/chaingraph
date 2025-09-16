@@ -6,8 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow } from '@badaitech/chaingraph-types'
-import type { JSONValue } from '../../../../chaingraph-types/src/utils/json'
+import type { Flow, FlowMetadata, JSONValue } from '@badaitech/chaingraph-types'
 import type { DBType } from '../../context'
 import { asc, desc, eq, sql } from 'drizzle-orm'
 
@@ -71,11 +70,11 @@ export async function deleteFlow(db: DBType, id: string) {
   return db.delete(flowsTable).where(eq(flowsTable.id, id))
 }
 
-export type ListOrderBy =
-  'createdAtDesc' |
-  'createdAtAsc' |
-  'updatedAtDesc' |
-  'updatedAtAsc'
+export type ListOrderBy
+  = 'createdAtDesc'
+    | 'createdAtAsc'
+    | 'updatedAtDesc'
+    | 'updatedAtAsc'
 
 export async function listFlows<T>(
   db: DBType,
@@ -105,6 +104,39 @@ export async function listFlows<T>(
     .map(row => deserialize(row.data))
 }
 
+export async function listFlowsMetadata(
+  db: DBType,
+  ownerId: string,
+  orderBy: ListOrderBy,
+  limit: number,
+): Promise<FlowMetadata[]> {
+  const orderByMap = {
+    createdAtDesc: desc(flowsTable.createdAt),
+    createdAtAsc: asc(flowsTable.createdAt),
+    updatedAtDesc: desc(flowsTable.updatedAt),
+    updatedAtAsc: asc(flowsTable.updatedAt),
+  }
+
+  const result = await db
+    .select({
+      metadata: sql<FlowMetadata>`${flowsTable.data}->'metadata'`,
+    })
+    .from(flowsTable)
+    .where(
+      eq(flowsTable.ownerId, ownerId),
+    )
+    .orderBy(orderByMap[orderBy])
+    .limit(limit)
+
+  return result.map((row) => {
+    return {
+      ...row.metadata,
+      createdAt: new Date(row.metadata.createdAt),
+      updatedAt: new Date(row.metadata.updatedAt),
+    }
+  })
+}
+
 export async function loadFlow<T>(db: DBType, id: string, deserialize: (data: JSONValue) => T): Promise<T | null> {
   const result = await db.select().from(flowsTable).where(eq(flowsTable.id, id))
   if (!result || result.length === 0 || !result[0]?.data) {
@@ -112,4 +144,24 @@ export async function loadFlow<T>(db: DBType, id: string, deserialize: (data: JS
   }
 
   return deserialize(result[0].data)
+}
+
+export async function loadFlowMetadata(db: DBType, id: string): Promise<FlowMetadata | null> {
+  const result = await db
+    .select({
+      // TODO: check if there are most efficient way to select nested JSON field
+      metadata: sql<FlowMetadata>`${flowsTable.data}->'metadata'`,
+    })
+    .from(flowsTable)
+    .where(eq(flowsTable.id, id))
+
+  if (!result || result.length === 0 || !result[0]?.metadata) {
+    return null
+  }
+
+  return {
+    ...result[0].metadata,
+    createdAt: new Date(result[0].metadata.createdAt),
+    updatedAt: new Date(result[0].metadata.updatedAt),
+  }
 }

@@ -6,12 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
+import { Maximize2, Minimize2, RotateCcw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { cn } from '@/lib/utils'
-import { ExecutionStatus } from '@/store/execution'
-import { Maximize2, Minimize2, RotateCcw, Search } from 'lucide-react'
 
 interface TreeControlsProps {
   searchQuery: string
@@ -60,12 +61,12 @@ export function TreeControls({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value={ExecutionStatus.CREATED}>Created</SelectItem>
-            <SelectItem value={ExecutionStatus.RUNNING}>Running</SelectItem>
-            <SelectItem value={ExecutionStatus.PAUSED}>Paused</SelectItem>
-            <SelectItem value={ExecutionStatus.COMPLETED}>Completed</SelectItem>
-            <SelectItem value={ExecutionStatus.ERROR}>Failed</SelectItem>
-            <SelectItem value={ExecutionStatus.STOPPED}>Stopped</SelectItem>
+            <SelectItem value={ExecutionStatus.Created}>Created</SelectItem>
+            <SelectItem value={ExecutionStatus.Running}>Running</SelectItem>
+            <SelectItem value={ExecutionStatus.Paused}>Paused</SelectItem>
+            <SelectItem value={ExecutionStatus.Completed}>Completed</SelectItem>
+            <SelectItem value={ExecutionStatus.Failed}>Failed</SelectItem>
+            <SelectItem value={ExecutionStatus.Stopped}>Stopped</SelectItem>
           </SelectContent>
         </Select>
 

@@ -6,18 +6,19 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEdge, INode } from '@badaitech/chaingraph-types'
+import type { INode, SerializedEdge } from '@badaitech/chaingraph-types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 
-export enum ExecutionStatus {
-  IDLE = 'IDLE',
-  CREATING = 'CREATING',
-  CREATED = 'CREATED',
-  RUNNING = 'RUNNING',
-  PAUSED = 'PAUSED',
-  STOPPED = 'STOPPED',
-  COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR',
-}
+// export enum ExecutionStatus {
+//   IDLE = 'IDLE',
+//   CREATING = 'CREATING',
+//   CREATED = 'CREATED',
+//   RUNNING = 'RUNNING',
+//   PAUSED = 'PAUSED',
+//   STOPPED = 'STOPPED',
+//   COMPLETED = 'COMPLETED',
+//   ERROR = 'ERROR',
+// }
 
 export interface ExecutionState {
   status: ExecutionStatus
@@ -78,9 +79,9 @@ export interface ExecutionSubscriptionState {
 }
 
 export const TERMINAL_EXECUTION_STATUSES = [
-  ExecutionStatus.COMPLETED,
-  ExecutionStatus.ERROR,
-  ExecutionStatus.STOPPED,
+  ExecutionStatus.Completed,
+  ExecutionStatus.Failed,
+  ExecutionStatus.Stopped,
 ] as const
 
 export type TerminalExecutionStatus = typeof TERMINAL_EXECUTION_STATUSES[number]
@@ -100,5 +101,6 @@ export interface NodeExecutionState {
 
 export interface EdgeExecutionState {
   status: 'idle' | 'transferring' | 'completed' | 'failed'
-  edge: IEdge
+  // edge: IEdge
+  serializedEdge: SerializedEdge
 }

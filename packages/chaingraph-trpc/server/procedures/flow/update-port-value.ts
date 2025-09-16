@@ -38,11 +38,14 @@ export const updatePortValue = flowContextProcedure
       if (!node)
         throw new Error('Node not found')
 
-      node.bindPortBindings()
+      // node.bindPortBindings()
 
       const port = node.ports.get(input.portId)
       if (!port)
         throw new Error('Port not found')
+
+      // Start batch update mode to collect all port updates
+      node.startBatchUpdate()
 
       port.setValue(input.value)
 
@@ -59,8 +62,11 @@ export const updatePortValue = flowContextProcedure
         currentPort = parentPort
       }
 
+      // Update ports - these will be collected, not emitted immediately
       node.updatePorts(portsToUpdate)
-      flow.updateNode(node)
+
+      // Commit all updates via flow.updateNode (auto-commits the batch)
+      await flow.updateNode(node)
 
       // console.log('Port value updated', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, value: input.value })
 
@@ -125,7 +131,7 @@ export const addFieldObjectPort = flowContextProcedure
         timestamp: new Date(),
         version: node.getVersion(),
       })
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 
@@ -219,7 +225,7 @@ export const removeFieldObjectPort = flowContextProcedure
       }
 
       // trigger node update
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       // console.log('Object port key removed', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key })
 
@@ -271,7 +277,7 @@ export const updateItemConfigArrayPort = flowContextProcedure
 
       //
 
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       await ctx.flowStore.updateFlow(flow)
 
@@ -312,7 +318,7 @@ export const appendElementArrayPort = flowContextProcedure
         throw new Error('Port is not an array port')
 
       node.appendArrayItem(port, input.value)
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 
@@ -355,10 +361,10 @@ export const removeElementArrayPort = flowContextProcedure
         throw new Error('Port is not an array port')
 
       const itemPortId = generatePortIDArrayElement(port.id, input.index)
-      flow.removePort(node.id, itemPortId)
+      await flow.removePort(node.id, itemPortId)
 
       node.removeArrayItem(port, input.index)
-      flow.updateNode(node)
+      await flow.updateNode(node)
 
       // console.log('Object port key added', { flowId: input.flowId, nodeId: input.nodeId, portId: input.portId, key, config })
 

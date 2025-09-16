@@ -6,17 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
 import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-/*
- * Copyright (c) 2025 BadLabs
- *
- * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
- *
- * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
- */
-import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
+import { useCallback, useMemo } from 'react'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
   Select,
@@ -29,7 +23,6 @@ import { cn } from '@/lib/utils'
 import { useExecutionID } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { requestUpdatePortUI } from '@/store/ports'
-import { useCallback, useMemo } from 'react'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 

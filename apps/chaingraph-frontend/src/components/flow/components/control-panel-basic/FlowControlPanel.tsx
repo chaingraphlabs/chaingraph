@@ -7,9 +7,6 @@
  */
 
 import type { ExecutionStatus } from './types'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
 import {
   PauseIcon,
   PlayIcon,
@@ -21,6 +18,9 @@ import {
   Bug,
 } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 import { DebugControls } from './DebugControls'
 import { StatusIndicator } from './StatusIndicator'
 
