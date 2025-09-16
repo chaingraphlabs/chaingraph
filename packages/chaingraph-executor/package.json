@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-executor",
   "type": "module",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "private": false,
   "description": "Chaingraph Message Bus for inter-service communication",
   "license": "BUSL-1.1",

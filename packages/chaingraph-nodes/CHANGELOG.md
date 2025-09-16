@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.0
+
+### Minor Changes
+
+- feat: Add Kafka-based distributed execution with horizontal scaling, microservices architecture, and Docker deployment support
+
+### Patch Changes
+
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.0
+
 ## 0.4.5
 
 ### Patch Changes
