@@ -24,7 +24,8 @@ export function useNode(nodeId: string) {
     keys: [nodeId],
     fn: (nodes, [nodeId]) => {
       // Handle empty/undefined nodeId gracefully
-      if (!nodeId) return undefined
+      if (!nodeId)
+        return undefined
       return nodes[nodeId]
     },
     updateFilter: (prev, next) => {

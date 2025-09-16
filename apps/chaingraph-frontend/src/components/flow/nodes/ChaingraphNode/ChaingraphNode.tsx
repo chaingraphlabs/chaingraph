@@ -33,6 +33,7 @@ import {
 } from '@/store/nodes/computed'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import { useNodePulseState } from '@/store/updates'
+import { useStore } from '@xyflow/react'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo } from 'react'
@@ -63,18 +64,14 @@ const defaultCategoryMetadata = {
   order: 7,
 } satisfies CategoryMetadata
 
-// const zoomSelector = s => s.transform[2] >= 0.2
+const zoomSelector = s => s.transform[2] >= 0.2
 
 function ChaingraphNodeComponent({
   data,
   selected,
   id,
 }: NodeProps<ChaingraphNode>) {
-  // Debug: Track why component re-rendered
-  // useWhyDidYouUpdate(`Node-${id}`, { data, selected, id })
-  // useRenderCount(`Node-${id}`)
-
-  const showContent = true// useStore(zoomSelector)
+  const showContent = useStore(zoomSelector)
 
   // Optimized granular hooks - only subscribe to what we need
   const node = useNode(id)
