@@ -20,10 +20,14 @@ import { roundPosition } from './useFlowUtils'
  */
 export function useNodeChanges() {
   const activeFlow = useUnit($activeFlowMetadata)
-  const nodes = useUnit($nodes)
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
-    if (!activeFlow || !nodes || !changes || activeFlow.id === undefined)
+    if (!activeFlow || !changes || activeFlow.id === undefined)
+      return
+
+    // Get current nodes state inside callback to avoid dependency
+    const currentNodes = $nodes.getState()
+    if (!currentNodes)
       return
 
     // Handle node changes (position, selection, etc)
@@ -34,7 +38,7 @@ export function useNodeChanges() {
             if (!change.dragging)
               return
 
-            const node = nodes[change.id]
+            const node = currentNodes[change.id]
             if (!node || !change.position || !change.position.x || !change.position.y) {
               return
             }
@@ -66,7 +70,7 @@ export function useNodeChanges() {
 
         case 'dimensions':
         {
-          const node = nodes[change.id]
+          const node = currentNodes[change.id]
           if (!node)
             return
 
@@ -106,7 +110,7 @@ export function useNodeChanges() {
 
         case 'select':
           {
-            const node = nodes[change.id]
+            const node = currentNodes[change.id]
             if (!node)
               return
 
@@ -125,7 +129,7 @@ export function useNodeChanges() {
 
         case 'remove':
           {
-            const node = nodes[change.id]
+            const node = currentNodes[change.id]
             if (!node)
               return
 
@@ -142,7 +146,7 @@ export function useNodeChanges() {
           break
       }
     })
-  }, [activeFlow, nodes])
+  }, [activeFlow])
 
   return {
     onNodesChange,

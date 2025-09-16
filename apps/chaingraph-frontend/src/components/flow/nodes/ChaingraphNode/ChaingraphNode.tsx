@@ -16,10 +16,8 @@ import { Skeleton } from '@/components/ui'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useNodeDropFeedback } from '@/store/drag-drop'
-import { useEdgesForNode } from '@/store/edges/hooks/useEdges'
 import {
   $executionState,
-  $highlightedNodeId,
   addBreakpoint,
   removeBreakpoint,
 } from '@/store/execution'
@@ -27,18 +25,14 @@ import { useBreakpoint } from '@/store/execution/hooks/useBreakpoint'
 import { useNodeExecution } from '@/store/execution/hooks/useNodeExecution'
 import { $activeFlowMetadata, $isFlowLoaded } from '@/store/flow'
 import { removeNodeFromFlow, updateNodeUI } from '@/store/nodes'
-import { useNode } from '@/store/nodes/hooks/useNode'
 import {
-  addFieldObjectPort,
-  appendElementArrayPort,
-  removeElementArrayPort,
-  removeFieldObjectPort,
-  requestUpdatePortUI,
-  requestUpdatePortValue,
-  updateItemConfigArrayPort,
-} from '@/store/ports'
-import { $nodesPulseState } from '@/store/updates'
-import { useStore } from '@xyflow/react'
+  useHasHighlightedNodes,
+  useIsNodeHighlighted,
+  useNodeExecutionStyle,
+  useNodePortContextValue,
+} from '@/store/nodes/computed'
+import { useNode } from '@/store/nodes/hooks/useNode'
+import { useNodePulseState } from '@/store/updates'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo } from 'react'
@@ -69,164 +63,76 @@ const defaultCategoryMetadata = {
   order: 7,
 } satisfies CategoryMetadata
 
-const zoomSelector = s => s.transform[2] >= 0.2
+// const zoomSelector = s => s.transform[2] >= 0.2
 
 function ChaingraphNodeComponent({
   data,
   selected,
   id,
 }: NodeProps<ChaingraphNode>) {
-  const showContent = useStore(zoomSelector)
+  // Debug: Track why component re-rendered
+  // useWhyDidYouUpdate(`Node-${id}`, { data, selected, id })
+  // useRenderCount(`Node-${id}`)
 
-  const activeFlow = useUnit($activeFlowMetadata)
-  const nodeExecution = useNodeExecution(id)
-  const dispatch = useUnit({
-    addBreakpoint,
-    removeBreakpoint,
-    requestUpdatePortValue,
-    requestUpdatePortUI,
-    updateItemConfigArrayPort,
-    appendElementArrayPort,
-    removeElementArrayPort,
-    addFieldObjectPort,
-    removeFieldObjectPort,
-  })
-  const { theme } = useTheme()
+  const showContent = true// useStore(zoomSelector)
+
+  // Optimized granular hooks - only subscribe to what we need
   const node = useNode(id)
-  const parentNode = useNode(node.metadata.parentNodeId || '')
-  const nodeEdges = useEdgesForNode(id)
-  const highlightedNodeId = useUnit($highlightedNodeId)
-  const isFlowLoaded = useUnit($isFlowLoaded)
+  const parentNode = useNode(node?.metadata.parentNodeId || '')
+  const nodeExecution = useNodeExecution(id)
+  const executionStyle = useNodeExecutionStyle(id)
+  const portContext = useNodePortContextValue(id) // Now returns PortContextValue, not undefined
+  const nodePulseState = useNodePulseState(id)
+  const isHighlighted = useIsNodeHighlighted(id)
+  const hasHighlights = useHasHighlightedNodes()
   const dropFeedback = useNodeDropFeedback(id)
-  const nodesPulseState = useUnit($nodesPulseState)
+  const isBreakpointSet = useBreakpoint(id)
+
+  // Only these need useUnit (minimal subscriptions)
+  const activeFlow = useUnit($activeFlowMetadata)
+  const { debugMode } = useUnit($executionState)
+  const isFlowLoaded = useUnit($isFlowLoaded)
+
+  // Debug: Track changes in hook values
+  // useWhyDidYouUpdate(`Node-${id}-hooks`, {
+  //   nodeVersion: node?.getVersion(),
+  //   executionStyle: executionStyle?.className,
+  //   pulseState: nodePulseState,
+  //   isHighlighted,
+  //   hasHighlights,
+  //   dropFeedback: dropFeedback?.canAcceptDrop,
+  //   isBreakpointSet,
+  //   debugMode,
+  // })
+
+  // Theme and metadata
+  const { theme } = useTheme()
 
   const categoryMetadata = data.categoryMetadata ?? defaultCategoryMetadata
-
   const style = useMemo(() => {
     return theme === 'dark' ? categoryMetadata.style.dark : categoryMetadata.style.light
   }, [categoryMetadata, theme])
 
-  const isHighlighted = useMemo(
-    () => highlightedNodeId && highlightedNodeId.includes(id),
-    [highlightedNodeId, id],
-  )
-
-  const nodePulseState = nodesPulseState.get(id)
-
-  const { debugMode, executionId } = useUnit($executionState)
-  const isBreakpointSet = useBreakpoint(id)
-  // const { getZoom } = useReactFlow()
-
-  // Get edges for each port - needs to be defined here so the hook works properly
-  const edgesMapByPortId = useMemo(() => {
-    // Create a map to avoid recalculating filters on every access
-    const portEdgesMap = new Map()
-    if (node) {
-      // Pre-compute edges for each port
-      node.ports.forEach((port) => {
-        const portId = port.id
-        const filteredEdges = nodeEdges.filter(
-          edge => edge.sourcePortId === portId || edge.targetPortId === portId,
-        )
-        portEdgesMap.set(portId, filteredEdges)
-      })
-    }
-    return portEdgesMap
-  }, [node, nodeEdges])
-
-  const getEdgesForPortFunction = useCallback((portId: string) => {
-    return edgesMapByPortId.get(portId) || []
-  }, [edgesMapByPortId])
-
-  // Get current zoom level for port components that need it
+  // Breakpoint handling
   const handleBreakpointToggle = useCallback(() => {
     if (isBreakpointSet) {
-      dispatch.removeBreakpoint({ nodeId: id })
+      removeBreakpoint({ nodeId: id })
     } else {
-      dispatch.addBreakpoint({ nodeId: id })
+      addBreakpoint({ nodeId: id })
     }
-  }, [isBreakpointSet, dispatch, id])
+  }, [isBreakpointSet, id])
 
-  // Use throttled/memoized version of execution state style to reduce renders
-  const executionStateStyle = useMemo(() => {
-    // Calculate the style based on node state
-    const calculateStyle = () => {
-      if (selected) {
-        return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
-      }
-      if (executionId && !nodeExecution) {
-        return 'border-gray-500 opacity-30'
-      }
-
-      if (nodeExecution) {
-        if (nodeExecution.isExecuting) {
-          return `border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] scale-[1.02] animate-[glow_3s_ease-in-out_infinite]`
-        }
-        if (nodeExecution.isCompleted) {
-          return 'border-green-500 shadow-[0_0_20px_rgba(34,207,94,0.5)]'
-        }
-        if (nodeExecution.isFailed) {
-          return 'border-red-500 shadow-[0_0_20px_rgba(249,68,68,0.5)] opacity-80'
-        }
-        if (nodeExecution.isSkipped) {
-          return 'border-gray-500 opacity-50'
-        }
-
-        if (executionId) {
-          if (nodeExecution.status === 'idle') {
-            return 'border-gray-500 opacity-30'
-          }
-        }
-      }
-
-      return ''
+  // Compute final execution style (combine selected + execution state)
+  const finalExecutionStyle = useMemo(() => {
+    if (selected) {
+      return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
     }
+    return executionStyle?.className || ''
+  }, [selected, executionStyle])
 
-    // Only the execution status matters for styling, not all nodeExecution properties
-    return calculateStyle()
-  }, [
-    selected,
-    nodeExecution,
-    executionId,
-  ])
-
-  // Memoize the entire context value to prevent unnecessary renders
-  const portContextValue = useMemo(() => {
-    return {
-      updatePortValue: params => dispatch.requestUpdatePortValue(params),
-      updatePortUI: params => dispatch.requestUpdatePortUI(params),
-      addFieldObjectPort: params => dispatch.addFieldObjectPort({
-        nodeId: params.nodeId,
-        portId: params.portId,
-        config: params.config,
-        key: params.key,
-      }),
-      removeFieldObjectPort: params => dispatch.removeFieldObjectPort({
-        nodeId: params.nodeId,
-        portId: params.portId,
-        key: params.key,
-      }),
-      updateItemConfigArrayPort: params => dispatch.updateItemConfigArrayPort({
-        nodeId: params.nodeId,
-        portId: params.portId,
-        itemConfig: params.itemConfig,
-      }),
-      appendElementArrayPort: params => dispatch.appendElementArrayPort({
-        nodeId: params.nodeId,
-        portId: params.portId,
-        value: params.value,
-      }),
-      removeElementArrayPort: params => dispatch.removeElementArrayPort({
-        nodeId: params.nodeId,
-        portId: params.portId,
-        index: params.index,
-      }),
-      getEdgesForPort: getEdgesForPortFunction,
-    }
-  }, [dispatch, getEdgesForPortFunction])
-
+  // Merged node for rendering (execution node or regular node)
   const nodeToRender = useMemo(() => {
-    return nodeExecution?.node ? mergeNodePortsUi(nodeExecution.node, node) : node
+    return nodeExecution?.node ? mergeNodePortsUi(nodeExecution.node, node!) : node
   }, [node, nodeExecution])
 
   // Use a custom hook to handle element resize
@@ -255,7 +161,7 @@ function ChaingraphNodeComponent({
           && rect.bottom > 0
 
         if (!isVisible) {
-          console.warn('Node resize ignored: element not visible')
+          // console.warn('Node resize ignored: element not visible')
           return
         }
       }
@@ -313,14 +219,14 @@ function ChaingraphNodeComponent({
         !dropFeedback?.canAcceptDrop && selected
           ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
           : !dropFeedback?.canAcceptDrop && 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
-        executionStateStyle,
-
-        // Update animations (two-phase system)
+        // Execution state styling
+        finalExecutionStyle,
+        // Pulse animations
         nodePulseState === 'pulse' && 'animate-update-pulse',
         nodePulseState === 'fade' && 'animate-update-fade',
-
+        // Highlighting
         isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
-        highlightedNodeId !== null && !isHighlighted && 'opacity-40',
+        hasHighlights && !isHighlighted && 'opacity-40',
       )}
       style={{
         borderColor: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema'
@@ -347,7 +253,7 @@ function ChaingraphNodeComponent({
 
       <NodeHeader
         node={nodeToRender}
-        context={portContextValue}
+        context={portContext}
         icon={categoryMetadata.icon}
         style={style}
         categoryMetadata={categoryMetadata}
@@ -364,15 +270,15 @@ function ChaingraphNodeComponent({
         ? (
             <NodeBody
               node={nodeToRender}
-              context={portContextValue}
+              context={portContext}
             />
           )
         : (
             <div
               className="p-4 text-center text-muted-foreground"
               style={{
-                width: `${node.metadata.ui?.dimensions?.width || 200}px`,
-                height: `${node.metadata.ui?.dimensions?.height ? node.metadata.ui?.dimensions?.height - 85 : 50}px`,
+                width: `${node!.metadata.ui?.dimensions?.width || 200}px`,
+                height: `${node!.metadata.ui?.dimensions?.height ? node!.metadata.ui?.dimensions?.height - 85 : 50}px`,
               }}
             >
               {/* <div>Zoom in to see node details</div> */}
@@ -387,7 +293,7 @@ function ChaingraphNodeComponent({
         <div className="mt-2">
           <NodeErrorPorts
             node={nodeToRender}
-            context={portContextValue}
+            context={portContext}
           />
         </div>
       )}

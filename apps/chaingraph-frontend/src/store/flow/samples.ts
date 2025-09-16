@@ -162,11 +162,11 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       }
 
       if (data.node.getVersion() && data.node.getVersion() < node.getVersion()) {
-        console.warn(`[NodeUpdated] Received outdated node update event for node ${data.node.id}`)
+        // console.warn(`[NodeUpdated] Received outdated node update event for node ${data.node.id}`)
         return
       }
 
-      console.log(`[NodeUpdated] Updating node ${data.node.id} to version ${data.node.getVersion()}`)
+      // console.log(`[NodeUpdated] Updating node ${data.node.id} to version ${data.node.getVersion()}`)
 
       updateNode(data.node)
       nodeUpdated(data.node.id)
@@ -189,11 +189,11 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       }
 
       if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
-        console.warn(`[PortUpdated] Received outdated port update event`)
+        // console.warn(`[PortUpdated] Received outdated port update event`)
         return
       }
 
-      console.log(`[PortUpdated] Updating port ${data.port.id} on node ${data.port.getConfig().nodeId} to node version ${data.nodeVersion} with value:`, data.port.getValue())
+      // console.log(`[PortUpdated] Updating port ${data.port.id} on node ${data.port.getConfig().nodeId} to node version ${data.nodeVersion} with value:`, data.port.getValue())
 
       updatePort({
         id: data.port.id,
@@ -300,7 +300,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       const currentVersion = currentNode.getVersion()
 
       if (data.version && data.version <= currentVersion) {
-        console.warn(`[SKIPPING] Received outdated position change event`)
+        // console.warn(`[SKIPPING] Received outdated position change event`)
         return
       }
 

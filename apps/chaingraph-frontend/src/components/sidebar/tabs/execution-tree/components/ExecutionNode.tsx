@@ -231,7 +231,7 @@ export const ExecutionNode = memo(function ExecutionNode({
           )}
 
           <span className="font-mono">
-            {(node as RootExecution).execution.level}
+            {(node as RootExecution).execution.executionDepth}
           </span>
 
           {/* Child Count Badge (for root nodes with statistics) */}

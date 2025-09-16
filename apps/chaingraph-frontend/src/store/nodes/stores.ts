@@ -211,21 +211,20 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Single node operations - only clone the affected node and preserve others
   .on(addNode, (state, node) => {
-    return { ...state, [node.id]: node.clone() }
+    return { ...state, [node.id]: node }
   })
 
   // Add nodes operation
   .on(addNodes, (state, nodes) => {
     const newState = { ...state }
     nodes.forEach((node) => {
-      newState[node.id] = node.clone()
+      newState[node.id] = node
     })
 
     return newState
   })
 
   .on(updateNode, (state, node) => {
-    // Create a new state object, but only clone the node we're updating
     return { ...state, [node.id]: node }
   })
 
@@ -262,7 +261,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     }
 
     // Only clone the node we're updating
-    const updatedNode = node.clone()
+    const updatedNode = node// .clone()
     updatedNode.setVersion(version)
 
     // Return new state with just the updated node changed
@@ -287,8 +286,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     try {
-      // Clone both node and port to maintain immutability
-      const updatedNode = node.clone()
+      const updatedNode = node// .clone()
       const updatedPort = port.clone()
 
       updatedPort.setConfig(data.config)

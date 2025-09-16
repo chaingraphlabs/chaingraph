@@ -48,4 +48,4 @@ ENV PORT=${PORT}
 
 EXPOSE ${PORT}
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["serve", "-s", "dist/app", "-l", "3000"]

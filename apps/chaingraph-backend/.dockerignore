@@ -7,4 +7,16 @@ node_modules
 coverage
 .env
 .env.*
-*.log
+npm-debug.log
+dist
+.env.local
+.env.*.local
+.DS_Store
+.gitignore
+README.md
+.idea
+.nyc_output
+*.swp
+*.swo
+*~
+docker-compose.override.yml
