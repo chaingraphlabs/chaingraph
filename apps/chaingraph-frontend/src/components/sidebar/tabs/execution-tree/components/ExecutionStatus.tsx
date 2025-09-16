@@ -6,9 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cn } from '@/lib/utils'
-
 import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
+
 import {
   CheckCircle2,
   Circle,
@@ -18,6 +17,7 @@ import {
   StopCircle,
   XCircle,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface ExecutionStatusIndicatorProps {
   status: ExecutionStatus

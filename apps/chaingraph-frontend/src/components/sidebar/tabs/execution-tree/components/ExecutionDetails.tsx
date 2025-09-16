@@ -7,11 +7,11 @@
  */
 
 import type { ExecutionTreeNode } from '@badaitech/chaingraph-executor/types'
+import { AlertCircle, Clock, Copy, ExternalLink, Hash, Layers, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { AlertCircle, Clock, Copy, ExternalLink, Hash, Layers, Zap } from 'lucide-react'
 import { formatDuration, formatTimestamp } from '../utils/formatters'
 import { ExecutionStatusIndicator } from './ExecutionStatus'
 

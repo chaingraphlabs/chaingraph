@@ -11,16 +11,16 @@ import type {
   INode,
 } from '@badaitech/chaingraph-types'
 import {
-  getNodePositionInFlow,
-  getNodePositionInsideParent,
-} from '@/components/flow/utils/node-position'
-import { nodeUpdated } from '@/store/updates'
-import {
   createEventHandler,
   DefaultPosition,
   FlowEventType,
 } from '@badaitech/chaingraph-types'
 import { combine, createEffect, sample } from 'effector'
+import {
+  getNodePositionInFlow,
+  getNodePositionInsideParent,
+} from '@/components/flow/utils/node-position'
+import { nodeUpdated } from '@/store/updates'
 import {
   removeEdge,
   resetEdges,

@@ -7,15 +7,15 @@
  */
 
 import type { MCPServerWithCapabilities } from '../store/types'
+import { useUnit } from 'effector-react'
+import { Server } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { $mcpServersWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
 import {
   Accordion,
 } from '@/components/ui/accordion'
 import { Command, CommandInput } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useUnit } from 'effector-react'
-import { Server } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import { MCPServerItem } from './MCPServerItem'
 
 interface MCPServerListProps {

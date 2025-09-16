@@ -49,28 +49,28 @@ import {
   StringPort,
 } from '../../port'
 
-export type PortInstance =
-  | StringPort
-  | NumberPort
-  | BooleanPort
-  | ArrayPort
-  | ObjectPort
-  | StreamPort
-  | EnumPort
-  | AnyPort
-  | SecretPort<any>
+export type PortInstance
+  = | StringPort
+    | NumberPort
+    | BooleanPort
+    | ArrayPort
+    | ObjectPort
+    | StreamPort
+    | EnumPort
+    | AnyPort
+    | SecretPort<any>
 
-export type PortInstanceFromConfig<T extends IPortConfig> =
-  T extends StringPortConfig ? StringPort :
-    T extends NumberPortConfig ? NumberPort :
-      T extends BooleanPortConfig ? BooleanPort :
-        T extends ArrayPortConfig<infer I> ? ArrayPort<I> :
-          T extends ObjectPortConfig<infer S> ? ObjectPort<S> :
-            T extends StreamPortConfig<infer V> ? StreamPort<V> :
-              T extends EnumPortConfig ? EnumPort :
-                T extends SecretPortConfig<infer S> ? SecretPort<S> :
-                  T extends AnyPortConfig ? AnyPort :
-                    never
+export type PortInstanceFromConfig<T extends IPortConfig>
+  = T extends StringPortConfig ? StringPort
+    : T extends NumberPortConfig ? NumberPort
+      : T extends BooleanPortConfig ? BooleanPort
+        : T extends ArrayPortConfig<infer I> ? ArrayPort<I>
+          : T extends ObjectPortConfig<infer S> ? ObjectPort<S>
+            : T extends StreamPortConfig<infer V> ? StreamPort<V>
+              : T extends EnumPortConfig ? EnumPort
+                : T extends SecretPortConfig<infer S> ? SecretPort<S>
+                  : T extends AnyPortConfig ? AnyPort
+                    : never
 
 export class PortFactory {
   /**

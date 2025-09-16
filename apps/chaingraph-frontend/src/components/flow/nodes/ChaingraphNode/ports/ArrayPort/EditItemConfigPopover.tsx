@@ -16,6 +16,9 @@ import type {
   PortType,
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
+import { PORT_TYPES } from '@badaitech/chaingraph-types'
+import { Settings } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -29,9 +32,6 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PORT_TYPES } from '@badaitech/chaingraph-types'
-import { Settings } from 'lucide-react'
-import { useCallback, useState } from 'react'
 import { ObjectSchemaEditor } from './ObjectSchemaEditor'
 
 export interface EditItemConfigPopoverProps {

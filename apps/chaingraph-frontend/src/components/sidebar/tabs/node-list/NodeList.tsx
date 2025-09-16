@@ -7,6 +7,8 @@
  */
 
 import type { CategorizedNodes } from '@badaitech/chaingraph-types'
+import { LayersIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
 import {
   useExpandedCategories,
@@ -21,8 +23,6 @@ import { Command, CommandInput } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
-import { LayersIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import { NodeCard } from './NodeCard'
 import { NodeListSkeleton } from './NodeListSkeleton'
 

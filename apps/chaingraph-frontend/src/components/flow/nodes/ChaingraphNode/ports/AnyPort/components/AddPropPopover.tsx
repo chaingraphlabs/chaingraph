@@ -7,6 +7,9 @@
  */
 
 import type { AnyPortConfig, IPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import { PORT_TYPES } from '@badaitech/chaingraph-types'
+import { ChevronDown, X } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -17,9 +20,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { PopoverContent } from '@/components/ui/popover'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
-import { PORT_TYPES } from '@badaitech/chaingraph-types'
-import { ChevronDown, X } from 'lucide-react'
-import { useState } from 'react'
 
 interface Data {
   key: string

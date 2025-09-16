@@ -18,10 +18,10 @@ import type {
   MCPServerWithNodes,
   UpdateMCPServerEvent,
 } from './types'
+import { combine, sample } from 'effector'
 import { $trpcClient } from '@/store'
 import { globalReset } from '@/store/common'
 import { mcpDomain } from '@/store/domains'
-import { combine, sample } from 'effector'
 import { MCPServerStatus } from './types'
 
 // EVENTS

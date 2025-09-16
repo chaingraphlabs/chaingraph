@@ -65,12 +65,12 @@ class ComplexTestNode extends BaseNodeCompositional {
       active: boolean
     }
   } = {
-      name: 'John',
-      details: {
-        age: 30,
-        active: true,
-      },
-    }
+    name: 'John',
+    details: {
+      age: 30,
+      active: true,
+    },
+  }
 
   // Array of objects
   @Port({
@@ -102,23 +102,23 @@ class ComplexTestNode extends BaseNodeCompositional {
       priority: number
     }
   }> = [
-      {
-        id: 'game1',
-        score: 100,
-        metadata: {
-          tags: ['action', 'multiplayer'],
-          priority: 1,
-        },
+    {
+      id: 'game1',
+      score: 100,
+      metadata: {
+        tags: ['action', 'multiplayer'],
+        priority: 1,
       },
-      {
-        id: 'game2',
-        score: 250,
-        metadata: {
-          tags: ['puzzle', 'singleplayer'],
-          priority: 2,
-        },
+    },
+    {
+      id: 'game2',
+      score: 250,
+      metadata: {
+        tags: ['puzzle', 'singleplayer'],
+        priority: 2,
       },
-    ]
+    },
+  ]
 
   // Deeply nested object with multiple levels
   @Port({
@@ -186,49 +186,49 @@ class ComplexTestNode extends BaseNodeCompositional {
       }>
     }
   } = {
-      company: {
-        name: 'TechCorp',
-        departments: [
-          {
-            name: 'Engineering',
-            employees: [
-              {
-                id: 'emp1',
-                name: 'Alice',
-                skills: ['TypeScript', 'React', 'Node.js'],
-                contact: {
-                  email: 'alice@techcorp.com',
-                  phone: '+1234567890',
-                },
+    company: {
+      name: 'TechCorp',
+      departments: [
+        {
+          name: 'Engineering',
+          employees: [
+            {
+              id: 'emp1',
+              name: 'Alice',
+              skills: ['TypeScript', 'React', 'Node.js'],
+              contact: {
+                email: 'alice@techcorp.com',
+                phone: '+1234567890',
               },
-              {
-                id: 'emp2',
-                name: 'Bob',
-                skills: ['Python', 'Django', 'PostgreSQL'],
-                contact: {
-                  email: 'bob@techcorp.com',
-                  phone: '+1234567891',
-                },
+            },
+            {
+              id: 'emp2',
+              name: 'Bob',
+              skills: ['Python', 'Django', 'PostgreSQL'],
+              contact: {
+                email: 'bob@techcorp.com',
+                phone: '+1234567891',
               },
-            ],
-          },
-          {
-            name: 'Marketing',
-            employees: [
-              {
-                id: 'emp3',
-                name: 'Carol',
-                skills: ['SEO', 'Content Marketing', 'Analytics'],
-                contact: {
-                  email: 'carol@techcorp.com',
-                  phone: '+1234567892',
-                },
+            },
+          ],
+        },
+        {
+          name: 'Marketing',
+          employees: [
+            {
+              id: 'emp3',
+              name: 'Carol',
+              skills: ['SEO', 'Content Marketing', 'Analytics'],
+              contact: {
+                email: 'carol@techcorp.com',
+                phone: '+1234567892',
               },
-            ],
-          },
-        ],
-      },
-    }
+            },
+          ],
+        },
+      ],
+    },
+  }
 
   // Array of arrays (matrix-like structure)
   @Port({
@@ -304,39 +304,39 @@ class ComplexTestNode extends BaseNodeCompositional {
       }>
     }
   } = {
-      config: {
-        settings: [
-          {
-            key: 'feature1',
-            value: {
-              type: 'experimental',
-              data: [
-                {
-                  nested: ['opt1', 'opt2'],
-                  count: 2,
-                },
-                {
-                  nested: ['opt3', 'opt4', 'opt5'],
-                  count: 3,
-                },
-              ],
-            },
+    config: {
+      settings: [
+        {
+          key: 'feature1',
+          value: {
+            type: 'experimental',
+            data: [
+              {
+                nested: ['opt1', 'opt2'],
+                count: 2,
+              },
+              {
+                nested: ['opt3', 'opt4', 'opt5'],
+                count: 3,
+              },
+            ],
           },
-          {
-            key: 'feature2',
-            value: {
-              type: 'stable',
-              data: [
-                {
-                  nested: ['production'],
-                  count: 1,
-                },
-              ],
-            },
+        },
+        {
+          key: 'feature2',
+          value: {
+            type: 'stable',
+            data: [
+              {
+                nested: ['production'],
+                count: 1,
+              },
+            ],
           },
-        ],
-      },
-    }
+        },
+      ],
+    },
+  }
 
   // Empty structures for edge case testing
   @Port({

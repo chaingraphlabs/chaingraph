@@ -20,12 +20,12 @@ import type {
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
 
+import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
 import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/formatValue'
 import { useTheme } from '@/components/theme'
 import { Badge, Button, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
-import React, { useEffect, useRef, useState } from 'react'
 import { getPortTypeColor } from './getPortTypeColor'
 
 interface PortDocContentProps<C extends IPortConfig> {

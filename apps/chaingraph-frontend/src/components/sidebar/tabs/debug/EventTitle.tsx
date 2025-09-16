@@ -7,10 +7,10 @@
  */
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
-import { Badge } from '@/components/ui/badge'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { AlertCircle, ArrowRightCircle, Timer } from 'lucide-react'
 import React, { memo, useMemo } from 'react'
+import { Badge } from '@/components/ui/badge'
 import 'react-json-view-lite/dist/index.css'
 import './style/json.css'
 

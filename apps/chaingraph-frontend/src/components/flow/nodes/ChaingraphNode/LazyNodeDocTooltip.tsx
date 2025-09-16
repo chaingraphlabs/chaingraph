@@ -9,6 +9,7 @@
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { INode } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import {
   Tooltip,
   TooltipContent,
@@ -16,7 +17,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 
 // Lazy load the heavy tooltip content component
 const NodeDocTooltipContent = lazy(() =>

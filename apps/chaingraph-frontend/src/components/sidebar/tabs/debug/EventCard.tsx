@@ -7,13 +7,13 @@
  */
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { eventThemes } from '@/components/sidebar/tabs/debug/theme'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { setHighlightedEdgeId, setHighlightedNodeId } from '@/store/execution'
-import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import React, { memo, useCallback, useMemo, useState } from 'react'
 import { EventDetails } from './EventDetails'
 import { EventTitle } from './EventTitle'
 import 'react-json-view-lite/dist/index.css'

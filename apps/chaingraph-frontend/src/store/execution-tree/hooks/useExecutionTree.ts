@@ -7,9 +7,9 @@
  */
 
 import type { ExecutionTreeFilters } from '../types'
-import { $activeFlowId } from '@/store/flow/stores'
 import { useUnit } from 'effector-react'
 import { useEffect } from 'react'
+import { $activeFlowId } from '@/store/flow/stores'
 import {
   $executionTreeError,
   $executionTreeFilters,

@@ -287,8 +287,8 @@ type ValidateSerializableEncryptedSecretValue<T extends JSONValue> = T
 /**
  * Encrypted secret value in a serializable form.
  */
-type SerializableEncryptedSecretValue<T extends SecretType> =
-  ValidateSerializableEncryptedSecretValue<Omit<EncryptedSecretValue<T>, 'decrypt'>>
+type SerializableEncryptedSecretValue<T extends SecretType>
+  = ValidateSerializableEncryptedSecretValue<Omit<EncryptedSecretValue<T>, 'decrypt'>>
 
 /**
  * Schema of an encrypted secret value.

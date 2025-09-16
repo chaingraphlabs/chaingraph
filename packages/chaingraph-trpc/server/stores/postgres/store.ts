@@ -70,11 +70,11 @@ export async function deleteFlow(db: DBType, id: string) {
   return db.delete(flowsTable).where(eq(flowsTable.id, id))
 }
 
-export type ListOrderBy =
-  'createdAtDesc' |
-  'createdAtAsc' |
-  'updatedAtDesc' |
-  'updatedAtAsc'
+export type ListOrderBy
+  = 'createdAtDesc'
+    | 'createdAtAsc'
+    | 'updatedAtDesc'
+    | 'updatedAtAsc'
 
 export async function listFlows<T>(
   db: DBType,

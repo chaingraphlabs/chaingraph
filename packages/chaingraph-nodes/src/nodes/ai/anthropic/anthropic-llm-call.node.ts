@@ -892,11 +892,11 @@ export class AntropicLlmCallNode extends BaseNode {
     params: Anthropic.Beta.MessageCreateParams,
     context: ExecutionContext,
   ): Promise<{
-      stopReason: string | null
-      textBlocks: TextResponseBlock[]
-      thinkingBlocks: ThinkingResponseBlock[]
-      toolUseBlocks: ToolUseResponseBlock[]
-    }> {
+    stopReason: string | null
+    textBlocks: TextResponseBlock[]
+    thinkingBlocks: ThinkingResponseBlock[]
+    toolUseBlocks: ToolUseResponseBlock[]
+  }> {
     const betas: Array<BetaAPI.Anthropic.AnthropicBeta> = []
 
     if (this.features.codeExecution20250522) {

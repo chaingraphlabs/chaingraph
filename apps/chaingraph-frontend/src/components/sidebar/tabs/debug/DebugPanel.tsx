@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { useExecutionEvents } from '@/store/execution/hooks/useExecutionEvents'
-import { $activeFlowMetadata } from '@/store/flow'
-import { $selectedNodeIds } from '@/store/nodes'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
 import { $executionState } from 'store/execution'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { useExecutionEvents } from '@/store/execution/hooks/useExecutionEvents'
+import { $activeFlowMetadata } from '@/store/flow'
+import { $selectedNodeIds } from '@/store/nodes'
 import { ExecutionTimeline } from './ExecutionTimeline'
 import { FilterBar } from './FilterBar'
 

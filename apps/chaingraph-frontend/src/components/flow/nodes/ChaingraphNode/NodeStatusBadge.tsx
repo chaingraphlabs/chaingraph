@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cn } from '@/lib/utils'
 import { NodeStatus } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -21,6 +20,7 @@ import {
   Trash,
 } from 'lucide-react'
 import { memo, useEffect, useRef } from 'react'
+import { cn } from '@/lib/utils'
 
 interface NodeStatusBadgeProps {
   status: NodeStatus

@@ -7,13 +7,13 @@
  */
 
 import type { ExecutionStatus } from './types'
-import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   CornerDownRightIcon,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface DebugControlsProps {
   status: ExecutionStatus

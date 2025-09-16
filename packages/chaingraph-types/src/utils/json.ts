@@ -38,6 +38,6 @@ export interface JSONObject {
 
 export type JSONArray = JSONValue[]
 
-export type EnsureJSONSerializable<T> =
-  T extends JSONValue ? T :
-    never
+export type EnsureJSONSerializable<T>
+  = T extends JSONValue ? T
+    : never

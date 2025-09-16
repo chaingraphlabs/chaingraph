@@ -17,13 +17,6 @@ import type {
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
 import type { PropertyEditorProps } from './types'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import {
   AlignLeft,
@@ -39,6 +32,13 @@ import {
   Type,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import {
   isArrayPortConfig,
   isNumberPortConfig,

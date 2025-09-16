@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Slider } from '@/components/ui/slider'
-import { cn } from '@/lib/utils'
 import Color from 'color'
 import { Paintbrush } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { CirclePicker } from 'react-color'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Slider } from '@/components/ui/slider'
+import { cn } from '@/lib/utils'
 
 interface ColorPickerProps {
   color: string

@@ -8,11 +8,11 @@
 
 import type { CreateMCPServerEvent, UpdateMCPServerEvent } from './store'
 import type { MCPServerWithCapabilities } from './store/types'
-import { Button, ScrollArea } from '@/components/ui'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { Button, ScrollArea } from '@/components/ui'
 import { MCPServerForm } from './components/MCPServerForm'
 import { MCPServerList } from './components/MCPServerList'
 import {

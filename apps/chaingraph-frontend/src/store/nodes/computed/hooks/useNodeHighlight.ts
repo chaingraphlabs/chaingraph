@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $highlightedNodeId } from '@/store/execution'
 import { useStoreMap } from 'effector-react'
+import { $highlightedNodeId } from '@/store/execution'
 
 /**
  * Hook to check if a specific node is highlighted

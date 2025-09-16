@@ -10,11 +10,11 @@ import type { SecretType } from '../port'
 import type { PortDecoratorOptions } from './port.decorator.types'
 import { Port } from './port.decorator'
 
-type SecretDecoratorConfig<S extends SecretType> =
-  Omit<PortDecoratorOptions<'secret'>, 'type' | 'defaultValue'>
-  & {
-    secretType: S
-  }
+type SecretDecoratorConfig<S extends SecretType>
+  = Omit<PortDecoratorOptions<'secret'>, 'type' | 'defaultValue'>
+    & {
+      secretType: S
+    }
 
 /**
  * Decorator to specify a type configuration for type "secret".

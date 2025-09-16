@@ -7,6 +7,7 @@
  */
 
 import type { EdgeData } from '@/store/edges/types'
+import { combine, createEvent, createStore } from 'effector'
 import {
   addFieldObjectPort,
   appendElementArrayPort,
@@ -16,7 +17,6 @@ import {
   requestUpdatePortValue,
   updateItemConfigArrayPort,
 } from '@/store/ports'
-import { combine, createEvent, createStore } from 'effector'
 import { $nodePortEdgesMap } from './port-edges'
 
 export interface PortOperations {

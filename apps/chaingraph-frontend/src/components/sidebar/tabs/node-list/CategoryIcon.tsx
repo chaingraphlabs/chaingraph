@@ -7,8 +7,8 @@
  */
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
-import { cn } from '@/lib/utils'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
+import { cn } from '@/lib/utils'
 
 interface CategoryIconProps {
   // FIXME: preserves autocomplete but allows any string,

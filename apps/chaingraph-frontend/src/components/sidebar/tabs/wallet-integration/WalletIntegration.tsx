@@ -6,6 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { useUnit } from 'effector-react'
+import { AlertCircle, CheckCircle2, RefreshCw, Wallet } from 'lucide-react'
+import { useEffect } from 'react'
+import { formatEther } from 'viem'
+import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from 'wagmi'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,11 +21,6 @@ import { Switch } from '@/components/ui/switch'
 import { $executionState } from '@/store/execution'
 import { $autoRecreateEnabled, $walletContext, disableAutoRecreate, enableAutoRecreate, initializeWalletConfig, recreateExecutionWithCurrentWallet, walletConnected } from '@/store/wallet'
 import { wagmiConfig } from '@/store/wallet/wagmi.config'
-import { useUnit } from 'effector-react'
-import { AlertCircle, CheckCircle2, RefreshCw, Wallet } from 'lucide-react'
-import { useEffect } from 'react'
-import { formatEther } from 'viem'
-import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from 'wagmi'
 
 export function WalletIntegration() {
   const walletContext = useUnit($walletContext)

@@ -7,9 +7,9 @@
  */
 
 import type { ConfigStep } from './components/StepIndicator'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchAgentSession } from '@/components/sidebar/tabs/archai-integration/utils/api'
 import { Separator } from '@/components/ui/separator'
-import { useCallback, useEffect, useState } from 'react'
 import { AgentSelectionStep } from './components/AgentSelectionStep'
 import { ChatSelectionStep } from './components/ChatSelectionStep'
 import { ConfigurationSummary } from './components/ConfigurationSummary'

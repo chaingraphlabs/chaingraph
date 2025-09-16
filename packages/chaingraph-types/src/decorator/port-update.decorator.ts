@@ -18,8 +18,8 @@ const PORT_UPDATE_METADATA_KEY = 'chaingraph:port-update'
  * @template TNode The node type
  * @template TPort The port type
  */
-export type PortUpdateHandler<TNode extends INode = INode, TPort extends IPort = IPort> =
-  (node: TNode, port: TPort, event: PortUpdateEvent) => Promise<void> | void
+export type PortUpdateHandler<TNode extends INode = INode, TPort extends IPort = IPort>
+  = (node: TNode, port: TPort, event: PortUpdateEvent) => Promise<void> | void
 
 /**
  * Interface for configuration of port update handlers

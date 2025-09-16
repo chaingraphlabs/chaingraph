@@ -71,9 +71,9 @@ class TestObjectComponent {
     innerString: string
     innerList: string[]
   } = {
-      innerString: 'defaultInner',
-      innerList: ['a'],
-    }
+    innerString: 'defaultInner',
+    innerList: ['a'],
+  }
 }
 
 /**

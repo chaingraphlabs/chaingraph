@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $mcpServersWithNodes } from '@/components/sidebar/tabs/mcp/store/stores'
 import { useStoreMap } from 'effector-react'
+import { $mcpServersWithNodes } from '@/components/sidebar/tabs/mcp/store/stores'
 
 export function useMCPServerWithNodes(serverId: string) {
   return useStoreMap({

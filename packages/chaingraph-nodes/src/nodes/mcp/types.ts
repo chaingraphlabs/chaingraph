@@ -466,12 +466,12 @@ export class MCPResourceLinkContent {
   _meta?: Record<string, any>
 }
 
-export type MCPContentBlock =
-  MCPTextContent |
-  MCPImageContent |
-  MCPAudioContent |
-  MCPEmbeddedResourceContent |
-  MCPResourceLinkContent
+export type MCPContentBlock
+  = MCPTextContent
+    | MCPImageContent
+    | MCPAudioContent
+    | MCPEmbeddedResourceContent
+    | MCPResourceLinkContent
 
 // Fields for MCP progress messages
 // progress

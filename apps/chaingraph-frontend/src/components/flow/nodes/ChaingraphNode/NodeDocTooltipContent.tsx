@@ -9,6 +9,10 @@
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { INode } from '@badaitech/chaingraph-types'
+import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
+import { PortDirection } from '@badaitech/chaingraph-types'
+import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTheme } from '@/components/theme'
 import {
   Badge,
@@ -18,10 +22,6 @@ import {
   ScrollArea,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
-import { PortDirection } from '@badaitech/chaingraph-types'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import { PortDocContent } from './ports/doc/PortDocContent'
 
 interface NodeDocTooltipContentProps {

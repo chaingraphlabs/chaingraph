@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PasteNodesEvent } from '@/store/nodes'
-
 import type {
   INode,
   SerializedEdge,
   SerializedNodeType,
 } from '@badaitech/chaingraph-types'
+
 import type { EdgeData } from '../../../store/edges/types'
+import type { PasteNodesEvent } from '@/store/nodes'
 import {
   EdgeStatus,
 } from '@badaitech/chaingraph-types'

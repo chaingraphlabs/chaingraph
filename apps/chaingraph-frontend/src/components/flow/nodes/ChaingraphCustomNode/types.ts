@@ -8,14 +8,14 @@
 
 import type { Node } from '@xyflow/react'
 
-export type NodeVariant =
-  | 'default'
-  | 'pink' // For message operations
-  | 'blue' // For data operations
-  | 'green' // For execution operations
-  | 'yellow' // For stream operations
-  | 'error'
-  | 'success'
+export type NodeVariant
+  = | 'default'
+    | 'pink' // For message operations
+    | 'blue' // For data operations
+    | 'green' // For execution operations
+    | 'yellow' // For stream operations
+    | 'error'
+    | 'success'
 
 export type ChaingraphNodeCustom = Node<{
   title: string

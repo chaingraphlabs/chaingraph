@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import * as React from 'react'
+
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useShadowRoot } from './useShadowRoot'
 
 const AlertDialog = AlertDialogPrimitive.Root

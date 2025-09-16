@@ -8,11 +8,11 @@
 
 import type { TRPCClient } from '@badaitech/chaingraph-trpc/client'
 import type { StoreWritable } from 'effector'
-import { globalReset } from '@/store/common'
-import { trpcDomain } from '@/store/domains'
 import { createTRPCClient } from '@badaitech/chaingraph-trpc/client'
 import { attach, combine, createEffect } from 'effector'
 import SuperJSON from 'superjson'
+import { globalReset } from '@/store/common'
+import { trpcDomain } from '@/store/domains'
 
 interface ClientConfig {
   sessionBadAI?: string

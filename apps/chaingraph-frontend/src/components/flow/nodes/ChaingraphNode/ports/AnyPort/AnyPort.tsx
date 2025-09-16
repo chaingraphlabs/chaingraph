@@ -7,28 +7,21 @@
  */
 
 import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-/*
- * Copyright (c) 2025 BadLabs
- *
- * Use of this software is governed by the Business Source License 1.1 included in the file LICENSE.txt.
- *
- * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
- */
-import type {
   AnyPortConfig,
   AnyPort as AnyPortType,
   INode,
   IPort,
 } from '@badaitech/chaingraph-types'
-import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
-import { cn } from '@/lib/utils'
-import { requestUpdatePortUI } from '@/store/ports'
+import type {
+  PortContextValue,
+} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import {
   PortFactory,
 } from '@badaitech/chaingraph-types'
 import { memo, useMemo } from 'react'
+import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
+import { cn } from '@/lib/utils'
+import { requestUpdatePortUI } from '@/store/ports'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 

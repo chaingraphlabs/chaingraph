@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 import type { NumericFormatProps } from 'react-number-format'
-import { cn } from '@/lib/utils'
 import React from 'react'
 import { NumericFormat } from 'react-number-format'
+import { cn } from '@/lib/utils'
 
 export function NumberInput({ className, ...props }: NumericFormatProps) {
   return (

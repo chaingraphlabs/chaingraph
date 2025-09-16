@@ -10,8 +10,8 @@ import type {
   FlowMetadata,
 } from '@badaitech/chaingraph-types'
 import type { CreateFlowEvent, FlowSubscriptionError, UpdateFlowEvent } from './types'
-import { flowDomain } from '@/store/domains'
 import { combine } from 'effector'
+import { flowDomain } from '@/store/domains'
 import { globalReset } from '../common'
 import { $trpcClient } from '../trpc/store'
 import { FlowSubscriptionStatus } from './types'

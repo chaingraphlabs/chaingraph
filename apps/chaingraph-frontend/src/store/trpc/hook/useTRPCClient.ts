@@ -8,9 +8,9 @@
 
 import type { TRPCClient as TRPCExecutionClient } from '@badaitech/chaingraph-executor/client'
 import type { TRPCClient } from '@badaitech/chaingraph-trpc/client'
+import { useUnit } from 'effector-react'
 import { $trpcClientExecutor } from '@/store/trpc/execution-client'
 import { $trpcClient } from '@/store/trpc/store'
-import { useUnit } from 'effector-react'
 
 export function useTRPCClient(): TRPCClient {
   const trpcClient = useUnit($trpcClient)

@@ -13,6 +13,11 @@ import type {
   OnConnectStartParams,
 } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
+import { useUnit } from 'effector-react'
+import { AnimatePresence } from 'framer-motion'
+import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeContextMenu'
 import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel'
 import { StyledControls } from '@/components/flow/components/controls/StyledControls'
@@ -30,15 +35,10 @@ import { ZoomContext } from '@/providers/ZoomProvider'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
 import { $isConnectingBeginEvent, $isConnectingEndEvent } from '@/store/edges/stores'
 import { $executionState, $executionSubscriptionState, ExecutionSubscriptionStatus } from '@/store/execution'
+
 import { $activeFlowId, $flowSubscriptionState, setActiveFlowId } from '@/store/flow'
 import { addNodeToFlow } from '@/store/nodes'
 import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
-import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
-
-import { useUnit } from 'effector-react'
-import { AnimatePresence } from 'framer-motion'
-import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 // Configuration constants
 const defaultViewport: Viewport = {

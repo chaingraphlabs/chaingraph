@@ -7,8 +7,8 @@
  */
 
 import type { BlurPortEditorEvent, FocusedPortEditor, FocusPortEditorEvent } from './types'
-import { focusedEditorsDomain } from '@/store/domains'
 import { combine } from 'effector'
+import { focusedEditorsDomain } from '@/store/domains'
 import { globalReset } from '../common'
 
 // EVENTS

@@ -7,8 +7,8 @@
  */
 
 import type { EdgeData } from '@/store/edges/types'
-import { $edges } from '@/store/edges'
 import { combine } from 'effector'
+import { $edges } from '@/store/edges'
 import { $nodes } from '../stores'
 
 export interface PortEdgesMap {

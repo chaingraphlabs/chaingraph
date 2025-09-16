@@ -7,14 +7,14 @@
  */
 
 import type { ExecutionEventData, ExecutionEventImpl } from '@badaitech/chaingraph-types'
+import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
+import React, { memo } from 'react'
+import SuperJSON from 'superjson'
 import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import React, { memo } from 'react'
-import SuperJSON from 'superjson'
 import 'react-json-view-lite/dist/index.css'
 import './style/json.css'
 

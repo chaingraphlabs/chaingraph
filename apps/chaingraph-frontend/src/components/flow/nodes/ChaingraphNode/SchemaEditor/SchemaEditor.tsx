@@ -18,6 +18,9 @@ import type {
   StringPortConfig,
 } from '@badaitech/chaingraph-types'
 import type { SchemaEditorProps } from './types'
+import { PORT_TYPES } from '@badaitech/chaingraph-types'
+import { Bug, FileCode, Layers, Plus, Save, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -39,9 +42,6 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import { PORT_TYPES } from '@badaitech/chaingraph-types'
-import { Bug, FileCode, Layers, Plus, Save, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PropertyItem } from './PropertyItem'
 import { SchemaEditorProvider, useSchemaEditor } from './SchemaEditorContext'
 import { isArrayPortConfig, isObjectPortConfig } from './types'

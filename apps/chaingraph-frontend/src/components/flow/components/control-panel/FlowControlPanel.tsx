@@ -7,6 +7,12 @@
  */
 
 import type { FlowControlPanelProps } from './types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
+import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
+import { useUnit } from 'effector-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Bug } from 'lucide-react'
+import { useCallback } from 'react'
 import { StatusIndicator } from '@/components/flow/components/control-panel/StatusIndicator'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -26,12 +32,6 @@ import {
 } from '@/store/execution'
 import { $activeFlowMetadata } from '@/store/flow'
 import { getWalletContextForExecution } from '@/store/wallet'
-import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
-import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
-import { useUnit } from 'effector-react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Bug } from 'lucide-react'
-import { useCallback } from 'react'
 import { DebugControls } from './DebugControls'
 
 const MotionButton = motion(Button)

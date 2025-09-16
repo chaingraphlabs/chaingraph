@@ -7,10 +7,6 @@
  */
 
 import type { CSSProperties } from 'react'
-import { TooltipProvider } from '@/components/ui'
-import { ShadowWithStyles } from '@/components/ui/shadow'
-import { $trpcClientExecutor } from '@/store/trpc/execution-client'
-import { $trpcClient } from '@/store/trpc/store'
 import {
   TRPCProvider as ExecutorTRPCProvider,
   getExecutorQueryClient,
@@ -23,6 +19,10 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
 import { Outlet } from 'react-router-dom'
+import { TooltipProvider } from '@/components/ui'
+import { ShadowWithStyles } from '@/components/ui/shadow'
+import { $trpcClientExecutor } from '@/store/trpc/execution-client'
+import { $trpcClient } from '@/store/trpc/store'
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ThemeProvider } from '../components/theme/ThemeProvider'

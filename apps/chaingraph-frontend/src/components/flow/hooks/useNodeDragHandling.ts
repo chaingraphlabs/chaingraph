@@ -6,14 +6,14 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { DropTarget as DragDropTarget, NodeDragEndEvent, NodeDragStartEvent } from '@/store/drag-drop'
 import type { INode, ObjectPortConfig, Position } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
+import type { DropTarget as DragDropTarget, NodeDragEndEvent, NodeDragStartEvent } from '@/store/drag-drop'
+import { useUnit } from 'effector-react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useDragDrop } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodePosition } from '@/store/nodes'
-import { useUnit } from 'effector-react'
-import { useCallback, useMemo, useRef } from 'react'
 import { getNodePositionInFlow, getNodePositionInsideParent } from '../utils/node-position'
 import { calculateDropPriority, calculateNodeDepth, isValidPosition, roundPosition, wouldCreateCircularDependency } from './useFlowUtils'
 

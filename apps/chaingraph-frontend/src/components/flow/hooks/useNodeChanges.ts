@@ -8,11 +8,11 @@
 
 import type { Position } from '@badaitech/chaingraph-types'
 import type { NodeChange } from '@xyflow/react'
+import { useUnit } from 'effector-react'
+import { useCallback } from 'react'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodeUI } from '@/store/nodes'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
-import { useUnit } from 'effector-react'
-import { useCallback } from 'react'
 import { roundPosition } from './useFlowUtils'
 
 /**
@@ -84,13 +84,13 @@ export function useNodeChanges() {
             return
           }
           const isSameDimensions
-              = node.metadata.ui?.dimensions?.width === change.dimensions.width
-                && node.metadata.ui?.dimensions?.height === change.dimensions.height
+            = node.metadata.ui?.dimensions?.width === change.dimensions.width
+              && node.metadata.ui?.dimensions?.height === change.dimensions.height
 
           const isNodeDimensionInitialized
-                = node.metadata.ui?.dimensions !== undefined
-                  && node.metadata.ui?.dimensions?.width !== undefined
-                  && node.metadata.ui?.dimensions?.height !== undefined
+            = node.metadata.ui?.dimensions !== undefined
+              && node.metadata.ui?.dimensions?.width !== undefined
+              && node.metadata.ui?.dimensions?.height !== undefined
 
           if (isSameDimensions) { // || !isNodeDimensionInitialized) {
             return

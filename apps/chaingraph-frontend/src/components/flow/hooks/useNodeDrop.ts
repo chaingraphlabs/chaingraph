@@ -7,12 +7,12 @@
  */
 
 import type { NodeDropEvent } from '@/components/dnd'
-import { useDnd } from '@/components/dnd'
-import { $activeFlowMetadata } from '@/store/flow'
-import { $addNodeError, $isNodesLoading, addNodeToFlow } from '@/store/nodes'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect } from 'react'
+import { useDnd } from '@/components/dnd'
+import { $activeFlowMetadata } from '@/store/flow'
+import { $addNodeError, $isNodesLoading, addNodeToFlow } from '@/store/nodes'
 
 /**
  * Hook to handle node drops in the flow

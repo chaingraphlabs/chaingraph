@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { $executionNodes, $executionState } from '@/store/execution'
 import { combine } from 'effector'
+import { $executionNodes, $executionState } from '@/store/execution'
 import { $nodes } from '../stores'
 
 /**

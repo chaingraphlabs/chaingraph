@@ -8,9 +8,9 @@
 
 import type { CSSProperties, PropsWithChildren } from 'react'
 import type { ThemeMode } from './ThemeContext'
-import { cn } from '@/lib/utils'
 import { Theme } from '@radix-ui/themes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
 import { useShadowRoot } from '../ui/useShadowRoot'
 import { ThemeContext } from './ThemeContext'
 

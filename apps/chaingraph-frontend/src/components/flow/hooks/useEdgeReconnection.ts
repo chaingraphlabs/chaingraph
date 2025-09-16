@@ -7,10 +7,10 @@
  */
 
 import type { Connection, Edge, HandleType } from '@xyflow/react'
-import { requestRemoveEdge } from '@/store/edges'
-import { $activeFlowMetadata } from '@/store/flow'
 import { useUnit } from 'effector-react'
 import { useCallback, useRef } from 'react'
+import { requestRemoveEdge } from '@/store/edges'
+import { $activeFlowMetadata } from '@/store/flow'
 
 /**
  * Hook for handling edge reconnection logic

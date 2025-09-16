@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { Cross2Icon } from '@radix-ui/react-icons'
+import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Cross2Icon } from '@radix-ui/react-icons'
-import { motion } from 'framer-motion'
 
 interface FlowTagProps {
   tag: string

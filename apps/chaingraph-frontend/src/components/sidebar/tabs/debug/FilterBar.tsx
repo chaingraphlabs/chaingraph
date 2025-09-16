@@ -6,12 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { motion } from 'framer-motion'
 import { Filter } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface FilterBarProps {
   selectedTypes: Set<ExecutionEventEnum>

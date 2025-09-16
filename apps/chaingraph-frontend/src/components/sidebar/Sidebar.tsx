@@ -6,6 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import {
+  ChevronLeftIcon,
+  GearIcon,
+  QuestionMarkIcon,
+  Share1Icon,
+  ValueIcon,
+} from '@radix-ui/react-icons'
+import { Atom, Bug, FileJson, GitBranch, LayersIcon, Scroll, Wallet } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { DebugPanel } from '@/components/sidebar/tabs/debug/DebugPanel'
 import { ExecutionTree } from '@/components/sidebar/tabs/execution-tree'
 import { ExportImport } from '@/components/sidebar/tabs/export-import'
@@ -18,15 +27,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils'
 import { initConfig } from '@/store/archai'
 import { setActiveFlowId } from '@/store/flow'
-import {
-  ChevronLeftIcon,
-  GearIcon,
-  QuestionMarkIcon,
-  Share1Icon,
-  ValueIcon,
-} from '@radix-ui/react-icons'
-import { Atom, Bug, FileJson, GitBranch, LayersIcon, Scroll, Wallet } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
 import { ArchAIIntegration } from './tabs/archai-integration'
 import { Help } from './tabs/Help'
 import { Settings } from './tabs/Settings'

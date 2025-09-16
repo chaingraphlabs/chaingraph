@@ -15,19 +15,19 @@ import type {
   NodeMetadataWithPorts,
   ObjectPortConfig,
 } from '@badaitech/chaingraph-types'
-import { getPortTypeColor } from '@/components/flow/nodes/ChaingraphNode/ports/doc'
-import { useTheme } from '@/components/theme/hooks/useTheme'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-
-import { cn } from '@/lib/utils'
-
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { PortDirection } from '@badaitech/chaingraph-types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+
 import Markdown from 'react-markdown'
+
 import remarkGfm from 'remark-gfm'
+import { getPortTypeColor } from '@/components/flow/nodes/ChaingraphNode/ports/doc'
+import { useTheme } from '@/components/theme/hooks/useTheme'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@/lib/utils'
 
 interface NodePreviewProps {
   node: NodeMetadataWithPorts

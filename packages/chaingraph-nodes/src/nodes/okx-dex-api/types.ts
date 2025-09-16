@@ -1252,21 +1252,21 @@ export class FormattedSwapResponse {
       fee: string
     }[]
   } = {
-      fromToken: {
-        symbol: '',
-        amount: '',
-        decimal: '',
-        unitPrice: '',
-      },
-      toToken: {
-        symbol: '',
-        amount: '',
-        decimal: '',
-        unitPrice: '',
-      },
-      priceImpact: '',
-      dexRoutes: [],
-    }
+    fromToken: {
+      symbol: '',
+      amount: '',
+      decimal: '',
+      unitPrice: '',
+    },
+    toToken: {
+      symbol: '',
+      amount: '',
+      decimal: '',
+      unitPrice: '',
+    },
+    priceImpact: '',
+    dexRoutes: [],
+  }
 
   @PortString({
     title: 'Summary',

@@ -7,14 +7,14 @@
  */
 
 import type { CategoryMetadata, NodeMetadataWithPorts } from '@badaitech/chaingraph-types'
-import { useTheme } from '@/components/theme/hooks/useTheme'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
 import { PortDirection } from '@badaitech/chaingraph-types'
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
 import { ArrowRightIcon } from 'lucide-react'
 import { useMemo } from 'react'
+import { useTheme } from '@/components/theme/hooks/useTheme'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { NodePreview } from './NodePreview'
 
 interface NodeCardProps {

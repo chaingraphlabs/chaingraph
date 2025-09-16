@@ -7,11 +7,11 @@
  */
 
 import type { ExecutionTreeNode, RootExecution } from '@badaitech/chaingraph-executor/types'
+import { ChevronDown, ChevronRight, Loader2, Zap } from 'lucide-react'
+import { memo, useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight, Loader2, Zap } from 'lucide-react'
-import { memo, useEffect, useState } from 'react'
 import { formatDuration, formatExecutionId } from '../utils/formatters'
 import { ExecutionStatusIndicator } from './ExecutionStatus'
 

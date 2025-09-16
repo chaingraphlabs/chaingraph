@@ -6,8 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { MCPServerWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
 import type { Resource, ResourceTemplate } from '@modelcontextprotocol/sdk/types.js'
+import type { MCPServerWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
+import { useDraggable } from '@dnd-kit/core'
+import { motion } from 'framer-motion'
+import { File, FileBox, FileImage, FileJson, FileText } from 'lucide-react'
+import { useMemo } from 'react'
 import { NodePreview } from '@/components/sidebar'
 import { useMCPServerWithNodes } from '@/components/sidebar/tabs/mcp/store/useMCPServerWithNodes'
 import { buildNodeMetadataWithPorts } from '@/components/sidebar/tabs/mcp/utils/node'
@@ -15,10 +19,6 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useCategoryMetadata } from '@/store/categories/useCategories'
-import { useDraggable } from '@dnd-kit/core'
-import { motion } from 'framer-motion'
-import { File, FileBox, FileImage, FileJson, FileText } from 'lucide-react'
-import { useMemo } from 'react'
 
 interface MCPResourceCardProps {
   resource: Resource | ResourceTemplate

@@ -8,6 +8,9 @@
 
 import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
+import Color from 'color'
+import { useUnit } from 'effector-react'
+import { useEffect, useState } from 'react'
 import { useTheme } from '@/components/theme'
 import {
   Tooltip,
@@ -17,9 +20,6 @@ import {
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { $isConnecting } from '@/store/edges/stores'
-import Color from 'color'
-import { useUnit } from 'effector-react'
-import { useEffect, useState } from 'react'
 import { getPortTypeColor } from './getPortTypeColor'
 import { PortDocContent } from './PortDocContent'
 
