@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.4
+
+### Patch Changes
+
+- feat: add VITE_CHAINGRAPH_EXECUTOR_WS_URL to environment variables and comment out unused file handling code
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.4
+  - @badaitech/chaingraph-nodes@0.5.4
+  - @badaitech/chaingraph-types@0.5.4
+  - @badaitech/chaingraph-trpc@0.5.4
+
 ## 0.5.3
 
 ### Patch Changes
