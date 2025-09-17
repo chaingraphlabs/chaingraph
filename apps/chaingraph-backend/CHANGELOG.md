@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.2
+
+### Patch Changes
+
+- feat: refactor Dockerfile and configuration files; remove unused dependencies and optimize build process
+
 ## 0.5.1
 
 ### Patch Changes
