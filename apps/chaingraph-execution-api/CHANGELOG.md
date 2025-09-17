@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.3
+
+### Patch Changes
+
+- fix: resolve pino-pretty transport error in production builds
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.3
+  - @badaitech/chaingraph-types@0.5.3
+  - @badaitech/chaingraph-trpc@0.5.3
+
 ## 0.5.2
 
 ### Patch Changes

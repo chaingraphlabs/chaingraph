@@ -10,29 +10,49 @@ import process from 'node:process'
 import pino from 'pino'
 import { config } from './config'
 
-export const logger = pino({
+// Production logger - pure JSON output
+const productionLogger = pino({
   level: config.logging.level,
-  transport: config.logging.pretty
-    ? {
+  formatters: {
+    level: label => ({ level: label }),
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
+  base: {
+    pid: process.pid,
+  },
+})
+
+// Development logger - conditionally use pino-pretty when available
+const developmentLogger = (() => {
+  if (!config.logging.pretty || process.env.NODE_ENV === 'production') {
+    return productionLogger
+  }
+
+  try {
+    return pino({
+      level: config.logging.level,
+      transport: {
         target: 'pino-pretty',
         options: {
           colorize: true,
           translateTime: 'HH:MM:ss Z',
           ignore: 'pid,hostname',
         },
-      }
-    : undefined,
-})
+      },
+    })
+  } catch {
+    // Fallback to production logger if pino-pretty is not available
+    return productionLogger
+  }
+})()
 
-export const loggerJSON = pino({
-  level: config.logging.level,
-  formatters: { level: (label) => { return { level: label } } },
-  timestamp: pino.stdTimeFunctions.isoTime,
-  base: {
-    pid: process.pid,
-    // hostname: require('node:os').hostname(),
-  },
-})
+// Export the appropriate logger based on environment
+export const logger = process.env.NODE_ENV === 'production'
+  ? productionLogger
+  : developmentLogger
+
+// Keep existing loggerJSON for backward compatibility
+export const loggerJSON = productionLogger
 
 export function createLogger(name: string) {
   return logger.child({ module: name })
