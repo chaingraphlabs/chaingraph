@@ -57,13 +57,6 @@ RUN addgroup -g 1001 nodejs && \
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install pnpm for production dependencies
-RUN npm install -g pnpm@10.5.2
-RUN apk add --no-cache python3 make g++
-
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile
-
 # Copy built execution-api application
 COPY --from=builder --chown=nodeuser:nodejs /app/apps/chaingraph-execution-api/dist/ ./apps/chaingraph-execution-api/dist/
 

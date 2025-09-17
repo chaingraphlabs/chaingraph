@@ -52,17 +52,9 @@ WORKDIR /app
 RUN addgroup -g 1001 nodejs && \
     adduser -S -u 1001 -G nodejs nodeuser
 
-# Install pnpm for production dependencies
-RUN npm install -g pnpm@10.5.2
-RUN apk add --no-cache python3 make g++
-
 # Copy package files for production dependencies
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile && \
-    chown -R nodeuser:nodejs /app
 
 # Copy built execution-worker application
 COPY --from=builder --chown=nodeuser:nodejs /app/apps/chaingraph-execution-worker/dist/ ./apps/chaingraph-execution-worker/dist/

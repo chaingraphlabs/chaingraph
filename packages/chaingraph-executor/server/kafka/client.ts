@@ -8,13 +8,13 @@
 
 import type { LogEntry } from 'kafkajs'
 import { Kafka, logLevel } from 'kafkajs'
-import { CompressionCodecs, CompressionTypes } from 'kafkajs'
-import LZ4 from 'lz4-kafkajs'
+// import { CompressionCodecs, CompressionTypes } from 'kafkajs'
+// import LZ4 from 'lz4-kafkajs'
 import { config } from '../utils/config'
 import { createLogger } from '../utils/logger'
 
 // Register LZ4 codec
-CompressionCodecs[CompressionTypes.LZ4] = new LZ4().codec
+// CompressionCodecs[CompressionTypes.LZ4] = new LZ4().codec
 
 const logger = createLogger('kafka-client')
 const kafkaLogger = createLogger('kafkajs')

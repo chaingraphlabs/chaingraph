@@ -55,7 +55,6 @@
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.5",
     "kafkajs": "^2.2.4",
-    "lz4-kafkajs": "^1.0.0",
     "nanoid": "^5.1.5",
     "nanoid-dictionary": "^5.0.0",
     "pg": "^8.16.3",

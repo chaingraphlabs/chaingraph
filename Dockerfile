@@ -13,7 +13,7 @@ ENV NODE_OPTIONS="--max-old-space-size=12288"
 ENV NODE_ENV=production
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm deploy --filter @badaitech/chaingraph-backend --prod --legacy /prod/backend
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm turbo run build --filter=@badaitech/chaingraph-frontend...
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm turbo run build --filter=@badaitech/chaingraph-frontend
 
 FROM base AS backend
 WORKDIR /prod/backend

@@ -21,12 +21,19 @@ export default defineConfig({
   plugins: [
     nodePolyfills({
       include: ['buffer', 'crypto', 'path'],
+      exclude: ['fs', 'os', 'stream', 'vm'],
       globals: {
         global: true,
         Buffer: true,
         process: true,
       },
       protocolImports: true,
+      overrides: {
+        fs: 'rollup-plugin-node-polyfills/polyfills/empty',
+        os: 'rollup-plugin-node-polyfills/polyfills/empty',
+        stream: 'rollup-plugin-node-polyfills/polyfills/empty',
+        vm: 'rollup-plugin-node-polyfills/polyfills/empty',
+      },
     }),
     react({
       tsDecorators: true,
@@ -76,6 +83,12 @@ export default defineConfig({
         'dist',
         'index.cjs',
       ),
+      // Polyfill Node.js modules that cannot run in browser
+      'node:fs': 'rollup-plugin-node-polyfills/polyfills/empty',
+      'node:os': 'rollup-plugin-node-polyfills/polyfills/empty',
+      'node:path': 'path-browserify',
+      'fs': 'rollup-plugin-node-polyfills/polyfills/empty',
+      'os': 'rollup-plugin-node-polyfills/polyfills/empty',
     },
   },
   optimizeDeps: {
@@ -87,7 +100,14 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       external: [
-        // 'vite-plugin-node-polyfills/shims/global',
+        // Node.js modules that should not be bundled for browser
+        'node:fs',
+        'node:os',
+        'node:path',
+        'fs',
+        'os',
+        'stream',
+        'vm',
       ],
     },
   },
