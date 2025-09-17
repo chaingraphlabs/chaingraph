@@ -16,10 +16,6 @@ import type {
   PortType,
 } from '@badaitech/chaingraph-types'
 import type { ContentBlockBase } from './types'
-import { Buffer } from 'node:buffer'
-import * as fs from 'node:fs'
-import * as os from 'node:os'
-import * as path from 'node:path'
 import { Anthropic } from '@anthropic-ai/sdk'
 import {
   ExecutionEventImpl,
@@ -1352,17 +1348,17 @@ export class AntropicLlmCallNode extends BaseNode {
           // TODO: send file content to the attachments
 
           // save the file content to the filesystem
-          const filePath = path.join(os.tmpdir(), fileMetadata.filename || `file-${fileId}`)
-          const fileStream = fs.createWriteStream(filePath)
-          fileStream.on('finish', () => {
-            // console.log(`File saved to: ${filePath}`)
-            // TODO: send file path to the attachments
-          })
+          // const filePath = path.join(os.tmpdir(), fileMetadata.filename || `file-${fileId}`)
+          // TODO: send file path to the attachments
+          // const fileStream = fs.createWriteStream(filePath)
+          // fileStream.on('finish', () => {
+          // console.log(`File saved to: ${filePath}`)
+          // })
 
           // Convert blob to buffer and write to file
-          const buffer = await fileContentBlob.arrayBuffer()
-          fileStream.write(Buffer.from(buffer))
-          fileStream.end()
+          // const buffer = await fileContentBlob.arrayBuffer()
+          // fileStream.write(Buffer.from(buffer))
+          // fileStream.end()
         }
       }
 
