@@ -36,7 +36,7 @@ const topicConfigs: TopicConfig[] = [
     replicationFactor: 1, // Changed from 3 to 1 for local development
     configEntries: [
       { name: 'retention.ms', value: '2592000000' }, // 30 days
-      { name: 'compression.type', value: 'lz4' },
+      // { name: 'compression.type', value: 'lz4' },
       { name: 'cleanup.policy', value: 'delete' },
     ],
   },

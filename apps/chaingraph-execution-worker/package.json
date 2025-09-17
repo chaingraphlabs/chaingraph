@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-execution-worker",
   "type": "module",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": false,
   "description": "Chaingraph Execution Worker Service which connected to Kafka and process the flow executions",
   "license": "BUSL-1.1",
@@ -41,7 +41,6 @@
     "dotenv": "^16.5.0",
     "esm": "^3.2.25",
     "kafkajs": "^2.2.4",
-    "lz4-kafkajs": "^1.0.0",
     "superjson": "^2.2.2",
     "ws": "^8.18.3",
     "xxhashjs": "^0.2.2",

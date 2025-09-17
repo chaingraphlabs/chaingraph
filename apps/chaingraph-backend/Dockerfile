@@ -1,7 +1,3 @@
-# Use the base packages image
-ARG PACKAGES_IMAGE=ghcr.io/badaitech/chaingraph-packages:latest
-FROM ${PACKAGES_IMAGE} AS packages
-
 FROM node:22.14.0-alpine AS base
 
 WORKDIR /app
@@ -21,18 +17,14 @@ RUN turbo prune "@badaitech/chaingraph-backend" --docker
 FROM base AS builder
 
 ENV NODE_OPTIONS="--max-old-space-size=8192"
-ENV NODE_ENV=production
 
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 RUN pnpm install --frozen-lockfile
 
-# Copy built packages from base image
-COPY --from=packages /packages/ ./packages/
-
 COPY --from=pruner /app/out/full/ .
-RUN pnpm turbo run build --filter=@badaitech/chaingraph-backend
+RUN pnpm turbo run build --filter=@badaitech/chaingraph-backend...
 
 # Final stage: Run the application
 FROM base AS runner
@@ -49,11 +41,12 @@ COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 COPY --from=builder --chown=nodeuser:nodejs /app/apps/chaingraph-backend/dist/ ./apps/chaingraph-backend/dist/
+COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-nodes/src/ ./packages/chaingraph-nodes/src/
+COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-types/src/ ./packages/chaingraph-types/src/
+COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-trpc/client/ ./packages/chaingraph-trpc/client/
+COPY --from=builder --chown=nodeuser:nodejs /app/packages/chaingraph-trpc/server/ ./packages/chaingraph-trpc/server/
 
-# Copy built packages from base image
-COPY --from=packages --chown=nodeuser:nodejs /packages/ ./packages/
-
-RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts && \
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts && \
     chown -R nodeuser:nodejs /app
 
 USER nodeuser
