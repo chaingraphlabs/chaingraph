@@ -27,7 +27,7 @@ RUN pnpm install --frozen-lockfile
 # Build stage for packages
 FROM dependencies AS builder
 
-ENV NODE_OPTIONS="--max-old-space-size=12288"
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 ENV NODE_ENV=production
 
 # Build all workspace packages

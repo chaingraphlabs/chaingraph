@@ -15,7 +15,7 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.cjs"
+      "require": "./dist/index.cjs"
     }
   },
   "main": "./dist/index.cjs",
