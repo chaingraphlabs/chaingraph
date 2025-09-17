@@ -17,7 +17,8 @@ export default defineConfig({
     },
     outDir: 'dist',
     rollupOptions: {
-      external: ['bigint-crypto-utils'],
+      // external: ['bigint-crypto-utils', 'xxhashjs'],
+      external: ['bigint-crypto-utils', 'pg', 'pg-native', 'lz4', 'lz4-kafkajs', 'xxhashjs'],
     },
   },
 })

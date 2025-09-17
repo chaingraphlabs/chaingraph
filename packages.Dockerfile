@@ -19,16 +19,10 @@ FROM base AS dependencies
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY turbo.json ./
 
-# Copy only packages (not apps) - this avoids lockfile mismatch
+COPY apps/ ./apps/
 COPY packages/ ./packages/
 
-# Install dependencies with optimizations for space and speed
-# - Use --no-frozen-lockfile to handle potential mismatches
-# - Use --ignore-scripts to skip unnecessary post-install scripts
-# - Clean cache immediately to save space
-RUN pnpm install --filter="./packages/*" --no-frozen-lockfile --ignore-scripts && \
-    pnpm store prune && \
-    rm -rf /root/.pnpm-store /root/.cache
+RUN pnpm install --frozen-lockfile
 
 # Build stage for packages
 FROM dependencies AS builder

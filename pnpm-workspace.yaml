@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+
 onlyBuiltDependencies:
   - '@swc/core'
   - blake-hash
@@ -8,6 +9,7 @@ onlyBuiltDependencies:
   - es5-ext
   - esbuild
   - keccak
+  - lz4
   - protobufjs
   - secp256k1
   - utf-8-validate
