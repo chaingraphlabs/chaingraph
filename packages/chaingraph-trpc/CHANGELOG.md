@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.3
+
+### Patch Changes
+
+- fix: resolve pino-pretty transport error in production builds
+
 ## 0.5.2
 
 ### Patch Changes
