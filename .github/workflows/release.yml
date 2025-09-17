@@ -25,7 +25,7 @@ env:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m-2
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -153,7 +153,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile.packages
+          file: packages.Dockerfile
           push: ${{ github.ref == 'refs/heads/release' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/chaingraph-packages:latest
@@ -164,7 +164,7 @@ jobs:
   # Build all application Docker images in parallel
   build-apps:
     name: Build Application Images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m-2
     if: github.ref == 'refs/heads/release'
     needs: release
     strategy:

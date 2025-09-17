@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.1
+
+### Patch Changes
+
+- feat: update Dockerfile and package configurations; add new dependencies for Kafka and LZ4 support, and streamline production dependency installation
+
 ## 0.5.0
 
 ### Minor Changes

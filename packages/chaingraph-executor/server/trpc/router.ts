@@ -506,54 +506,6 @@ export const executionRouter = router({
         }, 'Event subscription ended')
       }
     }),
-
-  // Debug procedures
-  // debug: router({
-  //   // Add breakpoint
-  //   addBreakpoint: procedure
-  //     .input(z.object({
-  //       executionId: z.string(),
-  //       nodeId: z.string(),
-  //     }))
-  //     .mutation(async ({ input, ctx }) => {
-  //       const { executionService } = ctx
-  //       await executionService.addBreakpoint(input.executionId, input.nodeId)
-  //       return { success: true }
-  //     }),
-  //
-  //   // Remove breakpoint
-  //   removeBreakpoint: procedure
-  //     .input(z.object({
-  //       executionId: z.string(),
-  //       nodeId: z.string(),
-  //     }))
-  //     .mutation(async ({ input, ctx }) => {
-  //       const { executionService } = ctx
-  //       await executionService.removeBreakpoint(input.executionId, input.nodeId)
-  //       return { success: true }
-  //     }),
-  //
-  //   // Step execution
-  //   step: procedure
-  //     .input(z.object({
-  //       executionId: z.string(),
-  //     }))
-  //     .mutation(async ({ input, ctx }) => {
-  //       const { executionService } = ctx
-  //       await executionService.stepExecution(input.executionId)
-  //       return { success: true }
-  //     }),
-  //
-  //   // Get breakpoints
-  //   getBreakpoints: procedure
-  //     .input(z.object({
-  //       executionId: z.string(),
-  //     }))
-  //     .query(async ({ input, ctx }) => {
-  //       const { executionService } = ctx
-  //       return await executionService.getBreakpoints(input.executionId)
-  //     }),
-  // }),
 })
 
 export type ExecutionRouter = typeof executionRouter

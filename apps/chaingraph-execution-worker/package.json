@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-execution-worker",
   "type": "module",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": false,
   "description": "Chaingraph Execution Worker Service which connected to Kafka and process the flow executions",
   "license": "BUSL-1.1",
@@ -15,7 +15,7 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.cjs"
+      "require": "./dist/index.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -40,8 +40,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "esm": "^3.2.25",
+    "kafkajs": "^2.2.4",
+    "lz4-kafkajs": "^1.0.0",
     "superjson": "^2.2.2",
     "ws": "^8.18.3",
+    "xxhashjs": "^0.2.2",
     "yaml": "^2.8.0"
   },
   "devDependencies": {

@@ -45,7 +45,7 @@
     "changeset:version": "changeset version",
     "changeset:publish": "changeset publish",
     "typecheck": "turbo run typecheck",
-    "docker:packages": "docker build -f Dockerfile.packages -t chaingraph-packages:latest .",
+    "docker:packages": "docker build -f packages.Dockerfile -t chaingraph-packages:latest .",
     "docker:backend": "docker build -f apps/chaingraph-backend/Dockerfile -t chaingraph-backend:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
     "docker:frontend": "docker build -f apps/chaingraph-frontend/Dockerfile -t chaingraph-frontend:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
     "docker:execution-api": "docker build -f apps/chaingraph-execution-api/Dockerfile -t chaingraph-execution-api:latest --build-arg PACKAGES_IMAGE=chaingraph-packages:latest .",
