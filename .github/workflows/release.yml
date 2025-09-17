@@ -147,21 +147,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push base packages image
-      - name: Build and push base packages image
-        if: github.ref == 'refs/heads/release'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: packages.Dockerfile
-          push: ${{ github.ref == 'refs/heads/release' }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/chaingraph-packages:latest
-            ghcr.io/${{ github.repository_owner }}/chaingraph-packages:${{ github.sha }}
-          cache-from: type=gha,scope=packages
-          cache-to: type=gha,mode=max,scope=packages
-
-  # Build all application Docker images in parallel
+  # Build all application Docker images in parallel (self-contained builds)
   build-apps:
     name: Build Application Images
     runs-on: ubuntu-latest-m-2
@@ -217,8 +203,6 @@ jobs:
           context: .
           file: ${{ matrix.app.dockerfile }}
           push: true
-          build-args: |
-            PACKAGES_IMAGE=ghcr.io/${{ github.repository_owner }}/chaingraph-packages:${{ github.sha }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/chaingraph-${{ matrix.app.name }}:latest
             ghcr.io/${{ github.repository_owner }}/chaingraph-${{ matrix.app.name }}:${{ env[matrix.app.version_env] }}

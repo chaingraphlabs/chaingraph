@@ -1,8 +1,8 @@
-FROM node:22.12.0-alpine AS base
+FROM node:22.14.0-alpine AS base
 
 WORKDIR /app
 
-RUN npm install -g pnpm@10.3.0 turbo@2.5.0
+RUN npm install -g pnpm@10.5.2 turbo@2.5.0
 
 # Install build dependencies for native modules and CA certificates
 RUN apk add --no-cache python3 make g++ ca-certificates
