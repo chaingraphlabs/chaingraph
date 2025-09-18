@@ -167,7 +167,7 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
               {execution.externalEvents[0].payload && (
                 <div className="text-sm">
                   <span className="text-muted-foreground">Payload:</span>
-                  <pre className="mt-1 text-xs font-mono overflow-x-auto">
+                  <pre className="mt-1 text-xs font-mono overflow-auto whitespace-pre-wrap break-all">
                     {JSON.stringify(execution.externalEvents[0].payload, null, 2)}
                   </pre>
                 </div>

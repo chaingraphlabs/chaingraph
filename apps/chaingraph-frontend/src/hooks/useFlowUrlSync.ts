@@ -23,5 +23,5 @@ export function useFlowUrlSync() {
       console.debug(`[URL SYNC] Initial load: setting active flow to ${flowId}`)
       setActiveFlowId(flowId)
     }
-  }, [flowId]) // Remove activeFlowId from deps to avoid loops
+  }, [activeFlowId, flowId]) // Remove activeFlowId from deps to avoid loops
 }

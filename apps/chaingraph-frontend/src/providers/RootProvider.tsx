@@ -28,7 +28,6 @@ import { MenuPositionProvider } from '../components/flow/components/context-menu
 import { ThemeProvider } from '../components/theme/ThemeProvider'
 import { WagmiProvider } from '../components/wallet/WagmiProvider'
 import { ZoomProvider } from './ZoomProvider'
-import '../store'
 
 interface RootProviderProps {
   wrapperClassName?: string

@@ -223,16 +223,9 @@ export const ExecutionNode = memo(function ExecutionNode({
 
         {/* Metrics */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {/* Duration */}
-          {startedAt && completedAt && (
-            <span className="font-mono">
-              {formatDuration(startedAt, completedAt)}
-            </span>
-          )}
-
-          <span className="font-mono">
-            {(node as RootExecution).execution.executionDepth}
-          </span>
+          {/* <span className="font-mono"> */}
+          {/*  {(node as RootExecution).execution.executionDepth} */}
+          {/* </span> */}
 
           {/* Child Count Badge (for root nodes with statistics) */}
           {isRoot && (node as RootExecution).totalNested > 1 && (
@@ -242,6 +235,13 @@ export const ExecutionNode = memo(function ExecutionNode({
             >
               {(node as RootExecution).totalNested - 1}
             </Badge>
+          )}
+
+          {/* Duration */}
+          {startedAt && completedAt && (
+            <span className="font-mono">
+              {formatDuration(startedAt, completedAt)}
+            </span>
           )}
 
           {/* Depth Badge (for root nodes with levels) */}

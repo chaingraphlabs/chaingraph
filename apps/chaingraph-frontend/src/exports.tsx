@@ -28,12 +28,16 @@ export * from './components/sidebar'
 export * from './components/theme'
 export * from './components/ui'
 export * from './components/wallet/WagmiProvider'
+export { ChainGraphProvider } from './providers/ChainGraphProvider'
 export { RootProvider } from './providers/RootProvider'
 export * from './providers/ZoomProvider'
 export * from './store'
 export {
   type ChainGraphConfig,
   initChainGraph,
+  isChainGraphInitialized,
+  resetChainGraphInitialization,
   type SessionProvider,
   sessionProviders,
 } from './store/initialization'
+export { DEFAULT_INIT_KEY, initTracker } from './store/initialization-tracker'

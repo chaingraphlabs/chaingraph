@@ -23,6 +23,7 @@ export async function startWorker(): Promise<void> {
     // Set environment variables for the executor package
     process.env.EXECUTION_MODE = config.executionMode
     process.env.DATABASE_URL = config.databaseUrl
+    process.env.DATABASE_URL_EXECUTIONS = config.databaseUrlExecutions
     process.env.KAFKA_BROKERS = config.kafka.brokers.join(',')
     process.env.WORKER_ID = workerId
 

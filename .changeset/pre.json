@@ -1,0 +1,20 @@
+{
+  "mode": "pre",
+  "tag": "dev",
+  "initialVersions": {
+    "@badaitech/chaingraph-backend": "0.5.4",
+    "@badaitech/chaingraph-execution-api": "0.5.4",
+    "@badaitech/chaingraph-execution-worker": "0.5.4",
+    "@badaitech/chaingraph-frontend": "0.5.4",
+    "@badaitech/badai-api": "0.5.4",
+    "@badaitech/chaingraph-executor": "0.5.4",
+    "@badaitech/chaingraph-nodes": "0.5.4",
+    "@badaitech/chaingraph-trpc": "0.5.4",
+    "@badaitech/chaingraph-types": "0.5.4",
+    "@badaitech/typescript-config": "0.5.4"
+  },
+  "changesets": [
+    "olive-ears-camp",
+    "tired-days-sleep"
+  ]
+}

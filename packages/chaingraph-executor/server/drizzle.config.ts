@@ -24,9 +24,9 @@ if (envExists) {
 }
 
 // Check if DATABASE_URL is provided
-if (!process.env.DATABASE_URL) {
-  console.warn('WARNING: DATABASE_URL environment variable is not set')
-  console.warn('Please provide a valid DATABASE_URL environment variable or create a .env file')
+if (!process.env.DATABASE_URL_EXECUTIONS && !process.env.DATABASE_URL) {
+  console.warn('WARNING: DATABASE_URL_EXECUTIONS or DATABASE_URL environment variable is not set.')
+  console.warn('Please provide a valid DATABASE_URL_EXECUTIONS or DATABASE_URL environment variable or create a .env file')
 }
 
 export default defineConfig({
@@ -34,7 +34,7 @@ export default defineConfig({
   schema: path.resolve(__dirname, './stores/postgres/schema.ts'),
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres',
+    url: process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres',
   },
   tablesFilter: [
     'chaingraph_*',

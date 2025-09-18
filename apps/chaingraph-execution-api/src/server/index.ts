@@ -20,9 +20,9 @@ export async function startServer(): Promise<void> {
     logger.info('Services initialized')
 
     // Use the executor's WebSocket server
-    const { wss } = createWSServer(config.port, '0.0.0.0')
+    const { wss } = createWSServer(config.port, config.host)
 
-    logger.info({ port: config.port }, '✅ Server started')
+    logger.info({ port: config.port, host: config.host }, '✅ Server started')
   } catch (error) {
     logger.error({ error }, 'Failed to start server')
     process.exit(1)

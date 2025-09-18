@@ -20,7 +20,8 @@ export const config = {
 
   // Database
   database: {
-    url: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+    url_main: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+    url_executions: process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
   },
 
   // Kafka (only used in distributed mode)

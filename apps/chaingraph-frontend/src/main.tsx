@@ -13,6 +13,7 @@ import 'reflect-metadata'
 import './reflect'
 import '@badaitech/chaingraph-nodes'
 import './index.css'
+import './store' // Ensure stores are initialized for standalone app
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

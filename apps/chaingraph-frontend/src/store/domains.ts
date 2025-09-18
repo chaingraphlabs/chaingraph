@@ -45,3 +45,6 @@ export const dragDropDomain = createDomain('drag-drop')
 
 // MCP domain for MCP server management
 export const mcpDomain = createDomain('mcp')
+
+// Initialization domain for app initialization state management
+export const initializationDomain = createDomain('initialization')

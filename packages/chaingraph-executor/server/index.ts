@@ -58,7 +58,7 @@ export { config } from './utils/config'
 export type { ExecutionMode } from './utils/config'
 
 // Utilities
-export { closeDatabase, getDatabase } from './utils/db'
+export { closeDatabaseExecutions, closeDatabaseMain, getDatabaseExecutions, getDatabaseMain } from './utils/db'
 export { createLogger } from './utils/logger'
 
 // Workers
