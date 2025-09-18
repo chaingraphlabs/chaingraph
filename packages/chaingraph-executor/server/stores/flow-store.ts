@@ -9,7 +9,7 @@
 import type { DBType, IFlowStore } from '@badaitech/chaingraph-trpc/server'
 import type { Flow } from '@badaitech/chaingraph-types'
 import { DBFlowStore } from '@badaitech/chaingraph-trpc/server'
-import { getDatabase } from '../utils/db'
+import { getDatabaseMain } from '../utils/db'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('flow-store')
@@ -20,7 +20,7 @@ export async function getFlowStore(
   db?: DBType,
 ): Promise<IFlowStore> {
   if (!flowStore) {
-    const _db = db ?? await getDatabase()
+    const _db = db ?? await getDatabaseMain()
     flowStore = new DBFlowStore(_db, false)
   }
   return flowStore

@@ -7,7 +7,7 @@
  */
 
 import type { IExecutionStore } from './interfaces/IExecutionStore'
-import { getDatabase } from '../utils/db'
+import { getDatabaseExecutions } from '../utils/db'
 import { createLogger } from '../utils/logger'
 import { PostgresExecutionStore } from './postgres/postgres-execution-store'
 
@@ -17,7 +17,7 @@ let executionStore: IExecutionStore | null = null
 
 export async function getExecutionStore(): Promise<IExecutionStore> {
   if (!executionStore) {
-    const db = await getDatabase()
+    const db = await getDatabaseExecutions()
     executionStore = new PostgresExecutionStore(db)
   }
   return executionStore

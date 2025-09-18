@@ -13,6 +13,7 @@ import { attach, combine, createEffect } from 'effector'
 import SuperJSON from 'superjson'
 import { globalReset } from '@/store/common'
 import { trpcDomain } from '@/store/domains'
+import { createConnectionKey } from '../initialization-tracker'
 
 interface ClientConfig {
   sessionBadAI?: string
@@ -41,14 +42,31 @@ export const createTRPCExecutionClientEvent = trpcDomain.createEvent<CreateClien
 export const $trpcClientExecutor: StoreWritable<TRPCClient | null> = trpcDomain.createStore<TRPCClient | null>(null)
 const $trpcClientExecutorConfig: StoreWritable<ClientConfig | null> = trpcDomain.createStore<ClientConfig | null>(null)
 
-// Effect to create the TRPC execution client
-const createExecutorClientFx = createEffect<ClientConfig, TRPCClient>((config) => {
+// Connection deduplication map with secure session hashing
+const activeExecutorConnections = new Map<string, TRPCClient>()
+
+// Effect to create the TRPC execution client with connection deduplication
+const createExecutorClientFx = createEffect<ClientConfig, TRPCClient>(async (config) => {
+  // Create secure connection key
+  const connectionKey = await createConnectionKey({
+    trpcURL: config.trpcURL,
+    sessionBadAI: config.sessionBadAI,
+  })
+
   console.log('[TRPC Executor Client] Creating client with config:', {
     url: config.trpcURL,
     hasSession: !!config.sessionBadAI,
+    connectionKey: `${connectionKey.substring(0, 8)}...`, // Log truncated key for debugging
   })
 
-  return createTRPCClient({
+  // Check for existing connection
+  if (activeExecutorConnections.has(connectionKey)) {
+    console.log('[TRPC Executor Client] Reusing existing connection for key:', `${connectionKey.substring(0, 8)}...`)
+    return activeExecutorConnections.get(connectionKey)!
+  }
+
+  // Create new connection
+  const client = createTRPCClient({
     url: config.trpcURL,
     superjsonCustom: config.superjsonCustom,
     auth: {
@@ -60,12 +78,20 @@ const createExecutorClientFx = createEffect<ClientConfig, TRPCClient>((config) =
       },
       onClose: (event) => {
         console.log('[TRPC Executor Client] WebSocket closed:', event)
+        // Clean up connection on close
+        activeExecutorConnections.delete(connectionKey)
       },
       onOpen: () => {
-        console.log('[TRPC Executor Client] WebSocket opened')
+        console.log('[TRPC Executor Client] WebSocket opened for key:', `${connectionKey.substring(0, 8)}...`)
       },
     },
   }) as TRPCClient
+
+  // Store connection in map
+  activeExecutorConnections.set(connectionKey, client)
+  console.log('[TRPC Executor Client] Stored new connection, total connections:', activeExecutorConnections.size)
+
+  return client
 })
 
 // Combine current state for comparison

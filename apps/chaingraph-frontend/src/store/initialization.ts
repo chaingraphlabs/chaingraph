@@ -9,10 +9,12 @@
 import type { NodeRegistry } from '@badaitech/chaingraph-types'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import { NodeRegistry as NodeRegistryClass, registerSuperjsonTransformers } from '@badaitech/chaingraph-types'
-import { combine, createEffect, createEvent, createStore, sample } from 'effector'
+import { attach, combine, createEffect, sample } from 'effector'
 import SuperJSON from 'superjson'
 import { fetchCategorizedNodesFx } from './categories'
+import { initializationDomain } from './domains'
 import { loadFlowsListFx } from './flow'
+import { DEFAULT_INIT_KEY, initTracker } from './initialization-tracker'
 import { initInterpolatorFx } from './nodes'
 import { $session, setSession } from './session'
 import { $trpcClientExecutor, createTRPCExecutionClientEvent } from './trpc/execution-client'
@@ -48,15 +50,39 @@ interface InitializationState {
 export type SessionProvider = () => string | Promise<string>
 
 // Events
-const startAppInternal = createEvent<AppInternalConfig>()
-export const resetApp = createEvent()
+const startAppInternal = initializationDomain.createEvent<AppInternalConfig>()
+export const resetApp = initializationDomain.createEvent()
 
-// Stores
-const $appConfig = createStore<AppInternalConfig | null>(null)
+// Initialization domain events and stores
+export const initializationRequested = initializationDomain.createEvent<{
+  sessionOrProvider: string | SessionProvider
+  config?: ChainGraphConfig
+  initKey?: object | symbol
+}>()
+
+// Locking mechanism to prevent race conditions
+export const acquireInitLock = initializationDomain.createEvent<string>()
+export const releaseInitLock = initializationDomain.createEvent<string>()
+
+// Store for tracking initialization lock
+const $initLock = initializationDomain.createStore<string | null>(null)
+  .on(acquireInitLock, (_, lockId) => lockId)
+  .on(releaseInitLock, (state, lockId) => state === lockId ? null : state)
+  .reset(resetApp)
+
+// Track initialization config to detect changes
+const $lastInitConfig = initializationDomain.createStore<AppInternalConfig | null>(null)
   .on(startAppInternal, (_, config) => config)
   .reset(resetApp)
 
-export const $initState = createStore<InitializationState>({
+// Track if initialization is in progress (will be defined after effects)
+
+// Stores
+const $appConfig = initializationDomain.createStore<AppInternalConfig | null>(null)
+  .on(startAppInternal, (_, config) => config)
+  .reset(resetApp)
+
+export const $initState = initializationDomain.createStore<InitializationState>({
   sessionSet: false,
   nodeRegistryInitialized: false,
   trpcClientsCreated: false,
@@ -68,7 +94,7 @@ export const $initState = createStore<InitializationState>({
 // Effects
 
 // 1. Initialize node registry
-const initializeNodeRegistryFx = createEffect<AppInternalConfig, void>((config) => {
+const initializeNodeRegistryFx = initializationDomain.createEffect<AppInternalConfig, void>((config) => {
   initializeNodes((_nodeRegistry: NodeRegistry) => {
     if (config.nodeRegistry) {
       config.nodeRegistry.copyFrom(_nodeRegistry)
@@ -86,7 +112,7 @@ const initializeNodeRegistryFx = createEffect<AppInternalConfig, void>((config) 
 })
 
 // 2. Create TRPC clients effect
-const createTRPCClientsFx = createEffect<AppInternalConfig, void>((config) => {
+const createTRPCClientsFx = initializationDomain.createEffect<AppInternalConfig, void>((config) => {
   // Create main TRPC client for editor/flows
   createTRPCClientEvent({
     sessionBadAI: config.sessionToken,
@@ -103,12 +129,19 @@ const createTRPCClientsFx = createEffect<AppInternalConfig, void>((config) => {
 })
 
 // 3. Fetch initial data
-const fetchInitialDataFx = createEffect(async () => {
+const fetchInitialDataFx = initializationDomain.createEffect(async () => {
   await Promise.all([
     fetchCategorizedNodesFx(),
     loadFlowsListFx(),
   ])
 })
+
+// Track if initialization is in progress
+const $isInitializing = initializationDomain.createStore<boolean>(false)
+  .on(startAppInternal, () => true)
+  .on(fetchInitialDataFx.done, () => false)
+  .on(fetchInitialDataFx.fail, () => false)
+  .reset(resetApp)
 
 // Chain the initialization flow using sample
 
@@ -186,23 +219,156 @@ export const $initializationProgress = combine(
   },
 )
 
-// Public API - Unified initialization function
-export function initChainGraph(sessionOrProvider: string | SessionProvider, config?: ChainGraphConfig): Promise<void> {
-  // Resolve session
-  const sessionPromise = typeof sessionOrProvider === 'function'
-    ? Promise.resolve(sessionOrProvider())
-    : Promise.resolve(sessionOrProvider)
+// Smart initialization effect with locking and tracking
+const smartInitializationFx = attach({
+  source: combine({
+    lock: $initLock,
+    lastConfig: $lastInitConfig,
+    mainClient: $trpcClient,
+    executorClient: $trpcClientExecutor,
+    isInitializing: $isInitializing,
+  }),
+  effect: createEffect(async ({
+    request,
+    source,
+  }: {
+    request: { sessionOrProvider: string | SessionProvider, config?: ChainGraphConfig, initKey?: object | symbol }
+    source: { lock: string | null, lastConfig: AppInternalConfig | null, mainClient: any, executorClient: any, isInitializing: boolean }
+  }) => {
+    const { sessionOrProvider, config, initKey = DEFAULT_INIT_KEY } = request
+    const { lock, lastConfig, mainClient, executorClient, isInitializing } = source
 
-  return sessionPromise.then((sessionToken) => {
-    // Start the app with resolved session and config
-    startAppInternal({
-      sessionToken,
-      trpcMainURL: config?.trpcMainURL ?? 'ws://localhost:3001',
-      trpcExecutorURL: config?.trpcExecutorURL ?? 'ws://localhost:4021',
-      superjsonCustom: config?.superjsonCustom ?? SuperJSON,
-      nodeRegistry: config?.nodeRegistry,
+    // Check if already locked (synchronous race condition check)
+    if (lock !== null) {
+      console.log('[ChainGraph] Initialization locked, skipping duplicate call')
+      return
+    }
+
+    // Check initialization tracker first
+    const existingPromise = initTracker.getPromise(initKey)
+    if (existingPromise) {
+      console.log('[ChainGraph] Reusing existing initialization promise')
+      return existingPromise
+    }
+
+    // Generate lock ID and acquire lock
+    const lockId = crypto.randomUUID()
+    acquireInitLock(lockId)
+
+    try {
+      // Resolve session
+      const sessionToken = typeof sessionOrProvider === 'function'
+        ? await sessionOrProvider()
+        : sessionOrProvider
+
+      const newConfig: AppInternalConfig = {
+        sessionToken,
+        trpcMainURL: config?.trpcMainURL ?? 'ws://localhost:3001',
+        trpcExecutorURL: config?.trpcExecutorURL ?? 'ws://localhost:4021',
+        superjsonCustom: config?.superjsonCustom ?? SuperJSON,
+        nodeRegistry: config?.nodeRegistry,
+      }
+
+      // Check if initialization is needed
+      const configChanged = !lastConfig
+        || lastConfig.sessionToken !== newConfig.sessionToken
+        || lastConfig.trpcMainURL !== newConfig.trpcMainURL
+        || lastConfig.trpcExecutorURL !== newConfig.trpcExecutorURL
+        || lastConfig.superjsonCustom !== newConfig.superjsonCustom
+
+      const hasExistingClients = mainClient && executorClient
+
+      if (!configChanged && hasExistingClients && !isInitializing) {
+        console.log('[ChainGraph] Configuration unchanged and clients exist, skipping initialization')
+        return
+      }
+
+      console.log('[ChainGraph] Starting initialization with new configuration')
+      startAppInternal(newConfig)
+
+      // Wait for initialization to complete
+      return new Promise<void>((resolve, reject) => {
+        const unwatch = $isAppReady.watch((isReady) => {
+          if (isReady) {
+            unwatch()
+            resolve()
+          }
+        })
+
+        const unwatchError = $initializationError.watch((error) => {
+          if (error) {
+            unwatchError()
+            unwatch()
+            reject(error)
+          }
+        })
+      })
+    } finally {
+      // Always release the lock
+      releaseInitLock(lockId)
+    }
+  }),
+  mapParams: (request: { sessionOrProvider: string | SessionProvider, config?: ChainGraphConfig, initKey?: object | symbol }, source) => ({
+    request,
+    source,
+  }),
+})
+
+// Connect initialization request to smart effect
+sample({
+  clock: initializationRequested,
+  target: smartInitializationFx,
+})
+
+// Public API - Unified initialization function with tracking
+export function initChainGraph(sessionOrProvider: string | SessionProvider, config?: ChainGraphConfig, initKey?: object | symbol): Promise<void> {
+  const key = initKey || DEFAULT_INIT_KEY
+
+  // Check if already initialized/initializing
+  const existingPromise = initTracker.getPromise(key)
+  if (existingPromise) {
+    console.log('[ChainGraph] Reusing existing initialization')
+    return existingPromise
+  }
+
+  // Create new initialization promise
+  const initPromise = new Promise<void>((resolve, reject) => {
+    // Trigger initialization through effector
+    initializationRequested({ sessionOrProvider, config, initKey: key })
+
+    // Wait for completion
+    const unsubscribe = $isAppReady.watch((isReady) => {
+      if (isReady) {
+        unsubscribe()
+        resolve()
+      }
+    })
+
+    // Handle errors
+    const unsubscribeError = $initializationError.watch((error) => {
+      if (error) {
+        unsubscribeError()
+        unsubscribe()
+        reject(error)
+      }
     })
   })
+
+  // Track this initialization
+  return initTracker.track(key, initPromise)
+}
+
+// Helper to reset initialization (useful for testing)
+export function resetChainGraphInitialization(initKey?: object | symbol): void {
+  const key = initKey || DEFAULT_INIT_KEY
+  initTracker.reset(key)
+  resetApp()
+}
+
+// Helper to check if initialization is complete
+export function isChainGraphInitialized(initKey?: object | symbol): boolean {
+  const key = initKey || DEFAULT_INIT_KEY
+  return initTracker.isInitialized(key)
 }
 
 // Export session providers for convenience

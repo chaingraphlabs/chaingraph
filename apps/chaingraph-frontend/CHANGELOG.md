@@ -1,5 +1,29 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.1
+
+### Patch Changes
+
+- feat: enhance initialization process with connection deduplication and secure session hashing; add ChainGraphProvider component
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.1
+  - @badaitech/chaingraph-nodes@0.5.5-dev.1
+  - @badaitech/chaingraph-types@0.5.5-dev.1
+  - @badaitech/chaingraph-trpc@0.5.5-dev.1
+  - @badaitech/badai-api@0.5.5-dev.1
+
+## 0.5.5-dev.0
+
+### Patch Changes
+
+- Experimental version to debug the external integrations
+- Updated dependencies
+  - @badaitech/badai-api@0.5.5-dev.0
+  - @badaitech/chaingraph-executor@0.5.5-dev.0
+  - @badaitech/chaingraph-nodes@0.5.5-dev.0
+  - @badaitech/chaingraph-trpc@0.5.5-dev.0
+  - @badaitech/chaingraph-types@0.5.5-dev.0
+
 ## 0.5.4
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.1
+
+### Patch Changes
+
+- feat: enhance initialization process with connection deduplication and secure session hashing; add ChainGraphProvider component
+
+## 0.5.5-dev.0
+
+### Patch Changes
+
+- Experimental version to debug the external integrations
+
 ## 0.5.4
 
 ### Patch Changes

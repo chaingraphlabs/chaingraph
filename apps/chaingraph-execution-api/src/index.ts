@@ -15,6 +15,7 @@ import { startServer } from './server'
 logger.info('🚀 Starting tRPC Server')
 logger.info({
   port: config.port,
+  host: config.host,
   instanceId: process.env.NODE_APP_INSTANCE || '0',
 }, 'Server configuration')
 

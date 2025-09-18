@@ -27,6 +27,7 @@ export const config = {
 
   // Database URL for the executor package
   databaseUrl: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+  databaseUrlExecutions: process.env.DATABASE_URL_EXECUTIONS || 'postgres://postgres@localhost:5432/chaingraph',
 
   // Kafka configuration (needed for distributed mode)
   kafka: {

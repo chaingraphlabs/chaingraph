@@ -15,35 +15,68 @@ const logger = createLogger('database')
 
 const { Pool } = pg
 
-let pool: pg.Pool | null = null
 export type DBType = ReturnType<typeof drizzle>
-let db: DBType | null = null
 
-export async function getDatabase(): Promise<DBType> {
-  if (!db) {
-    pool = new Pool({
-      connectionString: config.database.url,
+let poolMain: pg.Pool | null = null
+let dbMain: DBType | null = null
+
+let poolExecutions: pg.Pool | null = null
+let dbExecutions: DBType | null = null
+
+export async function getDatabaseMain(): Promise<DBType> {
+  if (!dbMain) {
+    poolMain = new Pool({
+      connectionString: config.database.url_main,
     })
 
     // Test connection
     try {
-      await pool.query('SELECT 1')
+      await poolMain.query('SELECT 1')
     } catch (error) {
       logger.error({ error }, 'Failed to connect to database')
       throw error
     }
 
-    db = drizzle(pool)
+    dbMain = drizzle(poolMain)
   }
 
-  return db
+  return dbMain
 }
 
-export async function closeDatabase() {
-  if (pool) {
-    await pool.end()
-    pool = null
-    db = null
+export async function getDatabaseExecutions(): Promise<DBType> {
+  if (!dbExecutions) {
+    poolExecutions = new Pool({
+      connectionString: config.database.url_executions,
+    })
+
+    // Test connection
+    try {
+      await poolExecutions.query('SELECT 1')
+    } catch (error) {
+      logger.error({ error }, 'Failed to connect to executions database')
+      throw error
+    }
+
+    dbExecutions = drizzle(poolExecutions)
+  }
+
+  return dbExecutions
+}
+
+export async function closeDatabaseMain() {
+  if (poolMain) {
+    await poolMain.end()
+    poolMain = null
+    dbMain = null
     logger.info('Database connection closed')
+  }
+}
+
+export async function closeDatabaseExecutions() {
+  if (poolExecutions) {
+    await poolExecutions.end()
+    poolExecutions = null
+    dbExecutions = null
+    logger.info('Executions database connection closed')
   }
 }
