@@ -56,6 +56,8 @@ class InitializationTracker {
   private instances = new Map<string, Promise<void>>()
   private callbacks = new Map<string, Set<() => void>>()
   private initializationKeys = new WeakMap<object, string>()
+  private resolvedKeys = new Set<string>()
+  private rejectedKeys = new Set<string>()
 
   /**
    * Track initialization promise for a given key
@@ -71,14 +73,18 @@ class InitializationTracker {
     console.log('[InitTracker] Tracking new initialization for key:', keyString)
     this.instances.set(keyString, initPromise)
 
-    // Handle completion and cleanup callbacks
+    // Handle completion and cleanup callbacks with proper state tracking
     initPromise
       .then(() => {
         console.log('[InitTracker] Initialization completed for key:', keyString)
+        this.resolvedKeys.add(keyString)
+        this.rejectedKeys.delete(keyString) // Clear any previous failure
         this.executeCallbacks(keyString)
       })
       .catch((error) => {
         console.error('[InitTracker] Initialization failed for key:', keyString, error)
+        this.rejectedKeys.add(keyString)
+        this.resolvedKeys.delete(keyString) // Clear any previous success
         // Clean up failed initialization so it can be retried
         this.instances.delete(keyString)
       })
@@ -95,23 +101,48 @@ class InitializationTracker {
   }
 
   /**
-   * Check if initialization is complete for a key
+   * Check if initialization is complete for a key (fixed synchronous check)
    */
   isInitialized(key: object | symbol): boolean {
     const keyString = this.getKeyString(key)
-    const promise = this.instances.get(keyString)
+    return this.resolvedKeys.has(keyString)
+  }
 
-    if (!promise)
-      return false
+  /**
+   * Check if initialization is currently in progress for a key
+   */
+  isInitializing(key: object | symbol): boolean {
+    const keyString = this.getKeyString(key)
+    return this.instances.has(keyString) && !this.resolvedKeys.has(keyString) && !this.rejectedKeys.has(keyString)
+  }
 
-    // Check if promise is resolved by examining its state
-    // This is a synchronous check for resolved promises
-    let isResolved = false
-    promise
-      .then(() => { isResolved = true })
-      .catch(() => { isResolved = false })
+  /**
+   * Check if initialization failed for a key
+   */
+  isFailed(key: object | symbol): boolean {
+    const keyString = this.getKeyString(key)
+    return this.rejectedKeys.has(keyString)
+  }
 
-    return isResolved
+  /**
+   * Get the current status of initialization for a key
+   */
+  getStatus(key: object | symbol): 'not-started' | 'initializing' | 'initialized' | 'failed' {
+    const keyString = this.getKeyString(key)
+
+    if (this.resolvedKeys.has(keyString)) {
+      return 'initialized'
+    }
+
+    if (this.rejectedKeys.has(keyString)) {
+      return 'failed'
+    }
+
+    if (this.instances.has(keyString)) {
+      return 'initializing'
+    }
+
+    return 'not-started'
   }
 
   /**
@@ -149,6 +180,8 @@ class InitializationTracker {
     const keyString = this.getKeyString(key)
     this.instances.delete(keyString)
     this.callbacks.delete(keyString)
+    this.resolvedKeys.delete(keyString)
+    this.rejectedKeys.delete(keyString)
     console.log('[InitTracker] Reset state for key:', keyString)
   }
 
@@ -158,6 +191,8 @@ class InitializationTracker {
   resetAll(): void {
     this.instances.clear()
     this.callbacks.clear()
+    this.resolvedKeys.clear()
+    this.rejectedKeys.clear()
     this.initializationKeys = new WeakMap()
     console.log('[InitTracker] Reset all state')
   }

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CSSProperties, MutableRefObject, ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { ChainGraphConfig, SessionProvider } from '@/store/initialization'
 import { useUnit } from 'effector-react'
 import { useEffect, useRef, useState } from 'react'
@@ -99,7 +99,7 @@ interface ChainGraphProviderProps {
   errorComponent?: (error: Error) => ReactNode
 
   // Host integration
-  initializationRef?: MutableRefObject<boolean>
+  initializationRef?: { current: boolean }
   initKey?: object | symbol
 
   // Content
