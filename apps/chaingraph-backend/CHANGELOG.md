@@ -1,5 +1,71 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.12
+
+### Patch Changes
+
+- feat: enhance initialization process with improved state management, add flow metadata loading effect, and update environment configuration
+
+## 0.5.5-dev.11
+
+### Patch Changes
+
+- One more try, recreate samples in the stores file.
+
+## 0.5.5-dev.10
+
+### Patch Changes
+
+- One more try, playing around dependencies versions
+
+## 0.5.5-dev.9
+
+### Patch Changes
+
+- One more try, adjust here and there some init process logic
+
+## 0.5.5-dev.8
+
+### Patch Changes
+
+- One more try to fix issues with active flow id metadata
+
+## 0.5.5-dev.7
+
+### Patch Changes
+
+- feat: simplify initialization flow with improved state management and error handling; add auto-loading of active flow metadata
+
+## 0.5.5-dev.6
+
+### Patch Changes
+
+- feat: add flow metadata loading effect and enhance active flow state management
+
+## 0.5.5-dev.5
+
+### Patch Changes
+
+- feat: enhance ChainGraphProvider with memoization for stability and improved initialization handling
+
+## 0.5.5-dev.4
+
+### Patch Changes
+
+- Add more debug logs
+
+## 0.5.5-dev.3
+
+### Patch Changes
+
+- feat: comment out unused Chaingraph dependencies and disable keepNames option in esbuild configuration
+
+## 0.5.5-dev.2
+
+### Patch Changes
+
+- Try to pass switchSubscriptionFx always and do not track switchSubscriptionFx.pending
+
 ## 0.5.5-dev.1
 
 ### Patch Changes
