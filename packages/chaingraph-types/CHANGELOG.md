@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.14
+
+### Patch Changes
+
+- feat: enhance Kafka configuration with topics prefix and improve error handling in task publishing
+
 ## 0.5.5-dev.13
 
 ### Patch Changes

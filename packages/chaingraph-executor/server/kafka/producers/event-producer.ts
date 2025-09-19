@@ -34,7 +34,7 @@ export async function getEventProducer(): Promise<Producer> {
   if (!producer) {
     const kafka = getKafkaClient()
     producer = kafka.producer({
-      allowAutoTopicCreation: false,
+      allowAutoTopicCreation: true,
       idempotent: true,
       createPartitioner: Partitioners.DefaultPartitioner,
       maxInFlightRequests: 5,
