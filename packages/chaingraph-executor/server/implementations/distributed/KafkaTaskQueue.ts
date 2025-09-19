@@ -31,7 +31,7 @@ export class KafkaTaskQueue implements ITaskQueue {
       this.producer = await getTaskProducer()
     }
 
-    await this.producer.send({
+    const records = await this.producer.send({
       topic: KafkaTopics.TASKS,
       messages: [{
         key: task.executionId,
@@ -41,6 +41,25 @@ export class KafkaTaskQueue implements ITaskQueue {
       acks: -1,
       timeout: 30000,
     })
+
+    for (const record of records) {
+      if (record.errorCode && record.errorCode !== 0) {
+        logger.error({
+          topicName: record.topicName,
+          partition: record.partition,
+          errorCode: record.errorCode,
+        }, 'Failed to publish task to Kafka')
+        throw new Error(`Failed to publish task to Kafka, error code: ${record.errorCode}`)
+      }
+
+      logger.debug({
+        topicName: record.topicName,
+        partition: record.partition,
+        baseOffset: record.baseOffset,
+        logAppendTime: record.logAppendTime,
+        logStartOffset: record.logStartOffset,
+      }, 'Task published to Kafka successfully')
+    }
   }
 
   consumeTasks = async (handler: (task: ExecutionTask) => Promise<void>): Promise<void> => {
@@ -74,6 +93,8 @@ export class KafkaTaskQueue implements ITaskQueue {
 
         try {
           const task = safeSuperJSONParse<ExecutionTask>(message.value.toString())
+
+          // TODO: Add schema validation for task (zod schema or similar)
 
           if (!task) {
             logger.error({

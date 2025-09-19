@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.14
+
+### Patch Changes
+
+- feat: enhance Kafka configuration with topics prefix and improve error handling in task publishing
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.14
+  - @badaitech/chaingraph-nodes@0.5.5-dev.14
+  - @badaitech/chaingraph-types@0.5.5-dev.14
+  - @badaitech/chaingraph-trpc@0.5.5-dev.14
+
 ## 0.5.5-dev.13
 
 ### Patch Changes

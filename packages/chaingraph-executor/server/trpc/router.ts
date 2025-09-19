@@ -138,6 +138,7 @@ export const executionRouter = router({
 
       const flowMetadata = await flowStore.getFlowMetadata(input.flowId)
       if (!flowMetadata) {
+        logger.warn({ flowId: input.flowId }, 'Flow not found when creating execution')
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: `Flow with id ${input.flowId} not found`,
@@ -145,6 +146,7 @@ export const executionRouter = router({
       }
 
       if (!flowMetadata.id) {
+        logger.error({ flowMetadata }, 'Flow metadata is missing ID')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Flow metadata is missing ID`,

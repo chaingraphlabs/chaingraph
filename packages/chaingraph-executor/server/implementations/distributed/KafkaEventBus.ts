@@ -257,6 +257,7 @@ export class KafkaEventBus implements IEventBus {
               // Parse message
               // Use safe parsing to handle potential issues
               const parsedMessage = safeSuperJSONParse<any>(messageValue)
+              // TODO: Add schema validation for parsedMessage (zod schema or similar)
 
               // Filter by executionId
               if (parsedMessage.executionId !== executionId)
