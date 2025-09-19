@@ -13,7 +13,6 @@ import { attach, combine, createEffect } from 'effector'
 import SuperJSON from 'superjson'
 import { globalReset } from '@/store/common'
 import { trpcDomain } from '@/store/domains'
-import { createConnectionKey } from '../initialization-tracker'
 
 interface ClientConfig {
   sessionBadAI?: string
@@ -42,26 +41,27 @@ export const createTRPCClientEvent = trpcDomain.createEvent<CreateClientParams>(
 export const $trpcClient: StoreWritable<TRPCClient | null> = trpcDomain.createStore<TRPCClient | null>(null)
 const $trpcClientConfig: StoreWritable<ClientConfig | null> = trpcDomain.createStore<ClientConfig | null>(null)
 
-// Connection deduplication map with secure session hashing
+// Simple connection key function
+function createConnectionKey(url: string, session?: string): string {
+  return `${url}-${session || 'anonymous'}`
+}
+
+// Connection deduplication map
 const activeConnections = new Map<string, TRPCClient>()
 
 // Effect to create the TRPC client with connection deduplication
-const createClientFx = createEffect<ClientConfig, TRPCClient>(async (config) => {
-  // Create secure connection key
-  const connectionKey = await createConnectionKey({
-    trpcURL: config.trpcURL,
-    sessionBadAI: config.sessionBadAI,
-  })
+const createClientFx = trpcDomain.createEffect<ClientConfig, TRPCClient>((config) => {
+  // Create simple connection key
+  const connectionKey = createConnectionKey(config.trpcURL, config.sessionBadAI)
 
   console.log('[TRPC Client] Creating client with config:', {
     url: config.trpcURL,
     hasSession: !!config.sessionBadAI,
-    connectionKey: `${connectionKey.substring(0, 8)}...`, // Log truncated key for debugging
   })
 
   // Check for existing connection
   if (activeConnections.has(connectionKey)) {
-    console.log('[TRPC Client] Reusing existing connection for key:', `${connectionKey.substring(0, 8)}...`)
+    console.log('[TRPC Client] Reusing existing connection')
     return activeConnections.get(connectionKey)!
   }
 
@@ -82,7 +82,7 @@ const createClientFx = createEffect<ClientConfig, TRPCClient>(async (config) => 
         activeConnections.delete(connectionKey)
       },
       onOpen: () => {
-        console.log('[TRPC Client] WebSocket opened for key:', `${connectionKey.substring(0, 8)}...`)
+        console.log('[TRPC Client] WebSocket opened')
       },
     },
   }) as TRPCClient
@@ -121,7 +121,10 @@ const createClientIfNeededFx = attach({
 
     if (!configChanged && client) {
       console.log('[TRPC Client] Configuration unchanged, reusing existing client')
-      return null
+      return {
+        client,
+        config: currentConfig!,
+      }
     }
 
     // Create new client

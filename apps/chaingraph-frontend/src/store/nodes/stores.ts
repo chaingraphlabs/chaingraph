@@ -24,19 +24,9 @@ import { combine, sample } from 'effector'
 import { $categoryMetadata } from '../categories'
 import { globalReset } from '../common'
 import { nodesDomain } from '../domains'
+
 import {
-  $activeFlowId,
-  // baseUpdatePortUIFx,
-  // preBaseUpdatePortUiFx,
-  // throttledRequestUpdatePortUi,
-} from '../flow/stores'
-import {
-  baseUpdatePortUIFx,
-  baseUpdatePortValueFx,
-  preBaseUpdatePortUiFx,
-  preBaseUpdatePortValueFx,
   requestUpdatePortValue,
-  throttledRequestUpdatePortUi,
   updatePort,
   updatePortUI,
 } from '../ports/stores'
@@ -835,55 +825,3 @@ export const $draggingNodes = nodesDomain.createStore<string[]>([])
     return state
   })
   .reset(globalReset)
-
-sample({
-  source: combine({
-    activeFlowId: $activeFlowId,
-    nodes: $nodes,
-  }),
-  clock: requestUpdatePortValue,
-  // fn: ({ portId, nodeId, value }) => {
-  fn: (source, event) => {
-    const activeFlowId = source.activeFlowId
-    const nodes = source.nodes
-    if (!activeFlowId) {
-      throw new Error('No active flow selected')
-    }
-    return {
-      flowId: activeFlowId,
-      nodeId: event.nodeId,
-      portId: event.portId,
-      value: event.value,
-      nodeVersion: (nodes[event.nodeId]?.getVersion() ?? 0) + 1, // Optimistic version increment
-    }
-  },
-  target: [
-    preBaseUpdatePortValueFx,
-    baseUpdatePortValueFx,
-  ],
-})
-
-sample({
-  source: combine({
-    activeFlowId: $activeFlowId,
-    nodes: $nodes,
-  }),
-  clock: throttledRequestUpdatePortUi,
-  fn: ({ activeFlowId, nodes }, { nodeId, portId, ui }) => {
-    if (!activeFlowId) {
-      throw new Error('No active flow selected')
-    }
-
-    return {
-      flowId: activeFlowId,
-      nodeId,
-      portId,
-      ui,
-      nodeVersion: (nodes[nodeId]?.getVersion() ?? 0) + 1,
-    }
-  },
-  target: [
-    preBaseUpdatePortUiFx,
-    baseUpdatePortUIFx,
-  ],
-})

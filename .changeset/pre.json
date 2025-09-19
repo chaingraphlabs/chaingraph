@@ -14,7 +14,19 @@
     "@badaitech/typescript-config": "0.5.4"
   },
   "changesets": [
+    "afraid-needles-greet",
+    "angry-llamas-divide",
+    "beige-geese-show",
+    "chubby-numbers-enjoy",
+    "cold-news-fold",
+    "full-readers-itch",
+    "hungry-words-hang",
+    "loud-gifts-tell",
+    "modern-pants-train",
     "olive-ears-camp",
+    "proud-clouds-report",
+    "rude-parts-heal",
+    "tiny-things-report",
     "tired-days-sleep"
   ]
 }

@@ -40,4 +40,3 @@ export {
   type SessionProvider,
   sessionProviders,
 } from './store/initialization'
-export { DEFAULT_INIT_KEY, initTracker } from './store/initialization-tracker'

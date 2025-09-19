@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.5.5-dev.1",
+  "version": "0.5.5-dev.13",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -50,10 +50,10 @@
   },
   "peerDependencies": {
     "@xyflow/react": "^12.8.2",
-    "effector": "^23.0.0",
-    "effector-react": "^23.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "effector": "^23.3.0",
+    "effector-react": "^23.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "dependencies": {
     "@badaitech/badai-api": "workspace:*",

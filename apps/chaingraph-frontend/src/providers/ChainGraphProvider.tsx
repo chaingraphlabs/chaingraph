@@ -9,15 +9,12 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { ChainGraphConfig, SessionProvider } from '@/store/initialization'
 import { useUnit } from 'effector-react'
-import { useEffect, useRef, useState } from 'react'
-// Error Boundary for initialization failures
+import { useEffect } from 'react'
 import React from 'react'
-import { setActiveFlowId } from '@/store/flow'
-import { $initializationError, $initializationProgress, $isAppReady, initChainGraph } from '@/store/initialization'
-import { DEFAULT_INIT_KEY, initTracker } from '@/store/initialization-tracker'
-
+import { $initError, $initStatus, $isAppReady, initChainGraph, setActiveFlowId } from '@/store'
 import { RootProvider } from './RootProvider'
 
+// Error Boundary for initialization failures
 class ChainGraphErrorBoundary extends React.Component<
   { children: ReactNode, onError?: (error: Error) => void },
   { hasError: boolean, error: Error | null }
@@ -98,10 +95,6 @@ interface ChainGraphProviderProps {
   loadingComponent?: ReactNode
   errorComponent?: (error: Error) => ReactNode
 
-  // Host integration
-  initializationRef?: { current: boolean }
-  initKey?: object | symbol
-
   // Content
   children: ReactNode
 }
@@ -118,67 +111,36 @@ export function ChainGraphProvider({
   onInitialized,
   loadingComponent,
   errorComponent,
-  initializationRef,
-  initKey = DEFAULT_INIT_KEY,
   children,
 }: ChainGraphProviderProps) {
-  const mountIdRef = useRef(crypto.randomUUID())
-  const [hasStartedInit, setHasStartedInit] = useState(false)
-  const hasNotifiedInitialized = useRef(false)
-
-  // Subscribe to initialization state
-  const { isReady, initProgress, initError } = useUnit({
+  // Subscribe to initialization state from effector stores
+  const { isReady, initStatus, initError } = useUnit({
     isReady: $isAppReady,
-    initProgress: $initializationProgress,
-    initError: $initializationError,
+    initStatus: $initStatus,
+    initError: $initError,
   })
 
-  // Initialize ChainGraph on mount - StrictMode safe
+  // Initialize ChainGraph on mount
   useEffect(() => {
-    if (!session)
-      return
-
-    // Check if already initializing/initialized using tracker
-    const existingPromise = initTracker.getPromise(initKey)
-
-    if (existingPromise) {
-      console.log('[ChainGraphProvider] Reusing existing initialization promise')
-      existingPromise.then(() => {
-        if (!hasNotifiedInitialized.current) {
-          hasNotifiedInitialized.current = true
-          onInitialized?.()
-          if (initializationRef) {
-            initializationRef.current = true
-          }
-        }
-      }).catch((error) => {
-        console.error('[ChainGraphProvider] Existing initialization failed:', error)
-        onError?.(error)
-      })
+    if (!session || !config || !config.trpcMainURL || !config.trpcExecutorURL) {
+      console.log('[ChainGraphProvider] No session, or incomplete config - skipping initialization')
       return
     }
 
-    // Start new initialization only if not already started
-    if (!hasStartedInit) {
-      console.log('[ChainGraphProvider] Starting new initialization for mount:', mountIdRef.current)
-      setHasStartedInit(true)
+    console.log('[ChainGraphProvider] Initializing with session and config')
 
-      initChainGraph(session, config, initKey).then(() => {
-        if (!hasNotifiedInitialized.current) {
-          hasNotifiedInitialized.current = true
-          onInitialized?.()
-          if (initializationRef) {
-            initializationRef.current = true
-          }
-        }
-      }).catch((error) => {
+    initChainGraph(session, config)
+      .then(() => {
+        console.log('[ChainGraphProvider] Initialization completed')
+        onInitialized?.()
+      })
+      .catch((error) => {
         console.error('[ChainGraphProvider] Initialization failed:', error)
         onError?.(error)
       })
-    }
-  }, [mountIdRef.current]) // Use stable ref instead of changing deps
+  }, [config, onError, onInitialized, session]) // Empty dependency array - initialization is idempotent in effector
 
-  // Set active flow when ready and flowId provided
+  // Set active flow when ready and flowId changes
   useEffect(() => {
     if (isReady && flowId) {
       console.log('[ChainGraphProvider] Setting active flow:', flowId)
@@ -204,7 +166,7 @@ export function ChainGraphProvider({
   }
 
   // Show loading state while initializing
-  if (!hasStartedInit || !isReady) {
+  if (!isReady) {
     const defaultLoadingComponent = (
       <div style={{
         display: 'flex',
@@ -218,12 +180,10 @@ export function ChainGraphProvider({
       >
         <div>Loading ChainGraph...</div>
         <div style={{ fontSize: '14px', opacity: 0.7 }}>
-          {initProgress === 'setting-session' && 'Setting up session...'}
-          {initProgress === 'initializing-registry' && 'Initializing node registry...'}
-          {initProgress === 'creating-clients' && 'Connecting to servers...'}
-          {initProgress === 'fetching-data' && 'Fetching data...'}
-          {initProgress === 'complete' && 'Ready!'}
-          {initProgress === 'error' && 'Initialization failed'}
+          {initStatus === 'idle' && 'Preparing...'}
+          {initStatus === 'initializing' && 'Initializing...'}
+          {initStatus === 'error' && 'Initialization failed'}
+          {initStatus === 'ready' && 'Ready!'}
         </div>
       </div>
     )
