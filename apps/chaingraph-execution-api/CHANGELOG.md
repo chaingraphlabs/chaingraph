@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.13
+
+### Patch Changes
+
+- Bump version
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.13
+  - @badaitech/chaingraph-types@0.5.5-dev.13
+  - @badaitech/chaingraph-trpc@0.5.5-dev.13
+
 ## 0.5.5-dev.12
 
 ### Patch Changes

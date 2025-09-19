@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.13
+
+### Patch Changes
+
+- Bump version
+
 ## 0.5.5-dev.12
 
 ### Patch Changes
