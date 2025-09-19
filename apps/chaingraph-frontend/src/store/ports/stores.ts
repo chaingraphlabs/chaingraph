@@ -16,7 +16,6 @@ import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '../nodes/constan
 import { accumulateAndSample } from '../nodes/operators/accumulate-and-sample'
 import { setNodeVersion } from '../nodes/stores'
 import { $trpcClient } from '../trpc/store'
-import './complex-ports'
 
 // EVENTS
 // Port CRUD events
@@ -25,12 +24,6 @@ export const updatePort = portsDomain.createEvent<{
   data: Partial<PortState>
   nodeVersion: number
 }>()
-
-// export const updatePortValue = portsDomain.createEvent<{
-//   nodeId: string
-//   portId: string
-//   value: any
-// }>()
 
 export const updatePortUI = portsDomain.createEvent<{
   nodeId: string

@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.17
+
+### Patch Changes
+
+- feat: enhance module exports and update dependencies for computed and complex ports
+
+## 0.5.5-dev.16
+
+### Patch Changes
+
+- feat: enhance module exports by refining imports for computed and complex ports
+
 ## 0.5.5-dev.15
 
 ### Patch Changes

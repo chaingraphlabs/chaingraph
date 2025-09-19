@@ -192,18 +192,18 @@ export async function initChainGraph(
   initializeApp({ session, config })
 
   // Wait for initialization to complete
-  return new Promise<void>((resolve, reject) => {
-    const unwatch = $initStatus.watch((status) => {
-      if (status === 'ready') {
-        unwatch()
-        resolve()
-      } else if (status === 'error') {
-        const error = $initError.getState()
-        unwatch()
-        reject(error || new Error('Initialization failed'))
-      }
-    })
-  })
+  // return new Promise<void>((resolve, reject) => {
+  //   const unwatch = $initStatus.watch((status) => {
+  //     if (status === 'ready') {
+  //       unwatch()
+  //       resolve()
+  //     } else if (status === 'error') {
+  //       const error = $initError.getState()
+  //       unwatch()
+  //       reject(error || new Error('Initialization failed'))
+  //     }
+  //   })
+  // })
 }
 
 // Helper to reset initialization (useful for testing)
