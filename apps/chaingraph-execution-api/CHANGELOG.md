@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.15
+
+### Patch Changes
+
+- feat: add distributed execution mode and enhance module imports for computed and complex ports
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.15
+  - @badaitech/chaingraph-types@0.5.5-dev.15
+  - @badaitech/chaingraph-trpc@0.5.5-dev.15
+
 ## 0.5.5-dev.14
 
 ### Patch Changes

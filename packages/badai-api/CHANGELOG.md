@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.15
+
+### Patch Changes
+
+- feat: add distributed execution mode and enhance module imports for computed and complex ports
+
 ## 0.5.5-dev.14
 
 ### Patch Changes
