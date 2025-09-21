@@ -80,7 +80,12 @@ export interface ExecutionEventMessage {
   workerId: string // Which worker produced this
 }
 
-const topicsPrefix = process.env.KAFKA_TOPICS_PREFIX || ''
+let topicsPrefix = ''
+try {
+  topicsPrefix = process?.env?.KAFKA_TOPICS_PREFIX || ''
+} catch {
+  topicsPrefix = ''
+}
 
 /**
  * Kafka topic names

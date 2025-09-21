@@ -23,7 +23,7 @@ interface TopicConfig {
 const topicConfigs: TopicConfig[] = [
   {
     topic: KafkaTopics.COMMANDS,
-    numPartitions: 10,
+    numPartitions: 100,
     replicationFactor: 1, // Changed from 3 to 1 for local development
     configEntries: [
       { name: 'retention.ms', value: '604800000' }, // 7 days
@@ -32,7 +32,7 @@ const topicConfigs: TopicConfig[] = [
   },
   {
     topic: KafkaTopics.EVENTS,
-    numPartitions: 50,
+    numPartitions: 100,
     replicationFactor: 1, // Changed from 3 to 1 for local development
     configEntries: [
       { name: 'retention.ms', value: '2592000000' }, // 30 days

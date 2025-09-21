@@ -24,10 +24,15 @@ export async function getTaskProducer(): Promise<Producer> {
   if (!producer) {
     const kafka = getKafkaClient()
     producer = kafka.producer({
-      allowAutoTopicCreation: true,
-      idempotent: true,
+      allowAutoTopicCreation: false,
+      idempotent: false, // Disable for lower latency (no deduplication overhead)
       createPartitioner: Partitioners.DefaultPartitioner,
-      maxInFlightRequests: 10, // Increased from 5 for higher throughput
+      maxInFlightRequests: 5, // Balance between throughput and ordering
+      transactionTimeout: 30000,
+      retry: {
+        initialRetryTime: 100,
+        retries: 2, // Fewer retries for faster failure
+      },
     })
 
     // Store the connection promise to avoid multiple connection attempts
@@ -61,8 +66,9 @@ export async function publishExecutionTask(task: ExecutionTask): Promise<void> {
         value: safeSuperJSONStringify(task),
         timestamp: Date.now().toString(),
       }],
-      acks: 1, // Only wait for leader acknowledgment (optimized for single broker)
-      timeout: 5000, // 5 second timeout (reduced from 30s for faster failure detection)
+      acks: 1, // Only wait for leader acknowledgment (faster)
+      timeout: 5000, // 5 second timeout for lower latency
+      compression: 0, // No compression (0 = none) for lowest latency
     })
   } catch (error) {
     logger.error({ error, executionId: task.executionId }, 'Failed to publish task')

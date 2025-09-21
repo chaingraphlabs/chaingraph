@@ -24,7 +24,7 @@ export async function getCommandProducer(): Promise<Producer> {
   if (!producer) {
     const kafka = getKafkaClient()
     producer = kafka.producer({
-      allowAutoTopicCreation: true,
+      allowAutoTopicCreation: false,
       idempotent: true,
       createPartitioner: Partitioners.DefaultPartitioner,
       maxInFlightRequests: 10, // Increased from 5 for higher throughput
@@ -66,8 +66,8 @@ export async function publishExecutionCommand(command: ExecutionCommand): Promis
         value: safeSuperJSONStringify(command),
         timestamp: Date.now().toString(),
       }],
-      acks: 1, // Only wait for leader acknowledgment (optimized for single broker)
-      timeout: 5000, // 5 second timeout (reduced from 30s for faster failure detection)
+      acks: -1, // Wait for all in-sync replicas to acknowledge
+      timeout: 30000, // 30 second timeout
     })
 
     logger.debug({

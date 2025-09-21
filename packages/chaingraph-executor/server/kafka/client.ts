@@ -58,7 +58,6 @@ export function getKafkaClient(): Kafka {
         initialRetryTime: 50, // Reduced from 100ms for faster recovery
         maxRetryTime: 1000, // Max 1 second between retries (faster than default 30s)
         retries: 5, // Reduced from 8 to fail faster and avoid long delays
-        multiplier: 1.2, // Gentler exponential backoff
       },
       // Connection timeouts for faster failure detection
       connectionTimeout: 3000, // 3 second connection timeout
