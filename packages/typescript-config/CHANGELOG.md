@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.18
+
+### Patch Changes
+
+- feat: enhance GraphQL client integration, optimize Kafka configurations, and update message fields
+
 ## 0.5.5-dev.17
 
 ### Patch Changes
