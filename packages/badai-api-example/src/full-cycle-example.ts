@@ -6,21 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { MessageEvent } from './gql/client/graphql'
 import process from 'node:process'
+import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import { print } from 'graphql'
-import {
-  createClient,
-
-} from 'graphql-ws'
+import { createClient } from 'graphql-ws'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { createGraphQLClient } from './gql/client'
-import { Event } from './gql/client/graphql'
-// import { SubscribeMessagesDocument } from './gql/client/graphql'
-import { GraphQL } from './index'
 
-const restApiUrl = process.env.REST_API_URL ?? 'http://localhost:9151/graphql'
+const restApiUrl = process.env.REST_API_URL ?? 'http://localhost:9151/graphql' // ?? 'http://localhost:9151/graphql'
 const wsApiUrl = process.env.WS_API_URL ?? 'ws://localhost:9151/graphql'
+const agentId = process.env.AGENT_ID ?? ''
 
 let activeSocket: WebSocket | null = null
 let pingTimeout: ReturnType<typeof setTimeout> | null = null
@@ -176,6 +170,7 @@ async function main() {
     GraphQL.CreateChatRoomDocument,
     {
       session,
+      agents: [agentId],
     },
   )
 
@@ -187,6 +182,8 @@ async function main() {
     resolveMessageFinished = resolve
   })
 
+  let agentResponse = ''
+
   const cancel = wsClient.subscribe(
     {
       query: print(GraphQL.SubscribeMessagesDocument),
@@ -197,16 +194,51 @@ async function main() {
       },
     },
     {
-      next: ({ data }) => {
-        console.log('Subscription data:', JSON.stringify(data, null, 2))
+      next: async ({ data }) => {
+        // console.log('Subscription data:', JSON.stringify(data, null, 2))
         if (!data?.subscribeMessages)
           return
 
-        const event = data.subscribeMessages as MessageEvent
+        const event = data.subscribeMessages as GraphQL.MessageEvent
 
         switch (event.event) {
-          case Event.MessageFinished:
-            resolveMessageFinished()
+          case GraphQL.Event.Subscribed: {
+            // send message to the chat room from the user we just created
+            console.log('Subscription confirmed, sending message...')
+            const { sendMessage } = await restClient.request(
+              GraphQL.SendMessageDocument,
+              {
+                session,
+                chat_id: createChatRoom.id,
+                message: {
+                  is_system: false,
+                  finished: true,
+                  need_answer: true,
+                  text: 'Find in the web the current weather in Paris.',
+                },
+              },
+            )
+
+            console.log('Sent Message:', sendMessage)
+          }
+            break
+
+          case GraphQL.Event.MessageCreated:
+            console.log(`Message Created by @${event.message?.participant?.username}: ${event.message?.text || '<no text>'} with version ${event.message?.version}`)
+            break
+
+          case GraphQL.Event.MessageDeltaAdd:
+            if (event.message?.participant?.is_agent) {
+              console.log(`Message Delta Add by @${event.message?.participant?.username} [${event.message?.version}]: ${event.message?.text}`)
+            }
+            break
+
+          case GraphQL.Event.MessageFinished:
+            if (event.message?.participant?.is_agent) {
+              agentResponse = event.message.text
+              resolveMessageFinished()
+            }
+
             break
         }
       },
@@ -221,27 +253,13 @@ async function main() {
     },
   )
 
-  // send message to the chat room
-  const { sendMessage } = await restClient.request(
-    GraphQL.SendMessageDocument,
-    {
-      session,
-      chat_id: createChatRoom.id,
-      message: {
-        is_system: false,
-        finished: true,
-        need_answer: true,
-        text: 'Hello, world!',
-      },
-    },
-  )
-
-  console.log('Sent Message:', sendMessage)
-
   // Wait for MessageFinished event
   console.log('Waiting for MessageFinished event...')
   await onMessageFinishedPromise
   console.log('MessageFinished event received, shutting down gracefully...')
+
+  console.log('\n\n--- Summary ---')
+  console.log('Agent response:', agentResponse)
 
   // Clean up
   cancel()

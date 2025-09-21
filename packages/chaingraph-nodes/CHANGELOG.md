@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.20
+
+### Patch Changes
+
+- feat: rename auth-example to full-cycle-example, enhance GraphQL client integration, and add environment configuration
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.20
+
 ## 0.5.5-dev.19
 
 ### Patch Changes

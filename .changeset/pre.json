@@ -11,7 +11,8 @@
     "@badaitech/chaingraph-nodes": "0.5.4",
     "@badaitech/chaingraph-trpc": "0.5.4",
     "@badaitech/chaingraph-types": "0.5.4",
-    "@badaitech/typescript-config": "0.5.4"
+    "@badaitech/typescript-config": "0.5.4",
+    "@badaitech/badai-api-example": "0.5.5-dev.19"
   },
   "changesets": [
     "afraid-needles-greet",
@@ -20,6 +21,7 @@
     "brave-webs-refuse",
     "chubby-numbers-enjoy",
     "cold-news-fold",
+    "dirty-glasses-drop",
     "easy-candies-smile",
     "full-readers-itch",
     "hip-doors-notice",

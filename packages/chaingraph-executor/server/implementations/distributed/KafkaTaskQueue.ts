@@ -83,7 +83,7 @@ export class KafkaTaskQueue implements ITaskQueue {
       minBytes: 1, // fetch.min.bytes equivalent - fetch even single bytes
       maxBytes: 52428800, // fetch.max.bytes equivalent - 50MB max fetch
       maxBytesPerPartition: 10485760, // max.partition.fetch.bytes equivalent - 10MB per partition
-      readUncommitted: true, // Read only committed messages
+      readUncommitted: false, // Read only committed messages
       allowAutoTopicCreation: false,
       retry: {
         initialRetryTime: 100,

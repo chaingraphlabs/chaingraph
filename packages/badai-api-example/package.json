@@ -1,0 +1,32 @@
+{
+  "name": "@badaitech/badai-api-example",
+  "type": "module",
+  "version": "0.5.5-dev.20",
+  "private": true,
+  "description": "Bad AI GraphQL API client example",
+  "license": "BUSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com//badaitech/chaingraph.git",
+    "directory": "./packages/badai-api-example"
+  },
+  "scripts": {
+    "run": "bun run src/full-cycle-example.ts",
+    "typecheck": "tsc -b"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "dependencies": {
+    "@badaitech/badai-api": "workspace:*",
+    "@types/node": "^22.14.0",
+    "graphql": "^16.11.0",
+    "graphql-request": "^7.2.0",
+    "graphql-ws": "^6.0.6",
+    "keccak256": "^1.0.6",
+    "viem": "^2.37.7"
+  },
+  "devDependencies": {
+    "@badaitech/typescript-config": "workspace:*"
+  }
+}

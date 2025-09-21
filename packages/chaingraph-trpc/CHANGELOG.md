@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.20
+
+### Patch Changes
+
+- feat: rename auth-example to full-cycle-example, enhance GraphQL client integration, and add environment configuration
+
 ## 0.5.5-dev.19
 
 ### Patch Changes
