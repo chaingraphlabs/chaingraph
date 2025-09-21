@@ -31,6 +31,11 @@ export class KafkaTaskQueue implements ITaskQueue {
       this.producer = await getTaskProducer()
     }
 
+    logger.debug({
+      taskExecutionId: task.executionId,
+      topic: KafkaTopics.TASKS,
+    }, 'Publishing task to Kafka')
+
     const records = await this.producer.send({
       topic: KafkaTopics.TASKS,
       messages: [{
@@ -38,8 +43,9 @@ export class KafkaTaskQueue implements ITaskQueue {
         value: safeSuperJSONStringify(task),
         timestamp: Date.now().toString(),
       }],
-      acks: 1,
-      timeout: 30000,
+      acks: 1, // Only wait for leader acknowledgment (faster)
+      timeout: 5000, // 5 second timeout for lower latency
+      compression: 0, // No compression for lowest latency
     })
 
     for (const record of records) {
@@ -70,14 +76,19 @@ export class KafkaTaskQueue implements ITaskQueue {
     const kafka = getKafkaClient()
     this.consumer = kafka.consumer({
       groupId: config.kafka.groupId.worker,
-      sessionTimeout: 30000, // Increased from 10000 for better stability
+      sessionTimeout: 30000,
       heartbeatInterval: 3000,
-      rebalanceTimeout: 30000, // Increased from 10000 for better stability
-      maxWaitTimeInMs: 1, // Reduced from 100ms to 1ms for ultra-low latency
+      rebalanceTimeout: 30000,
+      maxWaitTimeInMs: 100, // fetch.max.wait.ms equivalent - wait up to 100ms
+      minBytes: 1, // fetch.min.bytes equivalent - fetch even single bytes
+      maxBytes: 52428800, // fetch.max.bytes equivalent - 50MB max fetch
+      maxBytesPerPartition: 10485760, // max.partition.fetch.bytes equivalent - 10MB per partition
+      readUncommitted: true, // Read only committed messages
       allowAutoTopicCreation: false,
-      minBytes: 1, // Fetch as soon as data is available
-      maxInFlightRequests: 1, // Ensure order by limiting to 1 in-flight request
-      readUncommitted: true, // Read uncommitted for lower latency
+      retry: {
+        initialRetryTime: 100,
+        retries: 5,
+      },
     })
 
     await this.consumer.connect()

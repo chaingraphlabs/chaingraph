@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.19
+
+### Patch Changes
+
+- feat: enhance flow initialization with Kafka topic creation and optimize producer configurations
+
 ## 0.5.5-dev.18
 
 ### Patch Changes
