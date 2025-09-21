@@ -35,6 +35,24 @@ The BadAI API provides a powerful GraphQL-based interface for creating conversat
 
 ## Installation
 
+### Important: NPM Registry Configuration
+
+The `@badaitech` packages are hosted on GitHub Package Registry. You need to configure npm to use the correct registry for `@badaitech` scoped packages.
+
+Create or update your `.npmrc` file in your project root:
+
+```bash
+@badaitech:registry=https://npm.pkg.github.com
+```
+
+Or configure globally:
+
+```bash
+npm config set @badaitech:registry https://npm.pkg.github.com
+```
+
+### Install Dependencies
+
 ```bash
 # Using npm
 npm install @badaitech/badai-api graphql graphql-ws viem
@@ -169,16 +187,8 @@ type AgentMeta = {
   last_name: string
   avatar: string
   role: string
-  llm_config: LLMConfig
-  template_params: JSON
   can_answer: boolean
   deployment_status: DeploymentStatus
-}
-
-type LLMConfig = {
-  model: string        // e.g., "gpt-4", "claude-3"
-  temperature: number  // 0.0 - 2.0
-  max_tokens: number   // Maximum response length
 }
 ```
 
