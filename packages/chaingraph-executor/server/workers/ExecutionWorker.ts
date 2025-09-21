@@ -373,9 +373,7 @@ export class ExecutionWorker {
         heartbeatInterval: 3000,
         // Ultra-low latency optimizations
         maxWaitTimeInMs: 1, // 1ms for ultra-low latency
-        fetchMinBytes: 1, // Don't wait for data accumulation
-        fetchBatchSize: 1024 * 1024, // 1MB batch size
-        maxBytesPerPartition: 1024 * 1024, // 1MB per partition
+        allowAutoTopicCreation: false,
       })
 
       await this.commandConsumer.connect()

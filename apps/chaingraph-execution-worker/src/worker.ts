@@ -25,6 +25,7 @@ export async function startWorker(): Promise<void> {
     process.env.DATABASE_URL = config.databaseUrl
     process.env.DATABASE_URL_EXECUTIONS = config.databaseUrlExecutions
     process.env.KAFKA_BROKERS = config.kafka.brokers.join(',')
+    process.env.KAFKA_TOPICS_PREFIX = config.kafka.topicsPrefix
     process.env.WORKER_ID = workerId
 
     // Create services (EventBus, TaskQueue, ExecutionStore)

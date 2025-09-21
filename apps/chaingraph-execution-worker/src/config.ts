@@ -32,6 +32,7 @@ export const config = {
   // Kafka configuration (needed for distributed mode)
   kafka: {
     brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
+    topicsPrefix: process.env.KAFKA_TOPICS_PREFIX || '',
   },
 
   // Health and monitoring
