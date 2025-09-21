@@ -1,5 +1,37 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.18
+
+### Patch Changes
+
+- feat: enhance GraphQL client integration, optimize Kafka configurations, and update message fields
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.18
+
+## 0.5.5-dev.17
+
+### Patch Changes
+
+- feat: enhance module exports and update dependencies for computed and complex ports
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.17
+
+## 0.5.5-dev.16
+
+### Patch Changes
+
+- feat: enhance module exports by refining imports for computed and complex ports
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.16
+
+## 0.5.5-dev.15
+
+### Patch Changes
+
+- feat: add distributed execution mode and enhance module imports for computed and complex ports
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.15
+
 ## 0.5.5-dev.14
 
 ### Patch Changes

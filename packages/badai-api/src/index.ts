@@ -7,5 +7,5 @@
  */
 
 export * from './gql/client'
+export { createGraphQLClient } from './gql/client'
 export * as GraphQL from './gql/client/graphql'
-export { createGraphQLClient } from './gql/execute'

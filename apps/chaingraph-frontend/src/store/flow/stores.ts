@@ -13,6 +13,12 @@ import type {
   FlowEventHandlerMap,
   INode,
 } from '@badaitech/chaingraph-types'
+import type {
+  AddFieldObjectPortInput,
+  AppendElementArrayPortInput,
+  RemoveFieldObjectPortInput,
+  UpdateItemConfigArrayPortInput,
+} from '../ports/stores'
 import type { CreateFlowEvent, FlowSubscriptionError, UpdateFlowEvent } from './types'
 import {
   createEventHandler,
@@ -20,11 +26,11 @@ import {
   FlowEventType,
 } from '@badaitech/chaingraph-types'
 import { combine, createEffect, sample } from 'effector'
+
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
 } from '@/components/flow/utils/node-position'
-
 import { flowDomain } from '@/store/domains'
 import { nodeUpdated } from '@/store/updates'
 import { globalReset } from '../common'
@@ -48,13 +54,22 @@ import {
   updateNodeUILocal,
 } from '../nodes/stores'
 import {
+  addFieldObjectPort,
+  addFieldObjectPortFx,
+  appendElementArrayPort,
+  appendElementArrayPortFx,
   baseUpdatePortUIFx,
   baseUpdatePortValueFx,
   preBaseUpdatePortUiFx,
   preBaseUpdatePortValueFx,
+  removeElementArrayPort,
+  removeElementArrayPortFx,
+  removeFieldObjectPort,
+  removeFiledObjectPortFx,
   requestUpdatePortValue,
-
   throttledRequestUpdatePortUi,
+  updateItemConfigArrayPort,
+  updateItemConfigArrayPortFx,
   updatePort,
 } from '../ports/stores'
 import { $trpcClient } from '../trpc/store'
@@ -745,4 +760,90 @@ sample({
     preBaseUpdatePortUiFx,
     baseUpdatePortUIFx,
   ],
+})
+
+sample({
+  source: $activeFlowId,
+  clock: addFieldObjectPort,
+  fn: (activeFlowId, { nodeId, portId, key, config }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const result: AddFieldObjectPortInput = {
+      nodeId,
+      config,
+      flowId: activeFlowId,
+      portId,
+      key,
+    }
+    return result
+  },
+  target: addFieldObjectPortFx,
+})
+
+sample({
+  source: $activeFlowId,
+  clock: removeFieldObjectPort,
+  fn: (activeFlowId, { nodeId, portId, key }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+
+    const result: RemoveFieldObjectPortInput = { flowId: activeFlowId, nodeId, portId, key }
+    return result
+  },
+  target: removeFiledObjectPortFx,
+})
+
+sample({
+  source: $activeFlowId,
+  clock: updateItemConfigArrayPort,
+  fn: (activeFlowId, { nodeId, portId, itemConfig }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const result: UpdateItemConfigArrayPortInput = {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      itemConfig,
+    }
+    return result
+  },
+  target: updateItemConfigArrayPortFx,
+})
+
+sample({
+  source: $activeFlowId,
+  clock: appendElementArrayPort,
+  fn: (activeFlowId, { nodeId, portId, value }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    const result: AppendElementArrayPortInput = {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      value,
+    }
+    return result
+  },
+  target: appendElementArrayPortFx,
+})
+
+sample({
+  source: $activeFlowId,
+  clock: removeElementArrayPort,
+  fn: (activeFlowId, { nodeId, portId, index }) => {
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+    return {
+      nodeId,
+      flowId: activeFlowId,
+      portId,
+      index,
+    }
+  },
+  target: removeElementArrayPortFx,
 })

@@ -27,7 +27,9 @@ export async function getCommandProducer(): Promise<Producer> {
       allowAutoTopicCreation: true,
       idempotent: true,
       createPartitioner: Partitioners.DefaultPartitioner,
-      maxInFlightRequests: 5,
+      maxInFlightRequests: 10, // Increased from 5 for higher throughput
+      // Note: KafkaJS doesn't support batch/linger config at producer level
+      // These are handled automatically or via send() options
     })
 
     // Store the connection promise to avoid multiple connection attempts
@@ -64,8 +66,8 @@ export async function publishExecutionCommand(command: ExecutionCommand): Promis
         value: safeSuperJSONStringify(command),
         timestamp: Date.now().toString(),
       }],
-      acks: -1, // Wait for all in-sync replicas to acknowledge
-      timeout: 30000, // 30 second timeout
+      acks: 1, // Only wait for leader acknowledgment (optimized for single broker)
+      timeout: 5000, // 5 second timeout (reduced from 30s for faster failure detection)
     })
 
     logger.debug({

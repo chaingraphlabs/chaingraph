@@ -25,12 +25,6 @@ export const updatePort = portsDomain.createEvent<{
   nodeVersion: number
 }>()
 
-// export const updatePortValue = portsDomain.createEvent<{
-//   nodeId: string
-//   portId: string
-//   value: any
-// }>()
-
 export const updatePortUI = portsDomain.createEvent<{
   nodeId: string
   portId: string

@@ -28,6 +28,7 @@ export const config = {
   kafka: {
     brokers: (process.env.KAFKA_BROKERS || 'localhost:9092,localhost:9093,localhost:9094').split(','),
     clientId: process.env.KAFKA_CLIENT_ID || 'chaingraph-executor',
+    topicsPrefix: process.env.KAFKA_TOPICS_PREFIX || '',
     groupId: {
       worker: process.env.KAFKA_GROUP_ID_WORKER || 'chaingraph-execution-workers',
       stream: process.env.KAFKA_GROUP_ID_STREAM || 'chaingraph-event-stream',

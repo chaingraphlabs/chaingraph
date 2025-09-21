@@ -12,6 +12,7 @@ import type {
   ExecutionOptions,
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
+import process from 'node:process'
 
 export enum ExecutionCommandType {
   CREATE = 'CREATE',
@@ -79,13 +80,15 @@ export interface ExecutionEventMessage {
   workerId: string // Which worker produced this
 }
 
+const topicsPrefix = process.env.KAFKA_TOPICS_PREFIX || ''
+
 /**
  * Kafka topic names
  */
 export const KafkaTopics = {
-  COMMANDS: '2.chaingraph.execution.commands',
-  EVENTS: '2.chaingraph.execution.events',
-  TASKS: '2.chaingraph.execution.tasks',
+  COMMANDS: `${topicsPrefix}chaingraph.execution.commands`,
+  EVENTS: `${topicsPrefix}chaingraph.execution.events`,
+  TASKS: `${topicsPrefix}chaingraph.execution.tasks`,
 } as const
 
 export type KafkaTopicName = typeof KafkaTopics[keyof typeof KafkaTopics]

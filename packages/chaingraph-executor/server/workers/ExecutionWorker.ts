@@ -368,9 +368,12 @@ export class ExecutionWorker {
     try {
       const kafka = getKafkaClient()
       this.commandConsumer = kafka.consumer({
-        groupId: `${config.kafka.groupId.worker}-commands-${this.workerId}`,
-        sessionTimeout: 10000,
+        groupId: `${config.kafka.groupId.worker}-commands`, // Removed workerId for proper load balancing
+        sessionTimeout: 30000, // Increased from 10000 for better stability
         heartbeatInterval: 3000,
+        // Ultra-low latency optimizations
+        maxWaitTimeInMs: 1, // 1ms for ultra-low latency
+        allowAutoTopicCreation: false,
       })
 
       await this.commandConsumer.connect()

@@ -9,7 +9,6 @@
 export * from './constants'
 export { useNode } from './hooks/useNode'
 export { useXYFlowNodes } from './hooks/useXYFlowNodes'
-export * from './interpolation-init'
 export { accumulateAndSample } from './operators/accumulate-and-sample'
 export * from './position-interpolation-advanced'
 export * from './stores'

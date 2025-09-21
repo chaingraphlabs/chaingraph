@@ -20,6 +20,7 @@ export * from './focused-editors'
 export { initializeStores } from './init'
 export * from './initialization'
 export * from './nodes'
+export * from './nodes/computed'
 export * from './ports'
 export {
   $trpcClientExecutor,
