@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.20
+
+### Patch Changes
+
+- feat: rename auth-example to full-cycle-example, enhance GraphQL client integration, and add environment configuration
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.20
+  - @badaitech/chaingraph-types@0.5.5-dev.20
+  - @badaitech/chaingraph-trpc@0.5.5-dev.20
+
 ## 0.5.5-dev.19
 
 ### Patch Changes
