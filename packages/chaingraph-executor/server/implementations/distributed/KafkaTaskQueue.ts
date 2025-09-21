@@ -38,7 +38,7 @@ export class KafkaTaskQueue implements ITaskQueue {
         value: safeSuperJSONStringify(task),
         timestamp: Date.now().toString(),
       }],
-      acks: -1,
+      acks: 1,
       timeout: 30000,
     })
 
@@ -70,10 +70,14 @@ export class KafkaTaskQueue implements ITaskQueue {
     const kafka = getKafkaClient()
     this.consumer = kafka.consumer({
       groupId: config.kafka.groupId.worker,
-      sessionTimeout: 10000,
+      sessionTimeout: 30000, // Increased from 10000 for better stability
       heartbeatInterval: 3000,
-      rebalanceTimeout: 10000,
-      maxWaitTimeInMs: 100,
+      rebalanceTimeout: 30000, // Increased from 10000 for better stability
+      maxWaitTimeInMs: 1, // Reduced from 100ms to 1ms for ultra-low latency
+      allowAutoTopicCreation: false,
+      minBytes: 1, // Fetch as soon as data is available
+      maxInFlightRequests: 1, // Ensure order by limiting to 1 in-flight request
+      readUncommitted: true, // Read uncommitted for lower latency
     })
 
     await this.consumer.connect()

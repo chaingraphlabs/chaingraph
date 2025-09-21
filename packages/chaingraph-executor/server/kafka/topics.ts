@@ -42,11 +42,12 @@ const topicConfigs: TopicConfig[] = [
   },
   {
     topic: KafkaTopics.TASKS,
-    numPartitions: 20,
+    numPartitions: 100, // Increased from 20 to match 100 consumers for optimal parallelism
     replicationFactor: 1, // Changed from 3 to 1 for local development
     configEntries: [
       { name: 'retention.ms', value: '259200000' }, // 3 days
       { name: 'cleanup.policy', value: 'delete' },
+      { name: 'min.insync.replicas', value: '1' }, // Optimize for single broker setup
     ],
   },
 ]

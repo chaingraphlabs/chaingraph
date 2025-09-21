@@ -27,7 +27,7 @@ export async function getTaskProducer(): Promise<Producer> {
       allowAutoTopicCreation: true,
       idempotent: true,
       createPartitioner: Partitioners.DefaultPartitioner,
-      maxInFlightRequests: 5,
+      maxInFlightRequests: 10, // Increased from 5 for higher throughput
     })
 
     // Store the connection promise to avoid multiple connection attempts
@@ -61,8 +61,8 @@ export async function publishExecutionTask(task: ExecutionTask): Promise<void> {
         value: safeSuperJSONStringify(task),
         timestamp: Date.now().toString(),
       }],
-      acks: -1, // Wait for all in-sync replicas to acknowledge
-      timeout: 30000, // 30 second timeout
+      acks: 1, // Only wait for leader acknowledgment (optimized for single broker)
+      timeout: 5000, // 5 second timeout (reduced from 30s for faster failure detection)
     })
   } catch (error) {
     logger.error({ error, executionId: task.executionId }, 'Failed to publish task')

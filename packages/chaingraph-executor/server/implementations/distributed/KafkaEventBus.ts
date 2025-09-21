@@ -72,7 +72,7 @@ export class KafkaEventBus implements IEventBus {
         value,
         timestamp: Date.now().toString(),
       }],
-      acks: -1,
+      acks: 1,
       timeout: 30000,
     })
   }
@@ -87,9 +87,14 @@ export class KafkaEventBus implements IEventBus {
     const kafka = getKafkaClient()
     const consumer = kafka.consumer({
       groupId: subscriptionId,
-      sessionTimeout: 10000,
+      sessionTimeout: 30000, // Increased from 10000 for better stability
       heartbeatInterval: 3000,
-      maxWaitTimeInMs: 10, // Reduced for faster batching
+      maxWaitTimeInMs: 1, // Ultra-low latency: reduced from 10ms to 1ms
+      allowAutoTopicCreation: false,
+      maxBytesPerPartition: 1024 * 1024, // 1MB per partition
+      minBytes: 1, // Fetch as soon as data is available
+      maxInFlightRequests: 1, // Ensure order by limiting to 1 in-flight request
+      readUncommitted: true, // Read uncommitted for lower latency
       retry: {
         initialRetryTime: 100, // Start with 100ms retry delay
         maxRetryTime: 5000, // Max 5 seconds between retries
