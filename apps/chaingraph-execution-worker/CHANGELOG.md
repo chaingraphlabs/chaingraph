@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.23
+
+### Patch Changes
+
+- feat: simplify JSON export formatting by removing indentation
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.23
+  - @badaitech/chaingraph-nodes@0.5.5-dev.23
+  - @badaitech/chaingraph-types@0.5.5-dev.23
+  - @badaitech/chaingraph-trpc@0.5.5-dev.23
+
 ## 0.5.5-dev.22
 
 ### Patch Changes

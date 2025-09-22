@@ -229,8 +229,7 @@ export class ExecutionService implements IExecutionService {
     if (parentInstance.row.integration?.archai) {
       childIntegrationContext.archai = {
         ...parentInstance.row.integration?.archai,
-        // remove chatID and messageID because it might be used in the root execution only
-        chatID: undefined,
+        // remove messageID because it might be used in the root execution only
         messageID: undefined,
       }
     }

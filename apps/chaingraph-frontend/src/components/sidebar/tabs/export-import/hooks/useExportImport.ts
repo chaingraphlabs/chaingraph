@@ -137,7 +137,7 @@ export function useExportImport() {
       edgeCount: edgesToExport.length,
     }
 
-    return JSON.stringify(exportData, null, 2)
+    return JSON.stringify(exportData)
   }, [activeFlowMetadata, nodes, edges, selectedNodes, getInternalEdges, calculateVirtualOrigin, getSelectedNodesWithChildren, adjustOrphanedNodePositions])
 
   // Validate import data
