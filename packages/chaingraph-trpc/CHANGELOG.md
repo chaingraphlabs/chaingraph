@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.23
+
+### Patch Changes
+
+- feat: simplify JSON export formatting by removing indentation
+
 ## 0.5.5-dev.22
 
 ### Patch Changes
