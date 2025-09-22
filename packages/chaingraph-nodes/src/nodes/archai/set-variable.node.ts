@@ -49,8 +49,14 @@ class ArchAISetVariableNode extends BaseNode {
   @PortEnum({
     title: 'Namespace',
     description: 'Namespace to set the variable in',
-    defaultValue: VariableNamespace.Execution,
+    defaultValue: VariableNamespace.Chat,
     options: [
+      {
+        id: VariableNamespace.Local,
+        type: 'string',
+        defaultValue: VariableNamespace.Local,
+        title: 'Local',
+      },
       {
         id: VariableNamespace.Execution,
         type: 'string',
@@ -78,7 +84,7 @@ class ArchAISetVariableNode extends BaseNode {
     ],
     required: true,
   })
-  namespace: VariableNamespace = VariableNamespace.Execution
+  namespace: VariableNamespace = VariableNamespace.Chat
 
   @Input()
   @PortAny({

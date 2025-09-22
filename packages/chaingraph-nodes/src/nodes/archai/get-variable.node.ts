@@ -64,6 +64,12 @@ class ArchAIGetVariableNode extends BaseNode {
     required: true,
     options: [
       {
+        id: VariableNamespace.Local,
+        type: 'string',
+        defaultValue: VariableNamespace.Local,
+        title: 'Local',
+      },
+      {
         id: VariableNamespace.Execution,
         type: 'string',
         defaultValue: VariableNamespace.Execution,

@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.26
+
+### Patch Changes
+
+- feat: add 'Local' variable namespace option to variable nodes
+
 ## 0.5.5-dev.25
 
 ### Patch Changes
