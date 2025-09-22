@@ -32,10 +32,6 @@ export function useSelectedFlow() {
     flowId: storedFlowId!,
   }, {
     enabled: Boolean(storedFlowId),
-    staleTime: 1000 * 15, // Consider data fresh for 1 minute
-    // Proper query options
-    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
-    retry: false, // Don't retry on error
   })
 
   // Handle flow selection/deselection
