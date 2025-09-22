@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.24
+
+### Patch Changes
+
+- feat: add integration details for ArchAI and Wallet in execution details view
+
 ## 0.5.5-dev.23
 
 ### Patch Changes

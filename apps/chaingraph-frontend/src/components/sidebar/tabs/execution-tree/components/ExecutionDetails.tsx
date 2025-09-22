@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionTreeNode } from '@badaitech/chaingraph-executor/types'
-import { AlertCircle, Clock, Copy, ExternalLink, Hash, Layers, Zap } from 'lucide-react'
+import { AlertCircle, Bot, Clock, Copy, ExternalLink, Hash, Layers, Wallet, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -31,7 +31,6 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
   const nodeId = node.id
   const parentId = node.parentId
   const rootId = execution.rootExecutionId
-  const level = node.level
 
   // Format timestamps
   const createdAt = execution.createdAt ? new Date(execution.createdAt) : undefined
@@ -173,6 +172,102 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
                 </div>
               )}
             </div>
+          </div>
+        </>
+      )}
+
+      {/* Integration Info */}
+      {execution.integration && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            {execution.integration?.archai && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Bot className="w-4 h-4 text-green-500" />
+                  <span>ArchAI Integration</span>
+                </div>
+                <div className="bg-muted/50 rounded-md p-3 space-y-2">
+                  {execution.integration.archai.agentID && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Agent ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                        {execution.integration.archai.agentID}
+                      </code>
+                    </div>
+                  )}
+                  {execution.integration.archai.chatID && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Chat ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                        {execution.integration.archai.chatID}
+                      </code>
+                    </div>
+                  )}
+                  {execution.integration.archai.messageID !== undefined && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Message ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                        {execution.integration.archai.messageID}
+                      </code>
+                    </div>
+                  )}
+                  {!execution.integration.archai.agentID && !execution.integration.archai.chatID && !execution.integration.archai.messageID && (
+                    <div className="text-sm text-muted-foreground">No context available</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {execution.integration?.wallet && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Wallet className="w-4 h-4 text-purple-500" />
+                  <span>Wallet Integration</span>
+                  {execution.integration.wallet.isConnected && (
+                    <Badge variant="outline" className="text-xs">
+                      Connected
+                    </Badge>
+                  )}
+                </div>
+                <div className="bg-muted/50 rounded-md p-3 space-y-2">
+                  {execution.integration.wallet.address && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Address</span>
+                      <div className="flex items-center gap-1">
+                        <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                          {execution.integration.wallet.address.slice(0, 6)}
+                          ...
+                          {execution.integration.wallet.address.slice(-4)}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => copyToClipboard(execution.integration?.wallet?.address || '')}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {execution.integration.wallet.chainId && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Chain ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                        {execution.integration.wallet.chainId}
+                      </code>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className="text-xs">
+                      {execution.integration.wallet.isConnected ? 'Connected' : 'Disconnected'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

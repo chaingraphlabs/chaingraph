@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.24
+
+### Patch Changes
+
+- feat: add integration details for ArchAI and Wallet in execution details view
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.24
+
 ## 0.5.5-dev.23
 
 ### Patch Changes

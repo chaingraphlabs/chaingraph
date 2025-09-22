@@ -43,7 +43,7 @@ export class KafkaTaskQueue implements ITaskQueue {
         value: safeSuperJSONStringify(task),
         timestamp: Date.now().toString(),
       }],
-      acks: 1, // Only wait for leader acknowledgment (faster)
+      acks: -1, // Only wait for leader acknowledgment (faster)
       timeout: 5000, // 5 second timeout for lower latency
       compression: 0, // No compression for lowest latency
     })
