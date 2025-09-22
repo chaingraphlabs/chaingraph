@@ -13,6 +13,9 @@ import type {
   SerializedEdge,
 } from '@badaitech/chaingraph-types'
 import {
+  SerializedNodeSchemaV1Legacy,
+} from '@badaitech/chaingraph-types'
+import {
   isObjectPortConfig,
 } from '@badaitech/chaingraph-types'
 import { NodeStatus } from '@badaitech/chaingraph-types'
@@ -27,7 +30,7 @@ const PositionSchema = z.object({
 })
 
 const ClipboardDataSchema = z.object({
-  nodes: z.array(SerializedNodeSchema),
+  nodes: z.array(z.union([SerializedNodeSchema, SerializedNodeSchemaV1Legacy])),
   edges: z.array(SerializedEdgeSchema),
   timestamp: z.number().optional().default(() => Date.now()),
 })
