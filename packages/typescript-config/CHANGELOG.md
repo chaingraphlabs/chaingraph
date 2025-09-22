@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.25
+
+### Patch Changes
+
+- feat: reduce staleTime for data fetching to improve responsiveness
+
 ## 0.5.5-dev.24
 
 ### Patch Changes

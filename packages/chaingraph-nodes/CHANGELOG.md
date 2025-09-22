@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.25
+
+### Patch Changes
+
+- feat: reduce staleTime for data fetching to improve responsiveness
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.25
+
 ## 0.5.5-dev.24
 
 ### Patch Changes
