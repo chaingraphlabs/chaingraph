@@ -140,6 +140,17 @@ export class ExecutionService implements IExecutionService {
       parentId: executionRow.parentExecutionId,
       rootId: executionRow.rootExecutionId,
       depth: currentDepth,
+      integration: {
+        ...(executionRow.integration?.archai
+          ? {
+              archai: {
+                agentID: executionRow.integration.archai.agentID,
+                chatID: executionRow.integration.archai.chatID,
+                messageID: executionRow.integration.archai.messageID,
+              },
+            }
+          : {}),
+      },
     }, 'Execution created')
 
     return instance
@@ -275,6 +286,24 @@ export class ExecutionService implements IExecutionService {
       timestamp: Date.now(),
       maxRetries: parentInstance.task.maxRetries,
     }
+
+    logger.debug({
+      parentId: parentInstance.row.id,
+      childId: childExecutionId,
+      eventType: event.type,
+      flowId: parentInstance.flow.id,
+      integration: {
+        ...(childIntegrationContext.archai
+          ? {
+              archai: {
+                agentID: childIntegrationContext.archai.agentID,
+                chatID: childIntegrationContext.archai.chatID,
+                messageID: childIntegrationContext.archai.messageID,
+              },
+            }
+          : {}),
+      },
+    }, 'Child execution task publish prepared')
 
     // Publish task to queue (will be executed by worker)
     try {
