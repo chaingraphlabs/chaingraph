@@ -185,55 +185,81 @@ export const pasteNodes = flowContextProcedure
         }
       }
 
-      const addedNodes = flow.addNodes(createdNodes)
+      const addedNodes = await flow.addNodes(createdNodes)
 
       // Step 2: Recreate edges using new IDs
       const createdEdges: SerializedEdge[] = []
 
-      for (const edgeData of clipboardData.edges) {
-        try {
+      // Prepare edge connection data with validated IDs
+      const edgeConnectionTasks = clipboardData.edges
+        .map((edgeData) => {
           const newSourceNodeId = nodeIdMapping.get(edgeData.sourceNodeId)
           const newTargetNodeId = nodeIdMapping.get(edgeData.targetNodeId)
           const newSourcePortId = portIdMapping.get(edgeData.sourcePortId)
           const newTargetPortId = portIdMapping.get(edgeData.targetPortId)
 
           if (!newSourceNodeId || !newTargetNodeId || !newSourcePortId || !newTargetPortId) {
-            continue
+            return null
           }
 
-          // Connect ports using flow's built-in method
-          const edge = await flow.connectPorts(newSourceNodeId, newSourcePortId, newTargetNodeId, newTargetPortId)
-
-          if (!edge) {
-            console.warn(`[FLOW] Failed to connect ports for edge ${edgeData.id}`)
-            continue
+          return {
+            originalEdgeData: edgeData,
+            newSourceNodeId,
+            newTargetNodeId,
+            newSourcePortId,
+            newTargetPortId,
           }
+        })
+        .filter((task): task is NonNullable<typeof task> => task !== null)
 
-          // Set edge metadata if provided
-          if (edgeData.metadata) {
-            if (edgeData.metadata.label && typeof edgeData.metadata.label === 'string') {
-              edge.metadata.label = edgeData.metadata.label
-            }
-            if (edgeData.metadata.description) {
-              edge.metadata.description = edgeData.metadata.description
-            }
-          }
+      // Execute all edge connections in parallel
+      const edgeConnectionResults = await Promise.allSettled(
+        edgeConnectionTasks.map(async task => ({
+          task,
+          edge: await flow.connectPorts(
+            task.newSourceNodeId,
+            task.newSourcePortId,
+            task.newTargetNodeId,
+            task.newTargetPortId,
+          ),
+        })),
+      )
 
-          createdEdges.push({
-            id: edge.id,
-            metadata: edge.metadata,
-            status: edge.status,
-            sourceNodeId: newSourceNodeId,
-            sourcePortId: newSourcePortId,
-            targetNodeId: newTargetNodeId,
-            targetPortId: newTargetPortId,
-          })
-
-          console.debug(`[FLOW] Created edge ${edge.id}`)
-        } catch (error) {
-          console.error(`[FLOW] Failed to create edge ${edgeData.id}:`, error)
-          // Continue with other edges rather than failing the entire operation
+      // Process results and update metadata
+      for (const result of edgeConnectionResults) {
+        if (result.status === 'rejected') {
+          console.error('[FLOW] Failed to create edge:', result.reason)
+          continue
         }
+
+        const { task, edge } = result.value
+
+        if (!edge) {
+          console.warn(`[FLOW] Failed to connect ports for edge ${task.originalEdgeData.id}`)
+          continue
+        }
+
+        // Set edge metadata if provided
+        if (task.originalEdgeData.metadata) {
+          if (task.originalEdgeData.metadata.label && typeof task.originalEdgeData.metadata.label === 'string') {
+            edge.metadata.label = task.originalEdgeData.metadata.label
+          }
+          if (task.originalEdgeData.metadata.description) {
+            edge.metadata.description = task.originalEdgeData.metadata.description
+          }
+        }
+
+        createdEdges.push({
+          id: edge.id,
+          metadata: edge.metadata,
+          status: edge.status,
+          sourceNodeId: task.newSourceNodeId,
+          sourcePortId: task.newSourcePortId,
+          targetNodeId: task.newTargetNodeId,
+          targetPortId: task.newTargetPortId,
+        })
+
+        console.debug(`[FLOW] Created edge ${edge.id}`)
       }
 
       // Save the updated flow

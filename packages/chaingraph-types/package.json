@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-types",
   "type": "module",
-  "version": "0.5.5-dev.20",
+  "version": "0.5.5-dev.22",
   "private": false,
   "description": "Core type definitions for the Chaingraph project",
   "license": "BUSL-1.1",

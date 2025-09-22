@@ -1,5 +1,29 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.22
+
+### Patch Changes
+
+- feat: enhance edge connection handling with parallel execution and improved error logging
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.22
+  - @badaitech/chaingraph-nodes@0.5.5-dev.22
+  - @badaitech/chaingraph-types@0.5.5-dev.22
+  - @badaitech/chaingraph-trpc@0.5.5-dev.22
+  - @badaitech/badai-api@0.5.5-dev.22
+
+## 0.5.5-dev.21
+
+### Patch Changes
+
+- feat: extend ClipboardDataSchema to support legacy SerializedNodeSchemaV1
+- Updated dependencies
+  - @badaitech/chaingraph-trpc@0.5.5-dev.21
+  - @badaitech/badai-api@0.5.5-dev.21
+  - @badaitech/chaingraph-executor@0.5.5-dev.21
+  - @badaitech/chaingraph-nodes@0.5.5-dev.21
+  - @badaitech/chaingraph-types@0.5.5-dev.21
+
 ## 0.5.5-dev.20
 
 ### Patch Changes
