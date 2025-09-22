@@ -134,6 +134,14 @@ export const fetchExecutionDetailsFx = executionDomain.createEffect(
   },
 )
 
+// Fetch multiple execution trees (for refreshing expanded trees)
+export const fetchMultipleExecutionTreesFx = executionDomain.createEffect(
+  async (executionIds: string[]) => {
+    const promises = executionIds.map(id => fetchExecutionTreeFx(id))
+    return await Promise.all(promises)
+  },
+)
+
 // ============================================================================
 // STORE UPDATES
 // ============================================================================
@@ -160,6 +168,16 @@ $loadingTrees
   .on(fetchExecutionTreeFx.finally, (state, { params: executionId }) => {
     const newSet = new Set(state)
     newSet.delete(executionId)
+    return newSet
+  })
+  .on(fetchMultipleExecutionTreesFx, (state, executionIds) => {
+    const newSet = new Set(state)
+    executionIds.forEach(id => newSet.add(id))
+    return newSet
+  })
+  .on(fetchMultipleExecutionTreesFx.finally, (state, { params: executionIds }) => {
+    const newSet = new Set(state)
+    executionIds.forEach(id => newSet.delete(id))
     return newSet
   })
 
@@ -225,9 +243,14 @@ $executionTreeError
     message: error.message,
     code: 'FETCH_DETAILS_ERROR',
   }))
+  .on(fetchMultipleExecutionTreesFx.failData, (_, error) => ({
+    message: error.message,
+    code: 'FETCH_MULTIPLE_TREES_ERROR',
+  }))
   .reset(fetchRootExecutionsFx)
   .reset(fetchExecutionTreeFx)
   .reset(fetchExecutionDetailsFx)
+  .reset(fetchMultipleExecutionTreesFx)
 
 // ============================================================================
 // SAMPLES (Event connections)
@@ -269,6 +292,15 @@ sample({
     after: filters.after,
   }),
   target: fetchRootExecutionsFx,
+})
+
+// Refresh expanded trees
+sample({
+  clock: refreshExecutionTree,
+  source: $expandedTrees,
+  filter: expandedTrees => expandedTrees.size > 0,
+  fn: expandedTrees => Array.from(expandedTrees.keys()),
+  target: fetchMultipleExecutionTreesFx,
 })
 
 // Fetch details when selecting an execution
