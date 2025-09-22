@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.22
+
+### Patch Changes
+
+- feat: enhance edge connection handling with parallel execution and improved error logging
+
+## 0.5.5-dev.21
+
+### Patch Changes
+
+- feat: extend ClipboardDataSchema to support legacy SerializedNodeSchemaV1
+
 ## 0.5.5-dev.20
 
 ### Patch Changes
