@@ -1,5 +1,18 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.27
+
+### Patch Changes
+
+- feat: enhance metrics tracking for Kafka event bus and task queue operations
+- Updated dependencies
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.27
+  - @badaitech/badai-api@0.5.5-dev.27
+  - @badaitech/chaingraph-nodes@0.5.5-dev.27
+  - @badaitech/chaingraph-trpc@0.5.5-dev.27
+  - @badaitech/chaingraph-types@0.5.5-dev.27
+
 ## 0.5.5-dev.26
 
 ### Patch Changes
