@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.29
+
+### Patch Changes
+
+- feat: optimize Kafka event processing with partitioning strategy and header filtering for improved performance
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.29
+  - @badaitech/chaingraph-nodes@0.5.5-dev.29
+  - @badaitech/chaingraph-trpc@0.5.5-dev.29
+  - @badaitech/chaingraph-types@0.5.5-dev.29
+
 ## 0.5.5-dev.28
 
 ### Patch Changes
