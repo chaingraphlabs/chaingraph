@@ -9,9 +9,12 @@
 import type { Consumer, Producer } from 'kafkajs'
 import type { ExecutionTask } from '../../../types/messages'
 import type { ITaskQueue } from '../../interfaces/ITaskQueue'
+import type { TaskQueueMetric } from '../../metrics'
+import { Buffer } from 'node:buffer'
 import { KafkaTopics } from '../../../types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getTaskProducer } from '../../kafka/producers/task-producer'
+import { createMetricsTracker, MetricsHelper, MetricStages } from '../../metrics'
 import { config } from '../../utils/config'
 import { createLogger } from '../../utils/logger'
 import { safeSuperJSONParse, safeSuperJSONStringify } from '../../utils/serialization'
@@ -25,8 +28,16 @@ export class KafkaTaskQueue implements ITaskQueue {
   private producer: Producer | null = null
   private consumer: Consumer | null = null
   private isConsuming = false
+  private readonly metrics = createMetricsTracker('kafka-task-queue')
+  private readonly metricsHelper = new MetricsHelper(this.metrics)
 
   publishTask = async (task: ExecutionTask): Promise<void> => {
+    const scopedMetrics = this.metrics.withContext({
+      executionId: task.executionId,
+      flowId: task.flowId,
+      retryCount: task.retryCount,
+    })
+
     if (!this.producer) {
       this.producer = await getTaskProducer()
     }
@@ -36,17 +47,34 @@ export class KafkaTaskQueue implements ITaskQueue {
       topic: KafkaTopics.TASKS,
     }, 'Publishing task to Kafka')
 
-    const records = await this.producer.send({
-      topic: KafkaTopics.TASKS,
-      messages: [{
+    // Track serialization time
+    const serializeTimer = this.metricsHelper.createTimer(MetricStages.TASK_QUEUE, 'serialize')
+    const serializedTask = safeSuperJSONStringify(task)
+    const serializationTime = serializeTimer.end()
+    const taskSizeBytes = Buffer.byteLength(serializedTask)
+
+    // Track Kafka publish
+    const startPublish = Date.now()
+    const records = await this.metricsHelper.trackKafkaPublish(
+      KafkaTopics.TASKS,
+      { executionId: task.executionId, flowId: task.flowId },
+      async () => await this.producer!.send({
+        topic: KafkaTopics.TASKS,
+        messages: [{
+          key: task.executionId,
+          value: serializedTask,
+          timestamp: Date.now().toString(),
+        }],
+        acks: -1, // Only wait for leader acknowledgment (faster)
+        timeout: 5000, // 5 second timeout for lower latency
+        compression: 0, // No compression for lowest latency
+      }),
+      {
         key: task.executionId,
-        value: safeSuperJSONStringify(task),
-        timestamp: Date.now().toString(),
-      }],
-      acks: -1, // Only wait for leader acknowledgment (faster)
-      timeout: 5000, // 5 second timeout for lower latency
-      compression: 0, // No compression for lowest latency
-    })
+        size: taskSizeBytes,
+      },
+    )
+    const kafkaSendDuration = Date.now() - startPublish
 
     for (const record of records) {
       if (record.errorCode && record.errorCode !== 0) {
@@ -55,8 +83,31 @@ export class KafkaTaskQueue implements ITaskQueue {
           partition: record.partition,
           errorCode: record.errorCode,
         }, 'Failed to publish task to Kafka')
+
+        // Track publish error
+        scopedMetrics.track({
+          stage: MetricStages.TASK_QUEUE,
+          event: 'publish_error',
+          timestamp: Date.now(),
+          error: `Kafka error code: ${record.errorCode}`,
+          partition: record.partition,
+        } as TaskQueueMetric)
+
         throw new Error(`Failed to publish task to Kafka, error code: ${record.errorCode}`)
       }
+
+      // Track successful publish with metadata
+      scopedMetrics.track({
+        stage: MetricStages.TASK_QUEUE,
+        event: 'publish',
+        timestamp: Date.now(),
+        kafka_send_duration_ms: kafkaSendDuration,
+        serialization_ms: serializationTime,
+        task_size_bytes: taskSizeBytes,
+        partition: record.partition,
+        offset: Number(record.baseOffset),
+        task_age_ms: Date.now() - task.timestamp,
+      } as TaskQueueMetric)
 
       logger.debug({
         topicName: record.topicName,
@@ -100,14 +151,20 @@ export class KafkaTaskQueue implements ITaskQueue {
     this.isConsuming = true
 
     await this.consumer.run({
-      eachMessage: async ({ message, partition }) => {
+      eachMessage: async ({ message, partition, topic }) => {
         if (!message.value) {
           logger.warn('Received task with no value')
           return
         }
 
+        const consumeStartTime = Date.now()
+        const messageSize = Buffer.byteLength(message.value)
+
         try {
+          // Track deserialization
+          const deserializeTimer = this.metricsHelper.createTimer(MetricStages.TASK_QUEUE, 'deserialize')
           const task = safeSuperJSONParse<ExecutionTask>(message.value.toString())
+          const deserializationTime = deserializeTimer.end()
 
           // TODO: Add schema validation for task (zod schema or similar)
 
@@ -118,8 +175,55 @@ export class KafkaTaskQueue implements ITaskQueue {
             return
           }
 
-          await handler(task)
+          // Create scoped metrics for this task
+          const scopedMetrics = this.metrics.withContext({
+            executionId: task.executionId,
+            flowId: task.flowId,
+            retryCount: task.retryCount,
+          })
+
+          // Track consume event
+          scopedMetrics.track({
+            stage: MetricStages.TASK_QUEUE,
+            event: 'consume',
+            timestamp: Date.now(),
+            partition,
+            offset: Number(message.offset),
+            task_size_bytes: messageSize,
+            deserialization_ms: deserializationTime,
+            task_age_ms: Date.now() - task.timestamp,
+          } as TaskQueueMetric)
+
+          // Process the task with metrics
+          await this.metricsHelper.trackKafkaConsume(
+            topic,
+            { executionId: task.executionId, flowId: task.flowId },
+            async () => await handler(task),
+            {
+              partition,
+              offset: Number(message.offset),
+            },
+          )
+
+          // Track successful processing
+          scopedMetrics.track({
+            stage: MetricStages.TASK_QUEUE,
+            event: 'ack',
+            timestamp: Date.now(),
+            duration_ms: Date.now() - consumeStartTime,
+          })
         } catch (error) {
+          // Track processing error
+          this.metrics.track({
+            stage: MetricStages.TASK_QUEUE,
+            event: 'consume_error',
+            context: { executionId: 'unknown', workerId: config.worker.id },
+            timestamp: Date.now(),
+            error: error instanceof Error ? error.message : String(error),
+            partition,
+            duration_ms: Date.now() - consumeStartTime,
+          })
+
           logger.error({
             error: error instanceof Error
               ? {
@@ -153,6 +257,9 @@ export class KafkaTaskQueue implements ITaskQueue {
       await this.producer.disconnect()
       this.producer = null
     }
+
+    // Dispose metrics tracker
+    this.metrics.dispose()
 
     logger.info('Kafka task queue closed')
   }

@@ -10,12 +10,14 @@ import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type { Consumer, Producer } from 'kafkajs'
 import type { ExecutionEventMessage } from '../../../types/messages'
 import type { IEventBus } from '../../interfaces/IEventBus'
+import { Buffer } from 'node:buffer'
 import { ExecutionEventImpl as EventImpl } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
 import { KafkaTopics } from '../../../types/messages'
 import { getKafkaClient } from '../../kafka/client'
 import { getEventProducer } from '../../kafka/producers/event-producer'
+import { createMetricsTracker, MetricsHelper, MetricStages } from '../../metrics'
 import { config } from '../../utils/config'
 import { createLogger } from '../../utils/logger'
 import { safeSuperJSONParse, safeSuperJSONStringify } from '../../utils/serialization'
@@ -36,6 +38,8 @@ export class KafkaEventBus implements IEventBus {
   private producer: Producer | null = null
   private subscriptions: Map<string, ActiveSubscription> = new Map()
   private cleanupInterval: NodeJS.Timeout | null = null
+  private readonly metrics = createMetricsTracker('kafka-event-bus')
+  private readonly metricsHelper = new MetricsHelper(this.metrics)
 
   constructor(options?: {
     producer?: Producer
@@ -46,6 +50,11 @@ export class KafkaEventBus implements IEventBus {
   }
 
   publishEvent = async (executionId: string, event: ExecutionEventImpl): Promise<void> => {
+    const scopedMetrics = this.metrics.withContext({
+      executionId,
+      workerId: config.worker.id,
+    })
+
     if (!this.producer) {
       this.producer = await getEventProducer()
     }
@@ -57,23 +66,38 @@ export class KafkaEventBus implements IEventBus {
       workerId: config.worker.id,
     }
 
-    // const value = JSON.stringify({
+    // Track serialization time
+    const serializeTimer = this.metricsHelper.createTimer(MetricStages.EVENT_PUBLISH, 'serialize')
     const value = safeSuperJSONStringify({
       executionId: message.executionId,
       timestamp: message.timestamp,
       workerId: message.workerId,
       event: message.event.serialize(),
     })
+    const serializationTime = serializeTimer.end()
+    const eventSizeBytes = Buffer.byteLength(value)
 
-    await this.producer.send({
-      topic: KafkaTopics.EVENTS,
-      messages: [{
-        key: executionId, // Use executionId as partition key for ordering
-        value,
-        timestamp: Date.now().toString(),
-      }],
-      acks: -1,
-      timeout: 30000,
+    // Track event publishing
+    await scopedMetrics.trackOperation({
+      execute: async () => await this.producer!.send({
+        topic: KafkaTopics.EVENTS,
+        messages: [{
+          key: executionId, // Use executionId as partition key for ordering
+          value,
+          timestamp: Date.now().toString(),
+        }],
+        acks: -1,
+        timeout: 30000,
+      }),
+      stage: MetricStages.EVENT_PUBLISH,
+      event: 'publish',
+      metadata: {
+        event_type: event.type,
+        event_index: event.index,
+        serialization_ms: serializationTime,
+        event_size_bytes: eventSizeBytes,
+        topic: KafkaTopics.EVENTS,
+      },
     })
   }
 
@@ -83,6 +107,16 @@ export class KafkaEventBus implements IEventBus {
   ): AsyncIterable<ExecutionEventImpl[]> => {
     // Create unique consumer group for this subscription
     const subscriptionId = `sub-${executionId}-${customAlphabet(nolookalikes, 8)()}`
+
+    // Track subscription creation
+    this.metrics.track({
+      stage: MetricStages.EVENT_PUBLISH,
+      event: 'subscription_create',
+      context: { executionId, workerId: config.worker.id },
+      timestamp: Date.now(),
+      subscription_id: subscriptionId,
+      from_index: fromIndex,
+    })
 
     const kafka = getKafkaClient()
     const consumer = kafka.consumer({
@@ -154,6 +188,15 @@ export class KafkaEventBus implements IEventBus {
 
     toRemove.forEach(subId => this.subscriptions.delete(subId))
 
+    // Track unsubscribe
+    this.metrics.track({
+      stage: MetricStages.EVENT_PUBLISH,
+      event: 'subscription_close',
+      context: { executionId, workerId: config.worker.id },
+      timestamp: Date.now(),
+      subscriptions_closed: toRemove.length,
+    })
+
     logger.debug({ executionId, count: toRemove.length }, 'Unsubscribed from Kafka events')
   }
 
@@ -175,6 +218,9 @@ export class KafkaEventBus implements IEventBus {
       await this.producer.disconnect()
       this.producer = null
     }
+
+    // Dispose metrics tracker
+    this.metrics.dispose()
 
     logger.info('Kafka event bus closed')
   }
@@ -248,6 +294,10 @@ export class KafkaEventBus implements IEventBus {
           let batchError: Error | null = null
 
           // Process all messages in the batch
+          const batchStartTime = Date.now()
+          let processedCount = 0
+          let skippedCount = 0
+
           for (const message of batch.messages) {
             if (!message.value)
               continue
@@ -261,8 +311,10 @@ export class KafkaEventBus implements IEventBus {
               // TODO: Add schema validation for parsedMessage (zod schema or similar)
 
               // Filter by executionId
-              if (parsedMessage.executionId !== executionId)
+              if (parsedMessage.executionId !== executionId) {
+                skippedCount++
                 continue
+              }
 
               // Check if event data exists
               if (!parsedMessage.event) {
@@ -285,10 +337,13 @@ export class KafkaEventBus implements IEventBus {
               }
 
               // Skip events before fromIndex
-              if (event.index < fromIndex)
+              if (event.index < fromIndex) {
+                skippedCount++
                 continue
+              }
 
               batchEvents.push(event)
+              processedCount++
             } catch (error) {
               logger.error({
                 error: error instanceof Error
@@ -304,6 +359,20 @@ export class KafkaEventBus implements IEventBus {
               hasError = true
               batchError = error as Error
             }
+          }
+
+          // Track batch processing metrics
+          if (processedCount > 0 || skippedCount > 0) {
+            this.metrics.track({
+              stage: MetricStages.EVENT_PUBLISH,
+              event: 'batch_processed',
+              context: { executionId, workerId: config.worker.id },
+              timestamp: Date.now(),
+              event_count: processedCount,
+              skipped_count: skippedCount,
+              batch_size: batch.messages.length,
+              duration_ms: Date.now() - batchStartTime,
+            })
           }
 
           // Add all valid events from this batch to the buffer

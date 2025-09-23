@@ -30,8 +30,8 @@ export interface MetricContext {
   executionId: string
   flowId?: string
   workerId?: string
-  rootExecutionId?: string
-  parentExecutionId?: string
+  rootExecutionId?: string | null
+  parentExecutionId?: string | null
   executionDepth?: number
   retryCount?: number
 }
@@ -53,7 +53,7 @@ export interface BaseMetricEvent {
  */
 export interface TaskQueueMetric extends BaseMetricEvent {
   stage: typeof MetricStages.TASK_QUEUE
-  event: 'publish' | 'consume' | 'ack' | 'retry'
+  event: 'publish' | 'consume' | 'ack' | 'retry' | 'publish_error' | 'consume_error'
   kafka_send_duration_ms?: number
   kafka_ack_wait_ms?: number
   queue_depth?: number
@@ -62,6 +62,10 @@ export interface TaskQueueMetric extends BaseMetricEvent {
   offset?: number
   task_size_bytes?: number
   task_age_ms?: number
+  serialization_ms?: number
+  deserialization_ms?: number
+  retry_count?: number
+  retry_delay_ms?: number
 }
 
 /**
@@ -69,7 +73,7 @@ export interface TaskQueueMetric extends BaseMetricEvent {
  */
 export interface ClaimMetric extends BaseMetricEvent {
   stage: typeof MetricStages.CLAIM
-  event: 'attempt' | 'success' | 'conflict' | 'release' | 'heartbeat' | 'expired'
+  event: 'attempt' | 'success' | 'conflict' | 'release' | 'heartbeat' | 'expired' | 'heartbeat_failed' | 'heartbeat_error' | 'release_after_error'
   claim_duration_ms?: number
   claim_attempts?: number
   claim_held_duration_ms?: number
@@ -84,7 +88,8 @@ export interface ClaimMetric extends BaseMetricEvent {
 export interface FlowLoadMetric extends BaseMetricEvent {
   stage: typeof MetricStages.FLOW_LOAD
   event: 'start' | 'complete' | 'cache_hit' | 'cache_miss' | 'error'
-  load_duration_ms?: number
+  duration_ms?: number // Keep consistent with base interface
+  load_duration_ms?: number // Additional specific field
   db_query_ms?: number
   deserialization_ms?: number
   flow_size_bytes?: number
@@ -98,13 +103,15 @@ export interface FlowLoadMetric extends BaseMetricEvent {
  */
 export interface InitMetric extends BaseMetricEvent {
   stage: typeof MetricStages.INIT
-  event: 'context_create' | 'engine_create' | 'setup_complete' | 'error'
+  event: 'context_create' | 'engine_create' | 'setup_complete' | 'error' | 'create_instance'
   total_init_ms?: number
   context_creation_ms?: number
   engine_creation_ms?: number
   event_handler_setup_ms?: number
   memory_allocated_mb?: number
   instance_count?: number
+  node_count?: number
+  edge_count?: number
 }
 
 /**
@@ -112,7 +119,7 @@ export interface InitMetric extends BaseMetricEvent {
  */
 export interface EventPublishMetric extends BaseMetricEvent {
   stage: typeof MetricStages.EVENT_PUBLISH
-  event: 'batch_start' | 'batch_complete' | 'publish_error'
+  event: 'batch_start' | 'batch_complete' | 'publish_error' | 'subscription_create' | 'subscription_close' | 'batch_processed' | 'publish' | 'serialize'
   event_count?: number
   batch_size_bytes?: number
   publish_duration_ms?: number
@@ -121,6 +128,14 @@ export interface EventPublishMetric extends BaseMetricEvent {
   events_per_second?: number
   pending_publishes?: number
   topic?: string
+  subscription_id?: string
+  from_index?: number
+  subscriptions_closed?: number
+  skipped_count?: number
+  batch_size?: number
+  event_type?: string
+  event_index?: number
+  event_size_bytes?: number
 }
 
 /**
@@ -128,7 +143,7 @@ export interface EventPublishMetric extends BaseMetricEvent {
  */
 export interface ChildSpawnMetric extends BaseMetricEvent {
   stage: typeof MetricStages.CHILD_SPAWN
-  event: 'spawn_start' | 'child_created' | 'task_published' | 'error'
+  event: 'spawn_start' | 'child_created' | 'task_published' | 'error' | 'spawn' | 'db_insert' | 'task_publish'
   parentExecutionId?: string
   childExecutionId?: string
   emittedEventType?: string
@@ -144,8 +159,8 @@ export interface ChildSpawnMetric extends BaseMetricEvent {
  */
 export interface DbOperationMetric extends BaseMetricEvent {
   stage: typeof MetricStages.DB_OPERATION
-  event: 'query' | 'insert' | 'update' | 'delete' | 'transaction'
-  operation: string
+  event: 'query' | 'insert' | 'update' | 'delete' | 'transaction' | 'status_update_running' | 'status_update_completed'
+  operation?: string
   query_duration_ms?: number
   rows_affected?: number
   transaction_duration_ms?: number
