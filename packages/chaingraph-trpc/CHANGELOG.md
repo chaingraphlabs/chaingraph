@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.28
+
+### Patch Changes
+
+- feat: enhance node and port cloning with deep copy for improved performance, add option to disable events when adding edges to the flow
+
 ## 0.5.5-dev.27
 
 ### Patch Changes

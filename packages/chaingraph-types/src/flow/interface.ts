@@ -73,7 +73,7 @@ export interface IFlow {
    * Adds an edge to the flow.
    * @param edge The edge to add.
    */
-  addEdge: (edge: IEdge) => Promise<void>
+  addEdge: (edge: IEdge, disableEvents?: boolean) => Promise<void>
 
   /**
    * Adds an edge to the flow synchronously, without triggering events.
