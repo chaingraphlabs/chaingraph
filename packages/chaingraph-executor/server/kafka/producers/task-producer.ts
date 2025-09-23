@@ -66,7 +66,7 @@ export async function publishExecutionTask(task: ExecutionTask): Promise<void> {
         value: safeSuperJSONStringify(task),
         timestamp: Date.now().toString(),
       }],
-      acks: 1, // Only wait for leader acknowledgment (faster)
+      acks: -1, // Only wait for leader acknowledgment (faster)
       timeout: 5000, // 5 second timeout for lower latency
       compression: 0, // No compression (0 = none) for lowest latency
     })

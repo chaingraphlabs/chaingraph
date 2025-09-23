@@ -59,4 +59,19 @@ export const config = {
     level: process.env.LOG_LEVEL || 'info',
     pretty: process.env.NODE_ENV !== 'production',
   },
+
+  // Metrics Configuration
+  metrics: {
+    enabled: process.env.ENABLE_METRICS === 'true',
+    logLevel: (process.env.METRICS_LOG_LEVEL || 'debug') as 'debug' | 'info' | 'warn',
+    sampling: process.env.METRICS_SAMPLING_ENABLED === 'true'
+      ? {
+          enabled: true,
+          rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
+        }
+      : undefined,
+    batchSize: Number.parseInt(process.env.METRICS_BATCH_SIZE || '1', 10),
+    flushInterval: Number.parseInt(process.env.METRICS_FLUSH_INTERVAL || '1000', 10),
+    includeMemoryMetrics: process.env.METRICS_INCLUDE_MEMORY === 'true',
+  },
 }
