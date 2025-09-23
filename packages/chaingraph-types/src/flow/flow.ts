@@ -336,7 +336,7 @@ export class Flow implements IFlow {
     this.edges.set(edge.id, edge)
   }
 
-  async addEdge(edge: IEdge): Promise<void> {
+  async addEdge(edge: IEdge, disableEvents?: boolean): Promise<void> {
     if (this.edges.has(edge.id)) {
       throw new Error(`Edge with ID ${edge.id} already exists in the flow.`)
     }
@@ -346,29 +346,31 @@ export class Flow implements IFlow {
       edge.targetPort.addConnection(edge.sourceNode.id, edge.sourcePort.id)
     }
 
-    await Promise.all([
-      edge.targetNode.emit({
-        type: NodeEventType.PortConnected,
-        sourceNode: edge.targetNode.clone(),
-        sourcePort: edge.targetPort.clone(),
-        targetNode: edge.sourceNode.clone(),
-        targetPort: edge.sourcePort.clone(),
-        nodeId: edge.targetNode.id,
-        timestamp: new Date(),
-        version: edge.targetNode.getVersion(),
-      }),
+    if (!disableEvents) {
+      await Promise.all([
+        edge.targetNode.emit({
+          type: NodeEventType.PortConnected,
+          sourceNode: edge.targetNode.clone(),
+          sourcePort: edge.targetPort.clone(),
+          targetNode: edge.sourceNode.clone(),
+          targetPort: edge.sourcePort.clone(),
+          nodeId: edge.targetNode.id,
+          timestamp: new Date(),
+          version: edge.targetNode.getVersion(),
+        }),
 
-      edge.sourceNode.emit({
-        type: NodeEventType.PortConnected,
-        sourceNode: edge.sourceNode.clone(),
-        sourcePort: edge.sourcePort.clone(),
-        targetNode: edge.targetNode.clone(),
-        targetPort: edge.targetPort.clone(),
-        nodeId: edge.sourceNode.id,
-        timestamp: new Date(),
-        version: edge.sourceNode.getVersion(),
-      }),
-    ])
+        edge.sourceNode.emit({
+          type: NodeEventType.PortConnected,
+          sourceNode: edge.sourceNode.clone(),
+          sourcePort: edge.sourcePort.clone(),
+          targetNode: edge.targetNode.clone(),
+          targetPort: edge.targetPort.clone(),
+          nodeId: edge.sourceNode.id,
+          timestamp: new Date(),
+          version: edge.sourceNode.getVersion(),
+        }),
+      ])
+    }
 
     this.edges.set(edge.id, edge)
   }
@@ -908,7 +910,7 @@ export class Flow implements IFlow {
         { ...edge.metadata },
       )
 
-      edgePromises.push(newFlow.addEdge(clonedEdge))
+      edgePromises.push(newFlow.addEdge(clonedEdge, true))
     }
 
     await Promise.all(edgePromises)

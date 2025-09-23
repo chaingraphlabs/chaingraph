@@ -126,10 +126,13 @@ export abstract class BasePort<C extends IPortConfig = IPortConfig> implements I
     }
   }
 
+  // New faster implementation with direct object cloning
   clone(): IPort<C> {
-    const serialized = this.serialize()
-    const newPort = new (this.constructor as new (config: C) => BasePort<C>)(this.config)
-    return newPort.deserialize(serialized)
+    const newConfig = deepCopy(this.config)
+    const newPort = new (this.constructor as new (config: C) => BasePort<C>)(newConfig)
+    const currentValue = this.getValue()
+    newPort.setValue(deepCopy(currentValue))
+    return newPort
   }
 
   isSystem() {

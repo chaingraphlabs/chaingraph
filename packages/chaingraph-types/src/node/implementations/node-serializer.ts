@@ -174,7 +174,24 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       throw new Error('Node reference is required for cloning')
     }
 
-    const serialized = this.serialize()
-    return this.createInstance(this.nodeRef.id).deserialize(serialized)
+    const newNode = this.createInstance(this.nodeRef.id)
+
+    // Deep copy metadata
+    newNode.setMetadata(deepCopy(this.nodeRef.metadata))
+    // Copy status
+    newNode.setStatus(this.nodeRef.status, false)
+    // Copy version
+    newNode.setVersion(this.nodeRef.getVersion())
+
+    // Clone ports
+    const clonedPorts = new Map<string, IPort>()
+    for (const [portId, port] of this.portManager.ports.entries()) {
+      clonedPorts.set(portId, port.clone())
+    }
+    newNode.setPorts(clonedPorts)
+
+    newNode.bindPortBindings()
+
+    return newNode
   }
 }
