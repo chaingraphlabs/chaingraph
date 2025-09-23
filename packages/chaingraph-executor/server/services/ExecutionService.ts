@@ -17,8 +17,9 @@ import type { IEventBus, ITaskQueue } from '../../server/interfaces'
 import type { IExecutionStore } from '../../server/stores/interfaces/IExecutionStore'
 import type { ExecutionRow } from '../../server/stores/postgres/schema'
 import type { ExecutionInstance, ExecutionTask } from '../../types'
-import type { CreateExecutionParams, IExecutionService } from './IExecutionService'
+import type { ChildSpawnMetric, InitMetric } from '../metrics'
 
+import type { CreateExecutionParams, IExecutionService } from './IExecutionService'
 import {
   ExecutionContext,
   ExecutionEngine,
@@ -26,6 +27,7 @@ import {
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
 import { ExecutionStatus } from '../../types'
+import { createMetricsTracker, MetricsHelper, MetricStages } from '../metrics'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('execution-service')
@@ -46,6 +48,10 @@ export class ExecutionService implements IExecutionService {
   // Maximum execution depth to prevent infinite cycles
   private readonly MAX_EXECUTION_DEPTH = 100
 
+  // Metrics tracking
+  private readonly metrics = createMetricsTracker('execution-service')
+  private readonly metricsHelper = new MetricsHelper(this.metrics)
+
   // // Track active executions in memory for engine access
   // private activeExecutions: Map<string, ExecutionInstance> = new Map()
   //
@@ -61,6 +67,16 @@ export class ExecutionService implements IExecutionService {
       flow,
       executionRow,
     } = params
+
+    const scopedMetrics = this.metrics.withContext({
+      executionId: executionRow.id,
+      flowId: flow.id,
+      rootExecutionId: executionRow.rootExecutionId || executionRow.id,
+      parentExecutionId: executionRow.parentExecutionId || undefined,
+      executionDepth: executionRow.executionDepth,
+    })
+
+    const initTimer = this.metricsHelper.createTimer(MetricStages.INIT, 'instance_create')
 
     flow.setIsDisabledPropagationEvents(true)
 
@@ -79,6 +95,8 @@ export class ExecutionService implements IExecutionService {
       throw new Error(`Maximum execution depth exceeded: ${currentDepth}. This may indicate an infinite event loop.`)
     }
 
+    // Track context creation
+    const contextTimer = this.metricsHelper.createTimer(MetricStages.INIT, 'context_create')
     const context = new ExecutionContext(
       flow.id,
       params.abortController,
@@ -96,17 +114,22 @@ export class ExecutionService implements IExecutionService {
         return Array.from(flow.nodes.values()).filter(predicate)
       },
     )
+    const contextCreationTime = contextTimer.end()
 
     // Enable event support for all executions
     if (!context.emittedEvents) {
       context.emittedEvents = []
     }
+
+    // Track engine creation
+    const engineTimer = this.metricsHelper.createTimer(MetricStages.INIT, 'engine_create')
     const engine = new ExecutionEngine(
       flow,
       context,
       executionRow.options || undefined,
       (node: INode) => {}, // TODO: onBreakpointHit
     )
+    const engineCreationTime = engineTimer.end()
 
     const instance: ExecutionInstance = {
       task,
@@ -129,7 +152,24 @@ export class ExecutionService implements IExecutionService {
     // this.activeExecutions.set(instance.row.id, instance)
 
     // Setup event handling and store cleanup function on the instance
+    const eventHandlerTimer = this.metricsHelper.createTimer(MetricStages.INIT, 'event_handler_setup')
     instance.cleanupEventHandling = this.setupEventHandling(instance)
+    const eventHandlerSetupTime = eventHandlerTimer.end()
+
+    // Track instance creation complete
+    const totalInitTime = initTimer.end()
+    scopedMetrics.track({
+      stage: MetricStages.INIT,
+      event: 'setup_complete',
+      timestamp: Date.now(),
+      total_init_ms: totalInitTime,
+      context_creation_ms: contextCreationTime,
+      engine_creation_ms: engineCreationTime,
+      event_handler_setup_ms: eventHandlerSetupTime,
+      instance_count: 1, // Could track active instances if needed
+      node_count: flow.nodes.size,
+      edge_count: flow.edges.size,
+    } as InitMetric)
 
     // Parent-child relationship is tracked via parentExecutionId in the store
 
@@ -226,6 +266,8 @@ export class ExecutionService implements IExecutionService {
     parentInstance: ExecutionInstance,
     event: EmittedEvent,
   ): Promise<void> {
+    const spawnTimer = this.metricsHelper.createTimer(MetricStages.CHILD_SPAWN, 'spawn')
+
     logger.debug({
       parentId: parentInstance.row.id,
       eventType: event.type,
@@ -233,6 +275,14 @@ export class ExecutionService implements IExecutionService {
     }, 'Spawning child execution for event')
 
     const childExecutionId = generateExecutionID()
+
+    const scopedMetrics = this.metrics.withContext({
+      executionId: parentInstance.row.id,
+      flowId: parentInstance.flow.id,
+      parentExecutionId: parentInstance.row.id,
+      rootExecutionId: parentInstance.row.rootExecutionId || undefined,
+      executionDepth: parentInstance.row.executionDepth + 1,
+    })
     const childIntegrationContext: IntegrationContext = {
       ...parentInstance.row.integration,
     }
@@ -269,6 +319,8 @@ export class ExecutionService implements IExecutionService {
       ],
     }
 
+    // Create child execution in store with metrics
+    const dbInsertTimer = this.metricsHelper.createTimer(MetricStages.CHILD_SPAWN, 'db_insert')
     try {
       await this.store.create(childExecutionRow)
     } catch (error) {
@@ -279,6 +331,7 @@ export class ExecutionService implements IExecutionService {
       }, 'Failed to create child execution in store')
       throw error
     }
+    const dbInsertTime = dbInsertTimer.end()
 
     const childTask: ExecutionTask = {
       executionId: childExecutionId,
@@ -305,7 +358,8 @@ export class ExecutionService implements IExecutionService {
       },
     }, 'Child execution task publish prepared')
 
-    // Publish task to queue (will be executed by worker)
+    // Publish task to queue with metrics
+    const taskPublishTimer = this.metricsHelper.createTimer(MetricStages.CHILD_SPAWN, 'task_publish')
     try {
       await this.taskQueue.publishTask(childTask)
     } catch (error) {
@@ -315,8 +369,34 @@ export class ExecutionService implements IExecutionService {
         eventType: event.type,
         error: error instanceof Error ? error.message : 'Unknown error',
       }, 'Failed to publish child execution task')
+
+      // Track spawn error
+      scopedMetrics.track({
+        stage: MetricStages.CHILD_SPAWN,
+        event: 'error',
+        timestamp: Date.now(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        childExecutionId,
+        emittedEventType: event.type,
+      } as ChildSpawnMetric)
+
       throw error
     }
+    const taskPublishTime = taskPublishTimer.end()
+
+    // Track successful child spawn
+    const totalSpawnTime = spawnTimer.end()
+    scopedMetrics.track({
+      stage: MetricStages.CHILD_SPAWN,
+      event: 'task_published',
+      timestamp: Date.now(),
+      childExecutionId,
+      emittedEventType: event.type,
+      total_spawn_ms: totalSpawnTime,
+      db_insert_ms: dbInsertTime,
+      task_publish_ms: taskPublishTime,
+      siblings_count: parentInstance.context.emittedEvents?.length || 0,
+    } as ChildSpawnMetric)
 
     // Parent-child relationship is tracked via parentExecutionId in the task
 

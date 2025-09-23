@@ -14,7 +14,12 @@ import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { Consumer } from 'kafkajs'
 import type { ExecutionCommand, ExecutionInstance, ExecutionTask } from '../../types'
 import type { IEventBus, ITaskQueue } from '../interfaces'
+import type {
+  FlowLoadMetric,
+  TaskQueueMetric,
+} from '../metrics'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
+import process from 'node:process'
 import {
   NodeRegistry,
 } from '@badaitech/chaingraph-types'
@@ -23,6 +28,12 @@ import { nolookalikes } from 'nanoid-dictionary'
 import { ExecutionStatus } from '../../types'
 import { KafkaTopics } from '../../types/messages'
 import { getKafkaClient } from '../kafka/client'
+import {
+  createMetricsTracker,
+  LifecycleMetricsBuilder,
+  MetricsHelper,
+  MetricStages,
+} from '../metrics'
 import { ExecutionService } from '../services/ExecutionService'
 import { loadFlow } from '../stores/flow-store'
 import { config } from '../utils/config'
@@ -51,6 +62,11 @@ export class ExecutionWorker {
   private reconnectAttempts = 0
   private readonly MAX_RECONNECT_ATTEMPTS = 10
   private readonly RECONNECT_DELAY_BASE = 1000 // 1 second base delay
+
+  // Metrics tracking
+  private readonly metrics = createMetricsTracker('execution-worker')
+  private readonly metricsHelper = new MetricsHelper(this.metrics)
+  private resourceMonitorInterval?: NodeJS.Timeout
 
   constructor(
     private readonly store: IExecutionStore,
@@ -91,6 +107,19 @@ export class ExecutionWorker {
       }
     }, config.worker.claimExpirationCheckIntervalMs)
 
+    // Start resource monitoring if metrics are enabled
+    if (this.metrics.isEnabled && config.metrics?.includeMemoryMetrics) {
+      this.resourceMonitorInterval = setInterval(() => {
+        this.metricsHelper.trackResourceSnapshot(
+          { executionId: 'worker', workerId: this.workerId },
+          {
+            memoryHeapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            memoryHeapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+          },
+        )
+      }, 30000) // Every 30 seconds
+    }
+
     this.isRunning = true
 
     // Start consuming tasks
@@ -101,6 +130,21 @@ export class ExecutionWorker {
 
   private async processTask(task: ExecutionTask): Promise<void> {
     const startProcessTime = Date.now()
+
+    // Create lifecycle metrics builder
+    const lifecycleBuilder = new LifecycleMetricsBuilder()
+
+    // Calculate queue wait time (time from task creation to processing)
+    const queueWaitTime = Date.now() - task.timestamp
+    lifecycleBuilder.addPhase('queue_wait', queueWaitTime)
+
+    // Create scoped metrics with execution context
+    const scopedMetrics = this.metrics.withContext({
+      executionId: task.executionId,
+      flowId: task.flowId,
+      workerId: this.workerId,
+      retryCount: task.retryCount || 0,
+    })
 
     // Initialize retry count if not set
     if (task.retryCount === undefined) {
@@ -125,12 +169,18 @@ export class ExecutionWorker {
       return
     }
 
-    // Try to claim the execution
-    const claimed = await this.store.claimExecution(
-      executionRow.id,
-      this.workerId,
-      this.CLAIM_TIMEOUT_MS,
-    )
+    // Try to claim the execution with metrics
+    lifecycleBuilder.startPhase('claim')
+    const claimed = await scopedMetrics.trackOperation({
+      execute: () => this.store.claimExecution(
+        executionRow.id,
+        this.workerId,
+        this.CLAIM_TIMEOUT_MS,
+      ),
+      stage: MetricStages.CLAIM,
+      event: 'attempt',
+    })
+    lifecycleBuilder.endPhase('claim')
 
     if (!claimed) {
       logger.debug({
@@ -138,8 +188,22 @@ export class ExecutionWorker {
         workerId: this.workerId,
         executionStatus: executionRow.status,
       }, 'Failed to claim execution, another worker got it or already executed')
+
+      // Track claim conflict
+      scopedMetrics.track({
+        stage: MetricStages.CLAIM,
+        event: 'conflict',
+        timestamp: Date.now(),
+      })
       return
     }
+
+    // Track successful claim
+    scopedMetrics.track({
+      stage: MetricStages.CLAIM,
+      event: 'success',
+      timestamp: Date.now(),
+    })
 
     logger.info({
       executionId: task.executionId,
@@ -150,16 +214,31 @@ export class ExecutionWorker {
     // Store active execution and start heartbeat
     const heartbeatInterval = setInterval(async () => {
       try {
-        const extended = await this.store.extendClaim(
-          task.executionId,
-          this.workerId,
-          this.CLAIM_TIMEOUT_MS,
-        )
+        const extended = await scopedMetrics.trackOperation({
+          execute: () => this.store.extendClaim(
+            task.executionId,
+            this.workerId,
+            this.CLAIM_TIMEOUT_MS,
+          ),
+          stage: MetricStages.CLAIM,
+          event: 'heartbeat',
+          metadata: {
+            heartbeat_interval_ms: this.HEARTBEAT_INTERVAL_MS,
+          },
+        })
         if (!extended) {
           logger.warn({
             executionId: task.executionId,
             workerId: this.workerId,
           }, 'Failed to extend claim, stopping execution')
+
+          // Track heartbeat failure
+          scopedMetrics.track({
+            stage: MetricStages.CLAIM,
+            event: 'heartbeat_failed',
+            timestamp: Date.now(),
+          })
+
           // TODO: Stop execution gracefully
           clearInterval(heartbeatInterval)
         }
@@ -168,24 +247,55 @@ export class ExecutionWorker {
           error,
           executionId: task.executionId,
         }, 'Error extending claim')
+
+        // Track heartbeat error
+        scopedMetrics.track({
+          stage: MetricStages.CLAIM,
+          event: 'heartbeat_error',
+          timestamp: Date.now(),
+          error: error instanceof Error ? error.message : String(error),
+        })
       }
     }, this.HEARTBEAT_INTERVAL_MS)
 
     try {
-      // Load flow from database
-      const flow = await loadFlow(task.flowId)
+      // Load flow from database with metrics
+      lifecycleBuilder.startPhase('flow_load')
+      const { result: flow, cacheHit } = await this.metricsHelper.trackFlowLoad(
+        task.flowId,
+        { executionId: task.executionId, flowId: task.flowId, workerId: this.workerId },
+        async () => await loadFlow(task.flowId),
+        { cache: false, source: 'database' },
+      )
+      lifecycleBuilder.endPhase('flow_load')
+
       if (!flow) {
         throw new Error(`Flow ${task.flowId} not found`)
       }
 
-      // Create execution instance with predetermined ID
+      // Track flow characteristics
+      scopedMetrics.track({
+        stage: MetricStages.FLOW_LOAD,
+        event: 'complete',
+        timestamp: Date.now(),
+        node_count: flow.nodes.size,
+        edge_count: flow.edges.size,
+      } as FlowLoadMetric)
+
+      // Create execution instance with metrics
+      lifecycleBuilder.startPhase('init')
       const abortController = new AbortController()
-      const instance = await this.executionService!.createExecutionInstance({
-        task,
-        flow,
-        executionRow,
-        abortController,
+      const instance = await scopedMetrics.trackOperation({
+        execute: () => this.executionService!.createExecutionInstance({
+          task,
+          flow,
+          executionRow,
+          abortController,
+        }),
+        stage: MetricStages.INIT,
+        event: 'create_instance',
       })
+      lifecycleBuilder.endPhase('init')
 
       this.activeExecutions.set(task.executionId, {
         task,
@@ -194,12 +304,21 @@ export class ExecutionWorker {
       })
 
       const startTime = Date.now()
-      const runningStatusPromise = this.setExecutionStatus(task.executionId, {
-        status: ExecutionStatus.Running,
-        startedAt: new Date(startTime),
-      })
 
-      // Start execution
+      // Track status update
+      lifecycleBuilder.startPhase('status_update')
+      const runningStatusPromise = scopedMetrics.trackOperation({
+        execute: () => this.setExecutionStatus(task.executionId, {
+          status: ExecutionStatus.Running,
+          startedAt: new Date(startTime),
+        }),
+        stage: MetricStages.DB_OPERATION,
+        event: 'status_update_running',
+      })
+      lifecycleBuilder.endPhase('status_update')
+
+      // Start execution phase
+      lifecycleBuilder.startPhase('execution')
       await instance.engine!.execute(async (
         context: ExecutionContext,
         eventQueue: EventQueue<ExecutionEventImpl>,
@@ -207,13 +326,16 @@ export class ExecutionWorker {
         // execution complete callback
         // The eventQueue is already closed at this point, and all events should be processed
         // Clean up the event handling (wait for Kafka publishes to complete)
+        lifecycleBuilder.startPhase('event_publish')
         if (instance.cleanupEventHandling) {
           await instance.cleanupEventHandling()
         }
+        lifecycleBuilder.endPhase('event_publish')
       })
+      lifecycleBuilder.endPhase('execution')
 
       const completeTime = Date.now()
-      const executionTime = completeTime - startTime
+      const executionTime = lifecycleBuilder.getBreakdown().execution || 0
       logger.info({
         executionId: task.executionId,
         executionTime,
@@ -223,15 +345,53 @@ export class ExecutionWorker {
 
       // Mark execution as completed in store if not already marked
       await runningStatusPromise
-      await this.setExecutionStatus(task.executionId, {
-        status: ExecutionStatus.Completed,
-        completedAt: new Date(completeTime),
+
+      lifecycleBuilder.startPhase('status_update')
+      await scopedMetrics.trackOperation({
+        execute: () => this.setExecutionStatus(task.executionId, {
+          status: ExecutionStatus.Completed,
+          completedAt: new Date(completeTime),
+        }),
+        stage: MetricStages.DB_OPERATION,
+        event: 'status_update_completed',
       })
+      lifecycleBuilder.endPhase('status_update')
 
       // Release claim and clean up
-      await this.releaseExecution(task.executionId)
+      lifecycleBuilder.startPhase('cleanup')
+      await scopedMetrics.trackOperation({
+        execute: () => this.releaseExecution(task.executionId),
+        stage: MetricStages.CLAIM,
+        event: 'release',
+      })
+      lifecycleBuilder.endPhase('cleanup')
+
+      // Track complete lifecycle
+      lifecycleBuilder.trackCompletion(scopedMetrics, {
+        executionId: task.executionId,
+        flowId: task.flowId,
+        workerId: this.workerId,
+        rootExecutionId: executionRow.rootExecutionId || undefined,
+        parentExecutionId: executionRow.parentExecutionId || undefined,
+        executionDepth: executionRow.executionDepth,
+      })
     } catch (error) {
       const executionTime = Date.now() - startProcessTime
+
+      // Track lifecycle failure
+      lifecycleBuilder.trackFailure(
+        scopedMetrics,
+        {
+          executionId: task.executionId,
+          flowId: task.flowId,
+          workerId: this.workerId,
+          rootExecutionId: executionRow.rootExecutionId || undefined,
+          parentExecutionId: executionRow.parentExecutionId || undefined,
+          executionDepth: executionRow.executionDepth,
+        },
+        error instanceof Error ? error : String(error),
+      )
+
       logger.error({
         error: error instanceof Error ? error.message : String(error),
         executionId: task.executionId,
@@ -257,13 +417,28 @@ export class ExecutionWorker {
         }, 'Failed to cleanup event handling after error')
       }
 
-      // Release claim and clean up
-      await this.releaseExecution(task.executionId)
+      // Release claim and clean up with metrics
+      lifecycleBuilder.startPhase('cleanup')
+      await scopedMetrics.trackOperation({
+        execute: () => this.releaseExecution(task.executionId),
+        stage: MetricStages.CLAIM,
+        event: 'release_after_error',
+      })
+      lifecycleBuilder.endPhase('cleanup')
 
       // Check if we should retry
       if (task.retryCount! < task.maxRetries!) {
         task.retryCount!++
         const retryDelay = task.retryDelayMs! * 2 ** (task.retryCount! - 1) // Exponential backoff
+
+        // Track retry metrics
+        scopedMetrics.track({
+          stage: MetricStages.TASK_QUEUE,
+          event: 'retry',
+          timestamp: Date.now(),
+          retry_count: task.retryCount,
+          retry_delay_ms: retryDelay,
+        } as TaskQueueMetric)
 
         // Add to retry history
         if (!task.retryHistory) {
@@ -529,6 +704,12 @@ export class ExecutionWorker {
 
     logger.info('Stopping execution worker')
 
+    // Stop resource monitoring
+    if (this.resourceMonitorInterval) {
+      clearInterval(this.resourceMonitorInterval)
+      this.resourceMonitorInterval = undefined
+    }
+
     // Release all active executions
     for (const [executionId] of this.activeExecutions) {
       await this.releaseExecution(executionId)
@@ -542,6 +723,9 @@ export class ExecutionWorker {
 
     // Stop consuming tasks
     await this.taskQueue.stopConsuming()
+
+    // Dispose metrics tracker
+    this.metrics.dispose()
 
     this.isRunning = false
     logger.info('Execution worker stopped')
