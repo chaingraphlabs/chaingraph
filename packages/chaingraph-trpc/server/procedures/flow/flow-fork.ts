@@ -42,6 +42,8 @@ export const fork = authedProcedure
       throw new Error(`Flow ${input.flowId} not found`)
     }
 
+    const isAdmin = ctx.session?.user?.role === 'admin'
+
     // Fork access control: Allow owners and users who pass fork rules
     // Add explicit null/undefined checks to prevent permission bypass
     const isOwner = !!(
@@ -50,7 +52,7 @@ export const fork = authedProcedure
       && typeof userId === 'string'
       && typeof originalFlow.metadata.ownerID === 'string'
       && originalFlow.metadata.ownerID === userId
-    )
+    ) || isAdmin // Admin always has owner access
 
     if (!isOwner) {
       // Evaluate fork rule for non-owners - default to deny if no rule is set

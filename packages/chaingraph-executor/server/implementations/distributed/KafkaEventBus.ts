@@ -11,6 +11,7 @@ import type { Consumer, Producer } from 'kafkajs'
 import type { ExecutionEventMessage } from '../../../types/messages'
 import type { IEventBus } from '../../interfaces/IEventBus'
 import { Buffer } from 'node:buffer'
+import { createHash } from 'node:crypto'
 import { ExecutionEventImpl as EventImpl } from '@badaitech/chaingraph-types'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
@@ -40,6 +41,7 @@ export class KafkaEventBus implements IEventBus {
   private cleanupInterval: NodeJS.Timeout | null = null
   private readonly metrics = createMetricsTracker('kafka-event-bus')
   private readonly metricsHelper = new MetricsHelper(this.metrics)
+  private readonly PARTITION_COUNT = 100 // Must match the topic configuration
 
   constructor(options?: {
     producer?: Producer
@@ -47,6 +49,19 @@ export class KafkaEventBus implements IEventBus {
     if (options?.producer) {
       this.producer = options.producer
     }
+  }
+
+  /**
+   * Calculate the partition for a given executionId using consistent hashing
+   * This ensures the same executionId always maps to the same partition
+   */
+  private getPartitionForExecution(executionId: string): number {
+    const hash = createHash('md5')
+      .update(executionId)
+      .digest()
+      .readUInt32BE(0)
+
+    return Math.abs(hash) % this.PARTITION_COUNT
   }
 
   publishEvent = async (executionId: string, event: ExecutionEventImpl): Promise<void> => {
@@ -65,6 +80,9 @@ export class KafkaEventBus implements IEventBus {
       timestamp: Date.now(),
       workerId: config.worker.id,
     }
+
+    // Calculate target partition for this execution
+    const targetPartition = this.getPartitionForExecution(executionId)
 
     // Track serialization time
     const serializeTimer = this.metricsHelper.createTimer(MetricStages.EVENT_PUBLISH, 'serialize')
@@ -85,6 +103,10 @@ export class KafkaEventBus implements IEventBus {
           key: executionId, // Use executionId as partition key for ordering
           value,
           timestamp: Date.now().toString(),
+          headers: {
+            'partition-hint': targetPartition.toString(),
+            'execution-id': executionId,
+          },
         }],
         acks: -1,
         timeout: 30000,
@@ -97,6 +119,7 @@ export class KafkaEventBus implements IEventBus {
         serialization_ms: serializationTime,
         event_size_bytes: eventSizeBytes,
         topic: KafkaTopics.EVENTS,
+        target_partition: targetPartition,
       },
     })
   }
@@ -105,6 +128,9 @@ export class KafkaEventBus implements IEventBus {
     executionId: string,
     fromIndex: number = 0,
   ): AsyncIterable<ExecutionEventImpl[]> => {
+    // Calculate target partition for this execution
+    const targetPartition = this.getPartitionForExecution(executionId)
+
     // Create unique consumer group for this subscription
     const subscriptionId = `sub-${executionId}-${customAlphabet(nolookalikes, 8)()}`
 
@@ -116,14 +142,15 @@ export class KafkaEventBus implements IEventBus {
       timestamp: Date.now(),
       subscription_id: subscriptionId,
       from_index: fromIndex,
+      target_partition: targetPartition,
     })
 
     const kafka = getKafkaClient()
     const consumer = kafka.consumer({
       groupId: subscriptionId,
-      sessionTimeout: 30000, // Increased from 10000 for better stability
+      sessionTimeout: 30000,
       heartbeatInterval: 3000,
-      maxWaitTimeInMs: 1, // Ultra-low latency: reduced from 10ms to 1ms
+      maxWaitTimeInMs: 10,
       allowAutoTopicCreation: false,
       retry: {
         initialRetryTime: 100, // Start with 100ms retry delay
@@ -171,8 +198,16 @@ export class KafkaEventBus implements IEventBus {
     // Start cleanup interval if not already running
     this.startCleanupInterval()
 
+    logger.debug({
+      executionId,
+      targetPartition,
+      subscriptionId,
+      message: 'Subscription created with partition optimization',
+      expected_filter_rate: `${((this.PARTITION_COUNT - 1) / this.PARTITION_COUNT * 100).toFixed(1)}%`,
+    })
+
     // Return the async generator directly
-    return this.createEventGenerator(consumer, executionId, fromIndex, subscriptionId)
+    return this.createEventGenerator(consumer, executionId, fromIndex, subscriptionId, targetPartition)
   }
 
   unsubscribe = async (executionId: string): Promise<void> => {
@@ -274,6 +309,7 @@ export class KafkaEventBus implements IEventBus {
     executionId: string,
     fromIndex: number,
     subscriptionId: string,
+    targetPartition: number,
   ): AsyncGenerator<ExecutionEventImpl[]> {
     try {
       await consumer.connect()
@@ -297,20 +333,37 @@ export class KafkaEventBus implements IEventBus {
           const batchStartTime = Date.now()
           let processedCount = 0
           let skippedCount = 0
+          let earlySkippedCount = 0 // Track messages skipped via header filtering
 
           for (const message of batch.messages) {
             if (!message.value)
               continue
 
             try {
+              // OPTIMIZATION: Check headers first to avoid expensive deserialization
+              const partitionHint = message.headers?.['partition-hint']?.toString()
+              const headerExecutionId = message.headers?.['execution-id']?.toString()
+
+              // Early exit if partition hint doesn't match
+              if (partitionHint && Number.parseInt(partitionHint) !== targetPartition) {
+                earlySkippedCount++
+                continue
+              }
+
+              // Early exit if execution ID from header doesn't match
+              if (headerExecutionId && headerExecutionId !== executionId) {
+                earlySkippedCount++
+                continue
+              }
+
               const messageValue = message.value.toString()
 
-              // Parse message
+              // Parse message (only for messages that passed header filtering)
               // Use safe parsing to handle potential issues
               const parsedMessage = safeSuperJSONParse<any>(messageValue)
               // TODO: Add schema validation for parsedMessage (zod schema or similar)
 
-              // Filter by executionId
+              // Double-check executionId from message body (for backward compatibility)
               if (parsedMessage.executionId !== executionId) {
                 skippedCount++
                 continue
@@ -362,7 +415,7 @@ export class KafkaEventBus implements IEventBus {
           }
 
           // Track batch processing metrics
-          if (processedCount > 0 || skippedCount > 0) {
+          if (processedCount > 0 || skippedCount > 0 || earlySkippedCount > 0) {
             this.metrics.track({
               stage: MetricStages.EVENT_PUBLISH,
               event: 'batch_processed',
@@ -370,8 +423,11 @@ export class KafkaEventBus implements IEventBus {
               timestamp: Date.now(),
               event_count: processedCount,
               skipped_count: skippedCount,
+              early_skipped_count: earlySkippedCount, // Messages skipped via header filtering
               batch_size: batch.messages.length,
               duration_ms: Date.now() - batchStartTime,
+              target_partition: targetPartition,
+              filter_efficiency: earlySkippedCount / (batch.messages.length || 1), // Ratio of early filtered
             })
           }
 
