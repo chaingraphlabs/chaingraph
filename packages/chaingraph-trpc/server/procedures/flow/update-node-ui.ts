@@ -61,49 +61,6 @@ export const updateNodeUI = flowContextProcedure
         }
       }
 
-      // Log the node title and ID and the input UI
-      // console.log('Node title:', node.metadata.title)
-      // console.log('Node ID:', node.metadata.id)
-
-      // console.log('Input UI:', input.ui)
-
-      // Log the Node ports erializedJson:
-      // console.log('Node ports:', Array.from(node.ports.values()).map((port) => {
-      //   return port.serialize()
-      // }))
-
-      // // Update dimensions if present
-      // const hasInputDimensions
-      //   = input.ui.dimensions
-      //     && input.ui.dimensions.width > 0
-      //     && input.ui.dimensions.height > 0
-      //
-      // const hasDimensionsChanged = (
-      //   hasInputDimensions
-      //   && (
-      //     !node.metadata.ui?.dimensions
-      //     || node.metadata.ui.dimensions.width !== input.ui.dimensions?.width
-      //     || node.metadata.ui.dimensions.height !== input.ui.dimensions?.height
-      //   )
-      // )
-      //
-      // if (hasDimensionsChanged) {
-      //   node.setDimensions(input.ui.dimensions!, true)
-      // }
-
-      // Update metadata
-
-      // ...updatedNode.metadata.ui,
-      //       ...ui,
-      //       style: {
-      //         ...updatedNode.metadata.ui?.style,
-      //         ...ui.style,
-      //       },
-      //       state: {
-      //         ...updatedNode.metadata.ui?.state,
-      //         ...ui.state,
-      //       },
-
       node.setUI({
         ...(node.metadata.ui ?? {}),
         ...input.ui,

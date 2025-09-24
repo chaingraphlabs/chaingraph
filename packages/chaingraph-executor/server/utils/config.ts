@@ -26,11 +26,105 @@ export const config = {
 
   // Kafka (only used in distributed mode)
   kafka: {
+    /**
+     * KAFKA_BROKERS: Comma-separated list of Kafka broker addresses
+     *
+     * Multi-environment considerations:
+     * - Can be SHARED across all environments (prod, staging, dev)
+     * - The same Kafka cluster handles all environments
+     * - Environment separation is achieved through topic prefixes, NOT separate brokers
+     *
+     * Example configurations:
+     * - Production cluster: "kafka-1.prod:9092,kafka-2.prod:9092,kafka-3.prod:9092"
+     * - Development: "localhost:9092" or shared cluster
+     *
+     * High availability: Always specify multiple brokers for redundancy
+     */
     brokers: (process.env.KAFKA_BROKERS || 'localhost:9092,localhost:9093,localhost:9094').split(','),
+
+    /**
+     * KAFKA_CLIENT_ID: Unique identifier for this Kafka client connection
+     *
+     * Multi-environment considerations:
+     * - Should be UNIQUE per environment AND service type
+     * - Format: "{environment}-{service}-{instance}"
+     * - Helps with debugging and monitoring Kafka connections
+     *
+     * Example configurations:
+     * - Production API: "prod-chaingraph-api"
+     * - Production Worker: "prod-chaingraph-worker"
+     * - Staging API: "staging-chaingraph-api"
+     * - Dev Worker: "dev-chaingraph-worker"
+     *
+     * Note: Multiple replicas of the same service can share the same clientId
+     * as it's just for connection identification, not for consumer group management
+     */
     clientId: process.env.KAFKA_CLIENT_ID || 'chaingraph-executor',
+
+    /**
+     * KAFKA_TOPICS_PREFIX: Critical for environment separation on shared Kafka cluster
+     *
+     * Multi-environment considerations:
+     * - MUST be UNIQUE per environment to prevent cross-environment data pollution
+     * - All topics will be prefixed with this value
+     * - Format: "{environment}." (note the trailing dot)
+     *
+     * Example configurations:
+     * - Production: "prod." → topics: "prod.chaingraph.execution.tasks"
+     * - Staging: "staging." → topics: "staging.chaingraph.execution.tasks"
+     * - Development: "dev." → topics: "dev.chaingraph.execution.tasks"
+     * - Local development: "" (empty, no prefix)
+     *
+     * CRITICAL: Without unique prefixes, different environments will read/write
+     * to the same topics, causing data corruption and processing errors!
+     */
     topicsPrefix: process.env.KAFKA_TOPICS_PREFIX || '',
+
     groupId: {
+      /**
+       * KAFKA_GROUP_ID_WORKER: Consumer group for task processing workers
+       *
+       * Multi-environment considerations:
+       * - Should be UNIQUE per environment but SHARED across worker replicas
+       * - All worker replicas in the same environment join the same group
+       * - Kafka automatically load-balances partitions across group members
+       *
+       * Example configurations:
+       * - Production: "prod-chaingraph-execution-workers"
+       * - Staging: "staging-chaingraph-execution-workers"
+       * - Development: "dev-chaingraph-execution-workers"
+       *
+       * Scaling behavior:
+       * - Multiple worker instances with the SAME group ID = load balancing
+       * - Each message is processed by only ONE worker in the group
+       * - Kafka rebalances partitions when workers join/leave
+       *
+       * IMPORTANT: All worker replicas in an environment MUST use the same group ID
+       * to ensure proper load distribution and prevent duplicate processing
+       */
       worker: process.env.KAFKA_GROUP_ID_WORKER || 'chaingraph-execution-workers',
+
+      /**
+       * KAFKA_GROUP_ID_STREAM: Consumer group for event streaming
+       *
+       * Multi-environment considerations:
+       * - Should be UNIQUE per environment
+       * - Used for consuming execution events from the events topic
+       * - Different from worker group to allow independent scaling
+       *
+       * Example configurations:
+       * - Production: "prod-chaingraph-event-stream"
+       * - Staging: "staging-chaingraph-event-stream"
+       * - Development: "dev-chaingraph-event-stream"
+       *
+       * Use cases:
+       * - Event monitoring and logging
+       * - Real-time event streaming to clients
+       * - Analytics and metrics collection
+       *
+       * Note: Unlike workers, event stream consumers might want to see ALL events,
+       * so consider if you need unique group IDs per consumer instance
+       */
       stream: process.env.KAFKA_GROUP_ID_STREAM || 'chaingraph-event-stream',
     },
   },
@@ -45,12 +139,6 @@ export const config = {
     heartbeatIntervalMs: Number.parseInt(process.env.WORKER_HEARTBEAT_INTERVAL_MS || '5000', 10),
     claimExpirationCheckIntervalMs: Number.parseInt(process.env.WORKER_CLAIM_EXPIRATION_CHECK_MS || '10000', 10),
   },
-
-  // Local Mode Configuration
-  // local: {
-  // maxEventHistory: Number.parseInt(process.env.LOCAL_MAX_EVENT_HISTORY || '1000', 10),
-  // taskQueueSize: Number.parseInt(process.env.LOCAL_TASK_QUEUE_SIZE || '100', 10),
-  // },
 
   authConfig,
 

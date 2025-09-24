@@ -21,6 +21,7 @@ export const getMeta = authedProcedure
     }
 
     const userId = ctx.session?.user?.id
+    const isAdmin = ctx.session?.user?.role === 'admin'
 
     // Check ownership
     const isOwner = !!(
@@ -29,7 +30,7 @@ export const getMeta = authedProcedure
       && typeof userId === 'string'
       && typeof flow.metadata.ownerID === 'string'
       && flow.metadata.ownerID === userId
-    )
+    ) || isAdmin // Admin always has owner access
 
     // Security: Only allow access to owners or if flow is explicitly public
     const isPublic = flow.metadata.isPublic === true

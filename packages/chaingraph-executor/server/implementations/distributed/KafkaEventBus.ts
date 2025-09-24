@@ -148,9 +148,9 @@ export class KafkaEventBus implements IEventBus {
     const kafka = getKafkaClient()
     const consumer = kafka.consumer({
       groupId: subscriptionId,
-      sessionTimeout: 30000, // Increased from 10000 for better stability
+      sessionTimeout: 30000,
       heartbeatInterval: 3000,
-      maxWaitTimeInMs: 1, // Ultra-low latency: reduced from 10ms to 1ms
+      maxWaitTimeInMs: 10,
       allowAutoTopicCreation: false,
       retry: {
         initialRetryTime: 100, // Start with 100ms retry delay
