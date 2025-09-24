@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.30
+
+### Patch Changes
+
+- feat: optimize flow node and edge addition with batch processing for improved performance
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.30
+  - @badaitech/chaingraph-nodes@0.5.5-dev.30
+  - @badaitech/chaingraph-types@0.5.5-dev.30
+  - @badaitech/chaingraph-trpc@0.5.5-dev.30
+
 ## 0.5.5-dev.29
 
 ### Patch Changes

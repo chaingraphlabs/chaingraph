@@ -8,9 +8,15 @@
 
 import type {
   Flow,
+  IEdge,
   INode,
   IPort,
   SerializedEdge,
+} from '@badaitech/chaingraph-types'
+import {
+  Edge,
+  EdgeStatus,
+
 } from '@badaitech/chaingraph-types'
 import {
   SerializedNodeSchemaV1Legacy,
@@ -20,8 +26,14 @@ import {
 } from '@badaitech/chaingraph-types'
 import { NodeStatus } from '@badaitech/chaingraph-types'
 import { SerializedEdgeSchema, SerializedNodeSchema } from '@badaitech/chaingraph-types'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
+
+function generateEdgeID(): string {
+  return `ED${customAlphabet(nolookalikes, 18)()}`
+}
 
 // Input schema for position
 const PositionSchema = z.object({
@@ -110,9 +122,7 @@ export const pasteNodes = flowContextProcedure
               y: pastePosition.y + relativePosition.y,
             }
 
-            clonedNode.setPosition(newPosition, true)
-          } else {
-            console.debug(`[FLOW] Child node ${originalNode.id} keeping relative position:`, originalNode.metadata.ui?.position)
+            clonedNode.setPosition(newPosition, false)
           }
           // For child nodes, keep the original position (relative to parent)
 
@@ -185,13 +195,14 @@ export const pasteNodes = flowContextProcedure
         }
       }
 
-      const addedNodes = await flow.addNodes(createdNodes)
+      const addedNodes = await flow.addNodes(createdNodes, false)
 
       // Step 2: Recreate edges using new IDs
       const createdEdges: SerializedEdge[] = []
+      const skippedEdges: string[] = []
 
       // Prepare edge connection data with validated IDs
-      const edgeConnectionTasks = clipboardData.edges
+      const edgesToAdd = clipboardData.edges
         .map((edgeData) => {
           const newSourceNodeId = nodeIdMapping.get(edgeData.sourceNodeId)
           const newTargetNodeId = nodeIdMapping.get(edgeData.targetNodeId)
@@ -199,68 +210,42 @@ export const pasteNodes = flowContextProcedure
           const newTargetPortId = portIdMapping.get(edgeData.targetPortId)
 
           if (!newSourceNodeId || !newTargetNodeId || !newSourcePortId || !newTargetPortId) {
+            skippedEdges.push(edgeData.id)
             return null
           }
 
-          return {
-            originalEdgeData: edgeData,
-            newSourceNodeId,
-            newTargetNodeId,
-            newSourcePortId,
-            newTargetPortId,
+          const sourceNode = addedNodes.find(n => n.id === newSourceNodeId)
+          const targetNode = addedNodes.find(n => n.id === newTargetNodeId)
+
+          if (!sourceNode || !targetNode) {
+            skippedEdges.push(edgeData.id)
+            console.warn(`[FLOW] Skipping edge ${edgeData.id} because new source or target node was not found (source: ${newSourceNodeId}, target: ${newTargetNodeId})`)
+            return null
           }
+
+          const sourcePort = sourceNode.ports.get(newSourcePortId)
+          const targetPort = targetNode.ports.get(newTargetPortId)
+          if (!targetPort || !sourcePort) {
+            skippedEdges.push(edgeData.id)
+            console.warn(`[FLOW] Skipping edge ${edgeData.id} because new source or target port was not found (source: ${newSourcePortId}, target: ${newTargetPortId})`)
+            return null
+          }
+
+          const edge = new Edge(
+            generateEdgeID(),
+            sourceNode,
+            sourcePort,
+            targetNode,
+            targetPort,
+            edgeData.metadata || {},
+          )
+          edge.status = edgeData.status || EdgeStatus.Active
+
+          return edge as IEdge
         })
-        .filter((task): task is NonNullable<typeof task> => task !== null)
+        .filter((edge): edge is NonNullable<typeof edge> => edge !== null)
 
-      // Execute all edge connections in parallel
-      const edgeConnectionResults = await Promise.allSettled(
-        edgeConnectionTasks.map(async task => ({
-          task,
-          edge: await flow.connectPorts(
-            task.newSourceNodeId,
-            task.newSourcePortId,
-            task.newTargetNodeId,
-            task.newTargetPortId,
-          ),
-        })),
-      )
-
-      // Process results and update metadata
-      for (const result of edgeConnectionResults) {
-        if (result.status === 'rejected') {
-          console.error('[FLOW] Failed to create edge:', result.reason)
-          continue
-        }
-
-        const { task, edge } = result.value
-
-        if (!edge) {
-          console.warn(`[FLOW] Failed to connect ports for edge ${task.originalEdgeData.id}`)
-          continue
-        }
-
-        // Set edge metadata if provided
-        if (task.originalEdgeData.metadata) {
-          if (task.originalEdgeData.metadata.label && typeof task.originalEdgeData.metadata.label === 'string') {
-            edge.metadata.label = task.originalEdgeData.metadata.label
-          }
-          if (task.originalEdgeData.metadata.description) {
-            edge.metadata.description = task.originalEdgeData.metadata.description
-          }
-        }
-
-        createdEdges.push({
-          id: edge.id,
-          metadata: edge.metadata,
-          status: edge.status,
-          sourceNodeId: task.newSourceNodeId,
-          sourcePortId: task.newSourcePortId,
-          targetNodeId: task.newTargetNodeId,
-          targetPortId: task.newTargetPortId,
-        })
-
-        console.debug(`[FLOW] Created edge ${edge.id}`)
-      }
+      await flow.addEdges(edgesToAdd, false)
 
       // Save the updated flow
       await ctx.flowStore.updateFlow(flow as Flow)
@@ -276,6 +261,7 @@ export const pasteNodes = flowContextProcedure
           position: node.metadata.ui?.position,
         })),
         createdEdges,
+        skippedEdges,
         nodeIdMapping: Object.fromEntries(nodeIdMapping),
         portIdMapping: Object.fromEntries(portIdMapping),
       }

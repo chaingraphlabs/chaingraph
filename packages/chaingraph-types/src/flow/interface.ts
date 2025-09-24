@@ -76,6 +76,14 @@ export interface IFlow {
   addEdge: (edge: IEdge, disableEvents?: boolean) => Promise<void>
 
   /**
+   * Adds multiple edges to the flow.
+   * @param edges The edges to add.
+   * @param disableEvents If true, events will not be triggered for each edge added.
+   * @returns A promise that resolves when all edges have been added.
+   */
+  addEdges: (edges: IEdge[], disableEvents?: boolean) => Promise<void>
+
+  /**
    * Adds an edge to the flow synchronously, without triggering events.
    * @param edge The edge to add.
    */

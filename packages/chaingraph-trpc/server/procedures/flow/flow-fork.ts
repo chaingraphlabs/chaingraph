@@ -83,17 +83,8 @@ export const fork = authedProcedure
     const forkedFlow = new Flow(metadataWithoutId)
 
     // Transfer nodes and edges to the new flow
-    await Promise.all(
-      clonedFlow.nodes.values().map((node) => {
-        return forkedFlow.addNode(node, true)
-      }),
-    )
-
-    await Promise.all(
-      clonedFlow.edges.values().map((edge) => {
-        return forkedFlow.addEdge(edge)
-      }),
-    )
+    await forkedFlow.addNodes(Array.from(clonedFlow.nodes.values()), true)
+    await forkedFlow.addEdges(Array.from(clonedFlow.edges.values()), true)
 
     // Configure fork metadata
     forkedFlow.metadata.name = input.name || `${originalFlow.metadata.name} (Fork)`
