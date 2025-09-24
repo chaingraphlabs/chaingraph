@@ -26,8 +26,14 @@ import {
 } from '@badaitech/chaingraph-types'
 import { NodeStatus } from '@badaitech/chaingraph-types'
 import { SerializedEdgeSchema, SerializedNodeSchema } from '@badaitech/chaingraph-types'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
+
+function generateEdgeID(): string {
+  return `ED${customAlphabet(nolookalikes, 18)()}`
+}
 
 // Input schema for position
 const PositionSchema = z.object({
@@ -226,7 +232,7 @@ export const pasteNodes = flowContextProcedure
           }
 
           const edge = new Edge(
-            edgeData.id,
+            generateEdgeID(),
             sourceNode,
             sourcePort,
             targetNode,
