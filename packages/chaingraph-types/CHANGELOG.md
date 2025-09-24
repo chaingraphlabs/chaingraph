@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.30
+
+### Patch Changes
+
+- feat: optimize flow node and edge addition with batch processing for improved performance
+
 ## 0.5.5-dev.29
 
 ### Patch Changes

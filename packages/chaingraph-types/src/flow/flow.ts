@@ -140,9 +140,9 @@ export class Flow implements IFlow {
       return []
     }
 
-    const addedNodes = await Promise.all(
-      nodes.map(node => this.addNode(node, disableEvents)),
-    )
+    const addedNodes = nodes.map((node) => {
+      return this.addNodeSync(node)
+    })
 
     // Emit NodesAdded event
     if (!disableEvents) {
@@ -373,6 +373,31 @@ export class Flow implements IFlow {
     }
 
     this.edges.set(edge.id, edge)
+  }
+
+  async addEdges(edges: IEdge[], disableEvents?: boolean): Promise<void> {
+    await Promise.all(edges.map(edge => this.addEdge(edge, true)))
+
+    if (!disableEvents) {
+      // emit only the EdgesAdded event once
+      return this.emitEvent(newEvent(
+        this.getNextEventIndex(),
+        this.id,
+        FlowEventType.EdgesAdded,
+        {
+          edges: edges.map(e => ({
+            edgeId: e.id,
+            sourceNodeId: e.sourceNode.id,
+            sourcePortId: e.sourcePort.id,
+            targetNodeId: e.targetNode.id,
+            targetPortId: e.targetPort.id,
+            metadata: e.metadata || {},
+          })),
+        },
+      ))
+    }
+
+    return Promise.resolve()
   }
 
   /**
