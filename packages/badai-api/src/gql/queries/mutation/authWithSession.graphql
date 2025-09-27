@@ -1,0 +1,11 @@
+mutation AuthBlumMetamaskLogin($session: Session!, $input: MetamaskLoginInput!) {
+    authBlumMetamaskLogin(session: $session, input: $input) {
+      session
+      user_profile {
+       id
+       name
+       picture
+       meta
+      }
+     }
+}

@@ -1,0 +1,4 @@
+query AuthBlumMetamaskMessage($address: MetamaskAddress!, $input: TelegramSecureLoginInput!) {
+  authBlumMetamaskMessage(address: $address, input: $input)
+}
+
