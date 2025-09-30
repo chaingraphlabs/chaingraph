@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.31
+
+### Patch Changes
+
+- Add new special specal login and sign methods with telegram params
+
 ## 0.5.5-dev.30
 
 ### Patch Changes

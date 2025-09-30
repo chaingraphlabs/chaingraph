@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.31
+
+### Patch Changes
+
+- Add new special specal login and sign methods with telegram params
+- Updated dependencies
+  - @badaitech/badai-api@0.5.5-dev.31
+  - @badaitech/chaingraph-executor@0.5.5-dev.31
+  - @badaitech/chaingraph-nodes@0.5.5-dev.31
+  - @badaitech/chaingraph-trpc@0.5.5-dev.31
+  - @badaitech/chaingraph-types@0.5.5-dev.31
+
 ## 0.5.5-dev.30
 
 ### Patch Changes
