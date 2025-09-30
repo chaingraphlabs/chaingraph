@@ -12,7 +12,7 @@ import { print } from 'graphql'
 import { createClient } from 'graphql-ws'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
-const restApiUrl = process.env.REST_API_URL ?? 'http://localhost:9151/graphql' // ?? 'http://localhost:9151/graphql'
+const restApiUrl = process.env.REST_API_URL ?? 'http://localhost:9151/graphql'
 const wsApiUrl = process.env.WS_API_URL ?? 'ws://localhost:9151/graphql'
 const agentId = process.env.AGENT_ID ?? ''
 
