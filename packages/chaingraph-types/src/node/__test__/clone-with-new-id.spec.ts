@@ -384,8 +384,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       }
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId() as ComplexTestNode
 
       expect(clonedNode.id).not.toBe(node.id)
       expect(clonedNode.nestedUser).toEqual({
@@ -409,8 +408,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       node.nestedUser.details.age = 35
       node.nestedUser.details.active = false
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId() as ComplexTestNode
 
       expect(clonedNode.nestedUser.details.age).toBe(35)
       expect(clonedNode.nestedUser.details.active).toBe(false)
@@ -451,8 +449,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       ]
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.gameResults).toEqual(node.gameResults)
       expect(clonedNode.gameResults).toHaveLength(3)
@@ -473,8 +470,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       })
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.gameResults).toHaveLength(node.gameResults.length)
 
@@ -496,8 +492,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       node.organization.company.departments[0].employees[0].skills = ['Go', 'Kubernetes', 'Docker']
       node.organization.company.departments[0].employees[0].contact.email = 'alice.updated@newtechcorp.com'
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.organization.company.name).toBe('NewTechCorp')
       expect(clonedNode.organization.company.departments[0].employees[0].name).toBe('Alice Updated')
@@ -526,8 +521,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         ],
       })
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.organization.company.departments).toHaveLength(3)
       expect(clonedNode.organization.company.departments[2].name).toBe('Research')
@@ -550,8 +544,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         [100, 110, 120],
       ]
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.matrix).toEqual(node.matrix)
       expect(clonedNode.matrix).toHaveLength(4)
@@ -591,8 +584,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       node.complexConfig.config.settings[0].value.data[0].nested.push('opt6')
       node.complexConfig.config.settings[0].value.data[0].count = 3
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.complexConfig.config.settings).toHaveLength(3)
       expect(clonedNode.complexConfig.config.settings[2].key).toBe('feature3')
@@ -608,8 +600,7 @@ describe('cloneWithNewId - Complex Structures', () => {
   describe('edge Cases', () => {
     it('should handle empty arrays and objects', () => {
       // Verify empty structures are cloned correctly
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect(clonedNode.emptyArray).toEqual([])
       expect(clonedNode.emptyNestedObject).toEqual({ empty: {} })
@@ -628,16 +619,14 @@ describe('cloneWithNewId - Complex Structures', () => {
       ;(node.nestedUser as any).nullValue = null
       ;(node.nestedUser as any).undefinedValue = undefined
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       expect((clonedNode.nestedUser as any).nullValue).toBeNull()
       expect((clonedNode.nestedUser as any).undefinedValue).toBeUndefined()
     })
 
     it('should maintain object references independence after cloning', () => {
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Verify that objects are deeply independent
       const originalDept = node.organization.company.departments[0]
@@ -662,8 +651,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       node.gameResults = largeData
 
       const startTime = Date.now()
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
       const endTime = Date.now()
 
       expect(endTime - startTime).toBeLessThan(1000) // Should complete within 1 second
@@ -675,8 +663,7 @@ describe('cloneWithNewId - Complex Structures', () => {
 
   describe('port Hierarchy Preservation', () => {
     it('should preserve all port configurations and values', () => {
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Verify that all ports exist
       const originalPortCount = node.ports.size
@@ -698,19 +685,18 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(clonedPortKeys).toEqual(originalPortKeys)
     })
 
-    it('should ensure all port IDs are unique between original and cloned', () => {
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+    it('should ensure all port IDs are same id between original and cloned', () => {
+      const clonedNode = node.cloneWithNewId()
 
       const originalPortIds = Array.from(node.ports.keys())
       const clonedPortIds = Array.from(clonedNode.ports.keys())
 
       // No port IDs should overlap
-      const intersection = originalPortIds.filter(id => clonedPortIds.includes(id))
+      const intersection = originalPortIds.filter(id => !clonedPortIds.includes(id))
       expect(intersection).toHaveLength(0)
     })
 
-    it('should verify complex object ports have different IDs but same values', () => {
+    it('should verify complex object ports have same IDs and values', () => {
       // Modify nested user data
       node.nestedUser = {
         name: 'TestUser',
@@ -720,8 +706,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       }
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Find the nestedUser port in both nodes
       const originalNestedUserPort = Array.from(node.ports.values())
@@ -732,8 +717,8 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(originalNestedUserPort).toBeDefined()
       expect(clonedNestedUserPort).toBeDefined()
 
-      // Verify IDs are different
-      expect(originalNestedUserPort!.id).not.toBe(clonedNestedUserPort!.id)
+      // Verify IDs are same
+      expect(originalNestedUserPort!.id).toBe(clonedNestedUserPort!.id)
 
       // Verify values are the same
       expect(originalNestedUserPort!.getValue()).toEqual(clonedNestedUserPort!.getValue())
@@ -753,12 +738,12 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(originalChildPorts.length).toBeGreaterThan(0)
 
       for (let i = 0; i < originalChildPorts.length; i++) {
-        expect(originalChildPorts[i].id).not.toBe(clonedChildPorts[i].id)
+        expect(originalChildPorts[i].id).toBe(clonedChildPorts[i].id)
         expect(originalChildPorts[i].getValue()).toEqual(clonedChildPorts[i].getValue())
       }
     })
 
-    it('should verify complex array ports have different IDs but same values', () => {
+    it('should verify complex array ports have same IDs and values', () => {
       // Modify game results
       node.gameResults = [
         {
@@ -779,8 +764,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       ]
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Find the gameResults port in both nodes
       const originalGameResultsPort = Array.from(node.ports.values())
@@ -791,8 +775,8 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(originalGameResultsPort).toBeDefined()
       expect(clonedGameResultsPort).toBeDefined()
 
-      // Verify IDs are different
-      expect(originalGameResultsPort!.id).not.toBe(clonedGameResultsPort!.id)
+      // Verify IDs are same
+      expect(originalGameResultsPort!.id).toBe(clonedGameResultsPort!.id)
 
       // Verify values are the same
       expect(originalGameResultsPort!.getValue()).toEqual(clonedGameResultsPort!.getValue())
@@ -804,7 +788,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(originalArrayChildPorts.length).toBe(clonedArrayChildPorts.length)
 
       for (let i = 0; i < originalArrayChildPorts.length; i++) {
-        expect(originalArrayChildPorts[i].id).not.toBe(clonedArrayChildPorts[i].id)
+        expect(originalArrayChildPorts[i].id).toBe(clonedArrayChildPorts[i].id)
         expect(originalArrayChildPorts[i].getValue()).toEqual(clonedArrayChildPorts[i].getValue())
 
         // For object array items, verify nested object properties also have different IDs
@@ -814,13 +798,13 @@ describe('cloneWithNewId - Complex Structures', () => {
         expect(originalNestedPorts.length).toBe(clonedNestedPorts.length)
 
         for (let j = 0; j < originalNestedPorts.length; j++) {
-          expect(originalNestedPorts[j].id).not.toBe(clonedNestedPorts[j].id)
+          expect(originalNestedPorts[j].id).toBe(clonedNestedPorts[j].id)
           expect(originalNestedPorts[j].getValue()).toEqual(clonedNestedPorts[j].getValue())
         }
       }
     })
 
-    it('should verify deeply nested object ports have different IDs at all levels', () => {
+    it('should verify deeply nested object ports have same IDs at all levels', () => {
       // Modify organization data
       node.organization = {
         company: {
@@ -844,8 +828,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       }
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Find the organization port in both nodes
       const originalOrgPort = Array.from(node.ports.values())
@@ -857,7 +840,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(clonedOrgPort).toBeDefined()
 
       // Verify root level IDs are different
-      expect(originalOrgPort!.id).not.toBe(clonedOrgPort!.id)
+      expect(originalOrgPort!.id).toBe(clonedOrgPort!.id)
       expect(originalOrgPort!.getValue()).toEqual(clonedOrgPort!.getValue())
 
       // Helper function to recursively verify all nested ports have different IDs
@@ -872,8 +855,8 @@ describe('cloneWithNewId - Complex Structures', () => {
           const origChild = originalChildren[i]
           const clonedChild = clonedChildren[i]
 
-          // Verify IDs are different but values are the same
-          expect(origChild.id).not.toBe(clonedChild.id)
+          // Verify IDs are same id and values
+          expect(origChild.id).toBe(clonedChild.id)
           expect(origChild.getValue()).toEqual(clonedChild.getValue())
 
           // Recursively check deeper levels
@@ -887,7 +870,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       verifyNestedPortIds(originalOrgPort!, clonedOrgPort!)
     })
 
-    it('should verify matrix (array of arrays) ports have different IDs at all levels', () => {
+    it('should verify matrix (array of arrays) ports have same IDs at all levels', () => {
       // Set matrix data
       node.matrix = [
         [1, 2, 3, 4],
@@ -895,8 +878,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         [9, 10, 11, 12],
       ]
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Find the matrix port in both nodes
       const originalMatrixPort = Array.from(node.ports.values())
@@ -907,8 +889,8 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(originalMatrixPort).toBeDefined()
       expect(clonedMatrixPort).toBeDefined()
 
-      // Verify root array port IDs are different
-      expect(originalMatrixPort!.id).not.toBe(clonedMatrixPort!.id)
+      // Verify root array port IDs are same
+      expect(originalMatrixPort!.id).toBe(clonedMatrixPort!.id)
       expect(originalMatrixPort!.getValue()).toEqual(clonedMatrixPort!.getValue())
 
       // Verify each row (sub-array) has different IDs
@@ -920,7 +902,7 @@ describe('cloneWithNewId - Complex Structures', () => {
 
       for (let i = 0; i < originalRowPorts.length; i++) {
         // Verify row port IDs are different
-        expect(originalRowPorts[i].id).not.toBe(clonedRowPorts[i].id)
+        expect(originalRowPorts[i].id).toBe(clonedRowPorts[i].id)
         expect(originalRowPorts[i].getValue()).toEqual(clonedRowPorts[i].getValue())
 
         // Verify each element in the row has different IDs
@@ -931,13 +913,13 @@ describe('cloneWithNewId - Complex Structures', () => {
         expect(originalElementPorts.length).toBe(4) // Four elements per row
 
         for (let j = 0; j < originalElementPorts.length; j++) {
-          expect(originalElementPorts[j].id).not.toBe(clonedElementPorts[j].id)
+          expect(originalElementPorts[j].id).toBe(clonedElementPorts[j].id)
           expect(originalElementPorts[j].getValue()).toEqual(clonedElementPorts[j].getValue())
         }
       }
     })
 
-    it('should verify extremely complex nested structure port IDs', () => {
+    it('should verify extremely complex nested structure port IDs are same', () => {
       // Modify the extremely complex config
       node.complexConfig = {
         config: {
@@ -962,8 +944,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         },
       }
 
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Find the complexConfig port
       const originalComplexPort = Array.from(node.ports.values())
@@ -975,7 +956,7 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(clonedComplexPort).toBeDefined()
 
       // Verify root level
-      expect(originalComplexPort!.id).not.toBe(clonedComplexPort!.id)
+      expect(originalComplexPort!.id).toBe(clonedComplexPort!.id)
       expect(originalComplexPort!.getValue()).toEqual(clonedComplexPort!.getValue())
 
       // Helper to verify all nested ports recursively
@@ -990,8 +971,8 @@ describe('cloneWithNewId - Complex Structures', () => {
           const clonedChild = clonedChildren[i]
           const currentPath = [...path, origChild.getConfig().key || `[${i}]`]
 
-          // Verify IDs are different at this level
-          expect(origChild.id).not.toBe(clonedChild.id)
+          // Verify IDs are same at this level
+          expect(origChild.id).toBe(clonedChild.id)
 
           // Verify values are the same at this level
           expect(origChild.getValue()).toEqual(clonedChild.getValue())
@@ -1009,15 +990,11 @@ describe('cloneWithNewId - Complex Structures', () => {
     })
 
     it('should verify port ID patterns are maintained after cloning', () => {
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Verify all ports in both nodes follow correct ID patterns
       const verifyPortIdPatterns = (ports: Map<string, any>) => {
         for (const [portId, port] of ports) {
-          // All port IDs should match the port ID pattern (contain 'PO')
-          expect(portId).toMatch(/PO/)
-
           // Port ID should match the port's own ID
           expect(portId).toBe(port.id)
 
@@ -1039,13 +1016,12 @@ describe('cloneWithNewId - Complex Structures', () => {
       expect(new Set(clonedIds).size).toBe(clonedIds.length)
 
       // No overlapping IDs between original and cloned
-      const overlap = originalIds.filter(id => clonedIds.includes(id))
+      const overlap = originalIds.filter(id => !clonedIds.includes(id))
       expect(overlap).toHaveLength(0)
     })
 
-    it('should verify parent-child relationships are preserved with new IDs', () => {
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as ComplexTestNode
+    it('should verify parent-child relationships are preserved with same IDs', () => {
+      const clonedNode = node.cloneWithNewId()
 
       // Helper to verify parent-child relationships
       const verifyParentChildRelationships = (ports: Map<string, any>) => {
@@ -1083,7 +1059,7 @@ describe('cloneWithNewId - Complex Structures', () => {
         )
 
         expect(clonedPort).toBeDefined()
-        expect(origPort.id).not.toBe(clonedPort!.id)
+        expect(origPort.id).toBe(clonedPort!.id)
 
         // Verify child count matches
         const origChildren = node.getChildPorts(origPort)

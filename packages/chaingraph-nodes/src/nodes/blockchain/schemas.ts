@@ -19,6 +19,7 @@ import {
  */
 @ObjectSchema({
   description: 'ERC20 Token information including metadata and chain',
+  type: 'Token',
 })
 export class Token {
   @PortString({
@@ -64,6 +65,7 @@ export class Token {
  */
 @ObjectSchema({
   description: 'Native blockchain token information',
+  type: 'NativeToken',
 })
 export class NativeToken extends Token {
   constructor(chainId: number = 1) {
@@ -101,6 +103,7 @@ export class NativeToken extends Token {
  */
 @ObjectSchema({
   description: 'Amount with raw value and formatted display',
+  type: 'Amount',
 })
 export class Amount {
   @PortString({
@@ -133,6 +136,7 @@ export class Amount {
  */
 @ObjectSchema({
   description: 'Connected wallet information including address, network, and status',
+  type: 'WalletInfo',
 })
 export class WalletInfo {
   @PortBoolean({
@@ -181,6 +185,7 @@ export class WalletInfo {
  */
 @ObjectSchema({
   description: 'Blockchain transaction ready for signing',
+  type: 'Transaction',
 })
 export class Transaction {
   @PortString({

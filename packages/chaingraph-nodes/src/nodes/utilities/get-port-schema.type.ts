@@ -19,6 +19,7 @@ import {
 // Base schema for common port properties
 @ObjectSchema({
   description: 'Base schema for common port properties',
+  type: 'BasePortSchema',
 })
 export class BasePortSchema {
   @PortString({ description: 'Port type (string, number, boolean, etc.)' })
@@ -46,6 +47,7 @@ export class BasePortSchema {
 // String port schema
 @ObjectSchema({
   description: 'Schema for string port type',
+  type: 'StringPortSchema',
 })
 export class StringPortSchema extends BasePortSchema {
   @PortString({ description: 'Default string value' })
@@ -78,6 +80,7 @@ export class StringPortSchema extends BasePortSchema {
 // Number port schema
 @ObjectSchema({
   description: 'Schema for number port type',
+  type: 'NumberPortSchema',
 })
 export class NumberPortSchema extends BasePortSchema {
   @PortNumber({ description: 'Default number value' })
@@ -112,6 +115,7 @@ export class NumberPortSchema extends BasePortSchema {
 // Boolean port schema
 @ObjectSchema({
   description: 'Schema for boolean port type',
+  type: 'BooleanPortSchema',
 })
 export class BooleanPortSchema extends BasePortSchema {
   @PortBoolean({ description: 'Default boolean value' })
@@ -130,6 +134,7 @@ export class BooleanPortSchema extends BasePortSchema {
 // Array port schema
 @ObjectSchema({
   description: 'Schema for array port type',
+  type: 'ArrayPortSchema',
 })
 export class ArrayPortSchema extends BasePortSchema {
   @PortObject({
@@ -174,6 +179,7 @@ export class ArrayPortSchema extends BasePortSchema {
 // Object port schema
 @ObjectSchema({
   description: 'Schema for object port type',
+  type: 'ObjectPortSchema',
 })
 export class ObjectPortSchema extends BasePortSchema {
   @PortObject({
@@ -216,6 +222,7 @@ export class ObjectPortSchema extends BasePortSchema {
 // Enum port schema
 @ObjectSchema({
   description: 'Schema for enum port type',
+  type: 'EnumPortSchema',
 })
 export class EnumPortSchema extends BasePortSchema {
   @PortArray({
@@ -252,6 +259,7 @@ export class EnumPortSchema extends BasePortSchema {
 // Stream port schema
 @ObjectSchema({
   description: 'Schema for stream port type',
+  type: 'StreamPortSchema',
 })
 export class StreamPortSchema extends BasePortSchema {
   @PortObject({
@@ -277,6 +285,7 @@ export class StreamPortSchema extends BasePortSchema {
 // Any port schema
 @ObjectSchema({
   description: 'Schema for any port type',
+  type: 'AnyPortSchema',
 })
 export class AnyPortSchema extends BasePortSchema {
   @PortObject({
@@ -307,6 +316,7 @@ export class AnyPortSchema extends BasePortSchema {
 // Combined port schema with discriminated union
 @ObjectSchema({
   description: 'Combined schema for all port types',
+  type: 'PortSchemaUnion',
 })
 export class PortSchemaUnion {
   @PortString({ description: 'Port type discriminator' })

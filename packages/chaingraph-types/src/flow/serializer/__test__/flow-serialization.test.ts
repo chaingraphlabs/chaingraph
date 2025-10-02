@@ -40,6 +40,7 @@ import find = util.find
 // Define Participant schema
 @ObjectSchema({
   description: 'Represents a participant in a chat conversation',
+  type: 'Participant',
 })
 class Participant {
   @PortString({
@@ -109,6 +110,7 @@ class Participant {
 // Define Attachment schema
 @ObjectSchema({
   description: 'Represents a file attachment in a message',
+  type: 'Attachment',
 })
 class Attachment {
   @PortString({
@@ -155,6 +157,7 @@ class Attachment {
 // Define Message schema
 @ObjectSchema({
   description: 'Represents a message in a chat conversation',
+  type: 'Message',
 })
 class Message {
   @PortNumber({

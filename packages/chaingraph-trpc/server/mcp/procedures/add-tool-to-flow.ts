@@ -56,8 +56,7 @@ export const addToolToFlow = flowContextProcedure
       const mcpToolNode = nodeBuilderService.buildToolNode(server, tool)
 
       // Clone the node with a new ID for the flow
-      const cloneResult = mcpToolNode.cloneWithNewId()
-      const node = cloneResult.clonedNode
+      const node = mcpToolNode.cloneWithNewId()
 
       // Set position
       node.setPosition(input.position, true)

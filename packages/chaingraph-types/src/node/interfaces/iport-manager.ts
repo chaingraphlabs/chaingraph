@@ -77,6 +77,27 @@ export interface IPortManager {
   findPortByPath: (path: string[]) => IPort | undefined
 
   /**
+   * Get a port by its path string (e.g., "port.subport.array[0].field")
+   * @param pathString The path string to the port
+   * @returns The port if found, undefined otherwise
+   */
+  getPortByPath: (pathString: string) => IPort | undefined
+
+  /**
+   * Get the full path string for a given port
+   * @param portId The ID of the port
+   * @returns The path string (e.g., "port.subport.field") or undefined if port not found
+   */
+  getPortPath: (portId: string) => string | undefined
+
+  /**
+   * Get the full path string for a given port instance
+   * @param port The port instance
+   * @returns The path string (e.g., "port.subport.field")
+   */
+  getPortPathForPort: (port: IPort) => string
+
+  /**
    * Get all direct child ports of a parent port
    * @param parentPort The parent port
    * @returns Array of child ports
@@ -89,6 +110,20 @@ export interface IPortManager {
    * @returns Array of all nested ports
    */
   getNestedPorts: (parentPort: IPort) => IPort[]
+
+  /**
+   * Get the full parentship chain of a port, from the port up to the root
+   * @param port The port to get the chain for
+   * @returns Array of ports in the chain, starting from the given port up to the root
+   */
+  getParentshipChain: (port: IPort) => IPort[]
+
+  /**
+   * Get the root port of a given port by traversing up the parentship chain
+   * @param port The port to find the root for
+   * @returns The root port
+   */
+  getRootPort: (port: IPort) => IPort
 
   /**
    * Update a port with new configuration/value

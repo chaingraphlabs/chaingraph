@@ -198,16 +198,16 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
               onChange={handleChange}
               // onClick={_ => handleResize()}
               // onInput={_ => handleResize()}
-              // onBlur={(_) => {
-              //   handleResize()
-              //   setFocused(false)
-              //   trackBlur()
-              // }}
-              // onFocus={(_) => {
-              //   handleResize()
-              //   setFocused(true)
-              //   trackFocus()
-              // }}
+              onBlur={(_) => {
+                // handleResize()
+                setFocused(false)
+                trackBlur()
+              }}
+              onFocus={(_) => {
+                // handleResize()
+                setFocused(true)
+                trackFocus()
+              }}
               style={{
               //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
                 height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,

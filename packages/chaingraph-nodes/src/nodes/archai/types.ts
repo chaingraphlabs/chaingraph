@@ -19,6 +19,7 @@ import {
 // Define Participant schema
 @ObjectSchema({
   description: 'Represents a participant in a chat conversation',
+  type: 'Participant',
 })
 export class Participant {
   @PortString({
@@ -88,6 +89,7 @@ export class Participant {
 // Define Attachment schema
 @ObjectSchema({
   description: 'Represents a file attachment in a message',
+  type: 'Attachment',
 })
 export class Attachment {
   @PortString({
@@ -134,6 +136,7 @@ export class Attachment {
 // Define Message schema
 @ObjectSchema({
   description: 'Represents a message in a chat conversation',
+  type: 'Message',
 })
 export class Message {
   @PortNumber({
@@ -278,6 +281,7 @@ export class Message {
 // Define ChatMeta schema
 @ObjectSchema({
   description: 'Represents a chat room or conversation',
+  type: 'ChatMeta',
 })
 export class ChatMeta {
   @PortString({
@@ -384,6 +388,7 @@ export enum VariableValueType {
 // Define DocumentMetadataKV schema
 @ObjectSchema({
   description: 'Represents a key-value pair for document metadata',
+  type: 'DocumentMetadataKV',
 })
 export class DocumentMetadataKV {
   @PortString({
@@ -404,6 +409,7 @@ export class DocumentMetadataKV {
 // Define DocumentMeta schema
 @ObjectSchema({
   description: 'Represents metadata for a document',
+  type: 'DocumentMeta',
 })
 export class DocumentMeta {
   @PortString({
@@ -480,6 +486,7 @@ export class DocumentMeta {
 // Define QA schema
 @ObjectSchema({
   description: 'Represents a question-answer pair',
+  type: 'QA',
 })
 export class QA {
   @PortString({
@@ -583,6 +590,7 @@ export class QA {
 // Define QAWithSimilarity schema
 @ObjectSchema({
   description: 'Represents a QA pair with similarity score',
+  type: 'QAWithSimilarity',
 })
 export class QAWithSimilarity {
   @PortObject({
@@ -604,6 +612,7 @@ export class QAWithSimilarity {
 // Define QAWithSimilarityByDocuments schema
 @ObjectSchema({
   description: 'Represents QA pairs with similarity scores grouped by document',
+  type: 'QAWithSimilarityByDocuments',
 })
 export class QAWithSimilarityByDocuments {
   @PortObject({
@@ -631,6 +640,7 @@ export class QAWithSimilarityByDocuments {
 // Define Page schema
 @ObjectSchema({
   description: 'Represents a page from a document in the knowledge database',
+  type: 'Page',
 })
 export class Page {
   @PortString({
@@ -689,6 +699,7 @@ export class Page {
 // Define IndexingDocumentStatisticsLLM schema
 @ObjectSchema({
   description: 'Represents LLM statistics for document indexing',
+  type: 'IndexingDocumentStatisticsLLM',
 })
 export class IndexingDocumentStatisticsLLM {
   @PortNumber({
@@ -731,6 +742,7 @@ export class IndexingDocumentStatisticsLLM {
 // Define IndexingDocumentStatistics schema
 @ObjectSchema({
   description: 'Represents statistics for document indexing',
+  type: 'IndexingDocumentStatistics',
 })
 export class IndexingDocumentStatistics {
   @PortNumber({
@@ -848,6 +860,7 @@ export class IndexingDocumentStatistics {
 // Define IndexingDocumentTaskConfig schema
 @ObjectSchema({
   description: 'Represents configuration for document indexing task',
+  type: 'IndexingDocumentTaskConfig',
 })
 export class IndexingDocumentTaskConfig {
   @PortNumber({
@@ -912,6 +925,7 @@ export class IndexingDocumentTaskConfig {
 // Define IndexingDocumentTask schema
 @ObjectSchema({
   description: 'Represents a document indexing task',
+  type: 'IndexingDocumentTask',
 })
 export class IndexingDocumentTask {
   @PortString({

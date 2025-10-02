@@ -29,6 +29,7 @@ import { Amount, Token } from '../blockchain/schemas'
  */
 @ObjectSchema({
   description: 'Raw token balance input',
+  type: 'RawBalanceInput',
 })
 class RawBalanceInput {
   @PortString({
@@ -59,6 +60,7 @@ class RawBalanceInput {
  */
 @ObjectSchema({
   description: 'Token balance with formatted amount and metadata',
+  type: 'TokenBalance',
 })
 class TokenBalance {
   @PortObject({

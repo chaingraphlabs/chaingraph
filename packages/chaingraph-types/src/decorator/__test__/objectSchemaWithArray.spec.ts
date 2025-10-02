@@ -12,7 +12,9 @@ import { Port } from '../port.decorator'
 import 'reflect-metadata'
 
 // Define a simple inner object schema for testing.
-@ObjectSchema()
+@ObjectSchema({
+  type: 'InnerObjectSchema',
+})
 class InnerObjectSchema {
   @Port({ type: 'string' })
   foo: string = 'defaultFoo'
@@ -22,7 +24,9 @@ class InnerObjectSchema {
 }
 
 // Define another simple schema for an array of strings.
-@ObjectSchema()
+@ObjectSchema({
+  type: 'SimpleStringSchema',
+})
 class SimpleStringSchema {
   @Port({ type: 'string' })
   value: string = 'default'
@@ -33,7 +37,9 @@ class SimpleStringSchema {
 // • An object array property using the explicit form.
 // • A nested object property with an explicit plain schema.
 // • An array property whose items are arrays of objects.
-@ObjectSchema()
+@ObjectSchema({
+  type: 'MixedSchema',
+})
 class MixedSchema {
   @Port({
     type: 'array',
@@ -80,13 +86,17 @@ class MixedSchema {
 
 // Define a deeper nested case: an object property that contains an array of objects,
 // with each object containing an array of objects.
-@ObjectSchema()
+@ObjectSchema({
+  type: 'DeepInner',
+})
 class DeepInner {
   @Port({ type: 'string' })
   a: string = 'a'
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  type: 'Intermediate',
+})
 class Intermediate {
   @Port({
     type: 'array',
@@ -95,7 +105,9 @@ class Intermediate {
   list: DeepInner[] = []
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  type: 'DeepOuter',
+})
 class DeepOuter {
   @Port({
     type: 'object',
@@ -203,7 +215,9 @@ describe('nested Object and Array Schemas (explicit syntax only)', () => {
   })
 
   // Additional test: combining arrays in an object and arrays in an array.
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'Complex',
+  })
   class Complex {
     @Port({
       type: 'object',

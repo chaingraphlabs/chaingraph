@@ -19,6 +19,7 @@ import {
 // Define Participant schema
 @ObjectSchema({
   description: 'Represents a participant in a chat conversation',
+  type: 'Participant',
 })
 export class Participant {
   @PortString({
@@ -88,6 +89,7 @@ export class Participant {
 // Define Attachment schema
 @ObjectSchema({
   description: 'Represents a file attachment in a message',
+  type: 'Attachment',
 })
 export class Attachment {
   @PortString({
@@ -134,6 +136,7 @@ export class Attachment {
 // Define Message schema
 @ObjectSchema({
   description: 'Represents a message in a chat conversation',
+  type: 'Message',
 })
 export class Message {
   @PortNumber({
@@ -278,6 +281,7 @@ export class Message {
 // Define ChatMeta schema
 @ObjectSchema({
   description: 'Represents a chat room or conversation',
+  type: 'ChatMeta',
 })
 export class ChatMeta {
   @PortString({

@@ -118,6 +118,7 @@ class DummyNode extends BaseNode {
               },
             },
           },
+          defaultValue: { foo: 'foo', bar: 42 },
         },
       },
     },
@@ -296,7 +297,16 @@ describe('port Initialization Test', () => {
 
     expect(deserializedNode).toBeDefined()
     expect(deserializedNode).toBeInstanceOf(DummyNode)
-    expect(deserializedNode.serialize()).toEqual(node.serialize())
+    expect(deserializedNode.id).toBe(node.id)
+    for (const [,port] of node.ports) {
+      const deserializedPort = findPort(
+        deserializedNode,
+        p => p.getConfig().key === port.getConfig().key,
+      )
+      expect(deserializedPort).toBeDefined()
+      expect(deserializedPort?.getValue()).toEqual(port.getValue())
+      expect(deserializedPort?.getConfig()).toEqual(port.getConfig())
+    }
   })
 
   it('should deserialize from json', () => {

@@ -28,6 +28,7 @@ import { NODE_CATEGORIES } from '../../categories'
 // Define PageInput schema
 @ObjectSchema({
   description: 'Represents input for creating a page in a document',
+  type: 'PageInput',
 })
 export class PageInput {
   @PortString({

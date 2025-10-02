@@ -454,7 +454,9 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
         },
       }
 
-      if (config.defaultValue !== undefined) {
+      if (config.defaultValue === undefined || config.defaultValue === null) {
+        serializedConfig.defaultValue = config.defaultValue
+      } else {
         // Serialize the default value using the ObjectPortPlugin’s own serializeValue,
         // passing in the config so that nested fields are serialized according to their settings.
         serializedConfig.defaultValue = ObjectPortPlugin.serializeValue(config.defaultValue, config)

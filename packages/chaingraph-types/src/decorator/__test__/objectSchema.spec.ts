@@ -12,7 +12,9 @@ import { getObjectSchema, ObjectSchema } from '../object-schema.decorator'
 import { Port } from '../port.decorator'
 import 'reflect-metadata'
 
-@ObjectSchema()
+@ObjectSchema({
+  type: 'InnerObjectSchema',
+})
 class InnerObjectSchema {
   // Every property must be decorated with @Port so that explicit type information is provided.
   // (In this example we assume that your existing @Port decorator stores { type: string } etc.)
@@ -24,7 +26,9 @@ class InnerObjectSchema {
   bar: number = 0
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  type: 'OuterObjectSchema',
+})
 class OuterObjectSchema {
   @Port({ type: 'string' })
   hello: string = 'hello'

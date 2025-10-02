@@ -37,6 +37,7 @@ export type {
 // MCP Client Info Schema
 @ObjectSchema({
   description: 'MCP Client Implementation Information',
+  type: 'MCPClientInfo',
 })
 export class MCPClientInfo {
   @PortString({
@@ -64,6 +65,7 @@ export class MCPClientInfo {
 // Authentication Schemas
 @ObjectSchema({
   description: 'API Key Authentication',
+  type: 'MCPApiKeyAuth',
 })
 export class MCPApiKeyAuth {
   @PortSecret<'string'>({
@@ -91,6 +93,7 @@ export class MCPApiKeyAuth {
 
 @ObjectSchema({
   description: 'Custom Header Authentication',
+  type: 'HeaderPair',
 })
 export class HeaderPair {
   @PortString({
@@ -108,6 +111,7 @@ export class HeaderPair {
 
 @ObjectSchema({
   description: 'MCP Connection Data',
+  type: 'MCPConnectionData',
 })
 export class MCPConnectionData {
   @PortString({
@@ -160,6 +164,7 @@ export class MCPConnectionData {
 // Server Capabilities Schema
 @ObjectSchema({
   description: 'MCP Server Capabilities',
+  type: 'MCPServerCapabilities',
 })
 export class MCPServerCapabilities {
   @PortBoolean({
@@ -208,6 +213,7 @@ export class MCPServerCapabilities {
 // Tool Definition Schema
 @ObjectSchema({
   description: 'MCP Tool Definition',
+  type: 'MCPToolDefinition',
 })
 export class MCPToolDefinition {
   @PortString({
@@ -246,6 +252,7 @@ export class MCPToolDefinition {
 // Content Block Schemas
 @ObjectSchema({
   description: 'Text Content Block',
+  type: 'MCPTextContent',
 })
 export class MCPTextContent {
   @PortString({
@@ -271,6 +278,7 @@ export class MCPTextContent {
 
 @ObjectSchema({
   description: 'Image Content Block',
+  type: 'MCPImageContent',
 })
 export class MCPImageContent {
   @PortString({
@@ -302,6 +310,7 @@ export class MCPImageContent {
 
 @ObjectSchema({
   description: 'Audio Content Block',
+  type: 'AudioContent',
 })
 export class MCPAudioContent {
   @PortString({
@@ -333,6 +342,7 @@ export class MCPAudioContent {
 
 @ObjectSchema({
   description: 'Text Resource Contents',
+  type: 'TextResourceContent',
 })
 export class TextResourceContent {
   @PortString({
@@ -363,6 +373,7 @@ export class TextResourceContent {
 
 @ObjectSchema({
   description: 'Blob Resource Contents',
+  type: 'BlobResourceContent',
 })
 export class BlobResourceContent {
   @PortString({
@@ -393,6 +404,7 @@ export class BlobResourceContent {
 
 @ObjectSchema({
   description: 'Embedded Resource Content Block',
+  type: 'MCPEmbeddedResourceContent',
 })
 export class MCPEmbeddedResourceContent {
   @PortString({
@@ -419,6 +431,7 @@ export class MCPEmbeddedResourceContent {
 
 @ObjectSchema({
   description: 'Resource Link Content Block',
+  type: 'MCPResourceLinkContent',
 })
 export class MCPResourceLinkContent {
   @PortString({
@@ -479,6 +492,7 @@ export type MCPContentBlock
 // message
 @ObjectSchema({
   description: 'MCP Progress Message',
+  type: 'MCPProgressMessage',
 })
 export class MCPProgressMessage {
   @PortNumber({
@@ -503,6 +517,7 @@ export class MCPProgressMessage {
 
 @ObjectSchema({
   description: 'MCP Prompt Message',
+  type: 'MCPPromptMessage',
 })
 export class MCPPromptMessage {
   @PortEnum({
@@ -528,6 +543,7 @@ export class MCPPromptMessage {
 
 @ObjectSchema({
   description: 'MCP Prompt Result',
+  type: 'MCPPromptResult',
 })
 export class MCPPromptResult {
   @PortString({
@@ -554,6 +570,7 @@ export class MCPPromptResult {
 
 @ObjectSchema({
   description: 'MCP Read Resource Result',
+  type: 'MCPReadResourceResult',
 })
 export class MCPReadResourceResult {
   @PortArray({

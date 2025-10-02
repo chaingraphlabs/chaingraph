@@ -130,17 +130,32 @@ export class PortManager implements IPortManager {
    * @returns The port if found, undefined otherwise
    */
   findPortByPath(path: string[]): IPort | undefined {
-    if (path.length === 0) {
+    // Validate input
+    if (!path || path.length === 0) {
       return undefined
     }
 
+    // Validate path segments
+    for (const segment of path) {
+      if (!segment || typeof segment !== 'string') {
+        console.warn(`Invalid path segment: ${segment}`)
+        return undefined
+      }
+      // Check for empty or whitespace-only segments
+      if (!segment.trim()) {
+        console.warn(`Empty path segment in path: ${path.join('.')}`)
+        return undefined
+      }
+    }
+
     // Find the root port first
-    const rootKey = path[0]
+    const rootKey = path[0].trim()
     let currentPort: IPort | undefined
 
-    // Find root port by key
+    // Find root port by key (this is still O(n) but can be optimized with indexing)
     for (const port of this._ports.values()) {
-      if (!port.getConfig().parentId && port.getConfig().key === rootKey) {
+      const config = port.getConfig()
+      if (!config.parentId && config.key === rootKey) {
         currentPort = port
         break
       }
@@ -152,15 +167,35 @@ export class PortManager implements IPortManager {
 
     // Follow the path to find the target port
     for (let i = 1; i < path.length; i++) {
-      const segment = path[i]
-      const isArrayIndex = segment.match(/^\d+$/)
+      const segment = path[i].trim()
 
-      // Build the expected port ID based on the current port
-      const nextPortId = isArrayIndex
-        ? generatePortIDArrayElement(currentPort.id, Number.parseInt(segment))
-        : `${currentPort.id}.${segment}`
+      // Check if segment is an array index
+      const isArrayIndex = /^\d+$/.test(segment)
 
-      currentPort = this._ports.get(nextPortId)
+      if (isArrayIndex) {
+        const index = Number.parseInt(segment, 10)
+
+        // Validate array index
+        if (index < 0 || index > Number.MAX_SAFE_INTEGER) {
+          console.warn(`Invalid array index: ${index}`)
+          return undefined
+        }
+
+        // Build the expected port ID for array element
+        const nextPortId = generatePortIDArrayElement(currentPort.id, index)
+        currentPort = this._ports.get(nextPortId)
+      } else {
+        // Validate that segment doesn't contain invalid characters
+        if (segment.includes('.') || segment.includes('[') || segment.includes(']')) {
+          console.warn(`Invalid characters in path segment: ${segment}`)
+          return undefined
+        }
+
+        // Build the expected port ID for object property
+        const nextPortId = `${currentPort.id}.${segment}`
+        currentPort = this._ports.get(nextPortId)
+      }
+
       if (!currentPort) {
         return undefined
       }
@@ -187,15 +222,92 @@ export class PortManager implements IPortManager {
    * @returns Array of all nested ports
    */
   getNestedPorts(parentPort: IPort): IPort[] {
-    const childPorts = this.getChildPorts(parentPort)
-    const nestedPorts: IPort[] = []
+    const result: IPort[] = []
+    const toProcess: string[] = [parentPort.id]
+    const processed = new Set<string>()
 
-    for (const child of childPorts) {
-      nestedPorts.push(...this.getNestedPorts(child))
+    // Single-pass collection using BFS approach
+    while (toProcess.length > 0) {
+      const currentId = toProcess.shift()!
+
+      // Skip if already processed (handles potential cycles)
+      if (processed.has(currentId)) {
+        continue
+      }
+      processed.add(currentId)
+
+      // Find all children of current port in a single iteration
+      for (const port of this._ports.values()) {
+        if (port.getConfig().parentId === currentId) {
+          result.push(port)
+          toProcess.push(port.id)
+        }
+      }
     }
-    nestedPorts.push(...childPorts)
 
-    return nestedPorts
+    return result
+  }
+
+  /**
+   * Get the full parentship chain of a port, from the port up to the root
+   * @param port The port to get the chain for
+   * @returns Array of ports in the chain, starting from the given port up to the root
+   */
+  getParentshipChain(port: IPort): IPort[] {
+    const chain: IPort[] = []
+    const visited = new Set<string>()
+    let currentPort: IPort | undefined = port
+
+    // Traverse up the parent chain
+    while (currentPort) {
+      // Cycle detection
+      if (visited.has(currentPort.id)) {
+        console.warn(`Cycle detected in port parentship chain at port ${currentPort.id}`)
+        break
+      }
+
+      chain.push(currentPort)
+      visited.add(currentPort.id)
+
+      // Get parent port
+      const parentId = currentPort.getConfig().parentId
+      if (!parentId) {
+        break // Reached root
+      }
+
+      currentPort = this._ports.get(parentId)
+    }
+
+    return chain
+  }
+
+  /**
+   * Get the root port of a given port by traversing up the parentship chain
+   * @param port The port to find the root for
+   * @returns The root port
+   */
+  getRootPort(port: IPort): IPort {
+    const visited = new Set<string>()
+    let currentPort: IPort = port
+
+    // Traverse up to find the root
+    while (currentPort.getConfig().parentId) {
+      // Cycle detection
+      if (visited.has(currentPort.id)) {
+        console.warn(`Cycle detected in port parentship chain at port ${currentPort.id}`)
+        return currentPort // Return current to avoid infinite loop
+      }
+      visited.add(currentPort.id)
+
+      const parentPort = this._ports.get(currentPort.getConfig().parentId!)
+      if (!parentPort) {
+        break // Parent not found, current is effectively root
+      }
+
+      currentPort = parentPort
+    }
+
+    return currentPort
   }
 
   /**
@@ -232,7 +344,6 @@ export class PortManager implements IPortManager {
     return undefined
   }
 
-  // findPorts: (predicate: (port: IPort) => boolean) => IPort[]/**/
   /**
    * Find all ports by a predicate function
    * @param predicate Predicate function to match the port
@@ -246,5 +357,154 @@ export class PortManager implements IPortManager {
       }
     }
     return matchingPorts
+  }
+
+  /**
+   * Parse a path string into segments
+   * Handles both dot notation and array notation
+   * @param pathString The path string (e.g., "port.array[0].field")
+   * @returns Array of path segments
+   */
+  protected parsePathString(pathString: string): string[] {
+    const segments: string[] = []
+    let current = ''
+    let i = 0
+
+    while (i < pathString.length) {
+      const char = pathString[i]
+
+      if (char === '.') {
+        if (current) {
+          segments.push(current)
+          current = ''
+        }
+        i++
+      } else if (char === '[') {
+        // Save current segment if exists
+        if (current) {
+          segments.push(current)
+          current = ''
+        }
+        // Find closing bracket
+        const closeIndex = pathString.indexOf(']', i)
+        if (closeIndex === -1) {
+          throw new Error(`Invalid path: unclosed bracket at position ${i}`)
+        }
+        // Extract array index
+        const index = pathString.slice(i + 1, closeIndex)
+        segments.push(index)
+        i = closeIndex + 1
+      } else {
+        current += char
+        i++
+      }
+    }
+
+    // Add last segment if exists
+    if (current) {
+      segments.push(current)
+    }
+
+    return segments
+  }
+
+  /**
+   * Get a port by its path string
+   * @param pathString The path string to the port
+   * @returns The port if found, undefined otherwise
+   */
+  getPortByPath(pathString: string): IPort | undefined {
+    if (!pathString) {
+      return undefined
+    }
+
+    try {
+      const segments = this.parsePathString(pathString)
+      return this.findPortByPath(segments)
+    } catch (error) {
+      console.warn(`Failed to parse path: ${pathString}`, error)
+      return undefined
+    }
+  }
+
+  /**
+   * Build the path for a port by traversing up the parent chain
+   * @param port The port to build the path for
+   * @returns The path segments from root to this port
+   */
+  protected buildPortPath(port: IPort): string[] {
+    const segments: string[] = []
+    let currentPort: IPort | undefined = port
+
+    // Build path from port to root
+    while (currentPort) {
+      const key = currentPort.getConfig().key
+      if (key) {
+        segments.unshift(key)
+      }
+
+      const parentId = currentPort.getConfig().parentId
+      if (!parentId) {
+        break // Reached root
+      }
+
+      currentPort = this._ports.get(parentId)
+    }
+
+    return segments
+  }
+
+  /**
+   * Convert path segments to a path string
+   * @param segments The path segments
+   * @returns The path string with proper notation
+   */
+  protected segmentsToPathString(segments: string[]): string {
+    let result = ''
+
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i]
+
+      // Check if segment is a number (array index)
+      if (/^\d+$/.test(segment)) {
+        // Array indices are wrapped in brackets
+        result += `[${segment}]`
+      } else {
+        // Property names need a dot separator unless:
+        // 1. We're at the start (result is empty)
+        // 2. The last character is already a dot
+        if (result && !result.endsWith('.')) {
+          result += '.'
+        }
+        result += segment
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Get the full path string for a given port
+   * @param portId The ID of the port
+   * @returns The path string or undefined if port not found
+   */
+  getPortPath(portId: string): string | undefined {
+    const port = this._ports.get(portId)
+    if (!port) {
+      return undefined
+    }
+
+    const segments = this.buildPortPath(port)
+    return this.segmentsToPathString(segments)
+  }
+
+  /**
+   * Get the full path string for a given port instance
+   * @param port The port instance
+   * @returns The path string
+   */
+  getPortPathForPort(port: IPort): string {
+    const segments = this.buildPortPath(port)
+    return this.segmentsToPathString(segments)
   }
 }

@@ -57,33 +57,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      'vite-plugin-node-polyfills/shims/buffer': path.resolve(
-        __dirname,
-        'node_modules',
-        'vite-plugin-node-polyfills',
-        'shims',
-        'buffer',
-        'dist',
-        'index.cjs',
-      ),
-      'vite-plugin-node-polyfills/shims/global': path.resolve(
-        __dirname,
-        'node_modules',
-        'vite-plugin-node-polyfills',
-        'shims',
-        'global',
-        'dist',
-        'index.cjs',
-      ),
-      'vite-plugin-node-polyfills/shims/process': path.resolve(
-        __dirname,
-        'node_modules',
-        'vite-plugin-node-polyfills',
-        'shims',
-        'process',
-        'dist',
-        'index.cjs',
-      ),
       // Polyfill Node.js modules that cannot run in browser
       'node:fs': 'rollup-plugin-node-polyfills/polyfills/empty',
       'node:os': 'rollup-plugin-node-polyfills/polyfills/empty',

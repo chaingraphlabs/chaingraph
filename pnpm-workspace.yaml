@@ -4,6 +4,7 @@ packages:
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - '@tailwindcss/oxide'
   - blake-hash
   - bufferutil
   - es5-ext

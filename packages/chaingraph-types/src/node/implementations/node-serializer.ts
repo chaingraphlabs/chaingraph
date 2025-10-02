@@ -77,9 +77,14 @@ export class NodeSerializer implements ISerializable<INodeComposite> {
       || typeof data !== 'object'
       || !('schemaVersion' in data)
       || typeof data.schemaVersion !== 'string'
-      || data.schemaVersion !== 'v2'
+      || (data.schemaVersion !== 'v2' && data.schemaVersion !== 'v3')
     ) {
       return this.deserializeV1(data)
+    }
+
+    // Check if v3, then throw error as it's not supported
+    if (data.schemaVersion === 'v3') {
+      throw new Error('Deserialization of v3 schema is not supported yet')
     }
 
     // Deserialize using FlowSerializer for v2 schema

@@ -25,6 +25,7 @@ import {
  */
 @ObjectSchema({
   description: 'Information about a specific token on the blockchain',
+  type: 'TokenInfo',
 })
 export class TokenInfo {
   @PortString({
@@ -75,6 +76,7 @@ export class TokenInfo {
  */
 @ObjectSchema({
   description: 'A single token information entry (alias for TokenInfo)',
+  type: 'TokenInfoList',
 })
 export class TokenInfoList extends TokenInfo { }
 
@@ -84,6 +86,7 @@ export class TokenInfoList extends TokenInfo { }
  */
 @ObjectSchema({
   description: 'Basic token information returned in token listing responses',
+  type: 'TokenListResponse',
 })
 export class TokenListResponse {
   @PortString({
@@ -125,6 +128,7 @@ export class TokenListResponse {
  */
 @ObjectSchema({
   description: 'Token list information (alias for TokenListResponse)',
+  type: 'TokenListInfo',
 })
 export class TokenListInfo extends TokenListResponse { }
 
@@ -134,6 +138,7 @@ export class TokenListInfo extends TokenListResponse { }
  */
 @ObjectSchema({
   description: 'Information about a DEX protocol used in a swap route',
+  type: 'DexProtocol',
 })
 export class DexProtocol {
   @PortString({
@@ -157,6 +162,7 @@ export class DexProtocol {
  */
 @ObjectSchema({
   description: 'Information about a sub-route in a complex swap path',
+  type: 'SubRouterInfo',
 })
 export class SubRouterInfo {
   @PortArray({
@@ -190,6 +196,7 @@ export class SubRouterInfo {
  */
 @ObjectSchema({
   description: 'Information about a DEX router used in swap execution',
+  type: 'DexRouter',
 })
 export class DexRouter {
   @PortString({
@@ -221,6 +228,7 @@ export class DexRouter {
  */
 @ObjectSchema({
   description: 'Comparative quote from a specific DEX for price comparison',
+  type: 'ComparisonQuote',
 })
 export class ComparisonQuote {
   @PortString({
@@ -254,6 +262,7 @@ export class ComparisonQuote {
  */
 @ObjectSchema({
   description: 'Detailed result of a swap routing calculation',
+  type: 'RouterResult',
 })
 export class RouterResult {
   @PortString({
@@ -333,6 +342,7 @@ export class RouterResult {
  */
 @ObjectSchema({
   description: 'Raw transaction data needed to execute a swap on the blockchain',
+  type: 'TransactionData',
 })
 export class TransactionData {
   @PortString({
@@ -417,6 +427,7 @@ export class TransactionData {
  */
 @ObjectSchema({
   description: 'Liquidity data for a specific blockchain',
+  type: 'LiquidityData',
 })
 export class LiquidityData {
   @PortString({
@@ -447,6 +458,7 @@ export class LiquidityData {
  */
 @ObjectSchema({
   description: 'Complete quote data including route and optional transaction details',
+  type: 'QuoteData',
 })
 export class QuoteData {
   @PortString({
@@ -547,6 +559,7 @@ export class QuoteData {
  */
 @ObjectSchema({
   description: 'Information about a blockchain network',
+  type: 'ChainData',
 })
 export class ChainData {
   @PortString({
@@ -577,6 +590,7 @@ export class ChainData {
  */
 @ObjectSchema({
   description: 'Data required to execute a swap transaction',
+  type: 'SwapExecutionData',
 })
 export class SwapExecutionData {
   @PortObject({
@@ -600,6 +614,7 @@ export class SwapExecutionData {
  */
 @ObjectSchema({
   description: 'API response structure for swap requests',
+  type: 'SwapResponseData',
 })
 export class SwapResponseData {
   @PortArray({
@@ -631,6 +646,7 @@ export class SwapResponseData {
  */
 @ObjectSchema({
   description: 'Generic API response wrapper',
+  type: 'APIResponse',
 })
 export class APIResponse<T> {
   @PortString({
@@ -660,6 +676,7 @@ export class APIResponse<T> {
  */
 @ObjectSchema({
   description: 'Configuration for Solana blockchain connections',
+  type: 'SolanaConfig',
 })
 export class SolanaConfig {
   @PortObject({
@@ -726,6 +743,7 @@ export class SolanaConfig {
  */
 @ObjectSchema({
   description: 'Configuration for Sui blockchain connections',
+  type: 'SuiConfig',
 })
 export class SuiConfig {
   @PortString({
@@ -771,6 +789,7 @@ export class SuiConfig {
  */
 @ObjectSchema({
   description: 'Configuration for EVM-compatible blockchain connections',
+  type: 'EVMConfig',
 })
 export class EVMConfig {
   @PortString({
@@ -823,6 +842,7 @@ export class EVMConfig {
  */
 @ObjectSchema({
   description: 'Configuration for a specific blockchain network',
+  type: 'ChainConfig',
 })
 export class ChainConfig {
   @PortString({
@@ -883,6 +903,7 @@ export class ChainConfig {
  */
 @ObjectSchema({
   description: 'Main configuration for OKX DEX API integration',
+  type: 'OKXConfig',
 })
 export class OKXConfig {
   @PortSecret<'OkxDexApi'>({
@@ -960,6 +981,7 @@ export class OKXConfig {
  */
 @ObjectSchema({
   description: 'Key-value parameters for API requests',
+  type: 'APIRequestParams',
   // isSchemaMutable: true,
 })
 export class APIRequestParams {
@@ -971,6 +993,7 @@ export class APIRequestParams {
  */
 @ObjectSchema({
   description: 'Options for configuring slippage tolerance in swaps',
+  type: 'SlippageOptions',
 })
 export class SlippageOptions {
   @PortString({
@@ -997,6 +1020,7 @@ export class SlippageOptions {
  */
 @ObjectSchema({
   description: 'Parameters for executing a token swap',
+  type: 'SwapParams',
 })
 export class SwapParams {
   @PortString({
@@ -1057,6 +1081,7 @@ export class SwapParams {
  */
 @ObjectSchema({
   description: 'Parameters for requesting a swap quote',
+  type: 'QuoteParams',
 })
 export class QuoteParams {
   @PortString({
@@ -1106,6 +1131,7 @@ export class QuoteParams {
  */
 @ObjectSchema({
   description: 'Result of a completed swap transaction',
+  type: 'SwapResult',
 })
 export class SwapResult {
   @PortBoolean({
@@ -1179,6 +1205,7 @@ export class SwapResult {
  */
 @ObjectSchema({
   description: 'User-friendly formatted swap response with summary',
+  type: 'FormattedSwapResponse',
 })
 export class FormattedSwapResponse {
   @PortBoolean({
@@ -1294,6 +1321,7 @@ export class FormattedSwapResponse {
  */
 @ObjectSchema({
   description: 'Parameters for requesting a token approval transaction',
+  type: 'ApproveTokenParams',
 })
 export class ApproveTokenParams {
   @PortString({
@@ -1323,6 +1351,7 @@ export class ApproveTokenParams {
  */
 @ObjectSchema({
   description: 'Result of a token approval transaction',
+  type: 'ApproveTokenResult',
 })
 export class ApproveTokenResult {
   @PortBoolean({

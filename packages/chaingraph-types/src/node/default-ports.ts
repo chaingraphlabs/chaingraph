@@ -23,7 +23,7 @@ export function createDefaultFlowInPort(id?: string): BooleanPortConfig {
   return {
     type: 'boolean',
     key: flowInID,
-    id: id ?? generatePortID('execute'),
+    id: id ?? generatePortID(flowInID),
     title: 'Execute',
     description: 'Whether the node should execute',
     direction: PortDirection.Input,
@@ -46,7 +46,7 @@ export function createDefaultFlowOutPort(id?: string): BooleanPortConfig {
   return {
     type: 'boolean',
     key: flowOutID,
-    id: id ?? generatePortID('success'),
+    id: id ?? generatePortID(flowOutID),
     title: 'Success',
     description: 'Whether the node executed successfully',
     direction: PortDirection.Output,
@@ -69,7 +69,7 @@ export function createDefaultErrorPort(id?: string): BooleanPortConfig {
   return {
     type: 'boolean',
     key: errorID,
-    id: id ?? generatePortID('error'),
+    id: id ?? generatePortID(errorID),
     title: 'Error',
     description: 'Whether an error occurred during execution',
     direction: PortDirection.Output,
@@ -92,7 +92,7 @@ export function createDefaultErrorMessagePort(id?: string): StringPortConfig {
   return {
     type: 'string',
     key: errorMessageID,
-    id: id ?? generatePortID('errorMessage'),
+    id: id ?? generatePortID(errorMessageID),
     title: 'Error Message',
     description: 'The error message if an error occurred during execution',
     direction: PortDirection.Output,

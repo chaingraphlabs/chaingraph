@@ -303,8 +303,7 @@ describe('baseNodeCompositional', () => {
       node.setDimensions({ width: 200, height: 150 }, false)
 
       // Clone with new ID
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as TestNode
+      const clonedNode = node.cloneWithNewId() as TestNode
 
       // Verify node has a different ID
       expect(clonedNode.id).not.toBe(node.id)
@@ -323,17 +322,11 @@ describe('baseNodeCompositional', () => {
       // Verify version and status were preserved
       expect(clonedNode.getVersion()).toBe(node.getVersion())
       expect(clonedNode.status).toBe(node.status)
-
-      // Verify the result includes mappings
-      expect(result.portIdMapping).toBeInstanceOf(Map)
-      expect(result.nodeIdMapping.originalId).toBe(node.id)
-      expect(result.nodeIdMapping.newId).toBe(clonedNode.id)
     })
 
-    it('should clone all ports with new unique identifiers', () => {
+    it('should clone all ports with all same identifiers', () => {
       // Clone with new ID
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as TestNode
+      const clonedNode = node.cloneWithNewId()
 
       // Verify all ports have different IDs
       const originalPortIds = Array.from(node.ports.keys())
@@ -343,12 +336,7 @@ describe('baseNodeCompositional', () => {
 
       // No port IDs should match between original and cloned
       for (const originalId of originalPortIds) {
-        expect(clonedPortIds).not.toContain(originalId)
-      }
-
-      // All cloned port IDs should follow the port ID pattern
-      for (const clonedId of clonedPortIds) {
-        expect(clonedId).toMatch(/PO/) // Should match the generatePortID pattern
+        expect(clonedPortIds).toContain(originalId)
       }
     })
 
@@ -358,8 +346,7 @@ describe('baseNodeCompositional', () => {
       node.stringList = ['item1', 'item2', 'item3']
 
       // Clone with new ID
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as TestNode
+      const clonedNode = node.cloneWithNewId() as TestNode
 
       // Verify complex object port values are preserved
       expect(clonedNode.person).toEqual({ name: 'Complex', age: 35 })
@@ -374,8 +361,8 @@ describe('baseNodeCompositional', () => {
       expect(originalObjectPort).toBeDefined()
       expect(clonedObjectPort).toBeDefined()
 
-      // Verify port IDs are different but values are the same
-      expect(originalObjectPort!.id).not.toBe(clonedObjectPort!.id)
+      // Verify port IDs and values are the same
+      expect(originalObjectPort!.id).toBe(clonedObjectPort!.id)
       expect(originalObjectPort!.getValue()).toEqual(clonedObjectPort!.getValue())
 
       // Find the array port in both nodes
@@ -388,14 +375,13 @@ describe('baseNodeCompositional', () => {
       expect(clonedArrayPort).toBeDefined()
 
       // Verify array port IDs are different but values are the same
-      expect(originalArrayPort!.id).not.toBe(clonedArrayPort!.id)
+      expect(originalArrayPort!.id).toBe(clonedArrayPort!.id)
       expect(originalArrayPort!.getValue()).toEqual(clonedArrayPort!.getValue())
     })
 
     it('should create independent node instances', async () => {
       // Clone with new ID
-      const result = node.cloneWithNewId()
-      const clonedNode = result.clonedNode as TestNode
+      const clonedNode = node.cloneWithNewId() as TestNode
 
       // Modify original node
       node.inputString = 'original-modified'
@@ -425,8 +411,7 @@ describe('baseNodeCompositional', () => {
       freshNode.initialize()
 
       // Clone without UI
-      const result = freshNode.cloneWithNewId()
-      const clonedNode = result.clonedNode as TestNode
+      const clonedNode = freshNode.cloneWithNewId()
 
       // Should not throw and should have different ID
       expect(clonedNode.id).not.toBe(freshNode.id)

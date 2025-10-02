@@ -44,7 +44,9 @@ describe('edge case: Missing schema for object port', () => {
 
 // Test case 2: Check normalization of an empty object schema (class decorated with @ObjectSchema but having no decorated properties)
 describe('edge case: Empty object schema', () => {
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'EmptySchema',
+  })
   class EmptySchema {}
 
   it('should return an object schema with empty properties', () => {
@@ -61,10 +63,14 @@ describe('edge case: Empty object schema', () => {
 // Here we define a class with a property that is an array of objects,
 // but the inner object has an empty object schema.
 describe('edge case: Array of objects with empty object schema', () => {
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'EmptyInnerSchema',
+  })
   class EmptyInnerSchema {}
 
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'TestNodeWithEmptyArray',
+  })
   class TestNodeWithEmptyArray {
     @Port({
       type: 'array',
@@ -92,13 +98,17 @@ describe('edge case: Array of objects with empty object schema', () => {
 // Test case 4: Deeply nested arrays and objects with varying levels of emptiness.
 // This test verifies that multiple layers of normalization produce the expected structure.
 describe('edge case: Deeply nested arrays and objects', () => {
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'InnerSchema',
+  })
   class InnerSchema {
     @Port({ type: 'string' })
     public a: string = 'defaultA'
   }
 
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'MiddleSchema',
+  })
   class MiddleSchema {
     @Port({
       type: 'array',
@@ -107,7 +117,9 @@ describe('edge case: Deeply nested arrays and objects', () => {
     public innerArray: any[] = []
   }
 
-  @ObjectSchema()
+  @ObjectSchema({
+    type: 'OuterSchema',
+  })
   class OuterSchema {
     @Port({
       type: 'object',

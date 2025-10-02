@@ -26,13 +26,15 @@ import {
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { formatAmount, getChainId, Networks } from './shared/alchemy-utils'
+import { formatAmount } from '../blockchain/schemas'
+import { getChainId, Networks } from './shared/alchemy-utils'
 
 /**
  * Amount with multiple representations
  */
 @ObjectSchema({
   description: 'Amount with raw value and formatted display',
+  type: 'Amount',
 })
 class Amount {
   @PortString({
@@ -62,6 +64,7 @@ class Amount {
 
 @ObjectSchema({
   description: 'Token balance information',
+  type: 'TokenBalance',
 })
 class TokenBalance {
   @PortString({

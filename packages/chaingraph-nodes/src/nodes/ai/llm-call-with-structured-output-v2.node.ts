@@ -54,6 +54,7 @@ const llmMaxRetries = 3
 
 @ObjectSchema({
   description: 'Configuration for LLM Call with Structured Output Node',
+  type: 'LLMConfig',
 })
 export class LLMConfig {
   @PortEnumFromObject(llmModels, {

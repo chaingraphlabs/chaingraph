@@ -40,6 +40,7 @@ import { ToolDefinition } from './tool'
 
 @ObjectSchema({
   description: 'Tool call output from LLM',
+  type: 'ToolCallOutput',
 })
 class ToolCallOutput {
   @PortString({

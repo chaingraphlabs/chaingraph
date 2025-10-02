@@ -21,6 +21,10 @@ export const SerializedFlowMetadataSchema = z.object({
   parentId: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
   version: z.number().optional(),
+  forkRule: z.record(z.string(), z.any()).optional(),
+  isPublic: z.boolean().optional(),
+  canFork: z.boolean().optional(),
+  schemaVersion: z.string().optional(),
 })
 
 export const SerializedFlowSchema = z.object({

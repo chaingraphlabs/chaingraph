@@ -26,6 +26,7 @@ import {
  */
 @ObjectSchema({
   description: 'Regular expression flags configuration',
+  type: 'RegExpFlags',
 })
 export class RegExpFlags {
   @PortBoolean({

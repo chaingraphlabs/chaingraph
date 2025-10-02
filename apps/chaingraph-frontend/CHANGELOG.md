@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.32
+
+### Patch Changes
+
+- feat: Add flow migration from v1 to v2 schema. Make the ports id's unique for the nodes only. chore: update dependencies and optimize code structure, improve flow node cloning logic
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.32
+  - @badaitech/chaingraph-nodes@0.5.5-dev.32
+  - @badaitech/chaingraph-types@0.5.5-dev.32
+  - @badaitech/chaingraph-trpc@0.5.5-dev.32
+  - @badaitech/badai-api@0.5.5-dev.32
+
 ## 0.5.5-dev.31
 
 ### Patch Changes

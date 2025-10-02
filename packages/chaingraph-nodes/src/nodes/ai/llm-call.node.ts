@@ -61,6 +61,8 @@ export enum LLMModels {
   O4Mini = 'o4-mini',
 
   // Claude Models
+  ClaudeSonnet4_5_20250929 = 'claude-sonnet-4-5-20250929',
+  ClaudeOpus4_1_20250805 = 'claude-opus-4-1-20250805',
   ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
   ClaudeOpus4_20250514 = 'claude-opus-4-20250514',
   Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
@@ -80,6 +82,7 @@ export enum LLMModels {
 @ObjectSchema({
   description: 'LLM Model',
   category: 'LLM',
+  type: 'LLMModel',
 })
 class LLMModel {
   @PortString({
@@ -110,6 +113,7 @@ type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | null | 'disable'
 
 @ObjectSchema({
   description: 'OpenAI Reasoning Configuration',
+  type: 'OpenAIReasoning',
 })
 class OpenAIReasoning {
   @PortEnumFromObject({
@@ -360,9 +364,12 @@ export function isDeepSeek(model: LLMModels): boolean {
  */
 export function isAnthropic(model: LLMModels): boolean {
   return [
-    LLMModels.Claude35Sonnet20241022,
-    LLMModels.Claude37Sonnet20250219,
+    LLMModels.ClaudeSonnet4_5_20250929,
     LLMModels.ClaudeSonnet4_20250514,
+    LLMModels.ClaudeOpus4_20250514,
+    LLMModels.ClaudeOpus4_1_20250805,
+    LLMModels.Claude37Sonnet20250219,
+    LLMModels.Claude35Sonnet20241022,
   ].includes(model)
 }
 

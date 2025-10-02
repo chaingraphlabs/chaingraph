@@ -7,25 +7,6 @@
  */
 
 /**
- * Result of cloning a node with new IDs
- */
-export interface CloneWithNewIdResult<T = any> {
-  /**
-   * The cloned node with new IDs
-   */
-  clonedNode: T
-  /**
-   * Mapping from original port IDs to new port IDs
-   * Includes all ports (top-level and nested)
-   */
-  portIdMapping: Map<string, string>
-  /**
-   * Original node ID to new node ID mapping
-   */
-  nodeIdMapping: { originalId: string, newId: string }
-}
-
-/**
  * Interface for node cloning operations
  * Extends the basic cloning functionality to support cloning with new IDs
  */
@@ -37,5 +18,5 @@ export interface INodeClonable<T = any> {
    *
    * @returns A result object containing the cloned node and ID mappings
    */
-  cloneWithNewId: () => CloneWithNewIdResult<T>
+  cloneWithNewId: () => T
 }

@@ -43,7 +43,7 @@ function PortItem({ port, type }: PortItemProps) {
       <CollapsibleTrigger className="w-full">
         <div className="flex items-center gap-2 text-left hover:bg-muted/30 rounded p-2 transition-colors">
           {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          <span className="text-xs font-medium">{config.title}</span>
+          <span className="text-xs font-medium">{config.title || config.id || config.key}</span>
           <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-auto">
             {config.type}
           </Badge>
@@ -245,7 +245,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {inputs
                               .map(port => (
-                                <PortItem key={port.getConfig().key} port={port} type="input" />
+                                <PortItem key={port.getConfig().id!} port={port} type="input" />
                               ))}
                           </div>
                         </div>

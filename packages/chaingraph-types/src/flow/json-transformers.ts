@@ -70,18 +70,18 @@ export function registerFlowTransformers(
           index: v.index,
           type: v.type,
           timestamp: v.timestamp,
-          data: superjsonCustom.stringify(v.data),
+          data: v.data,
         }
       },
       deserialize: (v) => {
         try {
-          const data = superjsonCustom.parse(v.data)
+          // const data = superjsonCustom.parse(v.data)
 
           return new ExecutionEventImpl(
             v.index,
             v.type,
             v.timestamp,
-            data,
+            v.data,
           )
         } catch (e) {
           console.error('Failed to deserialize execution event', e)
