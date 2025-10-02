@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.34
+
+### Patch Changes
+
+- feat: implement TextDecoderStream and TextEncoderStream polyfills; update serialization and execution events to use SuperJSON for data handling
+
 ## 0.5.5-dev.33
 
 ### Patch Changes

@@ -10,6 +10,7 @@ import type { SerializedEdge } from '../edge'
 import type { FlowMetadata } from '../flow/types'
 import type { INode, NodeStatus } from '../node'
 import type { JSONValue } from '../utils/json'
+import SuperJSON from 'superjson'
 
 export enum ExecutionEventEnum {
   // Flow events
@@ -163,7 +164,7 @@ export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnu
       index: this.index,
       type: this.type,
       timestamp: this.timestamp.toISOString(),
-      data: this.data,
+      data: SuperJSON.serialize(this.data),
     }
   }
 
@@ -175,7 +176,7 @@ export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnu
     this.index = obj.index
     this.type = obj.type
     this.timestamp = new Date(obj.timestamp)
-    this.data = obj.data as ExecutionEventData[T]
+    this.data = SuperJSON.deserialize(obj.data) as ExecutionEventData[T]
     return this
   }
 
@@ -188,7 +189,7 @@ export class ExecutionEventImpl<T extends ExecutionEventEnum = ExecutionEventEnu
       obj.index,
       obj.type,
       new Date(obj.timestamp),
-      obj.data as ExecutionEventData[T],
+      SuperJSON.deserialize(obj.data) as ExecutionEventData[T],
     )
   }
 }

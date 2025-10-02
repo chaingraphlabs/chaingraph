@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.34
+
+### Patch Changes
+
+- feat: implement TextDecoderStream and TextEncoderStream polyfills; update serialization and execution events to use SuperJSON for data handling
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.34
+
 ## 0.5.5-dev.33
 
 ### Patch Changes
