@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.33
+
+### Patch Changes
+
+- feat: add @mixmark-io/domino dependency to package.json for enhanced functionality
+
 ## 0.5.5-dev.32
 
 ### Patch Changes
