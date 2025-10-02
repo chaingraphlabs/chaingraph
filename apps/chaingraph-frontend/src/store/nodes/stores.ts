@@ -309,8 +309,6 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       updatedPort.setValue(value)
       updatedNode.setPort(updatedPort)
 
-      console.log(`Updating port value locally for node ${nodeId}, port ${portId}:`, value)
-
       return { ...state, [nodeId]: updatedNode }
     } catch (e: any) {
       console.error('Error updating port value:', e)

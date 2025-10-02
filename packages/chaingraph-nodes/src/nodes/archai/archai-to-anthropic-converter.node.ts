@@ -187,8 +187,6 @@ class ArchAIToAntropicConverterNode extends BaseNode {
           imageBlock.source.media_type = attachment.mime_type
           imageBlock.source.data = await getBase64Image(attachment.url)
 
-          console.log(`[ArchAIToAntropicConverterNode] Adding image block: ${attachment.filename} (${attachment.mime_type}) - ${attachment.url}`)
-
           anthropicMessage.content.push(imageBlock)
         }
       }

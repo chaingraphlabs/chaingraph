@@ -127,11 +127,8 @@ export function ChainGraphProvider({
       return
     }
 
-    console.log('[ChainGraphProvider] Initializing with session and config')
-
     initChainGraph(session, config)
       .then(() => {
-        console.log('[ChainGraphProvider] Initialization completed')
         onInitialized?.()
       })
       .catch((error) => {

@@ -63,8 +63,6 @@ class OKXGetSwapDataNode extends BaseNode {
   swapResponseData: SwapResponseData = new SwapResponseData()
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-    console.log(`[OKXGetSwapDataNode] Starting execution with swap parameters: ${JSON.stringify(this.swapParams)}`)
-
     // Validate inputs
     this.validateInputs()
 

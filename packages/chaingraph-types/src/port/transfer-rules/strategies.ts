@@ -343,8 +343,6 @@ export const Strategies = {
   },
 
   resetUnderlyingType: (ctx: TransferContext): TransferResult => {
-    console.log(`[Strategies.resetUnderlyingType] Resetting underlying type for port ${ctx.targetPort}`)
-
     if (!(ctx.targetPort instanceof AnyPort)) {
       return {
         success: false,

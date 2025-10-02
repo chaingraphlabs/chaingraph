@@ -54,14 +54,8 @@ const createExecutorClientFx = trpcDomain.createEffect<ClientConfig, TRPCClient>
   // Create simple connection key
   const connectionKey = createConnectionKey(config.trpcURL, config.sessionBadAI)
 
-  console.log('[TRPC Executor Client] Creating client with config:', {
-    url: config.trpcURL,
-    hasSession: !!config.sessionBadAI,
-  })
-
   // Check for existing connection
   if (activeExecutorConnections.has(connectionKey)) {
-    console.log('[TRPC Executor Client] Reusing existing connection')
     return activeExecutorConnections.get(connectionKey)!
   }
 
@@ -81,16 +75,12 @@ const createExecutorClientFx = trpcDomain.createEffect<ClientConfig, TRPCClient>
         // Clean up connection on close
         activeExecutorConnections.delete(connectionKey)
       },
-      onOpen: () => {
-        console.log('[TRPC Executor Client] WebSocket opened')
-      },
+      onOpen: () => {},
     },
   }) as TRPCClient
 
   // Store connection in map
   activeExecutorConnections.set(connectionKey, client)
-  console.log('[TRPC Executor Client] Stored new connection, total connections:', activeExecutorConnections.size)
-
   return client
 })
 
@@ -120,7 +110,6 @@ const createExecutorClientIfNeededFx = attach({
       || currentConfig.superjsonCustom !== newConfig.superjsonCustom
 
     if (!configChanged && client) {
-      console.log('[TRPC Executor Client] Configuration unchanged, reusing existing client')
       return {
         client,
         config: currentConfig!,

@@ -30,6 +30,11 @@ import { ToolDefinition } from './tool'
   description: 'Collect and manage multiple tool definitions for use with LLM models',
   category: NODE_CATEGORIES.AI,
   tags: ['tools', 'collection', 'agent', 'llm', 'function calling'],
+  ui: {
+    state: {
+      isHidden: true,
+    },
+  },
 })
 class ToolsCollectionNode extends BaseNode {
   /**
@@ -121,8 +126,6 @@ class ToolsCollectionNode extends BaseNode {
 
     // Convert map back to array
     const toolsToAdd = Array.from(toolMap.values())
-
-    console.log(`[ToolsCollectionNode] Tools Collection:`, toolsToAdd)
 
     this.toolsCollection = toolsToAdd
 

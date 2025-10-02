@@ -140,7 +140,6 @@ export function isNeedsToSkipPort(
 
   // Skip ports that are connected to other ports
   if (config.connections && (config.connections?.length || 0) > 0) {
-    console.log(`[isNeedsToSkipPort] Skipping port ${port.id} (${node.id}) because it has connections.`)
     return true
   }
 

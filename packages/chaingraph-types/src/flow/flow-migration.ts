@@ -22,18 +22,12 @@ export class FlowMigration {
    * System ports preserve their __ prefix
    */
   static migrateFlowFromV1ToV2(flow: IFlow): IFlow {
-    console.log(`\n🔄 [Migration V1→V2] Flow: ${flow.id}`)
-    console.log(`├─ Schema: ${flow.metadata.schemaVersion || 'v1'} → v2`)
-    console.log(`├─ Nodes: ${flow.nodes.size}`)
-    console.log(`└─ Edges: ${flow.edges.size}`)
-
     // nodePortsMapping has key as nodeId and value as map of oldPortId to newPortId
     const nodePortsMapping: Record<string, Record<string, string>> = {}
     let totalPortsMigrated = 0
     let totalPortsUnchanged = 0
 
     // iterate over all nodes and their ports
-    console.log(`\n📦 Migrating Nodes:`)
     flow.nodes.forEach((node) => {
       const migrateResult = this.migrateNodeFromV1ToV2(node, flow)
       nodePortsMapping[node.id] = migrateResult.portsIdsMapping
@@ -42,16 +36,9 @@ export class FlowMigration {
       const totalCount = node.ports.size
       totalPortsMigrated += changedCount
       totalPortsUnchanged += (totalCount - changedCount)
-
-      if (changedCount > 0) {
-        console.log(`├─ Node[${node.id.substring(0, 8)}...]: ${changedCount}/${totalCount} ports migrated`)
-      }
     })
 
-    console.log(`└─ Summary: ${totalPortsMigrated} migrated, ${totalPortsUnchanged} unchanged`)
-
     // now update all edges with new port ids
-    console.log(`\n🔗 Migrating Edges:`)
     let edgesMigrated = 0
     let edgesUnchanged = 0
 
@@ -81,13 +68,6 @@ export class FlowMigration {
 
         if (sourceChanged || targetChanged) {
           edgesMigrated++
-          console.log(`├─ Edge[${edge.id.substring(0, 6)}...]:`)
-          if (sourceChanged) {
-            console.log(`│  ├─ src: ${oldSourcePortId} → ${newSourcePortId}`)
-          }
-          if (targetChanged) {
-            console.log(`│  └─ tgt: ${oldTargetPortId} → ${newTargetPortId}`)
-          }
         } else {
           edgesUnchanged++
         }
@@ -137,14 +117,10 @@ export class FlowMigration {
         )
       })
 
-    console.log(`└─ Summary: ${edgesMigrated} migrated, ${edgesUnchanged} unchanged`)
-
     flow.setEdges(newEdges)
 
     flow.metadata.schemaVersion = 'v2'
     flow.metadata.updatedAt = new Date()
-
-    console.log(`\n✅ Migration Complete!\n`)
 
     return flow
   }
@@ -247,17 +223,6 @@ export class FlowMigration {
 
       recursivelyUpdateChildPorts(port, oldPortId)
     })
-
-    // Log port migration details for this node (only if there were changes)
-    if (portDetails.length > 0) {
-      console.log(`│  ├─ Port transformations:`)
-      portDetails.forEach((detail, idx) => {
-        const indent = `│  │  ${'  '.repeat(detail.level)}`
-        const isLast = idx === portDetails.length - 1
-        const prefix = isLast ? '└─' : '├─'
-        console.log(`${indent}${prefix} [${detail.type}] ${detail.old} → ${detail.new}`)
-      })
-    }
 
     node.setPorts(newPorts)
     return {

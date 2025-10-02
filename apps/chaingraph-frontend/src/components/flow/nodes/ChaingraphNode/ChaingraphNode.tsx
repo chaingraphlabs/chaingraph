@@ -220,8 +220,6 @@ function ChaingraphNodeComponent({
         }}
 
         onResize={(e, params) => {
-          console.log('Resizing', e, params)
-
           if (!activeFlow?.id || !id || !node)
             return
 

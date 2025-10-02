@@ -68,8 +68,6 @@ export const $isInitializing = $initStatus.map(status => status === 'initializin
 
 // Main initialization effect
 const initializeAppFx = initializationDomain.createEffect<AppInternalConfig, void>(async (config) => {
-  console.log('[ChainGraph] Starting initialization')
-
   // Set session
   setSession(config.sessionToken)
 
@@ -116,8 +114,6 @@ const initializeAppFx = initializationDomain.createEffect<AppInternalConfig, voi
     fetchCategorizedNodesFx(),
     loadFlowsListFx(),
   ])
-
-  console.log('[ChainGraph] Initialization completed')
 })
 
 // Update initialization status
@@ -160,12 +156,10 @@ sample({
           || currentConfig.trpcExecutorURL !== newConfig.trpcExecutorURL
 
       if (configChanged) {
-        console.log('[ChainGraph] Config changed, re-initializing')
         return true
       }
     }
 
-    console.log('[ChainGraph] Already initialized with same config, skipping')
     return false
   },
   fn: (_, { session, config }) => ({

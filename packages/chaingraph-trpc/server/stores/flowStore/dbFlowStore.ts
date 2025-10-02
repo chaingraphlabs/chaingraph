@@ -81,8 +81,6 @@ export class DBFlowStore implements IFlowStore {
       // Migrate flow if needed
       if (flow.metadata.schemaVersion !== 'v2') {
         FlowMigration.migrateFlowFromV1ToV2(flow)
-      } else {
-        console.log(`[Flow] Flow ${flow.id} is already at schema version ${flow.metadata.schemaVersion}`)
       }
 
       return flow

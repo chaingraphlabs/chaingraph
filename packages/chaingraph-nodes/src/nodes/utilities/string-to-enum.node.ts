@@ -173,15 +173,13 @@ export class StringToEnumNode extends BaseNode {
             return ''
           }).filter(value => value !== '')
 
-          console.log(`[StringToEnumNode] Connected to enum port with options:`, this.allowedValues)
-
           // Trigger the OnPortUpdate handler to update our outputEnum options
           const allowedValuesPort = this.findPort(
             p => p.getConfig().key === 'allowedValues',
           )
           if (allowedValuesPort) {
             // Update the port to trigger the OnPortUpdate decorator
-            this.updatePort(allowedValuesPort)
+            await this.updatePort(allowedValuesPort)
           }
         }
       }
@@ -197,15 +195,13 @@ export class StringToEnumNode extends BaseNode {
       // Clear the allowedValues when disconnected
       this.allowedValues = undefined
 
-      console.log(`[StringToEnumNode] Disconnected, clearing allowedValues`)
-
       // Trigger the OnPortUpdate handler to reset our outputEnum options
       const allowedValuesPort = this.findPort(
         p => p.getConfig().key === 'allowedValues',
       )
       if (allowedValuesPort) {
         // Update the port to trigger the OnPortUpdate decorator
-        this.updatePort(allowedValuesPort)
+        await this.updatePort(allowedValuesPort)
       }
     }
   }
