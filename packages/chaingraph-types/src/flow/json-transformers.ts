@@ -11,7 +11,7 @@ import SuperJSON from 'superjson'
 import { NodeRegistry } from '../decorator'
 import { registerEdgeTransformers } from '../edge'
 import { BasePort, PortFactory } from '../port'
-import { ExecutionEventImpl } from './execution-events'
+import { ExecutionEventImpl as EventImpl, ExecutionEventImpl } from './execution-events'
 import { Flow } from './flow'
 
 /**
@@ -66,23 +66,11 @@ export function registerFlowTransformers(
         return v instanceof ExecutionEventImpl
       },
       serialize: (v) => {
-        return {
-          index: v.index,
-          type: v.type,
-          timestamp: v.timestamp,
-          data: v.data,
-        }
+        return v.serialize()
       },
       deserialize: (v) => {
         try {
-          // const data = superjsonCustom.parse(v.data)
-
-          return new ExecutionEventImpl(
-            v.index,
-            v.type,
-            v.timestamp,
-            v.data,
-          )
+          return EventImpl.deserializeStatic(v)
         } catch (e) {
           console.error('Failed to deserialize execution event', e)
           throw e

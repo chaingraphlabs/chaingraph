@@ -12,10 +12,11 @@ import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { registerSuperjsonTransformers } from '@badaitech/chaingraph-types'
 import SuperJSON from 'superjson'
+import { setupPolyfills } from './setup-polyfills'
 
 setMaxListeners(100000)
 process.setMaxListeners(0)
-// setupPolyfills()
+setupPolyfills()
 initializeNodes((nodeRegistry) => {
   NodeRegistry.setInstance(nodeRegistry)
 })
