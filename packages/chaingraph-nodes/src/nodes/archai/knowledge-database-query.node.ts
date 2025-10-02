@@ -36,7 +36,10 @@ import { NODE_CATEGORIES } from '../../categories'
 import { QAWithSimilarity, QAWithSimilarityByDocuments } from './types'
 
 // Configuration Classes
-@ObjectSchema()
+@ObjectSchema({
+  description: 'Core search parameters including query and collections',
+  type: 'SearchConfig',
+})
 class SearchConfig {
   @PortArray({
     title: 'Search Queries',
@@ -81,7 +84,10 @@ class SearchConfig {
   threshold: number = 0.5
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  description: 'Configuration for controlling search results',
+  type: 'ResultConfig',
+})
 class ResultConfig {
   @PortNumber({
     title: 'Result Limit',
@@ -110,7 +116,10 @@ class ResultConfig {
   groupByDocuments: boolean = true
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  description: 'Filters to narrow search results',
+  type: 'FilterConfig',
+})
 class FilterConfig {
   @PortArray({
     itemConfig: {
@@ -149,7 +158,10 @@ class FilterConfig {
   publishedTo?: string
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  description: 'Configure how Documents are sorted when grouping results',
+  type: 'SortingConfigDocuments',
+})
 class SortingConfigDocuments {
   @PortEnum({
     title: 'Document Sort Field',
@@ -169,7 +181,10 @@ class SortingConfigDocuments {
   documentOrderDirection?: GraphQL.OrderDirection
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  description: 'Configure how Q&A pairs are sorted',
+  type: 'SortingConfigQA',
+})
 class SortingConfigQA {
   @PortEnum({
     title: 'Q&A Sort Field',
@@ -197,7 +212,10 @@ class SortingConfigQA {
   qaOrderDirection?: GraphQL.OrderDirection
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  description: 'Statistical information about the search results',
+  type: 'SearchStatistics',
+})
 class SearchStatistics {
   @PortNumber({
     title: 'Total Documents',

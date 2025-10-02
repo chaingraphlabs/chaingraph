@@ -31,6 +31,7 @@ import { getChainId, Networks } from './shared/alchemy-utils'
  */
 @ObjectSchema({
   description: 'Raw token balance as stringified BigInt',
+  type: 'RawTokenBalance',
 })
 class RawTokenBalance {
   @PortString({

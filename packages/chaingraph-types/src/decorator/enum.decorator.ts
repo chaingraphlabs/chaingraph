@@ -38,6 +38,9 @@ export function PortEnum(
   return Port({
     type: 'enum',
     ...config,
+    ...('defaultValue' in (config || {})
+      ? { defaultValue: config?.defaultValue ?? undefined }
+      : { defaultValue: undefined }),
   })
 }
 

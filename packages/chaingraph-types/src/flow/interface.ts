@@ -84,6 +84,12 @@ export interface IFlow {
   addEdges: (edges: IEdge[], disableEvents?: boolean) => Promise<void>
 
   /**
+   * Sets all edges in the flow, replacing any existing edges.
+   * @param edges The edges to set.
+   */
+  setEdges: (edges: IEdge[]) => void
+
+  /**
    * Adds an edge to the flow synchronously, without triggering events.
    * @param edge The edge to add.
    */

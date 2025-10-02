@@ -26,13 +26,15 @@ import {
   StringEnum,
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
-import { formatAmount, getChainId, Networks } from './shared/alchemy-utils'
+import { Amount, formatAmount } from '../blockchain/schemas'
+import { getChainId, Networks } from './shared/alchemy-utils'
 
 /**
  * ERC20 Token information
  */
 @ObjectSchema({
   description: 'ERC20 Token information including metadata and chain',
+  type: 'Token',
 })
 class Token {
   @PortString({
@@ -73,40 +75,9 @@ class Token {
   chainId: number = 1
 }
 
-/**
- * Amount with multiple representations
- */
-@ObjectSchema({
-  description: 'Amount with raw value and formatted display',
-})
-class Amount {
-  @PortString({
-    title: 'Value',
-    description: 'Amount in smallest unit (wei, satoshi, etc.)',
-    required: true,
-    defaultValue: '0',
-  })
-  value: string = '0'
-
-  @PortNumber({
-    title: 'Decimals',
-    description: 'Number of decimal places',
-    required: true,
-    defaultValue: 18,
-  })
-  decimals: number = 18
-
-  @PortString({
-    title: 'Formatted',
-    description: 'Human-readable amount (e.g., "1.5")',
-    required: false,
-    defaultValue: '0.0',
-  })
-  formatted?: string = '0.0'
-}
-
 @ObjectSchema({
   description: 'Token balance with metadata',
+  type: 'TokenBalanceWithMeta',
 })
 class TokenBalanceWithMeta {
   @PortObject({

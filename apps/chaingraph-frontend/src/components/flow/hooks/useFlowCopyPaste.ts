@@ -122,15 +122,12 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
   // Copy selected nodes and their internal edges
   const copySelectedNodes = useCallback(async (): Promise<CopyPasteResult> => {
-    console.log('🔄 Copy operation started...')
     try {
       // Get selected nodes including their children
       const selectedNodes = getSelectedNodes()
       const selectedNodesWithChildren = getSelectedNodesWithChildren(selectedNodes)
-      console.log(`📋 Found ${selectedNodesWithChildren.length} nodes (including children):`, selectedNodesWithChildren.map(n => ({ id: n.id, title: n.metadata.title, parent: n.metadata.parentNodeId })))
 
       if (selectedNodesWithChildren.length === 0) {
-        console.log('❌ No nodes selected for copying')
         return {
           success: false,
           nodeCount: 0,
@@ -141,19 +138,15 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
       // Get node IDs for edge filtering
       const selectedNodeIds = new Set(selectedNodesWithChildren.map(node => node.id))
-      console.log('🔗 Selected node IDs:', Array.from(selectedNodeIds))
 
       // Get internal edges (edges between selected nodes only)
       const internalEdges = getInternalEdges(selectedNodeIds, edges)
-      console.log(`🔗 Found ${internalEdges.length} internal edges:`, internalEdges.map(e => ({ id: e.edgeId, source: e.sourceNodeId, target: e.targetNodeId })))
 
       // Adjust positions for nodes whose parents aren't included in the selection
       const adjustedNodes = adjustOrphanedNodePositions(selectedNodesWithChildren, selectedNodeIds)
-      console.log('📄 Nodes cloned and positions adjusted successfully')
 
       // Calculate virtual origin (top-left bounding box) using adjusted positions
       const virtualOrigin = calculateVirtualOrigin(adjustedNodes)
-      console.log('📐 Calculated virtual origin:', virtualOrigin)
 
       // Store in clipboard
       const clipboardData: ClipboardData = {
@@ -164,13 +157,6 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
       }
 
       setClipboard(clipboardData)
-      console.log('✅ Copy operation completed successfully!', {
-        nodeCount: selectedNodesWithChildren.length,
-        edgeCount: internalEdges.length,
-        timestamp: clipboardData.timestamp,
-        virtualOrigin: clipboardData.virtualOrigin,
-        nodes: adjustedNodes,
-      })
 
       return {
         success: true,
@@ -190,8 +176,6 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
   // Paste nodes from clipboard
   const pasteNodes = useCallback(async (options?: PasteOptions): Promise<CopyPasteResult> => {
-    console.log('📋 Paste operation started...')
-
     if (!clipboard || !activeFlowMetadata || !activeFlowMetadata.id) {
       const error = !clipboard ? 'No data in clipboard' : 'No active flow'
       console.log(`❌ Paste failed: ${error}`)
@@ -208,14 +192,6 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
       const pastePosition = options?.targetPosition
         || screenToFlowPosition({ x: mousePositionRef.current.x, y: mousePositionRef.current.y })
         || { x: 100, y: 100 }
-
-      console.log('🔄 Calling pasteNodesToFlowFx with:', {
-        flowId: activeFlowMetadata.id,
-        nodeCount: clipboard.nodes.length,
-        edgeCount: clipboard.edges.length,
-        pastePosition,
-        virtualOrigin: clipboard.virtualOrigin,
-      })
 
       // Convert our ClipboardData to the format expected by the backend
       const pasteData: PasteNodesEvent = {
@@ -242,8 +218,6 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
       }
 
       const result = await pasteNodesToFlowFx(pasteData)
-
-      console.log('✅ Paste operation completed successfully!', result)
 
       // clean up clipboard after successful paste
       setClipboard(null)
@@ -281,8 +255,6 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
       return
     }
 
-    console.log(`⌨️ Keyboard shortcut detected: ${event.metaKey ? 'Cmd' : 'Ctrl'}+${event.key}`)
-
     // Skip copy/paste operations if any port editor is focused
     if (hasAnyFocusedEditor) {
       console.log('⏭️ Skipping copy/paste operation - port editor is focused')
@@ -291,22 +263,18 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
     switch (event.key.toLowerCase()) {
       case 'c': {
-        console.log('📋 Copy shortcut triggered')
         const copyResult = await copySelectedNodes()
         if (copyResult.success) {
           // Do not prevent default behavior for copy
           // event.preventDefault()
-          console.log(`✅ Successfully copied ${copyResult.nodeCount} nodes and ${copyResult.edgeCount} edges`)
         }
         break
       }
       case 'v': {
-        console.log('📋 Paste shortcut triggered')
         const pasteResult = await pasteNodes()
         if (pasteResult.success) {
           // Do not prevent default behavior for paste
           // event.preventDefault()
-          console.log(`✅ Successfully pasted ${pasteResult.nodeCount} nodes and ${pasteResult.edgeCount} edges`)
         }
         break
       }

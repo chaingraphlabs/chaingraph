@@ -48,4 +48,7 @@ export interface FlowMetadata {
 
   /** Whether the current user can fork this flow */
   canFork?: boolean
+
+  /** Schema version for the flow */
+  schemaVersion?: string
 }

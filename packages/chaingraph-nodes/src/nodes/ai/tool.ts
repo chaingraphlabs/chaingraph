@@ -10,6 +10,7 @@ import { ObjectSchema, PortObject, PortString } from '@badaitech/chaingraph-type
 
 @ObjectSchema({
   description: 'Tool definition for LLM',
+  type: 'ObjectSchema',
 })
 export class ToolDefinition {
   @PortString({

@@ -40,6 +40,7 @@ PortPluginRegistry.getInstance().register(ObjectPortPlugin)
  */
 @ObjectSchema({
   category: 'TestObjectComponent',
+  type: 'TestObjectComponent',
 })
 class TestObjectComponent {
   // A simple string field with default value (pure string).

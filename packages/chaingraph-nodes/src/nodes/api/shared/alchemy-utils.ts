@@ -32,45 +32,6 @@ export class Networks {
   }
 }
 
-/**
- * Amount with multiple representations
- */
-export class Amount {
-  value: string = '0'
-  decimals: number = 18
-  formatted?: string = '0.0'
-}
-
-/**
- * Formats a raw token balance into a structured Amount object with proper decimal handling
- * @param raw - Raw balance string (in smallest token unit)
- * @param decimals - Number of decimal places for the token
- * @returns Amount object with raw value, decimals, and formatted display string
- */
-export function formatAmount(raw: string, decimals: number): Amount {
-  const amount = new Amount()
-  amount.value = raw
-  amount.decimals = decimals
-
-  try {
-    const rawBigInt = BigInt(raw)
-    const divisor = BigInt(10 ** decimals)
-    const quotient = rawBigInt / divisor
-    const remainder = rawBigInt % divisor
-
-    const decimalStr = remainder.toString().padStart(decimals, '0')
-    const trimmedDecimal = decimalStr.replace(/0+$/, '')
-
-    amount.formatted = trimmedDecimal.length > 0
-      ? `${quotient}.${trimmedDecimal}`
-      : quotient.toString()
-  } catch {
-    amount.formatted = '0'
-  }
-
-  return amount
-}
-
 export function getChainId(network: string): number {
   const networkToChainId: Record<string, number> = {
     [Network.ETH_MAINNET]: 1,

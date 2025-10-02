@@ -21,6 +21,7 @@ import {
  * Supported Anthropic Claude models
  */
 export enum AntropicModelTypes {
+  ClaudeSonnet4_5_20250929 = 'claude-sonnet-4-5-20250929',
   ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
   ClaudeOpus4_1_20250805 = 'claude-opus-4-1-20250805',
   ClaudeOpus4_20250514 = 'claude-opus-4-20250514',
@@ -38,6 +39,7 @@ export enum AntropicModelTypes {
  */
 @ObjectSchema({
   description: 'Configuration for image source in image content blocks',
+  type: 'ImageSource',
 })
 export class ImageSource {
   @PortString({
@@ -78,6 +80,7 @@ export class ImageSource {
  */
 @ObjectSchema({
   description: 'Base content block shared by all content types',
+  type: 'ContentBlockBase',
 })
 export class ContentBlockBase {
   @PortString({
@@ -100,6 +103,7 @@ export class ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Text content block for messages',
+  type: 'TextBlock',
 })
 export class TextBlock extends ContentBlockBase {
   @PortString({
@@ -123,6 +127,7 @@ export class TextBlock extends ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Image content block for messages',
+  type: 'ImageBlock',
 })
 export class ImageBlock extends ContentBlockBase {
   @PortObject({
@@ -144,6 +149,7 @@ export class ImageBlock extends ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Tool result content block for providing results back to the model',
+  type: 'ToolResultBlock',
 })
 export class ToolResultBlock extends ContentBlockBase {
   @PortString({
@@ -174,6 +180,7 @@ export class ToolResultBlock extends ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Property in a tool input schema',
+  type: 'ToolSchemaProperty',
 })
 export class ToolSchemaProperty {
   @PortString({
@@ -220,6 +227,7 @@ export class ToolSchemaProperty {
  */
 @ObjectSchema({
   description: 'Schema definition for tool input',
+  type: 'ToolInputSchema',
 })
 export class ToolInputSchema {
   @PortString({
@@ -262,6 +270,7 @@ export class ToolInputSchema {
  */
 @ObjectSchema({
   description: 'Definition of a tool that the model may use',
+  type: 'Tool',
 })
 export class Tool {
   @PortString({
@@ -339,6 +348,7 @@ export enum ToolChoiceType {
  */
 @ObjectSchema({
   description: 'Controls how the model should use tools',
+  type: 'ToolChoice',
 })
 export class ToolChoice {
   @PortEnum({
@@ -374,6 +384,7 @@ export class ToolChoice {
  */
 @ObjectSchema({
   description: 'Configuration for Claude\'s extended thinking capability',
+  type: 'ThinkingConfig',
 })
 export class ThinkingConfig {
   @PortEnum({
@@ -402,6 +413,7 @@ export class ThinkingConfig {
  */
 @ObjectSchema({
   description: 'Metadata for the message request',
+  type: 'MessageMetadata',
 })
 export class MessageMetadata {
   @PortString({
@@ -419,6 +431,7 @@ export class MessageMetadata {
  */
 @ObjectSchema({
   description: 'A message in the conversation with Claude',
+  type: 'AntropicMessage',
 })
 export class AntropicMessage {
   @PortEnum({
@@ -451,6 +464,7 @@ export class AntropicMessage {
  */
 @ObjectSchema({
   description: 'Configuration for the Anthropic Claude API request',
+  type: 'AntropicConfig',
 })
 export class AntropicConfig {
   @PortString({
@@ -467,21 +481,22 @@ export class AntropicConfig {
     title: 'Model',
     description: 'The Claude model to use',
     options: [
-      { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4 (2025-05-14)' },
-      { id: AntropicModelTypes.ClaudeOpus4_1_20250805, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_1_20250805, title: 'Claude Opus 4.1 (2025-08-05)' },
-      { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4 (2025-05-14)' },
-      { id: AntropicModelTypes.Claude37Sonnet20250219, type: 'string', defaultValue: AntropicModelTypes.Claude37Sonnet20250219, title: 'Claude 3.7 Sonnet (2025-02-19)' },
-      { id: AntropicModelTypes.Claude37Opus20250213, type: 'string', defaultValue: AntropicModelTypes.Claude37Opus20250213, title: 'Claude 3.7 Opus (2025-02-13)' },
-      { id: AntropicModelTypes.Claude37Haiku20250304, type: 'string', defaultValue: AntropicModelTypes.Claude37Haiku20250304, title: 'Claude 3.7 Haiku (2025-03-04)' },
-      { id: AntropicModelTypes.Claude35Sonnet20241022, type: 'string', defaultValue: AntropicModelTypes.Claude35Sonnet20241022, title: 'Claude 3.5 Sonnet (2024-10-22)' },
-      { id: AntropicModelTypes.Claude3Sonnet20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Sonnet20240229, title: 'Claude 3 Sonnet (2024-02-29)' },
-      { id: AntropicModelTypes.Claude3Opus20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Opus20240229, title: 'Claude 3 Opus (2024-02-29)' },
-      { id: AntropicModelTypes.Claude3Haiku20240307, type: 'string', defaultValue: AntropicModelTypes.Claude3Haiku20240307, title: 'Claude 3 Haiku (2024-03-07)' },
+      { id: AntropicModelTypes.ClaudeSonnet4_5_20250929, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929, title: 'Claude Sonnet 4.5' },
+      { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4' },
+      { id: AntropicModelTypes.ClaudeOpus4_1_20250805, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_1_20250805, title: 'Claude Opus 4.1' },
+      { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4' },
+      { id: AntropicModelTypes.Claude37Sonnet20250219, type: 'string', defaultValue: AntropicModelTypes.Claude37Sonnet20250219, title: 'Claude 3.7 Sonnet' },
+      { id: AntropicModelTypes.Claude37Opus20250213, type: 'string', defaultValue: AntropicModelTypes.Claude37Opus20250213, title: 'Claude 3.7 Opus' },
+      { id: AntropicModelTypes.Claude37Haiku20250304, type: 'string', defaultValue: AntropicModelTypes.Claude37Haiku20250304, title: 'Claude 3.7 Haiku' },
+      { id: AntropicModelTypes.Claude35Sonnet20241022, type: 'string', defaultValue: AntropicModelTypes.Claude35Sonnet20241022, title: 'Claude 3.5 Sonnet' },
+      { id: AntropicModelTypes.Claude3Sonnet20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Sonnet20240229, title: 'Claude 3 Sonnet' },
+      { id: AntropicModelTypes.Claude3Opus20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Opus20240229, title: 'Claude 3 Opus' },
+      { id: AntropicModelTypes.Claude3Haiku20240307, type: 'string', defaultValue: AntropicModelTypes.Claude3Haiku20240307, title: 'Claude 3 Haiku' },
     ],
-    defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514,
+    defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929,
     required: true,
   })
-  model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_20250514
+  model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_5_20250929
 
   @PortNumber({
     title: 'Max Tokens',
@@ -592,6 +607,7 @@ export class AntropicConfig {
  */
 @ObjectSchema({
   description: 'Thinking content block from Claude\'s extended thinking',
+  type: 'ThinkingResponseBlock',
 })
 export class ThinkingResponseBlock extends ContentBlockBase {
   @PortString({
@@ -622,6 +638,7 @@ export class ThinkingResponseBlock extends ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Tool use content block from Claude',
+  type: 'ToolUseResponseBlock',
 })
 export class ToolUseResponseBlock extends ContentBlockBase {
   @PortString({
@@ -661,6 +678,7 @@ export class ToolUseResponseBlock extends ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Citation metadata for text responses',
+  type: 'Citation',
 })
 export class Citation {
   @PortString({
@@ -710,6 +728,7 @@ export class Citation {
  */
 @ObjectSchema({
   description: 'Text response block from Claude',
+  type: 'TextResponseBlock',
 })
 export class TextResponseBlock extends ContentBlockBase {
   @PortString({
@@ -743,6 +762,7 @@ export class TextResponseBlock extends ContentBlockBase {
  */
 @ObjectSchema({
   description: 'Response content from Claude',
+  type: 'AntropicResponseContent',
 })
 export class AntropicResponseContent {
   @PortArray({
@@ -781,6 +801,7 @@ export class AntropicResponseContent {
  */
 @ObjectSchema({
   description: 'Token usage information',
+  type: 'TokenUsage',
 })
 export class TokenUsage {
   @PortNumber({

@@ -296,9 +296,6 @@ class GetPortSchemaNode extends BaseNode {
 
       // Build the schema based on the port type
       this.portSchema = this.buildSchemaFromPortConfig(targetConfig)
-
-      console.log(`[GetPortSchemaNode] Connected to port of type ${targetConfig.type}`)
-      console.log(`[GetPortSchemaNode] Schema extracted:`, this.portSchema)
     }
   }
 
@@ -307,7 +304,6 @@ class GetPortSchemaNode extends BaseNode {
     if (event.sourceNode.id === this.id && event.sourcePort.key === 'input') {
       // Reset the schema when disconnected
       this.portSchema = new PortSchemaUnion()
-      console.log(`[GetPortSchemaNode] Disconnected, schema reset`)
     }
   }
 }

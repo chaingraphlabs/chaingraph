@@ -40,6 +40,7 @@ import { ToolDefinition } from './tool'
 
 @ObjectSchema({
   description: 'Tool call output from LLM',
+  type: 'ToolCallOutput',
 })
 class ToolCallOutput {
   @PortString({
@@ -204,8 +205,6 @@ class LLMCallWithToolsNode extends BaseNode {
    * Log debug messages to the execution context
    */
   private async debugLog(context: ExecutionContext, message: string): Promise<void> {
-    console.log(`[LLMCallWithTools:${this.id}] ${message}`)
-
     await context.sendEvent(
       new ExecutionEventImpl(
         0,
@@ -223,8 +222,6 @@ class LLMCallWithToolsNode extends BaseNode {
    * Convert our tool definitions to LangChain format
    */
   private prepareToolDefinitions(): any[] {
-    console.log(`[LLMCallWithToolsNode:${this.id}] Preparing tool definitions, length: ${this.tools.length}`)
-
     return this.tools.map((toolDef) => {
       // Create a Zod schema from the parameters object
       const parameterProperties: Record<string, z.ZodTypeAny> = {}

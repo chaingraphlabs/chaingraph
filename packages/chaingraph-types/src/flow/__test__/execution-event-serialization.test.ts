@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeExecutionResult, NodeMetadata } from '../../node'
+import type { INode, NodeExecutionResult, NodeMetadata } from '../../node'
 import superjson from 'superjson'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Input, Node, PortString } from '../../decorator'
@@ -31,7 +31,20 @@ PortPluginRegistry.getInstance().register(ArrayPortPlugin)
 PortPluginRegistry.getInstance().register(ObjectPortPlugin)
 PortPluginRegistry.getInstance().register(EnumPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
+registerFlowTransformers()
 
+const mockNodeMetadata: NodeMetadata = {
+  id: 'node-1',
+  type: 'MockNode',
+  title: 'Mock Node',
+}
+
+@Node(mockNodeMetadata)
+class MockNode extends BaseNode {
+  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    return {}
+  }
+}
 describe('executionEventImpl Serialization', () => {
   beforeAll(() => {
     // Register the necessary transformers
@@ -42,19 +55,6 @@ describe('executionEventImpl Serialization', () => {
 
   it('should serialize and deserialize ExecutionEventImpl correctly', () => {
     // Create a mock node
-    const mockNodeMetadata: NodeMetadata = {
-      id: 'node-1',
-      type: 'MockNode',
-      title: 'Mock Node',
-    }
-
-    @Node(mockNodeMetadata)
-    class MockNode extends BaseNode {
-      async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
-        return {}
-      }
-    }
-
     const mockNode = new MockNode('node-1')
     mockNode.initialize()
     mockNode.setStatus(NodeStatus.Completed)
@@ -65,17 +65,15 @@ describe('executionEventImpl Serialization', () => {
     const executionContext = new ExecutionContext(flowId, abortController)
 
     // Create example data for the event
-    const data = {
-      node: mockNode,
-      executionTime: 123, // Example execution time
-    }
-
     // Create an ExecutionEventImpl instance
     const event = new ExecutionEventImpl(
-      0, // index
-      ExecutionEventEnum.NODE_COMPLETED, // type
-      new Date(), // timestamp
-      data, // data
+      0,
+      ExecutionEventEnum.NODE_COMPLETED,
+      new Date(),
+      {
+        node: mockNode.clone() as INode,
+        executionTime: 123, // Example execution time
+      },
     )
 
     // Serialize the event

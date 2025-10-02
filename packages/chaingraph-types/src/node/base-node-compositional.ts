@@ -12,8 +12,8 @@ import type { Dimensions, NodeUIMetadata, Position } from '../node/node-ui'
 import type { NodeExecutionResult, NodeMetadata, NodeValidationResult } from '../node/types'
 import type { AnyPort, IPort, IPortConfig, ObjectPort, ObjectPortConfig } from '../port'
 import type { JSONValue } from '../utils/json'
-import type { EventContext } from './implementations'
-import type { CloneWithNewIdResult, IComplexPortHandler, INodeComposite, IPortManager } from './interfaces'
+import type { EventContext, PortManager } from './implementations'
+import type { IComplexPortHandler, INodeComposite, IPortManager } from './interfaces'
 import { applyPortUpdateHandlers, applyVisibilityRules, getOrCreateNodeMetadata, getPortsMetadata } from '../decorator'
 import { NodeEventType } from '../node/events'
 import { NodeStatus } from '../node/node-enums'
@@ -25,9 +25,9 @@ import {
   NodeUIManager,
   NodeVersionManager,
   PortBinder,
-  PortManager,
   PortUpdateCollector,
 } from './implementations'
+import { IndexedPortManager } from './implementations/indexed-port-manager'
 import { SystemPortManager } from './implementations/system-port-manager'
 import { PortConfigProcessor } from './port-config-processor'
 import { findPort } from './traverse-ports'
@@ -91,7 +91,8 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     }
 
     // Initialize components
-    this.portManager = new PortManager()
+    // this.portManager = new PortManager()
+    this.portManager = new IndexedPortManager()
     this.eventManager = new NodeEventManager()
     this.versionManager = new NodeVersionManager(this)
     this.portUpdateCollector = new PortUpdateCollector()
@@ -291,6 +292,14 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     return this.portManager.getNestedPorts(parentPort)
   }
 
+  getParentshipChain(port: IPort): IPort[] {
+    return this.portManager.getParentshipChain(port)
+  }
+
+  getRootPort(port: IPort): IPort {
+    return this.portManager.getRootPort(port)
+  }
+
   /**
    * Update a port and emit a port update event
    * This is a critical method that triggers port-related events
@@ -370,6 +379,18 @@ export abstract class BaseNodeCompositional implements INodeComposite {
 
   findPorts(predicate: (port: IPort) => boolean): IPort[] {
     return this.portManager.findPorts(predicate)
+  }
+
+  getPortByPath(pathString: string): IPort | undefined {
+    return this.portManager.getPortByPath(pathString)
+  }
+
+  getPortPath(portId: string): string | undefined {
+    return this.portManager.getPortPath(portId)
+  }
+
+  getPortPathForPort(port: IPort): string {
+    return this.portManager.getPortPathForPort(port)
   }
 
   //
@@ -609,7 +630,7 @@ export abstract class BaseNodeCompositional implements INodeComposite {
    *
    * @returns A result object containing the cloned node and ID mappings
    */
-  cloneWithNewId(): CloneWithNewIdResult<INodeComposite> {
+  cloneWithNewId(): this {
     return DeepCloneHandler.cloneNodeWithNewIds(this)
   }
 
@@ -667,10 +688,10 @@ export abstract class BaseNodeCompositional implements INodeComposite {
     }
 
     // Add default ports to the configuration
-    const defaultPorts = this.getSystemPortConfigs()
-    for (const portConfig of defaultPorts) {
-      if (portConfig.key && !portsConfig.has(portConfig.key)) {
-        portsConfig.set(portConfig.key, portConfig)
+    const systemPortConfigs = this.getSystemPortConfigs()
+    for (const systemPortConfig of systemPortConfigs) {
+      if (systemPortConfig.key && !portsConfig.has(systemPortConfig.key)) {
+        portsConfig.set(systemPortConfig.key, systemPortConfig)
       }
     }
 

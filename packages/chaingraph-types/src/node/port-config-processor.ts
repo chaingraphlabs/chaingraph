@@ -10,9 +10,7 @@ import type {
   IPortConfig,
 } from '../port'
 import type { INode } from './interface'
-import {
-  generatePortID,
-} from '../port'
+
 import { deepCopy } from '../utils'
 
 export interface Context {
@@ -20,6 +18,8 @@ export interface Context {
   parentPortConfig: IPortConfig | null
   propertyKey: string
   propertyValue: any
+  propertyDefaultValue?: any
+  propertyIsDefaultValueDefined?: boolean
 }
 
 export class PortConfigProcessor {
@@ -96,12 +96,21 @@ export class PortConfigProcessor {
     portConfig: IPortConfig,
     context: Context,
   ): IPortConfig {
-    const { nodeId, parentPortConfig, propertyKey, propertyValue } = context
+    const { nodeId, parentPortConfig, propertyKey, propertyValue, propertyDefaultValue } = context
 
     // Create a new object to avoid mutation
     const newPortConfig = { ...portConfig }
 
-    newPortConfig.id = portConfig.id || generatePortID(propertyKey)
+    // newPortConfig.id = portConfig.id || `${parentPortConfig?.id ? `${parentPortConfig.id}.` : ''}${propertyKey}`
+
+    // Force id to be unique and hierarchical
+    if (parentPortConfig && parentPortConfig.type === 'array') {
+      newPortConfig.id = `${parentPortConfig.id}[${propertyKey}]`
+    } else if (parentPortConfig && parentPortConfig.id) {
+      newPortConfig.id = `${parentPortConfig.id}.${propertyKey}`
+    } else {
+      newPortConfig.id = propertyKey
+    }
 
     // Assign key
     if (!newPortConfig.key) {
@@ -111,11 +120,15 @@ export class PortConfigProcessor {
     // Assign defaultValue
 
     // If the node field has an explicit value, override the defaultValue from the config.
-    if (portConfig.defaultValue === undefined || portConfig.defaultValue === null) {
-      // Log warning if needed (optional)
-      newPortConfig.defaultValue = deepCopy(propertyValue) ?? deepCopy(portConfig.defaultValue)
+    if (context.propertyIsDefaultValueDefined === true) {
+      newPortConfig.defaultValue = deepCopy(propertyDefaultValue)
     } else {
-      newPortConfig.defaultValue = deepCopy(portConfig.defaultValue)
+      if ((portConfig.defaultValue === undefined || portConfig.defaultValue === null)) {
+        // Log warning if needed (optional)
+        newPortConfig.defaultValue = deepCopy(propertyValue) ?? deepCopy(portConfig.defaultValue)
+      } else {
+        newPortConfig.defaultValue = deepCopy(portConfig.defaultValue)
+      }
     }
 
     // Assign parentId

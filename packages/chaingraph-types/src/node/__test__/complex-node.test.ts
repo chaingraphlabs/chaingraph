@@ -65,7 +65,9 @@ enum Direction {
   Right = 'Right',
 }
 
-@ObjectSchema()
+@ObjectSchema({
+  type: 'UserStatus',
+})
 export class UserStatus {
   @PortString()
   status: string = ''
@@ -93,6 +95,7 @@ type UserStatusOptionId = keyof typeof userStatusOptions
 
 @ObjectSchema({
   description: 'Test user address schema',
+  type: 'TestUserAddress',
 })
 export class TestUserAddress {
   @PortString({
@@ -121,6 +124,7 @@ export class TestUserAddress {
 
 @ObjectSchema({
   description: 'Test user object schema',
+  type: 'TestUserObject',
 })
 export class TestUserObject {
   constructor(data?: Partial<TestUserObject>) {
@@ -175,6 +179,40 @@ export class TestUserObject {
       address: this.address,
       emails: this.emails,
     }
+  }
+}
+
+@Node({
+  type: 'TestNodeArray3d',
+  title: 'Test Node Array 3D',
+  description: 'Test node description',
+})
+export class TestNodeArray3d extends BaseNode {
+  @Output() @PortArray({
+    defaultValue: [[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
+    itemConfig: {
+      id: 'z',
+      key: 'Z',
+      type: 'array',
+      defaultValue: [],
+      itemConfig: {
+        id: 'y',
+        key: 'Y',
+        type: 'array',
+        defaultValue: [],
+        itemConfig: {
+          id: 'x',
+          key: 'X',
+          type: 'number',
+          defaultValue: 0,
+        },
+      },
+    },
+  })
+  numbers3d: number[][][] = []
+
+  async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    return {}
   }
 }
 
@@ -464,6 +502,26 @@ describe('complex node', () => {
 
   it('instantiates a user profile node', async () => {
     const testNode = new UserProfileNode('test-node')
+    testNode.initialize()
+
+    const json = superjson.serialize(testNode)
+    const parsed = superjson.deserialize(json) as UserProfileNode
+
+    expect(parsed).toBeDefined()
+
+    // iterate over metadata ports config and compare with the original node
+    for (const [portId, value] of testNode.ports.entries()) {
+      const config = parsed.ports.get(portId)
+      expect(config).toBeDefined()
+      expect(config).toEqual(value)
+    }
+
+    expect(parsed.metadata).toEqual(testNode.metadata)
+    expect(parsed.status).toEqual(testNode.status)
+  })
+
+  it('testNodeArray3d serialize/deserialize', async () => {
+    const testNode = new TestNodeArray3d('test-node')
     testNode.initialize()
 
     const json = superjson.serialize(testNode)

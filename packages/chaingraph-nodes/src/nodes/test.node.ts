@@ -29,7 +29,7 @@ import {
 } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../categories'
 
-@ObjectSchema()
+@ObjectSchema({ type: 'Address' })
 class Address {
   @PortString()
   street: string = ''
@@ -38,7 +38,7 @@ class Address {
   number: number = 0
 }
 
-@ObjectSchema()
+@ObjectSchema({ type: 'User' })
 class User {
   @PortString()
   name: string = ''

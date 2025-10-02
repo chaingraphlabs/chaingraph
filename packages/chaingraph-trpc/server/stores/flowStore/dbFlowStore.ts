@@ -12,6 +12,7 @@ import type { ListOrderBy } from '../postgres/store'
 import type { IFlowStore } from './types'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Flow } from '@badaitech/chaingraph-types'
+import { FlowMigration } from '@badaitech/chaingraph-types'
 import { listFlowsMetadata } from '../postgres/store'
 import { loadFlowMetadata } from '../postgres/store'
 import { serializableFlow } from '../postgres/store'
@@ -74,7 +75,15 @@ export class DBFlowStore implements IFlowStore {
     }
 
     const flowFromDB = await loadFlow(this.db, flowId, (data) => {
-      return Flow.deserialize(data, this.nodeRegistry)
+      // Fix old flows with port ids containing redundant suffixes
+      const flow = Flow.deserialize(data, this.nodeRegistry)
+
+      // Migrate flow if needed
+      if (flow.metadata.schemaVersion !== 'v2') {
+        FlowMigration.migrateFlowFromV1ToV2(flow)
+      }
+
+      return flow
     })
     if (!flowFromDB) {
       return null

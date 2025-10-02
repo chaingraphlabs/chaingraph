@@ -30,6 +30,7 @@ export const create = authedProcedure
       tags: input.tags,
       ownerID: userId,
       forkRule: FORK_DENY_RULE, // Default: deny access (not forkable)
+      schemaVersion: 'v2',
     })
 
     return flow.metadata

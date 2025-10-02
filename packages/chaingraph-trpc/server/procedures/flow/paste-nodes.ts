@@ -106,7 +106,7 @@ export const pasteNodes = flowContextProcedure
 
           // Clone with new ID using the new method
           const cloneResult = originalNode.cloneWithNewId()
-          const clonedNode = cloneResult.clonedNode as INode
+          const clonedNode = cloneResult as INode
 
           // Only adjust position for root nodes (nodes without parents)
           // Child nodes keep their relative position to their parent
@@ -125,14 +125,6 @@ export const pasteNodes = flowContextProcedure
             clonedNode.setPosition(newPosition, false)
           }
           // For child nodes, keep the original position (relative to parent)
-
-          // Store ID mappings
-          nodeIdMapping.set(cloneResult.nodeIdMapping.originalId, cloneResult.nodeIdMapping.newId)
-
-          // Store port ID mappings
-          cloneResult.portIdMapping.forEach((newPortId, originalPortId) => {
-            portIdMapping.set(originalPortId, newPortId)
-          })
 
           // console.debug(`[FLOW] Cloned node ${cloneResult.nodeIdMapping.originalId} -> ${cloneResult.nodeIdMapping.newId}`)
 

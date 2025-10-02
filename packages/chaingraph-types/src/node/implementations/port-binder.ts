@@ -114,15 +114,67 @@ export class PortBinder implements IPortBinder {
       }
     } else if (config.type === 'array') {
       // For array ports, need to recreate array port items when value changes
+      // Object.defineProperty(targetObject, key, {
+      //   get() {
+      //     return port.getValue()
+      //   },
+      //   set(newValue) {
+      //     // Set the port value
+      //     port.setValue(newValue)
+      //
+      //     // Recreate all array item ports
+      //     if (Array.isArray(newValue) && self.complexPortHandler) {
+      //       self.complexPortHandler.recreateArrayItemPorts(port, newValue)
+      //     }
+      //   },
+      //   configurable: true,
+      //   enumerable: true,
+      // })
+      if (!targetObject || !key) {
+        return
+      }
       Object.defineProperty(targetObject, key, {
         get() {
-          return port.getValue()
+          const arrayValue = port.getValue()
+
+          if (!Array.isArray(arrayValue)) {
+            return arrayValue
+          }
+
+          // Return a Proxy that intercepts array methods
+          return new Proxy(arrayValue, {
+            get(target, property) {
+              // Intercept mutating methods
+              if (['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].includes(property as string)) {
+                return function (...args) {
+                  // Apply the method
+                  const result = Array.prototype[property].apply(target, args)
+
+                  // Trigger same logic as setter
+                  port.setValue(target)
+                  if (self.complexPortHandler) {
+                    self.complexPortHandler.recreateArrayItemPorts(port, target)
+                  }
+
+                  return result
+                }
+              }
+              return target[property]
+            },
+            set(target, property, value) {
+              target[property] = value
+              // Trigger update
+              port.setValue(target)
+              if (self.complexPortHandler && target) {
+                self.complexPortHandler.recreateArrayItemPorts(port, target)
+              }
+              return true
+            },
+          })
         },
         set(newValue) {
-          // Set the port value
+          // Original setter logic
           port.setValue(newValue)
-
-          // Recreate all array item ports
           if (Array.isArray(newValue) && self.complexPortHandler) {
             self.complexPortHandler.recreateArrayItemPorts(port, newValue)
           }

@@ -224,7 +224,6 @@ export class ExecutionEngine {
           if (isAutoExecutionDisabled) {
             if (!this.context.isChildExecution) {
               // In parent context, skip nodes with disabledAutoExecution
-              console.log(`Skipping node ${node.id} - auto-execution disabled in parent context`)
               continue
             }
             // In child context with event data, only execute if this is an EventListenerNode
@@ -232,7 +231,6 @@ export class ExecutionEngine {
             if (this.context.isChildExecution && this.context.eventData) {
               const nodeType = metadata?.type
               if (nodeType !== 'EventListenerNode') {
-                console.log(`Skipping node ${node.id} - not an EventListenerNode in child context`)
                 continue
               }
 
@@ -263,8 +261,6 @@ export class ExecutionEngine {
     // Check if any nodes were enqueued for execution in child context
     // If no matching EventListenerNodes were found, complete execution successfully
     if (this.context.isChildExecution && this.context.eventData && nodesEnqueued === 0) {
-      console.log(`[ExecutionEngine] No matching EventListenerNodes found for event "${this.context.eventData.eventName}" - completing child execution successfully`)
-
       // Close queues to signal completion (no error - this is normal behavior)
       this.readyQueue.close()
       this.completedQueue.close()
@@ -394,13 +390,11 @@ export class ExecutionEngine {
         if (isAutoExecutionDisabled) {
           if (!this.context.isChildExecution) {
             // In parent context, skip nodes with disabledAutoExecution
-            console.log(`Skipping dependent node ${dependentNode.id} - auto-execution disabled in parent context`)
             shouldSkip = true
           } else if (this.context.isChildExecution && this.context.eventData) {
             // In child context, only EventListenerNodes should have disabledAutoExecution
             const nodeType = metadata?.type
             if (nodeType !== 'EventListenerNode') {
-              console.log(`Skipping dependent node ${dependentNode.id} - not an EventListenerNode in child context`)
               shouldSkip = true
             } else {
               // Check if the event name matches the listener's event name

@@ -115,7 +115,6 @@ export const loadFlowsListFx = flowDomain.createEffect(async () => {
 })
 
 export const loadFlowMetadataFx = flowDomain.createEffect(async (flowId: string) => {
-  console.log(`[Flow|store] Loading metadata for flow ID: ${flowId}`)
   const client = $trpcClient.getState()
   if (!client) {
     console.error('[Flow|store] TRPC client is not initialized')
@@ -124,8 +123,6 @@ export const loadFlowMetadataFx = flowDomain.createEffect(async (flowId: string)
   const meta = await client.flow.getMeta.query({
     flowId,
   })
-
-  console.log(`[Flow|store] Loaded metadata for flow ID: ${flowId}`, meta)
 
   return meta
 })
@@ -217,7 +214,6 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
 // Currently active flow ID
 export const $activeFlowId = flowDomain.createStore<string | null>(null)
   .on(setActiveFlowId, (_, id) => {
-    console.log(`[Flow|store] Setting active flow ID to ${id}`)
     return id
   })
   .reset(clearActiveFlow)

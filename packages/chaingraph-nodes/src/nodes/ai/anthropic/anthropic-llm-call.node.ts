@@ -100,12 +100,13 @@ const TAGS = {
 
 @ObjectSchema({
   description: 'Beta features flags for Anthropic LLM Call Node',
+  type: 'AntropicLLMCallNodeFeatures',
 })
 class AntropicLLMCallNodeFeatures {
   @PortBoolean({
     title: 'code-execution-2025-05-22',
     description: 'Code execution support (beta)\n'
-      + 'Claude 3.7/4 can execute code in Python, JavaScript, and TypeScript. This allows for dynamic code execution within the conversation.',
+      + 'Claude 3.7/4/4.5 can execute code in Python, JavaScript, and TypeScript. This allows for dynamic code execution within the conversation.',
     defaultValue: false,
   })
   codeExecution20250522: boolean = false
@@ -156,6 +157,7 @@ class AntropicLLMCallNodeFeatures {
  */
 @ObjectSchema({
   description: 'Configuration for the Anthropic Claude LLM',
+  type: 'AnthropicLLMConfig',
 })
 export class AnthropicLLMConfig {
   @PortSecret<'anthropic'>({

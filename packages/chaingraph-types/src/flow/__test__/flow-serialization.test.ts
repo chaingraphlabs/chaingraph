@@ -30,7 +30,10 @@ PortPluginRegistry.getInstance().register(ArrayPortPlugin)
 PortPluginRegistry.getInstance().register(ObjectPortPlugin)
 PortPluginRegistry.getInstance().register(EnumPortPlugin)
 PortPluginRegistry.getInstance().register(StreamPortPlugin)
-
+registerFlowTransformers(
+  superjson,
+  NodeRegistry.getInstance(),
+)
 // Simple test nodes
 @Node({
   type: 'SourceNode',

@@ -8,12 +8,15 @@
 
 import type { IObjectSchema, IPortConfig } from '../port'
 
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import {
   getObjectSchemaMetadata,
   getPortsMetadata,
   setObjectSchemaMetadata,
 } from './metadata-storage'
 import { normalizeSchema } from './recursive-normalization'
+import { NodeRegistry } from './registry'
 import 'reflect-metadata'
 
 /**
@@ -44,8 +47,14 @@ export function resolveObjectSchema(
  * recursively.
  *
  * @param options - Optional additional settings for the object schema.
+ * @param nodeRegistry
  */
-export function ObjectSchema(options?: Partial<IObjectSchema>): ClassDecorator {
+export function ObjectSchema(
+  options: Partial<IObjectSchema> & {
+    type: string
+  },
+  nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
+): ClassDecorator {
   return (target: any) => {
     const portsConfig = getPortsMetadata(target)
 
@@ -59,15 +68,39 @@ export function ObjectSchema(options?: Partial<IObjectSchema>): ClassDecorator {
       properties[key.toString()] = config
     }
 
+    // check if the object schema already exists in the nodes registry
+    const schemaType = options?.type || target.name
+    let schemaId = schemaType
+    if (nodeRegistry.getObjectSchema(schemaType)) {
+      const maxIterations = 100
+      for (let i = 0; i < maxIterations; i++) {
+        schemaId = `${schemaType}#${customAlphabet(nolookalikes, 8)()}`
+        if (!nodeRegistry.getObjectSchema(schemaId)) {
+          break
+        }
+        if (i === maxIterations - 1) {
+          throw new Error(`Failed to generate a unique schema ID for type ${schemaType} after ${maxIterations} attempts`)
+        }
+      }
+    }
+
     const schema: IObjectSchema = {
-      type: target.name,
+      ...options,
+      id: schemaId,
+      type: options.type || target.name,
+      description: options.description,
+      category: options.category,
       properties,
       isObjectSchema: true,
-      ...options,
     }
 
     const normalizedSchema = normalizeSchema(schema)
     setObjectSchemaMetadata(target, normalizedSchema)
+
+    nodeRegistry.registerObjectSchema(
+      schemaId,
+      normalizedSchema,
+    )
   }
 }
 

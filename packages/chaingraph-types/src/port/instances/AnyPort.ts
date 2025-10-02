@@ -117,7 +117,7 @@ export class AnyPort extends BasePort<AnyPortConfig> {
 
     // Initialize value if it doesn't exist
     if (this.value === undefined || this.value === null) {
-      this.value = {}
+      this.value = undefined
     }
 
     // TODO: Add support for arrays and other types

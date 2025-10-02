@@ -30,6 +30,7 @@ const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/
 
 @ObjectSchema({
   description: 'Financial information for a cryptocurrency',
+  type: 'Financials',
 })
 class Financials {
   @PortNumber({ title: 'ATH', description: 'All-time high price' })
@@ -56,6 +57,7 @@ class Financials {
 
 @ObjectSchema({
   description: 'Asset contract addresses, containing blockchain and address pairs',
+  type: 'ContractAddress',
 })
 class ContractAddress {
   @PortString({ title: 'Blockchain', description: 'Blockchain name' })
@@ -67,6 +69,7 @@ class ContractAddress {
 
 @ObjectSchema({
   description: 'Structured data for cryptocurrency information',
+  type: 'CryptoData',
 })
 class CryptoData {
   @PortString({ title: 'Name', description: 'Cryptocurrency name' })

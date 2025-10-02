@@ -19,6 +19,7 @@ import { Flow } from '../flow'
 // Mock EventListenerNode with same structure as real one
 @ObjectSchema({
   description: 'Event data emitted by the listener',
+  type: 'EventData',
 })
 class EventData {
   @Title('Event Name')

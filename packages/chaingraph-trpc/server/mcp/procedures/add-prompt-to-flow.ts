@@ -56,8 +56,7 @@ export const addPromptToFlow = flowContextProcedure
       const mcpPromptNode = nodeBuilderService.buildPromptNode(server, prompt)
 
       // Clone the node with a new ID for the flow
-      const cloneResult = mcpPromptNode.cloneWithNewId()
-      const node = cloneResult.clonedNode
+      const node = mcpPromptNode.cloneWithNewId()
 
       // Set position
       node.setPosition(input.position, true)

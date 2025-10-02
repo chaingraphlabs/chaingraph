@@ -27,7 +27,7 @@ export async function serializableFlow(flow: Flow): Promise<SerializableFlow> {
     parentId: flow.metadata.parentId || '',
     version: flow.metadata.version || 1,
     serialize: () => ({
-      ...flow.serialize(),
+      ...flow.serialize() as object,
       createdAt: flow.metadata.createdAt.toISOString(),
       updatedAt: flow.metadata.updatedAt.toISOString(),
     }),

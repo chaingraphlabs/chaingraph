@@ -28,10 +28,7 @@ import { NodeRegistry } from '../decorator'
 import { Edge } from '../edge'
 import { filterPorts, NodeEventType } from '../node'
 import { deepCopy, EventQueue } from '../utils'
-import {
-  FlowEventType,
-  newEvent,
-} from './events'
+import { FlowEventType, newEvent } from './events'
 import { PropagationEngine } from './propagation'
 
 function generateFlowID(): string {
@@ -375,6 +372,12 @@ export class Flow implements IFlow {
     this.edges.set(edge.id, edge)
   }
 
+  setEdges(edges: IEdge[]): void {
+    // just replace exists edges:
+    this.edges.clear()
+    edges.map(edge => this.edges.set(edge.id, edge))
+  }
+
   async addEdges(edges: IEdge[], disableEvents?: boolean): Promise<void> {
     await Promise.all(edges.map(edge => this.addEdge(edge, true)))
 
@@ -506,7 +509,12 @@ export class Flow implements IFlow {
       throw new Error(`Source port with ID ${sourcePortId} does not exist on node ${sourceNodeId}.`)
     }
     if (!targetPort) {
-      throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}.`)
+      const portsIds: string[] = []
+      targetNode.ports.forEach((port) => {
+        portsIds.push(port.id)
+      })
+
+      throw new Error(`Target port with ID ${targetPortId} does not exist on node ${targetNodeId}, available ports: ${portsIds.join(', ')}`)
     }
 
     // check if such connection already exists
@@ -1003,8 +1011,24 @@ export class Flow implements IFlow {
       const targetNode = flow.nodes.get(edgeData.targetNodeId)
 
       if (!sourceNode || !targetNode) {
-        // throw new Error('Failed to deserialize flow: source or target node not found.')
-        console.error(`[Flow] Failed to deserialize flow: source or target node not found, skiping`)
+        const availableNodeIds = Array.from(flow.nodes.keys())
+        console.error(`[Flow] Failed to deserialize edge ${edgeData.id}:`)
+        console.error(`  Edge: ${edgeData.sourceNodeId}:${edgeData.sourcePortId} → ${edgeData.targetNodeId}:${edgeData.targetPortId}`)
+        if (!sourceNode) {
+          console.error(`  ❌ Source node not found: ${edgeData.sourceNodeId}`)
+        }
+        if (!targetNode) {
+          console.error(`  ❌ Target node not found: ${edgeData.targetNodeId}`)
+        }
+        console.error(`  Available nodes: [${availableNodeIds.join(', ')}]`)
+
+        // throw new Error(
+        //   `Failed to deserialize edge ${edgeData.id}: `
+        //   + `${!sourceNode ? `source node ${edgeData.sourceNodeId} not found` : ''}`
+        //   + `${!sourceNode && !targetNode ? ' and ' : ''}`
+        //   + `${!targetNode ? `target node ${edgeData.targetNodeId} not found` : ''}. `
+        //   + `Available nodes: ${availableNodeIds.length} [${availableNodeIds.slice(0, 5).join(', ')}${availableNodeIds.length > 5 ? '...' : ''}]`,
+        // )
         continue
       }
 

@@ -140,8 +140,6 @@ export class BuildTransferNode extends BaseNode {
     this.transaction.amount = this.amount
     this.transaction.token = this.token
 
-    console.log('token', this.token, this.token?.symbol)
-
     // Build transaction based on whether token is provided
     // Check if token has actual data (address is required for ERC20)
     if (!this.token.address) {

@@ -9,14 +9,11 @@
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
-import { useStore } from '@xyflow/react'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo } from 'react'
-import { useElementResize } from '@/components/flow/nodes/ChaingraphNode/hooks/useElementResize'
 import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
 import { useTheme } from '@/components/theme/hooks/useTheme'
-import { Skeleton } from '@/components/ui'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useNodeDropFeedback } from '@/store/drag-drop'
@@ -64,15 +61,11 @@ const defaultCategoryMetadata = {
   order: 7,
 } satisfies CategoryMetadata
 
-const zoomSelector = s => s.transform[2] >= 0.2
-
 function ChaingraphNodeComponent({
   data,
   selected,
   id,
 }: NodeProps<ChaingraphNode>) {
-  const showContent = useStore(zoomSelector)
-
   // Optimized granular hooks - only subscribe to what we need
   const node = useNode(id)
   const parentNode = useNode(node?.metadata.parentNodeId || '')
@@ -132,77 +125,11 @@ function ChaingraphNodeComponent({
     return nodeExecution?.node ? mergeNodePortsUi(nodeExecution.node, node!) : node
   }, [node, nodeExecution])
 
-  // Use a custom hook to handle element resize
-  const { ref: cardRef } = useElementResize<HTMLDivElement>({
-    debounceTime: 500,
-    onResize: (size) => {
-      if (!activeFlow || !activeFlow.id || !node || !isFlowLoaded || !showContent)
-        return
-
-      // Check if element is visible and has reasonable dimensions
-      // This prevents updates when tabs are hidden or during mounting
-      const MIN_WIDTH = 100
-      const MIN_HEIGHT = 40
-
-      if (size.width < MIN_WIDTH || size.height < MIN_HEIGHT) {
-        console.warn(`Node resize ignored: dimensions too small (${size.width}x${size.height})`)
-        return
-      }
-
-      // Check if the element is actually visible
-      const element = cardRef.current
-      if (element) {
-        const rect = element.getBoundingClientRect()
-        const isVisible = rect.width > 0 && rect.height > 0
-          && rect.top < window.innerHeight
-          && rect.bottom > 0
-
-        if (!isVisible) {
-          // console.warn('Node resize ignored: element not visible')
-          return
-        }
-      }
-
-      const actualDimensions = node.metadata.ui?.dimensions || {
-        width: 200, // Use reasonable defaults instead of 0
-        height: 50,
-      }
-
-      const isDimensionsChanged = size.width !== actualDimensions.width
-        || size.height !== actualDimensions.height
-
-      if (!isDimensionsChanged)
-        return
-
-      const diffWidth = size.width - actualDimensions.width
-      const diffHeight = size.height - actualDimensions.height
-
-      // threshold for minimum size
-      const threshold = 5
-      if (Math.abs(diffWidth) < threshold && Math.abs(diffHeight) < threshold)
-        return
-
-      updateNodeUI({
-        flowId: activeFlow.id!,
-        nodeId: id,
-        ui: {
-          // ...node.metadata.ui,
-          dimensions: {
-            width: size.width,
-            height: size.height,
-          },
-        },
-        version: node.getVersion(),
-      })
-    },
-  })
-
   if (!activeFlow || !activeFlow.id || !nodeToRender)
     return null
 
   return (
     <Card
-      ref={cardRef}
       className={cn(
         'shadow-none transition-all duration-200',
         'bg-card opacity-95',
@@ -263,26 +190,10 @@ function ChaingraphNodeComponent({
         onBreakpointToggle={handleBreakpointToggle}
       />
 
-      {showContent
-        ? (
-            <NodeBody
-              node={nodeToRender}
-              context={portContext}
-            />
-          )
-        : (
-            <div
-              className="p-4 text-center text-muted-foreground"
-              style={{
-                width: `${node!.metadata.ui?.dimensions?.width || 200}px`,
-                height: `${node!.metadata.ui?.dimensions?.height ? node!.metadata.ui?.dimensions?.height - 85 : 50}px`,
-              }}
-            >
-              {/* <div>Zoom in to see node details</div> */}
-              {/* <Skeleton className="w-24 h-4 mx-auto mt-2" /> */}
-              <Skeleton className="h-4 w-[95%]" />
-            </div>
-          )}
+      <NodeBody
+        node={nodeToRender}
+        context={portContext}
+      />
 
       {/* Node ports */}
 
@@ -307,8 +218,46 @@ function ChaingraphNodeComponent({
           height: '100%',
           width: 12,
         }}
-        shouldResize={() => {
-          return showContent
+
+        onResize={(e, params) => {
+          if (!activeFlow?.id || !id || !node)
+            return
+
+          updateNodeUI({
+            flowId: activeFlow.id!,
+            nodeId: id,
+            ui: {
+              dimensions: {
+                width: params.width,
+                height: params.height,
+              },
+              position: {
+                x: params.x,
+                y: params.y,
+              },
+            },
+            version: node.getVersion(),
+          })
+        }}
+        onResizeEnd={(e, params) => {
+          if (!activeFlow?.id || !id || !node)
+            return
+
+          updateNodeUI({
+            flowId: activeFlow.id,
+            nodeId: id,
+            ui: {
+              dimensions: {
+                width: params.width,
+                height: params.height,
+              },
+              position: {
+                x: params.x,
+                y: params.y,
+              },
+            },
+            version: node.getVersion(),
+          })
         }}
       />
 

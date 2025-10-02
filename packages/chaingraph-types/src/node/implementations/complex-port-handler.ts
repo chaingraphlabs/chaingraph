@@ -6,26 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  ArrayPort,
-  ArrayPortConfig,
-  IPort,
-  IPortConfig,
-  ObjectPortConfig,
-} from '../../port'
+import type { ArrayPort, ArrayPortConfig, IPort, IPortConfig, ObjectPortConfig } from '../../port'
 import type { IComplexPortHandler, IPortBinder, IPortManager } from '../interfaces'
-
+import type { Context } from '../port-config-processor'
 import {
   AnyPort,
-} from '../../port'
-import {
   generatePortID,
-} from '../../port'
-import {
   generatePortIDArrayElement,
+  ObjectPort,
+  PortFactory,
 } from '../../port'
-import { ObjectPort } from '../../port'
-import { PortFactory } from '../../port'
 import { deepCopy } from '../../utils'
 import { PortConfigProcessor } from '../port-config-processor'
 
@@ -63,34 +53,6 @@ export class ComplexPortHandler implements IComplexPortHandler {
     const config = objectPort.getConfig() as ObjectPortConfig
 
     if (config.type !== 'object') {
-      if (objectPort instanceof AnyPort) {
-        // For AnyPort, we need to operate on the underlying type instead
-
-        // const updatedPorts: IPort[] = []
-
-        // objectPort.operateOnUnderlyingType((underlyingPort): IPort => {
-        //   if (underlyingPort instanceof ObjectPort) {
-        //     // const res = this.addObjectProperties(underlyingPort, properties, useParentUI)
-        //
-        //     console.debug(`Adding properties to underlying port ${underlyingPort.id} with config:`, underlyingPort.getConfig())
-        //
-        //     // underlyingPort.addField(
-        //     //   config.key || '',
-        //     //   config,
-        //     // )
-        //
-        //     // updatedPorts.push(...res)
-        //     return underlyingPort
-        //   }
-        //   throw new Error(`Cannot add property to non-object port, actual type: ${underlyingPort.getConfig().type}`)
-        // })
-        //
-        // this.portManager.updatePort(objectPort)
-
-        // return updatedPorts
-        return []
-      }
-
       throw new Error(`Cannot add property to non-object port, actual type: ${config.type}`)
     }
 
@@ -106,18 +68,25 @@ export class ComplexPortHandler implements IComplexPortHandler {
 
     for (const portConfig of properties) {
       const key = portConfig.key || portConfig.id || portConfig.name || generatePortID('objectProperty')
-      const newPortConfig = useParentUI
-        ? this.generateChildConfigWithParentUI(deepCopy(config), deepCopy(portConfig))
+      const childPortConfig = useParentUI
+        ? this.generateChildConfigWithParentUI(
+            deepCopy(config),
+            deepCopy(portConfig),
+          )
         : portConfig
+
+      const propertyValue = (objectPort.getValue() || {})[key]
 
       // Process the port config
       const processedConfig = this.processPortConfig(
-        { ...newPortConfig },
+        { ...childPortConfig },
         {
           nodeId: this.nodeId,
           parentPortConfig: config,
           propertyKey: key,
-          propertyValue: newPortConfig.defaultValue,
+          propertyValue: childPortConfig.defaultValue,
+          // propertyValue: propertyValue || childPortConfig.defaultValue,
+          // propertyIsDefaultValueDefined: false,
         },
       )
 
@@ -129,7 +98,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
       const objectPortTyped = objectPort as ObjectPort
       objectPortTyped.addField(
         key,
-        newPortConfig,
+        childPortConfig,
       )
 
       // Find the existing child port
@@ -184,7 +153,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
       if (processedConfig.type === 'object' && processedConfig.schema?.properties) {
         this.createNestedObjectPorts(
           childPort,
-          newPortConfig.defaultValue,
+          childPortConfig.defaultValue,
           processedConfig as ObjectPortConfig,
           useParentUI,
         )
@@ -402,7 +371,11 @@ export class ComplexPortHandler implements IComplexPortHandler {
       if (!(targetObjectPort instanceof ObjectPort)) {
         throw new TypeError('Target port must be an ObjectPort to add properties')
       }
-      const addedPorts = this.addObjectProperties(targetObjectPort as IPort, propertiesToAdd, useParentUI)
+      const addedPorts = this.addObjectProperties(
+        targetObjectPort as IPort,
+        propertiesToAdd,
+        useParentUI,
+      )
       portsToUpdate.push(...addedPorts)
     }
 
@@ -462,6 +435,16 @@ export class ComplexPortHandler implements IComplexPortHandler {
           )
         : propConfig
 
+      const isPropertyValueDefined = objectValue
+        && typeof objectValue === 'object'
+        && propKey in objectValue
+      const propertyValue = isPropertyValueDefined ? objectValue[propKey] : undefined
+
+      const isDefaultValueDefined = newPropConfig
+        && typeof newPropConfig === 'object'
+        && 'defaultValue' in newPropConfig
+      const propertyDefaultValue = isDefaultValueDefined ? newPropConfig.defaultValue : undefined
+
       // Process the property config
       const processedConfig = this.processPortConfig(
         { ...newPropConfig },
@@ -469,7 +452,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
           nodeId: this.nodeId,
           parentPortConfig: config,
           propertyKey: propKey,
-          propertyValue: objectValue ? objectValue[propKey] ?? undefined : undefined,
+          propertyValue: isPropertyValueDefined ? propertyValue : propertyDefaultValue,
+          propertyDefaultValue,
+          propertyIsDefaultValueDefined: isDefaultValueDefined,
         },
       )
 
@@ -484,7 +469,11 @@ export class ComplexPortHandler implements IComplexPortHandler {
       }
 
       const nestedPort = PortFactory.createFromConfig(nestedConfig)
-      nestedPort.setValue(objectValue ? objectValue[propKey] ?? undefined : undefined)
+      nestedPort.setValue(
+        isPropertyValueDefined
+          ? deepCopy(propertyValue)
+          : deepCopy(propertyDefaultValue),
+      )
       this.portManager.setPort(nestedPort)
 
       // Bind port to object property
@@ -725,12 +714,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
   /**
    * Helper to process port configurations through PortConfigProcessor
    */
-  processPortConfig(config: IPortConfig, context: {
-    nodeId: string
-    parentPortConfig: IPortConfig | null
-    propertyKey: string
-    propertyValue: any
-  }): IPortConfig {
+  processPortConfig(config: IPortConfig, context: Context): IPortConfig {
     const processor = new PortConfigProcessor()
     return processor.processPortConfig(config, context)
   }
@@ -747,13 +731,15 @@ export class ComplexPortHandler implements IComplexPortHandler {
       childPorts.map(port => port.id),
     )
 
-    // Then create new ports for all items in the array
-    for (let i = 0; i < newArray.length; i++) {
-      this.appendArrayItemToMap(
-        arrayPort,
-        newArray[i],
-        i,
-      )
+    if (Array.isArray(newArray) && newArray.length > 0) {
+      // Then create new ports for all items in the array
+      for (let i = 0; i < newArray.length; i++) {
+        this.appendArrayItemToMap(
+          arrayPort,
+          newArray[i],
+          i,
+        )
+      }
     }
 
     this.portManager.updatePort(arrayPort, {
@@ -837,7 +823,6 @@ export class ComplexPortHandler implements IComplexPortHandler {
         }
 
         const childPropertyValue = value[key]
-
         const newPropConfig = useParentUI
           ? this.generateChildConfigWithParentUI(
               deepCopy(objectConfig),
@@ -945,9 +930,6 @@ export class ComplexPortHandler implements IComplexPortHandler {
     }
 
     this.createComplexItemChildPorts(anyPort, anyPort.getValue(), useParentUI)
-    this.portManager.updatePort(anyPort, {
-      sourceOfUpdate: 'ComplexPortHandler:refreshAnyPortUnderlyingPorts',
-    })
 
     // trigger updates for all child ports
     const childPortsAfterUpdate = this.portManager.getChildPorts(anyPort)
@@ -956,6 +938,10 @@ export class ComplexPortHandler implements IComplexPortHandler {
         sourceOfUpdate: 'ComplexPortHandler:refreshAnyPortUnderlyingPorts:childPortUpdate',
       })
     }
+
+    this.portManager.updatePort(anyPort, {
+      sourceOfUpdate: 'ComplexPortHandler:refreshAnyPortUnderlyingPorts',
+    })
   }
 
   /**
@@ -966,7 +952,7 @@ export class ComplexPortHandler implements IComplexPortHandler {
    */
   private generateChildConfigWithParentUI(parentConfig: ObjectPortConfig, childConfig: IPortConfig): IPortConfig {
     if (childConfig.type === 'object') {
-      const newChildConfig: ObjectPortConfig = {
+      return {
         ...childConfig,
         isSchemaMutable: parentConfig.isSchemaMutable,
         direction: parentConfig.direction,
@@ -981,7 +967,20 @@ export class ComplexPortHandler implements IComplexPortHandler {
           hidePropertyEditor: parentConfig.ui?.hidePropertyEditor,
         },
       }
-      return newChildConfig
+    } else if (childConfig.type === 'array') {
+      return {
+        ...childConfig,
+        isSchemaMutable: parentConfig.isSchemaMutable,
+        isMutable: parentConfig.isSchemaMutable,
+        direction: parentConfig.direction,
+        ui: {
+          ...childConfig.ui,
+          hidden: parentConfig.ui?.hidden,
+          disabled: parentConfig.ui?.disabled,
+          hideEditor: parentConfig.ui?.hideEditor,
+          hidePort: parentConfig.ui?.hidePort,
+        },
+      }
     } else {
       return {
         ...childConfig,

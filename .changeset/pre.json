@@ -15,6 +15,7 @@
     "@badaitech/badai-api-example": "0.5.5-dev.19"
   },
   "changesets": [
+    "green-beans-poke",
     "little-drinks-travel",
     "olive-ears-camp",
     "tired-days-sleep"

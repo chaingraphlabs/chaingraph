@@ -266,10 +266,17 @@ export class FlowSerializer {
     // attach connections to the ports
     if (serializedNode.connections) {
       for (const [portId, conns] of Object.entries(serializedNode.connections)) {
-        const port = node.ports.get(portId)
+        let port = node.ports.get(portId)
         if (!port) {
-          console.warn(`Port with id ${portId} not found on node ${node.id} for connections`)
-          continue
+          // console.warn(`Port with id ${portId} not found on node ${node.id} for connections`)
+          if (portId === 'success' || portId === 'execute' || portId === 'error' || portId === 'errorMessage') {
+            port = node.ports.get(`__${portId}`)
+            if (!port) {
+              throw new Error(`System port with id ${portId} not found on node ${node.id} for connections`)
+            }
+          }
+
+          throw new Error(`Port with id ${portId} not found on node ${node.id} for connections`)
         }
         port.setConfig({
           ...port.getConfig(),

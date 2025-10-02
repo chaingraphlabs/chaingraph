@@ -56,8 +56,7 @@ export const addResourceToFlow = flowContextProcedure
       const mcpResourceNode = nodeBuilderService.buildResourceNode(server, resource)
 
       // Clone the node with a new ID for the flow
-      const cloneResult = mcpResourceNode.cloneWithNewId()
-      const node = cloneResult.clonedNode
+      const node = mcpResourceNode.cloneWithNewId()
 
       // Set position
       node.setPosition(input.position, true)
