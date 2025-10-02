@@ -35,6 +35,7 @@
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
+    "@mixmark-io/domino": "^2.2.0",
     "bigint-crypto-utils": "^3.3.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
