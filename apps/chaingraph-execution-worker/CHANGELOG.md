@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.33
+
+### Patch Changes
+
+- feat: add @mixmark-io/domino dependency to package.json for enhanced functionality
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.33
+  - @badaitech/chaingraph-nodes@0.5.5-dev.33
+  - @badaitech/chaingraph-trpc@0.5.5-dev.33
+  - @badaitech/chaingraph-types@0.5.5-dev.33
+
 ## 0.5.5-dev.32
 
 ### Patch Changes
