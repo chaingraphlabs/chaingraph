@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.5.5-dev.36",
+  "version": "0.5.5-dev.37",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -49,18 +49,22 @@
     "typecheck": "tsc -b --noEmit"
   },
   "peerDependencies": {
-    "@xyflow/react": "^12.8.6",
-    "effector": "^23.3.0",
-    "effector-react": "^23.3.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.0"
-  },
-  "dependencies": {
     "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-executor": "workspace:*",
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
+    "@trpc/client": "^11.6.0",
+    "@trpc/react-query": "^11.6.0",
+    "@trpc/tanstack-react-query": "^11.6.0",
+    "@xyflow/react": "^12.8.6",
+    "effector": "^23.3.0",
+    "effector-react": "^23.3.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.0",
+    "superjson": "^2.2.2"
+  },
+  "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
@@ -88,9 +92,6 @@
     "@tailwindcss/postcss": "^4.1.13",
     "@tanstack/react-query": "^5.90.2",
     "@tanstack/react-query-devtools": "^5.90.2",
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/tanstack-react-query": "^11.6.0",
     "@types/color": "^4.2.0",
     "@xyflow/react": "^12.8.6",
     "@xyflow/system": "^0.0.70",
@@ -116,7 +117,6 @@
     "react-router-dom": "^7.9.3",
     "reflect-metadata": "^0.2.2",
     "remark-gfm": "^4.0.1",
-    "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "uri-template": "^2.0.0",

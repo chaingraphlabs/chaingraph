@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.5.5-dev.36",
+  "version": "0.5.5-dev.37",
   "private": false,
   "description": "tRPC client and server for the Chaingraph V2",
   "license": "BUSL-1.1",
@@ -35,6 +35,12 @@
     "dist",
     "server"
   ],
+  "peerDependencies": {
+    "@trpc/client": "^11.6.0",
+    "@trpc/react-query": "^11.6.0",
+    "@trpc/server": "^11.6.0",
+    "@trpc/tanstack-react-query": "^11.6.0"
+  },
   "scripts": {
     "dev": "tsc -b --watch",
     "build": "tsc -b",
@@ -47,10 +53,6 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
     "@tanstack/react-query": "^5.90.2",
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/server": "^11.6.0",
-    "@trpc/tanstack-react-query": "^11.6.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.5",
     "graphql-request": "^7.2.0",

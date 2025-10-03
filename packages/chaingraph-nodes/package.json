@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-nodes",
   "type": "module",
-  "version": "0.5.5-dev.36",
+  "version": "0.5.5-dev.37",
   "private": false,
   "description": "Node components for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -31,6 +31,9 @@
     "dist",
     "src"
   ],
+  "peerDependencies": {
+    "superjson": "^2.2.2"
+  },
   "scripts": {
     "dev": "tsc -b --watch",
     "build": "tsc -b",
@@ -62,7 +65,6 @@
     "nanoid-dictionary": "^5.0.0",
     "openai": "^5.23.2",
     "react": "^19.1.1",
-    "superjson": "^2.2.2",
     "turndown": "^7.2.1",
     "uri-template": "^2.0.0",
     "yaml": "^2.8.1"

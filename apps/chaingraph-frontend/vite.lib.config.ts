@@ -88,6 +88,11 @@ export default defineConfig({
         '@badaitech/chaingraph-trpc',
         '@badaitech/chaingraph-executor',
         '@badaitech/badai-api',
+        'superjson',
+        '@trpc/client',
+        '@trpc/react-query',
+        '@trpc/server',
+        '@trpc/tanstack-react-query',
       ],
       output: {
         // Bundle everything else together
@@ -100,6 +105,11 @@ export default defineConfig({
           '@badaitech/chaingraph-trpc': 'ChainGraphTRPC',
           '@badaitech/chaingraph-executor': 'ChainGraphExecutor',
           '@badaitech/badai-api': 'ChainGraphArchAIAPI',
+          'superjson': 'SuperJSON',
+          '@trpc/client': 'trpcClient',
+          '@trpc/react-query': 'trpcReactQuery',
+          '@trpc/server': 'trpcServer',
+          '@trpc/tanstack-react-query': 'trpcTanstackReactQuery',
         },
         assetFileNames: 'chaingraph-frontend.css',
       },
