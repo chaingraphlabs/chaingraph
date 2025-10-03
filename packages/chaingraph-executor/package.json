@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-executor",
   "type": "module",
-  "version": "0.5.5-dev.37",
+  "version": "0.5.5-dev.38",
   "private": false,
   "description": "Chaingraph Message Bus for inter-service communication",
   "license": "BUSL-1.1",
@@ -65,7 +65,9 @@
     "superjson": "^2.2.2"
   },
   "dependencies": {
+    "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-trpc": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
     "@tanstack/react-query": "^5.90.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.5",
@@ -79,9 +81,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@badaitech/chaingraph-nodes": "workspace:*",
-    "@badaitech/chaingraph-trpc": "workspace:*",
-    "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@types/node": "^22.14.0",
     "@types/pg": "^8.15.5",

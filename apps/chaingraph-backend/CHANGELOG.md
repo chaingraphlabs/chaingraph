@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.38
+
+### Patch Changes
+
+- fix: restore @badaitech/typescript-config as a devDependency in package.json
+
 ## 0.5.5-dev.37
 
 ### Patch Changes

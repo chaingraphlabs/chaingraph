@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.38
+
+### Patch Changes
+
+- fix: restore @badaitech/typescript-config as a devDependency in package.json
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.5.5-dev.38
+  - @badaitech/badai-api@0.5.5-dev.38
+  - @badaitech/chaingraph-types@0.5.5-dev.38
+  - @badaitech/typescript-config@0.5.5-dev.38
+
 ## 0.5.5-dev.37
 
 ### Patch Changes

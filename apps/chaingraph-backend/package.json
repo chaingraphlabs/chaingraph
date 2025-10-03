@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-backend",
   "type": "module",
-  "version": "0.5.5-dev.37",
+  "version": "0.5.5-dev.38",
   "private": false,
   "description": "Backend server for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -31,6 +31,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-trpc": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
     "@mixmark-io/domino": "^2.2.0",
     "@types/ws": "^8.18.1",
     "bigint-crypto-utils": "^3.3.0",
@@ -42,9 +45,6 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@badaitech/chaingraph-nodes": "workspace:*",
-    "@badaitech/chaingraph-trpc": "workspace:*",
-    "@badaitech/chaingraph-types": "workspace:*",
     "@badaitech/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/node": "^22.14.0",
