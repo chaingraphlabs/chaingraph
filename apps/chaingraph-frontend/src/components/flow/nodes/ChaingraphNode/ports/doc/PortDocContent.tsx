@@ -650,7 +650,7 @@ function renderEnumConfig(config: EnumPortConfig): React.ReactElement {
         <span className="text-muted-foreground text-[10px]">Options:</span>
         <ul className="mt-1 space-y-1 text-[10px]">
           {options.map((option, index) => (
-            <li key={index} className="pl-2 border-l border-muted/50">
+            <li key={option.id} className="pl-2 border-l border-muted/50">
               {formatValue(option.defaultValue) || `Option ${index + 1}`}
             </li>
           ))}

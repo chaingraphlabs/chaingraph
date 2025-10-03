@@ -48,7 +48,7 @@ export function startMaster(): void {
       signal,
     }, 'Worker died unexpectedly')
 
-    if (workerInfo && workerInfo.restarts < config.workers.maxRestarts) {
+    if (workerInfo && (workerInfo.restarts < config.workers.maxRestarts || config.workers.maxRestarts === -1)) {
       logger.info({
         workerId,
         attempt: workerInfo.restarts + 1,

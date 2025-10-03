@@ -562,7 +562,7 @@ function ArrayItemEditorContent({ onSave }: { onSave: (config: IPortConfig) => v
                     <p className="text-sm">Define options for enum values:</p>
 
                     {(itemConfig as EnumPortConfig).options?.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                      <div key={option.id} className="flex items-center gap-2">
                         <Input
                           value={option.title || ''}
                           onChange={(e) => {

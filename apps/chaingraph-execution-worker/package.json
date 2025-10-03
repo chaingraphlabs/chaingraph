@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "bun --watch run src/index.ts",
+    "dev": "bun --conditions=development --watch run src/index.ts",
     "build": "tsc -b && vite build",
     "start": "node ./dist/index.cjs",
     "test": "vitest",

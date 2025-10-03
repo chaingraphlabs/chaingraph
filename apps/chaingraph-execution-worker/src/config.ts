@@ -19,7 +19,7 @@ export const config = {
       ? cpus().length
       : Number.parseInt(process.env.WORKER_COUNT || String(cpus().length), 10),
     restartDelay: Number.parseInt(process.env.WORKER_RESTART_DELAY || '1000', 10),
-    maxRestarts: Number.parseInt(process.env.MAX_WORKER_RESTARTS || '5', 10),
+    maxRestarts: Number.parseInt(process.env.MAX_WORKER_RESTARTS || '5', 10), // -1 for infinite restarts
   },
 
   // Execution mode for the executor package

@@ -9,7 +9,7 @@
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import type { CreateFlowEvent, FlowMetadataEvent, UpdateFlowEvent } from '@/store/flow'
 import { Cross1Icon, FrameIcon, PlusIcon, TextIcon } from '@radix-ui/react-icons'
-import { Spinner } from '@radix-ui/themes' // оставляем пока
+import { Spinner } from '@radix-ui/themes'
 import { AnimatePresence, motion } from 'framer-motion'
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -148,7 +148,7 @@ export function FlowForm({
               <AnimatePresence mode="popLayout" initial={false}>
                 {tags.map((tag, index) => (
                   <FlowTag
-                    key={`${tag}-${index}`} // Добавляем индекс для уникальности ключа
+                    key={`${tag}-${index}`}
                     tag={tag}
                     onRemove={(tagToRemove) => {
                       setTags(currentTags =>
