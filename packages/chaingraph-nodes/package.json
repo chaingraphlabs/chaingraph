@@ -38,13 +38,13 @@
     "typecheck": "tsc -b"
   },
   "peerDependencies": {
-    "@badaitech/badai-api": "workspace:*",
-    "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/typescript-config": "workspace:*",
     "superjson": "^2.2.2"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
+    "@badaitech/badai-api": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/typescript-config": "workspace:*",
     "@langchain/anthropic": "^0.3.29",
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
