@@ -38,15 +38,15 @@
     "dist",
     "src"
   ],
-  "peerDependencies": {
-    "superjson": "^2.2.2"
-  },
   "scripts": {
     "dev": "tsc -b --watch",
     "build": "tsc -b",
     "test": "vitest",
     "typecheck": "tsc -b",
     "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "superjson": "^2.2.2"
   },
   "dependencies": {
     "nanoid": "^5.1.6",

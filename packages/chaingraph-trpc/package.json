@@ -35,12 +35,6 @@
     "dist",
     "server"
   ],
-  "peerDependencies": {
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/server": "^11.6.0",
-    "@trpc/tanstack-react-query": "^11.6.0"
-  },
   "scripts": {
     "dev": "tsc -b --watch",
     "build": "tsc -b",
@@ -49,6 +43,17 @@
     "migrate:push": "npx drizzle-kit push --config ./server/drizzle.config.ts",
     "migrate:generate": "npx drizzle-kit generate --config ./server/drizzle.config.ts",
     "migrate:run": "npx drizzle-kit migrate --config ./server/drizzle.config.ts"
+  },
+  "peerDependencies": {
+    "@badaitech/badai-api": "workspace:*",
+    "@badaitech/chaingraph-nodes": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/typescript-config": "workspace:*",
+    "@trpc/client": "^11.6.0",
+    "@trpc/react-query": "^11.6.0",
+    "@trpc/server": "^11.6.0",
+    "@trpc/tanstack-react-query": "^11.6.0",
+    "superjson": "^2.2.2"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
@@ -66,10 +71,6 @@
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
-    "@badaitech/badai-api": "workspace:*",
-    "@badaitech/chaingraph-nodes": "workspace:*",
-    "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/typescript-config": "workspace:*",
     "@types/json-logic-js": "^2.0.8",
     "@types/nanoid-dictionary": "^4.2.3",
     "@types/pg": "^8.15.5",
