@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.35
+
+### Patch Changes
+
+- feat: enhance KafkaEventBus message handling with improved error logging and header checks; add comprehensive tests for execution event serialization
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.35
+
 ## 0.5.5-dev.34
 
 ### Patch Changes

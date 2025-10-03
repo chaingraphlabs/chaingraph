@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.35
+
+### Patch Changes
+
+- feat: enhance KafkaEventBus message handling with improved error logging and header checks; add comprehensive tests for execution event serialization
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.35
+  - @badaitech/chaingraph-nodes@0.5.5-dev.35
+  - @badaitech/chaingraph-types@0.5.5-dev.35
+  - @badaitech/chaingraph-trpc@0.5.5-dev.35
+  - @badaitech/badai-api@0.5.5-dev.35
+
 ## 0.5.5-dev.34
 
 ### Patch Changes
