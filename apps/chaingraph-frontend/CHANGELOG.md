@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.37
+
+### Patch Changes
+
+- feat: update package.json and vite.lib.config.ts to include TRPC and SuperJSON dependencies
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.37
+  - @badaitech/chaingraph-nodes@0.5.5-dev.37
+  - @badaitech/chaingraph-types@0.5.5-dev.37
+  - @badaitech/chaingraph-trpc@0.5.5-dev.37
+  - @badaitech/badai-api@0.5.5-dev.37
+
 ## 0.5.5-dev.36
 
 ### Patch Changes
