@@ -315,6 +315,7 @@ export class KafkaEventBus implements IEventBus {
       await consumer.connect()
       await consumer.subscribe({
         topics: [KafkaTopics.EVENTS],
+        // TODO: needs to make fromBeginning: false when the executions storage is ready
         fromBeginning: true, // Start from beginning to catch all events
       })
 
@@ -340,18 +341,18 @@ export class KafkaEventBus implements IEventBus {
               continue
 
             try {
-              // OPTIMIZATION: Check headers first to avoid expensive deserialization
+              // Check headers first to avoid expensive deserialization
               const partitionHint = message.headers?.['partition-hint']?.toString()
               const headerExecutionId = message.headers?.['execution-id']?.toString()
 
               // Early exit if partition hint doesn't match
-              if (partitionHint && Number.parseInt(partitionHint) !== targetPartition) {
+              if (!partitionHint || (partitionHint && Number.parseInt(partitionHint) !== targetPartition)) {
                 earlySkippedCount++
                 continue
               }
 
               // Early exit if execution ID from header doesn't match
-              if (headerExecutionId && headerExecutionId !== executionId) {
+              if (!headerExecutionId || (headerExecutionId && headerExecutionId !== executionId)) {
                 earlySkippedCount++
                 continue
               }
@@ -360,8 +361,26 @@ export class KafkaEventBus implements IEventBus {
 
               // Parse message (only for messages that passed header filtering)
               // Use safe parsing to handle potential issues
-              const parsedMessage = safeSuperJSONParse<any>(messageValue)
-              // TODO: Add schema validation for parsedMessage (zod schema or similar)
+              let parsedMessage: any
+              try {
+                // TODO: Add schema validation for parsedMessage (zod schema or similar)
+                parsedMessage = safeSuperJSONParse<any>(messageValue)
+              } catch (err) {
+                logger.error({
+                  error: err instanceof Error
+                    ? {
+                        message: err.message,
+                        stack: err.stack,
+                        name: err.name,
+                      }
+                    : String(err),
+                  executionId,
+                  messageValue: message.value ? message.value.toString().substring(0, 200) : 'null',
+                }, 'Failed to parse Kafka message in batch')
+                hasError = true
+                batchError = err as Error
+                continue
+              }
 
               // Double-check executionId from message body (for backward compatibility)
               if (parsedMessage.executionId !== executionId) {

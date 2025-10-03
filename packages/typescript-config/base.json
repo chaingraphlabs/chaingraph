@@ -6,6 +6,8 @@
     "composite": false,
     "declaration": true,
     "declarationMap": true,
+    "sourceMap": true,
+    "customConditions": ["development"],
     "downlevelIteration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

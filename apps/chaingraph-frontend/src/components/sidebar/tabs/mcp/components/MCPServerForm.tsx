@@ -161,7 +161,7 @@ export function MCPServerForm({
             {authHeaders.length > 0 && (
               <div className="space-y-2">
                 {authHeaders.map((header, index) => (
-                  <div key={`header-${index}`} className="flex gap-2">
+                  <div key={`header-${header.key}`} className="flex gap-2">
                     <Input
                       value={header.key}
                       onChange={e => handleHeaderChange(index, 'key', e.target.value)}

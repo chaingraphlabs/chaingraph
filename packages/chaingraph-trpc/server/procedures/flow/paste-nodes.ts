@@ -85,7 +85,6 @@ export const pasteNodes = flowContextProcedure
 
       // Step 1: Clone nodes with new IDs using cloneWithNewId()
       const nodeIdMapping = new Map<string, string>()
-      const portIdMapping = new Map<string, string>()
       const createdNodes: INode[] = []
 
       for (let i = 0; i < clipboardData.nodes.length; i++) {
@@ -107,6 +106,9 @@ export const pasteNodes = flowContextProcedure
           // Clone with new ID using the new method
           const cloneResult = originalNode.cloneWithNewId()
           const clonedNode = cloneResult as INode
+
+          // Store the node ID mapping
+          nodeIdMapping.set(originalNode.id, clonedNode.id)
 
           // Only adjust position for root nodes (nodes without parents)
           // Child nodes keep their relative position to their parent
@@ -198,10 +200,8 @@ export const pasteNodes = flowContextProcedure
         .map((edgeData) => {
           const newSourceNodeId = nodeIdMapping.get(edgeData.sourceNodeId)
           const newTargetNodeId = nodeIdMapping.get(edgeData.targetNodeId)
-          const newSourcePortId = portIdMapping.get(edgeData.sourcePortId)
-          const newTargetPortId = portIdMapping.get(edgeData.targetPortId)
 
-          if (!newSourceNodeId || !newTargetNodeId || !newSourcePortId || !newTargetPortId) {
+          if (!newSourceNodeId || !newTargetNodeId) {
             skippedEdges.push(edgeData.id)
             return null
           }
@@ -215,11 +215,12 @@ export const pasteNodes = flowContextProcedure
             return null
           }
 
-          const sourcePort = sourceNode.ports.get(newSourcePortId)
-          const targetPort = targetNode.ports.get(newTargetPortId)
+          // Port IDs are unique by node schema, so we use them directly
+          const sourcePort = sourceNode.ports.get(edgeData.sourcePortId)
+          const targetPort = targetNode.ports.get(edgeData.targetPortId)
           if (!targetPort || !sourcePort) {
             skippedEdges.push(edgeData.id)
-            console.warn(`[FLOW] Skipping edge ${edgeData.id} because new source or target port was not found (source: ${newSourcePortId}, target: ${newTargetPortId})`)
+            console.warn(`[FLOW] Skipping edge ${edgeData.id} because source or target port was not found (source: ${edgeData.sourcePortId}, target: ${edgeData.targetPortId})`)
             return null
           }
 
@@ -255,7 +256,6 @@ export const pasteNodes = flowContextProcedure
         createdEdges,
         skippedEdges,
         nodeIdMapping: Object.fromEntries(nodeIdMapping),
-        portIdMapping: Object.fromEntries(portIdMapping),
       }
     } catch (error) {
       console.error(`[FLOW] Paste operation failed:`, error)

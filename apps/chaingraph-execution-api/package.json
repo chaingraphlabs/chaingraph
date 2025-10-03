@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-execution-api",
   "type": "module",
-  "version": "0.5.5-dev.34",
+  "version": "0.5.5-dev.35",
   "private": false,
   "description": "Chaingraph tRPC Server - Scalable API server for Chaingraph execution management",
   "license": "BUSL-1.1",
@@ -24,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "bun --watch run src/index.ts",
+    "dev": "bun --conditions=development --watch run src/index.ts",
     "build": "tsc -b && vite build",
     "start": "node ./dist/index.cjs",
     "test": "vitest",

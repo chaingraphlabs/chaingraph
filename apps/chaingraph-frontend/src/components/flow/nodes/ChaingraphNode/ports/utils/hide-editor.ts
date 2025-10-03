@@ -13,6 +13,7 @@ export function isHideEditor(config: IPortConfig, connectedEdges: EdgeData[]) {
   const hasInputConnections = connectedEdges
     .filter(edge => edge.targetPortId === config.id)
     .length > 0
+
   const isOutput = config.direction === 'output'
   const isEditorHiddenExplicit = config.ui?.hideEditor === true
 

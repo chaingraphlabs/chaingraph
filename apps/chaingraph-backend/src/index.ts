@@ -14,13 +14,18 @@ import { setupPolyfills } from './setup-polyfills'
 import { wsServer } from './ws-server'
 import './config'
 
-setMaxListeners(100000)
-process.setMaxListeners(0)
+async function main() {
+  setMaxListeners(100000)
+  process.setMaxListeners(0)
+  setupPolyfills()
+  prettyPrintConfig()
 
-setupPolyfills()
+  await init()
 
-prettyPrintConfig()
+  wsServer()
+}
 
-init()
-
-wsServer()
+main().catch((err) => {
+  console.error('Failed to start server', err)
+  process.exit(1)
+})

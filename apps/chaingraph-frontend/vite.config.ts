@@ -19,6 +19,9 @@ export default defineConfig({
   server: {
     port: 3004,
   },
+  css: {
+    devSourcemap: true, // Enable CSS source maps for debugging styles
+  },
   plugins: [
     nodePolyfills({
       include: ['buffer', 'crypto', 'path'],

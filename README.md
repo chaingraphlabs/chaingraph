@@ -100,6 +100,56 @@ You can also run each package individually if desired:
 - **Frontend:**
   `pnpm run dev:front`
 
+### Debugging with IDE
+
+ChainGraph supports debugging TypeScript source files directly in WebStorm or VS Code:
+
+**WebStorm:**
+1. Open Run/Debug Configurations
+2. Create a new Bun configuration:
+   - **File:** `apps/chaingraph-backend/src/index.ts` (or other app)
+   - **Bun parameters:** `--conditions=development`
+3. Set breakpoints in TypeScript files and start debugging
+
+**VS Code:**
+Add to `.vscode/launch.json`:
+```json
+{
+  "type": "node",
+  "request": "launch",
+  "name": "Debug Backend",
+  "runtimeExecutable": "bun",
+  "runtimeArgs": ["--conditions=development", "--watch", "run", "src/index.ts"],
+  "cwd": "${workspaceFolder}/apps/chaingraph-backend"
+}
+```
+
+The `--conditions=development` flag enables debugging TypeScript source files directly without relying on source maps.
+
+**Frontend (Browser):**
+The frontend automatically supports TypeScript debugging in browser DevTools:
+1. Start dev server: `pnpm run dev:front`
+2. Open Chrome/Firefox and navigate to `http://localhost:3004`
+3. Open DevTools (F12) → Sources/Debugger tab
+4. Press `Cmd+P` (or `Ctrl+P`) to quick-open files
+5. Set breakpoints in `.tsx`/`.ts` files (click line numbers)
+6. Interact with the app to trigger breakpoints
+
+**WebStorm (JavaScript Debug):**
+1. Run → Edit Configurations → + → npm
+2. Configuration tab:
+   - **package.json:** Select `apps/chaingraph-frontend/package.json`
+   - **Command:** `run`
+   - **Scripts:** `dev`
+3. Switch to **Browser / Live Edit** tab:
+   - Check **"After launch"**
+   - Browser: **Chrome** (or Edge/Firefox)
+   - Check **"with JavaScript debugger"**
+   - URL: `http://localhost:3004`
+4. Click **OK**, set breakpoints in `.tsx` files, then click Debug
+
+Source maps are enabled by default in development. You can debug both your app code and workspace packages (`@badaitech/*`).
+
 ## PostgreSQL Database Storage
 
 ChainGraph can be configured to use PostgreSQL for persistent storage instead of the default in-memory storage solution. Follow these steps to set up database storage:

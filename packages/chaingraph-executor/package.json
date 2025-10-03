@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-executor",
   "type": "module",
-  "version": "0.5.5-dev.34",
+  "version": "0.5.5-dev.35",
   "private": false,
   "description": "Chaingraph Message Bus for inter-service communication",
   "license": "BUSL-1.1",
@@ -11,24 +11,36 @@
     "directory": "./packages/chaingraph-executor"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "files": [
+      "dist"
+    ]
   },
   "exports": {
     "./client": {
       "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.js"
+      "development": "./client/index.ts",
+      "import": "./dist/client/index.js",
+      "default": "./dist/client/index.js"
     },
     "./server": {
       "types": "./dist/server/index.d.ts",
-      "import": "./dist/server/index.js"
+      "development": "./server/index.ts",
+      "import": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.js"
+      "development": "./types/index.ts",
+      "import": "./dist/types/index.js",
+      "default": "./dist/types/index.js"
     }
   },
   "files": [
-    "dist"
+    "client",
+    "dist",
+    "server",
+    "types"
   ],
   "scripts": {
     "dev": "tsc -b --watch",

@@ -82,5 +82,5 @@ export function useXYFlowEdges() {
     ).join('|'), [edges])
 
   // Final memoization using simple dependencies
-  return useMemo(() => edges, [edgesLength, edgesKey])
+  return useMemo(() => edges, [edges])
 }
