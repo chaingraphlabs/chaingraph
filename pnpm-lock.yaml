@@ -799,9 +799,15 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.65.0
         version: 0.65.0(zod@3.25.76)
+      '@badaitech/badai-api':
+        specifier: workspace:*
+        version: link:../badai-api
       '@badaitech/chaingraph-types':
         specifier: workspace:*
         version: link:../chaingraph-types
+      '@badaitech/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@langchain/anthropic':
         specifier: ^0.3.29
         version: 0.3.30(@langchain/core@0.3.78(openai@5.23.2(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76)
@@ -881,12 +887,6 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@badaitech/badai-api':
-        specifier: workspace:*
-        version: link:../badai-api
-      '@badaitech/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       '@types/nanoid-dictionary':
         specifier: ^4.2.3
         version: 4.2.3
@@ -899,6 +899,18 @@ importers:
 
   packages/chaingraph-trpc:
     dependencies:
+      '@badaitech/badai-api':
+        specifier: workspace:*
+        version: link:../badai-api
+      '@badaitech/chaingraph-nodes':
+        specifier: workspace:*
+        version: link:../chaingraph-nodes
+      '@badaitech/chaingraph-types':
+        specifier: workspace:*
+        version: link:../chaingraph-types
+      '@badaitech/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@modelcontextprotocol/sdk':
         specifier: ^1.18.2
         version: 1.18.2
@@ -938,6 +950,9 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.16.3(pg-native@3.5.2)
+      superjson:
+        specifier: ^2.2.2
+        version: 2.2.2
       uri-template:
         specifier: ^2.0.0
         version: 2.0.0
@@ -951,18 +966,6 @@ importers:
         specifier: ^3.24.6
         version: 3.24.6(zod@3.25.76)
     devDependencies:
-      '@badaitech/badai-api':
-        specifier: workspace:*
-        version: link:../badai-api
-      '@badaitech/chaingraph-nodes':
-        specifier: workspace:*
-        version: link:../chaingraph-nodes
-      '@badaitech/chaingraph-types':
-        specifier: workspace:*
-        version: link:../chaingraph-types
-      '@badaitech/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       '@types/json-logic-js':
         specifier: ^2.0.8
         version: 2.0.8
