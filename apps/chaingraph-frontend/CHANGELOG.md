@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.39
+
+### Patch Changes
+
+- fix: restore @badaitech/typescript-config as a devDependency in package.json and update package versions
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.39
+  - @badaitech/chaingraph-nodes@0.5.5-dev.39
+  - @badaitech/chaingraph-types@0.5.5-dev.39
+  - @badaitech/chaingraph-trpc@0.5.5-dev.39
+  - @badaitech/badai-api@0.5.5-dev.39
+
 ## 0.5.5-dev.38
 
 ### Patch Changes

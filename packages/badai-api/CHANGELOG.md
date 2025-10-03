@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.39
+
+### Patch Changes
+
+- fix: restore @badaitech/typescript-config as a devDependency in package.json and update package versions
+
 ## 0.5.5-dev.38
 
 ### Patch Changes
