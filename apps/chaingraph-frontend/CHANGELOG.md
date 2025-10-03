@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.36
+
+### Patch Changes
+
+- feat: update TRPC client and initialization to improve type exports and re-export NodeRegistry and SuperJSON
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.36
+  - @badaitech/chaingraph-nodes@0.5.5-dev.36
+  - @badaitech/chaingraph-types@0.5.5-dev.36
+  - @badaitech/chaingraph-trpc@0.5.5-dev.36
+  - @badaitech/badai-api@0.5.5-dev.36
+
 ## 0.5.5-dev.35
 
 ### Patch Changes

@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodeRegistry } from '@badaitech/chaingraph-types'
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
-import { NodeRegistry as NodeRegistryClass, registerSuperjsonTransformers } from '@badaitech/chaingraph-types'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { registerSuperjsonTransformers } from '@badaitech/chaingraph-types'
 import { combine, sample } from 'effector'
 import SuperJSON from 'superjson'
 import { fetchCategorizedNodesFx } from './categories'
@@ -76,12 +76,12 @@ const initializeAppFx = initializationDomain.createEffect<AppInternalConfig, voi
     if (config.nodeRegistry) {
       config.nodeRegistry.copyFrom(_nodeRegistry)
     }
-    NodeRegistryClass.setInstance(config.nodeRegistry ?? _nodeRegistry)
+    NodeRegistry.setInstance(config.nodeRegistry ?? _nodeRegistry)
   })
 
   registerSuperjsonTransformers(
     config.superjsonCustom,
-    NodeRegistryClass.getInstance(),
+    NodeRegistry.getInstance(),
   )
 
   initInterpolatorFx()
