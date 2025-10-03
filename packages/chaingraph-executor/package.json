@@ -42,13 +42,6 @@
     "server",
     "types"
   ],
-  "peerDependencies": {
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/server": "^11.6.0",
-    "@trpc/tanstack-react-query": "^11.6.0",
-    "superjson": "^2.2.2"
-  },
   "scripts": {
     "dev": "tsc -b --watch",
     "dev:worker": "bun --watch run server/workers/index.ts",
@@ -63,6 +56,13 @@
     "migrate:push": "npx drizzle-kit push --config ./server/drizzle.config.ts",
     "migrate:generate": "npx drizzle-kit generate --config ./server/drizzle.config.ts",
     "migrate:run": "npx drizzle-kit migrate --config ./server/drizzle.config.ts"
+  },
+  "peerDependencies": {
+    "@trpc/client": "^11.6.0",
+    "@trpc/react-query": "^11.6.0",
+    "@trpc/server": "^11.6.0",
+    "@trpc/tanstack-react-query": "^11.6.0",
+    "superjson": "^2.2.2"
   },
   "dependencies": {
     "@badaitech/chaingraph-trpc": "workspace:*",

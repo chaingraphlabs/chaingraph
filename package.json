@@ -51,12 +51,14 @@
     "docker:execution-worker": "docker build -f apps/chaingraph-execution-worker/Dockerfile -t chaingraph-execution-worker:latest .",
     "docker:build-all": "pnpm run docker:backend & pnpm run docker:frontend & pnpm run docker:execution-api & pnpm run docker:execution-worker & wait"
   },
+  "peerDependencies": {
+    "superjson": "^2.2.2"
+  },
   "dependencies": {
     "@changesets/cli": "^2.29.7",
     "decimal.js": "^10.6.0",
     "loglevel": "^1.9.2",
     "reflect-metadata": "^0.2.2",
-    "superjson": "^2.2.2",
     "ts-node": "^10.9.2",
     "tslog": "^4.10.0",
     "uuid": "^13.0.0",

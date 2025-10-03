@@ -31,18 +31,20 @@
     "dist",
     "src"
   ],
-  "peerDependencies": {
-    "superjson": "^2.2.2"
-  },
   "scripts": {
     "dev": "tsc -b --watch",
     "build": "tsc -b",
     "test": "vitest",
     "typecheck": "tsc -b"
   },
+  "peerDependencies": {
+    "@badaitech/badai-api": "workspace:*",
+    "@badaitech/chaingraph-types": "workspace:*",
+    "@badaitech/typescript-config": "workspace:*",
+    "superjson": "^2.2.2"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
-    "@badaitech/chaingraph-types": "workspace:*",
     "@langchain/anthropic": "^0.3.29",
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
@@ -70,9 +72,6 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@badaitech/badai-api": "workspace:*",
-    "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/typescript-config": "workspace:*",
     "@types/nanoid-dictionary": "^4.2.3",
     "@types/react": "^19.1.16",
     "vitest": "^3.2.4"
