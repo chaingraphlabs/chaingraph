@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.36
+
+### Patch Changes
+
+- feat: update TRPC client and initialization to improve type exports and re-export NodeRegistry and SuperJSON
+
 ## 0.5.5-dev.35
 
 ### Patch Changes

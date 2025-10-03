@@ -40,3 +40,8 @@ export {
   type SessionProvider,
   sessionProviders,
 } from './store/initialization'
+
+// re-export NodeRegistry
+export { NodeRegistry } from '@badaitech/chaingraph-types'
+// re-export superjson
+export { SuperJSON } from 'superjson'
