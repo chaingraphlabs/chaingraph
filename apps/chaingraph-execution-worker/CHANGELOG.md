@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.42
+
+### Patch Changes
+
+- fix: remove conditional checks for release branch in GitHub Actions and restore trpc dependencies in package.json
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.42
+  - @badaitech/chaingraph-nodes@0.5.5-dev.42
+  - @badaitech/chaingraph-types@0.5.5-dev.42
+  - @badaitech/chaingraph-trpc@0.5.5-dev.42
+
 ## 0.5.5-dev.41
 
 ### Patch Changes

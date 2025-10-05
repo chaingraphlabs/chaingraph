@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.42
+
+### Patch Changes
+
+- fix: remove conditional checks for release branch in GitHub Actions and restore trpc dependencies in package.json
+
 ## 0.5.5-dev.41
 
 ### Patch Changes
