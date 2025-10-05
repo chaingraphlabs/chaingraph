@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-backend",
   "type": "module",
-  "version": "0.5.5-dev.40",
+  "version": "0.5.5-dev.41",
   "private": false,
   "description": "Backend server for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -35,6 +35,8 @@
     "@badaitech/chaingraph-trpc": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
     "@mixmark-io/domino": "^2.2.0",
+    "@trpc/client": "^11.6.0",
+    "@trpc/server": "^11.6.0",
     "@types/ws": "^8.18.1",
     "bigint-crypto-utils": "^3.3.0",
     "cors": "^2.8.5",

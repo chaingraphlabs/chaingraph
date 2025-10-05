@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.41
+
+### Patch Changes
+
+- fix: remove Storybook references from configuration files, add trpc dependencies to the chaingraph-backend
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.41
+  - @badaitech/chaingraph-types@0.5.5-dev.41
+  - @badaitech/chaingraph-trpc@0.5.5-dev.41
+
 ## 0.5.5-dev.40
 
 ### Patch Changes

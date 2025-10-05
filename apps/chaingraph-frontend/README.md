@@ -143,18 +143,6 @@ pnpm --filter @badaitech/chaingraph-frontend run dev
 pnpm --filter @badaitech/chaingraph-frontend run build
 ```
 
-### Storybook
-
-This package includes Storybook for component development and testing:
-
-```bash
-# Run Storybook
-pnpm --filter @badaitech/chaingraph-frontend run storybook
-
-# Build Storybook
-pnpm --filter @badaitech/chaingraph-frontend run build-storybook
-```
-
 ## Component Structure
 
 The frontend is organized into several key component areas:
