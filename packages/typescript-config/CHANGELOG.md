@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.41
+
+### Patch Changes
+
+- fix: remove Storybook references from configuration files, add trpc dependencies to the chaingraph-backend
+
 ## 0.5.5-dev.40
 
 ### Patch Changes
