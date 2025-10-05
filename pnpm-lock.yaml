@@ -150,6 +150,15 @@ importers:
 
   apps/chaingraph-backend:
     dependencies:
+      '@badaitech/chaingraph-nodes':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-nodes
+      '@badaitech/chaingraph-trpc':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-trpc
+      '@badaitech/chaingraph-types':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-types
       '@mixmark-io/domino':
         specifier: ^2.2.0
         version: 2.2.0
@@ -178,15 +187,6 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@badaitech/chaingraph-nodes':
-        specifier: workspace:*
-        version: link:../../packages/chaingraph-nodes
-      '@badaitech/chaingraph-trpc':
-        specifier: workspace:*
-        version: link:../../packages/chaingraph-trpc
-      '@badaitech/chaingraph-types':
-        specifier: workspace:*
-        version: link:../../packages/chaingraph-types
       '@badaitech/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -708,9 +708,15 @@ importers:
 
   packages/chaingraph-executor:
     dependencies:
+      '@badaitech/chaingraph-nodes':
+        specifier: workspace:*
+        version: link:../chaingraph-nodes
       '@badaitech/chaingraph-trpc':
         specifier: workspace:*
         version: link:../chaingraph-trpc
+      '@badaitech/chaingraph-types':
+        specifier: workspace:*
+        version: link:../chaingraph-types
       '@tanstack/react-query':
         specifier: ^5.90.2
         version: 5.90.2(react@19.1.1)
@@ -760,12 +766,6 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
-      '@badaitech/chaingraph-nodes':
-        specifier: workspace:*
-        version: link:../chaingraph-nodes
-      '@badaitech/chaingraph-types':
-        specifier: workspace:*
-        version: link:../chaingraph-types
       '@badaitech/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -805,9 +805,6 @@ importers:
       '@badaitech/chaingraph-types':
         specifier: workspace:*
         version: link:../chaingraph-types
-      '@badaitech/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       '@langchain/anthropic':
         specifier: ^0.3.29
         version: 0.3.30(@langchain/core@0.3.78(openai@5.23.2(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76)
@@ -887,6 +884,9 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
+      '@badaitech/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/nanoid-dictionary':
         specifier: ^4.2.3
         version: 4.2.3
@@ -908,9 +908,6 @@ importers:
       '@badaitech/chaingraph-types':
         specifier: workspace:*
         version: link:../chaingraph-types
-      '@badaitech/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       '@modelcontextprotocol/sdk':
         specifier: ^1.18.2
         version: 1.18.2
@@ -966,6 +963,9 @@ importers:
         specifier: ^3.24.6
         version: 3.24.6(zod@3.25.76)
     devDependencies:
+      '@badaitech/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/json-logic-js':
         specifier: ^2.0.8
         version: 2.0.8

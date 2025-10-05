@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.5.5-dev.37",
+  "version": "0.5.5-dev.40",
   "private": false,
   "description": "tRPC client and server for the Chaingraph V2",
   "license": "BUSL-1.1",
@@ -55,7 +55,6 @@
     "@badaitech/badai-api": "workspace:*",
     "@badaitech/chaingraph-nodes": "workspace:*",
     "@badaitech/chaingraph-types": "workspace:*",
-    "@badaitech/typescript-config": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.18.2",
     "@tanstack/react-query": "^5.90.2",
     "dotenv": "^17.2.3",
@@ -71,6 +70,7 @@
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
+    "@badaitech/typescript-config": "workspace:*",
     "@types/json-logic-js": "^2.0.8",
     "@types/nanoid-dictionary": "^4.2.3",
     "@types/pg": "^8.15.5",

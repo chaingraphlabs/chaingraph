@@ -216,7 +216,6 @@ export class FlowSerializer {
     )
     //
     node.initializePortsFromConfigs(portsConfigProcessed || new Map())
-    // node.initializePortsFromConfigs(portsConfig)
 
     // Update node properties from the actual port values
     for (const serializedPort of serializedNode.ports || []) {

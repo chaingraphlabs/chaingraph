@@ -103,10 +103,9 @@ export class ExecutionService implements IExecutionService {
       undefined,
       executionRow.id,
       executionRow.integration || undefined,
-      executionRow.parentExecutionId || undefined,
       executionRow.rootExecutionId || executionRow.id,
+      executionRow.parentExecutionId || undefined,
       executionRow.externalEvents?.[0] || undefined,
-      // undefined, // TODO: do we really want to provide event data to the context?
       !!executionRow.parentExecutionId, // isChildExecution
       currentDepth,
       (nodeId: string) => flow.nodes.get(nodeId),

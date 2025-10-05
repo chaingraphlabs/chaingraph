@@ -14,6 +14,9 @@ import type {
   SerializedEdge,
 } from '@badaitech/chaingraph-types'
 import {
+  FlowMigration,
+} from '@badaitech/chaingraph-types'
+import {
   Edge,
   EdgeStatus,
 
@@ -141,7 +144,7 @@ export const pasteNodes = flowContextProcedure
       }
 
       for (const node of createdNodes) {
-      // iterate over created nodes and fix the parent ID if it exists
+        // iterate over created nodes and fix the parent ID if it exists
         if (node.metadata.parentNodeId) {
           const newParentId = nodeIdMapping.get(node.metadata.parentNodeId)
           if (newParentId) {
@@ -239,6 +242,9 @@ export const pasteNodes = flowContextProcedure
         .filter((edge): edge is NonNullable<typeof edge> => edge !== null)
 
       await flow.addEdges(edgesToAdd, false)
+
+      // Force migrate flow to v2
+      FlowMigration.migrateFlowFromV1ToV2(flow)
 
       // Save the updated flow
       await ctx.flowStore.updateFlow(flow as Flow)

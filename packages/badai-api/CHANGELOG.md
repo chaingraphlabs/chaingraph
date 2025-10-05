@@ -1,5 +1,23 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.40
+
+### Patch Changes
+
+- fix: update execution serialization and flow migration logic
+
+## 0.5.5-dev.39
+
+### Patch Changes
+
+- fix: restore @badaitech/typescript-config as a devDependency in package.json and update package versions
+
+## 0.5.5-dev.38
+
+### Patch Changes
+
+- fix: restore @badaitech/typescript-config as a devDependency in package.json
+
 ## 0.5.5-dev.37
 
 ### Patch Changes
