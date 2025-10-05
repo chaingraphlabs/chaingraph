@@ -74,8 +74,6 @@ desktop.ini
 # Project specific
 .changeset/
 .husky/
-storybook-static/
-*.storybook.log
 .eslintcache
 .prettiercache
 
@@ -151,8 +149,6 @@ research.md
 prompts/
 
 # Additional space-saving exclusions for Docker build
-**/.storybook/
-**/storybook-static/
 **/*.stories.*
 **/.nyc_output/
 **/test-results/

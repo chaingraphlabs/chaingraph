@@ -40,5 +40,5 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "build", "out", "coverage", "storybook-static"]
+  "exclude": ["node_modules", "dist", "build", "out", "coverage"]
 }

@@ -1,7 +1,5 @@
 src/
 node_modules/
-.storybook/
-storybook-static/
 coverage/
 .turbo/
 .vscode/
