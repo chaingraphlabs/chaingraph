@@ -149,7 +149,7 @@ export class FlowMigration {
       const isSystemPort = portConfig.metadata?.isSystemPort === true
       const newPortId = isSystemPort
         ? this.replacePortIdSchemaForSystemPort(oldPortId, portConfig.key || '')
-        : this.replacePortIdSchema(oldPortId)
+        : portConfig.key || this.replacePortIdSchema(oldPortId)
       const isPortIdChanged = oldPortId !== newPortId
 
       if (isPortIdChanged) {
@@ -241,8 +241,7 @@ export class FlowMigration {
     if (portKey && portKey.startsWith('__')) {
       return portKey
     }
-    // Fallback: if key doesn't have __, add it based on the old ID
-    const baseId = oldPortId.replace(/:PO[\w-]{16}/g, '')
-    return baseId.startsWith('__') ? baseId : `__${baseId}`
+
+    return `__${portKey}`
   }
 }

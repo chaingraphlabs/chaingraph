@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.40
+
+### Patch Changes
+
+- fix: update execution serialization and flow migration logic
+
 ## 0.5.5-dev.39
 
 ### Patch Changes

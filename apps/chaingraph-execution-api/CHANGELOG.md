@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.40
+
+### Patch Changes
+
+- fix: update execution serialization and flow migration logic
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.40
+  - @badaitech/chaingraph-types@0.5.5-dev.40
+  - @badaitech/chaingraph-trpc@0.5.5-dev.40
+
 ## 0.5.5-dev.39
 
 ### Patch Changes

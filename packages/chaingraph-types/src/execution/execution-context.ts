@@ -160,7 +160,6 @@ export class ExecutionContext {
   cloneForChildExecution(eventData: EmittedEventContext, childExecutionId: string): ExecutionContext {
     const ctx = new ExecutionContext(
       this.flowId!,
-      // new AbortController(), // New abort controller for child
       this.abortController,
       { ...this.metadata, parentExecutionId: this.executionId },
       childExecutionId,
