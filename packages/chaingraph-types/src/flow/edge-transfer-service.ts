@@ -118,8 +118,11 @@ export class EdgeTransferService {
     const data = sourcePort.getValue()
     // const data = value !== undefined ? value : sourcePort.getConfig().defaultValue
 
-    if (data === undefined || data === null) {
-      throw new Error(`Source port ${sourcePort.id} has no data to transfer`)
+    const isEmptyData = data === undefined || data === null
+    const isTargetPortRequired = targetPort.getConfig().required === true
+
+    if (isEmptyData && isTargetPortRequired) {
+      throw new Error(`Source port ${sourcePort.id} has no data to transfer and target port ${targetPort.id} is required`)
     }
 
     // Set the value on the target port

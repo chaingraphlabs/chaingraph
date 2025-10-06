@@ -172,20 +172,22 @@ export class AnthropicLLMConfig {
     title: 'Model',
     description: 'The Claude model to use',
     options: [
-      { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4 (2025-05-14)' },
-      { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4 (2025-05-14)' },
-      { id: AntropicModelTypes.Claude37Sonnet20250219, type: 'string', defaultValue: AntropicModelTypes.Claude37Sonnet20250219, title: 'Claude 3.7 Sonnet (2025-02-19)' },
-      { id: AntropicModelTypes.Claude37Opus20250213, type: 'string', defaultValue: AntropicModelTypes.Claude37Opus20250213, title: 'Claude 3.7 Opus (2025-02-13)' },
-      { id: AntropicModelTypes.Claude37Haiku20250304, type: 'string', defaultValue: AntropicModelTypes.Claude37Haiku20250304, title: 'Claude 3.7 Haiku (2025-03-04)' },
-      { id: AntropicModelTypes.Claude35Sonnet20241022, type: 'string', defaultValue: AntropicModelTypes.Claude35Sonnet20241022, title: 'Claude 3.5 Sonnet (2024-10-22)' },
-      { id: AntropicModelTypes.Claude3Sonnet20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Sonnet20240229, title: 'Claude 3 Sonnet (2024-02-29)' },
-      { id: AntropicModelTypes.Claude3Opus20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Opus20240229, title: 'Claude 3 Opus (2024-02-29)' },
-      { id: AntropicModelTypes.Claude3Haiku20240307, type: 'string', defaultValue: AntropicModelTypes.Claude3Haiku20240307, title: 'Claude 3 Haiku (2024-03-07)' },
+      { id: AntropicModelTypes.ClaudeSonnet4_5_20250929, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929, title: 'Claude Sonnet 4.5' },
+      { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4' },
+      { id: AntropicModelTypes.ClaudeOpus4_1_20250805, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_1_20250805, title: 'Claude Opus 4.1' },
+      { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4' },
+      { id: AntropicModelTypes.Claude37Sonnet20250219, type: 'string', defaultValue: AntropicModelTypes.Claude37Sonnet20250219, title: 'Claude 3.7 Sonnet' },
+      { id: AntropicModelTypes.Claude37Opus20250213, type: 'string', defaultValue: AntropicModelTypes.Claude37Opus20250213, title: 'Claude 3.7 Opus' },
+      { id: AntropicModelTypes.Claude37Haiku20250304, type: 'string', defaultValue: AntropicModelTypes.Claude37Haiku20250304, title: 'Claude 3.7 Haiku' },
+      { id: AntropicModelTypes.Claude35Sonnet20241022, type: 'string', defaultValue: AntropicModelTypes.Claude35Sonnet20241022, title: 'Claude 3.5 Sonnet' },
+      { id: AntropicModelTypes.Claude3Sonnet20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Sonnet20240229, title: 'Claude 3 Sonnet' },
+      { id: AntropicModelTypes.Claude3Opus20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Opus20240229, title: 'Claude 3 Opus' },
+      { id: AntropicModelTypes.Claude3Haiku20240307, type: 'string', defaultValue: AntropicModelTypes.Claude3Haiku20240307, title: 'Claude 3 Haiku' },
     ],
-    defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514,
+    defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929,
     required: true,
   })
-  model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_20250514
+  model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_5_20250929
 
   @PortNumber({
     title: 'Max Tokens',
@@ -193,6 +195,7 @@ export class AnthropicLLMConfig {
     min: 1,
     required: true,
     integer: true,
+    defaultValue: 16000,
   })
   max_tokens: number = 16000
 
@@ -207,6 +210,7 @@ export class AnthropicLLMConfig {
       leftSliderLabel: 'More deterministic',
       rightSliderLabel: 'More creative',
     },
+    defaultValue: 0,
   })
   temperature: number = 0
 
@@ -216,16 +220,17 @@ export class AnthropicLLMConfig {
     min: 0,
     max: 1,
     step: 0.01,
+    defaultValue: undefined,
   })
-  top_p?: number
+  top_p?: number = undefined
 
   @PortNumber({
     title: 'Top K',
     description: 'Only sample from top K options for each token',
-    min: 1,
     integer: true,
+    defaultValue: undefined,
   })
-  top_k?: number
+  top_k?: number = undefined
 
   @PortArray({
     title: 'Stop Sequences',
@@ -273,7 +278,7 @@ export class AnthropicLLMConfig {
   @PortNumber({
     title: 'Max Tool Calls',
     description: 'Maximum number of tool calls allowed in a single request',
-    min: 1,
+    min: 0,
     integer: true,
     defaultValue: 20,
   })

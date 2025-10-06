@@ -44,8 +44,8 @@ export function PortArray(config: Omit<PortDecoratorOptions<'array'>, 'type'>): 
     type: 'array',
     ...config,
     ...('defaultValue' in (config || {})
-      ? { defaultValue: config?.defaultValue ?? [] }
-      : { defaultValue: [] }),
+      ? { defaultValue: config?.defaultValue }
+      : { defaultValue: undefined }),
   })
 }
 
