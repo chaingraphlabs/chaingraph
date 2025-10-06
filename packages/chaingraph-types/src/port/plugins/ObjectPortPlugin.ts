@@ -378,7 +378,7 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
 
   deserializeValue: (data: JSONValue, config: ObjectPortConfig): ObjectPortValue => {
     if (data === undefined || data === null) {
-      return {}
+      return config.required ? {} : undefined
     }
     try {
       // Expecting an object with a "value" property that contains the serialized fields.
@@ -398,6 +398,14 @@ export const ObjectPortPlugin: IPortPlugin<'object'> = {
       for (const [key, fieldConfig] of Object.entries(config.schema.properties)) {
         const fieldSerializedValue = serializedFields[key]
         if (fieldSerializedValue === undefined) {
+          const defaultVal = fieldConfig.defaultValue
+          if (defaultVal !== undefined) {
+            deserialized[key] = defaultVal
+          } else if (fieldConfig.required) {
+            // If the field is required but missing and has no default, set to undefined or handle as needed.
+            deserialized[key] = undefined
+          }
+
           // If the field is required, you might want to throw an error.
           // For now, we simply continue to the next field.
           continue

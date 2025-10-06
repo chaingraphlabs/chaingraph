@@ -231,7 +231,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
           )
         }
       }
-      return data || undefined
+      return data
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,
