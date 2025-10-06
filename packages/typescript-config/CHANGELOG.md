@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.43
+
+### Patch Changes
+
+- fix: update default value handling in decorators and improve error messaging in edge transfer logic
+
 ## 0.5.5-dev.42
 
 ### Patch Changes
