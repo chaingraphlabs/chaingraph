@@ -165,10 +165,6 @@ export class Flow implements IFlow {
   }
 
   async updateNode(node: INode): Promise<void> {
-    if (!this.nodes.has(node.id)) {
-      throw new Error(`Node with ID ${node.id} does not exist in the flow.`)
-    }
-
     // Commit any pending batch updates before updating the node
     // This ensures all collected port updates are emitted before the flow update
     await node.commitBatchUpdate({ sourceOfUpdate: 'flow:updateNode' })
@@ -196,6 +192,36 @@ export class Flow implements IFlow {
       this.id,
       FlowEventType.NodeUpdated,
       { node: node.clone() },
+    ))
+  }
+
+  async updateNodes(nodes: INode[]): Promise<void> {
+    if (nodes.length === 0) {
+      return Promise.resolve()
+    }
+
+    // Commit any pending batch updates before updating the nodes
+    await Promise.all(nodes.map(node => node.commitBatchUpdate({ sourceOfUpdate: 'flow:updateNodes' })))
+
+    // cancel the previous event handler if it exists
+    nodes.forEach((node) => {
+      const oldCancel = this.nodeEventHandlersCancel.get(node.id)
+      this.nodes.set(node.id, node)
+      const newCancel = node.onAll(async (event: NodeEvent) => {
+        return this.handleNodeEvent(node, event)
+      })
+      if (oldCancel) {
+        oldCancel()
+      }
+      this.nodeEventHandlersCancel.set(node.id, newCancel)
+    })
+
+    // Emit NodesUpdated event
+    return this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.NodesUpdated,
+      { nodes: nodes.map(n => n.clone()) },
     ))
   }
 

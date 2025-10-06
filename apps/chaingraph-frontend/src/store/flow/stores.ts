@@ -51,6 +51,7 @@ import {
   removeNode,
   setNodeVersion,
   updateNode,
+  updateNodes,
   updateNodeUILocal,
 } from '../nodes/stores'
 import {
@@ -432,20 +433,38 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
     [FlowEventType.NodeUpdated]: (data) => {
       const node = nodes[data.node.id]
-      if (!node) {
-        console.error(`[NodeUpdated] Node ${data.node.id} not found`)
-        return
-      }
-
-      if (data.node.getVersion() && data.node.getVersion() < node.getVersion()) {
-        // console.warn(`[NodeUpdated] Received outdated node update event for node ${data.node.id}`)
-        return
+      if (node) {
+        if (data.node.getVersion() && data.node.getVersion() < node.getVersion()) {
+          // console.warn(`[NodeUpdated] Received outdated node update event for node ${data.node.id}`)
+          return
+        }
       }
 
       // console.log(`[NodeUpdated] Updating node ${data.node.id} to version ${data.node.getVersion()}`)
 
       updateNode(data.node)
       nodeUpdated(data.node.id)
+    },
+
+    [FlowEventType.NodesUpdated]: (data) => {
+      const validNodes = data.nodes.filter((node) => {
+        const existingNode = nodes[node.id]
+        if (existingNode) {
+          if (node.getVersion() && node.getVersion() < existingNode.getVersion()) {
+            // console.warn(`[NodesUpdated] Skipping outdated node update event for node ${node.id}`)
+            return false
+          }
+        }
+        return true
+      })
+
+      if (validNodes.length === 0) {
+        return
+      }
+
+      // console.log(`[NodesUpdated] Updating nodes:`, validNodes.map(n => n.id).join(', '))
+      updateNodes(validNodes)
+      validNodes.forEach(node => nodeUpdated(node.id))
     },
 
     [FlowEventType.NodeRemoved]: (data) => {

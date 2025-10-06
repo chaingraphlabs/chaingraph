@@ -64,6 +64,12 @@ export interface IFlow {
   updateNode: (node: INode) => Promise<void>
 
   /**
+   * Updates multiple nodes in the flow and triggers an event.
+   * @param node
+   */
+  updateNodes: (node: INode[]) => Promise<void>
+
+  /**
    * Removes a node from the flow.
    * @param nodeId The ID of the node to remove.
    */
