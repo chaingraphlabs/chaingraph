@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.44
+
+### Patch Changes
+
+- fix: for the paste node trpc procedure emit the migrated nodes instead of original one. Add support for updating multiple nodes and introduce NodesUpdated event
+
 ## 0.5.5-dev.43
 
 ### Patch Changes
