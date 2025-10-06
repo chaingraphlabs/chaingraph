@@ -88,12 +88,14 @@ class LLMModel {
   @PortString({
     title: 'Model',
     description: 'Language Model',
+    defaultValue: LLMModels.Gpt5Mini,
   })
   model: LLMModels = LLMModels.Gpt5Mini
 
   @PortNumber({
     title: 'Temperature',
     description: 'Temperature for sampling',
+    defaultValue: 0,
   })
   temperature: number = 0
 
@@ -151,6 +153,7 @@ export class LLMCallNode extends BaseNode {
   @PortEnumFromObject(llmModels, {
     title: 'Model',
     description: 'Language Model',
+    defaultValue: LLMModels.Gpt5Mini,
   })
   model: LLMModels = LLMModels.Gpt5Mini
 
@@ -201,6 +204,7 @@ export class LLMCallNode extends BaseNode {
       leftSliderLabel: 'More deterministic',
       rightSliderLabel: 'More creative',
     },
+    defaultValue: 0,
   })
   temperature: number = 0
 
@@ -212,6 +216,7 @@ export class LLMCallNode extends BaseNode {
       type: 'string',
       defaultValue: '',
     },
+    defaultValue: new MultiChannel<string>(),
   })
   outputStream: MultiChannel<string> = new MultiChannel<string>()
 

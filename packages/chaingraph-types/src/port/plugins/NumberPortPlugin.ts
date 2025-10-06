@@ -176,7 +176,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   valueSchema,
   serializeValue: (value: NumberPortValue): JSONValue => {
     if (value === undefined || value === null) {
-      return 0
+      return undefined
     }
 
     try {
@@ -208,7 +208,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
   },
   deserializeValue: (data: JSONValue) => {
     if (data === undefined || data === null) {
-      return 0
+      return undefined
     }
 
     try {
@@ -231,7 +231,7 @@ export const NumberPortPlugin: IPortPlugin<'number'> = {
           )
         }
       }
-      return data || 0
+      return data
     } catch (error) {
       throw new PortError(
         PortErrorType.SerializationError,

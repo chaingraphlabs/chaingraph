@@ -32,8 +32,8 @@ export function PortString(config?: Omit<PortDecoratorOptions<'string'>, 'type'>
     type: 'string',
     ...config,
     ...('defaultValue' in (config || {})
-      ? { defaultValue: config?.defaultValue ?? '' }
-      : { defaultValue: '' }),
+      ? { defaultValue: config?.defaultValue }
+      : { defaultValue: undefined }),
   })
 }
 
@@ -59,8 +59,8 @@ export function PortNumber(config?: Omit<PortDecoratorOptions<'number'>, 'type'>
     type: 'number',
     ...config,
     ...('defaultValue' in (config || {})
-      ? { defaultValue: config?.defaultValue ?? 0 }
-      : { defaultValue: 0 }),
+      ? { defaultValue: config?.defaultValue }
+      : { defaultValue: undefined }),
   })
 }
 
@@ -86,7 +86,7 @@ export function PortBoolean(config?: Omit<PortDecoratorOptions<'boolean'>, 'type
     type: 'boolean',
     ...config,
     ...('defaultValue' in (config || {})
-      ? { defaultValue: config?.defaultValue ?? false }
+      ? { defaultValue: config?.defaultValue }
       : { defaultValue: false }),
   })
 }

@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.43
+
+### Patch Changes
+
+- fix: update default value handling in decorators and improve error messaging in edge transfer logic
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.43
+  - @badaitech/chaingraph-executor@0.5.5-dev.43
+  - @badaitech/chaingraph-trpc@0.5.5-dev.43
+
 ## 0.5.5-dev.42
 
 ### Patch Changes

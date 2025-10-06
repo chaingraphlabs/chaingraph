@@ -44,8 +44,8 @@ export function PortArray(config: Omit<PortDecoratorOptions<'array'>, 'type'>): 
     type: 'array',
     ...config,
     ...('defaultValue' in (config || {})
-      ? { defaultValue: config?.defaultValue ?? [] }
-      : { defaultValue: [] }),
+      ? { defaultValue: config?.defaultValue }
+      : { defaultValue: undefined }),
   })
 }
 
@@ -125,7 +125,7 @@ export function PortArrayObject<T extends ObjectPortSchemaInput>(
 ): PropertyDecorator {
   return PortArray({
     // Preset the item configuration for object elements with the provided schema.
-    itemConfig: { type: 'object', schema, defaultValue: {} },
+    itemConfig: { type: 'object', schema },
     ...config,
   })
 }

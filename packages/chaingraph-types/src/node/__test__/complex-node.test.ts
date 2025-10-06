@@ -100,16 +100,19 @@ type UserStatusOptionId = keyof typeof userStatusOptions
 export class TestUserAddress {
   @PortString({
     description: 'Street of the address',
+    defaultValue: '',
   })
   street?: string = ''
 
   @PortString({
     description: 'City of the address',
+    defaultValue: '',
   })
   city?: string = ''
 
   @PortString({
     description: 'State of the address',
+    defaultValue: '',
   })
   country?: string = 'EU'
 
@@ -135,21 +138,25 @@ export class TestUserObject {
 
   @PortString({
     description: 'Username of the user',
+    defaultValue: '',
   })
   username: string = ''
 
   @PortString({
     description: 'Name of the user',
+    defaultValue: '',
   })
   name: string = ''
 
   @PortNumber({
     description: 'Age of the user',
+    defaultValue: 0,
   })
   age: number = 0
 
   @PortNumber({
     description: 'Age of the user decimal',
+    defaultValue: 0,
   })
   ageDecimal: number = 0
 
@@ -167,6 +174,7 @@ export class TestUserObject {
       type: 'string',
       defaultValue: '',
     },
+    defaultValue: [],
   })
   emails: string[] = []
 
@@ -225,6 +233,7 @@ export class UserProfileNode extends BaseNode {
   // Case for infer schema from field value
   @Input() @PortObject({
     schema: TestUserObject,
+    defaultValue: new TestUserObject(),
   })
   user1: TestUserObject = new TestUserObject()
 
@@ -331,6 +340,7 @@ export class UserProfileNode extends BaseNode {
         defaultValue: new TestUserObject(),
       },
     },
+    defaultValue: [],
   })
   users2DArray: TestUserObject[][] = []
 
@@ -417,7 +427,9 @@ export class UserProfileNode extends BaseNode {
   numberArray?: number[]
 
   @Output()
-  @PortArrayObject(TestUserObject)
+  @PortArrayObject(TestUserObject, {
+    defaultValue: [],
+  })
   simpleObjectArray?: TestUserObject[] = []
 
   @Output()

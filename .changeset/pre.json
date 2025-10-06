@@ -15,6 +15,7 @@
     "@badaitech/badai-api-example": "0.5.5-dev.19"
   },
   "changesets": [
+    "dry-hornets-roll",
     "dry-otters-share",
     "early-baboons-lay",
     "fluffy-chairs-yell",
