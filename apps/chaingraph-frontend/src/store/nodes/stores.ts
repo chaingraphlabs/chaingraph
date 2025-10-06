@@ -42,6 +42,7 @@ import { positionInterpolator } from './position-interpolation-advanced'
 export const addNode = nodesDomain.createEvent<INode>()
 export const addNodes = nodesDomain.createEvent<INode[]>()
 export const updateNode = nodesDomain.createEvent<INode>()
+export const updateNodes = nodesDomain.createEvent<INode[]>()
 export const removeNode = nodesDomain.createEvent<string>()
 export const setNodeMetadata = nodesDomain.createEvent<{ nodeId: string, metadata: NodeState['metadata'] }>()
 export const setNodeVersion = nodesDomain.createEvent<{ nodeId: string, version: number }>()
@@ -206,6 +207,16 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Add nodes operation
   .on(addNodes, (state, nodes) => {
+    const newState = { ...state }
+    nodes.forEach((node) => {
+      newState[node.id] = node
+    })
+
+    return newState
+  })
+
+  // Update nodes operation
+  .on(updateNodes, (state, nodes) => {
     const newState = { ...state }
     nodes.forEach((node) => {
       newState[node.id] = node

@@ -7,11 +7,13 @@
  */
 
 import type {
-  Flow,
   IEdge,
   INode,
   IPort,
   SerializedEdge,
+} from '@badaitech/chaingraph-types'
+import {
+  Flow,
 } from '@badaitech/chaingraph-types'
 import {
   FlowMigration,
@@ -81,10 +83,12 @@ export const pasteNodes = flowContextProcedure
       throw new Error(`Flow ${flowId} not found`)
     }
 
+    const emptyFlow = new Flow()
+
     await ctx.flowStore.lockFlow(flowId)
 
     try {
-      flow.setIsDisabledPropagationEvents(true)
+      emptyFlow.setIsDisabledPropagationEvents(true)
 
       // Step 1: Clone nodes with new IDs using cloneWithNewId()
       const nodeIdMapping = new Map<string, string>()
@@ -192,7 +196,7 @@ export const pasteNodes = flowContextProcedure
         }
       }
 
-      const addedNodes = await flow.addNodes(createdNodes, false)
+      const addedNodes = await emptyFlow.addNodes(createdNodes, true)
 
       // Step 2: Recreate edges using new IDs
       const createdEdges: SerializedEdge[] = []
@@ -241,10 +245,13 @@ export const pasteNodes = flowContextProcedure
         })
         .filter((edge): edge is NonNullable<typeof edge> => edge !== null)
 
-      await flow.addEdges(edgesToAdd, false)
+      await emptyFlow.addEdges(edgesToAdd, true)
 
       // Force migrate flow to v2
-      FlowMigration.migrateFlowFromV1ToV2(flow)
+      const flowWithPastedNodes = FlowMigration.migrateFlowFromV1ToV2(emptyFlow)
+
+      await flow.addNodes(Array.from(flowWithPastedNodes.nodes.values()), false)
+      await flow.addEdges(Array.from(flowWithPastedNodes.edges.values()), false)
 
       // Save the updated flow
       await ctx.flowStore.updateFlow(flow as Flow)
