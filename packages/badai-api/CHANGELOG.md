@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.45
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and comment out excluded packages in Vite config
+
 ## 0.5.5-dev.44
 
 ### Patch Changes
