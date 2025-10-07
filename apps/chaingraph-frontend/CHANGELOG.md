@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.53
+
+### Patch Changes
+
+- fix: update package.json and vite config for ESM compatibility and remove unnecessary plugins
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.53
+  - @badaitech/chaingraph-nodes@0.5.5-dev.53
+  - @badaitech/chaingraph-types@0.5.5-dev.53
+  - @badaitech/chaingraph-trpc@0.5.5-dev.53
+  - @badaitech/badai-api@0.5.5-dev.53
+
 ## 0.5.5-dev.52
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.53
+
+### Patch Changes
+
+- fix: update package.json and vite config for ESM compatibility and remove unnecessary plugins
+
 ## 0.5.5-dev.52
 
 ### Patch Changes
