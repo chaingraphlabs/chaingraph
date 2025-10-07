@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.50
+
+### Patch Changes
+
+- fix: disable sourcemap in Vite config for production build
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.50
+  - @badaitech/chaingraph-nodes@0.5.5-dev.50
+  - @badaitech/chaingraph-types@0.5.5-dev.50
+  - @badaitech/chaingraph-trpc@0.5.5-dev.50
+
 ## 0.5.5-dev.49
 
 ### Patch Changes

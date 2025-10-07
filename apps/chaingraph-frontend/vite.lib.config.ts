@@ -68,7 +68,7 @@ export default defineConfig({
   },
   build: {
     minify: 'esbuild',
-    sourcemap: true,
+    sourcemap: false,
     cssCodeSplit: false,
     cssMinify: true,
     outDir: 'dist/lib',
@@ -79,15 +79,41 @@ export default defineConfig({
       fileName: format => `chaingraph-frontend.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      // Only keep React and ReactDOM as external dependencies
       external: [
         'superjson',
         'react',
         'react-dom',
         'react/jsx-runtime',
+
+        // Large blockchain libs
+        'viem',
+        'wagmi',
+
+        // Heavy UI libs
+        '@xyflow/react',
+        '@xyflow/system',
+        'ag-grid-community',
+        'ag-grid-react',
+        'framer-motion',
+
+        // State management
+        'effector',
+        'effector-react',
+        '@tanstack/react-query',
+        '@tanstack/react-query-devtools',
+        '@trpc/react-query',
+
+        // Radix UI (regex pattern)
+        /@radix-ui\/.*/,
+
+        // Other heavy deps
+        'react-router-dom',
+        'react-markdown',
+        'remark-gfm',
+        'yaml',
+        'color',
       ],
       output: {
-        // Bundle everything else together
         globals: {
           'superjson': 'SuperJSON',
           'react': 'React',
@@ -107,7 +133,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      'superjson',
       'react',
       'react-dom',
       'react/jsx-runtime',

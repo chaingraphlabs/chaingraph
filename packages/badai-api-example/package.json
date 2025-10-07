@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/badai-api-example",
   "type": "module",
-  "version": "0.5.5-dev.49",
+  "version": "0.5.5-dev.50",
   "private": true,
   "description": "Bad AI GraphQL API client example",
   "license": "BUSL-1.1",
@@ -24,7 +24,7 @@
     "graphql-request": "^7.2.0",
     "graphql-ws": "^6.0.6",
     "keccak256": "^1.0.6",
-    "viem": "^2.37.7"
+    "viem": "^2.37.13"
   },
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*"

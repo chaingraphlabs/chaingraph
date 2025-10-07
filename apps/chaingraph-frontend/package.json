@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.5.5-dev.49",
+  "version": "0.5.5-dev.50",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -47,9 +47,16 @@
     "typecheck": "tsc -b --noEmit"
   },
   "peerDependencies": {
+    "@xyflow/react": "^12.8.6",
+    "@xyflow/system": "^0.0.70",
+    "effector": "^23.4.4",
+    "effector-react": "^23.3.0",
+    "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "superjson": "^2.2.2"
+    "superjson": "^2.2.2",
+    "viem": "^2.38.0",
+    "wagmi": "^2.17.5"
   },
   "dependencies": {
     "@badaitech/badai-api": "workspace:*",
@@ -89,8 +96,6 @@
     "@xyflow/react": "^12.8.6",
     "@xyflow/system": "^0.0.70",
     "add": "^2.0.6",
-    "ag-grid-community": "^34.2.0",
-    "ag-grid-react": "^34.2.0",
     "ahooks": "^3.9.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -100,7 +105,7 @@
     "effector": "^23.4.4",
     "effector-react": "^23.3.0",
     "framer-motion": "^12.23.22",
-    "lucide-react": "^0.544.0",
+    "lucide-react": "^0.545.0",
     "patronum": "^2.3.0",
     "react": "^19.2.0",
     "react-color": "^2.19.3",
@@ -115,7 +120,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "uri-template": "^2.0.0",
-    "viem": "^2.37.9",
+    "viem": "^2.38.0",
     "wagmi": "^2.17.5",
     "yaml": "^2.8.1",
     "zod-to-json-schema": "^3.24.6"
