@@ -1,5 +1,29 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.51
+
+### Patch Changes
+
+- fix: disable sourcemap in Vite config for production build and update package versions
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.51
+  - @badaitech/chaingraph-nodes@0.5.5-dev.51
+  - @badaitech/chaingraph-types@0.5.5-dev.51
+  - @badaitech/chaingraph-trpc@0.5.5-dev.51
+  - @badaitech/badai-api@0.5.5-dev.51
+
+## 0.5.5-dev.50
+
+### Patch Changes
+
+- fix: disable sourcemap in Vite config for production build
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.50
+  - @badaitech/chaingraph-nodes@0.5.5-dev.50
+  - @badaitech/chaingraph-types@0.5.5-dev.50
+  - @badaitech/chaingraph-trpc@0.5.5-dev.50
+  - @badaitech/badai-api@0.5.5-dev.50
+
 ## 0.5.5-dev.49
 
 ### Patch Changes
