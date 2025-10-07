@@ -80,38 +80,16 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        'superjson',
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-
-        // Large blockchain libs
-        'viem',
-        'wagmi',
-
-        // Heavy UI libs
         '@xyflow/react',
         '@xyflow/system',
-        'ag-grid-community',
-        'ag-grid-react',
-        'framer-motion',
-
-        // State management
         'effector',
         'effector-react',
-        '@tanstack/react-query',
-        '@tanstack/react-query-devtools',
-        '@trpc/react-query',
-
-        // Radix UI (regex pattern)
-        /@radix-ui\/.*/,
-
-        // Other heavy deps
-        'react-router-dom',
-        'react-markdown',
-        'remark-gfm',
-        'yaml',
-        'color',
+        'lucide-react',
+        'react',
+        'react-dom',
+        'superjson',
+        'viem',
+        'wagmi',
       ],
       output: {
         globals: {
@@ -119,6 +97,13 @@ export default defineConfig({
           'react': 'React',
           'react-dom': 'ReactDOM',
           'react/jsx-runtime': 'jsxRuntime',
+          'effector': 'effector',
+          'effector-react': 'effectorReact',
+          'viem': 'viem',
+          'wagmi': 'wagmi',
+          '@xyflow/react': 'XYFlowReact',
+          '@xyflow/system': 'XYFlowSystem',
+          'lucide-react': 'LucideReact',
         },
         assetFileNames: 'chaingraph-frontend.css',
       },
@@ -136,6 +121,14 @@ export default defineConfig({
       'react',
       'react-dom',
       'react/jsx-runtime',
+      'superjson',
+      'effector',
+      'effector-react',
+      'viem',
+      'wagmi',
+      '@xyflow/react',
+      '@xyflow/system',
+      'lucide-react',
     ],
     esbuildOptions: {
       // Keep names to avoid minification causing issues

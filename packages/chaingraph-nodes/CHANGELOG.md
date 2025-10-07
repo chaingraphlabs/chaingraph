@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.52
+
+### Patch Changes
+
+- fix: reorganize rollup external dependencies and update eslint ignore patterns
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.52
+  - @badaitech/badai-api@0.5.5-dev.52
+
 ## 0.5.5-dev.51
 
 ### Patch Changes

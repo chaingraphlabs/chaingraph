@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-executor",
   "type": "module",
-  "version": "0.5.5-dev.51",
+  "version": "0.5.5-dev.52",
   "private": false,
   "description": "Chaingraph Message Bus for inter-service communication",
   "license": "BUSL-1.1",
@@ -58,10 +58,6 @@
     "migrate:run": "npx drizzle-kit migrate --config ./server/drizzle.config.ts"
   },
   "peerDependencies": {
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/server": "^11.6.0",
-    "@trpc/tanstack-react-query": "^11.6.0",
     "superjson": "^2.2.2"
   },
   "dependencies": {
