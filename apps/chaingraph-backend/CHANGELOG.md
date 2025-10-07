@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.5.5-dev.47
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and update Vite config for minification and dependency inclusion
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.5.5-dev.47
+  - @badaitech/chaingraph-trpc@0.5.5-dev.47
+  - @badaitech/chaingraph-types@0.5.5-dev.47
+
 ## 0.5.5-dev.46
 
 ### Patch Changes

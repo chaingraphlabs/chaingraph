@@ -66,7 +66,7 @@ export default defineConfig({
     },
   },
   build: {
-    minify: true,
+    minify: false,
     sourcemap: true,
     cssCodeSplit: false,
     cssMinify: true,
@@ -99,9 +99,9 @@ export default defineConfig({
       output: {
         // Bundle everything else together
         globals: {
-          superjson: 'SuperJSON',
-          // 'react': 'React',
-          // 'react-dom': 'ReactDOM',
+          'superjson': 'SuperJSON',
+          'react': 'React',
+          'react-dom': 'ReactDOM',
           // 'react/jsx-runtime': 'jsxRuntime',
           // '@badaitech/chaingraph-nodes': 'ChainGraphNodes',
           // '@badaitech/chaingraph-types': 'ChainGraphTypes',
@@ -127,8 +127,8 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'superjson',
-      // 'react',
-      // 'react-dom',
+      'react',
+      'react-dom',
       // 'react/jsx-runtime',
       // '@dnd-kit/core',
       // '@fontsource/inter',

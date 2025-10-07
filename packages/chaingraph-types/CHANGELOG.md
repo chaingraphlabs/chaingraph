@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.47
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and update Vite config for minification and dependency inclusion
+
 ## 0.5.5-dev.46
 
 ### Patch Changes
