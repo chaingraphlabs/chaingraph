@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.55
+
+### Patch Changes
+
+- fix: update Vite config to clean output directory and adjust rollup options for ESM output
+
 ## 0.5.5-dev.54
 
 ### Patch Changes

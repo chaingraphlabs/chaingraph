@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.55
+
+### Patch Changes
+
+- fix: update Vite config to clean output directory and adjust rollup options for ESM output
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.55
+  - @badaitech/chaingraph-types@0.5.5-dev.55
+  - @badaitech/chaingraph-trpc@0.5.5-dev.55
+
 ## 0.5.5-dev.54
 
 ### Patch Changes
