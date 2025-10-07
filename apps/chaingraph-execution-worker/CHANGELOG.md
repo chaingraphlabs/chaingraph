@@ -1,5 +1,16 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.46
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and comment out excluded packages in Vite config
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.46
+  - @badaitech/chaingraph-nodes@0.5.5-dev.46
+  - @badaitech/chaingraph-trpc@0.5.5-dev.46
+  - @badaitech/chaingraph-types@0.5.5-dev.46
+
 ## 0.5.5-dev.45
 
 ### Patch Changes

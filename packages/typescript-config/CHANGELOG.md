@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.46
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and comment out excluded packages in Vite config
+
 ## 0.5.5-dev.45
 
 ### Patch Changes
