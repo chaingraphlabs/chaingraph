@@ -34,9 +34,8 @@ export default defineConfig({
     }),
     react({
       tsDecorators: true,
-      plugins: [
-        ['@effector/swc-plugin', {}],
-      ],
+      // Remove @effector/swc-plugin to avoid transforming external effector imports
+      plugins: [],
     }),
     tsconfigPaths({
       configNames: ['tsconfig.json', 'tsconfig.lib.json'],
@@ -74,9 +73,8 @@ export default defineConfig({
     outDir: 'dist/lib',
     lib: {
       entry: 'src/exports.tsx',
-      name: 'ChainGraphFrontend', // Used for UMD/IIFE bundles
-      formats: ['es', 'umd'],
-      fileName: format => `chaingraph-frontend.${format === 'es' ? 'mjs' : 'js'}`,
+      formats: ['es'], // Only ESM format to avoid CommonJS interop issues
+      fileName: 'chaingraph-frontend',
     },
     rollupOptions: {
       external: [
@@ -87,31 +85,16 @@ export default defineConfig({
         'lucide-react',
         'react',
         'react-dom',
+        'react/jsx-runtime',
         'superjson',
         'viem',
         'wagmi',
       ],
       output: {
-        globals: {
-          'superjson': 'SuperJSON',
-          'react': 'React',
-          'react-dom': 'ReactDOM',
-          'react/jsx-runtime': 'jsxRuntime',
-          'effector': 'effector',
-          'effector-react': 'effectorReact',
-          'viem': 'viem',
-          'wagmi': 'wagmi',
-          '@xyflow/react': 'XYFlowReact',
-          '@xyflow/system': 'XYFlowSystem',
-          'lucide-react': 'LucideReact',
-        },
         assetFileNames: 'chaingraph-frontend.css',
+        // Ensure external dependencies use correct ESM import syntax
+        interop: 'esModule',
       },
-    },
-    commonjsOptions: {
-      // This helps with CommonJS dependencies
-      include: [/node_modules/],
-      transformMixedEsModules: true,
     },
     // Don't empty outDir to preserve app build
     emptyOutDir: false,

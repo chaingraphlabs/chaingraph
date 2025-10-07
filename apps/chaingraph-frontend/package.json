@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.5.5-dev.52",
+  "version": "0.5.5-dev.53",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -17,19 +17,13 @@
   "exports": {
     ".": {
       "types": "./dist/lib/exports.d.ts",
-      "import": "./dist/lib/chaingraph-frontend.mjs",
-      "default": "./dist/lib/chaingraph-frontend.js"
-    },
-    "./store": {
-      "types": "./dist/lib/store.d.ts",
-      "import": "./dist/lib/store.mjs",
-      "default": "./dist/lib/store.js"
+      "import": "./dist/lib/chaingraph-frontend.js"
     },
     "./style.css": "./dist/lib/chaingraph-frontend.css",
     "./styles": "./dist/lib/chaingraph-frontend.css"
   },
-  "main": "./dist/lib/chaingraph-frontend.mjs",
-  "module": "./dist/lib/chaingraph-frontend.mjs",
+  "main": "./dist/lib/chaingraph-frontend.js",
+  "module": "./dist/lib/chaingraph-frontend.js",
   "types": "./dist/lib/exports.d.ts",
   "style": "./dist/lib/chaingraph-frontend.css",
   "files": [
