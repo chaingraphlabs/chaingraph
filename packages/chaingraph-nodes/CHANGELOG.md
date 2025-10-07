@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.54
+
+### Patch Changes
+
+- fix: update package.json version and adjust Vite config for ESM compatibility
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.54
+  - @badaitech/badai-api@0.5.5-dev.54
+
 ## 0.5.5-dev.53
 
 ### Patch Changes

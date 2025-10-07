@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.54
+
+### Patch Changes
+
+- fix: update package.json version and adjust Vite config for ESM compatibility
+
 ## 0.5.5-dev.53
 
 ### Patch Changes
