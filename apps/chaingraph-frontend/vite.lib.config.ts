@@ -71,12 +71,9 @@ export default defineConfig({
     cssCodeSplit: false,
     cssMinify: true,
     outDir: 'dist/lib',
-    lib: {
-      entry: 'src/exports.tsx',
-      formats: ['es'], // Only ESM format to avoid CommonJS interop issues
-      fileName: 'chaingraph-frontend',
-    },
+    emptyOutDir: true, // Clean dist folder before build
     rollupOptions: {
+      input: 'src/exports.tsx',
       external: [
         '@xyflow/react',
         '@xyflow/system',
@@ -91,13 +88,15 @@ export default defineConfig({
         'wagmi',
       ],
       output: {
+        format: 'es',
+        entryFileNames: 'chaingraph-frontend.js',
         assetFileNames: 'chaingraph-frontend.css',
         // Ensure external dependencies use correct ESM import syntax
         interop: 'esModule',
+        // Force all code into a single file (no code splitting)
+        inlineDynamicImports: true,
       },
     },
-    // Don't empty outDir to preserve app build
-    emptyOutDir: false,
   },
   optimizeDeps: {
     include: [
