@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.49
+
+### Patch Changes
+
+- fix: update Vite config for minification and include missing dependencies in pnpm-lock.yaml
+- Updated dependencies
+  - @badaitech/badai-api@0.5.5-dev.49
+  - @badaitech/chaingraph-executor@0.5.5-dev.49
+  - @badaitech/chaingraph-nodes@0.5.5-dev.49
+  - @badaitech/chaingraph-trpc@0.5.5-dev.49
+  - @badaitech/chaingraph-types@0.5.5-dev.49
+
 ## 0.5.5-dev.48
 
 ### Patch Changes

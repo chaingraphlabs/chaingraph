@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.49
+
+### Patch Changes
+
+- fix: update Vite config for minification and include missing dependencies in pnpm-lock.yaml
+
 ## 0.5.5-dev.48
 
 ### Patch Changes

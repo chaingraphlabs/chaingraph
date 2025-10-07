@@ -8,6 +8,7 @@
 
 import * as path from 'node:path'
 import react from '@vitejs/plugin-react-swc'
+
 import { defineConfig } from 'vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import svgr from 'vite-plugin-svgr'
@@ -66,7 +67,7 @@ export default defineConfig({
     },
   },
   build: {
-    minify: false,
+    minify: 'esbuild',
     sourcemap: true,
     cssCodeSplit: false,
     cssMinify: true,
@@ -83,6 +84,7 @@ export default defineConfig({
         'superjson',
         'react',
         'react-dom',
+        'react/jsx-runtime',
       ],
       output: {
         // Bundle everything else together
@@ -90,6 +92,7 @@ export default defineConfig({
           'superjson': 'SuperJSON',
           'react': 'React',
           'react-dom': 'ReactDOM',
+          'react/jsx-runtime': 'jsxRuntime',
         },
         assetFileNames: 'chaingraph-frontend.css',
       },
@@ -107,6 +110,7 @@ export default defineConfig({
       'superjson',
       'react',
       'react-dom',
+      'react/jsx-runtime',
     ],
     esbuildOptions: {
       // Keep names to avoid minification causing issues
