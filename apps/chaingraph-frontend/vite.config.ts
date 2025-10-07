@@ -77,7 +77,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['superjson'],
-    exclude: ['reflect-metadata'],
+    // exclude: ['reflect-metadata'],
   },
   build: {
     sourcemap: true,

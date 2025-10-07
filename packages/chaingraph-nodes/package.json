@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-nodes",
   "type": "module",
-  "version": "0.5.5-dev.44",
+  "version": "0.5.5-dev.48",
   "private": false,
   "description": "Node components for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -73,7 +73,7 @@
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
     "@types/nanoid-dictionary": "^4.2.3",
-    "@types/react": "^19.1.16",
+    "@types/react": "^19.2.0",
     "vitest": "^3.2.4"
   }
 }

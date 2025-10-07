@@ -1,5 +1,29 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.48
+
+### Patch Changes
+
+- fix: update @types/react to version 19.2.0 and clean up Vite config by removing commented-out dependencies
+
+## 0.5.5-dev.47
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and update Vite config for minification and dependency inclusion
+
+## 0.5.5-dev.46
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and comment out excluded packages in Vite config
+
+## 0.5.5-dev.45
+
+### Patch Changes
+
+- fix: remove unused peer dependencies and comment out excluded packages in Vite config
+
 ## 0.5.5-dev.44
 
 ### Patch Changes
