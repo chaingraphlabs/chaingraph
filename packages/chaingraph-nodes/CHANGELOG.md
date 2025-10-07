@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.48
+
+### Patch Changes
+
+- fix: update @types/react to version 19.2.0 and clean up Vite config by removing commented-out dependencies
+- Updated dependencies
+  - @badaitech/badai-api@0.5.5-dev.48
+  - @badaitech/chaingraph-types@0.5.5-dev.48
+
 ## 0.5.5-dev.47
 
 ### Patch Changes

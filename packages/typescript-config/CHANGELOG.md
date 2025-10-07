@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.48
+
+### Patch Changes
+
+- fix: update @types/react to version 19.2.0 and clean up Vite config by removing commented-out dependencies
+
 ## 0.5.5-dev.47
 
 ### Patch Changes
