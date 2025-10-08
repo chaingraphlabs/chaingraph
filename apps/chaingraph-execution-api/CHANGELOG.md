@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.59
+
+### Patch Changes
+
+- fix: restore lucide-react dependency in package.json and update Vite config for build
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.59
+  - @badaitech/chaingraph-types@0.5.5-dev.59
+  - @badaitech/chaingraph-trpc@0.5.5-dev.59
+
 ## 0.5.5-dev.58
 
 ### Patch Changes
