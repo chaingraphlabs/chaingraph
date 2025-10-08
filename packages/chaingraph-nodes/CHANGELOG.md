@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.5.5-dev.58
+
+### Patch Changes
+
+- fix: update package.json to add new peerDependencies and adjust existing ones, and modify Vite config for deduplication
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.5.5-dev.58
+  - @badaitech/badai-api@0.5.5-dev.58
+
 ## 0.5.5-dev.57
 
 ### Patch Changes
