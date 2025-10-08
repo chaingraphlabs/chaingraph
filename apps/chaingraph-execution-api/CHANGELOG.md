@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.60
+
+### Patch Changes
+
+- fix: add new TRPC and related dependencies in package.json
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.60
+  - @badaitech/chaingraph-types@0.5.5-dev.60
+  - @badaitech/chaingraph-trpc@0.5.5-dev.60
+
 ## 0.5.5-dev.59
 
 ### Patch Changes
