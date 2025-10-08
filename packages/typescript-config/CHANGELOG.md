@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.57
+
+### Patch Changes
+
+- fix: update package version and add wagmi and viem dependencies in package.json and vite config
+
 ## 0.5.5-dev.56
 
 ### Patch Changes
