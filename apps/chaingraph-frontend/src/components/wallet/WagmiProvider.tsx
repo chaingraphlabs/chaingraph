@@ -7,18 +7,55 @@
  */
 
 import type { ReactNode } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { WagmiProvider as WagmiProviderBase } from 'wagmi'
-import { wagmiConfig } from '@/store/wallet/wagmi.config'
+import { useEffect } from 'react'
 
-const queryClient = new QueryClient()
-
+/**
+ * @deprecated WagmiProvider is no longer needed and will be removed in v1.0.0.
+ *
+ * Chaingraph now uses Effector stores with wagmi Actions API instead of React Context.
+ * This means no provider is needed - wallet functionality works without it.
+ *
+ * **Migration Guide:**
+ *
+ * For standalone apps:
+ * ```tsx
+ * // Old (still works but deprecated)
+ * <WagmiProvider>
+ *   <ChainGraphProvider>
+ *     <Flow />
+ *   </ChainGraphProvider>
+ * </WagmiProvider>
+ *
+ * // New (recommended)
+ * <ChainGraphProvider>
+ *   <Flow />
+ * </ChainGraphProvider>
+ * ```
+ *
+ * For apps integrating chaingraph (Arch, CT, OKX):
+ * ```tsx
+ * import { initializeWalletConfig } from '@badaitech/chaingraph-frontend'
+ *
+ * // Initialize with your wagmi config
+ * initializeWalletConfig(yourWagmiConfig)
+ *
+ * // Then use chaingraph normally - no provider conflicts!
+ * <ChainGraphProvider>
+ *   <Flow />
+ * </ChainGraphProvider>
+ * ```
+ *
+ * @see {@link https://docs.chaingraph.dev/wallet-integration Documentation}
+ */
 export function WagmiProvider({ children }: { children: ReactNode }) {
-  return (
-    <WagmiProviderBase config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    </WagmiProviderBase>
-  )
+  useEffect(() => {
+    console.warn(
+      '[chaingraph] WagmiProvider is deprecated and will be removed in v1.0.0. '
+      + 'Wallet functionality now uses Effector stores and works without this provider. '
+      + 'See migration guide: https://docs.chaingraph.dev/wallet-integration',
+    )
+  }, [])
+
+  // Passthrough - no longer wraps children in any provider
+  return <>{children}</>
 }

@@ -9,8 +9,6 @@
 import { useUnit } from 'effector-react'
 import { AlertCircle, CheckCircle2, RefreshCw, Wallet } from 'lucide-react'
 import { useEffect } from 'react'
-import { formatEther } from 'viem'
-import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from 'wagmi'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,57 +17,49 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { $executionState } from '@/store/execution'
-import { $autoRecreateEnabled, $walletContext, disableAutoRecreate, enableAutoRecreate, initializeWalletConfig, recreateExecutionWithCurrentWallet, walletConnected } from '@/store/wallet'
+import {
+  $autoRecreateEnabled,
+  $balance,
+  $connectionState,
+  $connectors,
+  $currentChainName,
+  $formattedAddress,
+  $walletContext,
+  connectWallet,
+  disableAutoRecreate,
+  disconnectWallet,
+  enableAutoRecreate,
+  initializeWalletConfig,
+  recreateExecutionWithCurrentWallet,
+  refreshBalance,
+} from '@/store/wallet'
 import { wagmiConfig } from '@/store/wallet/wagmi.config'
 
 export function WalletIntegration() {
   const walletContext = useUnit($walletContext)
   const autoRecreateEnabled = useUnit($autoRecreateEnabled)
   const executionState = useUnit($executionState)
-  const { address, isConnected, connector } = useAccount()
-  const { connectors, connect, isPending } = useConnect()
-  const { disconnect } = useDisconnect()
-  const chainId = useChainId()
+  const balance = useUnit($balance)
+  const connectionState = useUnit($connectionState)
+  const connectors = useUnit($connectors)
+  const formattedAddress = useUnit($formattedAddress)
+  const chainName = useUnit($currentChainName)
 
   // Initialize wagmi config on mount
   useEffect(() => {
     initializeWalletConfig(wagmiConfig)
   }, [])
 
-  // Additional check for account changes that might be missed
-  useEffect(() => {
-    // If we have a previous address in wallet context and it's different from current
-    if (walletContext.address && address && walletContext.address !== address) {
-      walletConnected({ address, chainId })
-    }
-  }, [address, chainId, isConnected, walletContext.address])
-
-  // Get balance if connected
-  const { data: balance } = useBalance({
-    address,
-    query: {
-      enabled: !!address,
-    },
-  })
-
-  const getChainName = (id: number) => {
-    switch (id) {
-      case 1: return 'Ethereum Mainnet'
-      case 137: return 'Polygon'
-      case 56: return 'BNB Smart Chain'
-      case 42161: return 'Arbitrum One'
-      case 10: return 'Optimism'
-      case 8453: return 'Base'
-      default: return `Chain ${id}`
-    }
+  const handleConnect = () => {
+    connectWallet()
   }
 
-  const handleConnect = () => {
-    // Use the first available connector (usually injected/MetaMask)
-    const injectedConnector = connectors.find(c => c.id === 'injected')
-    if (injectedConnector) {
-      connect({ connector: injectedConnector })
-    }
+  const handleDisconnect = () => {
+    disconnectWallet()
+  }
+
+  const handleRefreshBalance = () => {
+    refreshBalance()
   }
 
   return (
@@ -83,7 +73,7 @@ export function WalletIntegration() {
 
       <Separator />
 
-      {!isConnected
+      {!walletContext.isConnected
         ? (
             <Card>
               <CardHeader className="pb-3">
@@ -98,12 +88,19 @@ export function WalletIntegration() {
               <CardContent>
                 <Button
                   onClick={handleConnect}
-                  disabled={isPending}
+                  disabled={connectionState.isConnecting}
                   size="sm"
                   className="w-full"
                 >
-                  {isPending ? 'Connecting...' : 'Connect Wallet'}
+                  {connectionState.isConnecting ? 'Connecting...' : 'Connect Wallet'}
                 </Button>
+                {connectionState.error && (
+                  <p className="text-xs text-red-500 mt-2">
+                    Error:
+                    {' '}
+                    {connectionState.error.message}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )
@@ -121,16 +118,14 @@ export function WalletIntegration() {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Address</span>
                       <code className="text-xs font-mono">
-                        {address?.slice(0, 6)}
-                        ...
-                        {address?.slice(-4)}
+                        {formattedAddress}
                       </code>
                     </div>
 
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">Network</span>
                       <Badge variant="secondary" className="text-xs">
-                        {getChainName(chainId)}
+                        {chainName}
                       </Badge>
                     </div>
 
@@ -138,29 +133,42 @@ export function WalletIntegration() {
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Balance</span>
                         <span className="text-xs font-mono">
-                          {Number.parseFloat(formatEther(balance.value)).toFixed(4)}
+                          {balance.formatted}
                           {' '}
                           {balance.symbol}
                         </span>
                       </div>
                     )}
 
-                    {connector && (
+                    {connectors.length > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Wallet</span>
-                        <span className="text-xs">{connector.name}</span>
+                        <span className="text-xs">{connectors[0].name}</span>
                       </div>
                     )}
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => disconnect()}
-                    className="w-full"
-                  >
-                    Disconnect
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRefreshBalance}
+                      disabled={!balance}
+                      className="flex-1"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-2" />
+                      Refresh
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDisconnect}
+                      disabled={connectionState.isDisconnecting}
+                      className="flex-1"
+                    >
+                      {connectionState.isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
