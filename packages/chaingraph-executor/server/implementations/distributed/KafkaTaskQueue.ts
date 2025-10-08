@@ -221,26 +221,45 @@ export class KafkaTaskQueue implements ITaskQueue {
             task_age_ms: Date.now() - task.timestamp,
           } as TaskQueueMetric)
 
-          // Create manual commit context
+          // Create manual commit context with error handling
           const context: TaskConsumerContext = {
             commitOffset: async () => {
               if (!this.consumer) {
                 throw new Error('Consumer not initialized')
               }
 
-              // Commit the offset for this specific message
-              await this.consumer.commitOffsets([{
-                topic,
-                partition,
-                offset: (Number(message.offset) + 1).toString(), // Commit next offset
-              }])
+              try {
+                // Commit the offset for this specific message
+                await this.consumer.commitOffsets([{
+                  topic,
+                  partition,
+                  offset: (Number(message.offset) + 1).toString(), // Commit next offset
+                }])
 
-              // Track commit
-              logger.debug({
-                executionId: task.executionId,
-                partition,
-                offset: Number(message.offset) + 1,
-              }, 'Kafka offset committed')
+                // Track successful commit
+                logger.debug({
+                  executionId: task.executionId,
+                  partition,
+                  offset: Number(message.offset) + 1,
+                }, 'Kafka offset committed successfully')
+              } catch (commitError) {
+                // Log error but don't throw - let processing continue
+                // If worker crashes, recovery will handle the task
+                // If message redelivered, claim conflict will prevent duplicate processing
+                logger.error({
+                  executionId: task.executionId,
+                  partition,
+                  offset: message.offset,
+                  error: commitError instanceof Error ? commitError.message : String(commitError),
+                }, 'Failed to commit Kafka offset - message may be redelivered')
+
+                // Track commit failure
+                logger.warn({
+                  executionId: task.executionId,
+                  partition,
+                  error: commitError instanceof Error ? commitError.message : String(commitError),
+                }, 'Offset commit failed, will be tracked in metrics')
+              }
             },
             partition,
             offset: message.offset.toString(),
@@ -264,7 +283,7 @@ export class KafkaTaskQueue implements ITaskQueue {
             event: 'ack',
             timestamp: Date.now(),
             duration_ms: Date.now() - consumeStartTime,
-          })
+          } as TaskQueueMetric)
         } catch (error) {
           // Track processing error
           this.metrics.track({

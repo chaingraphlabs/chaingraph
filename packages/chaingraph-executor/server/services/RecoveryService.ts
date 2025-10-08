@@ -26,6 +26,7 @@ export class RecoveryService {
   private recoveryTimer?: NodeJS.Timeout
   private isRunning = false
   private readonly workerId: string
+  private readonly failedRecoveryAttempts: Map<string, number> = new Map() // Track failed publish attempts
 
   constructor(
     private readonly store: IExecutionStore,
@@ -106,10 +107,11 @@ export class RecoveryService {
    */
   private async scanAndRecover(): Promise<void> {
     const scanStartTime = Date.now()
+    let lockAcquired = false
 
     try {
       // Try to acquire advisory lock
-      const lockAcquired = await this.acquireRecoveryLock()
+      lockAcquired = await this.acquireRecoveryLock()
 
       if (!lockAcquired) {
         logger.debug({
@@ -184,8 +186,10 @@ export class RecoveryService {
         workerId: this.workerId,
       }, 'Error during recovery scan')
     } finally {
-      // Always release the lock
-      await this.releaseRecoveryLock()
+      // Only release the lock if we acquired it
+      if (lockAcquired) {
+        await this.releaseRecoveryLock()
+      }
     }
   }
 
@@ -259,31 +263,76 @@ export class RecoveryService {
         previousWorkerId,
       }, 'Recovering execution')
 
-      // Republish task to Kafka
-      await this.taskQueue.publishTask({
-        executionId: execution.id,
-        flowId: execution.flowId,
-        timestamp: Date.now(),
-        retryCount: execution.failureCount, // Use failure count as retry count
-        maxRetries: this.MAX_FAILURE_COUNT,
-      })
+      // Republish task to Kafka with retry handling
+      try {
+        await this.taskQueue.publishTask({
+          executionId: execution.id,
+          flowId: execution.flowId,
+          timestamp: Date.now(),
+          retryCount: execution.failureCount, // Use failure count as retry count
+          maxRetries: this.MAX_FAILURE_COUNT,
+        })
 
-      // Record recovery action
-      await this.store.recordRecovery(
-        execution.id,
-        this.workerId,
-        recoveryReason,
-        previousStatus,
-        previousWorkerId,
-      )
+        // Clear failed recovery attempts on success
+        this.failedRecoveryAttempts.delete(execution.id)
 
-      logger.info({
-        executionId: execution.id,
-        recoveryReason,
-        recoveryDuration: Date.now() - recoveryStartTime,
-      }, 'Successfully recovered execution')
+        // Record recovery action
+        await this.store.recordRecovery(
+          execution.id,
+          this.workerId,
+          recoveryReason,
+          previousStatus,
+          previousWorkerId,
+        )
 
-      return true
+        logger.info({
+          executionId: execution.id,
+          recoveryReason,
+          recoveryDuration: Date.now() - recoveryStartTime,
+        }, 'Successfully recovered execution')
+
+        return true
+      } catch (publishError) {
+        // Track failed recovery publish attempts
+        const attemptCount = (this.failedRecoveryAttempts.get(execution.id) || 0) + 1
+        this.failedRecoveryAttempts.set(execution.id, attemptCount)
+
+        logger.error({
+          error: publishError instanceof Error ? publishError.message : String(publishError),
+          executionId: execution.id,
+          workerId: this.workerId,
+          attemptCount,
+        }, 'Failed to republish task during recovery')
+
+        // If we've failed to recover this execution 5 times, mark it as permanently failed
+        if (attemptCount >= 5) {
+          logger.error({
+            executionId: execution.id,
+            attemptCount,
+          }, 'Recovery publish failed 5 times, marking execution as permanently failed')
+
+          await this.store.updateExecutionStatus({
+            executionId: execution.id,
+            status: ExecutionStatus.Failed,
+            errorMessage: `Recovery failed after ${attemptCount} republish attempts: ${publishError instanceof Error ? publishError.message : String(publishError)}`,
+          })
+
+          // Record recovery failure
+          await this.store.recordRecovery(
+            execution.id,
+            this.workerId,
+            'recovery_publish_failed',
+            previousStatus,
+            previousWorkerId,
+          )
+
+          // Clear from tracking
+          this.failedRecoveryAttempts.delete(execution.id)
+        }
+
+        // Don't throw - continue with other executions
+        return false
+      }
     } catch (error) {
       logger.error({
         error: error instanceof Error ? error.message : String(error),

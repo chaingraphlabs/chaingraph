@@ -103,6 +103,7 @@ export class KafkaEventBus implements IEventBus {
           key: executionId, // Use executionId as partition key for ordering
           value,
           timestamp: Date.now().toString(),
+          partition: targetPartition,
           headers: {
             'partition-hint': targetPartition.toString(),
             'execution-id': executionId,
@@ -152,6 +153,7 @@ export class KafkaEventBus implements IEventBus {
       heartbeatInterval: 3000,
       maxWaitTimeInMs: 10,
       allowAutoTopicCreation: false,
+      partitionAssigners: [],
       retry: {
         initialRetryTime: 100, // Start with 100ms retry delay
         maxRetryTime: 5000, // Max 5 seconds between retries
@@ -315,16 +317,15 @@ export class KafkaEventBus implements IEventBus {
       await consumer.connect()
       await consumer.subscribe({
         topics: [KafkaTopics.EVENTS],
-        // TODO: needs to make fromBeginning: false when the executions storage is ready
-        fromBeginning: true, // Start from beginning to catch all events
       })
 
+      // you don't need to await consumer#run
       const eventBuffer: ExecutionEventImpl[] = []
       let resolver: ((value: ExecutionEventImpl[]) => void) | null = null
       let rejecter: ((error: Error) => void) | null = null
 
       // Start consuming with batch processing
-      await consumer.run({
+      const consumerPromise = consumer.run({
         eachBatch: async ({ batch }) => {
           const batchEvents: ExecutionEventImpl[] = []
           let hasError = false
@@ -478,6 +479,17 @@ export class KafkaEventBus implements IEventBus {
           }
         },
       })
+
+      await consumer.seek({
+        topic: KafkaTopics.EVENTS,
+        partition: targetPartition,
+        // TODO: store the offset of the particular executionId to resume from
+        // For now, we start from beginning to ensure no events are missed
+        // This may lead to processing older events, but they will be filtered out
+        offset: '0', // Start from beginning to ensure no events are missed
+      })
+
+      await consumerPromise
 
       // Yield events as they come
       while (true) {
