@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.5.5-dev.56
+
+### Patch Changes
+
+- fix: refactor wallet integration to use Effector stores, remove deprecated WagmiProvider, and update balance handling
+
 ## 0.5.5-dev.55
 
 ### Patch Changes

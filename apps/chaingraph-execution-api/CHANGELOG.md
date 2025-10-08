@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.56
+
+### Patch Changes
+
+- fix: refactor wallet integration to use Effector stores, remove deprecated WagmiProvider, and update balance handling
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.56
+  - @badaitech/chaingraph-types@0.5.5-dev.56
+  - @badaitech/chaingraph-trpc@0.5.5-dev.56
+
 ## 0.5.5-dev.55
 
 ### Patch Changes
