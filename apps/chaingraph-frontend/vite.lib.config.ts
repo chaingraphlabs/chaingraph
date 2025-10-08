@@ -86,8 +86,6 @@ export default defineConfig({
         'react-dom',
         'react/jsx-runtime',
         'superjson',
-        'viem',
-        'wagmi',
       ],
       output: {
         assetFileNames: 'chaingraph-frontend.css',
@@ -102,8 +100,6 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
       'superjson',
-      'viem',
-      'wagmi',
       '@xyflow/react',
       '@xyflow/system',
       'lucide-react',
