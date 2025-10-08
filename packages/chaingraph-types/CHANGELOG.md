@@ -1,5 +1,35 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.56
+
+### Patch Changes
+
+- fix: refactor wallet integration to use Effector stores, remove deprecated WagmiProvider, and update balance handling
+
+## 0.5.5-dev.55
+
+### Patch Changes
+
+- fix: update Vite config to clean output directory and adjust rollup options for ESM output
+
+## 0.5.5-dev.54
+
+### Patch Changes
+
+- fix: update package.json version and adjust Vite config for ESM compatibility
+
+## 0.5.5-dev.53
+
+### Patch Changes
+
+- fix: update package.json and vite config for ESM compatibility and remove unnecessary plugins
+
+## 0.5.5-dev.52
+
+### Patch Changes
+
+- fix: reorganize rollup external dependencies and update eslint ignore patterns
+
 ## 0.5.5-dev.51
 
 ### Patch Changes

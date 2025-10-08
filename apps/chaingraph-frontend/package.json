@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.5.5-dev.51",
+  "version": "0.5.5-dev.62",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -17,19 +17,13 @@
   "exports": {
     ".": {
       "types": "./dist/lib/exports.d.ts",
-      "import": "./dist/lib/chaingraph-frontend.mjs",
-      "default": "./dist/lib/chaingraph-frontend.js"
-    },
-    "./store": {
-      "types": "./dist/lib/store.d.ts",
-      "import": "./dist/lib/store.mjs",
-      "default": "./dist/lib/store.js"
+      "import": "./dist/lib/chaingraph-frontend.js"
     },
     "./style.css": "./dist/lib/chaingraph-frontend.css",
     "./styles": "./dist/lib/chaingraph-frontend.css"
   },
-  "main": "./dist/lib/chaingraph-frontend.mjs",
-  "module": "./dist/lib/chaingraph-frontend.mjs",
+  "main": "./dist/lib/chaingraph-frontend.js",
+  "module": "./dist/lib/chaingraph-frontend.js",
   "types": "./dist/lib/exports.d.ts",
   "style": "./dist/lib/chaingraph-frontend.css",
   "files": [
@@ -38,7 +32,7 @@
   "scripts": {
     "dev": "vite",
     "dev-force": "vite --force",
-    "build": "npm run build:app && npm run build:lib",
+    "build": "npm run build:lib",
     "build:app": "tsc -b && vite build --config vite.app.config.ts",
     "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
     "lint": "eslint .",
@@ -49,14 +43,10 @@
   "peerDependencies": {
     "@xyflow/react": "^12.8.6",
     "@xyflow/system": "^0.0.70",
-    "effector": "^23.4.4",
-    "effector-react": "^23.3.0",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "superjson": "^2.2.2",
-    "viem": "^2.38.0",
-    "wagmi": "^2.17.5"
+    "superjson": "^2.2.2"
   },
   "dependencies": {
     "@badaitech/badai-api": "workspace:*",

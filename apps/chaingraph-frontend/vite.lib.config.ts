@@ -34,9 +34,8 @@ export default defineConfig({
     }),
     react({
       tsDecorators: true,
-      plugins: [
-        ['@effector/swc-plugin', {}],
-      ],
+      // Remove @effector/swc-plugin to avoid transforming external effector imports
+      plugins: [],
     }),
     tsconfigPaths({
       configNames: ['tsconfig.json', 'tsconfig.lib.json'],
@@ -68,74 +67,42 @@ export default defineConfig({
   },
   build: {
     minify: 'esbuild',
-    sourcemap: false,
+    sourcemap: true,
     cssCodeSplit: false,
     cssMinify: true,
     outDir: 'dist/lib',
+    emptyOutDir: true, // Clean dist folder before build
     lib: {
       entry: 'src/exports.tsx',
-      name: 'ChainGraphFrontend', // Used for UMD/IIFE bundles
-      formats: ['es', 'umd'],
-      fileName: format => `chaingraph-frontend.${format === 'es' ? 'mjs' : 'js'}`,
+      formats: ['es'],
+      fileName: 'chaingraph-frontend',
     },
     rollupOptions: {
       external: [
-        'superjson',
+        '@xyflow/react',
+        '@xyflow/system',
+        'lucide-react',
         'react',
         'react-dom',
         'react/jsx-runtime',
-
-        // Large blockchain libs
-        'viem',
-        'wagmi',
-
-        // Heavy UI libs
-        '@xyflow/react',
-        '@xyflow/system',
-        'ag-grid-community',
-        'ag-grid-react',
-        'framer-motion',
-
-        // State management
-        'effector',
-        'effector-react',
-        '@tanstack/react-query',
-        '@tanstack/react-query-devtools',
-        '@trpc/react-query',
-
-        // Radix UI (regex pattern)
-        /@radix-ui\/.*/,
-
-        // Other heavy deps
-        'react-router-dom',
-        'react-markdown',
-        'remark-gfm',
-        'yaml',
-        'color',
+        'superjson',
       ],
       output: {
-        globals: {
-          'superjson': 'SuperJSON',
-          'react': 'React',
-          'react-dom': 'ReactDOM',
-          'react/jsx-runtime': 'jsxRuntime',
-        },
         assetFileNames: 'chaingraph-frontend.css',
+        interop: 'esModule',
+        inlineDynamicImports: true,
       },
     },
-    commonjsOptions: {
-      // This helps with CommonJS dependencies
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
-    // Don't empty outDir to preserve app build
-    emptyOutDir: false,
   },
   optimizeDeps: {
     include: [
       'react',
       'react-dom',
       'react/jsx-runtime',
+      'superjson',
+      '@xyflow/react',
+      '@xyflow/system',
+      'lucide-react',
     ],
     esbuildOptions: {
       // Keep names to avoid minification causing issues

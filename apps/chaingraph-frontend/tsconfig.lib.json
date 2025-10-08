@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "composite": true,
+    "composite": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "rootDir": "src",
@@ -17,11 +17,10 @@
       "@badaitech/badai-api/*": ["../../packages/badai-api/src/*"]
     },
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "emitDeclarationOnly": true,
     "noEmit": false,
-    "outDir": "dist/lib",
-    "sourceMap": true
+    "outDir": "dist/lib"
   },
   "include": [
     "src/**/*.ts",

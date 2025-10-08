@@ -15,7 +15,6 @@ import { ShadowWithStyles } from '@/components/ui/shadow'
 import { DndContextProvider, DndProvider } from '../components/dnd'
 import { MenuPositionProvider } from '../components/flow/components/context-menu'
 import { ThemeProvider } from '../components/theme/ThemeProvider'
-import { WagmiProvider } from '../components/wallet/WagmiProvider'
 import { ZoomProvider } from './ZoomProvider'
 
 interface RootProviderProps {
@@ -40,27 +39,30 @@ export function RootProvider({
   // const trpcClient = useUnit($trpcClient)
   // const trpcClientExecutor = useUnit($trpcClientExecutor)
 
+  // Note: WagmiProvider has been removed. Wallet functionality now uses
+  // Effector stores with wagmi Actions API. Parent apps should call
+  // initializeWalletConfig(theirWagmiConfig) to provide their own wagmi config.
+  // See @/store/wallet for more details.
+
   return (
     <ShadowWithStyles className={wrapperClassName}>
       <ThemeProvider className={className} style={style} theme={theme}>
         <TooltipProvider>
-          <WagmiProvider>
-            {/* <MainTRPCProvider trpcClient={trpcClient} queryClient={queryClientMain}> */}
-            {/*  <ExecutorTRPCProvider trpcClient={trpcClientExecutor} queryClient={queryClientExecutor}> */}
-            <ReactFlowProvider>
-              <ZoomProvider>
-                <DndContextProvider>
-                  <DndProvider>
-                    <MenuPositionProvider>
-                      {children ?? <Outlet />}
-                    </MenuPositionProvider>
-                  </DndProvider>
-                </DndContextProvider>
-              </ZoomProvider>
-            </ReactFlowProvider>
-            {/* </ExecutorTRPCProvider> */}
-            {/* </MainTRPCProvider> */}
-          </WagmiProvider>
+          {/* <MainTRPCProvider trpcClient={trpcClient} queryClient={queryClientMain}> */}
+          {/*  <ExecutorTRPCProvider trpcClient={trpcClientExecutor} queryClient={queryClientExecutor}> */}
+          <ReactFlowProvider>
+            <ZoomProvider>
+              <DndContextProvider>
+                <DndProvider>
+                  <MenuPositionProvider>
+                    {children ?? <Outlet />}
+                  </MenuPositionProvider>
+                </DndProvider>
+              </DndContextProvider>
+            </ZoomProvider>
+          </ReactFlowProvider>
+          {/* </ExecutorTRPCProvider> */}
+          {/* </MainTRPCProvider> */}
         </TooltipProvider>
         <div id="chaingraph-portal" />
       </ThemeProvider>

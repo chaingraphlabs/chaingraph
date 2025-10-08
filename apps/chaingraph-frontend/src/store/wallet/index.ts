@@ -6,11 +6,34 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-// Export everything from effects
+// Export effects for auto-recreation
 export * from './effects'
 
-// Export everything from wallet.store
-export * from './wallet.store'
+// Export types
+export type { BalanceData, ConnectionState, ConnectorInfo } from './wallet.store'
+
+// Export stores
+export {
+  $balance,
+  $connectionState,
+  $connectors,
+  $currentChainName,
+  $formattedAddress,
+  $isWalletReady,
+  $wagmiConfig,
+  $walletContext,
+} from './wallet.store'
+
+// Export user action events
+export {
+  connectWallet,
+  disconnectWallet,
+  initializeWalletConfig,
+  refreshBalance,
+} from './wallet.store'
+
+// Export helper functions
+export { getWalletContextForExecution } from './wallet.store'
 
 // Import effects to ensure they are registered
 import './effects'

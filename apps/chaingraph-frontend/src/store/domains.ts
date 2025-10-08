@@ -48,3 +48,9 @@ export const mcpDomain = createDomain('mcp')
 
 // Initialization domain for app initialization state management
 export const initializationDomain = createDomain('initialization')
+
+// Wallet domain for wallet integration and state management
+export const walletDomain = createDomain('wallet')
+
+// import { debug } from 'patronum'
+// debug(walletDomain)
