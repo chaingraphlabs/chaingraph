@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.5.5-dev.60
+
+### Patch Changes
+
+- fix: add new TRPC and related dependencies in package.json
+
 ## 0.5.5-dev.59
 
 ### Patch Changes
