@@ -133,9 +133,7 @@ export class KafkaTaskQueue implements ITaskQueue {
       maxWaitTimeInMs: 100, // fetch.max.wait.ms equivalent - wait up to 100ms
       minBytes: 1, // fetch.min.bytes equivalent - fetch even single bytes
       maxBytes: 52428800, // fetch.max.bytes equivalent - 50MB max fetch
-      maxBytesPerPartition: 10485760, // max.partition.fetch.bytes equivalent - 10MB per partition
-      maxPollRecords: 1, // Process one task at a time for long-running tasks
-      maxPollIntervalMs: 35 * 60 * 1000, // 35 minutes for 30-minute tasks with buffer
+      maxBytesPerPartition: 1048576, // 1MB per partition for controlled processing
       readUncommitted: false, // Read only committed messages
       allowAutoTopicCreation: false,
       retry: {
@@ -145,6 +143,31 @@ export class KafkaTaskQueue implements ITaskQueue {
     })
 
     await this.consumer.connect()
+
+    // Add rebalance event listeners for monitoring
+    this.consumer.on(this.consumer.events.GROUP_JOIN, (event) => {
+      logger.info({
+        groupId: event.payload.groupId,
+        memberId: event.payload.memberId,
+        leaderId: event.payload.leaderId,
+        duration: event.payload.duration,
+      }, 'Consumer joined group')
+    })
+
+    this.consumer.on(this.consumer.events.REBALANCING, (event) => {
+      logger.warn({
+        groupId: event.payload.groupId,
+        memberId: event.payload.memberId,
+      }, 'Consumer group rebalancing started')
+    })
+
+    this.consumer.on(this.consumer.events.CRASH, (event) => {
+      logger.error({
+        error: event.payload.error,
+        groupId: event.payload.groupId,
+      }, 'Consumer crashed')
+    })
+
     await this.consumer.subscribe({
       topics: [KafkaTopics.TASKS],
       fromBeginning: false,
@@ -154,6 +177,7 @@ export class KafkaTaskQueue implements ITaskQueue {
 
     await this.consumer.run({
       autoCommit: false, // Disable auto-commit for manual control
+      partitionsConsumedConcurrently: 1, // Process one partition at a time for long-running tasks
       eachMessage: async ({ message, partition, topic }) => {
         if (!message.value) {
           logger.warn('Received task with no value')
@@ -212,13 +236,11 @@ export class KafkaTaskQueue implements ITaskQueue {
               }])
 
               // Track commit
-              scopedMetrics.track({
-                stage: MetricStages.TASK_QUEUE,
-                event: 'commit',
-                timestamp: Date.now(),
+              logger.debug({
+                executionId: task.executionId,
                 partition,
                 offset: Number(message.offset) + 1,
-              } as TaskQueueMetric)
+              }, 'Kafka offset committed')
             },
             partition,
             offset: message.offset.toString(),
@@ -239,7 +261,7 @@ export class KafkaTaskQueue implements ITaskQueue {
           // Track successful processing
           scopedMetrics.track({
             stage: MetricStages.TASK_QUEUE,
-            event: 'processed',
+            event: 'ack',
             timestamp: Date.now(),
             duration_ms: Date.now() - consumeStartTime,
           })

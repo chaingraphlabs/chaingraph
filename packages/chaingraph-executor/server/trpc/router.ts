@@ -190,6 +190,12 @@ export const executionRouter = router({
         options: input.options || {},
         integration: input.integration || {},
         externalEvents: input.events || [],
+        // Failure tracking and recovery fields
+        failureCount: 0,
+        lastFailureReason: null,
+        lastFailureAt: null,
+        processingStartedAt: null,
+        processingWorkerId: null,
       }
 
       try {

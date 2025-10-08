@@ -113,7 +113,22 @@ export class ExecutionWorker {
       try {
         const expired = await this.store.expireOldClaims()
         if (expired > 0) {
-          logger.debug({ count: expired }, 'Expired old claims')
+          logger.debug({ count: expired, workerId: this.workerId }, 'Expired old claims')
+
+          // If many claims expired, trigger immediate recovery scan for faster recovery
+          if (expired >= 5 && this.recoveryService) {
+            logger.info({
+              count: expired,
+              workerId: this.workerId,
+            }, 'Many claims expired, triggering immediate recovery scan')
+            // Don't await - let it run in background
+            this.recoveryService.triggerRecoveryScan().catch((error) => {
+              logger.error({
+                error: error instanceof Error ? error.message : String(error),
+                workerId: this.workerId,
+              }, 'Failed to trigger recovery scan')
+            })
+          }
         }
       } catch (error) {
         logger.error({ error }, 'Failed to expire old claims')
@@ -358,14 +373,12 @@ export class ExecutionWorker {
 
       const startTime = Date.now()
 
-      // Track status update and set processing info
+      // Track status update (processing info already set by claimExecution)
       lifecycleBuilder.startPhase('status_update')
       const runningStatusPromise = scopedMetrics.trackOperation({
         execute: () => this.setExecutionStatus(task.executionId, {
           status: ExecutionStatus.Running,
           startedAt: new Date(startTime),
-          processingStartedAt: new Date(startTime),
-          processingWorkerId: this.workerId,
         }),
         stage: MetricStages.DB_OPERATION,
         event: 'status_update_running',
@@ -406,7 +419,6 @@ export class ExecutionWorker {
         execute: () => this.setExecutionStatus(task.executionId, {
           status: ExecutionStatus.Completed,
           completedAt: new Date(completeTime),
-          processingWorkerId: null, // Clear processing worker on completion
         }),
         stage: MetricStages.DB_OPERATION,
         event: 'status_update_completed',
@@ -541,7 +553,6 @@ export class ExecutionWorker {
         await this.setExecutionStatus(task.executionId, {
           status: ExecutionStatus.Created, // Reset to created for retry
           errorMessage: `Retry ${task.retryCount}/${task.maxRetries}: ${failureReason}`,
-          processingWorkerId: null, // Clear processing worker for retry
         })
 
         // Re-publish task with retry info
@@ -564,7 +575,6 @@ export class ExecutionWorker {
           await this.setExecutionStatus(task.executionId, {
             status: ExecutionStatus.Failed,
             errorMessage: failureReason,
-            processingWorkerId: null, // Clear processing worker
           })
 
           logger.error({

@@ -82,6 +82,25 @@ export class RecoveryService {
   }
 
   /**
+   * Manually trigger a recovery scan
+   * Useful for immediate recovery after detecting expired claims
+   */
+  async triggerRecoveryScan(): Promise<void> {
+    if (!this.isRunning) {
+      logger.warn({
+        workerId: this.workerId,
+      }, 'Recovery service not running, cannot trigger scan')
+      return
+    }
+
+    logger.debug({
+      workerId: this.workerId,
+    }, 'Manual recovery scan triggered')
+
+    await this.scanAndRecover()
+  }
+
+  /**
    * Scan for executions needing recovery and recover them
    * Uses distributed lock to ensure only one worker runs recovery at a time
    */
@@ -218,7 +237,6 @@ export class RecoveryService {
           executionId: execution.id,
           status: ExecutionStatus.Failed,
           errorMessage: `Exceeded maximum failure count (${this.MAX_FAILURE_COUNT})`,
-          processingWorkerId: null,
         })
 
         // Record recovery action (marking as failed)

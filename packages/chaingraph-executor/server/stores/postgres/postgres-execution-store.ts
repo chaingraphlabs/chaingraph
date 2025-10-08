@@ -236,13 +236,34 @@ export class PostgresExecutionStore implements IExecutionStore {
   /**
    * Claim an execution for a worker atomically
    * Uses PostgreSQL row-level locking to ensure only one worker can claim an execution
+   * Also updates the execution's processing fields in the same transaction
    */
   async claimExecution(executionId: string, workerId: string, timeoutMs: number): Promise<boolean> {
     const expiresAt = new Date(Date.now() + timeoutMs)
+    const now = new Date()
 
     try {
       // Use a transaction for atomicity
       return await this.db.transaction(async (tx) => {
+        // First, check the execution status
+        const execution = await tx
+          .select()
+          .from(executionsTable)
+          .where(eq(executionsTable.id, executionId))
+          .for('update') // Lock the execution row
+          .limit(1)
+
+        if (execution.length === 0) {
+          return false // Execution doesn't exist
+        }
+
+        const executionRow = execution[0]
+
+        // Don't claim if already in terminal state
+        if (executionRow.status === 'completed' || executionRow.status === 'failed') {
+          return false
+        }
+
         // Check if execution exists and is not already claimed
         const existingClaim = await tx
           .select()
@@ -254,18 +275,29 @@ export class PostgresExecutionStore implements IExecutionStore {
         if (existingClaim.length > 0) {
           const claim = existingClaim[0]
           // Check if claim is expired
-          if (claim.expiresAt < new Date() && claim.status === 'active') {
+          if (claim.expiresAt < now && claim.status === 'active') {
             // Expired claim, update it
             await tx
               .update(executionClaimsTable)
               .set({
                 workerId,
-                claimedAt: new Date(),
+                claimedAt: now,
                 expiresAt,
-                heartbeatAt: new Date(),
+                heartbeatAt: now,
                 status: 'active',
               })
               .where(eq(executionClaimsTable.executionId, executionId))
+
+            // Update execution's processing info
+            await tx
+              .update(executionsTable)
+              .set({
+                processingWorkerId: workerId,
+                processingStartedAt: now,
+                updatedAt: now,
+              })
+              .where(eq(executionsTable.id, executionId))
+
             return true
           }
           // Claim exists and is not expired
@@ -276,16 +308,27 @@ export class PostgresExecutionStore implements IExecutionStore {
         await tx.insert(executionClaimsTable).values({
           executionId,
           workerId,
-          claimedAt: new Date(),
+          claimedAt: now,
           expiresAt,
-          heartbeatAt: new Date(),
+          heartbeatAt: now,
           status: 'active',
         })
+
+        // Update execution's processing info
+        await tx
+          .update(executionsTable)
+          .set({
+            processingWorkerId: workerId,
+            processingStartedAt: now,
+            updatedAt: now,
+          })
+          .where(eq(executionsTable.id, executionId))
+
         return true
       })
     } catch (error) {
       // Handle unique constraint violation (race condition)
-      if ((error as any).code === '23505') {
+      if ((error as Error & { code?: string }).code === '23505') {
         return false
       }
       throw error
@@ -294,19 +337,37 @@ export class PostgresExecutionStore implements IExecutionStore {
 
   /**
    * Release an execution claim
+   * Also clears the processing fields in the execution row
    */
   async releaseExecution(executionId: string, workerId: string): Promise<void> {
-    await this.db
-      .update(executionClaimsTable)
-      .set({
-        status: 'released',
-      })
-      .where(
-        and(
-          eq(executionClaimsTable.executionId, executionId),
-          eq(executionClaimsTable.workerId, workerId),
-        ),
-      )
+    await this.db.transaction(async (tx) => {
+      // Release the claim
+      await tx
+        .update(executionClaimsTable)
+        .set({
+          status: 'released',
+        })
+        .where(
+          and(
+            eq(executionClaimsTable.executionId, executionId),
+            eq(executionClaimsTable.workerId, workerId),
+          ),
+        )
+
+      // Clear processing info from execution
+      await tx
+        .update(executionsTable)
+        .set({
+          processingWorkerId: null,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(executionsTable.id, executionId),
+            eq(executionsTable.processingWorkerId, workerId),
+          ),
+        )
+    })
   }
 
   /**
@@ -448,18 +509,18 @@ export class PostgresExecutionStore implements IExecutionStore {
         or(
           // No active claim for created executions
           and(
-            eq(executionsTable.status, 'created'),
+            eq(executionsTable.status, sql`'created'`),
             isNull(executionClaimsTable.executionId),
             eq(executionsTable.failureCount, 0),
           ),
           // Expired claim for running executions
           and(
-            eq(executionsTable.status, 'running'),
+            eq(executionsTable.status, sql`'running'`),
             lt(executionClaimsTable.expiresAt, new Date()),
           ),
           // Failed executions ready for retry
           and(
-            eq(executionsTable.status, 'created'),
+            eq(executionsTable.status, sql`'created'`),
             lt(executionsTable.failureCount, 5),
             lt(executionsTable.lastFailureAt, oneMinuteAgo),
           ),

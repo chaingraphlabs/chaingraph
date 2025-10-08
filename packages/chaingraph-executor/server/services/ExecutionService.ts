@@ -316,6 +316,12 @@ export class ExecutionService implements IExecutionService {
           payload: event.data,
         },
       ],
+      // Failure tracking and recovery fields
+      failureCount: 0,
+      lastFailureReason: null,
+      lastFailureAt: null,
+      processingStartedAt: null,
+      processingWorkerId: null,
     }
 
     // Create child execution in store with metrics
