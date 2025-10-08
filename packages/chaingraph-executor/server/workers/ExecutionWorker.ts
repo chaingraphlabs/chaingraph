@@ -35,6 +35,7 @@ import {
   MetricStages,
 } from '../metrics'
 import { ExecutionService } from '../services/ExecutionService'
+import { RecoveryService } from '../services/RecoveryService'
 import { loadFlow } from '../stores/flow-store'
 import { config } from '../utils/config'
 import { createLogger } from '../utils/logger'
@@ -49,6 +50,7 @@ const logger = createLogger('execution-worker')
 export class ExecutionWorker {
   private isRunning = false
   private executionService: ExecutionService | null = null
+  private recoveryService: RecoveryService | null = null
   private commandConsumer: Consumer | null = null
   private activeExecutions: Map<string, {
     task: ExecutionTask
@@ -89,6 +91,17 @@ export class ExecutionWorker {
       this.eventBus,
       this.taskQueue,
     )
+
+    // Create and start recovery service if enabled
+    if (config.recovery?.enabled) {
+      this.recoveryService = new RecoveryService(
+        this.store,
+        this.taskQueue,
+        this.workerId,
+      )
+      await this.recoveryService.start()
+      logger.info({ workerId: this.workerId }, 'Recovery service started')
+    }
 
     // Start command consumer if in distributed mode
     if (config.mode === 'distributed') {
@@ -345,12 +358,14 @@ export class ExecutionWorker {
 
       const startTime = Date.now()
 
-      // Track status update
+      // Track status update and set processing info
       lifecycleBuilder.startPhase('status_update')
       const runningStatusPromise = scopedMetrics.trackOperation({
         execute: () => this.setExecutionStatus(task.executionId, {
           status: ExecutionStatus.Running,
           startedAt: new Date(startTime),
+          processingStartedAt: new Date(startTime),
+          processingWorkerId: this.workerId,
         }),
         stage: MetricStages.DB_OPERATION,
         event: 'status_update_running',
@@ -391,6 +406,7 @@ export class ExecutionWorker {
         execute: () => this.setExecutionStatus(task.executionId, {
           status: ExecutionStatus.Completed,
           completedAt: new Date(completeTime),
+          processingWorkerId: null, // Clear processing worker on completion
         }),
         stage: MetricStages.DB_OPERATION,
         event: 'status_update_completed',
@@ -484,6 +500,7 @@ export class ExecutionWorker {
       if (task.retryCount! < task.maxRetries!) {
         task.retryCount!++
         const retryDelay = task.retryDelayMs! * 2 ** (task.retryCount! - 1) // Exponential backoff
+        const failureReason = error instanceof Error ? error.message : String(error)
 
         // Track retry metrics
         scopedMetrics.track({
@@ -500,7 +517,7 @@ export class ExecutionWorker {
         }
         task.retryHistory.push({
           attempt: task.retryCount!,
-          error: error instanceof Error ? error.message : String(error),
+          error: failureReason,
           timestamp: Date.now(),
           workerId: this.workerId,
         })
@@ -512,10 +529,19 @@ export class ExecutionWorker {
           retryHistory: task.retryHistory,
         }, 'Scheduling task retry')
 
+        // Update failure info in database
+        const currentFailureCount = (executionRow.failureCount || 0) + 1
+        await this.store.updateFailureInfo(
+          task.executionId,
+          currentFailureCount,
+          failureReason,
+        )
+
         // Update execution status to indicate retry
         await this.setExecutionStatus(task.executionId, {
           status: ExecutionStatus.Created, // Reset to created for retry
-          errorMessage: `Retry ${task.retryCount}/${task.maxRetries}: ${error instanceof Error ? error.message : String(error)}`,
+          errorMessage: `Retry ${task.retryCount}/${task.maxRetries}: ${failureReason}`,
+          processingWorkerId: null, // Clear processing worker for retry
         })
 
         // Re-publish task with retry info
@@ -524,14 +550,27 @@ export class ExecutionWorker {
       } else {
         // Max retries exceeded, mark as permanently failed
         try {
+          const failureReason = error instanceof Error ? error.message : 'Unknown error'
+          const finalFailureCount = (executionRow.failureCount || 0) + 1
+
+          // Update failure info one last time
+          await this.store.updateFailureInfo(
+            task.executionId,
+            finalFailureCount,
+            `Max retries exceeded: ${failureReason}`,
+          )
+
+          // Mark as permanently failed
           await this.setExecutionStatus(task.executionId, {
             status: ExecutionStatus.Failed,
-            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            errorMessage: failureReason,
+            processingWorkerId: null, // Clear processing worker
           })
 
           logger.error({
             executionId: task.executionId,
             retryCount: task.retryCount,
+            failureCount: finalFailureCount,
           }, 'Max retries exceeded, execution marked as failed')
 
           // TODO: Send to dead letter queue
@@ -765,6 +804,13 @@ export class ExecutionWorker {
     }
 
     logger.info('Stopping execution worker')
+
+    // Stop recovery service
+    if (this.recoveryService) {
+      await this.recoveryService.stop()
+      this.recoveryService = null
+      logger.info({ workerId: this.workerId }, 'Recovery service stopped')
+    }
 
     // Stop resource monitoring
     if (this.resourceMonitorInterval) {

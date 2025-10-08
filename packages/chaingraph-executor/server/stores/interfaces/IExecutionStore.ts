@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionRow } from '../../../server/stores/postgres/schema'
+import type { ExecutionRecoveryRow, ExecutionRow } from '../../../server/stores/postgres/schema'
 import type { ExecutionClaim, ExecutionStatus, ExecutionTreeNode, RootExecution } from '../../../types'
 
 // export interface GetRootExecutionsForOwnerInput {
@@ -22,6 +22,11 @@ export interface UpdateExecutionStatusParams {
   errorNodeId?: string
   startedAt?: Date
   completedAt?: Date
+  processingStartedAt?: Date
+  processingWorkerId?: string
+  failureCount?: number
+  lastFailureReason?: string
+  lastFailureAt?: Date
 }
 
 export interface IExecutionStore {
@@ -46,4 +51,27 @@ export interface IExecutionStore {
   getActiveClaims: () => Promise<ExecutionClaim[]>
   getClaimForExecution: (executionId: string) => Promise<ExecutionClaim | null>
   expireOldClaims: () => Promise<number>
+
+  // Failure tracking and recovery methods
+  updateFailureInfo: (
+    executionId: string,
+    failureCount: number,
+    reason: string
+  ) => Promise<boolean>
+
+  getExecutionsNeedingRecovery: (limit?: number) => Promise<ExecutionRow[]>
+
+  recordRecovery: (
+    executionId: string,
+    workerId: string,
+    reason: string,
+    previousStatus?: string,
+    previousWorkerId?: string
+  ) => Promise<void>
+
+  getRecoveryHistory: (executionId: string) => Promise<ExecutionRecoveryRow[]>
+
+  // Distributed lock methods for worker coordination
+  tryAcquireRecoveryLock: (lockId: number) => Promise<boolean>
+  releaseRecoveryLock: (lockId: number) => Promise<void>
 }

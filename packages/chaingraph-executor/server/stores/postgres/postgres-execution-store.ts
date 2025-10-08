@@ -9,9 +9,9 @@
 import type { DBType } from '../../../server/utils/db'
 import type { ExecutionClaim, ExecutionTreeNode, RootExecution } from '../../../types'
 import type { IExecutionStore, UpdateExecutionStatusParams } from '../interfaces/IExecutionStore'
-import type { ExecutionClaimRow, ExecutionRow } from './schema'
-import { and, desc, eq, getTableColumns, lt, sql } from 'drizzle-orm'
-import { executionClaimsTable, executionsTable } from './schema'
+import type { ExecutionClaimRow, ExecutionRecoveryRow, ExecutionRow } from './schema'
+import { and, desc, eq, getTableColumns, isNull, lt, or, sql } from 'drizzle-orm'
+import { executionClaimsTable, executionRecoveryTable, executionsTable } from './schema'
 
 export class PostgresExecutionStore implements IExecutionStore {
   constructor(
@@ -88,6 +88,25 @@ export class PostgresExecutionStore implements IExecutionStore {
     } else if (params.status === 'completed' || params.status === 'failed' || params.status === 'stopped') {
       // Set default completedAt for terminal states
       updateData.completedAt = new Date()
+    }
+
+    // Conditionally set processing tracking fields
+    if (params.processingStartedAt !== undefined) {
+      updateData.processingStartedAt = params.processingStartedAt
+    }
+    if (params.processingWorkerId !== undefined) {
+      updateData.processingWorkerId = params.processingWorkerId
+    }
+
+    // Conditionally set failure tracking fields
+    if (params.failureCount !== undefined) {
+      updateData.failureCount = params.failureCount
+    }
+    if (params.lastFailureReason !== undefined) {
+      updateData.lastFailureReason = params.lastFailureReason
+    }
+    if (params.lastFailureAt !== undefined) {
+      updateData.lastFailureAt = params.lastFailureAt
     }
 
     const result = await this.db
@@ -376,5 +395,140 @@ export class PostgresExecutionStore implements IExecutionStore {
       .returning({ executionId: executionClaimsTable.executionId })
 
     return result.length
+  }
+
+  /**
+   * Update failure count and reason for an execution
+   */
+  async updateFailureInfo(
+    executionId: string,
+    failureCount: number,
+    reason: string,
+  ): Promise<boolean> {
+    const result = await this.db
+      .update(executionsTable)
+      .set({
+        failureCount,
+        lastFailureReason: reason,
+        lastFailureAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(executionsTable.id, executionId))
+      .returning({ id: executionsTable.id })
+
+    return result.length > 0
+  }
+
+  /**
+   * Get executions that need recovery
+   * Finds executions that are:
+   * 1. Status = 'created' but no active claim
+   * 2. Status = 'running' but claim expired
+   * 3. Status = 'created' with failureCount < 5 and lastFailureAt > 1 minute ago
+   */
+  async getExecutionsNeedingRecovery(limit = 100): Promise<ExecutionRow[]> {
+    const oneMinuteAgo = new Date(Date.now() - 60000)
+
+    const results = await this.db
+      .select({
+        ...getTableColumns(executionsTable),
+        claimId: executionClaimsTable.executionId,
+        claimStatus: executionClaimsTable.status,
+        claimExpiresAt: executionClaimsTable.expiresAt,
+      })
+      .from(executionsTable)
+      .leftJoin(
+        executionClaimsTable,
+        and(
+          eq(executionsTable.id, executionClaimsTable.executionId),
+          eq(executionClaimsTable.status, 'active'),
+        ),
+      )
+      .where(
+        or(
+          // No active claim for created executions
+          and(
+            eq(executionsTable.status, 'created'),
+            isNull(executionClaimsTable.executionId),
+            eq(executionsTable.failureCount, 0),
+          ),
+          // Expired claim for running executions
+          and(
+            eq(executionsTable.status, 'running'),
+            lt(executionClaimsTable.expiresAt, new Date()),
+          ),
+          // Failed executions ready for retry
+          and(
+            eq(executionsTable.status, 'created'),
+            lt(executionsTable.failureCount, 5),
+            lt(executionsTable.lastFailureAt, oneMinuteAgo),
+          ),
+        ),
+      )
+      .limit(limit)
+
+    // Map back to ExecutionRow type by removing join columns
+    return results.map(({ claimId, claimStatus, claimExpiresAt, ...execution }) => execution as ExecutionRow)
+  }
+
+  /**
+   * Record a recovery action for an execution
+   */
+  async recordRecovery(
+    executionId: string,
+    workerId: string,
+    reason: string,
+    previousStatus?: string,
+    previousWorkerId?: string,
+  ): Promise<void> {
+    await this.db.insert(executionRecoveryTable).values({
+      executionId,
+      recoveredByWorker: workerId,
+      recoveryReason: reason,
+      previousStatus,
+      previousWorkerId,
+      recoveredAt: new Date(),
+    })
+  }
+
+  /**
+   * Get recovery history for an execution
+   */
+  async getRecoveryHistory(executionId: string): Promise<ExecutionRecoveryRow[]> {
+    return await this.db
+      .select()
+      .from(executionRecoveryTable)
+      .where(eq(executionRecoveryTable.executionId, executionId))
+      .orderBy(desc(executionRecoveryTable.recoveredAt))
+  }
+
+  /**
+   * Try to acquire a PostgreSQL advisory lock
+   * Returns true if lock was acquired, false if another session holds it
+   */
+  async tryAcquireRecoveryLock(lockId: number): Promise<boolean> {
+    try {
+      const result = await this.db.execute<{ acquired: boolean }>(
+        sql`SELECT pg_try_advisory_lock(${lockId}) as acquired`,
+      )
+
+      return result[0]?.acquired ?? false
+    } catch (error) {
+      // If error occurs, assume lock not acquired
+      return false
+    }
+  }
+
+  /**
+   * Release a PostgreSQL advisory lock
+   */
+  async releaseRecoveryLock(lockId: number): Promise<void> {
+    try {
+      await this.db.execute(
+        sql`SELECT pg_advisory_unlock(${lockId})`,
+      )
+    } catch (error) {
+      // Log but don't throw - lock will auto-release on connection close
+    }
   }
 }

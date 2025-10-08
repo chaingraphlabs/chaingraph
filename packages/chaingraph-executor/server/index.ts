@@ -26,6 +26,7 @@ export { publishExecutionTask } from './kafka/producers/task-producer'
 export { createTopicsIfNotExist } from './kafka/topics'
 // Services
 export { ExecutionService } from './services/ExecutionService'
+export { RecoveryService } from './services/RecoveryService'
 export { type CreateExecutionParams } from './services/IExecutionService'
 // Service Factory
 export { closeServices, createServices, getServices } from './services/ServiceFactory'
@@ -39,10 +40,12 @@ export type { IExecutionStore } from './stores/interfaces/IExecutionStore'
 export { PostgresExecutionStore } from './stores/postgres/postgres-execution-store'
 export type {
   ExecutionClaimRow,
+  ExecutionRecoveryRow,
   ExecutionRow,
 } from './stores/postgres/schema'
 export {
   executionClaimsTable,
+  executionRecoveryTable,
   executionsTable,
 } from './stores/postgres/schema'
 

@@ -162,4 +162,11 @@ export const config = {
     flushInterval: Number.parseInt(process.env.METRICS_FLUSH_INTERVAL || '1000', 10),
     includeMemoryMetrics: process.env.METRICS_INCLUDE_MEMORY === 'true',
   },
+
+  // Recovery Configuration
+  recovery: {
+    enabled: process.env.ENABLE_RECOVERY !== 'false', // Enabled by default
+    scanIntervalMs: Number.parseInt(process.env.RECOVERY_SCAN_INTERVAL_MS || '30000', 10), // 30 seconds
+    maxFailureCount: Number.parseInt(process.env.RECOVERY_MAX_FAILURE_COUNT || '5', 10), // Max 5 failures before permanent failure
+  },
 }
