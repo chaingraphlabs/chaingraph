@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.5.5-dev.59
+
+### Patch Changes
+
+- fix: restore lucide-react dependency in package.json and update Vite config for build
+
 ## 0.5.5-dev.58
 
 ### Patch Changes

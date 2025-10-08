@@ -90,7 +90,6 @@ export default defineConfig({
       'dotenv',
       'nanoid',
       'nanoid-dictionary',
-      'lucide-react',
     ],
   },
   build: {
@@ -109,7 +108,6 @@ export default defineConfig({
       external: [
         '@xyflow/react',
         '@xyflow/system',
-        'lucide-react',
         'react',
         'react-dom',
         'react/jsx-runtime',
