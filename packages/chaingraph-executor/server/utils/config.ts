@@ -169,4 +169,33 @@ export const config = {
     scanIntervalMs: Number.parseInt(process.env.RECOVERY_SCAN_INTERVAL_MS || '30000', 10), // 30 seconds
     maxFailureCount: Number.parseInt(process.env.RECOVERY_MAX_FAILURE_COUNT || '5', 10), // Max 5 failures before permanent failure
   },
+
+  // DBOS Configuration (Optional - for new execution engine)
+  dbos: {
+    /**
+     * Enable DBOS-based execution (replaces Kafka for task distribution)
+     * When enabled, uses DBOS Durable Queues and workflows for execution
+     * When disabled, uses traditional Kafka-based execution
+     */
+    enabled: process.env.ENABLE_DBOS_EXECUTION === 'true',
+
+    /**
+     * Database URL for DBOS system tables
+     * Defaults to the main executions database
+     */
+    systemDatabaseUrl: process.env.DBOS_SYSTEM_DATABASE_URL || process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+
+    /**
+     * Global concurrency limit across all workers
+     * Maximum number of executions running simultaneously across the entire cluster
+     */
+    queueConcurrency: Number.parseInt(process.env.DBOS_QUEUE_CONCURRENCY || '100', 10),
+
+    /**
+     * Per-worker concurrency limit
+     * Maximum number of executions running simultaneously on a single worker process
+     * Should be lower than global concurrency to allow load distribution
+     */
+    workerConcurrency: Number.parseInt(process.env.DBOS_WORKER_CONCURRENCY || '5', 10),
+  },
 }
