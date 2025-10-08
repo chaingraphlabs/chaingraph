@@ -13,7 +13,7 @@ import type {
 import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { Consumer } from 'kafkajs'
 import type { ExecutionCommand, ExecutionInstance, ExecutionTask } from '../../types'
-import type { IEventBus, ITaskQueue } from '../interfaces'
+import type { IEventBus, ITaskQueue, TaskConsumerContext } from '../interfaces'
 import type {
   FlowLoadMetric,
   TaskQueueMetric,
@@ -122,13 +122,13 @@ export class ExecutionWorker {
 
     this.isRunning = true
 
-    // Start consuming tasks
-    await this.taskQueue.consumeTasks(async (task) => {
-      await this.processTask(task)
+    // Start consuming tasks with context for manual offset management
+    await this.taskQueue.consumeTasks(async (task, context) => {
+      await this.processTask(task, context)
     })
   }
 
-  private async processTask(task: ExecutionTask): Promise<void> {
+  private async processTask(task: ExecutionTask, context?: TaskConsumerContext): Promise<void> {
     const startProcessTime = Date.now()
 
     // Create lifecycle metrics builder
@@ -164,8 +164,29 @@ export class ExecutionWorker {
         workerId: this.workerId,
       }, 'Execution not found in store, cannot process task')
 
-      // TODO: dead letter queue for such tasks?
+      // Commit offset since this task is invalid and can't be processed
+      if (context?.commitOffset) {
+        await context.commitOffset()
+        logger.debug({ executionId: task.executionId }, 'Committed offset for non-existent execution')
+      }
 
+      // TODO: dead letter queue for such tasks?
+      return
+    }
+
+    // Check if execution is already completed or failed
+    if (executionRow.status === 'completed' || executionRow.status === 'failed') {
+      logger.info({
+        executionId: task.executionId,
+        status: executionRow.status,
+        workerId: this.workerId,
+      }, 'Execution already in terminal state, skipping')
+
+      // Commit offset since this task doesn't need processing
+      if (context?.commitOffset) {
+        await context.commitOffset()
+        logger.debug({ executionId: task.executionId }, 'Committed offset for already processed execution')
+      }
       return
     }
 
@@ -195,7 +216,26 @@ export class ExecutionWorker {
         event: 'conflict',
         timestamp: Date.now(),
       })
+
+      // IMPORTANT: Commit offset even when claim fails
+      // This prevents re-processing of tasks already being handled by another worker
+      if (context?.commitOffset) {
+        await context.commitOffset()
+        logger.debug({ executionId: task.executionId }, 'Committed offset for unclaimed execution')
+      }
       return
+    }
+
+    // IMPORTANT: Commit offset immediately after successful claim
+    // This ensures the message won't be redelivered even if processing fails
+    if (context?.commitOffset) {
+      await context.commitOffset()
+      logger.info({
+        executionId: task.executionId,
+        workerId: this.workerId,
+        partition: context.partition,
+        offset: context.offset,
+      }, 'Committed Kafka offset after successful claim')
     }
 
     // Track successful claim
@@ -426,6 +466,20 @@ export class ExecutionWorker {
       })
       lifecycleBuilder.endPhase('cleanup')
 
+      // Check if we still own the claim before republishing
+      const currentClaim = await this.store.getClaimForExecution(task.executionId)
+      const stillClaimed = currentClaim?.workerId === this.workerId && currentClaim?.status === 'active'
+
+      if (!stillClaimed) {
+        logger.warn({
+          executionId: task.executionId,
+          workerId: this.workerId,
+          claimStatus: currentClaim?.status,
+          claimOwner: currentClaim?.workerId,
+        }, 'Lost claim on execution, cannot retry')
+        return
+      }
+
       // Check if we should retry
       if (task.retryCount! < task.maxRetries!) {
         task.retryCount!++
@@ -458,11 +512,17 @@ export class ExecutionWorker {
           retryHistory: task.retryHistory,
         }, 'Scheduling task retry')
 
+        // Update execution status to indicate retry
+        await this.setExecutionStatus(task.executionId, {
+          status: ExecutionStatus.Created, // Reset to created for retry
+          errorMessage: `Retry ${task.retryCount}/${task.maxRetries}: ${error instanceof Error ? error.message : String(error)}`,
+        })
+
         // Re-publish task with retry info
         await new Promise(resolve => setTimeout(resolve, retryDelay))
         await this.taskQueue.publishTask(task)
       } else {
-        // Max retries exceeded, mark as failed
+        // Max retries exceeded, mark as permanently failed
         try {
           await this.setExecutionStatus(task.executionId, {
             status: ExecutionStatus.Failed,
@@ -473,6 +533,8 @@ export class ExecutionWorker {
             executionId: task.executionId,
             retryCount: task.retryCount,
           }, 'Max retries exceeded, execution marked as failed')
+
+          // TODO: Send to dead letter queue
         } catch (storeError) {
           logger.error({
             error: storeError,

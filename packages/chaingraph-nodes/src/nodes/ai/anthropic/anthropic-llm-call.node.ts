@@ -1512,8 +1512,8 @@ export class AntropicLlmCallNode extends BaseNode {
     } else if (block instanceof ToolUseResponseBlock) {
       this.responseStream.send(`${JSON.stringify(block, null, 2)}${TAGS.TOOL_USE.INPUT.CLOSE}${TAGS.TOOL_USE.CLOSE}`)
     } else {
-      console.warn(`[ANTHROPIC] Received stop event for unknown block type at index ${index}, typeof block: ${typeof block}, data json: ${JSON.stringify(block)}`)
-      console.warn(`[ANTHROPIC] Received stop event for unknown block type at index ${index}, typeof block: ${typeof block}, EVENT json: ${JSON.stringify(event)}`)
+      // console.warn(`[ANTHROPIC] Received stop event for unknown block type at index ${index}, typeof block: ${typeof block}, data json: ${JSON.stringify(block)}`)
+      // console.warn(`[ANTHROPIC] Received stop event for unknown block type at index ${index}, typeof block: ${typeof block}, EVENT json: ${JSON.stringify(event)}`)
     }
   }
 

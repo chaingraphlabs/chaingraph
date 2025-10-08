@@ -8,7 +8,7 @@
 
 import type { Consumer, Producer } from 'kafkajs'
 import type { ExecutionTask } from '../../../types/messages'
-import type { ITaskQueue } from '../../interfaces/ITaskQueue'
+import type { ITaskQueue, TaskConsumerContext, TaskHandler } from '../../interfaces/ITaskQueue'
 import type { TaskQueueMetric } from '../../metrics'
 import { Buffer } from 'node:buffer'
 import { KafkaTopics } from '../../../types/messages'
@@ -119,7 +119,7 @@ export class KafkaTaskQueue implements ITaskQueue {
     }
   }
 
-  consumeTasks = async (handler: (task: ExecutionTask) => Promise<void>): Promise<void> => {
+  consumeTasks = async (handler: TaskHandler): Promise<void> => {
     if (this.isConsuming) {
       throw new Error('Already consuming tasks')
     }
@@ -134,6 +134,8 @@ export class KafkaTaskQueue implements ITaskQueue {
       minBytes: 1, // fetch.min.bytes equivalent - fetch even single bytes
       maxBytes: 52428800, // fetch.max.bytes equivalent - 50MB max fetch
       maxBytesPerPartition: 10485760, // max.partition.fetch.bytes equivalent - 10MB per partition
+      maxPollRecords: 1, // Process one task at a time for long-running tasks
+      maxPollIntervalMs: 35 * 60 * 1000, // 35 minutes for 30-minute tasks with buffer
       readUncommitted: false, // Read only committed messages
       allowAutoTopicCreation: false,
       retry: {
@@ -151,6 +153,7 @@ export class KafkaTaskQueue implements ITaskQueue {
     this.isConsuming = true
 
     await this.consumer.run({
+      autoCommit: false, // Disable auto-commit for manual control
       eachMessage: async ({ message, partition, topic }) => {
         if (!message.value) {
           logger.warn('Received task with no value')
@@ -194,11 +197,39 @@ export class KafkaTaskQueue implements ITaskQueue {
             task_age_ms: Date.now() - task.timestamp,
           } as TaskQueueMetric)
 
-          // Process the task with metrics
+          // Create manual commit context
+          const context: TaskConsumerContext = {
+            commitOffset: async () => {
+              if (!this.consumer) {
+                throw new Error('Consumer not initialized')
+              }
+
+              // Commit the offset for this specific message
+              await this.consumer.commitOffsets([{
+                topic,
+                partition,
+                offset: (Number(message.offset) + 1).toString(), // Commit next offset
+              }])
+
+              // Track commit
+              scopedMetrics.track({
+                stage: MetricStages.TASK_QUEUE,
+                event: 'commit',
+                timestamp: Date.now(),
+                partition,
+                offset: Number(message.offset) + 1,
+              } as TaskQueueMetric)
+            },
+            partition,
+            offset: message.offset.toString(),
+            topic,
+          }
+
+          // Process the task with metrics and context
           await this.metricsHelper.trackKafkaConsume(
             topic,
             { executionId: task.executionId, flowId: task.flowId },
-            async () => await handler(task),
+            async () => await handler(task, context),
             {
               partition,
               offset: Number(message.offset),
@@ -208,7 +239,7 @@ export class KafkaTaskQueue implements ITaskQueue {
           // Track successful processing
           scopedMetrics.track({
             stage: MetricStages.TASK_QUEUE,
-            event: 'ack',
+            event: 'processed',
             timestamp: Date.now(),
             duration_ms: Date.now() - consumeStartTime,
           })
