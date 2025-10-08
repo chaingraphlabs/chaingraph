@@ -67,18 +67,20 @@ export default defineConfig({
   },
   build: {
     minify: 'esbuild',
-    sourcemap: false,
+    sourcemap: true,
     cssCodeSplit: false,
     cssMinify: true,
     outDir: 'dist/lib',
     emptyOutDir: true, // Clean dist folder before build
+    lib: {
+      entry: 'src/exports.tsx',
+      formats: ['es'],
+      fileName: 'chaingraph-frontend',
+    },
     rollupOptions: {
-      input: 'src/exports.tsx',
       external: [
         '@xyflow/react',
         '@xyflow/system',
-        'effector',
-        'effector-react',
         'lucide-react',
         'react',
         'react-dom',
@@ -88,12 +90,8 @@ export default defineConfig({
         'wagmi',
       ],
       output: {
-        format: 'es',
-        entryFileNames: 'chaingraph-frontend.js',
         assetFileNames: 'chaingraph-frontend.css',
-        // Ensure external dependencies use correct ESM import syntax
         interop: 'esModule',
-        // Force all code into a single file (no code splitting)
         inlineDynamicImports: true,
       },
     },
@@ -104,8 +102,6 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
       'superjson',
-      'effector',
-      'effector-react',
       'viem',
       'wagmi',
       '@xyflow/react',

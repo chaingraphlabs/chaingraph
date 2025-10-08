@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.5.5-dev.55",
+  "version": "0.5.5-dev.59",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -32,7 +32,7 @@
   "scripts": {
     "dev": "vite",
     "dev-force": "vite --force",
-    "build": "npm run build:app && npm run build:lib",
+    "build": "npm run build:lib",
     "build:app": "tsc -b && vite build --config vite.app.config.ts",
     "build:lib": "vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
     "lint": "eslint .",
@@ -43,8 +43,6 @@
   "peerDependencies": {
     "@xyflow/react": "^12.8.6",
     "@xyflow/system": "^0.0.70",
-    "effector": "^23.4.4",
-    "effector-react": "^23.3.0",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
