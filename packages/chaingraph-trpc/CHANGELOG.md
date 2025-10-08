@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-trpc
 
+## 0.5.5-dev.57
+
+### Patch Changes
+
+- fix: update package version and add wagmi and viem dependencies in package.json and vite config
+- Updated dependencies
+  - @badaitech/badai-api@0.5.5-dev.57
+  - @badaitech/chaingraph-nodes@0.5.5-dev.57
+  - @badaitech/chaingraph-types@0.5.5-dev.57
+
 ## 0.5.5-dev.56
 
 ### Patch Changes
