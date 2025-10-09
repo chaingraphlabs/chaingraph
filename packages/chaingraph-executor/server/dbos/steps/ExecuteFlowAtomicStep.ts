@@ -9,20 +9,11 @@
 import type { ExecutionTask } from '../../../types'
 import type { ExecutionService } from '../../services/ExecutionService'
 import type { IExecutionStore } from '../../stores/interfaces/IExecutionStore'
+import type { CommandController } from '../workflows/ExecutionWorkflow'
 import type { ExecutionResult } from '../types'
 import { DBOS } from '@dbos-inc/dbos-sdk'
 import { ExecutionStatus } from '../../../types'
 import { loadFlow } from '../../stores/flow-store'
-
-/**
- * Execution command types for DBOS messaging
- */
-type ExecutionCommandType = 'PAUSE' | 'RESUME' | 'STEP'
-
-interface ExecutionCommand {
-  command: ExecutionCommandType
-  reason?: string
-}
 
 /**
  * ATOMIC EXECUTION STEP
@@ -86,10 +77,14 @@ function getExecutionStore(): IExecutionStore {
  * If this step fails at any point, DBOS will automatically retry it on another worker.
  *
  * @param task Execution task containing executionId and flowId
+ * @param abortController Abort controller from workflow level (for STOP command)
+ * @param commandController Command controller from workflow level (for PAUSE/RESUME/STEP)
  * @returns Execution result with status and duration
  */
 export async function executeFlowAtomic(
   task: ExecutionTask,
+  abortController: AbortController,
+  commandController: CommandController,
 ): Promise<ExecutionResult> {
   const startTime = Date.now()
   DBOS.logger.info(`Starting atomic flow execution: ${task.executionId}`)
@@ -118,45 +113,49 @@ export async function executeFlowAtomic(
     throw new Error(error)
   }
 
-  // Step 3: Create execution instance
+  // Step 3: Create execution instance with workflow-provided abortController
   // The execution instance is configured to stream events in real-time
   // For DBOS mode: Events streamed via DBOS.writeStream() to PostgreSQL
   // For Kafka mode: Events published to Kafka with batching
+  // AbortController is passed from workflow level to enable STOP command
   DBOS.logger.debug(`Creating execution instance: ${task.executionId}`)
 
-  const abortController = new AbortController()
   const instance = await service.createExecutionInstance({
     task,
     flow,
     executionRow,
-    abortController,
+    abortController, // ← Passed from workflow level
   })
 
   // Step 4: Execute the flow
   // Events are streamed in real-time during execution
   // The eventBus handles streaming (DBOS or Kafka depending on configuration)
+  // Commands are received via shared state from workflow-level polling
   DBOS.logger.info(`Executing flow: ${task.executionId}`)
 
-  // 🎮 Start command polling loop (runs in background)
-  // This polls for PAUSE/RESUME/STEP commands via DBOS.recv()
-  let isPollingCommands = true
-  const commandPollingInterval = setInterval(async () => {
-    if (!isPollingCommands) {
-      clearInterval(commandPollingInterval)
+  // 🎮 Start command checking loop (checks shared state, no DBOS calls!)
+  // The workflow-level polling updates commandController, we just read it here
+  let isCheckingCommands = true
+  let lastProcessedTimestamp = 0
+
+  const commandCheckInterval = setInterval(async () => {
+    if (!isCheckingCommands) {
+      clearInterval(commandCheckInterval)
       return
     }
 
     try {
-      // Non-blocking check for command (timeout = 0)
-      const command = await DBOS.recv<ExecutionCommand>('COMMAND', 0)
+      // Check if there's a new command in the shared state
+      if (commandController.currentCommand && commandController.commandTimestamp > lastProcessedTimestamp) {
+        const command = commandController.currentCommand
+        const reason = commandController.reason
 
-      if (command) {
-        DBOS.logger.info(`Received execution command: ${command.command} for ${task.executionId}`)
+        DBOS.logger.info(`Processing command: ${command} for ${task.executionId}`)
 
         // Get debugger from engine (renamed to avoid 'debugger' reserved keyword)
         const flowDebugger = instance.engine?.getDebugger()
 
-        switch (command.command) {
+        switch (command) {
           case 'PAUSE':
             flowDebugger?.pause()
             await store.updateExecutionStatus({
@@ -180,23 +179,32 @@ export async function executeFlowAtomic(
             DBOS.logger.info(`Execution stepped: ${task.executionId}`)
             break
 
+          case 'STOP':
+            // STOP is handled via abort controller at workflow level
+            // But if we see it here, log it
+            DBOS.logger.info(`STOP command detected (handled via abort): ${task.executionId}`)
+            break
+
           default:
-            DBOS.logger.warn(`Unknown command type: ${command.command}`)
+            DBOS.logger.warn(`Unknown command type: ${command}`)
         }
+
+        // Mark command as processed
+        lastProcessedTimestamp = commandController.commandTimestamp
       }
     } catch (error) {
-      DBOS.logger.error(`Error polling for commands: ${error instanceof Error ? error.message : String(error)}`)
+      DBOS.logger.error(`Error checking commands: ${error instanceof Error ? error.message : String(error)}`)
     }
-  }, 500) // Poll every 500ms
+  }, 100) // Check every 100ms (faster than workflow polling for responsiveness)
 
   try {
     await instance.engine!.execute(async (context, eventQueue) => {
       // Execution complete callback
       // The eventQueue is already closed at this point, and all events should be processed
 
-      // Stop command polling
-      isPollingCommands = false
-      clearInterval(commandPollingInterval)
+      // Stop command checking
+      isCheckingCommands = false
+      clearInterval(commandCheckInterval)
 
       // Step 5: Wait for all events to be published
       // This ensures all events are safely persisted before we mark step as complete
@@ -232,9 +240,9 @@ export async function executeFlowAtomic(
       `Flow execution failed: ${task.executionId} after ${duration}ms - ${errorMessage}`,
     )
 
-    // Stop command polling on error
-    isPollingCommands = false
-    clearInterval(commandPollingInterval)
+    // Stop command checking on error
+    isCheckingCommands = false
+    clearInterval(commandCheckInterval)
 
     // Try to cleanup event handling even on error
     try {
@@ -252,8 +260,8 @@ export async function executeFlowAtomic(
     // Re-throw the error so DBOS can handle retry
     throw error
   } finally {
-    // Ensure command polling is stopped
-    isPollingCommands = false
-    clearInterval(commandPollingInterval)
+    // Ensure command checking is stopped
+    isCheckingCommands = false
+    clearInterval(commandCheckInterval)
   }
 }

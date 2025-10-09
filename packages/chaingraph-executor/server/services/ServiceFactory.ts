@@ -66,22 +66,11 @@ export async function createServices(
     // This must happen before creating the worker so steps are ready
     initializeUpdateStatusSteps(executionStore)
 
-    // Create execution service (needed for ExecuteFlowAtomicStep initialization)
-    const executionService = new ExecutionService(
-      executionStore,
-      eventBus,
-      // TODO: add the publishing to the DBOS queue here instead of the in-memory one
-      // TODO: the child can emit subexecutions that need to be queued
-      new InMemoryTaskQueue(), // Placeholder for DBOS mode
-    )
-
-    // Initialize the execution step with both service and store
-    initializeExecuteFlowStep(executionService, executionStore)
-
-    // Step 3: Create DBOS worker (already initialized, just creates queue)
+    // Step 3: Create DBOS worker first (to get the queue)
+    // We'll set the executionService later via initialization
     const dbosWorker = new DBOSExecutionWorker(
       executionStore,
-      executionService,
+      null as any, // Temporary - will be set via initializeExecuteFlowStep
       {
         concurrency: config.dbos.queueConcurrency,
         workerConcurrency: config.dbos.workerConcurrency,
@@ -90,6 +79,18 @@ export async function createServices(
 
     // Create DBOS task queue wrapper
     const taskQueue = new DBOSTaskQueue(dbosWorker.getQueue())
+
+    // Step 4: Create execution service with DBOS task queue (not in-memory!)
+    // Now child executions will be published to DBOS queue
+    const executionService = new ExecutionService(
+      executionStore,
+      eventBus,
+      taskQueue, // ← Use DBOS task queue for child executions!
+    )
+
+    // Step 5: Initialize the execution step with service and store
+    // This also updates the worker's executionService reference
+    initializeExecuteFlowStep(executionService, executionStore)
 
     serviceInstances = {
       eventBus,

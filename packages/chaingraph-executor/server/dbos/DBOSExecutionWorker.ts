@@ -70,12 +70,12 @@ export class DBOSExecutionWorker {
    * Create a new DBOS execution worker
    *
    * @param store Execution store for database operations
-   * @param executionService Execution service for flow execution
+   * @param executionService Execution service for flow execution (optional, can be set via initializeExecuteFlowStep)
    * @param options Worker configuration options
    */
   constructor(
     private readonly store: IExecutionStore,
-    private executionService: ExecutionService,
+    private executionService: ExecutionService | null,
     options?: DBOSWorkerOptions,
   ) {
     this.queue = new ExecutionQueue({
@@ -112,7 +112,12 @@ export class DBOSExecutionWorker {
       // This injects dependencies into module-level state
       // Safe to call multiple times - updates the module-level references
       initializeUpdateStatusSteps(this.store)
-      initializeExecuteFlowStep(this.executionService, this.store)
+
+      // Initialize execute flow step if executionService is provided
+      // Otherwise, assume it was already initialized by ServiceFactory
+      if (this.executionService) {
+        initializeExecuteFlowStep(this.executionService, this.store)
+      }
 
       // Step 3: Workflow is already registered in ExecutionWorkflow.ts
       // In DBOS v4, workflows are registered at module load time via DBOS.registerWorkflow()

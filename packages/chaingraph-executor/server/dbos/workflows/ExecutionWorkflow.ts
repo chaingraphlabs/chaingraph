@@ -17,8 +17,29 @@ import {
   updateToFailed,
   updateToRunning,
 } from '../steps'
+import { ExecutionStatus } from '../../../types'
 import { getExecutionStore } from '../../stores/execution-store'
 import { loadFlow } from '../../stores/flow-store'
+
+/**
+ * Execution command types for DBOS messaging
+ */
+type ExecutionCommandType = 'PAUSE' | 'RESUME' | 'STEP' | 'STOP'
+
+interface ExecutionCommand {
+  command: ExecutionCommandType
+  reason?: string
+}
+
+/**
+ * Shared command controller for passing command state from workflow to step
+ * This avoids calling DBOS.recv() from inside a step (which is not allowed)
+ */
+export interface CommandController {
+  currentCommand: ExecutionCommandType | null
+  commandTimestamp: number
+  reason?: string
+}
 
 /**
  * Main DBOS workflow for executing chaingraph flows
@@ -76,6 +97,53 @@ import { loadFlow } from '../../stores/flow-store'
  */
 async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> {
   DBOS.logger.info(`Starting execution workflow: ${task.executionId}`)
+
+  // ============================================================
+  // Create shared controllers at WORKFLOW level
+  // ============================================================
+  // These are passed to the step to avoid calling DBOS methods from within steps
+
+  // Abort controller for STOP command
+  const abortController = new AbortController()
+
+  // Command controller for PAUSE/RESUME/STEP commands
+  const commandController: CommandController = {
+    currentCommand: null,
+    commandTimestamp: 0,
+  }
+
+  // 🎮 Start command polling at WORKFLOW level (DBOS.recv allowed here!)
+  let isPollingCommands = true
+  const commandPollingInterval = setInterval(async () => {
+    if (!isPollingCommands) {
+      clearInterval(commandPollingInterval)
+      return
+    }
+
+    try {
+      // Non-blocking check for command (timeout = 0)
+      // This is allowed at workflow level (not in step)
+      const command = await DBOS.recv<ExecutionCommand>('COMMAND', 0)
+
+      if (command) {
+        DBOS.logger.info(`Received command: ${command.command} for ${task.executionId}`)
+
+        if (command.command === 'STOP') {
+          // STOP: Trigger abort controller
+          abortController.abort(command.reason || 'User requested stop')
+          DBOS.logger.info(`Abort triggered for execution: ${task.executionId}`)
+        } else {
+          // PAUSE/RESUME/STEP: Update shared command controller
+          commandController.currentCommand = command.command
+          commandController.commandTimestamp = Date.now()
+          commandController.reason = command.reason
+          DBOS.logger.debug(`Command queued: ${command.command} for ${task.executionId}`)
+        }
+      }
+    } catch (error) {
+      DBOS.logger.error(`Error polling for commands: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }, 500) // Poll every 500ms
 
   try {
     // ============================================================
@@ -149,15 +217,20 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
     // Step 2: Execute flow ATOMICALLY
     // This is THE main step - includes:
     //   - Load flow from database
-    //   - Initialize execution instance
-    //   - Execute flow with real-time event streaming to Kafka
+    //   - Initialize execution instance with shared controllers
+    //   - Execute flow with real-time event streaming
     //   - Wait for all events to be published
+    //
+    // Controllers are passed from workflow to step:
+    //   - abortController: For STOP command (via abort signal)
+    //   - commandController: For PAUSE/RESUME/STEP (via shared state)
     //
     // If this step fails, DBOS will retry the ENTIRE step on another worker.
     // The flow execution is atomic - either fully succeeds or fully fails.
-    const result = await DBOS.runStep(() => executeFlowAtomic(task), {
-      name: 'executeFlowAtomic',
-    })
+    const result = await DBOS.runStep(
+      () => executeFlowAtomic(task, abortController, commandController),
+      { name: 'executeFlowAtomic' },
+    )
 
     // Step 3: Update status to "completed"
     // This is the final durable checkpoint - marks successful completion
@@ -173,13 +246,37 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
 
     DBOS.logger.error(`Execution workflow failed: ${task.executionId} - ${errorMessage}`)
 
-    // Update status to failed (this is also durable)
-    await DBOS.runStep(() => updateToFailed(task.executionId, errorMessage), {
-      name: 'updateToFailed',
-    })
+    // Check if error was due to abort (STOP command)
+    if (abortController.signal.aborted) {
+      DBOS.logger.info(`Execution stopped via abort controller: ${task.executionId}`)
+
+      // Update status to stopped instead of failed
+      await DBOS.runStep(() => updateToFailed(task.executionId, 'Execution stopped'), {
+        name: 'updateToStopped',
+      })
+
+      // Update to stopped status
+      const store = await getExecutionStore()
+      await store.updateExecutionStatus({
+        executionId: task.executionId,
+        status: ExecutionStatus.Stopped,
+        errorMessage: abortController.signal.reason as string || 'Execution stopped',
+        completedAt: new Date(),
+      })
+    } else {
+      // Regular failure
+      await DBOS.runStep(() => updateToFailed(task.executionId, errorMessage), {
+        name: 'updateToFailed',
+      })
+    }
 
     // Re-throw to mark workflow as failed in DBOS
     throw error
+  } finally {
+    // Stop command polling
+    isPollingCommands = false
+    clearInterval(commandPollingInterval)
+    DBOS.logger.debug(`Command polling stopped for execution: ${task.executionId}`)
   }
 }
 
