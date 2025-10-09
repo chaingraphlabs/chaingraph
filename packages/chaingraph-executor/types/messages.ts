@@ -12,7 +12,6 @@ import type {
   ExecutionOptions,
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
-import process from 'node:process'
 
 export enum ExecutionCommandType {
   CREATE = 'CREATE',
