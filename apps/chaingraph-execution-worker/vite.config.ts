@@ -9,11 +9,35 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  // resolve: {
-  //   alias: {
-  //     ws: './node_modules/ws/index.js',
-  //   },
-  // },
+  resolve: {
+    dedupe: [
+      '@badaitech/badai-api',
+      '@badaitech/chaingraph-executor',
+      '@badaitech/chaingraph-nodes',
+      '@badaitech/chaingraph-trpc',
+      '@badaitech/chaingraph-types',
+      '@modelcontextprotocol/sdk',
+      'superjson',
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      'wagmi',
+      'viem',
+      '@xyflow/react',
+      '@xyflow/system',
+      'ws',
+      'pg',
+      '@tanstack/react-query',
+      '@trpc/client',
+      '@trpc/react-query',
+      '@trpc/server',
+      '@trpc/tanstack-react-query',
+      'drizzle-orm',
+      'dotenv',
+      'nanoid',
+      'nanoid-dictionary',
+    ],
+  },
   build: {
     ssr: true,
     lib: {

@@ -6,7 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { setMaxListeners } from 'node:events'
 import process from 'node:process'
+import { init } from '@badaitech/chaingraph-trpc/server'
 import { config } from './config'
 import { logger } from './logger'
 import { startWorker } from './worker'
@@ -22,6 +24,11 @@ async function main() {
     dbosWorkerConcurrency: process.env.DBOS_WORKER_CONCURRENCY || '5',
     dbosQueueConcurrency: process.env.DBOS_QUEUE_CONCURRENCY || '100',
   }, 'Service configuration')
+
+  setMaxListeners(100000)
+  process.setMaxListeners(0)
+
+  await init()
 
   // Start worker process
   await startWorker()
