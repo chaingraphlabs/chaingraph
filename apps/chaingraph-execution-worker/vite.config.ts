@@ -11,31 +11,27 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   resolve: {
     dedupe: [
+      // Workspace packages - must be deduplicated
       '@badaitech/badai-api',
       '@badaitech/chaingraph-executor',
       '@badaitech/chaingraph-nodes',
       '@badaitech/chaingraph-trpc',
       '@badaitech/chaingraph-types',
-      '@modelcontextprotocol/sdk',
-      'superjson',
-      'react',
-      'react-dom',
-      'react/jsx-runtime',
-      'wagmi',
-      'viem',
-      '@xyflow/react',
-      '@xyflow/system',
-      'ws',
-      'pg',
+      // tRPC and query packages shared across workspace
       '@tanstack/react-query',
       '@trpc/client',
       '@trpc/react-query',
       '@trpc/server',
       '@trpc/tanstack-react-query',
+      // Shared utilities
+      '@modelcontextprotocol/sdk',
+      'superjson',
       'drizzle-orm',
       'dotenv',
       'nanoid',
       'nanoid-dictionary',
+      'pg',
+      'ws',
     ],
   },
   build: {
@@ -46,7 +42,17 @@ export default defineConfig({
     },
     outDir: 'dist',
     rollupOptions: {
-      external: ['bigint-crypto-utils'],
+      external: [
+        'bigint-crypto-utils',
+        // React and frontend dependencies (not used in backend service)
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'lucide-react',
+        // XYFlow (not used in backend service)
+        '@xyflow/react',
+        '@xyflow/system',
+      ],
     },
   },
 })

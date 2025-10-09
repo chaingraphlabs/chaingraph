@@ -8,7 +8,6 @@
 
 import type {
   EmittedEvent,
-  Flow,
   INode,
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
@@ -88,10 +87,6 @@ export class ExecutionService implements IExecutionService {
 
     flow.setIsDisabledPropagationEvents(true)
 
-    // Initial state flow needed to keep in memory the original node states
-    const initialStateFlow = await flow.clone() as Flow
-    initialStateFlow.setIsDisabledPropagationEvents(true)
-
     const currentDepth = executionRow.executionDepth
 
     // Check for maximum depth
@@ -144,7 +139,6 @@ export class ExecutionService implements IExecutionService {
       context,
       flow,
       engine,
-      initialStateFlow,
     }
 
     // Set up event callback for all executions to allow cycles

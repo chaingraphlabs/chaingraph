@@ -208,9 +208,15 @@ importers:
 
   apps/chaingraph-execution-api:
     dependencies:
+      '@badaitech/badai-api':
+        specifier: workspace:*
+        version: link:../../packages/badai-api
       '@badaitech/chaingraph-executor':
         specifier: workspace:*
         version: link:../../packages/chaingraph-executor
+      '@badaitech/chaingraph-nodes':
+        specifier: workspace:*
+        version: link:../../packages/chaingraph-nodes
       '@badaitech/chaingraph-trpc':
         specifier: workspace:*
         version: link:../../packages/chaingraph-trpc
@@ -220,6 +226,9 @@ importers:
       '@mixmark-io/domino':
         specifier: ^2.2.0
         version: 2.2.0
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.18.2
+        version: 1.18.2
       '@trpc/server':
         specifier: ^11.6.0
         version: 11.6.0(typescript@5.9.2)
@@ -232,9 +241,18 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.5(@types/pg@8.15.5)(bun-types@1.2.23(@types/react@19.2.0))(gel@2.1.1)(pg@8.16.3(pg-native@3.5.2))
       kafkajs:
         specifier: ^2.2.4
         version: 2.2.4
+      nanoid:
+        specifier: ^5.1.6
+        version: 5.1.6
+      nanoid-dictionary:
+        specifier: ^5.0.0
+        version: 5.0.0
       pg:
         specifier: ^8.16.3
         version: 8.16.3(pg-native@3.5.2)
@@ -275,6 +293,9 @@ importers:
 
   apps/chaingraph-execution-worker:
     dependencies:
+      '@badaitech/badai-api':
+        specifier: workspace:*
+        version: link:../../packages/badai-api
       '@badaitech/chaingraph-executor':
         specifier: workspace:*
         version: link:../../packages/chaingraph-executor
@@ -290,6 +311,12 @@ importers:
       '@mixmark-io/domino':
         specifier: ^2.2.0
         version: 2.2.0
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.18.2
+        version: 1.18.2
+      '@trpc/server':
+        specifier: ^11.6.0
+        version: 11.6.0(typescript@5.9.2)
       bigint-crypto-utils:
         specifier: ^3.3.0
         version: 3.3.0
@@ -299,12 +326,24 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.5(@types/pg@8.15.5)(bun-types@1.2.23(@types/react@19.2.0))(gel@2.1.1)(pg@8.16.3(pg-native@3.5.2))
       esm:
         specifier: ^3.2.25
         version: 3.2.25
       kafkajs:
         specifier: ^2.2.4
         version: 2.2.4
+      nanoid:
+        specifier: ^5.1.6
+        version: 5.1.6
+      nanoid-dictionary:
+        specifier: ^5.0.0
+        version: 5.0.0
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3(pg-native@3.5.2)
       superjson:
         specifier: ^2.2.2
         version: 2.2.2

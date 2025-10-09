@@ -9,7 +9,7 @@
 import { setMaxListeners } from 'node:events'
 import process from 'node:process'
 import { createServices, createWSServer } from '@badaitech/chaingraph-executor/server'
-import { init } from '@badaitech/chaingraph-trpc/server/init'
+import { init } from '@badaitech/chaingraph-trpc/server'
 import { config } from '../config'
 import { createLogger } from '../logger'
 

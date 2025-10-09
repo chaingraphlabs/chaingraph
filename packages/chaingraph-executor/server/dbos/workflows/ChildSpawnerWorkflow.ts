@@ -65,9 +65,9 @@ async function childSpawner(): Promise<void> {
   // Run forever, receiving and spawning child tasks
   while (true) {
     try {
-      // Wait for a child task message (timeout: 60 seconds)
+      // Wait for a child task message
       // This blocks until a message arrives or timeout expires
-      const childTask = await DBOS.recv<ExecutionTask>(CHILD_TASKS_TOPIC, 60)
+      const childTask = await DBOS.recv<ExecutionTask>(CHILD_TASKS_TOPIC, 60 * 30)
 
       if (childTask) {
         DBOS.logger.info(`Spawning child execution: ${childTask.executionId}`)
@@ -92,7 +92,7 @@ async function childSpawner(): Promise<void> {
       DBOS.logger.error(`Error spawning child execution (total: ${tasksProcessed}): ${error instanceof Error ? error.message : String(error)}`)
 
       // Small delay to prevent tight error loop
-      // await DBOS.sleep(1000)
+      await DBOS.sleep(1000)
     }
   }
 }
