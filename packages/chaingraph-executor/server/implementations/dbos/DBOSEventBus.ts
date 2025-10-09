@@ -74,12 +74,6 @@ export class DBOSEventBus implements IEventBus {
         event: serializedEvent,
         timestamp: Date.now(),
       })
-
-      logger.debug({
-        executionId,
-        eventType: event.type,
-        eventIndex: event.index,
-      }, 'Event written to DBOS stream')
     } catch (error) {
       logger.error({
         error: error instanceof Error ? error.message : String(error),
@@ -205,8 +199,10 @@ export class DBOSEventBus implements IEventBus {
           continue
         }
 
-        // Skip events before fromIndex
-        if (event.index < fromIndex) {
+        // Skip events before fromIndex (but keep negative index events)
+        // Negative index events (e.g., index -1 for EXECUTION_CREATED) are workflow-level
+        // events that should always be included regardless of fromIndex
+        if (event.index >= 0 && event.index < fromIndex) {
           continue
         }
 

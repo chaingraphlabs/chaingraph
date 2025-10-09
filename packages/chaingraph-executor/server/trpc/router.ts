@@ -14,6 +14,7 @@ import {
   IntegrationContextSchema,
 } from '@badaitech/chaingraph-types'
 import { ExecutionOptionsSchema } from '@badaitech/chaingraph-types'
+import { DBOS } from '@dbos-inc/dbos-sdk'
 import { initTRPC, TRPCError } from '@trpc/server'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
@@ -134,7 +135,7 @@ export const executionRouter = router({
       events: z.array(ExecutionExternalEventSchema).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionStore, flowStore } = ctx
+      const { executionStore, flowStore, taskQueue } = ctx
 
       const flowMetadata = await flowStore.getFlowMetadata(input.flowId)
       if (!flowMetadata) {
@@ -208,7 +209,30 @@ export const executionRouter = router({
         })
       }
 
-      // TODO: later we could emit an event here for execution created to provide clients ability to subscribe to new executions
+      // 🚀 Start workflow IMMEDIATELY (using signal pattern)
+      // The workflow will:
+      // 1. Write EXECUTION_CREATED event (initializes stream)
+      // 2. Wait for START_SIGNAL (blocks until client calls start endpoint)
+      // 3. Execute flow (after signal received)
+      //
+      // This ensures the event stream exists before clients subscribe
+      const executionTask: ExecutionTask = {
+        executionId,
+        flowId: executionRow.flowId,
+        timestamp: Date.now(),
+        maxRetries: defaultExecutionMaxRetries,
+      }
+
+      try {
+        await taskQueue.publishTask(executionTask)
+        logger.info({ executionId }, 'Execution workflow started (waiting for START_SIGNAL)')
+      } catch (error) {
+        logger.error({ error, executionId }, 'Failed to start execution workflow')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to start execution workflow',
+        })
+      }
 
       return {
         executionId,
@@ -221,7 +245,7 @@ export const executionRouter = router({
       executionId: z.string(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { taskQueue, executionStore } = ctx
+      const { executionStore } = ctx
 
       const executionRow = await executionStore.get(input.executionId)
       if (!executionRow) {
@@ -231,20 +255,25 @@ export const executionRouter = router({
         })
       }
 
-      const executionTask: ExecutionTask = {
-        executionId: input.executionId,
-        flowId: executionRow.flowId,
-        timestamp: Date.now(),
-        maxRetries: defaultExecutionMaxRetries,
+      // Validate execution can be started
+      if (executionRow.status !== ExecutionStatus.Created) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot start execution in status ${executionRow.status}. Execution must be in 'created' status.`,
+        })
       }
 
+      // 📨 Send START_SIGNAL to waiting workflow
+      // The workflow was started in the 'create' endpoint and is waiting for this signal
+      // This triggers Phase 2 of execution (actual flow execution)
       try {
-        await taskQueue.publishTask(executionTask)
+        await DBOS.send(input.executionId, 'GO', 'START_SIGNAL')
+        logger.info({ executionId: input.executionId }, 'START_SIGNAL sent to execution workflow')
       } catch (error) {
-        logger.error({ error, executionId: input.executionId }, 'Failed to publish execution task')
+        logger.error({ error, executionId: input.executionId }, 'Failed to send START_SIGNAL')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to publish execution task',
+          message: 'Failed to send start signal to execution workflow',
         })
       }
 

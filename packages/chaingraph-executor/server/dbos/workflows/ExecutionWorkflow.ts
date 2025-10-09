@@ -17,15 +17,28 @@ import {
   updateToFailed,
   updateToRunning,
 } from '../steps'
+import { getExecutionStore } from '../../stores/execution-store'
 import { loadFlow } from '../../stores/flow-store'
 
 /**
  * Main DBOS workflow for executing chaingraph flows
  *
- * This workflow orchestrates the execution of a chaingraph flow in three durable steps:
- * 1. Mark execution as "running" (checkpoint)
- * 2. Execute flow atomically: load + execute + stream events (checkpoint)
- * 3. Mark execution as "completed" (checkpoint)
+ * This workflow orchestrates the execution of a chaingraph flow using the signal pattern:
+ *
+ * Phase 1: Stream Initialization (immediate)
+ * - Write EXECUTION_CREATED event to initialize DBOS stream
+ * - Wait for START_SIGNAL from tRPC (timeout: 5 minutes)
+ *
+ * Phase 2: Execution (after signal received)
+ * - Mark execution as "running" (checkpoint)
+ * - Execute flow atomically: load + execute + stream events (checkpoint)
+ * - Mark execution as "completed" (checkpoint)
+ *
+ * Signal Pattern Benefits:
+ * - Stream exists immediately after workflow starts
+ * - Clients can subscribe before execution begins
+ * - No race condition between subscribe and stream creation
+ * - Timeout protection (workflow fails if not started within 5 min)
  *
  * DBOS Durability Guarantees:
  * - Each step is checkpointed in PostgreSQL
@@ -36,13 +49,16 @@ import { loadFlow } from '../../stores/flow-store'
  *
  * Recovery Example:
  * ```
- * Time 0: Step 1 completes (status = running) ✓
- * Time 1: Step 2 starts (executing flow)
- * Time 2: Worker crashes 💥
- * Time 3: DBOS detects incomplete workflow
- * Time 4: DBOS retries Step 2 on another worker ↻
- * Time 5: Step 2 completes ✓
- * Time 6: Step 3 completes (status = completed) ✓
+ * Time 0: EXECUTION_CREATED event written ✓ (stream initialized)
+ * Time 1: Waiting for START_SIGNAL...
+ * Time 2: START_SIGNAL received ✓
+ * Time 3: Step 1 completes (status = running) ✓
+ * Time 4: Step 2 starts (executing flow)
+ * Time 5: Worker crashes 💥
+ * Time 6: DBOS detects incomplete workflow
+ * Time 7: DBOS retries Step 2 on another worker ↻
+ * Time 8: Step 2 completes ✓
+ * Time 9: Step 3 completes (status = completed) ✓
  * ```
  */
 
@@ -52,6 +68,9 @@ import { loadFlow } from '../../stores/flow-store'
  * This is the main entry point for executing a chaingraph flow using DBOS.
  * The workflow provides exactly-once execution semantics through idempotency keys.
  *
+ * Signal Pattern: The workflow starts immediately but waits for START_SIGNAL before executing.
+ * This allows clients to subscribe to the event stream before execution begins.
+ *
  * @param task Execution task containing executionId and flowId
  * @returns Execution result with status and duration
  */
@@ -59,6 +78,68 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
   DBOS.logger.info(`Starting execution workflow: ${task.executionId}`)
 
   try {
+    // ============================================================
+    // PHASE 1: Stream Initialization (runs immediately)
+    // ============================================================
+
+    // Load execution row to get metadata for EXECUTION_CREATED event
+    const executionStore = await getExecutionStore()
+    const executionRow = await executionStore.get(task.executionId)
+
+    if (!executionRow) {
+      throw new Error(`Execution ${task.executionId} not found in database`)
+    }
+
+    // Load flow metadata
+    const flow = await loadFlow(task.flowId)
+    if (!flow) {
+      throw new Error(`Flow ${task.flowId} not found`)
+    }
+
+    // 🎯 Write EXECUTION_CREATED event to initialize the stream
+    // This creates the stream IMMEDIATELY, allowing clients to subscribe
+    // Written from WORKFLOW (not step) = exactly-once semantics
+    // Index -1 = special workflow-level event (before engine events start at 0)
+    DBOS.logger.info(`Initializing event stream for execution: ${task.executionId}`)
+
+    await DBOS.writeStream('events', {
+      executionId: task.executionId,
+      event: {
+        index: -1, // Special index for workflow-level initialization event
+        type: ExecutionEventEnum.EXECUTION_CREATED,
+        timestamp: new Date().toISOString(),
+        data: SuperJSON.serialize({
+          executionId: executionRow.id,
+          flowId: executionRow.flowId,
+          flowMetadata: flow.metadata,
+          ownerId: executionRow.ownerId,
+          rootExecutionId: executionRow.rootExecutionId,
+          parentExecutionId: executionRow.parentExecutionId,
+          executionDepth: executionRow.executionDepth,
+        }),
+      },
+      timestamp: Date.now(),
+    })
+
+    DBOS.logger.info(`Event stream initialized, waiting for START_SIGNAL: ${task.executionId}`)
+
+    // ⏸️ WAIT for START_SIGNAL from tRPC start endpoint
+    // Timeout: 300 seconds (5 minutes)
+    // This prevents workflows from hanging indefinitely if never started
+    const startSignal = await DBOS.recv<string>('START_SIGNAL', 300)
+
+    if (!startSignal) {
+      const timeoutError = 'Execution start timeout - START_SIGNAL not received within 5 minutes'
+      DBOS.logger.error(`${timeoutError}: ${task.executionId}`)
+      throw new Error(timeoutError)
+    }
+
+    DBOS.logger.info(`START_SIGNAL received, beginning execution: ${task.executionId}`)
+
+    // ============================================================
+    // PHASE 2: Execution (runs after START_SIGNAL received)
+    // ============================================================
+
     // Step 1: Update status to "running"
     // This is the first durable checkpoint - marks that execution has started
     await DBOS.runStep(() => updateToRunning(task.executionId), {
