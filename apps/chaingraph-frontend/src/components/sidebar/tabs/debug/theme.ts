@@ -28,6 +28,17 @@ export interface EventTheme {
 
 export const eventThemes: Record<ExecutionEventEnum, EventTheme> = {
   // Flow Events
+  [ExecutionEventEnum.EXECUTION_CREATED]: {
+    icon: PlayCircle,
+    color: {
+      light: 'text-indigo-700',
+      dark: 'text-indigo-300',
+    },
+    bgColor: {
+      light: 'bg-indigo-50',
+      dark: 'bg-indigo-500/10',
+    },
+  },
   [ExecutionEventEnum.FLOW_SUBSCRIBED]: {
     icon: PlayCircle,
     color: {
