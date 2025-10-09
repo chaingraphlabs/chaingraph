@@ -6,5 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+export { DBOSChildSpawnerQueue } from './DBOSChildSpawnerQueue'
 export { DBOSEventBus } from './DBOSEventBus'
 export { DBOSTaskQueue } from './DBOSTaskQueue'

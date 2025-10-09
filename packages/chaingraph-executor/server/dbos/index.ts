@@ -29,4 +29,9 @@ export {
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './types'
 
 // Workflows (registered workflow function)
-export { executionWorkflow } from './workflows'
+export {
+  childSpawnerWorkflow,
+  executionWorkflow,
+  sendChildTaskToSpawner,
+  startChildSpawner,
+} from './workflows'

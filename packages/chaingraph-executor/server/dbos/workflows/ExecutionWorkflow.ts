@@ -189,20 +189,33 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
       timestamp: Date.now(),
     })
 
+    // Check if this is a child execution (spawned from Event Emitter)
+    const isChildExecution = !!executionRow.parentExecutionId
+
+    if (isChildExecution) {
+      // 🚀 AUTO-START for child executions
+      // Children are spawned from parent workflows and should start immediately
+      // Send START_SIGNAL to self to begin execution
+      DBOS.logger.info(`Auto-starting child execution: ${task.executionId} (parent: ${executionRow.parentExecutionId})`)
+      await DBOS.send(task.executionId, 'AUTO-START', 'START_SIGNAL')
+    }
+
     DBOS.logger.info(`Event stream initialized, waiting for START_SIGNAL: ${task.executionId}`)
 
-    // ⏸️ WAIT for START_SIGNAL from tRPC start endpoint
-    // Timeout: 300 seconds (5 minutes)
-    // This prevents workflows from hanging indefinitely if never started
-    const startSignal = await DBOS.recv<string>('START_SIGNAL', 300)
+    // ⏸️ WAIT for START_SIGNAL
+    // - Parent executions: Wait for signal from tRPC start endpoint (timeout: 5 minutes)
+    // - Child executions: Receive auto-start signal immediately (no timeout)
+    const startSignal = await DBOS.recv<string>('START_SIGNAL', isChildExecution ? 10 : 300)
 
     if (!startSignal) {
-      const timeoutError = 'Execution start timeout - START_SIGNAL not received within 5 minutes'
+      const timeoutError = isChildExecution
+        ? 'Child execution auto-start failed - START_SIGNAL not received within 10 seconds'
+        : 'Execution start timeout - START_SIGNAL not received within 5 minutes'
       DBOS.logger.error(`${timeoutError}: ${task.executionId}`)
       throw new Error(timeoutError)
     }
 
-    DBOS.logger.info(`START_SIGNAL received, beginning execution: ${task.executionId}`)
+    DBOS.logger.info(`START_SIGNAL received, beginning execution: ${task.executionId}${isChildExecution ? ' (child auto-started)' : ''}`)
 
     // ============================================================
     // PHASE 2: Execution (runs after START_SIGNAL received)
@@ -219,6 +232,7 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
     //   - Load flow from database
     //   - Initialize execution instance with shared controllers
     //   - Execute flow with real-time event streaming
+    //   - Collect child tasks from emitted events
     //   - Wait for all events to be published
     //
     // Controllers are passed from workflow to step:
@@ -231,6 +245,30 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
       () => executeFlowAtomic(task, abortController, commandController),
       { name: 'executeFlowAtomic' },
     )
+
+    // Step 2.5: Spawn child executions (if any)
+    // This happens at WORKFLOW level where DBOS.startWorkflow is allowed
+    // Child tasks were collected during execution and returned in result.childTasks
+    if (result.childTasks && result.childTasks.length > 0) {
+      DBOS.logger.info(`Spawning ${result.childTasks.length} child execution(s) for: ${task.executionId}`)
+
+      for (const childTask of result.childTasks) {
+        try {
+          // Start child workflow with executionId as workflowID
+          await DBOS.startWorkflow(executionWorkflow, {
+            workflowID: childTask.executionId,
+          })(childTask)
+
+          DBOS.logger.info(`Child execution workflow started: ${childTask.executionId} (parent: ${task.executionId})`)
+        } catch (error) {
+          // Log error but continue spawning other children
+          // Individual child failures shouldn't fail the parent
+          DBOS.logger.error(`Failed to spawn child execution ${childTask.executionId}: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      }
+
+      DBOS.logger.info(`All ${result.childTasks.length} child execution(s) spawned for: ${task.executionId}`)
+    }
 
     // Step 3: Update status to "completed"
     // This is the final durable checkpoint - marks successful completion

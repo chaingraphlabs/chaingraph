@@ -6,14 +6,97 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionTask } from '../../../types'
+import type { EmittedEvent, IntegrationContext } from '@badaitech/chaingraph-types'
+import type { ExecutionInstance, ExecutionTask } from '../../../types'
 import type { ExecutionService } from '../../services/ExecutionService'
 import type { IExecutionStore } from '../../stores/interfaces/IExecutionStore'
-import type { CommandController } from '../workflows/ExecutionWorkflow'
+import type { ExecutionRow } from '../../stores/postgres/schema'
 import type { ExecutionResult } from '../types'
+import type { CommandController } from '../workflows/ExecutionWorkflow'
 import { DBOS } from '@dbos-inc/dbos-sdk'
+import { customAlphabet } from 'nanoid'
+import { nolookalikes } from 'nanoid-dictionary'
 import { ExecutionStatus } from '../../../types'
 import { loadFlow } from '../../stores/flow-store'
+
+/**
+ * Generate execution ID for child executions
+ */
+function generateExecutionID(): string {
+  return `EX${customAlphabet(nolookalikes, 24)()}`
+}
+
+/**
+ * Create a child execution task from an emitted event
+ * This creates the DB row but doesn't spawn the workflow (that must happen at workflow level)
+ *
+ * @param parentInstance The parent execution instance
+ * @param event The emitted event that triggered the child
+ * @param store Execution store for database operations
+ * @returns The child execution task ready to be spawned
+ */
+async function createChildTask(
+  parentInstance: ExecutionInstance,
+  event: EmittedEvent,
+  store: IExecutionStore,
+): Promise<ExecutionTask> {
+  const childExecutionId = generateExecutionID()
+
+  const childIntegrationContext: IntegrationContext = {
+    ...parentInstance.row.integration,
+  }
+
+  if (parentInstance.row.integration?.archai) {
+    childIntegrationContext.archai = {
+      ...parentInstance.row.integration?.archai,
+      // remove messageID because it might be used in the root execution only
+      messageID: undefined,
+    }
+  }
+
+  const childExecutionRow: ExecutionRow = {
+    id: childExecutionId,
+    flowId: parentInstance.flow.id,
+    ownerId: parentInstance.flow.metadata.ownerID || 'undefined',
+    rootExecutionId: parentInstance.row.rootExecutionId,
+    parentExecutionId: parentInstance.task.executionId,
+    status: ExecutionStatus.Created,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    startedAt: null,
+    completedAt: null,
+    errorMessage: null,
+    errorNodeId: null,
+    executionDepth: parentInstance.row.executionDepth + 1,
+    options: parentInstance.row.options,
+    integration: childIntegrationContext,
+    externalEvents: [
+      {
+        eventName: event.type,
+        payload: event.data,
+      },
+    ],
+    // Failure tracking and recovery fields
+    failureCount: 0,
+    lastFailureReason: null,
+    lastFailureAt: null,
+    processingStartedAt: null,
+    processingWorkerId: null,
+  }
+
+  // Create child execution in store
+  await store.create(childExecutionRow)
+
+  DBOS.logger.debug(`Child execution row created: ${childExecutionId} (parent: ${parentInstance.row.id}, event: ${event.type})`)
+
+  // Return task for workflow-level spawning
+  return {
+    executionId: childExecutionId,
+    flowId: parentInstance.flow.id,
+    timestamp: Date.now(),
+    maxRetries: parentInstance.task.maxRetries,
+  }
+}
 
 /**
  * ATOMIC EXECUTION STEP
@@ -91,6 +174,10 @@ export async function executeFlowAtomic(
 
   const service = getExecutionService()
   const store = getExecutionStore()
+
+  // Collect child tasks for spawning at workflow level
+  // This avoids calling DBOS.startWorkflow() from within a step
+  const collectedChildTasks: ExecutionTask[] = []
 
   // Step 1: Load flow from database
   DBOS.logger.debug(`Loading flow: ${task.flowId}`)
@@ -224,6 +311,25 @@ export async function executeFlowAtomic(
       `Flow execution completed successfully: ${task.executionId} in ${duration}ms`,
     )
 
+    // Collect child tasks from emitted events
+    // These will be spawned at workflow level (where DBOS.startWorkflow is allowed)
+    if (instance.context.emittedEvents && instance.context.emittedEvents.length > 0) {
+      const unprocessedEvents = instance.context.emittedEvents.filter(e => !e.processed)
+
+      for (const event of unprocessedEvents) {
+        // Mark as processed to avoid double-processing
+        event.processed = true
+
+        // Create child execution row and task (but don't spawn yet)
+        const childTask = await createChildTask(instance, event, store)
+        collectedChildTasks.push(childTask)
+
+        DBOS.logger.info(`Collected child task for spawning: ${childTask.executionId} (parent: ${task.executionId})`)
+      }
+    }
+
+    DBOS.logger.info(`Flow execution completed with ${collectedChildTasks.length} child tasks to spawn: ${task.executionId}`)
+
     // Note: DBOS automatically closes streams when the workflow terminates
     // No manual closeStream() call needed
 
@@ -231,6 +337,7 @@ export async function executeFlowAtomic(
       executionId: task.executionId,
       status: 'completed',
       duration,
+      childTasks: collectedChildTasks, // ← Return for workflow-level spawning
     }
   } catch (error) {
     const duration = Date.now() - startTime

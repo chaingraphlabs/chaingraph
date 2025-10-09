@@ -80,16 +80,17 @@ export async function createServices(
     // Create DBOS task queue wrapper
     const taskQueue = new DBOSTaskQueue(dbosWorker.getQueue())
 
-    // Step 4: Create execution service with DBOS task queue (not in-memory!)
-    // Now child executions will be published to DBOS queue
+    // Step 4: Create execution service with task queue
+    // Note: Child executions are NOT published to taskQueue anymore
+    // They are collected in executeFlowAtomic step and spawned at workflow level
+    // The taskQueue parameter is kept for interface compatibility but not used for children
     const executionService = new ExecutionService(
       executionStore,
       eventBus,
-      taskQueue, // ← Use DBOS task queue for child executions!
+      taskQueue, // Interface compatibility (not used for child spawning in DBOS mode)
     )
 
     // Step 5: Initialize the execution step with service and store
-    // This also updates the worker's executionService reference
     initializeExecuteFlowStep(executionService, executionStore)
 
     serviceInstances = {

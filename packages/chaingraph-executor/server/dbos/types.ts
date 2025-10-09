@@ -6,6 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { ExecutionTask } from '../../types'
+
 /**
  * Result of a successful chaingraph execution
  */
@@ -14,6 +16,12 @@ export interface ExecutionResult {
   status: 'completed' | 'failed'
   duration: number
   error?: string
+  /**
+   * Child execution tasks to be spawned
+   * Populated when Event Emitter nodes emit events during execution
+   * These must be spawned at workflow level (not in step)
+   */
+  childTasks?: ExecutionTask[]
 }
 
 /**

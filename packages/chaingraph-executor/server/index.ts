@@ -24,7 +24,7 @@ export {
 } from './dbos'
 
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './dbos'
-export { DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
+export { DBOSChildSpawnerQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
 
 // Distributed Implementations
 export { KafkaEventBus, KafkaTaskQueue } from './implementations/distributed'

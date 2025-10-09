@@ -148,9 +148,13 @@ export class ExecutionService implements IExecutionService {
     }
 
     // Set up event callback for all executions to allow cycles
-    engine.setEventCallback(async (ctx) => {
-      await this.processEmittedEvents(instance)
-    })
+    // NOTE: In DBOS mode, child spawning is handled in the step (not here)
+    // to avoid calling DBOS.startWorkflow() from within a step callback
+    // The callback is kept for Kafka/Local modes where it works fine
+    // TODO: Make this conditional based on execution mode
+    // engine.setEventCallback(async (ctx) => {
+    //   await this.processEmittedEvents(instance)
+    // })
 
     // Store in database
     // await this.store.create(instance)
@@ -369,11 +373,17 @@ export class ExecutionService implements IExecutionService {
             }
           : {}),
       },
-    }, 'Child execution task publish prepared')
+    }, 'Child execution task spawn prepared')
 
-    // Publish task to queue with metrics
+    // Spawn child execution with metrics
+    // Strategy depends on execution mode:
+    // - DBOS mode: Send to child spawner workflow (blazing fast, non-blocking!)
+    // - Kafka/Local mode: Publish directly to task queue
     const taskPublishTimer = this.metricsHelper.createTimer(MetricStages.CHILD_SPAWN, 'task_publish')
     try {
+      // Always use taskQueue.publishTask() - it handles routing internally
+      // For DBOS mode, taskQueue will be DBOSChildSpawnerQueue which uses DBOS.send()
+      // For Kafka/Local mode, taskQueue will publish normally
       await this.taskQueue.publishTask(childTask)
     } catch (error) {
       logger.error({
@@ -381,7 +391,7 @@ export class ExecutionService implements IExecutionService {
         childId: childExecutionId,
         eventType: event.type,
         error: error instanceof Error ? error.message : 'Unknown error',
-      }, 'Failed to publish child execution task')
+      }, 'Failed to spawn child execution')
 
       // Track spawn error
       scopedMetrics.track({
