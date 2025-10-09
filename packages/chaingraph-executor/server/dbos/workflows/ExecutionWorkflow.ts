@@ -11,15 +11,15 @@ import type { ExecutionResult } from '../types'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
 import { DBOS } from '@dbos-inc/dbos-sdk'
 import SuperJSON from 'superjson'
+import { ExecutionStatus } from '../../../types'
+import { getExecutionStore } from '../../stores/execution-store'
+import { loadFlow } from '../../stores/flow-store'
 import {
   executeFlowAtomic,
   updateToCompleted,
   updateToFailed,
   updateToRunning,
 } from '../steps'
-import { ExecutionStatus } from '../../../types'
-import { getExecutionStore } from '../../stores/execution-store'
-import { loadFlow } from '../../stores/flow-store'
 
 /**
  * Execution command types for DBOS messaging
@@ -123,7 +123,7 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
     try {
       // Non-blocking check for command (timeout = 0)
       // This is allowed at workflow level (not in step)
-      const command = await DBOS.recv<ExecutionCommand>('COMMAND', 0)
+      const command = await DBOS.recv<ExecutionCommand>('COMMAND', 5)
 
       if (command) {
         DBOS.logger.info(`Received command: ${command.command} for ${task.executionId}`)
@@ -255,6 +255,7 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
       for (const childTask of result.childTasks) {
         try {
           // Start child workflow with executionId as workflowID
+          // eslint-disable-next-line ts/no-use-before-define
           await DBOS.startWorkflow(executionWorkflow, {
             workflowID: childTask.executionId,
           })(childTask)

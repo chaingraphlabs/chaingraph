@@ -1,5 +1,27 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.5.5-dev.61
+
+### Patch Changes
+
+- e92f4dc: feat: implement child execution spawning with dedicated spawner workflow and event handling
+- 5cd71e6: feat: implement execution recovery service with failure tracking and recovery methods
+- 7caac7e: feat: integrate DBOS execution engine with event streaming and task management
+- 5cd71e6: fix: enhance execution worker with failure tracking, recovery methods, and improved claim handling
+- 18409d2: feat: enhance command handling in execution workflow with shared command controller and abort support
+- 6d0fbb3: feat: implement command polling for execution control with pause, resume, and step commands
+- 9069770: feat: implement signal pattern for DBOS execution workflow with event initialization and timeout handling
+- 7f24250: feat: integrate DBOS execution engine with durable workflows and task management
+- Updated dependencies [e92f4dc]
+- Updated dependencies [5cd71e6]
+- Updated dependencies [7caac7e]
+- Updated dependencies [5cd71e6]
+- Updated dependencies [18409d2]
+- Updated dependencies [6d0fbb3]
+- Updated dependencies [9069770]
+- Updated dependencies [7f24250]
+  - @badaitech/chaingraph-executor@0.5.5-dev.61
+
 ## 0.5.5-dev.60
 
 ### Patch Changes
