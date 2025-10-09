@@ -229,14 +229,28 @@ export class ExecutionService implements IExecutionService {
 
   /**
    * Setup event handling for an execution
+   *
+   * Events are published asynchronously using a sequential queue to avoid blocking flow execution
+   * while preventing race conditions in DBOS stream writes.
+   *
+   * The queue ensures:
+   * - Events are written to DBOS streams sequentially (no offset conflicts)
+   * - Engine callback returns immediately (non-blocking execution)
+   * - All publish promises are tracked for cleanup
    */
   private setupEventHandling(instance: ExecutionInstance): (() => Promise<void>) | undefined {
     const publishPromises: Promise<void>[] = []
 
+    // Promise chain for sequential stream writes
+    // This prevents race conditions in DBOS.writeStream() offset assignment
+    let publishQueue = Promise.resolve()
+
     // Subscribe to all events from the execution engine
-    const unsubscribe = instance.engine?.onAll(async (event) => {
-      // Track the publish promise
-      const publishPromise = this.eventBus.publishEvent(instance.row.id, event)
+    const unsubscribe = instance.engine?.onAll((event) => {
+      // Chain this event's publish to the queue (sequential processing)
+      // But don't block the engine callback - it returns immediately
+      publishQueue = publishQueue
+        .then(() => this.eventBus.publishEvent(instance.row.id, event))
         .catch((error) => {
           logger.error({
             error,
@@ -248,18 +262,37 @@ export class ExecutionService implements IExecutionService {
           // TODO: Handle publish failure (e.g., retry, dead-letter queue, etc.)
         })
 
-      publishPromises.push(publishPromise)
+      // Track the promise so we can wait for all publishes during cleanup
+      publishPromises.push(publishQueue)
 
-      // Wait for the publish to complete
-      await publishPromise
+      // Engine callback returns immediately - execution continues without blocking
     })
 
-    // Return enhanced unsubscribe that waits for pending publishes
+    // Return enhanced cleanup function that waits for all pending publishes
     return async () => {
-      // Wait for all pending event publishes
+      logger.debug({
+        executionId: instance.row.id,
+        pendingPublishes: publishPromises.length,
+      }, 'Waiting for all event publishes to complete')
+
+      // Wait for all pending event publishes to complete
       if (publishPromises.length > 0) {
-        await Promise.allSettled(publishPromises)
+        const startTime = Date.now()
+
+        // Wait for the entire publish queue to drain
+        await publishQueue.catch(() => {
+          // Ignore errors here - they were already logged during publishing
+        })
+
+        const duration = Date.now() - startTime
+
+        logger.debug({
+          executionId: instance.row.id,
+          total: publishPromises.length,
+          duration,
+        }, 'Event publish cleanup complete')
       }
+
       unsubscribe?.()
     }
   }
