@@ -108,7 +108,7 @@ async function createChildTask(
  * 1. Load the flow definition from database
  * 2. Initialize the execution instance with event streaming
  * 3. Execute the flow (can take up to 30 minutes)
- * 4. Stream events in real-time during execution (DBOS streams or Kafka)
+ * 4. Stream events in real-time during execution (DBOS streams)
  * 5. Wait for all events to be published before completing
  *
  * CRITICAL GUARANTEES:
@@ -202,8 +202,7 @@ export async function executeFlowAtomic(
 
   // Step 3: Create execution instance with workflow-provided abortController
   // The execution instance is configured to stream events in real-time
-  // For DBOS mode: Events streamed via DBOS.writeStream() to PostgreSQL
-  // For Kafka mode: Events published to Kafka with batching
+  // Events are streamed via DBOS.writeStream() to PostgreSQL
   // AbortController is passed from workflow level to enable STOP command
   DBOS.logger.debug(`Creating execution instance: ${task.executionId}`)
 
@@ -215,8 +214,7 @@ export async function executeFlowAtomic(
   })
 
   // Step 4: Execute the flow
-  // Events are streamed in real-time during execution
-  // The eventBus handles streaming (DBOS or Kafka depending on configuration)
+  // Events are streamed in real-time during execution via DBOS streams
   // Commands are received via shared state from workflow-level polling
   DBOS.logger.info(`Executing flow: ${task.executionId}`)
 
@@ -295,8 +293,7 @@ export async function executeFlowAtomic(
 
       // Step 5: Wait for all events to be published
       // This ensures all events are safely persisted before we mark step as complete
-      // For DBOS mode: Events are in PostgreSQL via DBOS streams
-      // For Kafka mode: Events are in Kafka topic
+      // Events are in PostgreSQL via DBOS streams
       DBOS.logger.debug(`Waiting for all events to be published: ${task.executionId}`)
 
       if (instance.cleanupEventHandling) {

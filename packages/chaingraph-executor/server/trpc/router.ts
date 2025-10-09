@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionRow } from '../../server/stores/postgres/schema'
-import type { ExecutionCommand, ExecutionTask } from '../../types'
+import type { ExecutionTask } from '../../types'
 import type { createContext } from './context'
 import {
   ExecutionExternalEventSchema,
@@ -16,15 +16,11 @@ import {
 import { ExecutionOptionsSchema } from '@badaitech/chaingraph-types'
 import { DBOS } from '@dbos-inc/dbos-sdk'
 import { initTRPC, TRPCError } from '@trpc/server'
-import { customAlphabet } from 'nanoid'
-import { nolookalikes } from 'nanoid-dictionary'
 import SuperJSON from 'superjson'
 import { z } from 'zod'
-import { publishExecutionCommand } from '../../server/kafka/producers/command-producer'
 import { generateExecutionID } from '../../server/services/ExecutionService'
 import { config } from '../../server/utils/config'
 import {
-  ExecutionCommandType,
   ExecutionStatus,
 } from '../../types'
 import { createLogger } from '../utils/logger'
@@ -310,43 +306,25 @@ export const executionRouter = router({
         })
       }
 
-      // HYBRID APPROACH: Use different methods based on execution mode
-      if (config.dbos.enabled) {
-        // 🛑 DBOS Mode: Use workflow cancellation (built-in DBOS feature)
-        // This cancels the workflow and all its children
-        try {
-          await DBOS.cancelWorkflow(input.executionId)
-          logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOS.cancelWorkflow()')
+      // 🛑 DBOS Mode: Use workflow cancellation (built-in DBOS feature)
+      // This cancels the workflow and all its children
+      try {
+        await DBOS.cancelWorkflow(input.executionId)
+        logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOS.cancelWorkflow()')
 
-          // Update status to stopped in database
-          await executionStore.updateExecutionStatus({
-            executionId: input.executionId,
-            status: ExecutionStatus.Stopped,
-            errorMessage: input.reason || 'User requested stop',
-            completedAt: new Date(),
-          })
-        } catch (error) {
-          logger.error({ error, executionId: input.executionId }, 'Failed to cancel workflow')
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to cancel execution workflow',
-          })
-        }
-      } else {
-        // 📨 Kafka Mode: Publish command to Kafka
-        const command: ExecutionCommand = {
-          id: `CMD${customAlphabet(nolookalikes, 24)()}`,
+        // Update status to stopped in database
+        await executionStore.updateExecutionStatus({
           executionId: input.executionId,
-          command: ExecutionCommandType.STOP,
-          payload: {
-            reason: input.reason || 'User requested stop',
-          },
-          timestamp: Date.now(),
-          requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
-          issuedBy: 'user',
-        }
-
-        await publishExecutionCommand(command)
+          status: ExecutionStatus.Stopped,
+          errorMessage: input.reason || 'User requested stop',
+          completedAt: new Date(),
+        })
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to cancel workflow')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to cancel execution workflow',
+        })
       }
 
       return { success: true }
@@ -384,38 +362,20 @@ export const executionRouter = router({
         })
       }
 
-      // HYBRID APPROACH: Use different methods based on execution mode
-      if (config.dbos.enabled) {
-        // ⏸️ DBOS Mode: Send PAUSE command via DBOS messaging
-        // The workflow's command polling loop will receive and handle this
-        try {
-          await DBOS.send(input.executionId, {
-            command: 'PAUSE',
-            reason: input.reason || 'User requested pause',
-          }, 'COMMAND')
-          logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOS.send()')
-        } catch (error) {
-          logger.error({ error, executionId: input.executionId }, 'Failed to send PAUSE command')
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to send pause command to execution workflow',
-          })
-        }
-      } else {
-        // 📨 Kafka Mode: Publish command to Kafka
-        const command: ExecutionCommand = {
-          id: `CMD${customAlphabet(nolookalikes, 24)()}`,
-          executionId: input.executionId,
-          command: ExecutionCommandType.PAUSE,
-          payload: {
-            reason: input.reason || 'User requested pause',
-          },
-          timestamp: Date.now(),
-          requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
-          issuedBy: 'user',
-        }
-
-        await publishExecutionCommand(command)
+      // ⏸️ DBOS Mode: Send PAUSE command via DBOS messaging
+      // The workflow's command polling loop will receive and handle this
+      try {
+        await DBOS.send(input.executionId, {
+          command: 'PAUSE',
+          reason: input.reason || 'User requested pause',
+        }, 'COMMAND')
+        logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOS.send()')
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to send PAUSE command')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send pause command to execution workflow',
+        })
       }
 
       return { success: true }
@@ -452,35 +412,19 @@ export const executionRouter = router({
         })
       }
 
-      // HYBRID APPROACH: Use different methods based on execution mode
-      if (config.dbos.enabled) {
-        // ▶️ DBOS Mode: Send RESUME command via DBOS messaging
-        // The workflow's command polling loop will receive and handle this
-        try {
-          await DBOS.send(input.executionId, {
-            command: 'RESUME',
-          }, 'COMMAND')
-          logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOS.send()')
-        } catch (error) {
-          logger.error({ error, executionId: input.executionId }, 'Failed to send RESUME command')
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to send resume command to execution workflow',
-          })
-        }
-      } else {
-        // 📨 Kafka Mode: Publish command to Kafka
-        const command: ExecutionCommand = {
-          id: `CMD${customAlphabet(nolookalikes, 24)()}`,
-          executionId: input.executionId,
-          command: ExecutionCommandType.RESUME,
-          payload: {},
-          timestamp: Date.now(),
-          requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
-          issuedBy: 'user',
-        }
-
-        await publishExecutionCommand(command)
+      // ▶️ DBOS Mode: Send RESUME command via DBOS messaging
+      // The workflow's command polling loop will receive and handle this
+      try {
+        await DBOS.send(input.executionId, {
+          command: 'RESUME',
+        }, 'COMMAND')
+        logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOS.send()')
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to send RESUME command')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send resume command to execution workflow',
+        })
       }
 
       return { success: true }

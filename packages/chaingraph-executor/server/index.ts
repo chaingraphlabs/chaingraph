@@ -26,20 +26,11 @@ export {
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './dbos'
 export { DBOSChildSpawnerQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
 
-// Distributed Implementations
-export { KafkaEventBus, KafkaTaskQueue } from './implementations/distributed'
-
 // Local Implementations
 export { InMemoryEventBus, InMemoryTaskQueue } from './implementations/local'
 
 // Core Interfaces
 export type { IEventBus, ITaskQueue } from './interfaces'
-// Kafka Services (for distributed mode)
-export { getKafkaClient } from './kafka/client'
-export { publishExecutionCommand } from './kafka/producers/command-producer'
-export { publishExecutionEvent } from './kafka/producers/event-producer'
-export { publishExecutionTask } from './kafka/producers/task-producer'
-export { createTopicsIfNotExist } from './kafka/topics'
 // Services
 export { ExecutionService } from './services/ExecutionService'
 
@@ -81,8 +72,6 @@ export type { ExecutionMode } from './utils/config'
 // Utilities
 export { closeDatabaseExecutions, closeDatabaseMain, getDatabaseExecutions, getDatabaseMain } from './utils/db'
 export { createLogger } from './utils/logger'
-// Workers
-export { ExecutionWorker } from './workers/ExecutionWorker'
 
 // WebSocket Server
 export { createWSServer } from './ws-server'

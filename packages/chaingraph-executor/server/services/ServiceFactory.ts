@@ -18,7 +18,6 @@ import {
   initializeUpdateStatusSteps,
 } from '../dbos'
 import { DBOSEventBus, DBOSTaskQueue } from '../implementations/dbos'
-import { KafkaEventBus, KafkaTaskQueue } from '../implementations/distributed'
 import { InMemoryEventBus, InMemoryTaskQueue } from '../implementations/local'
 import { getExecutionStore } from '../stores/execution-store'
 import { config } from '../utils/config'
@@ -54,7 +53,7 @@ export async function createServices(
 
   // Check if DBOS mode is enabled
   if (config.dbos.enabled) {
-    logger.info('🚀 DBOS mode enabled - using DBOS Durable Queues for task distribution')
+    logger.info('DBOS mode enabled')
 
     // Step 1: Initialize DBOS runtime (required for both API and Worker processes)
     await initializeDBOS()
@@ -102,32 +101,13 @@ export async function createServices(
       dbosWorker,
     }
 
-    logger.info({
-      queueConcurrency: config.dbos.queueConcurrency,
-      workerConcurrency: config.dbos.workerConcurrency,
-    }, 'DBOS services initialized successfully')
-  } else if (config.mode === 'local') {
+    logger.info('DBOS services initialized')
+  } else {
+    // Local mode - using in-memory services for development/testing
     logger.info('Local mode - using in-memory services')
 
     const eventBus = new InMemoryEventBus()
     const taskQueue = new InMemoryTaskQueue()
-
-    serviceInstances = {
-      eventBus,
-      taskQueue,
-      executionStore,
-      flowStore,
-      executionService: new ExecutionService(
-        executionStore,
-        eventBus,
-        taskQueue,
-      ),
-    }
-  } else {
-    logger.info('Distributed mode - using Kafka for tasks and events')
-
-    const eventBus = new KafkaEventBus()
-    const taskQueue = new KafkaTaskQueue()
 
     serviceInstances = {
       eventBus,

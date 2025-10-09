@@ -58,11 +58,7 @@ export class ExecutionQueue {
       workerConcurrency: perWorkerConcurrency,
     })
 
-    logger.info({
-      queueName: this.queue.name,
-      globalConcurrency,
-      perWorkerConcurrency,
-    }, 'Execution queue initialized')
+    logger.debug('Execution queue initialized')
   }
 
   /**
@@ -80,7 +76,7 @@ export class ExecutionQueue {
    * @returns Workflow handle for tracking execution status and result
    */
   async enqueue(task: ExecutionTask): Promise<WorkflowHandle<ExecutionResult>> {
-    logger.info({ executionId: task.executionId, flowId: task.flowId }, 'Enqueuing execution')
+    logger.debug({ executionId: task.executionId }, 'Enqueuing execution')
 
     try {
       const handle = await DBOS.startWorkflow(executionWorkflow, {
@@ -92,10 +88,7 @@ export class ExecutionQueue {
         },
       })(task)
 
-      logger.info({
-        executionId: task.executionId,
-        workflowID: handle.workflowID,
-      }, 'Execution enqueued successfully')
+      logger.debug({ executionId: task.executionId }, 'Execution enqueued')
 
       return handle
     } catch (error) {

@@ -1,5 +1,12 @@
 # @badaitech/chaingraph-frontend
 
+## 0.5.5-dev.71
+
+### Patch Changes
+
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.62
+
 ## 0.5.5-dev.70
 
 ### Patch Changes

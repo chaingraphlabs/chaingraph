@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import type { ITaskQueue } from '../interfaces/ITaskQueue'
+import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import type { ExecutionRow } from '../stores/postgres/schema'
 import { ExecutionStatus } from '../../types'
 import { config } from '../utils/config'
@@ -194,7 +194,7 @@ export class RecoveryService {
   }
 
   /**
-   * Recover a single execution by republishing to Kafka
+   * Recover a single execution by republishing to task queue
    */
   private async recoverExecution(execution: ExecutionRow): Promise<boolean> {
     const recoveryStartTime = Date.now()
@@ -263,7 +263,7 @@ export class RecoveryService {
         previousWorkerId,
       }, 'Recovering execution')
 
-      // Republish task to Kafka with retry handling
+      // Republish task to queue with retry handling
       try {
         await this.taskQueue.publishTask({
           executionId: execution.id,
@@ -386,5 +386,4 @@ export class RecoveryService {
       }, 'Failed to release recovery lock')
     }
   }
-
 }

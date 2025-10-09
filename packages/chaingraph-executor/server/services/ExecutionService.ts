@@ -41,8 +41,8 @@ export function generateEventID(): string {
 }
 
 /**
- * Refactored ExecutionService using dependency injection
- * Works with both local and distributed modes via interfaces
+ * ExecutionService using dependency injection
+ * Works with both local and DBOS modes via interfaces
  */
 export class ExecutionService implements IExecutionService {
   // Maximum execution depth to prevent infinite cycles
@@ -150,7 +150,7 @@ export class ExecutionService implements IExecutionService {
     // Set up event callback for all executions to allow cycles
     // NOTE: In DBOS mode, child spawning is handled in the step (not here)
     // to avoid calling DBOS.startWorkflow() from within a step callback
-    // The callback is kept for Kafka/Local modes where it works fine
+    // The callback is kept for Local mode where it works fine
     // TODO: Make this conditional based on execution mode
     // engine.setEventCallback(async (ctx) => {
     //   await this.processEmittedEvents(instance)
@@ -249,7 +249,7 @@ export class ExecutionService implements IExecutionService {
             executionId: instance.row.id,
             eventType: event.type,
             eventIndex: event.index,
-          }, 'Failed to publish event to Kafka')
+          }, 'Failed to publish event')
 
           // TODO: Handle publish failure (e.g., retry, dead-letter queue, etc.)
         })
@@ -262,7 +262,7 @@ export class ExecutionService implements IExecutionService {
 
     // Return enhanced unsubscribe that waits for pending publishes
     return async () => {
-      // Wait for all pending Kafka publishes
+      // Wait for all pending event publishes
       if (publishPromises.length > 0) {
         await Promise.allSettled(publishPromises)
       }
@@ -377,13 +377,13 @@ export class ExecutionService implements IExecutionService {
 
     // Spawn child execution with metrics
     // Strategy depends on execution mode:
-    // - DBOS mode: Send to child spawner workflow (blazing fast, non-blocking!)
-    // - Kafka/Local mode: Publish directly to task queue
+    // - DBOS mode: Collected in step, spawned at workflow level
+    // - Local mode: Publish directly to in-memory task queue
     const taskPublishTimer = this.metricsHelper.createTimer(MetricStages.CHILD_SPAWN, 'task_publish')
     try {
       // Always use taskQueue.publishTask() - it handles routing internally
-      // For DBOS mode, taskQueue will be DBOSChildSpawnerQueue which uses DBOS.send()
-      // For Kafka/Local mode, taskQueue will publish normally
+      // For DBOS mode, taskQueue will use DBOS queue
+      // For Local mode, taskQueue will publish to in-memory queue
       await this.taskQueue.publishTask(childTask)
     } catch (error) {
       logger.error({

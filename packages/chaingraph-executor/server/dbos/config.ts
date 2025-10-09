@@ -17,6 +17,57 @@ const logger = createLogger('dbos-config')
 let isDBOSInitialized = false
 
 /**
+ * Mask sensitive information in database URLs
+ * Hides password and shows only essential connection info
+ */
+function maskDatabaseUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    // Keep only the protocol, host, port, and database name
+    // Hide username and password
+    const host = parsed.host
+    const database = parsed.pathname
+    return `postgres://*****@${host}${database}`
+  } catch {
+    return 'postgres://*****@hidden'
+  }
+}
+
+/**
+ * Suppress DBOS SDK's verbose console output during initialization
+ * DBOS logs sensitive information (DB URLs, executor IDs) to console
+ * This captures and filters those logs
+ */
+function suppressDBOSLogs(fn: () => Promise<void>): Promise<void> {
+  // Store original console methods
+  const originalLog = console.log
+  const originalInfo = console.info
+  const originalWarn = console.warn
+
+  // Suppress DBOS initialization logs (they contain sensitive data)
+  // DBOS logs directly to console, bypassing our logger
+  console.log = () => {}
+  console.info = () => {}
+  console.warn = (message: any) => {
+    // Only show critical warnings from DBOS
+    if (typeof message === 'string' && (
+      message.includes('Unable to start DBOS admin server')
+      || message.includes('error')
+      || message.includes('Error')
+    )) {
+      originalWarn(message)
+    }
+  }
+
+  return fn().finally(() => {
+    // Restore original console methods
+    console.log = originalLog
+    console.info = originalInfo
+    console.warn = originalWarn
+  })
+}
+
+/**
  * Check if DBOS has been initialized
  */
 export function isDBOSLaunched(): boolean {
@@ -35,8 +86,6 @@ export async function initializeDBOS(): Promise<void> {
   }
 
   try {
-    logger.info('Initializing DBOS...')
-
     // Configure DBOS with v4 API
     const dbosConfig: DBOSConfig = {
       name: config.dbos.applicationName,
@@ -54,26 +103,28 @@ export async function initializeDBOS(): Promise<void> {
 
     DBOS.setConfig(dbosConfig)
 
-    // log if conductor is configured
-    if (config.dbos.conductorKey) {
-      logger.info(`DBOS Conductor configured, connecting to conductor at ${config.dbos.conductorKey}`)
-    }
+    // Log masked connection info (safe for production logs)
+    logger.info({
+      database: maskDatabaseUrl(config.dbos.systemDatabaseUrl),
+      adminServer: config.dbos.adminServer.enabled ? `port ${config.dbos.adminServer.port}` : 'disabled',
+    }, 'Initializing DBOS runtime')
 
-    // Launch DBOS runtime
-    await DBOS.launch({
-      conductorURL: config.dbos.conductorURL,
-      conductorKey: config.dbos.conductorKey,
+    // Launch DBOS runtime with suppressed verbose output
+    // DBOS SDK logs sensitive information (DB URLs, executor IDs) to console
+    // We suppress these logs and only show our own safe logs
+    await suppressDBOSLogs(async () => {
+      await DBOS.launch({
+        conductorURL: config.dbos.conductorURL,
+        conductorKey: config.dbos.conductorKey,
+      })
     })
 
     isDBOSInitialized = true
 
     logger.info({
-      systemDatabaseUrl: config.dbos.systemDatabaseUrl,
-      adminServerEnabled: config.dbos.adminServer.enabled,
-      adminServerPort: config.dbos.adminServer.enabled ? config.dbos.adminServer.port : 'disabled',
       queueConcurrency: config.dbos.queueConcurrency,
       workerConcurrency: config.dbos.workerConcurrency,
-    }, 'DBOS initialized successfully')
+    }, 'DBOS runtime ready')
   } catch (error) {
     logger.error({ error }, 'Failed to initialize DBOS')
     throw error

@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-executor",
   "type": "module",
-  "version": "0.5.5-dev.61",
+  "version": "0.5.5-dev.62",
   "private": false,
   "description": "Chaingraph Message Bus for inter-service communication",
   "license": "BUSL-1.1",
@@ -72,7 +72,6 @@
     "@trpc/tanstack-react-query": "^11.6.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.5",
-    "kafkajs": "^2.2.4",
     "nanoid": "^5.1.6",
     "nanoid-dictionary": "^5.0.0",
     "pg": "^8.16.3",

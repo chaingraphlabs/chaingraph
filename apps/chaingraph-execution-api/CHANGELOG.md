@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.5.5-dev.62
+
+### Patch Changes
+
+- feat: update DBOS execution configuration and remove Kafka dependencies
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.5.5-dev.62
+
 ## 0.5.5-dev.61
 
 ### Patch Changes

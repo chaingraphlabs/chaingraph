@@ -125,9 +125,7 @@ export class DBOSExecutionWorker {
 
       this.isRunning = true
 
-      logger.info({
-        queueName: this.queue.getQueueName(),
-      }, 'DBOS execution worker started successfully - listening for queued tasks')
+      logger.info('DBOS execution worker started')
 
       // Note: Unlike Kafka workers, DBOS automatically processes queued workflows
       // We don't need to manually call consumeTasks() - DBOS handles it internally

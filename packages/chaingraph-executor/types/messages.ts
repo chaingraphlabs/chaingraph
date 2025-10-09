@@ -71,7 +71,7 @@ export interface ExecutionTask {
 }
 
 /**
- * Event message published to Kafka
+ * Event message for execution events
  */
 export interface ExecutionEventMessage {
   executionId: string
@@ -79,21 +79,3 @@ export interface ExecutionEventMessage {
   timestamp: number
   workerId: string // Which worker produced this
 }
-
-let topicsPrefix = ''
-try {
-  topicsPrefix = process?.env?.KAFKA_TOPICS_PREFIX || ''
-} catch {
-  topicsPrefix = ''
-}
-
-/**
- * Kafka topic names
- */
-export const KafkaTopics = {
-  COMMANDS: `${topicsPrefix}chaingraph.execution.commands`,
-  EVENTS: `${topicsPrefix}chaingraph.execution.events`,
-  TASKS: `${topicsPrefix}chaingraph.execution.tasks`,
-} as const
-
-export type KafkaTopicName = typeof KafkaTopics[keyof typeof KafkaTopics]

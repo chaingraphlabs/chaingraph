@@ -469,7 +469,7 @@ DBOS_APPLICATION_NAME=chaingraph-executor
 
 # DBOS Admin Server (local management UI)
 DBOS_ADMIN_ENABLED=true
-DBOS_ADMIN_PORT=3002                  # Default: 3002
+DBOS_ADMIN_PORT=3022                  # Default: 3022
 
 # Concurrency Limits
 DBOS_QUEUE_CONCURRENCY=100            # Global across all workers
@@ -500,7 +500,7 @@ export const config = {
     conductorKey: process.env.DBOS_CONDUCTOR_KEY,
     adminServer: {
       enabled: process.env.DBOS_ADMIN_ENABLED !== 'false',
-      port: Number.parseInt(process.env.DBOS_ADMIN_PORT) || 3002,
+      port: Number.parseInt(process.env.DBOS_ADMIN_PORT) || 3022,
     },
     queueConcurrency: Number.parseInt(process.env.DBOS_QUEUE_CONCURRENCY) || 100,
     workerConcurrency: Number.parseInt(process.env.DBOS_WORKER_CONCURRENCY) || 5,
@@ -1014,7 +1014,7 @@ if (commandController.currentCommand) {
 
 ### DBOS Admin UI
 
-**Access**: `http://localhost:3002` (when `DBOS_ADMIN_ENABLED=true`)
+**Access**: `http://localhost:3022` (when `DBOS_ADMIN_ENABLED=true`)
 
 **Features**:
 - View all workflows (status, duration, progress)

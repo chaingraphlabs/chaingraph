@@ -10,6 +10,7 @@ import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import type { IEventBus } from '../../interfaces/IEventBus'
 import { ExecutionEventImpl as EventImpl } from '@badaitech/chaingraph-types'
 import { DBOS } from '@dbos-inc/dbos-sdk'
+import SuperJSON from 'superjson'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('dbos-event-bus')
@@ -62,8 +63,10 @@ export class DBOSEventBus implements IEventBus {
    */
   publishEvent = async (executionId: string, event: ExecutionEventImpl): Promise<void> => {
     try {
-      // Serialize event for storage
-      const serializedEvent = event.serialize()
+      // Serialize event for storage using SuperJSON to handle complex types
+      // event.serialize() returns an object that may contain circular references
+      // SuperJSON.serialize() handles circular refs and complex types (Dates, Maps, etc.)
+      const serializedEvent = SuperJSON.serialize(event.serialize())
 
       // Write to DBOS stream
       // Note: This can be called from both workflows and steps
@@ -189,8 +192,12 @@ export class DBOSEventBus implements IEventBus {
           continue
         }
 
-        // Deserialize event
-        const event = EventImpl.deserializeStatic(streamValue.event)
+        // Deserialize event using SuperJSON to handle complex types
+        // streamValue.event is a SuperJSON serialized object { json, meta }
+        const deserializedEvent = SuperJSON.deserialize(streamValue.event)
+
+        // Then deserialize the ExecutionEvent from the SuperJSON result
+        const event = EventImpl.deserializeStatic(deserializedEvent)
         if (!event) {
           logger.warn({
             executionId,
