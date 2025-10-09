@@ -180,10 +180,40 @@ export const config = {
     enabled: process.env.ENABLE_DBOS_EXECUTION === 'true',
 
     /**
+     * DBOS Conductor URL for connecting to a remote DBOS server
+     * If not set, assumes DBOS is running in "embedded" mode within this process
+     * In production, it's recommended to run a separate DBOS server and set this URL
+     */
+    conductorURL: process.env.DBOS_CONDUCTOR_URL || undefined,
+
+    /**
+     * Application Name for DBOS client identification
+     * Used in logging and monitoring on the DBOS server side
+     */
+    applicationName: process.env.DBOS_APPLICATION_NAME || 'chaingraph-executor',
+
+    /**
+     * DBOS Conductor Key for authenticating with DBOS server
+     * If not set, assumes DBOS is running in "embedded" mode within this process
+     * In production, it's recommended to run a separate DBOS server and set this key
+     */
+    conductorKey: process.env.DBOS_CONDUCTOR_KEY || undefined,
+
+    /**
      * Database URL for DBOS system tables
      * Defaults to the main executions database
      */
     systemDatabaseUrl: process.env.DBOS_SYSTEM_DATABASE_URL || process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+
+    /**
+     * DBOS Admin Server Configuration
+     * The admin server provides a management interface for DBOS workflows
+     * Set port to null/undefined to disable the admin server
+     */
+    adminServer: {
+      enabled: process.env.DBOS_ADMIN_ENABLED !== 'false', // Enabled by default
+      port: process.env.DBOS_ADMIN_PORT ? Number.parseInt(process.env.DBOS_ADMIN_PORT, 10) : 3002,
+    },
 
     /**
      * Global concurrency limit across all workers

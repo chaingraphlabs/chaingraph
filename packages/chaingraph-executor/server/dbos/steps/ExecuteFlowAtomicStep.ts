@@ -23,15 +23,16 @@ import { loadFlow } from '../../stores/flow-store'
  * 1. Load the flow definition from database
  * 2. Initialize the execution instance with event streaming
  * 3. Execute the flow (can take up to 30 minutes)
- * 4. Stream events to Kafka in real-time during execution with batching
+ * 4. Stream events in real-time during execution (DBOS streams or Kafka)
  * 5. Wait for all events to be published before completing
  *
  * CRITICAL GUARANTEES:
  * - The entire flow execution happens on ONE worker (no state transfer)
  * - Flow state stays in-memory throughout execution
  * - If execution fails, DBOS retries this ENTIRE step on another worker
- * - Events are streamed to Kafka with batching as execution progresses
- * - Step only completes after all events are safely in Kafka
+ * - Events are streamed in real-time as execution progresses
+ * - Step only completes after all events are safely persisted
+ * - DBOS automatically closes event streams when workflow terminates
  */
 
 // Module-level state for dependency injection (initialized by worker)
@@ -107,8 +108,9 @@ export async function executeFlowAtomic(
   }
 
   // Step 3: Create execution instance
-  // The execution instance is configured to stream events to Kafka in real-time
-  // The ExecutionService.createExecutionInstance() sets up event handling with batching
+  // The execution instance is configured to stream events in real-time
+  // For DBOS mode: Events streamed via DBOS.writeStream() to PostgreSQL
+  // For Kafka mode: Events published to Kafka with batching
   DBOS.logger.debug(`Creating execution instance: ${task.executionId}`)
 
   const abortController = new AbortController()
@@ -120,8 +122,8 @@ export async function executeFlowAtomic(
   })
 
   // Step 4: Execute the flow
-  // Events are published to Kafka in real-time during execution
-  // The eventBus handles batching and async publishing
+  // Events are streamed in real-time during execution
+  // The eventBus handles streaming (DBOS or Kafka depending on configuration)
   DBOS.logger.info(`Executing flow: ${task.executionId}`)
 
   try {
@@ -129,8 +131,10 @@ export async function executeFlowAtomic(
       // Execution complete callback
       // The eventQueue is already closed at this point, and all events should be processed
 
-      // Step 5: Wait for all events to be published to Kafka
-      // This ensures all events are safely in Kafka before we mark step as complete
+      // Step 5: Wait for all events to be published
+      // This ensures all events are safely persisted before we mark step as complete
+      // For DBOS mode: Events are in PostgreSQL via DBOS streams
+      // For Kafka mode: Events are in Kafka topic
       DBOS.logger.debug(`Waiting for all events to be published: ${task.executionId}`)
 
       if (instance.cleanupEventHandling) {
@@ -144,6 +148,9 @@ export async function executeFlowAtomic(
     DBOS.logger.info(
       `Flow execution completed successfully: ${task.executionId} in ${duration}ms`,
     )
+
+    // Note: DBOS automatically closes streams when the workflow terminates
+    // No manual closeStream() call needed
 
     return {
       executionId: task.executionId,
@@ -167,6 +174,9 @@ export async function executeFlowAtomic(
     } catch (cleanupError) {
       DBOS.logger.error('Failed to cleanup event handling after execution error')
     }
+
+    // Note: DBOS automatically closes streams when the workflow terminates
+    // No manual closeStream() call needed, even on error
 
     // Re-throw the error so DBOS can handle retry
     throw error

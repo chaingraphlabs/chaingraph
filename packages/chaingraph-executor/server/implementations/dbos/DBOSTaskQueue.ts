@@ -60,6 +60,7 @@ export class DBOSTaskQueue implements ITaskQueue {
 
     try {
       await this.executionQueue.enqueue(task)
+      // todo: return handle to await result if needed?
       logger.info({ executionId: task.executionId }, 'Task published to DBOS queue')
     } catch (error) {
       logger.error({

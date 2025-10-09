@@ -11,9 +11,9 @@ export * from '../types'
 // DBOS Integration (Optional - new execution engine)
 export {
   DBOSExecutionWorker,
+  executeFlowAtomic,
   ExecutionQueue,
   executionWorkflow,
-  executeFlowAtomic,
   initializeDBOS,
   initializeExecuteFlowStep,
   initializeUpdateStatusSteps,
@@ -24,7 +24,7 @@ export {
 } from './dbos'
 
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './dbos'
-export { DBOSTaskQueue } from './implementations/dbos'
+export { DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
 
 // Distributed Implementations
 export { KafkaEventBus, KafkaTaskQueue } from './implementations/distributed'

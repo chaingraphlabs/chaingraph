@@ -6,11 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IEventBus } from 'server/interfaces'
-import type { ITaskQueue } from '../interfaces/ITaskQueue'
+import type { ExecutionService } from '../services/ExecutionService'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import type { DBOSWorkerOptions } from './types'
-import { ExecutionService } from '../services/ExecutionService'
+import { isDBOSLaunched } from '.'
 import { createLogger } from '../utils/logger'
 import { initializeDBOS, shutdownDBOS } from './config'
 import { ExecutionQueue } from './queues/ExecutionQueue'
@@ -64,35 +63,25 @@ const logger = createLogger('dbos-execution-worker')
  */
 export class DBOSExecutionWorker {
   private queue: ExecutionQueue
-  private executionService: ExecutionService
+  // private executionService: ExecutionService
   private isRunning = false
 
   /**
    * Create a new DBOS execution worker
    *
    * @param store Execution store for database operations
-   * @param eventBus Event bus for publishing execution events
-   * @param taskQueue Task queue (used for ExecutionService compatibility, events still use Kafka)
+   * @param executionService Execution service for flow execution
    * @param options Worker configuration options
    */
   constructor(
     private readonly store: IExecutionStore,
-    private readonly eventBus: IEventBus,
-    private readonly taskQueue: ITaskQueue,
+    private executionService: ExecutionService,
     options?: DBOSWorkerOptions,
   ) {
     this.queue = new ExecutionQueue({
       concurrency: options?.concurrency ?? 100,
       workerConcurrency: options?.workerConcurrency ?? 5,
     })
-
-    // Create execution service for flow execution
-    // Note: eventBus will be extracted from taskQueue in actual implementation
-    this.executionService = new ExecutionService(
-      store,
-      eventBus,
-      taskQueue,
-    )
   }
 
   /**
@@ -110,11 +99,18 @@ export class DBOSExecutionWorker {
     logger.info('Starting DBOS execution worker...')
 
     try {
-      // Step 1: Initialize DBOS runtime
-      await initializeDBOS()
+      // Step 1: Initialize DBOS runtime (if not already initialized)
+      // This is idempotent - safe to call multiple times
+      // ServiceFactory may have already initialized DBOS in API process
+      if (!isDBOSLaunched()) {
+        await initializeDBOS()
+      } else {
+        logger.debug('DBOS already initialized by ServiceFactory')
+      }
 
       // Step 2: Initialize steps with dependencies
       // This injects dependencies into module-level state
+      // Safe to call multiple times - updates the module-level references
       initializeUpdateStatusSteps(this.store)
       initializeExecuteFlowStep(this.executionService, this.store)
 

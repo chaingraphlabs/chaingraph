@@ -7,7 +7,7 @@
  */
 
 // Configuration
-export { initializeDBOS, shutdownDBOS } from './config'
+export { initializeDBOS, isDBOSLaunched, shutdownDBOS } from './config'
 
 // Core worker
 export { DBOSExecutionWorker } from './DBOSExecutionWorker'

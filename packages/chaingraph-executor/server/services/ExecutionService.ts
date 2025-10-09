@@ -61,6 +61,14 @@ export class ExecutionService implements IExecutionService {
     private readonly taskQueue: ITaskQueue,
   ) {}
 
+  /**
+   * Get the event bus instance
+   * Useful for accessing event bus-specific methods (e.g., closing DBOS streams)
+   */
+  getEventBus(): IEventBus {
+    return this.eventBus
+  }
+
   async createExecutionInstance(params: CreateExecutionParams): Promise<ExecutionInstance> {
     const {
       task,

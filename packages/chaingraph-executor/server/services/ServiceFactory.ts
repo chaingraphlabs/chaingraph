@@ -12,6 +12,12 @@ import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { ExecutionService } from '../../server/services/ExecutionService'
 import { getFlowStore } from '../../server/stores/flow-store'
+import { DBOSExecutionWorker, initializeDBOS } from '../dbos'
+import {
+  initializeExecuteFlowStep,
+  initializeUpdateStatusSteps,
+} from '../dbos'
+import { DBOSEventBus, DBOSTaskQueue } from '../implementations/dbos'
 import { KafkaEventBus, KafkaTaskQueue } from '../implementations/distributed'
 import { InMemoryEventBus, InMemoryTaskQueue } from '../implementations/local'
 import { getExecutionStore } from '../stores/execution-store'
@@ -26,12 +32,13 @@ export interface ServiceInstances {
   executionStore: IExecutionStore
   executionService: ExecutionService
   flowStore: IFlowStore
+  dbosWorker?: DBOSExecutionWorker // Optional: only present when DBOS is enabled
 }
 
 let serviceInstances: ServiceInstances | null = null
 
 /**
- * Creates appropriate service instances based on execution mode
+ * Creates appropriate service instances based on execution mode and DBOS configuration
  */
 export async function createServices(
   nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
@@ -45,7 +52,61 @@ export async function createServices(
   const executionStore = await getExecutionStore()
   const flowStore = await getFlowStore()
 
-  if (config.mode === 'local') {
+  // Check if DBOS mode is enabled
+  if (config.dbos.enabled) {
+    logger.info('🚀 DBOS mode enabled - using DBOS Durable Queues for task distribution')
+
+    // Step 1: Initialize DBOS runtime (required for both API and Worker processes)
+    await initializeDBOS()
+
+    // DBOS architecture: DBOS for both tasks and events
+    const eventBus = new DBOSEventBus()
+
+    // Step 2: Initialize steps with dependencies
+    // This must happen before creating the worker so steps are ready
+    initializeUpdateStatusSteps(executionStore)
+
+    // Create execution service (needed for ExecuteFlowAtomicStep initialization)
+    const executionService = new ExecutionService(
+      executionStore,
+      eventBus,
+      // TODO: add the publishing to the DBOS queue here instead of the in-memory one
+      // TODO: the child can emit subexecutions that need to be queued
+      new InMemoryTaskQueue(), // Placeholder for DBOS mode
+    )
+
+    // Initialize the execution step with both service and store
+    initializeExecuteFlowStep(executionService, executionStore)
+
+    // Step 3: Create DBOS worker (already initialized, just creates queue)
+    const dbosWorker = new DBOSExecutionWorker(
+      executionStore,
+      executionService,
+      {
+        concurrency: config.dbos.queueConcurrency,
+        workerConcurrency: config.dbos.workerConcurrency,
+      },
+    )
+
+    // Create DBOS task queue wrapper
+    const taskQueue = new DBOSTaskQueue(dbosWorker.getQueue())
+
+    serviceInstances = {
+      eventBus,
+      taskQueue,
+      executionStore,
+      flowStore,
+      executionService,
+      dbosWorker,
+    }
+
+    logger.info({
+      queueConcurrency: config.dbos.queueConcurrency,
+      workerConcurrency: config.dbos.workerConcurrency,
+    }, 'DBOS services initialized successfully')
+  } else if (config.mode === 'local') {
+    logger.info('Local mode - using in-memory services')
+
     const eventBus = new InMemoryEventBus()
     const taskQueue = new InMemoryTaskQueue()
 
@@ -61,6 +122,8 @@ export async function createServices(
       ),
     }
   } else {
+    logger.info('Distributed mode - using Kafka for tasks and events')
+
     const eventBus = new KafkaEventBus()
     const taskQueue = new KafkaTaskQueue()
 
@@ -91,6 +154,12 @@ export async function closeServices(): Promise<void> {
   logger.info('Closing all services')
 
   try {
+    // Stop DBOS worker if it exists
+    if (serviceInstances.dbosWorker) {
+      logger.info('Stopping DBOS worker...')
+      await serviceInstances.dbosWorker.stop()
+    }
+
     await serviceInstances.eventBus.close()
     await serviceInstances.taskQueue.close()
   } catch (error) {
