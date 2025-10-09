@@ -11,7 +11,18 @@ import type { ExecutionService } from '../../services/ExecutionService'
 import type { IExecutionStore } from '../../stores/interfaces/IExecutionStore'
 import type { ExecutionResult } from '../types'
 import { DBOS } from '@dbos-inc/dbos-sdk'
+import { ExecutionStatus } from '../../../types'
 import { loadFlow } from '../../stores/flow-store'
+
+/**
+ * Execution command types for DBOS messaging
+ */
+type ExecutionCommandType = 'PAUSE' | 'RESUME' | 'STEP'
+
+interface ExecutionCommand {
+  command: ExecutionCommandType
+  reason?: string
+}
 
 /**
  * ATOMIC EXECUTION STEP
@@ -126,10 +137,66 @@ export async function executeFlowAtomic(
   // The eventBus handles streaming (DBOS or Kafka depending on configuration)
   DBOS.logger.info(`Executing flow: ${task.executionId}`)
 
+  // 🎮 Start command polling loop (runs in background)
+  // This polls for PAUSE/RESUME/STEP commands via DBOS.recv()
+  let isPollingCommands = true
+  const commandPollingInterval = setInterval(async () => {
+    if (!isPollingCommands) {
+      clearInterval(commandPollingInterval)
+      return
+    }
+
+    try {
+      // Non-blocking check for command (timeout = 0)
+      const command = await DBOS.recv<ExecutionCommand>('COMMAND', 0)
+
+      if (command) {
+        DBOS.logger.info(`Received execution command: ${command.command} for ${task.executionId}`)
+
+        // Get debugger from engine (renamed to avoid 'debugger' reserved keyword)
+        const flowDebugger = instance.engine?.getDebugger()
+
+        switch (command.command) {
+          case 'PAUSE':
+            flowDebugger?.pause()
+            await store.updateExecutionStatus({
+              executionId: task.executionId,
+              status: ExecutionStatus.Paused,
+            })
+            DBOS.logger.info(`Execution paused: ${task.executionId}`)
+            break
+
+          case 'RESUME':
+            flowDebugger?.continue()
+            await store.updateExecutionStatus({
+              executionId: task.executionId,
+              status: ExecutionStatus.Running,
+            })
+            DBOS.logger.info(`Execution resumed: ${task.executionId}`)
+            break
+
+          case 'STEP':
+            flowDebugger?.step()
+            DBOS.logger.info(`Execution stepped: ${task.executionId}`)
+            break
+
+          default:
+            DBOS.logger.warn(`Unknown command type: ${command.command}`)
+        }
+      }
+    } catch (error) {
+      DBOS.logger.error(`Error polling for commands: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }, 500) // Poll every 500ms
+
   try {
     await instance.engine!.execute(async (context, eventQueue) => {
       // Execution complete callback
       // The eventQueue is already closed at this point, and all events should be processed
+
+      // Stop command polling
+      isPollingCommands = false
+      clearInterval(commandPollingInterval)
 
       // Step 5: Wait for all events to be published
       // This ensures all events are safely persisted before we mark step as complete
@@ -165,6 +232,10 @@ export async function executeFlowAtomic(
       `Flow execution failed: ${task.executionId} after ${duration}ms - ${errorMessage}`,
     )
 
+    // Stop command polling on error
+    isPollingCommands = false
+    clearInterval(commandPollingInterval)
+
     // Try to cleanup event handling even on error
     try {
       if (instance.cleanupEventHandling) {
@@ -180,5 +251,9 @@ export async function executeFlowAtomic(
 
     // Re-throw the error so DBOS can handle retry
     throw error
+  } finally {
+    // Ensure command polling is stopped
+    isPollingCommands = false
+    clearInterval(commandPollingInterval)
   }
 }
