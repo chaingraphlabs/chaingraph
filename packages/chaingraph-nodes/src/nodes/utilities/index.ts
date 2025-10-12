@@ -8,7 +8,6 @@
 
 export * from './array-element.node'
 export * from './debug-log.node'
-export * from './delay.node'
 export * from './get-port-schema.node'
 export * from './handlebars-template.node'
 export * from './http.node'

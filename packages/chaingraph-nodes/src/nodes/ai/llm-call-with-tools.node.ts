@@ -14,6 +14,7 @@ import type {
 } from '@badaitech/chaingraph-types'
 import type { ChatAnthropic } from '@langchain/anthropic'
 import type { ChatDeepSeek } from '@langchain/deepseek'
+import type { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import type { ChatGroq } from '@langchain/groq'
 import type { ChatOpenAI } from '@langchain/openai'
 import {
@@ -268,7 +269,7 @@ class LLMCallWithToolsNode extends BaseNode {
    * Bind tools to the model
    */
   private bindToolsToModel(
-    llm: ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq,
+    llm: ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq | ChatGoogleGenerativeAI,
     toolDefinitions: any[],
   ): any {
     const options: any = {

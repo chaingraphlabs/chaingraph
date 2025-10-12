@@ -151,12 +151,12 @@ export const ExecutionNode = memo(function ExecutionNode({
   const completedAt = execution.completedAt ? new Date(execution.completedAt) : undefined
 
   return (
-    <div className="group">
+    <div className="group min-w-0">
       {/* Node Row */}
       <div
         className={cn(
           'relative flex items-center gap-2 px-2 py-1.5 cursor-pointer transition-all duration-200',
-          'hover:bg-accent/50 rounded-sm',
+          'hover:bg-accent/50 rounded-sm min-w-0',
           isSelected && 'bg-accent ring-1 ring-accent-foreground/10',
         )}
         onClick={() => onSelect(executionId)}
@@ -201,20 +201,20 @@ export const ExecutionNode = memo(function ExecutionNode({
 
         {/* Flow Name and ID */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-medium truncate">
               Flow Execution
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground truncate">
               {formatExecutionId(executionId)}
             </span>
           </div>
 
           {/* External Events Info (if available) */}
           {execution.externalEvents && execution.externalEvents.length > 0 && (
-            <div className="flex items-center gap-1 mt-0.5">
-              <Zap className="w-3 h-3 text-orange-500" />
-              <span className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 mt-0.5 min-w-0">
+              <Zap className="w-3 h-3 text-orange-500 flex-shrink-0" />
+              <span className="text-xs text-muted-foreground truncate">
                 {execution.externalEvents[0].eventName}
               </span>
             </div>
@@ -222,7 +222,7 @@ export const ExecutionNode = memo(function ExecutionNode({
         </div>
 
         {/* Metrics */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0">
           {/* <span className="font-mono"> */}
           {/*  {(node as RootExecution).execution.executionDepth} */}
           {/* </span> */}

@@ -266,7 +266,7 @@ export function Sidebar({
       {/* Content Panel with Resize Handle */}
       {isExpanded && activeTab && (
         <div
-          className="relative bg-card border-r"
+          className="relative bg-card border-r h-full flex flex-col"
           style={{ width: `${width}px` }}
         >
           {/* Collapse Button */}
@@ -295,14 +295,17 @@ export function Sidebar({
             />
           </Button>
 
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <h2 className="text-lg font-semibold mb-4">
-                {tabs.find(t => t.id === activeTab)?.label}
-              </h2>
-              {tabs.find(t => t.id === activeTab)?.content}
-            </div>
-          </ScrollArea>
+          {/* Tab Header */}
+          <div className="flex-shrink-0 p-4 pb-0">
+            <h2 className="text-lg font-semibold mb-4">
+              {tabs.find(t => t.id === activeTab)?.label}
+            </h2>
+          </div>
+
+          {/* Tab Content - Full height available for tab to manage */}
+          <div className="flex-1 min-h-0">
+            {tabs.find(t => t.id === activeTab)?.content}
+          </div>
 
           {/* Resize Handle */}
           <div

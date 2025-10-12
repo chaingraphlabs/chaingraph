@@ -25,6 +25,9 @@ export const secretTypeSchemas = {
   'anthropic': z.object({
     apiKey: z.string().min(1),
   }),
+  'gemini': z.object({
+    apiKey: z.string().min(1),
+  }),
   'coinmarketcap': z.object({
     apiKey: z.string().min(1),
   }),
@@ -147,6 +150,16 @@ export const secretTypeMetadata = {
       },
     },
   },
+  'gemini': {
+    icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmckiQuap12Vus4USXsPh3aXUMJsV8AFmYqi5YNfiQ7NLr',
+    label: 'Gemini API',
+    fields: {
+      apiKey: {
+        label: 'API Key',
+        description: 'API Key for Gemini',
+      },
+    },
+  },
   'coinmarketcap': {
     icon: 'https://quicknode.quicknode-ipfs.com/ipfs/QmdcUK961xCEdissP4dSEBQP2xbxiWV4FnCZYeVFuyu8Gz',
     label: 'CoinMarketCap API',
@@ -254,6 +267,7 @@ export const compatibleSecretTypes: Record<SecretType, SecretType[]> = {
   '0g': ['0g'],
   'openai': ['openai', 'anthropic', 'moonshot', 'string'],
   'anthropic': ['openai', 'anthropic', 'string'],
+  'gemini': ['gemini', 'string', 'anthropic', 'openai'],
   'coinmarketcap': ['coinmarketcap'],
   'deepseek': ['deepseek'],
   'groq': ['groq'],
