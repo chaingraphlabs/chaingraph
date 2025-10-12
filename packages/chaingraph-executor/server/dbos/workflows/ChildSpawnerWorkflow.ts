@@ -92,7 +92,7 @@ async function childSpawner(): Promise<void> {
       DBOS.logger.error(`Error spawning child execution (total: ${tasksProcessed}): ${error instanceof Error ? error.message : String(error)}`)
 
       // Small delay to prevent tight error loop
-      await DBOS.sleep(1000)
+      // await DBOS.sleep(1000)
     }
   }
 }

@@ -359,8 +359,8 @@ export async function executeFlowAtomic(
 
         const dbInsertDuration = Date.now() - dbInsertStartTime
         DBOS.logger.info(
-          `Child execution rows created: ${successCount}/${unprocessedEvents.length} succeeded, ${failureCount} failed in ${dbInsertDuration}ms ` +
-          `(${(unprocessedEvents.length / (dbInsertDuration / 1000)).toFixed(1)} inserts/sec) for: ${task.executionId}`
+          `Child execution rows created: ${successCount}/${unprocessedEvents.length} succeeded, ${failureCount} failed in ${dbInsertDuration}ms `
+          + `(${(unprocessedEvents.length / (dbInsertDuration / 1000)).toFixed(1)} inserts/sec) for: ${task.executionId}`,
         )
       }
     }

@@ -10,6 +10,7 @@ import type { IFlowStore } from '@badaitech/chaingraph-trpc/server'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
+import { Pool } from 'pg'
 import { ExecutionService } from '../../server/services/ExecutionService'
 import { getFlowStore } from '../../server/stores/flow-store'
 import { DBOSExecutionWorker, initializeDBOS } from '../dbos'
@@ -18,6 +19,8 @@ import {
   initializeUpdateStatusSteps,
 } from '../dbos'
 import { DBOSEventBus, DBOSTaskQueue } from '../implementations/dbos'
+import { PostgreSQLMigrationManager } from '../implementations/dbos/migrations/PostgreSQLMigrations'
+import { StreamBridgeBuilder } from '../implementations/dbos/streaming'
 import { InMemoryEventBus, InMemoryTaskQueue } from '../implementations/local'
 import { getExecutionStore } from '../stores/execution-store'
 import { config } from '../utils/config'
@@ -58,15 +61,57 @@ export async function createServices(
     // Step 1: Initialize DBOS runtime (required for both API and Worker processes)
     await initializeDBOS()
 
-    // DBOS architecture: DBOS for both tasks and events
-    const eventBus = new DBOSEventBus()
+    // Step 2: Create PostgreSQL pool for event queries
+    const pgPool = new Pool({
+      connectionString: config.dbos.systemDatabaseUrl,
+      max: 50,
+    })
 
-    // Step 2: Initialize steps with dependencies
-    // This must happen before creating the worker so steps are ready
+    logger.debug('PostgreSQL connection pool created')
+
+    // Step 3: Run PostgreSQL migrations for real-time notifications
+    let migrationsSucceeded = false
+    try {
+      const migrationManager = new PostgreSQLMigrationManager(pgPool)
+      migrationsSucceeded = await migrationManager.migrate()
+
+      if (migrationsSucceeded) {
+        logger.info('PostgreSQL migrations succeeded')
+      } else {
+        logger.warn('PostgreSQL migrations failed, using fallback polling mode')
+      }
+    } catch (error) {
+      logger.warn({
+        error: error instanceof Error ? error.message : String(error),
+      }, 'Migration setup failed, using fallback polling mode')
+    }
+
+    // Step 4: Create StreamBridge (generic DBOS stream infrastructure)
+    let streamBridge
+    if (migrationsSucceeded) {
+      try {
+        streamBridge = await StreamBridgeBuilder.create({
+          connectionString: config.dbos.systemDatabaseUrl,
+          queryPool: pgPool,
+        })
+        logger.info('StreamBridge initialized (10 PGListeners, real-time mode)')
+      } catch (error) {
+        logger.error({
+          error: error instanceof Error ? error.message : String(error),
+        }, 'Failed to initialize StreamBridge')
+        throw new Error('StreamBridge initialization failed - cannot proceed')
+      }
+    } else {
+      throw new Error('PostgreSQL migrations failed - real-time streaming required')
+    }
+
+    // Step 5: Create event bus (thin wrapper around StreamBridge)
+    const eventBus = new DBOSEventBus(streamBridge)
+
+    // Step 6: Initialize steps with dependencies
     initializeUpdateStatusSteps(executionStore)
 
-    // Step 3: Create DBOS worker first (to get the queue)
-    // We'll set the executionService later via initialization
+    // Step 7: Create DBOS worker (to get the queue)
     const dbosWorker = new DBOSExecutionWorker(
       executionStore,
       null as any, // Temporary - will be set via initializeExecuteFlowStep
@@ -76,20 +121,17 @@ export async function createServices(
       },
     )
 
-    // Create DBOS task queue wrapper
+    // Step 8: Create DBOS task queue wrapper
     const taskQueue = new DBOSTaskQueue(dbosWorker.getQueue())
 
-    // Step 4: Create execution service with task queue
-    // Note: Child executions are NOT published to taskQueue anymore
-    // They are collected in executeFlowAtomic step and spawned at workflow level
-    // The taskQueue parameter is kept for interface compatibility but not used for children
+    // Step 9: Create execution service with task queue
     const executionService = new ExecutionService(
       executionStore,
       eventBus,
-      taskQueue, // Interface compatibility (not used for child spawning in DBOS mode)
+      taskQueue,
     )
 
-    // Step 5: Initialize the execution step with service and store
+    // Step 10: Initialize the execution step with service and store
     initializeExecuteFlowStep(executionService, executionStore)
 
     serviceInstances = {
