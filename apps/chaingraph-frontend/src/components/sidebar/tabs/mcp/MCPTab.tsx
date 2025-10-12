@@ -84,11 +84,9 @@ export function MCPTab() {
   }, [])
 
   return (
-
     <div className="flex flex-col h-full">
-
-      {/* Header */}
-      <div className="border-b p-4">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 border-b p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">MCP Integration</h2>
           <Button
@@ -103,54 +101,56 @@ export function MCPTab() {
         </div>
       </div>
 
-      {/* Server List */}
-      <div className="flex-1 relative overflow-hidden">
-        {!isCreating && !editingServer
-          ? (
-              <MCPServerList onEditServer={handleEditClick} />
-            )
-          : (
-              <ScrollArea className="flex-1">
-                <div className="p-4">
-                  <AnimatePresence mode="sync">
-                    <motion.div
-                      key={editingServer ? `edit-${editingServer.id}` : 'create-form'}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                        transition: {
-                          type: 'spring',
-                          stiffness: 500,
-                          damping: 30,
-                        },
-                      }}
-                      exit={{
-                        opacity: 0,
-                        y: 20,
-                        scale: 0.95,
-                        transition: {
-                          duration: 0.2,
-                        },
-                      }}
-                    >
-                      <MCPServerForm
-                        server={editingServer}
-                        onCancel={handleCancel}
-                        onCreate={handleCreateServer}
-                        onUpdate={handleUpdateServer}
-                        onDelete={handleDeleteServer}
-                        isLoading={isCreatingServer}
-                        isUpdating={isUpdatingServer}
-                        isDeleting={isDeletingServer}
-                        error={createError || updateError || deleteError}
-                      />
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </ScrollArea>
-            )}
+      {/* Server List - Scrollable */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0">
+          {!isCreating && !editingServer
+            ? (
+                <MCPServerList onEditServer={handleEditClick} />
+              )
+            : (
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <AnimatePresence mode="sync">
+                      <motion.div
+                        key={editingServer ? `edit-${editingServer.id}` : 'create-form'}
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: 1,
+                          transition: {
+                            type: 'spring',
+                            stiffness: 500,
+                            damping: 30,
+                          },
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: 20,
+                          scale: 0.95,
+                          transition: {
+                            duration: 0.2,
+                          },
+                        }}
+                      >
+                        <MCPServerForm
+                          server={editingServer}
+                          onCancel={handleCancel}
+                          onCreate={handleCreateServer}
+                          onUpdate={handleUpdateServer}
+                          onDelete={handleDeleteServer}
+                          isLoading={isCreatingServer}
+                          isUpdating={isUpdatingServer}
+                          isDeleting={isDeletingServer}
+                          error={createError || updateError || deleteError}
+                        />
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </ScrollArea>
+              )}
+        </div>
       </div>
     </div>
   )

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { $executionState } from '@/store/execution'
@@ -63,15 +64,23 @@ export function WalletIntegration() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-semibold">Wallet Integration</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          Provide wallet context for blockchain nodes in your workflows. The wallet context enables nodes to read blockchain data and build transactions.
-        </p>
+    <div className="flex flex-col h-full">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 space-y-4 p-4">
+        <div>
+          <h3 className="text-sm font-semibold">Wallet Integration</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Provide wallet context for blockchain nodes in your workflows. The wallet context enables nodes to read blockchain data and build transactions.
+          </p>
+        </div>
+        <Separator />
       </div>
 
-      <Separator />
+      {/* Content - Scrollable */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="px-4 pb-4 space-y-4">
 
       {!walletContext.isConnected
         ? (
@@ -238,21 +247,25 @@ export function WalletIntegration() {
             </>
           )}
 
-      <div className="pt-2">
-        <h4 className="text-xs font-semibold mb-2">Integration Details</h4>
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <p>
-            • Wallet context is passed to all node executions
-          </p>
-          <p>
-            • Blockchain nodes use this context to determine chain, RPC endpoints, and user address
-          </p>
-          <p>
-            • External systems can provide their own wallet context through the execution API
-          </p>
-          <p>
-            • This UI connection is a demonstration - production usage would provide context programmatically
-          </p>
+              <div className="pt-2">
+                <h4 className="text-xs font-semibold mb-2">Integration Details</h4>
+                <div className="space-y-2 text-xs text-muted-foreground">
+                  <p>
+                    • Wallet context is passed to all node executions
+                  </p>
+                  <p>
+                    • Blockchain nodes use this context to determine chain, RPC endpoints, and user address
+                  </p>
+                  <p>
+                    • External systems can provide their own wallet context through the execution API
+                  </p>
+                  <p>
+                    • This UI connection is a demonstration - production usage would provide context programmatically
+                  </p>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
         </div>
       </div>
     </div>
