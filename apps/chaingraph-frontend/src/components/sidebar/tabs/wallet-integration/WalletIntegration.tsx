@@ -82,170 +82,170 @@ export function WalletIntegration() {
           <ScrollArea className="h-full">
             <div className="px-4 pb-4 space-y-4">
 
-      {!walletContext.isConnected
-        ? (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Wallet className="h-4 w-4" />
-                  No Wallet Connected
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Connect your wallet to access blockchain features
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={handleConnect}
-                  disabled={connectionState.isConnecting}
-                  size="sm"
-                  className="w-full"
-                >
-                  {connectionState.isConnecting ? 'Connecting...' : 'Connect Wallet'}
-                </Button>
-                {connectionState.error && (
-                  <p className="text-xs text-red-500 mt-2">
-                    Error:
-                    {' '}
-                    {connectionState.error.message}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )
-        : (
-            <>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Wallet Connected
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Address</span>
-                      <code className="text-xs font-mono">
-                        {formattedAddress}
-                      </code>
-                    </div>
+              {!walletContext.isConnected
+                ? (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Wallet className="h-4 w-4" />
+                          No Wallet Connected
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Connect your wallet to access blockchain features
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button
+                          onClick={handleConnect}
+                          disabled={connectionState.isConnecting}
+                          size="sm"
+                          className="w-full"
+                        >
+                          {connectionState.isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                        </Button>
+                        {connectionState.error && (
+                          <p className="text-xs text-red-500 mt-2">
+                            Error:
+                            {' '}
+                            {connectionState.error.message}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                : (
+                    <>
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            Wallet Connected
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Address</span>
+                              <code className="text-xs font-mono">
+                                {formattedAddress}
+                              </code>
+                            </div>
 
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Network</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {chainName}
-                      </Badge>
-                    </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Network</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {chainName}
+                              </Badge>
+                            </div>
 
-                    {balance && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">Balance</span>
-                        <span className="text-xs font-mono">
-                          {balance.formatted}
-                          {' '}
-                          {balance.symbol}
-                        </span>
-                      </div>
-                    )}
+                            {balance && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-muted-foreground">Balance</span>
+                                <span className="text-xs font-mono">
+                                  {balance.formatted}
+                                  {' '}
+                                  {balance.symbol}
+                                </span>
+                              </div>
+                            )}
 
-                    {connectors.length > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">Wallet</span>
-                        <span className="text-xs">{connectors[0].name}</span>
-                      </div>
-                    )}
-                  </div>
+                            {connectors.length > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-muted-foreground">Wallet</span>
+                                <span className="text-xs">{connectors[0].name}</span>
+                              </div>
+                            )}
+                          </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRefreshBalance}
-                      disabled={!balance}
-                      className="flex-1"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-2" />
-                      Refresh
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDisconnect}
-                      disabled={connectionState.isDisconnecting}
-                      className="flex-1"
-                    >
-                      {connectionState.isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRefreshBalance}
+                              disabled={!balance}
+                              className="flex-1"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-2" />
+                              Refresh
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleDisconnect}
+                              disabled={connectionState.isDisconnecting}
+                              className="flex-1"
+                            >
+                              {connectionState.isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle className="text-sm">Available Features</AlertTitle>
-                <AlertDescription className="text-xs space-y-1 mt-2">
-                  <div>• Get native token balance</div>
-                  <div>• Get ERC20 token information and balances</div>
-                  <div>• Check token allowances</div>
-                  <div>• Build transfer transactions</div>
-                  <div>• Multi-chain support</div>
-                </AlertDescription>
-              </Alert>
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle className="text-sm">Available Features</AlertTitle>
+                        <AlertDescription className="text-xs space-y-1 mt-2">
+                          <div>• Get native token balance</div>
+                          <div>• Get ERC20 token information and balances</div>
+                          <div>• Check token allowances</div>
+                          <div>• Build transfer transactions</div>
+                          <div>• Multi-chain support</div>
+                        </AlertDescription>
+                      </Alert>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Auto-recreate Executions
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Automatically restart executions when wallet state changes
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="auto-recreate" className="text-xs">
-                      Enable auto-recreate
-                    </Label>
-                    <Switch
-                      id="auto-recreate"
-                      checked={autoRecreateEnabled}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          enableAutoRecreate()
-                        } else {
-                          disableAutoRecreate()
-                        }
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    When enabled, active executions will automatically restart with updated wallet context when you switch accounts or chains.
-                  </p>
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <RefreshCw className="h-4 w-4" />
+                            Auto-recreate Executions
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            Automatically restart executions when wallet state changes
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="auto-recreate" className="text-xs">
+                              Enable auto-recreate
+                            </Label>
+                            <Switch
+                              id="auto-recreate"
+                              checked={autoRecreateEnabled}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  enableAutoRecreate()
+                                } else {
+                                  disableAutoRecreate()
+                                }
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            When enabled, active executions will automatically restart with updated wallet context when you switch accounts or chains.
+                          </p>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => recreateExecutionWithCurrentWallet()}
-                    className="w-full mt-3"
-                    disabled={!executionState.executionId}
-                  >
-                    <RefreshCw className="h-3 w-3 mr-2" />
-                    Refresh Execution
-                  </Button>
-                  {executionState.executionId && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Active execution:
-                      {' '}
-                      {executionState.executionId.slice(0, 8)}
-                      ...
-                    </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => recreateExecutionWithCurrentWallet()}
+                            className="w-full mt-3"
+                            disabled={!executionState.executionId}
+                          >
+                            <RefreshCw className="h-3 w-3 mr-2" />
+                            Refresh Execution
+                          </Button>
+                          {executionState.executionId && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Active execution:
+                              {' '}
+                              {executionState.executionId.slice(0, 8)}
+                              ...
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </>
                   )}
-                </CardContent>
-              </Card>
-            </>
-          )}
 
               <div className="pt-2">
                 <h4 className="text-xs font-semibold mb-2">Integration Details</h4>
