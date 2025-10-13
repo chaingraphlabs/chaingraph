@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.1
+
+### Patch Changes
+
+- feat: remove unused React and XYFlow dependencies from Vite configuration
+
 ## 0.6.0
 
 ### Minor Changes

@@ -44,11 +44,6 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'bigint-crypto-utils',
-        // React and frontend dependencies (not used in backend service)
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        'lucide-react',
       ],
     },
   },
