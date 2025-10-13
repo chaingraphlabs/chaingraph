@@ -1,5 +1,46 @@
 # @badaitech/badai-api
 
+## 0.6.0
+
+### Minor Changes
+
+- Release
+
+### Patch Changes
+
+- 35808f7: fix: update default value handling in decorators and improve error messaging in edge transfer logic
+- fab7b54: feat: update package.json and vite.lib.config.ts to include TRPC and SuperJSON dependencies
+- 34862a5: fix: restore @badaitech/typescript-config as a devDependency in package.json
+- b0cd4c4: fix: remove unused peer dependencies and update Vite config for minification and dependency inclusion
+- a21936f: fix: update package version and add wagmi and viem dependencies in package.json and vite config
+- 34862a5: fix: restore @badaitech/typescript-config as a devDependency in package.json and update package versions
+- 5fd5197: fix: remove conditional checks for release branch in GitHub Actions and restore trpc dependencies in package.json
+- f4dd3ac: fix: remove Storybook references from configuration files, add trpc dependencies to the chaingraph-backend
+- 78949c3: fix: update execution serialization and flow migration logic
+- b0cd4c4: fix: remove unused peer dependencies and comment out excluded packages in Vite config
+- e2658c6: feat: implement TextDecoderStream and TextEncoderStream polyfills; update serialization and execution events to use SuperJSON for data handling
+- e2658c6: feat: Add flow migration from v1 to v2 schema. Make the ports id's unique for the nodes only. chore: update dependencies and optimize code structure, improve flow node cloning logic
+- 054d798: fix: update Vite config to clean output directory and adjust rollup options for ESM output
+- eada8b3: fix: disable sourcemap in Vite config for production build and update package versions
+- 33d4280: Add new special specal login and sign methods with telegram params
+- e2658c6: feat: enhance KafkaEventBus message handling with improved error logging and header checks; add comprehensive tests for execution event serialization
+- bdac567: fix: update Vite config for minification and include missing dependencies in pnpm-lock.yaml
+- ad73d3a: fix: disable sourcemap in Vite config for production build
+- 44e68ba: fix: add new TRPC and related dependencies in package.json
+- 911e4ba: Experimental version to debug the external integrations
+- 48dcfce: fix: for the paste node trpc procedure emit the migrated nodes instead of original one. Add support for updating multiple nodes and introduce NodesUpdated event
+- e2658c6: feat: add @mixmark-io/domino dependency to package.json for enhanced functionality
+- 054d798: fix: refactor wallet integration to use Effector stores, remove deprecated WagmiProvider, and update balance handling
+- e8aff50: fix: update package.json version and adjust Vite config for ESM compatibility
+- 591929e: feat: update TRPC client and initialization to improve type exports and re-export NodeRegistry and SuperJSON
+- 4b8d45e: fix: reorganize rollup external dependencies and update eslint ignore patterns
+- cc27719: fix: restore lucide-react dependency in package.json and update Vite config for build
+- b0cd4c4: fix: remove unused peer dependencies and comment out excluded packages in Vite config
+- fd62af0: fix: update package.json and vite config for ESM compatibility and remove unnecessary plugins
+- b0cd4c4: fix: update @types/react to version 19.2.0 and clean up Vite config by removing commented-out dependencies
+- 911e4ba: feat: enhance initialization process with connection deduplication and secure session hashing; add ChainGraphProvider component
+- 79f58c1: fix: update package.json to add new peerDependencies and adjust existing ones, and modify Vite config for deduplication
+
 ## 0.5.5-dev.60
 
 ### Patch Changes
