@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.2
+
+### Patch Changes
+
+- feat: add OpenTelemetry and Winston dependencies for enhanced logging and tracing
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.6.2
+  - @badaitech/badai-api@0.6.2
+
 ## 0.6.1
 
 ### Patch Changes
