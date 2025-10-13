@@ -26,14 +26,25 @@ export interface StreamChannel<T = any> {
   /** MultiChannel instance for this stream */
   multiChannel: MultiChannel<T[]>
 
-  /** Last offset sent to consumers */
-  lastSentOffset: number
+  /** Offset tracking */
+  localOffset: number        // What we've READ from database
+  remoteOffset: number       // What PostgreSQL says exists (from NOTIFY)
+  lastSentOffset: number     // What we've SENT to consumers
 
   /** Number of active consumers for this stream */
   consumerCount: number
 
-  /** Flag to prevent duplicate processing during initial catch-up */
-  isPendingCatchup: boolean
+  /** Reader loop control */
+  isReading: boolean         // Is DB reader loop active?
+  readerPromise?: Promise<void>  // For awaiting reader completion
+  isPendingCatchup: boolean  // Initial catch-up in progress?
+
+  /** Cleanup control */
+  isCleaningUp: boolean      // Prevent double cleanup
+  cleanupPromise?: Promise<void>  // For awaiting cleanup completion
+
+  /** Creation timestamp for metrics */
+  createdAt: number
 }
 
 /**
@@ -82,9 +93,20 @@ export interface PoolStats {
 }
 
 /**
+ * Batch configuration for consumers
+ */
+export interface BatchConfig {
+  /** Maximum events per batch (default: 100) */
+  maxSize?: number
+
+  /** Maximum time to wait before flushing batch in ms (default: 25) */
+  timeoutMs?: number
+}
+
+/**
  * Subscribe options for stream subscription
  */
-export interface SubscribeOptions {
+export interface SubscribeOptions extends BatchConfig {
   /** DBOS workflow ID */
   workflowId: string
 

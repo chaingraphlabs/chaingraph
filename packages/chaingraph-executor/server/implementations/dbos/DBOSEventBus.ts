@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionEventImpl } from '@badaitech/chaingraph-types'
-import type { IEventBus } from '../../interfaces/IEventBus'
+import type { EventBatchConfig, IEventBus } from '../../interfaces/IEventBus'
 import type { StreamBridge } from './streaming'
 
 import { DBOS } from '@dbos-inc/dbos-sdk'
@@ -71,23 +71,17 @@ export class DBOSEventBus implements IEventBus {
   /**
    * Subscribe to execution events
    *
-   * Delegates to StreamBridge for real-time streaming via MultiChannel
-   *
    * @param executionId Execution ID
    * @param fromIndex Starting event index (0-based)
+   * @param batchConfig Optional batching configuration
    * @returns Async iterable of event batches
    */
   subscribeToEvents = (
     executionId: string,
     fromIndex: number = 0,
+    batchConfig?: EventBatchConfig,
   ): AsyncIterable<ExecutionEventImpl[]> => {
-    logger.debug({
-      executionId,
-      fromIndex,
-    }, 'Subscribing to execution events')
-
-    // Return async iterable that awaits channel setup
-    return this.createEventIterable(executionId, fromIndex)
+    return this.createEventIterable(executionId, fromIndex, batchConfig)
   }
 
   /**
@@ -96,28 +90,21 @@ export class DBOSEventBus implements IEventBus {
   private async* createEventIterable(
     executionId: string,
     fromIndex: number,
+    batchConfig?: EventBatchConfig,
   ): AsyncGenerator<ExecutionEventImpl[]> {
-    // Await channel setup
-    const channel = await this.streamBridge.subscribeToExecutionEvents(executionId, fromIndex)
+    // Subscribe with batching config
+    const channel = await this.streamBridge.subscribe<ExecutionEventImpl>({
+      workflowId: executionId,
+      streamKey: DBOSEventBus.STREAM_KEY,
+      fromOffset: fromIndex,
+      maxSize: batchConfig?.maxSize,
+      timeoutMs: batchConfig?.timeoutMs,
+    })
 
-    logger.info({ executionId }, 'Starting to iterate MultiChannel')
-
-    // Iterate over MultiChannel (which implements AsyncIterable)
-    let batchCount = 0
+    // Iterate over MultiChannel
     for await (const batch of channel) {
-      batchCount++
-      logger.info({
-        executionId,
-        batchCount,
-        batchSize: batch.length,
-      }, 'Yielding batch from MultiChannel')
       yield batch
     }
-
-    logger.info({
-      executionId,
-      totalBatches: batchCount,
-    }, 'MultiChannel iteration completed')
   }
 
   /**

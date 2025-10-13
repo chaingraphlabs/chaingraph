@@ -9,6 +9,7 @@
 import type { ExecutionEventImpl, MultiChannel } from '@badaitech/chaingraph-types'
 import type { Pool } from 'pg'
 import type {
+  BatchConfig,
   PipeOptions,
   PoolStats,
   PublishOptions,
@@ -60,30 +61,98 @@ export class StreamBridge {
    * const channel = await streamBridge.subscribe({
    *   workflowId: 'exec-123',
    *   streamKey: 'events',
-   *   fromOffset: 0
+   *   fromOffset: 0,
+   *   maxSize: 100,      // Batch up to 100 events
+   *   timeoutMs: 25,     // Or flush after 25ms
    * })
    *
    * for await (const batch of channel) {
-   *   console.log(batch)
+   *   console.log(batch) // Batch of up to 100 events
    * }
    *
-   * @param options Subscribe options
+   * @param options Subscribe options with batching config
    * @returns MultiChannel yielding batches of stream values
    */
   async subscribe<T = any>(
     options: SubscribeOptions,
   ): Promise<MultiChannel<T[]>> {
-    logger.debug({
-      workflowId: options.workflowId,
-      streamKey: options.streamKey,
-      fromOffset: options.fromOffset ?? 0,
-    }, 'StreamBridge.subscribe() called')
-
-    return this.streamSubscriber.subscribe<T>(
+    // Get raw channel from pool
+    const rawChannel = await this.streamSubscriber.subscribe<T>(
       options.workflowId,
       options.streamKey,
       options.fromOffset ?? 0,
     )
+
+    // Apply batching if configured
+    if (options.maxSize || options.timeoutMs) {
+      return this.createBatchedChannel(rawChannel, {
+        maxSize: options.maxSize ?? 100,
+        timeoutMs: options.timeoutMs ?? 25,
+      })
+    }
+
+    return rawChannel
+  }
+
+  /**
+   * Create batching accumulator wrapper
+   */
+  private createBatchedChannel<T>(
+    source: MultiChannel<T[]>,
+    config: Required<BatchConfig>,
+  ): MultiChannel<T[]> {
+    const batchedChannel = new MC<T[]>()
+
+    // Background accumulator task
+    ;(async () => {
+      let buffer: T[] = []
+      let timer: NodeJS.Timeout | null = null
+
+      const flush = () => {
+        if (buffer.length > 0) {
+          try {
+            batchedChannel.send(buffer)
+          } catch {
+            // Channel closed
+          }
+          buffer = []
+        }
+        if (timer) {
+          clearTimeout(timer)
+          timer = null
+        }
+      }
+
+      try {
+        for await (const batch of source) {
+          // Flatten and accumulate
+          buffer.push(...batch)
+
+          // Start timeout
+          if (!timer && config.timeoutMs > 0) {
+            timer = setTimeout(flush, config.timeoutMs)
+          }
+
+          // Flush if size reached
+          if (buffer.length >= config.maxSize) {
+            flush()
+          }
+        }
+
+        // Final flush
+        flush()
+      } catch (error) {
+        logger.error({
+          error: error instanceof Error ? error.message : String(error),
+        }, 'Batching accumulator error')
+      } finally {
+        flush()
+        batchedChannel.close()
+        if (timer) clearTimeout(timer)
+      }
+    })()
+
+    return batchedChannel
   }
 
   /**

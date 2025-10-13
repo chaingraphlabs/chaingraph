@@ -509,8 +509,10 @@ export const executionRouter = router({
       executionId: z.string(),
       fromIndex: z.number().optional().default(0),
       eventTypes: z.array(z.string()).optional().default([]),
+      batchSize: z.number().min(1).max(1000).optional().default(100),
+      batchTimeoutMs: z.number().min(0).max(1000).optional().default(25),
     }))
-    .subscription(async function* ({ input, ctx }) {
+    .subscription(async function* ({ input, ctx, signal }) {
       const { executionStore, eventBus } = ctx
 
       const instance = await executionStore.get(input.executionId)
@@ -521,20 +523,41 @@ export const executionRouter = router({
         })
       }
 
-      // Subscribe to events from the event bus
+      // Subscribe with batching config
       const iterator = eventBus.subscribeToEvents(
         input.executionId,
         input.fromIndex,
+        {
+          maxSize: input.batchSize,
+          timeoutMs: input.batchTimeoutMs,
+        },
       )
+
+      let eventCount = 0
 
       try {
         for await (const events of iterator) {
-          yield events.filter((event) => {
-            if (input.eventTypes.length === 0) {
+          // Check if client disconnected
+          if (signal?.aborted) {
+            logger.info({
+              executionId: input.executionId,
+              eventsSent: eventCount,
+            }, 'Client disconnected')
+            break
+          }
+
+          // Filter by event types
+          const filtered = events.filter((event) => {
+            if (input.eventTypes.length === 0)
               return true
-            }
             return input.eventTypes.includes(event.type)
           })
+
+          // Only yield non-empty batches
+          if (filtered.length > 0) {
+            eventCount += filtered.length
+            yield filtered
+          }
         }
       } catch (error) {
         logger.error({
@@ -545,7 +568,10 @@ export const executionRouter = router({
       } finally {
         logger.info({
           executionId: input.executionId,
-        }, 'Event subscription ended')
+          eventsSent: eventCount,
+        }, 'Subscription ended, cleaning up')
+
+        await eventBus.unsubscribe(input.executionId)
       }
     }),
 })

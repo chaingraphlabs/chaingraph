@@ -12,7 +12,6 @@ import type {
   PGListenerStats,
   StreamChannel,
   StreamIdentifier,
-  StreamNotificationPayload,
 } from './types'
 
 import { ExecutionEventImpl, MultiChannel } from '@badaitech/chaingraph-types'
@@ -23,40 +22,25 @@ import { POOL_CONFIG, STREAM_BATCH_CONFIG } from './types'
 const logger = createLogger('pg-listener')
 
 /**
- * Single PGListener instance managing one pg-listen subscriber
+ * Single PGListener with optimized DB reader loop
  *
- * Features:
- * - One pg-listen connection with auto-reconnect
- * - Multiple LISTEN channels on same connection
- * - MultiChannel per stream for fan-out to multiple consumers
- * - Atomic subscription with no lost events
- * - Query deduplication per listener
+ * Key optimizations:
+ * - Single reader loop per stream (not per notification)
+ * - Batch reads from database (1000 events/query)
+ * - Non-blocking notification handler
+ * - Graceful reference-counted cleanup
  */
 export class PGListener {
-  /** pg-listen subscriber instance */
   private readonly subscriber: Subscriber
-
-  /** Active stream channels by streamKey */
   private readonly channels = new Map<string, StreamChannel>()
-
-  /** Pending queries to prevent duplicate fetches */
-  private readonly pendingQueries = new Map<string, Promise<any[]>>()
-
-  /** PostgreSQL pool for database queries */
   private readonly queryPool: Pool
-
-  /** Listener index in pool */
   private readonly listenerIndex: number
-
-  /** Whether subscriber is connected */
   private isConnected = false
 
   constructor(connectionString: string, queryPool: Pool, listenerIndex: number) {
     this.queryPool = queryPool
     this.listenerIndex = listenerIndex
 
-    // Create pg-listen subscriber with health checks
-    // First arg: connection config, second arg: options
     this.subscriber = createSubscriber(
       { connectionString },
       {
@@ -66,61 +50,25 @@ export class PGListener {
       },
     )
 
-    // Setup event handlers
     this.subscriber.events.on('error', (error) => {
-      logger.error({
-        error: error.message,
-        listenerIndex: this.listenerIndex,
-      }, 'PGListener error')
-    })
-
-    this.subscriber.events.on('reconnect', (attempt) => {
-      logger.warn({
-        attempt,
-        listenerIndex: this.listenerIndex,
-      }, 'PGListener reconnecting')
+      logger.error({ error: error.message, listenerIndex: this.listenerIndex }, 'PGListener error')
     })
 
     this.subscriber.events.on('connected', () => {
-      logger.info({
-        listenerIndex: this.listenerIndex,
-      }, 'PGListener connected')
       this.isConnected = true
     })
 
-    // Setup global notification handler
     this.setupNotificationHandler()
-
-    logger.debug({
-      listenerIndex: this.listenerIndex,
-    }, 'PGListener created')
   }
 
-  /**
-   * Connect to PostgreSQL
-   */
   async connect(): Promise<void> {
-    if (this.isConnected) {
-      return
+    if (!this.isConnected) {
+      await this.subscriber.connect()
     }
-
-    await this.subscriber.connect()
-    logger.info({
-      listenerIndex: this.listenerIndex,
-    }, 'PGListener connection established')
   }
 
   /**
-   * Atomically subscribe to DBOS stream
-   *
-   * GUARANTEES:
-   * - No events lost (catch-up query + LISTEN)
-   * - No duplicates (isPendingCatchup flag + offset tracking)
-   * - Multiple consumers share same MultiChannel
-   *
-   * @param streamId Stream identifier
-   * @param fromOffset Starting offset (0-based)
-   * @returns MultiChannel for consuming stream values
+   * Subscribe to stream with reader loop initialization
    */
   async subscribe<T = any>(
     streamId: StreamIdentifier,
@@ -129,142 +77,191 @@ export class PGListener {
     const streamKey = this.getStreamKey(streamId)
     const pgChannel = this.getPGChannelName(streamId)
 
-    // Check if already subscribed
+    // Reuse existing channel
     const existing = this.channels.get(streamKey)
     if (existing) {
       existing.consumerCount++
-      logger.debug({
-        streamKey,
-        consumers: existing.consumerCount,
-      }, 'Reusing existing stream channel')
       return existing.multiChannel as MultiChannel<T[]>
     }
 
-    logger.info({
-      streamKey,
-      pgChannel,
-      fromOffset,
-    }, 'Creating new stream subscription')
-
-    // === ATOMIC SUBSCRIPTION PROTOCOL ===
-
-    // Step 1: Create MultiChannel
     const multiChannel = new MultiChannel<T[]>()
 
-    // Step 2: Create channel state BEFORE LISTEN
+    // Create channel state with offset tracking
     const channelState: StreamChannel<T> = {
       multiChannel,
+      localOffset: fromOffset, // Start reading from here
+      remoteOffset: fromOffset - 1, // Will be updated by notifications
       lastSentOffset: fromOffset - 1,
       consumerCount: 1,
-      isPendingCatchup: true, // ← Critical: blocks notifications during catch-up
+      isReading: false,
+      isPendingCatchup: true,
+      isCleaningUp: false,
+      createdAt: Date.now(),
     }
 
     this.channels.set(streamKey, channelState)
 
-    // Step 3: LISTEN to PostgreSQL channel (atomic)
+    // LISTEN to PostgreSQL
     await this.subscriber.listenTo(pgChannel)
 
-    logger.debug({
-      streamKey,
-      pgChannel,
-    }, 'LISTEN command executed')
-
-    // Step 4: Catch-up query for existing values
-    // Notifications received during query are buffered but not processed (isPendingCatchup = true)
-    try {
-      const existingValues = await this.queryStreamFromOffset<T>(
-        streamId,
-        fromOffset,
-      )
-
-      if (existingValues.length > 0) {
-        // Send initial batch to MultiChannel
-        multiChannel.send(existingValues)
-
-        // Update offset
-        channelState.lastSentOffset = fromOffset + existingValues.length - 1
-
-        logger.info({
-          streamKey,
-          values: existingValues.length,
-          lastOffset: channelState.lastSentOffset,
-        }, 'Initial catch-up complete')
-      } else {
-        logger.debug({
-          streamKey,
-        }, 'No existing values, ready for notifications')
-      }
-    } catch (error) {
-      // Cleanup on error
-      this.channels.delete(streamKey)
-      await this.subscriber.unlisten(pgChannel)
-      throw error
-    }
-
-    // Step 5: Enable notification processing (atomic flag flip)
-    channelState.isPendingCatchup = false
-
-    logger.info({
-      streamKey,
-      pgChannel,
-    }, 'Stream subscription active')
+    // Start reader loop immediately (don't wait for notification!)
+    this.startReaderLoop(streamId, channelState)
 
     return multiChannel
   }
 
   /**
-   * Unsubscribe from stream
-   *
-   * Decrements consumer count and cleans up if last consumer
+   * DB reader loop - reads batches until caught up
+   */
+  private async startReaderLoop(
+    streamId: StreamIdentifier,
+    channel: StreamChannel,
+  ): Promise<void> {
+    const streamKey = this.getStreamKey(streamId)
+
+    if (channel.isReading) {
+      return // Already running
+    }
+
+    channel.isReading = true
+    const readerPromise = (async () => {
+      try {
+        // Initial catch-up
+        while (channel.isReading && !channel.isCleaningUp) {
+          const batch = await this.executeStreamQuery(
+            streamId,
+            channel.localOffset,
+          )
+
+          if (batch.length === 0) {
+            // Caught up - wait for notifications
+            channel.isPendingCatchup = false
+            break
+          }
+
+          // Send to MultiChannel
+          channel.multiChannel.send(batch)
+          channel.localOffset += batch.length
+          channel.lastSentOffset = channel.localOffset - 1
+        }
+
+        // Now wait for notifications to trigger more reads
+        while (channel.isReading && !channel.isCleaningUp) {
+          if (channel.localOffset <= channel.remoteOffset) {
+            // New data available
+            const batch = await this.executeStreamQuery(
+              streamId,
+              channel.localOffset,
+            )
+
+            if (batch.length > 0) {
+              channel.multiChannel.send(batch)
+              channel.localOffset += batch.length
+              channel.lastSentOffset = channel.localOffset - 1
+            } else {
+              break // Caught up
+            }
+          } else {
+            // No new data, wait
+            await this.sleep(10)
+          }
+        }
+      } catch (error) {
+        logger.error({
+          error: error instanceof Error ? error.message : String(error),
+          streamKey,
+        }, 'Reader loop error')
+      } finally {
+        channel.isReading = false
+      }
+    })()
+
+    channel.readerPromise = readerPromise
+  }
+
+  /**
+   * Notification handler - just updates remoteOffset
+   */
+  private setupNotificationHandler(): void {
+    this.subscriber.events.on('notification', (notification) => {
+      const streamId = this.parseChannelName(notification.channel)
+      if (!streamId)
+        return
+
+      const streamKey = this.getStreamKey(streamId)
+      const channel = this.channels.get(streamKey)
+      if (!channel)
+        return
+
+      // Update remote offset
+      channel.remoteOffset = Math.max(channel.remoteOffset, notification.payload.offset)
+
+      // Trigger reader if not running
+      if (!channel.isReading && channel.localOffset <= channel.remoteOffset) {
+        this.startReaderLoop(streamId, channel)
+      }
+    })
+  }
+
+  /**
+   * Graceful unsubscribe with reference counting
    */
   async unsubscribe(streamId: StreamIdentifier): Promise<void> {
     const streamKey = this.getStreamKey(streamId)
     const channel = this.channels.get(streamKey)
 
-    if (!channel) {
-      logger.warn({
-        streamKey,
-      }, 'Unsubscribe called for non-existent channel')
+    if (!channel)
       return
-    }
 
     channel.consumerCount--
 
-    logger.debug({
+    logger.info({
       streamKey,
       remainingConsumers: channel.consumerCount,
     }, 'Consumer unsubscribed')
 
     // Cleanup if last consumer
-    if (channel.consumerCount <= 0) {
-      const pgChannel = this.getPGChannelName(streamId)
-
-      // Close MultiChannel
-      channel.multiChannel.close()
-
-      // UNLISTEN from PostgreSQL
-      await this.subscriber.unlisten(pgChannel)
-
-      // Remove from map
-      this.channels.delete(streamKey)
-
-      logger.info({
-        streamKey,
-        pgChannel,
-      }, 'Stream channel cleaned up (last consumer left)')
+    if (channel.consumerCount <= 0 && !channel.isCleaningUp) {
+      channel.cleanupPromise = this.cleanupStream(streamId, channel)
+      await channel.cleanupPromise
     }
   }
 
   /**
-   * Get stream count for load balancing
+   * Graceful cleanup
    */
+  private async cleanupStream(
+    streamId: StreamIdentifier,
+    channel: StreamChannel,
+  ): Promise<void> {
+    const streamKey = this.getStreamKey(streamId)
+    channel.isCleaningUp = true
+
+    // Stop reader
+    channel.isReading = false
+
+    // Wait for reader to finish
+    if (channel.readerPromise) {
+      await channel.readerPromise
+    }
+
+    // Close MultiChannel
+    channel.multiChannel.close()
+
+    // UNLISTEN
+    const pgChannel = this.getPGChannelName(streamId)
+    await this.subscriber.unlisten(pgChannel)
+
+    // Clear maps
+    this.channels.delete(streamKey)
+
+    logger.info({ streamKey }, 'Stream cleaned up')
+  }
+
   getStreamCount(): number {
     return this.channels.size
   }
 
-  /**
-   * Get listener statistics
-   */
   getStats(): PGListenerStats {
     const totalConsumers = Array.from(this.channels.values())
       .reduce((sum, ch) => sum + ch.consumerCount, 0)
@@ -277,266 +274,88 @@ export class PGListener {
     }
   }
 
-  /**
-   * Close listener and cleanup all channels
-   */
   async close(): Promise<void> {
-    logger.info({
-      listenerIndex: this.listenerIndex,
-      activeStreams: this.channels.size,
-    }, 'Closing PGListener')
-
-    // Close all MultiChannels
     for (const channel of this.channels.values()) {
       channel.multiChannel.close()
     }
-
-    // Clear channels
     this.channels.clear()
-
-    // Close pg-listen subscriber
     await this.subscriber.close()
-
-    logger.info({
-      listenerIndex: this.listenerIndex,
-    }, 'PGListener closed')
   }
 
   /**
-   * Setup global notification handler for all channels
-   *
-   * This handler is called for ALL notifications on this subscriber.
-   * It routes notifications to the correct StreamChannel.
-   */
-  private setupNotificationHandler(): void {
-    this.subscriber.events.on('notification', (notification) => {
-      const { channel, payload } = notification
-
-      // Extract streamId from channel name
-      // Format: dbos_stream_{workflowId}_{streamKey}
-      const streamId = this.parseChannelName(channel)
-      if (!streamId) {
-        logger.warn({
-          channel,
-        }, 'Failed to parse channel name')
-        return
-      }
-
-      const streamKey = this.getStreamKey(streamId)
-      const channelState = this.channels.get(streamKey)
-
-      if (!channelState) {
-        logger.warn({
-          streamKey,
-          channel,
-        }, 'Notification for unknown stream (already unsubscribed?)')
-        return
-      }
-
-      // Skip if still in catch-up phase (prevents duplicates)
-      if (channelState.isPendingCatchup) {
-        logger.debug({
-          streamKey,
-          offset: payload.offset,
-        }, 'Skipping notification during catch-up')
-        return
-      }
-
-      // Only fetch if new offset
-      if (payload.offset > channelState.lastSentOffset) {
-        // Trigger async fetch (don't await - handler must be sync!)
-        this.handleNotification(streamId, payload.offset).catch((error) => {
-          logger.error({
-            error: error instanceof Error ? error.message : String(error),
-            streamKey,
-          }, 'Error handling notification')
-        })
-      }
-    })
-  }
-
-  /**
-   * Handle notification: Query new values and send to MultiChannel
-   */
-  private async handleNotification(
-    streamId: StreamIdentifier,
-    notifiedOffset: number,
-  ): Promise<void> {
-    const streamKey = this.getStreamKey(streamId)
-    const channelState = this.channels.get(streamKey)
-
-    if (!channelState) {
-      return
-    }
-
-    const startOffset = channelState.lastSentOffset + 1
-
-    try {
-      const newValues = await this.queryStreamFromOffset(
-        streamId,
-        startOffset,
-      )
-
-      if (newValues.length > 0) {
-        // Filter out already-sent values (defensive)
-        const unseenValues = newValues.slice(
-          Math.max(0, channelState.lastSentOffset + 1 - startOffset),
-        )
-
-        if (unseenValues.length > 0) {
-          // Send to MultiChannel
-          channelState.multiChannel.send(unseenValues)
-
-          // Update offset
-          channelState.lastSentOffset = startOffset + newValues.length - 1
-        }
-      }
-    } catch (error) {
-      logger.error({
-        error: error instanceof Error ? error.message : String(error),
-        streamKey,
-        startOffset,
-      }, 'Error fetching stream values')
-    }
-  }
-
-  /**
-   * Query stream values from database with deduplication
-   */
-  private async queryStreamFromOffset<T>(
-    streamId: StreamIdentifier,
-    startOffset: number,
-  ): Promise<T[]> {
-    const streamKey = this.getStreamKey(streamId)
-    const queryKey = `${streamKey}:${startOffset}`
-
-    // Deduplicate concurrent queries
-    const pending = this.pendingQueries.get(queryKey)
-    if (pending) {
-      logger.debug({
-        streamKey,
-        startOffset,
-      }, 'Reusing pending query')
-      return pending as Promise<T[]>
-    }
-
-    // Create new query
-    const queryPromise = this.executeStreamQuery<T>(streamId, startOffset)
-
-    this.pendingQueries.set(queryKey, queryPromise)
-
-    try {
-      const result = await queryPromise
-      return result
-    } finally {
-      // Clear cache after brief delay
-      setTimeout(() => {
-        this.pendingQueries.delete(queryKey)
-      }, 100)
-    }
-  }
-
-  /**
-   * Execute database query for stream values
+   * Execute database query
    */
   private async executeStreamQuery<T>(
     streamId: StreamIdentifier,
     startOffset: number,
   ): Promise<T[]> {
-    try {
-      const result = await this.queryPool.query<{
-        offset: number
-        value: string
-      }>(`
-        SELECT "offset", value
-        FROM dbos.streams
-        WHERE workflow_uuid = $1
-          AND key = $2
-          AND "offset" >= $3
-        ORDER BY "offset" ASC
-        LIMIT $4
-      `, [
-        streamId.workflowId,
-        streamId.streamKey,
-        startOffset,
-        STREAM_BATCH_CONFIG.QUERY_BATCH_SIZE,
-      ])
+    const result = await this.queryPool.query<{
+      offset: number
+      value: string
+    }>(`
+      SELECT "offset", value
+      FROM dbos.streams
+      WHERE workflow_uuid = $1
+        AND key = $2
+        AND "offset" >= $3
+      ORDER BY "offset" ASC
+      LIMIT $4
+    `, [
+      streamId.workflowId,
+      streamId.streamKey,
+      startOffset,
+      STREAM_BATCH_CONFIG.QUERY_BATCH_SIZE,
+    ])
 
-      // Parse values
-      const values: T[] = []
+    const values: T[] = []
 
-      for (const row of result.rows) {
-        try {
-          const parsed = JSON.parse(row.value)
+    for (const row of result.rows) {
+      try {
+        const parsed = JSON.parse(row.value)
 
-          // For 'events' stream key, deserialize ExecutionEventImpl
-          // DBOS.writeStream stores: { executionId, event: serializedEvent, timestamp }
-          if (streamId.streamKey === 'events' && parsed.event) {
-            // Deserialize the event (converts JSON to ExecutionEventImpl instance)
-            const event = ExecutionEventImpl.deserializeStatic(parsed.event)
-            if (event) {
-              values.push(event as T)
-            }
-          } else {
-            // For other stream keys, use value as-is
-            values.push(parsed)
-          }
-        } catch (error) {
-          logger.warn({
-            workflowId: streamId.workflowId,
-            streamKey: streamId.streamKey,
-            offset: row.offset,
-            error: error instanceof Error ? error.message : String(error),
-          }, 'Failed to parse stream value')
+        if (streamId.streamKey === 'events' && parsed.event) {
+          const event = ExecutionEventImpl.deserializeStatic(parsed.event)
+          if (event)
+            values.push(event as T)
+        } else {
+          values.push(parsed)
         }
+      } catch (error) {
+        logger.warn({
+          workflowId: streamId.workflowId,
+          streamKey: streamId.streamKey,
+          offset: row.offset,
+        }, 'Parse error')
       }
-
-      return values
-    } catch (error) {
-      logger.error({
-        error: error instanceof Error ? error.message : String(error),
-        workflowId: streamId.workflowId,
-        streamKey: streamId.streamKey,
-        startOffset,
-      }, 'Database query failed')
-      throw error
     }
+
+    return values
   }
 
-  /**
-   * Parse PostgreSQL channel name to StreamIdentifier
-   *
-   * Format: dbos_stream_{workflowId}_{streamKey}
-   */
   private parseChannelName(channel: string): StreamIdentifier | null {
     const prefix = 'dbos_stream_'
-    if (!channel.startsWith(prefix)) {
+    if (!channel.startsWith(prefix))
       return null
-    }
 
     const parts = channel.slice(prefix.length).split('_')
-    if (parts.length < 2) {
+    if (parts.length < 2)
       return null
+
+    return {
+      workflowId: parts[0],
+      streamKey: parts.slice(1).join('_'),
     }
-
-    // workflowId is first part, streamKey is rest joined by _
-    const workflowId = parts[0]
-    const streamKey = parts.slice(1).join('_')
-
-    return { workflowId, streamKey }
   }
 
-  /**
-   * Get PostgreSQL channel name for stream
-   */
   private getPGChannelName(streamId: StreamIdentifier): string {
     return `dbos_stream_${streamId.workflowId}_${streamId.streamKey}`
   }
 
-  /**
-   * Get internal stream key (for map storage)
-   */
   private getStreamKey(streamId: StreamIdentifier): string {
     return `${streamId.workflowId}:${streamId.streamKey}`
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 }
