@@ -38,15 +38,15 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
   const completedAt = execution.completedAt ? new Date(execution.completedAt) : undefined
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-4 min-w-0 overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Execution Details</h3>
-          <div className="flex items-center gap-2">
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="space-y-1 min-w-0 flex-1">
+          <h3 className="text-lg font-semibold truncate">Execution Details</h3>
+          <div className="flex items-center gap-2 flex-wrap">
             <ExecutionStatusIndicator status={execution.status} showLabel />
             {execution.executionDepth > 0 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs flex-shrink-0">
                 Depth:
                 {' '}
                 {execution.executionDepth}
@@ -54,7 +54,7 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
             )}
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+        <Button variant="ghost" size="sm" onClick={onClose} className="flex-shrink-0">
           ✕
         </Button>
       </div>
@@ -62,20 +62,40 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
       <Separator />
 
       {/* IDs Section */}
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <div className="flex items-center gap-2 text-sm flex-shrink-0">
+          <Layers className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-muted-foreground whitespace-nowrap">Flow ID</span>
+        </div>
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          <code className="text-xs font-mono bg-muted px-2 py-1 rounded truncate block max-w-full">
+            {execution.flowId}
+          </code>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 flex-shrink-0"
+            onClick={() => copyToClipboard(execution.flowId)}
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <Hash className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Execution ID</span>
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 text-sm flex-shrink-0">
+            <Hash className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-muted-foreground whitespace-nowrap">Execution ID</span>
           </div>
-          <div className="flex items-center gap-1">
-            <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <code className="text-xs font-mono bg-muted px-2 py-1 rounded truncate block max-w-full">
               {nodeId}
             </code>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-6 w-6 flex-shrink-0"
               onClick={() => copyToClipboard(nodeId)}
             >
               <Copy className="h-3 w-3" />
@@ -83,40 +103,20 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <Layers className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Flow ID</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
-              {execution.flowId}
-            </code>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => copyToClipboard(execution.flowId)}
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-
         {parentId && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <ExternalLink className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Parent ID</span>
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-2 text-sm flex-shrink-0">
+              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground whitespace-nowrap">Parent ID</span>
             </div>
-            <div className="flex items-center gap-1">
-              <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
+            <div className="flex items-center gap-1 min-w-0 flex-1">
+              <code className="text-xs font-mono bg-muted px-2 py-1 rounded truncate block max-w-full">
                 {parentId}
               </code>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
+                className="h-6 w-6 flex-shrink-0"
                 onClick={() => copyToClipboard(parentId)}
               >
                 <Copy className="h-3 w-3" />
@@ -125,20 +125,20 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
           </div>
         )}
 
-        {rootId && rootId !== nodeId && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <ExternalLink className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Root ID</span>
+        {rootId && (
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-2 text-sm flex-shrink-0">
+              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground whitespace-nowrap">Root ID</span>
             </div>
-            <div className="flex items-center gap-1">
-              <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
+            <div className="flex items-center gap-1 min-w-0 flex-1">
+              <code className="text-xs font-mono bg-muted px-2 py-1 rounded truncate block max-w-full">
                 {rootId}
               </code>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
+                className="h-6 w-6 flex-shrink-0"
                 onClick={() => copyToClipboard(rootId)}
               >
                 <Copy className="h-3 w-3" />
@@ -152,21 +152,21 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
       {execution.externalEvents && execution.externalEvents.length > 0 && (
         <>
           <Separator />
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Zap className="w-4 h-4 text-orange-500" />
+              <Zap className="w-4 h-4 text-orange-500 flex-shrink-0" />
               <span>Triggered by Event</span>
             </div>
-            <div className="bg-muted/50 rounded-md p-3 space-y-1">
-              <div className="text-sm">
+            <div className="bg-muted/50 rounded-md p-3 space-y-1 min-w-0">
+              <div className="text-sm min-w-0">
                 <span className="text-muted-foreground">Event:</span>
                 {' '}
-                <span className="font-mono">{execution.externalEvents[0].eventName}</span>
+                <span className="font-mono truncate inline-block max-w-full align-bottom">{execution.externalEvents[0].eventName}</span>
               </div>
               {execution.externalEvents[0].payload && (
-                <div className="text-sm">
+                <div className="text-sm min-w-0">
                   <span className="text-muted-foreground">Payload:</span>
-                  <pre className="mt-1 text-xs font-mono overflow-auto whitespace-pre-wrap break-all">
+                  <pre className="mt-1 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all max-w-full">
                     {JSON.stringify(execution.externalEvents[0].payload, null, 2)}
                   </pre>
                 </div>
@@ -180,34 +180,34 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
       {execution.integration && (
         <>
           <Separator />
-          <div className="space-y-3">
+          <div className="space-y-3 min-w-0">
             {execution.integration?.archai && (
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <Bot className="w-4 h-4 text-green-500" />
+                  <Bot className="w-4 h-4 text-green-500 flex-shrink-0" />
                   <span>ArchAI Integration</span>
                 </div>
-                <div className="bg-muted/50 rounded-md p-3 space-y-2">
+                <div className="bg-muted/50 rounded-md p-3 space-y-2 min-w-0">
                   {execution.integration.archai.agentID && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Agent ID</span>
-                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+                      <span className="text-muted-foreground flex-shrink-0 whitespace-nowrap">Agent ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded truncate max-w-full">
                         {execution.integration.archai.agentID}
                       </code>
                     </div>
                   )}
                   {execution.integration.archai.chatID && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Chat ID</span>
-                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+                      <span className="text-muted-foreground flex-shrink-0 whitespace-nowrap">Chat ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded truncate max-w-full">
                         {execution.integration.archai.chatID}
                       </code>
                     </div>
                   )}
                   {execution.integration.archai.messageID !== undefined && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Message ID</span>
-                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+                      <span className="text-muted-foreground flex-shrink-0 whitespace-nowrap">Message ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded truncate max-w-full">
                         {execution.integration.archai.messageID}
                       </code>
                     </div>
@@ -220,9 +220,9 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
             )}
 
             {execution.integration?.wallet && (
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <Wallet className="w-4 h-4 text-purple-500" />
+                  <Wallet className="w-4 h-4 text-purple-500 flex-shrink-0" />
                   <span>Wallet Integration</span>
                   {execution.integration.wallet.isConnected && (
                     <Badge variant="outline" className="text-xs">
@@ -230,12 +230,12 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
                     </Badge>
                   )}
                 </div>
-                <div className="bg-muted/50 rounded-md p-3 space-y-2">
+                <div className="bg-muted/50 rounded-md p-3 space-y-2 min-w-0">
                   {execution.integration.wallet.address && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Address</span>
-                      <div className="flex items-center gap-1">
-                        <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+                      <span className="text-muted-foreground flex-shrink-0 whitespace-nowrap">Address</span>
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
+                        <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded truncate block max-w-full">
                           {execution.integration.wallet.address.slice(0, 6)}
                           ...
                           {execution.integration.wallet.address.slice(-4)}
@@ -243,7 +243,7 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-6 w-6 flex-shrink-0"
                           onClick={() => copyToClipboard(execution.integration?.wallet?.address || '')}
                         >
                           <Copy className="h-3 w-3" />
@@ -252,15 +252,15 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
                     </div>
                   )}
                   {execution.integration.wallet.chainId && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Chain ID</span>
-                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+                      <span className="text-muted-foreground flex-shrink-0 whitespace-nowrap">Chain ID</span>
+                      <code className="font-mono text-xs bg-muted px-2 py-0.5 rounded truncate max-w-full">
                         {execution.integration.wallet.chainId}
                       </code>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Status</span>
+                  <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+                    <span className="text-muted-foreground flex-shrink-0">Status</span>
                     <span className="text-xs">
                       {execution.integration.wallet.isConnected ? 'Connected' : 'Disconnected'}
                     </span>
@@ -274,31 +274,31 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
 
       {/* Timestamps */}
       <Separator />
-      <div className="space-y-2">
+      <div className="space-y-2 min-w-0">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <Clock className="w-4 h-4 text-muted-foreground" />
+          <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <span>Timestamps</span>
         </div>
-        <div className="space-y-1 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Created</span>
-            <span className="font-mono">{createdAt ? formatTimestamp(createdAt) : '-'}</span>
+        <div className="space-y-1 text-sm min-w-0">
+          <div className="flex justify-between gap-2 min-w-0">
+            <span className="text-muted-foreground flex-shrink-0">Created</span>
+            <span className="font-mono truncate">{createdAt ? formatTimestamp(createdAt) : '-'}</span>
           </div>
           {startedAt && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Started</span>
-              <span className="font-mono">{formatTimestamp(startedAt)}</span>
+            <div className="flex justify-between gap-2 min-w-0">
+              <span className="text-muted-foreground flex-shrink-0">Started</span>
+              <span className="font-mono truncate">{formatTimestamp(startedAt)}</span>
             </div>
           )}
           {completedAt && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Completed</span>
-              <span className="font-mono">{formatTimestamp(completedAt)}</span>
+            <div className="flex justify-between gap-2 min-w-0">
+              <span className="text-muted-foreground flex-shrink-0">Completed</span>
+              <span className="font-mono truncate">{formatTimestamp(completedAt)}</span>
             </div>
           )}
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Duration</span>
-            <span className="font-mono">
+          <div className="flex justify-between gap-2 min-w-0">
+            <span className="text-muted-foreground flex-shrink-0">Duration</span>
+            <span className="font-mono truncate">
               {formatDuration(startedAt, completedAt)}
             </span>
           </div>
@@ -309,42 +309,18 @@ export function ExecutionDetails({ execution: node, onClose, className }: Execut
       {execution.errorMessage && (
         <>
           <Separator />
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-              <AlertCircle className="w-4 h-4" />
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>Error</span>
             </div>
-            <div className="bg-destructive/10 rounded-md p-3 space-y-1">
-              <div className="text-sm text-destructive">{execution.errorMessage}</div>
+            <div className="bg-destructive/10 rounded-md p-3 space-y-1 min-w-0">
+              <div className="text-sm text-destructive break-words">{execution.errorMessage}</div>
               {execution.errorNodeId && (
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground min-w-0">
                   Node ID:
                   {' '}
-                  <code className="font-mono">{execution.errorNodeId}</code>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Additional Info */}
-      {(execution.rootExecutionId || execution.parentExecutionId) && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Additional Info</div>
-            <div className="space-y-1 text-sm">
-              {execution.rootExecutionId && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Root Execution</span>
-                  <code className="font-mono text-xs">{execution.rootExecutionId}</code>
-                </div>
-              )}
-              {execution.parentExecutionId && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Parent Execution</span>
-                  <code className="font-mono text-xs">{execution.parentExecutionId}</code>
+                  <code className="font-mono truncate inline-block max-w-full align-bottom">{execution.errorNodeId}</code>
                 </div>
               )}
             </div>

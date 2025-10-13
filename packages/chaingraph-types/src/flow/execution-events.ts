@@ -13,6 +13,9 @@ import type { JSONValue } from '../utils/json'
 import SuperJSON from 'superjson'
 
 export enum ExecutionEventEnum {
+  // Execution events (workflow-level)
+  EXECUTION_CREATED = 'execution:created',
+
   // Flow events
   FLOW_SUBSCRIBED = 'flow:subscribed',
   FLOW_STARTED = 'flow:started',
@@ -49,6 +52,15 @@ export enum ExecutionEventEnum {
 }
 
 export interface ExecutionEventData {
+  [ExecutionEventEnum.EXECUTION_CREATED]: {
+    executionId: string
+    flowId: string
+    flowMetadata: FlowMetadata
+    ownerId: string
+    rootExecutionId: string
+    parentExecutionId: string | null
+    executionDepth: number
+  }
   [ExecutionEventEnum.FLOW_SUBSCRIBED]: {
     flowMetadata: FlowMetadata
   }

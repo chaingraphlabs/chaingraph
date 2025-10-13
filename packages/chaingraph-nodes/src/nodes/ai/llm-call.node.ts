@@ -9,12 +9,17 @@
 import type {
   EncryptedSecretValue,
   ExecutionContext,
+  INode,
+  IPort,
   NodeExecutionResult,
+  SecretPort,
+  SecretType,
   SecretTypeMap,
 } from '@badaitech/chaingraph-types'
 import type { ChatOpenAIFields } from '@langchain/openai'
 
 import {
+  OnPortUpdate,
   PortObject,
   PortVisibility,
 } from '@badaitech/chaingraph-types'
@@ -34,6 +39,7 @@ import {
 import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage } from '@langchain/core/messages'
 import { ChatDeepSeek } from '@langchain/deepseek'
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import { ChatOpenAI } from '@langchain/openai'
 import { NODE_CATEGORIES } from '../../categories'
 
@@ -68,9 +74,25 @@ export enum LLMModels {
   Claude37Sonnet20250219 = 'claude-3-7-sonnet-20250219',
   Claude35Sonnet20241022 = 'claude-3-5-sonnet-20241022',
 
+  // Claude Latest Aliases
+  Claude35SonnetLatest = 'claude-3-5-sonnet-latest',
+
   // Deepseek Models
   DeepseekChat = 'deepseek-chat',
   DeepseekReasoner = 'deepseek-reasoner',
+
+  // Google Gemini 2.5 Models
+  Gemini25Pro = 'gemini-2.5-pro',
+  Gemini25Flash = 'gemini-2.5-flash',
+  Gemini25FlashLite = 'gemini-2.5-flash-lite',
+
+  // Google Gemini 2.0 Models
+  Gemini20Flash = 'gemini-2.0-flash',
+  Gemini20FlashLite = 'gemini-2.0-flash-lite',
+
+  // Google Gemini Latest Aliases
+  GeminiFlashLatest = 'gemini-flash-latest',
+  GeminiProLatest = 'gemini-pro-latest',
 
   // Groq Models
   GroqMetaLlamaLlama4Scout17b16eInstruct = 'groq/meta-llama/llama-4-scout-17b-16e-instruct',
@@ -155,6 +177,38 @@ export class LLMCallNode extends BaseNode {
     description: 'Language Model',
     defaultValue: LLMModels.Gpt5Mini,
   })
+  @OnPortUpdate(async (node: INode, port: IPort) => {
+    // Get the selected model
+    const selectedModel = port.getValue() as LLMModels
+    if (!selectedModel) {
+      return
+    }
+
+    // Find the apiKey port
+    const apiKeyPort = node.findPort(
+      p => p.getConfig().key === 'apiKey'
+        && p.getConfig().direction === 'input',
+    )
+
+    if (!apiKeyPort) {
+      return
+    }
+
+    // Determine the secret type for the selected model
+    const secretType = getSecretTypeForModel(selectedModel)
+
+    // Update the apiKey port's secret type
+    const secretPortTyped = apiKeyPort as SecretPort<any>
+    const currentConfig = secretPortTyped.getConfig()
+    secretPortTyped.setConfig({
+      ...currentConfig,
+      type: 'secret',
+      secretType,
+    })
+
+    // Notify the framework that the port configuration has changed
+    await node.updatePort(apiKeyPort)
+  })
   model: LLMModels = LLMModels.Gpt5Mini
 
   @Input()
@@ -227,9 +281,16 @@ export class LLMCallNode extends BaseNode {
 
     const { apiKey } = await this.apiKey.decrypt(context)
 
-    let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic
+    let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI
 
-    if (isDeepSeek(this.model)) {
+    if (isGemini(this.model)) {
+      llm = new ChatGoogleGenerativeAI({
+        apiKey,
+        model: this.model,
+        temperature: this.temperature,
+        streaming: true,
+      })
+    } else if (isDeepSeek(this.model)) {
       llm = new ChatDeepSeek({
         apiKey,
         model: this.model,
@@ -347,7 +408,7 @@ export class LLMCallNode extends BaseNode {
 /**
  * Type alias for supported provider names used in the system.
  */
-export type SupportedProviders = 'openai' | 'anthropic' | 'deepseek' | 'groq' | 'moonshot'
+export type SupportedProviders = 'openai' | 'anthropic' | 'deepseek' | 'groq' | 'moonshot' | 'gemini'
 
 /**
  * Represents an API key type that maps to a secret type defined for supported providers.
@@ -375,6 +436,7 @@ export function isAnthropic(model: LLMModels): boolean {
     LLMModels.ClaudeOpus4_1_20250805,
     LLMModels.Claude37Sonnet20250219,
     LLMModels.Claude35Sonnet20241022,
+    LLMModels.Claude35SonnetLatest,
   ].includes(model)
 }
 
@@ -390,6 +452,21 @@ export function isGroq(model: LLMModels): boolean {
  */
 export function isMoonshot(model: LLMModels): boolean {
   return model === LLMModels.MoonshotV1128K
+}
+
+/**
+ * Determines whether the given model belongs to the Google Gemini category of models.
+ */
+export function isGemini(model: LLMModels): boolean {
+  return [
+    LLMModels.Gemini25Pro,
+    LLMModels.Gemini25Flash,
+    LLMModels.Gemini25FlashLite,
+    LLMModels.Gemini20Flash,
+    LLMModels.Gemini20FlashLite,
+    LLMModels.GeminiFlashLatest,
+    LLMModels.GeminiProLatest,
+  ].includes(model)
 }
 
 /**
@@ -434,4 +511,26 @@ export function isOpenAIThinkingModel(model: LLMModels): boolean {
     LLMModels.O3Pro,
     LLMModels.O4Mini,
   ].includes(model)
+}
+
+/**
+ * Maps an LLM model to its corresponding secret type.
+ * @param model The LLM model to get the secret type for
+ * @returns The secret type for the given model
+ */
+export function getSecretTypeForModel(model: LLMModels): SecretType {
+  if (isGemini(model)) {
+    return 'gemini'
+  } else if (isAnthropic(model)) {
+    return 'anthropic'
+  } else if (isDeepSeek(model)) {
+    return 'deepseek'
+  } else if (isGroq(model)) {
+    return 'groq'
+  } else if (isMoonshot(model)) {
+    return 'moonshot'
+  } else {
+    // OpenAI is the default/fallback
+    return 'openai'
+  }
 }

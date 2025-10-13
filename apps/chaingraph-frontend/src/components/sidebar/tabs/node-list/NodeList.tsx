@@ -61,8 +61,8 @@ export function NodeList() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Compact Header */}
-      <div className="p-2 border-b">
+      {/* Compact Header - Fixed */}
+      <div className="flex-shrink-0 p-2 border-b">
         <Command className="rounded-md border shadow-none">
           <div className="flex items-center">
             <CommandInput
@@ -75,73 +75,77 @@ export function NodeList() {
         </Command>
       </div>
 
-      {/* Node Categories */}
-      <ScrollArea className="flex-1">
-        <Accordion
-          type="multiple"
-          value={expandedCategories}
-          onValueChange={setExpandedCategories}
-          className="space-y-0.5 p-1"
-        >
-          {filteredCategories
-            .filter(category => !category.metadata.hidden)
-            .map(category => (
-              <AccordionItem
-                key={category.category}
-                value={category.category}
-                className="border-0"
-              >
-                <AccordionTrigger
-                  className={cn(
-                    'py-1 px-2 rounded-sm hover:bg-accent/50',
-                    'hover:no-underline text-sm',
-                    'data-[state=open]:bg-accent/40',
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon
-                      name={category.metadata.icon}
-                      size={16}
-                      className="text-muted-foreground"
-                    />
-                    <span className="font-medium">{category.metadata.label}</span>
-                    <span className="text-xs text-muted-foreground font-normal">
-                      {category.nodes.length}
-                    </span>
-                  </div>
-                </AccordionTrigger>
-
-                <AccordionContent className="pt-1 pb-2">
-                  <div className="space-y-1 pl-6">
-                    {category.nodes
-                      .filter((node) => {
-                        return node.ui?.state?.isHidden !== true
-                      })
-                      .map(node => (
-                        <NodeCard
-                          key={node.type}
-                          node={node}
-                          categoryMetadata={category.metadata}
+      {/* Node Categories - Scrollable */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <Accordion
+              type="multiple"
+              value={expandedCategories}
+              onValueChange={setExpandedCategories}
+              className="space-y-0.5 p-1"
+            >
+              {filteredCategories
+                .filter(category => !category.metadata.hidden)
+                .map(category => (
+                  <AccordionItem
+                    key={category.category}
+                    value={category.category}
+                    className="border-0"
+                  >
+                    <AccordionTrigger
+                      className={cn(
+                        'py-1 px-2 rounded-sm hover:bg-accent/50',
+                        'hover:no-underline text-sm',
+                        'data-[state=open]:bg-accent/40',
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon
+                          name={category.metadata.icon}
+                          size={16}
+                          className="text-muted-foreground"
                         />
-                      ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-        </Accordion>
+                        <span className="font-medium">{category.metadata.label}</span>
+                        <span className="text-xs text-muted-foreground font-normal">
+                          {category.nodes.length}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
 
-        {/* Empty State */}
-        {filteredCategories?.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground">
-            <LayersIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
-            <p className="text-sm">
-              {searchQuery
-                ? `No nodes found matching "${searchQuery}"`
-                : 'No nodes available'}
-            </p>
-          </div>
-        )}
-      </ScrollArea>
+                    <AccordionContent className="pt-1 pb-2">
+                      <div className="space-y-1 pl-6">
+                        {category.nodes
+                          .filter((node) => {
+                            return node.ui?.state?.isHidden !== true
+                          })
+                          .map(node => (
+                            <NodeCard
+                              key={node.type}
+                              node={node}
+                              categoryMetadata={category.metadata}
+                            />
+                          ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+            </Accordion>
+
+            {/* Empty State */}
+            {filteredCategories?.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground">
+                <LayersIcon className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm">
+                  {searchQuery
+                    ? `No nodes found matching "${searchQuery}"`
+                    : 'No nodes available'}
+                </p>
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </div>
     </div>
   )
 }

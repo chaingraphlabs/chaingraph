@@ -6,14 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { DBOSExecutionWorker } from '@badaitech/chaingraph-executor/server'
 import process from 'node:process'
-import { createServices, ExecutionWorker } from '@badaitech/chaingraph-executor/server'
+import { createServices } from '@badaitech/chaingraph-executor/server'
 import { config } from './config'
 import { createLogger } from './logger'
 
 const logger = createLogger('worker')
 
-let executionWorker: ExecutionWorker | null = null
+let executionWorker: DBOSExecutionWorker | null = null
 let isShuttingDown = false
 
 export async function startWorker(): Promise<void> {
@@ -24,23 +25,22 @@ export async function startWorker(): Promise<void> {
     process.env.EXECUTION_MODE = config.executionMode
     process.env.DATABASE_URL = config.databaseUrl
     process.env.DATABASE_URL_EXECUTIONS = config.databaseUrlExecutions
-    process.env.KAFKA_BROKERS = config.kafka.brokers.join(',')
-    process.env.KAFKA_TOPICS_PREFIX = config.kafka.topicsPrefix
     process.env.WORKER_ID = workerId
 
-    // Create services (EventBus, TaskQueue, ExecutionStore)
+    // Create services (EventBus, TaskQueue, ExecutionStore, and DBOSWorker)
     const services = await createServices()
 
-    // Create and start the execution worker
-    executionWorker = new ExecutionWorker(
-      services.executionStore,
-      services.eventBus,
-      services.taskQueue,
-    )
+    // DBOS mode: Use DBOSExecutionWorker
+    if (!services.dbosWorker) {
+      throw new Error('DBOS worker not initialized. Set ENABLE_DBOS_EXECUTION=true')
+    }
+
+    logger.info({ workerId }, '🚀 Starting DBOS execution worker')
+    executionWorker = services.dbosWorker
 
     await executionWorker.start()
 
-    logger.info({ workerId, pid: process.pid }, '✅ Worker started successfully')
+    logger.info({ workerId, pid: process.pid }, '✅ DBOS worker started successfully')
 
     // Send heartbeat to master
     setInterval(() => {

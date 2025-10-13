@@ -8,7 +8,6 @@
 
 import type {
   EmittedEvent,
-  Flow,
   INode,
   IntegrationContext,
 } from '@badaitech/chaingraph-types'
@@ -41,8 +40,8 @@ export function generateEventID(): string {
 }
 
 /**
- * Refactored ExecutionService using dependency injection
- * Works with both local and distributed modes via interfaces
+ * ExecutionService using dependency injection
+ * Works with both local and DBOS modes via interfaces
  */
 export class ExecutionService implements IExecutionService {
   // Maximum execution depth to prevent infinite cycles
@@ -60,6 +59,14 @@ export class ExecutionService implements IExecutionService {
     private readonly eventBus: IEventBus,
     private readonly taskQueue: ITaskQueue,
   ) {}
+
+  /**
+   * Get the event bus instance
+   * Useful for accessing event bus-specific methods (e.g., closing DBOS streams)
+   */
+  getEventBus(): IEventBus {
+    return this.eventBus
+  }
 
   async createExecutionInstance(params: CreateExecutionParams): Promise<ExecutionInstance> {
     const {
@@ -79,10 +86,6 @@ export class ExecutionService implements IExecutionService {
     const initTimer = this.metricsHelper.createTimer(MetricStages.INIT, 'instance_create')
 
     flow.setIsDisabledPropagationEvents(true)
-
-    // Initial state flow needed to keep in memory the original node states
-    const initialStateFlow = await flow.clone() as Flow
-    initialStateFlow.setIsDisabledPropagationEvents(true)
 
     const currentDepth = executionRow.executionDepth
 
@@ -136,13 +139,16 @@ export class ExecutionService implements IExecutionService {
       context,
       flow,
       engine,
-      initialStateFlow,
     }
 
     // Set up event callback for all executions to allow cycles
-    engine.setEventCallback(async (ctx) => {
-      await this.processEmittedEvents(instance)
-    })
+    // NOTE: In DBOS mode, child spawning is handled in the step (not here)
+    // to avoid calling DBOS.startWorkflow() from within a step callback
+    // The callback is kept for Local mode where it works fine
+    // TODO: Make this conditional based on execution mode
+    // engine.setEventCallback(async (ctx) => {
+    //   await this.processEmittedEvents(instance)
+    // })
 
     // Store in database
     // await this.store.create(instance)
@@ -223,37 +229,70 @@ export class ExecutionService implements IExecutionService {
 
   /**
    * Setup event handling for an execution
+   *
+   * Events are published asynchronously using a sequential queue to avoid blocking flow execution
+   * while preventing race conditions in DBOS stream writes.
+   *
+   * The queue ensures:
+   * - Events are written to DBOS streams sequentially (no offset conflicts)
+   * - Engine callback returns immediately (non-blocking execution)
+   * - All publish promises are tracked for cleanup
    */
   private setupEventHandling(instance: ExecutionInstance): (() => Promise<void>) | undefined {
     const publishPromises: Promise<void>[] = []
 
+    // Promise chain for sequential stream writes
+    // This prevents race conditions in DBOS.writeStream() offset assignment
+    let publishQueue = Promise.resolve()
+
     // Subscribe to all events from the execution engine
-    const unsubscribe = instance.engine?.onAll(async (event) => {
-      // Track the publish promise
-      const publishPromise = this.eventBus.publishEvent(instance.row.id, event)
+    const unsubscribe = instance.engine?.onAll((event) => {
+      // Chain this event's publish to the queue (sequential processing)
+      // But don't block the engine callback - it returns immediately
+      publishQueue = publishQueue
+        .then(() => this.eventBus.publishEvent(instance.row.id, event))
         .catch((error) => {
           logger.error({
             error,
             executionId: instance.row.id,
             eventType: event.type,
             eventIndex: event.index,
-          }, 'Failed to publish event to Kafka')
+          }, 'Failed to publish event')
 
           // TODO: Handle publish failure (e.g., retry, dead-letter queue, etc.)
         })
 
-      publishPromises.push(publishPromise)
+      // Track the promise so we can wait for all publishes during cleanup
+      publishPromises.push(publishQueue)
 
-      // Wait for the publish to complete
-      await publishPromise
+      // Engine callback returns immediately - execution continues without blocking
     })
 
-    // Return enhanced unsubscribe that waits for pending publishes
+    // Return enhanced cleanup function that waits for all pending publishes
     return async () => {
-      // Wait for all pending Kafka publishes
+      logger.debug({
+        executionId: instance.row.id,
+        pendingPublishes: publishPromises.length,
+      }, 'Waiting for all event publishes to complete')
+
+      // Wait for all pending event publishes to complete
       if (publishPromises.length > 0) {
-        await Promise.allSettled(publishPromises)
+        const startTime = Date.now()
+
+        // Wait for the entire publish queue to drain
+        await publishQueue.catch(() => {
+          // Ignore errors here - they were already logged during publishing
+        })
+
+        const duration = Date.now() - startTime
+
+        logger.debug({
+          executionId: instance.row.id,
+          total: publishPromises.length,
+          duration,
+        }, 'Event publish cleanup complete')
       }
+
       unsubscribe?.()
     }
   }
@@ -316,6 +355,12 @@ export class ExecutionService implements IExecutionService {
           payload: event.data,
         },
       ],
+      // Failure tracking and recovery fields
+      failureCount: 0,
+      lastFailureReason: null,
+      lastFailureAt: null,
+      processingStartedAt: null,
+      processingWorkerId: null,
     }
 
     // Create child execution in store with metrics
@@ -355,11 +400,17 @@ export class ExecutionService implements IExecutionService {
             }
           : {}),
       },
-    }, 'Child execution task publish prepared')
+    }, 'Child execution task spawn prepared')
 
-    // Publish task to queue with metrics
+    // Spawn child execution with metrics
+    // Strategy depends on execution mode:
+    // - DBOS mode: Collected in step, spawned at workflow level
+    // - Local mode: Publish directly to in-memory task queue
     const taskPublishTimer = this.metricsHelper.createTimer(MetricStages.CHILD_SPAWN, 'task_publish')
     try {
+      // Always use taskQueue.publishTask() - it handles routing internally
+      // For DBOS mode, taskQueue will use DBOS queue
+      // For Local mode, taskQueue will publish to in-memory queue
       await this.taskQueue.publishTask(childTask)
     } catch (error) {
       logger.error({
@@ -367,7 +418,7 @@ export class ExecutionService implements IExecutionService {
         childId: childExecutionId,
         eventType: event.type,
         error: error instanceof Error ? error.message : 'Unknown error',
-      }, 'Failed to publish child execution task')
+      }, 'Failed to spawn child execution')
 
       // Track spawn error
       scopedMetrics.track({

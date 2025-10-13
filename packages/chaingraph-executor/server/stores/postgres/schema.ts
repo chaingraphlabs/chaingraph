@@ -14,7 +14,7 @@ import type {
 import type {
   ExecutionStatus,
 } from '../../../types'
-import { index, integer, jsonb, pgTableCreator, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, integer, jsonb, pgTableCreator, serial, text, timestamp } from 'drizzle-orm/pg-core'
 
 const pgTable = pgTableCreator(name => `chaingraph_${name}`)
 
@@ -37,6 +37,12 @@ export const executionsTable = pgTable('executions', {
   options: jsonb('options').$type<ExecutionOptions>(),
   integration: jsonb('integration').$type<IntegrationContext>(),
   externalEvents: jsonb('external_events').$type<ExecutionExternalEvent[]>(),
+  // Failure tracking and recovery support
+  failureCount: integer('failure_count').default(0).notNull(),
+  lastFailureReason: text('last_failure_reason'),
+  lastFailureAt: timestamp('last_failure_at'),
+  processingStartedAt: timestamp('processing_started_at'),
+  processingWorkerId: text('processing_worker_id'),
 }, table => [
   index('executions_flow_depth_created_idx').on(table.flowId, table.executionDepth, table.createdAt),
   index('executions_root_execution_id_idx').on(table.rootExecutionId),
@@ -44,6 +50,11 @@ export const executionsTable = pgTable('executions', {
   index('executions_flow_id_idx').on(table.flowId),
   index('executions_status_idx').on(table.status),
   index('executions_started_at_idx').on(table.startedAt),
+  // Indexes for failure tracking and recovery
+  index('executions_failure_count_idx').on(table.failureCount),
+  index('executions_processing_worker_idx').on(table.processingWorkerId),
+  index('executions_status_failure_idx').on(table.status, table.failureCount),
+  index('executions_last_failure_at_idx').on(table.lastFailureAt),
 ])
 
 export const executionClaimsTable = pgTable('execution_claims', {
@@ -60,5 +71,21 @@ export const executionClaimsTable = pgTable('execution_claims', {
   index('execution_claims_expires_at_status_idx').on(table.expiresAt, table.status),
 ])
 
+export const executionRecoveryTable = pgTable('execution_recovery', {
+  id: serial('id').primaryKey(),
+  executionId: text('execution_id').notNull().references(() => executionsTable.id),
+  recoveredAt: timestamp('recovered_at').defaultNow().notNull(),
+  recoveredByWorker: text('recovered_by_worker').notNull(),
+  recoveryReason: text('recovery_reason').notNull(), // 'expired_claim', 'no_claim', 'stuck_running', 'retry_after_failure'
+  previousStatus: text('previous_status'),
+  previousWorkerId: text('previous_worker_id'),
+}, table => [
+  index('execution_recovery_execution_id_idx').on(table.executionId),
+  index('execution_recovery_recovered_at_idx').on(table.recoveredAt),
+  index('execution_recovery_worker_idx').on(table.recoveredByWorker),
+  index('execution_recovery_reason_idx').on(table.recoveryReason),
+])
+
 export type ExecutionRow = typeof executionsTable.$inferSelect
 export type ExecutionClaimRow = typeof executionClaimsTable.$inferSelect
+export type ExecutionRecoveryRow = typeof executionRecoveryTable.$inferSelect

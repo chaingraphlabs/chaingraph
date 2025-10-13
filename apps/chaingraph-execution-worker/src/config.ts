@@ -23,17 +23,11 @@ export const config = {
   },
 
   // Execution mode for the executor package
-  executionMode: (process.env.EXECUTION_MODE || 'distributed') as 'local' | 'distributed',
+  executionMode: (process.env.EXECUTION_MODE || 'dbos') as 'local' | 'dbos',
 
   // Database URL for the executor package
   databaseUrl: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
   databaseUrlExecutions: process.env.DATABASE_URL_EXECUTIONS || 'postgres://postgres@localhost:5432/chaingraph',
-
-  // Kafka configuration (needed for distributed mode)
-  kafka: {
-    brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
-    topicsPrefix: process.env.KAFKA_TOPICS_PREFIX || '',
-  },
 
   // Health and monitoring
   monitoring: {

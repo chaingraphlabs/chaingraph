@@ -7,4 +7,4 @@
  */
 
 export type { IEventBus } from './IEventBus'
-export type { ITaskQueue } from './ITaskQueue'
+export type { ITaskQueue, TaskConsumerContext, TaskHandler } from './ITaskQueue'

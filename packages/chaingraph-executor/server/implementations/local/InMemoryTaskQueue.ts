@@ -7,7 +7,7 @@
  */
 
 import type { ExecutionTask } from '../../../types/messages'
-import type { ITaskQueue } from '../../interfaces/ITaskQueue'
+import type { ITaskQueue, TaskConsumerContext, TaskHandler } from '../../interfaces/ITaskQueue'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('in-memory-task-queue')
@@ -19,9 +19,10 @@ const logger = createLogger('in-memory-task-queue')
 export class InMemoryTaskQueue implements ITaskQueue {
   private queue: ExecutionTask[] = []
   private isConsuming = false
-  private handler: ((task: ExecutionTask) => Promise<void>) | null = null
+  private handler: TaskHandler | null = null
   private processingPromise: Promise<void> | null = null
   private shouldStop = false
+  private processedCount = 0 // Track processed messages for offset simulation
 
   publishTask = async (task: ExecutionTask): Promise<void> => {
     this.queue.push(task)
@@ -37,7 +38,7 @@ export class InMemoryTaskQueue implements ITaskQueue {
     }
   }
 
-  consumeTasks = async (handler: (task: ExecutionTask) => Promise<void>): Promise<void> => {
+  consumeTasks = async (handler: TaskHandler): Promise<void> => {
     if (this.isConsuming) {
       throw new Error('Already consuming tasks')
     }
@@ -89,7 +90,26 @@ export class InMemoryTaskQueue implements ITaskQueue {
           flowId: task.flowId,
         }, 'Processing task from in-memory queue')
 
-        await this.handler(task)
+        // Create a dummy context for local mode
+        // In local mode, commit is always automatic after processing
+        const context: TaskConsumerContext = {
+          commitOffset: async () => {
+            // No-op for local mode - automatically committed
+            this.processedCount++
+            logger.debug({
+              executionId: task.executionId,
+              processedCount: this.processedCount,
+            }, 'Task committed (local mode)')
+          },
+          partition: 0, // Single partition for local mode
+          offset: this.processedCount.toString(),
+          topic: 'local-tasks', // Virtual topic name for local mode
+        }
+
+        await this.handler(task, context)
+
+        // Automatically increment processed count in local mode
+        this.processedCount++
       } catch (error) {
         logger.error({
           error: error instanceof Error ? error.message : String(error),

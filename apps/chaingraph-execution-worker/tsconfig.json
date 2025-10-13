@@ -10,7 +10,8 @@
       "@badaitech/chaingraph-types/*": ["../../packages/chaingraph-types/src/*"],
       "@badaitech/chaingraph-nodes/*": ["../../packages/chaingraph-nodes/src/*"],
       "@badaitech/typescript-config/*": ["../../packages/typescript-config/*"],
-      "@badaitech/chaingraph-executor/*": ["../../packages/chaingraph-executor/*"]
+      "@badaitech/chaingraph-executor/*": ["../../packages/chaingraph-executor/*"],
+      "@badaitech/badai-api/*": ["../../packages/badai-api/src/*"]
     },
     "noEmit": true,
     "outDir": "./dist",

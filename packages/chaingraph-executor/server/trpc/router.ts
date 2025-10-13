@@ -7,23 +7,20 @@
  */
 
 import type { ExecutionRow } from '../../server/stores/postgres/schema'
-import type { ExecutionCommand, ExecutionTask } from '../../types'
+import type { ExecutionTask } from '../../types'
 import type { createContext } from './context'
 import {
   ExecutionExternalEventSchema,
   IntegrationContextSchema,
 } from '@badaitech/chaingraph-types'
 import { ExecutionOptionsSchema } from '@badaitech/chaingraph-types'
+import { DBOS } from '@dbos-inc/dbos-sdk'
 import { initTRPC, TRPCError } from '@trpc/server'
-import { customAlphabet } from 'nanoid'
-import { nolookalikes } from 'nanoid-dictionary'
 import SuperJSON from 'superjson'
 import { z } from 'zod'
-import { publishExecutionCommand } from '../../server/kafka/producers/command-producer'
 import { generateExecutionID } from '../../server/services/ExecutionService'
 import { config } from '../../server/utils/config'
 import {
-  ExecutionCommandType,
   ExecutionStatus,
 } from '../../types'
 import { createLogger } from '../utils/logger'
@@ -134,7 +131,7 @@ export const executionRouter = router({
       events: z.array(ExecutionExternalEventSchema).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { executionStore, flowStore } = ctx
+      const { executionStore, flowStore, taskQueue } = ctx
 
       const flowMetadata = await flowStore.getFlowMetadata(input.flowId)
       if (!flowMetadata) {
@@ -190,6 +187,12 @@ export const executionRouter = router({
         options: input.options || {},
         integration: input.integration || {},
         externalEvents: input.events || [],
+        // Failure tracking and recovery fields
+        failureCount: 0,
+        lastFailureReason: null,
+        lastFailureAt: null,
+        processingStartedAt: null,
+        processingWorkerId: null,
       }
 
       try {
@@ -202,7 +205,30 @@ export const executionRouter = router({
         })
       }
 
-      // TODO: later we could emit an event here for execution created to provide clients ability to subscribe to new executions
+      // 🚀 Start workflow IMMEDIATELY (using signal pattern)
+      // The workflow will:
+      // 1. Write EXECUTION_CREATED event (initializes stream)
+      // 2. Wait for START_SIGNAL (blocks until client calls start endpoint)
+      // 3. Execute flow (after signal received)
+      //
+      // This ensures the event stream exists before clients subscribe
+      const executionTask: ExecutionTask = {
+        executionId,
+        flowId: executionRow.flowId,
+        timestamp: Date.now(),
+        maxRetries: defaultExecutionMaxRetries,
+      }
+
+      try {
+        await taskQueue.publishTask(executionTask)
+        logger.info({ executionId }, 'Execution workflow started (waiting for START_SIGNAL)')
+      } catch (error) {
+        logger.error({ error, executionId }, 'Failed to start execution workflow')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to start execution workflow',
+        })
+      }
 
       return {
         executionId,
@@ -215,7 +241,7 @@ export const executionRouter = router({
       executionId: z.string(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const { taskQueue, executionStore } = ctx
+      const { executionStore } = ctx
 
       const executionRow = await executionStore.get(input.executionId)
       if (!executionRow) {
@@ -225,20 +251,25 @@ export const executionRouter = router({
         })
       }
 
-      const executionTask: ExecutionTask = {
-        executionId: input.executionId,
-        flowId: executionRow.flowId,
-        timestamp: Date.now(),
-        maxRetries: defaultExecutionMaxRetries,
+      // Validate execution can be started
+      if (executionRow.status !== ExecutionStatus.Created) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot start execution in status ${executionRow.status}. Execution must be in 'created' status.`,
+        })
       }
 
+      // 📨 Send START_SIGNAL to waiting workflow
+      // The workflow was started in the 'create' endpoint and is waiting for this signal
+      // This triggers Phase 2 of execution (actual flow execution)
       try {
-        await taskQueue.publishTask(executionTask)
+        await DBOS.send(input.executionId, 'GO', 'START_SIGNAL')
+        logger.info({ executionId: input.executionId }, 'START_SIGNAL sent to execution workflow')
       } catch (error) {
-        logger.error({ error, executionId: input.executionId }, 'Failed to publish execution task')
+        logger.error({ error, executionId: input.executionId }, 'Failed to send START_SIGNAL')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to publish execution task',
+          message: 'Failed to send start signal to execution workflow',
         })
       }
 
@@ -275,20 +306,26 @@ export const executionRouter = router({
         })
       }
 
-      // Create STOP command
-      const command: ExecutionCommand = {
-        id: `CMD${customAlphabet(nolookalikes, 24)()}`,
-        executionId: input.executionId,
-        command: ExecutionCommandType.STOP,
-        payload: {
-          reason: input.reason || 'User requested stop',
-        },
-        timestamp: Date.now(),
-        requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
-        issuedBy: 'user',
-      }
+      // 🛑 DBOS Mode: Use workflow cancellation (built-in DBOS feature)
+      // This cancels the workflow and all its children
+      try {
+        await DBOS.cancelWorkflow(input.executionId)
+        logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOS.cancelWorkflow()')
 
-      await publishExecutionCommand(command)
+        // Update status to stopped in database
+        await executionStore.updateExecutionStatus({
+          executionId: input.executionId,
+          status: ExecutionStatus.Stopped,
+          errorMessage: input.reason || 'User requested stop',
+          completedAt: new Date(),
+        })
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to cancel workflow')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to cancel execution workflow',
+        })
+      }
 
       return { success: true }
     }),
@@ -325,20 +362,21 @@ export const executionRouter = router({
         })
       }
 
-      // Create STOP command
-      const command: ExecutionCommand = {
-        id: `CMD${customAlphabet(nolookalikes, 24)()}`,
-        executionId: input.executionId,
-        command: ExecutionCommandType.PAUSE,
-        payload: {
+      // ⏸️ DBOS Mode: Send PAUSE command via DBOS messaging
+      // The workflow's command polling loop will receive and handle this
+      try {
+        await DBOS.send(input.executionId, {
+          command: 'PAUSE',
           reason: input.reason || 'User requested pause',
-        },
-        timestamp: Date.now(),
-        requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
-        issuedBy: 'user',
+        }, 'COMMAND')
+        logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOS.send()')
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to send PAUSE command')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send pause command to execution workflow',
+        })
       }
-
-      await publishExecutionCommand(command)
 
       return { success: true }
     }),
@@ -374,18 +412,20 @@ export const executionRouter = router({
         })
       }
 
-      // Create RESUME command
-      const command: ExecutionCommand = {
-        id: `CMD${customAlphabet(nolookalikes, 24)()}`,
-        executionId: input.executionId,
-        command: ExecutionCommandType.RESUME,
-        payload: {},
-        timestamp: Date.now(),
-        requestId: `REQ${customAlphabet(nolookalikes, 16)()}`,
-        issuedBy: 'user',
+      // ▶️ DBOS Mode: Send RESUME command via DBOS messaging
+      // The workflow's command polling loop will receive and handle this
+      try {
+        await DBOS.send(input.executionId, {
+          command: 'RESUME',
+        }, 'COMMAND')
+        logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOS.send()')
+      } catch (error) {
+        logger.error({ error, executionId: input.executionId }, 'Failed to send RESUME command')
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send resume command to execution workflow',
+        })
       }
-
-      await publishExecutionCommand(command)
 
       return { success: true }
     }),
@@ -469,8 +509,10 @@ export const executionRouter = router({
       executionId: z.string(),
       fromIndex: z.number().optional().default(0),
       eventTypes: z.array(z.string()).optional().default([]),
+      batchSize: z.number().min(1).max(1000).optional().default(100),
+      batchTimeoutMs: z.number().min(0).max(1000).optional().default(25),
     }))
-    .subscription(async function* ({ input, ctx }) {
+    .subscription(async function* ({ input, ctx, signal }) {
       const { executionStore, eventBus } = ctx
 
       const instance = await executionStore.get(input.executionId)
@@ -481,20 +523,41 @@ export const executionRouter = router({
         })
       }
 
-      // Subscribe to events from the event bus
+      // Subscribe with batching config
       const iterator = eventBus.subscribeToEvents(
         input.executionId,
         input.fromIndex,
+        {
+          maxSize: input.batchSize,
+          timeoutMs: input.batchTimeoutMs,
+        },
       )
+
+      let eventCount = 0
 
       try {
         for await (const events of iterator) {
-          yield events.filter((event) => {
-            if (input.eventTypes.length === 0) {
+          // Check if client disconnected
+          if (signal?.aborted) {
+            logger.info({
+              executionId: input.executionId,
+              eventsSent: eventCount,
+            }, 'Client disconnected')
+            break
+          }
+
+          // Filter by event types
+          const filtered = events.filter((event) => {
+            if (input.eventTypes.length === 0)
               return true
-            }
             return input.eventTypes.includes(event.type)
           })
+
+          // Only yield non-empty batches
+          if (filtered.length > 0) {
+            eventCount += filtered.length
+            yield filtered
+          }
         }
       } catch (error) {
         logger.error({
@@ -505,7 +568,10 @@ export const executionRouter = router({
       } finally {
         logger.info({
           executionId: input.executionId,
-        }, 'Event subscription ended')
+          eventsSent: eventCount,
+        }, 'Subscription ended, cleaning up')
+
+        await eventBus.unsubscribe(input.executionId)
       }
     }),
 })

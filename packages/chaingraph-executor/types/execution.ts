@@ -36,7 +36,6 @@ export interface ExecutionInstance {
   row: ExecutionRow
   context: ExecutionContext
   flow: Flow
-  initialStateFlow: Flow
   engine: ExecutionEngine | null
   cleanupEventHandling?: () => Promise<void>
 }

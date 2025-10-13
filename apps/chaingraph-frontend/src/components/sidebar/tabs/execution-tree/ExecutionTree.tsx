@@ -118,7 +118,7 @@ export function ExecutionTree() {
   return (
     <div className="flex flex-col h-full">
       {/* Controls */}
-      <div className="px-4 py-3">
+      <div className="flex-shrink-0 px-4 py-3">
         <TreeControls
           searchQuery={filters.searchQuery}
           onSearchChange={handleSearchChange}
@@ -130,65 +130,67 @@ export function ExecutionTree() {
         />
       </div>
 
-      <Separator />
+      <Separator className="flex-shrink-0" />
 
-      {/* Tree Content */}
+      {/* Tree Content - Takes remaining space and provides scroll */}
       <div className="flex-1 min-h-0 flex flex-col">
-        <ScrollArea className="flex-1">
-          <div className="py-2">
-            {!activeFlowId
-              ? (
-                  // No flow selected state
-                  <div className="px-4 py-8 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">No flow selected</p>
-                    <p className="text-xs text-muted-foreground">
-                      Select a flow from the Flows tab to view its executions
-                    </p>
-                  </div>
-                )
-              : isLoadingRoots
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="py-2 px-4">
+              {!activeFlowId
                 ? (
-                    // Loading state
-                    <div className="space-y-2 px-4">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="space-y-2">
-                          <Skeleton className="h-10 w-full" />
-                          {i % 2 === 0 && (
-                            <div className="ml-6">
-                              <Skeleton className="h-8 w-[95%]" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                  // No flow selected state
+                    <div className="px-4 py-8 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">No flow selected</p>
+                      <p className="text-xs text-muted-foreground">
+                        Select a flow from the Flows tab to view its executions
+                      </p>
                     </div>
                   )
-                : error
+                : isLoadingRoots
                   ? (
-                      // Error state
-                      <div className="px-4 py-8 text-center">
-                        <p className="text-sm text-destructive mb-2">Failed to load executions</p>
-                        <p className="text-xs text-muted-foreground mb-4">{error.message}</p>
-                        <Button variant="outline" size="sm" onClick={handleRefresh}>
-                          Try Again
-                        </Button>
+                    // Loading state
+                      <div className="space-y-2 px-4">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div key={i} className="space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            {i % 2 === 0 && (
+                              <div className="ml-6">
+                                <Skeleton className="h-8 w-[95%]" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )
-                  : rootExecutions.length === 0
+                  : error
                     ? (
-                        <EmptyState />
+                      // Error state
+                        <div className="px-4 py-8 text-center">
+                          <p className="text-sm text-destructive mb-2">Failed to load executions</p>
+                          <p className="text-xs text-muted-foreground mb-4">{error.message}</p>
+                          <Button variant="outline" size="sm" onClick={handleRefresh}>
+                            Try Again
+                          </Button>
+                        </div>
                       )
-                    : (
+                    : rootExecutions.length === 0
+                      ? (
+                          <EmptyState />
+                        )
+                      : (
                         // Render root executions with lazy loading
-                        rootExecutions.map(renderRootExecution)
-                      )}
-          </div>
-        </ScrollArea>
+                          rootExecutions.map(renderRootExecution)
+                        )}
+            </div>
+          </ScrollArea>
+        </div>
 
         {/* Details Panel */}
         {selectedExecution && (
           <>
-            <Separator />
-            <div className="h-1/3 min-h-[200px] max-h-[400px]">
+            <Separator className="flex-shrink-0" />
+            <div className="flex-1 min-h-0">
               <ScrollArea className="h-full">
                 <div className="p-4">
                   <ExecutionDetails

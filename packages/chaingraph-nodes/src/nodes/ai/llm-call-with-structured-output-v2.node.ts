@@ -11,12 +11,14 @@ import type {
   EncryptedSecretValue,
   EnumPortConfig,
   ExecutionContext,
+  INode,
   IObjectSchema,
   IPort,
   IPortConfig,
   NodeExecutionResult,
   ObjectPort,
   ObjectPortConfig,
+  SecretPort,
 } from '@badaitech/chaingraph-types'
 import type { APIkey, SupportedProviders } from './llm-call.node'
 import {
@@ -26,6 +28,7 @@ import {
   ObjectSchemaCopyTo,
 } from '@badaitech/chaingraph-types'
 import {
+  OnPortUpdate,
   Passthrough,
 } from '@badaitech/chaingraph-types'
 import {
@@ -43,12 +46,13 @@ import {
 import { ChatAnthropic } from '@langchain/anthropic'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { ChatDeepSeek } from '@langchain/deepseek'
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import { ChatGroq } from '@langchain/groq'
 import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
 import { NODE_CATEGORIES } from '../../categories'
-import { isOpenAI } from './llm-call.node'
-import { isAnthropic, isDeepSeek, isGroq, isMoonshot, LLMModels, llmModels } from './llm-call.node'
+import { getSecretTypeForModel, isOpenAI } from './llm-call.node'
+import { isAnthropic, isDeepSeek, isGemini, isGroq, isMoonshot, LLMModels, llmModels } from './llm-call.node'
 
 const llmMaxRetries = 3
 
@@ -60,6 +64,40 @@ export class LLMConfig {
   @PortEnumFromObject(llmModels, {
     title: 'Model',
     description: 'Language Model to use',
+  })
+  @OnPortUpdate(async (node: INode, port: IPort) => {
+    // Get the selected model
+    const selectedModel = port.getValue() as LLMModels
+    if (!selectedModel) {
+      return
+    }
+
+    // Find the apiKey port - it's nested within the config object
+    // We need to find the sibling port in the same object
+    const parentConfig = port.getConfig().parentId
+    const apiKeyPort = node.findPort(
+      p => p.getConfig().key === 'apiKey'
+        && p.getConfig().parentId === parentConfig,
+    )
+
+    if (!apiKeyPort) {
+      return
+    }
+
+    // Determine the secret type for the selected model
+    const secretType = getSecretTypeForModel(selectedModel)
+
+    // Update the apiKey port's secret type
+    const secretPortTyped = apiKeyPort as SecretPort<any>
+    const currentConfig = secretPortTyped.getConfig()
+    secretPortTyped.setConfig({
+      ...currentConfig,
+      type: 'secret',
+      secretType,
+    })
+
+    // Notify the framework that the port configuration has changed
+    await node.updatePort(apiKeyPort)
   })
   model: LLMModels = LLMModels.Gpt5Mini
 
@@ -522,7 +560,16 @@ export class LLMCallWithStructuredOutputNodeV2 extends BaseNode {
 /**
  * Create an LLM instance based on the selected model.
  */
-export function createLLMInstance(config: LLMConfig, apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq {
+export function createLLMInstance(config: LLMConfig, apiKey: APIkey): ChatOpenAI | ChatAnthropic | ChatDeepSeek | ChatGroq | ChatGoogleGenerativeAI {
+  if (isGemini(config.model)) {
+    return new ChatGoogleGenerativeAI({
+      apiKey,
+      model: config.model,
+      temperature: config.temperature,
+      maxRetries: llmMaxRetries,
+    })
+  }
+
   if (isDeepSeek(config.model)) {
     return new ChatDeepSeek({
       apiKey,

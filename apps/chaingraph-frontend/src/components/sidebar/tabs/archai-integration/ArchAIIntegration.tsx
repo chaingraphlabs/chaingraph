@@ -9,6 +9,7 @@
 import type { ConfigStep } from './components/StepIndicator'
 import { useCallback, useEffect, useState } from 'react'
 import { fetchAgentSession } from '@/components/sidebar/tabs/archai-integration/utils/api'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { AgentSelectionStep } from './components/AgentSelectionStep'
 import { ChatSelectionStep } from './components/ChatSelectionStep'
@@ -153,67 +154,77 @@ export function ArchAIIntegration() {
   }
 
   return (
-    <div className="p-2 space-y-3">
-      <div>
-        <h2 className="text-base font-semibold">ArchAI Integration</h2>
-        <p className="text-xs text-muted-foreground">
-          Connect ChainGraph with your ArchAI platform.
-          Once authenticated, select specific agents, chat histories, and messages that serve as
-          context for ArchAI nodes in your workflows. This integration enables seamless
-          conversation processing, message creation,
-          and variable management without leaving ChainGraph.
-        </p>
+    <div className="flex flex-col h-full">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 p-2 space-y-3">
+        <div>
+          <h2 className="text-base font-semibold">ArchAI Integration</h2>
+          <p className="text-xs text-muted-foreground">
+            Connect ChainGraph with your ArchAI platform.
+            Once authenticated, select specific agents, chat histories, and messages that serve as
+            context for ArchAI nodes in your workflows. This integration enables seamless
+            conversation processing, message creation,
+            and variable management without leaving ChainGraph.
+          </p>
+        </div>
+
+        <Separator className="my-1" />
+
+        <StepIndicator
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          onStepClick={handleStepChange}
+        />
       </div>
 
-      <Separator className="my-1" />
+      {/* Content - Scrollable */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-2 space-y-4">
+              {currentStep === 'userSession' && (
+                <UserSessionStep
+                  userSession={config.userSession}
+                  onUpdate={handleUserSessionUpdate}
+                />
+              )}
 
-      <StepIndicator
-        currentStep={currentStep}
-        completedSteps={completedSteps}
-        onStepClick={handleStepChange}
-      />
+              {currentStep === 'agentSelection' && (
+                <AgentSelectionStep
+                  userSession={config.userSession}
+                  selectedAgentId={config.agentID}
+                  onSelectAgent={handleAgentSelection}
+                  onDeselectAgent={handleAgentDeselection}
+                  enabled={!!config.userSession}
+                />
+              )}
 
-      <div className="space-y-4">
-        {currentStep === 'userSession' && (
-          <UserSessionStep
-            userSession={config.userSession}
-            onUpdate={handleUserSessionUpdate}
-          />
-        )}
+              {currentStep === 'chatSelection' && (
+                <ChatSelectionStep
+                  userSession={config.userSession}
+                  selectedChatId={config.chatID}
+                  onSelectChat={handleChatSelection}
+                  onDeselectChat={handleChatDeselection}
+                  enabled={!!config.userSession}
+                />
+              )}
 
-        {currentStep === 'agentSelection' && (
-          <AgentSelectionStep
-            userSession={config.userSession}
-            selectedAgentId={config.agentID}
-            onSelectAgent={handleAgentSelection}
-            onDeselectAgent={handleAgentDeselection}
-            enabled={!!config.userSession}
-          />
-        )}
+              {currentStep === 'messageSelection' && (
+                <MessageSelectionStep
+                  userSession={config.userSession}
+                  chatId={config.chatID}
+                  selectedMessageId={config.messageID}
+                  onSelectMessage={handleMessageSelection}
+                  onDeselectMessage={handleMessageDeselection}
+                  enabled={!!config.userSession && !!config.chatID}
+                />
+              )}
 
-        {currentStep === 'chatSelection' && (
-          <ChatSelectionStep
-            userSession={config.userSession}
-            selectedChatId={config.chatID}
-            onSelectChat={handleChatSelection}
-            onDeselectChat={handleChatDeselection}
-            enabled={!!config.userSession}
-          />
-        )}
-
-        {currentStep === 'messageSelection' && (
-          <MessageSelectionStep
-            userSession={config.userSession}
-            chatId={config.chatID}
-            selectedMessageId={config.messageID}
-            onSelectMessage={handleMessageSelection}
-            onDeselectMessage={handleMessageDeselection}
-            enabled={!!config.userSession && !!config.chatID}
-          />
-        )}
+              {config.userSession && <ConfigurationSummary config={config} isComplete={isComplete} />}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
-
-      {config.userSession && <ConfigurationSummary config={config} isComplete={isComplete} />}
     </div>
   )
 }

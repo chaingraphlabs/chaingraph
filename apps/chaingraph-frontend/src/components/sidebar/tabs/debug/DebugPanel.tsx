@@ -41,7 +41,8 @@ export function DebugPanel() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="p-4 border-b">
+      {/* Header - Fixed height */}
+      <div className="flex-shrink-0 p-4 border-b">
         <h2 className="text-lg font-semibold mb-4">Execution Log</h2>
         {/* execution id title: */}
         {executionId && (
@@ -57,13 +58,18 @@ export function DebugPanel() {
         />
       </div>
 
-      <div className="flex items-center mb-2  w-full">
-        <ScrollArea className="flex-1 p-4">
-          <ExecutionTimeline
-            events={executionEvents}
-            selectedEventTypes={selectedEventTypes}
-          />
-        </ScrollArea>
+      {/* Timeline Content - Scrollable area */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              <ExecutionTimeline
+                events={executionEvents}
+                selectedEventTypes={selectedEventTypes}
+              />
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   )
