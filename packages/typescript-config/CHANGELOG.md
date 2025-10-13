@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.3
+
+### Patch Changes
+
+- feat: add pg-listen dependency and update Vite configuration for improved module handling
+
 ## 0.6.2
 
 ### Patch Changes

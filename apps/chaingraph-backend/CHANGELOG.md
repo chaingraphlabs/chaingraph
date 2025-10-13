@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.3
+
+### Patch Changes
+
+- feat: add pg-listen dependency and update Vite configuration for improved module handling
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.3
+  - @badaitech/chaingraph-types@0.6.3
+  - @badaitech/chaingraph-trpc@0.6.3
+
 ## 0.6.2
 
 ### Patch Changes
