@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.6.1
+
+### Patch Changes
+
+- feat: remove unused React and XYFlow dependencies from Vite configuration
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.1
+  - @badaitech/chaingraph-nodes@0.6.1
+  - @badaitech/chaingraph-types@0.6.1
+  - @badaitech/chaingraph-trpc@0.6.1
+  - @badaitech/badai-api@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes
