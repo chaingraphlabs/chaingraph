@@ -21,6 +21,7 @@ import type {
 import { MultiChannel as MC } from '@badaitech/chaingraph-types'
 import { createLogger } from '../../../utils/logger'
 import { DBOSStreamSubscriber } from './DBOSStreamSubscriber'
+import { STREAM_CONSTANTS } from './types'
 
 const logger = createLogger('stream-bridge')
 
@@ -148,7 +149,8 @@ export class StreamBridge {
       } finally {
         flush()
         batchedChannel.close()
-        if (timer) clearTimeout(timer)
+        if (timer)
+          clearTimeout(timer)
       }
     })()
 
@@ -262,14 +264,9 @@ export class StreamBridge {
     executionId: string,
     fromIndex: number = 0,
   ): Promise<MultiChannel<ExecutionEventImpl[]>> {
-    logger.debug({
-      executionId,
-      fromIndex,
-    }, 'Subscribing to execution events (backward compat)')
-
     return this.subscribe<ExecutionEventImpl>({
       workflowId: executionId,
-      streamKey: 'events',
+      streamKey: STREAM_CONSTANTS.EVENTS_STREAM_KEY,
       fromOffset: fromIndex,
     })
   }

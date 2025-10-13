@@ -20,6 +20,12 @@ export interface StreamIdentifier {
 }
 
 /**
+ * Stream value deserializer function
+ * Converts raw database value to typed value
+ */
+export type StreamDeserializer<T> = (raw: any) => T | null
+
+/**
  * Stream channel state managed by PGListener
  */
 export interface StreamChannel<T = any> {
@@ -27,21 +33,24 @@ export interface StreamChannel<T = any> {
   multiChannel: MultiChannel<T[]>
 
   /** Offset tracking */
-  localOffset: number        // What we've READ from database
-  remoteOffset: number       // What PostgreSQL says exists (from NOTIFY)
-  lastSentOffset: number     // What we've SENT to consumers
+  localOffset: number // What we've READ from database
+  remoteOffset: number // What PostgreSQL says exists (from NOTIFY)
+  lastSentOffset: number // What we've SENT to consumers
 
   /** Number of active consumers for this stream */
   consumerCount: number
 
   /** Reader loop control */
-  isReading: boolean         // Is DB reader loop active?
-  readerPromise?: Promise<void>  // For awaiting reader completion
-  isPendingCatchup: boolean  // Initial catch-up in progress?
+  isReading: boolean // Is DB reader loop active?
+  readerPromise?: Promise<void> // For awaiting reader completion
+  isPendingCatchup: boolean // Initial catch-up in progress?
+
+  /** Reactive wake-up mechanism (zero-sleep reactive pattern) */
+  wakeUpResolver: (() => void) | null // Resolves when new data arrives
 
   /** Cleanup control */
-  isCleaningUp: boolean      // Prevent double cleanup
-  cleanupPromise?: Promise<void>  // For awaiting cleanup completion
+  isCleaningUp: boolean // Prevent double cleanup
+  cleanupPromise?: Promise<void> // For awaiting cleanup completion
 
   /** Creation timestamp for metrics */
   createdAt: number
@@ -158,6 +167,17 @@ export interface StreamPipe<TInput = any, TOutput = any> {
   /** Close both channels and cleanup */
   close: () => Promise<void>
 }
+
+/**
+ * Stream naming constants
+ */
+export const STREAM_CONSTANTS = {
+  /** PostgreSQL channel prefix */
+  CHANNEL_PREFIX: 'dbos_stream_',
+
+  /** Execution events stream key */
+  EVENTS_STREAM_KEY: 'events',
+} as const
 
 /**
  * PGListener pool configuration

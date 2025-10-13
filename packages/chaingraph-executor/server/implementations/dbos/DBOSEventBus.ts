@@ -12,6 +12,7 @@ import type { StreamBridge } from './streaming'
 
 import { DBOS } from '@dbos-inc/dbos-sdk'
 import { createLogger } from '../../utils/logger'
+import { STREAM_CONSTANTS } from './streaming/types'
 
 const logger = createLogger('dbos-event-bus')
 
@@ -28,8 +29,6 @@ const logger = createLogger('dbos-event-bus')
  * - Backward compatible with IEventBus interface
  */
 export class DBOSEventBus implements IEventBus {
-  private static readonly STREAM_KEY = 'events'
-
   /** Generic stream bridge (handles all complexity) */
   private readonly streamBridge: StreamBridge
 
@@ -52,7 +51,7 @@ export class DBOSEventBus implements IEventBus {
       const serializedEvent = event.serialize()
 
       // Write to DBOS stream (existing flow, no changes)
-      await DBOS.writeStream(DBOSEventBus.STREAM_KEY, {
+      await DBOS.writeStream(STREAM_CONSTANTS.EVENTS_STREAM_KEY, {
         executionId,
         event: serializedEvent,
         timestamp: Date.now(),
@@ -95,7 +94,7 @@ export class DBOSEventBus implements IEventBus {
     // Subscribe with batching config
     const channel = await this.streamBridge.subscribe<ExecutionEventImpl>({
       workflowId: executionId,
-      streamKey: DBOSEventBus.STREAM_KEY,
+      streamKey: STREAM_CONSTANTS.EVENTS_STREAM_KEY,
       fromOffset: fromIndex,
       maxSize: batchConfig?.maxSize,
       timeoutMs: batchConfig?.timeoutMs,
@@ -111,7 +110,7 @@ export class DBOSEventBus implements IEventBus {
    * Unsubscribe from events
    */
   unsubscribe = async (executionId: string): Promise<void> => {
-    await this.streamBridge.unsubscribe(executionId, DBOSEventBus.STREAM_KEY)
+    await this.streamBridge.unsubscribe(executionId, STREAM_CONSTANTS.EVENTS_STREAM_KEY)
     logger.debug({ executionId }, 'Unsubscribed from execution events')
   }
 

@@ -6,16 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Pool } from 'pg'
 import type { MultiChannel } from '@badaitech/chaingraph-types'
+import type { Pool } from 'pg'
 import type {
   PoolStats,
   StreamIdentifier,
 } from './types'
 
+import { ExecutionEventImpl } from '@badaitech/chaingraph-types'
 import { createLogger } from '../../../utils/logger'
 import { PGListener } from './PGListener'
-import { POOL_CONFIG } from './types'
+import { POOL_CONFIG, STREAM_CONSTANTS } from './types'
 
 const logger = createLogger('pg-listener-pool')
 
@@ -66,6 +67,19 @@ export class PGListenerPool {
       this.listeners.push(listener)
     }
 
+    // Register deserializers for all listeners
+    const eventsDeserializer = (raw: any) => {
+      // DBOS.writeStream stores: { executionId, event: serialized, timestamp }
+      if (raw?.event) {
+        return ExecutionEventImpl.deserializeStatic(raw.event)
+      }
+      return null
+    }
+
+    for (const listener of this.listeners) {
+      listener.registerDeserializer(STREAM_CONSTANTS.EVENTS_STREAM_KEY, eventsDeserializer)
+    }
+
     // Connect all listeners in parallel
     await Promise.all(
       this.listeners.map(listener => listener.connect()),
@@ -73,7 +87,7 @@ export class PGListenerPool {
 
     logger.info({
       poolSize: POOL_CONFIG.SIZE,
-    }, 'PGListener pool initialized')
+    }, 'PGListener pool initialized with deserializers')
   }
 
   /**

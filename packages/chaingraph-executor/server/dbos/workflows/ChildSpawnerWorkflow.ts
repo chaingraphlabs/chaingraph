@@ -67,6 +67,7 @@ async function childSpawner(): Promise<void> {
     try {
       // Wait for a child task message
       // This blocks until a message arrives or timeout expires
+      // TODO: rewrite the childs spawner to use a subscription model instead of polling
       const childTask = await DBOS.recv<ExecutionTask>(CHILD_TASKS_TOPIC, 60 * 30)
 
       if (childTask) {
