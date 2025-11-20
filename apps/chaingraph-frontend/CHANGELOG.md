@@ -1,5 +1,13 @@
 # @badaitech/chaingraph-frontend
 
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.4
+  - @badaitech/chaingraph-trpc@0.6.4
+
 ## 0.6.3
 
 ### Patch Changes
