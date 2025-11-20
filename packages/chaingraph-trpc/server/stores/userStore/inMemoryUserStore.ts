@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CreateUserData, DBUser, DemoSessionResult, ExternalAccount, ExternalAccountData, UpdateUserData, UserRole } from './types'
+import type { UserStore } from './userStore'
 import { customAlphabet } from 'nanoid'
 import { alphanumeric } from 'nanoid-dictionary'
 import { isDemoToken, signDemoToken, verifyDemoToken } from '../../auth/jwt'
-import type { CreateUserData, DBUser, DemoSessionResult, ExternalAccount, ExternalAccountData, UpdateUserData, UserRole } from './types'
-import type { UserStore } from './userStore'
 
 // ID generators
 const nanoid = customAlphabet(alphanumeric, 21)
@@ -273,8 +273,7 @@ export class InMemoryUserStore implements UserStore {
       })
 
       return user
-    }
-    catch (error) {
+    } catch (error) {
       // Token verification failed or user not found
       return null
     }

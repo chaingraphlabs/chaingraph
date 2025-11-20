@@ -6,7 +6,6 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import type { DBType } from 'server/context'
 import type { CreateUserData, DBUser, DemoSessionResult, ExternalAccount, ExternalAccountData, UpdateUserData, UserRole } from './types'
 import type { UserStore } from './userStore'
