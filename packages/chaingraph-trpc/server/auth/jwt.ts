@@ -50,24 +50,15 @@ export function verifyDemoToken(token: string): DemoTokenPayload {
   // Strip "demo_" prefix if present
   const cleanToken = token.startsWith('demo_') ? token.slice(5) : token
 
-  try {
-    const decoded = jwt.verify(cleanToken, DEMO_TOKEN_SECRET) as DemoTokenPayload
+  // Verify JWT signature and expiry (throws JsonWebTokenError or TokenExpiredError if invalid)
+  const decoded = jwt.verify(cleanToken, DEMO_TOKEN_SECRET) as DemoTokenPayload
 
-    // Validate token type
-    if (decoded.type !== 'demo') {
-      throw new Error('Invalid token type')
-    }
-
-    return decoded
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw new TypeError('Invalid demo token')
-    }
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new TypeError('Demo token expired')
-    }
-    throw error
+  // Validate token type
+  if (decoded.type !== 'demo') {
+    throw new Error('Invalid token type')
   }
+
+  return decoded
 }
 
 /**

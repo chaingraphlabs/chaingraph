@@ -20,8 +20,6 @@ const nanoid = customAlphabet(alphanumeric, 21)
 const generateUserId = () => `USR_${nanoid()}`
 const generateExternalAccountId = () => `EXTACC_${nanoid()}`
 
-// type DBType = NodePgDatabase<Record<string, never>>
-
 /**
  * PostgreSQL implementation of UserStore.
  *

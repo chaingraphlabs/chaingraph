@@ -43,6 +43,16 @@ export async function init() {
         console.log('   • For development: set AUTH_DEV_MODE=true to bypass authentication checks')
         throw new Error('Authentication is enabled but no auth provider is configured')
       }
+
+      // Validate demo token secret is configured
+      if (!process.env.DEMO_TOKEN_SECRET) {
+        console.error('   ❌ DEMO_TOKEN_SECRET environment variable is not set')
+        console.error('   • Demo user authentication requires a secure secret')
+        console.error('   • Generate a secret: openssl rand -base64 64')
+        console.error('   • Set DEMO_TOKEN_SECRET in your environment')
+        throw new Error('DEMO_TOKEN_SECRET is required when authentication is enabled in production')
+      }
+      console.log('   ✅ Demo token secret configured')
     }
     console.log('===================================\n')
   } else {
