@@ -7,7 +7,7 @@
  */
 
 export * from './auth/config'
-export * from './auth/service'
+export { AuthService, createAuthService } from './auth/service'
 export * from './auth/types'
 
 export {
@@ -29,7 +29,10 @@ export {
 export { init } from './init'
 export * from './mcp'
 export * from './procedures'
-export * from './stores'
+export * from './stores/flowStore'
+export * from './stores/postgres'
+export { PgUserStore } from './stores/userStore'
+export type { DBUser, DemoSessionResult, ExternalAccount, ExternalAccountData, UserStore } from './stores/userStore'
 export * from './trpc'
 export {
   FORK_ALLOW_RULE,

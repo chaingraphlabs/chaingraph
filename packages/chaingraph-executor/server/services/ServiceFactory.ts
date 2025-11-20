@@ -6,13 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IFlowStore } from '@badaitech/chaingraph-trpc/server'
+import type { AuthService, IFlowStore } from '@badaitech/chaingraph-trpc/server'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
+import { createAuthService } from '@badaitech/chaingraph-trpc/server'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Pool } from 'pg'
 import { ExecutionService } from '../../server/services/ExecutionService'
 import { getFlowStore } from '../../server/stores/flow-store'
+import { getUserStore } from '../../server/stores/user-store'
 import { DBOSExecutionWorker, initializeDBOS } from '../dbos'
 import {
   initializeExecuteFlowStep,
@@ -34,6 +36,7 @@ export interface ServiceInstances {
   executionStore: IExecutionStore
   executionService: ExecutionService
   flowStore: IFlowStore
+  authService: AuthService
   dbosWorker?: DBOSExecutionWorker // Optional: only present when DBOS is enabled
 }
 
@@ -53,6 +56,10 @@ export async function createServices(
   // Always use PostgreSQL for execution storage
   const executionStore = await getExecutionStore()
   const flowStore = await getFlowStore()
+  const userStore = await getUserStore()
+
+  // Create auth service with user store
+  const authService = createAuthService(userStore)
 
   // Check if DBOS mode is enabled
   if (config.dbos.enabled) {
@@ -140,6 +147,7 @@ export async function createServices(
       executionStore,
       flowStore,
       executionService,
+      authService,
       dbosWorker,
     }
 
@@ -161,6 +169,7 @@ export async function createServices(
         eventBus,
         taskQueue,
       ),
+      authService,
     }
   }
 

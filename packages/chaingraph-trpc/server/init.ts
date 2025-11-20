@@ -20,6 +20,7 @@ import { initializeContext } from './context'
 import { InMemoryMCPStore, PostgresMCPStore } from './mcp/stores'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
+import { PgUserStore } from './stores/userStore'
 
 export async function init() {
   process.setMaxListeners(0)
@@ -56,6 +57,7 @@ export async function init() {
   const db = drizzle(process.env.DATABASE_URL!)
   let flowStore: IFlowStore = new InMemoryFlowStore()
   let mcpStore: IMCPStore = new InMemoryMCPStore()
+  const userStore = new PgUserStore(db)
 
   // ping to check if the connection is successful
   try {
@@ -78,6 +80,7 @@ export async function init() {
     NodeRegistry.getInstance(),
     nodesCatalog,
     mcpStore,
+    userStore,
   )
 
   // register categories

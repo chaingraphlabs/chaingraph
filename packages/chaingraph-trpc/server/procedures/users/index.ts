@@ -6,6 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './flowStore'
-export * from './postgres'
-export * from './userStore'
+import { router } from '../../trpc'
+import { demoProcedures } from './demo'
+import { profileProcedures } from './profile'
+
+export const userProcedures = router({
+  demo: demoProcedures,
+  profile: profileProcedures,
+})

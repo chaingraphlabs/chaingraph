@@ -50,6 +50,13 @@
       "when": 1756844735717,
       "tag": "0006_furry_norman_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1763646097763,
+      "tag": "0007_amazing_vampiro",
+      "breakpoints": true
     }
   ]
 }

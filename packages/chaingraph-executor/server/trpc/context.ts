@@ -11,7 +11,6 @@ import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
 import type { IExecutionService } from '../../server/services/IExecutionService'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
-import { authService } from '@badaitech/chaingraph-trpc/server'
 import { getAuthToken } from '@badaitech/chaingraph-trpc/server'
 import { getServices } from '../services/ServiceFactory'
 import { createLogger } from '../utils/logger'
@@ -42,9 +41,9 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<Exe
   // Get token from request headers or websocket
   const token = getAuthToken(opts)
 
-  // Validate session
-  const session = await authService.validateSession(token)
-  const user = await authService.getUserFromSession(session)
+  // Validate session using authService from services
+  const session = await services.authService.validateSession(token)
+  const user = await services.authService.getUserFromSession(session)
 
   return {
     session: {

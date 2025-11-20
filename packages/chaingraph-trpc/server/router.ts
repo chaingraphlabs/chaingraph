@@ -10,6 +10,7 @@ import { mcpProcedures } from './mcp'
 import { flowProcedures } from './procedures/flow'
 import { nodeRegistryProcedures } from './procedures/nodeRegistry'
 import { secretProcedures } from './procedures/secrets'
+import { userProcedures } from './procedures/users'
 import { createCallerFactory, router } from './trpc'
 
 export const appRouter = router({
@@ -18,6 +19,7 @@ export const appRouter = router({
   secrets: secretProcedures,
   // execution: executionRouter,
   mcp: mcpProcedures,
+  users: userProcedures,
 })
 export type AppRouter = typeof appRouter
 

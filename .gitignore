@@ -26,3 +26,6 @@ apps/**/src/**/*.js
 vitest.config.js
 .pnpm-store
 out
+
+docs/.vitepress
+docs/api
