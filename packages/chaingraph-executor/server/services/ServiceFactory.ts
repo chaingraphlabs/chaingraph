@@ -136,6 +136,7 @@ export async function createServices(
       executionStore,
       eventBus,
       taskQueue,
+      userStore,
     )
 
     // Step 10: Initialize the execution step with service and store
@@ -168,6 +169,7 @@ export async function createServices(
         executionStore,
         eventBus,
         taskQueue,
+        userStore,
       ),
       authService,
     }

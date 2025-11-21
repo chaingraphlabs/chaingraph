@@ -10,12 +10,13 @@ import type { CreateUserData, DBUser, DemoSessionResult, ExternalAccount, Extern
 import type { UserStore } from './userStore'
 import { customAlphabet } from 'nanoid'
 import { alphanumeric } from 'nanoid-dictionary'
+import { DEMO_EXPIRY_MS } from '../../auth/constants'
 import { isDemoToken, signDemoToken, verifyDemoToken } from '../../auth/jwt'
 
 // ID generators
 const nanoid = customAlphabet(alphanumeric, 21)
-const generateUserId = () => `USR_${nanoid()}`
-const generateExternalAccountId = () => `EXTACC_${nanoid()}`
+const generateUserId = () => `USR${nanoid()}`
+const generateExternalAccountId = () => `EXTACC${nanoid()}`
 
 /**
  * In-memory implementation of UserStore for testing.
@@ -254,8 +255,8 @@ export class InMemoryUserStore implements UserStore {
       const account = this.externalAccounts.get(accountId)!
       const user = this.users.get(account.userId)!
 
-      // Check expiration: demo account createdAt + 7 days
-      const expiresAt = new Date(account.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000)
+      // Check expiration: demo account createdAt + DEMO_EXPIRY_DAYS
+      const expiresAt = new Date(account.createdAt.getTime() + DEMO_EXPIRY_MS)
       if (expiresAt < new Date()) {
         return null // Demo expired
       }
@@ -301,8 +302,8 @@ export class InMemoryUserStore implements UserStore {
       return null
     }
 
-    // Expiration is 7 days after demo account creation
-    return new Date(demoAccount.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000)
+    // Expiration is DEMO_EXPIRY_DAYS after demo account creation
+    return new Date(demoAccount.createdAt.getTime() + DEMO_EXPIRY_MS)
   }
 
   /**

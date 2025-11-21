@@ -31,7 +31,7 @@ describe('inMemoryUserStore', () => {
       })
 
       expect(user.id).toBeDefined()
-      expect(user.id).toMatch(/^USR_/)
+      expect(user.id).toMatch(/^USR/)
       expect(user.email).toBe('test@example.com')
       expect(user.displayName).toBe('Test User')
       expect(user.avatarUrl).toBe('https://example.com/avatar.jpg')
@@ -45,7 +45,7 @@ describe('inMemoryUserStore', () => {
     it('should create a user with minimal fields (defaults applied)', async () => {
       const user = await store.createUser({})
 
-      expect(user.id).toMatch(/^USR_/)
+      expect(user.id).toMatch(/^USR/)
       expect(user.email).toBeNull()
       expect(user.displayName).toBeNull()
       expect(user.avatarUrl).toBeNull()
@@ -140,7 +140,7 @@ describe('inMemoryUserStore', () => {
         displayName: 'Archai User',
       })
 
-      expect(account.id).toMatch(/^EXTACC_/)
+      expect(account.id).toMatch(/^EXTACC/)
       expect(account.userId).toBe(user.id)
       expect(account.provider).toBe('archai')
       expect(account.externalId).toBe('12345')
@@ -321,7 +321,7 @@ describe('inMemoryUserStore', () => {
         externalId: 'new123',
       })
 
-      expect(user.id).toMatch(/^USR_/)
+      expect(user.id).toMatch(/^USR/)
       expect(user).toBeDefined()
     })
 
@@ -395,7 +395,7 @@ describe('inMemoryUserStore', () => {
     it('should create demo user with default display name', async () => {
       const { user, token } = await store.createDemoUser()
 
-      expect(user.id).toMatch(/^USR_/)
+      expect(user.id).toMatch(/^USR/)
       expect(user.displayName).toMatch(/^Demo User /)
       expect(user.role).toBe('user')
       expect(token).toBeDefined()

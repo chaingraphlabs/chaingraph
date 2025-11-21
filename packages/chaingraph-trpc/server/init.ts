@@ -34,6 +34,25 @@ export async function init() {
       console.log('   • User roles will not be enforced')
     } else {
       console.log('🔒 tRPC server Authentication is ENABLED and enforced')
+
+      // Demo Auth Configuration
+      if (authConfig.demoAuth.enabled) {
+        console.log('   🎭 Demo Auth: Enabled')
+        // Validate demo token secret is configured
+        if (!process.env.DEMO_TOKEN_SECRET) {
+          console.error('   ❌ DEMO_TOKEN_SECRET environment variable is not set')
+          console.error('   • Demo user authentication requires a secure secret')
+          console.error('   • Generate a secret: openssl rand -base64 64')
+          console.error('   • Set DEMO_TOKEN_SECRET in your environment')
+          throw new Error('DEMO_TOKEN_SECRET is required when demo auth is enabled in production')
+        }
+        console.log('   • Demo token secret configured')
+      } else {
+        console.log('   🎭 Demo Auth: Disabled')
+        console.log('   • To enable demo users: set DEMO_AUTH_ENABLED=true (or remove DEMO_AUTH_ENABLED to use default)')
+      }
+
+      // BadAI Auth Configuration
       if (authConfig.badaiAuth.enabled) {
         console.log('   🧪 BadAI Auth provider: Active')
         console.log(`   • API URL: ${authConfig.badaiAuth.apiUrl}`)
@@ -43,16 +62,6 @@ export async function init() {
         console.log('   • For development: set AUTH_DEV_MODE=true to bypass authentication checks')
         throw new Error('Authentication is enabled but no auth provider is configured')
       }
-
-      // Validate demo token secret is configured
-      if (!process.env.DEMO_TOKEN_SECRET) {
-        console.error('   ❌ DEMO_TOKEN_SECRET environment variable is not set')
-        console.error('   • Demo user authentication requires a secure secret')
-        console.error('   • Generate a secret: openssl rand -base64 64')
-        console.error('   • Set DEMO_TOKEN_SECRET in your environment')
-        throw new Error('DEMO_TOKEN_SECRET is required when authentication is enabled in production')
-      }
-      console.log('   ✅ Demo token secret configured')
     }
     console.log('===================================\n')
   } else {
@@ -76,6 +85,35 @@ export async function init() {
       throw new Error('DB connection failed')
     }
     console.log('DB connection successful')
+
+    // Validate required tables exist
+    const tableCheck = await db.execute(sql`
+      SELECT
+        (SELECT to_regclass('public.chaingraph_users')) as users_table,
+        (SELECT to_regclass('public.chaingraph_external_accounts')) as accounts_table
+    `)
+
+    const { users_table, accounts_table } = tableCheck.rows[0] as { users_table: string | null, accounts_table: string | null }
+
+    if (!users_table || !accounts_table) {
+      const missing: string[] = []
+      if (!users_table)
+        missing.push('chaingraph_users')
+      if (!accounts_table)
+        missing.push('chaingraph_external_accounts')
+
+      console.error('\n❌ Required database tables are missing:')
+      missing.forEach(table => console.error(`   • ${table}`))
+      console.error('\n   User management tables are required for authentication.')
+      console.error('   Please run database migrations:')
+      console.error('   1. cd packages/chaingraph-trpc')
+      console.error('   2. pnpm run migrate')
+      console.error('')
+      throw new Error(`Missing required tables: ${missing.join(', ')}. Run migrations first.`)
+    }
+
+    console.log('✅ All required user management tables exist')
+
     flowStore = new DBFlowStore(db)
     mcpStore = new PostgresMCPStore(db)
   } catch (error) {

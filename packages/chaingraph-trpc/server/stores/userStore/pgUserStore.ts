@@ -12,13 +12,14 @@ import type { UserStore } from './userStore'
 import { and, eq } from 'drizzle-orm'
 import { customAlphabet } from 'nanoid'
 import { alphanumeric } from 'nanoid-dictionary'
+import { DEMO_EXPIRY_MS } from '../../auth/constants'
 import { isDemoToken, signDemoToken, verifyDemoToken } from '../../auth/jwt'
 import { externalAccountsTable, usersTable } from '../postgres/schema'
 
 // ID generators
 const nanoid = customAlphabet(alphanumeric, 21)
-const generateUserId = () => `USR_${nanoid()}`
-const generateExternalAccountId = () => `EXTACC_${nanoid()}`
+const generateUserId = () => `USR${nanoid()}`
+const generateExternalAccountId = () => `EXTACC${nanoid()}`
 
 /**
  * PostgreSQL implementation of UserStore.
@@ -298,8 +299,8 @@ export class PgUserStore implements UserStore {
       const demoAccount = accounts[0].external_accounts
       const user = accounts[0].users
 
-      // Check expiration: demo account createdAt + 7 days
-      const expiresAt = new Date(demoAccount.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000)
+      // Check expiration: demo account createdAt + DEMO_EXPIRY_DAYS
+      const expiresAt = new Date(demoAccount.createdAt.getTime() + DEMO_EXPIRY_MS)
       if (expiresAt < new Date()) {
         return null // Demo expired
       }
@@ -345,8 +346,8 @@ export class PgUserStore implements UserStore {
       return null
     }
 
-    // Expiration is 7 days after demo account creation
-    return new Date(demoAccount.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000)
+    // Expiration is DEMO_EXPIRY_DAYS after demo account creation
+    return new Date(demoAccount.createdAt.getTime() + DEMO_EXPIRY_MS)
   }
 
   /**

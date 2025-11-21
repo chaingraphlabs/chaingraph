@@ -8,9 +8,10 @@
 
 import * as process from 'node:process'
 import * as jwt from 'jsonwebtoken'
+import { DEMO_EXPIRY_SECONDS } from './constants'
 
 const DEMO_TOKEN_SECRET = process.env.DEMO_TOKEN_SECRET || 'chaingraph-demo-secret-change-in-production'
-const DEMO_TOKEN_EXPIRY = 7 * 24 * 60 * 60 // 7 days in seconds
+const DEMO_TOKEN_EXPIRY = DEMO_EXPIRY_SECONDS
 
 export interface DemoTokenPayload {
   type: 'demo'
@@ -20,7 +21,7 @@ export interface DemoTokenPayload {
 }
 
 /**
- * Sign a demo JWT token that expires in 7 days.
+ * Sign a demo JWT token that expires after DEMO_EXPIRY_DAYS (7 days).
  * Token is stateless - no server-side session storage needed.
  *
  * @param demoId - The external ID for the demo account (nanoid)

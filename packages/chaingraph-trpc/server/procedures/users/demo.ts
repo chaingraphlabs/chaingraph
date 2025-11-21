@@ -6,7 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
+import { authConfig } from '../../auth/config'
 import { publicProcedure, router } from '../../trpc'
 
 // Enhanced input validation schema for demo session creation
@@ -34,6 +36,14 @@ export const demoProcedures = router({
   createDemoSession: publicProcedure
     .input(createDemoSessionInput)
     .mutation(async ({ input, ctx }) => {
+      // Check if demo auth is enabled
+      if (!authConfig.demoAuth.enabled) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Demo user creation is disabled',
+        })
+      }
+
       const { user, token } = await ctx.userStore.createDemoUser(
         input?.displayName,
       )

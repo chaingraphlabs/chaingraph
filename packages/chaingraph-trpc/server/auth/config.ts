@@ -14,6 +14,9 @@ dotenv.config({ path: '../../.env' })
 export interface AuthConfig {
   enabled: boolean
   devMode: boolean
+  demoAuth: {
+    enabled: boolean
+  }
   badaiAuth: {
     enabled: boolean
     apiUrl: string
@@ -24,6 +27,10 @@ export interface AuthConfig {
 export const authConfig: AuthConfig = {
   enabled: process.env.AUTH_ENABLED === 'true',
   devMode: process.env.AUTH_DEV_MODE === 'true' || process.env.NODE_ENV === 'development',
+  demoAuth: {
+    // Demo auth is enabled by default (unless explicitly disabled with DEMO_AUTH_ENABLED=false)
+    enabled: process.env.DEMO_AUTH_ENABLED !== 'false',
+  },
   badaiAuth: {
     enabled: process.env.BADAI_AUTH_ENABLED === 'true',
     apiUrl: process.env.BADAI_API_URL || 'http://localhost:9151/graphql',
