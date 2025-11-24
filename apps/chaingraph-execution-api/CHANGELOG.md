@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.7
+
+### Patch Changes
+
+- bump, fix build
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.7
+  - @badaitech/chaingraph-nodes@0.6.7
+  - @badaitech/chaingraph-types@0.6.7
+  - @badaitech/chaingraph-trpc@0.6.7
+  - @badaitech/badai-api@0.6.7
+
 ## 0.6.6
 
 ### Patch Changes

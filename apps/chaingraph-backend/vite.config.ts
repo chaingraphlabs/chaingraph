@@ -24,9 +24,6 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'bigint-crypto-utils',
-        'pg',
-        'pg-listen',
-        'pg-native',
       ],
     },
   },
