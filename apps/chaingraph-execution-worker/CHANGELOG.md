@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.6.6
+
+### Patch Changes
+
+- Fix imports
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.6
+  - @badaitech/chaingraph-nodes@0.6.6
+  - @badaitech/chaingraph-types@0.6.6
+  - @badaitech/chaingraph-trpc@0.6.6
+  - @badaitech/badai-api@0.6.6
+
 ## 0.6.5
 
 ### Patch Changes
