@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './flowStore'
-export * from './postgres'
+export { InMemoryUserStore } from './inMemoryUserStore'
+export { PgUserStore } from './pgUserStore'
+export * from './types'
 export * from './userStore'

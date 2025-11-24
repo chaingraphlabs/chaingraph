@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-trpc
 
+## 0.6.4
+
+### Patch Changes
+
+- feat(userStore): implement in-memory and PostgreSQL user stores
+
 ## 0.6.3
 
 ### Patch Changes

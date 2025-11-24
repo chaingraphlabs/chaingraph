@@ -7,6 +7,7 @@
  */
 
 import type { IFlowStore } from 'server/stores/flowStore/types'
+import type { UserStore } from 'server/stores/userStore'
 import type { AppContext } from '../../context'
 import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import { DevUser } from '../../auth/types'
@@ -27,6 +28,21 @@ export function createTestContext(
     const node = nodeRegistry.createNode(type, `${type}-catalog`)
     nodesCatalog.registerNode(type, node)
   })
+
+  const mockUserStore: UserStore = {
+    getUserById: async () => null,
+    createUser: async () => null as any,
+    updateUser: async () => null as any,
+    getOrCreateUserByExternalAccount: async () => null as any,
+    getExternalAccounts: async () => [],
+    linkExternalAccount: async () => null as any,
+    unlinkExternalAccount: async () => {},
+    createDemoUser: async () => null as any,
+    validateDemoToken: async () => null,
+    isUserDemo: async () => false,
+    getDemoExpiration: async () => null,
+    isDemoExpired: async () => false,
+  }
 
   return {
     session: {
@@ -49,5 +65,6 @@ export function createTestContext(
     flowStore: flowStore ?? new InMemoryFlowStore(),
     db: null as any,
     mcpStore: null as any,
+    userStore: mockUserStore,
   }
 }

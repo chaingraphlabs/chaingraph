@@ -31,6 +31,7 @@ export class ExecutionContext {
   public readonly executionId: string
   public readonly rootExecutionId?: string
   public readonly parentExecutionId?: string
+  public readonly userId?: string
 
   public readonly startTime: Date
   public readonly flowId?: string
@@ -75,6 +76,7 @@ export class ExecutionContext {
     executionDepth?: number,
     getNodeById?: (nodeId: string) => INode | undefined,
     findNodes?: (predicate: (node: INode) => boolean) => INode[] | undefined,
+    userId?: string,
   ) {
     this.executionId = executionId || uuidv4()
     this.startTime = new Date()
@@ -92,6 +94,7 @@ export class ExecutionContext {
     this.eventData = eventData
     this.isChildExecution = isChildExecution
     this.executionDepth = executionDepth || 0
+    this.userId = userId
     if (this.eventData || this.parentExecutionId) {
       this.emittedEvents = []
     }
@@ -171,6 +174,7 @@ export class ExecutionContext {
       this.executionDepth + 1,
       this.getNodeById,
       this.findNodes,
+      this.userId, // Pass userId to child execution
     )
     ctx.ecdhKeyPairPromise = this.ecdhKeyPairPromise // Share key pair promise
     return ctx

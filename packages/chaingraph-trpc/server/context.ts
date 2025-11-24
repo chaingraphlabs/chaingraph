@@ -12,7 +12,8 @@ import type { drizzle } from 'drizzle-orm/node-postgres'
 import type { AuthSession, User } from './auth/types'
 import type { IMCPStore } from './mcp/stores/types'
 import type { IFlowStore } from './stores/flowStore/types'
-import { authService } from './auth/service'
+import type { UserStore } from './stores/userStore'
+import { AuthService } from './auth/service'
 
 export interface Session {
   user?: User
@@ -29,6 +30,7 @@ export interface AppContext {
   nodeRegistry: NodeRegistry
   nodesCatalog: NodeCatalog
   mcpStore: IMCPStore
+  userStore: UserStore
 }
 
 let db: DBType | null = null
@@ -36,6 +38,8 @@ let flowStore: IFlowStore | null = null
 let nodeRegistry: NodeRegistry | null = null
 let nodesCatalog: NodeCatalog | null = null
 let mcpStore: IMCPStore | null = null
+let userStore: UserStore | null = null
+let authService: AuthService | null = null
 
 /**
  * Initialize application context with stores
@@ -47,12 +51,15 @@ export function initializeContext(
   _nodeRegistry: NodeRegistry,
   _nodesCatalog: NodeCatalog,
   _mcpStore: IMCPStore,
+  _userStore: UserStore,
 ) {
   db = _db
   flowStore = _flowStore
   nodeRegistry = _nodeRegistry
   nodesCatalog = _nodesCatalog
   mcpStore = _mcpStore
+  userStore = _userStore
+  authService = new AuthService(_userStore)
 }
 
 /**
@@ -66,6 +73,8 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
     || !nodeRegistry
     || !nodesCatalog
     || !mcpStore
+    || !userStore
+    || !authService
   ) {
     throw new Error('Context not initialized. Call initializeContext first.')
   }
@@ -73,7 +82,7 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
   // Get token from request headers or websocket
   const token = getAuthToken(opts)
 
-  // Validate session
+  // Validate session (auto-creates users in database on first login)
   const session = await authService.validateSession(token)
   const user = await authService.getUserFromSession(session)
 
@@ -88,6 +97,7 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<App
     nodeRegistry,
     nodesCatalog,
     mcpStore,
+    userStore,
   }
 }
 
