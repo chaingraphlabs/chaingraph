@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.5
+
+### Patch Changes
+
+- Bump
+
 ## 0.6.3
 
 ### Patch Changes
