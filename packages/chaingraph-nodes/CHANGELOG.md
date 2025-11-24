@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.5
+
+### Patch Changes
+
+- Bump
+- Updated dependencies
+  - @badaitech/chaingraph-types@0.6.5
+  - @badaitech/badai-api@0.6.5
+
 ## 0.6.3
 
 ### Patch Changes

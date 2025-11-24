@@ -283,7 +283,7 @@ export class MCPToolCallNode extends BaseNode {
             this.cleanArgumentsRecursively(argumentValue, propertyConfig.schema.properties, visited)
           }
         } else if (propertyConfig.type === 'array' && Array.isArray(argumentValue)) {
-        // Handle arrays containing objects
+          // Handle arrays containing objects
           const itemConfig = propertyConfig.itemConfig
           if (itemConfig?.type === 'object' && itemConfig.schema?.properties) {
             // Clean each object in the array
@@ -315,7 +315,7 @@ export class MCPToolCallNode extends BaseNode {
   private extractErrorMessage(response: CallToolResult): string {
     if (response.content && Array.isArray(response.content)) {
       const textContent = response.content.find((c: any) => c.type === 'text')
-      if (textContent?.text) {
+      if (textContent && 'text' in textContent) {
         return textContent.text.toString()
       }
     }
