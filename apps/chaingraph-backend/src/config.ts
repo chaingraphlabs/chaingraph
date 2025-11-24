@@ -9,7 +9,7 @@
 import process from 'node:process'
 import dotenv from 'dotenv'
 
-dotenv.config({ path: '.env' })
+dotenv.config({ path: ['.env', '../../.env'] })
 
 // config for backend node app
 export const appConfig = {

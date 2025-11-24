@@ -2,21 +2,35 @@
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["dom", "ESNext", "ESNext.AsyncIterable"],
+    "lib": [
+      "dom",
+      "ESNext",
+      "ESNext.AsyncIterable"
+    ],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "rootDir": "./src",
     "paths": {
-      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
-      "@badaitech/typescript-config/*": ["../typescript-config/*"],
-      "@badaitech/badai-api/*": ["../badai-api/src/*"]
+      "@badaitech/chaingraph-types/*": [
+        "../chaingraph-types/src/*"
+      ],
+      "@badaitech/typescript-config/*": [
+        "../typescript-config/*"
+      ],
+      "@badaitech/badai-api/*": [
+        "../badai-api/src/*"
+      ]
     },
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
     "outDir": "dist"
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

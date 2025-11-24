@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { DBType } from 'server/context'
+import type { DBType } from '../../context'
 import type { CreateUserData, DBUser, DemoSessionResult, ExternalAccount, ExternalAccountData, UpdateUserData, UserRole } from './types'
 import type { UserStore } from './userStore'
 import { and, eq } from 'drizzle-orm'
