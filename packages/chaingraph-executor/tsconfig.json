@@ -3,15 +3,26 @@
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["dom", "ESNext", "ESNext.AsyncIterable"],
+    "lib": [
+      "dom",
+      "ESNext",
+      "ESNext.AsyncIterable"
+    ],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "paths": {
-      "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
-      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
-      "@badaitech/chaingraph-trpc/*": ["../chaingraph-trpc/*"],
-      "@badaitech/typescript-config/*": ["../typescript-config/*"]
+      "@badaitech/chaingraph-nodes/*": [
+        "../chaingraph-nodes/src/*"
+      ],
+      "@badaitech/chaingraph-types/*": [
+        "../chaingraph-types/src/*"
+      ],
+      "@badaitech/chaingraph-trpc/*": [
+        "../chaingraph-trpc/*"
+      ],
+      "@badaitech/typescript-config/*": [
+        "../typescript-config/*"
+      ]
     },
     /** Emit types for internal packages to speed up editor performance. */
     "declaration": true,
@@ -19,6 +30,14 @@
     "emitDeclarationOnly": false,
     "outDir": "dist"
   },
-  "include": ["server", "client", "types"],
-  "exclude": ["node_modules", "dist", "drizzle"]
+  "include": [
+    "server",
+    "client",
+    "types"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "drizzle"
+  ]
 }

@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IFlowStore } from 'server/stores/flowStore/types'
-import type { UserStore } from 'server/stores/userStore'
 import type { AppContext } from '../../context'
+import type { IFlowStore } from '../../stores/flowStore/types'
+import type { UserStore } from '../../stores/userStore/userStore'
 import { NodeCatalog, NodeRegistry } from '@badaitech/chaingraph-types'
 import { DevUser } from '../../auth/types'
 import { InMemoryFlowStore } from '../../stores/flowStore/inMemoryFlowStore'
@@ -36,7 +36,7 @@ export function createTestContext(
     getOrCreateUserByExternalAccount: async () => null as any,
     getExternalAccounts: async () => [],
     linkExternalAccount: async () => null as any,
-    unlinkExternalAccount: async () => {},
+    unlinkExternalAccount: async () => { },
     createDemoUser: async () => null as any,
     validateDemoToken: async () => null,
     isUserDemo: async () => false,

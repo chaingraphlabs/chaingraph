@@ -3,15 +3,26 @@
   "extends": "@badaitech/typescript-config/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["dom", "ESNext", "ESNext.AsyncIterable"],
+    "lib": [
+      "dom",
+      "ESNext",
+      "ESNext.AsyncIterable"
+    ],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "paths": {
-      "@badaitech/chaingraph-types/*": ["../chaingraph-types/src/*"],
-      "@badaitech/chaingraph-nodes/*": ["../chaingraph-nodes/src/*"],
-      "@badaitech/typescript-config/*": ["../typescript-config/*"],
-      "@badaitech/badai-api/*": ["../badai-api/src/*"]
+      "@badaitech/chaingraph-types/*": [
+        "../chaingraph-types/src/*"
+      ],
+      "@badaitech/chaingraph-nodes/*": [
+        "../chaingraph-nodes/src/*"
+      ],
+      "@badaitech/typescript-config/*": [
+        "../typescript-config/*"
+      ],
+      "@badaitech/badai-api/*": [
+        "../badai-api/src/*"
+      ]
     },
     /** Emit types for internal packages to speed up editor performance. */
     "declaration": true,
@@ -19,6 +30,11 @@
     "emitDeclarationOnly": false,
     "outDir": "dist"
   },
-  "include": ["server", "client"],
-  "exclude": ["server/node_modules"]
+  "include": [
+    "server",
+    "client"
+  ],
+  "exclude": [
+    "server/node_modules"
+  ]
 }

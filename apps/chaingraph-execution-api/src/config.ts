@@ -9,7 +9,7 @@
 import process from 'node:process'
 import * as dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config({ path: ['.env', '../../.env'] })
 
 // Calculate port based on base port and PM2 instance ID
 const basePort = Number.parseInt(process.env.PORT || '4021', 10)

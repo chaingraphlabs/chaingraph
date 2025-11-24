@@ -10,7 +10,7 @@ import { cpus } from 'node:os'
 import process from 'node:process'
 import * as dotenv from 'dotenv'
 
-dotenv.config()
+dotenv.config({ path: ['.env', '../../.env'] })
 
 export const config = {
   // Worker process configuration
