@@ -30,8 +30,7 @@ export async function startServer(): Promise<void> {
     const { wss } = createWSServer(config.port, config.host)
 
     logger.info({ port: config.port, host: config.host }, '✅ Server started (API mode)')
-  }
-  catch (error) {
+  } catch (error) {
     logger.error({ error }, 'Failed to start server')
     process.exit(1)
   }

@@ -267,13 +267,11 @@ export const executionRouter = router({
         if (ctx.dbosClient) {
           await ctx.dbosClient.send(input.executionId, 'GO', 'START_SIGNAL')
           logger.info({ executionId: input.executionId }, 'START_SIGNAL sent via DBOSClient')
-        }
-        else {
+        } else {
           await DBOS.send(input.executionId, 'GO', 'START_SIGNAL')
           logger.info({ executionId: input.executionId }, 'START_SIGNAL sent via DBOS')
         }
-      }
-      catch (error) {
+      } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to send START_SIGNAL')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -321,8 +319,7 @@ export const executionRouter = router({
         if (ctx.dbosClient) {
           await ctx.dbosClient.cancelWorkflow(input.executionId)
           logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOSClient')
-        }
-        else {
+        } else {
           await DBOS.cancelWorkflow(input.executionId)
           logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOS')
         }
@@ -334,8 +331,7 @@ export const executionRouter = router({
           errorMessage: input.reason || 'User requested stop',
           completedAt: new Date(),
         })
-      }
-      catch (error) {
+      } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to cancel workflow')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -390,13 +386,11 @@ export const executionRouter = router({
         if (ctx.dbosClient) {
           await ctx.dbosClient.send(input.executionId, pauseCommand, 'COMMAND')
           logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOSClient')
-        }
-        else {
+        } else {
           await DBOS.send(input.executionId, pauseCommand, 'COMMAND')
           logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOS')
         }
-      }
-      catch (error) {
+      } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to send PAUSE command')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -449,13 +443,11 @@ export const executionRouter = router({
         if (ctx.dbosClient) {
           await ctx.dbosClient.send(input.executionId, resumeCommand, 'COMMAND')
           logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOSClient')
-        }
-        else {
+        } else {
           await DBOS.send(input.executionId, resumeCommand, 'COMMAND')
           logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOS')
         }
-      }
-      catch (error) {
+      } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to send RESUME command')
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
