@@ -10,7 +10,6 @@ import type { ExecutionEvent } from '../flow'
 import type { INode } from '../node'
 import type { EmittedEventContext } from './emitted-event-context'
 import type { IntegrationContext } from './integration-context'
-import { subtle } from 'node:crypto'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
 import { v4 as uuidv4 } from 'uuid'
@@ -106,7 +105,7 @@ export class ExecutionContext {
 
   async getECDHKeyPair(): Promise<CryptoKeyPair> {
     if (!this.ecdhKeyPairPromise) {
-      this.ecdhKeyPairPromise = subtle.generateKey({
+      this.ecdhKeyPairPromise = globalThis.crypto.subtle.generateKey({
         name: 'ECDH',
         namedCurve: 'P-256',
       }, false, ['deriveKey'])

@@ -46,7 +46,7 @@
     "@opentelemetry/resources": "^2.1.0",
     "@opentelemetry/sdk-logs": "^0.206.0",
     "@opentelemetry/sdk-trace-base": "^2.1.0",
-    "@trpc/server": "^11.6.0",
+    "@trpc/server": "^11.7.2",
     "bigint-crypto-utils": "^3.3.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -57,7 +57,7 @@
     "nanoid-dictionary": "^5.0.0",
     "pg": "^8.16.3",
     "pg-listen": "^1.7.0",
-    "superjson": "^2.2.2",
+    "superjson": "^2.2.5",
     "winston": "^3.18.3",
     "winston-transport": "^4.9.0",
     "ws": "^8.18.3",
@@ -67,7 +67,7 @@
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.10.1",
     "@types/ws": "^8.18.1",
     "vite-plugin-top-level-await": "^1.5.0"
   }

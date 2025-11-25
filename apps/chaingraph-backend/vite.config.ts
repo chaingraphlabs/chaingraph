@@ -9,22 +9,69 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  // resolve: {
-  //   alias: {
-  //     ws: './node_modules/ws/index.js',
-  //   },
-  // },
+  ssr: {
+    // Force these to be bundled (not external)
+    noExternal: [
+      'bigint-crypto-utils',
+      'uuid',
+      'dotenv',
+      'superjson',
+      'yaml',
+      'decimal.js',
+      '@mixmark-io/domino',
+      '@badaitech/chaingraph-types',
+      '@badaitech/chaingraph-nodes',
+      '@badaitech/chaingraph-trpc',
+    ],
+  },
   build: {
     ssr: true,
     lib: {
       entry: './src/index.ts',
-      formats: ['cjs'],
+      formats: ['es'],
+      fileName: 'index',
     },
     outDir: 'dist',
     rollupOptions: {
       external: [
-        'bigint-crypto-utils',
+        // Node.js built-ins
+        /^node:/,
+        'assert',
+        'buffer',
+        'crypto',
+        'dns',
+        'events',
+        'fs',
+        'http',
+        'https',
+        'net',
+        'os',
+        'path',
+        'process',
+        'punycode',
+        'stream',
+        'string_decoder',
+        'tls',
+        'tty',
+        'url',
+        'util',
+        'zlib',
+        // npm dependencies that are ESM-compatible
+        'ws',
+        'cors',
+        'reflect-metadata',
+        'zod',
+        'zod/v3',
+        'zod/v4',
+        'zod/v4/core',
+        '@trpc/server',
+        '@trpc/server/adapters/ws',
       ],
+      output: {
+        interop: 'auto',
+        // Add createRequire for CJS modules that use require() in ESM context
+        banner: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
+      },
     },
   },
 })

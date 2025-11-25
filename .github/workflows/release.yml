@@ -19,7 +19,7 @@ permissions:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NODE_VERSION: 22.14.0
+  NODE_VERSION: 24.11.1
   PNPM_VERSION: 10.5.2
 
 jobs:
@@ -36,8 +36,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@badaitech'
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@badaitech"
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v3
@@ -107,8 +107,8 @@ jobs:
         with:
           version: pnpm run changeset:version
           publish: pnpm run changeset:publish
-          commit: 'chore: update package versions'
-          title: 'chore: update package versions'
+          commit: "chore: update package versions"
+          title: "chore: update package versions"
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -7,7 +7,7 @@
  */
 
 import * as path from 'node:path'
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 
 import { defineConfig } from 'vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
@@ -33,9 +33,12 @@ export default defineConfig({
       },
     }),
     react({
-      tsDecorators: true,
-      // Remove @effector/swc-plugin to avoid transforming external effector imports
-      plugins: [],
+      babel: {
+        plugins: [
+          ['@babel/plugin-proposal-decorators', { legacy: true }],
+          ['@babel/plugin-transform-class-properties', { loose: true }],
+        ],
+      },
     }),
     tsconfigPaths({
       configNames: ['tsconfig.json', 'tsconfig.lib.json'],

@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@badaitech/badai-api": "workspace:*",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.10.1",
     "graphql": "^16.11.0",
     "graphql-request": "^7.2.0",
     "graphql-ws": "^6.0.6",

@@ -236,7 +236,7 @@ Flow Definition (JSON)
 ### Core Stack
 - **TypeScript**: Decorators (`experimentalDecorators`, `emitDecoratorMetadata`), advanced types
 - **Bun**: Runtime for development (use `--conditions=development` for debugging)
-- **Node.js v22.14.0**: Production runtime
+- **Node.js v24.11.1**: Production runtime
 - **pnpm**: Package manager with workspaces
 - **Turbo**: Monorepo task orchestration
 
