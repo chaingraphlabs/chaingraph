@@ -54,4 +54,4 @@ USER nodeuser
 ENV NODE_ENV=${NODE_ENV}
 EXPOSE ${PORT}
 
-CMD ["node", "apps/chaingraph-backend/dist/index.cjs"]
+CMD ["node", "apps/chaingraph-backend/dist/index.js"]

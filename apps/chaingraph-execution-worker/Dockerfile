@@ -70,4 +70,4 @@ USER nodeuser
 
 ENV NODE_ENV=${NODE_ENV}
 
-CMD ["node", "apps/chaingraph-execution-worker/dist/index.cjs"]
+CMD ["node", "apps/chaingraph-execution-worker/dist/index.js"]
