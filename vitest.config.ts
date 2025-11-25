@@ -14,6 +14,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['reflect-metadata'],
+    env: {
+      DEMO_AUTH_ENABLED: 'true', // Enable demo auth for tests
+    },
     alias: {
       '@badaitech/chaingraph-types': resolve(__dirname, './packages/chaingraph-types/src'),
       '@badaitech/chaingraph-backend': resolve(__dirname, './packages/chaingraph-backend/src'),

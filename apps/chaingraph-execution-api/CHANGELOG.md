@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.9
+
+### Patch Changes
+
+- feat: implement API-only task queue and update service creation for API mode
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.9
+  - @badaitech/chaingraph-nodes@0.6.9
+  - @badaitech/chaingraph-types@0.6.9
+  - @badaitech/chaingraph-trpc@0.6.9
+  - @badaitech/badai-api@0.6.9
+
 ## 0.6.8
 
 ### Patch Changes

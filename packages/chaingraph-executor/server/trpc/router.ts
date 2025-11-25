@@ -263,8 +263,14 @@ export const executionRouter = router({
       // The workflow was started in the 'create' endpoint and is waiting for this signal
       // This triggers Phase 2 of execution (actual flow execution)
       try {
-        await DBOS.send(input.executionId, 'GO', 'START_SIGNAL')
-        logger.info({ executionId: input.executionId }, 'START_SIGNAL sent to execution workflow')
+        // Use DBOSClient if available (API mode), otherwise use DBOS (Worker mode)
+        if (ctx.dbosClient) {
+          await ctx.dbosClient.send(input.executionId, 'GO', 'START_SIGNAL')
+          logger.info({ executionId: input.executionId }, 'START_SIGNAL sent via DBOSClient')
+        } else {
+          await DBOS.send(input.executionId, 'GO', 'START_SIGNAL')
+          logger.info({ executionId: input.executionId }, 'START_SIGNAL sent via DBOS')
+        }
       } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to send START_SIGNAL')
         throw new TRPCError({
@@ -309,8 +315,14 @@ export const executionRouter = router({
       // 🛑 DBOS Mode: Use workflow cancellation (built-in DBOS feature)
       // This cancels the workflow and all its children
       try {
-        await DBOS.cancelWorkflow(input.executionId)
-        logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOS.cancelWorkflow()')
+        // Use DBOSClient if available (API mode), otherwise use DBOS (Worker mode)
+        if (ctx.dbosClient) {
+          await ctx.dbosClient.cancelWorkflow(input.executionId)
+          logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOSClient')
+        } else {
+          await DBOS.cancelWorkflow(input.executionId)
+          logger.info({ executionId: input.executionId }, 'Workflow cancelled via DBOS')
+        }
 
         // Update status to stopped in database
         await executionStore.updateExecutionStatus({
@@ -365,11 +377,19 @@ export const executionRouter = router({
       // ⏸️ DBOS Mode: Send PAUSE command via DBOS messaging
       // The workflow's command polling loop will receive and handle this
       try {
-        await DBOS.send(input.executionId, {
-          command: 'PAUSE',
+        const pauseCommand = {
+          command: 'PAUSE' as const,
           reason: input.reason || 'User requested pause',
-        }, 'COMMAND')
-        logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOS.send()')
+        }
+
+        // Use DBOSClient if available (API mode), otherwise use DBOS (Worker mode)
+        if (ctx.dbosClient) {
+          await ctx.dbosClient.send(input.executionId, pauseCommand, 'COMMAND')
+          logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOSClient')
+        } else {
+          await DBOS.send(input.executionId, pauseCommand, 'COMMAND')
+          logger.info({ executionId: input.executionId }, 'PAUSE command sent via DBOS')
+        }
       } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to send PAUSE command')
         throw new TRPCError({
@@ -415,10 +435,18 @@ export const executionRouter = router({
       // ▶️ DBOS Mode: Send RESUME command via DBOS messaging
       // The workflow's command polling loop will receive and handle this
       try {
-        await DBOS.send(input.executionId, {
-          command: 'RESUME',
-        }, 'COMMAND')
-        logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOS.send()')
+        const resumeCommand = {
+          command: 'RESUME' as const,
+        }
+
+        // Use DBOSClient if available (API mode), otherwise use DBOS (Worker mode)
+        if (ctx.dbosClient) {
+          await ctx.dbosClient.send(input.executionId, resumeCommand, 'COMMAND')
+          logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOSClient')
+        } else {
+          await DBOS.send(input.executionId, resumeCommand, 'COMMAND')
+          logger.info({ executionId: input.executionId }, 'RESUME command sent via DBOS')
+        }
       } catch (error) {
         logger.error({ error, executionId: input.executionId }, 'Failed to send RESUME command')
         throw new TRPCError({
