@@ -23,8 +23,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@badaitech"
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@badaitech'
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v3
