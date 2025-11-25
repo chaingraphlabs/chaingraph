@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.8
+
+### Patch Changes
+
+- Fix build, change cjs to esm
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.8
+  - @badaitech/chaingraph-nodes@0.6.8
+  - @badaitech/chaingraph-types@0.6.8
+  - @badaitech/chaingraph-trpc@0.6.8
+  - @badaitech/badai-api@0.6.8
+
 ## 0.6.7
 
 ### Patch Changes
