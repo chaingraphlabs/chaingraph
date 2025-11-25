@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.10
+
+### Patch Changes
+
+- 4177dc6: fix: ensure execution workflow is registered before DBOS launch
+- Updated dependencies [4177dc6]
+  - @badaitech/badai-api@0.6.10
+
 ## 0.6.9
 
 ### Patch Changes

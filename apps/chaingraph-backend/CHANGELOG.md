@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.10
+
+### Patch Changes
+
+- 4177dc6: fix: ensure execution workflow is registered before DBOS launch
+- Updated dependencies [4177dc6]
+  - @badaitech/chaingraph-nodes@0.6.10
+  - @badaitech/chaingraph-types@0.6.10
+  - @badaitech/chaingraph-trpc@0.6.10
+
 ## 0.6.9
 
 ### Patch Changes
