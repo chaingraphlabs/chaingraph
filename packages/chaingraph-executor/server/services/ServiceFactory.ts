@@ -22,6 +22,7 @@ import {
   initializeUpdateStatusSteps,
 } from '../dbos'
 import { getOrCreateQueue } from '../dbos/queues/ExecutionQueue'
+import { executionWorkflow } from '../dbos/workflows/ExecutionWorkflow'
 import { APITaskQueue, DBOSEventBus, DBOSTaskQueue } from '../implementations/dbos'
 import { PostgreSQLMigrationManager } from '../implementations/dbos/migrations/PostgreSQLMigrations'
 import { StreamBridgeBuilder } from '../implementations/dbos/streaming'
@@ -302,6 +303,13 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
   const userStore = await getUserStore()
   const authService = createAuthService(userStore)
 
+  // CRITICAL: Ensure workflow is registered BEFORE DBOS.launch()
+  // This import is needed because we only import getOrCreateQueue() function
+  // Without this, tree-shaking would remove the executionWorkflow import
+  if (!executionWorkflow) {
+    throw new Error('ExecutionWorkflow failed to load - workflow not registered')
+  }
+
   // CRITICAL: Create queue BEFORE DBOS.launch()
   // This ensures the worker can dequeue tasks
   const queue = getOrCreateQueue({
@@ -312,6 +320,7 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
   logger.info({
     concurrency: config.dbos.queueConcurrency,
     workerConcurrency: config.dbos.workerConcurrency,
+    workflowRegistered: true,
   }, 'Workflow queue created before DBOS initialization')
 
   // NOW launch DBOS - queue will be registered for dequeue

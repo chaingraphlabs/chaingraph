@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.10
+
+### Patch Changes
+
+- 4177dc6: fix: ensure execution workflow is registered before DBOS launch
+
 ## 0.6.9
 
 ### Patch Changes
