@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.9
+
+### Patch Changes
+
+- feat: implement API-only task queue and update service creation for API mode
+
 ## 0.6.8
 
 ### Patch Changes
