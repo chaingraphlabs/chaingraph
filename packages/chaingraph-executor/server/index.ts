@@ -24,7 +24,7 @@ export {
 } from './dbos'
 
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './dbos'
-export { DBOSChildSpawnerQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
+export { APITaskQueue, DBOSChildSpawnerQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
 
 // Local Implementations
 export { InMemoryEventBus, InMemoryTaskQueue } from './implementations/local'
@@ -38,7 +38,7 @@ export { type CreateExecutionParams } from './services/IExecutionService'
 
 export { RecoveryService } from './services/RecoveryService'
 // Service Factory
-export { closeServices, createServices, getServices } from './services/ServiceFactory'
+export { closeServices, createServices, createServicesForAPI, createServicesForWorker, getServices } from './services/ServiceFactory'
 export type { ServiceInstances } from './services/ServiceFactory'
 // Stores
 export { getExecutionStore } from './stores/execution-store'

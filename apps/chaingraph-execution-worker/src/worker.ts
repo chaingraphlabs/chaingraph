@@ -8,7 +8,7 @@
 
 import type { DBOSExecutionWorker } from '@badaitech/chaingraph-executor/server'
 import process from 'node:process'
-import { createServices } from '@badaitech/chaingraph-executor/server'
+import { createServicesForWorker } from '@badaitech/chaingraph-executor/server'
 import { config } from './config'
 import { createLogger } from './logger'
 
@@ -27,8 +27,8 @@ export async function startWorker(): Promise<void> {
     process.env.DATABASE_URL_EXECUTIONS = config.databaseUrlExecutions
     process.env.WORKER_ID = workerId
 
-    // Create services (EventBus, TaskQueue, ExecutionStore, and DBOSWorker)
-    const services = await createServices()
+    // Create services in Worker mode (full DBOS with queue dequeue)
+    const services = await createServicesForWorker()
 
     // DBOS mode: Use DBOSExecutionWorker
     if (!services.dbosWorker) {
@@ -40,7 +40,7 @@ export async function startWorker(): Promise<void> {
 
     await executionWorker.start()
 
-    logger.info({ workerId, pid: process.pid }, '✅ DBOS worker started successfully')
+    logger.info({ workerId, pid: process.pid }, '✅ DBOS worker started successfully (queue registered for dequeue)')
 
     // Send heartbeat to master
     setInterval(() => {

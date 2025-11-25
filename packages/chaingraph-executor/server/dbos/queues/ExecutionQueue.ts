@@ -15,6 +15,41 @@ import { executionWorkflow } from '../workflows/ExecutionWorkflow'
 
 const logger = createLogger('dbos-execution-queue')
 
+const QUEUE_NAME = 'chaingraph-executions'
+
+/**
+ * Module-level queue instance
+ * CRITICAL: This must be created BEFORE DBOS.launch() for the worker to dequeue tasks.
+ * If created after DBOS.launch(), the queue will only be used for enqueueing (not dequeueing).
+ */
+let moduleQueue: WorkflowQueue | null = null
+
+/**
+ * Get or create the module-level workflow queue
+ * This ensures the queue exists before DBOS.launch() is called in the worker.
+ *
+ * @param options Queue configuration options
+ * @returns The workflow queue instance
+ */
+export function getOrCreateQueue(options?: DBOSQueueOptions): WorkflowQueue {
+  if (!moduleQueue) {
+    const globalConcurrency = options?.concurrency ?? 100
+    const perWorkerConcurrency = options?.workerConcurrency ?? 5
+
+    moduleQueue = new WorkflowQueue(QUEUE_NAME, {
+      concurrency: globalConcurrency,
+      workerConcurrency: perWorkerConcurrency,
+    })
+
+    logger.debug({
+      globalConcurrency,
+      perWorkerConcurrency,
+    }, 'Module-level execution queue created')
+  }
+
+  return moduleQueue
+}
+
 /**
  * DBOS execution queue for managing chaingraph execution workflows
  *
@@ -50,15 +85,10 @@ export class ExecutionQueue {
    * @param options.workerConcurrency Per-worker concurrency limit (default: 5)
    */
   constructor(options?: DBOSQueueOptions) {
-    const globalConcurrency = options?.concurrency ?? 100
-    const perWorkerConcurrency = options?.workerConcurrency ?? 5
+    // Use the module-level queue (must be created before DBOS.launch() in worker)
+    this.queue = getOrCreateQueue(options)
 
-    this.queue = new WorkflowQueue('chaingraph-executions', {
-      concurrency: globalConcurrency,
-      workerConcurrency: perWorkerConcurrency,
-    })
-
-    logger.debug('Execution queue initialized')
+    logger.debug('Execution queue wrapper initialized')
   }
 
   /**

@@ -7,6 +7,7 @@
  */
 
 import type { IFlowStore, Session } from '@badaitech/chaingraph-trpc/server'
+import type { DBOSClient } from '@dbos-inc/dbos-sdk'
 import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
 import type { IExecutionService } from '../../server/services/IExecutionService'
 import type { IEventBus, ITaskQueue } from '../interfaces'
@@ -24,6 +25,7 @@ export interface ExecutorContext {
   eventBus: IEventBus
   taskQueue: ITaskQueue
   flowStore: IFlowStore
+  dbosClient?: DBOSClient // Optional: only present in API mode
 }
 
 /**
@@ -56,6 +58,7 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<Exe
     flowStore: services.flowStore,
     eventBus: services.eventBus,
     taskQueue: services.taskQueue,
+    dbosClient: services.dbosClient,
   }
 }
 

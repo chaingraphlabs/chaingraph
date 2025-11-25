@@ -8,7 +8,7 @@
 
 import { setMaxListeners } from 'node:events'
 import process from 'node:process'
-import { createServices, createWSServer } from '@badaitech/chaingraph-executor/server'
+import { createServicesForAPI, createWSServer } from '@badaitech/chaingraph-executor/server'
 import { init } from '@badaitech/chaingraph-trpc/server'
 import { config } from '../config'
 import { createLogger } from '../logger'
@@ -22,15 +22,16 @@ export async function startServer(): Promise<void> {
   await init()
 
   try {
-    // Initialize services first (required by the executor)
-    await createServices()
-    logger.info('Services initialized')
+    // Initialize services in API mode (client-only, no workflow execution)
+    await createServicesForAPI()
+    logger.info('Services initialized (API client-only mode)')
 
     // Use the executor's WebSocket server
     const { wss } = createWSServer(config.port, config.host)
 
-    logger.info({ port: config.port, host: config.host }, '✅ Server started')
-  } catch (error) {
+    logger.info({ port: config.port, host: config.host }, '✅ Server started (API mode)')
+  }
+  catch (error) {
     logger.error({ error }, 'Failed to start server')
     process.exit(1)
   }

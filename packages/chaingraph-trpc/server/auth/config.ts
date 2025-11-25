@@ -29,7 +29,7 @@ export const authConfig: AuthConfig = {
   devMode: process.env.AUTH_DEV_MODE === 'true' || process.env.NODE_ENV === 'development',
   demoAuth: {
     // Demo auth is enabled by default (unless explicitly disabled with DEMO_AUTH_ENABLED=false)
-    enabled: process.env.DEMO_AUTH_ENABLED !== 'false',
+    enabled: process.env.DEMO_AUTH_ENABLED === 'true',
   },
   badaiAuth: {
     enabled: process.env.BADAI_AUTH_ENABLED === 'true',
