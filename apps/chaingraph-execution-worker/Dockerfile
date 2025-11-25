@@ -1,4 +1,4 @@
-FROM node:22.14.0-alpine AS base
+FROM node:24.11.1-alpine AS base
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ COPY --from=pruner /app/out/full/ .
 RUN pnpm turbo run build --filter=@badaitech/chaingraph-execution-worker...
 
 # Final stage: Run the application
-FROM node:22.14.0-alpine AS runner
+FROM node:24.11.1-alpine AS runner
 
 ARG NODE_ENV=production
 
@@ -70,4 +70,4 @@ USER nodeuser
 
 ENV NODE_ENV=${NODE_ENV}
 
-CMD ["node", "apps/chaingraph-execution-worker/dist/index.cjs"]
+CMD ["node", "apps/chaingraph-execution-worker/dist/index.js"]

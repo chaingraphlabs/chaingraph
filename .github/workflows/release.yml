@@ -19,7 +19,7 @@ permissions:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NODE_VERSION: 22.14.0
+  NODE_VERSION: 24.11.1
   PNPM_VERSION: 10.5.2
 
 jobs:

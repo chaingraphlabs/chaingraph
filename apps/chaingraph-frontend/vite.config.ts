@@ -7,7 +7,7 @@
  */
 
 import process from 'node:process'
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import circularDependency from 'vite-plugin-circullar-dependency'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
@@ -40,10 +40,13 @@ export default defineConfig({
       },
     }),
     react({
-      tsDecorators: true,
-      plugins: [
-        ['@effector/swc-plugin', {}],
-      ],
+      babel: {
+        plugins: [
+          ['@babel/plugin-proposal-decorators', { legacy: true }],
+          ['@babel/plugin-transform-class-properties', { loose: true }],
+          'effector/babel-plugin',
+        ],
+      },
     }),
     tsconfigPaths({
       configNames: ['tsconfig.json', 'tsconfig.app.json'],

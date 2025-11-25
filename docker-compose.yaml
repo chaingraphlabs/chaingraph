@@ -14,5 +14,19 @@ services:
       - postgres_data_volume:/var/lib/postgresql/data
     restart: always
 
+  postgres-exe:
+    image: postgres:latest
+    container_name: chaingraph-postgres-db-exe
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - '15432:5432'
+    volumes:
+      - postgres_data_volume_exe:/var/lib/postgresql/data
+    restart: always
+
 volumes:
   postgres_data_volume:
+  postgres_data_volume_exe:

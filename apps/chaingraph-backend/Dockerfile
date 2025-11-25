@@ -1,4 +1,4 @@
-FROM node:22.14.0-alpine AS base
+FROM node:24.11.1-alpine AS base
 
 WORKDIR /app
 
@@ -54,4 +54,4 @@ USER nodeuser
 ENV NODE_ENV=${NODE_ENV}
 EXPOSE ${PORT}
 
-CMD ["node", "apps/chaingraph-backend/dist/index.cjs"]
+CMD ["node", "apps/chaingraph-backend/dist/index.js"]

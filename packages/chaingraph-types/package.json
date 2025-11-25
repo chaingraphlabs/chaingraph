@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-types",
   "type": "module",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "private": false,
   "description": "Core type definitions for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -46,7 +46,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "superjson": "^2.2.2"
+    "superjson": "^2.2.5"
   },
   "dependencies": {
     "nanoid": "^5.1.6",
@@ -60,8 +60,8 @@
   "devDependencies": {
     "@badaitech/typescript-config": "workspace:*",
     "@types/nanoid-dictionary": "^4.2.3",
-    "@types/node": "^22.14.0",
-    "superjson": "^2.2.2",
+    "@types/node": "^24.10.1",
+    "superjson": "^2.2.5",
     "uuid": "^13.0.0",
     "vitest": "^3.2.4"
   }
