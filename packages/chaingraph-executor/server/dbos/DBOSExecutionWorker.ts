@@ -12,11 +12,14 @@ import type { DBOSWorkerOptions } from './types'
 import { isDBOSLaunched } from '.'
 import { createLogger } from '../utils/logger'
 import { initializeDBOS, shutdownDBOS } from './config'
-import { ExecutionQueue } from './queues/ExecutionQueue'
+// Import queue to ensure it's created before DBOS.launch()
+import { executionQueue, QUEUE_NAME } from './queue'
 import {
   initializeExecuteFlowStep,
   initializeUpdateStatusSteps,
 } from './steps'
+// Import ExecutionWorkflows to ensure it's registered before DBOS.launch()
+import { ExecutionWorkflows } from './workflows/ExecutionWorkflows'
 
 const logger = createLogger('dbos-execution-worker')
 
@@ -32,27 +35,28 @@ const logger = createLogger('dbos-execution-worker')
  *
  * Architecture:
  * ```
- * tRPC API → queue.enqueue(task)
+ * tRPC API → DBOSClient.enqueue() or DBOS.startWorkflow()
  *              ↓
  *          PostgreSQL (DBOS queue)
  *              ↓
  *          DBOS Worker (auto-consumes)
  *              ↓
- *          ExecutionWorkflow:
+ *          ExecutionWorkflows.executeChainGraph():
  *            1. Update status to "running"
  *            2. Execute flow atomically
  *            3. Update status to "completed"
  * ```
  *
- * Key Differences from Kafka Worker:
+ * Key Features:
+ * - Uses class-based workflow with @DBOS.workflow() decorator
+ * - Module-level queue created before DBOS.launch()
  * - No manual claim management (DBOS handles it)
  * - No manual recovery service (DBOS handles it)
  * - No manual offset commits (DBOS handles it)
- * - Simpler code (~500 lines removed)
  *
  * Usage:
  * ```typescript
- * const worker = new DBOSExecutionWorker(store, eventBus, taskQueue, {
+ * const worker = new DBOSExecutionWorker(store, null, {
  *   concurrency: 100,
  *   workerConcurrency: 5
  * });
@@ -62,8 +66,6 @@ const logger = createLogger('dbos-execution-worker')
  * ```
  */
 export class DBOSExecutionWorker {
-  private queue: ExecutionQueue
-  // private executionService: ExecutionService
   private isRunning = false
 
   /**
@@ -71,17 +73,27 @@ export class DBOSExecutionWorker {
    *
    * @param store Execution store for database operations
    * @param executionService Execution service for flow execution (optional, can be set via initializeExecuteFlowStep)
-   * @param options Worker configuration options
+   * @param _options Worker configuration options (now ignored - config comes from queue.ts)
    */
   constructor(
     private readonly store: IExecutionStore,
     private executionService: ExecutionService | null,
-    options?: DBOSWorkerOptions,
+    _options?: DBOSWorkerOptions,
   ) {
-    this.queue = new ExecutionQueue({
-      concurrency: options?.concurrency ?? 100,
-      workerConcurrency: options?.workerConcurrency ?? 5,
-    })
+    // Verify ExecutionWorkflows is imported (prevents tree-shaking)
+    if (!ExecutionWorkflows.executeChainGraph) {
+      throw new Error('ExecutionWorkflows not properly imported - workflow may not be registered')
+    }
+
+    // Verify queue is created at module level
+    if (!executionQueue) {
+      throw new Error('Execution queue not created - check queue.ts import')
+    }
+
+    logger.debug({
+      queueName: QUEUE_NAME,
+      workflowRegistered: true,
+    }, 'DBOS execution worker created')
   }
 
   /**
@@ -119,13 +131,17 @@ export class DBOSExecutionWorker {
         initializeExecuteFlowStep(this.executionService, this.store)
       }
 
-      // Step 3: Workflow is already registered in ExecutionWorkflow.ts
-      // In DBOS v4, workflows are registered at module load time via DBOS.registerWorkflow()
-      // Steps don't need registration - they're just regular functions called via DBOS.runStep()
+      // Step 3: Workflow is already registered via @DBOS.workflow() decorator
+      // Queue was created at module level before DBOS.launch()
+      // DBOS will automatically start consuming from the queue
 
       this.isRunning = true
 
-      logger.info('DBOS execution worker started')
+      logger.info({
+        queueName: QUEUE_NAME,
+        workflowClass: 'ExecutionWorkflows',
+        workflowMethod: 'executeChainGraph',
+      }, 'DBOS execution worker started')
 
       // Note: Unlike Kafka workers, DBOS automatically processes queued workflows
       // We don't need to manually call consumeTasks() - DBOS handles it internally
@@ -163,14 +179,12 @@ export class DBOSExecutionWorker {
   }
 
   /**
-   * Get the execution queue
+   * Get the queue name
    *
-   * This allows external code (e.g., tRPC API) to enqueue executions
-   *
-   * @returns The execution queue instance
+   * @returns The queue name used by this worker
    */
-  getQueue(): ExecutionQueue {
-    return this.queue
+  getQueueName(): string {
+    return QUEUE_NAME
   }
 
   /**

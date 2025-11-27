@@ -46,8 +46,8 @@ function suppressDBOSLogs(fn: () => Promise<void>): Promise<void> {
 
   // Suppress DBOS initialization logs (they contain sensitive data)
   // DBOS logs directly to console, bypassing our logger
-  console.log = () => {}
-  console.info = () => {}
+  console.log = () => { }
+  console.info = () => { }
   console.warn = (message: any) => {
     // Only show critical warnings from DBOS
     if (typeof message === 'string' && (
@@ -90,6 +90,8 @@ export async function initializeDBOS(): Promise<void> {
     const dbosConfig: DBOSConfig = {
       name: config.dbos.applicationName,
       systemDatabaseUrl: config.dbos.systemDatabaseUrl,
+      systemDatabasePoolSize: config.dbos.systemDatabasePoolSize,
+      applicationVersion: config.dbos.applicationVersion,
     }
 
     // Configure admin server (management UI)

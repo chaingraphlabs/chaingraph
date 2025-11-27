@@ -59,10 +59,12 @@ export class APITaskQueue implements ITaskQueue {
 
     try {
       // Use DBOSClient.enqueue() with explicit workflow metadata
+      // Since ExecutionWorkflows uses static methods with @DBOS.workflow() decorator,
+      // it's registered as a class-based workflow
       await client.enqueue(
         {
-          workflowName: 'executeChainGraph', // Function name from ExecutionWorkflow.ts:98
-          workflowClassName: '', // Empty for standalone functions (not class methods)
+          workflowName: 'executeChainGraph', // Method name from ExecutionWorkflows class
+          workflowClassName: 'ExecutionWorkflows', // Class name for class-based workflows
           queueName: 'chaingraph-executions',
           workflowID: task.executionId, // Use executionId as workflow ID
           workflowTimeoutMS: 35 * 60 * 1000, // 35 minute timeout

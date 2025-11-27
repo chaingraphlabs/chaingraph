@@ -7,8 +7,10 @@
  */
 
 import type { ExecutionTask } from '../../../types'
-import type { ExecutionQueue } from '../../dbos/queues/ExecutionQueue'
 import type { ITaskQueue, TaskHandler } from '../../interfaces/ITaskQueue'
+import { DBOS } from '@dbos-inc/dbos-sdk'
+import { QUEUE_NAME } from '../../dbos/queue'
+import { ExecutionWorkflows } from '../../dbos/workflows/ExecutionWorkflows'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('dbos-task-queue')
@@ -16,11 +18,12 @@ const logger = createLogger('dbos-task-queue')
 /**
  * DBOS-based implementation of ITaskQueue interface
  *
- * This implementation uses DBOS Durable Queues instead of Kafka for task distribution.
+ * This implementation uses DBOS Durable Queues with direct DBOS.startWorkflow() calls.
  * It provides a compatible interface with the existing ITaskQueue so it can be used
  * as a drop-in replacement in the system.
  *
- * Key Differences from Kafka Implementation:
+ * Key Features:
+ * - Uses @DBOS.workflow() decorated class method directly
  * - No manual offset management (DBOS handles it)
  * - No consumer groups (DBOS handles distribution)
  * - consumeTasks() is a no-op (DBOS auto-consumes via workflow registration)
@@ -28,28 +31,31 @@ const logger = createLogger('dbos-task-queue')
  *
  * Usage:
  * ```typescript
- * const queue = worker.getQueue();
- * const taskQueue = new DBOSTaskQueue(queue);
+ * const taskQueue = new DBOSTaskQueue();
  *
- * // Publish task
+ * // Publish task - uses DBOS.startWorkflow() directly
  * await taskQueue.publishTask(task);
  *
  * // Consumption is automatic - no need to call consumeTasks()
  * ```
  */
 export class DBOSTaskQueue implements ITaskQueue {
+  private readonly queueName: string
+
   /**
    * Create a DBOS task queue
    *
-   * @param executionQueue The DBOS execution queue instance
+   * @param queueName Optional queue name (defaults to 'chaingraph-executions')
    */
-  constructor(private readonly executionQueue: ExecutionQueue) {
-    logger.info('DBOS task queue initialized')
+  constructor(queueName: string = QUEUE_NAME) {
+    this.queueName = queueName
+    logger.info({ queueName }, 'DBOS task queue initialized')
   }
 
   /**
    * Publish an execution task to the DBOS queue
    *
+   * Uses DBOS.startWorkflow() directly with the ExecutionWorkflows class.
    * The task will be durably stored in PostgreSQL and eventually processed
    * by a worker. DBOS guarantees at-least-once execution.
    *
@@ -59,8 +65,16 @@ export class DBOSTaskQueue implements ITaskQueue {
     logger.debug({ executionId: task.executionId }, 'Publishing task to DBOS queue')
 
     try {
-      await this.executionQueue.enqueue(task)
-      // todo: return handle to await result if needed?
+      // Use DBOS.startWorkflow() directly with the class-based workflow
+      await DBOS.startWorkflow(ExecutionWorkflows, {
+        queueName: this.queueName,
+        workflowID: task.executionId, // Use execution ID as workflow ID for easy tracking
+        timeoutMS: 35 * 60 * 1000, // 35 minute timeout for long-running executions
+        enqueueOptions: {
+          deduplicationID: task.executionId, // Prevent duplicate executions via deduplication
+        },
+      }).executeChainGraph(task)
+
       logger.info({ executionId: task.executionId }, 'Task published to DBOS queue')
     } catch (error) {
       logger.error({
@@ -79,7 +93,7 @@ export class DBOSTaskQueue implements ITaskQueue {
    * to manually subscribe - DBOS handles consumption internally.
    *
    * The handler parameter is ignored because DBOS workflows are registered
-   * separately (see DBOSExecutionWorker.start()).
+   * via the @DBOS.workflow() decorator.
    *
    * @param _handler Task handler (unused in DBOS implementation)
    */
@@ -106,7 +120,7 @@ export class DBOSTaskQueue implements ITaskQueue {
    * implemented for DBOS. DBOS workflows are tracked in system tables,
    * but there's no simple API to count pending tasks.
    *
-   * @returns Undefined (not implemented)
+   * @returns 0 (not implemented)
    */
   async getPendingCount(): Promise<number> {
     // Not implemented - would require querying DBOS system tables

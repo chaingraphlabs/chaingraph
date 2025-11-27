@@ -101,6 +101,17 @@ export const config = {
     systemDatabaseUrl: process.env.DBOS_SYSTEM_DATABASE_URL || process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
 
     /**
+     * Connection pool size for the DBOS system database
+     */
+    systemDatabasePoolSize: Number.parseInt(process.env.DBOS_SYSTEM_DATABASE_POOL_SIZE || '10', 10),
+
+    /**
+     * Application version for DBOS workflows
+     * Used for versioning and migrations within DBOS
+     */
+    applicationVersion: process.env.DBOS_APPLICATION_VERSION || '1.0.0',
+
+    /**
      * DBOS Admin Server Configuration
      * The admin server provides a management interface for DBOS workflows
      * Set port to null/undefined to disable the admin server

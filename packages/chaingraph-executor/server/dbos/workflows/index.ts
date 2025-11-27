@@ -11,4 +11,7 @@ export {
   sendChildTaskToSpawner,
   startChildSpawner,
 } from './ChildSpawnerWorkflow'
-export { executionWorkflow } from './ExecutionWorkflow'
+
+export { ExecutionWorkflows } from './ExecutionWorkflows'
+
+export type { CommandController } from './ExecutionWorkflows'

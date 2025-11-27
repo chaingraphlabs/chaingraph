@@ -8,7 +8,7 @@
 
 import type { ExecutionTask } from '../../../types'
 import { DBOS } from '@dbos-inc/dbos-sdk'
-import { executionWorkflow } from './ExecutionWorkflow'
+import { ExecutionWorkflows } from './ExecutionWorkflows'
 
 /**
  * Child Spawner Workflow - Dedicated workflow for spawning child executions
@@ -30,7 +30,7 @@ import { executionWorkflow } from './ExecutionWorkflow'
  *   → while(true):
  *       → childTask = DBOS.recv('CHILD_TASKS', timeout)
  *       → if (childTask):
- *           → DBOS.startWorkflow(executionWorkflow, {workflowID: childTask.executionId})(childTask)
+ *           → DBOS.startWorkflow(ExecutionWorkflows).executeChainGraph(childTask)
  *           → Child workflow starts immediately
  * ```
  *
@@ -73,11 +73,11 @@ async function childSpawner(): Promise<void> {
       if (childTask) {
         DBOS.logger.info(`Spawning child execution: ${childTask.executionId}`)
 
-        // Start child execution workflow
+        // Start child execution workflow using new class-based workflow
         // workflowID = executionId for consistent routing
-        await DBOS.startWorkflow(executionWorkflow, {
+        await DBOS.startWorkflow(ExecutionWorkflows, {
           workflowID: childTask.executionId,
-        })(childTask)
+        }).executeChainGraph(childTask)
 
         tasksProcessed++
 
