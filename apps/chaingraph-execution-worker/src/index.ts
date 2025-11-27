@@ -6,35 +6,44 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { setMaxListeners } from 'node:events'
 import process from 'node:process'
 import { init } from '@badaitech/chaingraph-trpc/server'
-import { config } from './config'
 import { logger } from './logger'
 import { startWorker } from './worker'
 
-// Start the execution worker service
-// DBOS mode: Run as single process (no cluster)
-// DBOS handles concurrency internally via its queue system
+/**
+ * Chaingraph Execution Worker
+ *
+ * Single-process worker that uses DBOS for durable workflow execution.
+ * DBOS handles concurrency control and work distribution via PostgreSQL-backed queues.
+ *
+ * For horizontal scaling, deploy multiple replicas via Kubernetes.
+ * Each replica registers with the same DBOS queue and picks up work automatically.
+ *
+ * Environment variables:
+ * - ENABLE_DBOS_EXECUTION=true (required)
+ * - DATABASE_URL_EXECUTIONS - PostgreSQL connection for DBOS
+ * - DBOS_WORKER_CONCURRENCY - Max concurrent workflows per worker (default: 5)
+ * - DBOS_QUEUE_CONCURRENCY - Global max concurrent workflows (default: 100)
+ * - HEALTH_PORT - Health endpoint port (default: 9090)
+ */
 async function main() {
-  logger.info('🚀 Starting Chaingraph Execution Worker Service (DBOS Mode)')
+  logger.info('🚀 Starting Chaingraph Execution Worker')
   logger.info({
     pid: process.pid,
-    mode: config.executionMode,
+    nodeVersion: process.version,
     dbosWorkerConcurrency: process.env.DBOS_WORKER_CONCURRENCY || '5',
     dbosQueueConcurrency: process.env.DBOS_QUEUE_CONCURRENCY || '100',
-  }, 'Service configuration')
+  }, 'Worker configuration')
 
-  setMaxListeners(100000)
-  process.setMaxListeners(0)
-
+  // Initialize tRPC/auth dependencies
   await init()
 
-  // Start worker process
+  // Start the DBOS worker
   await startWorker()
 }
 
 main().catch((error) => {
-  logger.error({ error }, 'Failed to start service')
+  logger.error({ error }, 'Failed to start worker')
   process.exit(1)
 })

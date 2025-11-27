@@ -9,7 +9,7 @@
 import type { ExecutionTask } from '../../../types'
 import type { ExecutionResult } from '../types'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
-import { DBOS } from '@dbos-inc/dbos-sdk'
+import { ConfiguredInstance, DBOS } from '@dbos-inc/dbos-sdk'
 import SuperJSON from 'superjson'
 import { ExecutionStatus } from '../../../types'
 import { getExecutionStore } from '../../stores/execution-store'
@@ -58,7 +58,16 @@ export interface CommandController {
  * - The workflow is guaranteed to run to completion (at-least-once semantics)
  * - Idempotency is ensured through workflow ID (executionId)
  */
-export class ExecutionWorkflows {
+export class ExecutionWorkflows extends ConfiguredInstance {
+  constructor(name: string = 'ExecutionWorkflows') {
+    super(name)
+  }
+
+  initialize(): Promise<void> {
+    DBOS.logger.info(`ExecutionWorkflows initialized with DBOS configuration: ${this.name}`)
+    return Promise.resolve()
+  }
+
   /**
    * Execute a chaingraph flow with durable workflow orchestration
    *

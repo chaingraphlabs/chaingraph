@@ -49,9 +49,9 @@ export const config = {
     logLevel: (process.env.METRICS_LOG_LEVEL || 'debug') as 'debug' | 'info' | 'warn',
     sampling: process.env.METRICS_SAMPLING_ENABLED === 'true'
       ? {
-          enabled: true,
-          rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
-        }
+        enabled: true,
+        rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
+      }
       : undefined,
     batchSize: Number.parseInt(process.env.METRICS_BATCH_SIZE || '1', 10),
     flushInterval: Number.parseInt(process.env.METRICS_FLUSH_INTERVAL || '1000', 10),
@@ -98,7 +98,7 @@ export const config = {
      * Database URL for DBOS system tables
      * Defaults to the main executions database
      */
-    systemDatabaseUrl: process.env.DBOS_SYSTEM_DATABASE_URL || process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+    systemDatabaseUrl: process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
 
     /**
      * Connection pool size for the DBOS system database

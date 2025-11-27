@@ -7,6 +7,7 @@
  */
 
 import type { DBOSClient } from '@dbos-inc/dbos-sdk'
+import type { Pool } from 'pg'
 import type { ExecutionTask } from '../../../types'
 import type { ITaskQueue } from '../../interfaces'
 import { DBOSClient as DBOSClientClass } from '@dbos-inc/dbos-sdk'
@@ -30,9 +31,11 @@ const logger = createLogger('api-task-queue')
 export class APITaskQueue implements ITaskQueue {
   private client: DBOSClient | null = null
   private systemDatabaseUrl: string
+  private systemDatabasePool?: Pool
 
-  constructor(systemDatabaseUrl: string) {
+  constructor(systemDatabaseUrl: string, pgPool?: Pool) {
     this.systemDatabaseUrl = systemDatabaseUrl
+    this.systemDatabasePool = pgPool
   }
 
   /**
@@ -40,8 +43,14 @@ export class APITaskQueue implements ITaskQueue {
    */
   private async ensureClient(): Promise<DBOSClient> {
     if (!this.client) {
+      // Log masked connection info (safe for production logs)
+      logger.info({
+        database: maskDatabaseUrl(this.systemDatabaseUrl),
+      }, 'Initializing DBOSClient for API task queue')
+
       this.client = await DBOSClientClass.create({
         systemDatabaseUrl: this.systemDatabaseUrl,
+        systemDatabasePool: this.systemDatabasePool,
       })
       logger.info('DBOSClient initialized for API task queue')
     }
@@ -117,5 +126,22 @@ export class APITaskQueue implements ITaskQueue {
   async stopConsuming(): Promise<void> {
     // API mode does not consume tasks - nothing to stop
     logger.debug('stopConsuming called on APITaskQueue - this is a no-op in API mode')
+  }
+}
+
+/**
+ * Mask sensitive information in database URLs
+ * Hides password and shows only essential connection info
+ */
+function maskDatabaseUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    // Keep only the protocol, host, port, and database name
+    // Hide username and password
+    const host = parsed.host
+    const database = parsed.pathname
+    return `postgres://*****@${host}${database}`
+  } catch {
+    return 'postgres://*****@hidden'
   }
 }

@@ -36,7 +36,6 @@ DBOS (Database-Oriented Operating System) is a durable execution framework that 
 ```bash
 # Enable DBOS mode
 export ENABLE_DBOS_EXECUTION=true
-export DBOS_SYSTEM_DATABASE_URL=postgres://postgres@localhost:5432/chaingraph
 
 # Start services
 pnpm run dev
@@ -458,10 +457,6 @@ server/services/
 # Enable DBOS mode (default: false)
 ENABLE_DBOS_EXECUTION=true
 
-# Database for DBOS system tables
-# Stores workflow state, event streams, queues, and messages
-DBOS_SYSTEM_DATABASE_URL=postgres://postgres@localhost:5432/chaingraph
-
 # DBOS Conductor (optional, for production monitoring)
 # DBOS_CONDUCTOR_URL=https://conductor.dbos.dev
 DBOS_APPLICATION_NAME=chaingraph-executor
@@ -494,7 +489,7 @@ EXECUTION_MODE=distributed             # or 'local'
 export const config = {
   dbos: {
     enabled: process.env.ENABLE_DBOS_EXECUTION === 'true',
-    systemDatabaseUrl: process.env.DBOS_SYSTEM_DATABASE_URL || ...,
+    systemDatabaseUrl: process.env.DATABASE_URL_EXECUTIONS || ...,
     conductorURL: process.env.DBOS_CONDUCTOR_URL,
     applicationName: process.env.DBOS_APPLICATION_NAME || 'chaingraph-executor',
     conductorKey: process.env.DBOS_CONDUCTOR_KEY,

@@ -6,33 +6,32 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { cpus } from 'node:os'
 import process from 'node:process'
 import * as dotenv from 'dotenv'
 
 dotenv.config({ path: ['.env', '../../.env'] })
 
+/**
+ * Execution Worker Configuration
+ *
+ * DBOS handles concurrency internally via its WorkflowQueue settings:
+ * - workerConcurrency: Max concurrent executions per worker process
+ * - concurrency: Global max concurrent executions across all workers
+ *
+ * These are configured in the chaingraph-executor package's queue.ts
+ * via DBOS_WORKER_CONCURRENCY and DBOS_QUEUE_CONCURRENCY env vars.
+ */
 export const config = {
-  // Worker process configuration
-  workers: {
-    count: process.env.WORKER_COUNT === 'auto'
-      ? cpus().length
-      : Number.parseInt(process.env.WORKER_COUNT || String(cpus().length), 10),
-    restartDelay: Number.parseInt(process.env.WORKER_RESTART_DELAY || '1000', 10),
-    maxRestarts: Number.parseInt(process.env.MAX_WORKER_RESTARTS || '5', 10), // -1 for infinite restarts
-  },
+  // Execution mode (always 'dbos' for this worker)
+  executionMode: 'dbos' as const,
 
-  // Execution mode for the executor package
-  executionMode: (process.env.EXECUTION_MODE || 'dbos') as 'local' | 'dbos',
-
-  // Database URL for the executor package
+  // Database URLs
   databaseUrl: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
-  databaseUrlExecutions: process.env.DATABASE_URL_EXECUTIONS || 'postgres://postgres@localhost:5432/chaingraph',
+  databaseUrlExecutions: process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
 
-  // Health and monitoring
-  monitoring: {
-    healthPort: Number.parseInt(process.env.HEALTH_PORT || '9090', 10),
-    heartbeatInterval: Number.parseInt(process.env.HEARTBEAT_INTERVAL || '5000', 10),
+  // Health server for Kubernetes liveness/readiness probes
+  health: {
+    port: Number.parseInt(process.env.HEALTH_PORT || '9090', 10),
   },
 
   // Logging
