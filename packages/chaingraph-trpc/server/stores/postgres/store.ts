@@ -8,7 +8,7 @@
 
 import type { Flow, FlowMetadata, JSONValue } from '@badaitech/chaingraph-types'
 import type { DBType } from '../../context'
-import { asc, desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import { flowsTable } from './schema'
 
@@ -78,7 +78,7 @@ export type ListOrderBy
 
 export async function listFlows<T>(
   db: DBType,
-  ownerId: string,
+  ownerIds: string | string[],
   orderBy: ListOrderBy,
   limit: number,
   deserialize: (data: JSONValue) => T,
@@ -90,12 +90,15 @@ export async function listFlows<T>(
     updatedAtAsc: asc(flowsTable.updatedAt),
   }
 
+  // Build WHERE clause: single ID or array for backward compatibility
+  const whereClause = Array.isArray(ownerIds)
+    ? inArray(flowsTable.ownerId, ownerIds)
+    : eq(flowsTable.ownerId, ownerIds)
+
   const result = await db
     .select()
     .from(flowsTable)
-    .where(
-      eq(flowsTable.ownerId, ownerId),
-    )
+    .where(whereClause)
     .orderBy(orderByMap[orderBy])
     .limit(limit)
 
@@ -106,7 +109,7 @@ export async function listFlows<T>(
 
 export async function listFlowsMetadata(
   db: DBType,
-  ownerId: string,
+  ownerIds: string | string[],
   orderBy: ListOrderBy,
   limit: number,
 ): Promise<FlowMetadata[]> {
@@ -117,14 +120,17 @@ export async function listFlowsMetadata(
     updatedAtAsc: asc(flowsTable.updatedAt),
   }
 
+  // Build WHERE clause: single ID or array for backward compatibility
+  const whereClause = Array.isArray(ownerIds)
+    ? inArray(flowsTable.ownerId, ownerIds)
+    : eq(flowsTable.ownerId, ownerIds)
+
   const result = await db
     .select({
       metadata: sql<FlowMetadata>`${flowsTable.data}->'metadata'`,
     })
     .from(flowsTable)
-    .where(
-      eq(flowsTable.ownerId, ownerId),
-    )
+    .where(whereClause)
     .orderBy(orderByMap[orderBy])
     .limit(limit)
 

@@ -20,6 +20,7 @@ import { initializeContext } from './context'
 import { InMemoryMCPStore, PostgresMCPStore } from './mcp/stores'
 import { DBFlowStore } from './stores/flowStore/dbFlowStore'
 import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
+import { PgOwnershipResolver } from './stores/ownership'
 import { PgUserStore } from './stores/userStore'
 
 export async function init() {
@@ -114,7 +115,8 @@ export async function init() {
 
     console.log('✅ All required user management tables exist')
 
-    flowStore = new DBFlowStore(db)
+    const ownershipResolver = new PgOwnershipResolver(userStore)
+    flowStore = new DBFlowStore(db, true, NodeRegistry.getInstance(), ownershipResolver)
     mcpStore = new PostgresMCPStore(db)
   } catch (error) {
     console.error('DB connection failed, using in-memory store. If you would like to use a database, please set DATABASE_URL environment variable.')

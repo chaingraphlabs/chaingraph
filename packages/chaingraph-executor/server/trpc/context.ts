@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IFlowStore, Session } from '@badaitech/chaingraph-trpc/server'
+import type { IFlowStore, IOwnershipResolver, Session } from '@badaitech/chaingraph-trpc/server'
 import type { DBOSClient } from '@dbos-inc/dbos-sdk'
 import type { CreateHTTPContextOptions } from '@trpc/server/adapters/standalone'
 import type { IExecutionService } from '../../server/services/IExecutionService'
@@ -25,6 +25,7 @@ export interface ExecutorContext {
   eventBus: IEventBus
   taskQueue: ITaskQueue
   flowStore: IFlowStore
+  ownershipResolver: IOwnershipResolver
   dbosClient?: DBOSClient // Optional: only present in API mode
 }
 
@@ -58,6 +59,7 @@ export async function createContext(opts: CreateHTTPContextOptions): Promise<Exe
     flowStore: services.flowStore,
     eventBus: services.eventBus,
     taskQueue: services.taskQueue,
+    ownershipResolver: services.ownershipResolver,
     dbosClient: services.dbosClient,
   }
 }

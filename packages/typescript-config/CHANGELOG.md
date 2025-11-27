@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.11
+
+### Patch Changes
+
+- fix: backward-compatible user ID resolution
+
 ## 0.6.10
 
 ### Patch Changes

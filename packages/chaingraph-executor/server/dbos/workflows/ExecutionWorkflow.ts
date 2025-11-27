@@ -339,5 +339,6 @@ async function executeChainGraph(task: ExecutionTask): Promise<ExecutionResult> 
 
 /**
  * Registered workflow - use this to start executions
+ * Explicitly named 'executeChainGraph' to match DBOSClient.enqueue() calls
  */
-export const executionWorkflow = DBOS.registerWorkflow(executeChainGraph)
+export const executionWorkflow = DBOS.registerWorkflow(executeChainGraph, { name: 'executeChainGraph' })

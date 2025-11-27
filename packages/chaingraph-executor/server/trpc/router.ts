@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { IOwnershipResolver } from '@badaitech/chaingraph-trpc/server'
 import type { ExecutionRow } from '../../server/stores/postgres/schema'
 import type { ExecutionTask } from '../../types'
 import type { createContext } from './context'
@@ -28,6 +29,26 @@ import { createLogger } from '../utils/logger'
 const logger = createLogger('trpc-router')
 
 const defaultExecutionMaxRetries = 3
+
+/**
+ * Check if user owns a flow (supports both old and new user IDs)
+ * Provides backward compatibility for flows created before user migration
+ *
+ * @param flowOwnerID Flow owner ID (may be internal USR... or old ArchAI ID)
+ * @param userId Current user ID (internal USR... format)
+ * @param ownershipResolver IOwnershipResolver instance for ID resolution
+ * @returns true if user owns the flow
+ */
+async function isUserOwnerOfFlow(
+  flowOwnerID: string | undefined,
+  userId: string | undefined,
+  ownershipResolver: IOwnershipResolver,
+): Promise<boolean> {
+  if (!flowOwnerID || !userId)
+    return false
+
+  return await ownershipResolver.isOwner(userId, flowOwnerID)
+}
 
 // Initialize tRPC
 const t = initTRPC.context<typeof createContext>().create({
@@ -157,13 +178,18 @@ export const executionRouter = router({
         })
       }
 
-      if (ctx.session.user?.id !== flowMetadata.ownerID) {
-        if (ctx.session.user?.role !== 'admin') {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'User does not own the flow',
-          })
-        }
+      // Check ownership with backward compatibility (supports old ArchAI IDs)
+      const isOwner = await isUserOwnerOfFlow(
+        flowMetadata.ownerID,
+        ctx.session.user?.id,
+        ctx.ownershipResolver,
+      )
+
+      if (!isOwner && ctx.session.user?.role !== 'admin') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'User does not own the flow',
+        })
       }
 
       // Create execution record
@@ -514,13 +540,18 @@ export const executionRouter = router({
         })
       }
 
-      if (ctx.session.user?.id !== flowMetadata.ownerID) {
-        if (ctx.session.user?.role !== 'admin') {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'User does not own the flow',
-          })
-        }
+      // Check ownership with backward compatibility (supports old ArchAI IDs)
+      const isOwner = await isUserOwnerOfFlow(
+        flowMetadata.ownerID,
+        ctx.session.user?.id,
+        ctx.ownershipResolver,
+      )
+
+      if (!isOwner && ctx.session.user?.role !== 'admin') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'User does not own the flow',
+        })
       }
 
       // Get all root executions for the flow
