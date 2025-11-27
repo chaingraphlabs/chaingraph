@@ -6,13 +6,20 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { WorkflowQueue } from '@dbos-inc/dbos-sdk'
+import { DBOS, WorkflowQueue } from '@dbos-inc/dbos-sdk'
 import { config } from '../utils/config'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('dbos-queue')
 
 export const QUEUE_NAME = 'chaingraph-executions'
+
+// CRITICAL: Check if DBOS is already initialized
+// If true, the queue won't be registered for dequeue!
+const dbosAlreadyInitialized = DBOS.isInitialized()
+if (dbosAlreadyInitialized) {
+  logger.error('CRITICAL: DBOS is already initialized! Queue will NOT be used for dequeue!')
+}
 
 /**
  * Module-level workflow queue for chaingraph executions
@@ -28,8 +35,11 @@ export const executionQueue = new WorkflowQueue(QUEUE_NAME, {
   concurrency: config.dbos.queueConcurrency ?? 100,
 })
 
-logger.debug({
+// Log at INFO level so it's visible in production logs
+// This helps verify the queue was created before DBOS.launch()
+logger.info({
   queueName: QUEUE_NAME,
   workerConcurrency: config.dbos.workerConcurrency ?? 5,
   concurrency: config.dbos.queueConcurrency ?? 100,
-}, 'Execution queue created at module level')
+  dbosInitializedBeforeQueueCreation: dbosAlreadyInitialized,
+}, 'Execution queue created at module level (BEFORE DBOS.launch)')
