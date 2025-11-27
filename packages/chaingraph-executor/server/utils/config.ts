@@ -49,9 +49,9 @@ export const config = {
     logLevel: (process.env.METRICS_LOG_LEVEL || 'debug') as 'debug' | 'info' | 'warn',
     sampling: process.env.METRICS_SAMPLING_ENABLED === 'true'
       ? {
-        enabled: true,
-        rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
-      }
+          enabled: true,
+          rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
+        }
       : undefined,
     batchSize: Number.parseInt(process.env.METRICS_BATCH_SIZE || '1', 10),
     flushInterval: Number.parseInt(process.env.METRICS_FLUSH_INTERVAL || '1000', 10),

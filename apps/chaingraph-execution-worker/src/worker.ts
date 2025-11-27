@@ -76,7 +76,8 @@ export async function startWorker(): Promise<void> {
  * Gracefully shutdown the worker
  */
 async function gracefulShutdown(signal: string): Promise<void> {
-  if (isShuttingDown) return
+  if (isShuttingDown)
+    return
   isShuttingDown = true
 
   const workerId = process.env.WORKER_ID
