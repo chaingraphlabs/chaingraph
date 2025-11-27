@@ -265,7 +265,10 @@ export async function createServicesForAPI(): Promise<ServiceInstances> {
   const eventBus = new DBOSEventBus(streamBridge)
 
   // API-only task queue - uses DBOSClient to enqueue
-  const taskQueue = new APITaskQueue(config.dbos.systemDatabaseUrl)
+  const taskQueue = new APITaskQueue(
+    config.dbos.systemDatabaseUrl,
+    pgPool,
+  )
 
   // Get the DBOSClient instance to pass to context
   const dbosClient = await taskQueue.getClient()
@@ -286,7 +289,7 @@ export async function createServicesForAPI(): Promise<ServiceInstances> {
     executionService,
     authService,
     ownershipResolver,
-    dbosClient, // <-- Add this for tRPC context
+    dbosClient,
     // NO dbosWorker - API doesn't process tasks!
   }
 
@@ -384,16 +387,6 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
   // Initialize steps with dependencies
   initializeUpdateStatusSteps(executionStore)
 
-  // Create DBOS worker with the pre-created queue
-  const dbosWorker = new DBOSExecutionWorker(
-    executionStore,
-    null as any, // Temporary - will be set via initializeExecuteFlowStep
-    {
-      concurrency: config.dbos.queueConcurrency,
-      workerConcurrency: config.dbos.workerConcurrency,
-    },
-  )
-
   // Create DBOS task queue wrapper (uses queue name, not ExecutionQueue)
   const taskQueue = new DBOSTaskQueue(QUEUE_NAME)
 
@@ -403,6 +396,16 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
     eventBus,
     taskQueue,
     userStore,
+  )
+
+  // Create DBOS worker with the pre-created queue
+  const dbosWorker = new DBOSExecutionWorker(
+    executionStore,
+    executionService,
+    {
+      concurrency: config.dbos.queueConcurrency,
+      workerConcurrency: config.dbos.workerConcurrency,
+    },
   )
 
   // Initialize the execution step with service and store

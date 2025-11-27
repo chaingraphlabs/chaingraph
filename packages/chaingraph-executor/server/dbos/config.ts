@@ -118,8 +118,8 @@ export async function initializeDBOS(): Promise<void> {
     // TODO: Re-enable suppressDBOSLogs after debugging queue registration issue
     // await suppressDBOSLogs(async () => {
     await DBOS.launch({
-      conductorURL: config.dbos.conductorURL,
-      conductorKey: config.dbos.conductorKey,
+      // conductorURL: config.dbos.conductorURL,
+      // conductorKey: config.dbos.conductorKey,
     })
     // })
 

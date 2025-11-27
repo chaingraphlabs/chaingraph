@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.14
+
+### Patch Changes
+
+- e150365: refactor: simplify DBOS configuration and remove legacy components
+
 ## 0.6.13
 
 ### Patch Changes

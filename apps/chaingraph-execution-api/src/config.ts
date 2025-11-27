@@ -13,12 +13,11 @@ dotenv.config({ path: ['.env', '../../.env'] })
 
 // Calculate port based on base port and PM2 instance ID
 const basePort = Number.parseInt(process.env.PORT || '4021', 10)
-const instanceId = Number.parseInt(process.env.NODE_APP_INSTANCE || '0', 10)
 
 export const config = {
   // Server configuration
-  port: basePort + instanceId, // PM2 will set NODE_APP_INSTANCE for each instance
   host: process.env.HOST || 'localhost',
+  port: basePort,
 
   // Database URL for the executor package
   databaseUrl: process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',

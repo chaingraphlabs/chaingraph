@@ -391,7 +391,6 @@ DATABASE_URL_EXECUTIONS=postgres://postgres:postgres@127.0.0.1:5432/postgres?ssl
 
 # DBOS Execution (recommended)
 ENABLE_DBOS_EXECUTION=true
-DBOS_SYSTEM_DATABASE_URL=postgres://postgres@localhost:5432/chaingraph
 DBOS_ADMIN_ENABLED=true
 DBOS_ADMIN_PORT=3022
 DBOS_QUEUE_CONCURRENCY=100

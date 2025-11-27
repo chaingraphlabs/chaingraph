@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.14
+
+### Patch Changes
+
+- e150365: refactor: simplify DBOS configuration and remove legacy components
+- Updated dependencies [e150365]
+  - @badaitech/badai-api@0.6.14
+
 ## 0.6.13
 
 ### Patch Changes

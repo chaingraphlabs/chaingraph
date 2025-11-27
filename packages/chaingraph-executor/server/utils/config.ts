@@ -98,7 +98,7 @@ export const config = {
      * Database URL for DBOS system tables
      * Defaults to the main executions database
      */
-    systemDatabaseUrl: process.env.DBOS_SYSTEM_DATABASE_URL || process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
+    systemDatabaseUrl: process.env.DATABASE_URL_EXECUTIONS || process.env.DATABASE_URL || 'postgres://postgres@localhost:5432/chaingraph',
 
     /**
      * Connection pool size for the DBOS system database
