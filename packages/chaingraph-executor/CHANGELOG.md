@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-executor
 
+## 0.6.15
+
+### Patch Changes
+
+- 5faf86d: feat: add hardcoded version constants for DBOS application and queue name
+- Updated dependencies [5faf86d]
+  - @badaitech/chaingraph-nodes@0.6.15
+  - @badaitech/chaingraph-types@0.6.15
+  - @badaitech/chaingraph-trpc@0.6.15
+
 ## 0.6.14
 
 ### Patch Changes
