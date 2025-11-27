@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.15
+
+### Patch Changes
+
+- 5faf86d: feat: add hardcoded version constants for DBOS application and queue name
+- Updated dependencies [5faf86d]
+  - @badaitech/badai-api@0.6.15
+
 ## 0.6.14
 
 ### Patch Changes

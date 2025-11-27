@@ -9,6 +9,7 @@
 import process from 'node:process'
 import { authConfig } from '@badaitech/chaingraph-trpc/server'
 import * as dotenv from 'dotenv'
+import { DBOS_APPLICATION_VERSION } from '../dbos/version'
 
 dotenv.config()
 
@@ -107,9 +108,10 @@ export const config = {
 
     /**
      * Application version for DBOS workflows
-     * Used for versioning and migrations within DBOS
+     * HARDCODED to ensure API and Worker use the same version.
+     * DO NOT use env vars - they can drift between deployments.
      */
-    applicationVersion: process.env.DBOS_APPLICATION_VERSION || '1.0.0',
+    applicationVersion: DBOS_APPLICATION_VERSION,
 
     /**
      * DBOS Admin Server Configuration

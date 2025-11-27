@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.15
+
+### Patch Changes
+
+- 5faf86d: feat: add hardcoded version constants for DBOS application and queue name
+
 ## 0.6.14
 
 ### Patch Changes

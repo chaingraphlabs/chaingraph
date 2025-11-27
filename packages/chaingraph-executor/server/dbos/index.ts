@@ -24,8 +24,12 @@ export {
   updateToFailed,
   updateToRunning,
 } from './steps'
+
 // Types
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './types'
+
+// Version constants (HARDCODED - must match between API and Worker)
+export { DBOS_APPLICATION_VERSION, DBOS_QUEUE_NAME } from './version'
 
 // Child spawner workflow (optional - for spawning from steps)
 export {
