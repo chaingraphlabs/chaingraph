@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.12
+
+### Patch Changes
+
+- f1f81b9: refactor: simplify DBOS layer by removing Kafka legacy wrappers
+
 ## 0.6.11
 
 ### Patch Changes
