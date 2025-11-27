@@ -9,10 +9,12 @@
 import type { DBType, IFlowStore } from '@badaitech/chaingraph-trpc/server'
 import type { Flow } from '@badaitech/chaingraph-types'
 import type { FlowLoadMetric } from '../metrics'
-import { DBFlowStore } from '@badaitech/chaingraph-trpc/server'
+import { DBFlowStore, PgOwnershipResolver } from '@badaitech/chaingraph-trpc/server'
+import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { createMetricsTracker, MetricsHelper, MetricStages } from '../metrics'
 import { getDatabaseMain } from '../utils/db'
 import { createLogger } from '../utils/logger'
+import { getUserStore } from './user-store'
 
 const logger = createLogger('flow-store')
 
@@ -27,7 +29,9 @@ export async function getFlowStore(
 ): Promise<IFlowStore> {
   if (!flowStore) {
     const _db = db ?? await getDatabaseMain()
-    flowStore = new DBFlowStore(_db, false)
+    const userStore = await getUserStore()
+    const ownershipResolver = new PgOwnershipResolver(userStore)
+    flowStore = new DBFlowStore(_db, false, NodeRegistry.getInstance(), ownershipResolver)
   }
   return flowStore
 }

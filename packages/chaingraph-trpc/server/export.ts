@@ -30,9 +30,14 @@ export { init } from './init'
 export * from './mcp'
 export * from './procedures'
 export * from './stores/flowStore'
+// Ownership resolver
+export type { IOwnershipResolver } from './stores/ownership'
+export { NoOpOwnershipResolver, PgOwnershipResolver } from './stores/ownership'
 export * from './stores/postgres'
+
 export { PgUserStore } from './stores/userStore'
 export type { DBUser, DemoSessionResult, ExternalAccount, ExternalAccountData, UserStore } from './stores/userStore'
+
 export * from './trpc'
 export {
   FORK_ALLOW_RULE,

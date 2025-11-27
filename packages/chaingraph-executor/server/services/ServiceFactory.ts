@@ -6,11 +6,11 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AuthService, IFlowStore } from '@badaitech/chaingraph-trpc/server'
+import type { AuthService, IFlowStore, IOwnershipResolver } from '@badaitech/chaingraph-trpc/server'
 import type { DBOSClient } from '@dbos-inc/dbos-sdk'
 import type { IEventBus, ITaskQueue } from '../interfaces'
 import type { IExecutionStore } from '../stores/interfaces/IExecutionStore'
-import { createAuthService } from '@badaitech/chaingraph-trpc/server'
+import { createAuthService, PgOwnershipResolver } from '@badaitech/chaingraph-trpc/server'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { Pool } from 'pg'
 import { ExecutionService } from '../../server/services/ExecutionService'
@@ -40,6 +40,7 @@ export interface ServiceInstances {
   executionService: ExecutionService
   flowStore: IFlowStore
   authService: AuthService
+  ownershipResolver: IOwnershipResolver
   dbosWorker?: DBOSExecutionWorker // Optional: only present when DBOS is enabled
   dbosClient?: DBOSClient // Optional: only present in API mode
 }
@@ -146,6 +147,8 @@ export async function createServices(
     // Step 10: Initialize the execution step with service and store
     initializeExecuteFlowStep(executionService, executionStore)
 
+    const ownershipResolver = new PgOwnershipResolver(userStore)
+
     serviceInstances = {
       eventBus,
       taskQueue,
@@ -153,6 +156,7 @@ export async function createServices(
       flowStore,
       executionService,
       authService,
+      ownershipResolver,
       dbosWorker,
     }
 
@@ -163,6 +167,8 @@ export async function createServices(
 
     const eventBus = new InMemoryEventBus()
     const taskQueue = new InMemoryTaskQueue()
+
+    const ownershipResolver = new PgOwnershipResolver(userStore)
 
     serviceInstances = {
       eventBus,
@@ -176,6 +182,7 @@ export async function createServices(
         userStore,
       ),
       authService,
+      ownershipResolver,
     }
   }
 
@@ -201,9 +208,10 @@ export async function createServicesForAPI(): Promise<ServiceInstances> {
   logger.info('Creating services for API (client-only mode)')
 
   const executionStore = await getExecutionStore()
-  const flowStore = await getFlowStore()
   const userStore = await getUserStore()
   const authService = createAuthService(userStore)
+  const ownershipResolver = new PgOwnershipResolver(userStore)
+  const flowStore = await getFlowStore()
 
   // NO initializeDBOS() call - we use DBOSClient instead!
   // This prevents the API from launching a full DBOS runtime
@@ -276,6 +284,7 @@ export async function createServicesForAPI(): Promise<ServiceInstances> {
     flowStore,
     executionService,
     authService,
+    ownershipResolver,
     dbosClient, // <-- Add this for tRPC context
     // NO dbosWorker - API doesn't process tasks!
   }
@@ -400,6 +409,8 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
   // Initialize the execution step with service and store
   initializeExecuteFlowStep(executionService, executionStore)
 
+  const ownershipResolver = new PgOwnershipResolver(userStore)
+
   serviceInstances = {
     eventBus,
     taskQueue,
@@ -407,6 +418,7 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
     flowStore,
     executionService,
     authService,
+    ownershipResolver,
     dbosWorker,
   }
 

@@ -8,6 +8,7 @@
 
 import type { FlowMetadata } from '@badaitech/chaingraph-types'
 import type { DBType } from '../../context'
+import type { IOwnershipResolver } from '../ownership'
 import type { ListOrderBy } from '../postgres/store'
 import type { IFlowStore } from './types'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
@@ -37,6 +38,7 @@ export class DBFlowStore implements IFlowStore {
     db: DBType,
     private cacheEnabled: boolean = true,
     private nodeRegistry: NodeRegistry = NodeRegistry.getInstance(),
+    private ownershipResolver?: IOwnershipResolver,
   ) {
     this.db = db
   }
@@ -107,6 +109,12 @@ export class DBFlowStore implements IFlowStore {
 
   /**
    * Lists all available flows ordered by updatedAt desc
+   * Supports both new internal user IDs (USR...) and old external IDs (ArchAI IDs)
+   * for backward compatibility with pre-migration flows
+   *
+   * @param ownerId User identifier (internal USR... format)
+   * @param orderBy Sort order
+   * @param limit Maximum number of flows to return
    * @returns Array of flows
    */
   async listFlows(
@@ -114,10 +122,17 @@ export class DBFlowStore implements IFlowStore {
     orderBy: ListOrderBy,
     limit: number,
   ): Promise<FlowMetadata[]> {
+    // Get all possible owner IDs (internal + external for backward compatibility)
+    let ownerIds: string[] = [ownerId]
+
+    if (this.ownershipResolver) {
+      ownerIds = await this.ownershipResolver.getAllUserIds(ownerId)
+    }
+
     // load all flows from DB and cache which is not in cache
     const flows = await listFlowsMetadata(
       this.db,
-      ownerId,
+      ownerIds, // Pass array of IDs for dual lookup
       orderBy,
       limit || defaultFlowLimit,
     )
@@ -162,8 +177,12 @@ export class DBFlowStore implements IFlowStore {
 
   /**
    * Checks if user has access to flow
+   * Supports both new internal user IDs (USR...) and old external IDs (ArchAI IDs)
+   * for backward compatibility with pre-migration flows
+   *
    * @param flowId Flow identifier
-   * @param userId User identifier
+   * @param userId User identifier (internal USR... format)
+   * @param cacheEnabled Whether to use cache
    * @returns true if user has access, false otherwise
    */
   async hasAccess(flowId: string, userId: string, cacheEnabled = true): Promise<boolean> {
@@ -192,7 +211,12 @@ export class DBFlowStore implements IFlowStore {
       return false
     }
 
-    // Check if user has access to flow
+    // Use ownership resolver if available (supports both new and old user IDs)
+    if (this.ownershipResolver && flow.metadata.ownerID) {
+      return await this.ownershipResolver.isOwner(userId, flow.metadata.ownerID)
+    }
+
+    // Fallback: Direct match only (no backward compatibility)
     const hasAccess = flow.metadata.ownerID === userId
 
     // TODO: add another checks for access for example if flow is public or user is in group
