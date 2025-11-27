@@ -21,8 +21,9 @@ import {
   initializeExecuteFlowStep,
   initializeUpdateStatusSteps,
 } from '../dbos'
-import { getOrCreateQueue } from '../dbos/queues/ExecutionQueue'
-import { executionWorkflow } from '../dbos/workflows/ExecutionWorkflow'
+import { executionQueue, QUEUE_NAME } from '../dbos/queue'
+// Import new class-based workflow and queue
+import { ExecutionWorkflows } from '../dbos/workflows/ExecutionWorkflows'
 import { APITaskQueue, DBOSEventBus, DBOSTaskQueue } from '../implementations/dbos'
 import { PostgreSQLMigrationManager } from '../implementations/dbos/migrations/PostgreSQLMigrations'
 import { StreamBridgeBuilder } from '../implementations/dbos/streaming'
@@ -133,8 +134,8 @@ export async function createServices(
       },
     )
 
-    // Step 8: Create DBOS task queue wrapper
-    const taskQueue = new DBOSTaskQueue(dbosWorker.getQueue())
+    // Step 8: Create DBOS task queue wrapper (uses queue name, not ExecutionQueue)
+    const taskQueue = new DBOSTaskQueue(QUEUE_NAME)
 
     // Step 9: Create execution service with task queue
     const executionService = new ExecutionService(
@@ -312,25 +313,23 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
   const userStore = await getUserStore()
   const authService = createAuthService(userStore)
 
-  // CRITICAL: Ensure workflow is registered BEFORE DBOS.launch()
-  // This import is needed because we only import getOrCreateQueue() function
-  // Without this, tree-shaking would remove the executionWorkflow import
-  if (!executionWorkflow) {
-    throw new Error('ExecutionWorkflow failed to load - workflow not registered')
+  // CRITICAL: Ensure workflow class is imported BEFORE DBOS.launch()
+  // This import ensures tree-shaking doesn't remove the workflow registration
+  if (!ExecutionWorkflows.executeChainGraph) {
+    throw new Error('ExecutionWorkflows.executeChainGraph not found - workflow not registered')
   }
 
-  // CRITICAL: Create queue BEFORE DBOS.launch()
-  // This ensures the worker can dequeue tasks
-  const queue = getOrCreateQueue({
-    concurrency: config.dbos.queueConcurrency,
-    workerConcurrency: config.dbos.workerConcurrency,
-  })
+  // CRITICAL: Ensure queue is created BEFORE DBOS.launch()
+  // The queue is created at module level in queue.ts when imported
+  if (!executionQueue) {
+    throw new Error('Execution queue not created - check queue.ts import')
+  }
 
   logger.info({
-    concurrency: config.dbos.queueConcurrency,
-    workerConcurrency: config.dbos.workerConcurrency,
-    workflowRegistered: true,
-  }, 'Workflow queue created before DBOS initialization')
+    queueName: QUEUE_NAME,
+    workflowClass: 'ExecutionWorkflows',
+    workflowMethod: 'executeChainGraph',
+  }, 'Workflow and queue ready before DBOS initialization')
 
   // NOW launch DBOS - queue will be registered for dequeue
   await initializeDBOS()
@@ -395,8 +394,8 @@ export async function createServicesForWorker(): Promise<ServiceInstances> {
     },
   )
 
-  // Create DBOS task queue wrapper
-  const taskQueue = new DBOSTaskQueue(dbosWorker.getQueue())
+  // Create DBOS task queue wrapper (uses queue name, not ExecutionQueue)
+  const taskQueue = new DBOSTaskQueue(QUEUE_NAME)
 
   // Create execution service with task queue
   const executionService = new ExecutionService(

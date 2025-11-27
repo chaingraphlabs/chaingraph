@@ -12,8 +12,8 @@ export { initializeDBOS, isDBOSLaunched, shutdownDBOS } from './config'
 // Core worker
 export { DBOSExecutionWorker } from './DBOSExecutionWorker'
 
-// Queue management
-export { ExecutionQueue } from './queues'
+// Queue management (new simplified exports)
+export { executionQueue, QUEUE_NAME } from './queue'
 
 // Steps (functional API)
 export {
@@ -24,14 +24,15 @@ export {
   updateToFailed,
   updateToRunning,
 } from './steps'
-
 // Types
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './types'
 
-// Workflows (registered workflow function)
+// Child spawner workflow (optional - for spawning from steps)
 export {
   childSpawnerWorkflow,
-  executionWorkflow,
+  ExecutionWorkflows,
   sendChildTaskToSpawner,
   startChildSpawner,
 } from './workflows'
+
+export type { CommandController } from './workflows'

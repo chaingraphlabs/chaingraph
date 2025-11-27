@@ -12,16 +12,19 @@ export * from '../types'
 export {
   DBOSExecutionWorker,
   executeFlowAtomic,
-  ExecutionQueue,
-  executionWorkflow,
+  executionQueue,
+  ExecutionWorkflows,
   initializeDBOS,
   initializeExecuteFlowStep,
   initializeUpdateStatusSteps,
+  QUEUE_NAME,
   shutdownDBOS,
   updateToCompleted,
   updateToFailed,
   updateToRunning,
 } from './dbos'
+
+export type { CommandController } from './dbos'
 
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './dbos'
 export { APITaskQueue, DBOSChildSpawnerQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
