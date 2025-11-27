@@ -11,6 +11,7 @@ import type { Pool } from 'pg'
 import type { ExecutionTask } from '../../../types'
 import type { ITaskQueue } from '../../interfaces'
 import { DBOSClient as DBOSClientClass } from '@dbos-inc/dbos-sdk'
+import { DBOS_APPLICATION_VERSION, DBOS_QUEUE_NAME } from '../../dbos/version'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('api-task-queue')
@@ -74,10 +75,11 @@ export class APITaskQueue implements ITaskQueue {
         {
           workflowName: 'executeChainGraph', // Method name from ExecutionWorkflows class
           workflowClassName: 'ExecutionWorkflows', // Class name for class-based workflows
-          queueName: 'chaingraph-executions',
+          queueName: DBOS_QUEUE_NAME,
           workflowID: task.executionId, // Use executionId as workflow ID
           workflowTimeoutMS: 35 * 60 * 1000, // 35 minute timeout
           deduplicationID: task.executionId, // Prevent duplicates
+          appVersion: DBOS_APPLICATION_VERSION, // CRITICAL: Must match worker version for dequeue
         },
         task, // Workflow argument
       )

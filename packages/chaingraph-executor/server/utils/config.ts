@@ -9,6 +9,7 @@
 import process from 'node:process'
 import { authConfig } from '@badaitech/chaingraph-trpc/server'
 import * as dotenv from 'dotenv'
+import { DBOS_APPLICATION_VERSION } from '../dbos/version'
 
 dotenv.config()
 
@@ -49,9 +50,9 @@ export const config = {
     logLevel: (process.env.METRICS_LOG_LEVEL || 'debug') as 'debug' | 'info' | 'warn',
     sampling: process.env.METRICS_SAMPLING_ENABLED === 'true'
       ? {
-          enabled: true,
-          rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
-        }
+        enabled: true,
+        rate: Number.parseFloat(process.env.METRICS_SAMPLING_RATE || '1.0'),
+      }
       : undefined,
     batchSize: Number.parseInt(process.env.METRICS_BATCH_SIZE || '1', 10),
     flushInterval: Number.parseInt(process.env.METRICS_FLUSH_INTERVAL || '1000', 10),
@@ -107,9 +108,10 @@ export const config = {
 
     /**
      * Application version for DBOS workflows
-     * Used for versioning and migrations within DBOS
+     * HARDCODED to ensure API and Worker use the same version.
+     * DO NOT use env vars - they can drift between deployments.
      */
-    applicationVersion: process.env.DBOS_APPLICATION_VERSION || '1.0.0',
+    applicationVersion: DBOS_APPLICATION_VERSION,
 
     /**
      * DBOS Admin Server Configuration
