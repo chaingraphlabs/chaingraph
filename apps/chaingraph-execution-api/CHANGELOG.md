@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.13
+
+### Patch Changes
+
+- a715198: Debug DBOS
+- Updated dependencies [a715198]
+  - @badaitech/chaingraph-executor@0.6.13
+  - @badaitech/chaingraph-nodes@0.6.13
+  - @badaitech/chaingraph-types@0.6.13
+  - @badaitech/chaingraph-trpc@0.6.13
+  - @badaitech/badai-api@0.6.13
+
 ## 0.6.12
 
 ### Patch Changes

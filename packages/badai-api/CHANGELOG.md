@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.13
+
+### Patch Changes
+
+- a715198: Debug DBOS
+
 ## 0.6.12
 
 ### Patch Changes
