@@ -54,6 +54,9 @@ function suppressDBOSLogs(fn: () => Promise<void>): Promise<void> {
       message.includes('Unable to start DBOS admin server')
       || message.includes('error')
       || message.includes('Error')
+      || message.includes('queue') // CRITICAL: Show queue registration warnings!
+      || message.includes('workflow')
+      || message.includes('dequeue')
     )) {
       originalWarn(message)
     }
@@ -111,17 +114,20 @@ export async function initializeDBOS(): Promise<void> {
       adminServer: config.dbos.adminServer.enabled ? `port ${config.dbos.adminServer.port}` : 'disabled',
     }, 'Initializing DBOS runtime')
 
-    // Launch DBOS runtime with suppressed verbose output
-    // DBOS SDK logs sensitive information (DB URLs, executor IDs) to console
-    // We suppress these logs and only show our own safe logs
-    await suppressDBOSLogs(async () => {
-      await DBOS.launch({
-        conductorURL: config.dbos.conductorURL,
-        conductorKey: config.dbos.conductorKey,
-      })
+    // TEMPORARILY DISABLED: Log suppression removed for debugging
+    // TODO: Re-enable suppressDBOSLogs after debugging queue registration issue
+    // await suppressDBOSLogs(async () => {
+    await DBOS.launch({
+      conductorURL: config.dbos.conductorURL,
+      conductorKey: config.dbos.conductorKey,
     })
+    // })
 
     isDBOSInitialized = true
+
+    // Log registered endpoints to verify queue was registered before launch
+    // This helps debug issues where queue is created after DBOS.launch()
+    DBOS.logRegisteredEndpoints()
 
     logger.info({
       queueConcurrency: config.dbos.queueConcurrency,
