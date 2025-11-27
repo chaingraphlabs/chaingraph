@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-trpc
 
+## 0.6.11
+
+### Patch Changes
+
+- fix: backward-compatible user ID resolution
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.11
+  - @badaitech/chaingraph-types@0.6.11
+  - @badaitech/badai-api@0.6.11
+
 ## 0.6.10
 
 ### Patch Changes
