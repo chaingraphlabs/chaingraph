@@ -62,6 +62,7 @@ export class APITaskQueue implements ITaskQueue {
       await client.enqueue(
         {
           workflowName: 'executeChainGraph', // Function name from ExecutionWorkflow.ts:98
+          workflowClassName: '', // Empty for standalone functions (not class methods)
           queueName: 'chaingraph-executions',
           workflowID: task.executionId, // Use executionId as workflow ID
           workflowTimeoutMS: 35 * 60 * 1000, // 35 minute timeout
