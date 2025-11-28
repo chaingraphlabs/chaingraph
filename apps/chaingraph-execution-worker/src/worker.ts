@@ -9,7 +9,7 @@
 import type { DBOSExecutionWorker } from '@badaitech/chaingraph-executor/server'
 import http from 'node:http'
 import process from 'node:process'
-import { createServicesForWorker } from '@badaitech/chaingraph-executor/server'
+import { createServicesForWorker, config as executorConfig } from '@badaitech/chaingraph-executor/server'
 import { config } from './config'
 import { createLogger } from './logger'
 
@@ -18,6 +18,12 @@ const logger = createLogger('worker')
 let executionWorker: DBOSExecutionWorker | null = null
 let healthServer: http.Server | null = null
 let isShuttingDown = false
+
+/**
+ * Get the worker ID from centralized config
+ * Priority: WORKER_ID env > HOSTNAME (K8s pod name) > random
+ */
+const workerId = executorConfig.worker.id
 
 /**
  * Start the DBOS execution worker
@@ -32,8 +38,6 @@ let isShuttingDown = false
  * DBOS handles work distribution automatically via PostgreSQL-backed queues.
  */
 export async function startWorker(): Promise<void> {
-  const workerId = process.env.WORKER_ID || `worker-${process.pid}`
-
   try {
     logger.info({ workerId }, '🚀 Starting DBOS execution worker')
 
@@ -80,7 +84,6 @@ async function gracefulShutdown(signal: string): Promise<void> {
     return
   isShuttingDown = true
 
-  const workerId = process.env.WORKER_ID
   logger.info({ workerId, signal }, 'Worker shutting down...')
 
   try {

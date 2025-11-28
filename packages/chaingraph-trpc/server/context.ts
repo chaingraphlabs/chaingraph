@@ -119,7 +119,7 @@ export function getAuthToken(opts: CreateHTTPContextOptions): string | undefined
   // Try to get from cookie
   const cookies = opts.req.headers.cookie
   if (cookies) {
-    const match = cookies.match(/session_badai=([^;]+)/)
+    const match = cookies.match(/session=([^;]+)/)
     if (match && match[1]) {
       return match[1]
     }
