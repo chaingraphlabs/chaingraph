@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.16
+
+### Patch Changes
+
+- feat: enhance WebSocket server with health check endpoints and error handling
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.16
+  - @badaitech/chaingraph-types@0.6.16
+  - @badaitech/chaingraph-trpc@0.6.16
+
 ## 0.6.15
 
 ### Patch Changes

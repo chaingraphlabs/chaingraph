@@ -27,7 +27,8 @@ export const config = {
 
   // Worker Configuration
   worker: {
-    id: process.env.WORKER_ID || `worker-${Math.random().toString(36).substring(7)}`,
+    // Priority: WORKER_ID (explicit) > HOSTNAME (K8s pod name) > random (dev)
+    id: process.env.WORKER_ID || process.env.HOSTNAME || `worker-${Math.random().toString(36).substring(7)}`,
     concurrency: Number.parseInt(process.env.WORKER_CONCURRENCY || '10', 10),
     // memoryLimitMB: Number.parseInt(process.env.WORKER_MEMORY_LIMIT_MB || '512', 10),
     // timeoutMs: Number.parseInt(process.env.WORKER_TIMEOUT_MS || '300000', 10),
