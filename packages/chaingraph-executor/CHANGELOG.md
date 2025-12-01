@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-executor
 
+## 0.6.18
+
+### Patch Changes
+
+- 50c07ea: fix: update external ID mapping in PgOwnershipResolver to include provider prefix
+- Updated dependencies [50c07ea]
+  - @badaitech/chaingraph-nodes@0.6.18
+  - @badaitech/chaingraph-types@0.6.18
+  - @badaitech/chaingraph-trpc@0.6.18
+
 ## 0.6.17
 
 ### Patch Changes

@@ -19,7 +19,7 @@ import type { IOwnershipResolver } from './IOwnershipResolver'
  * This implementation queries the external_accounts table to resolve old IDs.
  */
 export class PgOwnershipResolver implements IOwnershipResolver {
-  constructor(private userStore: UserStore) {}
+  constructor(private userStore: UserStore) { }
 
   async isOwner(userId: string, ownerId: string): Promise<boolean> {
     if (!userId || !ownerId)
@@ -44,7 +44,7 @@ export class PgOwnershipResolver implements IOwnershipResolver {
 
     try {
       const externalAccounts = await this.userStore.getExternalAccounts(userId)
-      const externalIds = externalAccounts.map(acc => acc.externalId)
+      const externalIds = externalAccounts.map(acc => `${acc.provider}:${acc.externalId}`)
       return [userId, ...externalIds]
     } catch (error) {
       // If lookup fails, return only internal ID
