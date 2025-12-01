@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.18
+
+### Patch Changes
+
+- 50c07ea: fix: update external ID mapping in PgOwnershipResolver to include provider prefix
+
 ## 0.6.17
 
 ### Patch Changes
