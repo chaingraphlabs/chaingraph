@@ -2024,7 +2024,7 @@ function getAuthToken(opts: CreateHTTPContextOptions): string | undefined {
   // 3. Try cookie
   const cookies = opts.req.headers.cookie
   if (cookies) {
-    const match = cookies.match(/session_badai=([^;]+)/)
+    const match = cookies.match(/session_cg=([^;]+)/)
     if (match) return match[1]
   }
 
@@ -2212,7 +2212,7 @@ function getAuthToken(opts: CreateHTTPContextOptions): string | undefined {
     if (betterAuthMatch) return betterAuthMatch[1]
 
     // Fallback to old cookie
-    const badaiMatch = cookies.match(/session_badai=([^;]+)/)
+    const badaiMatch = cookies.match(/session=([^;]+)/)
     if (badaiMatch) return badaiMatch[1]
   }
 

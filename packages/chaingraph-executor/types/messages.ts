@@ -67,6 +67,12 @@ export interface ExecutionTask {
   maxRetries?: number
   retryDelayMs?: number
   retryHistory?: RetryHistoryEntry[]
+  /**
+   * Enable debug mode for this execution.
+   * When true, command polling (PAUSE/RESUME/STEP/STOP) is enabled.
+   * When false (default), no command polling occurs for zero overhead.
+   */
+  debug?: boolean
 }
 
 /**
