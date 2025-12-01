@@ -43,6 +43,14 @@ export interface CommandController {
 }
 
 /**
+ * Signal object for coordinating command loop termination
+ */
+interface ExecutionSignal {
+  done: boolean
+  error?: Error
+}
+
+/**
  * Class-based DBOS workflow for executing chaingraph flows
  *
  * This class provides the main entry point for executing chaingraph flows using DBOS.
@@ -51,6 +59,12 @@ export interface CommandController {
  * Signal Pattern:
  * - Workflow starts immediately but waits for START_SIGNAL before executing
  * - This allows clients to subscribe to the event stream before execution begins
+ *
+ * Command Loop Pattern (Debug Mode Only):
+ * - Command polling (PAUSE/RESUME/STEP/STOP) is ONLY enabled when task.debug=true
+ * - In production mode (debug=false): Zero overhead - no polling, no recv() calls
+ * - In debug mode: Command loop runs in background, awaited after execution completes
+ * - No overlapping recv() calls - single sequential loop
  *
  * DBOS Durability Guarantees:
  * - Each step is checkpointed in PostgreSQL
@@ -66,6 +80,69 @@ export class ExecutionWorkflows extends ConfiguredInstance {
   initialize(): Promise<void> {
     DBOS.logger.info(`ExecutionWorkflows initialized with DBOS configuration: ${this.name}`)
     return Promise.resolve()
+  }
+
+  /**
+   * Command polling loop that runs in parallel with execution
+   *
+   * This loop:
+   * - Polls for commands using DBOS.recv() at workflow level (allowed)
+   * - Updates shared controllers (abortController, commandController)
+   * - Terminates when signal.done is set or STOP command received
+   * - Uses short timeout (2s) to allow responsive termination
+   *
+   * @param executionId - ID for logging
+   * @param signal - Shared signal for termination
+   * @param abortController - Controller to trigger STOP
+   * @param commandController - Controller for PAUSE/RESUME/STEP
+   */
+  private static async commandPollingLoop(
+    executionId: string,
+    signal: ExecutionSignal,
+    abortController: AbortController,
+    commandController: CommandController,
+  ): Promise<void> {
+    DBOS.logger.debug(`Command polling loop started for: ${executionId}`)
+
+    while (!signal.done) {
+      try {
+        // Wait for command with short timeout (5s)
+        // Short timeout allows checking signal.done frequently for responsive termination
+        // Single recv() call at a time - no overlapping calls
+        const command = await DBOS.recv<ExecutionCommand>('COMMAND', 5)
+
+        if (command) {
+          DBOS.logger.info(`Received command: ${command.command} for ${executionId}`)
+
+          if (command.command === 'STOP') {
+            // STOP: Trigger abort controller and exit loop
+            abortController.abort(command.reason || 'User requested stop')
+            DBOS.logger.info(`Abort triggered for execution: ${executionId}`)
+            break // Exit loop immediately on STOP
+          } else {
+            // PAUSE/RESUME/STEP: Update shared command controller
+            commandController.currentCommand = command.command
+            commandController.commandTimestamp = Date.now()
+            commandController.reason = command.reason
+            DBOS.logger.debug(`Command queued: ${command.command} for ${executionId}`)
+          }
+        }
+        // No command received (timeout) - continue loop and check signal.done
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+
+        // Check for cancellation - workflow was cancelled externally
+        if (errorMessage.includes('has been cancelled')) {
+          DBOS.logger.info(`Command polling stopped due to cancellation for: ${executionId}`)
+          break
+        }
+
+        // Log error but continue polling - transient errors shouldn't stop command handling
+        DBOS.logger.warn(`Error in command polling (continuing): ${errorMessage} for ${executionId}`)
+      }
+    }
+
+    DBOS.logger.debug(`Command polling loop ended for: ${executionId}`)
   }
 
   /**
@@ -92,39 +169,8 @@ export class ExecutionWorkflows extends ConfiguredInstance {
       commandTimestamp: 0,
     }
 
-    // 🎮 Start command polling at WORKFLOW level (DBOS.recv allowed here!)
-    let isPollingCommands = true
-    const commandPollingInterval = setInterval(async () => {
-      if (!isPollingCommands) {
-        clearInterval(commandPollingInterval)
-        return
-      }
-
-      try {
-        // Non-blocking check for command (timeout = 5s)
-        // This is allowed at workflow level (not in step)
-        // TODO: actually should be stream subscription instead of polling
-        const command = await DBOS.recv<ExecutionCommand>('COMMAND', 5)
-
-        if (command) {
-          DBOS.logger.info(`Received command: ${command.command} for ${task.executionId}`)
-
-          if (command.command === 'STOP') {
-            // STOP: Trigger abort controller
-            abortController.abort(command.reason || 'User requested stop')
-            DBOS.logger.info(`Abort triggered for execution: ${task.executionId}`)
-          } else {
-            // PAUSE/RESUME/STEP: Update shared command controller
-            commandController.currentCommand = command.command
-            commandController.commandTimestamp = Date.now()
-            commandController.reason = command.reason
-            DBOS.logger.debug(`Command queued: ${command.command} for ${task.executionId}`)
-          }
-        }
-      } catch (error) {
-        DBOS.logger.error(`Error polling for commands: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    }, 500) // Poll every 500ms
+    // Signal for coordinating command loop termination
+    const executionSignal: ExecutionSignal = { done: false }
 
     try {
       // ============================================================
@@ -151,7 +197,7 @@ export class ExecutionWorkflows extends ConfiguredInstance {
       // Index -1 = special workflow-level event (before engine events start at 0)
       DBOS.logger.info(`Initializing event stream for execution: ${task.executionId}`)
 
-      // TODO: make a step for this, in order to have better durability guarantees and deduplication
+      // TODO: make a step for this, in order to have better durability guarantees and deduplication?
       await DBOS.writeStream('events', {
         executionId: task.executionId,
         event: {
@@ -209,24 +255,47 @@ export class ExecutionWorkflows extends ConfiguredInstance {
         name: 'updateToRunning',
       })
 
-      // Step 2: Execute flow ATOMICALLY
-      // This is THE main step - includes:
-      //   - Load flow from database
-      //   - Initialize execution instance with shared controllers
-      //   - Execute flow with real-time event streaming
-      //   - Collect child tasks from emitted events
-      //   - Wait for all events to be published
+      // ============================================================
+      // Step 2: Execute flow (with optional debug command polling)
+      // ============================================================
+      //
+      // Command polling is ONLY enabled in debug mode (task.debug=true)
+      // - Production mode: Zero overhead - direct execution, no recv() calls
+      // - Debug mode: Background command loop for PAUSE/RESUME/STEP/STOP
       //
       // Controllers are passed from workflow to step:
       //   - abortController: For STOP command (via abort signal)
       //   - commandController: For PAUSE/RESUME/STEP (via shared state)
       //
-      // If this step fails, DBOS will retry the ENTIRE step on another worker.
+      // If the step fails, DBOS will retry the ENTIRE step on another worker.
       // The flow execution is atomic - either fully succeeds or fully fails.
+
+      // Start command polling in background ONLY if debug mode is enabled
+      let commandLoopPromise: Promise<void> | null = null
+      if (task.debug) {
+        DBOS.logger.info(`Debug mode enabled - starting command polling for: ${task.executionId}`)
+        commandLoopPromise = ExecutionWorkflows.commandPollingLoop(
+          task.executionId,
+          executionSignal,
+          abortController,
+          commandController,
+        )
+      } else {
+        DBOS.logger.debug(`Production mode - command polling disabled for: ${task.executionId}`)
+      }
+
+      // Run execution (not wrapped in Promise.all - cleaner flow)
       const result = await DBOS.runStep(
         () => executeFlowAtomic(task, abortController, commandController),
         { name: 'executeFlowAtomic' },
       )
+
+      // Signal command loop to stop and wait for cleanup (if debug mode)
+      executionSignal.done = true
+      if (commandLoopPromise) {
+        await commandLoopPromise
+        DBOS.logger.debug(`Command polling cleanup complete for: ${task.executionId}`)
+      }
 
       // Step 2.5: Spawn child executions (if any)
       // This happens at WORKFLOW level where DBOS.startWorkflow is allowed
@@ -310,10 +379,9 @@ export class ExecutionWorkflows extends ConfiguredInstance {
       // Re-throw to mark workflow as failed in DBOS
       throw error
     } finally {
-      // Stop command polling
-      isPollingCommands = false
-      clearInterval(commandPollingInterval)
-      DBOS.logger.debug(`Command polling stopped for execution: ${task.executionId}`)
+      // Ensure command polling loop terminates (defensive - should already be done)
+      executionSignal.done = true
+      DBOS.logger.debug(`Execution workflow cleanup complete for: ${task.executionId}`)
     }
   }
 }

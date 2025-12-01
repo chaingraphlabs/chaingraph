@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.17
+
+### Patch Changes
+
+- e8c4961: feat: add debug mode support for command polling in execution workflows
+- Updated dependencies [e8c4961]
+  - @badaitech/badai-api@0.6.17
+  - @badaitech/chaingraph-types@0.6.17
+
 ## 0.6.16
 
 ### Patch Changes

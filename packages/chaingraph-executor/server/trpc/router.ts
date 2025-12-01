@@ -243,6 +243,7 @@ export const executionRouter = router({
         flowId: executionRow.flowId,
         timestamp: Date.now(),
         maxRetries: defaultExecutionMaxRetries,
+        debug: input.options?.debug ?? false,
       }
 
       try {

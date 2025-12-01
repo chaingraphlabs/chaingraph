@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.17
+
+### Patch Changes
+
+- e8c4961: feat: add debug mode support for command polling in execution workflows
+
 ## 0.6.16
 
 ### Patch Changes

@@ -90,11 +90,13 @@ async function createChildTask(
   DBOS.logger.debug(`Child execution row created: ${childExecutionId} (parent: ${parentInstance.row.id}, event: ${event.type})`)
 
   // Return task for workflow-level spawning
+  // Inherit debug flag from parent so child executions also have command polling in debug mode
   return {
     executionId: childExecutionId,
     flowId: parentInstance.flow.id,
     timestamp: Date.now(),
     maxRetries: parentInstance.task.maxRetries,
+    debug: parentInstance.task.debug,
   }
 }
 
