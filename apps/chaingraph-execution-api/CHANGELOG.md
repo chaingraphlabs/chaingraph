@@ -1,29 +1,5 @@
 # @badaitech/chaingraph-execution-api
 
-## 0.6.18
-
-### Patch Changes
-
-- 50c07ea: fix: update external ID mapping in PgOwnershipResolver to include provider prefix
-- Updated dependencies [50c07ea]
-  - @badaitech/chaingraph-executor@0.6.18
-  - @badaitech/chaingraph-nodes@0.6.18
-  - @badaitech/chaingraph-types@0.6.18
-  - @badaitech/chaingraph-trpc@0.6.18
-  - @badaitech/badai-api@0.6.18
-
-## 0.6.17
-
-### Patch Changes
-
-- e8c4961: feat: add debug mode support for command polling in execution workflows
-- Updated dependencies [e8c4961]
-  - @badaitech/chaingraph-executor@0.6.17
-  - @badaitech/badai-api@0.6.17
-  - @badaitech/chaingraph-nodes@0.6.17
-  - @badaitech/chaingraph-trpc@0.6.17
-  - @badaitech/chaingraph-types@0.6.17
-
 ## 0.6.16
 
 ### Patch Changes
