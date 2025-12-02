@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.19
+
+### Patch Changes
+
+- ac7371b: feat: implement node visibility filtering functionality for the frontend lib
+- Updated dependencies [ac7371b]
+  - @badaitech/badai-api@0.6.19
+
 ## 0.6.18
 
 ### Patch Changes

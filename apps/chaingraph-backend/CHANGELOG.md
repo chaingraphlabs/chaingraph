@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.19
+
+### Patch Changes
+
+- ac7371b: feat: implement node visibility filtering functionality for the frontend lib
+- Updated dependencies [ac7371b]
+  - @badaitech/chaingraph-nodes@0.6.19
+  - @badaitech/chaingraph-trpc@0.6.19
+  - @badaitech/chaingraph-types@0.6.19
+
 ## 0.6.18
 
 ### Patch Changes
