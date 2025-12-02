@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.19
+
+### Patch Changes
+
+- ac7371b: feat: implement node visibility filtering functionality for the frontend lib
+
 ## 0.6.18
 
 ### Patch Changes
