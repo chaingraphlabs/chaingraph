@@ -22,7 +22,6 @@ import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeC
 import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel'
 import { StyledControls } from '@/components/flow/components/controls/StyledControls'
 import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
-import { FPSCounter } from '@/components/flow/components/FPSCounter'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
@@ -268,7 +267,7 @@ function Flow({
 
         <div className="absolute top-4 left-4 z-50">
           {/* <ExecutionComponent /> */}
-          <FPSCounter />
+          {/* <FPSCounter /> */}
         </div>
       </ReactFlow>
 
