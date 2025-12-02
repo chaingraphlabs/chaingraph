@@ -8,16 +8,38 @@
 
 export {
   $categoryMetadata,
+  $dynamicBoosts,
+  $nodeOrderConfig,
   $nodeVisibilityFilter,
+  boostCategories,
+  boostCategoriesEvent,
+  boostNodes,
+  boostNodesEvent,
+  clearBoosts,
+  clearCategoryBoosts,
+  clearDynamicBoosts,
+  clearNodeBoosts,
+  configureNodeOrdering,
   configureNodeVisibility,
   fetchCategorizedNodesFx,
   resetCategories,
+  resetNodeOrderConfig,
+  resetNodeOrdering,
   resetNodeVisibility,
   resetNodeVisibilityFilter,
+  setNodeOrderConfig,
   setNodeVisibilityFilter,
+  updateNodeOrderConfig,
+  updateNodeOrdering,
   updateNodeVisibility,
   updateNodeVisibilityFilter,
 } from './stores'
-export type { CategoryState, FetchCategoriesError, NodeVisibilityFilter } from './types'
+export type {
+  CategoryState,
+  DynamicBoosts,
+  FetchCategoriesError,
+  NodeOrderConfig,
+  NodeVisibilityFilter,
+} from './types'
 
 export { useCategories } from './useCategories'
