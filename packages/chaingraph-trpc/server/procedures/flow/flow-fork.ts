@@ -12,19 +12,6 @@ import { z } from 'zod'
 import { authedProcedure } from '../../trpc'
 import { FORK_DENY_RULE, safeApplyJsonLogic } from '../../utils/fork-security'
 
-async function storeForkedFlow(flowStore: IFlowStore, forkedFlow: Flow): Promise<void> {
-  // For InMemoryFlowStore, directly add to the flows map
-  if ('flows' in flowStore) {
-    const memoryStore = flowStore as any
-    memoryStore.flows.set(forkedFlow.id, forkedFlow)
-    return
-  }
-
-  // For other flow stores, create empty flow then update with content
-  await flowStore.createFlow(forkedFlow.metadata)
-  await flowStore.updateFlow(forkedFlow)
-}
-
 export const fork = authedProcedure
   .input(z.object({
     flowId: z.string(),
@@ -82,10 +69,6 @@ export const fork = authedProcedure
     const { id: _, ...metadataWithoutId } = clonedFlow.metadata
     const forkedFlow = new Flow(metadataWithoutId)
 
-    // Transfer nodes and edges to the new flow
-    await forkedFlow.addNodes(Array.from(clonedFlow.nodes.values()), true)
-    await forkedFlow.addEdges(Array.from(clonedFlow.edges.values()), true)
-
     // Configure fork metadata
     forkedFlow.metadata.name = input.name || `${originalFlow.metadata.name} (Fork)`
     forkedFlow.metadata.createdAt = new Date()
@@ -95,7 +78,12 @@ export const fork = authedProcedure
     forkedFlow.metadata.forkRule = FORK_DENY_RULE
 
     // Store the forked flow
-    await storeForkedFlow(ctx.flowStore, forkedFlow)
+    const createdFlow = await ctx.flowStore.createFlow(forkedFlow.metadata)
 
-    return forkedFlow.metadata
+    // Transfer nodes and edges to the new flow
+    await createdFlow.addNodes(Array.from(clonedFlow.nodes.values()), true)
+    await createdFlow.addEdges(Array.from(clonedFlow.edges.values()), true)
+    const updatedFlow = await ctx.flowStore.updateFlow(createdFlow)
+
+    return updatedFlow.metadata
   })
