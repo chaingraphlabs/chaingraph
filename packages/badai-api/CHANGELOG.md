@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.20
+
+### Patch Changes
+
+- feat: refactor flow forking logic to streamline flow storage and node/edge transfer
+
 ## 0.6.19
 
 ### Patch Changes

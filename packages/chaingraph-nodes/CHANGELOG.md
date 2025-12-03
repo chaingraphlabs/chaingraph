@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.20
+
+### Patch Changes
+
+- feat: refactor flow forking logic to streamline flow storage and node/edge transfer
+- Updated dependencies
+  - @badaitech/badai-api@0.6.20
+  - @badaitech/chaingraph-types@0.6.20
+
 ## 0.6.19
 
 ### Patch Changes
