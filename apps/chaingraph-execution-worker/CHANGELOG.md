@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.6.23
+
+### Patch Changes
+
+- feat(gemini): enhance GeminiThinkingLevel and GeminiMediaResolution enums with new values and improved naming
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.23
+  - @badaitech/chaingraph-nodes@0.6.23
+  - @badaitech/chaingraph-types@0.6.23
+  - @badaitech/chaingraph-trpc@0.6.23
+  - @badaitech/badai-api@0.6.23
+
 ## 0.6.22
 
 ### Patch Changes

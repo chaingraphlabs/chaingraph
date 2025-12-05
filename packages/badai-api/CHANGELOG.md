@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.23
+
+### Patch Changes
+
+- feat(gemini): enhance GeminiThinkingLevel and GeminiMediaResolution enums with new values and improved naming
+
 ## 0.6.22
 
 ### Patch Changes
