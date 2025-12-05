@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-backend",
   "type": "module",
-  "version": "0.6.20",
+  "version": "0.6.21",
   "private": false,
   "description": "Backend server for the Chaingraph project",
   "license": "BUSL-1.1",

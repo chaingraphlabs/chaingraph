@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.6.21
+
+### Patch Changes
+
+- e55f08b: feat(mcp): enhance MCP server auth headers with template support
+- Updated dependencies [e55f08b]
+  - @badaitech/chaingraph-nodes@0.6.21
+  - @badaitech/chaingraph-trpc@0.6.21
+  - @badaitech/badai-api@0.6.21
+  - @badaitech/chaingraph-executor@0.6.21
+  - @badaitech/chaingraph-types@0.6.21
+
 ## 0.6.20
 
 ### Patch Changes
