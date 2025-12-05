@@ -28,7 +28,7 @@ interface MCPServerFormProps {
 }
 
 // Component for template variable badge
-const TemplateVariableBadge = ({ variables }: { variables: string[] }) => {
+function TemplateVariableBadge({ variables }: { variables: string[] }) {
   if (variables.length === 0)
     return null
 
@@ -320,7 +320,10 @@ export function MCPServerForm({
                 <div>
                   • Example:
                   {' '}
-                  <code className="bg-background px-1 py-0.5 rounded">Bearer {'{{api_token}}'}</code>
+                  <code className="bg-background px-1 py-0.5 rounded">
+                    Bearer
+                    {'{{api_token}}'}
+                  </code>
                 </div>
                 <div>• Variables become input ports on MCP nodes in flows</div>
                 <div>

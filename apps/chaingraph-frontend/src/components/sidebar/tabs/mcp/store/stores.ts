@@ -7,6 +7,7 @@
  */
 
 import type { MCPServer as MCPServerTRPC } from '@badaitech/chaingraph-trpc/server'
+import type { ExpandedState } from '../utils'
 import type {
   CreateMCPServerEvent,
   MCPServer,
@@ -17,14 +18,13 @@ import type {
   UpdateMCPServerEvent,
 } from './types'
 import { attach, combine, sample } from 'effector'
+
 import { debounce } from 'patronum'
-
-import type { ExpandedState } from '../utils'
-import { loadCachedMCPServers, loadExpandedState, saveExpandedState, saveMCPServers } from '../utils'
-
 import { $trpcClient } from '@/store'
+
 import { globalReset } from '@/store/common'
 import { mcpDomain } from '@/store/domains'
+import { loadCachedMCPServers, loadExpandedState, saveExpandedState, saveMCPServers } from '../utils'
 
 import { MCPServerStatus } from './types'
 
@@ -197,7 +197,8 @@ const hydrateMCPFromCacheFx = mcpDomain.createEffect(() => {
 const loadMCPServersFx = attach({
   source: $trpcClient,
   effect: async (client, _: void) => {
-    if (!client) throw new Error('TRPC client not ready')
+    if (!client)
+      throw new Error('TRPC client not ready')
     return client.mcp.listServers.query()
   },
 })
@@ -208,7 +209,8 @@ const loadMCPServersFx = attach({
 const loadServerCapabilitiesFx = attach({
   source: $trpcClient,
   effect: async (client, serverId: string) => {
-    if (!client) throw new Error('TRPC client not ready')
+    if (!client)
+      throw new Error('TRPC client not ready')
     const { tools, resources, prompts } = await client.mcp.serverCapabilities.query({ serverId })
     return { serverId, tools, resources, prompts }
   },
@@ -220,7 +222,8 @@ const loadServerCapabilitiesFx = attach({
 const loadServerNodesFx = attach({
   source: $trpcClient,
   effect: async (client, serverId: string) => {
-    if (!client) throw new Error('TRPC client not ready')
+    if (!client)
+      throw new Error('TRPC client not ready')
     const result = await client.mcp.getAllNodesForServer.query({ serverId })
     return { serverId, nodes: result }
   },
@@ -232,7 +235,8 @@ const loadServerNodesFx = attach({
 export const createMCPServerFx = attach({
   source: $trpcClient,
   effect: async (client, event: CreateMCPServerEvent): Promise<MCPServerTRPC> => {
-    if (!client) throw new Error('TRPC client not ready')
+    if (!client)
+      throw new Error('TRPC client not ready')
     return client.mcp.createServer.mutate({
       title: event.title,
       url: event.url,
@@ -247,7 +251,8 @@ export const createMCPServerFx = attach({
 export const updateMCPServerFx = attach({
   source: $trpcClient,
   effect: async (client, event: UpdateMCPServerEvent): Promise<MCPServerTRPC> => {
-    if (!client) throw new Error('TRPC client not ready')
+    if (!client)
+      throw new Error('TRPC client not ready')
     return client.mcp.updateServer.mutate({
       id: event.id,
       url: event.url,
@@ -263,7 +268,8 @@ export const updateMCPServerFx = attach({
 export const deleteMCPServerFx = attach({
   source: $trpcClient,
   effect: async (client, id: string) => {
-    if (!client) throw new Error('TRPC client not ready')
+    if (!client)
+      throw new Error('TRPC client not ready')
     await client.mcp.deleteServer.mutate({ id })
     return { id }
   },
@@ -317,16 +323,13 @@ $mcpServers
       title: s.title,
       url: s.url,
       authHeaders: s.authHeaders,
-    })),
-  )
+    })))
   .on(loadMCPServersFx.doneData, (_, servers) => servers)
   .on(createMCPServerFx.doneData, (servers, newServer) => [...servers, newServer])
   .on(updateMCPServerFx.doneData, (servers, updated) =>
-    servers.map(s => s.id === updated.id ? updated : s),
-  )
+    servers.map(s => s.id === updated.id ? updated : s))
   .on(deleteMCPServerFx.doneData, (servers, { id }) =>
-    servers.filter(s => s.id !== id),
-  )
+    servers.filter(s => s.id !== id))
   .reset(globalReset)
 
 // --- Capabilities (Record, not Map!) ---

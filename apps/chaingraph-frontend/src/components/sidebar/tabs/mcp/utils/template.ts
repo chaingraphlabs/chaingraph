@@ -20,9 +20,8 @@ export const TEMPLATE_VARIABLE_REGEX = /\{\{\s*(\w+)\s*\}\}/g
 export function getTemplateVariables(value: string): string[] {
   const regex = new RegExp(TEMPLATE_VARIABLE_REGEX)
   const matches: string[] = []
-  let match: RegExpExecArray | null
 
-  while ((match = regex.exec(value))) {
+  for (let match = regex.exec(value); match !== null; match = regex.exec(value)) {
     matches.push(match[1])
   }
 
@@ -51,8 +50,7 @@ export function countTemplateVariables(
     if (!header.isTemplate)
       continue
 
-    let match: RegExpExecArray | null
-    while ((match = regex.exec(header.value))) {
+    for (let match = regex.exec(header.value); match !== null; match = regex.exec(header.value)) {
       vars.add(match[1])
     }
   }

@@ -17,18 +17,18 @@ export enum MCPServerStatus {
 }
 
 // Overall MCP loading state machine
-export type MCPLoadStatus =
-  | 'idle'       // Initial - no data, nothing happening
-  | 'hydrating'  // Loading from localStorage (instant)
-  | 'ready'      // Has data (cached or fresh)
-  | 'error'      // Something failed critically
+export type MCPLoadStatus
+  = | 'idle' // Initial - no data, nothing happening
+    | 'hydrating' // Loading from localStorage (instant)
+    | 'ready' // Has data (cached or fresh)
+    | 'error' // Something failed critically
 
 export interface MCPState {
   status: MCPLoadStatus
-  isSyncing: boolean           // Background fetch in progress
-  hydratedAt: number | null    // When hydrated from cache
-  lastSyncAt: number | null    // When last fresh fetch completed
-  syncError: string | null     // Last sync error (non-fatal)
+  isSyncing: boolean // Background fetch in progress
+  hydratedAt: number | null // When hydrated from cache
+  lastSyncAt: number | null // When last fresh fetch completed
+  syncError: string | null // Last sync error (non-fatal)
 }
 
 // Per-server capability state (Record value type)

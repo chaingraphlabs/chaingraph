@@ -16,8 +16,8 @@ export * from './types'
 
 // Export utilities for external use
 export {
-  TEMPLATE_VARIABLE_REGEX,
   extractTemplateVariables,
   hasTemplateVariables,
   resolveTemplateValue,
+  TEMPLATE_VARIABLE_REGEX,
 } from './utils'

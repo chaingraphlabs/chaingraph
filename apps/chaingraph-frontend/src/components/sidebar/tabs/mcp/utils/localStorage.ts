@@ -47,8 +47,7 @@ export function saveMCPServers(servers: MCPServerWithNodes[]): void {
       timestamp: Date.now(),
     }
     localStorage.setItem(STORAGE_KEY_SERVERS, JSON.stringify(data))
-  }
-  catch (error) {
+  } catch (error) {
     console.error('[MCP] Failed to save servers to localStorage:', error)
   }
 }
@@ -63,8 +62,7 @@ export function loadCachedMCPServers(): MCPServerWithCapabilities[] {
       const data = JSON.parse(stored) as CachedMCPData
       return data.servers
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('[MCP] Failed to load cached servers:', error)
   }
   return []
@@ -76,8 +74,7 @@ export function loadCachedMCPServers(): MCPServerWithCapabilities[] {
 export function saveExpandedState(state: ExpandedState): void {
   try {
     localStorage.setItem(STORAGE_KEY_EXPANDED, JSON.stringify(state))
-  }
-  catch (error) {
+  } catch (error) {
     console.error('[MCP] Failed to save expanded state:', error)
   }
 }
@@ -115,8 +112,7 @@ export function loadExpandedState(): ExpandedState {
         return migrated
       }
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('[MCP] Failed to load expanded state:', error)
   }
   return { servers: [], capabilities: {} }
@@ -147,8 +143,7 @@ export function clearMCPCache(): void {
     localStorage.removeItem(STORAGE_KEY_SERVERS)
     localStorage.removeItem(STORAGE_KEY_EXPANDED)
     localStorage.removeItem(STORAGE_KEY_EXPANDED_LEGACY)
-  }
-  catch (error) {
+  } catch (error) {
     console.error('[MCP] Failed to clear cache:', error)
   }
 }

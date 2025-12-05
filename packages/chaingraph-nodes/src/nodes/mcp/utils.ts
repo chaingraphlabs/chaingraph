@@ -51,16 +51,14 @@ export function extractTemplateVariables(
       continue
 
     const regex = new RegExp(TEMPLATE_VARIABLE_REGEX)
-    let match: RegExpExecArray | null
 
-    while ((match = regex.exec(header.value))) {
+    for (let match = regex.exec(header.value); match !== null; match = regex.exec(header.value)) {
       const varName = match[1]
       const isRequired = header.templateRequired !== false
 
       if (variables.has(varName)) {
         variables.set(varName, variables.get(varName)! || isRequired)
-      }
-      else {
+      } else {
         variables.set(varName, isRequired)
       }
     }
