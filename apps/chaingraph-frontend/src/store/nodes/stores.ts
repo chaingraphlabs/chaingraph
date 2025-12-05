@@ -18,7 +18,7 @@ import type {
   UpdateNodeUIEvent,
 } from './types'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
-import { DefaultPosition } from '@badaitech/chaingraph-types'
+import { DefaultPosition, PortFactory } from '@badaitech/chaingraph-types'
 
 import { combine, sample } from 'effector'
 import { $categoryMetadata } from '../categories'
@@ -262,7 +262,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     }
 
     // Only clone the node we're updating
-    const updatedNode = node// .clone()
+    const updatedNode = node.clone()
     updatedNode.setVersion(version)
 
     // Return new state with just the updated node changed
@@ -282,12 +282,14 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     if (!node)
       return state
 
-    const port = node.getPort(id)
-    if (!port)
-      return state
+    let port = node.getPort(id)
+    if (!port) {
+      // create new port if it doesn't exist
+      port = PortFactory.createFromConfig(data.config)
+    }
 
     try {
-      const updatedNode = node// .clone()
+      const updatedNode = node.clone()
       const updatedPort = port.clone()
 
       updatedPort.setConfig(data.config)
@@ -313,7 +315,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     try {
-    // Clone both node and port
+      // Clone both node and port
       const updatedNode = node.clone()
       const updatedPort = port
 
