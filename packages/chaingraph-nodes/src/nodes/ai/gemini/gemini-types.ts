@@ -34,10 +34,12 @@ export type GeminiAPIKey = SecretTypeMap['gemini']['apiKey']
  * Controls the depth of reasoning before generating a response
  */
 export enum GeminiThinkingLevel {
+  /** Default value (unspecified) */
+  Unspecified = 'THINKING_LEVEL_UNSPECIFIED',
   /** Minimizes latency and cost for straightforward tasks */
-  Low = 'low',
+  Low = 'LOW',
   /** Maximizes reasoning depth for complex problems (default) */
-  High = 'high',
+  High = 'HIGH',
 }
 
 /**
@@ -45,12 +47,14 @@ export enum GeminiThinkingLevel {
  * Affects quality and token cost
  */
 export enum GeminiMediaResolution {
-  /** 70 tokens per frame - fastest, lowest cost */
-  Low = 'low',
-  /** 560 tokens - balanced */
-  Medium = 'medium',
-  /** 1120 tokens max - highest quality */
-  High = 'high',
+  /** Media resolution not specified */
+  Unspecified = 'MEDIA_RESOLUTION_UNSPECIFIED',
+  /** 64 tokens - fastest, lowest cost */
+  Low = 'MEDIA_RESOLUTION_LOW',
+  /** 256 tokens - balanced */
+  Medium = 'MEDIA_RESOLUTION_MEDIUM',
+  /** 256 tokens with zoomed reframing - highest quality */
+  High = 'MEDIA_RESOLUTION_HIGH',
 }
 
 // ============================================================================
