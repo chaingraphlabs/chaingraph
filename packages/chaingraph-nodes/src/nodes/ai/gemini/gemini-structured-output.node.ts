@@ -234,8 +234,7 @@ export class GeminiStructuredOutputNode extends BaseNode {
         thinkingLevel: this.thinkingLevel,
         includeThoughts: this.includeThoughts,
       }
-    }
-    else if (isGemini25Model(this.config.model)) {
+    } else if (isGemini25Model(this.config.model)) {
       generationConfig.thinkingConfig = {
         thinkingBudget: this.thinkingBudget,
         includeThoughts: this.includeThoughts,
@@ -291,16 +290,14 @@ export class GeminiStructuredOutputNode extends BaseNode {
         await this.debugLog(context, `Success: ${JSON.stringify(parsed, null, 2)}`)
 
         return parsed
-      }
-      catch (error: any) {
+      } catch (error: any) {
         const errorMsg = error?.message || String(error)
 
         if (attempt >= GEMINI_MAX_RETRIES - 1) {
           // Last attempt failed
           await this.debugLog(context, `All retries failed: ${errorMsg}`)
           throw new Error(`Failed after ${GEMINI_MAX_RETRIES} attempts: ${errorMsg}`)
-        }
-        else {
+        } else {
           // Retry
           await this.debugLog(context, `Attempt ${attempt + 1} failed: ${errorMsg}, retrying...`)
         }

@@ -711,17 +711,17 @@ export class AntropicLlmCallNode extends BaseNode {
       // Prepare initial messages from input
       const conversationHistory = (this.messages.length > 0
         ? this.messages.map(msg => ({
-          role: msg.role,
-          content: this.convertContentBlocksToAnthropicFormat(msg.content),
-        }))
+            role: msg.role,
+            content: this.convertContentBlocksToAnthropicFormat(msg.content),
+          }))
         : [
-          {
-            role: 'user' as const,
-            content: this.convertContentBlocksToAnthropicFormat([
-              AntropicLlmCallNode.createTextBlock(this.system || ''),
-            ]),
-          },
-        ])
+            {
+              role: 'user' as const,
+              content: this.convertContentBlocksToAnthropicFormat([
+                AntropicLlmCallNode.createTextBlock(this.system || ''),
+              ]),
+            },
+          ])
 
       // Check if the last message is from the assistant then change it to user
       if (conversationHistory.length > 0
