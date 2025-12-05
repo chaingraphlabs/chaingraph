@@ -172,7 +172,10 @@ export class AnthropicLLMConfig {
     title: 'Model',
     description: 'The Claude model to use',
     options: [
-      { id: AntropicModelTypes.ClaudeSonnet4_5_20250929, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929, title: 'Claude Sonnet 4.5' },
+      { id: AntropicModelTypes.ClaudeHaiku4_5, type: 'string', defaultValue: AntropicModelTypes.ClaudeHaiku4_5, title: 'Claude Haiku 4.5' },
+      { id: AntropicModelTypes.ClaudeSonnet4_5, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_5, title: 'Claude Sonnet 4.5' },
+      { id: AntropicModelTypes.ClaudeOpus4_5, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_5, title: 'Claude Opus 4.5' },
+      { id: AntropicModelTypes.ClaudeSonnet4_5_20250929, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929, title: 'Claude Sonnet 4.5-20250929' },
       { id: AntropicModelTypes.ClaudeSonnet4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeSonnet4_20250514, title: 'Claude Sonnet 4' },
       { id: AntropicModelTypes.ClaudeOpus4_1_20250805, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_1_20250805, title: 'Claude Opus 4.1' },
       { id: AntropicModelTypes.ClaudeOpus4_20250514, type: 'string', defaultValue: AntropicModelTypes.ClaudeOpus4_20250514, title: 'Claude Opus 4' },
@@ -184,10 +187,10 @@ export class AnthropicLLMConfig {
       { id: AntropicModelTypes.Claude3Opus20240229, type: 'string', defaultValue: AntropicModelTypes.Claude3Opus20240229, title: 'Claude 3 Opus' },
       { id: AntropicModelTypes.Claude3Haiku20240307, type: 'string', defaultValue: AntropicModelTypes.Claude3Haiku20240307, title: 'Claude 3 Haiku' },
     ],
-    defaultValue: AntropicModelTypes.ClaudeSonnet4_5_20250929,
+    defaultValue: AntropicModelTypes.ClaudeHaiku4_5,
     required: true,
   })
-  model: AntropicModelTypes = AntropicModelTypes.ClaudeSonnet4_5_20250929
+  model: AntropicModelTypes = AntropicModelTypes.ClaudeHaiku4_5
 
   @PortNumber({
     title: 'Max Tokens',

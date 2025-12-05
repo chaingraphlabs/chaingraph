@@ -8,6 +8,7 @@
 
 // export * from './0g-llm-call.node'
 export * from './anthropic'
+export * from './gemini'
 export * from './llm-call-with-structured-output-v2.node'
 // export * from './0g-llm-call.node'
 // export * from './antropic'

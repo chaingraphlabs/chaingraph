@@ -16,8 +16,8 @@ import type {
   SecretType,
   SecretTypeMap,
 } from '@badaitech/chaingraph-types'
-import type { ChatOpenAIFields } from '@langchain/openai'
 
+import type { ChatOpenAIFields } from '@langchain/openai'
 import {
   OnPortUpdate,
   PortObject,
@@ -45,6 +45,8 @@ import { NODE_CATEGORIES } from '../../categories'
 
 export enum LLMModels {
   // gpt-5 family
+  Gpt5_1 = 'gpt-5.1',
+  Gpt5_1CodeMax = 'gpt-5.1-codex-max',
   Gpt5 = 'gpt-5',
   Gpt5Mini = 'gpt-5-mini',
   Gpt5Nano = 'gpt-5-nano',
@@ -67,7 +69,9 @@ export enum LLMModels {
   O4Mini = 'o4-mini',
 
   // Claude Models
-  ClaudeSonnet4_5_20250929 = 'claude-sonnet-4-5-20250929',
+  ClaudeHaiku4_5 = 'claude-haiku-4-5',
+  ClaudeSonnet4_5_20250929 = 'claude-sonnet-4-5',
+  ClaudeOpus4_5 = 'claude-opus-4-5',
   ClaudeOpus4_1_20250805 = 'claude-opus-4-1-20250805',
   ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
   ClaudeOpus4_20250514 = 'claude-opus-4-20250514',
@@ -82,6 +86,7 @@ export enum LLMModels {
   DeepseekReasoner = 'deepseek-reasoner',
 
   // Google Gemini 2.5 Models
+  Gemini3ProPreview = 'gemini-3-pro-preview',
   Gemini25Pro = 'gemini-2.5-pro',
   Gemini25Flash = 'gemini-2.5-flash',
   Gemini25FlashLite = 'gemini-2.5-flash-lite',
@@ -354,7 +359,8 @@ export class LLMCallNode extends BaseNode {
       new HumanMessage(this.prompt),
     ]
 
-    const stream = await llm.stream(messages, {
+    // TODO: FIX TYPES
+    const stream = await llm.stream(messages as any, {
       signal: context.abortSignal,
     })
 
@@ -430,7 +436,9 @@ export function isDeepSeek(model: LLMModels): boolean {
  */
 export function isAnthropic(model: LLMModels): boolean {
   return [
+    LLMModels.ClaudeHaiku4_5,
     LLMModels.ClaudeSonnet4_5_20250929,
+    LLMModels.ClaudeOpus4_5,
     LLMModels.ClaudeSonnet4_20250514,
     LLMModels.ClaudeOpus4_20250514,
     LLMModels.ClaudeOpus4_1_20250805,
@@ -459,6 +467,7 @@ export function isMoonshot(model: LLMModels): boolean {
  */
 export function isGemini(model: LLMModels): boolean {
   return [
+    LLMModels.Gemini3ProPreview,
     LLMModels.Gemini25Pro,
     LLMModels.Gemini25Flash,
     LLMModels.Gemini25FlashLite,
@@ -475,6 +484,8 @@ export function isGemini(model: LLMModels): boolean {
 export function isOpenAI(model: LLMModels): boolean {
   return [
     // gpt-5 family
+    LLMModels.Gpt5_1,
+    LLMModels.Gpt5_1CodeMax,
     LLMModels.Gpt5,
     LLMModels.Gpt5Mini,
     LLMModels.Gpt5Nano,

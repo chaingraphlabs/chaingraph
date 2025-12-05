@@ -471,6 +471,31 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       removeNode(data.nodeId)
     },
 
+    [FlowEventType.PortCreated]: (data) => {
+      if (!data.port.getConfig().nodeId) {
+        console.error(`Port ${data.port.id} has no node ID`)
+        return
+      }
+
+      const node = nodes[data.port.getConfig().nodeId!]
+      if (!node) {
+        console.error(`Node ${data.port.getConfig().nodeId} not found`)
+        return
+      }
+
+      updatePort({
+        id: data.port.id,
+        data: {
+          id: data.port.id,
+          config: data.port.getConfig(),
+          value: data.port.getValue(),
+        },
+        nodeVersion: data.nodeVersion ?? 1,
+      })
+
+      nodeUpdated(data.port.getConfig().nodeId!)
+    },
+
     [FlowEventType.PortUpdated]: (data) => {
       if (!data.port.getConfig().nodeId) {
         console.error(`Port ${data.port.id} has no node ID`)
@@ -483,10 +508,10 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         return
       }
 
-      if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
-        // console.warn(`[PortUpdated] Received outdated port update event`)
-        return
-      }
+      // if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
+      // console.warn(`[PortUpdated] Received outdated port update event`)
+      // return
+      // }
 
       // console.log(`[PortUpdated] Updating port ${data.port.id} on node ${data.port.getConfig().nodeId} to node version ${data.nodeVersion} with value:`, data.port.getValue())
 
@@ -498,11 +523,6 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
           value: data.port.getValue(),
         },
         nodeVersion: data.nodeVersion ?? 1,
-      })
-
-      setNodeVersion({
-        nodeId: data.port.getConfig().nodeId!,
-        version: data.nodeVersion ?? 1,
       })
 
       nodeUpdated(data.port.getConfig().nodeId!)

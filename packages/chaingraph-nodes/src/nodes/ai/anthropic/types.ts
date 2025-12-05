@@ -21,6 +21,9 @@ import {
  * Supported Anthropic Claude models
  */
 export enum AntropicModelTypes {
+  ClaudeOpus4_5 = 'claude-opus-4-5',
+  ClaudeSonnet4_5 = 'claude-sonnet-4-5',
+  ClaudeHaiku4_5 = 'claude-haiku-4-5',
   ClaudeSonnet4_5_20250929 = 'claude-sonnet-4-5-20250929',
   ClaudeSonnet4_20250514 = 'claude-sonnet-4-20250514',
   ClaudeOpus4_1_20250805 = 'claude-opus-4-1-20250805',

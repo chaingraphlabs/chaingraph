@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.22
+
+### Patch Changes
+
+- 0b2c821: feat(gemini): add native Gemini nodes with structured output and thinking support
+
 ## 0.6.21
 
 ### Patch Changes
