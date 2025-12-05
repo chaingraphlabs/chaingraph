@@ -203,6 +203,11 @@ export class Message {
     schema: Participant,
     title: 'Participant',
     description: 'Information about the message author',
+    ui: {
+      hideEditor: true,
+      hidePropertyEditor: true,
+      keyDeletable: false,
+    },
   })
   participant?: Participant
 

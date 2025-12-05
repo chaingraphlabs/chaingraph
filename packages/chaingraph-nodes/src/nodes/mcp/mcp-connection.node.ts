@@ -27,6 +27,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { NODE_CATEGORIES } from '../../categories'
 import { MCPConnectionData } from './types'
+import { hasTemplateVariables, resolveTemplateValue } from './utils'
 
 @Node({
   type: 'MCPConnectionNode',
@@ -72,6 +73,7 @@ export class MCPConnectionNode extends BaseNode {
     connection: MCPConnectionData,
     context: ExecutionContext,
     onprogress?: ProgressCallback,
+    templateValues?: Record<string, string>,
   ): Promise<Client> {
     // Try to parse URL
     let url: URL
@@ -81,10 +83,11 @@ export class MCPConnectionNode extends BaseNode {
       throw new Error('Invalid server URL format')
     }
 
-    // Build authentication headers
+    // Build authentication headers WITH template resolution
     const headers = await MCPConnectionNode.buildAuthHeaders(
       connection.headers,
       context,
+      templateValues,
     )
 
     let client: Client | undefined
@@ -132,15 +135,24 @@ export class MCPConnectionNode extends BaseNode {
   private static async buildAuthHeaders(
     headers: HeaderPair[],
     context: ExecutionContext,
+    templateValues?: Record<string, string>,
   ): Promise<Record<string, string>> {
     const headersResult: Record<string, string> = {}
 
     const promises = headers.map(async (header) => {
       if (header.key && header.value) {
-        // const { value: headerValue } = await header.value!.decrypt(context)
-        // const { value: headerValue } = await header.value!.decrypt(context)
+        // Resolve template variables if present
+        let resolvedValue = header.value
+        if (templateValues && hasTemplateVariables(header.value)) {
+          resolvedValue = resolveTemplateValue(
+            header.value,
+            templateValues,
+          )
+        }
+
+        // const { value: headerValue } = await resolvedValue!.decrypt(context)
         // TODO: implement secret storing
-        return { key: header.key, value: header.value }
+        return { key: header.key, value: resolvedValue }
       }
     })
 

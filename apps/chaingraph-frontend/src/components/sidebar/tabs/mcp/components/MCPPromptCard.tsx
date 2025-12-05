@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useCategoryMetadata } from '@/store/categories/useCategories'
+import { countTemplateVariables } from '../utils'
 
 interface MCPPromptCardProps {
   prompt: Prompt
@@ -28,6 +29,12 @@ interface MCPPromptCardProps {
 export function MCPPromptCard({ prompt, server }: MCPPromptCardProps) {
   const serverWithNodes = useMCPServerWithNodes(server.id)
   const argCount = prompt.arguments?.length || 0
+
+  // Count template variables from server authHeaders
+  const templateVarCount = useMemo(
+    () => countTemplateVariables(server.authHeaders),
+    [server.authHeaders],
+  )
 
   const node = useMemo(() => {
     if (!serverWithNodes?.nodes)
@@ -123,6 +130,15 @@ export function MCPPromptCard({ prompt, server }: MCPPromptCardProps) {
                 {argCount}
                 {' '}
                 args
+              </Badge>
+            )}
+
+            {/* Template Variable Count */}
+            {templateVarCount > 0 && (
+              <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                {templateVarCount}
+                {' '}
+                vars
               </Badge>
             )}
           </div>

@@ -84,6 +84,21 @@ export class MCPPromptGetNode extends BaseNode {
 
   @Passthrough()
   @PortObject({
+    title: 'Template Variables',
+    description: 'Runtime values for template variables in MCP server headers (e.g., {{api_token}})',
+    schema: { properties: {} },
+    isSchemaMutable: true,
+    required: false,
+    defaultValue: {},
+    ui: {
+      hidden: true, // Hidden by default, unhidden when template variables exist
+      collapsed: true,
+    },
+  })
+  templateVariables: Record<string, string> = {}
+
+  @Passthrough()
+  @PortObject({
     title: 'Arguments',
     description: 'Prompt arguments (schema depends on selected prompt)',
     schema: { properties: {} },
@@ -119,9 +134,16 @@ export class MCPPromptGetNode extends BaseNode {
         throw new Error('MCP connection is required')
       }
 
+      // Collect template variable values from the templateVariables port
+      // The templateVariables port contains properties for each template variable
+      // e.g., { api_token: "secret123", user_id: "user456" }
+      const templateValues = this.templateVariables || {}
+
       const client = await MCPConnectionNode.createClient(
         this.connection,
         context,
+        undefined, // onprogress
+        templateValues,
       )
 
       // Validate prompt selection

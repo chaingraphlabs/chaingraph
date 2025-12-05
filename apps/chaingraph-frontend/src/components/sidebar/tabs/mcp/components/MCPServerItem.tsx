@@ -7,7 +7,9 @@
  */
 
 import type { MCPServerWithCapabilities } from '../store/types'
+import { useUnit } from 'effector-react'
 import { AlertCircle, FileText, Loader2, Package, Pencil, Server, TerminalSquare } from 'lucide-react'
+import { useCallback } from 'react'
 import {
   Accordion,
   AccordionContent,
@@ -16,11 +18,45 @@ import {
 } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { $expandedCapabilitySections, setExpandedCapabilitySections } from '../store'
 import { MCPServerStatus } from '../store/types'
 import { MCPPromptCard } from './MCPPromptCard'
 import { MCPResourceCard } from './MCPResourceCard'
 import { MCPToolCard } from './MCPToolCard'
+
+// Skeleton components for loading state
+function SkeletonToolCard() {
+  return (
+    <div className="flex items-center gap-2 py-1.5 px-2 rounded-sm">
+      <Skeleton className="h-4 w-4 rounded" />
+      <div className="flex-1 space-y-1">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-2 w-32 opacity-50" />
+      </div>
+      <Skeleton className="h-4 w-12 rounded" />
+    </div>
+  )
+}
+
+function SkeletonResourceCard() {
+  return (
+    <div className="flex items-center gap-2 py-1.5 px-2 rounded-sm">
+      <Skeleton className="h-4 w-4 rounded" />
+      <Skeleton className="h-3 w-28" />
+    </div>
+  )
+}
+
+function SkeletonPromptCard() {
+  return (
+    <div className="flex items-center gap-2 py-1.5 px-2 rounded-sm">
+      <Skeleton className="h-4 w-4 rounded" />
+      <Skeleton className="h-3 w-20" />
+    </div>
+  )
+}
 
 interface MCPServerItemProps {
   server: MCPServerWithCapabilities
@@ -29,6 +65,20 @@ interface MCPServerItemProps {
 }
 
 export function MCPServerItem({ server, searchQuery, onEdit }: MCPServerItemProps) {
+  // Get expanded state from store
+  const expandedSections = useUnit($expandedCapabilitySections)
+  const serverExpandedSections = expandedSections[server.id] ?? []
+
+  // Handle section toggle
+  const handleSectionChange = useCallback((sections: string[]) => {
+    setExpandedCapabilitySections({ serverId: server.id, sections })
+  }, [server.id])
+
+  // Auto-expand when searching
+  const effectiveExpanded = searchQuery
+    ? ['tools', 'resources', 'prompts']
+    : serverExpandedSections
+
   const toolsCount = server.tools?.length || 0
   const resourcesCount = server.resources?.length || 0
   const promptsCount = server.prompts?.length || 0
@@ -107,7 +157,8 @@ export function MCPServerItem({ server, searchQuery, onEdit }: MCPServerItemProp
         <div className="pl-6">
           <Accordion
             type="multiple"
-            defaultValue={searchQuery ? ['tools', 'resources', 'prompts'] : []}
+            value={effectiveExpanded}
+            onValueChange={handleSectionChange}
             className="space-y-0.5"
           >
             {/* Tools Section */}

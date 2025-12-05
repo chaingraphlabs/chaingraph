@@ -12,7 +12,8 @@ import { Cross1Icon, PlusIcon, TrashIcon } from '@radix-ui/react-icons'
 import { motion } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
-import { Button, Card, Input, Label } from '@/components/ui'
+import { Badge, Button, Card, Input, Label, Switch } from '@/components/ui'
+import { getTemplateVariables } from '../utils'
 
 interface MCPServerFormProps {
   server?: MCPServerWithCapabilities
@@ -24,6 +25,22 @@ interface MCPServerFormProps {
   isUpdating?: boolean
   isDeleting?: boolean
   error?: Error | null
+}
+
+// Component for template variable badge
+function TemplateVariableBadge({ variables }: { variables: string[] }) {
+  if (variables.length === 0)
+    return null
+
+  return (
+    <div className="flex gap-1 flex-wrap mt-1">
+      {variables.map(varName => (
+        <Badge key={varName} variant="secondary" className="text-xs">
+          {varName}
+        </Badge>
+      ))}
+    </div>
+  )
 }
 
 export function MCPServerForm({
@@ -40,11 +57,16 @@ export function MCPServerForm({
   const isEditMode = Boolean(server)
   const [title, setTitle] = useState(server?.title || '')
   const [url, setUrl] = useState(server?.url || '')
-  const [authHeaders, setAuthHeaders] = useState<Array<{ key: string, value: string }>>(server?.authHeaders || [])
+  const [authHeaders, setAuthHeaders] = useState<Array<{
+    key: string
+    value: string
+    isTemplate?: boolean
+    templateRequired?: boolean
+  }>>(server?.authHeaders || [])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleAddHeader = () => {
-    setAuthHeaders([...authHeaders, { key: '', value: '' }])
+    setAuthHeaders([...authHeaders, { key: '', value: '', isTemplate: false, templateRequired: true }])
   }
 
   const handleRemoveHeader = (index: number) => {
@@ -54,6 +76,21 @@ export function MCPServerForm({
   const handleHeaderChange = (index: number, field: 'key' | 'value', value: string) => {
     const newHeaders = [...authHeaders]
     newHeaders[index][field] = value
+    setAuthHeaders(newHeaders)
+  }
+
+  const handleTemplateToggle = (index: number, enabled: boolean) => {
+    const newHeaders = [...authHeaders]
+    newHeaders[index].isTemplate = enabled
+    if (enabled && newHeaders[index].templateRequired === undefined) {
+      newHeaders[index].templateRequired = true // default to required
+    }
+    setAuthHeaders(newHeaders)
+  }
+
+  const handleRequiredToggle = (index: number, required: boolean) => {
+    const newHeaders = [...authHeaders]
+    newHeaders[index].templateRequired = required
     setAuthHeaders(newHeaders)
   }
 
@@ -159,35 +196,100 @@ export function MCPServerForm({
             </div>
 
             {authHeaders.length > 0 && (
-              <div className="space-y-2">
-                {authHeaders.map((header, index) => (
-                  <div key={`header-${header.key}`} className="flex gap-2">
-                    <Input
-                      value={header.key}
-                      onChange={e => handleHeaderChange(index, 'key', e.target.value)}
-                      placeholder="Header name"
-                      className="flex-1"
-                      disabled={isLoading || isUpdating || isDeleting}
-                    />
-                    <Input
-                      value={header.value}
-                      onChange={e => handleHeaderChange(index, 'value', e.target.value)}
-                      placeholder="Header value"
-                      className="flex-1"
-                      type="password"
-                      disabled={isLoading || isUpdating || isDeleting}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveHeader(index)}
-                      disabled={isLoading || isUpdating || isDeleting}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {authHeaders.map((header, index) => {
+                  const templateVars = getTemplateVariables(header.value)
+                  const isTemplate = header.isTemplate || false
+                  const isRequired = header.templateRequired !== false // default true
+
+                  return (
+                    <div key={`header-${index}`} className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          value={header.key}
+                          onChange={e => handleHeaderChange(index, 'key', e.target.value)}
+                          placeholder="Header name"
+                          className="flex-1"
+                          disabled={isLoading || isUpdating || isDeleting}
+                        />
+                        <Input
+                          value={header.value}
+                          onChange={e => handleHeaderChange(index, 'value', e.target.value)}
+                          placeholder={isTemplate ? 'e.g., Bearer {{api_token}}' : 'Header value'}
+                          className="flex-1"
+                          type={isTemplate ? 'text' : 'password'}
+                          disabled={isLoading || isUpdating || isDeleting}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveHeader(index)}
+                          disabled={isLoading || isUpdating || isDeleting}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Template mode controls */}
+                      <div className="flex items-center gap-3 pl-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id={`template-${index}`}
+                            checked={isTemplate}
+                            onCheckedChange={checked => handleTemplateToggle(index, checked)}
+                            disabled={isLoading || isUpdating || isDeleting}
+                          />
+                          <Label
+                            htmlFor={`template-${index}`}
+                            className="text-xs text-muted-foreground cursor-pointer"
+                          >
+                            Template mode
+                          </Label>
+                        </div>
+
+                        {/* Required toggle (only visible when template mode is on) */}
+                        {isTemplate && (
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id={`required-${index}`}
+                              checked={isRequired}
+                              onCheckedChange={checked => handleRequiredToggle(index, checked)}
+                              disabled={isLoading || isUpdating || isDeleting}
+                            />
+                            <Label
+                              htmlFor={`required-${index}`}
+                              className="text-xs text-muted-foreground cursor-pointer"
+                            >
+                              Required
+                            </Label>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Template variable badges */}
+                      {isTemplate && templateVars.length > 0 && (
+                        <div className="pl-2 flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            Variables:
+                          </span>
+                          <TemplateVariableBadge variables={templateVars} />
+                        </div>
+                      )}
+
+                      {/* Template mode help (only shown when template mode is on) */}
+                      {isTemplate && templateVars.length === 0 && (
+                        <div className="pl-2 text-xs text-muted-foreground">
+                          Use
+                          {' '}
+                          <code className="bg-background px-1 py-0.5 rounded">{'{{variable_name}}'}</code>
+                          {' '}
+                          syntax in the value
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
 
@@ -196,6 +298,43 @@ export function MCPServerForm({
                 No authentication headers configured
               </div>
             )}
+
+            {/* Template syntax help */}
+            <div className="text-sm text-muted-foreground bg-muted/50 rounded p-3 space-y-2">
+              <div className="font-medium">💡 Template Variables</div>
+              <div className="space-y-1 text-xs">
+                <div>
+                  • Enable
+                  {' '}
+                  <strong>Template mode</strong>
+                  {' '}
+                  to use runtime variables
+                </div>
+                <div>
+                  • Use
+                  {' '}
+                  <code className="bg-background px-1 py-0.5 rounded">{'{{variable_name}}'}</code>
+                  {' '}
+                  syntax in header values
+                </div>
+                <div>
+                  • Example:
+                  {' '}
+                  <code className="bg-background px-1 py-0.5 rounded">
+                    Bearer
+                    {'{{api_token}}'}
+                  </code>
+                </div>
+                <div>• Variables become input ports on MCP nodes in flows</div>
+                <div>
+                  • Mark as
+                  {' '}
+                  <strong>Required</strong>
+                  {' '}
+                  to enforce values at execution time
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Delete Section (Edit Mode Only) */}

@@ -13,3 +13,11 @@ export { MCPToolCallNode } from './mcp-tool-call.node'
 
 // Export types for external use
 export * from './types'
+
+// Export utilities for external use
+export {
+  extractTemplateVariables,
+  hasTemplateVariables,
+  resolveTemplateValue,
+  TEMPLATE_VARIABLE_REGEX,
+} from './utils'

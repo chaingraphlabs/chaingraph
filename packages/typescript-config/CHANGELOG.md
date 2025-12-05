@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.21
+
+### Patch Changes
+
+- e55f08b: feat(mcp): enhance MCP server auth headers with template support
+
 ## 0.6.20
 
 ### Patch Changes

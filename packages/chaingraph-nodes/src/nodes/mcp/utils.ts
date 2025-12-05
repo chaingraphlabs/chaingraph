@@ -21,6 +21,84 @@ import {
   TextResourceContent,
 } from './types'
 
+// ============================================================================
+// Template Variable Utilities
+// ============================================================================
+
+/**
+ * Regular expression to match template variables with optional whitespace
+ * Matches: {{var}}, {{ var }}, {{  var  }}, etc.
+ */
+export const TEMPLATE_VARIABLE_REGEX = /\{\{\s*(\w+)\s*\}\}/g
+
+/**
+ * Extract unique template variables from MCP server headers
+ * @param headers - Array of headers with template syntax
+ * @returns Map of variable names to required flags
+ */
+export function extractTemplateVariables(
+  headers: Array<{
+    key: string
+    value: string
+    isTemplate?: boolean
+    templateRequired?: boolean
+  }>,
+): Map<string, boolean> {
+  const variables = new Map<string, boolean>()
+
+  for (const header of headers) {
+    if (!header.isTemplate)
+      continue
+
+    const regex = new RegExp(TEMPLATE_VARIABLE_REGEX)
+
+    for (let match = regex.exec(header.value); match !== null; match = regex.exec(header.value)) {
+      const varName = match[1]
+      const isRequired = header.templateRequired !== false
+
+      if (variables.has(varName)) {
+        variables.set(varName, variables.get(varName)! || isRequired)
+      } else {
+        variables.set(varName, isRequired)
+      }
+    }
+  }
+
+  return variables
+}
+
+/**
+ * Resolve template variables in a string value
+ * @param value - String potentially containing {{variables}}
+ * @param templateValues - Map of variable names to values
+ * @returns Resolved string with variables substituted
+ */
+export function resolveTemplateValue(
+  value: string,
+  templateValues: Record<string, string>,
+): string {
+  return value.replace(TEMPLATE_VARIABLE_REGEX, (_match, varName) => {
+    const resolvedValue = templateValues[varName]
+    if (resolvedValue === undefined) {
+      throw new Error(`Template variable {{${varName}}} not provided`)
+    }
+    return resolvedValue
+  })
+}
+
+/**
+ * Check if a string contains template variables
+ * @param value - String to check
+ * @returns True if value contains {{variables}}, false otherwise
+ */
+export function hasTemplateVariables(value: string): boolean {
+  return /\{\{\s*\w+\s*\}\}/.test(value)
+}
+
+// ============================================================================
+// Content Conversion Utilities
+// ============================================================================
+
 export
 function convertContentBlockToChaingraphContent(content: ContentBlock): MCPContentBlock {
   let contentResult: MCPContentBlock

@@ -12,6 +12,8 @@ import { authedProcedure } from '../../trpc'
 const authHeaderSchema = z.object({
   key: z.string(),
   value: z.string(),
+  isTemplate: z.boolean().optional(), // NEW: if true, value contains {{variables}}
+  templateRequired: z.boolean().optional(), // NEW: if true, template variable ports are required
 })
 
 export const updateServer = authedProcedure

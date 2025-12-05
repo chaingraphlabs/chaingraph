@@ -9,8 +9,8 @@
 import type { MCPServerWithCapabilities } from '../store/types'
 import { useUnit } from 'effector-react'
 import { Server } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { $mcpServersWithCapabilities } from '@/components/sidebar/tabs/mcp/store'
+import { useCallback, useMemo, useState } from 'react'
+import { $expandedServerIds, $mcpServersWithCapabilities, setExpandedServers } from '@/components/sidebar/tabs/mcp/store'
 import {
   Accordion,
 } from '@/components/ui/accordion'
@@ -24,7 +24,10 @@ interface MCPServerListProps {
 
 export function MCPServerList({ onEditServer }: MCPServerListProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const servers = useUnit($mcpServersWithCapabilities)
+  const { servers, expandedServers } = useUnit({
+    servers: $mcpServersWithCapabilities,
+    expandedServers: $expandedServerIds,
+  })
 
   // Filter servers based on search
   const filteredServers = useMemo(() => {
@@ -68,13 +71,18 @@ export function MCPServerList({ onEditServer }: MCPServerListProps) {
     })
   }, [servers, searchQuery])
 
-  // Auto-expand servers when searching
-  const expandedServers = useMemo(() => {
+  // Handle expanded state changes
+  const handleExpandedChange = useCallback((ids: string[]) => {
+    setExpandedServers(ids)
+  }, [])
+
+  // Auto-expand when searching (override persisted state)
+  const effectiveExpandedServers = useMemo(() => {
     if (searchQuery) {
       return filteredServers.map(server => server.id)
     }
-    return []
-  }, [searchQuery, filteredServers])
+    return expandedServers
+  }, [searchQuery, filteredServers, expandedServers])
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -98,7 +106,8 @@ export function MCPServerList({ onEditServer }: MCPServerListProps) {
           ? (
               <Accordion
                 type="multiple"
-                defaultValue={expandedServers}
+                value={effectiveExpandedServers}
+                onValueChange={handleExpandedChange}
                 className="space-y-0.5 p-1 w-full"
               >
                 {filteredServers.map(server => (

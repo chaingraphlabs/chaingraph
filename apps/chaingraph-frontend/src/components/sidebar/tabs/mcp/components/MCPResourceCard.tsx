@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useCategoryMetadata } from '@/store/categories/useCategories'
+import { countTemplateVariables } from '../utils'
 
 interface MCPResourceCardProps {
   resource: Resource | ResourceTemplate
@@ -27,6 +28,12 @@ interface MCPResourceCardProps {
 
 export function MCPResourceCard({ resource, server }: MCPResourceCardProps) {
   const serverWithNodes = useMCPServerWithNodes(server.id)
+
+  // Count template variables from server authHeaders
+  const templateVarCount = useMemo(
+    () => countTemplateVariables(server.authHeaders),
+    [server.authHeaders],
+  )
 
   // Select icon based on resource type
   const getResourceIcon = (type: string) => {
@@ -147,6 +154,15 @@ export function MCPResourceCard({ resource, server }: MCPResourceCardProps) {
             <Badge variant="outline" className="text-xs px-1 py-0 h-4">
               {resource.mimeType}
             </Badge>
+
+            {/* Template Variable Count */}
+            {templateVarCount > 0 && (
+              <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                {templateVarCount}
+                {' '}
+                vars
+              </Badge>
+            )}
           </div>
         </TooltipTrigger>
 
