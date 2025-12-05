@@ -16,6 +16,31 @@ export enum MCPServerStatus {
   ERROR = 'error',
 }
 
+// Overall MCP loading state machine
+export type MCPLoadStatus =
+  | 'idle'       // Initial - no data, nothing happening
+  | 'hydrating'  // Loading from localStorage (instant)
+  | 'ready'      // Has data (cached or fresh)
+  | 'error'      // Something failed critically
+
+export interface MCPState {
+  status: MCPLoadStatus
+  isSyncing: boolean           // Background fetch in progress
+  hydratedAt: number | null    // When hydrated from cache
+  lastSyncAt: number | null    // When last fresh fetch completed
+  syncError: string | null     // Last sync error (non-fatal)
+}
+
+// Per-server capability state (Record value type)
+export interface ServerCapabilityState {
+  status: 'idle' | 'loading' | 'ready' | 'error'
+  tools: Tool[]
+  resources: (Resource | ResourceTemplate)[]
+  prompts: Prompt[]
+  loadedAt: number | null
+  error: string | null
+}
+
 export interface MCPCapabilityLoadingState {
   tools: boolean
   resources: boolean
@@ -26,7 +51,7 @@ export interface MCPServer {
   id: string
   title: string
   url: string
-  authHeaders: Array<{ key: string, value: string }>
+  authHeaders: Array<{ key: string, value: string, isTemplate?: boolean, templateRequired?: boolean }>
 }
 
 export interface MCPServerWithCapabilities extends MCPServer {
@@ -41,14 +66,14 @@ export interface MCPServerWithCapabilities extends MCPServer {
 export interface CreateMCPServerEvent {
   title: string
   url: string
-  authHeaders: Array<{ key: string, value: string }>
+  authHeaders: Array<{ key: string, value: string, isTemplate?: boolean, templateRequired?: boolean }>
 }
 
 export interface UpdateMCPServerEvent {
   id: string
   title: string
   url: string
-  authHeaders: Array<{ key: string, value: string }>
+  authHeaders: Array<{ key: string, value: string, isTemplate?: boolean, templateRequired?: boolean }>
 }
 
 export interface MCPServerNodes {

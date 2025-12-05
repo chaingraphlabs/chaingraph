@@ -18,11 +18,40 @@ import {
   HeaderPair,
 } from '@badaitech/chaingraph-nodes'
 import { MCPConnectionData } from '@badaitech/chaingraph-nodes'
+import { extractTemplateVariables } from '@badaitech/chaingraph-nodes'
 import { jsonSchemaToPortConfig } from '@badaitech/chaingraph-types'
 import { parse } from 'uri-template'
 
 export class MCPNodeBuilderService {
   constructor(private nodeRegistry: NodeRegistry) {}
+
+  /**
+   * Create port configs for template variables
+   * These become properties of the templateVariables object port
+   */
+  private createTemplateVariablePortConfigs(
+    variables: Map<string, boolean>,
+  ): IPortConfig[] {
+    const configs: IPortConfig[] = []
+    let index = 0
+
+    for (const [varName, isRequired] of variables) {
+      configs.push({
+        key: varName, // Direct variable name (no template_ prefix)
+        title: varName,
+        description: `Runtime value for {{${varName}}} in MCP server headers${isRequired ? ' (required)' : ' (optional)'}`,
+        type: 'string',
+        required: isRequired,
+        defaultValue: '',
+        order: index++,
+        ui: {
+          placeholder: `Enter value for ${varName}`,
+        },
+      })
+    }
+
+    return configs
+  }
 
   buildToolNode(server: MCPServer, tool: Tool): INode {
     const mcpToolNode = this.nodeRegistry.createNode('MCPToolCallNode', 'temp') as MCPToolCallNode
@@ -38,6 +67,30 @@ export class MCPNodeBuilderService {
     }
     if (tool.description) {
       mcpToolNode.metadata.description = tool.description
+    }
+
+    // Extract template variables from server authHeaders
+    const templateVars = extractTemplateVariables(server.authHeaders)
+    const templatePortConfigs = this.createTemplateVariablePortConfigs(templateVars)
+
+    // Configure templateVariables port if there are template variables
+    if (templatePortConfigs.length > 0) {
+      const templateVariablesPort = mcpToolNode.findPort(
+        port => port.getConfig().key === 'templateVariables' && !port.getConfig().parentId,
+      ) as ObjectPort
+      if (templateVariablesPort) {
+        // Add template variable properties to the templateVariables port
+        mcpToolNode.addObjectProperties(templateVariablesPort as IPort, templatePortConfigs)
+
+        // Unhide the port since we have template variables
+        templateVariablesPort.setConfig({
+          ...templateVariablesPort.getConfig(),
+          ui: {
+            ...templateVariablesPort.getConfig().ui,
+            hidden: false,
+          },
+        })
+      }
     }
 
     // Configure connection port
@@ -217,6 +270,30 @@ export class MCPNodeBuilderService {
       resourceReadNode.metadata.description = `**URI:** ${resourceUri}\n**Mime:** ${resource.mimeType}`
     }
 
+    // Extract template variables from server authHeaders
+    const templateVars = extractTemplateVariables(server.authHeaders)
+    const templatePortConfigs = this.createTemplateVariablePortConfigs(templateVars)
+
+    // Configure templateVariables port if there are template variables
+    if (templatePortConfigs.length > 0) {
+      const templateVariablesPort = resourceReadNode.findPort(
+        port => port.getConfig().key === 'templateVariables' && !port.getConfig().parentId,
+      ) as ObjectPort
+      if (templateVariablesPort) {
+        // Add template variable properties to the templateVariables port
+        resourceReadNode.addObjectProperties(templateVariablesPort as IPort, templatePortConfigs)
+
+        // Unhide the port since we have template variables
+        templateVariablesPort.setConfig({
+          ...templateVariablesPort.getConfig(),
+          ui: {
+            ...templateVariablesPort.getConfig().ui,
+            hidden: false,
+          },
+        })
+      }
+    }
+
     // Configure connection port
     const connectionPort = resourceReadNode.findPort(
       port => port.getConfig().key === 'connection' && !port.getConfig().parentId,
@@ -227,7 +304,12 @@ export class MCPNodeBuilderService {
 
     const connectionData = new MCPConnectionData()
     connectionData.serverUrl = server.url
-    // connectionData.headers = server.authHeaders || []
+    connectionData.headers = server.authHeaders.map((header) => {
+      const headerPair = new HeaderPair()
+      headerPair.key = header.key
+      headerPair.value = header.value
+      return headerPair
+    }) || []
 
     this.configureConnectionPort(connectionPort, server, connectionData)
 
@@ -318,6 +400,30 @@ export class MCPNodeBuilderService {
       promptGetNode.metadata.description = prompt.description
     }
 
+    // Extract template variables from server authHeaders
+    const templateVars = extractTemplateVariables(server.authHeaders)
+    const templatePortConfigs = this.createTemplateVariablePortConfigs(templateVars)
+
+    // Configure templateVariables port if there are template variables
+    if (templatePortConfigs.length > 0) {
+      const templateVariablesPort = promptGetNode.findPort(
+        port => port.getConfig().key === 'templateVariables' && !port.getConfig().parentId,
+      ) as ObjectPort
+      if (templateVariablesPort) {
+        // Add template variable properties to the templateVariables port
+        promptGetNode.addObjectProperties(templateVariablesPort as IPort, templatePortConfigs)
+
+        // Unhide the port since we have template variables
+        templateVariablesPort.setConfig({
+          ...templateVariablesPort.getConfig(),
+          ui: {
+            ...templateVariablesPort.getConfig().ui,
+            hidden: false,
+          },
+        })
+      }
+    }
+
     // Configure connection port
     const connectionPort = promptGetNode.findPort(
       port => port.getConfig().key === 'connection' && !port.getConfig().parentId,
@@ -328,7 +434,12 @@ export class MCPNodeBuilderService {
 
     const connectionData = new MCPConnectionData()
     connectionData.serverUrl = server.url
-    // connectionData.headers = server.authHeaders || []
+    connectionData.headers = server.authHeaders.map((header) => {
+      const headerPair = new HeaderPair()
+      headerPair.key = header.key
+      headerPair.value = header.value
+      return headerPair
+    }) || []
 
     this.configureConnectionPort(connectionPort, server, connectionData)
 

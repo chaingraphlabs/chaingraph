@@ -24,7 +24,7 @@ import {
   $updateMCPServerError,
   createMCPServer,
   deleteMCPServer,
-  loadMCPServers,
+  initializeMCPTab,
   updateMCPServer,
 } from './store'
 
@@ -48,9 +48,9 @@ export function MCPTab() {
     deleteError: $deleteMCPServerError,
   })
 
-  // Load MCP servers on mount
+  // Initialize MCP tab on mount (handles hydration + sync)
   useEffect(() => {
-    loadMCPServers()
+    initializeMCPTab()
   }, [])
 
   const handleCreateClick = useCallback(() => {

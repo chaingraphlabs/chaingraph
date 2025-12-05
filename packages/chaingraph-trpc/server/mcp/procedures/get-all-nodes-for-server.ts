@@ -20,10 +20,6 @@ export interface AllNodesResponse {
   serverTitle: string
 }
 
-// Cache for built nodes
-const nodeCache = new Map<string, { nodes: AllNodesResponse, timestamp: number }>()
-const NODE_CACHE_DURATION = 30 * 1000 // 30 seconds
-
 export const getAllNodesForServer = authedProcedure
   .input(z.object({
     serverId: z.string(),
@@ -32,13 +28,6 @@ export const getAllNodesForServer = authedProcedure
     const userId = ctx.session?.user?.id
     if (!userId) {
       throw new Error('User not authenticated')
-    }
-
-    // Check node cache first
-    const cacheKey = `${input.serverId}-${userId}`
-    const cached = nodeCache.get(cacheKey)
-    if (cached && Date.now() - cached.timestamp < NODE_CACHE_DURATION) {
-      return cached.nodes
     }
 
     // Get server details
@@ -83,12 +72,6 @@ export const getAllNodesForServer = authedProcedure
       serverId: server.id,
       serverTitle: server.title,
     }
-
-    // Cache the built nodes
-    nodeCache.set(cacheKey, {
-      nodes: response,
-      timestamp: Date.now(),
-    })
 
     return response
   })

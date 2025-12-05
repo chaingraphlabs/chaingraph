@@ -9,6 +9,8 @@
 export interface MCPServerAuthHeader {
   key: string
   value: string
+  isTemplate?: boolean       // NEW: if true, value contains {{variables}}
+  templateRequired?: boolean // NEW: if true, template variable ports are required
 }
 
 export interface MCPServerInput {
