@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.24
+
+### Patch Changes
+
+- feat(gemini): add debug logging for model response in GeminiStructuredOutputNode
+
 ## 0.6.23
 
 ### Patch Changes

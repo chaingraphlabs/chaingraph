@@ -280,6 +280,9 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
         const resultText = response.candidates?.[0]?.content?.parts?.[0]?.text
 
+        // debug json response.candidates:
+        await this.debugLog(context, `Model Response: ${JSON.stringify(response, null, 2)}`)
+
         if (!resultText) {
           throw new Error('No response from model')
         }

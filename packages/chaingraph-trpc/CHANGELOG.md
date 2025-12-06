@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-trpc
 
+## 0.6.24
+
+### Patch Changes
+
+- feat(gemini): add debug logging for model response in GeminiStructuredOutputNode
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.24
+  - @badaitech/chaingraph-types@0.6.24
+  - @badaitech/badai-api@0.6.24
+
 ## 0.6.23
 
 ### Patch Changes
