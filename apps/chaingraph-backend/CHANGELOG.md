@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.26
+
+### Patch Changes
+
+- feat(gemini): implement stream handling and conversion in GeminiStructuredOutputNode
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.26
+  - @badaitech/chaingraph-types@0.6.26
+  - @badaitech/chaingraph-trpc@0.6.26
+
 ## 0.6.25
 
 ### Patch Changes

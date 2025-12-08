@@ -17,11 +17,13 @@ import type {
   NodeExecutionResult,
   ObjectPort,
   ObjectPortConfig,
+  StreamPortConfig,
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
   ExecutionEventEnum,
   ExecutionEventImpl,
+  MultiChannel,
   Node,
   ObjectSchemaCopyTo,
   Output,
@@ -66,6 +68,9 @@ const GEMINI_MAX_RETRIES = 3
   tags: ['ai', 'gemini', 'structured', 'json', 'schema', 'output'],
 })
 export class GeminiStructuredOutputNode extends BaseNode {
+  // Track stream fields for converting array responses back to streams
+  private streamFields: Map<string, StreamPortConfig> = new Map()
+
   // ============================================================================
   // Configuration
   // ============================================================================
@@ -187,6 +192,9 @@ export class GeminiStructuredOutputNode extends BaseNode {
   // ============================================================================
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    // Clear previous stream tracking
+    this.streamFields.clear()
+
     // Validate inputs
     if (!this.config.apiKey) {
       throw new Error('API Key is required')
@@ -209,8 +217,8 @@ export class GeminiStructuredOutputNode extends BaseNode {
     const { apiKey } = await this.config.apiKey.decrypt(context)
     const genAI = new GoogleGenAI({ apiKey })
 
-    // Convert port schema to JSON Schema
-    const jsonSchema = this.convertPortSchemaToJsonSchema(schema)
+    // Convert port schema to JSON Schema (track streams for later conversion)
+    const jsonSchema = this.convertPortSchemaToJsonSchema(schema, true)
 
     // Build generation config
     const generationConfig: Record<string, any> = {
@@ -248,9 +256,19 @@ export class GeminiStructuredOutputNode extends BaseNode {
       context,
     )
 
-    // Set the structured response
+    // Set the structured response, converting arrays to streams where needed
     for (const [key, value] of Object.entries(result)) {
-      this.structuredResponse[key] = value
+      const streamConfig = this.streamFields.get(key)
+
+      if (streamConfig && Array.isArray(value)) {
+        // Convert array to stream
+        const channel = new MultiChannel<any>()
+        channel.sendBatch(value)
+        channel.close()
+        this.structuredResponse[key] = channel
+      } else {
+        this.structuredResponse[key] = value
+      }
     }
 
     return {}
@@ -317,16 +335,42 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
   /**
    * Convert ChainGraph port schema to JSON Schema format
+   * @param portSchema The port schema to convert
+   * @param trackStreams If true, track stream fields for later array→stream conversion
    */
-  private convertPortSchemaToJsonSchema(portSchema: IObjectSchema): Record<string, any> {
+  private convertPortSchemaToJsonSchema(
+    portSchema: IObjectSchema,
+    trackStreams: boolean = false,
+  ): Record<string, any> {
+    // Handle empty or missing properties - return unconstrained object
+    if (!portSchema.properties || Object.keys(portSchema.properties).length === 0) {
+      return { type: 'object' }
+    }
+
     const properties: Record<string, any> = {}
     const required: string[] = []
 
-    for (const [key, propConfig] of Object.entries(portSchema.properties || {})) {
-      properties[key] = this.convertPropertyToJsonSchema(propConfig as IPortConfig)
-      if ((propConfig as IPortConfig).required) {
-        required.push(key)
+    for (const [key, propConfig] of Object.entries(portSchema.properties)) {
+      const config = propConfig as IPortConfig
+
+      // Track stream fields for later conversion (only at top level)
+      if (trackStreams && config.type === 'stream') {
+        this.streamFields.set(key, config as StreamPortConfig)
       }
+
+      const propSchema = this.convertPropertyToJsonSchema(config)
+      // Filter out null schemas (unsupported types like secret)
+      if (propSchema !== null) {
+        properties[key] = propSchema
+        if (config.required) {
+          required.push(key)
+        }
+      }
+    }
+
+    // If all properties were filtered out, return unconstrained object
+    if (Object.keys(properties).length === 0) {
+      return { type: 'object' }
     }
 
     return {
@@ -338,8 +382,9 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
   /**
    * Convert a single property config to JSON Schema
+   * Returns null for unsupported types (stream, secret) to skip them
    */
-  private convertPropertyToJsonSchema(config: IPortConfig): Record<string, any> {
+  private convertPropertyToJsonSchema(config: IPortConfig): Record<string, any> | null {
     const schema: Record<string, any> = {}
 
     if (config.description) {
@@ -362,9 +407,11 @@ export class GeminiStructuredOutputNode extends BaseNode {
         break
       case 'object': {
         const objConfig = config as ObjectPortConfig
-        if (objConfig.schema?.properties) {
+        // Only recurse if there are actual properties defined
+        if (objConfig.schema?.properties && Object.keys(objConfig.schema.properties).length > 0) {
           return this.convertPortSchemaToJsonSchema(objConfig.schema)
         }
+        // Empty/no properties = unconstrained object
         schema.type = 'object'
         break
       }
@@ -374,6 +421,23 @@ export class GeminiStructuredOutputNode extends BaseNode {
         schema.enum = enumConfig.options?.map(o => String(o.defaultValue)) || []
         break
       }
+      case 'any':
+        // Return empty schema for maximum flexibility - Gemini will accept any JSON value
+        return {}
+      case 'stream': {
+        // Convert stream to array schema - items will be converted back to stream after LLM response
+        const streamConfig = config as StreamPortConfig
+        const itemSchema = streamConfig.itemConfig
+          ? this.convertPropertyToJsonSchema(streamConfig.itemConfig)
+          : {}
+        return {
+          type: 'array',
+          items: itemSchema ?? {},
+        }
+      }
+      case 'secret':
+        // Unsupported type - skip field (caller will filter out nulls)
+        return null
       default:
         schema.type = 'string'
     }
@@ -386,7 +450,8 @@ export class GeminiStructuredOutputNode extends BaseNode {
    */
   private convertArrayItemToJsonSchema(config: ArrayPortConfig): Record<string, any> {
     if (!config.itemConfig?.type) {
-      return { type: 'string' }
+      // No item type specified - default to any item type
+      return {}
     }
 
     switch (config.itemConfig.type) {
@@ -398,7 +463,8 @@ export class GeminiStructuredOutputNode extends BaseNode {
         return { type: 'boolean' }
       case 'object': {
         const objConfig = config.itemConfig as ObjectPortConfig
-        if (objConfig.schema?.properties) {
+        // Only recurse if there are actual properties defined
+        if (objConfig.schema?.properties && Object.keys(objConfig.schema.properties).length > 0) {
           return this.convertPortSchemaToJsonSchema(objConfig.schema)
         }
         return { type: 'object' }
@@ -417,6 +483,23 @@ export class GeminiStructuredOutputNode extends BaseNode {
           enum: enumConfig.options?.map(o => String(o.defaultValue)) || [],
         }
       }
+      case 'any':
+        // Empty schema accepts any JSON value
+        return {}
+      case 'stream': {
+        // Convert stream to array schema (array of streams = array of arrays)
+        const streamConfig = config.itemConfig as StreamPortConfig
+        const itemSchema = streamConfig.itemConfig
+          ? this.convertPropertyToJsonSchema(streamConfig.itemConfig)
+          : {}
+        return {
+          type: 'array',
+          items: itemSchema ?? {},
+        }
+      }
+      case 'secret':
+        // Unsupported type in arrays - treat as unconstrained
+        return {}
       default:
         return { type: 'string' }
     }
