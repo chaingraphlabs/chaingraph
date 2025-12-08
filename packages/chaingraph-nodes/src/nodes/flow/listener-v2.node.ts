@@ -6,12 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Output, PortNumber, PortObject, PortString } from '@badaitech/chaingraph-types'
+import type { ExecutionContext, IPort, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, Input, Node, ObjectSchemaCopyTo, Output, Passthrough, PortNumber, PortObject, PortString } from '@badaitech/chaingraph-types'
 import { NODE_CATEGORIES } from '../../categories'
 
 @Node({
-  type: 'EventListenerNode',
+  type: 'EventListenerNodeV2',
   title: 'Event Listener',
   description: 'Listens for specific events and triggers actions',
   category: NODE_CATEGORIES.FLOW,
@@ -20,13 +20,8 @@ import { NODE_CATEGORIES } from '../../categories'
     // Disable auto-execution - this node should only execute when explicitly triggered by events
     disabledAutoExecution: true,
   },
-  ui: {
-    state: {
-      isHidden: true, // Deprecated node, use v2
-    },
-  },
 })
-class EventListenerNode extends BaseNode {
+class EventListenerNodeV2 extends BaseNode {
   @Input()
   @PortString({
     title: 'Event Name',
@@ -34,6 +29,22 @@ class EventListenerNode extends BaseNode {
     defaultValue: '',
   })
   eventName: string = ''
+
+  @Passthrough()
+  @PortObject({
+    title: 'Event Schema',
+    description: 'Define the event schema. Connect an object port or define properties manually.',
+    schema: { properties: {} },
+    isSchemaMutable: true,
+    ui: {
+      keyDeletable: true,
+      hideEditor: false,
+    },
+  })
+  @ObjectSchemaCopyTo((port: IPort): boolean => {
+    return port.getConfig().key === 'eventPayload' && !port.getConfig().parentId
+  })
+  eventSchema: Record<string, any> = {}
 
   @Input()
   @PortNumber({
@@ -46,9 +57,9 @@ class EventListenerNode extends BaseNode {
 
   @Output()
   @PortObject({
-    title: 'Event Data',
-    description: 'Output data when the event is triggered',
-    isSchemaMutable: true,
+    title: 'Event Payload',
+    description: 'Event payload data when the event is triggered',
+    isSchemaMutable: false,
     schema: {
       type: 'object',
       properties: {},
@@ -59,7 +70,7 @@ class EventListenerNode extends BaseNode {
       hidePropertyEditor: true,
     },
   })
-  outputData: Record<string, any> = {}
+  eventPayload: Record<string, any> = {}
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // EventListenerNode should only process when there's event data
@@ -80,11 +91,11 @@ class EventListenerNode extends BaseNode {
     }
 
     // Output the payload directly without schema processing
-    this.outputData = payload || {}
+    this.eventPayload = payload || {}
 
     // Return empty result - node executed successfully
     return {}
   }
 }
 
-export default EventListenerNode
+export default EventListenerNodeV2

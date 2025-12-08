@@ -230,7 +230,7 @@ export class ExecutionEngine {
             // that matches the event
             if (this.context.isChildExecution && this.context.eventData) {
               const nodeType = metadata?.type
-              if (nodeType !== 'EventListenerNode') {
+              if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
                 continue
               }
 
@@ -286,10 +286,10 @@ export class ExecutionEngine {
     // Wait for all initial node status changed events to be published
     await Promise.all(promises)
 
-  //   console.log(`[ExecutionEngine] Debug state:
-  // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
-  // - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
-  // - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
+    //   console.log(`[ExecutionEngine] Debug state:
+    // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
+    // - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
+    // - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
   }
 
   private startWorkers(): Promise<void>[] {
@@ -394,7 +394,7 @@ export class ExecutionEngine {
           } else if (this.context.isChildExecution && this.context.eventData) {
             // In child context, only EventListenerNodes should have disabledAutoExecution
             const nodeType = metadata?.type
-            if (nodeType !== 'EventListenerNode') {
+            if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
               shouldSkip = true
             } else {
               // Check if the event name matches the listener's event name
