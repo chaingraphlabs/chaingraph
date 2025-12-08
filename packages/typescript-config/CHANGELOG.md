@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.25
+
+### Patch Changes
+
+- feat(gemini): add output formatting configuration for Gemini responses
+
 ## 0.6.24
 
 ### Patch Changes

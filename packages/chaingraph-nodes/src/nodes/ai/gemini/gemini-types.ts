@@ -231,6 +231,48 @@ export class GeminiMediaConfig {
 }
 
 // ============================================================================
+// GeminiOutputConfig - Output Formatting Configuration
+// ============================================================================
+
+/**
+ * Configuration for output stream formatting
+ * Controls how search results, citations, and other metadata are formatted
+ */
+@ObjectSchema({
+  description: 'Output formatting configuration for Gemini responses',
+  type: 'GeminiOutputConfig',
+})
+export class GeminiOutputConfig {
+  @PortBoolean({
+    title: 'Include Thoughts',
+    description: 'Stream thought summaries in output (wrapped in ~~~thoughts blocks)',
+    defaultValue: false,
+  })
+  includeThoughts: boolean = false
+
+  @PortBoolean({
+    title: 'Include Search Queries',
+    description: 'Show web search queries used by the model in output',
+    defaultValue: true,
+  })
+  includeSearchQueries: boolean = true
+
+  @PortBoolean({
+    title: 'Include Search Sources',
+    description: 'Show search result sources as tool results',
+    defaultValue: true,
+  })
+  includeSearchSources: boolean = true
+
+  @PortBoolean({
+    title: 'Include Footnotes',
+    description: 'Add markdown footnotes section with sources at end',
+    defaultValue: true,
+  })
+  includeFootnotes: boolean = true
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
