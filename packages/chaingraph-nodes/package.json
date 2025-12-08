@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-nodes",
   "type": "module",
-  "version": "0.6.25",
+  "version": "0.6.26",
   "private": false,
   "description": "Node components for the Chaingraph project",
   "license": "BUSL-1.1",

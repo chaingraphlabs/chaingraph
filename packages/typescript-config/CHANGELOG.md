@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.26
+
+### Patch Changes
+
+- feat(gemini): implement stream handling and conversion in GeminiStructuredOutputNode
+
 ## 0.6.25
 
 ### Patch Changes
