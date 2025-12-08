@@ -11,7 +11,7 @@ import type {
   INode,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { Part, VideoMetadata } from '@google/genai'
+import type { GroundingChunk, Part, VideoMetadata } from '@google/genai'
 import {
   BaseNode,
   MultiChannel,
@@ -31,6 +31,7 @@ import { NODE_CATEGORIES } from '../../../categories'
 import {
   GeminiGenerationConfig,
   GeminiMediaConfig,
+  GeminiOutputConfig,
   GeminiThinkingLevel,
   isGemini3Model,
   isGemini25Model,
@@ -39,11 +40,25 @@ import {
 
 /**
  * Tags for formatting streamed output (same pattern as Anthropic node)
+ * These tags are parsed by the frontend's MarkdownComponentThoughts component
  */
 const TAGS = {
   THINK: {
     OPEN: '\n~~~thoughts\n',
     CLOSE: '\n~~~\n',
+  },
+  TOOL_USE: {
+    OPEN: '<tool_use>\n',
+    CLOSE: '</tool_use>\n',
+    ID: { OPEN: '<tool_id>', CLOSE: '</tool_id>\n' },
+    NAME: { OPEN: '<tool_name>', CLOSE: '</tool_name>\n' },
+    INPUT: { OPEN: '<tool_input>\n', CLOSE: '\n</tool_input>\n' },
+  },
+  TOOL_RESULT: {
+    OPEN: '<tool_result>\n',
+    CLOSE: '</tool_result>\n',
+    ID: { OPEN: '<tool_result_id>', CLOSE: '</tool_result_id>\n' },
+    CONTENT: { OPEN: '<tool_result_content>\n', CLOSE: '\n</tool_result_content>\n' },
   },
 }
 
@@ -123,10 +138,25 @@ export class GeminiMultimodalCallNode extends BaseNode {
     description: 'Images, videos, and YouTube URLs for multimodal input',
     schema: GeminiMediaConfig,
     ui: {
-      collapsed: true,
+      collapsed: false,
     },
   })
   media: GeminiMediaConfig = new GeminiMediaConfig()
+
+  // ============================================================================
+  // Output Configuration (formatting options)
+  // ============================================================================
+
+  @Passthrough()
+  @PortObject({
+    title: 'Output Format',
+    description: 'Configure how search results and citations appear in output',
+    schema: GeminiOutputConfig,
+    ui: {
+      collapsed: false,
+    },
+  })
+  outputConfig: GeminiOutputConfig = new GeminiOutputConfig()
 
   // ============================================================================
   // Thinking / Reasoning (Model-specific with @PortVisibility)
@@ -156,17 +186,6 @@ export class GeminiMultimodalCallNode extends BaseNode {
     defaultValue: -1,
   })
   thinkingBudget: number = -1
-
-  @Passthrough()
-  @PortVisibility({
-    showIf: (node: INode) => supportsThinking((node as GeminiMultimodalCallNode).config.model),
-  })
-  @PortBoolean({
-    title: 'Include Thoughts',
-    description: 'Stream thought summaries in output (wrapped in ~~~thoughts blocks)',
-    defaultValue: false,
-  })
-  includeThoughts: boolean = false
 
   // ============================================================================
   // Output
@@ -227,13 +246,13 @@ export class GeminiMultimodalCallNode extends BaseNode {
       // Gemini 3 uses thinkingLevel
       generationConfig.thinkingConfig = {
         thinkingLevel: this.thinkingLevel,
-        includeThoughts: this.includeThoughts,
+        includeThoughts: this.outputConfig.includeThoughts,
       }
     } else if (isGemini25Model(this.config.model)) {
       // Gemini 2.5 uses thinkingBudget
       generationConfig.thinkingConfig = {
         thinkingBudget: this.thinkingBudget,
-        includeThoughts: this.includeThoughts,
+        includeThoughts: this.outputConfig.includeThoughts,
       }
     }
 
@@ -263,8 +282,11 @@ export class GeminiMultimodalCallNode extends BaseNode {
           config: generationConfig,
         })
 
-        // Track if we're currently in a thinking block
+        // Track state across chunks
         let inThinkingBlock = false
+        let searchQueryId = 0
+        const processedQueries = new Set<string>()
+        const groundingChunks: GroundingChunk[] = []
 
         // Stream the response chunks
         for await (const chunk of stream) {
@@ -273,6 +295,35 @@ export class GeminiMultimodalCallNode extends BaseNode {
             this.outputStream.close()
             this.outputStream.setError(new Error('Stream aborted'))
             return
+          }
+
+          // Process grounding metadata (may arrive before or with text)
+          const groundingMetadata = (chunk.candidates?.[0] as any)?.groundingMetadata
+          if (groundingMetadata) {
+            // Emit search queries as tool_use (if enabled and not already processed)
+            if (this.outputConfig.includeSearchQueries && groundingMetadata.webSearchQueries) {
+              for (const query of groundingMetadata.webSearchQueries) {
+                if (!processedQueries.has(query)) {
+                  processedQueries.add(query)
+                  // Close thinking block if open before emitting tool_use
+                  if (inThinkingBlock) {
+                    this.outputStream.send(TAGS.THINK.CLOSE)
+                    inThinkingBlock = false
+                  }
+                  this.emitWebSearchToolUse(++searchQueryId, query)
+                }
+              }
+            }
+
+            // Collect grounding chunks for later (deduplicated)
+            if (groundingMetadata.groundingChunks) {
+              for (const chunk of groundingMetadata.groundingChunks) {
+                const uri = chunk?.web?.uri
+                if (uri && !groundingChunks.some(c => c?.web?.uri === uri)) {
+                  groundingChunks.push(chunk)
+                }
+              }
+            }
           }
 
           // Process all parts in the chunk
@@ -301,6 +352,16 @@ export class GeminiMultimodalCallNode extends BaseNode {
         // Close any open thinking block at the end
         if (inThinkingBlock) {
           this.outputStream.send(TAGS.THINK.CLOSE)
+        }
+
+        // Emit search results as tool_result (if enabled and we have sources)
+        if (groundingChunks.length > 0 && this.outputConfig.includeSearchSources) {
+          this.emitWebSearchToolResult(searchQueryId, groundingChunks)
+        }
+
+        // Add footnotes section (if enabled and we have sources)
+        if (groundingChunks.length > 0 && this.outputConfig.includeFootnotes) {
+          this.emitFootnotes(groundingChunks)
         }
       } catch (error: any) {
         const errorMessage = error?.message || String(error)
@@ -401,5 +462,62 @@ export class GeminiMultimodalCallNode extends BaseNode {
 
     // Only return metadata if there's actual configuration
     return Object.keys(metadata).length > 0 ? metadata : undefined
+  }
+
+  // ============================================================================
+  // Output Formatting Helpers
+  // ============================================================================
+
+  /**
+   * Emit a web search query as a tool_use block
+   * Format matches the frontend's parseContent() expectations
+   */
+  private emitWebSearchToolUse(id: number, query: string): void {
+    const toolUse = `${TAGS.THINK.OPEN}${TAGS.TOOL_USE.OPEN}`
+      + `${TAGS.TOOL_USE.ID.OPEN}search_${id}${TAGS.TOOL_USE.ID.CLOSE}`
+      + `${TAGS.TOOL_USE.NAME.OPEN}web_search${TAGS.TOOL_USE.NAME.CLOSE}`
+      + `${TAGS.TOOL_USE.INPUT.OPEN}${JSON.stringify({ input: { query } })}${TAGS.TOOL_USE.INPUT.CLOSE}`
+      + `${TAGS.TOOL_USE.CLOSE}${TAGS.THINK.CLOSE}`
+    this.outputStream.send(toolUse)
+  }
+
+  /**
+   * Emit web search results as a tool_result block
+   * Results must have type: "web_search_result" for frontend detection
+   */
+  private emitWebSearchToolResult(id: number, chunks: GroundingChunk[]): void {
+    const results = chunks
+      .filter(c => c?.web)
+      .map(c => ({
+        type: 'web_search_result',
+        title: c.web?.title || c.web?.domain || 'Unknown',
+        url: c.web?.uri,
+      }))
+
+    if (results.length === 0) {
+      return
+    }
+
+    const toolResult = `${TAGS.THINK.OPEN}${TAGS.TOOL_RESULT.OPEN}`
+      + `${TAGS.TOOL_RESULT.ID.OPEN}search_${id}${TAGS.TOOL_RESULT.ID.CLOSE}`
+      + `${TAGS.TOOL_RESULT.CONTENT.OPEN}${JSON.stringify(results)}${TAGS.TOOL_RESULT.CONTENT.CLOSE}`
+      + `${TAGS.TOOL_RESULT.CLOSE}${TAGS.THINK.CLOSE}`
+    this.outputStream.send(toolResult)
+  }
+
+  /**
+   * Emit a markdown footnotes section with source links
+   */
+  private emitFootnotes(chunks: GroundingChunk[]): void {
+    const validChunks = chunks.filter(c => c?.web?.uri)
+    if (validChunks.length === 0) {
+      return
+    }
+
+    const footnotes = validChunks
+      .map((c, i) => `[^${i + 1}]: [${c.web?.title || c.web?.domain || 'Source'}](${c.web?.uri})`)
+      .join('\n')
+
+    this.outputStream.send(`\n\n---\n**Sources:**\n${footnotes}\n`)
   }
 }
