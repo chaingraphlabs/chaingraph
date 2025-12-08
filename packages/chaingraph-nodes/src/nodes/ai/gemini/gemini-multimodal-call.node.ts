@@ -18,7 +18,6 @@ import {
   Node,
   Output,
   Passthrough,
-  PortBoolean,
   PortEnumFromNative,
   PortNumber,
   PortObject,
@@ -35,7 +34,6 @@ import {
   GeminiThinkingLevel,
   isGemini3Model,
   isGemini25Model,
-  supportsThinking,
 } from './gemini-types'
 
 /**
