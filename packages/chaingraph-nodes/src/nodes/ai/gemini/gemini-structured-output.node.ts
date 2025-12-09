@@ -32,10 +32,11 @@ import {
   PortEnumFromNative,
   PortNumber,
   PortObject,
+  PortStream,
   PortString,
   PortVisibility,
 } from '@badaitech/chaingraph-types'
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenAI, type Part } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   GeminiGenerationConfig,
@@ -51,12 +52,13 @@ const GEMINI_MAX_RETRIES = 3
  * Gemini Structured Output Node
  *
  * This node provides native Gemini structured output using the @google/genai SDK.
- * It uses JSON mode with responseSchema for guaranteed structured output.
+ * It uses JSON mode with responseJsonSchema for guaranteed structured output.
  *
  * Key features:
- * - Direct JSON Schema output (no function calling)
+ * - Direct JSON Schema output using responseJsonSchema (supports additionalProperties)
+ * - Empty object schemas allowed via additionalProperties: true
  * - System instructions support
- * - Gemini 3/2.5 thinking/reasoning
+ * - Gemini 3/2.5 thinking/reasoning with thought streaming output
  * - Retry logic for robustness
  * - Text-only (focused use case)
  */
@@ -187,6 +189,14 @@ export class GeminiStructuredOutputNode extends BaseNode {
   })
   structuredResponse: Record<string, any> = {}
 
+  @Output()
+  @PortStream({
+    title: 'Thoughts',
+    description: 'Streaming output of model reasoning/thinking process (when thinking is enabled)',
+    itemConfig: { type: 'string' },
+  })
+  thoughts: MultiChannel<string> = new MultiChannel()
+
   // ============================================================================
   // Execute Method
   // ============================================================================
@@ -227,7 +237,7 @@ export class GeminiStructuredOutputNode extends BaseNode {
       topP: this.config.topP,
       topK: this.config.topK,
       responseMimeType: 'application/json',
-      responseSchema: jsonSchema,
+      responseJsonSchema: jsonSchema,  // Use full JSON Schema (supports additionalProperties)
       abortSignal: context.abortSignal,
     }
 
@@ -250,14 +260,23 @@ export class GeminiStructuredOutputNode extends BaseNode {
     }
 
     // Execute with retry logic
-    const result = await this.generateStructuredResponseWithRetries(
+    const { parsed, thoughts } = await this.generateStructuredResponseWithRetries(
       genAI,
       generationConfig,
       context,
     )
 
+    // Stream thoughts if any were collected
+    this.thoughts = new MultiChannel<string>()
+    if (thoughts.length > 0) {
+      for (const thought of thoughts) {
+        this.thoughts.send(thought)
+      }
+    }
+    this.thoughts.close()
+
     // Set the structured response, converting arrays to streams where needed
-    for (const [key, value] of Object.entries(result)) {
+    for (const [key, value] of Object.entries(parsed)) {
       const streamConfig = this.streamFields.get(key)
 
       if (streamConfig && Array.isArray(value)) {
@@ -282,7 +301,7 @@ export class GeminiStructuredOutputNode extends BaseNode {
     genAI: GoogleGenAI,
     config: Record<string, any>,
     context: ExecutionContext,
-  ): Promise<Record<string, any>> {
+  ): Promise<{ parsed: Record<string, any>, thoughts: string[] }> {
     for (let attempt = 0; attempt < GEMINI_MAX_RETRIES; attempt++) {
       try {
         await this.debugLog(context, `Attempt ${attempt + 1}/${GEMINI_MAX_RETRIES}`)
@@ -296,13 +315,26 @@ export class GeminiStructuredOutputNode extends BaseNode {
           config,
         })
 
-        const resultText = response.candidates?.[0]?.content?.parts?.[0]?.text
-
         // debug json response.candidates:
         await this.debugLog(context, `Model Response: ${JSON.stringify(response, null, 2)}`)
 
+        // Extract response text, handling thought parts correctly
+        const parts: Part[] = response.candidates?.[0]?.content?.parts || []
+        let resultText = ''
+        const thoughtTexts: string[] = []
+
+        for (const part of parts) {
+          if (part.thought && part.text) {
+            // Thought part - collect for streaming output
+            thoughtTexts.push(part.text)
+          } else if (part.text) {
+            // Regular content part - this contains the JSON
+            resultText += part.text
+          }
+        }
+
         if (!resultText) {
-          throw new Error('No response from model')
+          throw new Error('No response content from model (only thought parts received or empty response)')
         }
 
         // Parse JSON
@@ -310,7 +342,7 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
         await this.debugLog(context, `Success: ${JSON.stringify(parsed, null, 2)}`)
 
-        return parsed
+        return { parsed, thoughts: thoughtTexts }
       } catch (error: any) {
         const errorMsg = error?.message || String(error)
 
@@ -342,9 +374,12 @@ export class GeminiStructuredOutputNode extends BaseNode {
     portSchema: IObjectSchema,
     trackStreams: boolean = false,
   ): Record<string, any> {
-    // Handle empty or missing properties - return unconstrained object
+    // Handle empty or missing properties - allow any properties
     if (!portSchema.properties || Object.keys(portSchema.properties).length === 0) {
-      return { type: 'object' }
+      return {
+        type: 'object',
+        additionalProperties: true,
+      }
     }
 
     const properties: Record<string, any> = {}
@@ -368,9 +403,12 @@ export class GeminiStructuredOutputNode extends BaseNode {
       }
     }
 
-    // If all properties were filtered out, return unconstrained object
+    // If all properties were filtered out, allow any properties
     if (Object.keys(properties).length === 0) {
-      return { type: 'object' }
+      return {
+        type: 'object',
+        additionalProperties: true,
+      }
     }
 
     return {
@@ -411,9 +449,12 @@ export class GeminiStructuredOutputNode extends BaseNode {
         if (objConfig.schema?.properties && Object.keys(objConfig.schema.properties).length > 0) {
           return this.convertPortSchemaToJsonSchema(objConfig.schema)
         }
-        // Empty/no properties = unconstrained object
-        schema.type = 'object'
-        break
+        // Empty/no properties = allow any properties with additionalProperties
+        return {
+          type: 'object',
+          additionalProperties: true,
+          description: config.description || 'Object with any properties',
+        }
       }
       case 'enum': {
         const enumConfig = config as EnumPortConfig
@@ -467,7 +508,11 @@ export class GeminiStructuredOutputNode extends BaseNode {
         if (objConfig.schema?.properties && Object.keys(objConfig.schema.properties).length > 0) {
           return this.convertPortSchemaToJsonSchema(objConfig.schema)
         }
-        return { type: 'object' }
+        // Empty/no properties = allow any properties with additionalProperties
+        return {
+          type: 'object',
+          additionalProperties: true,
+        }
       }
       case 'array': {
         const arrayConfig = config.itemConfig as ArrayPortConfig
