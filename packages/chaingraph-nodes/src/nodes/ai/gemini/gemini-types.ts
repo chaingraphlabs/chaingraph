@@ -138,6 +138,13 @@ export class GeminiGenerationConfig {
     defaultValue: false,
   })
   enableGoogleSearch: boolean = false
+
+  @PortBoolean({
+    title: 'Debug Mode',
+    description: 'Enables detailed logging for debugging purposes',
+    defaultValue: false,
+  })
+  debug: boolean = false
 }
 
 // ============================================================================

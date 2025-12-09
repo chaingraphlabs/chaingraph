@@ -19,7 +19,7 @@ import type {
   ObjectPortConfig,
   StreamPortConfig,
 } from '@badaitech/chaingraph-types'
-import type { Part } from '@google/genai'
+import type { GenerateContentConfig, MediaResolution, Part, ThinkingLevel } from '@google/genai'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -41,6 +41,7 @@ import { GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   GeminiGenerationConfig,
+  GeminiMediaResolution,
   GeminiThinkingLevel,
   isGemini3Model,
   isGemini25Model,
@@ -231,8 +232,13 @@ export class GeminiStructuredOutputNode extends BaseNode {
     // Convert port schema to JSON Schema (track streams for later conversion)
     const jsonSchema = this.convertPortSchemaToJsonSchema(schema, true)
 
+    // If debug enabled, log the JSON schema
+    if (this.config.debug) {
+      await this.debugLog(context, `Using JSON Schema: ${JSON.stringify(jsonSchema, null, 2)}`)
+    }
+
     // Build generation config
-    const generationConfig: Record<string, any> = {
+    const generationConfig: GenerateContentConfig = {
       temperature: this.config.temperature,
       maxOutputTokens: this.config.maxOutputTokens,
       topP: this.config.topP,
@@ -250,7 +256,7 @@ export class GeminiStructuredOutputNode extends BaseNode {
     // Thinking config (model-specific)
     if (isGemini3Model(this.config.model)) {
       generationConfig.thinkingConfig = {
-        thinkingLevel: this.thinkingLevel,
+        thinkingLevel: mapThinkingLevel(this.thinkingLevel),
         includeThoughts: this.includeThoughts,
       }
     } else if (isGemini25Model(this.config.model)) {
@@ -258,6 +264,11 @@ export class GeminiStructuredOutputNode extends BaseNode {
         thinkingBudget: this.thinkingBudget,
         includeThoughts: this.includeThoughts,
       }
+    }
+
+    // If debug enabled, log the base generation config
+    if (this.config.debug) {
+      await this.debugLog(context, `Base Generation Config: ${JSON.stringify(generationConfig, null, 2)}`)
     }
 
     // Execute with retry logic
@@ -272,6 +283,10 @@ export class GeminiStructuredOutputNode extends BaseNode {
     if (thoughts.length > 0) {
       for (const thought of thoughts) {
         this.thoughts.send(thought)
+
+        if (this.config.debug) {
+          await this.debugLog(context, `Streaming Thought: ${thought}`)
+        }
       }
     }
     this.thoughts.close()
@@ -300,12 +315,14 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
   private async generateStructuredResponseWithRetries(
     genAI: GoogleGenAI,
-    config: Record<string, any>,
+    config: GenerateContentConfig,
     context: ExecutionContext,
   ): Promise<{ parsed: Record<string, any>, thoughts: string[] }> {
     for (let attempt = 0; attempt < GEMINI_MAX_RETRIES; attempt++) {
       try {
-        await this.debugLog(context, `Attempt ${attempt + 1}/${GEMINI_MAX_RETRIES}`)
+        if (this.config.debug) {
+          await this.debugLog(context, `Attempt ${attempt + 1}/${GEMINI_MAX_RETRIES}`)
+        }
 
         const response = await genAI.models.generateContent({
           model: this.config.model,
@@ -317,7 +334,9 @@ export class GeminiStructuredOutputNode extends BaseNode {
         })
 
         // debug json response.candidates:
-        await this.debugLog(context, `Model Response: ${JSON.stringify(response, null, 2)}`)
+        if (this.config.debug) {
+          await this.debugLog(context, `Model Response: ${JSON.stringify(response, null, 2)}`)
+        }
 
         // Extract response text, handling thought parts correctly
         const parts: Part[] = response.candidates?.[0]?.content?.parts || []
@@ -341,7 +360,9 @@ export class GeminiStructuredOutputNode extends BaseNode {
         // Parse JSON
         const parsed = JSON.parse(resultText)
 
-        await this.debugLog(context, `Success: ${JSON.stringify(parsed, null, 2)}`)
+        if (this.config.debug) {
+          await this.debugLog(context, `Success: ${JSON.stringify(parsed, null, 2)}`)
+        }
 
         return { parsed, thoughts: thoughtTexts }
       } catch (error: any) {
@@ -349,11 +370,15 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
         if (attempt >= GEMINI_MAX_RETRIES - 1) {
           // Last attempt failed
-          await this.debugLog(context, `All retries failed: ${errorMsg}`)
+          if (this.config.debug) {
+            await this.debugLog(context, `All retries failed: ${errorMsg}`)
+          }
           throw new Error(`Failed after ${GEMINI_MAX_RETRIES} attempts: ${errorMsg}`)
         } else {
           // Retry
-          await this.debugLog(context, `Attempt ${attempt + 1} failed: ${errorMsg}, retrying...`)
+          if (this.config.debug) {
+            await this.debugLog(context, `Attempt ${attempt + 1} failed: ${errorMsg}, retrying...`)
+          }
         }
       }
     }
@@ -567,5 +592,21 @@ export class GeminiStructuredOutputNode extends BaseNode {
         },
       ),
     )
+  }
+}
+
+/**
+ * Maps our GeminiThinkingLevel enum to SDK's ThinkingLevel enum
+ */
+function mapThinkingLevel(value: GeminiThinkingLevel): ThinkingLevel {
+  switch (value) {
+    case GeminiThinkingLevel.Unspecified:
+      return 'THINKING_LEVEL_UNSPECIFIED' as ThinkingLevel
+    case GeminiThinkingLevel.Low:
+      return 'LOW' as ThinkingLevel
+    case GeminiThinkingLevel.High:
+      return 'HIGH' as ThinkingLevel
+    default:
+      return 'HIGH' as ThinkingLevel
   }
 }
