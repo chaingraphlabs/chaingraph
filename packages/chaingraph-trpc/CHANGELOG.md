@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-trpc
 
+## 0.6.31
+
+### Patch Changes
+
+- feat(port-field): integrate AddPropPopover for editing port fields with enhanced configuration options
+- b9115b1: feat(gemini): add debug mode for detailed logging in GeminiStructuredOutputNode and GeminiGenerationConfig
+- Updated dependencies
+- Updated dependencies [b9115b1]
+  - @badaitech/chaingraph-nodes@0.6.31
+  - @badaitech/badai-api@0.6.31
+  - @badaitech/chaingraph-types@0.6.31
+
 ## 0.6.30
 
 ### Patch Changes
