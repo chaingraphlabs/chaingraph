@@ -67,7 +67,7 @@ const GEMINI_MAX_RETRIES = 3
   type: 'GeminiStructuredOutputNode',
   title: 'Gemini Structured Output',
   description: 'Call Gemini with structured JSON output based on a defined schema',
-  category: NODE_CATEGORIES.AI,
+  category: NODE_CATEGORIES.GEMINI,
   tags: ['ai', 'gemini', 'structured', 'json', 'schema', 'output'],
 })
 export class GeminiStructuredOutputNode extends BaseNode {
