@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.29
+
+### Patch Changes
+
+- 0442f06: feat(gemini): enhance gemini structured output node with thoughts streaming and JSON schema improvements
+
 ## 0.6.28
 
 ### Patch Changes

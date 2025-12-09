@@ -19,6 +19,7 @@ import type {
   ObjectPortConfig,
   StreamPortConfig,
 } from '@badaitech/chaingraph-types'
+import type { Part } from '@google/genai'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -36,7 +37,7 @@ import {
   PortString,
   PortVisibility,
 } from '@badaitech/chaingraph-types'
-import { GoogleGenAI, type Part } from '@google/genai'
+import { GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   GeminiGenerationConfig,
@@ -237,7 +238,7 @@ export class GeminiStructuredOutputNode extends BaseNode {
       topP: this.config.topP,
       topK: this.config.topK,
       responseMimeType: 'application/json',
-      responseJsonSchema: jsonSchema,  // Use full JSON Schema (supports additionalProperties)
+      responseJsonSchema: jsonSchema, // Use full JSON Schema (supports additionalProperties)
       abortSignal: context.abortSignal,
     }
 

@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-frontend
 
+## 0.6.29
+
+### Patch Changes
+
+- 0442f06: feat(gemini): enhance gemini structured output node with thoughts streaming and JSON schema improvements
+- Updated dependencies [0442f06]
+  - @badaitech/chaingraph-executor@0.6.29
+  - @badaitech/chaingraph-nodes@0.6.29
+  - @badaitech/chaingraph-types@0.6.29
+  - @badaitech/chaingraph-trpc@0.6.29
+  - @badaitech/badai-api@0.6.29
+
 ## 0.6.28
 
 ### Patch Changes
