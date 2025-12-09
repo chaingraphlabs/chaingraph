@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.28
+
+### Patch Changes
+
+- Enhanced the ExecutionEngine to accurately identify and mark event-bound nodes, including upstream and downstream dependencies.
+
 ## 0.6.27
 
 ### Patch Changes
