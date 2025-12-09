@@ -12,6 +12,7 @@ export const NODE_CATEGORIES = {
   MESSAGING: 'messaging',
   AI: 'ai',
   ANTHROPIC: 'anthropic',
+  GEMINI: 'gemini',
   API: 'api',
   MATH: 'math',
   DATA: 'data',
@@ -354,6 +355,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 1.5, // Between AI and API
+  },
+
+  [NODE_CATEGORIES.GEMINI]: {
+    id: NODE_CATEGORIES.GEMINI,
+    label: 'Google Gemini',
+    description: 'Google Gemini AI models and image generation',
+    icon: 'Sparkles',
+    style: {
+      light: {
+        primary: '#E3F0FF', // Soft celestial blue
+        secondary: '#F0F7FF',
+        background: '#FFFFFF',
+        text: '#1A73E8', // Google blue - readable and recognizable
+      },
+      dark: {
+        primary: '#1A3352', // Deep space blue
+        secondary: '#0F1F33', // Darker blue
+        background: '#1C1C1C',
+        text: '#8AB4F8', // Bright sky blue - excellent readability on dark
+      },
+    },
+    order: 1.7, // After Anthropic, before API
   },
 
   [NODE_CATEGORIES.OKX_DEX]: {

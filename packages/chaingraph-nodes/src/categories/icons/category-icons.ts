@@ -17,6 +17,7 @@ import {
   Lock,
   MessageSquare,
   Package,
+  Sparkles,
   Type,
   Wallet,
   Wrench,
@@ -43,6 +44,7 @@ export const CategoryIcons = {
   Lock,
   FlaskConical,
   Wallet,
+  Sparkles,
 } as const satisfies Record<string, IconComponent>
 
 export type CategoryIconName = keyof typeof CategoryIcons

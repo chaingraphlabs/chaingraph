@@ -55,6 +55,17 @@ class CreateMessageArchAIV2Node extends BaseNode {
 
   @Input()
   @PortArray({
+    title: 'Attachment IDs',
+    description: 'List of attachment IDs to include with the message (from Upload Attachment node)',
+    itemConfig: {
+      type: 'string',
+    },
+    isMutable: true,
+  })
+  attachmentIds?: string[]
+
+  @Input()
+  @PortArray({
     title: 'Notify Agents',
     description: 'List of agents to notify about a message',
     itemConfig: {
@@ -113,11 +124,14 @@ class CreateMessageArchAIV2Node extends BaseNode {
       return signal
     })
 
+    // Filter out empty attachment IDs
+    const attachments = this.attachmentIds?.filter(id => id?.trim()) || undefined
+
     const { sendMessage } = await graphQLClient.request(GraphQL.SendMessageDocument, {
       session: agentSession,
       chat_id: chatID,
       message: {
-        attachments: undefined,
+        attachments: attachments?.length ? attachments : undefined,
         error: undefined,
         finished: this.finished,
         is_system: false,

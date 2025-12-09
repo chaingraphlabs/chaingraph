@@ -311,9 +311,26 @@ export function NodePreview({ node, categoryMetadata }: NodePreviewProps) {
           {/* Description */}
           {node.description && (
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground whitespace-pre-wrap break-all">
-                {/* <Markdown remarkPlugins={[remarkGfm]}>{node.description}</Markdown> */}
-                {node.description}
+              <div className="text-xs text-muted-foreground">
+                {/* { node.description} */}
+                <div className="prose prose-xs dark:prose-invert max-w-none">
+                  <Markdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
+                      ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
+                      ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
+                      li: ({ children }) => <li className="my-0.5">{children}</li>,
+                      h1: ({ children }) => <h1 className="text-sm font-semibold my-1">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-xs font-semibold my-1">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-xs font-medium my-1">{children}</h3>,
+                      code: ({ children }) => <code className="px-1 py-0.5 rounded bg-muted text-[10px]">{children}</code>,
+                      pre: ({ children }) => <pre className="my-1 p-2 rounded bg-muted overflow-x-auto">{children}</pre>,
+                    }}
+                  >
+                    {node.description}
+                  </Markdown>
+                </div>
               </div>
             </div>
           )}
