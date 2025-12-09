@@ -22,6 +22,8 @@ import type {
 
 import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/formatValue'
 import { useTheme } from '@/components/theme'
 import { Badge, Button, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
@@ -169,10 +171,28 @@ export function PortDocContent<C extends IPortConfig>({
           {/* Description */}
           {config.description && (
             <div
-              className="space-y-1 text-xs text-muted-foreground whitespace-pre-wrap border-l-2 pl-2"
+              className="space-y-1 text-xs text-muted-foreground border-l-2 pl-2"
               style={{ borderColor: portColor.circleColor }}
             >
-              {formatDescriptionWithBreaks(config.description)}
+              <div className="prose prose-xs dark:prose-invert max-w-none">
+                <Markdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
+                    ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
+                    li: ({ children }) => <li className="my-0.5">{children}</li>,
+                    h1: ({ children }) => <h1 className="text-sm font-semibold my-1">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xs font-semibold my-1">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-xs font-medium my-1">{children}</h3>,
+                    code: ({ children }) => <code className="px-1 py-0.5 rounded bg-muted text-[10px]">{children}</code>,
+                    pre: ({ children }) => <pre className="my-1 p-2 rounded bg-muted overflow-x-auto">{children}</pre>,
+                  }}
+                >
+                  {config.description}
+                </Markdown>
+              </div>
+              {/* {formatDescriptionWithBreaks(config.description)} */}
             </div>
           )}
 
@@ -305,13 +325,13 @@ function PropertyItem({ name, config, level = 0, isLast = false }: PropertyItemP
         >
           {isExpandable
             ? (
-                isOpen
-                  ? <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
-                  : <ChevronRight className="h-3 w-3 opacity-70 shrink-0" />
-              )
+              isOpen
+                ? <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
+                : <ChevronRight className="h-3 w-3 opacity-70 shrink-0" />
+            )
             : (
-                <div className="w-3" />
-              )}
+              <div className="w-3" />
+            )}
           <span className="font-medium">{name}</span>
           <Badge
             variant="outline"
@@ -567,17 +587,17 @@ function renderArrayConfig(config: ArrayPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
-              <PropertyItem
-                name="Item"
-                config={config.itemConfig as IPortConfig}
-                isLast={true}
-              />
-            )
+            <PropertyItem
+              name="Item"
+              config={config.itemConfig as IPortConfig}
+              isLast={true}
+            />
+          )
           : (
-              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-                No item configuration defined
-              </div>
-            )}
+            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+              No item configuration defined
+            </div>
+          )}
       </div>
     </div>
   )
@@ -628,13 +648,13 @@ function renderObjectConfig(config: ObjectPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {propertyCount > 0
           ? (
-              renderObjectSchemaContent(config, 0)
-            )
+            renderObjectSchemaContent(config, 0)
+          )
           : (
-              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-                No properties defined
-              </div>
-            )}
+            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+              No properties defined
+            </div>
+          )}
       </div>
     </div>
   )
@@ -685,17 +705,17 @@ function renderStreamConfig(config: StreamPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
-              <PropertyItem
-                name="Stream Item"
-                config={config.itemConfig as IPortConfig}
-                isLast={true}
-              />
-            )
+            <PropertyItem
+              name="Stream Item"
+              config={config.itemConfig as IPortConfig}
+              isLast={true}
+            />
+          )
           : (
-              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-                No item configuration defined
-              </div>
-            )}
+            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+              No item configuration defined
+            </div>
+          )}
       </div>
     </div>
   )

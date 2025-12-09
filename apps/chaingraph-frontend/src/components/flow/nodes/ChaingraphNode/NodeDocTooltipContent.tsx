@@ -13,6 +13,8 @@ import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { PortDirection } from '@badaitech/chaingraph-types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useTheme } from '@/components/theme'
 import {
   Badge,
@@ -175,11 +177,50 @@ export function NodeDocTooltipContent({
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full w-full">
           <div className="p-4 space-y-3">
+
+            {/* Description */}
+            {node.metadata.description && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">Description</div>
+                <div className="text-xs text-muted-foreground">
+                  {/* {formatDescription(node.metadata.description)} */}
+
+                  <div
+                    className="prose prose-xs dark:prose-invert max-w-none space-y-1 text-xs text-muted-foreground border-l-2 pl-2"
+                    // className=""
+                    style={{ borderColor: style.primary }}
+                  >
+                    <Markdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
+                        ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
+                        ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
+                        li: ({ children }) => <li className="my-0.5">{children}</li>,
+                        h1: ({ children }) => <h1 className="text-sm font-semibold my-1">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-xs font-semibold my-1">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-xs font-medium my-1">{children}</h3>,
+                        code: ({ children }) => <code className="px-1 py-0.5 rounded bg-muted text-[10px]">{children}</code>,
+                        pre: ({ children }) => <pre className="my-1 p-2 rounded bg-muted overflow-x-auto">{children}</pre>,
+                      }}
+                    >
+                      {node.metadata.description}
+                    </Markdown>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delimiter: */}
+            <hr className="border-t border-border" />
+
             {/* Node ID */}
             {node.id && (
               <div className="space-y-1">
                 <div className="text-xs font-medium text-muted-foreground">Node ID</div>
-                <div className="text-xs text-muted-foreground">{node.id}</div>
+                <Badge variant="outline" className="px-1.5 py-0 font-mono">
+                  {node.id}
+                </Badge>
               </div>
             )}
 
@@ -187,7 +228,7 @@ export function NodeDocTooltipContent({
             {node.metadata.type && (
               <div className="space-y-1">
                 <div className="text-xs font-medium text-muted-foreground">Node Type</div>
-                <div className="text-xs text-muted-foreground">{node.metadata.type}</div>
+                <Badge variant="outline" className="px-1.5 py-0 font-mono">{node.metadata.type}</Badge>
               </div>
             )}
 
@@ -196,23 +237,17 @@ export function NodeDocTooltipContent({
               <div className="space-y-2">
                 <div className="text-xs font-medium text-muted-foreground">Category</div>
                 {/* badge and description on separate rows */}
+
+                <Badge variant="outline" className="px-1.5 py-0 font-mono">
+                  {node.metadata.category}
+                </Badge>
                 <div className="flex flex-col gap-1">
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 w-fit">
-                    {node.metadata.category}
-                  </Badge>
-                  <div className="text-xs text-muted-foreground">
+                  <div
+                    className="text-xs text-muted-foreground border-l-2 pl-2"
+                    style={{ borderColor: style.primary }}
+                  >
                     {categoryMetadata.description}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            {node.metadata.description && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">Description</div>
-                <div className="text-xs text-muted-foreground">
-                  {formatDescription(node.metadata.description)}
                 </div>
               </div>
             )}
