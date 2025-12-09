@@ -12,7 +12,6 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Input,
   Node,
   Output,
   Passthrough,

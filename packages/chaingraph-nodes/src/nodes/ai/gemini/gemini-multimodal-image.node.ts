@@ -10,7 +10,7 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { Content, GenerateContentConfig, Part } from '@google/genai'
+import type { Content, Part } from '@google/genai'
 import {
   BaseNode,
   ExecutionEventEnum,

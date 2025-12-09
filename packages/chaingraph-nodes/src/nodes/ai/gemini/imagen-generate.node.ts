@@ -12,7 +12,6 @@ import type {
 } from '@badaitech/chaingraph-types'
 import {
   BaseNode,
-  Input,
   Node,
   Output,
   Passthrough,
@@ -332,7 +331,7 @@ This enables conversational workflows and multi-turn editing.`,
     // Validate we got expected number of images
     if (this.images.length !== this.control.numberOfImages) {
       console.warn(
-        `Expected ${this.control.numberOfImages} images but got ${this.images.length}`
+        `Expected ${this.control.numberOfImages} images but got ${this.images.length}`,
       )
     }
 

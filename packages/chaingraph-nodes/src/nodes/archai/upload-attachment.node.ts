@@ -15,7 +15,6 @@ import process from 'node:process'
 import { createGraphQLClient, GraphQL } from '@badaitech/badai-api'
 import {
   BaseNode,
-  Input,
   Node,
   Output,
   Passthrough,

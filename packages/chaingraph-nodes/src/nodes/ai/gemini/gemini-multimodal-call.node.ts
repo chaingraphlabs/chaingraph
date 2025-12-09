@@ -11,7 +11,7 @@ import type {
   INode,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { Content, GenerateContentConfig, GroundingChunk, MediaResolution, Part, ThinkingLevel, VideoMetadata } from '@google/genai'
+import type { Content, GenerateContentConfig, GroundingChunk, MediaResolution, Part, ThinkingLevel } from '@google/genai'
 import {
   BaseNode,
   MultiChannel,
@@ -31,7 +31,6 @@ import { NODE_CATEGORIES } from '../../../categories'
 import { ConversationMessage, GeminiMessagePart } from './gemini-conversation-types'
 import {
   GeminiGenerationConfig,
-  GeminiMediaConfig,
   GeminiMediaResolution,
   GeminiOutputConfig,
   GeminiThinkingLevel,
@@ -374,7 +373,7 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
     }
 
     // Start streaming in the background
-    let collectedResponseParts: Part[] = []
+    const collectedResponseParts: Part[] = []
     const streamingPromise = async () => {
       try {
         // Generate content with streaming (multi-turn conversation support)

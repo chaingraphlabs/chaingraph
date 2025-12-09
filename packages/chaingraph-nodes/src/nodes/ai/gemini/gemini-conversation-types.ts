@@ -7,6 +7,7 @@
  */
 
 import type { EncryptedSecretValue } from '@badaitech/chaingraph-types'
+import { Buffer } from 'node:buffer'
 import {
   ObjectSchema,
   PortArray,

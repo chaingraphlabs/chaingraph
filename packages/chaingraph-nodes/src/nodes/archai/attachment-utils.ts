@@ -7,6 +7,7 @@
  */
 
 import type { AttachmentInput } from './types'
+import { Buffer } from 'node:buffer'
 
 /**
  * Source type for attachment data
@@ -93,73 +94,73 @@ export function detectMimeTypeFromFilename(filename: string): string {
 
   const mimeMap: Record<string, string> = {
     // Images
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    png: 'image/png',
-    gif: 'image/gif',
-    webp: 'image/webp',
-    bmp: 'image/bmp',
-    tiff: 'image/tiff',
-    tif: 'image/tiff',
-    svg: 'image/svg+xml',
-    ico: 'image/x-icon',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'bmp': 'image/bmp',
+    'tiff': 'image/tiff',
+    'tif': 'image/tiff',
+    'svg': 'image/svg+xml',
+    'ico': 'image/x-icon',
 
     // Documents
-    pdf: 'application/pdf',
-    doc: 'application/msword',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    xls: 'application/vnd.ms-excel',
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ppt: 'application/vnd.ms-powerpoint',
-    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt': 'application/vnd.ms-powerpoint',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 
     // Text
-    txt: 'text/plain',
-    html: 'text/html',
-    htm: 'text/html',
-    css: 'text/css',
-    csv: 'text/csv',
-    md: 'text/markdown',
+    'txt': 'text/plain',
+    'html': 'text/html',
+    'htm': 'text/html',
+    'css': 'text/css',
+    'csv': 'text/csv',
+    'md': 'text/markdown',
 
     // Data
-    json: 'application/json',
-    xml: 'application/xml',
-    yaml: 'application/yaml',
-    yml: 'application/yaml',
+    'json': 'application/json',
+    'xml': 'application/xml',
+    'yaml': 'application/yaml',
+    'yml': 'application/yaml',
 
     // Archives
-    zip: 'application/zip',
-    gz: 'application/gzip',
-    tar: 'application/x-tar',
-    rar: 'application/vnd.rar',
+    'zip': 'application/zip',
+    'gz': 'application/gzip',
+    'tar': 'application/x-tar',
+    'rar': 'application/vnd.rar',
     '7z': 'application/x-7z-compressed',
 
     // Audio
-    mp3: 'audio/mpeg',
-    wav: 'audio/wav',
-    ogg: 'audio/ogg',
-    m4a: 'audio/mp4',
-    flac: 'audio/flac',
-    aac: 'audio/aac',
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'm4a': 'audio/mp4',
+    'flac': 'audio/flac',
+    'aac': 'audio/aac',
 
     // Video
-    mp4: 'video/mp4',
-    webm: 'video/webm',
-    mov: 'video/quicktime',
-    avi: 'video/x-msvideo',
-    mkv: 'video/x-matroska',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
 
     // Code
-    js: 'text/javascript',
-    ts: 'text/typescript',
-    py: 'text/x-python',
-    java: 'text/x-java-source',
-    c: 'text/x-c',
-    cpp: 'text/x-c++src',
-    h: 'text/x-c',
-    hpp: 'text/x-c++hdr',
-    rs: 'text/x-rust',
-    go: 'text/x-go',
+    'js': 'text/javascript',
+    'ts': 'text/typescript',
+    'py': 'text/x-python',
+    'java': 'text/x-java-source',
+    'c': 'text/x-c',
+    'cpp': 'text/x-c++src',
+    'h': 'text/x-c',
+    'hpp': 'text/x-c++hdr',
+    'rs': 'text/x-rust',
+    'go': 'text/x-go',
   }
 
   return mimeMap[ext || ''] || 'application/octet-stream'

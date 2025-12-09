@@ -325,13 +325,13 @@ function PropertyItem({ name, config, level = 0, isLast = false }: PropertyItemP
         >
           {isExpandable
             ? (
-              isOpen
-                ? <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
-                : <ChevronRight className="h-3 w-3 opacity-70 shrink-0" />
-            )
+                isOpen
+                  ? <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
+                  : <ChevronRight className="h-3 w-3 opacity-70 shrink-0" />
+              )
             : (
-              <div className="w-3" />
-            )}
+                <div className="w-3" />
+              )}
           <span className="font-medium">{name}</span>
           <Badge
             variant="outline"
@@ -587,17 +587,17 @@ function renderArrayConfig(config: ArrayPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
-            <PropertyItem
-              name="Item"
-              config={config.itemConfig as IPortConfig}
-              isLast={true}
-            />
-          )
+              <PropertyItem
+                name="Item"
+                config={config.itemConfig as IPortConfig}
+                isLast={true}
+              />
+            )
           : (
-            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-              No item configuration defined
-            </div>
-          )}
+              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+                No item configuration defined
+              </div>
+            )}
       </div>
     </div>
   )
@@ -648,13 +648,13 @@ function renderObjectConfig(config: ObjectPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {propertyCount > 0
           ? (
-            renderObjectSchemaContent(config, 0)
-          )
+              renderObjectSchemaContent(config, 0)
+            )
           : (
-            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-              No properties defined
-            </div>
-          )}
+              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+                No properties defined
+              </div>
+            )}
       </div>
     </div>
   )
@@ -705,17 +705,17 @@ function renderStreamConfig(config: StreamPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
-            <PropertyItem
-              name="Stream Item"
-              config={config.itemConfig as IPortConfig}
-              isLast={true}
-            />
-          )
+              <PropertyItem
+                name="Stream Item"
+                config={config.itemConfig as IPortConfig}
+                isLast={true}
+              />
+            )
           : (
-            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-              No item configuration defined
-            </div>
-          )}
+              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+                No item configuration defined
+              </div>
+            )}
       </div>
     </div>
   )
