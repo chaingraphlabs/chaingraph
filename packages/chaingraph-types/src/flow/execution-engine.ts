@@ -53,6 +53,12 @@ export class ExecutionEngine {
   private readonly debugger: FlowDebugger | null = null
   private readonly transferService: EdgeTransferService
 
+  // Event-bound node tracking for EventListener scopes
+  private readonly eventListenerNodeIds: Set<string> = new Set()
+  private readonly eventBoundNodes: Set<string> = new Set()
+  // Maps event-bound node ID to the set of event names it's associated with
+  private readonly eventBoundNodeEvents: Map<string, Set<string>> = new Map()
+
   // private readonly eventQueue: EventQueue<ExecutionEvent>
   private readonly eventQueue: EventQueue<ExecutionEventImpl>
   private eventIndex: number = 0
@@ -85,6 +91,81 @@ export class ExecutionEngine {
 
     // Initialize the transfer service with the flow
     this.transferService = new EdgeTransferService(this.flow)
+  }
+
+  /**
+   * Identifies all nodes that are "event-bound" - meaning they are upstream
+   * of EventListener nodes and should only execute in child context when
+   * the corresponding event is triggered.
+   *
+   * Algorithm:
+   * 1. Find all EventListener nodes and their event names
+   * 2. Traverse BACKWARDS from each EventListener to mark all upstream nodes
+   * 3. Track which events each event-bound node is associated with
+   */
+  private identifyEventBoundNodes(): void {
+    // Step 1: Identify all EventListener nodes and their event names
+    for (const [nodeId, node] of this.flow.nodes) {
+      const nodeType = node.metadata?.type
+      if (nodeType === 'EventListenerNode' || nodeType === 'EventListenerNodeV2') {
+        this.eventListenerNodeIds.add(nodeId)
+        this.eventBoundNodes.add(nodeId)
+        // Track event name for this listener
+        const eventName = (node as any).eventName as string
+        if (eventName) {
+          if (!this.eventBoundNodeEvents.has(nodeId)) {
+            this.eventBoundNodeEvents.set(nodeId, new Set())
+          }
+          this.eventBoundNodeEvents.get(nodeId)!.add(eventName)
+        }
+      }
+    }
+
+    // Step 2: Traverse backwards from EventListeners to mark upstream nodes
+    for (const listenerId of this.eventListenerNodeIds) {
+      const listenerNode = this.flow.nodes.get(listenerId)
+      const eventName = listenerNode ? (listenerNode as any).eventName as string : undefined
+      this.markUpstreamNodesAsEventBound(listenerId, new Set(), eventName)
+    }
+  }
+
+  /**
+   * Recursively marks all upstream nodes (nodes that feed into this node) as event-bound
+   * and associates them with the given event name
+   */
+  private markUpstreamNodesAsEventBound(nodeId: string, visited: Set<string>, eventName?: string): void {
+    if (visited.has(nodeId))
+      return // Prevent infinite loops
+    visited.add(nodeId)
+
+    const node = this.flow.nodes.get(nodeId)
+    if (!node)
+      return
+
+    // Get all incoming edges to find upstream nodes
+    const incomingEdges = this.flow.getIncomingEdges(node)
+
+    for (const edge of incomingEdges) {
+      const sourceNodeId = edge.sourceNode.id
+      this.eventBoundNodes.add(sourceNodeId)
+      // Track event name association for this node
+      if (eventName) {
+        if (!this.eventBoundNodeEvents.has(sourceNodeId)) {
+          this.eventBoundNodeEvents.set(sourceNodeId, new Set())
+        }
+        this.eventBoundNodeEvents.get(sourceNodeId)!.add(eventName)
+      }
+      // Recursively mark sources of source
+      this.markUpstreamNodesAsEventBound(sourceNodeId, visited, eventName)
+    }
+  }
+
+  /**
+   * Checks if an event-bound node should execute for the given event name
+   */
+  private isEventBoundNodeForEvent(nodeId: string, eventName: string): boolean {
+    const associatedEvents = this.eventBoundNodeEvents.get(nodeId)
+    return associatedEvents ? associatedEvents.has(eventName) : false
   }
 
   async execute(
@@ -210,43 +291,56 @@ export class ExecutionEngine {
       }
     }
 
+    // Identify event-bound nodes (nodes upstream of EventListeners)
+    this.identifyEventBoundNodes()
+
     // Enqueue initial nodes (nodes with no dependencies)
     let nodesEnqueued = 0
     for (const [nodeId, dependencies] of this.nodeDependencies.entries()) {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
-          // Check if node has disabledAutoExecution
           const metadata = node.metadata
           const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+          const isEventBound = this.eventBoundNodes.has(nodeId)
 
-          // Skip nodes with disabledAutoExecution based on context
-          if (isAutoExecutionDisabled) {
-            if (!this.context.isChildExecution) {
-              // In parent context, skip nodes with disabledAutoExecution
+          // ┌─────────────────────────────────────────────────────────────────────┐
+          // │ EXECUTION RULES:                                                     │
+          // │                                                                       │
+          // │ WITH eventData (child spawn OR external API event):                   │
+          // │   • EventListeners → execute if event name matches                    │
+          // │   • Event-bound nodes → execute if upstream of matching listener      │
+          // │   • Regular nodes → skip (only event chains execute)                  │
+          // │                                                                       │
+          // │ WITHOUT eventData (normal root execution):                            │
+          // │   • EventListeners → skip (no event to listen for)                    │
+          // │   • Event-bound nodes → skip (they feed EventListeners)               │
+          // │   • Regular nodes → execute normally                                  │
+          // └─────────────────────────────────────────────────────────────────────┘
+          if (this.context.eventData) {
+            const incomingEventName = this.context.eventData.eventName
+            if (isAutoExecutionDisabled) {
+              // EventListener nodes: must match event name
+              const nodeType = metadata?.type
+              if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
+                continue
+              }
+              const listenerEventName = (node as any).eventName
+              if (incomingEventName !== listenerEventName) {
+                continue
+              }
+            } else if (isEventBound) {
+              // Event-bound upstream nodes: only if associated with this event
+              if (!this.isEventBoundNodeForEvent(nodeId, incomingEventName)) {
+                continue
+              }
+            } else {
+              // Regular nodes: skip in event-driven execution
               continue
             }
-            // In child context with event data, only execute if this is an EventListenerNode
-            // that matches the event
-            if (this.context.isChildExecution && this.context.eventData) {
-              const nodeType = metadata?.type
-              if (nodeType !== 'EventListenerNode') {
-                continue
-              }
-
-              // Check if the event name matches the listener's event name
-              const eventName = this.context.eventData.eventName
-              const listenerEventName = (node as any).eventName
-              if (eventName !== listenerEventName) {
-                // console.log(`Skipping EventListenerNode ${node.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
-                continue
-              }
-            }
           } else {
-            // For nodes WITHOUT disabledAutoExecution in child context
-            // Skip them to prevent re-running the entire flow
-            if (this.context.isChildExecution && this.context.eventData) {
-              // console.log(`Skipping node ${node.id} - regular node in event-driven child context`)
+            // Normal execution: skip all event-related nodes
+            if (isAutoExecutionDisabled || isEventBound) {
               continue
             }
           }
@@ -258,10 +352,10 @@ export class ExecutionEngine {
       }
     }
 
-    // Check if any nodes were enqueued for execution in child context
-    // If no matching EventListenerNodes were found, complete execution successfully
-    if (this.context.isChildExecution && this.context.eventData && nodesEnqueued === 0) {
-      // Close queues to signal completion (no error - this is normal behavior)
+    // If no nodes were enqueued for execution, complete gracefully
+    // This can happen in root context when all nodes are event-bound,
+    // or in child context when no EventListeners match the event
+    if (nodesEnqueued === 0) {
       this.readyQueue.close()
       this.completedQueue.close()
       return
@@ -286,10 +380,10 @@ export class ExecutionEngine {
     // Wait for all initial node status changed events to be published
     await Promise.all(promises)
 
-  //   console.log(`[ExecutionEngine] Debug state:
-  // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
-  // - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
-  // - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
+    //   console.log(`[ExecutionEngine] Debug state:
+    // - Dependencies: ${JSON.stringify(Object.fromEntries(this.nodeDependencies), null, 2)}
+    // - Dependents: ${JSON.stringify(Array.from(this.dependentsMap.entries()).map(([id, nodes]) => [id, nodes.map(n => n.id)]), null, 2)}
+    // - Executing nodes: ${JSON.stringify(Array.from(this.executingNodes))}`)
   }
 
   private startWorkers(): Promise<void>[] {
@@ -381,44 +475,43 @@ export class ExecutionEngine {
       this.nodeDependencies.set(dependentNode.id, remainingDeps)
 
       if (remainingDeps === 0) {
-        // Check if node has disabledAutoExecution
         const metadata = dependentNode.metadata
         const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+        const isEventBound = this.eventBoundNodes.has(dependentNode.id)
 
-        // Skip nodes based on execution context
         let shouldSkip = false
-        if (isAutoExecutionDisabled) {
-          if (!this.context.isChildExecution) {
-            // In parent context, skip nodes with disabledAutoExecution
-            shouldSkip = true
-          } else if (this.context.isChildExecution && this.context.eventData) {
-            // In child context, only EventListenerNodes should have disabledAutoExecution
+
+        // Same execution rules as initializeDependencies() - see comment block there
+        if (this.context.eventData) {
+          // Event-driven execution: only matching EventListeners and their upstream
+          const incomingEventName = this.context.eventData.eventName
+          if (isAutoExecutionDisabled) {
             const nodeType = metadata?.type
-            if (nodeType !== 'EventListenerNode') {
+            if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
               shouldSkip = true
             } else {
-              // Check if the event name matches the listener's event name
-              const eventName = this.context.eventData.eventName
               const listenerEventName = (dependentNode as any)?.eventName
-              if (eventName !== listenerEventName) {
-                // console.log(`Skipping dependent EventListenerNode ${dependentNode.id} - event name mismatch: expected "${listenerEventName}", got "${eventName}"`)
+              if (incomingEventName !== listenerEventName) {
                 shouldSkip = true
               }
             }
+          } else if (isEventBound) {
+            if (!this.isEventBoundNodeForEvent(dependentNode.id, incomingEventName)) {
+              shouldSkip = true
+            }
+          } else {
+            shouldSkip = true
           }
         } else {
-          // For nodes WITHOUT disabledAutoExecution in child context
-          // Skip them if this is an event-driven child execution and they're not downstream of a listener
-          if (this.context.isChildExecution && this.context.eventData) {
-            // This is tricky - we need to allow nodes downstream of EventListeners to execute
-            // For now, we'll let them through and rely on the initial node filtering
+          // Normal execution: skip event-related nodes
+          if (isAutoExecutionDisabled || isEventBound) {
+            shouldSkip = true
           }
         }
 
         if (shouldSkip) {
           // Mark as completed without executing so dependents can proceed
           this.completedNodes.add(dependentNode.id)
-          // Need to enqueue it to the completed queue so processDependents gets called
           this.completedQueue.enqueue(dependentNode)
           continue
         }

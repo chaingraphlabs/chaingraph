@@ -1,5 +1,12 @@
 # @badaitech/chaingraph-types
 
+## 0.6.27
+
+### Patch Changes
+
+- 5e2043a: feat(execution-engine): implement event-bound node tracking and execution logic
+- f76fc26: feat(listener): add EventListenerNodeV2 and deprecate old listener node
+
 ## 0.6.26
 
 ### Patch Changes
