@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { BooleanPortConfig, IPort, IPortConfig, NumberPortConfig, ObjectPortConfig, PortType, StringPortConfig } from '@badaitech/chaingraph-types'
+import type { BooleanPortConfig, IPort, IPortConfig, NumberPortConfig, ObjectPortConfig, PortType, SecretType, StringPortConfig } from '@badaitech/chaingraph-types'
 import { PORT_TYPES, secretTypeSchemas } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -212,7 +212,7 @@ export function AddPropPopover(props: Props) {
     }),
     secret: () => ({
       type: 'secret',
-      secretType: secretType as any,
+      secretType: secretType as SecretType,
       defaultValue: undefined,
       title: title || undefined,
       description: description || undefined,
