@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.28
+
+### Patch Changes
+
+- Enhanced the ExecutionEngine to accurately identify and mark event-bound nodes, including upstream and downstream dependencies.
+- Updated dependencies
+  - @badaitech/badai-api@0.6.28
+
 ## 0.6.27
 
 ### Patch Changes

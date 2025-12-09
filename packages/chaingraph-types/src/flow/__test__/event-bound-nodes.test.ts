@@ -498,4 +498,260 @@ describe('event-Bound Nodes', () => {
       expect(executedNodes).not.toContain('listener-b')
     })
   })
+
+  describe('downstream Node Behavior', () => {
+    it('should mark downstream nodes of EventListener as event-bound', async () => {
+      // Create flow: UpstreamNode -> EventListenerNode -> DownstreamNode
+      const flow = new Flow({ name: 'test-flow' })
+
+      const upstreamNode = new RegularTestNode('upstream-1')
+      const listenerNode = new TestEventListenerNodeV2('listener-1', 'test-event')
+      const downstreamNode = new RegularTestNode('downstream-1')
+
+      upstreamNode.initialize()
+      listenerNode.initialize()
+      downstreamNode.initialize()
+
+      await flow.addNode(upstreamNode)
+      await flow.addNode(listenerNode)
+      await flow.addNode(downstreamNode)
+
+      // Connect: upstream -> listener -> downstream
+      const upstreamOut = upstreamNode.getFlowOutPort()
+      const listenerIn = listenerNode.getFlowInPort()
+      const listenerOut = listenerNode.getFlowOutPort()
+      const downstreamIn = downstreamNode.getFlowInPort()
+
+      if (upstreamOut && listenerIn) {
+        await flow.addEdge(new Edge('edge-1', upstreamNode, upstreamOut, listenerNode, listenerIn))
+      }
+      if (listenerOut && downstreamIn) {
+        await flow.addEdge(new Edge('edge-2', listenerNode, listenerOut, downstreamNode, downstreamIn))
+      }
+
+      // ROOT context - downstream should NOT execute
+      const abortController = new AbortController()
+      const context = new ExecutionContext(
+        flow.id,
+        abortController,
+        undefined,
+        'test-execution',
+        {},
+        undefined,
+        undefined,
+        undefined,
+        false,
+      )
+
+      const engine = new ExecutionEngine(flow, context)
+      const executedNodes: string[] = []
+
+      engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
+        executedNodes.push(event.data.node.id)
+      })
+
+      await engine.execute()
+
+      // All nodes in the event chain should be skipped in root context
+      expect(executedNodes).not.toContain('upstream-1')
+      expect(executedNodes).not.toContain('listener-1')
+      expect(executedNodes).not.toContain('downstream-1')
+    })
+
+    it('should mark nodeF (upstream of downstream) as event-bound', async () => {
+      // Create flow:
+      // upstream -> eventListener -> downstream
+      //                       nodeF ->
+      const flow = new Flow({ name: 'test-flow' })
+
+      const upstreamNode = new RegularTestNode('upstream-1')
+      const listenerNode = new TestEventListenerNodeV2('listener-1', 'test-event')
+      const downstreamNode = new RegularTestNode('downstream-1')
+      const nodeF = new RegularTestNode('node-f')
+
+      upstreamNode.initialize()
+      listenerNode.initialize()
+      downstreamNode.initialize()
+      nodeF.initialize()
+
+      await flow.addNode(upstreamNode)
+      await flow.addNode(listenerNode)
+      await flow.addNode(downstreamNode)
+      await flow.addNode(nodeF)
+
+      // Connect: upstream -> listener
+      const upstreamOut = upstreamNode.getFlowOutPort()
+      const listenerIn = listenerNode.getFlowInPort()
+      if (upstreamOut && listenerIn) {
+        await flow.addEdge(new Edge('edge-1', upstreamNode, upstreamOut, listenerNode, listenerIn))
+      }
+
+      // Connect: listener -> downstream
+      const listenerOut = listenerNode.getFlowOutPort()
+      const downstreamIn = downstreamNode.getFlowInPort()
+      if (listenerOut && downstreamIn) {
+        await flow.addEdge(new Edge('edge-2', listenerNode, listenerOut, downstreamNode, downstreamIn))
+      }
+
+      // Connect: nodeF -> downstream (nodeF feeds into downstream but NOT through listener)
+      const nodeFOut = nodeF.getFlowOutPort()
+      if (nodeFOut && downstreamIn) {
+        await flow.addEdge(new Edge('edge-3', nodeF, nodeFOut, downstreamNode, downstreamIn))
+      }
+
+      // ROOT context - nodeF should NOT execute (it's needed only by event chain)
+      const abortController = new AbortController()
+      const context = new ExecutionContext(
+        flow.id,
+        abortController,
+        undefined,
+        'test-execution',
+        {},
+        undefined,
+        undefined,
+        undefined,
+        false,
+      )
+
+      const engine = new ExecutionEngine(flow, context)
+      const executedNodes: string[] = []
+
+      engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
+        executedNodes.push(event.data.node.id)
+      })
+
+      await engine.execute()
+
+      // ALL nodes should be skipped - nodeF is event-bound because it feeds downstream
+      expect(executedNodes).not.toContain('upstream-1')
+      expect(executedNodes).not.toContain('listener-1')
+      expect(executedNodes).not.toContain('downstream-1')
+      expect(executedNodes).not.toContain('node-f')
+    })
+
+    it('should execute entire event chain (including nodeF) in event context', async () => {
+      // Same flow as above but with event context
+      const flow = new Flow({ name: 'test-flow' })
+
+      const upstreamNode = new RegularTestNode('upstream-1')
+      const listenerNode = new TestEventListenerNodeV2('listener-1', 'test-event')
+      const downstreamNode = new RegularTestNode('downstream-1')
+      const nodeF = new RegularTestNode('node-f')
+
+      upstreamNode.initialize()
+      listenerNode.initialize()
+      downstreamNode.initialize()
+      nodeF.initialize()
+
+      await flow.addNode(upstreamNode)
+      await flow.addNode(listenerNode)
+      await flow.addNode(downstreamNode)
+      await flow.addNode(nodeF)
+
+      // Connect edges (same as above)
+      const upstreamOut = upstreamNode.getFlowOutPort()
+      const listenerIn = listenerNode.getFlowInPort()
+      if (upstreamOut && listenerIn) {
+        await flow.addEdge(new Edge('edge-1', upstreamNode, upstreamOut, listenerNode, listenerIn))
+      }
+
+      const listenerOut = listenerNode.getFlowOutPort()
+      const downstreamIn = downstreamNode.getFlowInPort()
+      if (listenerOut && downstreamIn) {
+        await flow.addEdge(new Edge('edge-2', listenerNode, listenerOut, downstreamNode, downstreamIn))
+      }
+
+      const nodeFOut = nodeF.getFlowOutPort()
+      if (nodeFOut && downstreamIn) {
+        await flow.addEdge(new Edge('edge-3', nodeF, nodeFOut, downstreamNode, downstreamIn))
+      }
+
+      // EVENT context - all event-bound nodes should execute
+      const abortController = new AbortController()
+      const context = new ExecutionContext(
+        flow.id,
+        abortController,
+        undefined,
+        'test-execution',
+        {},
+        'root-execution',
+        'parent-execution',
+        { eventName: 'test-event', payload: {} },
+        true,
+      )
+
+      const engine = new ExecutionEngine(flow, context)
+      const executedNodes: string[] = []
+
+      engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
+        executedNodes.push(event.data.node.id)
+      })
+
+      await engine.execute()
+
+      // ALL event-bound nodes should execute
+      expect(executedNodes).toContain('upstream-1')
+      expect(executedNodes).toContain('listener-1')
+      expect(executedNodes).toContain('downstream-1')
+      expect(executedNodes).toContain('node-f')
+    })
+
+    it('should execute downstream chain in root context with external event', async () => {
+      // Test external event API scenario - root execution with eventData
+      const flow = new Flow({ name: 'test-flow' })
+
+      const upstreamNode = new RegularTestNode('upstream-1')
+      const listenerNode = new TestEventListenerNodeV2('listener-1', 'test-event')
+      const downstreamNode = new RegularTestNode('downstream-1')
+
+      upstreamNode.initialize()
+      listenerNode.initialize()
+      downstreamNode.initialize()
+
+      await flow.addNode(upstreamNode)
+      await flow.addNode(listenerNode)
+      await flow.addNode(downstreamNode)
+
+      // Connect: upstream -> listener -> downstream
+      const upstreamOut = upstreamNode.getFlowOutPort()
+      const listenerIn = listenerNode.getFlowInPort()
+      const listenerOut = listenerNode.getFlowOutPort()
+      const downstreamIn = downstreamNode.getFlowInPort()
+
+      if (upstreamOut && listenerIn) {
+        await flow.addEdge(new Edge('edge-1', upstreamNode, upstreamOut, listenerNode, listenerIn))
+      }
+      if (listenerOut && downstreamIn) {
+        await flow.addEdge(new Edge('edge-2', listenerNode, listenerOut, downstreamNode, downstreamIn))
+      }
+
+      // ROOT execution context WITH external event data
+      const abortController = new AbortController()
+      const context = new ExecutionContext(
+        flow.id,
+        abortController,
+        undefined,
+        'test-execution',
+        {},
+        undefined,
+        undefined,
+        { eventName: 'test-event', payload: { source: 'external-api' } },
+        false, // NOT a child execution
+      )
+
+      const engine = new ExecutionEngine(flow, context)
+      const executedNodes: string[] = []
+
+      engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
+        executedNodes.push(event.data.node.id)
+      })
+
+      await engine.execute()
+
+      // ALL event-chain nodes should execute with external event
+      expect(executedNodes).toContain('upstream-1')
+      expect(executedNodes).toContain('listener-1')
+      expect(executedNodes).toContain('downstream-1')
+    })
+  })
 })

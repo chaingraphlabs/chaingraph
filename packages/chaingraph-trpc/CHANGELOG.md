@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-trpc
 
+## 0.6.28
+
+### Patch Changes
+
+- Enhanced the ExecutionEngine to accurately identify and mark event-bound nodes, including upstream and downstream dependencies.
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.28
+  - @badaitech/chaingraph-types@0.6.28
+  - @badaitech/badai-api@0.6.28
+
 ## 0.6.27
 
 ### Patch Changes

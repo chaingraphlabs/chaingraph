@@ -94,14 +94,16 @@ export class ExecutionEngine {
   }
 
   /**
-   * Identifies all nodes that are "event-bound" - meaning they are upstream
-   * of EventListener nodes and should only execute in child context when
-   * the corresponding event is triggered.
+   * Identifies all nodes that are "event-bound" - meaning they are part of
+   * an EventListener chain and should only execute when the corresponding
+   * event is triggered.
    *
    * Algorithm:
    * 1. Find all EventListener nodes and their event names
    * 2. Traverse BACKWARDS from each EventListener to mark all upstream nodes
-   * 3. Track which events each event-bound node is associated with
+   * 3. Traverse FORWARDS from each EventListener to mark downstream nodes
+   *    (and their upstream dependencies like nodeF)
+   * 4. Track which events each event-bound node is associated with
    */
   private identifyEventBoundNodes(): void {
     // Step 1: Identify all EventListener nodes and their event names
@@ -127,13 +129,25 @@ export class ExecutionEngine {
       const eventName = listenerNode ? (listenerNode as any).eventName as string : undefined
       this.markUpstreamNodesAsEventBound(listenerId, new Set(), eventName)
     }
+
+    // Step 3: Traverse forwards from EventListeners to mark downstream nodes
+    // This also marks upstream dependencies of downstream nodes (like nodeF)
+    for (const listenerId of this.eventListenerNodeIds) {
+      const listenerNode = this.flow.nodes.get(listenerId)
+      const eventName = listenerNode ? (listenerNode as any).eventName as string : undefined
+      this.markDownstreamNodesAsEventBound(listenerId, new Set(), eventName)
+    }
   }
 
   /**
    * Recursively marks all upstream nodes (nodes that feed into this node) as event-bound
-   * and associates them with the given event name
+   * and associates them with the given event name.
+   *
+   * @param skipEventListeners - When true, stops at EventListener nodes without marking them.
+   *   This is used when marking upstream from downstream nodes to avoid marking other
+   *   EventListeners that happen to feed into the same downstream node.
    */
-  private markUpstreamNodesAsEventBound(nodeId: string, visited: Set<string>, eventName?: string): void {
+  private markUpstreamNodesAsEventBound(nodeId: string, visited: Set<string>, eventName?: string, skipEventListeners = false): void {
     if (visited.has(nodeId))
       return // Prevent infinite loops
     visited.add(nodeId)
@@ -147,6 +161,17 @@ export class ExecutionEngine {
 
     for (const edge of incomingEdges) {
       const sourceNodeId = edge.sourceNode.id
+      const sourceNode = this.flow.nodes.get(sourceNodeId)
+
+      // Skip EventListener nodes when called from downstream traversal
+      // This prevents marking other EventListeners that share a downstream node
+      if (skipEventListeners && sourceNode) {
+        const sourceNodeType = sourceNode.metadata?.type
+        if (sourceNodeType === 'EventListenerNode' || sourceNodeType === 'EventListenerNodeV2') {
+          continue
+        }
+      }
+
       this.eventBoundNodes.add(sourceNodeId)
       // Track event name association for this node
       if (eventName) {
@@ -156,7 +181,45 @@ export class ExecutionEngine {
         this.eventBoundNodeEvents.get(sourceNodeId)!.add(eventName)
       }
       // Recursively mark sources of source
-      this.markUpstreamNodesAsEventBound(sourceNodeId, visited, eventName)
+      this.markUpstreamNodesAsEventBound(sourceNodeId, visited, eventName, skipEventListeners)
+    }
+  }
+
+  /**
+   * Recursively marks all downstream nodes (nodes fed by this node) as event-bound.
+   * Also marks upstream dependencies of those downstream nodes (catches nodes like nodeF
+   * that feed into downstream nodes but aren't directly connected to EventListener).
+   */
+  private markDownstreamNodesAsEventBound(nodeId: string, visited: Set<string>, eventName?: string): void {
+    if (visited.has(nodeId))
+      return
+    visited.add(nodeId)
+
+    const node = this.flow.nodes.get(nodeId)
+    if (!node)
+      return
+
+    // Get all outgoing edges to find downstream nodes
+    const outgoingEdges = this.flow.getOutgoingEdges(node)
+
+    for (const edge of outgoingEdges) {
+      const targetNodeId = edge.targetNode.id
+
+      // Mark downstream node as event-bound
+      this.eventBoundNodes.add(targetNodeId)
+      if (eventName) {
+        if (!this.eventBoundNodeEvents.has(targetNodeId)) {
+          this.eventBoundNodeEvents.set(targetNodeId, new Set())
+        }
+        this.eventBoundNodeEvents.get(targetNodeId)!.add(eventName)
+      }
+
+      // Mark upstream feeder nodes of this downstream node (catches nodeF)
+      // Skip EventListeners to avoid marking other event chains that share this downstream
+      this.markUpstreamNodesAsEventBound(targetNodeId, new Set([nodeId]), eventName, true)
+
+      // Recursively process further downstream nodes
+      this.markDownstreamNodesAsEventBound(targetNodeId, visited, eventName)
     }
   }
 
