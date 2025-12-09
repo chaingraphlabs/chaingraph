@@ -304,18 +304,23 @@ export class ExecutionEngine {
           const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
           const isEventBound = this.eventBoundNodes.has(nodeId)
 
-          // ROOT CONTEXT: Skip event-bound and disabledAutoExecution nodes
-          if (!this.context.isChildExecution) {
-            if (isAutoExecutionDisabled || isEventBound) {
-              continue
-            }
-          }
-
-          // CHILD CONTEXT with event data
-          if (this.context.isChildExecution && this.context.eventData) {
+          // ┌─────────────────────────────────────────────────────────────────────┐
+          // │ EXECUTION RULES:                                                     │
+          // │                                                                       │
+          // │ WITH eventData (child spawn OR external API event):                   │
+          // │   • EventListeners → execute if event name matches                    │
+          // │   • Event-bound nodes → execute if upstream of matching listener      │
+          // │   • Regular nodes → skip (only event chains execute)                  │
+          // │                                                                       │
+          // │ WITHOUT eventData (normal root execution):                            │
+          // │   • EventListeners → skip (no event to listen for)                    │
+          // │   • Event-bound nodes → skip (they feed EventListeners)               │
+          // │   • Regular nodes → execute normally                                  │
+          // └─────────────────────────────────────────────────────────────────────┘
+          if (this.context.eventData) {
             const incomingEventName = this.context.eventData.eventName
-            // EventListener nodes: check event name match
             if (isAutoExecutionDisabled) {
+              // EventListener nodes: must match event name
               const nodeType = metadata?.type
               if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
                 continue
@@ -325,12 +330,17 @@ export class ExecutionEngine {
                 continue
               }
             } else if (isEventBound) {
-              // Event-bound nodes: only execute if associated with the incoming event
+              // Event-bound upstream nodes: only if associated with this event
               if (!this.isEventBoundNodeForEvent(nodeId, incomingEventName)) {
                 continue
               }
             } else {
-              // Non-event-bound nodes in child context: skip
+              // Regular nodes: skip in event-driven execution
+              continue
+            }
+          } else {
+            // Normal execution: skip all event-related nodes
+            if (isAutoExecutionDisabled || isEventBound) {
               continue
             }
           }
@@ -471,15 +481,9 @@ export class ExecutionEngine {
 
         let shouldSkip = false
 
-        // ROOT CONTEXT
-        if (!this.context.isChildExecution) {
-          if (isAutoExecutionDisabled || isEventBound) {
-            shouldSkip = true
-          }
-        }
-
-        // CHILD CONTEXT with event data
-        if (this.context.isChildExecution && this.context.eventData) {
+        // Same execution rules as initializeDependencies() - see comment block there
+        if (this.context.eventData) {
+          // Event-driven execution: only matching EventListeners and their upstream
           const incomingEventName = this.context.eventData.eventName
           if (isAutoExecutionDisabled) {
             const nodeType = metadata?.type
@@ -492,12 +496,15 @@ export class ExecutionEngine {
               }
             }
           } else if (isEventBound) {
-            // Event-bound nodes: only execute if associated with the incoming event
             if (!this.isEventBoundNodeForEvent(dependentNode.id, incomingEventName)) {
               shouldSkip = true
             }
           } else {
-            // Non-event-bound nodes in child context: skip
+            shouldSkip = true
+          }
+        } else {
+          // Normal execution: skip event-related nodes
+          if (isAutoExecutionDisabled || isEventBound) {
             shouldSkip = true
           }
         }

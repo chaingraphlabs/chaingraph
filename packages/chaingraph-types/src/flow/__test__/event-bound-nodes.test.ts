@@ -274,6 +274,56 @@ describe('event-Bound Nodes', () => {
       expect(executedNodes).toContain('listener-1')
     })
 
+    it('should execute event-bound nodes in ROOT context with EXTERNAL event data (API)', async () => {
+      // This tests the scenario where an external API call triggers an event
+      // without spawning a child execution (isChildExecution: false, but eventData present)
+      const flow = new Flow({ name: 'test-flow' })
+
+      const upstreamNode = new RegularTestNode('upstream-1')
+      const listenerNode = new TestEventListenerNodeV2('listener-1', 'test-event')
+
+      upstreamNode.initialize()
+      listenerNode.initialize()
+
+      await flow.addNode(upstreamNode)
+      await flow.addNode(listenerNode)
+
+      const upstreamOutPort = upstreamNode.getFlowOutPort()
+      const listenerInPort = listenerNode.getFlowInPort()
+
+      if (upstreamOutPort && listenerInPort) {
+        const edge = new Edge('edge-1', upstreamNode, upstreamOutPort, listenerNode, listenerInPort)
+        await flow.addEdge(edge)
+      }
+
+      // ROOT execution context WITH external event data (not a child execution!)
+      const abortController = new AbortController()
+      const context = new ExecutionContext(
+        flow.id,
+        abortController,
+        undefined,
+        'test-execution',
+        {},
+        undefined, // no root execution ID
+        undefined, // no parent execution ID
+        { eventName: 'test-event', payload: { source: 'external-api' } }, // HAS event data
+        false, // NOT a child execution - this is the key difference!
+      )
+
+      const engine = new ExecutionEngine(flow, context)
+      const executedNodes: string[] = []
+
+      engine.on(ExecutionEventEnum.NODE_STARTED, (event) => {
+        executedNodes.push(event.data.node.id)
+      })
+
+      await engine.execute()
+
+      // Both upstream and listener should execute - external event triggers the chain
+      expect(executedNodes).toContain('upstream-1')
+      expect(executedNodes).toContain('listener-1')
+    })
+
     it('should NOT execute event-bound nodes when event name does not match', async () => {
       // Create flow: UpstreamNode -> EventListenerNode(event-a)
       const flow = new Flow({ name: 'test-flow' })
