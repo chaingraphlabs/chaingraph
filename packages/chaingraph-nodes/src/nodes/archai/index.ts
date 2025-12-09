@@ -7,10 +7,12 @@
  */
 
 export * from './add-agents-to-chat.node'
+export * from './add-message-attachment.node'
 export * from './append-message.node'
 export * from './append-variable.node'
 export * from './archai-to-anthropic-converter-v2.node'
 export * from './archai-to-anthropic-converter.node'
+export * from './attachment-utils'
 export * from './chat-history.node'
 export * from './chat-meta.node'
 export * from './create-collection.node'
@@ -31,3 +33,4 @@ export * from './on-new-message.event.node'
 export * from './set-variable.node'
 export * from './stream-message.node'
 export * from './types'
+export * from './upload-attachment.node'

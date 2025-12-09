@@ -133,6 +133,37 @@ export class Attachment {
   size: number = 0
 }
 
+// Define AttachmentInput schema for uploading attachments
+@ObjectSchema({
+  description: 'Input for uploading attachments. Accepts multiple formats: raw base64, data URI, or URL.',
+  type: 'AttachmentInput',
+})
+export class AttachmentInput {
+  @PortString({
+    title: 'Source',
+    description: `File data or URL:
+- Raw base64 string
+- Data URI (data:mime;base64,...)
+- HTTP/HTTPS URL (auto-fetched)`,
+    required: true,
+  })
+  source: string = ''
+
+  @PortString({
+    title: 'Filename',
+    description: 'Output filename with extension (e.g., "document.pdf")',
+    required: true,
+  })
+  filename: string = ''
+
+  @PortString({
+    title: 'MIME Type',
+    description: 'Override auto-detected MIME type (optional)',
+    required: false,
+  })
+  mimeType?: string
+}
+
 // Define Message schema
 @ObjectSchema({
   description: 'Represents a message in a chat conversation',
