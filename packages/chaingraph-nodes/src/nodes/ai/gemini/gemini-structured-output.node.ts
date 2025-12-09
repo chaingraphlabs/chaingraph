@@ -19,7 +19,7 @@ import type {
   ObjectPortConfig,
   StreamPortConfig,
 } from '@badaitech/chaingraph-types'
-import type { GenerateContentConfig, MediaResolution, Part, ThinkingLevel } from '@google/genai'
+import type { GenerateContentConfig, Part, ThinkingLevel } from '@google/genai'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -41,7 +41,6 @@ import { GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   GeminiGenerationConfig,
-  GeminiMediaResolution,
   GeminiThinkingLevel,
   isGemini3Model,
   isGemini25Model,
