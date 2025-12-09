@@ -1,5 +1,20 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.30
+
+### Patch Changes
+
+- a2b6952: feat: enhance node and port documentation with Markdown support for descriptions
+- e10f1b7: feat: Add Gemini Multimodal Image and Imagen Generate nodes
+- 28bd0d2: feat(archai): implement upload and attachment handling nodes for ArchAI integration
+- bcc58e4: feat(gemini): add new nodes for Gemini File Part, Image Part, and Text Part; enhance ArchAI integration with attachment handling
+- Updated dependencies [a2b6952]
+- Updated dependencies [e10f1b7]
+- Updated dependencies [28bd0d2]
+- Updated dependencies [bcc58e4]
+  - @badaitech/chaingraph-types@0.6.30
+  - @badaitech/badai-api@0.6.30
+
 ## 0.6.29
 
 ### Patch Changes
