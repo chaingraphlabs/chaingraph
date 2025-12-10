@@ -30,6 +30,11 @@ import { GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import { ConversationMessage, GeminiMessagePart } from './gemini-conversation-types'
 import {
+  GeminiPartTypeSupport,
+  convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
+  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
+} from './gemini-part-converters'
+import {
   GeminiGenerationConfig,
   GeminiMediaResolution,
   GeminiOutputConfig,
@@ -475,10 +480,20 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
           this.emitFootnotes(groundingChunks)
         }
 
-        // Build messages output with full conversation history
+        // Build output messages - ONLY the new exchange (not including previousMessages)
+        // This allows callers to know exactly what was produced by this call
+        // Clean user input to remove invalid fields (like thought: false)
+        const cleanedInputParts = this.inputMessage.parts.map(p => this.convertAPIPartToMessagePart(
+          this.convertPartToAPIFormat(p),
+        ))
+
         this.messages = [
-          ...(this.previousMessages || []),
-          this.inputMessage,
+          // User's input message (cleaned)
+          {
+            role: this.inputMessage.role,
+            parts: cleanedInputParts,
+          },
+          // Model's response with ALL parts EXACTLY as returned
           {
             role: 'model' as const,
             parts: collectedResponseParts.map(p => this.convertAPIPartToMessagePart(p)),
@@ -503,96 +518,18 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
 
   /**
    * Convert GeminiMessagePart to API Part format
+   * Delegates to shared utility with ALL part types supported
    */
-  private convertPartToAPIFormat(part: any): Part {
-    const apiPart: Part = {}
-
-    if (part.text) {
-      apiPart.text = part.text
-    }
-    if (part.inlineData) {
-      apiPart.inlineData = part.inlineData
-    }
-    if (part.fileData) {
-      apiPart.fileData = part.fileData
-    }
-    if (part.functionCall) {
-      // Parse args from JSON string
-      apiPart.functionCall = {
-        name: part.functionCall.name,
-        args: part.functionCall.args ? JSON.parse(part.functionCall.args) : {},
-      }
-    }
-    if (part.functionResponse) {
-      // Parse response from JSON string
-      apiPart.functionResponse = {
-        name: part.functionResponse.name,
-        response: part.functionResponse.response ? JSON.parse(part.functionResponse.response) : {},
-      }
-    }
-    if (part.executableCode) {
-      apiPart.executableCode = { code: part.executableCode }
-    }
-    if (part.codeExecutionResult) {
-      apiPart.codeExecutionResult = part.codeExecutionResult
-    }
-    if (part.thought !== undefined) {
-      (apiPart as any).thought = part.thought
-    }
-    if (part.thoughtSignature) {
-      (apiPart as any).thoughtSignature = part.thoughtSignature
-    }
-    if (part.videoMetadata) {
-      apiPart.videoMetadata = part.videoMetadata
-    }
-
-    return apiPart
+  private convertPartToAPIFormat(part: GeminiMessagePart): Part {
+    return sharedConvertPartToAPIFormat(part, GeminiPartTypeSupport.ALL) || {}
   }
 
   /**
    * Convert API Part to GeminiMessagePart format
+   * Delegates to shared utility
    */
-  private convertAPIPartToMessagePart(part: Part): any {
-    const messagePart: any = {}
-
-    if (part.text) {
-      messagePart.text = part.text
-    }
-    if (part.inlineData) {
-      messagePart.inlineData = part.inlineData
-    }
-    if (part.fileData) {
-      messagePart.fileData = part.fileData
-    }
-    if (part.functionCall) {
-      messagePart.functionCall = {
-        name: part.functionCall.name,
-        args: JSON.stringify(part.functionCall.args || {}),
-      }
-    }
-    if (part.functionResponse) {
-      messagePart.functionResponse = {
-        name: part.functionResponse.name,
-        response: JSON.stringify(part.functionResponse.response || {}),
-      }
-    }
-    if (part.executableCode) {
-      messagePart.executableCode = (part.executableCode as any).code || part.executableCode
-    }
-    if (part.codeExecutionResult) {
-      messagePart.codeExecutionResult = part.codeExecutionResult
-    }
-    if ((part as any).thought !== undefined) {
-      messagePart.thought = (part as any).thought
-    }
-    if ((part as any).thoughtSignature) {
-      messagePart.thoughtSignature = (part as any).thoughtSignature
-    }
-    if (part.videoMetadata) {
-      messagePart.videoMetadata = part.videoMetadata
-    }
-
-    return messagePart
+  private convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
+    return sharedConvertAPIPartToMessagePart(part)
   }
 
   // ============================================================================

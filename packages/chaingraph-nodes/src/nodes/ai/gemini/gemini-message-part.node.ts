@@ -22,6 +22,7 @@ import {
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   CodeExecutionResultConfig,
+  ExecutableCodeConfig,
   FileDataConfig,
   FunctionCallConfig,
   FunctionResponseConfig,
@@ -122,14 +123,14 @@ Response from a function call.`,
   // === Code Execution ===
 
   @Passthrough()
-  @PortString({
+  @PortObject({
     title: 'Executable Code',
-    description: `**Code to execute**
+    description: `**Code to execute with language specification**
 
-Python code for Gemini to run.`,
-    ui: { isTextArea: true },
+Code for Gemini to run (default: Python).`,
+    schema: ExecutableCodeConfig,
   })
-  executableCode?: string
+  executableCode?: ExecutableCodeConfig
 
   @Passthrough()
   @PortObject({

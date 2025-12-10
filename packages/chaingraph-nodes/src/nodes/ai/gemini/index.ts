@@ -8,6 +8,7 @@
 
 // Conversation and image types
 export * from './gemini-conversation-types'
+export * from './gemini-part-converters'
 export * from './gemini-file-part.node'
 
 export * from './gemini-image-part.node'

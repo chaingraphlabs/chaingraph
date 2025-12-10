@@ -257,6 +257,15 @@ Failed downloads show: \`[Attachment unavailable: filename (type)]\``,
       return 'user'
     }
 
+    // CRITICAL FIX: If message has attachments, ALWAYS treat as 'user'
+    // Reason: ArchAI doesn't store thoughtSignatures for agent messages.
+    // Agent messages with images would fail Gemini 3 Pro validation if marked as 'model'
+    // because model responses with images MUST have thoughtSignature fields.
+    // See: https://ai.google.dev/gemini-api/docs/thought-signatures
+    if (message.attachments && message.attachments.length > 0 && this.includeAttachments) {
+      return 'user'
+    }
+
     // If assistantId is set, check if this message's author matches
     if (this.assistantId && this.assistantId.trim().length > 0) {
       if (message.participant?.agent_id === this.assistantId) {

@@ -19,7 +19,7 @@ import type {
   ObjectPortConfig,
   StreamPortConfig,
 } from '@badaitech/chaingraph-types'
-import type { GenerateContentConfig, Part, ThinkingLevel } from '@google/genai'
+import type { Content, ContentListUnion, GenerateContentConfig, Part, ThinkingLevel } from '@google/genai'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -29,6 +29,7 @@ import {
   ObjectSchemaCopyTo,
   Output,
   Passthrough,
+  PortArray,
   PortBoolean,
   PortEnumFromNative,
   PortNumber,
@@ -39,6 +40,15 @@ import {
 } from '@badaitech/chaingraph-types'
 import { GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
+import {
+  ConversationMessage,
+  GeminiMessagePart,
+} from './gemini-conversation-types'
+import {
+  GeminiPartTypeSupport,
+  convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
+  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
+} from './gemini-part-converters'
 import {
   GeminiGenerationConfig,
   GeminiThinkingLevel,
@@ -88,24 +98,54 @@ export class GeminiStructuredOutputNode extends BaseNode {
   config: GeminiGenerationConfig = new GeminiGenerationConfig()
 
   // ============================================================================
-  // Content Inputs
+  // Conversation Inputs
   // ============================================================================
 
   @Passthrough()
-  @PortString({
-    title: 'Prompt',
-    description: 'Text prompt for the model',
-    ui: {
-      isTextArea: true,
-    },
-    defaultValue: '',
+  @PortObject({
+    title: 'Input Message',
+    description: `**Your current message to the model**
+
+Add parts with text, images, files, code:
+- **Text only** → \`[{ text: "Extract data from this text..." }]\`
+- **Text + file** → \`[{ fileData: { fileUri: "url" } }, { text: "Extract data" }]\`
+- **Code execution** → \`[{ executableCode: { code: "...", language: "PYTHON" } }]\`
+
+**Note:** Structured output works with TEXT models only, not image generation models.
+
+Build with Gemini Message Part + Array Add nodes.`,
+    schema: ConversationMessage,
+    required: true,
   })
-  prompt: string = ''
+  inputMessage: ConversationMessage = new ConversationMessage()
+
+  @Passthrough()
+  @PortArray({
+    title: 'Previous Messages',
+    description: `**Conversation history (optional)**
+
+Chain from previous Gemini nodes for multi-turn structured extraction:
+- Context-aware data extraction
+- Follow-up refinement
+- Iterative schema evolution
+
+Leave empty for single-shot operations.`,
+    itemConfig: {
+      type: 'object',
+      schema: ConversationMessage,
+    },
+    isMutable: true,
+    defaultValue: [],
+    ui: {
+      collapsed: true,
+    },
+  })
+  previousMessages: ConversationMessage[] = []
 
   @Passthrough()
   @PortString({
     title: 'System Instructions',
-    description: 'System-level instructions for the model',
+    description: 'System-level instructions for the model (separate from conversation)',
     ui: {
       isTextArea: true,
     },
@@ -198,6 +238,44 @@ export class GeminiStructuredOutputNode extends BaseNode {
   })
   thoughts: MultiChannel<string> = new MultiChannel()
 
+  @Output()
+  @PortStream({
+    title: 'Parts Stream (Raw)',
+    description: `**Raw model response parts for programmatic processing**
+
+Streams raw \`GeminiMessagePart\` objects as they arrive:
+- \`{ text: "..." }\` — JSON chunks (partial structured output)
+- \`{ thought: true, text: "..." }\` — Reasoning content
+
+Use this for:
+- Real-time UI updates during generation
+- Progress indicators
+- Displaying thoughts/partial results as they arrive`,
+    itemConfig: {
+      type: 'object',
+      schema: GeminiMessagePart,
+    },
+    defaultValue: new MultiChannel<GeminiMessagePart>(),
+  })
+  partsStream: MultiChannel<GeminiMessagePart> = new MultiChannel<GeminiMessagePart>()
+
+  @Output()
+  @PortArray({
+    title: 'Messages',
+    description: `**Conversation history for chaining**
+
+Contains only the new exchange:
+- Input message (cleaned)
+- Model response (with structured output as text)
+
+Chain to another Gemini node's "Previous Messages" for multi-turn structured extraction workflows.`,
+    itemConfig: {
+      type: 'object',
+      schema: ConversationMessage,
+    },
+  })
+  messages: ConversationMessage[] = []
+
   // ============================================================================
   // Execute Method
   // ============================================================================
@@ -211,8 +289,8 @@ export class GeminiStructuredOutputNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
-    if (!this.prompt) {
-      throw new Error('Prompt is required')
+    if (!this.inputMessage.parts || this.inputMessage.parts.length === 0) {
+      throw new Error('Input message must contain at least one part')
     }
 
     // Get the output schema from port
@@ -270,9 +348,51 @@ export class GeminiStructuredOutputNode extends BaseNode {
       await this.debugLog(context, `Base Generation Config: ${JSON.stringify(generationConfig, null, 2)}`)
     }
 
+    // Build conversation contents from previousMessages + inputMessage
+    const contents: Content[] = []
+
+    // 1. Add previous conversation messages if any
+    if (this.previousMessages && this.previousMessages.length > 0) {
+      for (const msg of this.previousMessages) {
+        const convertedParts: Part[] = []
+        for (const p of msg.parts) {
+          const converted = this.convertPartToAPIFormat(p, context)
+          if (converted) {
+            convertedParts.push(converted)
+          }
+        }
+        if (convertedParts.length > 0) {
+          contents.push({
+            role: msg.role,
+            parts: convertedParts,
+          })
+        }
+      }
+    }
+
+    // 2. Process inputMessage parts
+    const currentParts: Part[] = []
+    for (const part of this.inputMessage.parts) {
+      const converted = this.convertPartToAPIFormat(part, context)
+      if (converted) {
+        currentParts.push(converted)
+      }
+    }
+
+    if (currentParts.length === 0) {
+      throw new Error('Input message must contain at least one valid part')
+    }
+
+    // 3. Add current user message
+    contents.push({
+      role: 'user',
+      parts: currentParts,
+    })
+
     // Execute with retry logic
-    const { parsed, thoughts } = await this.generateStructuredResponseWithRetries(
+    const { parsed, thoughts, collectedParts } = await this.generateStructuredResponseWithRetries(
       genAI,
+      contents,
       generationConfig,
       context,
     )
@@ -305,6 +425,29 @@ export class GeminiStructuredOutputNode extends BaseNode {
       }
     }
 
+    // Build output messages - ONLY the new exchange (not including previousMessages)
+    // Clean user input to remove invalid fields
+    const cleanedInputParts: Part[] = []
+    for (const part of this.inputMessage.parts) {
+      const converted = this.convertPartToAPIFormat(part)
+      if (converted) {
+        cleanedInputParts.push(converted)
+      }
+    }
+
+    this.messages = [
+      // User's input message (cleaned)
+      {
+        role: this.inputMessage.role,
+        parts: cleanedInputParts.map(p => this.convertAPIPartToMessagePart(p)),
+      },
+      // Model's response with ALL parts
+      {
+        role: 'model' as const,
+        parts: collectedParts.map(p => this.convertAPIPartToMessagePart(p)),
+      },
+    ]
+
     return {}
   }
 
@@ -314,58 +457,81 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
   private async generateStructuredResponseWithRetries(
     genAI: GoogleGenAI,
+    contents: ContentListUnion,
     config: GenerateContentConfig,
     context: ExecutionContext,
-  ): Promise<{ parsed: Record<string, any>, thoughts: string[] }> {
+  ): Promise<{ parsed: Record<string, any>, thoughts: string[], collectedParts: Part[] }> {
     for (let attempt = 0; attempt < GEMINI_MAX_RETRIES; attempt++) {
       try {
         if (this.config.debug) {
           await this.debugLog(context, `Attempt ${attempt + 1}/${GEMINI_MAX_RETRIES}`)
         }
 
-        const response = await genAI.models.generateContent({
+        // Use streaming API to support real-time parts output
+        const stream = await genAI.models.generateContentStream({
           model: this.config.model,
-          contents: [{
-            role: 'user',
-            parts: [{ text: this.prompt }],
-          }],
+          contents,
           config,
         })
 
-        // debug json response.candidates:
-        if (this.config.debug) {
-          await this.debugLog(context, `Model Response: ${JSON.stringify(response, null, 2)}`)
-        }
-
-        // Extract response text, handling thought parts correctly
-        const parts: Part[] = response.candidates?.[0]?.content?.parts || []
-        let resultText = ''
+        // Collect response parts and JSON chunks
+        const collectedParts: Part[] = []
+        let jsonBuffer = ''
         const thoughtTexts: string[] = []
 
-        for (const part of parts) {
-          if (part.thought && part.text) {
-            // Thought part - collect for streaming output
-            thoughtTexts.push(part.text)
-          } else if (part.text) {
-            // Regular content part - this contains the JSON
-            resultText += part.text
+        // Stream chunks in real-time
+        for await (const chunk of stream) {
+          // Check abort
+          if (context.abortSignal.aborted) {
+            this.partsStream.close()
+            this.partsStream.setError(new Error('Stream aborted'))
+            throw new Error('Stream aborted')
+          }
+
+          const chunkParts = chunk.candidates?.[0]?.content?.parts || []
+          for (const part of chunkParts) {
+            // Collect for final output
+            collectedParts.push(part)
+
+            // Send to raw parts stream for real-time UI updates
+            const messagePart = this.convertAPIPartToMessagePart(part)
+            this.partsStream.send(messagePart)
+
+            // Separate thoughts from JSON content
+            if (part.thought && part.text) {
+              thoughtTexts.push(part.text)
+            } else if (part.text) {
+              jsonBuffer += part.text
+            }
           }
         }
 
-        if (!resultText) {
+        // Close parts stream
+        this.partsStream.close()
+
+        // debug json response:
+        if (this.config.debug) {
+          await this.debugLog(context, `Collected JSON Buffer: ${jsonBuffer}`)
+          await this.debugLog(context, `Collected ${collectedParts.length} parts`)
+        }
+
+        if (!jsonBuffer) {
           throw new Error('No response content from model (only thought parts received or empty response)')
         }
 
         // Parse JSON
-        const parsed = JSON.parse(resultText)
+        const parsed = JSON.parse(jsonBuffer)
 
         if (this.config.debug) {
           await this.debugLog(context, `Success: ${JSON.stringify(parsed, null, 2)}`)
         }
 
-        return { parsed, thoughts: thoughtTexts }
+        return { parsed, thoughts: thoughtTexts, collectedParts }
       } catch (error: any) {
         const errorMsg = error?.message || String(error)
+
+        // Close parts stream on error
+        this.partsStream.close()
 
         if (attempt >= GEMINI_MAX_RETRIES - 1) {
           // Last attempt failed
@@ -374,7 +540,8 @@ export class GeminiStructuredOutputNode extends BaseNode {
           }
           throw new Error(`Failed after ${GEMINI_MAX_RETRIES} attempts: ${errorMsg}`)
         } else {
-          // Retry
+          // Retry - reinitialize parts stream for next attempt
+          this.partsStream = new MultiChannel<GeminiMessagePart>()
           if (this.config.debug) {
             await this.debugLog(context, `Attempt ${attempt + 1} failed: ${errorMsg}, retrying...`)
           }
@@ -384,6 +551,33 @@ export class GeminiStructuredOutputNode extends BaseNode {
 
     // Shouldn't reach here
     throw new Error('Maximum retries exceeded')
+  }
+
+  // ============================================================================
+  // Part Conversion Helpers
+  // ============================================================================
+
+  /**
+   * Convert GeminiMessagePart to API Part format.
+   * Delegates to shared utility with TEXT_STRUCTURED support.
+   * Supports: text, fileData, functionCall, functionResponse, executableCode, codeExecutionResult, videoMetadata
+   * Does NOT support: inlineData (inline images) - use fileData for image URLs instead
+   */
+  private convertPartToAPIFormat(part: GeminiMessagePart, context?: ExecutionContext): Part | null {
+    return sharedConvertPartToAPIFormat(
+      part,
+      GeminiPartTypeSupport.TEXT_STRUCTURED,
+      context,
+      this.config.debug ? this.debugLog.bind(this) : undefined,
+    )
+  }
+
+  /**
+   * Convert API Part to GeminiMessagePart format.
+   * Delegates to shared utility
+   */
+  private convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
+    return sharedConvertAPIPartToMessagePart(part)
   }
 
   // ============================================================================
