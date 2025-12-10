@@ -36,6 +36,11 @@ import {
   ImageSize,
   isGemini3ImageModel,
 } from './gemini-conversation-types'
+import {
+  GeminiPartTypeSupport,
+  convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
+  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
+} from './gemini-part-converters'
 
 // ============================================================================
 // Gemini Multimodal Image Node
@@ -246,17 +251,38 @@ This preserves the full conversation history.`,
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
       for (const msg of this.previousMessages) {
-        contents.push({
-          role: msg.role,
-          parts: msg.parts.map(p => this.convertPartToAPIFormat(p)),
-        })
+        const convertedParts: Part[] = []
+        for (const p of msg.parts) {
+          const converted = this.convertPartToAPIFormat(p, context)
+          if (converted) {
+            convertedParts.push(converted)
+          }
+        }
+        // Only add message if it has valid parts
+        if (convertedParts.length > 0) {
+          contents.push({
+            role: msg.role,
+            parts: convertedParts,
+          })
+        }
       }
     }
 
     // 2. Process inputMessage parts - convert to API format
-    const currentParts: Part[] = this.inputMessage.parts.map(p => this.convertPartToAPIFormat(p))
+    const currentParts: Part[] = []
+    for (const part of this.inputMessage.parts) {
+      const converted = this.convertPartToAPIFormat(part, context)
+      if (converted) {
+        currentParts.push(converted)
+      }
+    }
 
-    // 3. Add current user message to contents
+    // 3. Validate we have at least one valid part
+    if (currentParts.length === 0) {
+      throw new Error('Input message must contain at least one valid part (text or image). Unsupported part types have been filtered out.')
+    }
+
+    // 4. Add current user message to contents
     contents.push({
       role: 'user',
       parts: currentParts,
@@ -301,7 +327,7 @@ This preserves the full conversation history.`,
                 mimeType: p.inlineData.mimeType,
                 dataLength: p.inlineData.data?.length || 0,
               },
-              thoughtSignature: (p as any).thoughtSignature ? `${(p as any).thoughtSignature.substring(0, 50)}...` : undefined,
+              thoughtSignature: p.thoughtSignature ? `${p.thoughtSignature.substring(0, 50)}...` : undefined,
             }
           }
           return p
@@ -332,10 +358,10 @@ This preserves the full conversation history.`,
                     mimeType: p.inlineData.mimeType,
                     dataLength: p.inlineData.data?.length || 0,
                   },
-                  thoughtSignature: (p as any).thoughtSignature ? `${(p as any).thoughtSignature.substring(0, 50)}...` : undefined,
+                  thoughtSignature: p.thoughtSignature ? `${p.thoughtSignature.substring(0, 50)}...` : undefined,
                 }
               }
-              return { ...p, thoughtSignature: (p as any).thoughtSignature ? `${(p as any).thoughtSignature.substring(0, 50)}...` : undefined }
+              return { ...p, thoughtSignature: p.thoughtSignature ? `${p.thoughtSignature.substring(0, 50)}...` : undefined }
             }),
           },
           finishReason: c.finishReason,
@@ -355,7 +381,7 @@ This preserves the full conversation history.`,
       await this.debugLog(context, `[RESPONSE] Image parts count: ${imageParts.length}`)
       for (let i = 0; i < responseParts.length; i++) {
         const p = responseParts[i]
-        const hasSignature = !!(p as any).thoughtSignature
+        const hasSignature = !!p.thoughtSignature
         const partType = p.inlineData ? 'image' : p.text ? 'text' : 'other'
         await this.debugLog(context, `[RESPONSE] Part ${i}: type=${partType}, hasThoughtSignature=${hasSignature}`)
       }
@@ -414,15 +440,24 @@ This preserves the full conversation history.`,
       }
     }
 
-    // 11. Build updated conversation history for chaining
+    // 11. Build output messages - ONLY the new exchange (not including previousMessages)
+    // This allows callers to know exactly what was produced by this call
+    // Clean user input to remove unsupported fields
+    const cleanedInputParts: Part[] = []
+    for (const part of this.inputMessage.parts) {
+      const converted = this.convertPartToAPIFormat(part)
+      if (converted) {
+        cleanedInputParts.push(converted)
+      }
+    }
+
     this.messages = [
-      ...(this.previousMessages || []),
-      // Add the user's input message - but clean it to remove any invalid fields
+      // Add the user's input message (cleaned)
       {
         role: this.inputMessage.role,
-        parts: this.inputMessage.parts.map(p => this.convertAPIPartToMessagePart(p as any)),
+        parts: cleanedInputParts.map(p => this.convertAPIPartToMessagePart(p)),
       },
-      // Add the model's response with ALL parts (preserving thoughtSignatures)
+      // Add the model's response with ALL parts EXACTLY as returned (preserving thoughtSignatures)
       {
         role: 'model' as const,
         parts: outputParts,
@@ -448,52 +483,22 @@ This preserves the full conversation history.`,
 
   /**
    * Convert GeminiMessagePart to API Part format.
-   * IMPORTANT: Only includes valid API fields. Explicitly excludes `thought` field
-   * which is invalid for image generation models and causes 400 errors.
+   * Delegates to shared utility with IMAGE_ONLY support (text + inlineData only)
    */
-  private convertPartToAPIFormat(part: GeminiMessagePart): Part {
-    const apiPart: Part = {}
-
-    if (part.inlineData) {
-      apiPart.inlineData = {
-        data: part.inlineData.data,
-        mimeType: part.inlineData.mimeType,
-      }
-    }
-    if (part.text) {
-      apiPart.text = part.text
-    }
-    // Preserve thoughtSignature for multi-turn conversations (required by Gemini 3 Pro Image)
-    if (part.thoughtSignature) {
-      apiPart.thoughtSignature = part.thoughtSignature
-    }
-    // NOTE: Explicitly NOT including `thought` field - invalid for image models
-
-    return apiPart
+  private convertPartToAPIFormat(part: GeminiMessagePart, context?: ExecutionContext): Part | null {
+    return sharedConvertPartToAPIFormat(
+      part,
+      GeminiPartTypeSupport.IMAGE_ONLY,
+      context,
+      this.config.debug ? this.debugLog.bind(this) : undefined,
+    )
   }
 
   /**
    * Convert API Part to GeminiMessagePart format.
-   * Only copies valid fields, excluding any that shouldn't be persisted.
+   * Delegates to shared utility
    */
   private convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
-    const msgPart: GeminiMessagePart = {}
-
-    if (part.inlineData) {
-      msgPart.inlineData = {
-        data: part.inlineData.data || '',
-        mimeType: part.inlineData.mimeType || 'image/png',
-      }
-    }
-    if (part.text) {
-      msgPart.text = part.text
-    }
-    // Preserve thoughtSignature for multi-turn conversations
-    if (part.thoughtSignature) {
-      msgPart.thoughtSignature = part.thoughtSignature
-    }
-    // NOTE: Do NOT copy `thought` field - it's not valid for image models
-
-    return msgPart
+    return sharedConvertAPIPartToMessagePart(part)
   }
 }
