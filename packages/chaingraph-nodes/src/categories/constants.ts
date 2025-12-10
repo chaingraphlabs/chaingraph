@@ -29,6 +29,7 @@ export const NODE_CATEGORIES = {
   BLOCKCHAIN: 'blockchain',
   MCP: 'mcp',
   CONVERTERS: 'converters',
+  TRANSFORMS: 'transforms',
 } as const
 
 export type NodeCategoryKey = keyof typeof NODE_CATEGORIES
@@ -465,6 +466,28 @@ export const CATEGORY_METADATA: Record<NodeCategoryValue, CategoryMetadata> = {
       },
     },
     order: 4.5, // Between FLOW and UTILITIES
+  },
+
+  [NODE_CATEGORIES.TRANSFORMS]: {
+    id: NODE_CATEGORIES.TRANSFORMS,
+    label: 'Transforms',
+    description: 'Array operations, type algebra, and data transformations',
+    icon: 'Layers',
+    style: {
+      light: {
+        primary: '#E0F7FA', // Soft cyan
+        secondary: '#F0FBFC',
+        background: '#FFFFFF',
+        text: '#00838F', // Deep teal
+      },
+      dark: {
+        primary: '#004D40', // Deep teal
+        secondary: '#00332C',
+        background: '#1C1C1C',
+        text: '#4DD0E1', // Light cyan
+      },
+    },
+    order: 3.2, // Between DATA (3) and MCP (3.5)
   },
 
 }

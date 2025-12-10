@@ -14,6 +14,7 @@ import {
   FlaskConical,
   GitBranch,
   Grid,
+  Layers,
   Lock,
   MessageSquare,
   Package,
@@ -45,6 +46,7 @@ export const CategoryIcons = {
   FlaskConical,
   Wallet,
   Sparkles,
+  Layers,
 } as const satisfies Record<string, IconComponent>
 
 export type CategoryIconName = keyof typeof CategoryIcons

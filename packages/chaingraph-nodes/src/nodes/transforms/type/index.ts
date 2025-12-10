@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './number-to-string.node'
-export * from './on-stream-started.node'
-export * from './stream-buffer.node'
-export * from './text-search.node'
+export * from './type-focus.node'
+export * from './type-merge.node'
+export * from './type-unwrap.node'
+export * from './type-wrap.node'

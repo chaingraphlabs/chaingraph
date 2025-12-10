@@ -24,14 +24,14 @@ export function useExpandedCategories(availableCategories: string[]) {
 
   // Convert collapsed categories to expanded for Accordion
   const expandedCategories = availableCategories.filter(
-    category => !collapsedCategories.includes(category),
+    category => collapsedCategories.includes(category),
   )
 
   // Handle Accordion value change
   const handleExpandedChange = (expanded: string[]) => {
     // Calculate which categories are now collapsed
     const newCollapsed = availableCategories.filter(
-      category => !expanded.includes(category),
+      category => expanded.includes(category),
     )
     setCollapsedCategories(newCollapsed)
 

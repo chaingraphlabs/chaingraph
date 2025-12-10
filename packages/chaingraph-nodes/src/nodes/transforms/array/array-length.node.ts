@@ -16,11 +16,13 @@ import {
   PortNumber,
 } from '@badaitech/chaingraph-types'
 
+import { NODE_CATEGORIES } from '../../../categories'
+
 @Node({
   type: 'ArrayLengthNode',
   title: 'Array Length',
   description: 'Get the length of an array',
-  category: 'data',
+  category: NODE_CATEGORIES.TRANSFORMS,
   tags: ['array', 'length', 'count', 'size'],
 })
 export class ArrayLengthNode extends BaseNode {

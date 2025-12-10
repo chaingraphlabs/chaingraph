@@ -25,7 +25,7 @@ export class MCPCapabilityService {
   private activeClients = new Map<string, Client>()
   private readonly CACHE_DURATION = 30 * 1000 // 30 seconds
 
-  constructor(private mcpStore: IMCPStore) {}
+  constructor(private mcpStore: IMCPStore) { }
 
   async getTool(serverId: string, toolName: string, userId: string): Promise<Tool> {
     const capabilities = await this.getCapabilities(serverId, userId)
@@ -163,6 +163,7 @@ export class MCPCapabilityService {
         const sseTransport = new SSEClientTransport(url)
         await client.connect(sseTransport)
       } catch (sseError) {
+        console.error('SSE transport also failed:', sseError)
         throw new Error(`Failed to connect to both StreamableHTTP and SSE transports: HTTP Error: ${error instanceof Error ? error.message : error}, SSE Error: ${sseError instanceof Error ? sseError.message : sseError}`)
       }
     }
