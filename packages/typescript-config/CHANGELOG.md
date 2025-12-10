@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.33
+
+### Patch Changes
+
+- 558bb40: feat(gemini): enhance message part handling and conversion utilities
+
 ## 0.6.32
 
 ### Patch Changes

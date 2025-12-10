@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.33
+
+### Patch Changes
+
+- 558bb40: feat(gemini): enhance message part handling and conversion utilities
+- Updated dependencies [558bb40]
+  - @badaitech/badai-api@0.6.33
+
 ## 0.6.32
 
 ### Patch Changes

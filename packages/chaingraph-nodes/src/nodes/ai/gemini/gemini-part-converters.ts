@@ -55,8 +55,7 @@ export function convertPartToAPIFormat(
         mimeType: part.inlineData.mimeType || 'image/png',
       }
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] inlineData (base64 images) not compatible with ${support} mode. Use fileData for image URLs instead.`)
     }
   }
@@ -66,8 +65,7 @@ export function convertPartToAPIFormat(
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.fileData = part.fileData
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] fileData not supported in ${support} mode`)
     }
   }
@@ -81,8 +79,7 @@ export function convertPartToAPIFormat(
         args: part.functionCall.args,
       }
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] functionCall not supported in ${support} mode`)
     }
   }
@@ -95,8 +92,7 @@ export function convertPartToAPIFormat(
         response: part.functionResponse.response,
       }
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] functionResponse not supported in ${support} mode`)
     }
   }
@@ -109,8 +105,7 @@ export function convertPartToAPIFormat(
         language: part.executableCode.language as any, // API uses Language enum
       }
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] executableCode not supported in ${support} mode`)
     }
   }
@@ -122,8 +117,7 @@ export function convertPartToAPIFormat(
         output: part.codeExecutionResult.output,
       }
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] codeExecutionResult not supported in ${support} mode`)
     }
   }
@@ -133,8 +127,7 @@ export function convertPartToAPIFormat(
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.videoMetadata = part.videoMetadata
       hasValidContent = true
-    }
-    else if (context && debugLog) {
+    } else if (context && debugLog) {
       debugLog(context, `[WARNING] videoMetadata not supported in ${support} mode`)
     }
   }

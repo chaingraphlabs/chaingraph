@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-executor
 
+## 0.6.33
+
+### Patch Changes
+
+- 558bb40: feat(gemini): enhance message part handling and conversion utilities
+- Updated dependencies [558bb40]
+  - @badaitech/chaingraph-nodes@0.6.33
+  - @badaitech/chaingraph-types@0.6.33
+  - @badaitech/chaingraph-trpc@0.6.33
+
 ## 0.6.32
 
 ### Patch Changes
