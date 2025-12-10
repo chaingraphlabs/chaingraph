@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.34
+
+### Patch Changes
+
+- 50796a3: feat(nodes): add Transforms category with 16 array/type/object nodes
+- Updated dependencies [50796a3]
+  - @badaitech/badai-api@0.6.34
+  - @badaitech/chaingraph-types@0.6.34
+
 ## 0.6.33
 
 ### Patch Changes

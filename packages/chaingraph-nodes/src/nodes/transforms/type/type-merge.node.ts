@@ -198,8 +198,10 @@ class TypeMergeNode extends BaseNode {
    * Recursively merges nested objects, with B winning on conflicts
    */
   private deepMergeValues(objA: any, objB: any): any {
-    if (!objA || typeof objA !== 'object') return objB
-    if (!objB || typeof objB !== 'object') return objB
+    if (!objA || typeof objA !== 'object')
+      return objB
+    if (!objB || typeof objB !== 'object')
+      return objB
 
     const result: any = { ...objA }
 

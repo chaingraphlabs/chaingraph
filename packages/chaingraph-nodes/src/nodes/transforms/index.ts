@@ -7,6 +7,6 @@
  */
 
 export * from './array'
-export * from './type'
 export * from './object'
+export * from './type'
 export * from './utils'

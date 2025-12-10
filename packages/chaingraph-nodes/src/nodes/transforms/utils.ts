@@ -13,18 +13,22 @@ import type { ArrayPortConfig, IPortConfig, ObjectPortConfig } from '@badaitech/
  * Supports: "a.b", "a[0]", "a.b[0].c"
  */
 export function getByPath(obj: any, path: string): any {
-  if (!path || !obj) return obj
+  if (!path || !obj)
+    return obj
 
   const parts = path.split('.').flatMap((part) => {
     const match = part.match(/^(.+?)\[(\d+)\]$/)
-    if (match) return [match[1], match[2]]
+    if (match)
+      return [match[1], match[2]]
     const arrayMatch = part.match(/^\[(\d+)\]$/)
-    if (arrayMatch) return [arrayMatch[1]]
+    if (arrayMatch)
+      return [arrayMatch[1]]
     return [part]
   }).filter(Boolean)
 
   return parts.reduce((acc, key) => {
-    if (acc === null || acc === undefined) return undefined
+    if (acc === null || acc === undefined)
+      return undefined
     return acc[key]
   }, obj)
 }
@@ -34,7 +38,8 @@ export function getByPath(obj: any, path: string): any {
  * Returns IPortConfig at the path location
  */
 export function getTypeAtPath(config: IPortConfig, path: string): IPortConfig | undefined {
-  if (!path) return config
+  if (!path)
+    return config
 
   const parts = path.split('.').flatMap((part) => {
     const match = part.match(/^(.+?)\[(\d+)\]$/)
@@ -44,7 +49,8 @@ export function getTypeAtPath(config: IPortConfig, path: string): IPortConfig | 
   let current: IPortConfig | undefined = config
 
   for (const part of parts) {
-    if (!current) return undefined
+    if (!current)
+      return undefined
 
     if (part === '[]' || part === '*') {
       if (current.type === 'array') {
