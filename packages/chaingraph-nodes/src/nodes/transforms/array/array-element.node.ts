@@ -33,13 +33,13 @@ import {
   PortAny,
   PortNumber,
 } from '@badaitech/chaingraph-types'
-import { NODE_CATEGORIES } from '../../categories'
+import { NODE_CATEGORIES } from '../../../categories'
 
 @Node({
   type: 'ArrayElementNode',
   title: 'Array Element',
   description: 'Extracts an element from an array at the specified index',
-  category: NODE_CATEGORIES.UTILITIES,
+  category: NODE_CATEGORIES.TRANSFORMS,
   tags: ['array', 'element', 'index', 'extract'],
 })
 class ArrayElementNode extends BaseNode {

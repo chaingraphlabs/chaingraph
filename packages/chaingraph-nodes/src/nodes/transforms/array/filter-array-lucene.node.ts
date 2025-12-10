@@ -10,6 +10,8 @@ import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingrap
 import { BaseNode, Input, Node, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
 import { filter, QueryParser } from 'lucene-kit'
 
+import { NODE_CATEGORIES } from '../../../categories'
+
 /**
  * Filter node that applies Lucene-style query syntax to filter arrays of objects
  */
@@ -17,7 +19,7 @@ import { filter, QueryParser } from 'lucene-kit'
   type: 'FilterArrayLuceneNode',
   title: 'Filter Array (Lucene)',
   description: 'Filter an array of objects using Lucene-style query syntax, allowing for complex searches and filtering based on multiple fields and conditions.',
-  category: 'data',
+  category: NODE_CATEGORIES.TRANSFORMS,
   tags: ['filter', 'array', 'query', 'search', 'lucene'],
 })
 export class FilterArrayLuceneNode extends BaseNode {
