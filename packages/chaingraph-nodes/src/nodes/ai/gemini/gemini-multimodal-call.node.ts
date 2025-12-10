@@ -496,9 +496,9 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
       }
     }
 
-    return {
-      backgroundActions: [streamingPromise],
-    }
+    await streamingPromise()
+
+    return {}
   }
 
   /**

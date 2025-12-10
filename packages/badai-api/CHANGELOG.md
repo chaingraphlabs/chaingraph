@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.32
+
+### Patch Changes
+
+- feat(gemini): add debug mode for detailed logging and improve API part conversion
+
 ## 0.6.31
 
 ### Patch Changes

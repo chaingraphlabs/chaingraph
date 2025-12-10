@@ -217,6 +217,14 @@ Get your API key from: [Google AI Studio](https://aistudio.google.com/apikey)`,
     required: true,
   })
   model: GeminiImageModels = DEFAULT_GEMINI_IMAGE_MODEL
+
+  // debug bool:
+  @PortBoolean({
+    title: 'Debug Mode',
+    description: 'Enables detailed logging for debugging purposes',
+    defaultValue: false,
+  })
+  debug: boolean = false
 }
 
 // ============================================================================

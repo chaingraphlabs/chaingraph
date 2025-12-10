@@ -1,5 +1,14 @@
 # @badaitech/chaingraph-nodes
 
+## 0.6.32
+
+### Patch Changes
+
+- feat(gemini): add debug mode for detailed logging and improve API part conversion
+- Updated dependencies
+  - @badaitech/badai-api@0.6.32
+  - @badaitech/chaingraph-types@0.6.32
+
 ## 0.6.31
 
 ### Patch Changes
