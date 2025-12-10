@@ -10,7 +10,10 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
-import type { Content, Part } from '@google/genai'
+import type { Content, GenerateContentConfig, Part } from '@google/genai'
+import type {
+  GeminiMessagePart,
+} from './gemini-conversation-types'
 import {
   BaseNode,
   ExecutionEventEnum,
@@ -245,31 +248,13 @@ This preserves the full conversation history.`,
       for (const msg of this.previousMessages) {
         contents.push({
           role: msg.role,
-          parts: msg.parts.map((p) => {
-            if (p.inlineData) {
-              return { inlineData: p.inlineData } as Part
-            }
-            return { text: p.text || '' } as Part
-          }),
+          parts: msg.parts.map(p => this.convertPartToAPIFormat(p)),
         })
       }
     }
 
     // 2. Process inputMessage parts - convert to API format
-    const currentParts: Part[] = []
-
-    for (const part of this.inputMessage.parts) {
-      if (part.inlineData) {
-        currentParts.push({
-          inlineData: {
-            data: part.inlineData.data,
-            mimeType: part.inlineData.mimeType,
-          },
-        })
-      } else if (part.text) {
-        currentParts.push({ text: part.text })
-      }
-    }
+    const currentParts: Part[] = this.inputMessage.parts.map(p => this.convertPartToAPIFormat(p))
 
     // 3. Add current user message to contents
     contents.push({
@@ -278,8 +263,8 @@ This preserves the full conversation history.`,
     })
 
     // 4. Build generation config from Output/Control
-    const generateConfig: any = {
-      responseModalities: ['IMAGE'],
+    const generateConfig: GenerateContentConfig = {
+      responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
         aspectRatio: this.output.aspectRatio,
         imageSize: this.output.size,
@@ -301,16 +286,80 @@ This preserves the full conversation history.`,
       generateConfig.topK = this.control.topK
     }
 
-    // 5. Call Gemini API
+    // 5. Debug log inputs before API call
+    if (this.config.debug) {
+      await this.debugLog(context, `[INPUT] Model: ${this.config.model}`)
+      await this.debugLog(context, `[INPUT] Previous messages count: ${this.previousMessages?.length || 0}`)
+      await this.debugLog(context, `[INPUT] Current parts count: ${currentParts.length}`)
+      // Log contents structure (truncate base64 data for readability)
+      const contentsForLog = contents.map(c => ({
+        role: c.role,
+        parts: c.parts?.map((p) => {
+          if (p.inlineData) {
+            return {
+              inlineData: {
+                mimeType: p.inlineData.mimeType,
+                dataLength: p.inlineData.data?.length || 0,
+              },
+              thoughtSignature: (p as any).thoughtSignature ? `${(p as any).thoughtSignature.substring(0, 50)}...` : undefined,
+            }
+          }
+          return p
+        }),
+      }))
+      await this.debugLog(context, `[INPUT] Contents structure: ${JSON.stringify(contentsForLog, null, 2)}`)
+      await this.debugLog(context, `[INPUT] Generation config: ${JSON.stringify({ ...generateConfig, abortSignal: '[AbortSignal]' }, null, 2)}`)
+    }
+
+    // 6. Call Gemini API
     const response = await genAI.models.generateContent({
       model: this.config.model,
       contents,
       config: generateConfig,
     })
 
-    // 6. Extract all image parts from response
+    // 7. Debug log raw response
+    if (this.config.debug) {
+      // Log response structure (truncate base64 data for readability)
+      const responseForLog = {
+        candidates: response.candidates?.map(c => ({
+          content: {
+            role: c.content?.role,
+            parts: c.content?.parts?.map((p) => {
+              if (p.inlineData) {
+                return {
+                  inlineData: {
+                    mimeType: p.inlineData.mimeType,
+                    dataLength: p.inlineData.data?.length || 0,
+                  },
+                  thoughtSignature: (p as any).thoughtSignature ? `${(p as any).thoughtSignature.substring(0, 50)}...` : undefined,
+                }
+              }
+              return { ...p, thoughtSignature: (p as any).thoughtSignature ? `${(p as any).thoughtSignature.substring(0, 50)}...` : undefined }
+            }),
+          },
+          finishReason: c.finishReason,
+        })),
+        usageMetadata: response.usageMetadata,
+      }
+      await this.debugLog(context, `[RESPONSE] Raw response structure: ${JSON.stringify(responseForLog, null, 2)}`)
+    }
+
+    // 8. Extract all image parts from response
     const responseParts = response.candidates?.[0]?.content?.parts || []
     const imageParts = responseParts.filter(p => p.inlineData)
+
+    // Debug log extracted parts
+    if (this.config.debug) {
+      await this.debugLog(context, `[RESPONSE] Total parts count: ${responseParts.length}`)
+      await this.debugLog(context, `[RESPONSE] Image parts count: ${imageParts.length}`)
+      for (let i = 0; i < responseParts.length; i++) {
+        const p = responseParts[i]
+        const hasSignature = !!(p as any).thoughtSignature
+        const partType = p.inlineData ? 'image' : p.text ? 'text' : 'other'
+        await this.debugLog(context, `[RESPONSE] Part ${i}: type=${partType}, hasThoughtSignature=${hasSignature}`)
+      }
+    }
 
     // Defensive check: warn if multiple images returned
     if (imageParts.length > 1) {
@@ -336,10 +385,10 @@ This preserves the full conversation history.`,
       throw new Error('No image was generated in the response')
     }
 
-    // 7. Process first image
-    const part = imageParts[0]
-    const outputBase64 = part.inlineData?.data || ''
-    const outputMimeType = part.inlineData?.mimeType || 'image/png'
+    // 9. Process first image for ImageData output
+    const firstImagePart = imageParts[0]
+    const outputBase64 = firstImagePart.inlineData?.data || ''
+    const outputMimeType = firstImagePart.inlineData?.mimeType || 'image/png'
 
     // Set output with provenance tracking
     const textPrompt = currentParts.find(p => p.text)?.text || ''
@@ -350,25 +399,101 @@ This preserves the full conversation history.`,
       prompt: textPrompt,
     })
 
-    // 8. Build updated conversation history for chaining
+    // 10. Build output parts from ALL response parts (preserving thoughtSignatures)
+    // This is critical for multi-turn conversations with Gemini 3 Pro Image
+    const outputParts = responseParts.map(p => this.convertAPIPartToMessagePart(p))
+
+    // Debug log output parts
+    if (this.config.debug) {
+      await this.debugLog(context, `[OUTPUT] Building messages with ${outputParts.length} model response parts`)
+      for (let i = 0; i < outputParts.length; i++) {
+        const p = outputParts[i]
+        const hasSignature = !!p.thoughtSignature
+        const partType = p.inlineData ? 'image' : p.text ? 'text' : 'other'
+        await this.debugLog(context, `[OUTPUT] Part ${i}: type=${partType}, hasThoughtSignature=${hasSignature}`)
+      }
+    }
+
+    // 11. Build updated conversation history for chaining
     this.messages = [
       ...(this.previousMessages || []),
-      // Add the user's input message (use directly!)
-      this.inputMessage,
-      // Add the model's response
+      // Add the user's input message - but clean it to remove any invalid fields
+      {
+        role: this.inputMessage.role,
+        parts: this.inputMessage.parts.map(p => this.convertAPIPartToMessagePart(p as any)),
+      },
+      // Add the model's response with ALL parts (preserving thoughtSignatures)
       {
         role: 'model' as const,
-        parts: [
-          {
-            inlineData: {
-              data: outputBase64,
-              mimeType: outputMimeType,
-            },
-          },
-        ],
+        parts: outputParts,
       },
     ]
 
     return {}
+  }
+
+  private async debugLog(context: ExecutionContext, message: string): Promise<void> {
+    await context.sendEvent(
+      new ExecutionEventImpl(
+        0,
+        ExecutionEventEnum.NODE_DEBUG_LOG_STRING,
+        new Date(),
+        {
+          nodeId: this.id || 'unknown',
+          log: message,
+        },
+      ),
+    )
+  }
+
+  /**
+   * Convert GeminiMessagePart to API Part format.
+   * IMPORTANT: Only includes valid API fields. Explicitly excludes `thought` field
+   * which is invalid for image generation models and causes 400 errors.
+   */
+  private convertPartToAPIFormat(part: GeminiMessagePart): Part {
+    const apiPart: Part = {}
+
+    if (part.inlineData) {
+      apiPart.inlineData = {
+        data: part.inlineData.data,
+        mimeType: part.inlineData.mimeType,
+      }
+    }
+    if (part.text) {
+      apiPart.text = part.text
+    }
+    // Preserve thoughtSignature for multi-turn conversations (required by Gemini 3 Pro Image)
+    if (part.thoughtSignature) {
+      apiPart.thoughtSignature = part.thoughtSignature
+    }
+    // NOTE: Explicitly NOT including `thought` field - invalid for image models
+
+    return apiPart
+  }
+
+  /**
+   * Convert API Part to GeminiMessagePart format.
+   * Only copies valid fields, excluding any that shouldn't be persisted.
+   */
+  private convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
+    const msgPart: GeminiMessagePart = {}
+
+    if (part.inlineData) {
+      msgPart.inlineData = {
+        data: part.inlineData.data || '',
+        mimeType: part.inlineData.mimeType || 'image/png',
+      }
+    }
+    if (part.text) {
+      msgPart.text = part.text
+    }
+    // Preserve thoughtSignature for multi-turn conversations
+    if (part.thoughtSignature) {
+      msgPart.thoughtSignature = part.thoughtSignature
+    }
+    // NOTE: Do NOT copy `thought` field - it's not valid for image models
+
+    return msgPart
   }
 }
