@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExecutionContext, NodeExecutionResult } from '@badaitech/chaingraph-types'
-import { BaseNode, Input, Node, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
+import type { ArrayPort, ExecutionContext, INode, IPort, NodeExecutionResult } from '@badaitech/chaingraph-types'
+import { BaseNode, deepCopy, Input, Node, OnPortUpdate, Output, PortArray, PortString } from '@badaitech/chaingraph-types'
 import { filter, QueryParser } from 'lucene-kit'
 
 import { NODE_CATEGORIES } from '../../../categories'
@@ -32,6 +32,25 @@ export class FilterArrayLuceneNode extends BaseNode {
       type: 'any',
     },
   })
+  @OnPortUpdate(async (node: INode, port: IPort) => {
+    const arrayPort = port as ArrayPort
+    const resultPort = node.findPort(
+      p => p.getConfig().key === 'filteredArray'
+        && !p.getConfig().parentId
+        && p.getConfig().direction === 'output',
+    ) as ArrayPort | undefined
+
+    if (!resultPort) {
+      return
+    }
+
+    // Use first array's itemConfig for the result
+    resultPort.setConfig({
+      ...resultPort.getConfig(),
+      itemConfig: deepCopy(arrayPort.getConfig().itemConfig),
+    })
+    node.updateArrayItemConfig(resultPort as IPort)
+  })
   inputArray: any[] = []
 
   @Input()
@@ -54,6 +73,7 @@ export class FilterArrayLuceneNode extends BaseNode {
     itemConfig: {
       type: 'any',
     },
+    isSchemaMutable: true,
   })
   filteredArray: any[] = []
 

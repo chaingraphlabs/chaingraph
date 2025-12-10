@@ -89,7 +89,9 @@ class ArrayPickNode extends BaseNode {
     itemConfig: {
       type: 'object',
       schema: { properties: {} },
+      isSchemaMutable: true,
     },
+    isSchemaMutable: true,
   })
   result: object[] = []
 

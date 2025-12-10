@@ -178,15 +178,18 @@ export const Strategies = {
    */
   arrayItemConfig: (ctx: TransferContext): TransferResult => {
     try {
-      if (ctx.sourceConfig.type !== 'array' || ctx.targetConfig.type !== 'array') {
+      const sourceArrayConfig = unwrapAnyPort(ctx.sourceConfig) || ctx.sourceConfig
+      const targetArrayConfig = unwrapAnyPort(ctx.targetConfig) || ctx.targetConfig
+
+      if (sourceArrayConfig?.type !== 'array' || targetArrayConfig?.type !== 'array') {
         return {
           success: false,
           message: 'Both ports must be array type for item config transfer',
         }
       }
 
-      const sourceArray = ctx.sourceConfig as ArrayPortConfig
-      const targetArray = ctx.targetConfig as ArrayPortConfig
+      const sourceArray = sourceArrayConfig as ArrayPortConfig
+      const targetArray = targetArrayConfig as ArrayPortConfig
 
       // Check if target can receive item config updates
       const canReceiveConfig = (
@@ -205,12 +208,12 @@ export const Strategies = {
         }
       }
 
-      const result = checkSchemaCompatibility(sourceArray, targetArray, {
+      const result = checkSchemaCompatibility(sourceArray, targetArrayConfig, {
         allowMutableEmptySchema: false,
         allowExtraProperties: false,
         debug: false,
       }).compatible
-      && checkSchemaCompatibility(targetArray, sourceArray, {
+      && checkSchemaCompatibility(targetArrayConfig, sourceArray, {
         allowMutableEmptySchema: false,
         allowExtraProperties: false,
         debug: false,
@@ -227,7 +230,7 @@ export const Strategies = {
 
       // Transfer item configuration
       ctx.targetPort.setConfig({
-        ...ctx.targetConfig,
+        ...(targetArrayConfig as ArrayPortConfig),
         itemConfig: deepCopy(sourceArray.itemConfig),
       })
 

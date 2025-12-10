@@ -95,6 +95,7 @@ class ArrayZipNode extends BaseNode {
         },
       },
     },
+    isSchemaMutable: true,
   })
   result: Array<{ a: any, b: any }> = []
 
