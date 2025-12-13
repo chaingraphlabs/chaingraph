@@ -26,6 +26,13 @@ export interface EmittedEvent {
   processed?: boolean
 }
 
+/**
+ * Callback type for port resolution events
+ * @param nodeId - The node ID that resolved the port
+ * @param portId - The port ID that was resolved
+ */
+export type OnPortResolvedCallback = (nodeId: string, portId: string) => void
+
 export class ExecutionContext {
   public readonly executionId: string
   public readonly rootExecutionId?: string
@@ -56,6 +63,10 @@ export class ExecutionContext {
   // findNode is a utility function to find a node by a predicate
   public readonly findNodes: (predicate: (node: INode) => boolean) => INode[] | undefined
 
+  // Port resolution support - tracks resolved ports using composite keys "nodeId:portId"
+  private readonly resolvedPorts: Set<string> = new Set()
+  private onPortResolved?: OnPortResolvedCallback
+
   // TODO: chat api gql client
   // TODO: agent session
   // TODO: chat room meta + participants agents?
@@ -76,6 +87,7 @@ export class ExecutionContext {
     getNodeById?: (nodeId: string) => INode | undefined,
     findNodes?: (predicate: (node: INode) => boolean) => INode[] | undefined,
     userId?: string,
+    onPortResolved?: OnPortResolvedCallback,
   ) {
     this.executionId = executionId || uuidv4()
     this.startTime = new Date()
@@ -97,6 +109,9 @@ export class ExecutionContext {
     if (this.eventData || this.parentExecutionId) {
       this.emittedEvents = []
     }
+
+    // Port resolution support
+    this.onPortResolved = onPortResolved
   }
 
   get abortSignal(): AbortSignal {
@@ -174,8 +189,86 @@ export class ExecutionContext {
       this.getNodeById,
       this.findNodes,
       this.userId, // Pass userId to child execution
+      this.onPortResolved, // Pass port resolution callback to child
     )
     ctx.ecdhKeyPairPromise = this.ecdhKeyPairPromise // Share key pair promise
     return ctx
+  }
+
+  /**
+   * Helper to create composite port key for flow-level uniqueness
+   * Port IDs are only unique within a node, so we use "nodeId:portId" format
+   */
+  private portKey(nodeId: string, portId: string): string {
+    return `${nodeId}:${portId}`
+  }
+
+  /**
+   * Mark a port as resolved, allowing downstream nodes to begin execution.
+   * Uses the port ID (which equals the key/path for root ports, e.g., "outputStream"
+   * or "object.field" for nested ports).
+   *
+   * @param portId The port ID (equals key for root ports, path for nested ports)
+   * @throws Error if called outside of node execution or port not found
+   */
+  resolvePort(portId: string): void {
+    if (!this.currentNodeId) {
+      throw new Error('Cannot resolve port outside of node execution')
+    }
+
+    const node = this.getNodeById(this.currentNodeId)
+    if (!node) {
+      throw new Error(`Current node ${this.currentNodeId} not found`)
+    }
+
+    // Get port by ID (for root ports, ID === key)
+    const port = node.getPort(portId)
+    if (!port) {
+      throw new Error(`Port with ID '${portId}' not found on node ${this.currentNodeId}`)
+    }
+
+    const compositeKey = this.portKey(this.currentNodeId, port.id)
+    if (this.resolvedPorts.has(compositeKey)) {
+      return // Already resolved
+    }
+
+    this.resolvedPorts.add(compositeKey)
+    this.onPortResolved?.(this.currentNodeId, port.id)
+  }
+
+  /**
+   * Check if a port is resolved.
+   * Uses the port ID (which equals the key/path for root ports).
+   *
+   * @param portId The port ID (equals key for root ports, path for nested ports)
+   * @returns true if the port is resolved, false otherwise
+   */
+  isPortResolved(portId: string): boolean {
+    if (!this.currentNodeId) {
+      return false
+    }
+
+    const node = this.getNodeById(this.currentNodeId)
+    if (!node) {
+      return false
+    }
+
+    const port = node.getPort(portId)
+    if (!port) {
+      return false
+    }
+
+    const compositeKey = this.portKey(this.currentNodeId, port.id)
+    return this.resolvedPorts.has(compositeKey)
+  }
+
+  /**
+   * Set the port resolution callback.
+   * This is called by the execution engine to receive port resolution events.
+   *
+   * @param callback The callback to invoke when a port is resolved
+   */
+  setOnPortResolved(callback: OnPortResolvedCallback): void {
+    this.onPortResolved = callback
   }
 }

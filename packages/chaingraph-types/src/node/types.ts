@@ -105,8 +105,8 @@ export interface NodeValidationResult {
 
 /**
  * Type definition for node execution result
+ * NOTE: backgroundActions have been removed - use context.resolvePort() for streaming
  */
 export interface NodeExecutionResult {
-  backgroundActions?: (() => Promise<void>)[]
   [key: string]: any // Allow any additional properties
 }

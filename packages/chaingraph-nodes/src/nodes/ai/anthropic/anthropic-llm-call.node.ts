@@ -527,20 +527,13 @@ export class AntropicLlmCallNode extends BaseNode {
         timeout: 10 * 60 * 1000, // 10 minutes
       })
 
-      return {
-        backgroundActions: [() => this.handleStreamingExecution(client, context)],
-      }
+      // Explicitly resolve the stream port - downstream nodes can start reading NOW
+      context.resolvePort('responseStream')
 
-      // TODO: Always stream responses for now
-      // if (this.config.stream) {
-      //   return {
-      //     backgroundActions: [() => this.handleStreamingExecution(client, context)],
-      //   }
-      // } else {
-      //   // Handle non-streaming execution
-      //   await this.handleNonStreamingExecution(client, context)
-      //   return {}
-      // }
+      // Stream in main loop (no background actions)
+      await this.handleStreamingExecution(client, context)
+
+      return {}
     } catch (error: any) {
       await this.handleError(context, error)
       throw new Error(`Anthropic API Error: ${error.message || PortString(error)}`)
@@ -1144,9 +1137,6 @@ export class AntropicLlmCallNode extends BaseNode {
           )
 
           const executionResult = await nodeToExecute.execute(context)
-          if (executionResult.backgroundActions && executionResult.backgroundActions.length > 0) {
-            await Promise.all(executionResult.backgroundActions.map(action => action()))
-          }
 
           // Find all outputs of the nodeToExecute and serialize values to JSON
           if (nodeToExecute instanceof MCPToolCallNode) {

@@ -364,50 +364,49 @@ export class LLMCallNode extends BaseNode {
       signal: context.abortSignal,
     })
 
-    // Start streaming in the background
-    const streamingPromise = async () => {
-      try {
-        const buffer: string[] = []
-        const bufferSize = 1 // TODO: consider if we really need this buffer
+    // Explicitly resolve the stream port - downstream nodes can start reading NOW
+    context.resolvePort('outputStream')
 
-        for await (const chunk of stream) {
-          // Check if execution was aborted
-          if (context.abortSignal.aborted) {
-            this.outputStream.close()
-            this.outputStream.setError(new Error(`stream aborted`))
-            return
-          }
+    // Stream in main loop (no background actions)
+    try {
+      const buffer: string[] = []
+      const bufferSize = 1 // TODO: consider if we really need this buffer
 
-          // add chunk to buffer
-          if (chunk.content) {
-            buffer.push(chunk.content.toString())
-          }
-
-          if (buffer.length > bufferSize) {
-            // Send chunk content to the output stream
-            this.outputStream.send(buffer.join(''))
-
-            // Clear buffer
-            buffer.splice(0, buffer.length)
-          }
+      for await (const chunk of stream) {
+        // Check if execution was aborted
+        if (context.abortSignal.aborted) {
+          this.outputStream.close()
+          this.outputStream.setError(new Error(`stream aborted`))
+          throw new Error('Stream aborted')
         }
 
-        // Send remaining content
-        if (buffer.length > 0) {
+        // add chunk to buffer
+        if (chunk.content) {
+          buffer.push(chunk.content.toString())
+        }
+
+        if (buffer.length > bufferSize) {
+          // Send chunk content to the output stream
           this.outputStream.send(buffer.join(''))
+
+          // Clear buffer
+          buffer.splice(0, buffer.length)
         }
-      } catch (error: any) {
-        this.outputStream.setError(new Error(error))
-        throw error
-      } finally {
-        // Close the stream in any case
-        this.outputStream.close()
       }
+
+      // Send remaining content
+      if (buffer.length > 0) {
+        this.outputStream.send(buffer.join(''))
+      }
+
+      this.outputStream.close()
+    } catch (error: any) {
+      this.outputStream.setError(new Error(error))
+      this.outputStream.close()
+      throw error  // System will resolve error ports automatically
     }
 
-    return {
-      backgroundActions: [streamingPromise],
-    }
+    return {}
   }
 }
 

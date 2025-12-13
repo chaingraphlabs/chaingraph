@@ -53,6 +53,12 @@ export class ExecutionEngine {
   private readonly debugger: FlowDebugger | null = null
   private readonly transferService: EdgeTransferService
 
+  // Port-level resolution tracking (using composite keys "nodeId:portId")
+  private readonly resolvedPorts: Set<string> = new Set()
+  private readonly sourcePortToWaitingNodes: Map<string, Set<string>> = new Map()
+  private readonly nodeInputPorts: Map<string, Set<string>> = new Map()
+  private readonly portEdgeSources: Map<string, Set<string>> = new Map()
+
   // Event-bound node tracking for EventListener scopes
   private readonly eventListenerNodeIds: Set<string> = new Set()
   private readonly eventBoundNodes: Set<string> = new Set()
@@ -91,6 +97,77 @@ export class ExecutionEngine {
 
     // Initialize the transfer service with the flow
     this.transferService = new EdgeTransferService(this.flow)
+
+    // Set up port resolution callback
+    this.context.setOnPortResolved(this.handlePortResolved.bind(this))
+  }
+
+  /**
+   * Helper to create composite port key for flow-level uniqueness.
+   * Port IDs are only unique within a node, so we use "nodeId:portId" format.
+   */
+  private portKey(nodeId: string, portId: string): string {
+    return `${nodeId}:${portId}`
+  }
+
+  /**
+   * Handle port resolution event from execution context.
+   * When a port is resolved, check if any waiting nodes can now execute.
+   *
+   * @param nodeId The node ID that resolved the port
+   * @param portId The port ID that was resolved
+   */
+  private handlePortResolved(nodeId: string, portId: string): void {
+    const key = this.portKey(nodeId, portId)
+    if (this.resolvedPorts.has(key)) {
+      return // Already resolved
+    }
+    this.resolvedPorts.add(key)
+
+    // Find all nodes waiting on this source port
+    const waitingNodes = this.sourcePortToWaitingNodes.get(key)
+    if (!waitingNodes) {
+      return
+    }
+
+    for (const waitingNodeId of waitingNodes) {
+      if (this.isNodeReady(waitingNodeId)) {
+        const node = this.flow.nodes.get(waitingNodeId)
+        if (node && !this.executingNodes.has(waitingNodeId) && !this.completedNodes.has(waitingNodeId)) {
+          this.executingNodes.add(waitingNodeId)
+          this.readyQueue.enqueue(this.executeNode.bind(this, node))
+        }
+      }
+    }
+  }
+
+  /**
+   * Check if all input ports of a node have at least one resolved source.
+   *
+   * @param nodeId The node ID to check
+   * @returns true if all input ports are resolved, false otherwise
+   */
+  private isNodeReady(nodeId: string): boolean {
+    const inputPortKeys = this.nodeInputPorts.get(nodeId)
+    if (!inputPortKeys || inputPortKeys.size === 0) {
+      return true // No inputs = ready
+    }
+
+    for (const targetPortKey of inputPortKeys) {
+      const sourcePorts = this.portEdgeSources.get(targetPortKey)
+      if (!sourcePorts || sourcePorts.size === 0) {
+        continue
+      }
+
+      // Need at least ONE resolved source for this input port
+      const hasResolvedSource = Array.from(sourcePorts).some(
+        sourceKey => this.resolvedPorts.has(sourceKey),
+      )
+      if (!hasResolvedSource) {
+        return false
+      }
+    }
+    return true
   }
 
   /**
@@ -320,6 +397,33 @@ export class ExecutionEngine {
       // Initialize dependency counts
       const incomingEdges = this.flow.getIncomingEdges(node)
       this.nodeDependencies.set(node.id, incomingEdges.length)
+
+      // Build port-level dependency tracking
+      const inputPortKeys = new Set<string>()
+      for (const edge of incomingEdges) {
+        const targetPortKey = this.portKey(edge.targetNode.id, edge.targetPort.id)
+        const sourcePortKey = this.portKey(edge.sourceNode.id, edge.sourcePort.id)
+
+        // Track input ports for this node
+        inputPortKeys.add(targetPortKey)
+
+        // Track which sources can satisfy each target port
+        if (!this.portEdgeSources.has(targetPortKey)) {
+          this.portEdgeSources.set(targetPortKey, new Set())
+        }
+        this.portEdgeSources.get(targetPortKey)!.add(sourcePortKey)
+
+        // Track which nodes are waiting for each source port (reverse mapping)
+        if (!this.sourcePortToWaitingNodes.has(sourcePortKey)) {
+          this.sourcePortToWaitingNodes.set(sourcePortKey, new Set())
+        }
+        this.sourcePortToWaitingNodes.get(sourcePortKey)!.add(edge.targetNode.id)
+      }
+
+      // Store input ports for this node
+      if (inputPortKeys.size > 0) {
+        this.nodeInputPorts.set(node.id, inputPortKeys)
+      }
 
       // TODO: index for parent nodes
       // Get children nodes
@@ -735,47 +839,25 @@ export class ExecutionEngine {
       // Track current executing node for event emission
       this.context.currentNodeId = node.id
 
-      const { backgroundActions } = await withTimeout(
+      // Execute node (no background actions in new design)
+      await withTimeout(
         node.executeWithSystemPorts(this.context),
         nodeTimeoutMs,
         `Node ${node.id} execution timed out after ${nodeTimeoutMs} ms.`,
       )
 
-      const hasBackgroundActions = backgroundActions && backgroundActions.length > 0
-      if (hasBackgroundActions) {
-        await this.setNodeBackgrounding(node, nodeStartTime)
-
-        let completedActions = 0
-        for (const action of backgroundActions) {
-          this.readyQueue.enqueue(
-            () => action()
-              .then(async () => {
-                if (node.status !== NodeStatus.Backgrounding) {
-                  return
-                }
-
-                if (++completedActions === backgroundActions.length) {
-                  await this.setNodeCompleted(node, nodeStartTime)
-                }
-              })
-              .catch(async (e) => {
-                await this.setNodeError(node, e, nodeStartTime)
-              }),
-          )
+      // Check if execution succeeded based on flowOut port
+      if (node.getFlowOutPort()?.getValue() !== true) {
+        // Node did not complete successfully
+        const error = node.getErrorPort()?.getValue()
+        const errorMessage = node.getErrorMessagePort()?.getValue()
+        if (error === true && errorMessage) {
+          await this.setNodeError(node, new Error(errorMessage.toString()), nodeStartTime)
+        } else {
+          await this.setNodeError(node, new Error('node did not complete successfully'), nodeStartTime)
         }
       } else {
-        if (node.getFlowOutPort()?.getValue() !== true) {
-          // this means the node has not completed successfully
-          const error = node.getErrorPort()?.getValue()
-          const errorMessage = node.getErrorMessagePort()?.getValue()
-          if (error === true && errorMessage) {
-            await this.setNodeError(node, new Error(errorMessage.toString()), nodeStartTime)
-          } else {
-            await this.setNodeError(node, new Error('node did not complete successfully'), nodeStartTime)
-          }
-        } else {
-          await this.setNodeCompleted(node, nodeStartTime)
-        }
+        await this.setNodeCompleted(node, nodeStartTime)
       }
     } catch (error) {
       await this.setNodeError(node, error, nodeStartTime)
@@ -824,39 +906,35 @@ export class ExecutionEngine {
   }
 
   /**
-   * Checks if an edge can transfer data based on source node status
-   * and port type (system error ports have special rules)
+   * Checks if an edge can transfer data based on port-level resolution.
+   * A port can transfer if it has been explicitly resolved via context.resolvePort()
+   * or auto-resolved when the node completed.
    */
   private canEdgeTransfer(edge: IEdge): boolean {
-    const { sourceNode, sourcePort } = edge
-    const isErrorPort = sourcePort.isSystemError()
-
-    // System error ports can transfer from Error status
-    if (isErrorPort && sourceNode.status === NodeStatus.Error) {
-      return true
-    }
-
-    // All ports can transfer from Completed/Backgrounding
-    return sourceNode.status === NodeStatus.Completed
-      || sourceNode.status === NodeStatus.Backgrounding
+    const sourceKey = this.portKey(edge.sourceNode.id, edge.sourcePort.id)
+    return this.resolvedPorts.has(sourceKey)
   }
 
   private async setNodeCompleted(node: INode, nodeStartTime: number): Promise<void> {
+    // Auto-resolve all non-error output/passthrough ports that weren't already resolved
+    for (const port of node.ports.values()) {
+      const config = port.getConfig()
+      const direction = config.direction
+      const isErrorPort = config.metadata?.portCategory === 'error'
+      const isOutputOrPassthrough = direction === 'output' || direction === 'passthrough'
+
+      if (isOutputOrPassthrough && !isErrorPort) {
+        const key = this.portKey(node.id, port.id)
+        if (!this.resolvedPorts.has(key)) {
+          this.handlePortResolved(node.id, port.id)
+        }
+      }
+    }
+
     node.setStatus(NodeStatus.Completed, true)
     await this.publishEventTracked(ExecutionEventEnum.NODE_COMPLETED, {
       node: node.clone(),
       executionTime: Date.now() - nodeStartTime,
-    })
-
-    if (!this.completedQueue.isClosed()) {
-      this.completedQueue.enqueue(node)
-    }
-  }
-
-  private async setNodeBackgrounding(node: INode, nodeStartTime: number) {
-    node.setStatus(NodeStatus.Backgrounding, true)
-    await this.publishEventTracked(ExecutionEventEnum.NODE_BACKGROUNDED, {
-      node: node.clone(),
     })
 
     if (!this.completedQueue.isClosed()) {
@@ -877,6 +955,16 @@ export class ExecutionEngine {
   }
 
   private async setNodeError(node: INode, error: unknown, nodeStartTime: number) {
+    // Resolve error ports when node errors
+    const errorPort = node.getErrorPort()
+    const errorMessagePort = node.getErrorMessagePort()
+    if (errorPort) {
+      this.handlePortResolved(node.id, errorPort.id)
+    }
+    if (errorMessagePort) {
+      this.handlePortResolved(node.id, errorMessagePort.id)
+    }
+
     node.setStatus(NodeStatus.Error, true)
 
     await this.publishEventTracked(ExecutionEventEnum.NODE_FAILED, {
