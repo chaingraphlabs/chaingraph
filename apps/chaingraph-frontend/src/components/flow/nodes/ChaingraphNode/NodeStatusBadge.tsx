@@ -13,7 +13,6 @@ import {
   CheckCircle,
   Clock,
   Cog,
-  Layers,
   Pause,
   Play,
   SkipForward,
