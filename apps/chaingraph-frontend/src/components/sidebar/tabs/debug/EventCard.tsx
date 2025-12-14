@@ -29,7 +29,6 @@ function getNodeDataFromEvent(event: ExecutionEventImpl): string | string[] | nu
   switch (event.type) {
     case ExecutionEventEnum.NODE_STARTED:
     case ExecutionEventEnum.NODE_COMPLETED:
-    case ExecutionEventEnum.NODE_BACKGROUNDED:
     case ExecutionEventEnum.NODE_FAILED:
     case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
       return (event.data as any).node.id

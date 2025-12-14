@@ -284,6 +284,10 @@ export class LLMCallNode extends BaseNode {
       throw new Error('API Key is required')
     }
 
+    // Explicitly resolve the stream port - downstream nodes can start reading NOW
+    // Using new thread-safe signature with explicit node ID
+    context.resolvePort(this.id, 'outputStream')
+
     const { apiKey } = await this.apiKey.decrypt(context)
 
     let llm: ChatDeepSeek | ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI
@@ -364,9 +368,6 @@ export class LLMCallNode extends BaseNode {
       signal: context.abortSignal,
     })
 
-    // Explicitly resolve the stream port - downstream nodes can start reading NOW
-    context.resolvePort('outputStream')
-
     // Stream in main loop (no background actions)
     try {
       const buffer: string[] = []
@@ -403,7 +404,7 @@ export class LLMCallNode extends BaseNode {
     } catch (error: any) {
       this.outputStream.setError(new Error(error))
       this.outputStream.close()
-      throw error  // System will resolve error ports automatically
+      throw error // System will resolve error ports automatically
     }
 
     return {}

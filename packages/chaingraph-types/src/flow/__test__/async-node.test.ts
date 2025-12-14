@@ -16,7 +16,6 @@ import {
   Flow,
   MultiChannel,
   Node,
-  NodeStatus,
   PortDirection,
   PortStream,
 } from '@badaitech/chaingraph-types'
@@ -38,7 +37,7 @@ class AsyncNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Explicitly resolve the stream port - downstream can start reading
-    context.resolvePort('numbers')
+    context.resolvePort(this.id, 'numbers')
 
     // Stream in main loop (no background actions)
     for (const number of this.countFn()) {
@@ -79,7 +78,7 @@ class MergerNode extends BaseNode {
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
     // Explicitly resolve output stream - downstream can start reading
-    context.resolvePort('output')
+    context.resolvePort(this.id, 'output')
 
     // Process both streams in parallel in main loop
     await Promise.all([

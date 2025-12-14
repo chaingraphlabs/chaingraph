@@ -344,7 +344,6 @@ describe('executionEventImpl Comprehensive Serialization Tests', () => {
       expect(eventData.nodeId).toBe('node-debug')
       expect(eventData.log).toBe('Debug log message')
     })
-
   })
 
   describe('flow Events', () => {

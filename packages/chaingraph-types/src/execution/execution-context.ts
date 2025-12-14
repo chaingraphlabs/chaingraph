@@ -10,6 +10,7 @@ import type { ExecutionEvent } from '../flow'
 import type { INode } from '../node'
 import type { EmittedEventContext } from './emitted-event-context'
 import type { IntegrationContext } from './integration-context'
+import process from 'node:process'
 import { customAlphabet } from 'nanoid'
 import { nolookalikes } from 'nanoid-dictionary'
 import { v4 as uuidv4 } from 'uuid'
@@ -59,9 +60,9 @@ export class ExecutionContext {
   public currentNodeId?: string // Track current executing node for event emission
   public readonly executionDepth: number // Track depth to prevent infinite cycles
 
-  public readonly getNodeById: (nodeId: string) => INode | undefined
+  public getNodeById: (nodeId: string) => INode | undefined
   // findNode is a utility function to find a node by a predicate
-  public readonly findNodes: (predicate: (node: INode) => boolean) => INode[] | undefined
+  public findNodes: (predicate: (node: INode) => boolean) => INode[] | undefined
 
   // Port resolution support - tracks resolved ports using composite keys "nodeId:portId"
   private readonly resolvedPorts: Set<string> = new Set()
@@ -205,60 +206,105 @@ export class ExecutionContext {
 
   /**
    * Mark a port as resolved, allowing downstream nodes to begin execution.
-   * Uses the port ID (which equals the key/path for root ports, e.g., "outputStream"
-   * or "object.field" for nested ports).
    *
-   * @param portId The port ID (equals key for root ports, path for nested ports)
-   * @throws Error if called outside of node execution or port not found
+   * @param nodeIdOrPortId - Node ID (new signature) or Port ID (deprecated signature)
+   * @param portId - Port ID (new signature only)
+   * @throws Error if port not found or called outside execution context
+   *
+   * @example
+   * // New signature (recommended, thread-safe):
+   * context.resolvePort(this.id, 'outputStream')
+   *
+   * // Old signature (deprecated, not thread-safe in parallel execution):
+   * context.resolvePort('outputStream')
    */
-  resolvePort(portId: string): void {
-    if (!this.currentNodeId) {
-      throw new Error('Cannot resolve port outside of node execution')
+  resolvePort(nodeIdOrPortId: string, portId?: string): void {
+    let nodeId: string
+    let actualPortId: string
+
+    if (portId !== undefined) {
+      // New signature: resolvePort(nodeId, portId)
+      nodeId = nodeIdOrPortId
+      actualPortId = portId
+    } else {
+      // Old signature: resolvePort(portId) - deprecated
+      actualPortId = nodeIdOrPortId
+      if (!this.currentNodeId) {
+        throw new Error('Cannot resolve port outside of node execution')
+      }
+      nodeId = this.currentNodeId
+
+      // Log deprecation warning in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(
+          `[DEPRECATED] resolvePort('${actualPortId}') is deprecated and not thread-safe. `
+          + `Use resolvePort(this.id, '${actualPortId}') instead. Node: ${nodeId}`,
+        )
+      }
     }
 
-    const node = this.getNodeById(this.currentNodeId)
+    // Get node and port
+    const node = this.getNodeById(nodeId)
     if (!node) {
-      throw new Error(`Current node ${this.currentNodeId} not found`)
+      throw new Error(`Node ${nodeId} not found`)
     }
 
-    // Get port by ID (for root ports, ID === key)
-    const port = node.getPort(portId)
+    const port = node.getPort(actualPortId)
     if (!port) {
-      throw new Error(`Port with ID '${portId}' not found on node ${this.currentNodeId}`)
+      throw new Error(`Port with ID '${actualPortId}' not found on node ${node.metadata.type}:${nodeId}`)
     }
 
-    const compositeKey = this.portKey(this.currentNodeId, port.id)
+    const compositeKey = this.portKey(nodeId, port.id)
     if (this.resolvedPorts.has(compositeKey)) {
       return // Already resolved
     }
 
     this.resolvedPorts.add(compositeKey)
-    this.onPortResolved?.(this.currentNodeId, port.id)
+    this.onPortResolved?.(nodeId, port.id)
   }
 
   /**
    * Check if a port is resolved.
-   * Uses the port ID (which equals the key/path for root ports).
    *
-   * @param portId The port ID (equals key for root ports, path for nested ports)
-   * @returns true if the port is resolved, false otherwise
+   * @param nodeIdOrPortId - Node ID (new signature) or Port ID (deprecated signature)
+   * @param portId - Port ID (new signature only)
+   * @returns true if the port is resolved
+   *
+   * @example
+   * // New signature (recommended, thread-safe):
+   * context.isPortResolved(this.id, 'outputStream')
+   *
+   * // Old signature (deprecated):
+   * context.isPortResolved('outputStream')
    */
-  isPortResolved(portId: string): boolean {
-    if (!this.currentNodeId) {
-      return false
+  isPortResolved(nodeIdOrPortId: string, portId?: string): boolean {
+    let nodeId: string
+    let actualPortId: string
+
+    if (portId !== undefined) {
+      // New signature: isPortResolved(nodeId, portId)
+      nodeId = nodeIdOrPortId
+      actualPortId = portId
+    } else {
+      // Old signature: isPortResolved(portId) - use currentNodeId
+      actualPortId = nodeIdOrPortId
+      if (!this.currentNodeId) {
+        return false
+      }
+      nodeId = this.currentNodeId
     }
 
-    const node = this.getNodeById(this.currentNodeId)
+    const node = this.getNodeById(nodeId)
     if (!node) {
       return false
     }
 
-    const port = node.getPort(portId)
+    const port = node.getPort(actualPortId)
     if (!port) {
       return false
     }
 
-    const compositeKey = this.portKey(this.currentNodeId, port.id)
+    const compositeKey = this.portKey(nodeId, port.id)
     return this.resolvedPorts.has(compositeKey)
   }
 

@@ -528,7 +528,8 @@ export class AntropicLlmCallNode extends BaseNode {
       })
 
       // Explicitly resolve the stream port - downstream nodes can start reading NOW
-      context.resolvePort('responseStream')
+      // Using new thread-safe signature with explicit node ID
+      context.resolvePort(this.id, 'responseStream')
 
       // Stream in main loop (no background actions)
       await this.handleStreamingExecution(client, context)

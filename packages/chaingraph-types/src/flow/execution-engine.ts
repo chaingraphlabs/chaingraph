@@ -98,6 +98,12 @@ export class ExecutionEngine {
     // Initialize the transfer service with the flow
     this.transferService = new EdgeTransferService(this.flow)
 
+    // Set up node lookup functions for context
+    this.context.getNodeById = (nodeId: string) => this.flow.nodes.get(nodeId)
+    this.context.findNodes = (predicate: (node: INode) => boolean) => {
+      return Array.from(this.flow.nodes.values()).filter(predicate)
+    }
+
     // Set up port resolution callback
     this.context.setOnPortResolved(this.handlePortResolved.bind(this))
   }
@@ -159,11 +165,11 @@ export class ExecutionEngine {
         continue
       }
 
-      // Need at least ONE resolved source for this input port
-      const hasResolvedSource = Array.from(sourcePorts).some(
+      // Need ALL sources to be resolved for this input port
+      const allSourcesResolved = Array.from(sourcePorts).every(
         sourceKey => this.resolvedPorts.has(sourceKey),
       )
-      if (!hasResolvedSource) {
+      if (!allSourcesResolved) {
         return false
       }
     }
@@ -625,68 +631,60 @@ export class ExecutionEngine {
   }
 
   private async processDependents(completedNode: INode): Promise<void> {
+    // Handle parent-child relationships
+    const parentNodeId = completedNode.metadata.parentNodeId
+    if (parentNodeId) {
+      const remainingChildren = (this.nodeDependencies.get(parentNodeId) ?? 1) - 1
+      this.nodeDependencies.set(parentNodeId, remainingChildren)
+    }
+
+    // Handle event-driven execution rules
     const dependents = this.dependentsMap.get(completedNode.id) ?? []
 
     for (const dependentNode of dependents) {
       if (this.context.abortSignal.aborted)
         break
 
-      // Skip if node is already completed or executing
-      // TODO: Do we really need this check?
-      // if (this.completedNodes.has(dependentNode.id)
-      //   || this.executingNodes.has(dependentNode.id)) {
-      //   continue
-      // }
+      // Check if node should be skipped due to event-driven execution rules
+      const metadata = dependentNode.metadata
+      const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+      const isEventBound = this.eventBoundNodes.has(dependentNode.id)
 
-      const remainingDeps = this.nodeDependencies.get(dependentNode.id)! - 1
-      this.nodeDependencies.set(dependentNode.id, remainingDeps)
+      let shouldSkip = false
 
-      if (remainingDeps === 0) {
-        const metadata = dependentNode.metadata
-        const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
-        const isEventBound = this.eventBoundNodes.has(dependentNode.id)
-
-        let shouldSkip = false
-
-        // Same execution rules as initializeDependencies() - see comment block there
-        if (this.context.eventData) {
-          // Event-driven execution: only matching EventListeners and their upstream
-          const incomingEventName = this.context.eventData.eventName
-          if (isAutoExecutionDisabled) {
-            const nodeType = metadata?.type
-            if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
-              shouldSkip = true
-            } else {
-              const listenerEventName = (dependentNode as any)?.eventName
-              if (incomingEventName !== listenerEventName) {
-                shouldSkip = true
-              }
-            }
-          } else if (isEventBound) {
-            if (!this.isEventBoundNodeForEvent(dependentNode.id, incomingEventName)) {
-              shouldSkip = true
-            }
+      if (this.context.eventData) {
+        const incomingEventName = this.context.eventData.eventName
+        if (isAutoExecutionDisabled) {
+          const nodeType = metadata?.type
+          if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
+            shouldSkip = true
           } else {
+            const listenerEventName = (dependentNode as any)?.eventName
+            if (incomingEventName !== listenerEventName) {
+              shouldSkip = true
+            }
+          }
+        } else if (isEventBound) {
+          if (!this.isEventBoundNodeForEvent(dependentNode.id, incomingEventName)) {
             shouldSkip = true
           }
         } else {
-          // Normal execution: skip event-related nodes
-          if (isAutoExecutionDisabled || isEventBound) {
-            shouldSkip = true
-          }
+          shouldSkip = true
         }
-
-        if (shouldSkip) {
-          // Mark as completed without executing so dependents can proceed
-          this.completedNodes.add(dependentNode.id)
-          this.completedQueue.enqueue(dependentNode)
-          continue
+      } else {
+        if (isAutoExecutionDisabled || isEventBound) {
+          shouldSkip = true
         }
-
-        // Node is ready for execution
-        this.executingNodes.add(dependentNode.id)
-        this.readyQueue.enqueue(this.executeNode.bind(this, dependentNode))
       }
+
+      if (shouldSkip) {
+        // Mark as completed without executing so their dependents can proceed
+        this.completedNodes.add(dependentNode.id)
+        this.completedQueue.enqueue(dependentNode)
+      }
+
+      // NOTE: Actual dependency checking happens via port resolution
+      // handlePortResolved() is called when ports resolve and enqueues ready nodes
     }
   }
 

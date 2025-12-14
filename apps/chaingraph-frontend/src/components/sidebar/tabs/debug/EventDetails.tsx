@@ -23,7 +23,6 @@ function serializeEvent(event: ExecutionEventImpl) {
     case ExecutionEventEnum.NODE_STARTED:
     case ExecutionEventEnum.NODE_FAILED:
     case ExecutionEventEnum.NODE_COMPLETED:
-    case ExecutionEventEnum.NODE_BACKGROUNDED:
     case ExecutionEventEnum.DEBUG_BREAKPOINT_HIT:
     {
       const data = event.data as ExecutionEventData[ExecutionEventEnum.NODE_COMPLETED]
