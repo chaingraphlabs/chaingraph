@@ -145,6 +145,7 @@ class ArrayPluckNode extends BaseNode {
       type: 'any',
       title: 'Item',
     },
+    isSchemaMutable: true,
   })
   result: any[] = []
 

@@ -293,6 +293,11 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
       throw new Error('Input message must contain at least one part')
     }
 
+    // Explicitly resolve the stream port - downstream nodes can start reading NOW
+    // Using new thread-safe signature with explicit node ID
+    context.resolvePort(this.id, 'thoughts')
+    context.resolvePort(this.id, 'partsStream')
+
     // Get the output schema from port
     const outputPort = this.findPortByKey('structuredResponse') as ObjectPort
     const portConfig = outputPort?.getConfig()

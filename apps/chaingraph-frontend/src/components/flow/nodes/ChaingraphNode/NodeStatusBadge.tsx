@@ -13,7 +13,6 @@ import {
   CheckCircle,
   Clock,
   Cog,
-  Layers,
   Pause,
   Play,
   SkipForward,
@@ -42,8 +41,6 @@ function getStatusIcon(status: NodeStatus, className: string = '') {
       return <Clock className={className} />
     case NodeStatus.Executing:
       return <Play className={className} />
-    case NodeStatus.Backgrounding:
-      return <Layers className={className} />
     case NodeStatus.Completed:
       return <CheckCircle className={className} />
     case NodeStatus.Skipped:
@@ -68,8 +65,6 @@ function getStatusColor(status: NodeStatus) {
       return { bg: 'rgb(254 240 138 / 0.8)', text: 'rgb(202 138 4)', border: 'rgb(234 179 8)' }
     case NodeStatus.Executing:
       return { bg: 'rgb(219 234 254 / 0.8)', text: 'rgb(30 64 175)', border: 'rgb(37 99 235)' }
-    case NodeStatus.Backgrounding:
-      return { bg: 'rgb(233 213 255 / 0.8)', text: 'rgb(126 34 206)', border: 'rgb(147 51 234)' }
     case NodeStatus.Completed:
       return { bg: 'rgb(220 252 231 / 0.8)', text: 'rgb(22 101 52)', border: 'rgb(22 163 74)' }
     case NodeStatus.Skipped:

@@ -43,7 +43,12 @@ export function getTypeAtPath(config: IPortConfig, path: string): IPortConfig | 
 
   const parts = path.split('.').flatMap((part) => {
     const match = part.match(/^(.+?)\[(\d+)\]$/)
-    return match ? [match[1], '[]'] : [part]
+    if (match)
+      return [match[1], '[]']
+    const arrayMatch = part.match(/^\[(\d+)\]$/)
+    if (arrayMatch)
+      return ['[]']
+    return [part]
   }).filter(Boolean)
 
   let current: IPortConfig | undefined = config

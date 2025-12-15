@@ -52,7 +52,6 @@ const subscribeToExecutionBaseFx = createEffect<{ executionId: string, client: T
             ExecutionEventEnum.FLOW_PAUSED,
             ExecutionEventEnum.FLOW_RESUMED,
             ExecutionEventEnum.NODE_STARTED,
-            ExecutionEventEnum.NODE_BACKGROUNDED,
             ExecutionEventEnum.NODE_COMPLETED,
             ExecutionEventEnum.NODE_FAILED,
             ExecutionEventEnum.NODE_SKIPPED,

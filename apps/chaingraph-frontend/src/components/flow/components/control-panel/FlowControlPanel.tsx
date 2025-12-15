@@ -11,7 +11,6 @@ import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { PlayIcon, ReloadIcon, StopIcon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Bug } from 'lucide-react'
 import { useCallback } from 'react'
 import { StatusIndicator } from '@/components/flow/components/control-panel/StatusIndicator'
 import { Button } from '@/components/ui/button'
@@ -255,7 +254,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
             </AnimatePresence>
 
             {/* Debug Button */}
-            <Tooltip>
+            {/* <Tooltip>
               <TooltipTrigger asChild>
                 <MotionButton
                   variant={debugMode ? 'secondary' : 'ghost'}
@@ -275,7 +274,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
               <TooltipContent side="bottom" className="text-xs">
                 {debugMode ? 'Disable Debug Mode' : 'Enable Debug Mode'}
               </TooltipContent>
-            </Tooltip>
+            </Tooltip> */}
           </div>
 
           {/* Debug Controls (Right Side) */}

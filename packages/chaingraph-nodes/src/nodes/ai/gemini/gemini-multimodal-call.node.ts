@@ -317,6 +317,11 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
       throw new Error('Input message must contain at least one part')
     }
 
+    // Explicitly resolve the stream port - downstream nodes can start reading NOW
+    // Using new thread-safe signature with explicit node ID
+    context.resolvePort(this.id, 'textStream')
+    context.resolvePort(this.id, 'partsStream')
+
     // Decrypt the API key
     const { apiKey } = await this.config.apiKey.decrypt(context)
 

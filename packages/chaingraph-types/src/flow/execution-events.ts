@@ -27,10 +27,6 @@ export enum ExecutionEventEnum {
 
   // Node events
   NODE_STARTED = 'node:started',
-  /**
-   * Node started running background actions, and is ready to stream the data through its edges.
-   */
-  NODE_BACKGROUNDED = 'node:backgrounded',
   NODE_COMPLETED = 'node:completed',
   NODE_FAILED = 'node:failed',
   NODE_SKIPPED = 'node:skipped',
@@ -89,9 +85,6 @@ export interface ExecutionEventData {
     flowMetadata: FlowMetadata
   }
   [ExecutionEventEnum.NODE_STARTED]: {
-    node: INode
-  }
-  [ExecutionEventEnum.NODE_BACKGROUNDED]: {
     node: INode
   }
   [ExecutionEventEnum.NODE_COMPLETED]: {

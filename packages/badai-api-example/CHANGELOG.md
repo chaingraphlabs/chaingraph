@@ -1,5 +1,15 @@
 # @badaitech/badai-api-example
 
+## 0.6.35
+
+### Patch Changes
+
+- 4deaba9: feat(nodes): add isSchemaMutable property to array transform nodes and update transfer rules
+- feat(nodes): remove NODE_BACKGROUNDED event handling and update related logic
+- Updated dependencies [4deaba9]
+- Updated dependencies
+  - @badaitech/badai-api@0.6.35
+
 ## 0.6.34
 
 ### Patch Changes

@@ -197,7 +197,7 @@ describe('executionEventImpl Comprehensive Serialization Tests', () => {
       const node = createTestNode('node-3')
       const event = new ExecutionEventImpl(
         10,
-        ExecutionEventEnum.NODE_BACKGROUNDED,
+        ExecutionEventEnum.NODE_STARTED,
         new Date('2025-02-01T00:00:00.000Z'),
         {
           node: node.clone(),
@@ -211,7 +211,7 @@ describe('executionEventImpl Comprehensive Serialization Tests', () => {
       expect(deserialized).toBeInstanceOf(ExecutionEventImpl)
       expect(deserialized.index).toBe(10)
       expect(deserialized.timestamp).toEqual(event.timestamp)
-      const eventData = getEventData(deserialized, ExecutionEventEnum.NODE_BACKGROUNDED)
+      const eventData = getEventData(deserialized, ExecutionEventEnum.NODE_STARTED)
       expect(eventData.node).toBeDefined()
       expect(eventData.node.id).toBe('node-3')
     })
@@ -343,23 +343,6 @@ describe('executionEventImpl Comprehensive Serialization Tests', () => {
       const eventData = getEventData(deserialized, ExecutionEventEnum.NODE_DEBUG_LOG_STRING)
       expect(eventData.nodeId).toBe('node-debug')
       expect(eventData.log).toBe('Debug log message')
-    })
-
-    it('should serialize NODE_BACKGROUNDED event', () => {
-      const node = createTestNode('node-bg')
-      const event = new ExecutionEventImpl(
-        7,
-        ExecutionEventEnum.NODE_BACKGROUNDED,
-        new Date('2025-01-01T10:30:00.000Z'),
-        { node: node.clone() },
-      )
-
-      const serialized = event.serialize()
-      const deserialized = ExecutionEventImpl.deserializeStatic(serialized)
-
-      const eventData = getEventData(deserialized, ExecutionEventEnum.NODE_BACKGROUNDED)
-      expect(eventData.node).toBeDefined()
-      expect(eventData.node.id).toBe('node-bg')
     })
   })
 

@@ -129,6 +129,7 @@ class ArrayPartitionNode extends BaseNode {
       type: 'any',
       title: 'Item',
     },
+    isSchemaMutable: true,
   })
   matching: any[] = []
 
@@ -140,6 +141,7 @@ class ArrayPartitionNode extends BaseNode {
       type: 'any',
       title: 'Item',
     },
+    isSchemaMutable: true,
   })
   nonMatching: any[] = []
 
