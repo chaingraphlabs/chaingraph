@@ -179,11 +179,11 @@ function RecursivePortPreview({ config, depth = 0, isLast = false }: PortPreview
           >
             {isExpanded
               ? (
-                <ChevronDown className="w-3 h-3 text-muted-foreground" />
-              )
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                )
               : (
-                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-              )}
+                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                )}
           </button>
         )}
       </div>

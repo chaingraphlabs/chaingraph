@@ -65,8 +65,8 @@ export interface UpdateNodeDimensions {
   flowId: string
   nodeId: string
   dimensions: {
-    width?: number   // Optional - allows height-only updates without interfering with width
-    height?: number  // Optional - only GroupNode uses height from resize, regular nodes track content height
+    width?: number // Optional - allows height-only updates without interfering with width
+    height?: number // Optional - only GroupNode uses height from resize, regular nodes track content height
   }
   version: number
 }

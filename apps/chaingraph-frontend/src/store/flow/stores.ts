@@ -198,12 +198,12 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
       return flows.map(flow =>
         flow.id === updatedFlowId
           ? {
-            ...flow,
-            metadata: {
-              ...flow.metadata,
-              loaded: true,
-            },
-          }
+              ...flow,
+              metadata: {
+                ...flow.metadata,
+                loaded: true,
+              },
+            }
           : flow,
       )
     }

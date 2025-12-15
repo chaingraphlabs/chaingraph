@@ -51,7 +51,7 @@ export function useNodeChanges() {
             // check if the position is the same
             const isSamePosition
               = node.metadata.ui?.position?.x === change.position.x
-              && node.metadata.ui?.position?.y === change.position.y
+                && node.metadata.ui?.position?.y === change.position.y
 
             if (isSamePosition) {
               return
@@ -69,18 +69,18 @@ export function useNodeChanges() {
           break
 
         case 'dimensions':
-          {
-            // SKIP all dimension changes from XYFlow's onNodesChange
-            // XYFlow reports measured DOM sizes which conflict with resize handle positions
-            //
-            // Dimension sources are now:
-            // - Width: NodeResizeControl onResize handler (user intent)
-            // - Height: useElementResize content detection (for regular nodes)
-            // - Both: NodeResizer onResize handler (for GroupNode)
-            //
-            // GroupNode is also skipped here as it handles dimensions in its own component
-            break
-          }
+        {
+          // SKIP all dimension changes from XYFlow's onNodesChange
+          // XYFlow reports measured DOM sizes which conflict with resize handle positions
+          //
+          // Dimension sources are now:
+          // - Width: NodeResizeControl onResize handler (user intent)
+          // - Height: useElementResize content detection (for regular nodes)
+          // - Both: NodeResizer onResize handler (for GroupNode)
+          //
+          // GroupNode is also skipped here as it handles dimensions in its own component
+          break
+        }
 
         case 'select':
           {
