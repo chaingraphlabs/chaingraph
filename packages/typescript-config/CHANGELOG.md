@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.36
+
+### Patch Changes
+
+- f359d5e: feat: Enhance node UI and dimensions handling
+
 ## 0.6.35
 
 ### Patch Changes

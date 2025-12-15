@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.36
+
+### Patch Changes
+
+- f359d5e: feat: Enhance node UI and dimensions handling
+- Updated dependencies [f359d5e]
+  - @badaitech/chaingraph-nodes@0.6.36
+  - @badaitech/chaingraph-types@0.6.36
+  - @badaitech/chaingraph-trpc@0.6.36
+
 ## 0.6.35
 
 ### Patch Changes
