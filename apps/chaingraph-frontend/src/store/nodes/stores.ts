@@ -12,6 +12,7 @@ import type {
   AddNodeEvent,
   NodeState,
   PasteNodesEvent,
+  UpdateNodeDimensions,
   UpdateNodeParent,
   UpdateNodePosition,
   UpdateNodeTitleEvent,
@@ -31,7 +32,7 @@ import {
   updatePortUI,
 } from '../ports/stores'
 import { $trpcClient } from '../trpc/store'
-import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
+import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_DIMENSIONS_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
 import { accumulateAndSample } from './operators/accumulate-and-sample'
 import { positionInterpolator } from './position-interpolation-advanced'
 // import './computed'
@@ -66,6 +67,10 @@ export const updateNodeUI = nodesDomain.createEvent<UpdateNodeUIEvent>()
 export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() // For optimistic updates
 export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
 export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
+
+// Dimension update events
+export const updateNodeDimensions = nodesDomain.createEvent<UpdateNodeDimensions>()
+export const updateNodeDimensionsLocal = nodesDomain.createEvent<UpdateNodeDimensions>() // For optimistic updates
 
 export const updateNodeTitle = nodesDomain.createEvent<UpdateNodeTitleEvent>()
 
@@ -142,6 +147,8 @@ export const updateNodeUIFx = nodesDomain.createEffect(async (params: UpdateNode
   if (!params.ui) {
     throw new Error('UI metadata is required')
   }
+
+  console.log(`[updateNodeUIFx] Updating node UI for node ${params.nodeId} in flow ${params.flowId} with version ${params.version} and ui:`, params.ui)
 
   return client.flow.updateNodeUI.mutate({
     flowId: params.flowId,
@@ -534,15 +541,22 @@ export const $xyflowNodes = combine(
           return cachedNode
         }
 
+        const isMovingDisabled = node.metadata.ui?.state?.isMovingDisabled === true
+
         // Create a new node
         const reactflowNode: Node = {
           id: nodeId,
           type: nodeType,
           position: nodePositionRound,
-          width: node.metadata.ui?.dimensions?.width ?? 200, // Default width if not set
-          height: node.metadata.ui?.dimensions?.height ?? 50, // Default height if not set
-          initialWidth: node.metadata.ui?.dimensions?.width ?? 200, // Initial width for resizing
-          initialHeight: node.metadata.ui?.dimensions?.height ?? 50, // Initial height for resizing
+          // GroupNode needs explicit dimensions (uses w-full h-full CSS)
+          // ChaingraphNode manages its own dimensions via inline styles
+          ...(nodeType === 'groupNode' && {
+            width: node.metadata.ui?.dimensions?.width || 300,
+            height: node.metadata.ui?.dimensions?.height || 200,
+          }),
+          draggable: !isMovingDisabled,
+          // selectable only when draggable is true and not hidden
+          // selectable: !isMovingDisabled && (node.metadata.ui?.state?.isHidden !== true),
           zIndex: currentZIndex,
           data: {
             node,
@@ -550,25 +564,25 @@ export const $xyflowNodes = combine(
           },
           parentId: node.metadata.parentNodeId,
           extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined,
-          selected: node.metadata.ui?.state?.isSelected ?? false,
-          hidden: node.metadata.ui?.state?.isHidden ?? false,
-          selectable: node.metadata.category === 'group'
-            ? true // All groups should be selectable
-            : !(parentNode && parentNode.metadata.category !== 'group'), // Regular nodes follow existing logic
+          selected: node.metadata.ui?.state?.isSelected || false,
+          hidden: node.metadata.ui?.state?.isHidden || false,
+          // selectable: node.metadata.category === 'group'
+          //   ? true // All groups should be selectable
+          //   : !(parentNode && parentNode.metadata.category !== 'group'), // Regular nodes follow existing logic
         }
 
-        // Set dimensions if available and valid
-        const MIN_NODE_WIDTH = 100
-        const MIN_NODE_HEIGHT = 40
+        // // Set dimensions if available and valid
+        // const MIN_NODE_WIDTH = 100
+        // const MIN_NODE_HEIGHT = 40
 
-        if (
-          node.metadata.ui?.dimensions
-          && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH
-          && node.metadata.ui.dimensions.height > MIN_NODE_HEIGHT
-        ) {
-          reactflowNode.width = node.metadata.ui.dimensions.width
-          reactflowNode.height = node.metadata.ui.dimensions.height
-        }
+        // if (
+        //   node.metadata.ui?.dimensions
+        //   && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH
+        //   && node.metadata.ui.dimensions.height > MIN_NODE_HEIGHT
+        // ) {
+        //   reactflowNode.width = node.metadata.ui.dimensions.width
+        //   reactflowNode.height = node.metadata.ui.dimensions.height
+        // }
 
         // Store in cache for future reference
         nodeCache.set(cacheKey, reactflowNode)
@@ -587,18 +601,35 @@ $nodes
 
     // Clone the node for the UI update
     const updatedNode = node.clone()
-    updatedNode.setUI({
+
+    const newUI = {
       ...updatedNode.metadata.ui ?? {},
       ...ui ?? {},
-      style: {
-        ...(updatedNode.metadata.ui?.style ?? {}),
-        ...(ui.style ?? {}),
+      position: {
+        ...updatedNode.metadata.ui?.position ?? DefaultPosition,
+        ...ui.position ?? {},
       },
       state: {
-        ...(updatedNode.metadata.ui?.state ?? {}),
-        ...(ui.state ?? {}),
+        ...updatedNode.metadata.ui?.state ?? {},
+        ...ui.state ?? {},
       },
-    }, false)
+      style: {
+        ...updatedNode.metadata.ui?.style ?? {},
+        ...ui.style ?? {},
+      },
+    }
+
+    if (updatedNode.metadata.ui?.dimensions || ui.dimensions) {
+      newUI.dimensions = {
+        ...updatedNode.metadata.ui?.dimensions ?? {
+          width: 200,
+          height: 200,
+        },
+        ...ui.dimensions ?? {},
+      }
+    }
+
+    updatedNode.setUI(newUI, false)
 
     return { ...state, [nodeId]: updatedNode }
   })
@@ -623,6 +654,47 @@ $nodes
     updatedNode.setPosition(position, false)
 
     // Fix: Use updatedNode instead of node
+    return { ...state, [nodeId]: updatedNode }
+  })
+
+  .on(updateNodeDimensionsLocal, (state, { nodeId, dimensions }) => {
+    // Don't modify state if node doesn't exist
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    // Merge dimensions - preserve existing values for fields not provided
+    // This allows width-only updates (resize handle) and height-only updates (content detection)
+    // to work independently without interfering with each other
+    const currentDimensions = node.metadata.ui?.dimensions
+    const newDimensions = {
+      width: dimensions.width ?? currentDimensions?.width,
+      height: dimensions.height ?? currentDimensions?.height,
+    }
+
+    // Skip update if dimensions are unchanged or if we don't have any dimension to set
+    if (!newDimensions.width && !newDimensions.height) {
+      return state
+    }
+
+    if (
+      currentDimensions?.width === newDimensions.width
+      && currentDimensions?.height === newDimensions.height
+    ) {
+      return state
+    }
+
+    // Update the node's dimensions
+    const updatedNode = node.clone()
+    const dimensionsToSet = {
+      width: newDimensions.width ?? 200, // Default width if never set
+      height: newDimensions.height ?? 100, // Default height if never set
+    }
+
+    updatedNode.setDimensions(dimensionsToSet, false)
+
+    console.log(`[updateNodeDimensionsLocal] Updated dimensions for node ${nodeId}, version ${updatedNode.getVersion()}:`, dimensionsToSet)
+
     return { ...state, [nodeId]: updatedNode }
   })
 
@@ -739,6 +811,53 @@ sample({
     version: (nodes[params.nodeId]?.getVersion() ?? 0) + 1,
   }),
   target: [setNodeVersion, baseUpdateNodePositionFx],
+})
+
+// * * * * * * * * * * * * * * *
+// Dimension operations
+// * * * * * * * * * * * * * * *
+
+// Fast path: Update local dimensions immediately (~11ms)
+const throttledUpdateNodeDimensionsLocal = accumulateAndSample({
+  source: [updateNodeDimensions],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+sample({
+  clock: throttledUpdateNodeDimensionsLocal,
+  target: [updateNodeDimensionsLocal],
+})
+
+// Slow path: Server sync (~500ms)
+const throttledUpdateDimensions = accumulateAndSample({
+  source: [updateNodeDimensions],
+  timeout: NODE_DIMENSIONS_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+// Version increment and server sync for dimensions
+sample({
+  source: $nodes,
+  clock: throttledUpdateDimensions,
+  fn: (nodes, params) => {
+    const node = nodes[params.nodeId]
+    const currentDimensions = node?.metadata.ui?.dimensions
+
+    // Merge incoming dimensions with current - backend requires both width and height
+    const mergedDimensions = {
+      width: params.dimensions.width ?? currentDimensions?.width ?? 200,
+      height: params.dimensions.height ?? currentDimensions?.height ?? 100,
+    }
+
+    return {
+      flowId: params.flowId,
+      nodeId: params.nodeId,
+      ui: { dimensions: mergedDimensions },
+      version: (node?.getVersion() ?? 0) + 1,
+    }
+  },
+  target: [setNodeVersion, updateNodeUIFx],
 })
 
 // * * * * * * * * * * * * * * *

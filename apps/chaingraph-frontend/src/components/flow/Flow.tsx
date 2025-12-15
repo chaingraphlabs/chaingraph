@@ -14,7 +14,7 @@ import type {
 } from '@xyflow/react'
 import type { Viewport } from '@xyflow/system'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { Background, ReactFlow, useReactFlow } from '@xyflow/react'
+import { Background, ReactFlow, useNodesInitialized, useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { AnimatePresence } from 'framer-motion'
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -128,6 +128,17 @@ function Flow({
     onNodeDrag,
     onNodeDragStop,
   } = useFlowCallbacks()
+
+  const nodesInitialized = useNodesInitialized({
+    includeHiddenNodes: false,
+  })
+
+  useEffect(() => {
+    if (nodesInitialized) {
+      console.log('[Flow] Nodes initialized:', nodesInitialized)
+      // setLayoutedNodes(yourLayoutingFunction(getNodes()));
+    }
+  }, [nodesInitialized])
 
   // State for a context menu
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null)

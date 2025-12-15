@@ -25,10 +25,10 @@ import { extractNodeSchema } from './utils'
   category: NODE_CATEGORIES.ANTHROPIC,
   tags: ['anthropic', 'tool', 'claude', 'function'],
   ui: {
-    dimensions: {
-      width: 300,
-      height: 0,
-    },
+    // dimensions: {
+    // width: 300,
+    // height: 0,
+    // },
   },
 })
 class NodeAsAnthropicToolNode extends BaseNode {

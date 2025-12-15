@@ -8,4 +8,5 @@
 
 export const NODE_POSITION_DEBOUNCE_MS = 500
 export const NODE_UI_DEBOUNCE_MS = 250
-export const LOCAL_NODE_UI_DEBOUNCE_MS = 1000 / 90 // ~60 FPS
+export const NODE_DIMENSIONS_DEBOUNCE_MS = 500 // Same as position for server sync
+export const LOCAL_NODE_UI_DEBOUNCE_MS = 1000 / 90 // 90 FPS for smooth local updates

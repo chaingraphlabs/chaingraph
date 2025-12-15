@@ -51,7 +51,7 @@ export function useNodeChanges() {
             // check if the position is the same
             const isSamePosition
               = node.metadata.ui?.position?.x === change.position.x
-                && node.metadata.ui?.position?.y === change.position.y
+              && node.metadata.ui?.position?.y === change.position.y
 
             if (isSamePosition) {
               return
@@ -69,44 +69,18 @@ export function useNodeChanges() {
           break
 
         case 'dimensions':
-        {
-          const node = currentNodes[change.id]
-          if (!node)
-            return
-
-          if (node.metadata.category === 'group') {
-            // ignore group node dimension changes, is is handled by the group node itself
-            return
+          {
+            // SKIP all dimension changes from XYFlow's onNodesChange
+            // XYFlow reports measured DOM sizes which conflict with resize handle positions
+            //
+            // Dimension sources are now:
+            // - Width: NodeResizeControl onResize handler (user intent)
+            // - Height: useElementResize content detection (for regular nodes)
+            // - Both: NodeResizer onResize handler (for GroupNode)
+            //
+            // GroupNode is also skipped here as it handles dimensions in its own component
+            break
           }
-
-          if (!change.dimensions || !change.dimensions.width || !change.dimensions.height) {
-            console.warn(`[useNodeChanges] Invalid dimensions change:`, change)
-            return
-          }
-          const isSameDimensions
-            = node.metadata.ui?.dimensions?.width === change.dimensions.width
-              && node.metadata.ui?.dimensions?.height === change.dimensions.height
-
-          const isNodeDimensionInitialized
-            = node.metadata.ui?.dimensions !== undefined
-              && node.metadata.ui?.dimensions?.width !== undefined
-              && node.metadata.ui?.dimensions?.height !== undefined
-
-          if (isSameDimensions) { // || !isNodeDimensionInitialized) {
-            return
-          }
-
-          updateNodeUI({
-            flowId: activeFlow.id!,
-            nodeId: change.id,
-            ui: {
-              dimensions: change.dimensions,
-            },
-            version: node.getVersion(),
-          })
-
-          break
-        }
 
         case 'select':
           {
@@ -117,7 +91,7 @@ export function useNodeChanges() {
             updateNodeUI({
               flowId: activeFlow.id!,
               nodeId: change.id,
-              version: node.getVersion() + 1,
+              version: 0,
               ui: {
                 state: {
                   isSelected: change.selected,

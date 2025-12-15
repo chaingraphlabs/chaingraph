@@ -134,27 +134,9 @@ export function isNeedsToSkipPort(
 ): boolean {
   const config = port.getConfig()
 
+  // Skip stream and secret ports
   if (port.getConfig().type === 'stream' || port.getConfig().type === 'secret') {
     return true
-  }
-
-  // Skip ports that are connected to other ports
-  if (config.connections && (config.connections?.length || 0) > 0) {
-    return true
-  }
-
-  const value = port.getValue()
-
-  if (config.type === 'string') {
-    if (value !== undefined && value !== null && value !== '') {
-      // Skip string properties that are not empty
-      return true
-    }
-  } else if (config.type === 'number') {
-    if (value !== undefined && value !== null && value !== 0) {
-      // Skip number properties that are not null or undefined
-      return true
-    }
   }
 
   // Skip ports that are hidden
