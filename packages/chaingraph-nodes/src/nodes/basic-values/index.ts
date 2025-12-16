@@ -8,6 +8,7 @@
 
 export * from './array.node'
 export * from './boolean'
+export * from './markdown-text'
 export * from './number'
 export * from './object'
 export * from './text'

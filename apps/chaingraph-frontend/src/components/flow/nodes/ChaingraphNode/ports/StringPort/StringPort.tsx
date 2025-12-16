@@ -28,6 +28,7 @@ import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking
 import { requestUpdatePortUI } from '@/store/ports'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
+import { MarkdownPreview } from './MarkdownPreview'
 
 export interface StringPortProps {
   node: INode
@@ -230,6 +231,16 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
             />
           </>
         )}
+
+        {/* Markdown preview - renders below the editor when enabled */}
+        {ui?.renderMarkdown && port.getValue() && (
+          <MarkdownPreview
+            content={port.getValue() ?? ''}
+            nodeId={node.id}
+            portId={port.id}
+            styles={ui?.markdownStyles}
+          />
+        )}
       </div>
 
       {(config.direction === 'output' || config.direction === 'passthrough')
@@ -276,6 +287,18 @@ export const StringPort = memo(StringPortInner, (prev, next) => {
   if (prev.port.getConfig().ui?.disabled !== next.port.getConfig().ui?.disabled) {
     return false
   }
+
+  // Markdown rendering state changed
+  if (prev.port.getConfig().ui?.renderMarkdown !== next.port.getConfig().ui?.renderMarkdown) {
+    return false
+  }
+
+  // Markdown styles changed (deep comparison)
+  const prevStyles = prev.port.getConfig().ui?.markdownStyles
+  const nextStyles = next.port.getConfig().ui?.markdownStyles
+  if (prevStyles?.fontSize !== nextStyles?.fontSize) return false
+  if (prevStyles?.lineHeight !== nextStyles?.lineHeight) return false
+  if (prevStyles?.maxHeight !== nextStyles?.maxHeight) return false
 
   // Node or port ID changed
   if (prev.node.id !== next.node.id || prev.port.id !== next.port.id) {
