@@ -22,8 +22,8 @@ import type {
 import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import { memo } from 'react'
 import { AnyPort } from 'components/flow/nodes/ChaingraphNode/ports/AnyPort/AnyPort'
+import { memo } from 'react'
 import { BooleanPort } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
 import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
 
@@ -45,6 +45,35 @@ export interface PortProps {
   port: IPort
   context: PortContextValue
 }
+
+/**
+ * Memoized PortComponent with custom comparison
+ * Only re-renders when port data actually changes, not on parent node position updates
+ */
+export const PortComponent = memo(PortComponentInner, (prev, next) => {
+  // Different port ID = must re-render
+  if (prev.port.id !== next.port.id) {
+    return false
+  }
+
+  // Different node = must re-render
+  if (prev.node.id !== next.node.id) {
+    return false
+  }
+
+  // Node version changed = port data might have changed
+  if (prev.node.getVersion() !== next.node.getVersion()) {
+    return false
+  }
+
+  // Context reference changed (operations are stable, but check anyway)
+  if (prev.context !== next.context) {
+    return false
+  }
+
+  // All checks passed - skip re-render
+  return true
+})
 
 function PortComponentInner(props: PortProps) {
   const {
@@ -118,32 +147,3 @@ function PortComponentInner(props: PortProps) {
     }
   }
 }
-
-/**
- * Memoized PortComponent with custom comparison
- * Only re-renders when port data actually changes, not on parent node position updates
- */
-export const PortComponent = memo(PortComponentInner, (prev, next) => {
-  // Different port ID = must re-render
-  if (prev.port.id !== next.port.id) {
-    return false
-  }
-
-  // Different node = must re-render
-  if (prev.node.id !== next.node.id) {
-    return false
-  }
-
-  // Node version changed = port data might have changed
-  if (prev.node.getVersion() !== next.node.getVersion()) {
-    return false
-  }
-
-  // Context reference changed (operations are stable, but check anyway)
-  if (prev.context !== next.context) {
-    return false
-  }
-
-  // All checks passed - skip re-render
-  return true
-})

@@ -9,7 +9,6 @@
 import type { EdgeData } from '@/store/edges/types'
 import { combine } from 'effector'
 import { $edges } from '@/store/edges'
-import { $nodes } from '../stores'
 
 export interface PortEdgesMap {
   [portId: string]: EdgeData[]

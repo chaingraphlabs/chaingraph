@@ -382,7 +382,7 @@ export const $nodePositions = nodesDomain.createStore<Record<string, Position>>(
   .on(updateNodePositionOnly, (state, { nodeId, position }) => {
     const current = state[nodeId]
     if (current?.x === position.x && current?.y === position.y) {
-      return state  // Same reference - no cascade
+      return state // Same reference - no cascade
     }
     return { ...state, [nodeId]: position }
   })
@@ -413,7 +413,8 @@ export const $nodePositions = nodesDomain.createStore<Record<string, Position>>(
   // Node CRUD operations - sync initial positions
   .on(addNode, (state, node) => {
     const position = node.metadata.ui?.position
-    if (!position) return state
+    if (!position)
+      return state
     return { ...state, [node.id]: position }
   })
   .on(addNodes, (state, nodes) => {
@@ -428,7 +429,8 @@ export const $nodePositions = nodesDomain.createStore<Record<string, Position>>(
   })
   .on(updateNode, (state, node) => {
     const position = node.metadata.ui?.position
-    if (!position) return state
+    if (!position)
+      return state
     const current = state[node.id]
     if (current?.x === position.x && current?.y === position.y) {
       return state
@@ -437,7 +439,8 @@ export const $nodePositions = nodesDomain.createStore<Record<string, Position>>(
   })
   // UI updates that include position changes
   .on(updateNodeUILocal, (state, { nodeId, ui }) => {
-    if (!ui?.position) return state
+    if (!ui?.position)
+      return state
     const current = state[nodeId]
     if (current?.x === ui.position.x && current?.y === ui.position.y) {
       return state

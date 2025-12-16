@@ -186,7 +186,7 @@ export const $nodePortContexts = combine(
 
     // Iterate over ALL nodes, not just those in portEdgesMap
     Object.keys(nodes).forEach((nodeId) => {
-      const nodePortEdges = portEdgesMap[nodeId] || {}  // Empty object if no edges
+      const nodePortEdges = portEdgesMap[nodeId] || {} // Empty object if no edges
 
       // Get or create operations for this node
       let operations = operationsCache.get(nodeId)
