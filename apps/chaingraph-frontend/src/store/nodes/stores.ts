@@ -68,6 +68,12 @@ export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() //
 export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
 export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
 
+// NEW: Position-only update that bypasses $nodes cascade (for drag performance)
+export const updateNodePositionOnly = nodesDomain.createEvent<{
+  nodeId: string
+  position: Position
+}>()
+
 // Dimension update events
 export const updateNodeDimensions = nodesDomain.createEvent<UpdateNodeDimensions>()
 export const updateNodeDimensionsLocal = nodesDomain.createEvent<UpdateNodeDimensions>() // For optimistic updates
@@ -362,6 +368,87 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
   })
   .reset(globalReset)
 
+// NEW: Separate position store for drag performance optimization
+// This store tracks positions independently from $nodes to prevent cascade recalculations
+// during drag operations. Only $xyflowNodes subscribes to this, avoiding triggering
+// $nodePortEdgesMap, $nodeExecutionStyles, $nodeLayerDepth, etc.
+//
+// IMPORTANT: This store must stay synchronized with $nodes.metadata.ui.position for consistency!
+export const $nodePositions = nodesDomain.createStore<Record<string, Position>>({})
+  // Drag-only position updates (performance-critical path)
+  .on(updateNodePositionOnly, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state  // Same reference - no cascade
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Local position updates (resize, drop, etc.) - must sync immediately!
+  .on(updateNodePositionLocal, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Interpolated positions (server sync)
+  .on(updateNodePositionInterpolated, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Parent changes include position updates
+  .on(updateNodeParent, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Node CRUD operations - sync initial positions
+  .on(addNode, (state, node) => {
+    const position = node.metadata.ui?.position
+    if (!position) return state
+    return { ...state, [node.id]: position }
+  })
+  .on(addNodes, (state, nodes) => {
+    const newState = { ...state }
+    nodes.forEach((node) => {
+      const position = node.metadata.ui?.position
+      if (position) {
+        newState[node.id] = position
+      }
+    })
+    return newState
+  })
+  .on(updateNode, (state, node) => {
+    const position = node.metadata.ui?.position
+    if (!position) return state
+    const current = state[node.id]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [node.id]: position }
+  })
+  // UI updates that include position changes
+  .on(updateNodeUILocal, (state, { nodeId, ui }) => {
+    if (!ui?.position) return state
+    const current = state[nodeId]
+    if (current?.x === ui.position.x && current?.y === ui.position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: ui.position }
+  })
+  // Clear position when node is removed
+  .on(removeNode, (state, nodeId) => {
+    const { [nodeId]: _, ...rest } = state
+    return rest
+  })
+  .reset(clearNodes)
+  .reset(globalReset)
+
 // Store that tracks the nodes parent layer depth, so nodes without parents are 0 layer, and each child node increases the layer by 1
 export const $nodeLayerDepth = combine(
   $nodes,
@@ -456,14 +543,15 @@ export const $maxNodeDepth = combine(
 /**
  * Enhanced store for XYFlow nodes that preserves node references when only positions change.
  * This significantly reduces unnecessary re-renders.
+ *
+ * NOW USES $nodePositions for drag positions to prevent cascade recalculations!
  */
 export const $xyflowNodes = combine(
   $nodes,
+  $nodePositions,
   $categoryMetadata,
   $nodeLayerDepth,
-  // $nodePositions,
-  // (nodes, categoryMetadata, nodePositions) => {
-  (nodes, categoryMetadata, nodeLayerDepth) => {
+  (nodes, nodePositions, categoryMetadata, nodeLayerDepth) => {
     if (!nodes || Object.keys(nodes).length === 0) {
       return []
     }
@@ -494,9 +582,9 @@ export const $xyflowNodes = combine(
           ? 'groupNode'
           : 'chaingraphNode'
 
-        // Get position from the positions store if available
-        // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
-        const position = node.metadata.ui?.position || DefaultPosition
+        // Get position from the positions store if available (drag optimization)
+        // Priority: $nodePositions (updated during drag) > node.metadata.ui.position > default
+        const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
 
         const parentNode = node.metadata.parentNodeId ? nodes[node.metadata.parentNodeId] : undefined
 

@@ -13,7 +13,7 @@ import type {
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 // import { useStore } from '@xyflow/react'
 import {
-
+  memo,
   useCallback,
   useMemo,
   useRef,
@@ -37,7 +37,7 @@ export interface StringPortProps {
 
 // const zoomSelector = s => s.transform[2] ?? 1
 
-export function StringPort(props: PropsWithChildren<StringPortProps>) {
+function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   const executionID = useExecutionID()
   const { node, port, context } = props
   const {
@@ -247,3 +247,36 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
     </div>
   )
 }
+
+/**
+ * Memoized StringPort - only re-renders when port value or visibility changes
+ */
+export const StringPort = memo(StringPortInner, (prev, next) => {
+  // Port value changed
+  if (prev.port.getValue() !== next.port.getValue()) {
+    return false
+  }
+
+  // Hidden state changed
+  if (prev.port.getConfig().ui?.hidden !== next.port.getConfig().ui?.hidden) {
+    return false
+  }
+
+  // Editor visibility changed
+  if (prev.port.getConfig().ui?.hideEditor !== next.port.getConfig().ui?.hideEditor) {
+    return false
+  }
+
+  // Disabled state changed
+  if (prev.port.getConfig().ui?.disabled !== next.port.getConfig().ui?.disabled) {
+    return false
+  }
+
+  // Node or port ID changed
+  if (prev.node.id !== next.node.id || prev.port.id !== next.port.id) {
+    return false
+  }
+
+  // Skip re-render - nothing important changed
+  return true
+})

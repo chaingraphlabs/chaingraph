@@ -11,7 +11,7 @@ import type { NodeChange } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
 import { $activeFlowMetadata } from '@/store/flow'
-import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodeUI } from '@/store/nodes'
+import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodePositionOnly, updateNodeUI } from '@/store/nodes'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { roundPosition } from './useFlowUtils'
 
@@ -59,6 +59,13 @@ export function useNodeChanges() {
 
             positionInterpolator.clearNodeState(node.id)
 
+            // Use position-only update during drag to avoid $nodes cascade
+            updateNodePositionOnly({
+              nodeId: change.id,
+              position: roundPosition(change.position as Position),
+            })
+
+            // Also trigger server sync (throttled separately at 500ms)
             updateNodePosition({
               flowId: activeFlow.id!,
               nodeId: change.id,
