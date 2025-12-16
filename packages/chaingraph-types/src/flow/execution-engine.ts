@@ -140,6 +140,10 @@ export class ExecutionEngine {
       if (this.isNodeReady(waitingNodeId)) {
         const node = this.flow.nodes.get(waitingNodeId)
         if (node && !this.executingNodes.has(waitingNodeId) && !this.completedNodes.has(waitingNodeId)) {
+          // Check if node should execute in current event context
+          if (!this.shouldNodeExecuteInContext(node)) {
+            continue // Skip this node - it's not meant for this context
+          }
           this.executingNodes.add(waitingNodeId)
           this.readyQueue.enqueue(this.executeNode.bind(this, node))
         }
@@ -315,6 +319,48 @@ export class ExecutionEngine {
     return associatedEvents ? associatedEvents.has(eventName) : false
   }
 
+  /**
+   * Checks if a node should execute in the current event context.
+   * Returns false if the node should be skipped due to event binding rules.
+   *
+   * This consolidates the event-binding logic used in initializeDependencies(),
+   * processDependents(), and handlePortResolved().
+   */
+  private shouldNodeExecuteInContext(node: INode): boolean {
+    const metadata = node.metadata
+    const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
+    const isEventBound = this.eventBoundNodes.has(node.id)
+
+    if (this.context.eventData) {
+      const incomingEventName = this.context.eventData.eventName
+      if (isAutoExecutionDisabled) {
+        // EventListener nodes: must match event name
+        const nodeType = metadata?.type
+        if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
+          return false
+        }
+        const listenerEventName = (node as any).eventName
+        if (incomingEventName !== listenerEventName) {
+          return false
+        }
+      } else if (isEventBound) {
+        // Event-bound upstream nodes: only if associated with this event
+        if (!this.isEventBoundNodeForEvent(node.id, incomingEventName)) {
+          return false
+        }
+      } else {
+        // Regular nodes: skip in event-driven execution
+        return false
+      }
+    } else {
+      // Normal execution: skip all event-related nodes
+      if (isAutoExecutionDisabled || isEventBound) {
+        return false
+      }
+    }
+    return true
+  }
+
   async execute(
     onComplete?: (context: ExecutionContext, eventQueue: EventQueue<ExecutionEventImpl>) => Promise<void>,
   ): Promise<void> {
@@ -474,49 +520,10 @@ export class ExecutionEngine {
       if (dependencies === 0) {
         const node = this.flow.nodes.get(nodeId)
         if (node) {
-          const metadata = node.metadata
-          const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
-          const isEventBound = this.eventBoundNodes.has(nodeId)
-
-          // ┌─────────────────────────────────────────────────────────────────────┐
-          // │ EXECUTION RULES:                                                     │
-          // │                                                                       │
-          // │ WITH eventData (child spawn OR external API event):                   │
-          // │   • EventListeners → execute if event name matches                    │
-          // │   • Event-bound nodes → execute if upstream of matching listener      │
-          // │   • Regular nodes → skip (only event chains execute)                  │
-          // │                                                                       │
-          // │ WITHOUT eventData (normal root execution):                            │
-          // │   • EventListeners → skip (no event to listen for)                    │
-          // │   • Event-bound nodes → skip (they feed EventListeners)               │
-          // │   • Regular nodes → execute normally                                  │
-          // └─────────────────────────────────────────────────────────────────────┘
-          if (this.context.eventData) {
-            const incomingEventName = this.context.eventData.eventName
-            if (isAutoExecutionDisabled) {
-              // EventListener nodes: must match event name
-              const nodeType = metadata?.type
-              if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
-                continue
-              }
-              const listenerEventName = (node as any).eventName
-              if (incomingEventName !== listenerEventName) {
-                continue
-              }
-            } else if (isEventBound) {
-              // Event-bound upstream nodes: only if associated with this event
-              if (!this.isEventBoundNodeForEvent(nodeId, incomingEventName)) {
-                continue
-              }
-            } else {
-              // Regular nodes: skip in event-driven execution
-              continue
-            }
-          } else {
-            // Normal execution: skip all event-related nodes
-            if (isAutoExecutionDisabled || isEventBound) {
-              continue
-            }
+          // Check if node should execute in current event context
+          // (handles event-binding rules and disabled auto-execution)
+          if (!this.shouldNodeExecuteInContext(node)) {
+            continue
           }
 
           this.executingNodes.add(node.id)
@@ -658,36 +665,7 @@ export class ExecutionEngine {
         break
 
       // Check if node should be skipped due to event-driven execution rules
-      const metadata = dependentNode.metadata
-      const isAutoExecutionDisabled = metadata?.flowPorts?.disabledAutoExecution === true
-      const isEventBound = this.eventBoundNodes.has(dependentNode.id)
-
-      let shouldSkip = false
-
-      if (this.context.eventData) {
-        const incomingEventName = this.context.eventData.eventName
-        if (isAutoExecutionDisabled) {
-          const nodeType = metadata?.type
-          if (nodeType !== 'EventListenerNode' && nodeType !== 'EventListenerNodeV2') {
-            shouldSkip = true
-          } else {
-            const listenerEventName = (dependentNode as any)?.eventName
-            if (incomingEventName !== listenerEventName) {
-              shouldSkip = true
-            }
-          }
-        } else if (isEventBound) {
-          if (!this.isEventBoundNodeForEvent(dependentNode.id, incomingEventName)) {
-            shouldSkip = true
-          }
-        } else {
-          shouldSkip = true
-        }
-      } else {
-        if (isAutoExecutionDisabled || isEventBound) {
-          shouldSkip = true
-        }
-      }
+      const shouldSkip = !this.shouldNodeExecuteInContext(dependentNode)
 
       if (shouldSkip) {
         // Mark as completed without executing so their dependents can proceed

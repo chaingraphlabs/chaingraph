@@ -247,8 +247,8 @@ describe('disabledAutoExecution', () => {
     expect(executedNodes).toContain('normal-1')
     expect(executedNodes).not.toContain('disabled-3')
 
-    // Dependent node should NOT execute because disabled node never completes
-    // (all dependencies must be satisfied for a node to execute)
-    expect(executedNodes).not.toContain('dependent-1')
+    // Dependent node SHOULD execute because normal-1 provides data
+    // (at least one source per port is sufficient - OR semantics)
+    expect(executedNodes).toContain('dependent-1')
   })
 })

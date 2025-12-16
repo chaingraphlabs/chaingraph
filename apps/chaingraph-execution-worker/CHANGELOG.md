@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.6.39
+
+### Patch Changes
+
+- feat: implement event context checks in ExecutionEngine to manage node execution based on event binding rules
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.39
+  - @badaitech/chaingraph-nodes@0.6.39
+  - @badaitech/chaingraph-types@0.6.39
+  - @badaitech/chaingraph-trpc@0.6.39
+  - @badaitech/badai-api@0.6.39
+
 ## 0.6.38
 
 ### Patch Changes
