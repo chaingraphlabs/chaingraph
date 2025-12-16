@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.38
+
+### Patch Changes
+
+- feat: enhance MarkdownPreview to support base64 images and update ExecutionEngine to require at least one resolved source
+- Updated dependencies
+  - @badaitech/badai-api@0.6.38
+
 ## 0.6.37
 
 ### Patch Changes
