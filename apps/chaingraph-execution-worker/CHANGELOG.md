@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.6.40
+
+### Patch Changes
+
+- feat(nodes): html-preview node with safe iframe sandbox
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.40
+  - @badaitech/chaingraph-nodes@0.6.40
+  - @badaitech/chaingraph-types@0.6.40
+  - @badaitech/chaingraph-trpc@0.6.40
+  - @badaitech/badai-api@0.6.40
+
 ## 0.6.39
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.40
+
+### Patch Changes
+
+- feat(nodes): html-preview node with safe iframe sandbox
+
 ## 0.6.39
 
 ### Patch Changes
