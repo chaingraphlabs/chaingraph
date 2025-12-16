@@ -178,10 +178,11 @@ function NumberPortInner(props: NumberPortProps) {
 }
 
 /**
- * Memoized NumberPort - only re-renders when port value or UI config changes
+ * Memoized NumberPort - only re-renders when port value, UI config, or context changes
  */
 export const NumberPort = memo(NumberPortInner, (prev, next) => {
   return prev.port.getValue() === next.port.getValue()
+    && prev.context === next.context
     && prev.port.getConfig().ui?.hidden === next.port.getConfig().ui?.hidden
     && prev.port.getConfig().ui?.hideEditor === next.port.getConfig().ui?.hideEditor
     && prev.port.getConfig().ui?.disabled === next.port.getConfig().ui?.disabled

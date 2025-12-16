@@ -11,7 +11,7 @@ import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
@@ -71,9 +71,17 @@ function ChaingraphNodeComponent({
   const node = useNode(id)
   const parentNode = useNode(node?.metadata.parentNodeId || '')
   const nodeExecution = useNodeExecution(id)
+
+  // Non-critical: Defer execution style and pulse state during rapid updates
   const executionStyle = useNodeExecutionStyle(id)
-  const portContext = useNodePortContextValue(id) // Now returns PortContextValue, not undefined
+  const deferredExecutionStyle = useDeferredValue(executionStyle)
+
   const nodePulseState = useNodePulseState(id)
+  const deferredPulseState = useDeferredValue(nodePulseState)
+
+  const portContext = useNodePortContextValue(id) // Now returns PortContextValue, not undefined
+
+  // Critical: Always immediate (user interaction)
   const isHighlighted = useIsNodeHighlighted(id)
   const hasHighlights = useHasHighlightedNodes()
   const dropFeedback = useNodeDropFeedback(id)
@@ -146,12 +154,13 @@ function ChaingraphNodeComponent({
   })
 
   // Compute final execution style (combine selected + execution state)
+  // Use deferred execution style to avoid blocking drag with execution state updates
   const finalExecutionStyle = useMemo(() => {
     if (selected) {
       return 'border-blue-500 shadow-[0_0_35px_rgba(34,94,197,0.6)]'
     }
-    return executionStyle?.className || ''
-  }, [selected, executionStyle])
+    return deferredExecutionStyle?.className || ''
+  }, [selected, deferredExecutionStyle])
 
   // Merged node for rendering (execution node or regular node)
   const nodeToRender = useMemo(() => {
@@ -178,12 +187,12 @@ function ChaingraphNodeComponent({
           !dropFeedback?.canAcceptDrop && selected
             ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
             : !dropFeedback?.canAcceptDrop && 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
-          // Execution state styling
+          // Execution state styling (deferred)
           finalExecutionStyle,
-          // Pulse animations
-          nodePulseState === 'pulse' && 'animate-update-pulse',
-          nodePulseState === 'fade' && 'animate-update-fade',
-          // Highlighting
+          // Pulse animations (deferred)
+          deferredPulseState === 'pulse' && 'animate-update-pulse',
+          deferredPulseState === 'fade' && 'animate-update-fade',
+          // Highlighting (immediate)
           isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
           hasHighlights && !isHighlighted && 'opacity-40',
         )}

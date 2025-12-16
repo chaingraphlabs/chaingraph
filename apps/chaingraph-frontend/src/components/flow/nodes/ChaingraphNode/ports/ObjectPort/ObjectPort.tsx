@@ -412,6 +412,11 @@ export const ObjectPort = memo(ObjectPortInner, (prev, next) => {
     return false
   }
 
+  // Context changed (affects edge connections and editor visibility)
+  if (prev.context !== next.context) {
+    return false
+  }
+
   // Skip re-render
   return true
 })

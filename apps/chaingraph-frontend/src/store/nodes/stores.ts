@@ -67,6 +67,9 @@ export const updateNodeUI = nodesDomain.createEvent<UpdateNodeUIEvent>()
 export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() // For optimistic updates
 export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
 export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
+// Drag state management (actual drag operations, not selection)
+export const nodeDragStart = nodesDomain.createEvent<string>()
+export const nodeDragEnd = nodesDomain.createEvent<string>()
 
 // NEW: Position-only update that bypasses $nodes cascade (for drag performance)
 export const updateNodePositionOnly = nodesDomain.createEvent<{
@@ -326,9 +329,9 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     try {
-      // Clone both node and port
+      // Clone both node and port to ensure new references for React memo comparisons
       const updatedNode = node.clone()
-      const updatedPort = port
+      const updatedPort = port.clone()
 
       updatedPort.setValue(value)
       updatedNode.setPort(updatedPort)
@@ -634,12 +637,11 @@ export const $xyflowNodes = combine(
           id: nodeId,
           type: nodeType,
           position: nodePositionRound,
-          // GroupNode needs explicit dimensions (uses w-full h-full CSS)
-          // ChaingraphNode manages its own dimensions via inline styles
-          ...(nodeType === 'groupNode' && {
-            width: node.metadata.ui?.dimensions?.width || 300,
-            height: node.metadata.ui?.dimensions?.height || 200,
-          }),
+          // IMPORTANT: All nodes need width/height for XYFlow drag initialization!
+          // Even though ChaingraphNode uses inline styles for visual sizing,
+          // XYFlow requires these properties for internal drag validation (Error 015 prevention)
+          width: node.metadata.ui?.dimensions?.width || (nodeType === 'groupNode' ? 300 : 200),
+          height: node.metadata.ui?.dimensions?.height || (nodeType === 'groupNode' ? 200 : 100),
           draggable: !isMovingDisabled,
           // selectable only when draggable is true and not hidden
           // selectable: !isMovingDisabled && (node.metadata.ui?.state?.isHidden !== true),
@@ -1021,21 +1023,15 @@ export const $selectedNodeIds = combine(
 )
 
 // Create store for dragging nodes (nodes which user moves right now)
+// Uses actual drag events from XYFlow callbacks, not selection state
 export const $draggingNodes = nodesDomain.createStore<string[]>([])
-  // Track nodes that start being dragged
-  .on(throttledUpdateNodeUILocal, (state, { nodeId, ui }) => {
-    if (ui?.state?.isSelected) {
-      // check if node id exists in the state:
-      if (!state.includes(nodeId)) {
-        // Add nodeId to the array if it's not already there
-        return [...state, nodeId]
-      }
-    } else {
-      // check if not selected and in the list, then remove from the list
-      if (state.includes(nodeId)) {
-        return state.filter(id => id !== nodeId)
-      }
+  .on(nodeDragStart, (state, nodeId) => {
+    if (!state.includes(nodeId)) {
+      return [...state, nodeId]
     }
     return state
+  })
+  .on(nodeDragEnd, (state, nodeId) => {
+    return state.filter(id => id !== nodeId)
   })
   .reset(globalReset)

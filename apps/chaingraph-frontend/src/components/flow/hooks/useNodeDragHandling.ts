@@ -13,7 +13,7 @@ import { useUnit } from 'effector-react'
 import { useCallback, useMemo, useRef } from 'react'
 import { useDragDrop } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
-import { $nodes, updateNodeParent, updateNodePosition } from '@/store/nodes'
+import { $nodes, nodeDragEnd, nodeDragStart, updateNodeParent, updateNodePosition } from '@/store/nodes'
 import { getNodePositionInFlow, getNodePositionInsideParent } from '../utils/node-position'
 import { calculateDropPriority, calculateNodeDepth, isValidPosition, roundPosition, wouldCreateCircularDependency } from './useFlowUtils'
 
@@ -349,6 +349,11 @@ export function useNodeDragHandling(
       nodesDragStop.push(nodesDrag)
     }
 
+    // Clear drag state for all stopped nodes (fixes pulse animation bug)
+    nodesDragStop.forEach((node) => {
+      nodeDragEnd(node.id)
+    })
+
     // Prepare end drag events
     const endDragEvents: NodeDragEndEvent[] = []
 
@@ -435,6 +440,11 @@ export function useNodeDragHandling(
   ) => {
     // Get all nodes being dragged
     const draggedNodes = nodesDragStop.length > 0 ? nodesDragStop : [nodesDrag]
+
+    // Track drag start for all dragged nodes (fixes pulse animation bug)
+    draggedNodes.forEach((node) => {
+      nodeDragStart(node.id)
+    })
 
     // Convert screen coordinates to flow coordinates
     const mousePos = screenToFlowPosition

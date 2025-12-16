@@ -159,10 +159,11 @@ function EnumPortInner(props: EnumPortProps) {
 }
 
 /**
- * Memoized EnumPort - only re-renders when port value or UI config changes
+ * Memoized EnumPort - only re-renders when port value, UI config, or context changes
  */
 export const EnumPort = memo(EnumPortInner, (prev, next) => {
   return prev.port.getValue() === next.port.getValue()
+    && prev.context === next.context
     && prev.port.getConfig().ui?.hidden === next.port.getConfig().ui?.hidden
     && prev.port.getConfig().ui?.hideEditor === next.port.getConfig().ui?.hideEditor
     && prev.port.getConfig().ui?.disabled === next.port.getConfig().ui?.disabled

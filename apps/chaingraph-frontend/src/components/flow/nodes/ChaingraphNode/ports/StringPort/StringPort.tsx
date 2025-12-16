@@ -249,11 +249,16 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
 }
 
 /**
- * Memoized StringPort - only re-renders when port value or visibility changes
+ * Memoized StringPort - only re-renders when port value, visibility, or context changes
  */
 export const StringPort = memo(StringPortInner, (prev, next) => {
   // Port value changed
   if (prev.port.getValue() !== next.port.getValue()) {
+    return false
+  }
+
+  // Context changed (affects edge connections and editor visibility)
+  if (prev.context !== next.context) {
     return false
   }
 
