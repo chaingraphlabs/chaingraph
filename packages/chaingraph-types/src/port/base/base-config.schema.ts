@@ -34,6 +34,12 @@ export const stringPortConfigUISchema = basePortConfigUISchema.merge(
       height: z.number().optional(),
     }).optional(),
     placeholder: z.string().optional(),
+    renderMarkdown: z.boolean().optional(),
+    markdownStyles: z.object({
+      fontSize: z.number().min(10).max(1000).optional(), // 10-1000% scale
+      lineHeight: z.enum(['compact', 'normal', 'relaxed']).optional(),
+      maxHeight: z.enum(['unlimited', '200', '400', '600']).optional(),
+    }).optional(),
   }).passthrough(),
 )
 /**
