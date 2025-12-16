@@ -40,6 +40,17 @@ export const stringPortConfigUISchema = basePortConfigUISchema.merge(
       lineHeight: z.enum(['compact', 'normal', 'relaxed']).optional(),
       maxHeight: z.enum(['unlimited', '200', '400', '600']).optional(),
     }).optional(),
+    // HTML preview in sandboxed iframe (allows JS execution, no storage/cookies access)
+    renderHtml: z.boolean().optional(),
+    htmlStyles: z.object({
+      height: z.number().min(100).max(2000).optional(), // default 400px
+      autoHeight: z.boolean().optional(), // default false
+      maxHeight: z.enum(['unlimited', '400', '600', '800', '1000']).optional(), // default '600'
+      scale: z.number().min(25).max(200).optional(), // default 100%
+      showBorder: z.boolean().optional(), // default false
+      stripMarkdown: z.boolean().optional(), // default true
+      debounceDelay: z.number().min(0).max(2000).optional(), // default 600ms
+    }).optional(),
   }).passthrough(),
 )
 /**

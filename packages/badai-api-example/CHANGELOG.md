@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.40
+
+### Patch Changes
+
+- feat(nodes): html-preview node with safe iframe sandbox
+- Updated dependencies
+  - @badaitech/badai-api@0.6.40
+
 ## 0.6.39
 
 ### Patch Changes

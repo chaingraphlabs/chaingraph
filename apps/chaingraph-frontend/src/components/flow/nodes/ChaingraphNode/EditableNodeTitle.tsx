@@ -103,6 +103,7 @@ export function EditableNodeTitle({
 
   return (
     <h3
+      data-editable-title
       className={cn(
         'font-medium text-sm truncate cursor-text',
         'hover:bg-white/10 rounded px-1 transition-colors',

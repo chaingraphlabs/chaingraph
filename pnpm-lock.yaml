@@ -606,6 +606,9 @@ importers:
       patronum:
         specifier: ^2.3.0
         version: 2.3.0(effector@23.4.4)
+      penpal:
+        specifier: ^7.0.4
+        version: 7.0.4
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -8936,6 +8939,9 @@ packages:
   peek-readable@4.1.0:
     resolution: {integrity: sha512-ZI3LnwUv5nOGbQzD9c2iDG6toheuXSZP5esSHBjopsXH4dg19soufvpUGA3uohi5anFtGb2lhAVdHzH6R/Evvg==}
     engines: {node: '>=8'}
+
+  penpal@7.0.4:
+    resolution: {integrity: sha512-O+M2V83oSaWQRDHghxYsq23TQgjAEzlrwemS0a1md16wZWqgOgmB35u4zluMwyqF6GnF/XT4v0N4QrrRgWAgSQ==}
 
   pg-cloudflare@1.2.7:
     resolution: {integrity: sha512-YgCtzMH0ptvZJslLM1ffsY4EuGaU0cx4XSdXLRFae8bPP4dS5xL1tNB3k2o/N64cHJpwU7dxKli/nZ2lUa5fLg==}
@@ -19296,7 +19302,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.12.2(debug@4.4.3))
+      retry-axios: 2.6.0(axios@1.12.2)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -21090,6 +21096,8 @@ snapshots:
 
   peek-readable@4.1.0: {}
 
+  penpal@7.0.4: {}
+
   pg-cloudflare@1.2.7:
     optional: true
 
@@ -21908,7 +21916,7 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
 
-  retry-axios@2.6.0(axios@1.12.2(debug@4.4.3)):
+  retry-axios@2.6.0(axios@1.12.2):
     dependencies:
       axios: 1.12.2(debug@4.4.3)
 

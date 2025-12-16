@@ -11,6 +11,7 @@ import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badait
 import type { PortContextValue } from './ports/context/PortContext'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
+import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -45,12 +46,32 @@ export function NodeHeader({
   categoryMetadata,
 }: NodeHeaderProps) {
   const Icon = getCategoryIcon(icon)
+  const { fitView } = useReactFlow()
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
   const [showStatusBadge, setShowStatusBadge] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const activeFlow = useUnit($activeFlowMetadata)
 
   const parentNode = useNode(node.metadata.parentNodeId || '')
+
+  // Double-click header to fit view to this node
+  const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
+    // Skip if clicking on editable title (let it handle its own double-click)
+    if ((e.target as HTMLElement).closest('[data-editable-title]')) {
+      return
+    }
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    // Smoothly animate camera to fit this node
+    fitView({
+      nodes: [{ id: node.id }],
+      duration: 800,
+      padding: 0.02,
+      maxZoom: 2,
+    })
+  }, [fitView, node.id])
 
   // Callback to handle status badge visibility and state
   const handleStatusChange = useCallback((show: boolean, status: NodeStatus | null) => {
@@ -113,6 +134,7 @@ export function NodeHeader({
         background: style.primary,
         borderBottom: `1px solid ${style.secondary}`,
       }}
+      onDoubleClick={handleHeaderDoubleClick}
     >
       {(!parentNode || parentNode.metadata.category === 'group') && (
         <NodeFlowPorts node={node} context={context} />

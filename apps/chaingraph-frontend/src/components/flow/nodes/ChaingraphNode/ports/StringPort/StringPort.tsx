@@ -28,6 +28,7 @@ import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking
 import { requestUpdatePortUI } from '@/store/ports'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
+import { HTMLPreview } from './HTMLPreview'
 import { MarkdownPreview } from './MarkdownPreview'
 
 export interface StringPortProps {
@@ -241,6 +242,16 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
             styles={ui?.markdownStyles}
           />
         )}
+
+        {/* HTML preview - renders in sandboxed iframe when enabled */}
+        {ui?.renderHtml && port.getValue() && (
+          <HTMLPreview
+            content={port.getValue() ?? ''}
+            nodeId={node.id}
+            portId={port.id}
+            styles={ui?.htmlStyles}
+          />
+        )}
       </div>
 
       {(config.direction === 'output' || config.direction === 'passthrough')
@@ -301,6 +312,28 @@ export const StringPort = memo(StringPortInner, (prev, next) => {
   if (prevStyles?.lineHeight !== nextStyles?.lineHeight)
     return false
   if (prevStyles?.maxHeight !== nextStyles?.maxHeight)
+    return false
+
+  // HTML preview state changed
+  if (prev.port.getConfig().ui?.renderHtml !== next.port.getConfig().ui?.renderHtml)
+    return false
+
+  // HTML styles changed (deep comparison)
+  const prevHtmlStyles = prev.port.getConfig().ui?.htmlStyles
+  const nextHtmlStyles = next.port.getConfig().ui?.htmlStyles
+  if (prevHtmlStyles?.height !== nextHtmlStyles?.height)
+    return false
+  if (prevHtmlStyles?.autoHeight !== nextHtmlStyles?.autoHeight)
+    return false
+  if (prevHtmlStyles?.maxHeight !== nextHtmlStyles?.maxHeight)
+    return false
+  if (prevHtmlStyles?.scale !== nextHtmlStyles?.scale)
+    return false
+  if (prevHtmlStyles?.showBorder !== nextHtmlStyles?.showBorder)
+    return false
+  if (prevHtmlStyles?.stripMarkdown !== nextHtmlStyles?.stripMarkdown)
+    return false
+  if (prevHtmlStyles?.debounceDelay !== nextHtmlStyles?.debounceDelay)
     return false
 
   // Node or port ID changed
