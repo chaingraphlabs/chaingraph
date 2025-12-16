@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.37
+
+### Patch Changes
+
+- 77730ba: feat: add MarkdownTextNode with live preview and integrate MarkdownPreview component
+
 ## 0.6.36
 
 ### Patch Changes

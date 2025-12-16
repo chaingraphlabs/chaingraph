@@ -50,9 +50,9 @@ const LINE_HEIGHT_SCALE: Record<string, number> = {
 
 const MAX_HEIGHT_CLASSES: Record<string, string> = {
   unlimited: '',
-  '200': 'max-h-[200px] overflow-auto',
-  '400': 'max-h-[400px] overflow-auto',
-  '600': 'max-h-[600px] overflow-auto',
+  200: 'max-h-[200px] overflow-auto',
+  400: 'max-h-[400px] overflow-auto',
+  600: 'max-h-[600px] overflow-auto',
 }
 
 function MarkdownPreviewInner({
@@ -84,11 +84,11 @@ function MarkdownPreviewInner({
     ...defaultSchema,
     attributes: {
       ...defaultSchema.attributes,
-      div: [
+      'div': [
         ...(defaultSchema.attributes?.div || []),
         ['className', 'math', 'math-display'],
       ],
-      span: [
+      'span': [
         ...(defaultSchema.attributes?.span || []),
         ['className', 'math', 'math-inline'],
         // Allow all KaTeX classes
@@ -159,7 +159,10 @@ function MarkdownPreviewInner({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium">Text Size</Label>
-                  <span className="text-xs text-muted-foreground font-mono">{fontSize}%</span>
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {fontSize}
+                    %
+                  </span>
                 </div>
                 <Slider
                   value={[fontSize]}
@@ -184,7 +187,8 @@ function MarkdownPreviewInner({
                       className="h-6 px-2 text-[10px] nodrag"
                       onClick={() => updateStyle('fontSize', size)}
                     >
-                      {size}%
+                      {size}
+                      %
                     </Button>
                   ))}
                 </div>
@@ -414,17 +418,24 @@ function MarkdownPreviewInner({
  * Memoized MarkdownPreview component
  */
 export const MarkdownPreview = memo(MarkdownPreviewInner, (prev, next) => {
-  if (prev.content !== next.content) return false
-  if (prev.nodeId !== next.nodeId) return false
-  if (prev.portId !== next.portId) return false
-  if (prev.className !== next.className) return false
+  if (prev.content !== next.content)
+    return false
+  if (prev.nodeId !== next.nodeId)
+    return false
+  if (prev.portId !== next.portId)
+    return false
+  if (prev.className !== next.className)
+    return false
 
   // Deep compare styles
   const prevStyles = prev.styles
   const nextStyles = next.styles
-  if (prevStyles?.fontSize !== nextStyles?.fontSize) return false
-  if (prevStyles?.lineHeight !== nextStyles?.lineHeight) return false
-  if (prevStyles?.maxHeight !== nextStyles?.maxHeight) return false
+  if (prevStyles?.fontSize !== nextStyles?.fontSize)
+    return false
+  if (prevStyles?.lineHeight !== nextStyles?.lineHeight)
+    return false
+  if (prevStyles?.maxHeight !== nextStyles?.maxHeight)
+    return false
 
   return true
 })

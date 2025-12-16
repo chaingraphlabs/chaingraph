@@ -296,9 +296,12 @@ export const StringPort = memo(StringPortInner, (prev, next) => {
   // Markdown styles changed (deep comparison)
   const prevStyles = prev.port.getConfig().ui?.markdownStyles
   const nextStyles = next.port.getConfig().ui?.markdownStyles
-  if (prevStyles?.fontSize !== nextStyles?.fontSize) return false
-  if (prevStyles?.lineHeight !== nextStyles?.lineHeight) return false
-  if (prevStyles?.maxHeight !== nextStyles?.maxHeight) return false
+  if (prevStyles?.fontSize !== nextStyles?.fontSize)
+    return false
+  if (prevStyles?.lineHeight !== nextStyles?.lineHeight)
+    return false
+  if (prevStyles?.maxHeight !== nextStyles?.maxHeight)
+    return false
 
   // Node or port ID changed
   if (prev.node.id !== next.node.id || prev.port.id !== next.port.id) {

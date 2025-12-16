@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-worker
 
+## 0.6.37
+
+### Patch Changes
+
+- 77730ba: feat: add MarkdownTextNode with live preview and integrate MarkdownPreview component
+- Updated dependencies [77730ba]
+  - @badaitech/chaingraph-nodes@0.6.37
+  - @badaitech/chaingraph-types@0.6.37
+  - @badaitech/badai-api@0.6.37
+  - @badaitech/chaingraph-executor@0.6.37
+  - @badaitech/chaingraph-trpc@0.6.37
+
 ## 0.6.36
 
 ### Patch Changes
