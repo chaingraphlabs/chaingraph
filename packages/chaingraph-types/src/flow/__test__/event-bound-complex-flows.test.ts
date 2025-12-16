@@ -375,22 +375,24 @@ describe('event-Bound Complex Flows', () => {
       const rootExecuted = await executeAndCollect(flow, createRootContext(flow))
       expect(rootExecuted).toHaveLength(0)
 
-      // Event-a context - only event-a chain executes, sharedDownstream CANNOT execute
-      // because listenerB (its other dependency) didn't fire
+      // Event-a context - event-a chain executes
+      // With OR semantics, sharedDownstream CAN execute because listenerA provides data
+      // (at least one source per port is sufficient)
       const eventAExecuted = await executeAndCollect(flow, createEventContext(flow, 'event-a'))
       expect(eventAExecuted).toContain('upA')
       expect(eventAExecuted).toContain('listenerA')
-      // sharedDownstream cannot execute - it depends on BOTH listenerA AND listenerB
-      expect(eventAExecuted).not.toContain('sharedDownstream')
+      // sharedDownstream SHOULD execute - listenerA provides data (OR semantics)
+      expect(eventAExecuted).toContain('sharedDownstream')
       expect(eventAExecuted).not.toContain('upB')
       expect(eventAExecuted).not.toContain('listenerB')
 
-      // Event-b context - only event-b chain executes, sharedDownstream CANNOT execute
+      // Event-b context - event-b chain executes
+      // With OR semantics, sharedDownstream CAN execute because listenerB provides data
       const eventBExecuted = await executeAndCollect(flow, createEventContext(flow, 'event-b'))
       expect(eventBExecuted).toContain('upB')
       expect(eventBExecuted).toContain('listenerB')
-      // sharedDownstream cannot execute - it depends on BOTH listenerA AND listenerB
-      expect(eventBExecuted).not.toContain('sharedDownstream')
+      // sharedDownstream SHOULD execute - listenerB provides data (OR semantics)
+      expect(eventBExecuted).toContain('sharedDownstream')
       expect(eventBExecuted).not.toContain('upA')
       expect(eventBExecuted).not.toContain('listenerA')
     })
