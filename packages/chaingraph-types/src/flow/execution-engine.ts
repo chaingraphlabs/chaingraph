@@ -835,9 +835,6 @@ export class ExecutionEngine {
         // If the node has a parent that is not a group, mark it completed without actually executing
         await this.setNodeCompleted(node, nodeStartTime)
 
-        console.log(`[ExecutionEngine] Node ${node.id} has parent ${nodeParent.id} which is not a group. Marking node as completed without execution:`, JSON.stringify(node.serialize(), null, 2))
-        console.log(`[ExecutionEngine] Node ${node.id} has parent ${nodeParent.id} which is not a group. Marking node as completed without execution:`, JSON.stringify(nodeParent.serialize(), null, 2))
-
         // find in the parent node the port which contains:
         // "nodeSchemaCapture": {
         //   "enabled": true,

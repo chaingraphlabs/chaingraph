@@ -209,7 +209,7 @@ export function StringPort(props: PropsWithChildren<StringPortProps>) {
                 trackFocus()
               }}
               style={{
-              //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
+                //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
                 height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,
               }}
               className={cn(

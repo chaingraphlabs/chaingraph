@@ -198,12 +198,12 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
       return flows.map(flow =>
         flow.id === updatedFlowId
           ? {
-              ...flow,
-              metadata: {
-                ...flow.metadata,
-                loaded: true,
-              },
-            }
+            ...flow,
+            metadata: {
+              ...flow.metadata,
+              loaded: true,
+            },
+          }
           : flow,
       )
     }
@@ -639,7 +639,6 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         // console.warn(`[NodeUIChanged] Skipping outdated UI change event for node ${data.nodeId}, event version ${data.version}, current version ${currentVersion}`)
         return
       }
-      console.log(`[NodeUIChanged] Received UI change for node ${data.nodeId} with version ${data.version}, current node version is ${currentNode.getVersion()}`, data.ui)
 
       updateNodeUILocal({
         flowId,
@@ -661,15 +660,11 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
       const currentVersion = currentNode.getVersion()
 
-      console.log(`[NodeUIDimensionsChanged] Received dimensions change for node ${data.nodeId} with version ${data.version}, current node version is ${currentVersion}`, data.newDimensions)
-
       if (data.version && data.version <= currentVersion) {
-        console.warn(`[NodeUIDimensionsChanged] Skipping outdated dimensions change event for node ${data.nodeId}, event version ${data.version}, current version ${currentVersion}`)
         return
       }
 
       if (!data.newDimensions || !data.newDimensions.width) { // || !data.newDimensions.height) {
-        console.warn(`[NodeUIDimensionsChanged] Invalid dimensions received for node ${data.nodeId}:`, data.newDimensions)
         return
       }
 

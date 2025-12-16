@@ -148,8 +148,6 @@ export const updateNodeUIFx = nodesDomain.createEffect(async (params: UpdateNode
     throw new Error('UI metadata is required')
   }
 
-  console.log(`[updateNodeUIFx] Updating node UI for node ${params.nodeId} in flow ${params.flowId} with version ${params.version} and ui:`, params.ui)
-
   return client.flow.updateNodeUI.mutate({
     flowId: params.flowId,
     nodeId: params.nodeId,
@@ -692,8 +690,6 @@ $nodes
     }
 
     updatedNode.setDimensions(dimensionsToSet, false)
-
-    console.log(`[updateNodeDimensionsLocal] Updated dimensions for node ${nodeId}, version ${updatedNode.getVersion()}:`, dimensionsToSet)
 
     return { ...state, [nodeId]: updatedNode }
   })

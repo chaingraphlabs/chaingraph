@@ -135,7 +135,7 @@ function Flow({
 
   useEffect(() => {
     if (nodesInitialized) {
-      console.log('[Flow] Nodes initialized:', nodesInitialized)
+      // console.log('[Flow] Nodes initialized:', nodesInitialized)
       // setLayoutedNodes(yourLayoutingFunction(getNodes()));
     }
   }, [nodesInitialized])
