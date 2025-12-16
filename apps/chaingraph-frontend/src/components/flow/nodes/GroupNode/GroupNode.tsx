@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
-import { updateNodeUI } from '@/store/nodes'
+import { updateNodeDimensions, updateNodeDimensionsLocal, updateNodePosition, updateNodeUI } from '@/store/nodes'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import { ColorPicker } from './components/ColorPicker'
 import { EditableTitle } from './components/EditableTitle'
@@ -100,50 +100,39 @@ function GroupNodeComponent({
         lineStyle={{
           border: '3px solid transparent',
         }}
-        onResizeStart={(e, params) => {
-          // console.log('Resize started', e, params)
+        onResizeStart={() => {
+          // Resize starting, nothing needed
         }}
-        onResize={(e, params) => {
-          // console.log('Resizing', e, params)
-
-          if (!activeFlow?.id || !id)
+        onResize={(_e, params) => {
+          if (!activeFlow?.id || !id || !node)
             return
 
-          updateNodeUI({
+          // INSTANT local update - makes resize feel responsive
+          updateNodeDimensionsLocal({
             flowId: activeFlow.id,
             nodeId: id,
-            ui: {
-              dimensions: {
-                width: params.width,
-                height: params.height,
-              },
-              position: {
-                x: params.x,
-                y: params.y,
-              },
-            },
-            version: node?.getVersion() || 0,
+            dimensions: { width: params.width, height: params.height },
+            version: node.getVersion(),
+          })
+
+          // Throttled backend sync
+          updateNodeDimensions({
+            flowId: activeFlow.id,
+            nodeId: id,
+            dimensions: { width: params.width, height: params.height },
+            version: node.getVersion(),
+          })
+
+          // Position update
+          updateNodePosition({
+            flowId: activeFlow.id,
+            nodeId: id,
+            position: { x: params.x, y: params.y },
+            version: node.getVersion(),
           })
         }}
-        onResizeEnd={(e, params) => {
-          if (!activeFlow?.id || !id)
-            return
-
-          updateNodeUI({
-            flowId: activeFlow.id,
-            nodeId: id,
-            ui: {
-              dimensions: {
-                width: params.width,
-                height: params.height,
-              },
-              position: {
-                x: params.x,
-                y: params.y,
-              },
-            },
-            version: node?.getVersion() || 0,
-          })
+        onResizeEnd={() => {
+          // Throttled events handle server sync, nothing needed here
         }}
       />
 

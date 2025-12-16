@@ -12,6 +12,7 @@ import type {
   AddNodeEvent,
   NodeState,
   PasteNodesEvent,
+  UpdateNodeDimensions,
   UpdateNodeParent,
   UpdateNodePosition,
   UpdateNodeTitleEvent,
@@ -31,7 +32,7 @@ import {
   updatePortUI,
 } from '../ports/stores'
 import { $trpcClient } from '../trpc/store'
-import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
+import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_DIMENSIONS_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
 import { accumulateAndSample } from './operators/accumulate-and-sample'
 import { positionInterpolator } from './position-interpolation-advanced'
 // import './computed'
@@ -66,6 +67,19 @@ export const updateNodeUI = nodesDomain.createEvent<UpdateNodeUIEvent>()
 export const updateNodeUILocal = nodesDomain.createEvent<UpdateNodeUIEvent>() // For optimistic updates
 export const updateNodePosition = nodesDomain.createEvent<UpdateNodePosition>()
 export const updateNodePositionLocal = nodesDomain.createEvent<UpdateNodePosition>() // For optimistic updates
+// Drag state management (actual drag operations, not selection)
+export const nodeDragStart = nodesDomain.createEvent<string>()
+export const nodeDragEnd = nodesDomain.createEvent<string>()
+
+// NEW: Position-only update that bypasses $nodes cascade (for drag performance)
+export const updateNodePositionOnly = nodesDomain.createEvent<{
+  nodeId: string
+  position: Position
+}>()
+
+// Dimension update events
+export const updateNodeDimensions = nodesDomain.createEvent<UpdateNodeDimensions>()
+export const updateNodeDimensionsLocal = nodesDomain.createEvent<UpdateNodeDimensions>() // For optimistic updates
 
 export const updateNodeTitle = nodesDomain.createEvent<UpdateNodeTitleEvent>()
 
@@ -315,9 +329,9 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       return state
 
     try {
-      // Clone both node and port
+      // Clone both node and port to ensure new references for React memo comparisons
       const updatedNode = node.clone()
-      const updatedPort = port
+      const updatedPort = port.clone()
 
       updatedPort.setValue(value)
       updatedNode.setPort(updatedPort)
@@ -355,6 +369,90 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
     return { ...state, [nodeId]: updatedNode }
   })
+  .reset(globalReset)
+
+// NEW: Separate position store for drag performance optimization
+// This store tracks positions independently from $nodes to prevent cascade recalculations
+// during drag operations. Only $xyflowNodes subscribes to this, avoiding triggering
+// $nodePortEdgesMap, $nodeExecutionStyles, $nodeLayerDepth, etc.
+//
+// IMPORTANT: This store must stay synchronized with $nodes.metadata.ui.position for consistency!
+export const $nodePositions = nodesDomain.createStore<Record<string, Position>>({})
+  // Drag-only position updates (performance-critical path)
+  .on(updateNodePositionOnly, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state // Same reference - no cascade
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Local position updates (resize, drop, etc.) - must sync immediately!
+  .on(updateNodePositionLocal, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Interpolated positions (server sync)
+  .on(updateNodePositionInterpolated, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Parent changes include position updates
+  .on(updateNodeParent, (state, { nodeId, position }) => {
+    const current = state[nodeId]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: position }
+  })
+  // Node CRUD operations - sync initial positions
+  .on(addNode, (state, node) => {
+    const position = node.metadata.ui?.position
+    if (!position)
+      return state
+    return { ...state, [node.id]: position }
+  })
+  .on(addNodes, (state, nodes) => {
+    const newState = { ...state }
+    nodes.forEach((node) => {
+      const position = node.metadata.ui?.position
+      if (position) {
+        newState[node.id] = position
+      }
+    })
+    return newState
+  })
+  .on(updateNode, (state, node) => {
+    const position = node.metadata.ui?.position
+    if (!position)
+      return state
+    const current = state[node.id]
+    if (current?.x === position.x && current?.y === position.y) {
+      return state
+    }
+    return { ...state, [node.id]: position }
+  })
+  // UI updates that include position changes
+  .on(updateNodeUILocal, (state, { nodeId, ui }) => {
+    if (!ui?.position)
+      return state
+    const current = state[nodeId]
+    if (current?.x === ui.position.x && current?.y === ui.position.y) {
+      return state
+    }
+    return { ...state, [nodeId]: ui.position }
+  })
+  // Clear position when node is removed
+  .on(removeNode, (state, nodeId) => {
+    const { [nodeId]: _, ...rest } = state
+    return rest
+  })
+  .reset(clearNodes)
   .reset(globalReset)
 
 // Store that tracks the nodes parent layer depth, so nodes without parents are 0 layer, and each child node increases the layer by 1
@@ -451,14 +549,15 @@ export const $maxNodeDepth = combine(
 /**
  * Enhanced store for XYFlow nodes that preserves node references when only positions change.
  * This significantly reduces unnecessary re-renders.
+ *
+ * NOW USES $nodePositions for drag positions to prevent cascade recalculations!
  */
 export const $xyflowNodes = combine(
   $nodes,
+  $nodePositions,
   $categoryMetadata,
   $nodeLayerDepth,
-  // $nodePositions,
-  // (nodes, categoryMetadata, nodePositions) => {
-  (nodes, categoryMetadata, nodeLayerDepth) => {
+  (nodes, nodePositions, categoryMetadata, nodeLayerDepth) => {
     if (!nodes || Object.keys(nodes).length === 0) {
       return []
     }
@@ -489,9 +588,9 @@ export const $xyflowNodes = combine(
           ? 'groupNode'
           : 'chaingraphNode'
 
-        // Get position from the positions store if available
-        // const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
-        const position = node.metadata.ui?.position || DefaultPosition
+        // Get position from the positions store if available (drag optimization)
+        // Priority: $nodePositions (updated during drag) > node.metadata.ui.position > default
+        const position = nodePositions[nodeId] || node.metadata.ui?.position || DefaultPosition
 
         const parentNode = node.metadata.parentNodeId ? nodes[node.metadata.parentNodeId] : undefined
 
@@ -534,15 +633,21 @@ export const $xyflowNodes = combine(
           return cachedNode
         }
 
+        const isMovingDisabled = node.metadata.ui?.state?.isMovingDisabled === true
+
         // Create a new node
         const reactflowNode: Node = {
           id: nodeId,
           type: nodeType,
           position: nodePositionRound,
-          width: node.metadata.ui?.dimensions?.width ?? 200, // Default width if not set
-          height: node.metadata.ui?.dimensions?.height ?? 50, // Default height if not set
-          initialWidth: node.metadata.ui?.dimensions?.width ?? 200, // Initial width for resizing
-          initialHeight: node.metadata.ui?.dimensions?.height ?? 50, // Initial height for resizing
+          // IMPORTANT: All nodes need width/height for XYFlow drag initialization!
+          // Even though ChaingraphNode uses inline styles for visual sizing,
+          // XYFlow requires these properties for internal drag validation (Error 015 prevention)
+          width: node.metadata.ui?.dimensions?.width || (nodeType === 'groupNode' ? 300 : 200),
+          height: node.metadata.ui?.dimensions?.height || (nodeType === 'groupNode' ? 200 : 100),
+          draggable: !isMovingDisabled,
+          // selectable only when draggable is true and not hidden
+          // selectable: !isMovingDisabled && (node.metadata.ui?.state?.isHidden !== true),
           zIndex: currentZIndex,
           data: {
             node,
@@ -550,25 +655,25 @@ export const $xyflowNodes = combine(
           },
           parentId: node.metadata.parentNodeId,
           extent: parentNode && parentNode.metadata.category !== 'group' ? 'parent' : undefined,
-          selected: node.metadata.ui?.state?.isSelected ?? false,
-          hidden: node.metadata.ui?.state?.isHidden ?? false,
-          selectable: node.metadata.category === 'group'
-            ? true // All groups should be selectable
-            : !(parentNode && parentNode.metadata.category !== 'group'), // Regular nodes follow existing logic
+          selected: node.metadata.ui?.state?.isSelected || false,
+          hidden: node.metadata.ui?.state?.isHidden || false,
+          // selectable: node.metadata.category === 'group'
+          //   ? true // All groups should be selectable
+          //   : !(parentNode && parentNode.metadata.category !== 'group'), // Regular nodes follow existing logic
         }
 
-        // Set dimensions if available and valid
-        const MIN_NODE_WIDTH = 100
-        const MIN_NODE_HEIGHT = 40
+        // // Set dimensions if available and valid
+        // const MIN_NODE_WIDTH = 100
+        // const MIN_NODE_HEIGHT = 40
 
-        if (
-          node.metadata.ui?.dimensions
-          && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH
-          && node.metadata.ui.dimensions.height > MIN_NODE_HEIGHT
-        ) {
-          reactflowNode.width = node.metadata.ui.dimensions.width
-          reactflowNode.height = node.metadata.ui.dimensions.height
-        }
+        // if (
+        //   node.metadata.ui?.dimensions
+        //   && node.metadata.ui.dimensions.width > MIN_NODE_WIDTH
+        //   && node.metadata.ui.dimensions.height > MIN_NODE_HEIGHT
+        // ) {
+        //   reactflowNode.width = node.metadata.ui.dimensions.width
+        //   reactflowNode.height = node.metadata.ui.dimensions.height
+        // }
 
         // Store in cache for future reference
         nodeCache.set(cacheKey, reactflowNode)
@@ -587,18 +692,35 @@ $nodes
 
     // Clone the node for the UI update
     const updatedNode = node.clone()
-    updatedNode.setUI({
+
+    const newUI = {
       ...updatedNode.metadata.ui ?? {},
       ...ui ?? {},
-      style: {
-        ...(updatedNode.metadata.ui?.style ?? {}),
-        ...(ui.style ?? {}),
+      position: {
+        ...updatedNode.metadata.ui?.position ?? DefaultPosition,
+        ...ui.position ?? {},
       },
       state: {
-        ...(updatedNode.metadata.ui?.state ?? {}),
-        ...(ui.state ?? {}),
+        ...updatedNode.metadata.ui?.state ?? {},
+        ...ui.state ?? {},
       },
-    }, false)
+      style: {
+        ...updatedNode.metadata.ui?.style ?? {},
+        ...ui.style ?? {},
+      },
+    }
+
+    if (updatedNode.metadata.ui?.dimensions || ui.dimensions) {
+      newUI.dimensions = {
+        ...updatedNode.metadata.ui?.dimensions ?? {
+          width: 200,
+          height: 200,
+        },
+        ...ui.dimensions ?? {},
+      }
+    }
+
+    updatedNode.setUI(newUI, false)
 
     return { ...state, [nodeId]: updatedNode }
   })
@@ -623,6 +745,45 @@ $nodes
     updatedNode.setPosition(position, false)
 
     // Fix: Use updatedNode instead of node
+    return { ...state, [nodeId]: updatedNode }
+  })
+
+  .on(updateNodeDimensionsLocal, (state, { nodeId, dimensions }) => {
+    // Don't modify state if node doesn't exist
+    const node = state[nodeId]
+    if (!node)
+      return state
+
+    // Merge dimensions - preserve existing values for fields not provided
+    // This allows width-only updates (resize handle) and height-only updates (content detection)
+    // to work independently without interfering with each other
+    const currentDimensions = node.metadata.ui?.dimensions
+    const newDimensions = {
+      width: dimensions.width ?? currentDimensions?.width,
+      height: dimensions.height ?? currentDimensions?.height,
+    }
+
+    // Skip update if dimensions are unchanged or if we don't have any dimension to set
+    if (!newDimensions.width && !newDimensions.height) {
+      return state
+    }
+
+    if (
+      currentDimensions?.width === newDimensions.width
+      && currentDimensions?.height === newDimensions.height
+    ) {
+      return state
+    }
+
+    // Update the node's dimensions
+    const updatedNode = node.clone()
+    const dimensionsToSet = {
+      width: newDimensions.width ?? 200, // Default width if never set
+      height: newDimensions.height ?? 100, // Default height if never set
+    }
+
+    updatedNode.setDimensions(dimensionsToSet, false)
+
     return { ...state, [nodeId]: updatedNode }
   })
 
@@ -742,6 +903,53 @@ sample({
 })
 
 // * * * * * * * * * * * * * * *
+// Dimension operations
+// * * * * * * * * * * * * * * *
+
+// Fast path: Update local dimensions immediately (~11ms)
+const throttledUpdateNodeDimensionsLocal = accumulateAndSample({
+  source: [updateNodeDimensions],
+  timeout: LOCAL_NODE_UI_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+sample({
+  clock: throttledUpdateNodeDimensionsLocal,
+  target: [updateNodeDimensionsLocal],
+})
+
+// Slow path: Server sync (~500ms)
+const throttledUpdateDimensions = accumulateAndSample({
+  source: [updateNodeDimensions],
+  timeout: NODE_DIMENSIONS_DEBOUNCE_MS,
+  getKey: update => update.nodeId,
+})
+
+// Version increment and server sync for dimensions
+sample({
+  source: $nodes,
+  clock: throttledUpdateDimensions,
+  fn: (nodes, params) => {
+    const node = nodes[params.nodeId]
+    const currentDimensions = node?.metadata.ui?.dimensions
+
+    // Merge incoming dimensions with current - backend requires both width and height
+    const mergedDimensions = {
+      width: params.dimensions.width ?? currentDimensions?.width ?? 200,
+      height: params.dimensions.height ?? currentDimensions?.height ?? 100,
+    }
+
+    return {
+      flowId: params.flowId,
+      nodeId: params.nodeId,
+      ui: { dimensions: mergedDimensions },
+      version: (node?.getVersion() ?? 0) + 1,
+    }
+  },
+  target: [setNodeVersion, updateNodeUIFx],
+})
+
+// * * * * * * * * * * * * * * *
 // Node operations
 // * * * * * * * * * * * * * * *
 
@@ -818,21 +1026,15 @@ export const $selectedNodeIds = combine(
 )
 
 // Create store for dragging nodes (nodes which user moves right now)
+// Uses actual drag events from XYFlow callbacks, not selection state
 export const $draggingNodes = nodesDomain.createStore<string[]>([])
-  // Track nodes that start being dragged
-  .on(throttledUpdateNodeUILocal, (state, { nodeId, ui }) => {
-    if (ui?.state?.isSelected) {
-      // check if node id exists in the state:
-      if (!state.includes(nodeId)) {
-        // Add nodeId to the array if it's not already there
-        return [...state, nodeId]
-      }
-    } else {
-      // check if not selected and in the list, then remove from the list
-      if (state.includes(nodeId)) {
-        return state.filter(id => id !== nodeId)
-      }
+  .on(nodeDragStart, (state, nodeId) => {
+    if (!state.includes(nodeId)) {
+      return [...state, nodeId]
     }
     return state
+  })
+  .on(nodeDragEnd, (state, nodeId) => {
+    return state.filter(id => id !== nodeId)
   })
   .reset(globalReset)

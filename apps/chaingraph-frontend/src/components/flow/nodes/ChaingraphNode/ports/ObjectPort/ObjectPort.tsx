@@ -76,7 +76,7 @@ const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }
   )
 })
 
-export function ObjectPort({ node, port, context }: ObjectPortProps) {
+function ObjectPortInner({ node, port, context }: ObjectPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
   const {
     updatePortUI,
@@ -377,3 +377,46 @@ export function ObjectPort({ node, port, context }: ObjectPortProps) {
     </div>
   )
 }
+
+/**
+ * Memoized ObjectPort - only re-renders when port structure or collapse state changes
+ */
+export const ObjectPort = memo(ObjectPortInner, (prev, next) => {
+  // Port ID or node ID changed
+  if (prev.port.id !== next.port.id || prev.node.id !== next.node.id) {
+    return false
+  }
+
+  // Child ports changed (structure change)
+  const prevChildPorts = Array.from(prev.node.ports.values())
+    .filter(p => p.getConfig().parentId === prev.port.getConfig().id)
+  const nextChildPorts = Array.from(next.node.ports.values())
+    .filter(p => p.getConfig().parentId === next.port.getConfig().id)
+
+  if (prevChildPorts.length !== nextChildPorts.length) {
+    return false
+  }
+
+  // Collapsed state changed
+  if (prev.port.getConfig().ui?.collapsed !== next.port.getConfig().ui?.collapsed) {
+    return false
+  }
+
+  // Hidden state changed
+  if (prev.port.getConfig().ui?.hidden !== next.port.getConfig().ui?.hidden) {
+    return false
+  }
+
+  // Node version changed
+  if (prev.node.getVersion() !== next.node.getVersion()) {
+    return false
+  }
+
+  // Context changed (affects edge connections and editor visibility)
+  if (prev.context !== next.context) {
+    return false
+  }
+
+  // Skip re-render
+  return true
+})

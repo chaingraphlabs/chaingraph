@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Flow } from '@badaitech/chaingraph-types'
+import type { Flow, NodeUIMetadata } from '@badaitech/chaingraph-types'
 import { z } from 'zod'
 import { flowContextProcedure } from '../../trpc'
 
@@ -21,7 +21,7 @@ export const updateNodeUI = flowContextProcedure
       }).optional(),
       dimensions: z.object({
         width: z.number(),
-        height: z.number(),
+        height: z.number().optional(),
       }).optional(),
       style: z.object({
         backgroundColor: z.string().optional(),
@@ -61,9 +61,16 @@ export const updateNodeUI = flowContextProcedure
         }
       }
 
-      node.setUI({
+      const newUI: NodeUIMetadata = {
         ...(node.metadata.ui ?? {}),
-        ...input.ui,
+        position: {
+          ...(node.metadata.ui?.position ?? { x: 0, y: 0 }),
+          ...input.ui.position,
+        },
+        dimensions: {
+          ...(node.metadata.ui?.dimensions ?? { width: 200, height: 200 }),
+          ...input.ui.dimensions,
+        },
         style: {
           ...(node.metadata.ui?.style ?? {}),
           ...input.ui.style,
@@ -72,7 +79,9 @@ export const updateNodeUI = flowContextProcedure
           ...(node.metadata.ui?.state ?? {}),
           ...input.ui.state,
         },
-      }, true)
+      }
+
+      node.setUI(newUI, true)
 
       await ctx.flowStore.updateFlow(flow as Flow)
 

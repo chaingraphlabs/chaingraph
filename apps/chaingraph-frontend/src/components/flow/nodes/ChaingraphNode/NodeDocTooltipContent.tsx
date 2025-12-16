@@ -295,7 +295,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {passthroughs
                               .map(port => (
-                                <PortItem key={port.getConfig().key} port={port} type="passthrough" />
+                                <PortItem key={port.getConfig().id} port={port} type="passthrough" />
                               ))}
                           </div>
                         </div>
@@ -308,7 +308,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {outputs
                               .map(port => (
-                                <PortItem key={port.getConfig().key} port={port} type="output" />
+                                <PortItem key={port.getConfig().id} port={port} type="output" />
                               ))}
                           </div>
                         </div>
@@ -321,7 +321,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {systemPorts
                               .map(port => (
-                                <PortItem key={port.getConfig().key} port={port} type="input" />
+                                <PortItem key={port.getConfig().id} port={port} type="input" />
                               ))}
                           </div>
                         </div>

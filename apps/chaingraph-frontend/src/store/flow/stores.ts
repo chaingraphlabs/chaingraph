@@ -636,6 +636,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       const currentVersion = currentNode.getVersion()
 
       if (data.version && data.version <= currentVersion) {
+        // console.warn(`[NodeUIChanged] Skipping outdated UI change event for node ${data.nodeId}, event version ${data.version}, current version ${currentVersion}`)
         return
       }
 
@@ -663,7 +664,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         return
       }
 
-      if (!data.newDimensions || !data.newDimensions.width || !data.newDimensions.height) {
+      if (!data.newDimensions || !data.newDimensions.width) { // || !data.newDimensions.height) {
         return
       }
 

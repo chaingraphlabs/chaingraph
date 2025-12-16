@@ -77,7 +77,7 @@ const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }
   )
 })
 
-export function ArrayPort({ node, port, context }: ArrayPortProps) {
+function ArrayPortInner({ node, port, context }: ArrayPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
   const [isSchemaEditorOpen, setIsSchemaEditorOpen] = useState(false)
   const {
@@ -360,3 +360,57 @@ export function ArrayPort({ node, port, context }: ArrayPortProps) {
     </div>
   )
 }
+
+/**
+ * Memoized ArrayPort - only re-renders when array elements or UI config changes
+ */
+export const ArrayPort = memo(ArrayPortInner, (prev, next) => {
+  // Port or node ID changed
+  if (prev.port.id !== next.port.id || prev.node.id !== next.node.id) {
+    return false
+  }
+
+  // Array value changed (shallow comparison)
+  const prevValue = prev.port.getValue()
+  const nextValue = next.port.getValue()
+  if (prevValue !== nextValue) {
+    // Check array length first (fast check)
+    if (Array.isArray(prevValue) && Array.isArray(nextValue)) {
+      if (prevValue.length !== nextValue.length) {
+        return false
+      }
+    } else {
+      return false
+    }
+  }
+
+  // Child ports count changed
+  const prevChildPorts = Array.from(prev.node.ports.values())
+    .filter(p => p.getConfig().parentId === prev.port.getConfig().id)
+  const nextChildPorts = Array.from(next.node.ports.values())
+    .filter(p => p.getConfig().parentId === next.port.getConfig().id)
+
+  if (prevChildPorts.length !== nextChildPorts.length) {
+    return false
+  }
+
+  // UI state changed
+  if (prev.port.getConfig().ui?.hidden !== next.port.getConfig().ui?.hidden
+    || prev.port.getConfig().ui?.collapsed !== next.port.getConfig().ui?.collapsed
+    || prev.port.getConfig().ui?.hideEditor !== next.port.getConfig().ui?.hideEditor) {
+    return false
+  }
+
+  // Node version changed
+  if (prev.node.getVersion() !== next.node.getVersion()) {
+    return false
+  }
+
+  // Context changed (affects edge connections and editor visibility)
+  if (prev.context !== next.context) {
+    return false
+  }
+
+  // Skip re-render
+  return true
+})

@@ -10,7 +10,7 @@ import type { ExtractValue, INode, IPort, NumberPortConfig } from '@badaitech/ch
 import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import { useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { NumberInput } from '@/components/ui/number-input'
 import { Slider } from '@/components/ui/slider'
@@ -27,7 +27,7 @@ export interface NumberPortProps {
   context: PortContextValue
 }
 
-export function NumberPort(props: NumberPortProps) {
+function NumberPortInner(props: NumberPortProps) {
   const { node, port, context } = props
   const { updatePortValue, getEdgesForPort } = context
 
@@ -176,3 +176,16 @@ export function NumberPort(props: NumberPortProps) {
     </div>
   )
 }
+
+/**
+ * Memoized NumberPort - only re-renders when port value, UI config, or context changes
+ */
+export const NumberPort = memo(NumberPortInner, (prev, next) => {
+  return prev.port.getValue() === next.port.getValue()
+    && prev.context === next.context
+    && prev.port.getConfig().ui?.hidden === next.port.getConfig().ui?.hidden
+    && prev.port.getConfig().ui?.hideEditor === next.port.getConfig().ui?.hideEditor
+    && prev.port.getConfig().ui?.disabled === next.port.getConfig().ui?.disabled
+    && prev.node.id === next.node.id
+    && prev.port.id === next.port.id
+})

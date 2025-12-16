@@ -193,7 +193,7 @@ function RecursivePortPreview({ config, depth = 0, isLast = false }: PortPreview
         <div className="relative">
           {childConfigs.map((childConfig, index) => (
             <RecursivePortPreview
-              key={childConfig.key || index}
+              key={childConfig.id || childConfig.key || index}
               config={childConfig}
               depth={depth + 1}
               isLast={index === childConfigs.length - 1}
@@ -218,7 +218,7 @@ function PortGroup({ title, ports, depth = 0 }: PortGroupProps) {
       <div className="space-y-0.5">
         {ports.map((port, index) => (
           <RecursivePortPreview
-            key={port.key || port.id || index}
+            key={port.id || port.key || index}
             config={port}
             depth={depth}
           />

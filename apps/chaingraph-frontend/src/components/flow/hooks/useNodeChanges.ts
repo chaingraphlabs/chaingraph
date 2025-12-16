@@ -11,7 +11,7 @@ import type { NodeChange } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
 import { $activeFlowMetadata } from '@/store/flow'
-import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodeUI } from '@/store/nodes'
+import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodePositionOnly, updateNodeUI } from '@/store/nodes'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { roundPosition } from './useFlowUtils'
 
@@ -59,6 +59,13 @@ export function useNodeChanges() {
 
             positionInterpolator.clearNodeState(node.id)
 
+            // Use position-only update during drag to avoid $nodes cascade
+            updateNodePositionOnly({
+              nodeId: change.id,
+              position: roundPosition(change.position as Position),
+            })
+
+            // Also trigger server sync (throttled separately at 500ms)
             updateNodePosition({
               flowId: activeFlow.id!,
               nodeId: change.id,
@@ -70,41 +77,15 @@ export function useNodeChanges() {
 
         case 'dimensions':
         {
-          const node = currentNodes[change.id]
-          if (!node)
-            return
-
-          if (node.metadata.category === 'group') {
-            // ignore group node dimension changes, is is handled by the group node itself
-            return
-          }
-
-          if (!change.dimensions || !change.dimensions.width || !change.dimensions.height) {
-            console.warn(`[useNodeChanges] Invalid dimensions change:`, change)
-            return
-          }
-          const isSameDimensions
-            = node.metadata.ui?.dimensions?.width === change.dimensions.width
-              && node.metadata.ui?.dimensions?.height === change.dimensions.height
-
-          const isNodeDimensionInitialized
-            = node.metadata.ui?.dimensions !== undefined
-              && node.metadata.ui?.dimensions?.width !== undefined
-              && node.metadata.ui?.dimensions?.height !== undefined
-
-          if (isSameDimensions) { // || !isNodeDimensionInitialized) {
-            return
-          }
-
-          updateNodeUI({
-            flowId: activeFlow.id!,
-            nodeId: change.id,
-            ui: {
-              dimensions: change.dimensions,
-            },
-            version: node.getVersion(),
-          })
-
+          // SKIP all dimension changes from XYFlow's onNodesChange
+          // XYFlow reports measured DOM sizes which conflict with resize handle positions
+          //
+          // Dimension sources are now:
+          // - Width: NodeResizeControl onResize handler (user intent)
+          // - Height: useElementResize content detection (for regular nodes)
+          // - Both: NodeResizer onResize handler (for GroupNode)
+          //
+          // GroupNode is also skipped here as it handles dimensions in its own component
           break
         }
 
@@ -117,7 +98,7 @@ export function useNodeChanges() {
             updateNodeUI({
               flowId: activeFlow.id!,
               nodeId: change.id,
-              version: node.getVersion() + 1,
+              version: 0,
               ui: {
                 state: {
                   isSelected: change.selected,

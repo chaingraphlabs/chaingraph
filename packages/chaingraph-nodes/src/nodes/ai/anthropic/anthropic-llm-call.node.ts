@@ -632,6 +632,75 @@ export class AntropicLlmCallNode extends BaseNode {
     }
 
     if (this.tools && this.tools.length > 0) {
+      /**
+       * Filters out pre-configured ports from tool input schema.
+       * Pre-configured ports are those with incoming connections.
+       */
+      function filterPreConfiguredPorts(
+        tool: Tool,
+        node: INode,
+      ): Record<string, any> {
+        const filteredProperties: Record<string, any> = {}
+
+        for (const [key, propSchema] of Object.entries(tool.input_schema.properties)) {
+          const port = findPort(node, p => p.getConfig().key === key)
+
+          if (!port) {
+            // Port not found in node, include it anyway
+            filteredProperties[key] = propSchema
+            continue
+          }
+
+          const config = port.getConfig()
+          // Check if port is pre-configured (has incoming connections)
+          const isPreConfigured = config.connections && config.connections.length > 0
+
+          if (!isPreConfigured) {
+            // Port is NOT pre-configured → include in tool schema for LLM
+            filteredProperties[key] = propSchema
+          }
+          // else: Port IS pre-configured → skip it (don't ask LLM for this value)
+        }
+
+        return filteredProperties
+      }
+
+      /**
+       * Filters required fields to match filtered properties.
+       * Removes required fields that are pre-configured.
+       */
+      function filterRequiredFields(
+        tool: Tool,
+        node: INode,
+      ): string[] {
+        if (!tool.input_schema.required) {
+          return []
+        }
+
+        const filteredRequired: string[] = []
+
+        for (const key of tool.input_schema.required) {
+          const port = findPort(node, p => p.getConfig().key === key)
+
+          if (!port) {
+            // Port not found, include in required
+            filteredRequired.push(key)
+            continue
+          }
+
+          const config = port.getConfig()
+          const isPreConfigured = config.connections && config.connections.length > 0
+
+          if (!isPreConfigured) {
+            // Port is NOT pre-configured → include in required
+            filteredRequired.push(key)
+          }
+          // else: Port IS pre-configured → skip (already satisfied)
+        }
+
+        return filteredRequired
+      }
+
       function convertToolToToolDefinition(tool: Tool): Anthropic.Beta.BetaToolUnion {
         const nodeId = tool.chaingraph_node_id
         if (!nodeId) {
@@ -647,14 +716,18 @@ export class AntropicLlmCallNode extends BaseNode {
           throw new Error(`Node with ID ${nodeId} not found in context`)
         }
 
+        // Filter out pre-configured ports from the tool schema
+        const filteredProperties = filterPreConfiguredPorts(tool, node)
+        const filteredRequired = filterRequiredFields(tool, node)
+
         return {
           type: 'custom',
           name: tool.name,
           description: tool.description,
           input_schema: {
             type: tool.input_schema.type as 'object',
-            properties: tool.input_schema.properties,
-            required: tool.input_schema.required,
+            properties: filteredProperties,
+            required: filteredRequired,
           },
         }
       }
@@ -1115,6 +1188,23 @@ export class AntropicLlmCallNode extends BaseNode {
 
           const nodeToExecute = originalNodeToExecute.clone() as BaseNode
 
+          // Pre-fill pre-configured port values from the original node
+          // Pre-configured ports are those with incoming connections
+          for (const port of originalNodeToExecute.getInputs()) {
+            const config = port.getConfig()
+            const isPreConfigured = config.connections && config.connections.length > 0
+
+            if (isPreConfigured) {
+              // Copy the pre-configured value to the cloned node
+              const value = port.getValue()
+              const clonedPort = nodeToExecute.getPort(config.id!)
+
+              if (clonedPort && value !== undefined) {
+                clonedPort.setValue(value)
+              }
+            }
+          }
+
           let toolInput: any = toolUseBlock.input
 
           if (nodeToExecute instanceof MCPToolCallNode) {
@@ -1129,7 +1219,8 @@ export class AntropicLlmCallNode extends BaseNode {
             }
           }
 
-          // fill the node's input ports with the tool use block input
+          // Fill the node's input ports with the tool use block input (LLM-provided values)
+          // This merges with pre-configured values set above
           this.setPortValuesRecursively(
             nodeToExecute,
             toolInput,

@@ -17,6 +17,7 @@ import {
   requestUpdatePortValue,
   updateItemConfigArrayPort,
 } from '@/store/ports'
+import { $nodes } from '../stores'
 import { $nodePortEdgesMap } from './port-edges'
 
 export interface PortOperations {
@@ -169,18 +170,23 @@ export const $nodeOperationsFactory = createStore<() => PortOperations>(() => ({
 /**
  * Computed port contexts for all nodes
  * Creates context objects with operations and edges data
+ *
+ * CRITICAL: Must include ALL nodes, not just nodes with edges.
+ * Nodes without edges need working port contexts too!
  */
 export const $nodePortContexts = combine(
+  $nodes,
   $nodePortEdgesMap,
   $nodeOperationsFactory,
-  (portEdgesMap, operationsFactory) => {
+  (nodes, portEdgesMap, operationsFactory) => {
     const contexts: Record<string, NodePortContext> = {}
 
     // Cache for operations per node to maintain stable references
     const operationsCache = new Map<string, PortOperations>()
 
-    Object.keys(portEdgesMap).forEach((nodeId) => {
-      const nodePortEdges = portEdgesMap[nodeId]
+    // Iterate over ALL nodes, not just those in portEdgesMap
+    Object.keys(nodes).forEach((nodeId) => {
+      const nodePortEdges = portEdgesMap[nodeId] || {} // Empty object if no edges
 
       // Get or create operations for this node
       let operations = operationsCache.get(nodeId)
@@ -201,7 +207,7 @@ export const $nodePortContexts = combine(
       contexts[nodeId] = {
         nodeId,
         operations,
-        edgesForPorts: nodePortEdges || {},
+        edgesForPorts: nodePortEdges,
       }
     })
 

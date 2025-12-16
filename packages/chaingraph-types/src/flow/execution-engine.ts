@@ -636,6 +636,17 @@ export class ExecutionEngine {
     if (parentNodeId) {
       const remainingChildren = (this.nodeDependencies.get(parentNodeId) ?? 1) - 1
       this.nodeDependencies.set(parentNodeId, remainingChildren)
+
+      // Check if parent is now ready (all children complete + all input ports resolved)
+      if (remainingChildren === 0) {
+        const parentNode = this.flow.nodes.get(parentNodeId)
+        if (parentNode && this.isNodeReady(parentNodeId)) {
+          if (!this.executingNodes.has(parentNodeId) && !this.completedNodes.has(parentNodeId)) {
+            this.executingNodes.add(parentNodeId)
+            this.readyQueue.enqueue(this.executeNode.bind(this, parentNode))
+          }
+        }
+      }
     }
 
     // Handle event-driven execution rules
@@ -823,6 +834,28 @@ export class ExecutionEngine {
       if (nodeParent && nodeParent.metadata.category !== 'group') {
         // If the node has a parent that is not a group, mark it completed without actually executing
         await this.setNodeCompleted(node, nodeStartTime)
+
+        // find in the parent node the port which contains:
+        // "nodeSchemaCapture": {
+        //   "enabled": true,
+        //   "capturedNodeId": THE CURRENT NODE ID
+        // }
+        // and mark this port as resolved
+        nodeParent.findPort((port) => {
+          const portConfig = port.getConfig()
+          // is object port
+          if (!portConfig.type || portConfig.type !== 'object') {
+            return false
+          }
+
+          const nodeSchemaCapture = portConfig.ui?.nodeSchemaCapture
+          if (nodeSchemaCapture && nodeSchemaCapture.enabled === true && nodeSchemaCapture.capturedNodeId === node.id) {
+            this.handlePortResolved(nodeParent.id, port.id)
+            return true
+          }
+          return false
+        })
+
         return
       }
 

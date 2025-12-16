@@ -9,7 +9,6 @@
 import type { EdgeData } from '@/store/edges/types'
 import { combine } from 'effector'
 import { $edges } from '@/store/edges'
-import { $nodes } from '../stores'
 
 export interface PortEdgesMap {
   [portId: string]: EdgeData[]
@@ -22,43 +21,34 @@ export interface NodePortEdgesMap {
 /**
  * Pre-computed mapping of edges for each port in each node
  * This eliminates the need to filter edges on every render
+ *
+ * OPTIMIZED: Now only depends on $edges, not $nodes!
+ * This prevents recalculation during node position/drag updates.
  */
 export const $nodePortEdgesMap = combine(
-  $nodes,
   $edges,
-  (nodes, edges) => {
+  (edges) => {
     const nodePortEdges: NodePortEdgesMap = {}
 
-    // Initialize empty maps for all nodes
-    Object.keys(nodes).forEach((nodeId) => {
-      nodePortEdges[nodeId] = {}
-      const node = nodes[nodeId]
-
-      // Initialize empty arrays for all ports
-      if (node && node.ports) {
-        node.ports.forEach((port) => {
-          nodePortEdges[nodeId][port.id] = []
-        })
+    // Helper to ensure node and port structure exists
+    const ensurePortArray = (nodeId: string, portId: string) => {
+      if (!nodePortEdges[nodeId]) {
+        nodePortEdges[nodeId] = {}
       }
-    })
+      if (!nodePortEdges[nodeId][portId]) {
+        nodePortEdges[nodeId][portId] = []
+      }
+    }
 
-    // Populate edges for each port
+    // Build map directly from edges - no node iteration needed!
     edges.forEach((edge) => {
       // Add edge to source node's port
-      if (nodePortEdges[edge.sourceNodeId]) {
-        if (!nodePortEdges[edge.sourceNodeId][edge.sourcePortId]) {
-          nodePortEdges[edge.sourceNodeId][edge.sourcePortId] = []
-        }
-        nodePortEdges[edge.sourceNodeId][edge.sourcePortId].push(edge)
-      }
+      ensurePortArray(edge.sourceNodeId, edge.sourcePortId)
+      nodePortEdges[edge.sourceNodeId][edge.sourcePortId].push(edge)
 
       // Add edge to target node's port
-      if (nodePortEdges[edge.targetNodeId]) {
-        if (!nodePortEdges[edge.targetNodeId][edge.targetPortId]) {
-          nodePortEdges[edge.targetNodeId][edge.targetPortId] = []
-        }
-        nodePortEdges[edge.targetNodeId][edge.targetPortId].push(edge)
-      }
+      ensurePortArray(edge.targetNodeId, edge.targetPortId)
+      nodePortEdges[edge.targetNodeId][edge.targetPortId].push(edge)
     })
 
     return nodePortEdges

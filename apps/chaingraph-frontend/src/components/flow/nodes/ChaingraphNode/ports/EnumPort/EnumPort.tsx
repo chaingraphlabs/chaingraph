@@ -10,7 +10,7 @@ import type { EnumPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
 import type {
   PortContextValue,
 } from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import { useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import {
   Select,
@@ -32,7 +32,7 @@ export interface EnumPortProps {
   context: PortContextValue
 }
 
-export function EnumPort(props: EnumPortProps) {
+function EnumPortInner(props: EnumPortProps) {
   const executionID = useExecutionID()
 
   const { node, port, context } = props
@@ -157,3 +157,16 @@ export function EnumPort(props: EnumPortProps) {
     </div>
   )
 }
+
+/**
+ * Memoized EnumPort - only re-renders when port value, UI config, or context changes
+ */
+export const EnumPort = memo(EnumPortInner, (prev, next) => {
+  return prev.port.getValue() === next.port.getValue()
+    && prev.context === next.context
+    && prev.port.getConfig().ui?.hidden === next.port.getConfig().ui?.hidden
+    && prev.port.getConfig().ui?.hideEditor === next.port.getConfig().ui?.hideEditor
+    && prev.port.getConfig().ui?.disabled === next.port.getConfig().ui?.disabled
+    && prev.node.id === next.node.id
+    && prev.port.id === next.port.id
+})

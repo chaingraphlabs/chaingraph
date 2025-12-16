@@ -53,4 +53,5 @@ export const initializationDomain = createDomain('initialization')
 export const walletDomain = createDomain('wallet')
 
 // import { debug } from 'patronum'
-// debug(walletDomain)
+
+// debug(dragDropDomain)

@@ -7,6 +7,7 @@
  */
 
 import { combine, createEffect, createEvent, createStore, sample } from 'effector'
+import { $draggingNodes } from '../nodes/stores'
 
 // Constants
 const PULSE_DURATION_MS = 200
@@ -84,8 +85,15 @@ const scheduleFadeCompletionFx = createEffect<string, void>((nodeId) => {
 })
 
 // Connect events to effects using sample
+// Skip pulse animation if node is being dragged (performance optimization)
 sample({
-  source: nodeUpdated,
+  source: $draggingNodes,
+  clock: nodeUpdated,
+  filter: (draggingNodes, nodeId) => {
+    // Only pulse if node is NOT being dragged
+    return !draggingNodes.includes(nodeId)
+  },
+  fn: (_, nodeId) => nodeId,
   target: schedulePulseCompletionFx,
 })
 
