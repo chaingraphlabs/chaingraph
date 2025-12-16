@@ -79,7 +79,7 @@ function MarkdownPreviewInner({
   const basePadding = 0.5 // rem at 100%
   const paddingRem = Math.max(0.25, (fontSize / 100) * basePadding)
 
-  // Custom sanitize schema that allows KaTeX classes
+  // Custom sanitize schema that allows KaTeX classes and base64 images
   const sanitizeSchema = {
     ...defaultSchema,
     attributes: {
@@ -99,6 +99,11 @@ function MarkdownPreviewInner({
         ...(defaultSchema.attributes?.['*'] || []),
         ['aria-hidden'],
       ],
+    },
+    protocols: {
+      ...defaultSchema.protocols,
+      // Allow data URIs for base64 encoded images
+      src: ['http', 'https', 'data'],
     },
     tagNames: [
       ...(defaultSchema.tagNames || []),

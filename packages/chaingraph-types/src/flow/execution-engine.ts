@@ -165,11 +165,12 @@ export class ExecutionEngine {
         continue
       }
 
-      // Need ALL sources to be resolved for this input port
-      const allSourcesResolved = Array.from(sourcePorts).every(
+      // Need AT LEAST ONE source to be resolved for this input port
+      // (if multiple edges feed the same port, the first resolved one wins)
+      const anySourceResolved = Array.from(sourcePorts).some(
         sourceKey => this.resolvedPorts.has(sourceKey),
       )
-      if (!allSourcesResolved) {
+      if (!anySourceResolved) {
         return false
       }
     }

@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.38
+
+### Patch Changes
+
+- feat: enhance MarkdownPreview to support base64 images and update ExecutionEngine to require at least one resolved source
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.38
+  - @badaitech/chaingraph-nodes@0.6.38
+  - @badaitech/chaingraph-types@0.6.38
+  - @badaitech/chaingraph-trpc@0.6.38
+  - @badaitech/badai-api@0.6.38
+
 ## 0.6.37
 
 ### Patch Changes
