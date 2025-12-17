@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.41
+
+### Patch Changes
+
+- feat(gemini): add Gemini 3 Flash model and update thinking level enums
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.41
+  - @badaitech/badai-api@0.6.41
+  - @badaitech/chaingraph-executor@0.6.41
+  - @badaitech/chaingraph-trpc@0.6.41
+  - @badaitech/chaingraph-types@0.6.41
+
 ## 0.6.40
 
 ### Patch Changes

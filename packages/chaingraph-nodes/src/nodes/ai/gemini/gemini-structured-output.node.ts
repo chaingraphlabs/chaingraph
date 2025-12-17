@@ -51,8 +51,11 @@ import {
 } from './gemini-part-converters'
 import {
   GeminiGenerationConfig,
-  GeminiThinkingLevel,
+  GeminiThinkingLevelFlash,
+  GeminiThinkingLevelPro,
+  isGemini3FlashModel,
   isGemini3Model,
+  isGemini3ProModel,
   isGemini25Model,
   supportsThinking,
 } from './gemini-types'
@@ -179,14 +182,29 @@ Leave empty for single-shot operations.`,
 
   @Passthrough()
   @PortVisibility({
-    showIf: (node: INode) => isGemini3Model((node as GeminiStructuredOutputNode).config.model),
+    showIf: (node: INode) => isGemini3ProModel((node as GeminiStructuredOutputNode).config.model),
   })
-  @PortEnumFromNative(GeminiThinkingLevel, {
+  @PortEnumFromNative(GeminiThinkingLevelPro, {
     title: 'Thinking Level',
-    description: 'Gemini 3 reasoning depth (low = faster, high = deeper)',
-    defaultValue: GeminiThinkingLevel.High,
+    description: 'Gemini 3 Pro reasoning depth (low = faster, high = deeper)',
+    defaultValue: GeminiThinkingLevelPro.High,
   })
-  thinkingLevel: GeminiThinkingLevel = GeminiThinkingLevel.High
+  thinkingLevelPro: GeminiThinkingLevelPro = GeminiThinkingLevelPro.High
+
+  @Passthrough()
+  @PortVisibility({
+    showIf: (node: INode) => isGemini3FlashModel((node as GeminiStructuredOutputNode).config.model),
+  })
+  @PortEnumFromNative(GeminiThinkingLevelFlash, {
+    title: 'Thinking Level',
+    description: `Gemini 3 Flash reasoning depth:
+- **Minimal** — No thinking, fastest latency
+- **Low** — Minimal reasoning, fast
+- **Medium** — Balanced thinking
+- **High** — Deep reasoning (default)`,
+    defaultValue: GeminiThinkingLevelFlash.High,
+  })
+  thinkingLevelFlash: GeminiThinkingLevelFlash = GeminiThinkingLevelFlash.High
 
   @Passthrough()
   @PortVisibility({
@@ -320,8 +338,9 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
     }
 
     // Build generation config
+    // Auto-apply temperature 1.0 for Gemini 3 models (Google's recommendation)
     const generationConfig: GenerateContentConfig = {
-      temperature: this.config.temperature,
+      temperature: isGemini3Model(this.config.model) ? 1.0 : this.config.temperature,
       maxOutputTokens: this.config.maxOutputTokens,
       topP: this.config.topP,
       topK: this.config.topK,
@@ -335,13 +354,21 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
       generationConfig.systemInstruction = this.systemInstruction
     }
 
-    // Thinking config (model-specific)
-    if (isGemini3Model(this.config.model)) {
+    // Thinking config - model specific
+    if (isGemini3FlashModel(this.config.model)) {
+      // Gemini 3 Flash uses thinkingLevelFlash (supports minimal, low, medium, high)
       generationConfig.thinkingConfig = {
-        thinkingLevel: mapThinkingLevel(this.thinkingLevel),
+        thinkingLevel: mapThinkingLevel(this.thinkingLevelFlash),
+        includeThoughts: this.includeThoughts,
+      }
+    } else if (isGemini3ProModel(this.config.model)) {
+      // Gemini 3 Pro uses thinkingLevelPro (supports low, high only)
+      generationConfig.thinkingConfig = {
+        thinkingLevel: mapThinkingLevel(this.thinkingLevelPro),
         includeThoughts: this.includeThoughts,
       }
     } else if (isGemini25Model(this.config.model)) {
+      // Gemini 2.5 uses thinkingBudget
       generationConfig.thinkingConfig = {
         thinkingBudget: this.thinkingBudget,
         includeThoughts: this.includeThoughts,
@@ -794,15 +821,20 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
 }
 
 /**
- * Maps our GeminiThinkingLevel enum to SDK's ThinkingLevel enum
+ * Maps thinking level enum value to SDK's ThinkingLevel
+ * Accepts string values from any thinking level enum (Pro, Flash, or Legacy)
  */
-function mapThinkingLevel(value: GeminiThinkingLevel): ThinkingLevel {
+function mapThinkingLevel(value: string): ThinkingLevel {
   switch (value) {
-    case GeminiThinkingLevel.Unspecified:
+    case 'THINKING_LEVEL_UNSPECIFIED':
       return 'THINKING_LEVEL_UNSPECIFIED' as ThinkingLevel
-    case GeminiThinkingLevel.Low:
+    case 'MINIMAL':
+      return 'MINIMAL' as ThinkingLevel
+    case 'LOW':
       return 'LOW' as ThinkingLevel
-    case GeminiThinkingLevel.High:
+    case 'MEDIUM':
+      return 'MEDIUM' as ThinkingLevel
+    case 'HIGH':
       return 'HIGH' as ThinkingLevel
     default:
       return 'HIGH' as ThinkingLevel

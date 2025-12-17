@@ -30,14 +30,44 @@ export type GeminiAPIKey = SecretTypeMap['gemini']['apiKey']
 // ============================================================================
 
 /**
- * Thinking level for Gemini 3 models
- * Controls the depth of reasoning before generating a response
+ * Thinking level for Gemini 3 Pro models
+ * Pro supports: Low, High
+ */
+export enum GeminiThinkingLevelPro {
+  /** Minimizes latency and cost for straightforward tasks */
+  Low = 'LOW',
+  /** Maximizes reasoning depth for complex problems (default) */
+  High = 'HIGH',
+}
+
+/**
+ * Thinking level for Gemini 3 Flash models
+ * Flash supports additional levels: Minimal, Medium
+ */
+export enum GeminiThinkingLevelFlash {
+  /** Matches "no thinking" for most queries. May think minimally for complex coding. Minimizes latency. */
+  Minimal = 'MINIMAL',
+  /** Minimizes latency and cost for straightforward tasks */
+  Low = 'LOW',
+  /** Balanced thinking for most tasks */
+  Medium = 'MEDIUM',
+  /** Maximizes reasoning depth for complex problems (default) */
+  High = 'HIGH',
+}
+
+/**
+ * Legacy thinking level enum for backward compatibility
+ * @deprecated Use GeminiThinkingLevelPro or GeminiThinkingLevelFlash instead
  */
 export enum GeminiThinkingLevel {
   /** Default value (unspecified) */
   Unspecified = 'THINKING_LEVEL_UNSPECIFIED',
+  /** Matches "no thinking" for most queries (Flash only) */
+  Minimal = 'MINIMAL',
   /** Minimizes latency and cost for straightforward tasks */
   Low = 'LOW',
+  /** Balanced thinking for most tasks (Flash only) */
+  Medium = 'MEDIUM',
   /** Maximizes reasoning depth for complex problems (default) */
   High = 'HIGH',
 }
@@ -49,12 +79,14 @@ export enum GeminiThinkingLevel {
 export enum GeminiMediaResolution {
   /** Media resolution not specified */
   Unspecified = 'MEDIA_RESOLUTION_UNSPECIFIED',
-  /** 64 tokens - fastest, lowest cost */
+  /** 280 tokens (images), 70 tokens (video) - fastest, lowest cost */
   Low = 'MEDIA_RESOLUTION_LOW',
-  /** 256 tokens - balanced */
+  /** 560 tokens (images), 70 tokens (video) - balanced */
   Medium = 'MEDIA_RESOLUTION_MEDIUM',
-  /** 256 tokens with zoomed reframing - highest quality */
+  /** 1120 tokens (images), 280 tokens (video) - high quality */
   High = 'MEDIA_RESOLUTION_HIGH',
+  /** 2240 tokens - ultra high quality (Gemini 3 only, per-part, v1alpha API) */
+  UltraHigh = 'MEDIA_RESOLUTION_ULTRA_HIGH',
 }
 
 // ============================================================================
@@ -319,6 +351,22 @@ export function getMediaItemCount(config?: GeminiMediaConfig): number {
  */
 export function isGemini3Model(model: string): boolean {
   return model.includes('gemini-3')
+}
+
+/**
+ * Check if model is Gemini 3 Flash series
+ * Gemini 3 Flash supports additional thinking levels (minimal, medium)
+ */
+export function isGemini3FlashModel(model: string): boolean {
+  return model.includes('gemini-3') && model.includes('flash')
+}
+
+/**
+ * Check if model is Gemini 3 Pro series (not Flash, not Image)
+ * Gemini 3 Pro supports only Low and High thinking levels
+ */
+export function isGemini3ProModel(model: string): boolean {
+  return model.includes('gemini-3') && model.includes('pro') && !model.includes('image')
 }
 
 /**
