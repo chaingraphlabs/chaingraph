@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.41
+
+### Patch Changes
+
+- feat(gemini): add Gemini 3 Flash model and update thinking level enums
+
 ## 0.6.40
 
 ### Patch Changes

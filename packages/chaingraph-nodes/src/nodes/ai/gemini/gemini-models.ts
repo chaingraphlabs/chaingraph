@@ -18,6 +18,7 @@ import {
 export enum GeminiModels {
   // Gemini 3 Models
   Gemini3ProPreview = 'gemini-3-pro-preview',
+  Gemini3FlashPreview = 'gemini-3-flash-preview',
 
   // Gemini 2.5 Models
   Gemini25Pro = 'gemini-2.5-pro',
