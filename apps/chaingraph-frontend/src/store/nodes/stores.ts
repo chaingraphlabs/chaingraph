@@ -216,13 +216,23 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Single node operations - only clone the affected node and preserve others
   .on(addNode, (state, node) => {
+    // PERF: Skip if node already exists with same reference
+    if (state[node.id] === node) {
+      return state
+    }
     return { ...state, [node.id]: node }
   })
 
   // Add nodes operation
   .on(addNodes, (state, nodes) => {
+    // PERF: Check if any nodes actually need updating
+    const nodesToAdd = nodes.filter(node => state[node.id] !== node)
+    if (nodesToAdd.length === 0) {
+      return state
+    }
+
     const newState = { ...state }
-    nodes.forEach((node) => {
+    nodesToAdd.forEach((node) => {
       newState[node.id] = node
     })
 
@@ -231,8 +241,21 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Update nodes operation
   .on(updateNodes, (state, nodes) => {
+    // PERF: Filter nodes that actually need updating (different reference or newer version)
+    const nodesToUpdate = nodes.filter((node) => {
+      const existing = state[node.id]
+      if (!existing) return true // New node
+      if (existing === node) return false // Same reference
+      if (existing.getVersion() >= node.getVersion()) return false // Outdated
+      return true
+    })
+
+    if (nodesToUpdate.length === 0) {
+      return state
+    }
+
     const newState = { ...state }
-    nodes.forEach((node) => {
+    nodesToUpdate.forEach((node) => {
       newState[node.id] = node
     })
 
@@ -240,6 +263,18 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
   })
 
   .on(updateNode, (state, node) => {
+    const existing = state[node.id]
+
+    // PERF: Skip if reference unchanged
+    if (existing === node) {
+      return state
+    }
+
+    // PERF: Skip if version not newer (handles race conditions)
+    if (existing && existing.getVersion() >= node.getVersion()) {
+      return state
+    }
+
     return { ...state, [node.id]: node }
   })
 
@@ -272,6 +307,11 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
     const node = state[nodeId]
     if (!node) {
       console.error(`Node ${nodeId} not found in store`)
+      return state
+    }
+
+    // PERF: Skip if version already set (prevents unnecessary clone and cascade)
+    if (node.getVersion() === version) {
       return state
     }
 

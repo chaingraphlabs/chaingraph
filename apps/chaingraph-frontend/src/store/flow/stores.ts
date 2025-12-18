@@ -619,12 +619,26 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         return
       }
 
+      const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
+
+      // PERF: Skip if position is already in state (echo of our optimistic update)
+      // This preserves multi-user editing: other users' different positions will be processed
+      const positionUnchanged =
+        Math.abs(currentPosition.x - data.newPosition.x) < 1 &&
+        Math.abs(currentPosition.y - data.newPosition.y) < 1
+
+      // Always update version to maintain consistency
       setNodeVersion({
         nodeId: data.nodeId,
         version: data.version,
       })
 
-      const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
+      if (positionUnchanged) {
+        // Position already matches - skip expensive interpolator and $nodes cascade
+        return
+      }
+
+      // Different position - another user moved the node or server correction
       positionInterpolator.addState(data.nodeId, data.newPosition, currentPosition)
     },
 
@@ -668,11 +682,26 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         return
       }
 
+      const currentDimensions = currentNode.metadata.ui?.dimensions
+
+      // PERF: Skip if dimensions are already in state (echo of our optimistic update)
+      // This preserves multi-user editing: other users' different dimensions will be processed
+      const dimensionsUnchanged = currentDimensions &&
+        Math.abs((currentDimensions.width ?? 0) - (data.newDimensions.width ?? 0)) < 1 &&
+        Math.abs((currentDimensions.height ?? 0) - (data.newDimensions.height ?? 0)) < 1
+
+      // Always update version to maintain consistency
       setNodeVersion({
         nodeId: data.nodeId,
         version: data.version,
       })
 
+      if (dimensionsUnchanged) {
+        // Dimensions already match - skip expensive $nodes cascade
+        return
+      }
+
+      // Different dimensions - another user resized the node or server correction
       updateNodeUILocal({
         flowId,
         nodeId: data.nodeId,
