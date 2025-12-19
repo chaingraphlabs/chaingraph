@@ -32,7 +32,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ObjectSchemaEditor } from './ObjectSchemaEditor'
+// import { ObjectSchemaEditor } from './ObjectSchemaEditor'
 
 export interface EditItemConfigPopoverProps {
   portConfig: ArrayPortConfig
@@ -364,10 +364,13 @@ export function EditItemConfigPopover({
                   </p>
 
                   <div className="border rounded-md bg-muted/10">
-                    <ObjectSchemaEditor
+                    {/* <ObjectSchemaEditor
                       initialSchema={(editedConfig as ObjectPortConfig).schema}
                       onChange={handleObjectSchemaChange}
-                    />
+                    /> */}
+                    <div className="p-4 text-sm text-muted-foreground">
+                      ObjectSchemaEditor component goes here.
+                    </div>
                   </div>
                 </div>
               )}
