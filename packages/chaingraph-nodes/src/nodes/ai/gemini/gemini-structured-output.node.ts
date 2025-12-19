@@ -48,6 +48,8 @@ import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
   convertPartToAPIFormat as sharedConvertPartToAPIFormat,
+  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+  convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
 } from './gemini-part-converters'
 import {
   GeminiGenerationConfig,
@@ -385,31 +387,19 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
 
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
-      for (const msg of this.previousMessages) {
-        const convertedParts: Part[] = []
-        for (const p of msg.parts) {
-          const converted = this.convertPartToAPIFormat(p, context)
-          if (converted) {
-            convertedParts.push(converted)
-          }
-        }
-        if (convertedParts.length > 0) {
-          contents.push({
-            role: msg.role,
-            parts: convertedParts,
-          })
+      const convertedMessages = await Promise.all(
+        this.previousMessages.map((msg) => this.convertMessageToAPIFormat(msg, context)),
+      )
+      for (const content of convertedMessages) {
+        if (content) {
+          contents.push(content)
         }
       }
     }
 
-    // 2. Process inputMessage parts
-    const currentParts: Part[] = []
-    for (const part of this.inputMessage.parts) {
-      const converted = this.convertPartToAPIFormat(part, context)
-      if (converted) {
-        currentParts.push(converted)
-      }
-    }
+    // 2. Process inputMessage parts with parallel conversion
+    const allCurrentParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts, context)
+    const currentParts = allCurrentParts.filter((p): p is Part => p !== null)
 
     if (currentParts.length === 0) {
       throw new Error('Input message must contain at least one valid part')
@@ -459,13 +449,8 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
 
     // Build output messages - ONLY the new exchange (not including previousMessages)
     // Clean user input to remove invalid fields
-    const cleanedInputParts: Part[] = []
-    for (const part of this.inputMessage.parts) {
-      const converted = this.convertPartToAPIFormat(part)
-      if (converted) {
-        cleanedInputParts.push(converted)
-      }
-    }
+    const allCleanedInputParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts)
+    const cleanedInputParts = allCleanedInputParts.filter((p): p is Part => p !== null)
 
     this.messages = [
       // User's input message (cleaned)
@@ -595,9 +580,41 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
    * Supports: text, fileData, functionCall, functionResponse, executableCode, codeExecutionResult, videoMetadata
    * Does NOT support: inlineData (inline images) - use fileData for image URLs instead
    */
-  private convertPartToAPIFormat(part: GeminiMessagePart, context?: ExecutionContext): Part | null {
+  private async convertPartToAPIFormat(part: GeminiMessagePart, context?: ExecutionContext): Promise<Part | null> {
     return sharedConvertPartToAPIFormat(
       part,
+      GeminiPartTypeSupport.TEXT_STRUCTURED,
+      context,
+      this.config.debug ? this.debugLog.bind(this) : undefined,
+    )
+  }
+
+  /**
+   * Convert multiple parts to API format in parallel while maintaining order.
+   * Delegates to shared utility with TEXT_STRUCTURED support.
+   */
+  private async convertPartsToAPIFormatBatch(
+    parts: GeminiMessagePart[],
+    context?: ExecutionContext,
+  ): Promise<(Part | null)[]> {
+    return sharedConvertPartsToAPIFormatBatch(
+      parts,
+      GeminiPartTypeSupport.TEXT_STRUCTURED,
+      context,
+      this.config.debug ? this.debugLog.bind(this) : undefined,
+    )
+  }
+
+  /**
+   * Convert a complete message to API format.
+   * Delegates to shared utility with TEXT_STRUCTURED support for parallel conversion and null filtering.
+   */
+  private async convertMessageToAPIFormat(
+    message: { role: string; parts: GeminiMessagePart[] },
+    context?: ExecutionContext,
+  ): Promise<{ role: string; parts: Part[] } | null> {
+    return sharedConvertMessageToAPIFormat(
+      message,
       GeminiPartTypeSupport.TEXT_STRUCTURED,
       context,
       this.config.debug ? this.debugLog.bind(this) : undefined,

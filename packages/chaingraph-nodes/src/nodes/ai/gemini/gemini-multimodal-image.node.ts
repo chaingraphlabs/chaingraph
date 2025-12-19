@@ -24,7 +24,7 @@ import {
   PortArray,
   PortObject,
 } from '@badaitech/chaingraph-types'
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenAI, createPartFromUri } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   ConversationMessage,
@@ -40,6 +40,8 @@ import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
   convertPartToAPIFormat as sharedConvertPartToAPIFormat,
+  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+  convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
 } from './gemini-part-converters'
 
 // ============================================================================
@@ -250,32 +252,19 @@ This preserves the full conversation history.`,
 
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
-      for (const msg of this.previousMessages) {
-        const convertedParts: Part[] = []
-        for (const p of msg.parts) {
-          const converted = this.convertPartToAPIFormat(p, context)
-          if (converted) {
-            convertedParts.push(converted)
-          }
-        }
-        // Only add message if it has valid parts
-        if (convertedParts.length > 0) {
-          contents.push({
-            role: msg.role,
-            parts: convertedParts,
-          })
+      const convertedMessages = await Promise.all(
+        this.previousMessages.map((msg) => this.convertMessageToAPIFormat(msg, context)),
+      )
+      for (const content of convertedMessages) {
+        if (content) {
+          contents.push(content)
         }
       }
     }
 
-    // 2. Process inputMessage parts - convert to API format
-    const currentParts: Part[] = []
-    for (const part of this.inputMessage.parts) {
-      const converted = this.convertPartToAPIFormat(part, context)
-      if (converted) {
-        currentParts.push(converted)
-      }
-    }
+    // 2. Process inputMessage parts - convert to API format with parallel downloads
+    const allCurrentParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts, context)
+    const currentParts = allCurrentParts.filter((p): p is Part => p !== null)
 
     // 3. Validate we have at least one valid part
     if (currentParts.length === 0) {
@@ -443,13 +432,8 @@ This preserves the full conversation history.`,
     // 11. Build output messages - ONLY the new exchange (not including previousMessages)
     // This allows callers to know exactly what was produced by this call
     // Clean user input to remove unsupported fields
-    const cleanedInputParts: Part[] = []
-    for (const part of this.inputMessage.parts) {
-      const converted = this.convertPartToAPIFormat(part)
-      if (converted) {
-        cleanedInputParts.push(converted)
-      }
-    }
+    const allCleanedInputParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts)
+    const cleanedInputParts = allCleanedInputParts.filter((p): p is Part => p !== null)
 
     this.messages = [
       // Add the user's input message (cleaned)
@@ -485,9 +469,38 @@ This preserves the full conversation history.`,
    * Convert GeminiMessagePart to API Part format.
    * Delegates to shared utility with IMAGE_ONLY support (text + inlineData only)
    */
-  private convertPartToAPIFormat(part: GeminiMessagePart, context?: ExecutionContext): Part | null {
+  private async convertPartToAPIFormat(part: GeminiMessagePart, context?: ExecutionContext): Promise<Part | null> {
     return sharedConvertPartToAPIFormat(
       part,
+      GeminiPartTypeSupport.IMAGE_ONLY,
+      context,
+      this.config.debug ? this.debugLog.bind(this) : undefined,
+    )
+  }
+
+  /**
+   * Convert multiple parts to API format in parallel while maintaining order.
+   * Delegates to shared utility with IMAGE_ONLY support for parallel downloads.
+   */
+  private async convertPartsToAPIFormatBatch(parts: GeminiMessagePart[], context?: ExecutionContext): Promise<(Part | null)[]> {
+    return sharedConvertPartsToAPIFormatBatch(
+      parts,
+      GeminiPartTypeSupport.IMAGE_ONLY,
+      context,
+      this.config.debug ? this.debugLog.bind(this) : undefined,
+    )
+  }
+
+  /**
+   * Convert a complete message to API format.
+   * Delegates to shared utility with IMAGE_ONLY support for parallel downloads and null filtering.
+   */
+  private async convertMessageToAPIFormat(
+    message: { role: string; parts: GeminiMessagePart[] },
+    context?: ExecutionContext,
+  ): Promise<{ role: string; parts: Part[] } | null> {
+    return sharedConvertMessageToAPIFormat(
+      message,
       GeminiPartTypeSupport.IMAGE_ONLY,
       context,
       this.config.debug ? this.debugLog.bind(this) : undefined,

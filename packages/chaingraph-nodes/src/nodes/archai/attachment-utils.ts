@@ -12,7 +12,19 @@ import { Buffer } from 'node:buffer'
 /**
  * Source type for attachment data
  */
-export type AttachmentSourceType = 'dataUri' | 'url' | 'base64'
+export type AttachmentSourceType = 'dataUri' | 'url' | 'base64' | 'plainText'
+
+/**
+ * Enum values for explicit source type selection in UI
+ */
+export const SOURCE_TYPE_OPTIONS = {
+  BASE64: 'base64',
+  DATA_URI: 'dataUri',
+  URL: 'url',
+  PLAIN_TEXT: 'plainText',
+} as const
+
+export type SourceTypeOption = typeof SOURCE_TYPE_OPTIONS[keyof typeof SOURCE_TYPE_OPTIONS]
 
 /**
  * Resolved attachment data ready for upload
@@ -188,8 +200,76 @@ export function parseAttachmentDataUri(dataUri: string): ResolvedAttachment {
 }
 
 /**
+ * Detect MIME type from plain text content by analyzing its structure
+ */
+export function detectMimeTypeFromContent(text: string): string {
+  const trimmed = text.trim()
+
+  // JSON detection
+  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+      (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+    try {
+      JSON.parse(trimmed)
+      return 'application/json'
+    } catch {
+      // Not valid JSON, continue checking
+    }
+  }
+
+  // HTML detection
+  if (/^<!DOCTYPE\s+html/i.test(trimmed) ||
+      /^<html[\s>]/i.test(trimmed)) {
+    return 'text/html'
+  }
+
+  // XML detection (including SVG)
+  if (trimmed.startsWith('<?xml')) {
+    if (trimmed.includes('<svg')) {
+      return 'image/svg+xml'
+    }
+    return 'application/xml'
+  }
+
+  // SVG detection (without XML declaration)
+  if (/^<svg[\s>]/i.test(trimmed)) {
+    return 'image/svg+xml'
+  }
+
+  // Markdown detection (basic heuristics)
+  if (/^#+\s/.test(trimmed) ||
+      /\n#{1,6}\s/.test(trimmed) ||
+      /```[\s\S]*```/.test(trimmed)) {
+    return 'text/markdown'
+  }
+
+  // CSV detection (has comma separators, consistent columns)
+  const lines = trimmed.split('\n').filter(l => l.trim())
+  if (lines.length > 1) {
+    const firstLineCommas = (lines[0].match(/,/g) || []).length
+    if (firstLineCommas > 0) {
+      const allLinesHaveSimilarCommas = lines.slice(0, 5).every(line => {
+        const commas = (line.match(/,/g) || []).length
+        return Math.abs(commas - firstLineCommas) <= 1
+      })
+      if (allLinesHaveSimilarCommas) {
+        return 'text/csv'
+      }
+    }
+  }
+
+  // YAML detection
+  if (/^---\s*\n/.test(trimmed) ||
+      /^\w+:\s*(?:\n|$)/.test(trimmed)) {
+    return 'application/yaml'
+  }
+
+  // Default to plain text
+  return 'text/plain'
+}
+
+/**
  * Resolve AttachmentInput to base64 format ready for API calls.
- * Handles URLs by fetching them, data URIs by parsing, and raw base64 passthrough.
+ * Uses explicit sourceType from input to determine how to process the source.
  */
 export async function resolveAttachmentData(input: AttachmentInput): Promise<ResolvedAttachment> {
   const source = input.source.trim()
@@ -198,7 +278,8 @@ export async function resolveAttachmentData(input: AttachmentInput): Promise<Res
     throw new Error('Attachment source is empty')
   }
 
-  const sourceType = detectAttachmentSourceType(source)
+  // Use explicit sourceType from input, fallback to auto-detect for backwards compatibility
+  const sourceType: AttachmentSourceType = (input.sourceType as AttachmentSourceType) || detectAttachmentSourceType(source)
 
   let base64: string
   let detectedMimeType: string
@@ -221,6 +302,14 @@ export async function resolveAttachmentData(input: AttachmentInput): Promise<Res
       const contentType = response.headers.get('content-type') || ''
       // Extract just the MIME type (remove charset etc.)
       detectedMimeType = contentType.split(';')[0].trim() || detectMimeTypeFromFilename(input.filename)
+      break
+    }
+
+    case 'plainText': {
+      // Convert plain text to base64
+      base64 = Buffer.from(source, 'utf-8').toString('base64')
+      // Try to detect MIME type from content, fallback to filename
+      detectedMimeType = detectMimeTypeFromContent(source) || detectMimeTypeFromFilename(input.filename)
       break
     }
 
