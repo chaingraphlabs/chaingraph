@@ -9,8 +9,13 @@
 import SuperJSON from 'superjson'
 import { NodeRegistry } from './decorator'
 import { registerFlowTransformers } from './flow'
+import { getTransformerTraceCallbacks } from './json-transformers-trace'
 import { registerNodeTransformers } from './node'
 import { MultiChannel } from './utils'
+
+// Re-export trace types and functions
+export type { TransformerTraceCallbacks } from './json-transformers-trace'
+export { getTransformerTraceCallbacks, setTransformerTraceCallbacks } from './json-transformers-trace'
 
 /**
  * Registers SuperJSON transformers
@@ -28,7 +33,11 @@ export function registerSuperjsonTransformers(
         return v.serialize()
       },
       deserialize: (v) => {
-        return MultiChannel.deserialize(v)
+        const traceCallbacks = getTransformerTraceCallbacks()
+        const spanId = traceCallbacks?.onDeserializeStart?.('MultiChannel')
+        const result = MultiChannel.deserialize(v)
+        traceCallbacks?.onDeserializeEnd?.(spanId ?? null)
+        return result
       },
     },
     'MultiChannel',

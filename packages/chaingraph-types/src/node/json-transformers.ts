@@ -9,6 +9,7 @@
 import type { INode } from './interface'
 import SuperJSON from 'superjson'
 import { BaseNode, NodeRegistry } from '..'
+import { getTransformerTraceCallbacks } from '../json-transformers-trace'
 
 /**
  * Registers node transformers with SuperJSON
@@ -31,6 +32,9 @@ export function registerNodeTransformers(
         return v.serialize()
       },
       deserialize: (v) => {
+        const traceCallbacks = getTransformerTraceCallbacks()
+        const spanId = traceCallbacks?.onDeserializeStart?.('BaseNode')
+
         const nodeData = v as any
         const nodeMetadata = nodeData.metadata as any
 
@@ -41,8 +45,11 @@ export function registerNodeTransformers(
             nodeMetadata,
           )
 
-          return node.deserialize(nodeData)
+          const result = node.deserialize(nodeData)
+          traceCallbacks?.onDeserializeEnd?.(spanId ?? null)
+          return result
         } catch (err: any) {
+          traceCallbacks?.onDeserializeEnd?.(spanId ?? null)
           console.error('Failed to deserialize node', err, nodeRegistry)
           throw err
         }

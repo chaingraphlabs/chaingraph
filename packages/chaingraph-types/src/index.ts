@@ -15,7 +15,12 @@ export * from './edge'
 // export { isSupportedSecretType, wrapSecret } from './port/base/secret'
 export * from './execution'
 export * from './flow'
-export { registerSuperjsonTransformers } from './json-transformers'
+export {
+  registerSuperjsonTransformers,
+  setTransformerTraceCallbacks,
+  getTransformerTraceCallbacks,
+} from './json-transformers'
+export type { TransformerTraceCallbacks } from './json-transformers'
 export * from './node'
 export * from './port'
 export * from './utils'
