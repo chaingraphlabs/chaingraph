@@ -135,30 +135,44 @@ export class Attachment {
 
 // Define AttachmentInput schema for uploading attachments
 @ObjectSchema({
-  description: 'Input for uploading attachments. Accepts multiple formats: raw base64, data URI, or URL.',
+  description: 'Input for uploading attachments. Supports base64, data URI, URL, or plain text.',
   type: 'AttachmentInput',
 })
 export class AttachmentInput {
+  @PortEnum({
+    title: 'Source Type',
+    description: 'Type of data in the source field',
+    options: [
+      { id: 'base64', type: 'string', defaultValue: 'base64', title: 'Base64', description: 'Raw base64 encoded binary data' },
+      { id: 'dataUri', type: 'string', defaultValue: 'dataUri', title: 'Data URI', description: 'Data URI format (data:mime;base64,...)' },
+      { id: 'url', type: 'string', defaultValue: 'url', title: 'URL', description: 'HTTP/HTTPS URL (will be fetched)' },
+      { id: 'plainText', type: 'string', defaultValue: 'plainText', title: 'Plain Text', description: 'Plain text content (JSON, HTML, etc.)' },
+    ],
+    defaultValue: 'base64',
+    required: true,
+  })
+  sourceType: string = 'base64'
+
   @PortString({
     title: 'Source',
-    description: `File data or URL:
-- Raw base64 string
-- Data URI (data:mime;base64,...)
-- HTTP/HTTPS URL (auto-fetched)`,
+    description: 'File data based on selected Source Type',
     required: true,
+    ui: {
+      isTextArea: true,
+    },
   })
   source: string = ''
 
   @PortString({
     title: 'Filename',
-    description: 'Output filename with extension (e.g., "document.pdf")',
+    description: 'Output filename with extension (e.g., "document.pdf", "data.json")',
     required: true,
   })
   filename: string = ''
 
   @PortString({
     title: 'MIME Type',
-    description: 'Override auto-detected MIME type (optional)',
+    description: 'Override auto-detected MIME type (optional). If not set, will be detected from filename or content.',
     required: false,
   })
   mimeType?: string

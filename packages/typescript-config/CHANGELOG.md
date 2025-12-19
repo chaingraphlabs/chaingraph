@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.6.42
+
+### Patch Changes
+
+- ac5eedb: feat: Enhance Gemini structured output node with batch conversion and async processing. feat: Extend attachment utilities to support plain text and MIME type detection. feat: Introduce ArrayEmbed, ArrayRemap, and ArrayZipMerge nodes for advanced array transformations.
+
 ## 0.6.41
 
 ### Patch Changes
