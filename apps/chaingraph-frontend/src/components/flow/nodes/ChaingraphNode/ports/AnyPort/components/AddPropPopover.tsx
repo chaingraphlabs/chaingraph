@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AnyPortConfig, IPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { PopoverContent } from '@/components/ui/popover'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { usePortConfig } from '@/store/ports-v2'
 
 interface Data {
   key: string
@@ -30,7 +31,8 @@ interface Props {
   onClose: () => void
   onSubmit: (data: Data) => void
   nextOrder?: number
-  port: IPort<AnyPortConfig>
+  nodeId: string
+  portId: string
 }
 
 const typeConfigMap: Record<PortType, IPortConfig> = {
@@ -113,20 +115,17 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit, port } = props
+  const { onClose, onSubmit, nodeId, portId } = props
   const [key, setKey] = useState('')
 
-  // Get nodeId from port config
-  const portAnyConfig = port.getConfig()
-
-  const nodeId = portAnyConfig.nodeId || ''
-  const portId = port.id
+  // Get port config for allowed types
+  const portConfig = usePortConfig(nodeId, portId)
 
   // Track focus/blur for global copy-paste functionality
   const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
 
-  // use all porttypes if allowedTypes undefined and filter stream ans any out
-  const dropDownValues = ((portAnyConfig.underlyingType?.type === 'object' && portAnyConfig.underlyingType.ui?.allowedTypes) || PORT_TYPES).filter(t => t !== 'stream' && t !== 'any')
+  // use all porttypes if allowedTypes undefined and filter stream and any out
+  const dropDownValues = (((portConfig as any)?.underlyingType?.type === 'object' && (portConfig as any).underlyingType.ui?.allowedTypes) || PORT_TYPES).filter(t => t !== 'stream' && t !== 'any')
 
   const [type, setType] = useState<PortType | undefined>(
     // use as initial value first enumvalue if type is any

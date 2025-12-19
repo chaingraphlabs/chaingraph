@@ -8,12 +8,12 @@
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
-import type { PortContextValue } from './ports/context/PortContext'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
 import { $activeFlowMetadata } from '@/store/flow'
 import { updateNodeTitle, useNode } from '@/store/nodes'
@@ -27,7 +27,6 @@ interface NodeHeaderProps {
   icon: CategoryIconName | (string & {}) // FIXME: extract CategoryIconName to prevent import cycle
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
-  context: PortContextValue
   debugMode: boolean
   isBreakpointSet: boolean
   onBreakpointToggle: () => void
@@ -39,39 +38,49 @@ export function NodeHeader({
   icon,
   style,
   onDelete,
-  context,
   debugMode,
   isBreakpointSet,
   onBreakpointToggle,
   categoryMetadata,
 }: NodeHeaderProps) {
+  // Trace render (synchronous - measures render function time)
+  const renderCountRef = useRef(0)
+  const traceSpanId = useRef<string | null>(null)
+  if (trace.isEnabled()) {
+    renderCountRef.current++
+    traceSpanId.current = trace.start('render.NodeHeader', {
+      category: 'render',
+      tags: { nodeId: node.id, renderCount: renderCountRef.current },
+    })
+  }
+
   const Icon = getCategoryIcon(icon)
-  const { fitView } = useReactFlow()
+  // const { fitView } = useReactFlow()
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
   const [showStatusBadge, setShowStatusBadge] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const activeFlow = useUnit($activeFlowMetadata)
 
-  const parentNode = useNode(node.metadata.parentNodeId || '')
+  // const parentNode = useNode(node.metadata.parentNodeId || '')
 
   // Double-click header to fit view to this node
-  const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
-    // Skip if clicking on editable title (let it handle its own double-click)
-    if ((e.target as HTMLElement).closest('[data-editable-title]')) {
-      return
-    }
+  // const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
+  //   // Skip if clicking on editable title (let it handle its own double-click)
+  //   if ((e.target as HTMLElement).closest('[data-editable-title]')) {
+  //     return
+  //   }
 
-    e.preventDefault()
-    e.stopPropagation()
+  //   e.preventDefault()
+  //   e.stopPropagation()
 
-    // Smoothly animate camera to fit this node
-    fitView({
-      nodes: [{ id: node.id }],
-      duration: 800,
-      padding: 0.02,
-      maxZoom: 2,
-    })
-  }, [fitView, node.id])
+  //   // Smoothly animate camera to fit this node
+  //   fitView({
+  //     nodes: [{ id: node.id }],
+  //     duration: 800,
+  //     padding: 0.02,
+  //     maxZoom: 2,
+  //   })
+  // }, [fitView, node.id])
 
   // Callback to handle status badge visibility and state
   const handleStatusChange = useCallback((show: boolean, status: NodeStatus | null) => {
@@ -124,6 +133,10 @@ export function NodeHeader({
     }
   }, [showDeleteConfirm])
 
+  // End trace BEFORE return (synchronous measurement)
+  if (traceSpanId.current)
+    trace.end(traceSpanId.current)
+
   return (
     <div
       className={cn(
@@ -134,36 +147,22 @@ export function NodeHeader({
         background: style.primary,
         borderBottom: `1px solid ${style.secondary}`,
       }}
-      onDoubleClick={handleHeaderDoubleClick}
+    // onDoubleClick={handleHeaderDoubleClick}
     >
-      {(!parentNode || parentNode.metadata.category === 'group') && (
-        <NodeFlowPorts node={node} context={context} />
-      )}
+      {/* {(!parentNode || parentNode.metadata.category === 'group') && ( */}
+      <NodeFlowPorts node={node} />
+      {/* )} */}
 
       <div className="flex items-center gap-2 min-w-0 relative">
         {categoryMetadata
           ? (
-              <LazyNodeDocTooltip
-                node={node}
-                categoryMetadata={categoryMetadata}
-                className="cursor-pointer"
-              >
-                <div
-                  className="w-6 min-w-6 h-6 rounded flex items-center justify-center hover:opacity-80 transition-opacity"
-                  style={{
-                    background: `${style.text}20`,
-                  }}
-                >
-                  <Icon
-                    className="w-4 h-4"
-                    style={{ color: style.text }}
-                  />
-                </div>
-              </LazyNodeDocTooltip>
-            )
-          : (
+            <LazyNodeDocTooltip
+              node={node}
+              categoryMetadata={categoryMetadata}
+              className="cursor-pointer"
+            >
               <div
-                className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
+                className="w-6 min-w-6 h-6 rounded flex items-center justify-center hover:opacity-80 transition-opacity"
                 style={{
                   background: `${style.text}20`,
                 }}
@@ -173,7 +172,21 @@ export function NodeHeader({
                   style={{ color: style.text }}
                 />
               </div>
-            )}
+            </LazyNodeDocTooltip>
+          )
+          : (
+            <div
+              className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
+              style={{
+                background: `${style.text}20`,
+              }}
+            >
+              <Icon
+                className="w-4 h-4"
+                style={{ color: style.text }}
+              />
+            </div>
+          )}
 
         <EditableNodeTitle
           value={node.metadata.title || node.id}

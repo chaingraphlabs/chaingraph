@@ -5,42 +5,49 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import { Handle, Position } from '@xyflow/react'
 import { useUnit } from 'effector-react/effector-react.umd'
 import { cn } from '@/lib/utils'
 import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortDocTooltip } from '../doc'
 
-interface Props<C extends IPortConfig> {
+interface Props {
   className?: string
-  port: IPort<C>
+  nodeId: string
+  portId: string
   isConnectable?: boolean
   forceDirection?: 'input' | 'output'
 }
 
-export function PortHandle<C extends IPortConfig>({ port, forceDirection, className, isConnectable }: Props<C>) {
-  const config = port.getConfig()
+export function PortHandle({ nodeId, portId, forceDirection, className, isConnectable }: Props) {
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
 
   const compatiblePorts = useUnit($compatiblePortsToDraggingEdge)
-  const isDraggingCompatible = compatiblePorts && compatiblePorts.includes(port.id)
+  const isDraggingCompatible = compatiblePorts && compatiblePorts.includes(portId)
 
   const isCompatible = compatiblePorts === null ? true : isDraggingCompatible
 
+  // Cast UI for type-safe property access
+  const portUI = ui as { hidePort?: boolean, bgColor?: string }
+
   const bgColor = isCompatible
-    ? config.ui?.bgColor
+    ? portUI.bgColor
     : '#a1a1a1'
 
-  const direction = forceDirection ?? config.direction
+  const direction = forceDirection ?? config?.direction
   const position = direction === 'input'
     ? Position.Left
     : Position.Right
 
+  if (!config) return null
+
   return (
-    <PortDocTooltip port={port}>
+    <PortDocTooltip nodeId={nodeId} portId={portId}>
       <Handle
         id={config.id}
-        hidden={config.ui?.hidePort === true}
+        hidden={portUI.hidePort === true}
         isConnectable={isConnectable === undefined || isConnectable}
         type={direction === 'input' ? 'target' : 'source'}
         position={position}

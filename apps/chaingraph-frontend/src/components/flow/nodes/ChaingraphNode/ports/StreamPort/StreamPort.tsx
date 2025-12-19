@@ -6,30 +6,31 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort, StreamPortConfig } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import { memo } from 'react'
 import { cn } from '@/lib/utils'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface StreamPortProps {
-  node: INode
-  port: IPort<StreamPortConfig>
-  context: PortContextValue
+  readonly nodeId: string
+  readonly portId: string
 }
 
 function StreamPortComponent(props: StreamPortProps) {
-  const { port, context } = props
+  const { nodeId, portId } = props
 
-  const config = port.getConfig()
-  const ui = config.ui
-  const title = config.title || config.key
+  // Granular subscriptions - only re-renders when THIS port's data changes
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
+
+  const title = config?.title || config?.key || portId
 
   if (ui?.hidden)
     return null
+
+  // Early return if config not loaded yet
+  if (!config) return null
 
   return (
     <div
@@ -40,7 +41,7 @@ function StreamPortComponent(props: StreamPortProps) {
       )}
     >
       {(config.direction === 'input' || config.direction === 'passthrough')
-        && <PortHandle port={port} forceDirection="input" />}
+        && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}
 
       <div className={cn(
         'flex flex-col',
@@ -56,7 +57,8 @@ function StreamPortComponent(props: StreamPortProps) {
       {(config.direction === 'output' || config.direction === 'passthrough')
         && (
           <PortHandle
-            port={port}
+            nodeId={nodeId}
+            portId={portId}
             forceDirection="output"
             className={cn(
               config.parentId !== undefined

@@ -6,91 +6,40 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  AnyPortConfig,
-  AnyPort as AnyPortType,
-  INode,
-  IPort,
-} from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import {
-  PortFactory,
-} from '@badaitech/chaingraph-types'
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface AnyPortProps {
-  node: INode
-  port: IPort<AnyPortConfig>
-  context: PortContextValue
+  nodeId: string
+  portId: string
 }
 
 function AnyPortComponent(props: AnyPortProps) {
-  const { port, node, context } = props
+  const { nodeId, portId } = props
 
-  const config = useMemo(() => (port as AnyPortType).getRawConfig(), [port])
+  // Granular subscriptions
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
 
-  const underlyingType = useMemo(() => {
-    return (port as AnyPortType).unwrapUnderlyingType()
-  }, [port])
+  // Early return if config not loaded yet
+  if (!config) return null
 
-  const underlyingPort = useMemo(() => {
-    if (!underlyingType || underlyingType.type === 'any' || !config.id)
-      return undefined
-
-    const newPort = underlyingType
-      ? PortFactory.create({
-          ...underlyingType,
-          id: config.id,
-          parentId: config.parentId,
-          direction: config.direction,
-          required: config.required,
-          key: config.key,
-          connections: config.connections,
-          title: underlyingType.title || config.title,
-          description: underlyingType.description || config.description,
-          ui: {
-            ...config,
-            ...underlyingType.ui,
-            // bgColor: underlyingType.ui?.bgColor || config.ui?.bgColor,
-            // borderColor: underlyingType.ui?.borderColor || config.ui?.borderColor,
-            // ...underlyingType.ui,
-          },
-        })
-      : undefined
-
-    if (newPort) {
-      // set value from the original port if it exists
-      newPort.setValue(port.getValue())
-    }
-
-    return newPort
-  }, [config, port, underlyingType])
-
-  const ui = config.ui
   const title = config.title || config.key
 
-  // if (config.underlyingType?.type === 'object') {
-  //   return <AnyObjectPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
-  // }
+  // Check if there's an underlying type (stored in config)
+  const underlyingType = (config as any).underlyingType
 
-  if (underlyingPort && underlyingType?.type !== 'any') {
+  // If there's an underlying type that's not 'any', render that port component
+  if (underlyingType && underlyingType.type !== 'any') {
     return (
-      <PortComponent node={node} port={underlyingPort as IPort} context={context} />
+      <PortComponent nodeId={nodeId} portId={portId} />
     )
   }
-
-  //
-  // if (underlyingPort && underlyingType?.type === 'array') {
-  //   // return <AnyObjectPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
-  //   return <ArrayPort node={node} port={underlyingPort as IPort<ArrayPortConfig>} context={context} />
-  // }
 
   if (ui?.hidden)
     return null
@@ -104,7 +53,7 @@ function AnyPortComponent(props: AnyPortProps) {
       )}
     >
       {(config.direction === 'input' || config.direction === 'passthrough')
-        && <PortHandle port={port} forceDirection="input" />}
+        && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}
 
       <div className={cn(
         'flex flex-col',
@@ -116,15 +65,13 @@ function AnyPortComponent(props: AnyPortProps) {
             'cursor-pointer',
             // if port required and the value is empty, add a red underline
             config.required
-            && (port.getValue() === undefined || port.getValue() === null || !port.validate())
             && (config.direction === 'input' || config.direction === 'passthrough')
-            && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
           onClick={() => {
             requestUpdatePortUI({
-              nodeId: node.id,
-              portId: port.id,
+              nodeId,
+              portId,
               ui: {
                 hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
               },
@@ -140,7 +87,8 @@ function AnyPortComponent(props: AnyPortProps) {
         (config.direction === 'output' || config.direction === 'passthrough')
         && (
           <PortHandle
-            port={port}
+            nodeId={nodeId}
+            portId={portId}
             forceDirection="output"
             className={cn(
               config.parentId !== undefined

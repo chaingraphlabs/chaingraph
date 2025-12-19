@@ -10,6 +10,7 @@ import type { Position } from '@badaitech/chaingraph-types'
 import type { NodeChange } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
+import { trace } from '@/lib/perf-trace'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodePositionOnly, updateNodeUI } from '@/store/nodes'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
@@ -22,16 +23,22 @@ export function useNodeChanges() {
   const activeFlow = useUnit($activeFlowMetadata)
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
-    if (!activeFlow || !changes || activeFlow.id === undefined)
-      return
+    const spanId = trace.start('drag.onNodesChange', {
+      category: 'event',
+      tags: { changeCount: changes?.length ?? 0 },
+    })
 
-    // Get current nodes state inside callback to avoid dependency
-    const currentNodes = $nodes.getState()
-    if (!currentNodes)
-      return
+    try {
+      if (!activeFlow || !changes || activeFlow.id === undefined)
+        return
 
-    // Handle node changes (position, selection, etc)
-    changes.forEach((change, i) => {
+      // Get current nodes state inside callback to avoid dependency
+      const currentNodes = $nodes.getState()
+      if (!currentNodes)
+        return
+
+      // Handle node changes (position, selection, etc)
+      changes.forEach((change) => {
       switch (change.type) {
         case 'position':
           {
@@ -126,7 +133,11 @@ export function useNodeChanges() {
           // console.warn(`[useNodeChanges] Unhandled node change:`, change)
           break
       }
-    })
+      })
+    }
+    finally {
+      trace.end(spanId)
+    }
   }, [activeFlow])
 
   return {

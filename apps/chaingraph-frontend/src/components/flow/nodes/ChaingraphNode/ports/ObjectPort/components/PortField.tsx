@@ -6,32 +6,29 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort, IPortConfig, ObjectPortConfig } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
+import type { IPortConfig } from '@badaitech/chaingraph-types'
 import { Pencil } from 'lucide-react'
 import { memo, useMemo, useState } from 'react'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { addFieldObjectPort } from '@/store/ports'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortComponent } from '../../../PortComponent'
 import { AddPropPopover } from './AddPropPopover'
 
 interface PortFieldProps {
-  node: INode
-  parentPort: IPort<ObjectPortConfig>
-  port: IPort
-  context: PortContextValue
+  nodeId: string
+  parentPortId: string
+  portId: string
   isOutput: boolean
   isSchemaMutable: boolean
   onDelete: () => void
 }
 
 export function PortField({
-  node,
-  parentPort,
-  port,
-  context,
+  nodeId,
+  parentPortId,
+  portId,
   isOutput,
   isSchemaMutable,
   onDelete,
@@ -39,26 +36,27 @@ export function PortField({
   // Edit mode state
   const [isEditOpen, setIsEditOpen] = useState(false)
 
+  // Get parent UI config
+  const parentUI = usePortUI(nodeId, parentPortId)
+
+  // Get current child port config and UI for editing
+  const childConfig = usePortConfig(nodeId, portId)
+  const childUI = usePortUI(nodeId, portId)
+
+  // Cast parent UI for type-safe property access
+  const objectParentUI = parentUI as { keyDeletable?: boolean }
+
   // Memoize this computation to prevent recalculation on every render
   const isKeyDeletable = useMemo(() =>
-    parentPort.getConfig()?.ui?.keyDeletable
-    || parentPort.getConfig()?.ui?.keyDeletable === undefined, [parentPort])
-
-  const portConfig = port.getConfig()
-  port.setConfig({
-    ...portConfig,
-    ui: {
-      ...portConfig.ui || {},
-      hideEditor: parentPort.getConfig()?.ui?.hidePropertyEditor || port.getConfig().ui?.hideEditor || false,
-    },
-  })
+    objectParentUI.keyDeletable
+    || objectParentUI.keyDeletable === undefined, [objectParentUI])
 
   const handleEditSubmit = (data: { key: string, config: IPortConfig }) => {
     // Remove old field then add new field with updated config
     onDelete()
-    context.addFieldObjectPort({
-      nodeId: node.id!,
-      portId: parentPort.id!,
+    addFieldObjectPort({
+      nodeId,
+      portId: parentPortId,
       key: data.key,
       config: data.config,
     })
@@ -74,48 +72,46 @@ export function PortField({
       )}
       >
         <div className="flex-1 min-w-0">
-          <PortComponent node={node} port={port} context={context} />
+          <PortComponent nodeId={nodeId} portId={portId} />
         </div>
 
-        {(isSchemaMutable && parentPort.getConfig()?.ui?.keyDeletable)
+        {(isSchemaMutable && objectParentUI.keyDeletable)
           && (
-            <Popover open={isEditOpen} onOpenChange={setIsEditOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    'flex-shrink-0 p-1 rounded-md',
-                    'self-start',
-                    'hover:bg-accent',
-                    'absolute -right-5 top-1',
-                    'nodrag',
-                    'opacity-0 group-hover/field:opacity-100 transition-opacity',
-                  )}
-                  onClick={() => setIsEditOpen(true)}
-                >
-                  <Pencil className="size-3 text-muted-foreground" />
-                </button>
-              </PopoverTrigger>
-
-              {isEditOpen && (
-                <AddPropPopover
-                  port={parentPort}
-                  onClose={() => setIsEditOpen(false)}
-                  onSubmit={handleEditSubmit}
-                  onDelete={onDelete}
-                  editMode={true}
-                  existingField={{
-                    key: portConfig.key!,
-                    config: port.getConfig(),
-                  }}
-                />
-              )}
-            </Popover>
+            <div className={cn(
+              'flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity',
+              isOutput ? 'mr-2' : 'ml-2',
+            )}
+            >
+              <Popover open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="p-1 hover:bg-accent rounded-sm transition-colors"
+                    onClick={() => setIsEditOpen(true)}
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                </PopoverTrigger>
+                {isEditOpen && childConfig && (
+                  <AddPropPopover
+                    onClose={() => setIsEditOpen(false)}
+                    onSubmit={handleEditSubmit}
+                    nextOrder={0}
+                    nodeId={nodeId}
+                    portId={portId}
+                    editMode
+                    existingField={{
+                      key: childConfig.key ?? '',
+                      config: { ...childConfig, ui: childUI } as IPortConfig,
+                    }}
+                  />
+                )}
+              </Popover>
+            </div>
           )}
       </div>
     </div>
   )
 }
 
-// Use memo to prevent unnecessary re-renders
 export default memo(PortField)

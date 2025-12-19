@@ -32,11 +32,12 @@ interface NodeDocTooltipContentProps {
 }
 
 interface PortItemProps {
+  nodeId: string
   port: any
   type: 'input' | 'output' | 'passthrough'
 }
 
-function PortItem({ port, type }: PortItemProps) {
+function PortItem({ nodeId, port, type }: PortItemProps) {
   const [isOpen, setIsOpen] = useState(false)
   const config = port.getConfig()
 
@@ -56,7 +57,7 @@ function PortItem({ port, type }: PortItemProps) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="pl-7 pr-2">
-          <PortDocContent port={port} className="w-full" />
+          <PortDocContent nodeId={nodeId} portId={port.id} className="w-full" />
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -280,7 +281,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {inputs
                               .map(port => (
-                                <PortItem key={port.getConfig().id!} port={port} type="input" />
+                                <PortItem key={port.getConfig().id!} nodeId={node.id} port={port} type="input" />
                               ))}
                           </div>
                         </div>
@@ -295,7 +296,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {passthroughs
                               .map(port => (
-                                <PortItem key={port.getConfig().id} port={port} type="passthrough" />
+                                <PortItem key={port.getConfig().id} nodeId={node.id} port={port} type="passthrough" />
                               ))}
                           </div>
                         </div>
@@ -308,7 +309,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {outputs
                               .map(port => (
-                                <PortItem key={port.getConfig().id} port={port} type="output" />
+                                <PortItem key={port.getConfig().id} nodeId={node.id} port={port} type="output" />
                               ))}
                           </div>
                         </div>
@@ -321,7 +322,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {systemPorts
                               .map(port => (
-                                <PortItem key={port.getConfig().id} port={port} type="input" />
+                                <PortItem key={port.getConfig().id} nodeId={node.id} port={port} type="input" />
                               ))}
                           </div>
                         </div>

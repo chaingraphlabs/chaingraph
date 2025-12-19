@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { BooleanPortConfig, IPort, IPortConfig, NumberPortConfig, ObjectPortConfig, PortType, SecretType, StringPortConfig } from '@badaitech/chaingraph-types'
+import type { BooleanPortConfig, IPortConfig, NumberPortConfig, PortType, SecretType, StringPortConfig } from '@badaitech/chaingraph-types'
 import { PORT_TYPES, secretTypeSchemas } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { usePortUI } from '@/store/ports-v2'
 
 interface Data {
   key: string
@@ -35,7 +36,8 @@ interface Props {
   onSubmit: (data: Data) => void
   onDelete?: () => void
   nextOrder?: number
-  port: IPort<ObjectPortConfig>
+  nodeId: string
+  portId: string
   editMode?: boolean
   existingField?: {
     key: string
@@ -44,12 +46,12 @@ interface Props {
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit, onDelete, port, editMode = false, existingField } = props
-  const [key, setKey] = useState(existingField?.key || '')
+  const { onClose, onSubmit, onDelete, nodeId, portId, editMode = false, existingField } = props
 
-  // Get nodeId from port config
-  const nodeId = port.getConfig().nodeId || ''
-  const portId = port.id
+  // Get port UI state for allowed types
+  const ui = usePortUI(nodeId, portId)
+
+  const [key, setKey] = useState(existingField?.key || '')
 
   // Track focus/blur for global copy-paste functionality
   const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
@@ -224,7 +226,8 @@ export function AddPropPopover(props: Props) {
   }
 
   // use all porttypes if allowedTypes undefined and filter stream out
-  const dropDownValues = (port.getConfig().ui?.allowedTypes || PORT_TYPES).filter(t => t !== 'stream')
+  const objectUI = ui as { allowedTypes?: PortType[] }
+  const dropDownValues = (objectUI.allowedTypes || PORT_TYPES).filter(t => t !== 'stream')
 
   const [type, setType] = useState<PortType | undefined>(
     existingField?.config.type || dropDownValues.at(0),

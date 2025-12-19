@@ -38,6 +38,7 @@ import { $executionState, $executionSubscriptionState, ExecutionSubscriptionStat
 import { $activeFlowId, $flowSubscriptionState, setActiveFlowId } from '@/store/flow'
 import { addNodeToFlow } from '@/store/nodes'
 import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
+import { FPSCounter } from './components/FPSCounter'
 
 // Configuration constants
 const defaultViewport: Viewport = {
@@ -230,6 +231,8 @@ function Flow({
         edges={edges}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
+
+        onlyRenderVisibleElements={true}
         // onEdgesChange={onEdgesChange}
         // onInit={onInit}
         onConnect={onConnect}
@@ -266,7 +269,7 @@ function Flow({
         className="bg-background"
         minZoom={0.05}
         maxZoom={2}
-        nodeDragThreshold={0}
+        nodeDragThreshold={1}
       >
         <Background />
         {/* <Controls position="bottom-right" /> */}
@@ -278,7 +281,7 @@ function Flow({
 
         <div className="absolute top-4 left-4 z-50">
           {/* <ExecutionComponent /> */}
-          {/* <FPSCounter /> */}
+          <FPSCounter />
         </div>
       </ReactFlow>
 

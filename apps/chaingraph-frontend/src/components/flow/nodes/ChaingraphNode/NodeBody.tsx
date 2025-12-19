@@ -7,54 +7,70 @@
  */
 
 import type { INode } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import { PortDirection } from '@badaitech/chaingraph-types'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useRef } from 'react'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
+import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
 import { useNode } from '@/store/nodes'
 
 export interface NodeBodyProps {
   node: INode
-  context: PortContextValue
   className?: string
 }
 
 function NodeBody({
   node,
-  context,
   className = '',
 }: NodeBodyProps) {
+  // Trace render (synchronous - measures render function time)
+  const renderCountRef = useRef(0)
+  const traceSpanId = useRef<string | null>(null)
+  if (trace.isEnabled()) {
+    renderCountRef.current++
+    traceSpanId.current = trace.start('render.NodeBody', {
+      category: 'render',
+      tags: { nodeId: node.id, renderCount: renderCountRef.current },
+    })
+  }
+
   const parentNode = useNode(node.metadata.parentNodeId || '')
 
   const passthroughPorts = useMemo(
-    () => Array.from(
-      node.ports.values(),
-    ).filter(port =>
-      port.getConfig().direction === PortDirection.Passthrough
-      && !port.getConfig().parentId
-      && !port.isSystem(),
+    () => trace.wrap('compute.passthroughPorts', { category: 'compute' }, () =>
+      Array.from(
+        node.ports.values(),
+      ).filter(port =>
+        port.getConfig().direction === PortDirection.Passthrough
+        && !port.getConfig().parentId
+        && !port.isSystem(),
+      ),
     ),
     [node],
   )
 
   const inputPorts = useMemo(
-    () => node.getInputs().filter(
-      port =>
-        !port.getConfig().parentId
-        && !port.isSystem(),
+    () => trace.wrap('compute.inputPorts', { category: 'compute' }, () =>
+      node.getInputs().filter(
+        port =>
+          !port.getConfig().parentId
+          && !port.isSystem(),
+      ),
     ),
     [node],
   )
   const outputPorts = useMemo(
-    () => node.getOutputs().filter(
-      port => !port.getConfig().parentId
-        && !port.isSystem(),
+    () => trace.wrap('compute.outputPorts', { category: 'compute' }, () =>
+      node.getOutputs().filter(
+        port => !port.getConfig().parentId
+          && !port.isSystem(),
+      ),
     ),
     [node],
   )
+
+  // End trace BEFORE return (synchronous measurement)
+  if (traceSpanId.current) trace.end(traceSpanId.current)
 
   return (
     <div className={cn('px-3 py-2 space-y-4', className)}>
@@ -65,9 +81,8 @@ function NodeBody({
           return (
             <PortComponent
               key={port.id}
-              node={node}
-              port={port}
-              context={context}
+              nodeId={node.id}
+              portId={port.id}
             />
           )
         })}
@@ -77,9 +92,8 @@ function NodeBody({
           return (
             <PortComponent
               key={port.id}
-              node={node}
-              port={port}
-              context={context}
+              nodeId={node.id}
+              portId={port.id}
             />
           )
         })}
@@ -89,9 +103,8 @@ function NodeBody({
           return (
             <PortComponent
               key={port.id}
-              node={node}
-              port={port}
-              context={context}
+              nodeId={node.id}
+              portId={port.id}
             />
           )
         })}

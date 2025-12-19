@@ -7,24 +7,34 @@
  */
 
 import type { INode } from '@badaitech/chaingraph-types'
-import type { PortContextValue } from './ports/context/PortContext'
 import { ChevronDownIcon, ChevronUpIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons'
 import { useUnit } from 'effector-react'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useRef } from 'react'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
+import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
+import { usePortEdges } from '@/store/nodes/computed'
 import { $activeFlowId } from '@/store/flow'
 import { updateNodeUI } from '@/store/nodes'
 
 export interface NodeErrorPortsProps {
   node: INode
-  context: PortContextValue
 }
 
 function NodeErrorPorts({
   node,
-  context,
 }: NodeErrorPortsProps) {
+  // Trace render (synchronous - measures render function time)
+  const renderCountRef = useRef(0)
+  const traceSpanId = useRef<string | null>(null)
+  if (trace.isEnabled()) {
+    renderCountRef.current++
+    traceSpanId.current = trace.start('render.NodeErrorPorts', {
+      category: 'render',
+      tags: { nodeId: node.id, renderCount: renderCountRef.current },
+    })
+  }
+
   const activeFlowId = useUnit($activeFlowId)
 
   // Filter error ports from default ports
@@ -41,13 +51,17 @@ function NodeErrorPorts({
   const errorMessagePort = useMemo(() =>
     errorPorts.find(port => port.getConfig().key === '__errorMessage'), [errorPorts])
 
+  // Use granular edge hooks
+  const errorEdges = usePortEdges(node.id, errorPort?.id || '')
+  const errorMessageEdges = usePortEdges(node.id, errorMessagePort?.id || '')
+
   const errorConnections = useMemo(() => {
-    return errorPort && context.getEdgesForPort(errorPort.id).length > 0
-  }, [context, errorPort])
+    return errorPort && errorEdges.length > 0
+  }, [errorPort, errorEdges])
 
   const errorMessageConnections = useMemo(() => {
-    return errorMessagePort && context.getEdgesForPort(errorMessagePort.id).length > 0
-  }, [context, errorMessagePort])
+    return errorMessagePort && errorMessageEdges.length > 0
+  }, [errorMessagePort, errorMessageEdges])
 
   const hasConnections = useMemo(
     () => errorConnections || errorMessageConnections,
@@ -78,8 +92,12 @@ function NodeErrorPorts({
 
   // Only render if we have error ports
   if (!errorPort && !errorMessagePort) {
+    if (traceSpanId.current) trace.end(traceSpanId.current)
     return null
   }
+
+  // End trace BEFORE return (synchronous measurement)
+  if (traceSpanId.current) trace.end(traceSpanId.current)
 
   return (
     <div className="border-t border-background/20">
@@ -116,9 +134,8 @@ function NodeErrorPorts({
           {errorPort && (
             <PortComponent
               key={errorPort.id}
-              node={node}
-              port={errorPort}
-              context={context}
+              nodeId={node.id}
+              portId={errorPort.id}
             />
           )}
 
@@ -126,9 +143,8 @@ function NodeErrorPorts({
           {errorMessagePort && (
             <PortComponent
               key={errorMessagePort.id}
-              node={node}
-              port={errorMessagePort}
-              context={context}
+              nodeId={node.id}
+              portId={errorMessagePort.id}
             />
           )}
         </div>

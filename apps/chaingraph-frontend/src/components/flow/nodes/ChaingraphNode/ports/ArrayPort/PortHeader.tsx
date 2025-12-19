@@ -6,22 +6,22 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
+import { usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
 import { PortTitle } from '../ui/PortTitle'
 
 interface PortHeaderProps {
   title: string
   isOutput: boolean
-  isCollapsible: boolean
+  isCollapsible?: boolean
   onClick: () => void
   rightElement?: ReactNode
 
-  node: INode
-  port: IPort
+  nodeId: string
+  portId: string
 }
 
 export function PortHeader({
@@ -30,10 +30,12 @@ export function PortHeader({
   isCollapsible,
   onClick,
   rightElement,
-  node,
-  port,
+  nodeId,
+  portId,
 }: PortHeaderProps) {
-  const config = port.getConfig()
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
+  const value = usePortValue(nodeId, portId) as any[] | undefined
 
   return (
     <div className="space-y-1">
@@ -70,19 +72,18 @@ export function PortHeader({
               'font-semibold min-w-0 flex-1',
               isOutput ? 'text-right' : 'text-left',
               // if port required and the value is empty, add a red underline
-              config.required
-              && (port.getValue() === undefined || port.getValue() === null || port.getValue().length === 0 || !port.validate())
+              config?.required
+              && (value === undefined || value === null || value.length === 0)
               && (config.direction === 'input' || config.direction === 'passthrough')
-              && (config.connections?.length || 0) === 0
               && 'underline decoration-red-500 decoration-2',
             )}
 
             onClick={() => {
               requestUpdatePortUI({
-                nodeId: node.id,
-                portId: port.id,
+                nodeId,
+                portId,
                 ui: {
-                  hideEditor: config.ui?.hideEditor === undefined ? true : !config.ui?.hideEditor,
+                  hideEditor: ui?.hideEditor === undefined ? true : !ui?.hideEditor,
                 },
               })
             }}

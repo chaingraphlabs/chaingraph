@@ -5,16 +5,19 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
 import { cn } from '@/lib/utils'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortTitle } from '../ui/PortTitle'
 
-export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
-  const { port } = props
-  const config = port.getConfig()
+export function StubPort(props: { nodeId: string, portId: string }) {
+  const { nodeId, portId } = props
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
+
+  if (!config) return null
+
   const title = config.title || config.key
-  const ui = config.ui
 
   if (ui?.hidden)
     return null
@@ -35,7 +38,7 @@ export function StubPort<C extends IPortConfig>(props: { port: IPort<C> }) {
         </PortTitle>
       )}
 
-      <PortHandle port={port} />
+      <PortHandle nodeId={nodeId} portId={portId} />
 
       {config.direction === 'input' && (
         <PortTitle>{title}</PortTitle>
