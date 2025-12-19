@@ -52,6 +52,11 @@ export const initializationDomain = createDomain('initialization')
 // Wallet domain for wallet integration and state management
 export const walletDomain = createDomain('wallet')
 
+// XYFlow domain for optimized XYFlow node rendering
+// Provides single combined store with all render data per node
+// See store/xyflow/domain.ts for detailed documentation
+export { xyflowDomain } from './xyflow/domain'
+
 // import { debug } from 'patronum'
 
 // debug(dragDropDomain)

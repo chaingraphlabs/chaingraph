@@ -9,7 +9,7 @@
 import type { Node } from '@xyflow/react'
 import { useStoreMap } from 'effector-react'
 import { useMemo, useRef } from 'react'
-import { $xyflowNodes } from '../stores'
+import { $xyflowNodesList as $xyflowNodes } from '@/store/xyflow'
 
 /**
  * Returns a stable reference to XYFlow nodes, only updating when there are

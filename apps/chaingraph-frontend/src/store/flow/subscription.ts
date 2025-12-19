@@ -11,6 +11,7 @@ import type { FlowEvent } from '@badaitech/chaingraph-types'
 
 import { attach, createEffect } from 'effector'
 
+import { trace } from '@/lib/perf-trace'
 import { flowDomain } from '../domains'
 import { resetEdges } from '../edges'
 import { clearNodes } from '../nodes'
@@ -55,9 +56,14 @@ const subscribeToFlowBaseFx = createEffect<{ flowId: string, client: TRPCClient 
           },
           onData: (data) => {
             if (data && data.data) {
+              const spanId = trace.start('subscription.onData', {
+                category: 'io',
+                tags: { eventType: data.data.type },
+              })
               newFlowEvents([
                 data.data,
               ])
+              trace.end(spanId)
             }
           },
           onError: (error: any) => {

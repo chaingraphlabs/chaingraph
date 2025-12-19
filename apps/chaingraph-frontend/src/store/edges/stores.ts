@@ -11,10 +11,12 @@ import type { Edge, FinalConnectionState, HandleType } from '@xyflow/react'
 import type { AddEdgeEventData, EdgeData, RemoveEdgeEventData } from './types'
 import { getDefaultTransferEngine } from '@badaitech/chaingraph-types'
 import { attach, combine, sample } from 'effector'
+import { trace } from '@/lib/perf-trace'
 import { edgesDomain, portsDomain } from '@/store/domains'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
-import { $nodeLayerDepth, $nodes, $xyflowNodes } from '../nodes'
+import { $nodeLayerDepth, $nodes } from '../nodes'
+import { $xyflowNodesList as $xyflowNodes } from '../xyflow'
 import { $trpcClient } from '../trpc/store'
 import { EDGE_STYLES } from './consts'
 
@@ -61,14 +63,27 @@ const removeEdgeFx = attach({
 
 // STORES
 export const $edges = edgesDomain.createStore<EdgeData[]>([])
-  .on(setEdges, (source, edges) => [
-    ...source,
-    ...edges,
-  ])
-  .on(setEdge, (edges, edge) => [
-    ...edges,
-    { ...edge },
-  ])
+  .on(setEdges, (source, edges) => {
+    const spanId = trace.start('store.$edges.setEdges', {
+      category: 'store',
+      tags: { count: edges.length },
+    })
+    const result = [
+      ...source,
+      ...edges,
+    ]
+    trace.end(spanId)
+    return result
+  })
+  .on(setEdge, (edges, edge) => {
+    const spanId = trace.start('store.$edges.setEdge', { category: 'store' })
+    const result = [
+      ...edges,
+      { ...edge },
+    ]
+    trace.end(spanId)
+    return result
+  })
   .on(removeEdge, (edges, event) => edges.filter(
     edge => edge.edgeId !== event.edgeId,
   ))

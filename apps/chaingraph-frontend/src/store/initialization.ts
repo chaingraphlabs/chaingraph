@@ -8,13 +8,17 @@
 
 import { initializeNodes } from '@badaitech/chaingraph-nodes'
 import { NodeRegistry } from '@badaitech/chaingraph-types'
-import { registerSuperjsonTransformers } from '@badaitech/chaingraph-types'
+import { registerSuperjsonTransformers, setTransformerTraceCallbacks } from '@badaitech/chaingraph-types'
 import { combine, sample } from 'effector'
 import SuperJSON from 'superjson'
+import { trace } from '@/lib/perf-trace'
 import { fetchCategorizedNodesFx } from './categories'
 import { initializationDomain } from './domains'
 import { loadFlowsListFx } from './flow'
 import { initInterpolatorFx } from './nodes'
+// Import ports-v2 to register all sample() wiring for granular port stores
+// This enables the buffering system, echo detection, initialization handlers, etc.
+import '@/store/ports-v2'
 import { setSession } from './session'
 import { $trpcClientExecutor, createTRPCExecutionClientEvent } from './trpc/execution-client'
 import { $trpcClient, createTRPCClientEvent } from './trpc/store'
@@ -83,6 +87,16 @@ const initializeAppFx = initializationDomain.createEffect<AppInternalConfig, voi
     config.superjsonCustom,
     NodeRegistry.getInstance(),
   )
+
+  // Connect trace callbacks for deserialization tracing (dev mode only)
+  if (import.meta.env.DEV) {
+    setTransformerTraceCallbacks({
+      onDeserializeStart: (type) => trace.start(`deserialize.${type}`, { category: 'io' }),
+      onDeserializeEnd: (spanId) => {
+        if (spanId) trace.end(spanId)
+      },
+    })
+  }
 
   initInterpolatorFx()
 
