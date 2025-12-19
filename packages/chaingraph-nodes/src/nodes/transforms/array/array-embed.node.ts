@@ -150,8 +150,7 @@ Type is inferred from input array and path.`,
         ...resultPort.getConfig(),
         itemConfig: nestedSchema,
       })
-    }
-    else {
+    } else {
       // No path - wrap in object with 'value' key
       resultPort.setConfig({
         ...resultPort.getConfig(),

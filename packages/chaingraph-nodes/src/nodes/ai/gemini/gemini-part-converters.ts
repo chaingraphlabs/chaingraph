@@ -9,6 +9,7 @@
 import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { Part } from '@google/genai'
 import type { GeminiMessagePart } from './gemini-conversation-types'
+import { Buffer } from 'node:buffer'
 
 /**
  * Supported part types for different Gemini models/use cases

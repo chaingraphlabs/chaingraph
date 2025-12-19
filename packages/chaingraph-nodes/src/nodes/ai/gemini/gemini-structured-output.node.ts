@@ -47,9 +47,9 @@ import {
 import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
-  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
-  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
   convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
+  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
 } from './gemini-part-converters'
 import {
   GeminiGenerationConfig,
@@ -388,7 +388,7 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
       const convertedMessages = await Promise.all(
-        this.previousMessages.map((msg) => this.convertMessageToAPIFormat(msg, context)),
+        this.previousMessages.map(msg => this.convertMessageToAPIFormat(msg, context)),
       )
       for (const content of convertedMessages) {
         if (content) {
@@ -610,9 +610,9 @@ Chain to another Gemini node's "Previous Messages" for multi-turn structured ext
    * Delegates to shared utility with TEXT_STRUCTURED support for parallel conversion and null filtering.
    */
   private async convertMessageToAPIFormat(
-    message: { role: string; parts: GeminiMessagePart[] },
+    message: { role: string, parts: GeminiMessagePart[] },
     context?: ExecutionContext,
-  ): Promise<{ role: string; parts: Part[] } | null> {
+  ): Promise<{ role: string, parts: Part[] } | null> {
     return sharedConvertMessageToAPIFormat(
       message,
       GeminiPartTypeSupport.TEXT_STRUCTURED,
