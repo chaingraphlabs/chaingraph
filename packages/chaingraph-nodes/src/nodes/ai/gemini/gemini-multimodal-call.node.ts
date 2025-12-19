@@ -33,6 +33,8 @@ import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
   convertPartToAPIFormat as sharedConvertPartToAPIFormat,
+  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+  convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
 } from './gemini-part-converters'
 import {
   GeminiGenerationConfig,
@@ -358,16 +360,16 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
 
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
-      for (const msg of this.previousMessages) {
-        contents.push({
-          role: msg.role,
-          parts: msg.parts.map(p => this.convertPartToAPIFormat(p)),
-        })
+      const convertedMessages = await Promise.all(
+        this.previousMessages.map((msg) => this.convertMessageToAPIFormat(msg)),
+      )
+      for (const content of convertedMessages) {
+        contents.push(content)
       }
     }
 
     // 2. Add current input message
-    const currentParts = this.inputMessage.parts.map(p => this.convertPartToAPIFormat(p))
+    const currentParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts)
     contents.push({
       role: 'user',
       parts: currentParts,
@@ -520,9 +522,8 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
         // Build output messages - ONLY the new exchange (not including previousMessages)
         // This allows callers to know exactly what was produced by this call
         // Clean user input to remove invalid fields (like thought: false)
-        const cleanedInputParts = this.inputMessage.parts.map(p => this.convertAPIPartToMessagePart(
-          this.convertPartToAPIFormat(p),
-        ))
+        const apiParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts)
+        const cleanedInputParts = apiParts.map((p) => this.convertAPIPartToMessagePart(p))
 
         this.messages = [
           // User's input message (cleaned)
@@ -557,8 +558,29 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
    * Convert GeminiMessagePart to API Part format
    * Delegates to shared utility with ALL part types supported
    */
-  private convertPartToAPIFormat(part: GeminiMessagePart): Part {
-    return sharedConvertPartToAPIFormat(part, GeminiPartTypeSupport.ALL) || {}
+  private async convertPartToAPIFormat(part: GeminiMessagePart): Promise<Part> {
+    return (await sharedConvertPartToAPIFormat(part, GeminiPartTypeSupport.ALL)) || {}
+  }
+
+  /**
+   * Convert multiple parts to API format in parallel while maintaining order.
+   * Delegates to shared utility with ALL part types supported.
+   */
+  private async convertPartsToAPIFormatBatch(parts: GeminiMessagePart[]): Promise<Part[]> {
+    const results = await sharedConvertPartsToAPIFormatBatch(parts, GeminiPartTypeSupport.ALL)
+    return results.map((p) => p || {})
+  }
+
+  /**
+   * Convert a complete message to API format.
+   * Delegates to shared utility with ALL part types supported.
+   */
+  private async convertMessageToAPIFormat(message: {
+    role: string
+    parts: GeminiMessagePart[]
+  }): Promise<{ role: string; parts: Part[] }> {
+    const result = await sharedConvertMessageToAPIFormat(message, GeminiPartTypeSupport.ALL)
+    return result || { role: message.role, parts: [] }
   }
 
   /**

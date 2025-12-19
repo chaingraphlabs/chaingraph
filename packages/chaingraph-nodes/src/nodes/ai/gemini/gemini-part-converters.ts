@@ -23,6 +23,26 @@ export enum GeminiPartTypeSupport {
 }
 
 /**
+ * Fetch with timeout support using AbortController.
+ * @param url - URL to fetch
+ * @param timeout - Timeout in milliseconds
+ * @returns Response promise
+ */
+async function fetchWithTimeout(url: string, timeout: number): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    clearTimeout(timeoutId)
+    return response
+  } catch (error) {
+    clearTimeout(timeoutId)
+    throw error
+  }
+}
+
+/**
  * Convert GeminiMessagePart to Gemini API Part format.
  * Handles type conversions, whitelisting based on model support, and thought field validation.
  *
@@ -30,14 +50,16 @@ export enum GeminiPartTypeSupport {
  * @param support - Which part types to allow (whitelist mode)
  * @param context - Optional execution context for debug logging
  * @param debugLog - Optional debug logging function
- * @returns Part for API or null if filtered out by whitelist
+ * @param timeout - Optional timeout for file downloads (default: 30000ms)
+ * @returns Promise<Part | null> for API or null if filtered out by whitelist
  */
-export function convertPartToAPIFormat(
+export async function convertPartToAPIFormat(
   part: GeminiMessagePart,
   support: GeminiPartTypeSupport = GeminiPartTypeSupport.ALL,
   context?: ExecutionContext,
   debugLog?: (ctx: ExecutionContext, msg: string) => Promise<void>,
-): Part | null {
+  timeout: number = 30000,
+): Promise<Part | null> {
   const apiPart: Part = {}
   let hasValidContent = false
 
@@ -62,7 +84,40 @@ export function convertPartToAPIFormat(
 
   // FileData (URLs, GCS, YouTube) - text models and ALL
   if (part.fileData) {
-    if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
+    if (support === GeminiPartTypeSupport.IMAGE_ONLY) {
+      // Download file and convert to inlineData (base64) for IMAGE_ONLY mode
+      if (context && debugLog) {
+        await debugLog(context, `[INFO] Downloading fileData URL and converting to inlineData for IMAGE_ONLY mode: ${part.fileData.fileUri}`)
+      }
+
+      try {
+        const response = await fetchWithTimeout(part.fileData.fileUri, timeout)
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const arrayBuffer = await response.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        const mimeType = part.fileData.mimeType || response.headers.get('content-type') || 'image/png'
+
+        apiPart.inlineData = {
+          data: base64,
+          mimeType,
+        }
+        hasValidContent = true
+      } catch (error) {
+        // On error, create a text part with error message
+        const errorMessage = `[ERROR] Failed to download image from URL: ${part.fileData.fileUri}\nReason: ${error instanceof Error ? error.message : String(error)}`
+
+        if (context && debugLog) {
+          await debugLog(context, errorMessage)
+        }
+
+        apiPart.text = errorMessage
+        hasValidContent = true
+      }
+    } else if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.fileData = part.fileData
       hasValidContent = true
     } else if (context && debugLog) {
@@ -149,6 +204,117 @@ export function convertPartToAPIFormat(
   }
 
   return apiPart
+}
+
+/**
+ * Convert multiple parts to API format in parallel while maintaining order.
+ * Optimized for IMAGE_ONLY mode with parallel file downloads.
+ *
+ * @param parts - Array of parts to convert
+ * @param support - Which part types to allow (whitelist mode)
+ * @param context - Optional execution context for debug logging
+ * @param debugLog - Optional debug logging function
+ * @param options - Optional configuration for concurrency and timeout
+ * @returns Promise<Array<Part | null>> with results in same order as input
+ */
+export async function convertPartsToAPIFormatBatch(
+  parts: GeminiMessagePart[],
+  support: GeminiPartTypeSupport = GeminiPartTypeSupport.ALL,
+  context?: ExecutionContext,
+  debugLog?: (ctx: ExecutionContext, msg: string) => Promise<void>,
+  options?: {
+    maxConcurrency?: number
+    timeout?: number
+  },
+): Promise<(Part | null)[]> {
+  // Early exit for empty arrays
+  if (parts.length === 0) {
+    return []
+  }
+
+  const maxConcurrency = options?.maxConcurrency ?? 5
+  const timeout = options?.timeout ?? 30000
+
+  // Semaphore for concurrency control
+  let activeCount = 0
+  const queue: Array<() => void> = []
+
+  const acquire = (): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      if (activeCount < maxConcurrency) {
+        activeCount++
+        resolve()
+      } else {
+        queue.push(resolve)
+      }
+    })
+  }
+
+  const release = (): void => {
+    activeCount--
+    const next = queue.shift()
+    if (next) {
+      activeCount++
+      next()
+    }
+  }
+
+  // Process all parts in parallel with concurrency control
+  const results = await Promise.all(
+    parts.map(async (part) => {
+      await acquire()
+      try {
+        return await convertPartToAPIFormat(part, support, context, debugLog, timeout)
+      } finally {
+        release()
+      }
+    }),
+  )
+
+  return results
+}
+
+/**
+ * Convert a complete message (with multiple parts) to API format.
+ * Handles part batching, parallel conversion, and null filtering.
+ *
+ * @param message - Message with role and parts
+ * @param support - Which part types to allow (whitelist mode)
+ * @param context - Optional execution context for debug logging
+ * @param debugLog - Optional debug logging function
+ * @param options - Optional configuration for concurrency and timeout
+ * @returns Promise<Content | null> with converted message or null if no valid parts
+ */
+export async function convertMessageToAPIFormat(
+  message: { role: string, parts: GeminiMessagePart[] },
+  support: GeminiPartTypeSupport = GeminiPartTypeSupport.ALL,
+  context?: ExecutionContext,
+  debugLog?: (ctx: ExecutionContext, msg: string) => Promise<void>,
+  options?: {
+    maxConcurrency?: number
+    timeout?: number
+  },
+): Promise<{ role: string, parts: Part[] } | null> {
+  // Convert all parts in batch
+  const convertedParts = await convertPartsToAPIFormatBatch(
+    message.parts,
+    support,
+    context,
+    debugLog,
+    options,
+  )
+
+  // Filter out nulls (preserve existing behavior)
+  const validParts = convertedParts.filter((p): p is Part => p !== null)
+
+  if (validParts.length === 0) {
+    return null // Message has no valid parts
+  }
+
+  return {
+    role: message.role,
+    parts: validParts,
+  }
 }
 
 /**
