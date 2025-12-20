@@ -10,6 +10,9 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
+import type {
+  GenerateImagesConfig,
+} from '@google/genai'
 import {
   BaseNode,
   Node,
@@ -267,7 +270,7 @@ This enables conversational workflows and multi-turn editing.`,
     const genAI = new GoogleGenAI({ apiKey })
 
     // Build generation config from Input/Output/Control
-    const generateConfig: any = {
+    const generateConfig: GenerateImagesConfig = {
       numberOfImages: this.control.numberOfImages,
       // From output
       aspectRatio: this.output.aspectRatio,
@@ -276,21 +279,16 @@ This enables conversational workflows and multi-turn editing.`,
       // From control
       personGeneration: mapPersonGeneration(this.control.personGeneration),
       safetyFilterLevel: mapSafetyFilterLevel(this.control.safetyFilter),
+      outputMimeType: 'image/png',
     }
 
     // From input - prompt enhancement settings
-    if (this.input.negativePrompt) {
-      generateConfig.negativePrompt = this.input.negativePrompt
-    }
     generateConfig.enhancePrompt = this.input.enhancePrompt
     generateConfig.language = mapImagePromptLanguage(this.input.language)
 
     // Optional control params
     if (this.control.guidanceScale !== undefined) {
       generateConfig.guidanceScale = this.control.guidanceScale
-    }
-    if (this.control.seed !== undefined) {
-      generateConfig.seed = this.control.seed
     }
 
     // Generate the image using Imagen API
