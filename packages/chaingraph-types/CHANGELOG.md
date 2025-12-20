@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.6.43
+
+### Patch Changes
+
+- feat: Enhance API format conversion by adding additional checks for part properties
+
 ## 0.6.42
 
 ### Patch Changes

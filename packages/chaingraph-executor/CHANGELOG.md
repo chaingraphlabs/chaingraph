@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-executor
 
+## 0.6.43
+
+### Patch Changes
+
+- feat: Enhance API format conversion by adding additional checks for part properties
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.43
+  - @badaitech/chaingraph-trpc@0.6.43
+  - @badaitech/chaingraph-types@0.6.43
+
 ## 0.6.42
 
 ### Patch Changes

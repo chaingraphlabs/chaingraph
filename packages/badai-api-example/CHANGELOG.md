@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.43
+
+### Patch Changes
+
+- feat: Enhance API format conversion by adding additional checks for part properties
+- Updated dependencies
+  - @badaitech/badai-api@0.6.43
+
 ## 0.6.42
 
 ### Patch Changes
