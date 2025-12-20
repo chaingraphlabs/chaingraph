@@ -273,7 +273,8 @@ export async function executeFlowAtomic(
 
   // Step 1: Load flow from database
   DBOS.logger.debug(`Loading flow: ${task.flowId}`)
-  const flow = await loadFlow(task.flowId)
+  // const flow = await loadFlow(task.flowId)
+  const flow = await flowCachedLoader.loadFlow(task.flowId, task.flowVersion)
 
   if (!flow) {
     const error = `Flow ${task.flowId} not found`
