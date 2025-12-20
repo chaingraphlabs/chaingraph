@@ -23,9 +23,13 @@ import { FlowDebugger } from './debugger'
 import { EdgeTransferService } from './edge-transfer-service'
 import { ExecutionEventEnum, ExecutionEventImpl } from './execution-events'
 
-const DEFAULT_MAX_CONCURRENCY = 100
-const DEFAULT_NODE_TIMEOUT_MS = 60000
-const DEFAULT_FLOW_TIMEOUT_MS = 300000
+const DEFAULT_MAX_CONCURRENCY = 50
+
+// 1 hour
+const DEFAULT_NODE_TIMEOUT_MS = 3600000
+
+// 3 hours
+const DEFAULT_FLOW_TIMEOUT_MS = 10800000
 
 export const ExecutionCancelledReason = 'Execution cancelled'
 export const ExecutionStoppedByDebugger = 'Stopped by debugger'

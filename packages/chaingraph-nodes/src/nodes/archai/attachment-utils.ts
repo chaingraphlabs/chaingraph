@@ -206,8 +206,8 @@ export function detectMimeTypeFromContent(text: string): string {
   const trimmed = text.trim()
 
   // JSON detection
-  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-      (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+  if ((trimmed.startsWith('{') && trimmed.endsWith('}'))
+    || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
     try {
       JSON.parse(trimmed)
       return 'application/json'
@@ -217,8 +217,8 @@ export function detectMimeTypeFromContent(text: string): string {
   }
 
   // HTML detection
-  if (/^<!DOCTYPE\s+html/i.test(trimmed) ||
-      /^<html[\s>]/i.test(trimmed)) {
+  if (/^<!DOCTYPE\s+html/i.test(trimmed)
+    || /^<html[\s>]/i.test(trimmed)) {
     return 'text/html'
   }
 
@@ -236,9 +236,9 @@ export function detectMimeTypeFromContent(text: string): string {
   }
 
   // Markdown detection (basic heuristics)
-  if (/^#+\s/.test(trimmed) ||
-      /\n#{1,6}\s/.test(trimmed) ||
-      /```[\s\S]*```/.test(trimmed)) {
+  if (/^#+\s/.test(trimmed)
+    || /\n#{1,6}\s/.test(trimmed)
+    || /```[\s\S]*```/.test(trimmed)) {
     return 'text/markdown'
   }
 
@@ -247,7 +247,7 @@ export function detectMimeTypeFromContent(text: string): string {
   if (lines.length > 1) {
     const firstLineCommas = (lines[0].match(/,/g) || []).length
     if (firstLineCommas > 0) {
-      const allLinesHaveSimilarCommas = lines.slice(0, 5).every(line => {
+      const allLinesHaveSimilarCommas = lines.slice(0, 5).every((line) => {
         const commas = (line.match(/,/g) || []).length
         return Math.abs(commas - firstLineCommas) <= 1
       })
@@ -258,8 +258,8 @@ export function detectMimeTypeFromContent(text: string): string {
   }
 
   // YAML detection
-  if (/^---\s*\n/.test(trimmed) ||
-      /^\w+:\s*(?:\n|$)/.test(trimmed)) {
+  if (/^---\s*\n/.test(trimmed)
+    || /^\w+:\s*(?:\n|$)/.test(trimmed)) {
     return 'application/yaml'
   }
 

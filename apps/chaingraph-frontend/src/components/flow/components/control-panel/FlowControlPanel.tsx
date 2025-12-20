@@ -29,6 +29,7 @@ import {
   stopExecution,
   toggleDebugMode,
 } from '@/store/execution'
+import { useSelectedExecution } from '@/store/execution-tree/hooks/useExecutionTree'
 import { $activeFlowMetadata } from '@/store/flow'
 import { getWalletContextForExecution } from '@/store/wallet'
 import { DebugControls } from './DebugControls'
@@ -36,6 +37,8 @@ import { DebugControls } from './DebugControls'
 const MotionButton = motion(Button)
 
 export function FlowControlPanel({ className }: FlowControlPanelProps) {
+  const { selectedExecution } = useSelectedExecution()
+
   // Get states from stores
   const { status: executionStatus, executionId, debugMode } = useUnit($executionState)
   const { isSubscribed } = useUnit($executionSubscriptionState)
@@ -131,7 +134,11 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                 transition={{ type: 'spring', duration: 0.4 }}
               >
                 <StatusIndicator
-                  status={executionStatus}
+                  status={
+                    selectedExecution?.status === ExecutionStatus.Running
+                      ? selectedExecution.status
+                      : executionStatus
+                  }
                   debugMode={debugMode}
                 />
               </motion.div>
@@ -209,7 +216,7 @@ export function FlowControlPanel({ className }: FlowControlPanelProps) {
                   transition={{ duration: 0.3 }}
                 >
                   {/* Stop Button */}
-                  {executionStatus === ExecutionStatus.Running && (
+                  {(executionStatus === ExecutionStatus.Running || selectedExecution?.status === ExecutionStatus.Running) && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <MotionButton

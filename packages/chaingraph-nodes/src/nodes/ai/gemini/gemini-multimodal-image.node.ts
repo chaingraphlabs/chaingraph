@@ -24,7 +24,7 @@ import {
   PortArray,
   PortObject,
 } from '@badaitech/chaingraph-types'
-import { GoogleGenAI, createPartFromUri } from '@google/genai'
+import { createPartFromUri, GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   ConversationMessage,
@@ -39,9 +39,11 @@ import {
 import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
-  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
-  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
   convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
+
+  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+
+  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
 } from './gemini-part-converters'
 
 // ============================================================================
@@ -253,7 +255,7 @@ This preserves the full conversation history.`,
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
       const convertedMessages = await Promise.all(
-        this.previousMessages.map((msg) => this.convertMessageToAPIFormat(msg, context)),
+        this.previousMessages.map(msg => this.convertMessageToAPIFormat(msg, context)),
       )
       for (const content of convertedMessages) {
         if (content) {
@@ -496,9 +498,9 @@ This preserves the full conversation history.`,
    * Delegates to shared utility with IMAGE_ONLY support for parallel downloads and null filtering.
    */
   private async convertMessageToAPIFormat(
-    message: { role: string; parts: GeminiMessagePart[] },
+    message: { role: string, parts: GeminiMessagePart[] },
     context?: ExecutionContext,
-  ): Promise<{ role: string; parts: Part[] } | null> {
+  ): Promise<{ role: string, parts: Part[] } | null> {
     return sharedConvertMessageToAPIFormat(
       message,
       GeminiPartTypeSupport.IMAGE_ONLY,

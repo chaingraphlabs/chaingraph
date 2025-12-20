@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { WorkflowHandle } from '@dbos-inc/dbos-sdk'
 import type { ExecutionTask } from '../../../types'
 import type { ExecutionResult } from '../types'
 import { ExecutionEventEnum } from '@badaitech/chaingraph-types'
@@ -163,6 +164,40 @@ export class ExecutionWorkflows extends ConfiguredInstance {
     // Abort controller for STOP command
     const abortController = new AbortController()
 
+    // Run periodic checker for parent workflow:
+    const parentCheckerSignal = { done: false }
+    const stopCheckerPromise = (async () => {
+      if (!task.parentExecutionId) {
+        return // No parent to check
+      }
+
+      DBOS.logger.debug(`Starting parent workflow monitor for: ${task.executionId}`)
+
+      while (!parentCheckerSignal.done) {
+        try {
+          // DO NOT need durable timeout, use just node timeout:
+          await new Promise(resolve => setTimeout(resolve, 1000))
+
+          if (parentCheckerSignal.done)
+            break // Check signal after sleep
+
+          const parentWorkflow = await DBOS.getWorkflowStatus(task.parentExecutionId)
+          if (parentWorkflow?.status === 'COMPLETED' || parentWorkflow?.status === 'ERROR' || parentWorkflow?.status === 'CANCELLED') {
+            DBOS.logger.info(`Parent workflow ${task.parentExecutionId} has ended (${parentWorkflow.status}). Stopping execution ${task.executionId}.`)
+            abortController.abort(`Parent workflow has ended: ${parentWorkflow.status}`)
+            break
+          }
+        } catch (error) {
+          if (parentCheckerSignal.done)
+            break // Exit if cancelled
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          DBOS.logger.warn(`Error checking parent workflow status (continuing): ${errorMessage}`)
+        }
+      }
+
+      DBOS.logger.debug(`Parent workflow monitor stopped for: ${task.executionId}`)
+    })()
+
     // Command controller for PAUSE/RESUME/STEP commands
     const commandController: CommandController = {
       currentCommand: null,
@@ -271,18 +306,18 @@ export class ExecutionWorkflows extends ConfiguredInstance {
       // The flow execution is atomic - either fully succeeds or fully fails.
 
       // Start command polling in background ONLY if debug mode is enabled
-      let commandLoopPromise: Promise<void> | null = null
-      if (task.debug) {
-        DBOS.logger.info(`Debug mode enabled - starting command polling for: ${task.executionId}`)
-        commandLoopPromise = ExecutionWorkflows.commandPollingLoop(
-          task.executionId,
-          executionSignal,
-          abortController,
-          commandController,
-        )
-      } else {
-        DBOS.logger.debug(`Production mode - command polling disabled for: ${task.executionId}`)
-      }
+      // let commandLoopPromise: Promise<void> | null = null
+      // if (task.debug) {
+      //   DBOS.logger.info(`Debug mode enabled - starting command polling for: ${task.executionId}`)
+      //   commandLoopPromise = ExecutionWorkflows.commandPollingLoop(
+      //     task.executionId,
+      //     executionSignal,
+      //     abortController,
+      //     commandController,
+      //   )
+      // } else {
+      //   DBOS.logger.debug(`Production mode - command polling disabled for: ${task.executionId}`)
+      // }
 
       // Run execution (not wrapped in Promise.all - cleaner flow)
       const result = await DBOS.runStep(
@@ -292,10 +327,10 @@ export class ExecutionWorkflows extends ConfiguredInstance {
 
       // Signal command loop to stop and wait for cleanup (if debug mode)
       executionSignal.done = true
-      if (commandLoopPromise) {
-        await commandLoopPromise
-        DBOS.logger.debug(`Command polling cleanup complete for: ${task.executionId}`)
-      }
+      // if (commandLoopPromise) {
+      // await commandLoopPromise
+      // DBOS.logger.debug(`Command polling cleanup complete for: ${task.executionId}`)
+      // }
 
       // Step 2.5: Spawn child executions (if any)
       // This happens at WORKFLOW level where DBOS.startWorkflow is allowed
@@ -304,38 +339,105 @@ export class ExecutionWorkflows extends ConfiguredInstance {
         const childCount = result.childTasks.length
         const spawnStartTime = Date.now()
 
-        DBOS.logger.info(`Spawning ${childCount} child execution(s) in parallel for: ${task.executionId}`)
+        DBOS.logger.info(`Spawning ${childCount} child execution(s) for: ${task.executionId}`)
 
-        // Spawn all children in parallel using Promise.allSettled
+        // ============================================================
+        // PHASE A: Spawn all children and collect handles
+        // ============================================================
+        // Using Promise.allSettled to prevent cascade failures
         // This is much faster than sequential spawning (40x improvement for 100 children)
-        // Using allSettled instead of all() to prevent cascade failures
-        const spawnPromises = result.childTasks.map(childTask =>
-          DBOS.startWorkflow(ExecutionWorkflows, {
-            queueName: executionQueue.name,
-            workflowID: childTask.executionId,
-          }).executeChainGraph(childTask).then(() => {
-            DBOS.logger.debug(`Child spawned: ${childTask.executionId} (parent: ${task.executionId})`)
-            return { executionId: childTask.executionId, status: 'spawned' as const }
-          }).catch((error) => {
-            // Log error but don't throw - individual child failures shouldn't fail the parent
-            const errorMessage = error instanceof Error ? error.message : String(error)
-            DBOS.logger.error(`Failed to spawn child ${childTask.executionId}: ${errorMessage}`)
-            return { executionId: childTask.executionId, status: 'failed' as const, error: errorMessage }
-          }),
+        const spawnResults = await Promise.allSettled(
+          result.childTasks.map(childTask =>
+            DBOS.startWorkflow(ExecutionWorkflows, {
+              queueName: executionQueue.name,
+              workflowID: childTask.executionId,
+              enqueueOptions: {
+                deduplicationID: childTask.executionId,
+              },
+            }).executeChainGraph(childTask),
+          ),
         )
 
-        // Wait for all spawn operations to complete (succeeded or failed)
-        const results = await Promise.allSettled(spawnPromises)
+        // Extract successful handles and log spawn failures
+        const handles: Array<{ handle: WorkflowHandle<ExecutionResult>, executionId: string }> = []
+        const spawnFailures: string[] = []
 
-        // Calculate success/failure statistics
-        const succeeded = results.filter(r => r.status === 'fulfilled' && r.value.status === 'spawned').length
-        const failed = results.filter(r => r.status === 'fulfilled' && r.value.status === 'failed').length
+        for (let i = 0; i < spawnResults.length; i++) {
+          const spawnResult = spawnResults[i]
+          const childTask = result.childTasks[i]
+
+          if (spawnResult.status === 'fulfilled') {
+            handles.push({ handle: spawnResult.value, executionId: childTask.executionId })
+          } else {
+            const errorMsg = spawnResult.reason instanceof Error
+              ? spawnResult.reason.message
+              : String(spawnResult.reason)
+            spawnFailures.push(`${childTask.executionId}: ${errorMsg}`)
+            DBOS.logger.error(`Failed to spawn child ${childTask.executionId}: ${errorMsg}`)
+          }
+        }
+
         const spawnDuration = Date.now() - spawnStartTime
-
         DBOS.logger.info(
-          `Child spawn complete: ${succeeded}/${childCount} succeeded, ${failed} failed in ${spawnDuration}ms `
+          `Child spawn complete: ${handles.length}/${childCount} spawned, `
+          + `${spawnFailures.length} failed in ${spawnDuration}ms `
           + `(${(childCount / (spawnDuration / 1000)).toFixed(1)} spawns/sec) for: ${task.executionId}`,
         )
+
+        // ============================================================
+        // PHASE B: Await all child results
+        // ============================================================
+        if (handles.length > 0) {
+          const awaitStartTime = Date.now()
+
+          const childResults = await Promise.allSettled(
+            handles.map(h => h.handle.getResult()),
+          )
+
+          // Aggregate results
+          let completed = 0
+          let failed = 0
+          const errors: string[] = []
+
+          for (let i = 0; i < childResults.length; i++) {
+            const childResult = childResults[i]
+            const executionId = handles[i].executionId
+
+            if (childResult.status === 'fulfilled') {
+              const execResult = childResult.value
+              if (execResult.status === 'completed') {
+                completed++
+              } else {
+                failed++
+                if (execResult.error) {
+                  errors.push(`${executionId}: ${execResult.error}`)
+                }
+              }
+            } else {
+              failed++
+              const errorMsg = childResult.reason instanceof Error
+                ? childResult.reason.message
+                : String(childResult.reason)
+              errors.push(`${executionId}: ${errorMsg}`)
+            }
+          }
+
+          const awaitDuration = Date.now() - awaitStartTime
+          const totalDuration = Date.now() - spawnStartTime
+
+          DBOS.logger.info(
+            `Child executions complete: ${completed} completed, ${failed} failed `
+            + `in ${awaitDuration}ms (${(handles.length / (awaitDuration / 1000)).toFixed(1)} exec/sec) `
+            + `| Total: ${totalDuration}ms for: ${task.executionId}`,
+          )
+
+          if (errors.length > 0) {
+            DBOS.logger.warn(
+              `Child execution errors for ${task.executionId}: `
+              + `${errors.slice(0, 5).join('; ')}${errors.length > 5 ? ` (+${errors.length - 5} more)` : ''}`,
+            )
+          }
+        }
       }
 
       // Step 3: Update status to "completed"
@@ -382,6 +484,9 @@ export class ExecutionWorkflows extends ConfiguredInstance {
       // Ensure command polling loop terminates (defensive - should already be done)
       executionSignal.done = true
       DBOS.logger.debug(`Execution workflow cleanup complete for: ${task.executionId}`)
+
+      // Also stop the parent checker
+      parentCheckerSignal.done = true
     }
   }
 }

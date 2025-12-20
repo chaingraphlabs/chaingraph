@@ -9,6 +9,7 @@
 import type { ExecutionContext } from '@badaitech/chaingraph-types'
 import type { Part } from '@google/genai'
 import type { GeminiMessagePart } from './gemini-conversation-types'
+import { Buffer } from 'node:buffer'
 
 /**
  * Supported part types for different Gemini models/use cases
@@ -83,7 +84,7 @@ export async function convertPartToAPIFormat(
   }
 
   // FileData (URLs, GCS, YouTube) - text models and ALL
-  if (part.fileData) {
+  if (part.fileData && part.fileData.fileUri) {
     if (support === GeminiPartTypeSupport.IMAGE_ONLY) {
       // Download file and convert to inlineData (base64) for IMAGE_ONLY mode
       if (context && debugLog) {
@@ -126,7 +127,7 @@ export async function convertPartToAPIFormat(
   }
 
   // Function calling - text models and ALL
-  if (part.functionCall) {
+  if (part.functionCall && (part.functionCall.id || part.functionCall.name)) {
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.functionCall = {
         id: part.functionCall.id,
@@ -139,7 +140,7 @@ export async function convertPartToAPIFormat(
     }
   }
 
-  if (part.functionResponse) {
+  if (part.functionResponse && (part.functionResponse.id || part.functionResponse.name)) {
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.functionResponse = {
         id: part.functionResponse.id,
@@ -153,7 +154,7 @@ export async function convertPartToAPIFormat(
   }
 
   // Executable code - text models and ALL
-  if (part.executableCode) {
+  if (part.executableCode && part.executableCode.code) {
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.executableCode = {
         code: part.executableCode.code,
@@ -165,7 +166,7 @@ export async function convertPartToAPIFormat(
     }
   }
 
-  if (part.codeExecutionResult) {
+  if (part.codeExecutionResult && (part.codeExecutionResult.outcome || part.codeExecutionResult.output)) {
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.codeExecutionResult = {
         outcome: part.codeExecutionResult.outcome as any, // API uses Outcome enum
@@ -178,7 +179,7 @@ export async function convertPartToAPIFormat(
   }
 
   // Video metadata - text models and ALL
-  if (part.videoMetadata) {
+  if (part.videoMetadata && (part.videoMetadata.fps || part.videoMetadata.startOffset || part.videoMetadata.endOffset)) {
     if (support === GeminiPartTypeSupport.TEXT_STRUCTURED || support === GeminiPartTypeSupport.ALL) {
       apiPart.videoMetadata = part.videoMetadata
       hasValidContent = true
@@ -286,7 +287,7 @@ export async function convertPartsToAPIFormatBatch(
  * @returns Promise<Content | null> with converted message or null if no valid parts
  */
 export async function convertMessageToAPIFormat(
-  message: { role: string; parts: GeminiMessagePart[] },
+  message: { role: string, parts: GeminiMessagePart[] },
   support: GeminiPartTypeSupport = GeminiPartTypeSupport.ALL,
   context?: ExecutionContext,
   debugLog?: (ctx: ExecutionContext, msg: string) => Promise<void>,
@@ -294,7 +295,7 @@ export async function convertMessageToAPIFormat(
     maxConcurrency?: number
     timeout?: number
   },
-): Promise<{ role: string; parts: Part[] } | null> {
+): Promise<{ role: string, parts: Part[] } | null> {
   // Convert all parts in batch
   const convertedParts = await convertPartsToAPIFormatBatch(
     message.parts,
@@ -335,21 +336,21 @@ export function convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
     msgPart.text = part.text
   }
 
-  if (part.inlineData) {
+  if (part.inlineData && part.inlineData.data) {
     msgPart.inlineData = {
       data: part.inlineData.data || '',
       mimeType: part.inlineData.mimeType || 'image/png',
     }
   }
 
-  if (part.fileData) {
+  if (part.fileData && part.fileData.fileUri) {
     msgPart.fileData = {
       fileUri: part.fileData.fileUri || '',
       mimeType: part.fileData.mimeType,
     }
   }
 
-  if (part.functionCall) {
+  if (part.functionCall && (part.functionCall.id || part.functionCall.name)) {
     msgPart.functionCall = {
       id: part.functionCall.id,
       name: part.functionCall.name,
@@ -357,7 +358,7 @@ export function convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
     }
   }
 
-  if (part.functionResponse) {
+  if (part.functionResponse && (part.functionResponse.id || part.functionResponse.name)) {
     msgPart.functionResponse = {
       id: part.functionResponse.id,
       name: part.functionResponse.name,
@@ -365,21 +366,21 @@ export function convertAPIPartToMessagePart(part: Part): GeminiMessagePart {
     }
   }
 
-  if (part.executableCode) {
+  if (part.executableCode && part.executableCode.code) {
     msgPart.executableCode = {
       code: part.executableCode.code,
       language: part.executableCode.language,
     }
   }
 
-  if (part.codeExecutionResult) {
+  if (part.codeExecutionResult && (part.codeExecutionResult.outcome || part.codeExecutionResult.output)) {
     msgPart.codeExecutionResult = {
       outcome: part.codeExecutionResult.outcome || '',
       output: part.codeExecutionResult.output,
     }
   }
 
-  if (part.videoMetadata) {
+  if (part.videoMetadata && (part.videoMetadata.fps || part.videoMetadata.startOffset || part.videoMetadata.endOffset)) {
     msgPart.videoMetadata = part.videoMetadata
   }
 

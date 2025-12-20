@@ -190,7 +190,8 @@ Type is inferred from source types and target paths.`,
     }
 
     for (const mapping of this.mappings || []) {
-      if (!mapping.from || !mapping.to) continue
+      if (!mapping.from || !mapping.to)
+        continue
 
       // Get type at source path
       const sourceType = getTypeAtPath(sourceItemConfig, mapping.from) || { type: 'any' }
@@ -268,7 +269,8 @@ Type is inferred from source types and target paths.`,
   private setAtPath(obj: any, path: string, value: any): void {
     const parts = path.split('.').filter(Boolean)
 
-    if (parts.length === 0) return
+    if (parts.length === 0)
+      return
 
     let current = obj
 
@@ -302,8 +304,7 @@ Type is inferred from source types and target paths.`,
     for (const key of Object.keys(source)) {
       if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
         result[key] = this.deepMerge(result[key] || {}, source[key])
-      }
-      else {
+      } else {
         result[key] = source[key]
       }
     }
@@ -329,7 +330,8 @@ Type is inferred from source types and target paths.`,
       const targetObj: any = {}
 
       for (const mapping of this.mappings) {
-        if (!mapping.from || !mapping.to) continue
+        if (!mapping.from || !mapping.to)
+          continue
 
         // Extract value from source path
         const value = getByPath(sourceObj, mapping.from)

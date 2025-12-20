@@ -155,9 +155,11 @@ export const createExecutionFx = executionDomain.createEffect(async (payload: Cr
       debug,
       breakpoints: debug ? Array.from(breakpoints) : [],
       execution: {
-        maxConcurrency: 10,
-        nodeTimeoutMs: 300000,
-        flowTimeoutMs: 900000,
+        maxConcurrency: 20,
+        // 1 hour:
+        nodeTimeoutMs: 3600000,
+        // 3 hours:
+        flowTimeoutMs: 10800000,
       },
     },
     integration,
@@ -460,10 +462,10 @@ $executionState
     // Process ALL events in the batch, not just the first one
     for (const event of events) {
       switch (event.type) {
-      // case ExecutionEventEnum.FLOW_SUBSCRIBED:
-      //   console.log('Flow subscribed:', event.data)
-      //   newState = { ...newState, status: ExecutionStatus.CREATED }
-      //   break
+        // case ExecutionEventEnum.FLOW_SUBSCRIBED:
+        //   console.log('Flow subscribed:', event.data)
+        //   newState = { ...newState, status: ExecutionStatus.CREATED }
+        //   break
 
         case ExecutionEventEnum.FLOW_STARTED:
           console.debug('Flow started:', event.data)
@@ -506,18 +508,18 @@ $executionState
     return newState
   })
 
-// .on(startExecutionFx.pending, state => ({
-//   ...state,
-//   status: ExecutionStatus.RUNNING,
-// }))
-// .on(pauseExecutionFx.done, state => ({
-//   ...state,
-//   status: ExecutionStatus.PAUSED,
-// }))
-//   .on(resumeExecutionFx.done, state => ({
-//     ...state,
-//     status: ExecutionStatus.RUNNING,
-//   }))
+  // .on(startExecutionFx.pending, state => ({
+  //   ...state,
+  //   status: ExecutionStatus.RUNNING,
+  // }))
+  // .on(pauseExecutionFx.done, state => ({
+  //   ...state,
+  //   status: ExecutionStatus.PAUSED,
+  // }))
+  //   .on(resumeExecutionFx.done, state => ({
+  //     ...state,
+  //     status: ExecutionStatus.RUNNING,
+  //   }))
   .on(stopExecutionFx.done, (state) => {
     return {
       ...state,

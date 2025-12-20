@@ -197,6 +197,7 @@ Describe elements you DON'T want in the image.
 Example: "blurry, low quality, text, watermarks, distorted faces"`,
     ui: {
       isTextArea: true,
+      hidden: true,
     },
   })
   negativePrompt?: string
@@ -208,6 +209,9 @@ Example: "blurry, low quality, text, watermarks, distorted faces"`,
 Helps the model understand non-English prompts better.
 Use \`auto\` for automatic detection.`,
     defaultValue: ImagePromptLanguage.Auto,
+    ui: {
+      hidden: true,
+    },
   })
   language: ImagePromptLanguage = ImagePromptLanguage.Auto
 
@@ -220,6 +224,9 @@ Disable for literal prompt interpretation.
 
 **Tip:** Disable for \`imagen-4.0-fast\` with complex prompts.`,
     defaultValue: true,
+    ui: {
+      hidden: true,
+    },
   })
   enhancePrompt: boolean = true
 }
@@ -261,9 +268,47 @@ Common uses:
 
 Adds invisible watermark for AI-generated image detection.
 **Must be OFF to use seed for reproducibility.**`,
-    defaultValue: true,
+    defaultValue: false,
+    ui: {
+      hidden: true,
+    },
   })
-  watermark: boolean = true
+  watermark: boolean = false
+
+  @PortString({
+    title: 'Output MIME Type',
+    description: `**Image file format**
+
+Choose the desired output format:
+- \`image/png\` — Lossless, supports transparency
+- \`image/jpeg\` — Compressed, smaller file size
+
+Default is \`image/png\`.`,
+    defaultValue: 'image/png',
+    ui: {
+      hidden: true,
+    },
+  })
+  outputMimeType?: string = 'image/png'
+
+  @PortNumber({
+    title: 'JPEG Compression Quality',
+    description: `**Compression quality for JPEG output**
+
+Value between 1 and 100.
+Higher = better quality, larger file size.
+Ignored if output format is not JPEG.
+
+Default is 75.`,
+    defaultValue: 75,
+    ui: {
+      min: 1,
+      max: 100,
+      step: 1,
+      hidden: true,
+    },
+  })
+  compressionQuality?: number = 75
 }
 
 /**
@@ -295,6 +340,9 @@ export class ImagenGenerationControl {
 - \`BLOCK_ONLY_HIGH\` — Permissive
 - \`BLOCK_NONE\` — No filtering (use responsibly)`,
     defaultValue: SafetyFilterLevel.BlockMediumAndAbove,
+    ui: {
+      hidden: true,
+    },
   })
   safetyFilter: SafetyFilterLevel = SafetyFilterLevel.BlockMediumAndAbove
 
@@ -310,6 +358,7 @@ Typical range: 5-15. Leave empty for model default.`,
       min: 1,
       max: 30,
       step: 0.5,
+      hidden: true,
     },
   })
   guidanceScale?: number
@@ -327,6 +376,7 @@ Range: 1 - 2147483647`,
       min: 1,
       max: 2147483647,
       step: 1,
+      hidden: true,
     },
   })
   seed?: number

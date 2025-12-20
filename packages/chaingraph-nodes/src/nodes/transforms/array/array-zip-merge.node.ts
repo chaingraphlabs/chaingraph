@@ -195,16 +195,13 @@ Length matches the shorter input array.`,
         // Both have this key - recurse if both are objects
         if (propA.type === 'object' && propB.type === 'object') {
           mergedProps[key] = this.deepMergeSchemas(propA, propB)
-        }
-        else {
+        } else {
           // Type mismatch or non-objects - B wins
           mergedProps[key] = deepCopy(propB)
         }
-      }
-      else if (propB) {
+      } else if (propB) {
         mergedProps[key] = deepCopy(propB)
-      }
-      else if (propA) {
+      } else if (propA) {
         mergedProps[key] = deepCopy(propA)
       }
     }
@@ -254,8 +251,7 @@ Length matches the shorter input array.`,
       ) {
         // Both are plain objects - recurse
         result[key] = this.deepMergeObjects(result[key], objB[key])
-      }
-      else {
+      } else {
         // Otherwise B wins
         result[key] = objB[key]
       }

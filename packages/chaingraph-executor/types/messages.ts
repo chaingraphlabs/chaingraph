@@ -62,11 +62,15 @@ export interface RetryHistoryEntry {
 export interface ExecutionTask {
   executionId: string
   flowId: string
+  parentExecutionId?: string
+  flowVersion?: number
   timestamp: number
   retryCount?: number
   maxRetries?: number
   retryDelayMs?: number
   retryHistory?: RetryHistoryEntry[]
+  maxDepth?: number
+  maxTimeoutMs?: number
   /**
    * Enable debug mode for this execution.
    * When true, command polling (PAUSE/RESUME/STEP/STOP) is enabled.

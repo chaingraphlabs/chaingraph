@@ -10,6 +10,9 @@ import type {
   ExecutionContext,
   NodeExecutionResult,
 } from '@badaitech/chaingraph-types'
+import type {
+  GenerateImagesConfig,
+} from '@google/genai'
 import {
   BaseNode,
   Node,
@@ -266,31 +269,19 @@ This enables conversational workflows and multi-turn editing.`,
     // Initialize the Gemini API client
     const genAI = new GoogleGenAI({ apiKey })
 
+    const outputMimeType = this.output.outputMimeType || 'image/png'
+    if (outputMimeType !== 'image/png' && outputMimeType !== 'image/jpeg') {
+      throw new Error('Output MIME type must be either image/png or image/jpeg')
+    }
+
     // Build generation config from Input/Output/Control
-    const generateConfig: any = {
+    const generateConfig: GenerateImagesConfig = {
       numberOfImages: this.control.numberOfImages,
       // From output
       aspectRatio: this.output.aspectRatio,
       imageSize: this.output.size,
-      addWatermark: this.output.watermark,
       // From control
       personGeneration: mapPersonGeneration(this.control.personGeneration),
-      safetyFilterLevel: mapSafetyFilterLevel(this.control.safetyFilter),
-    }
-
-    // From input - prompt enhancement settings
-    if (this.input.negativePrompt) {
-      generateConfig.negativePrompt = this.input.negativePrompt
-    }
-    generateConfig.enhancePrompt = this.input.enhancePrompt
-    generateConfig.language = mapImagePromptLanguage(this.input.language)
-
-    // Optional control params
-    if (this.control.guidanceScale !== undefined) {
-      generateConfig.guidanceScale = this.control.guidanceScale
-    }
-    if (this.control.seed !== undefined) {
-      generateConfig.seed = this.control.seed
     }
 
     // Generate the image using Imagen API
@@ -321,7 +312,7 @@ This enables conversational workflows and multi-turn editing.`,
 
       return createImageData({
         base64: genImg.image.imageBytes,
-        mimeType: 'image/png', // Imagen always outputs PNG
+        mimeType: outputMimeType,
         sourceModel: this.config.model,
         // Use enhanced prompt if available, otherwise original
         prompt: genImg.enhancedPrompt || this.input.prompt,
@@ -339,6 +330,7 @@ This enables conversational workflows and multi-turn editing.`,
     // Structure: User message with prompt, Model message with all generated images
     const modelMessageParts = this.images.map(img => ({
       inlineData: {
+        // TODO: upload to R2/S3 or similar and provide URL instead!
         data: img.source, // Already base64
         mimeType: img.mimeType,
       },

@@ -32,9 +32,11 @@ import { ConversationMessage, GeminiMessagePart } from './gemini-conversation-ty
 import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
-  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
-  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
   convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
+
+  convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+
+  convertPartToAPIFormat as sharedConvertPartToAPIFormat,
 } from './gemini-part-converters'
 import {
   GeminiGenerationConfig,
@@ -361,7 +363,7 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
     // 1. Add previous conversation messages if any
     if (this.previousMessages && this.previousMessages.length > 0) {
       const convertedMessages = await Promise.all(
-        this.previousMessages.map((msg) => this.convertMessageToAPIFormat(msg)),
+        this.previousMessages.map(msg => this.convertMessageToAPIFormat(msg)),
       )
       for (const content of convertedMessages) {
         contents.push(content)
@@ -523,7 +525,7 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
         // This allows callers to know exactly what was produced by this call
         // Clean user input to remove invalid fields (like thought: false)
         const apiParts = await this.convertPartsToAPIFormatBatch(this.inputMessage.parts)
-        const cleanedInputParts = apiParts.map((p) => this.convertAPIPartToMessagePart(p))
+        const cleanedInputParts = apiParts.map(p => this.convertAPIPartToMessagePart(p))
 
         this.messages = [
           // User's input message (cleaned)
@@ -568,7 +570,7 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
    */
   private async convertPartsToAPIFormatBatch(parts: GeminiMessagePart[]): Promise<Part[]> {
     const results = await sharedConvertPartsToAPIFormatBatch(parts, GeminiPartTypeSupport.ALL)
-    return results.map((p) => p || {})
+    return results.map(p => p || {})
   }
 
   /**
@@ -578,7 +580,7 @@ Chain to another Gemini node's "Previous Messages" for multi-turn workflows.`,
   private async convertMessageToAPIFormat(message: {
     role: string
     parts: GeminiMessagePart[]
-  }): Promise<{ role: string; parts: Part[] }> {
+  }): Promise<{ role: string, parts: Part[] }> {
     const result = await sharedConvertMessageToAPIFormat(message, GeminiPartTypeSupport.ALL)
     return result || { role: message.role, parts: [] }
   }

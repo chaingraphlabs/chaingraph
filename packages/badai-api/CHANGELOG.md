@@ -1,5 +1,29 @@
 # @badaitech/badai-api
 
+## 0.6.45
+
+### Patch Changes
+
+- feat: add output MIME type and compression quality options for image generation
+
+## 0.6.44
+
+### Patch Changes
+
+- feat: enhance execution flow and error handling
+
+## 0.6.43
+
+### Patch Changes
+
+- feat: Enhance API format conversion by adding additional checks for part properties
+
+## 0.6.42
+
+### Patch Changes
+
+- ac5eedb: feat: Enhance Gemini structured output node with batch conversion and async processing. feat: Extend attachment utilities to support plain text and MIME type detection. feat: Introduce ArrayEmbed, ArrayRemap, and ArrayZipMerge nodes for advanced array transformations.
+
 ## 0.6.41
 
 ### Patch Changes
