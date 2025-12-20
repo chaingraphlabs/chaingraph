@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.6.45
+
+### Patch Changes
+
+- feat: add output MIME type and compression quality options for image generation
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.45
+  - @badaitech/chaingraph-types@0.6.45
+  - @badaitech/chaingraph-trpc@0.6.45
+
 ## 0.6.44
 
 ### Patch Changes
