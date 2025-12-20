@@ -269,6 +269,11 @@ This enables conversational workflows and multi-turn editing.`,
     // Initialize the Gemini API client
     const genAI = new GoogleGenAI({ apiKey })
 
+    const outputMimeType = this.output.outputMimeType || 'image/png'
+    if (outputMimeType !== 'image/png' && outputMimeType !== 'image/jpeg') {
+      throw new Error('Output MIME type must be either image/png or image/jpeg')
+    }
+
     // Build generation config from Input/Output/Control
     const generateConfig: GenerateImagesConfig = {
       numberOfImages: this.control.numberOfImages,
@@ -277,17 +282,6 @@ This enables conversational workflows and multi-turn editing.`,
       imageSize: this.output.size,
       // From control
       personGeneration: mapPersonGeneration(this.control.personGeneration),
-      safetyFilterLevel: mapSafetyFilterLevel(this.control.safetyFilter),
-      outputMimeType: 'image/png',
-    }
-
-    // From input - prompt enhancement settings
-    generateConfig.enhancePrompt = this.input.enhancePrompt
-    generateConfig.language = mapImagePromptLanguage(this.input.language)
-
-    // Optional control params
-    if (this.control.guidanceScale !== undefined) {
-      generateConfig.guidanceScale = this.control.guidanceScale
     }
 
     // Generate the image using Imagen API
@@ -318,7 +312,7 @@ This enables conversational workflows and multi-turn editing.`,
 
       return createImageData({
         base64: genImg.image.imageBytes,
-        mimeType: 'image/png', // Imagen always outputs PNG
+        mimeType: outputMimeType,
         sourceModel: this.config.model,
         // Use enhanced prompt if available, otherwise original
         prompt: genImg.enhancedPrompt || this.input.prompt,
