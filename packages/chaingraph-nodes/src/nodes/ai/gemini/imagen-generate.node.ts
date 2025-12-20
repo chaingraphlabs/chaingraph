@@ -275,7 +275,6 @@ This enables conversational workflows and multi-turn editing.`,
       // From output
       aspectRatio: this.output.aspectRatio,
       imageSize: this.output.size,
-      addWatermark: this.output.watermark,
       // From control
       personGeneration: mapPersonGeneration(this.control.personGeneration),
       safetyFilterLevel: mapSafetyFilterLevel(this.control.safetyFilter),
@@ -337,6 +336,7 @@ This enables conversational workflows and multi-turn editing.`,
     // Structure: User message with prompt, Model message with all generated images
     const modelMessageParts = this.images.map(img => ({
       inlineData: {
+        // TODO: upload to R2/S3 or similar and provide URL instead!
         data: img.source, // Already base64
         mimeType: img.mimeType,
       },

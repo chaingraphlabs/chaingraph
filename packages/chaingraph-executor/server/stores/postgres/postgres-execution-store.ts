@@ -16,7 +16,7 @@ import { executionClaimsTable, executionRecoveryTable, executionsTable } from '.
 export class PostgresExecutionStore implements IExecutionStore {
   constructor(
     private readonly db: DBType,
-  ) {}
+  ) { }
 
   async create(row: ExecutionRow): Promise<void> {
     await this.db.insert(executionsTable)
@@ -487,7 +487,7 @@ export class PostgresExecutionStore implements IExecutionStore {
    * 2. Status = 'running' but claim expired
    * 3. Status = 'created' with failureCount < 5 and lastFailureAt > 1 minute ago
    */
-  async getExecutionsNeedingRecovery(limit = 100): Promise<ExecutionRow[]> {
+  async getExecutionsNeedingRecovery(limit = 1000): Promise<ExecutionRow[]> {
     const oneMinuteAgo = new Date(Date.now() - 60000)
 
     const results = await this.db

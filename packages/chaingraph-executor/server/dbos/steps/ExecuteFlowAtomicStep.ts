@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { EmittedEvent, IntegrationContext } from '@badaitech/chaingraph-types'
+import type { EmittedEvent, Flow, IntegrationContext } from '@badaitech/chaingraph-types'
 import type { ExecutionInstance, ExecutionTask } from '../../../types'
 import type { ExecutionService } from '../../services/ExecutionService'
 import type { IExecutionStore } from '../../stores/interfaces/IExecutionStore'
@@ -93,7 +93,11 @@ async function createChildTask(
   // Inherit debug flag from parent so child executions also have command polling in debug mode
   return {
     executionId: childExecutionId,
+    parentExecutionId: parentInstance.task.executionId,
     flowId: parentInstance.flow.id,
+    flowVersion: parentInstance.flow.metadata.version,
+    maxDepth: parentInstance.task.maxDepth ? parentInstance.task.maxDepth - 1 : undefined,
+    maxTimeoutMs: parentInstance.task.maxTimeoutMs,
     timestamp: Date.now(),
     maxRetries: parentInstance.task.maxRetries,
     debug: parentInstance.task.debug,
@@ -154,6 +158,92 @@ function getExecutionStore(): IExecutionStore {
   }
   return executionStore
 }
+
+// TODO: remove this cache later, just workaround for now
+// Flow versioned cache. Should be able to ask for flow with passed version
+// if the version is the same as cached one, return cached one
+// if different, load from DB again, remove old cache and set new one
+// stores many flows, also has flow cache invalidation mechanism - time based. default flow cache time 30 minutes
+class FlowCachedLoader {
+  private cachedFlows: Map<string, { flowVersion: number, flow: Flow, timestamp: number }> = new Map()
+  private cacheTTLMs: number = 30 * 60 * 1000 // 30 minutes
+  private cleanupIntervalMs: number = 60 * 1000 // 1 minute
+  private cleanupTimer: NodeJS.Timeout | null = null
+
+  constructor() {
+    this.startCleanup()
+  }
+
+  private startCleanup(): void {
+    this.cleanupTimer = setInterval(() => {
+      this.cleanExpiredEntries()
+    }, this.cleanupIntervalMs)
+  }
+
+  private cleanExpiredEntries(): void {
+    const now = Date.now()
+    let cleanedCount = 0
+
+    for (const [flowId, cached] of this.cachedFlows.entries()) {
+      if (now - cached.timestamp >= this.cacheTTLMs) {
+        this.cachedFlows.delete(flowId)
+        cleanedCount++
+      }
+    }
+
+    if (cleanedCount > 0) {
+      DBOS.logger.debug(`Flow cache cleanup: removed ${cleanedCount} expired entries`)
+    }
+  }
+
+  async loadFlow(flowId: string, flowVersion?: number): Promise<Flow | null> {
+    if (flowVersion === undefined) {
+      // No version provided, always load from DB
+      const flow = await loadFlow(flowId)
+      return flow
+    }
+
+    const now = Date.now()
+    const cached = this.cachedFlows.get(flowId)
+
+    if (cached) {
+      // Check if cache is still valid
+      if (now - cached.timestamp < this.cacheTTLMs) {
+        // Check if version matches
+        if (cached.flowVersion === flowVersion) {
+          DBOS.logger.debug(`Flow cache hit: ${flowId} (version: ${cached.flowVersion})`)
+          return cached.flow
+        }
+      } else {
+        // Cache expired
+        this.cachedFlows.delete(flowId)
+      }
+    }
+
+    // Load from DB
+    const flow = await loadFlow(flowId)
+
+    if (flow) {
+      this.cachedFlows.set(flowId, {
+        flowVersion: flow.metadata.version || 0,
+        flow,
+        timestamp: now,
+      })
+      DBOS.logger.debug(`Flow cache set: ${flowId} (version: ${flow.metadata.version || 0})`)
+    }
+
+    return flow
+  }
+
+  destroy(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer)
+      this.cleanupTimer = null
+    }
+  }
+}
+
+const flowCachedLoader = new FlowCachedLoader()
 
 /**
  * Execute a chaingraph flow atomically
@@ -220,78 +310,10 @@ export async function executeFlowAtomic(
   // Commands are received via shared state from workflow-level polling
   DBOS.logger.info(`Executing flow: ${task.executionId}`)
 
-  // 🎮 Start command checking loop (checks shared state, no DBOS calls!)
-  // The workflow-level polling updates commandController, we just read it here
-  let isCheckingCommands = true
-  let lastProcessedTimestamp = 0
-
-  const commandCheckInterval = setInterval(async () => {
-    if (!isCheckingCommands) {
-      clearInterval(commandCheckInterval)
-      return
-    }
-
-    try {
-      // Check if there's a new command in the shared state
-      if (commandController.currentCommand && commandController.commandTimestamp > lastProcessedTimestamp) {
-        const command = commandController.currentCommand
-        const reason = commandController.reason
-
-        DBOS.logger.info(`Processing command: ${command} for ${task.executionId}`)
-
-        // Get debugger from engine (renamed to avoid 'debugger' reserved keyword)
-        const flowDebugger = instance.engine?.getDebugger()
-
-        switch (command) {
-          case 'PAUSE':
-            flowDebugger?.pause()
-            await store.updateExecutionStatus({
-              executionId: task.executionId,
-              status: ExecutionStatus.Paused,
-            })
-            DBOS.logger.info(`Execution paused: ${task.executionId}`)
-            break
-
-          case 'RESUME':
-            flowDebugger?.continue()
-            await store.updateExecutionStatus({
-              executionId: task.executionId,
-              status: ExecutionStatus.Running,
-            })
-            DBOS.logger.info(`Execution resumed: ${task.executionId}`)
-            break
-
-          case 'STEP':
-            flowDebugger?.step()
-            DBOS.logger.info(`Execution stepped: ${task.executionId}`)
-            break
-
-          case 'STOP':
-            // STOP is handled via abort controller at workflow level
-            // But if we see it here, log it
-            DBOS.logger.info(`STOP command detected (handled via abort): ${task.executionId}`)
-            break
-
-          default:
-            DBOS.logger.warn(`Unknown command type: ${command}`)
-        }
-
-        // Mark command as processed
-        lastProcessedTimestamp = commandController.commandTimestamp
-      }
-    } catch (error) {
-      DBOS.logger.error(`Error checking commands: ${error instanceof Error ? error.message : String(error)}`)
-    }
-  }, 100) // Check every 100ms (faster than workflow polling for responsiveness)
-
   try {
     await instance.engine!.execute(async (context, eventQueue) => {
       // Execution complete callback
       // The eventQueue is already closed at this point, and all events should be processed
-
-      // Stop command checking
-      isCheckingCommands = false
-      clearInterval(commandCheckInterval)
 
       // Step 5: Wait for all events to be published
       // This ensures all events are safely persisted before we mark step as complete
@@ -386,10 +408,6 @@ export async function executeFlowAtomic(
       `Flow execution failed: ${task.executionId} after ${duration}ms - ${errorMessage}`,
     )
 
-    // Stop command checking on error
-    isCheckingCommands = false
-    clearInterval(commandCheckInterval)
-
     // Try to cleanup event handling even on error
     try {
       if (instance.cleanupEventHandling) {
@@ -405,9 +423,5 @@ export async function executeFlowAtomic(
 
     // Re-throw the error so DBOS can handle retry
     throw error
-  } finally {
-    // Ensure command checking is stopped
-    isCheckingCommands = false
-    clearInterval(commandCheckInterval)
   }
 }

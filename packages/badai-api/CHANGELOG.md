@@ -1,5 +1,11 @@
 # @badaitech/badai-api
 
+## 0.6.44
+
+### Patch Changes
+
+- feat: enhance execution flow and error handling
+
 ## 0.6.43
 
 ### Patch Changes

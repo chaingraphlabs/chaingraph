@@ -1,5 +1,17 @@
 # @badaitech/chaingraph-execution-api
 
+## 0.6.44
+
+### Patch Changes
+
+- feat: enhance execution flow and error handling
+- Updated dependencies
+  - @badaitech/chaingraph-executor@0.6.44
+  - @badaitech/chaingraph-nodes@0.6.44
+  - @badaitech/chaingraph-types@0.6.44
+  - @badaitech/badai-api@0.6.44
+  - @badaitech/chaingraph-trpc@0.6.44
+
 ## 0.6.43
 
 ### Patch Changes
