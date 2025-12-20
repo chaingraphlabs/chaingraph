@@ -29,6 +29,8 @@ import { createLogger } from '../utils/logger'
 const logger = createLogger('trpc-router')
 
 const defaultExecutionMaxRetries = 3
+const defaultExecutionMaxTimeoutMs = 100 * 60 * 1000 // 100 minutes
+const defaultExecutionMaxDepth = 100
 
 /**
  * Check if user owns a flow (supports both old and new user IDs)
@@ -241,9 +243,12 @@ export const executionRouter = router({
       const executionTask: ExecutionTask = {
         executionId,
         flowId: executionRow.flowId,
+        flowVersion: flowMetadata.version,
         timestamp: Date.now(),
         maxRetries: defaultExecutionMaxRetries,
         debug: input.options?.debug ?? false,
+        maxDepth: defaultExecutionMaxDepth,
+        maxTimeoutMs: input.options?.execution?.flowTimeoutMs || defaultExecutionMaxTimeoutMs,
       }
 
       try {

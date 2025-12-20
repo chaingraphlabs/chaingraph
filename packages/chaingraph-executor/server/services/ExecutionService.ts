@@ -60,7 +60,7 @@ export class ExecutionService implements IExecutionService {
     private readonly eventBus: IEventBus,
     private readonly taskQueue: ITaskQueue,
     private readonly userStore: UserStore,
-  ) {}
+  ) { }
 
   /**
    * Get the event bus instance
@@ -92,7 +92,7 @@ export class ExecutionService implements IExecutionService {
     const currentDepth = executionRow.executionDepth
 
     // Check for maximum depth
-    if (currentDepth > this.MAX_EXECUTION_DEPTH) {
+    if (currentDepth > Math.max(this.MAX_EXECUTION_DEPTH, task.maxDepth || 0)) {
       logger.warn({
         currentDepth,
         maxDepth: this.MAX_EXECUTION_DEPTH,
@@ -132,7 +132,7 @@ export class ExecutionService implements IExecutionService {
       flow,
       context,
       executionRow.options || undefined,
-      (node: INode) => {}, // TODO: onBreakpointHit
+      (node: INode) => { }, // TODO: onBreakpointHit
     )
     const engineCreationTime = engineTimer.end()
 
@@ -382,9 +382,13 @@ export class ExecutionService implements IExecutionService {
 
     const childTask: ExecutionTask = {
       executionId: childExecutionId,
+      parentExecutionId: parentInstance.task.executionId,
+      flowVersion: parentInstance.task?.flowVersion || parentInstance.flow.metadata.version || undefined,
       flowId: parentInstance.flow.id,
       timestamp: Date.now(),
       maxRetries: parentInstance.task.maxRetries,
+      maxDepth: parentInstance.task.maxDepth ? (parentInstance.task.maxDepth - 1) : undefined,
+      maxTimeoutMs: parentInstance.task.maxTimeoutMs,
     }
 
     logger.debug({
