@@ -212,7 +212,7 @@ class FlowCachedLoader {
         // Check if version matches
         if (cached.flowVersion === flowVersion) {
           DBOS.logger.debug(`Flow cache hit: ${flowId} (version: ${cached.flowVersion})`)
-          return cached.flow.clone()
+          return await cached.flow.clone() as Flow
         }
       } else {
         // Cache expired
