@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-executor
 
+## 0.6.46
+
+### Patch Changes
+
+- fix: return a clone of the cached flow to prevent unintended mutations
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.6.46
+  - @badaitech/chaingraph-trpc@0.6.46
+  - @badaitech/chaingraph-types@0.6.46
+
 ## 0.6.45
 
 ### Patch Changes
