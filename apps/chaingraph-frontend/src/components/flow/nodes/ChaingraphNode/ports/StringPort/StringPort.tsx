@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { StringPortConfig } from '@badaitech/chaingraph-types'
+import type { StringPortConfig, StringPortConfigUIType } from '@badaitech/chaingraph-types'
 import type { ChangeEvent, PropsWithChildren } from 'react'
 // import { useStore } from '@xyflow/react'
 import {
@@ -21,7 +21,7 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { useExecutionID } from '@/store/execution'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { usePortEdges } from '@/store/nodes/computed'
 import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
@@ -43,9 +43,9 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   const { nodeId, portId } = props
 
   // Granular subscriptions - only re-renders when THIS port's data changes
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
-  const storeValue = usePortValue(nodeId, portId) as string | undefined
+  const config = usePortConfigWithExecution(nodeId, portId) as Omit<StringPortConfig, 'ui'> | undefined
+  const ui = usePortUIWithExecution(nodeId, portId) as StringPortConfigUIType | undefined
+  const storeValue = usePortValueWithExecution(nodeId, portId) as string | undefined
 
   // Granular edge subscription - only re-renders when THIS port's edges change
   const connectedEdges = usePortEdges(nodeId, portId)
@@ -152,30 +152,31 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   const title = config.title || config.key
 
   // Cast UI to proper type for type-safe property access
-  const stringUI = ui as {
-    isTextArea?: boolean
-    isPassword?: boolean
-    textareaDimensions?: { width?: number, height?: number }
-    placeholder?: string
-    renderMarkdown?: boolean
-    markdownStyles?: {
-      fontSize?: number
-      lineHeight?: 'compact' | 'normal' | 'relaxed'
-      maxHeight?: 'unlimited' | '200' | '400' | '600'
-    }
-    renderHtml?: boolean
-    htmlStyles?: {
-      height?: number
-      autoHeight?: boolean
-      maxHeight?: 'unlimited' | '400' | '600' | '800' | '1000'
-      scale?: number
-      showBorder?: boolean
-      stripMarkdown?: boolean
-      debounceDelay?: number
-    }
-    disabled?: boolean
-    hideEditor?: boolean
-  }
+  const stringUI = ui
+  //  as {
+  //   isTextArea?: boolean
+  //   isPassword?: boolean
+  //   textareaDimensions?: { width?: number, height?: number }
+  //   placeholder?: string
+  //   renderMarkdown?: boolean
+  //   markdownStyles?: {
+  //     fontSize?: number
+  //     lineHeight?: 'compact' | 'normal' | 'relaxed'
+  //     maxHeight?: 'unlimited' | '200' | '400' | '600'
+  //   }
+  //   renderHtml?: boolean
+  //   htmlStyles?: {
+  //     height?: number
+  //     autoHeight?: boolean
+  //     maxHeight?: 'unlimited' | '400' | '600' | '800' | '1000'
+  //     scale?: number
+  //     showBorder?: boolean
+  //     stripMarkdown?: boolean
+  //     debounceDelay?: number
+  //   }
+  //   disabled?: boolean
+  //   hideEditor?: boolean
+  // }
 
   return (
     <div
@@ -212,7 +213,7 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
               nodeId,
               portId,
               ui: {
-                hideEditor: stringUI.hideEditor === undefined ? true : !stringUI.hideEditor,
+                hideEditor: stringUI?.hideEditor === undefined ? true : !stringUI?.hideEditor,
               },
             })
           }}
@@ -220,7 +221,7 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
           {title}
         </PortTitle>
 
-        {!stringUI.isTextArea && needRenderEditor && (
+        {!stringUI?.isTextArea && needRenderEditor && (
           <Input
             value={localValue}
             onChange={handleChange}
@@ -244,18 +245,18 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
               'placeholder:text-neutral-400 placeholder:opacity-40',
             )}
             placeholder={
-              stringUI.placeholder
+              stringUI?.placeholder
               ?? config.title
               ?? config.key
               ?? 'Text'
             }
-            type={stringUI.isPassword ? 'password' : undefined}
+            type={stringUI?.isPassword ? 'password' : undefined}
             data-1p-ignore
-            disabled={executionID ? true : stringUI.disabled ?? false}
+            disabled={executionID ? true : stringUI?.disabled ?? false}
           />
         )}
 
-        {stringUI.isTextArea && needRenderEditor && (
+        {stringUI?.isTextArea && needRenderEditor && (
           <>
             <Textarea
               ref={textareaRef}
@@ -302,7 +303,7 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
 
         {/* Markdown preview - renders below the editor when enabled */}
         {/* Use localValue for immediate preview feedback while typing */}
-        {stringUI.renderMarkdown && localValue && (
+        {stringUI?.renderMarkdown && localValue && (
           <MarkdownPreview
             content={localValue}
             nodeId={nodeId}
@@ -313,7 +314,7 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
 
         {/* HTML preview - renders in sandboxed iframe when enabled */}
         {/* Use localValue for immediate preview feedback while typing */}
-        {stringUI.renderHtml && localValue && (
+        {stringUI?.renderHtml && localValue && (
           <HTMLPreview
             content={localValue}
             nodeId={nodeId}

@@ -29,12 +29,10 @@
 // Initialize wiring (registers all sample() calls)
 import './init'
 
-// Buffer
+// Direct port updates (no buffer - synchronous processing)
 export {
-  batchProcessor,
   portUpdateReceived,
   portUpdatesReceived,
-  processBatchTick,
 } from './buffer'
 
 // Domain
@@ -42,9 +40,7 @@ export { portsV2Domain } from './domain'
 
 // Feature Flags
 export {
-  $isGranularReadEnabled,
   $isGranularWriteEnabled,
-  $isLegacyWriteEnabled,
   $migrationMode,
   setMigrationMode,
 } from './feature-flags'
@@ -55,6 +51,7 @@ export {
   usePort,
   usePortConfig,
   usePortConnections,
+  usePortType,
   usePortUI,
   usePortValue,
 } from './hooks'
@@ -72,6 +69,10 @@ export {
 } from './pending-mutations'
 
 export type { PendingMutation } from './pending-mutations'
+
+// Port Lists (derived store for component iteration)
+export { $nodePortLists } from './port-lists'
+export type { NodePortLists } from './port-lists'
 
 // Stores
 export {
@@ -111,9 +112,15 @@ export {
   extractConfigCore,
   fromPortKey,
   getParentChain,
-  getParentPortId,
+  hasEnumOptions,
+  hasUnderlyingType,
   isChildPort,
   isDeepEqual,
+  isMutableArrayPort,
+  isMutableObjectPort,
+  isSystemErrorPort,
+  isSystemPort,
   mergeUIStates,
   toPortKey,
+  unwrapAnyPortConfig,
 } from './utils'

@@ -70,9 +70,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
       const key = portConfig.key || portConfig.id || portConfig.name || generatePortID('objectProperty')
       const childPortConfig = useParentUI
         ? this.generateChildConfigWithParentUI(
-            deepCopy(config),
-            deepCopy(portConfig),
-          )
+          deepCopy(config),
+          deepCopy(portConfig),
+        )
         : portConfig
 
       const propertyValue = (objectPort.getValue() || {})[key]
@@ -430,9 +430,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
 
       const newPropConfig = useParentUI
         ? this.generateChildConfigWithParentUI(
-            deepCopy(config),
-            deepCopy(propConfig),
-          )
+          deepCopy(config),
+          deepCopy(propConfig),
+        )
         : propConfig
 
       const isPropertyValueDefined = objectValue
@@ -825,9 +825,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
         const childPropertyValue = value[key]
         const newPropConfig = useParentUI
           ? this.generateChildConfigWithParentUI(
-              deepCopy(objectConfig),
-              deepCopy(propConfig),
-            )
+            deepCopy(objectConfig),
+            deepCopy(propConfig),
+          )
           : deepCopy(propConfig)
 
         // Process the property config
@@ -876,9 +876,9 @@ export class ComplexPortHandler implements IComplexPortHandler {
         // use parent UI if specified
         const newItemConfig = useParentUI
           ? this.generateChildConfigWithParentUI(
-              deepCopy(arrayConfig),
-              deepCopy(arrayConfig.itemConfig),
-            )
+            deepCopy(arrayConfig),
+            deepCopy(arrayConfig.itemConfig),
+          )
           : deepCopy(arrayConfig.itemConfig)
 
         // Process the element config

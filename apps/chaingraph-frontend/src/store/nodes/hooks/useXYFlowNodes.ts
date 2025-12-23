@@ -84,8 +84,8 @@ export function useXYFlowNodes() {
         }
 
         // Version check (most important - detects any data changes)
-        const prevVersion = (prev.data?.node as any)?.getVersion?.() ?? 0
-        const nextVersion = (next.data?.node as any)?.getVersion?.() ?? 0
+        const prevVersion = prev.data?.version ?? 0
+        const nextVersion = next.data?.version ?? 0
         if (prevVersion !== nextVersion) {
           changedNodes++
           continue

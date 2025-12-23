@@ -87,7 +87,7 @@ export const throttledServerPortValueSync = accumulateAndSample({
 export const requestUpdatePortUI = portsDomain.createEvent<{
   nodeId: string
   portId: string
-  ui: any
+  ui: Partial<IPortConfig['ui']>
 }>()
 
 // Object port updates

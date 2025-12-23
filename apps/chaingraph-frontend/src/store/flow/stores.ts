@@ -13,6 +13,7 @@ import type {
   FlowEventHandlerMap,
   INode,
 } from '@badaitech/chaingraph-types'
+import type { PortUIState } from '../ports-v2'
 import type {
   AddFieldObjectPortInput,
   AppendElementArrayPortInput,
@@ -25,8 +26,8 @@ import {
   DefaultPosition,
   FlowEventType,
 } from '@badaitech/chaingraph-types'
-import { combine, createEffect, sample } from 'effector'
 
+import { combine, createEffect, sample } from 'effector'
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
@@ -56,6 +57,22 @@ import {
   updateNodes,
   updateNodeUILocal,
 } from '../nodes/stores'
+// Granular port stores - ONLY mode (migration complete)
+import {
+  $portConfigs,
+  $portHierarchy,
+  $portValues,
+  addPendingMutation,
+  computeParentValue,
+  extractConfigCore,
+  fromPortKey,
+  generateMutationId,
+  getClientId,
+  getParentChain,
+  portUpdateReceived,
+  rejectPendingMutation,
+  toPortKey,
+} from '../ports-v2'
 import {
   addFieldObjectPort,
   addFieldObjectPortFx,
@@ -77,25 +94,9 @@ import {
   updateItemConfigArrayPort,
   updateItemConfigArrayPortFx,
 } from '../ports/stores'
-// Granular port stores - ONLY mode (migration complete)
-import {
-  $portConfigs,
-  $portHierarchy,
-  $portValues,
-  addPendingMutation,
-  computeParentValue,
-  extractConfigCore,
-  fromPortKey,
-  generateMutationId,
-  getClientId,
-  getParentChain,
-  portUpdateReceived,
-  rejectPendingMutation,
-  toPortKey,
-} from '../ports-v2'
-import type { PortUIState } from '../ports-v2'
 import { $trpcClient } from '../trpc/store'
-import { $activeSubscription, newFlowEvents, switchSubscriptionFx } from './subscription'
+import { newFlowEvents } from './event-buffer'
+import { $activeSubscription, switchSubscriptionFx } from './subscription'
 import { FlowSubscriptionStatus } from './types'
 
 // EVENTS
@@ -219,12 +220,12 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
       return flows.map(flow =>
         flow.id === updatedFlowId
           ? {
-              ...flow,
-              metadata: {
-                ...flow.metadata,
-                loaded: true,
-              },
-            }
+            ...flow,
+            metadata: {
+              ...flow.metadata,
+              loaded: true,
+            },
+          }
           : flow,
       )
     }
@@ -466,13 +467,13 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
       // Extract only non-port changes (metadata, UI state, status)
       // Port changes already handled via PortUpdated events → granular stores
-      const metadataChanged =
-        !node ||
-        node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x ||
-        node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y ||
-        node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width ||
-        node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height ||
-        node.status !== data.node.status
+      const metadataChanged
+        = !node
+        || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
+        || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
+        || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
+        || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
+        || node.status !== data.node.status
 
       if (metadataChanged) {
         // Update $nodes for metadata-only changes (position, dimensions, status)
@@ -676,9 +677,9 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
       // PERF: Skip if position is already in state (echo of our optimistic update)
       // This preserves multi-user editing: other users' different positions will be processed
-      const positionUnchanged =
-        Math.abs(currentPosition.x - data.newPosition.x) < 1 &&
-        Math.abs(currentPosition.y - data.newPosition.y) < 1
+      const positionUnchanged
+        = Math.abs(currentPosition.x - data.newPosition.x) < 1
+        && Math.abs(currentPosition.y - data.newPosition.y) < 1
 
       // Use granular version store to avoid $nodes cascade on position echoes
       setNodeVersionOnly({
@@ -740,9 +741,9 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
       // PERF: Skip if dimensions are already in state (echo of our optimistic update)
       // This preserves multi-user editing: other users' different dimensions will be processed
-      const dimensionsUnchanged = currentDimensions &&
-        Math.abs((currentDimensions.width ?? 0) - (data.newDimensions.width ?? 0)) < 1 &&
-        Math.abs((currentDimensions.height ?? 0) - (data.newDimensions.height ?? 0)) < 1
+      const dimensionsUnchanged = currentDimensions
+        && Math.abs((currentDimensions.width ?? 0) - (data.newDimensions.width ?? 0)) < 1
+        && Math.abs((currentDimensions.height ?? 0) - (data.newDimensions.height ?? 0)) < 1
 
       // Use granular version store to avoid $nodes cascade on dimension echoes
       setNodeVersionOnly({
@@ -818,7 +819,8 @@ sample({
         console.error(`Unhandled error processing event ${event.type}:`, error)
       }
 
-      if (eventSpanId) trace.end(eventSpanId)
+      if (eventSpanId)
+        trace.end(eventSpanId)
     }
 
     trace.end(batchSpanId)

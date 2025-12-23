@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution/hooks/usePortValueWithExecution'
 
 export interface StreamPortProps {
   readonly nodeId: string
@@ -21,8 +22,8 @@ function StreamPortComponent(props: StreamPortProps) {
   const { nodeId, portId } = props
 
   // Granular subscriptions - only re-renders when THIS port's data changes
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
 
   const title = config?.title || config?.key || portId
 

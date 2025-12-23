@@ -7,8 +7,6 @@
  */
 
 import type { TRPCClient } from '@badaitech/chaingraph-trpc/client'
-import type { FlowEvent } from '@badaitech/chaingraph-types'
-
 import { attach, createEffect } from 'effector'
 
 import { trace } from '@/lib/perf-trace'
@@ -17,6 +15,7 @@ import { resetEdges } from '../edges'
 import { clearNodes } from '../nodes'
 import { positionInterpolator } from '../nodes/position-interpolation-advanced'
 import { $trpcClient } from '../trpc/store'
+import { flowEventReceived } from './event-buffer'
 import { setFlowSubscriptionError, setFlowSubscriptionStatus } from './stores'
 import { FlowSubscriptionStatus } from './types'
 
@@ -27,8 +26,6 @@ interface FlowSubscription {
 
 // Store for current active subscription
 export const $activeSubscription = flowDomain.createStore<FlowSubscription | null>(null)
-
-export const newFlowEvents = flowDomain.createEvent<FlowEvent[]>()
 
 // Base effect for creating subscription
 const subscribeToFlowBaseFx = createEffect<{ flowId: string, client: TRPCClient }, FlowSubscription>(
@@ -60,9 +57,9 @@ const subscribeToFlowBaseFx = createEffect<{ flowId: string, client: TRPCClient 
                 category: 'io',
                 tags: { eventType: data.data.type },
               })
-              newFlowEvents([
-                data.data,
-              ])
+              // Send to global event buffer instead of newFlowEvents directly
+              // Buffer ensures nodes are processed before edges (race condition fix)
+              flowEventReceived(data.data)
               trace.end(spanId)
             }
           },

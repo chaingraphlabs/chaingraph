@@ -14,8 +14,8 @@ import { Fragment, memo, useCallback, useMemo, useState } from 'react'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { usePortEdges } from '@/store/nodes/computed'
-import { useExecutionID } from '@/store/execution'
 import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   appendElementArrayPort,
@@ -76,9 +76,9 @@ function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
   const [isSchemaEditorOpen, setIsSchemaEditorOpen] = useState(false)
 
   // Granular subscriptions - ALWAYS use ports-v2
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
-  const value = usePortValue(nodeId, portId) as any[] | undefined
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const value = usePortValueWithExecution(nodeId, portId) as any[] | undefined
   const childPortIds = useChildPorts(nodeId, portId)
 
   // Granular edge subscription - only re-renders when THIS port's edges change
@@ -87,9 +87,6 @@ function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
   // Get first child config for newItemConfig (if exists)
   const firstChildPortId = childPortIds.length > 0 ? childPortIds[0] : null
   const firstChildConfig = usePortConfig(nodeId, firstChildPortId || '')
-
-  // Get the node object temporarily (for schema editor - will be removed later)
-  const node = useNode(nodeId)
 
   const title = config?.title || config?.key || portId
   const isMutable = (config as any)?.isMutable
@@ -105,7 +102,8 @@ function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
   const values = useMemo(() => value ?? [], [value])
 
   const needRenderEditor = useMemo(() => {
-    if (!config) return false
+    if (!config)
+      return false
     return !isHideEditor(config as any, connectedEdges) && Boolean(isMutable)
   }, [config, connectedEdges, isMutable])
 
@@ -200,7 +198,8 @@ function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
     return null
 
   // Early return if config not loaded yet
-  if (!config || !node) return null
+  if (!config)
+    return null
 
   return (
     <div

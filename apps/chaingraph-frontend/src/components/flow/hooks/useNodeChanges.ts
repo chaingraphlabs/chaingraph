@@ -33,7 +33,10 @@ export function useNodeChanges() {
         return
 
       // Get current nodes state inside callback to avoid dependency
+      const getStateSpan = trace.start('drag.getState', { category: 'event' })
       const currentNodes = $nodes.getState()
+      trace.end(getStateSpan)
+
       if (!currentNodes)
         return
 
@@ -67,10 +70,15 @@ export function useNodeChanges() {
             positionInterpolator.clearNodeState(node.id)
 
             // Use position-only update during drag to avoid $nodes cascade
+            const updateSpan = trace.start('drag.updatePositionOnly', {
+              category: 'event',
+              tags: { nodeId: change.id },
+            })
             updateNodePositionOnly({
               nodeId: change.id,
               position: roundPosition(change.position as Position),
             })
+            trace.end(updateSpan)
 
             // Also trigger server sync (throttled separately at 500ms)
             updateNodePosition({

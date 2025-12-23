@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PortConfigCore } from '../types'
+import type { PortConfigFull } from '../types'
 import { useStoreMap } from 'effector-react'
 import { $portConfigs } from '../stores'
 import { isDeepEqual, toPortKey } from '../utils'
@@ -21,7 +21,7 @@ import { isDeepEqual, toPortKey } from '../utils'
  * @param portId - The port ID
  * @returns The port's configuration, or undefined if not found
  */
-export function usePortConfig(nodeId: string, portId: string): PortConfigCore | undefined {
+export function usePortConfig(nodeId: string, portId: string): PortConfigFull | undefined {
   const portKey = toPortKey(nodeId, portId)
 
   // ALWAYS use granular stores

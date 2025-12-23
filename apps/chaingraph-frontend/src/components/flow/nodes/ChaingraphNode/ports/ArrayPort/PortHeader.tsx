@@ -35,7 +35,7 @@ export function PortHeader({
 }: PortHeaderProps) {
   const config = usePortConfig(nodeId, portId)
   const ui = usePortUI(nodeId, portId)
-  const value = usePortValue(nodeId, portId) as any[] | undefined
+  // const value = usePortValue(nodeId, portId) as any[] | undefined
 
   return (
     <div className="space-y-1">
@@ -73,7 +73,7 @@ export function PortHeader({
               isOutput ? 'text-right' : 'text-left',
               // if port required and the value is empty, add a red underline
               config?.required
-              && (value === undefined || value === null || value.length === 0)
+              // && (value === undefined || value === null || value.length === 0)
               && (config.direction === 'input' || config.direction === 'passthrough')
               && 'underline decoration-red-500 decoration-2',
             )}

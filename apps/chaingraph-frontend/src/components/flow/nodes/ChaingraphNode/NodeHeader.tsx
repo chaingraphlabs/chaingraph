@@ -7,7 +7,7 @@
  */
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
-import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, CategoryStyle, NodeStatus } from '@badaitech/chaingraph-types'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { useReactFlow } from '@xyflow/react'
@@ -16,14 +16,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
 import { $activeFlowMetadata } from '@/store/flow'
-import { updateNodeTitle, useNode } from '@/store/nodes'
+import { updateNodeTitle } from '@/store/nodes'
 import { EditableNodeTitle } from './EditableNodeTitle'
 import { LazyNodeDocTooltip } from './LazyNodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
 import NodeStatusBadge from './NodeStatusBadge'
 
 interface NodeHeaderProps {
-  node: INode
+  nodeId: string
   icon: CategoryIconName | (string & {}) // FIXME: extract CategoryIconName to prevent import cycle
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
@@ -31,10 +31,11 @@ interface NodeHeaderProps {
   isBreakpointSet: boolean
   onBreakpointToggle: () => void
   categoryMetadata?: CategoryMetadata
+  renderData?: any // XYFlowNodeRenderData - for title, status, and NodeFlowPorts
 }
 
 export function NodeHeader({
-  node,
+  nodeId,
   icon,
   style,
   onDelete,
@@ -42,6 +43,7 @@ export function NodeHeader({
   isBreakpointSet,
   onBreakpointToggle,
   categoryMetadata,
+  renderData,
 }: NodeHeaderProps) {
   // Trace render (synchronous - measures render function time)
   const renderCountRef = useRef(0)
@@ -50,7 +52,7 @@ export function NodeHeader({
     renderCountRef.current++
     traceSpanId.current = trace.start('render.NodeHeader', {
       category: 'render',
-      tags: { nodeId: node.id, renderCount: renderCountRef.current },
+      tags: { nodeId, renderCount: renderCountRef.current },
     })
   }
 
@@ -60,6 +62,9 @@ export function NodeHeader({
   const [showStatusBadge, setShowStatusBadge] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const activeFlow = useUnit($activeFlowMetadata)
+
+  // Node is fetched on-demand inside LazyNodeDocTooltip (only when tooltip opens)
+  // Removed useNode(nodeId) to avoid hot-path subscription during drag
 
   // const parentNode = useNode(node.metadata.parentNodeId || '')
 
@@ -102,16 +107,16 @@ export function NodeHeader({
   }, [onDelete])
 
   const handleTitleChange = useCallback((title: string) => {
-    if (!activeFlow?.id || !node.id)
+    if (!activeFlow?.id || !nodeId)
       return
 
     updateNodeTitle({
       flowId: activeFlow.id,
-      nodeId: node.id,
+      nodeId,
       title,
-      version: node.getVersion(),
+      version: 0,
     })
-  }, [activeFlow, node])
+  }, [activeFlow, nodeId])
 
   // Hide delete confirmation when clicking outside
   useEffect(() => {
@@ -149,15 +154,14 @@ export function NodeHeader({
       }}
     // onDoubleClick={handleHeaderDoubleClick}
     >
-      {/* {(!parentNode || parentNode.metadata.category === 'group') && ( */}
-      <NodeFlowPorts node={node} />
-      {/* )} */}
+      {/* Flow ports (granular subscription - component handles its own early return) */}
+      <NodeFlowPorts nodeId={nodeId} />
 
       <div className="flex items-center gap-2 min-w-0 relative">
         {categoryMetadata
           ? (
             <LazyNodeDocTooltip
-              node={node}
+              nodeId={nodeId}
               categoryMetadata={categoryMetadata}
               className="cursor-pointer"
             >
@@ -189,7 +193,7 @@ export function NodeHeader({
           )}
 
         <EditableNodeTitle
-          value={node.metadata.title || node.id}
+          value={renderData?.title || nodeId}
           onChange={handleTitleChange}
           className="min-w-0 flex-1"
           style={{ color: style.text }}
@@ -197,7 +201,7 @@ export function NodeHeader({
 
         {/* Use the extracted and optimized NodeStatusBadge component */}
         <NodeStatusBadge
-          status={node.status}
+          status={renderData?.status || 'idle'}
           prevStatus={prevStatus}
           showBadge={showStatusBadge}
           onStatusChange={handleStatusChange}

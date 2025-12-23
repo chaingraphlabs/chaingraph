@@ -6,17 +6,16 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { AnyPort } from 'components/flow/nodes/ChaingraphNode/ports/AnyPort/AnyPort'
 import { memo } from 'react'
-import { BooleanPort } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
-import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
-import { usePortConfig } from '@/store/ports-v2'
-
-import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort'
-import { StreamPort } from '@/components/flow/nodes/ChaingraphNode/ports/StreamPort/StreamPort'
+import { usePortType } from '@/store/ports-v2'
+import { AnyPort } from './ports/AnyPort/AnyPort'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
+import { BooleanPort } from './ports/BooleanPort/BooleanPort'
 import { EnumPort } from './ports/EnumPort/EnumPort'
+import { NumberPort } from './ports/NumberPort/NumberPort'
+import { ObjectPort } from './ports/ObjectPort/ObjectPort'
 import { SecretPort } from './ports/SecretPort/SecretPort'
+import { StreamPort } from './ports/StreamPort/StreamPort'
 import { StringPort } from './ports/StringPort/StringPort'
 
 /**
@@ -41,21 +40,24 @@ export interface PortProps {
 export const PortComponent = memo(PortComponentInner, (prev, next) => {
   // Simple ID comparison - if IDs match, skip re-render
   // Granular hooks inside component handle data change detection
-  if (prev.nodeId !== next.nodeId) return false
-  if (prev.portId !== next.portId) return false
-  return true  // IDs match - skip re-render, let hooks decide
+  if (prev.nodeId !== next.nodeId)
+    return false
+  if (prev.portId !== next.portId)
+    return false
+  return true // IDs match - skip re-render, let hooks decide
 })
 
 function PortComponentInner(props: PortProps) {
   const { nodeId, portId } = props
 
-  // Fetch port config to determine type
-  const config = usePortConfig(nodeId, portId)
+  // Fetch only the port type to avoid re-renders on unrelated config changes
+  const portType = usePortType(nodeId, portId)
 
   // Early return if config not loaded
-  if (!config) return null
+  if (!portType)
+    return null
 
-  switch (config.type) {
+  switch (portType) {
     case 'string': {
       return (
         <StringPort nodeId={nodeId} portId={portId} />
@@ -100,7 +102,7 @@ function PortComponentInner(props: PortProps) {
     }
 
     default: {
-      throw new Error(`Unhandled config.type case: ${(config as any).type}`)
+      throw new Error(`Unhandled port type case: ${String(portType)}`)
     }
   }
 }

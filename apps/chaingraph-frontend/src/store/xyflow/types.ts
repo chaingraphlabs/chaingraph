@@ -49,7 +49,26 @@ export interface XYFlowNodeRenderData {
   // Core identity
   nodeId: string
   version: number
-  node: INode // The actual node reference (for port operations)
+
+  // Port ID arrays (from $nodePortLists - replaces node.getInputs()/getOutputs() iteration)
+  inputPortIds: string[]
+  outputPortIds: string[]
+  passthroughPortIds: string[]
+
+  // Specific system ports (pre-computed - no iteration needed in components)
+  flowInputPortId: string | null
+  flowOutputPortId: string | null
+
+  // Specific error ports (pre-computed - no iteration needed in components)
+  errorPortId: string | null
+  errorMessagePortId: string | null
+
+  // Node metadata (from node instance - will replace direct node access)
+  title: string
+  status: 'idle' | 'running' | 'completed' | 'failed' | 'skipped'
+
+  // Node UI state (for components that need UI state without accessing node)
+  isErrorPortCollapsed: boolean
 
   // Position (from $nodePositions)
   position: Position
@@ -70,6 +89,10 @@ export interface XYFlowNodeRenderData {
   // Parent relationship (from node.metadata)
   parentNodeId: string | undefined
 
+  // Parent node category (for output port visibility check)
+  // Pre-computed to avoid loading entire parent INode in NodeBody
+  parentNodeCategory: string | undefined
+
   // Execution state (from $executionState + $executionNodes)
   executionStyle: string | undefined // Border/shadow className
   executionStatus: NodeExecutionStatus
@@ -86,7 +109,7 @@ export interface XYFlowNodeRenderData {
   hasBreakpoint: boolean
   debugMode: boolean // For debug UI visibility
 
-  // Drop feedback (from $dragDropState)
+  // Drop feedback (from $dragDropRenderState)
   dropFeedback: DropFeedback | null
 }
 

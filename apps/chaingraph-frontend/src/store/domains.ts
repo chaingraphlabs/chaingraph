@@ -57,6 +57,20 @@ export const walletDomain = createDomain('wallet')
 // See store/xyflow/domain.ts for detailed documentation
 export { xyflowDomain } from './xyflow/domain'
 
-// import { debug } from 'patronum'
+import { debug } from 'patronum'
 
-// debug(dragDropDomain)
+// debug(
+//     flowDomain,
+//     nodesDomain,
+//     edgesDomain,
+//     executionDomain,
+//     categoriesDomain,
+//     portsDomain,
+//     trpcDomain,
+//     archaiDomain,
+//     focusedEditorsDomain,
+//     dragDropDomain,
+//     mcpDomain,
+//     initializationDomain,
+//     walletDomain,
+// )

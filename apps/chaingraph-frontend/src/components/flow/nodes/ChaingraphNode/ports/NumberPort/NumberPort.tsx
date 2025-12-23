@@ -6,13 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ExtractValue, NumberPortConfig } from '@badaitech/chaingraph-types'
+import type { NumberPortConfig } from '@badaitech/chaingraph-types'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { NumberInput } from '@/components/ui/number-input'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
-import { useExecutionID } from '@/store/execution'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { usePortEdges } from '@/store/nodes/computed'
 import { requestUpdatePortUI, requestUpdatePortValue, requestUpdatePortValueThrottled } from '@/store/ports'
@@ -29,9 +29,9 @@ function NumberPortInner(props: NumberPortProps) {
   const { nodeId, portId } = props
 
   // Granular subscriptions - only re-renders when THIS port's data changes
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
-  const storeValue = usePortValue(nodeId, portId) as number | undefined
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const storeValue = usePortValueWithExecution(nodeId, portId) as number | undefined
 
   const title = config?.title || config?.key || portId
   const executionID = useExecutionID()
@@ -147,12 +147,7 @@ function NumberPortInner(props: NumberPortProps) {
   const numberConfig = config as NumberPortConfig
 
   // Cast UI to proper type for type-safe property access
-  const numberUI = ui as {
-    isSlider?: boolean
-    leftSliderLabel?: string
-    rightSliderLabel?: string
-    disabled?: boolean
-  }
+  const numberUI = ui as NumberPortConfig['ui'] || {}
 
   return (
     <div

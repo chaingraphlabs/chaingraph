@@ -1,3 +1,4 @@
+import type { BasePortConfigUIType, IPortConfig } from '@badaitech/chaingraph-types'
 /*
  * Copyright (c) 2025 BadLabs
  *
@@ -7,10 +8,11 @@
  */
 import { Handle, Position } from '@xyflow/react'
 import { useUnit } from 'effector-react/effector-react.umd'
+import { useTheme } from '@/components/theme/hooks/useTheme'
 import { cn } from '@/lib/utils'
 import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
 import { usePortConfig, usePortUI } from '@/store/ports-v2'
-import { PortDocTooltip } from '../doc'
+import { getPortTypeColor, PortDocTooltip } from '../doc'
 
 interface Props {
   className?: string
@@ -30,18 +32,30 @@ export function PortHandle({ nodeId, portId, forceDirection, className, isConnec
   const isCompatible = compatiblePorts === null ? true : isDraggingCompatible
 
   // Cast UI for type-safe property access
-  const portUI = ui as { hidePort?: boolean, bgColor?: string }
+  const portUI = ui as BasePortConfigUIType
 
-  const bgColor = isCompatible
-    ? portUI.bgColor
-    : '#a1a1a1'
+  const { theme } = useTheme()
+  const portColor = isCompatible && config
+    ? getPortTypeColor(theme, {
+      ...config,
+      ui: {
+        ...config.ui,
+        ...portUI,
+      },
+    } as IPortConfig)
+    : getPortTypeColor(theme, {
+      type: 'any',
+    } as IPortConfig)
 
   const direction = forceDirection ?? config?.direction
   const position = direction === 'input'
     ? Position.Left
     : Position.Right
 
-  if (!config) return null
+  if (!config) {
+    console.warn(`PortHandle: Missing config for port ${nodeId}:${portId}`)
+    return null
+  }
 
   return (
     <PortDocTooltip nodeId={nodeId} portId={portId}>
@@ -54,12 +68,12 @@ export function PortHandle({ nodeId, portId, forceDirection, className, isConnec
         style={
           isDraggingCompatible
             ? {
-                backgroundColor: bgColor,
-                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
-              }
+              backgroundColor: portColor.circleColor,
+              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
+            }
             : {
-                backgroundColor: bgColor,
-              }
+              backgroundColor: portColor.circleColor,
+            }
         }
         className={cn(
           'absolute',
@@ -69,7 +83,7 @@ export function PortHandle({ nodeId, portId, forceDirection, className, isConnec
           'data-[connected=true]:shadow-port-connected',
           'z-50',
           direction === 'input' ? '-left-4' : '-right-4',
-          !bgColor && 'bg-flow-data',
+          !portColor.circleColor && 'bg-flow-data',
           className,
           !isCompatible && 'opacity-10 cursor-not-allowed',
           isCompatible && 'cursor-pointer',

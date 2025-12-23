@@ -60,7 +60,7 @@ const ChildrenHiddenHandles = memo(({ nodeId, portId, childPortIds }: { nodeId: 
   )
 })
 
-export function AnyObjectPort({ nodeId, portId }: AnyPortProps) {
+function AnyObjectPortInner({ nodeId, portId }: AnyPortProps) {
   // ========================================
   // SECTION 1: ALL HOOKS (React requirement!)
   // ========================================
@@ -246,3 +246,8 @@ export function AnyObjectPort({ nodeId, portId }: AnyPortProps) {
     </div>
   )
 }
+
+/**
+ * Memoized AnyObjectPort - prevents unnecessary re-renders
+ */
+export const AnyObjectPort = memo(AnyObjectPortInner)

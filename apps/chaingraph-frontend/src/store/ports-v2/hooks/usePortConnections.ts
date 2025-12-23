@@ -27,32 +27,12 @@ import { isDeepEqual, toPortKey } from '../utils'
  */
 export function usePortConnections(nodeId: string, portId: string): Connection[] {
   const portKey = toPortKey(nodeId, portId)
-  const mode = useUnit($migrationMode)
 
-  // Route based on migration mode
-  if (mode === 'full' || mode === 'read-only') {
-    // Read from granular stores
-    return useStoreMap({
-      store: $portConnections,
-      keys: [portKey],
-      fn: (connections, [key]) => connections.get(key) || [],
-      updateFilter: (prev, next) => !isDeepEqual(prev, next),
-    })
-  }
-
-  // Legacy: Read from $nodes
+  // Read from granular stores
   return useStoreMap({
-    store: $nodes,
-    keys: [nodeId, portId],
-    fn: (nodes, [nId, pId]) => {
-      const node = nodes[nId]
-      if (!node)
-        return []
-      const port = node.getPort(pId)
-      if (!port)
-        return []
-      return port.getConfig().connections || []
-    },
+    store: $portConnections,
+    keys: [portKey],
+    fn: (connections, [key]) => connections.get(key) || [],
     updateFilter: (prev, next) => !isDeepEqual(prev, next),
   })
 }

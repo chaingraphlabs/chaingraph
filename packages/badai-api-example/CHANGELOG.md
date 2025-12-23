@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.6.46
+
+### Patch Changes
+
+- feat: remove unused child spawner workflow and related components for code cleanup
+- Updated dependencies
+  - @badaitech/badai-api@0.6.46
+
 ## 0.6.45
 
 ### Patch Changes

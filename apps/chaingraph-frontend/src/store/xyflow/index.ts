@@ -9,9 +9,6 @@
 // Domain
 export { xyflowDomain } from './domain'
 
-// Stores
-export { $xyflowNodeRenderMap, $xyflowNodesList } from './stores'
-
 // Events
 export {
   setXYFlowNodeRenderMap,
@@ -20,7 +17,15 @@ export {
 } from './events'
 
 // Hooks
-export { useXYFlowNodeRenderData } from './hooks'
+export {
+  useXYFlowNodeBodyPorts,
+  useXYFlowNodeErrorPorts,
+  useXYFlowNodeFlowPorts,
+  useXYFlowNodeRenderData,
+} from './hooks'
+
+// Stores
+export { $xyflowNodeRenderMap, $xyflowNodesList } from './stores'
 
 // Types
 export type {

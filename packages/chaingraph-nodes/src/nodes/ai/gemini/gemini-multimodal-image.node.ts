@@ -24,7 +24,7 @@ import {
   PortArray,
   PortObject,
 } from '@badaitech/chaingraph-types'
-import { createPartFromUri, GoogleGenAI } from '@google/genai'
+import { GoogleGenAI } from '@google/genai'
 import { NODE_CATEGORIES } from '../../../categories'
 import {
   ConversationMessage,

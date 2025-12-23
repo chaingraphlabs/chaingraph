@@ -21,3 +21,8 @@ import { createDomain } from 'effector'
  * @see /docs/architecture/granular-port-stores-design.md
  */
 export const portsV2Domain = createDomain('portsV2')
+
+// import { debug } from 'patronum'
+// debug(
+// portsV2Domain,
+// )

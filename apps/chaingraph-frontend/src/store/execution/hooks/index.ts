@@ -12,3 +12,8 @@ export { useExecutionEvents } from './useExecutionEvents'
 // export { useExecutionSubscription } from './useExecutionSubscription'
 export { useExternalIntegrationConfig } from './useExternalIntegrationConfig'
 export { useNodeExecution } from './useNodeExecution'
+export {
+  usePortConfigWithExecution,
+  usePortUIWithExecution,
+  usePortValueWithExecution,
+} from './usePortValueWithExecution'

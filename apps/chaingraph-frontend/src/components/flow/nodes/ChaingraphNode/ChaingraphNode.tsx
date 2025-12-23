@@ -12,7 +12,6 @@ import type { ChaingraphNode } from './types'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo, useRef } from 'react'
-import { mergeNodePortsUi } from '@/components/flow/nodes/ChaingraphNode/utils/merge-nodes'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Card } from '@/components/ui/card'
 import { trace } from '@/lib/perf-trace'
@@ -23,7 +22,6 @@ import {
 } from '@/store/execution'
 import { $activeFlowMetadata, $isFlowLoaded } from '@/store/flow'
 import { removeNodeFromFlow, updateNodeDimensions, updateNodeDimensionsLocal, updateNodePosition } from '@/store/nodes'
-import { useNode } from '@/store/nodes/hooks/useNode'
 import { useXYFlowNodeRenderData } from '@/store/xyflow'
 import { BreakpointButton } from '../debug/BreakpointButton'
 import { useElementResize } from './hooks/useElementResize'
@@ -71,8 +69,6 @@ function ChaingraphNodeComponent({
   data,
   selected,
   id,
-  // position,
-  // measured,
 }: NodeProps<ChaingraphNode>) {
   // ✅ 1. Single subscription for ALL render data (replaces 10 hooks)
   const renderData = useXYFlowNodeRenderData(id)
@@ -87,7 +83,6 @@ function ChaingraphNodeComponent({
   const { theme } = useTheme()
 
   // Extract data from renderData (with defaults for when undefined)
-  const node = renderData?.node
   const categoryMetadata = renderData?.categoryMetadata
   const executionStyle = renderData?.executionStyle
   const executionNode = renderData?.executionNode
@@ -118,12 +113,12 @@ function ChaingraphNodeComponent({
   // Content-driven dimension detection (HEIGHT only)
   // Width comes from resize handle only - height is tracked for dynamic content (spoilers, etc.)
   const handleContentResize = useCallback((size: { width: number, height: number }) => {
-    if (!activeFlow?.id || !node)
+    if (!activeFlow?.id)
       return
 
     // Only update HEIGHT from content measurement
     // Width comes from resize handle only (prevents conflict between content and resize)
-    const currentHeight = node.metadata.ui?.dimensions?.height
+    const currentHeight = renderData?.dimensions.height // node.metadata.ui?.dimensions?.height
     if (currentHeight && Math.abs(size.height - currentHeight) < 5)
       return
 
@@ -136,9 +131,9 @@ function ChaingraphNodeComponent({
         // NO WIDTH! Let the store merge with existing width
         height: Math.ceil(size.height), // HEIGHT from content
       },
-      version: node.getVersion(),
+      version: 0, // node.getVersion(),
     })
-  }, [activeFlow?.id, node, id])
+  }, [activeFlow?.id, id, renderData?.dimensions.height])
 
   const { ref: contentRef } = useElementResize<HTMLDivElement>({
     debounceTime: 200,
@@ -155,14 +150,7 @@ function ChaingraphNodeComponent({
     return executionStyle || ''
   }, [selected, executionStyle])
 
-  // Merged node for rendering (execution node or regular node)
-  const nodeToRender = useMemo(() => {
-    if (!node)
-      return null
-    return trace.wrap('compute.mergeNodePortsUi', { category: 'compute', tags: { nodeId: id } }, () => {
-      return executionNode?.node ? mergeNodePortsUi(executionNode.node, node) : node
-    })
-  }, [node, executionNode, id])
+  // Note: mergeNodePortsUi is no longer needed - components use granular stores directly
 
   // Trace render performance (synchronous - measures render function time)
   const renderCountRef = useRef(0)
@@ -179,7 +167,7 @@ function ChaingraphNodeComponent({
   }
 
   // Early return if data not ready - AFTER all hooks are called
-  if (!renderData || !activeFlow?.id || !isFlowLoaded || !nodeToRender) {
+  if (!renderData || !activeFlow?.id || !isFlowLoaded) {
     if (traceSpanId.current)
       trace.end(traceSpanId.current)
     return null
@@ -239,7 +227,7 @@ function ChaingraphNodeComponent({
                       hover:w-2 transition-all duration-200"
           >
             <BreakpointButton
-              nodeId={nodeToRender.id}
+              nodeId={id}
               enabled={hasBreakpoint}
               onToggle={handleBreakpointToggle}
             />
@@ -247,7 +235,7 @@ function ChaingraphNodeComponent({
         )}
 
         <NodeHeader
-          node={nodeToRender}
+          nodeId={id}
           icon={finalCategoryMetadata.icon}
           style={style}
           categoryMetadata={finalCategoryMetadata}
@@ -258,13 +246,14 @@ function ChaingraphNodeComponent({
           debugMode={debugMode}
           isBreakpointSet={hasBreakpoint}
           onBreakpointToggle={handleBreakpointToggle}
+          renderData={renderData}
         />
 
-        <NodeBody node={nodeToRender} />
+        <NodeBody nodeId={id} />
 
         {/* Node ports */}
         <div className="mt-2">
-          <NodeErrorPorts node={nodeToRender} />
+          <NodeErrorPorts nodeId={id} />
         </div>
 
         {/* Resize control */}
@@ -282,7 +271,7 @@ function ChaingraphNodeComponent({
           }}
 
           onResize={(_e, params) => {
-            if (!activeFlow?.id || !id || !node)
+            if (!activeFlow?.id || !id || !renderData)
               return
 
             // INSTANT local update (no throttle) - makes resize feel responsive
@@ -290,7 +279,7 @@ function ChaingraphNodeComponent({
               flowId: activeFlow.id,
               nodeId: id,
               dimensions: { width: params.width }, // WIDTH ONLY from resize handle
-              version: node.getVersion(),
+              version: renderData.version,
             })
 
             // ALSO dispatch throttled backend sync
@@ -298,22 +287,22 @@ function ChaingraphNodeComponent({
               flowId: activeFlow.id,
               nodeId: id,
               dimensions: { width: params.width }, // WIDTH ONLY!
-              version: node.getVersion(),
+              version: renderData.version,
             })
 
             // Also update position if changed during resize
-            if (params.x !== node.metadata.ui?.position?.x
-              || params.y !== node.metadata.ui?.position?.y) {
+            if (params.x !== renderData.position.x
+              || params.y !== renderData.position.y) {
               updateNodePosition({
                 flowId: activeFlow.id,
                 nodeId: id,
                 position: { x: params.x, y: params.y },
-                version: node.getVersion(),
+                version: renderData.version,
               })
             }
           }}
           onResizeEnd={(_e, params) => {
-            if (!activeFlow?.id || !id || !node)
+            if (!activeFlow?.id || !id || !renderData)
               return
 
             // Final local update on resize end
@@ -321,7 +310,7 @@ function ChaingraphNodeComponent({
               flowId: activeFlow.id,
               nodeId: id,
               dimensions: { width: params.width }, // WIDTH ONLY from resize handle
-              version: node.getVersion(),
+              version: renderData.version,
             })
 
             // Trigger backend sync
@@ -329,17 +318,17 @@ function ChaingraphNodeComponent({
               flowId: activeFlow.id,
               nodeId: id,
               dimensions: { width: params.width }, // WIDTH ONLY!
-              version: node.getVersion(),
+              version: renderData.version,
             })
 
             // Also update position if changed during resize
-            if (params.x !== node.metadata.ui?.position?.x
-              || params.y !== node.metadata.ui?.position?.y) {
+            if (params.x !== renderData.position.x
+              || params.y !== renderData.position.y) {
               updateNodePosition({
                 flowId: activeFlow.id,
                 nodeId: id,
                 position: { x: params.x, y: params.y },
-                version: node.getVersion(),
+                version: renderData.version,
               })
             }
           }}

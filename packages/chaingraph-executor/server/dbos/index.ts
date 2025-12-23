@@ -33,10 +33,7 @@ export { DBOS_APPLICATION_VERSION, DBOS_QUEUE_NAME } from './version'
 
 // Child spawner workflow (optional - for spawning from steps)
 export {
-  childSpawnerWorkflow,
   ExecutionWorkflows,
-  sendChildTaskToSpawner,
-  startChildSpawner,
 } from './workflows'
 
 export type { CommandController } from './workflows'

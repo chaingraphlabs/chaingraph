@@ -15,6 +15,7 @@ import { addFieldObjectPort } from '@/store/ports'
 import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortComponent } from '../../../PortComponent'
 import { AddPropPopover } from './AddPropPopover'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store'
 
 interface PortFieldProps {
   nodeId: string
@@ -37,11 +38,11 @@ export function PortField({
   const [isEditOpen, setIsEditOpen] = useState(false)
 
   // Get parent UI config
-  const parentUI = usePortUI(nodeId, parentPortId)
+  const parentUI = usePortUIWithExecution(nodeId, parentPortId)
 
   // Get current child port config and UI for editing
-  const childConfig = usePortConfig(nodeId, portId)
-  const childUI = usePortUI(nodeId, portId)
+  const childConfig = usePortConfigWithExecution(nodeId, portId)
+  const childUI = usePortUIWithExecution(nodeId, portId)
 
   // Cast parent UI for type-safe property access
   const objectParentUI = parentUI as { keyDeletable?: boolean }

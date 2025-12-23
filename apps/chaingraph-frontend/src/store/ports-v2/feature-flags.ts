@@ -56,22 +56,8 @@ $migrationMode.on(setMigrationMode, (_, mode) => {
 })
 
 /**
- * Helper to check if granular ports are enabled for reading
- */
-export const $isGranularReadEnabled = $migrationMode.map(
-  mode => mode === 'read-only' || mode === 'full',
-)
-
-/**
  * Helper to check if granular ports are enabled for writing
  */
 export const $isGranularWriteEnabled = $migrationMode.map(
   mode => mode !== 'disabled',
-)
-
-/**
- * Helper to check if legacy system should still receive writes
- */
-export const $isLegacyWriteEnabled = $migrationMode.map(
-  mode => mode !== 'full',
 )

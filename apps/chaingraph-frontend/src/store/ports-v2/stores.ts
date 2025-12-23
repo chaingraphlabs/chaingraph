@@ -7,7 +7,7 @@
  */
 
 import type { Connection } from '@badaitech/chaingraph-types'
-import type { PortConfigCore, PortKey, PortUIState } from './types'
+import type { PortConfigFull, PortKey, PortUIState } from './types'
 import { globalReset } from '../common'
 import { portsV2Domain } from './domain'
 
@@ -42,9 +42,9 @@ export const $portUI = portsV2Domain.createStore<Map<PortKey, PortUIState>>(
  * Only holds structural/type information
  *
  * Key: PortKey
- * Value: PortConfigCore (type, direction, constraints)
+ * Value: PortConfigFull (type, direction, constraints)
  */
-export const $portConfigs = portsV2Domain.createStore<Map<PortKey, PortConfigCore>>(
+export const $portConfigs = portsV2Domain.createStore<Map<PortKey, PortConfigFull>>(
   new Map(),
 )
 
@@ -117,7 +117,7 @@ export const applyUIUpdates = portsV2Domain.createEvent<Map<PortKey, PortUIState
 /**
  * Apply batched config updates (accepts Partial to handle incremental updates)
  */
-export const applyConfigUpdates = portsV2Domain.createEvent<Map<PortKey, Partial<PortConfigCore>>>()
+export const applyConfigUpdates = portsV2Domain.createEvent<Map<PortKey, Partial<PortConfigFull>>>()
 
 /**
  * Apply batched connection updates
@@ -177,7 +177,7 @@ $portConfigs.on(applyConfigUpdates, (state, updates) => {
   for (const [key, partialConfig] of updates) {
     const existing = state.get(key)
     // Merge partial with existing, or use partial as-is if no existing
-    newState.set(key, existing ? { ...existing, ...partialConfig } as PortConfigCore : partialConfig as PortConfigCore)
+    newState.set(key, existing ? { ...existing, ...partialConfig } as PortConfigFull : partialConfig as PortConfigFull)
   }
   return newState
 })

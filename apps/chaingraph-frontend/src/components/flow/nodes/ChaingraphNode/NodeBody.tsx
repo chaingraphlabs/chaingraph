@@ -6,21 +6,19 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
-import { PortDirection } from '@badaitech/chaingraph-types'
-import { memo, useMemo, useRef } from 'react'
+import { memo, useRef } from 'react'
 import { PortComponent } from '@/components/flow/nodes/ChaingraphNode/PortComponent'
 import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
-import { useNode } from '@/store/nodes'
+import { useXYFlowNodeBodyPorts } from '@/store/xyflow'
 
 export interface NodeBodyProps {
-  node: INode
+  nodeId: string
   className?: string
 }
 
 function NodeBody({
-  node,
+  nodeId,
   className = '',
 }: NodeBodyProps) {
   // Trace render (synchronous - measures render function time)
@@ -30,81 +28,60 @@ function NodeBody({
     renderCountRef.current++
     traceSpanId.current = trace.start('render.NodeBody', {
       category: 'render',
-      tags: { nodeId: node.id, renderCount: renderCountRef.current },
+      tags: { nodeId, renderCount: renderCountRef.current },
     })
   }
 
-  const parentNode = useNode(node.metadata.parentNodeId || '')
-
-  const passthroughPorts = useMemo(
-    () => trace.wrap('compute.passthroughPorts', { category: 'compute' }, () =>
-      Array.from(
-        node.ports.values(),
-      ).filter(port =>
-        port.getConfig().direction === PortDirection.Passthrough
-        && !port.getConfig().parentId
-        && !port.isSystem(),
-      ),
-    ),
-    [node],
-  )
-
-  const inputPorts = useMemo(
-    () => trace.wrap('compute.inputPorts', { category: 'compute' }, () =>
-      node.getInputs().filter(
-        port =>
-          !port.getConfig().parentId
-          && !port.isSystem(),
-      ),
-    ),
-    [node],
-  )
-  const outputPorts = useMemo(
-    () => trace.wrap('compute.outputPorts', { category: 'compute' }, () =>
-      node.getOutputs().filter(
-        port => !port.getConfig().parentId
-          && !port.isSystem(),
-      ),
-    ),
-    [node],
-  )
+  // Granular subscription - only 5 fields (port IDs + parent category)
+  // Component only re-renders when these specific fields change
+  // OPTIMIZATION: parentNodeCategory replaces inefficient useNode(parentNodeId) call
+  const portData = useXYFlowNodeBodyPorts(nodeId)
 
   // End trace BEFORE return (synchronous measurement)
-  if (traceSpanId.current) trace.end(traceSpanId.current)
+  if (traceSpanId.current)
+    trace.end(traceSpanId.current)
+
+  // Early return if no data
+  if (!portData) {
+    return null
+  }
+
+  const { inputPortIds, outputPortIds, passthroughPortIds, parentNodeCategory } = portData
 
   return (
     <div className={cn('px-3 py-2 space-y-4', className)}>
       <div className="space-y-3">
 
         {/* Input Ports */}
-        {inputPorts.map((port) => {
+        {inputPortIds.map((portId) => {
           return (
             <PortComponent
-              key={port.id}
-              nodeId={node.id}
-              portId={port.id}
+              key={portId}
+              nodeId={nodeId}
+              portId={portId}
             />
           )
         })}
 
         {/* Passthrough Ports */}
-        {passthroughPorts.map((port) => {
+        {passthroughPortIds.map((portId) => {
           return (
             <PortComponent
-              key={port.id}
-              nodeId={node.id}
-              portId={port.id}
+              key={portId}
+              nodeId={nodeId}
+              portId={portId}
             />
           )
         })}
 
         {/* Output Ports */}
-        {(!parentNode || parentNode.metadata.category === 'group') && outputPorts.map((port) => {
+        {/* Only show outputs if no parent or parent is a group node */}
+        {(!parentNodeCategory || parentNodeCategory === 'group') && outputPortIds.map((portId) => {
           return (
             <PortComponent
-              key={port.id}
-              nodeId={node.id}
-              portId={port.id}
+              key={portId}
+              nodeId={nodeId}
+              portId={portId}
             />
           )
         })}

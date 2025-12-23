@@ -12,9 +12,9 @@ import { Fragment, memo, useCallback, useMemo, useRef, useState } from 'react'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { usePortEdges } from '@/store/nodes/computed'
-import { useExecutionID } from '@/store/execution'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution'
 import { $activeFlowId } from '@/store/flow'
+import { usePortEdges } from '@/store/nodes/computed'
 import { addFieldObjectPort, removeFieldObjectPort, requestUpdatePortUI } from '@/store/ports'
 import { useChildPorts, usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
@@ -75,15 +75,16 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
   const executionID = useExecutionID()
 
   // Granular subscriptions - ALWAYS use ports-v2 (no node subscription!)
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
   const childPortIds = useChildPorts(nodeId, portId)
 
   // Granular edge subscription - only re-renders when THIS port's edges change
   const connectedEdges = usePortEdges(nodeId, portId)
 
   const needRenderEditor = useMemo(() => {
-    if (!config) return false
+    if (!config)
+      return false
     return !isHideEditor(config as any, connectedEdges)
   }, [config, connectedEdges])
 
@@ -98,13 +99,16 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
 
   // Determine which node to display: preview during drag, captured after drop
   const displayNode = useMemo(() => {
-    if (previewNode) return previewNode
-    if (capturedNode) return capturedNode
+    if (previewNode)
+      return previewNode
+    if (capturedNode)
+      return capturedNode
     return undefined
   }, [previewNode, capturedNode])
 
   const needRenderObject = useMemo(() => {
-    if (!config) return false
+    if (!config)
+      return false
     return (
       connectedEdges.filter(edge => edge.targetPortId === config.id).length === 0
       || config.direction === 'output'
@@ -149,8 +153,10 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
   // ========================================
   // SECTION 2: EARLY RETURNS (after all hooks)
   // ========================================
-  if (!config) return null
-  if (ui?.hidden) return null
+  if (!config)
+    return null
+  if (ui?.hidden)
+    return null
 
   return (
     <div
@@ -294,7 +300,7 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
               )}
             >
 
-              {childPortIds.map(childPortId => {
+              {childPortIds.map((childPortId) => {
                 // Extract key from child port ID (format: 'parentPort.key')
                 const key = childPortId.split('.').pop() || ''
                 return (

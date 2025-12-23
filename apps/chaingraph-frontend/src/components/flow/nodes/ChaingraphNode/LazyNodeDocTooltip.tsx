@@ -7,7 +7,6 @@
  */
 
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
-import type { INode } from '@badaitech/chaingraph-types'
 import type { ReactNode } from 'react'
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import {
@@ -26,14 +25,14 @@ const NodeDocTooltipContent = lazy(() =>
 )
 
 interface LazyNodeDocTooltipProps {
-  node: INode
+  nodeId: string
   categoryMetadata: CategoryMetadata
   children: ReactNode
   className?: string
 }
 
 export function LazyNodeDocTooltip({
-  node,
+  nodeId,
   categoryMetadata,
   children,
   className,
@@ -61,12 +60,12 @@ export function LazyNodeDocTooltip({
       )}
       >
         <NodeDocTooltipContent
-          node={node}
+          nodeId={nodeId}
           categoryMetadata={categoryMetadata}
         />
       </Suspense>
     )
-  }, [hasBeenOpened, node, categoryMetadata])
+  }, [hasBeenOpened, nodeId, categoryMetadata])
 
   return (
     <TooltipProvider delayDuration={500}>

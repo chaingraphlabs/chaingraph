@@ -26,7 +26,7 @@ import { fromPortKey, toPortKey } from '../utils'
  * ```typescript
  * // For a parent port 'myArrayPort' with children 'myArrayPort.0', 'myArrayPort.1'
  * const childPortIds = useChildPorts('node123', 'myArrayPort')
- * // Returns: ['myArrayPort.0', 'myArrayPort.1']
+ * // Returns: ['myArrayPort[0]', 'myArrayPort[1]']
  *
  * // Then use with PortComponent:
  * {childPortIds.map(portId => (
@@ -45,11 +45,19 @@ export function useChildPorts(nodeId: string, parentPortId: string): string[] {
       if (!children)
         return []
 
-      // Convert PortKeys back to port IDs
-      return Array.from(children).map((childKey) => {
-        const { portId } = fromPortKey(childKey)
-        return portId
-      })
+      // Convert PortKeys back to port IDs (with error handling)
+      const portIds: string[] = []
+      for (const childKey of children) {
+        try {
+          const { portId } = fromPortKey(childKey)
+          portIds.push(portId)
+        }
+        catch (error) {
+          console.error(`[useChildPorts] Invalid childKey in hierarchy: ${childKey}`, error)
+          // Skip malformed keys instead of crashing
+        }
+      }
+      return portIds
     },
     updateFilter: (prev, next) => !isDeepEqual(prev, next),
   })

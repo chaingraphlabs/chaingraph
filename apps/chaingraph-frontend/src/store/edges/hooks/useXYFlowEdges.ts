@@ -6,81 +6,81 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { useStoreMap } from 'effector-react'
+import type { EdgeRenderData } from '../types'
+import { useUnit } from 'effector-react'
 import { useMemo } from 'react'
-import { $xyflowEdges } from '../stores'
+import { $edgeRenderMap, $xyflowEdgesList } from '../stores'
 
 /**
  * Hook that returns XYFlow edges with optimized re-rendering.
- * Only updates when there are meaningful changes to the edges.
+ *
+ * Leverages the new map-based architecture:
+ * 1. Uses $xyflowEdgesList (already filtered to ready edges)
+ * 2. Memoizes by version sum (avoids deep comparison)
+ * 3. Falls back to reference equality when versions unchanged
  */
 export function useXYFlowEdges() {
-  const edges = useStoreMap({
-    store: $xyflowEdges,
-    keys: [],
-    fn: edges => edges,
-    updateFilter: (prevEdges, nextEdges) => {
-      // return false
-      // Quick checks first
-      // if (prevEdges === nextEdges)
-      //   return false
+  const edges = useUnit($xyflowEdgesList)
+  const edgeMap = useUnit($edgeRenderMap)
 
-      if (prevEdges.length !== nextEdges.length)
-        return true
+  // Compute version fingerprint for memoization
+  // This is O(E) but avoids deep comparison of edge objects
+  const versionSum = useMemo(() => {
+    let sum = 0
+    for (const renderData of edgeMap.values()) {
+      sum += renderData.version
+    }
+    return sum
+  }, [edgeMap])
 
-      // Check for changes in edge properties that affect rendering
-      for (let i = 0; i < prevEdges.length; i++) {
-        const prev = prevEdges[i]
-        const next = nextEdges[i]
+  // Memoize edges array by version fingerprint
+  // Only recomputes when version sum changes
+  return useMemo(() => edges, [edges, versionSum])
+}
 
-        // Check if it's the same edge ID
-        if (prev.id !== next.id)
-          return true
+/**
+ * Hook for EdgeRenderData connected to a specific node
+ * Uses the render map for efficient filtering
+ *
+ * NOTE: This returns EdgeRenderData, not EdgeData.
+ * For EdgeData, use useEdgesForNode from useEdges.ts
+ */
+export function useEdgeRenderDataForNode(nodeId: string): EdgeRenderData[] {
+  const edgeMap = useUnit($edgeRenderMap)
 
-        // Check if core properties changed
-        if (prev.source !== next.source || prev.target !== next.target)
-          return true
-        if (prev.sourceHandle !== next.sourceHandle || prev.targetHandle !== next.targetHandle)
-          return true
-
-        // Check if type changed (affects rendering logic)
-        if (prev.type !== next.type)
-          return true
-
-        // Check if animation state changed
-        if (prev.data?.animated !== next.data?.animated)
-          return true
-
-        // Check if styling changed
-        const prevStyle = prev.style || {}
-        const nextStyle = next.style || {}
-        if (
-          prevStyle.stroke !== nextStyle.stroke
-          || prevStyle.strokeWidth !== nextStyle.strokeWidth
-          || prevStyle.strokeOpacity !== nextStyle.strokeOpacity
-        ) {
-          return true
-        }
-
-        // Check data version (captures changes in source/target nodes)
-        // if (prev.data?.version !== next.data?.version)
-        //   return true
+  return useMemo(() => {
+    const result: EdgeRenderData[] = []
+    for (const edge of edgeMap.values()) {
+      if (edge.isReady && (edge.source === nodeId || edge.target === nodeId)) {
+        result.push(edge)
       }
+    }
+    return result
+  }, [edgeMap, nodeId])
+}
 
-      // No meaningful changes detected
-      return false
-    },
-  })
+/**
+ * Hook for EdgeRenderData connected to a specific port
+ * Uses the render map for efficient filtering
+ *
+ * NOTE: This returns EdgeRenderData, not EdgeData.
+ * For EdgeData, use useEdgesForPort from useEdges.ts
+ */
+export function useEdgeRenderDataForPort(nodeId: string, portId: string): EdgeRenderData[] {
+  const edgeMap = useUnit($edgeRenderMap)
 
-  // Memoize length separately
-  const edgesLength = useMemo(() => edges.length, [edges])
+  return useMemo(() => {
+    const result: EdgeRenderData[] = []
+    for (const edge of edgeMap.values()) {
+      if (!edge.isReady) continue
 
-  // Memoize the composite key separately
-  const edgesKey = useMemo(() =>
-    edges.map(e =>
-      `${e.id}-${e.type}-${e.data?.animated}-${e.style?.strokeOpacity}-${e.data?.version}`,
-    ).join('|'), [edges])
+      const isSourcePort = edge.source === nodeId && edge.sourceHandle === portId
+      const isTargetPort = edge.target === nodeId && edge.targetHandle === portId
 
-  // Final memoization using simple dependencies
-  return useMemo(() => edges, [edges])
+      if (isSourcePort || isTargetPort) {
+        result.push(edge)
+      }
+    }
+    return result
+  }, [edgeMap, nodeId, portId])
 }

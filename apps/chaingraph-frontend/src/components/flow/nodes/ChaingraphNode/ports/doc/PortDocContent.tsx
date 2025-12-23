@@ -27,7 +27,7 @@ import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/fo
 import { useTheme } from '@/components/theme'
 import { Badge, Button, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
+import { usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { getPortTypeColor } from './getPortTypeColor'
 
 interface PortDocContentProps {
@@ -42,14 +42,13 @@ export function PortDocContent({
   className,
 }: PortDocContentProps) {
   const { theme } = useTheme()
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
-  const value = usePortValue(nodeId, portId)
+  // Use execution-aware hooks - will show runtime values during execution,
+  // and fallback to design-time values when not executing
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const value = usePortValueWithExecution(nodeId, portId)
   const [containerHeight, setContainerHeight] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  // Early return if config not loaded
-  if (!config) return null
 
   // Merge config with UI for color calculation (UI is stored separately in ports-v2)
   const configWithUI = { ...config, ui } as IPortConfig
@@ -133,16 +132,16 @@ export function PortDocContent({
               color: portColor.textColor,
             }}
           >
-            {config.title || config.key || 'Port'}
+            {config?.title || config?.key || 'Port'}
           </h3>
         </div>
         <div className="flex items-center space-x-1.5">
-          {config.required && (
+          {config?.required && (
             <div className="pl-1.5 pr-1.5 rounded-full bg-red-500" title="Required">
               Required
             </div>
           )}
-          {!config.required && (
+          {!config?.required && (
             <div className="pl-1.5 pr-1.5 rounded-full bg-green-500" title="Optional">
               Optional
             </div>
@@ -154,7 +153,7 @@ export function PortDocContent({
               color: portColor.textColor,
             }}
           >
-            {formatPortType(config.type)}
+            {config && formatPortType(config.type)}
           </span>
         </div>
       </div>
@@ -165,21 +164,21 @@ export function PortDocContent({
           {/* Basic information and direction */}
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">
-              {config.direction === 'input'
+              {config?.direction === 'input'
                 ? 'Input Port'
-                : config.direction === 'output'
+                : config?.direction === 'output'
                   ? 'Output Port'
-                  : config.direction === 'passthrough'
+                  : config?.direction === 'passthrough'
                     ? 'Passthrough Port'
                     : 'Unknown Direction'}
             </span>
             <span className="text-muted-foreground">
-              {config.key}
+              {config?.key}
             </span>
           </div>
 
           {/* Description */}
-          {config.description && (
+          {config?.description && (
             <div
               className="space-y-1 text-xs text-muted-foreground border-l-2 pl-2"
               style={{ borderColor: portColor.circleColor }}
@@ -207,7 +206,7 @@ export function PortDocContent({
           )}
 
           {/* Port ID */}
-          {config.id && (
+          {config?.id && (
             <div className="pt-1 space-y-1 text-muted-foreground">
               <div className="text-xs font-medium">Port ID</div>
               <pre className={cn(
@@ -215,7 +214,7 @@ export function PortDocContent({
                 'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
-                {config.id}
+                {config?.id}
               </pre>
             </div>
           )}
@@ -244,7 +243,7 @@ export function PortDocContent({
             <div className="pt-1 space-y-1 text-muted-foreground">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-medium text-muted-foreground">Value</div>
-                {!(config.type === 'string' && (config as any).ui?.isPassword === true) && (
+                {!(config?.type === 'string' && (config as any).ui?.isPassword === true) && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -260,7 +259,7 @@ export function PortDocContent({
                 'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
-                {config.type === 'string' && (config as any).ui?.isPassword === true
+                {config?.type === 'string' && (config as any).ui?.isPassword === true
                   ? '**** hidden ****'
                   : formatValue(value)}
               </pre>
@@ -335,13 +334,13 @@ function PropertyItem({ name, config, level = 0, isLast = false }: PropertyItemP
         >
           {isExpandable
             ? (
-                isOpen
-                  ? <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
-                  : <ChevronRight className="h-3 w-3 opacity-70 shrink-0" />
-              )
+              isOpen
+                ? <ChevronDown className="h-3 w-3 opacity-70 shrink-0" />
+                : <ChevronRight className="h-3 w-3 opacity-70 shrink-0" />
+            )
             : (
-                <div className="w-3" />
-              )}
+              <div className="w-3" />
+            )}
           <span className="font-medium">{name}</span>
           <Badge
             variant="outline"
@@ -597,17 +596,17 @@ function renderArrayConfig(config: ArrayPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
-              <PropertyItem
-                name="Item"
-                config={config.itemConfig as IPortConfig}
-                isLast={true}
-              />
-            )
+            <PropertyItem
+              name="Item"
+              config={config.itemConfig as IPortConfig}
+              isLast={true}
+            />
+          )
           : (
-              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-                No item configuration defined
-              </div>
-            )}
+            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+              No item configuration defined
+            </div>
+          )}
       </div>
     </div>
   )
@@ -658,13 +657,13 @@ function renderObjectConfig(config: ObjectPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {propertyCount > 0
           ? (
-              renderObjectSchemaContent(config, 0)
-            )
+            renderObjectSchemaContent(config, 0)
+          )
           : (
-              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-                No properties defined
-              </div>
-            )}
+            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+              No properties defined
+            </div>
+          )}
       </div>
     </div>
   )
@@ -715,17 +714,17 @@ function renderStreamConfig(config: StreamPortConfig): React.ReactElement {
       <div className="border rounded-md py-1 px-0.5 bg-muted/10">
         {config.itemConfig
           ? (
-              <PropertyItem
-                name="Stream Item"
-                config={config.itemConfig as IPortConfig}
-                isLast={true}
-              />
-            )
+            <PropertyItem
+              name="Stream Item"
+              config={config.itemConfig as IPortConfig}
+              isLast={true}
+            />
+          )
           : (
-              <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
-                No item configuration defined
-              </div>
-            )}
+            <div className="text-[10px] text-muted-foreground px-3 py-1 italic">
+              No item configuration defined
+            </div>
+          )}
       </div>
     </div>
   )

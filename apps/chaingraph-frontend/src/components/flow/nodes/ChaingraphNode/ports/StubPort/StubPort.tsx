@@ -7,15 +7,17 @@
  */
 import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
 import { cn } from '@/lib/utils'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution/hooks/usePortValueWithExecution'
 import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortTitle } from '../ui/PortTitle'
 
 export function StubPort(props: { nodeId: string, portId: string }) {
   const { nodeId, portId } = props
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
 
-  if (!config) return null
+  if (!config)
+    return null
 
   const title = config.title || config.key
 

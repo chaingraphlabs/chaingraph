@@ -249,10 +249,10 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       const existing = state[node.id]
       if (!existing)
         return true // New node
-      if (existing === node)
-        return false // Same reference
       if (existing.getVersion() >= node.getVersion())
         return false // Outdated
+      if (existing === node)
+        return false // Same reference
       return true
     })
 

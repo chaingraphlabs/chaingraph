@@ -27,7 +27,7 @@ export {
 export type { CommandController } from './dbos'
 
 export type { DBOSQueueOptions, DBOSWorkerOptions, ExecutionResult } from './dbos'
-export { APITaskQueue, DBOSChildSpawnerQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
+export { APITaskQueue, DBOSEventBus, DBOSTaskQueue } from './implementations/dbos'
 
 // Local Implementations
 export { InMemoryEventBus, InMemoryTaskQueue } from './implementations/local'

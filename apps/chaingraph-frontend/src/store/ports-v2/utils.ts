@@ -6,8 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { IPortConfig } from '@badaitech/chaingraph-types'
-import type { PortConfigCore, PortKey, PortUIState } from './types'
+import type { AnyPortConfig, EnumPortConfig, IPortConfig } from '@badaitech/chaingraph-types'
+import type { PortConfigCore, PortConfigFull, PortKey, PortUIState } from './types'
 
 // Re-export isDeepEqual for use in hooks
 export { isDeepEqual } from '@badaitech/chaingraph-types'
@@ -46,29 +46,57 @@ export function isChildPort(portId: string): boolean {
 }
 
 /**
- * Get the parent port ID from a child port ID
- * Handles both DOT notation (object) and BRACKET notation (array)
- * Examples:
- *   'myPort.field.nested' → 'myPort'
- *   'myPort[0]' → 'myPort'
- *   'myPort[0].nested' → 'myPort'
+ * Unwrap AnyPort config to its underlying type
+ *
+ * Transforms configs like:
+ *   { type: 'any', underlyingType: { type: 'string', minLength: 5 }, ... }
+ * Into:
+ *   { type: 'string', minLength: 5, ..., originalType: 'any' }
+ *
+ * This allows components to see the actual type and render appropriately,
+ * avoiding infinite loops where AnyPort → PortComponent → AnyPort.
+ *
+ * @param config - Port config that might be an 'any' type
+ * @returns Unwrapped config with actual type, or original if not 'any'
  */
-export function getParentPortId(portId: string): string | null {
-  const dotIndex = portId.indexOf('.')
-  const bracketIndex = portId.indexOf('[')
+export function unwrapAnyPortConfig(config: PortConfigFull): PortConfigFull {
+  // Not an any port - return as-is
+  if (config.type !== 'any') {
+    return config
+  }
 
-  // Find the FIRST separator (either . or [)
-  if (dotIndex === -1 && bracketIndex === -1)
-    return null
+  const underlyingType = (config as any).underlyingType
 
-  if (dotIndex === -1)
-    return portId.slice(0, bracketIndex)
-  if (bracketIndex === -1)
-    return portId.slice(0, dotIndex)
+  // No underlying type or it's empty - return as-is
+  if (!underlyingType || !underlyingType.type) {
+    return config
+  }
 
-  // Both exist - use whichever comes first
-  const separatorIndex = Math.min(dotIndex, bracketIndex)
-  return portId.slice(0, separatorIndex)
+  // Underlying type is also 'any' - return as-is to prevent infinite unwrapping
+  if (underlyingType.type === 'any') {
+    return config
+  }
+
+  // Unwrap: use underlying type's fields but preserve port identity
+  return {
+    ...underlyingType,           // Spread all underlying type fields (minLength, itemConfig, etc.)
+    type: underlyingType.type,   // Use actual type instead of 'any'!
+    // type: 'any',   // Use actual type instead of 'any'!
+    // Preserve original port identity fields
+    id: config.id,
+    key: config.key,
+    nodeId: config.nodeId,
+    direction: config.direction,
+    parentId: config.parentId,
+    order: config.order,
+    // Merge title/description (prefer original if set)
+    title: config.title || underlyingType.title,
+    description: config.description || underlyingType.description,
+    // Merge required flag
+    required: config.required !== undefined ? config.required : underlyingType.required,
+    // Keep original underlyingType for reference (useful for debugging)
+    originalType: 'any' as any,
+  } as PortConfigFull
 }
 
 /**
@@ -78,18 +106,21 @@ export function getParentPortId(portId: string): string | null {
  * This ensures all fields (itemConfig, schema, underlyingType, secretType, options)
  * are preserved for documentation tooltips and type-specific rendering.
  *
+ * Also unwraps AnyPort configs to their underlying type, so components always see
+ * the actual type (string, array, etc.) instead of 'any'.
+ *
  * The UI and connections are stored separately in $portUI and $portConnections.
  * We only exclude 'ui' and 'connections' from the stored config to avoid duplication.
  *
  * @param config - Full IPortConfig from node
  * @returns PortConfigCore (which is now an alias for IPortConfig)
  */
-export function extractConfigCore(config: IPortConfig): PortConfigCore {
+export function extractConfigCore(config: IPortConfig): PortConfigFull {
   // Return full config, only excluding UI and connections which are stored separately
   const { ui, connections, ...configWithoutUIAndConnections } = config
 
-  // Return the config with required fields ensured
-  return {
+  // Build core config with required fields ensured
+  const coreConfig = {
     ...configWithoutUIAndConnections,
     // Ensure required fields have defaults
     id: config.id ?? '',
@@ -97,7 +128,11 @@ export function extractConfigCore(config: IPortConfig): PortConfigCore {
     nodeId: config.nodeId ?? '',
     type: config.type,
     direction: config.direction ?? 'input',
-  } as PortConfigCore
+  } as PortConfigFull
+
+  // Unwrap any ports to their underlying type
+  // This ensures components see the actual type (e.g., 'string' instead of 'any')
+  return unwrapAnyPortConfig(coreConfig)
 }
 
 /**
@@ -111,6 +146,7 @@ export function mergeUIStates(existing: PortUIState, incoming: Partial<PortUISta
 
   for (const [key, value] of Object.entries(incoming)) {
     if (value !== undefined) {
+      // TODO: check for other nested objects that need deep merge! or recursion?
       // Deep merge for nested objects
       if (key === 'textareaDimensions' && typeof value === 'object' && typeof existingRecord.textareaDimensions === 'object') {
         merged.textareaDimensions = { ...existingRecord.textareaDimensions, ...value as object }
@@ -234,4 +270,57 @@ export function computeParentValue(
   // For stream or other complex types, return parent value as-is
   // (stream ports don't aggregate child values the same way)
   return parentValue
+}
+
+// ============================================================================
+// TYPE GUARDS - Replace unsafe `as any` casts with proper type checking
+// ============================================================================
+
+/**
+ * Type guard: Check if config is a system port
+ * Replaces: `(config as any).isSystem`
+ */
+export function isSystemPort(config: IPortConfig | PortConfigCore): config is IPortConfig & { isSystem: true } {
+  return config.metadata?.isSystemPort === true
+}
+
+/**
+ * Type guard: Check if config is a system error port
+ * Replaces: `(config as any).isSystemError`
+ */
+export function isSystemErrorPort(config: IPortConfig | PortConfigCore): config is IPortConfig & { isSystemError: true } {
+  return config.metadata?.portCategory === 'error'
+}
+
+/**
+ * Type guard: Check if config has an underlying type (for AnyPort)
+ * Replaces: `(config as any).underlyingType`
+ */
+export function hasUnderlyingType(config: IPortConfig | PortConfigCore): config is IPortConfig & { underlyingType: IPortConfig } {
+  return config.type === 'any' && 'underlyingType' in config && typeof (config as AnyPortConfig).underlyingType === 'object'
+}
+
+/**
+ * Type guard: Check if array port is mutable
+ * Replaces: `(config as any).isMutable`
+ */
+export function isMutableArrayPort(config: IPortConfig | PortConfigCore): config is IPortConfig & { isMutable: boolean } {
+  return config.type === 'array' && 'isMutable' in config
+}
+
+/**
+ * Type guard: Check if object port has mutable schema
+ * Replaces: `(config as any).isSchemaMutable`
+ */
+export function isMutableObjectPort(config: IPortConfig | PortConfigCore): config is IPortConfig & { isSchemaMutable: boolean } {
+  return config.type === 'object' && 'isSchemaMutable' in config
+}
+
+/**
+ * Type guard: Check if enum port has options
+ * Replaces: `(config as any).options`
+ */
+export function hasEnumOptions(config: IPortConfig | PortConfigCore): config is IPortConfig & { options: Array<{ label: string, value: any }> } {
+  // return 'options' in config && Array.isArray((config as any).options)
+  return config.type === 'enum' && Array.isArray((config as EnumPortConfig).options)
 }

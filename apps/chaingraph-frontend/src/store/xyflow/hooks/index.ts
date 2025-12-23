@@ -7,3 +7,8 @@
  */
 
 export { useXYFlowNodeRenderData } from './useXYFlowNodeRenderData'
+
+// Granular hooks for optimized component subscriptions
+export { useXYFlowNodeFlowPorts } from './useXYFlowNodeFlowPorts'
+export { useXYFlowNodeErrorPorts } from './useXYFlowNodeErrorPorts'
+export { useXYFlowNodeBodyPorts } from './useXYFlowNodeBodyPorts'

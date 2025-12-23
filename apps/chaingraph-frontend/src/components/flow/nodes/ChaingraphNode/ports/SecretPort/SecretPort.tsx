@@ -9,6 +9,7 @@
 import type { INode, IPort, SecretPortConfig } from '@badaitech/chaingraph-types'
 import { memo } from 'react'
 import { cn } from '@/lib/utils'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution/hooks/usePortValueWithExecution'
 import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
@@ -22,8 +23,8 @@ function SecretPortComponent(props: SecretPortProps) {
   const { nodeId, portId } = props
 
   // Granular subscriptions - only re-renders when THIS port's data changes
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
 
   const title = config?.title || config?.key || portId
 
@@ -31,7 +32,8 @@ function SecretPortComponent(props: SecretPortProps) {
     return null
 
   // Early return if config not loaded yet
-  if (!config) return null
+  if (!config)
+    return null
 
   return (
     <div

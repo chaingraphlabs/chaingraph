@@ -8,7 +8,6 @@
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
-import type { INode } from '@badaitech/chaingraph-types'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { PortDirection } from '@badaitech/chaingraph-types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
@@ -24,10 +23,11 @@ import {
   ScrollArea,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { useNode } from '@/store/nodes'
 import { PortDocContent } from './ports/doc/PortDocContent'
 
 interface NodeDocTooltipContentProps {
-  node: INode
+  nodeId: string
   categoryMetadata: CategoryMetadata
 }
 
@@ -65,12 +65,24 @@ function PortItem({ nodeId, port, type }: PortItemProps) {
 }
 
 export function NodeDocTooltipContent({
-  node,
+  nodeId,
   categoryMetadata,
 }: NodeDocTooltipContentProps) {
   const { theme } = useTheme()
   const [portsOpen, setPortsOpen] = useState(true)
   const [jsonOpen, setJsonOpen] = useState(false)
+
+  // Fetch node on-demand (only when tooltip is actually rendered)
+  const node = useNode(nodeId)
+
+  // Early return if node not loaded yet
+  if (!node) {
+    return (
+      <div className="w-[450px] h-[200px] bg-card rounded-lg flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Loading node data...</div>
+      </div>
+    )
+  }
 
   const style = useMemo(() => (
     theme === 'dark'

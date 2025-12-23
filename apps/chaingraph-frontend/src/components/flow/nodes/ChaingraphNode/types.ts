@@ -10,6 +10,7 @@ import type { CategoryMetadata, INode } from '@badaitech/chaingraph-types'
 import type { Node } from '@xyflow/react'
 
 export type ChaingraphNode = Node<{
-  node: INode
+  // node: INode
+  version?: number
   categoryMetadata?: CategoryMetadata
 }, 'chaingraphNode'>

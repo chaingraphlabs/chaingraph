@@ -197,7 +197,7 @@ class FlowCachedLoader {
   }
 
   async loadFlow(flowId: string, flowVersion?: number): Promise<Flow | null> {
-    if (flowVersion === undefined) {
+    if (flowVersion === undefined || flowVersion === 0 || !flowVersion) {
       // No version provided, always load from DB
       const flow = await loadFlow(flowId)
       return flow
@@ -212,7 +212,9 @@ class FlowCachedLoader {
         // Check if version matches
         if (cached.flowVersion === flowVersion) {
           DBOS.logger.debug(`Flow cache hit: ${flowId} (version: ${cached.flowVersion})`)
-          return cached.flow
+
+          const flowClone = await cached.flow.clone()
+          return flowClone as Flow
         }
       } else {
         // Cache expired

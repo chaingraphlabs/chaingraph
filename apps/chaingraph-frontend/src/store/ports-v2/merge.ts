@@ -50,7 +50,7 @@ export function mergePortEvents(events: PortUpdateEvent[]): MergedPortUpdate & {
 
   let value: unknown | undefined
   let ui: Record<string, unknown> = {}
-  let config: Record<string, unknown> = {}  // Use Record for dynamic accumulation, cast at end
+  let config: Record<string, unknown> = {} // Use Record for dynamic accumulation, cast at end
   let connections: Connection[] | undefined
   let highestVersion = 0
   let latestVersion: number | undefined
@@ -70,7 +70,7 @@ export function mergePortEvents(events: PortUpdateEvent[]): MergedPortUpdate & {
 
     // UI: Deep merge (accumulate all changes)
     if (event.changes.ui) {
-      ui = mergeUIStates(ui as any, event.changes.ui) as any
+      ui = mergeUIStates(ui, event.changes.ui)
     }
 
     // CONFIG: Version-based (highest version wins)

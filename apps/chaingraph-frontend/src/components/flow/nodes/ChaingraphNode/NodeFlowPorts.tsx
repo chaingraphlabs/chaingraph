@@ -6,37 +6,41 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
 import { Handle, Position } from '@xyflow/react'
 import { useUnit } from 'effector-react'
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import { cn } from '@/lib/utils'
-import { usePortEdges } from '@/store/nodes/computed'
 import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
+import { usePortEdges } from '@/store/nodes/computed'
+import { usePortConfig } from '@/store/ports-v2'
+import { useXYFlowNodeFlowPorts } from '@/store/xyflow'
 import { PortDocTooltip } from './ports/doc'
 
 export interface NodeFlowPortsProps {
-  node: INode
+  nodeId: string
 }
 
 // Separate component for port handle to use hooks properly
-const FlowPortHandle = memo(function FlowPortHandle({
+const FlowPortHandle = memo(({
   nodeId,
-  port,
+  portId,
   position,
   compatiblePorts,
 }: {
   nodeId: string
-  port: IPort
+  portId: string
   position: Position
   compatiblePorts: string[] | null
-}) {
-  const config = port.getConfig()
-  const portId = port.id
+}) => {
+  // Fetch port config from granular store
+  const config = usePortConfig(nodeId, portId)
 
   // Use granular edge hook
   const edges = usePortEdges(nodeId, portId)
   const isConnected = edges.length > 0
+
+  // Early return if config not loaded
+  if (!config) return null
 
   // Determine color based on connection
   const portColor = config.ui?.bgColor || '#4a90e2'
@@ -69,49 +73,37 @@ const FlowPortHandle = memo(function FlowPortHandle({
   )
 })
 
-function NodeFlowPorts({ node }: NodeFlowPortsProps) {
-  // Filter out the flow ports from the default ports
-  const flowPorts = useMemo(() => {
-    return node.getDefaultPorts().filter((port) => {
-      return port.isSystem() && !port.isSystemError()
-    })
-  }, [node])
-
-  // Separate into input and output ports
-  const flowInPort = useMemo(() =>
-    flowPorts.find(
-      port => port.isSystem() && port.getConfig().direction === 'input',
-    ), [flowPorts])
-
-  const flowOutPort = useMemo(() =>
-    flowPorts.find(
-      port => port.isSystem() && port.getConfig().direction === 'output',
-    ), [flowPorts])
+function NodeFlowPorts({ nodeId }: NodeFlowPortsProps) {
+  // Granular subscription - only 2 fields (flowInputPortId, flowOutputPortId)
+  // Component only re-renders when these specific fields change
+  const portData = useXYFlowNodeFlowPorts(nodeId)
 
   const compatiblePorts = useUnit($compatiblePortsToDraggingEdge)
 
-  // Only render if we have flow ports
-  if (!flowInPort && !flowOutPort) {
+  // Early return if no data or no flow ports
+  if (!portData || (!portData.flowInputPortId && !portData.flowOutputPortId)) {
     return null
   }
+
+  const { flowInputPortId, flowOutputPortId } = portData
 
   return (
     <>
       {/* Flow In Port (left side) */}
-      {flowInPort && (
+      {flowInputPortId && (
         <FlowPortHandle
-          nodeId={node.id}
-          port={flowInPort}
+          nodeId={nodeId}
+          portId={flowInputPortId}
           position={Position.Left}
           compatiblePorts={compatiblePorts}
         />
       )}
 
       {/* Flow Out Port (right side) */}
-      {flowOutPort && (
+      {flowOutputPortId && (
         <FlowPortHandle
-          nodeId={node.id}
-          port={flowOutPort}
+          nodeId={nodeId}
+          portId={flowOutputPortId}
           position={Position.Right}
           compatiblePorts={compatiblePorts}
         />

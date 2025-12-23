@@ -7,6 +7,7 @@
  */
 
 import type { PortKey, PortUpdateEvent } from './types'
+import type { PortUIState } from './types'
 import { sample } from 'effector'
 import {
   addFieldObjectPort,
@@ -15,28 +16,31 @@ import {
 } from '@/store/ports/stores'
 import { portUpdateReceived } from './buffer'
 import { $isGranularWriteEnabled } from './feature-flags'
-import { $portHierarchy, removePortsBatch } from './stores'
+import { $portHierarchy, $portValues, removePortsBatch } from './stores'
 import { extractConfigCore, toPortKey } from './utils'
-import type { PortUIState } from './types'
 
 /**
  * Wire: When array element is added, populate granular stores
  *
- * ArrayPort children use the pattern: `${parentPortId}.${index}`
+ * ArrayPort children use the pattern: `${parentPortId}[${index}]`
  */
 sample({
   clock: appendElementArrayPort,
-  source: $isGranularWriteEnabled,
-  filter: (enabled) => enabled,
-  fn: (_, { nodeId, portId, value }): PortUpdateEvent => {
-    // Note: The actual child port ID will be determined by the port implementation
-    // For now, we create a placeholder event that will be updated by the node update
-    const childPortKey = toPortKey(nodeId, `${portId}.new`)
+  source: { enabled: $isGranularWriteEnabled, portValues: $portValues },
+  filter: ({ enabled }) => enabled,
+  fn: ({ portValues }, { nodeId, portId, value }): PortUpdateEvent => {
+    // Get current array to compute the next index
+    const parentKey = toPortKey(nodeId, portId)
+    const currentArray = portValues.get(parentKey)
+    const nextIndex = Array.isArray(currentArray) ? currentArray.length : 0
+
+    const childPortId = `${portId}[${nextIndex}]`
+    const childPortKey = toPortKey(nodeId, childPortId)
 
     return {
       portKey: childPortKey,
       nodeId,
-      portId: `${portId}.new`,
+      portId: childPortId,
       timestamp: Date.now(),
       source: 'local-optimistic',
       changes: {
@@ -55,7 +59,7 @@ sample({
 sample({
   clock: addFieldObjectPort,
   source: $isGranularWriteEnabled,
-  filter: (enabled) => enabled,
+  filter: enabled => enabled,
   fn: (_, { nodeId, portId, config, key }): PortUpdateEvent => {
     const childPortKey = toPortKey(nodeId, `${portId}.${key}`)
 
@@ -82,10 +86,10 @@ sample({
 sample({
   clock: removeElementArrayPort,
   source: $isGranularWriteEnabled,
-  filter: (enabled) => enabled,
+  filter: enabled => enabled,
   fn: (_, { nodeId, portId, index }): Set<PortKey> => {
-    // Calculate child port key
-    const childPortKey = toPortKey(nodeId, `${portId}.${index}`)
+    // Calculate child port key using bracket notation for arrays
+    const childPortKey = toPortKey(nodeId, `${portId}[${index}]`)
     return new Set<PortKey>([childPortKey])
   },
   target: removePortsBatch,
@@ -94,37 +98,64 @@ sample({
 /**
  * Update hierarchy tracking when ports with '.' or '[' in ID are created
  * This allows us to track parent-child relationships for nested ports
- * Examples: 'myPort.fieldName' (object) or 'myPort[0]' (array)
+ *
+ * Port ID formats:
+ * - Object fields: 'parent.fieldName' or 'parent.nested.field'
+ * - Array elements: 'parent[0]' or 'parent[0].field' or 'parent[0][1]'
+ *
+ * Examples:
+ * - 'object.field' → parent: 'object'
+ * - 'object.nested.field' → parent: 'object.nested'
+ * - 'array[0]' → parent: 'array'
+ * - 'array[0].field' → parent: 'array[0]'
+ * - 'array[0][1]' → parent: 'array[0]'
  */
-$portHierarchy.on(portUpdateReceived, (state, event) => {
-  // Skip if not a child port (no '.' or '[' in portId)
-  if (!event.portId.includes('.') && !event.portId.includes('[')) return state
+// $portHierarchy.on(portUpdateReceived, (state, event) => {
+//   // Skip if not a child port (no '.' or '[' in portId)
+//   if (!event.portId.includes('.') && !event.portId.includes('['))
+//     return state
 
-  // Extract parent port ID (everything before first '.' or '[')
-  const dotIndex = event.portId.indexOf('.')
-  const bracketIndex = event.portId.indexOf('[')
+//   // Extract IMMEDIATE parent port ID (everything before LAST separator)
+//   // Use lastIndexOf to find the last '.' or '[' - this gives us the immediate parent
+//   const lastDotIndex = event.portId.lastIndexOf('.')
+//   const lastBracketIndex = event.portId.lastIndexOf('[')
 
-  let separatorIndex: number
-  if (dotIndex === -1) separatorIndex = bracketIndex
-  else if (bracketIndex === -1) separatorIndex = dotIndex
-  else separatorIndex = Math.min(dotIndex, bracketIndex)
+//   let separatorIndex: number
+//   if (lastDotIndex === -1 && lastBracketIndex === -1)
+//     return state // No separator found
 
-  const parentPortId = event.portId.slice(0, separatorIndex)
-  const parentKey = toPortKey(event.nodeId, parentPortId)
-  const childKey = event.portKey
+//   if (lastDotIndex === -1)
+//     separatorIndex = lastBracketIndex
+//   else if (lastBracketIndex === -1)
+//     separatorIndex = lastDotIndex
+//   else
+//     separatorIndex = Math.max(lastDotIndex, lastBracketIndex) // Use the LAST separator
 
-  const newState = {
-    parents: new Map(state.parents),
-    children: new Map(state.children),
-  }
+//   const parentPortId = event.portId.slice(0, separatorIndex)
 
-  // Track parent → child relationship
-  newState.parents.set(childKey, parentKey)
+//   // Safety: parent ID should not be empty
+//   if (!parentPortId)
+//     return state
 
-  // Track children set for parent
-  const siblings = newState.children.get(parentKey) || new Set()
-  siblings.add(childKey)
-  newState.children.set(parentKey, siblings)
+//   const parentKey = toPortKey(event.nodeId, parentPortId)
+//   const childKey = event.portKey
 
-  return newState
-})
+//   // Avoid self-reference
+//   if (parentKey === childKey)
+//     return state
+
+//   const newState = {
+//     parents: new Map(state.parents),
+//     children: new Map(state.children),
+//   }
+
+//   // Track parent → child relationship
+//   newState.parents.set(childKey, parentKey)
+
+//   // Track children set for parent
+//   const siblings = newState.children.get(parentKey) || new Set()
+//   siblings.add(childKey)
+//   newState.children.set(parentKey, siblings)
+
+//   return newState
+// })

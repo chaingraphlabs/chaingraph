@@ -29,11 +29,11 @@ export function PortField({
   isMutable,
   onDelete,
 }: PortFieldProps) {
-  const parentUI = usePortUI(nodeId, parentPortId)
+  // const parentUI = usePortUI(nodeId, parentPortId)
 
-  const isKeyDeletable
-    = useMemo(() => parentUI?.keyDeletable
-      || parentUI?.keyDeletable === undefined, [parentUI])
+  // const isKeyDeletable
+  //   = useMemo(() => parentUI?.keyDeletable
+  //     || parentUI?.keyDeletable === undefined, [parentUI])
 
   return (
     <div className="py-1 w-full relative">

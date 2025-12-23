@@ -11,13 +11,7 @@ import type { DropTarget, NodeDragEndEvent, NodeDragMoveEvent, NodeDragStartEven
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
 import {
-  $canDrop,
-  $dragDropState,
-  $draggedNodes,
-  $hoveredDropTarget,
-  $isDragging,
-  $mousePosition,
-  $potentialDropTargets,
+  $dragDropRenderState,
   clearDropTargets,
   endMultiNodeDrag,
   endNodeDrag,
@@ -31,25 +25,10 @@ import {
 
 /**
  * Hook for managing drag and drop state
+ * OPTIMIZED: Uses render-safe state without mousePosition
  */
 export function useDragDrop() {
-  const [
-    dragDropState,
-    isDragging,
-    draggedNodes,
-    mousePosition,
-    potentialDropTargets,
-    hoveredDropTarget,
-    canDrop,
-  ] = useUnit([
-    $dragDropState,
-    $isDragging,
-    $draggedNodes,
-    $mousePosition,
-    $potentialDropTargets,
-    $hoveredDropTarget,
-    $canDrop,
-  ])
+  const renderState = useUnit($dragDropRenderState)
 
   // Start dragging nodes
   const handleStartDrag = useCallback((nodes: NodeDragStartEvent | NodeDragStartEvent[]) => {
@@ -94,14 +73,8 @@ export function useDragDrop() {
   }, [])
 
   return {
-    // State
-    dragDropState,
-    isDragging,
-    draggedNodes,
-    mousePosition,
-    potentialDropTargets,
-    hoveredDropTarget,
-    canDrop,
+    // State - NO mousePosition (components never use it for rendering)
+    ...renderState,
 
     // Actions
     startDrag: handleStartDrag,
@@ -115,11 +88,12 @@ export function useDragDrop() {
 
 /**
  * Hook for getting drop feedback for a specific node
+ * OPTIMIZED: Uses render-safe state
  */
 export function useNodeDropFeedback(nodeId: string) {
-  const dragDropState = useUnit($dragDropState)
+  const renderState = useUnit($dragDropRenderState)
 
-  const { hoveredDropTarget, canDrop, isDragging, potentialDropTargets } = dragDropState
+  const { hoveredDropTarget, canDrop, isDragging, potentialDropTargets } = renderState
 
   if (!isDragging)
     return null

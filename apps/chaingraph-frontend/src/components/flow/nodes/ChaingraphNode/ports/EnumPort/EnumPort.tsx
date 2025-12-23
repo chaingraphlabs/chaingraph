@@ -16,9 +16,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { usePortEdges } from '@/store/nodes/computed'
-import { useExecutionID } from '@/store/execution'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { usePortEdges } from '@/store/nodes/computed'
 import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
 import { usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
@@ -35,9 +35,9 @@ function EnumPortInner(props: EnumPortProps) {
   const { nodeId, portId } = props
 
   // Granular subscriptions - only re-renders when THIS port's data changes
-  const config = usePortConfig(nodeId, portId)
-  const ui = usePortUI(nodeId, portId)
-  const value = usePortValue(nodeId, portId) as string | undefined
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const value = usePortValueWithExecution(nodeId, portId) as string | undefined
 
   // Track focus/blur for global copy-paste functionality
   const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
@@ -46,7 +46,8 @@ function EnumPortInner(props: EnumPortProps) {
   const connectedEdges = usePortEdges(nodeId, portId)
 
   const needRenderEditor = useMemo(() => {
-    if (!config) return false
+    if (!config)
+      return false
     return !isHideEditor(config as any, connectedEdges)
   }, [config, connectedEdges])
 
@@ -73,7 +74,8 @@ function EnumPortInner(props: EnumPortProps) {
     return null
 
   // Early return if config not loaded yet
-  if (!config) return null
+  if (!config)
+    return null
 
   return (
     <div

@@ -6,19 +6,21 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
+import type { IPort } from '@badaitech/chaingraph-types'
 import type { Edge, FinalConnectionState, HandleType } from '@xyflow/react'
-import type { AddEdgeEventData, EdgeData, RemoveEdgeEventData } from './types'
+import type { AddEdgeEventData, EdgeData, EdgeRenderData, RemoveEdgeEventData } from './types'
 import { getDefaultTransferEngine } from '@badaitech/chaingraph-types'
-import { attach, combine, sample } from 'effector'
+import { attach, sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
 import { edgesDomain, portsDomain } from '@/store/domains'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
 import { $nodeLayerDepth, $nodes } from '../nodes'
-import { $xyflowNodesList as $xyflowNodes } from '../xyflow'
+import { $portConfigs, $portUI, toPortKey } from '../ports-v2'
 import { $trpcClient } from '../trpc/store'
+import { $xyflowNodesList } from '../xyflow'
 import { EDGE_STYLES } from './consts'
+import { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
 
 // EVENTS
 
@@ -89,7 +91,7 @@ export const $edges = edgesDomain.createStore<EdgeData[]>([])
   ))
   .reset(resetEdges)
   .reset(globalReset)
-  // .reset(clearActiveFlow)
+// .reset(clearActiveFlow)
 
 // event connection start
 interface DraggingEdge {
@@ -207,175 +209,327 @@ export const $isConnecting = edgesDomain.createStore<boolean>(false)
   .reset(resetEdges)
   .reset(globalReset)
 
+// ============================================================================
+// EDGE RENDER MAP - GRANULAR DELTA UPDATES
+// ============================================================================
+
 /**
- * Store that directly computes XYFlow-compatible edges from the internal stores
- * Separates base edge structure (which rarely changes) from styling (which changes more often)
+ * Event for surgical edge updates
+ * Each wire (sample) targets this event with only the edges that changed
  */
-export const $xyflowEdges = combine(
-  $edges,
-  $xyflowNodes,
-  $executionNodes,
-  $executionState,
-  $highlightedNodeId,
-  $highlightedEdgeId,
-  $nodeLayerDepth,
-  (
-    storeEdges,
-    nodes,
-    // ports,
-    executionNodes,
-    // activeFlowMetadata,
-    executionState,
-    highlightedNodeId,
-    highlightedEdgeId,
-  ) => {
-    const { executionId } = executionState
+export const edgeDataChanged = edgesDomain.createEvent<{
+  changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }>
+}>()
 
-    // Filter valid edges (with existing source and target nodes)
-    const filteredEdges = storeEdges
-      .filter((edge) => {
-        const sourceNode = nodes.find(n => n.id === edge.sourceNodeId)
-        const targetNode = nodes.find(n => n.id === edge.targetNodeId)
+/**
+ * Helper: Create pending edge (not ready until ports arrive)
+ */
+function createPendingEdgeRenderData(edge: EdgeData): EdgeRenderData {
+  return {
+    edgeId: edge.edgeId,
+    source: edge.sourceNodeId,
+    target: edge.targetNodeId,
+    sourceHandle: edge.sourcePortId,
+    targetHandle: edge.targetPortId,
+    isReady: false,
+    color: 'currentColor',
+    type: 'default',
+    strokeWidth: EDGE_STYLES.DEFAULT.strokeWidth,
+    strokeOpacity: EDGE_STYLES.DEFAULT.strokeOpacity,
+    animated: false,
+    zIndex: 0,
+    version: 0,
+    edgeData: edge,
+  }
+}
 
-        return sourceNode && targetNode
-          && sourceNode.position && targetNode.position
-          && !Number.isNaN(sourceNode.position.x) && !Number.isNaN(sourceNode.position.y)
-          && !Number.isNaN(targetNode.position.x) && !Number.isNaN(targetNode.position.y)
-      })
-      .map((edge) => {
-        const sourceNode = nodes.find(n => n.id === edge.sourceNodeId)
-        const targetNode = nodes.find(n => n.id === edge.targetNodeId)
-        if (!sourceNode || !targetNode) {
-          return null
-        }
+/**
+ * Main edge render map store
+ *
+ * Stores EdgeRenderData per edge, updated via delta samples.
+ * This replaces the monolithic $xyflowEdges combine.
+ */
+export const $edgeRenderMap = edgesDomain
+  .createStore<Map<string, EdgeRenderData>>(new Map())
 
-        const sourceINode = sourceNode.data?.node as INode
-        const targetINode = targetNode.data?.node as INode
+  // Structure: Add single edge (initially as "pending")
+  .on(setEdge, (state, edge) => {
+    const newState = new Map(state)
+    newState.set(edge.edgeId, createPendingEdgeRenderData(edge))
+    return newState
+  })
 
-        const sourcePort = sourceINode.getPort(edge.sourcePortId)
-        const targetPort = targetINode.getPort(edge.targetPortId)
-        if (!sourcePort || !targetPort) {
-          return null
-        }
+  // Structure: Add multiple edges
+  .on(setEdges, (state, edges) => {
+    const newState = new Map(state)
+    for (const edge of edges) {
+      newState.set(edge.edgeId, createPendingEdgeRenderData(edge))
+    }
+    return newState
+  })
 
-        const sourcePortConfig = sourcePort.getConfig()
-        const edgeColor = sourcePortConfig.ui?.bgColor ?? 'currentColor'
+  // Structure: Remove edge
+  .on(removeEdge, (state, event) => {
+    const newState = new Map(state)
+    newState.delete(event.edgeId)
+    return newState
+  })
 
-        // Get execution state for this edge's target node
-        const targetNodeExecution = executionNodes[edge.targetNodeId]
+  // Delta: Surgical updates with structural sharing
+  .on(edgeDataChanged, (state, { changes }) => {
+    if (changes.length === 0)
+      return state
 
-        // Determine edge styling based on execution state and highlighting
-        let shouldAnimate = false
-        let edgeStyle = EDGE_STYLES.DEFAULT
-        let edgeType = 'default'
+    const newState = new Map(state)
+    let hasChanges = false
 
-        const isHighlighted = highlightedEdgeId && highlightedEdgeId.includes(edge.edgeId)
-        const isSourceHighlighted = highlightedNodeId && highlightedNodeId.includes(edge.sourceNodeId)
-        const isTargetHighlighted = highlightedNodeId && highlightedNodeId.includes(edge.targetNodeId)
-        const hasHighlights = highlightedEdgeId || highlightedNodeId
+    for (const { edgeId, changes: edgeChanges } of changes) {
+      const current = newState.get(edgeId)
+      if (!current)
+        continue
 
-        if (targetPort && targetPort.isSystem() && !targetPort.isSystemError()) {
-          edgeType = 'flow'
-          shouldAnimate = false
-          edgeStyle = EDGE_STYLES.DEFAULT
-        }
+      // Check if there are actual differences
+      const needsUpdate = Object.entries(edgeChanges).some(
+        ([key, value]) => current[key as keyof EdgeRenderData] !== value,
+      )
 
-        if (targetNodeExecution && (
-          targetNodeExecution.status === 'running'
-          || targetNodeExecution.status === 'completed'
-          || targetNodeExecution.status === 'failed'
-        )) {
-          edgeType = 'flow'
-          shouldAnimate = targetPort.isSystem() && !targetPort.isSystemError()
-          edgeStyle = EDGE_STYLES.HIGHLIGHTED
-        }
+      if (needsUpdate) {
+        newState.set(edgeId, {
+          ...current,
+          ...edgeChanges,
+          version: current.version + 1,
+        })
+        hasChanges = true
+      }
+    }
 
-        if (targetNodeExecution && targetNodeExecution.status === 'skipped') {
-          edgeType = 'default'
-          shouldAnimate = false
-          edgeStyle = EDGE_STYLES.DIMMED
-        }
+    return hasChanges ? newState : state
+  })
 
-        if (targetNodeExecution && targetNodeExecution.status === 'failed') {
-          edgeType = 'flow'
-          shouldAnimate = targetPort.isSystem() && !targetPort.isSystemError()
-          edgeStyle = EDGE_STYLES.DEFAULT
-        }
+  .reset(resetEdges)
+  .reset(globalReset)
 
-        if (targetNodeExecution && targetNodeExecution.status === 'running') {
-          edgeType = 'flow'
-          shouldAnimate = (targetPort.isSystem() && !targetPort.isSystemError()) || targetPort.getConfig().type === 'stream'
-          edgeStyle = EDGE_STYLES.HIGHLIGHTED
-        }
+// ============================================================================
+// WIRE 1: Port Configs + UI → isReady + Color
+// ============================================================================
+// CRITICAL: Edge color comes from $portUI (bgColor), NOT $portConfigs!
+// CRITICAL: Also triggers when edges are added (in case ports already exist)
 
-        if (executionId && (targetNodeExecution && (targetNodeExecution.status === 'idle' || !targetNodeExecution.status))) {
-          edgeStyle = EDGE_STYLES.DIMMED
-          edgeType = 'default'
-        }
-        if (executionId && (!targetNodeExecution)) {
-          edgeStyle = EDGE_STYLES.DIMMED
-          edgeType = 'default'
-        }
-
-        if (hasHighlights) {
-          if (highlightedNodeId) {
-            if (isSourceHighlighted || isTargetHighlighted) {
-              edgeStyle = EDGE_STYLES.HIGHLIGHTED
-            } else {
-              edgeType = 'default'
-              edgeStyle = EDGE_STYLES.DIMMED
-            }
-          }
-
-          if (highlightedEdgeId) {
-            if (highlightedEdgeId.includes(edge.edgeId)) {
-              edgeStyle = EDGE_STYLES.HIGHLIGHTED
-            } else {
-              edgeType = 'default'
-              edgeStyle = EDGE_STYLES.DIMMED
-            }
-          }
-        }
-
-        if (isHighlighted) {
-          edgeStyle = EDGE_STYLES.HIGHLIGHTED
-        }
-
-        // edge zIndex is determined by the max zIndex of source and target nodes
-        const sourceZIndex = $nodeLayerDepth[sourceNode.id] ?? 0
-        const targetZIndex = $nodeLayerDepth[targetNode.id] ?? 0
-        const zIndex = Math.max(sourceZIndex, targetZIndex) + 1
-
-        // Create final edge with all computed styling
-        const reactFlowEdge: Edge = {
-          id: edge.edgeId,
-          source: edge.sourceNodeId,
-          target: edge.targetNodeId,
-          sourceHandle: edge.sourcePortId,
-          targetHandle: edge.targetPortId,
-          type: edgeType,
-          zIndex,
-          style: {
-            stroke: edgeColor,
-            strokeWidth: edgeStyle.strokeWidth,
-            strokeOpacity: edgeStyle.strokeOpacity,
-          },
-          data: {
-            animated: shouldAnimate,
-            edgeData: edge,
-            sourcePortId: edge.sourcePortId,
-            targetPortId: edge.targetPortId,
-            version: `${(sourceNode.data?.node as any).getVersion()}_${(targetNode.data?.node as any).getVersion()}`,
-          },
-        }
-
-        return reactFlowEdge
-      })
-      .filter(Boolean) as Edge[]
-
-    return filteredEdges
+sample({
+  clock: [$portConfigs, $portUI, $edgeRenderMap, $xyflowNodesList],
+  source: {
+    edgeMap: $edgeRenderMap,
+    portConfigs: $portConfigs,
+    portUI: $portUI,
+    xyflowNodes: $xyflowNodesList,
   },
-)
+  fn: ({ edgeMap, portConfigs, portUI, xyflowNodes }) => {
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+
+    // Build node ID set for O(1) lookups
+    const nodeIds = new Set(xyflowNodes.map(n => n.id))
+
+    for (const [edgeId, edge] of edgeMap) {
+      const sourceKey = toPortKey(edge.source, edge.sourceHandle)
+      const targetKey = toPortKey(edge.target, edge.targetHandle)
+
+      const sourceConfig = portConfigs.get(sourceKey)
+      const targetConfig = portConfigs.get(targetKey)
+      const sourceUI = portUI.get(sourceKey)
+      const targetUI = portUI.get(targetKey)
+
+      // Edge is ready when:
+      // 1. Both port configs exist (handles can be rendered)
+      // 2. Both XYFlow nodes exist (handles are in DOM)
+      const hasPortConfigs = !!(sourceConfig && targetConfig)
+      const hasNodes = nodeIds.has(edge.source) && nodeIds.has(edge.target)
+      const isReady = hasPortConfigs && hasNodes
+
+      // Compute new color
+      const newColor = isReady && sourceConfig
+        ? extractEdgeColor(sourceConfig, sourceUI, targetConfig, targetUI)
+        : edge.color
+
+      // Check if readiness or color changed
+      if (edge.isReady !== isReady || (isReady && edge.color !== newColor)) {
+        changes.push({
+          edgeId,
+          changes: {
+            isReady,
+            ...(isReady ? { color: newColor } : {}),
+          },
+        })
+      }
+    }
+
+    return { changes }
+  },
+  target: edgeDataChanged,
+})
+
+// ============================================================================
+// WIRE 2: Execution Nodes → Animation + Style
+// ============================================================================
+
+sample({
+  clock: [$executionNodes, $executionState],
+  source: {
+    edgeMap: $edgeRenderMap,
+    execNodes: $executionNodes,
+    execState: $executionState,
+    portConfigs: $portConfigs,
+  },
+  fn: ({ edgeMap, execNodes, execState, portConfigs }) => {
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+
+    for (const [edgeId, edge] of edgeMap) {
+      if (!edge.isReady)
+        continue
+
+      const targetExec = execNodes[edge.target]
+      const targetConfig = portConfigs.get(toPortKey(edge.target, edge.targetHandle))
+
+      const { type, animated, strokeWidth, strokeOpacity } = computeExecutionStyle(
+        targetExec,
+        execState,
+        targetConfig,
+      )
+
+      if (
+        edge.type !== type
+        || edge.animated !== animated
+        || edge.strokeWidth !== strokeWidth
+        || edge.strokeOpacity !== strokeOpacity
+      ) {
+        changes.push({
+          edgeId,
+          changes: { type, animated, strokeWidth, strokeOpacity },
+        })
+      }
+    }
+
+    return { changes }
+  },
+  target: edgeDataChanged,
+})
+
+// ============================================================================
+// WIRE 3-4: Highlighting → Style
+// ============================================================================
+
+sample({
+  clock: [$highlightedNodeId, $highlightedEdgeId],
+  source: {
+    edgeMap: $edgeRenderMap,
+    highlightedNodes: $highlightedNodeId,
+    highlightedEdges: $highlightedEdgeId,
+  },
+  fn: ({ edgeMap, highlightedNodes, highlightedEdges }) => {
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+    const hasHighlights = !!(highlightedNodes?.length || highlightedEdges?.length)
+
+    for (const [edgeId, edge] of edgeMap) {
+      if (!edge.isReady)
+        continue
+
+      const isConnected = highlightedNodes?.includes(edge.source) || highlightedNodes?.includes(edge.target)
+      const isEdgeHighlighted = highlightedEdges?.includes(edgeId)
+
+      const { strokeWidth, strokeOpacity } = computeHighlightStyle(
+        hasHighlights,
+        !!isConnected,
+        !!isEdgeHighlighted,
+      )
+
+      if (edge.strokeWidth !== strokeWidth || edge.strokeOpacity !== strokeOpacity) {
+        changes.push({
+          edgeId,
+          changes: { strokeWidth, strokeOpacity },
+        })
+      }
+    }
+
+    return { changes }
+  },
+  target: edgeDataChanged,
+})
+
+// ============================================================================
+// WIRE 5: Node Layer Depth → zIndex
+// ============================================================================
+
+sample({
+  clock: $nodeLayerDepth,
+  source: { edgeMap: $edgeRenderMap, layerDepths: $nodeLayerDepth },
+  fn: ({ edgeMap, layerDepths }) => {
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+
+    for (const [edgeId, edge] of edgeMap) {
+      if (!edge.isReady)
+        continue
+
+      const sourceZ = layerDepths[edge.source] ?? 0
+      const targetZ = layerDepths[edge.target] ?? 0
+      const zIndex = Math.max(sourceZ, targetZ) + 1
+
+      if (edge.zIndex !== zIndex) {
+        changes.push({ edgeId, changes: { zIndex } })
+      }
+    }
+
+    return { changes }
+  },
+  target: edgeDataChanged,
+})
+
+// ============================================================================
+// $xyflowEdgesList - Final array for XYFlow
+// ============================================================================
+
+/**
+ * Converts render map to array, filtering only ready edges.
+ * This is the final store consumed by React components.
+ */
+export const $xyflowEdgesList = $edgeRenderMap.map((edgeMap): Edge[] => {
+  const edges: Edge[] = []
+
+  for (const renderData of edgeMap.values()) {
+    // Skip edges that aren't ready (missing port configs)
+    if (!renderData.isReady) {
+      continue
+    }
+
+    edges.push({
+      id: renderData.edgeId,
+      source: renderData.source,
+      target: renderData.target,
+      sourceHandle: renderData.sourceHandle,
+      targetHandle: renderData.targetHandle,
+      type: renderData.type,
+      zIndex: renderData.zIndex,
+      style: {
+        stroke: renderData.color,
+        strokeWidth: renderData.strokeWidth,
+        strokeOpacity: renderData.strokeOpacity,
+      },
+      data: {
+        animated: renderData.animated,
+        edgeData: renderData.edgeData,
+        sourcePortId: renderData.sourceHandle,
+        targetPortId: renderData.targetHandle,
+        version: renderData.version,
+      },
+    })
+  }
+
+  return edges
+})
+
+/**
+ * Backward compatibility alias
+ * @deprecated Use $xyflowEdgesList directly
+ */
+export const $xyflowEdges = $xyflowEdgesList
 
 // SAMPLES
 

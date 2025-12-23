@@ -8,6 +8,7 @@
 
 import type { Node } from '@xyflow/react'
 import type { XYFlowNodeRenderData } from '../types'
+import type { ChaingraphNode } from '@/components/flow/nodes/ChaingraphNode/types'
 import { sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
 import { globalReset } from '@/store/common'
@@ -21,13 +22,50 @@ import { $xyflowNodeRenderMap } from './node-render-data'
  * Groups are sorted first, then regular nodes
  */
 function buildXYFlowNodesArray(renderMap: Record<string, XYFlowNodeRenderData>): Node[] {
+  // Build depth map for hierarchy-based sorting
+  const depthMap = new Map<string, number>()
+  const visiting = new Set<string>() // Track nodes being visited to detect cycles
+  const MAX_DEPTH = 50 // Safety limit
+
+  function getDepth(nodeId: string, chainDepth: number = 0): number {
+    if (depthMap.has(nodeId))
+      return depthMap.get(nodeId)!
+
+    // CYCLE DETECTION: Check if we're currently visiting this node
+    if (visiting.has(nodeId)) {
+      console.warn(`[XYFlow] Cycle detected in node hierarchy at ${nodeId}`)
+      depthMap.set(nodeId, 0) // Break cycle, treat as root
+      return 0
+    }
+
+    // MAX DEPTH PROTECTION: Prevent stack overflow
+    if (chainDepth >= MAX_DEPTH) {
+      console.warn(`[XYFlow] Max depth ${MAX_DEPTH} reached for node ${nodeId}`)
+      depthMap.set(nodeId, MAX_DEPTH)
+      return MAX_DEPTH
+    }
+
+    visiting.add(nodeId) // Mark as visiting BEFORE recursion
+
+    const renderData = renderMap[nodeId]
+    if (!renderData || !renderData.parentNodeId) {
+      depthMap.set(nodeId, 0)
+      visiting.delete(nodeId)
+      return 0
+    }
+
+    const depth = getDepth(renderData.parentNodeId, chainDepth + 1) + 1
+    depthMap.set(nodeId, depth)
+    visiting.delete(nodeId) // Remove after recursion completes
+    return depth
+  }
+
   const nodes = Object.values(renderMap)
     .filter(r => !r.isHidden)
     .sort((a, b) => {
-      // Group nodes first
-      if (a.nodeType === 'groupNode' && b.nodeType !== 'groupNode') return -1
-      if (a.nodeType !== 'groupNode' && b.nodeType === 'groupNode') return 1
-      return 0
+      const depthA = getDepth(a.nodeId)
+      const depthB = getDepth(b.nodeId)
+      return depthA - depthB
     })
 
   return nodes.map(renderData => ({
@@ -48,11 +86,11 @@ function buildXYFlowNodesArray(renderMap: Record<string, XYFlowNodeRenderData>):
     draggable: renderData.isDraggable,
     zIndex: renderData.zIndex,
     data: {
-      node: renderData.node,
       categoryMetadata: renderData.categoryMetadata,
+      version: renderData.version, // For edge memoization
     },
     parentId: renderData.parentNodeId,
-    extent: renderData.parentNodeId ? 'parent' : undefined,
+    // extent: renderData.parentNodeId ? 'parent' : undefined,
     selected: renderData.isSelected,
     hidden: renderData.isHidden,
   }))
@@ -88,7 +126,21 @@ sample({
   },
   fn: ({ currentList, renderMap }, { changes }) => {
     return trace.wrap('sample.nodesList.surgical', { category: 'sample' }, () => {
-      if (changes.length === 0) return currentList
+      if (changes.length === 0)
+        return currentList
+
+      // Trace incoming changes to understand cascade
+      const changeTypes = new Set<string>()
+      changes.forEach((c) => {
+        Object.keys(c.changes).forEach(k => changeTypes.add(k))
+      })
+      trace.wrap('surgical.incomingChanges', {
+        category: 'sample',
+        tags: {
+          changedCount: changes.length,
+          changeTypes: Array.from(changeTypes).join(','),
+        },
+      }, () => { })
 
       const changedIds = new Set(changes.map(c => c.nodeId))
 
@@ -98,17 +150,35 @@ sample({
       )
 
       if (hasVisibilityChange) {
-        return buildXYFlowNodesArray(renderMap)
+        const rebuildSpan = trace.start('surgical.fullRebuild', {
+          category: 'sample',
+          tags: {
+            reason: 'visibility-change',
+            nodeCount: Object.keys(renderMap).length,
+            changedNodes: changes
+              .filter(c => c.changes.isHidden !== undefined)
+              .map(c => `${c.nodeId}:${c.changes.isHidden}`)
+              .join(','),
+          },
+        })
+        const result = buildXYFlowNodesArray(renderMap)
+        trace.end(rebuildSpan)
+        return result
       }
 
       // Surgical update - preserve unchanged node references
-      return currentList.map((xyflowNode) => {
+      const mapSpan = trace.start('surgical.map', {
+        category: 'sample',
+        tags: { nodeCount: currentList.length, changedCount: changedIds.size },
+      })
+      const result = currentList.map((xyflowNode) => {
         if (!changedIds.has(xyflowNode.id)) {
           return xyflowNode // Preserve reference - React skips re-render
         }
 
         const renderData = renderMap[xyflowNode.id]
-        if (!renderData) return xyflowNode
+        if (!renderData)
+          return xyflowNode
 
         // Update XYFlow node properties
         return {
@@ -129,11 +199,13 @@ sample({
           draggable: renderData.isDraggable,
           zIndex: renderData.zIndex,
           data: {
-            node: renderData.node,
             categoryMetadata: renderData.categoryMetadata,
-          },
+            version: renderData.version, // For edge memoization
+          } as ChaingraphNode['data'],
         }
       })
+      trace.end(mapSpan)
+      return result
     })
   },
   target: $xyflowNodesList,

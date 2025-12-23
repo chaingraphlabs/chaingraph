@@ -8,15 +8,15 @@
 
 import type { CategoryMetadata, INode, Position } from '@badaitech/chaingraph-types'
 import type { PulseState, XYFlowNodeRenderData, XYFlowNodesDataChangedPayload } from '../types'
-import type { DragDropState } from '@/store/drag-drop/types'
+import type { DragDropRenderState } from '@/store/drag-drop/types'
 import type { ExecutionState, NodeExecutionState } from '@/store/execution/types'
+import type { NodePortLists } from '@/store/ports-v2'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
 import { sample } from 'effector'
-import { debounce } from 'patronum'
 import { trace } from '@/lib/perf-trace'
 import { $categoryMetadata } from '@/store/categories'
 import { globalReset } from '@/store/common'
-import { $dragDropState } from '@/store/drag-drop/stores'
+import { $dragDropRenderState } from '@/store/drag-drop/stores'
 import { $executionNodes, $executionState, $highlightedNodeId } from '@/store/execution'
 import {
   $nodeLayerDepth,
@@ -35,6 +35,7 @@ import {
   updateNodes,
   updateNodeUILocal,
 } from '@/store/nodes/stores'
+import { $nodePortLists } from '@/store/ports-v2'
 import { $nodesPulseState } from '@/store/updates'
 import { xyflowDomain } from '../domain'
 import {
@@ -55,7 +56,8 @@ function buildCompleteRenderMap(
   execNodes: Record<string, NodeExecutionState>,
   highlightedIds: string[] | null,
   pulseStates: Map<string, PulseState>,
-  dragState: DragDropState,
+  dragState: DragDropRenderState,
+  portLists: Record<string, NodePortLists>,
 ): Record<string, XYFlowNodeRenderData> {
   const renderMap: Record<string, XYFlowNodeRenderData> = {}
   const highlightSet = new Set(highlightedIds || [])
@@ -102,10 +104,35 @@ function buildCompleteRenderMap(
       }
     }
 
+    // Get port lists for this node (default to empty/null if not found)
+    const portList = portLists[nodeId] || {
+      inputPortIds: [],
+      outputPortIds: [],
+      passthroughPortIds: [],
+      flowInputPortId: null,
+      flowOutputPortId: null,
+      errorPortId: null,
+      errorMessagePortId: null,
+    }
+
     renderMap[nodeId] = {
       nodeId,
       version: node.getVersion(),
-      node,
+      // Port ID arrays (from $nodePortLists)
+      inputPortIds: portList.inputPortIds,
+      outputPortIds: portList.outputPortIds,
+      passthroughPortIds: portList.passthroughPortIds,
+      // Specific system ports (pre-computed)
+      flowInputPortId: portList.flowInputPortId,
+      flowOutputPortId: portList.flowOutputPortId,
+      // Specific error ports (pre-computed)
+      errorPortId: portList.errorPortId,
+      errorMessagePortId: portList.errorMessagePortId,
+      // Node metadata (from node instance)
+      title: node.metadata.title || '',
+      status: (node.status as XYFlowNodeRenderData['status']) || 'idle',
+      // Node UI state
+      isErrorPortCollapsed: node.metadata.ui?.state?.isErrorPortCollapsed ?? true,
       position,
       dimensions: dims,
       nodeType: node.metadata.category === NODE_CATEGORIES.GROUP ? 'groupNode' : 'chaingraphNode',
@@ -115,6 +142,10 @@ function buildCompleteRenderMap(
       isHidden: node.metadata.ui?.state?.isHidden || false,
       isDraggable: !node.metadata.ui?.state?.isMovingDisabled,
       parentNodeId: node.metadata.parentNodeId,
+      // Pre-compute parent category to avoid loading entire parent INode in NodeBody
+      parentNodeCategory: node.metadata.parentNodeId
+        ? nodes[node.metadata.parentNodeId]?.metadata.category
+        : undefined,
       executionStyle: execStyle,
       executionStatus: (execNode?.status as XYFlowNodeRenderData['executionStatus']) || 'idle',
       executionNode: execNode
@@ -183,15 +214,12 @@ export const $xyflowNodeRenderMap = xyflowDomain
 // ============================================================================
 // CRITICAL: Use sample() with combined source instead of .getState() to ensure
 // atomic snapshot of all stores (prevents race conditions in store forks)
-
-// Debounce structure changes to prevent multiple rebuilds during bulk operations
-const debouncedStructureChanged = debounce({
-  source: xyflowStructureChanged,
-  timeout: 50,
-})
+//
+// NOTE: Debounce was removed because global event buffer now handles batching.
+// See store/flow/event-buffer.ts for details.
 
 sample({
-  clock: debouncedStructureChanged,
+  clock: xyflowStructureChanged,
   source: {
     nodes: $nodes,
     positions: $nodePositions,
@@ -201,7 +229,8 @@ sample({
     execNodes: $executionNodes,
     highlights: $highlightedNodeId,
     pulseStates: $nodesPulseState,
-    dragState: $dragDropState,
+    dragState: $dragDropRenderState,
+    portLists: $nodePortLists,
   },
   fn: ({
     nodes,
@@ -213,6 +242,7 @@ sample({
     highlights,
     pulseStates,
     dragState,
+    portLists,
   }) => buildCompleteRenderMap(
     nodes,
     positions,
@@ -223,6 +253,7 @@ sample({
     highlights,
     pulseStates,
     dragState,
+    portLists,
   ),
   target: setXYFlowNodeRenderMap,
 })
@@ -232,6 +263,16 @@ sample({
 // ============================================================================
 sample({
   clock: [addNode, addNodes, removeNode, clearNodes, setNodes, updateNodeParent],
+  target: xyflowStructureChanged,
+})
+
+// ============================================================================
+// WIRE: Port lists changes (triggers rebuild when $portConfigs updates)
+// CRITICAL: This fixes the timing issue where ports were empty on first render
+// because $portConfigs was still in buffer when xyflowStructureChanged first fired.
+// ============================================================================
+sample({
+  clock: $nodePortLists,
   target: xyflowStructureChanged,
 })
 
@@ -248,12 +289,28 @@ sample({
     return trace.wrap('sample.positions.delta', { category: 'sample' }, () => {
       // Delta computation - only changed positions
       const changes: XYFlowNodesDataChangedPayload['changes'] = []
+
+      // Trace the iteration to measure O(N) cost
+      const iterateSpan = trace.start('wire1.iteratePositions', {
+        category: 'sample',
+        tags: { positionCount: Object.keys(positions).length },
+      })
       for (const [nodeId, pos] of Object.entries(positions)) {
         const current = renderMap[nodeId]
         if (current && (current.position.x !== pos.x || current.position.y !== pos.y)) {
           changes.push({ nodeId, changes: { position: pos } })
         }
       }
+      trace.end(iterateSpan)
+
+      // Trace WIRE 1 firing
+      if (changes.length > 0) {
+        trace.wrap('wire1.fire', {
+          category: 'sample',
+          tags: { changedCount: changes.length },
+        }, () => { })
+      }
+
       return { changes }
     })
   },
@@ -272,7 +329,8 @@ sample({
  * Returns IDs of nodes that need render data updates.
  */
 function getNodeIdsFromPayload(payload: unknown): string[] {
-  if (!payload) return []
+  if (!payload)
+    return []
 
   // INode (single node)
   if (typeof payload === 'object' && 'id' in payload && typeof (payload as INode).id === 'string') {
@@ -305,7 +363,6 @@ function computeNodeRenderUpdates(
   // Version change
   if (current.version !== node.getVersion()) {
     updates.version = node.getVersion()
-    updates.node = node // Update node reference
   }
 
   // Dimension change
@@ -365,7 +422,8 @@ sample({
       const node = nodes[nodeId]
       const current = renderMap[nodeId]
 
-      if (!node || !current) continue // Skip if node doesn't exist or not in render map yet
+      if (!node || !current)
+        continue // Skip if node doesn't exist or not in render map yet
 
       const updates = computeNodeRenderUpdates(current, node)
 
@@ -524,44 +582,63 @@ sample({
 // WIRE 6: DROP FEEDBACK CHANGES (During drag operations)
 // ============================================================================
 sample({
-  clock: $dragDropState,
+  clock: $dragDropRenderState,
   source: $xyflowNodeRenderMap,
   fn: (renderMap, dragState): XYFlowNodesDataChangedPayload => {
-    // Compute drop feedback delta
-    const changes: XYFlowNodesDataChangedPayload['changes'] = []
+    return trace.wrap('wire6.dropFeedback', { category: 'sample' }, () => {
+      // Compute drop feedback delta
+      const changes: XYFlowNodesDataChangedPayload['changes'] = []
 
-    for (const [nodeId, current] of Object.entries(renderMap)) {
-      let dropFeedback: { canAcceptDrop: boolean, dropType: 'group' | 'schema' } | null = null
+      const iterateSpan = trace.start('wire6.iterateNodes', {
+        category: 'sample',
+        tags: {
+          nodeCount: Object.keys(renderMap).length,
+          isDragging: dragState.isDragging,
+          hasHoveredTarget: !!dragState.hoveredDropTarget,
+        },
+      })
+      for (const [nodeId, current] of Object.entries(renderMap)) {
+        let dropFeedback: { canAcceptDrop: boolean, dropType: 'group' | 'schema' } | null = null
 
-      // Check if this node is the hovered target
-      const hoveredTarget = dragState.hoveredDropTarget
-      if (hoveredTarget && hoveredTarget.nodeId === nodeId && dragState.canDrop) {
-        dropFeedback = {
-          canAcceptDrop: true,
-          dropType: hoveredTarget.type,
-        }
-      } else {
-        const potentialTarget = dragState.potentialDropTargets?.find(t => t.nodeId === nodeId)
-        if (potentialTarget) {
+        // Check if this node is the hovered target
+        const hoveredTarget = dragState.hoveredDropTarget
+        if (hoveredTarget && hoveredTarget.nodeId === nodeId && dragState.canDrop) {
           dropFeedback = {
-            canAcceptDrop: false,
-            dropType: potentialTarget.type,
+            canAcceptDrop: true,
+            dropType: hoveredTarget.type,
+          }
+        } else {
+          const potentialTarget = dragState.potentialDropTargets?.find(t => t.nodeId === nodeId)
+          if (potentialTarget) {
+            dropFeedback = {
+              canAcceptDrop: false,
+              dropType: potentialTarget.type,
+            }
           }
         }
+
+        // Compare with current
+        const changed
+          = (current.dropFeedback === null) !== (dropFeedback === null)
+          || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
+          || current.dropFeedback?.dropType !== dropFeedback?.dropType
+
+        if (changed) {
+          changes.push({ nodeId, changes: { dropFeedback } })
+        }
+      }
+      trace.end(iterateSpan)
+
+      // Trace WIRE 6 firing
+      if (changes.length > 0) {
+        trace.wrap('wire6.fire', {
+          category: 'sample',
+          tags: { changedCount: changes.length },
+        }, () => { })
       }
 
-      // Compare with current
-      const changed
-        = (current.dropFeedback === null) !== (dropFeedback === null)
-        || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
-        || current.dropFeedback?.dropType !== dropFeedback?.dropType
-
-      if (changed) {
-        changes.push({ nodeId, changes: { dropFeedback } })
-      }
-    }
-
-    return { changes }
+      return { changes }
+    })
   },
   target: xyflowNodesDataChanged,
 })
