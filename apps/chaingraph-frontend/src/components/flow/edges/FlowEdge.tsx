@@ -7,10 +7,17 @@
  */
 
 import type { EdgeProps } from '@xyflow/react'
-import { getBezierPath } from '@xyflow/react'
+import { getBezierPath, useReactFlow } from '@xyflow/react'
+import { useUnit } from 'effector-react'
 import { motion } from 'framer-motion'
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { nanoid } from 'nanoid'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTheme } from '@/components/theme/hooks/useTheme'
+import { $edgeAnchors, addAnchorLocal, moveAnchorLocal, removeAnchorLocal } from '@/store/edges/anchors'
+import { $selectedEdgeId } from '@/store/edges/selection'
+import { $curveConfig } from '@/store/settings/curve-config'
+import { AnchorHandle } from './components/AnchorHandle'
+import { calculateGhostAnchors, catmullRomToBezierPath } from './utils/catmull-rom'
 
 // Static store to maintain particle positions across component remounts
 // Using a Map with edge IDs as keys to maintain separate positions for each edge
@@ -225,31 +232,95 @@ export const FlowEdge = memo(({
   } = style as { stroke: string, strokeWidth: number, strokeOpacity: number }
 
   const { theme } = useTheme()
+  const { screenToFlowPosition } = useReactFlow()
+
+  // Anchor support
+  const selectedEdgeId = useUnit($selectedEdgeId)
+  const anchorsMap = useUnit($edgeAnchors)
+  const curveConfig = useUnit($curveConfig)
+  const isSelected = selectedEdgeId === id
+  const edgeId = (data as any)?.edgeData?.edgeId ?? id
+
+  // Hover state for visual feedback
+  const [isHovered, setIsHovered] = useState(false)
+
+  // Get anchors from local store ONLY (no fallback to edge data)
+  // Anchors are initialized from edge metadata in stores.ts on flow load
+  const localState = anchorsMap.get(edgeId)
+  const anchors = useMemo(
+    () => localState?.anchors ?? [],
+    [localState?.anchors],
+  )
+
+  // Source and target points for anchor calculations
+  const source = useMemo(() => ({ x: sourceX, y: sourceY }), [sourceX, sourceY])
+  const target = useMemo(() => ({ x: targetX, y: targetY }), [targetX, targetY])
 
   // Path calculations, memoized to avoid recalculating on every render
+  // ALWAYS use Catmull-Rom with virtual anchors (even with 0 user anchors)
+  // This preserves the natural S-curve from handle positions consistently
   const pathData = useMemo(() => {
-    // Calculate main path
-    const [edgePath] = getBezierPath({
-      sourceX,
-      sourceY,
+    const edgePath = catmullRomToBezierPath(
+      source,
+      target,
+      anchors,
       sourcePosition,
-      targetX,
-      targetY,
       targetPosition,
-    })
+    )
+    return { edgePath, parallelPath: edgePath }
+  }, [source, target, anchors, sourcePosition, targetPosition, curveConfig])
 
-    // Calculate parallel path with slight offset for the dual-line effect
-    const [parallelPath] = getBezierPath({
-      sourceX,
-      sourceY,
-      sourcePosition,
-      targetX,
-      targetY,
-      targetPosition,
-    })
+  // Ghost anchors (only when selected)
+  const ghostAnchors = useMemo(() => {
+    if (!isSelected)
+      return []
+    return calculateGhostAnchors(source, target, anchors, sourcePosition, targetPosition)
+  }, [isSelected, source, target, anchors, sourcePosition, targetPosition, curveConfig])
 
-    return { edgePath, parallelPath }
-  }, [sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition])
+  // Track ghost → real anchor ID mappings during drag
+  const ghostToRealAnchorRef = useRef<Map<string, string>>(new Map())
+
+  // Clear ghost-to-real mappings when edge is deselected
+  useEffect(() => {
+    if (!isSelected) {
+      ghostToRealAnchorRef.current.clear()
+    }
+  }, [isSelected])
+
+  // Anchor handlers
+  const handleAnchorDrag = useCallback((anchorId: string, x: number, y: number) => {
+    if (anchorId.startsWith('ghost-')) {
+      // Check if we already created a real anchor for this ghost drag
+      const existingRealId = ghostToRealAnchorRef.current.get(anchorId)
+      if (existingRealId) {
+        // Already created, just move it seamlessly
+        moveAnchorLocal({ edgeId, anchorId: existingRealId, x, y })
+      } else {
+        // First drag event - create the anchor
+        const insertIndex = Number.parseInt(anchorId.split('-')[1], 10)
+        const newAnchor = {
+          id: nanoid(8),
+          x,
+          y,
+          index: insertIndex,
+        }
+        addAnchorLocal({ edgeId, anchor: newAnchor })
+        // Store mapping so subsequent drags move instead of create
+        ghostToRealAnchorRef.current.set(anchorId, newAnchor.id)
+      }
+    } else {
+      moveAnchorLocal({ edgeId, anchorId, x, y })
+    }
+  }, [edgeId])
+
+  const handleAnchorDragEnd = useCallback(() => {
+    // Clear mapping when drag ends so next drag starts fresh
+    ghostToRealAnchorRef.current.clear()
+  }, [])
+
+  const handleAnchorDelete = useCallback((anchorId: string) => {
+    removeAnchorLocal({ edgeId, anchorId })
+  }, [edgeId])
 
   // Generate a lighter version of the stroke color for the secondary path, memoized
   const secondaryColor = useMemo(() =>
@@ -305,11 +376,64 @@ export const FlowEdge = memo(({
           fill="none"
           // stroke={stroke}
           stroke={theme === 'dark' ? stroke : secondaryColor}
-          strokeWidth={strokeWidth}
+          strokeWidth={isSelected ? strokeWidth * 1.5 : (isHovered ? strokeWidth * 1.2 : strokeWidth)}
           strokeOpacity={strokeOpacity}
           strokeLinecap="round"
           markerEnd={markerEnd}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{ cursor: 'pointer', transition: 'stroke-width 0.15s ease' }}
         />
+
+        {/* Selection highlight */}
+        {isSelected && (
+          <path
+            d={pathData.edgePath}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={strokeWidth * 3}
+            strokeOpacity={0.2}
+          />
+        )}
+
+        {/* Anchor handles (only when selected) */}
+        {isSelected && (
+          <>
+            {/* Real anchors */}
+            {anchors.map(anchor => (
+              <AnchorHandle
+                key={anchor.id}
+                id={anchor.id}
+                edgeId={edgeId}
+                x={anchor.x}
+                y={anchor.y}
+                isGhost={false}
+                edgeColor={stroke}
+                screenToFlowPosition={screenToFlowPosition}
+                onDrag={handleAnchorDrag}
+                onDragEnd={handleAnchorDragEnd}
+                onDelete={handleAnchorDelete}
+              />
+            ))}
+
+            {/* Ghost anchors */}
+            {ghostAnchors.map(ghost => (
+              <AnchorHandle
+                key={`ghost-${ghost.insertIndex}`}
+                id={`ghost-${ghost.insertIndex}`}
+                edgeId={edgeId}
+                x={ghost.x}
+                y={ghost.y}
+                isGhost={true}
+                edgeColor={stroke}
+                screenToFlowPosition={screenToFlowPosition}
+                onDrag={handleAnchorDrag}
+                onDragEnd={handleAnchorDragEnd}
+                onDelete={() => { }}
+              />
+            ))}
+          </>
+        )}
       </g>
     )
   }
@@ -393,6 +517,56 @@ export const FlowEdge = memo(({
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
+      )}
+
+      {/* Selection highlight */}
+      {isSelected && (
+        <path
+          d={pathData.edgePath}
+          fill="none"
+          stroke={stroke}
+          strokeWidth={strokeWidth * 3}
+          strokeOpacity={0.2}
+        />
+      )}
+
+      {/* Anchor handles (only when selected) */}
+      {isSelected && (
+        <>
+          {/* Real anchors */}
+          {anchors.map(anchor => (
+            <AnchorHandle
+              key={anchor.id}
+              id={anchor.id}
+              edgeId={edgeId}
+              x={anchor.x}
+              y={anchor.y}
+              isGhost={false}
+              edgeColor={stroke}
+              screenToFlowPosition={screenToFlowPosition}
+              onDrag={handleAnchorDrag}
+              onDragEnd={handleAnchorDragEnd}
+              onDelete={handleAnchorDelete}
+            />
+          ))}
+
+          {/* Ghost anchors */}
+          {ghostAnchors.map(ghost => (
+            <AnchorHandle
+              key={`ghost-${ghost.insertIndex}`}
+              id={`ghost-${ghost.insertIndex}`}
+              edgeId={edgeId}
+              x={ghost.x}
+              y={ghost.y}
+              isGhost={true}
+              edgeColor={stroke}
+              screenToFlowPosition={screenToFlowPosition}
+              onDrag={handleAnchorDrag}
+              onDragEnd={handleAnchorDragEnd}
+              onDelete={() => { }}
+            />
+          ))}
+        </>
       )}
     </g>
   )

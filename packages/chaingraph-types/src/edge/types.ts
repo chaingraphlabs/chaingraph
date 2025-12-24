@@ -22,10 +22,28 @@ export interface EdgeStyle {
 }
 
 /**
+ * Control point anchor for edge path customization
+ */
+export interface EdgeAnchor {
+  /** Unique identifier */
+  id: string
+  /** Absolute X coordinate on canvas */
+  x: number
+  /** Absolute Y coordinate on canvas */
+  y: number
+  /** Order index in path (0 = closest to source) */
+  index: number
+}
+
+/**
  * Edge configuration metadata
  */
 export interface EdgeMetadata {
   label?: string
+  /** Control point anchors for custom path */
+  anchors?: EdgeAnchor[]
+  /** Version for optimistic update conflict resolution */
+  version?: number
 
   /** Custom metadata */
   [key: string]: unknown

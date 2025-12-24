@@ -24,15 +24,19 @@ import { StyledControls } from '@/components/flow/components/controls/StyledCont
 import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
+import { useEdgeAnchorKeyboard } from '@/components/flow/hooks/useEdgeAnchorKeyboard'
+import { useEdgeKeyboardShortcuts } from '@/components/flow/hooks/useEdgeKeyboardShortcuts'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
 import { useFlowCopyPaste } from '@/components/flow/hooks/useFlowCopyPaste'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
-import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import { NodeInternalsSync } from '@/components/flow/NodeInternalsSync'
+import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
 import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
+import { $isDraggingAnchor, deselectAnchor } from '@/store/edges/anchor-selection'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
+import { deselectEdge, selectEdge } from '@/store/edges/selection'
 import { $isConnectingBeginEvent, $isConnectingEndEvent } from '@/store/edges/stores'
 import { $executionState, $executionSubscriptionState, ExecutionSubscriptionStatus } from '@/store/execution'
 
@@ -118,6 +122,12 @@ function Flow({
   // Setup copy-paste functionality
   const copyPasteHook = useFlowCopyPaste()
 
+  // Setup anchor keyboard shortcuts
+  useEdgeAnchorKeyboard()
+
+  // Setup edge keyboard shortcuts (delete edge with backspace)
+  useEdgeKeyboardShortcuts()
+
   // Get interaction callbacks
   const {
     onNodesChange,
@@ -144,6 +154,11 @@ function Flow({
 
   // State for a context menu
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null)
+
+  // Handle node clicks - deselect any selected edge
+  const handleNodeClick = useCallback(() => {
+    deselectEdge()
+  }, [])
 
   // const onInit = useCallback(() => {
   //   setZoom(getZoom())
@@ -200,6 +215,23 @@ function Flow({
     setZoom(currentZoom)
   }, [getZoom, setZoom])
 
+  // Handle edge selection
+  const handleEdgeClick = useCallback((event: React.MouseEvent, edge: any) => {
+    event.stopPropagation()
+    selectEdge(edge.id)
+  }, [])
+
+  // Check if anchor is being dragged
+  const isDraggingAnchor = useUnit($isDraggingAnchor)
+
+  // Handle pane click to deselect (but not during anchor drag)
+  const handlePaneClick = useCallback(() => {
+    // Don't deselect during anchor drag - user may release mouse outside edge path
+    if (isDraggingAnchor) return
+    deselectEdge()
+    deselectAnchor()
+  }, [isDraggingAnchor])
+
   // Check flowId props and set active flow if changed
   useEffect(() => {
     if (!flowId || activeFlowId === flowId)
@@ -232,6 +264,7 @@ function Flow({
         edges={edges}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
+        onNodeClick={handleNodeClick}
 
         onlyRenderVisibleElements={true}
         // onEdgesChange={onEdgesChange}
@@ -250,6 +283,8 @@ function Flow({
           $isConnectingEndEvent(connectionState)
         }}
         onEdgesChange={onEdgesChange}
+        onEdgeClick={handleEdgeClick}
+        onPaneClick={handlePaneClick}
         onReconnect={onReconnect}
         onReconnectStart={onReconnectStart}
         onReconnectEnd={onReconnectEnd}
@@ -262,6 +297,7 @@ function Flow({
         panOnScroll={true}
         zoomOnDoubleClick={true}
         connectOnClick={true}
+        deleteKeyCode={['Delete', 'Backspace']}
         onViewportChange={onViewportChange}
         fitView={true}
         preventScrolling

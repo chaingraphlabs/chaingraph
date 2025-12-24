@@ -9,7 +9,7 @@
 import type { EdgeChange } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useCallback } from 'react'
-import { requestRemoveEdge } from '@/store/edges'
+import { deselectEdge, requestRemoveEdge, selectEdge } from '@/store/edges'
 import { $activeFlowMetadata } from '@/store/flow'
 
 /**
@@ -34,7 +34,11 @@ export function useEdgeChanges() {
           })
           break
         case 'select':
-          // Handle edge selection if needed
+          if (change.selected) {
+            selectEdge(change.id)
+          } else {
+            deselectEdge()
+          }
           break
       }
     })

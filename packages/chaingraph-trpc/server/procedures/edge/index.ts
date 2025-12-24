@@ -6,8 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export * from './active-flow'
-export * from './event-buffer'
-export * from './stores'
-export * from './subscription'
-export * from './types'
+import { router } from '../../trpc'
+import { updateAnchors } from './update-anchors'
+
+/**
+ * Edge procedures sub-router
+ * Accessible via client.edge.*
+ */
+export const edgeProcedures = router({
+  updateAnchors,
+})
+
+export { updateAnchors } from './update-anchors'

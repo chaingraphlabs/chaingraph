@@ -6,8 +6,33 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+// Anchor Selection (frontend-only)
+export {
+  $selectedAnchorId,
+  deselectAnchor,
+  selectAnchor,
+} from './anchor-selection'
+
+// Edge Anchors with Optimistic Updates
+export {
+  $edgeAnchors,
+  addAnchorLocal,
+  clearAnchorsLocal,
+  moveAnchorLocal,
+  removeAnchorLocal,
+  setEdgeAnchors,
+} from './anchors'
+
 // Hooks
 export { useXYFlowEdges } from './hooks/useXYFlowEdges'
+
+// Edge Selection
+export {
+  $hasEdgeSelected,
+  $selectedEdgeId,
+  deselectEdge,
+  selectEdge,
+} from './selection'
 
 // Stores
 export {

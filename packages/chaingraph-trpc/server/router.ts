@@ -7,6 +7,7 @@
  */
 
 import { mcpProcedures } from './mcp'
+import { edgeProcedures } from './procedures/edge'
 import { flowProcedures } from './procedures/flow'
 import { nodeRegistryProcedures } from './procedures/nodeRegistry'
 import { secretProcedures } from './procedures/secrets'
@@ -15,6 +16,7 @@ import { createCallerFactory, router } from './trpc'
 
 export const appRouter = router({
   flow: flowProcedures,
+  edge: edgeProcedures,
   nodeRegistry: nodeRegistryProcedures,
   secrets: secretProcedures,
   // execution: executionRouter,

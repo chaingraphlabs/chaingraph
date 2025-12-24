@@ -13,6 +13,8 @@ import { getDefaultTransferEngine } from '@badaitech/chaingraph-types'
 import { attach, sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
 import { edgesDomain, portsDomain } from '@/store/domains'
+import { $curveConfig } from '@/store/settings/curve-config'
+import { $selectedEdgeId } from './selection'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
 import { $nodeLayerDepth, $nodes } from '../nodes'
@@ -303,7 +305,7 @@ export const $edgeRenderMap = edgesDomain
       )
 
       if (isForceRerender) {
-        console.log(`[EdgeRenderMap] Forcing re-render for edge ${edgeId}`)
+        // console.log(`[EdgeRenderMap] Forcing re-render for edge ${edgeId}`)
         // debugger
       }
 
@@ -602,6 +604,62 @@ sample({
   clock: portCollapseChangedForNodes,
   filter: nodeIds => nodeIds.length > 0,
   target: bumpEdgesForNodes,
+})
+
+// ============================================================================
+// WIRE 8: Curve Config → Edge Version Bump
+// ============================================================================
+
+/**
+ * When curve configuration changes (alpha, tension, virtual anchor params),
+ * bump version for ALL edges to force re-render with new curve settings.
+ *
+ * This allows real-time preview of curve adjustments in the Settings panel.
+ */
+sample({
+  clock: $curveConfig,
+  source: $edgeRenderMap,
+  fn: (edgeMap) => {
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+    for (const [edgeId, edge] of edgeMap) {
+      if (!edge.isReady)
+        continue
+      // Empty changes = version bump only
+      changes.push({ edgeId, changes: {} })
+    }
+    return { changes }
+  },
+  target: edgeDataChanged,
+})
+
+// ============================================================================
+// WIRE 9: Selected Edge Z-Index Boost
+// ============================================================================
+
+/**
+ * Boost z-index for selected edge to bring it to front
+ * This ensures anchors are clickable when edges overlap
+ */
+sample({
+  clock: $selectedEdgeId,
+  source: { edgeMap: $edgeRenderMap, selectedId: $selectedEdgeId },
+  fn: ({ edgeMap, selectedId }) => {
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+
+    for (const [edgeId, edge] of edgeMap) {
+      if (!edge.isReady)
+        continue
+
+      // Selected edge gets z-index 1000, others keep their normal z-index
+      const newZIndex = selectedId === edgeId ? 1000 : edge.zIndex
+      if (newZIndex !== edge.zIndex) {
+        changes.push({ edgeId, changes: { zIndex: newZIndex } })
+      }
+    }
+
+    return { changes }
+  },
+  target: edgeDataChanged,
 })
 
 // ============================================================================

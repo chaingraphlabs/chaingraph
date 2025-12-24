@@ -36,6 +36,8 @@ import { trace } from '@/lib/perf-trace'
 import { flowDomain } from '@/store/domains'
 import { nodeUpdated } from '@/store/updates'
 import { globalReset } from '../common'
+import { setEdgeAnchors } from '../edges/anchors'
+import { $activeFlowId, clearActiveFlow } from './active-flow'
 import {
   removeEdge,
   resetEdges,
@@ -109,9 +111,9 @@ export const setFlowsError = flowDomain.createEvent<Error | null>()
 export const setFlowMetadata = flowDomain.createEvent<FlowMetadata>()
 export const setFlowLoaded = flowDomain.createEvent<string>()
 
-// Active flow events
-export const setActiveFlowId = flowDomain.createEvent<string>()
-export const clearActiveFlow = flowDomain.createEvent()
+// Active flow events - imported from ./active-flow to avoid circular dependencies
+// Re-exported for backwards compatibility
+export { $activeFlowId, clearActiveFlow, setActiveFlowId } from './active-flow'
 
 // Removed debugging - issue identified and fixed
 
@@ -234,13 +236,7 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
     flows.filter(f => f.id !== id))
   .reset(globalReset)
 
-// Currently active flow ID
-export const $activeFlowId = flowDomain.createStore<string | null>(null)
-  .on(setActiveFlowId, (_, id) => {
-    return id
-  })
-  .reset(clearActiveFlow)
-  .reset(globalReset)
+// $activeFlowId store moved to ./active-flow.ts to avoid circular dependencies
 
 // Main loading state
 export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
@@ -591,6 +587,15 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         targetPortId: data.targetPortId,
         metadata: data.metadata,
       })
+
+      // Initialize anchors from edge metadata if present
+      if (data.metadata?.anchors && data.metadata.anchors.length > 0) {
+        setEdgeAnchors({
+          edgeId: data.edgeId,
+          anchors: data.metadata.anchors,
+          version: data.metadata.version ?? 0,
+        })
+      }
     },
 
     [FlowEventType.EdgesAdded]: (data) => {
@@ -603,12 +608,31 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         targetPortId: edge.targetPortId,
         metadata: edge.metadata,
       })))
+
+      // Initialize anchors from edge metadata for all edges
+      data.edges.forEach((edge) => {
+        if (edge.metadata?.anchors && edge.metadata.anchors.length > 0) {
+          setEdgeAnchors({
+            edgeId: edge.edgeId,
+            anchors: edge.metadata.anchors,
+            version: edge.metadata.version ?? 0,
+          })
+        }
+      })
     },
 
     [FlowEventType.EdgeRemoved]: (data) => {
       removeEdge({
         flowId,
         edgeId: data.edgeId,
+      })
+    },
+
+    [FlowEventType.EdgeMetadataUpdated]: (data) => {
+      setEdgeAnchors({
+        edgeId: data.edgeId,
+        anchors: data.metadata.anchors ?? [],
+        version: data.version,
       })
     },
 

@@ -11,18 +11,24 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { EdgeCurveSettings } from './settings/EdgeCurveSettings'
 
 export function Settings() {
   const { theme, toggleTheme } = useTheme()
 
   return (
     <ScrollArea className="h-[calc(100vh-10rem)]">
-      <div className="space-y-6">
+      <div className="px-4 py-2 space-y-6">
+        {/* Edge Curves */}
+        <EdgeCurveSettings />
+
+        <Separator />
+
         {/* Appearance */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium leading-none">Appearance</h4>
+          <h3 className="text-sm font-medium">Appearance</h3>
           <div className="flex items-center justify-between">
-            <Label htmlFor="dark-mode">Dark Mode</Label>
+            <Label htmlFor="dark-mode" className="text-xs">Dark Mode</Label>
             <Switch
               id="dark-mode"
               checked={theme === 'dark'}
@@ -30,9 +36,6 @@ export function Settings() {
             />
           </div>
         </div>
-
-        <Separator />
-
       </div>
     </ScrollArea>
   )

@@ -121,7 +121,6 @@ function AnyPortComponent(props: AnyPortProps) {
           }}
         >
           {title}
-          {JSON.stringify({ config, ui })}
         </PortTitle>
 
       </div>
