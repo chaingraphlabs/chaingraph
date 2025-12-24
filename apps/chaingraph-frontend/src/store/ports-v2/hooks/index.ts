@@ -19,6 +19,7 @@
  */
 
 export { useChildPorts } from './useChildPorts'
+export { useNodeDescendantPorts } from './useNodeDescendantPorts'
 export { usePort } from './usePort'
 export { usePortConfig } from './usePortConfig'
 export { usePortConnections } from './usePortConnections'

@@ -37,7 +37,9 @@ async function main() {
   }, 'Worker configuration')
 
   // Initialize tRPC/auth dependencies
-  await init()
+  await init({
+    useFlowStoreCache: false, // There is internal flow caching in the executor DBOS workflow
+  })
 
   // Start the DBOS worker
   await startWorker()

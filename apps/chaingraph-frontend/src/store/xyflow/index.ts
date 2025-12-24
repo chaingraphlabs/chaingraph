@@ -21,6 +21,7 @@ export {
   useXYFlowNodeBodyPorts,
   useXYFlowNodeErrorPorts,
   useXYFlowNodeFlowPorts,
+  useXYFlowNodeHeaderData,
   useXYFlowNodeRenderData,
 } from './hooks'
 

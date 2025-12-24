@@ -74,6 +74,11 @@ export type { PendingMutation } from './pending-mutations'
 export { $nodePortLists } from './port-lists'
 export type { NodePortLists } from './port-lists'
 
+// Descendants (derived stores for collapsed port handles)
+export { $portDescendants } from './descendants'
+export { $collapsedHandleData } from './collapsed-handles'
+export type { CollapsedHandleInfo } from './collapsed-handles'
+
 // Stores
 export {
   // Granular stores

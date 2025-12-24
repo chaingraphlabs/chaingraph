@@ -10,7 +10,7 @@ import type {
   IPortConfig,
 } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -26,6 +26,7 @@ import {
 } from '@/store/ports'
 import { useChildPorts, usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
 import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
+import { CollapsedPortHandles } from '../ui/CollapsedPortHandles'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddElementPopover } from './AddElementPopover'
@@ -53,23 +54,6 @@ const variants = {
     transition: { duration: 0 },
   },
 } as const
-// Extracted to a memoizable component
-const ChildrenHiddenHandles = memo(({ nodeId, portId, childPortIds }: { nodeId: string, portId: string, childPortIds: string[] }) => {
-  return (
-    <>
-      {childPortIds.map(childPortId => (
-        <Fragment key={childPortId}>
-          <PortHandle
-            key={childPortId}
-            nodeId={nodeId}
-            portId={childPortId}
-            className={cn('opacity-0')}
-          />
-        </Fragment>
-      ))}
-    </>
-  )
-})
 
 function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
@@ -208,7 +192,8 @@ function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!ui?.collapsed && <ChildrenHiddenHandles nodeId={nodeId} portId={portId} childPortIds={childPortIds} />}
+      {/* Render hidden handles for ALL descendants when port is collapsed */}
+      {ui?.collapsed ? <CollapsedPortHandles nodeId={nodeId} parentPortId={portId} /> : null}
 
       {(config.direction === 'input' || config.direction === 'passthrough')
         && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}

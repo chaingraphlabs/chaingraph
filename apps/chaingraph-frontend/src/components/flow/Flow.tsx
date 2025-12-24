@@ -28,6 +28,7 @@ import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
 import { useFlowCopyPaste } from '@/components/flow/hooks/useFlowCopyPaste'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
+import { NodeInternalsSync } from '@/components/flow/NodeInternalsSync'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
 import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
@@ -272,6 +273,7 @@ function Flow({
         nodeDragThreshold={1}
       >
         <Background />
+        <NodeInternalsSync />
         {/* <Controls position="bottom-right" /> */}
         <StyledControls position="bottom-right" />
 
@@ -281,7 +283,7 @@ function Flow({
 
         <div className="absolute top-4 left-4 z-50">
           {/* <ExecutionComponent /> */}
-          <FPSCounter />
+          {/* <FPSCounter /> */}
         </div>
       </ReactFlow>
 

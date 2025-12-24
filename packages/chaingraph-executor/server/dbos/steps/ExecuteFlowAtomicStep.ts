@@ -198,6 +198,7 @@ class FlowCachedLoader {
 
   async loadFlow(flowId: string, flowVersion?: number): Promise<Flow | null> {
     if (flowVersion === undefined || flowVersion === 0 || !flowVersion) {
+      DBOS.logger.info(`Flow version not provided or zero, loading from DB: ${flowId}`)
       // No version provided, always load from DB
       const flow = await loadFlow(flowId)
       return flow
@@ -207,11 +208,12 @@ class FlowCachedLoader {
     const cached = this.cachedFlows.get(flowId)
 
     if (cached) {
+      DBOS.logger.info(`Flow cache found for: ${flowId} (cached version: ${cached.flowVersion}, requested version: ${flowVersion})`)
       // Check if cache is still valid
       if (now - cached.timestamp < this.cacheTTLMs) {
         // Check if version matches
         if (cached.flowVersion === flowVersion) {
-          DBOS.logger.debug(`Flow cache hit: ${flowId} (version: ${cached.flowVersion})`)
+          DBOS.logger.info(`Flow cache hit: ${flowId} (version: ${cached.flowVersion})`)
 
           const flowClone = await cached.flow.clone()
           return flowClone as Flow
@@ -219,11 +221,17 @@ class FlowCachedLoader {
       } else {
         // Cache expired
         this.cachedFlows.delete(flowId)
+
+        DBOS.logger.info(`Flow cache expired for: ${flowId}, removing from cache and loading from DB`)
       }
     }
 
     // Load from DB
+    const startTime = Date.now()
     const flow = await loadFlow(flowId)
+    const loadDuration = Date.now() - startTime
+
+    DBOS.logger.info(`Flow loaded from DB: ${flowId} with version: ${flow ? flow.metadata.version || 0 : 'N/A'} in ${loadDuration}ms`)
 
     if (flow) {
       this.cachedFlows.set(flowId, {
@@ -231,7 +239,7 @@ class FlowCachedLoader {
         flow,
         timestamp: now,
       })
-      DBOS.logger.debug(`Flow cache set: ${flowId} (version: ${flow.metadata.version || 0})`)
+      DBOS.logger.info(`Flow cache set: ${flowId} (version: ${flow.metadata.version || 0})`)
     }
 
     return flow
@@ -274,7 +282,7 @@ export async function executeFlowAtomic(
   const collectedChildTasks: ExecutionTask[] = []
 
   // Step 1: Load flow from database
-  DBOS.logger.debug(`Loading flow: ${task.flowId}`)
+  DBOS.logger.info(`Loading flow: ${task.flowId} with version: ${task.flowVersion}`)
   // const flow = await loadFlow(task.flowId)
   const flow = await flowCachedLoader.loadFlow(task.flowId, task.flowVersion)
 
@@ -299,7 +307,7 @@ export async function executeFlowAtomic(
   // The execution instance is configured to stream events in real-time
   // Events are streamed via DBOS.writeStream() to PostgreSQL
   // AbortController is passed from workflow level to enable STOP command
-  DBOS.logger.debug(`Creating execution instance: ${task.executionId}`)
+  DBOS.logger.info(`Creating execution instance: ${task.executionId} with version: ${task.flowVersion}`)
 
   const instance = await service.createExecutionInstance({
     task,

@@ -8,7 +8,7 @@
 
 import { useUnit } from 'effector-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -16,10 +16,11 @@ import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution } fr
 import { $activeFlowId } from '@/store/flow'
 import { usePortEdges } from '@/store/nodes/computed'
 import { addFieldObjectPort, removeFieldObjectPort, requestUpdatePortUI } from '@/store/ports'
-import { useChildPorts, usePortConfig, usePortUI } from '@/store/ports-v2'
+import { useChildPorts } from '@/store/ports-v2'
+import { CollapsedPortHandles } from '../ui/CollapsedPortHandles'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
-import { AddPropPopover } from './components/AddPropPopover'
+import { LazyAddPropPopover } from './components/LazyAddPropPopover'
 import PortField from './components/PortField'
 import { PortHeader } from './components/PortHeader'
 import { useNodeSchemaDrop } from './hooks'
@@ -28,42 +29,6 @@ export interface ObjectPortProps {
   nodeId: string
   portId: string
 }
-
-const variants = {
-  open: {
-    opacity: 1,
-    height: 'auto',
-    pointerEvents: 'auto' as const,
-    transition: { duration: 0 },
-    overflow: 'visible' as const,
-  },
-  closed: {
-    opacity: 0,
-    height: 0,
-    pointerEvents: 'none' as const,
-    overflow: 'hidden' as const,
-    transition: { duration: 0 },
-  },
-} as const
-
-// Extracted this to a memoizable component
-const ChildrenHiddenHandles = memo(({ nodeId, portId, childPortIds }: { nodeId: string, portId: string, childPortIds: string[] }) => {
-  return (
-    <>
-      {childPortIds.map(childPortId => (
-        <Fragment key={childPortId}>
-          <PortHandle
-            key={childPortId}
-            nodeId={nodeId}
-            portId={childPortId}
-            className={cn('opacity-0')}
-            isConnectable={false}
-          />
-        </Fragment>
-      ))}
-    </>
-  )
-})
 
 function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
   // ========================================
@@ -91,20 +56,10 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
   // Use the node schema drop hook (reads from granular $portUI store, no subscriptions!)
   const {
     isNodeSchemaCaptureEnabled,
-    previewNode,
-    capturedNode,
+    capturedNodeMetadata,
     isShowingDropZone,
     handleClearSchema,
   } = useNodeSchemaDrop({ nodeId, portId })
-
-  // Determine which node to display: preview during drag, captured after drop
-  const displayNode = useMemo(() => {
-    if (previewNode)
-      return previewNode
-    if (capturedNode)
-      return capturedNode
-    return undefined
-  }, [previewNode, capturedNode])
 
   const needRenderObject = useMemo(() => {
     if (!config)
@@ -165,7 +120,8 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!ui?.collapsed && <ChildrenHiddenHandles nodeId={nodeId} portId={portId} childPortIds={childPortIds} />}
+      {/* Render hidden handles for ALL descendants when port is collapsed */}
+      {ui?.collapsed === false ? <CollapsedPortHandles nodeId={nodeId} parentPortId={portId} /> : null}
 
       {(config.direction === 'input' || config.direction === 'passthrough')
         && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}
@@ -244,8 +200,6 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
                       >
                         <p className="break-words whitespace-normal">
                           Drag and drop a node here to use its schema
-                          {' '}
-                          {previewNode ? ' NODE PREVIEW' : ''}
                         </p>
                       </motion.div>
                     </motion.div>
@@ -254,8 +208,9 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
                     <div
                       style={{
                         // take actual width of the node from the displayNode
-                        width: '100%',
-                        height: displayNode ? `${(displayNode.metadata.ui?.dimensions?.height || 200) + 10}px` : '100%',
+                        // width: '100%',
+                        width: capturedNodeMetadata ? `${(capturedNodeMetadata.ui?.dimensions?.width || 200) + 10}px` : '100%',
+                        height: capturedNodeMetadata ? `${(capturedNodeMetadata.ui?.dimensions?.height || 200) + 10}px` : '100%',
                       }}
                       ref={dropNodeZoneRef}
                     >
@@ -278,18 +233,10 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
             portId={portId}
           />
 
-          <AnimatePresence initial={false} mode="wait">
-            <motion.div
-              initial={ui?.collapsed ? 'open' : 'closed'}
-              variants={variants}
-              animate={ui?.collapsed ? 'open' : 'closed'}
-              exit={ui?.collapsed ? 'closed' : 'open'}
+          {!!ui?.collapsed && (
+            <div
               className={cn(
                 'relative w-full',
-                // isOutput
-                //   ? 'pr-[15px] border-r-2 border-muted/95 -mr-[6px]'
-                //   : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
-
                 config.direction === 'output'
                   ? 'pr-[15px] -mr-[6px] border-r-2 border-muted/95'
                   : config.direction === 'input'
@@ -299,7 +246,6 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
                       : '',
               )}
             >
-
               {childPortIds.map((childPortId) => {
                 // Extract key from child port ID (format: 'parentPort.key')
                 const key = childPortId.split('.').pop() || ''
@@ -340,19 +286,18 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
                       Add field
                     </button>
                   </PopoverTrigger>
-                  {isAddPropOpen && (
-                    <AddPropPopover
-                      onClose={handleClosePopover}
-                      onSubmit={handleSubmitPopover}
-                      nextOrder={childPortIds.length + 1}
-                      nodeId={nodeId}
-                      portId={portId}
-                    />
-                  )}
+                  <LazyAddPropPopover
+                    isOpen={isAddPropOpen}
+                    onClose={handleClosePopover}
+                    onSubmit={handleSubmitPopover}
+                    nextOrder={childPortIds.length + 1}
+                    nodeId={nodeId}
+                    portId={portId}
+                  />
                 </Popover>
               )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          )}
         </div>
       )}
 

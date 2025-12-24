@@ -23,6 +23,7 @@ import { PopoverContent } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { usePortUI } from '@/store/ports-v2'
 
@@ -39,17 +40,25 @@ interface Props {
   nodeId: string
   portId: string
   editMode?: boolean
-  existingField?: {
-    key: string
-    config: IPortConfig
-  }
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit, onDelete, nodeId, portId, editMode = false, existingField } = props
+  const { onClose, onSubmit, onDelete, nodeId, portId, editMode = false } = props
 
   // Get port UI state for allowed types
   const ui = usePortUI(nodeId, portId)
+
+  // Get config and UI for edit mode (only subscribes when component is rendered)
+  const portConfig = usePortConfigWithExecution(nodeId, portId)
+  const portUI = usePortUIWithExecution(nodeId, portId)
+
+  // Build existingField internally when in editMode
+  const existingField = editMode && portConfig
+    ? {
+        key: portConfig.key ?? '',
+        config: { ...portConfig, ui: portUI } as IPortConfig,
+      }
+    : undefined
 
   const [key, setKey] = useState(existingField?.key || '')
 

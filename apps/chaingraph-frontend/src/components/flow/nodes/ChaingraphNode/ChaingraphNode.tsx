@@ -83,18 +83,33 @@ function ChaingraphNodeComponent({
   const { theme } = useTheme()
 
   // Extract data from renderData (with defaults for when undefined)
-  const categoryMetadata = renderData?.categoryMetadata
-  const executionStyle = renderData?.executionStyle
-  const executionNode = renderData?.executionNode
-  const isHighlighted = renderData?.isHighlighted ?? false
-  const hasAnyHighlights = renderData?.hasAnyHighlights ?? false
-  const pulseState = renderData?.pulseState
-  const hasBreakpoint = renderData?.hasBreakpoint ?? false
-  const debugMode = renderData?.debugMode ?? false
-  const dropFeedback = renderData?.dropFeedback
+  const {
+    categoryMetadata,
+    executionStyle,
+    executionNode,
+    isHighlighted = false,
+    hasAnyHighlights = false,
+    pulseState,
+    hasBreakpoint = false,
+    debugMode = false,
+    dropFeedback,
+  } = useMemo(() => ({
+    categoryMetadata: renderData?.categoryMetadata,
+    executionStyle: renderData?.executionStyle,
+    executionNode: renderData?.executionNode,
+    isHighlighted: renderData?.isHighlighted ?? false,
+    hasAnyHighlights: renderData?.hasAnyHighlights ?? false,
+    pulseState: renderData?.pulseState,
+    hasBreakpoint: renderData?.hasBreakpoint ?? false,
+    debugMode: renderData?.debugMode ?? false,
+    dropFeedback: renderData?.dropFeedback,
+  }), [renderData])
 
   // Use categoryMetadata from renderData, fallback to data prop or default
-  const finalCategoryMetadata = categoryMetadata ?? data.categoryMetadata ?? defaultCategoryMetadata
+  const finalCategoryMetadata = useMemo(
+    () => categoryMetadata ?? data.categoryMetadata ?? defaultCategoryMetadata,
+    [categoryMetadata, data.categoryMetadata],
+  )
 
   // Theme and metadata - all hooks must be called unconditionally
   const style = useMemo(() => {
@@ -238,15 +253,10 @@ function ChaingraphNodeComponent({
           nodeId={id}
           icon={finalCategoryMetadata.icon}
           style={style}
-          categoryMetadata={finalCategoryMetadata}
           onDelete={() => removeNodeFromFlow({
             flowId: activeFlow.id!,
             nodeId: id,
           })}
-          debugMode={debugMode}
-          isBreakpointSet={hasBreakpoint}
-          onBreakpointToggle={handleBreakpointToggle}
-          renderData={renderData}
         />
 
         <NodeBody nodeId={id} />

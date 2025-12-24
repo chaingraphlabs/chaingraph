@@ -16,7 +16,7 @@ import { edgesDomain, portsDomain } from '@/store/domains'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
 import { $nodeLayerDepth, $nodes } from '../nodes'
-import { $portConfigs, $portUI, toPortKey } from '../ports-v2'
+import { $portConfigs, $portUI, applyUIUpdates, fromPortKey, toPortKey } from '../ports-v2'
 import { $trpcClient } from '../trpc/store'
 import { $xyflowNodesList } from '../xyflow'
 import { EDGE_STYLES } from './consts'
@@ -31,6 +31,14 @@ export const resetEdges = edgesDomain.createEvent()
 
 export const requestAddEdge = edgesDomain.createEvent<AddEdgeEventData>()
 export const requestRemoveEdge = edgesDomain.createEvent<RemoveEdgeEventData>()
+
+/**
+ * Event: Bump version for edges connected to specific nodes
+ *
+ * Use when handle positions change (e.g., port collapse) to force
+ * XYFlow to recalculate edge paths.
+ */
+export const bumpEdgesForNodes = edgesDomain.createEvent<string[]>()
 
 // EFFECTS
 const addEdgeFx = attach({
@@ -288,16 +296,22 @@ export const $edgeRenderMap = edgesDomain
       if (!current)
         continue
 
-      // Check if there are actual differences
-      const needsUpdate = Object.entries(edgeChanges).some(
+      // Check if there are actual differences, OR if this is a forced re-render (empty changes)
+      const isForceRerender = Object.keys(edgeChanges).length === 0
+      const needsUpdate = isForceRerender || Object.entries(edgeChanges).some(
         ([key, value]) => current[key as keyof EdgeRenderData] !== value,
       )
+
+      if (isForceRerender) {
+        console.log(`[EdgeRenderMap] Forcing re-render for edge ${edgeId}`)
+        // debugger
+      }
 
       if (needsUpdate) {
         newState.set(edgeId, {
           ...current,
           ...edgeChanges,
-          version: current.version + 1,
+          version: (current.version || 0) + 1,
         })
         hasChanges = true
       }
@@ -480,6 +494,114 @@ sample({
     return { changes }
   },
   target: edgeDataChanged,
+})
+
+// ============================================================================
+// WIRE 6: Force Re-render for Handle Position Changes
+// ============================================================================
+
+/**
+ * Internal event for edge changes that need version bump
+ */
+const edgesNeedVersionBump = edgesDomain.createEvent<{
+  changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }>
+}>()
+
+/**
+ * When bumpEdgesForNodes is called, find all edges connected to those nodes
+ * and trigger a version bump to force XYFlow to recalculate edge paths.
+ */
+sample({
+  clock: bumpEdgesForNodes,
+  source: $edgeRenderMap,
+  fn: (edgeMap, nodeIds) => {
+    const nodeIdSet = new Set(nodeIds)
+    const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
+
+    for (const [edgeId, edge] of edgeMap) {
+      if (!edge.isReady)
+        continue
+
+      // Check if edge is connected to any of the target nodes
+      if (nodeIdSet.has(edge.source) || nodeIdSet.has(edge.target)) {
+        // Empty changes object - just triggers version bump
+        changes.push({
+          edgeId,
+          changes: {},
+        })
+      }
+    }
+
+    if (changes.length === 0) {
+      return { changes: [] }
+    }
+    return { changes }
+  },
+  target: edgesNeedVersionBump,
+})
+
+/**
+ * Forward to edgeDataChanged only when there are edges to update
+ */
+sample({
+  clock: edgesNeedVersionBump,
+  filter: ({ changes }) => changes.length > 0,
+  target: edgeDataChanged,
+})
+
+// ============================================================================
+// WIRE 7: Port Collapse → Edge Version Bump
+// ============================================================================
+
+/**
+ * Event: Collapsed state changed for specific nodes.
+ * Used by NodeInternalsSync to trigger XYFlow handle position recalculation.
+ */
+export const portCollapseChangedForNodes = edgesDomain.createEvent<string[]>()
+
+/**
+ * When a port's collapsed state changes, extract affected nodeIds.
+ *
+ * NOTE: We don't compare with previous state because by the time this sample
+ * runs, $portUI has already been updated. Instead, we assume any update
+ * containing 'collapsed' field means the collapse state changed.
+ */
+sample({
+  clock: applyUIUpdates,
+  fn: (updates) => {
+    const affectedNodeIds = new Set<string>()
+
+    for (const [portKey, newUI] of updates) {
+      // If collapsed field is present in the update, trigger edge re-render
+      if (!('collapsed' in newUI)) {
+        continue
+      }
+
+      // Extract nodeId from portKey
+      try {
+        const { nodeId } = fromPortKey(portKey)
+        affectedNodeIds.add(nodeId)
+      } catch {
+        // Invalid portKey, skip
+      }
+    }
+
+    if (affectedNodeIds.size === 0) {
+      return []
+    }
+
+    return Array.from(affectedNodeIds)
+  },
+  target: portCollapseChangedForNodes,
+})
+
+/**
+ * Forward collapse changes to edge bump (only when there are affected nodes)
+ */
+sample({
+  clock: portCollapseChangedForNodes,
+  filter: nodeIds => nodeIds.length > 0,
+  target: bumpEdgesForNodes,
 })
 
 // ============================================================================

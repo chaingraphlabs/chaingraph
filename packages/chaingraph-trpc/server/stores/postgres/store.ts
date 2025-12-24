@@ -72,9 +72,9 @@ export async function deleteFlow(db: DBType, id: string) {
 
 export type ListOrderBy
   = 'createdAtDesc'
-    | 'createdAtAsc'
-    | 'updatedAtDesc'
-    | 'updatedAtAsc'
+  | 'createdAtAsc'
+  | 'updatedAtDesc'
+  | 'updatedAtAsc'
 
 export async function listFlows<T>(
   db: DBType,
@@ -157,6 +157,7 @@ export async function loadFlowMetadata(db: DBType, id: string): Promise<FlowMeta
     .select({
       // TODO: check if there are most efficient way to select nested JSON field
       metadata: sql<FlowMetadata>`${flowsTable.data}->'metadata'`,
+      version: flowsTable.version,
     })
     .from(flowsTable)
     .where(eq(flowsTable.id, id))
@@ -165,8 +166,11 @@ export async function loadFlowMetadata(db: DBType, id: string): Promise<FlowMeta
     return null
   }
 
+  const version = Number(result[0].version) || 1
+
   return {
     ...result[0].metadata,
+    version,
     createdAt: new Date(result[0].metadata.createdAt),
     updatedAt: new Date(result[0].metadata.updatedAt),
   }

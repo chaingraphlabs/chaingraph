@@ -10,9 +10,9 @@ import { Handle, Position } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo } from 'react'
 import { cn } from '@/lib/utils'
+import { usePortConfigWithExecution } from '@/store'
 import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
 import { usePortEdges } from '@/store/nodes/computed'
-import { usePortConfig } from '@/store/ports-v2'
 import { useXYFlowNodeFlowPorts } from '@/store/xyflow'
 import { PortDocTooltip } from './ports/doc'
 
@@ -33,14 +33,15 @@ const FlowPortHandle = memo(({
   compatiblePorts: string[] | null
 }) => {
   // Fetch port config from granular store
-  const config = usePortConfig(nodeId, portId)
+  const config = usePortConfigWithExecution(nodeId, portId)
 
   // Use granular edge hook
-  const edges = usePortEdges(nodeId, portId)
-  const isConnected = edges.length > 0
+  // const edges = usePortEdges(nodeId, portId)
+  // const isConnected = edges.length > 0
 
   // Early return if config not loaded
-  if (!config) return null
+  if (!config)
+    return null
 
   // Determine color based on connection
   const portColor = config.ui?.bgColor || '#4a90e2'

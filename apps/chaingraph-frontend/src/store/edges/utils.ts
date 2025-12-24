@@ -6,9 +6,9 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PortConfigFull, PortUIState } from '../ports-v2/types'
 import type { NodeExecutionState } from '../execution/types'
 import type { ExecutionState } from '../execution/types'
+import type { PortConfigFull, PortUIState } from '../ports-v2/types'
 import { isSystemErrorPort, isSystemPort } from '../ports-v2'
 import { EDGE_STYLES } from './consts'
 
@@ -31,7 +31,8 @@ export function extractEdgeColor(
 ): string {
   // Type-safe access to bgColor (exists on BasePortConfigUIType)
   const getBgColor = (ui: PortUIState | undefined): string | undefined => {
-    if (!ui) return undefined
+    if (!ui)
+      return undefined
     // bgColor is part of BasePortConfigUIType which all port UIs extend
     if ('bgColor' in ui && typeof (ui as Record<string, unknown>).bgColor === 'string') {
       return (ui as Record<string, unknown>).bgColor as string

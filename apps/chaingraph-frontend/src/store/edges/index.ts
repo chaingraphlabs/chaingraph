@@ -7,20 +7,21 @@
  */
 
 // Hooks
-export { useEdgesForNode, useEdgesForPort } from './hooks/useEdges'
-export { useEdgeRenderDataForNode, useEdgeRenderDataForPort, useXYFlowEdges } from './hooks/useXYFlowEdges'
+export { useXYFlowEdges } from './hooks/useXYFlowEdges'
 
 // Stores
 export {
-  // Core edge data
-  $edges,
   // Granular edge render data (new)
   $edgeRenderMap,
-  $xyflowEdgesList,
+  // Core edge data
+  $edges,
   // Backward compatibility alias
   $xyflowEdges,
+  $xyflowEdgesList,
   // Events
+  bumpEdgesForNodes,
   edgeDataChanged,
+  portCollapseChangedForNodes,
   removeEdge,
   requestAddEdge,
   requestRemoveEdge,
@@ -29,8 +30,8 @@ export {
   setEdges,
 } from './stores'
 
-// Utilities
-export { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
-
 // Types
 export * from './types'
+
+// Utilities
+export { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'

@@ -8,14 +8,12 @@
 
 import type { IPortConfig } from '@badaitech/chaingraph-types'
 import { Pencil } from 'lucide-react'
-import { memo, useMemo, useState } from 'react'
+import { memo, useState } from 'react'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { addFieldObjectPort } from '@/store/ports'
-import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortComponent } from '../../../PortComponent'
-import { AddPropPopover } from './AddPropPopover'
-import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store'
+import { LazyAddPropPopover } from './LazyAddPropPopover'
 
 interface PortFieldProps {
   nodeId: string
@@ -36,21 +34,6 @@ export function PortField({
 }: PortFieldProps) {
   // Edit mode state
   const [isEditOpen, setIsEditOpen] = useState(false)
-
-  // Get parent UI config
-  const parentUI = usePortUIWithExecution(nodeId, parentPortId)
-
-  // Get current child port config and UI for editing
-  const childConfig = usePortConfigWithExecution(nodeId, portId)
-  const childUI = usePortUIWithExecution(nodeId, portId)
-
-  // Cast parent UI for type-safe property access
-  const objectParentUI = parentUI as { keyDeletable?: boolean }
-
-  // Memoize this computation to prevent recalculation on every render
-  const isKeyDeletable = useMemo(() =>
-    objectParentUI.keyDeletable
-    || objectParentUI.keyDeletable === undefined, [objectParentUI])
 
   const handleEditSubmit = (data: { key: string, config: IPortConfig }) => {
     // Remove old field then add new field with updated config
@@ -76,7 +59,7 @@ export function PortField({
           <PortComponent nodeId={nodeId} portId={portId} />
         </div>
 
-        {(isSchemaMutable && objectParentUI.keyDeletable)
+        {(isSchemaMutable)
           && (
             <div className={cn(
               'flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity',
@@ -93,20 +76,16 @@ export function PortField({
                     <Pencil className="w-3 h-3" />
                   </button>
                 </PopoverTrigger>
-                {isEditOpen && childConfig && (
-                  <AddPropPopover
-                    onClose={() => setIsEditOpen(false)}
-                    onSubmit={handleEditSubmit}
-                    nextOrder={0}
-                    nodeId={nodeId}
-                    portId={portId}
-                    editMode
-                    existingField={{
-                      key: childConfig.key ?? '',
-                      config: { ...childConfig, ui: childUI } as IPortConfig,
-                    }}
-                  />
-                )}
+                <LazyAddPropPopover
+                  isOpen={isEditOpen}
+                  onClose={() => setIsEditOpen(false)}
+                  onSubmit={handleEditSubmit}
+                  nextOrder={0}
+                  nodeId={nodeId}
+                  portId={portId}
+                  editMode
+                  onDelete={onDelete}
+                />
               </Popover>
             </div>
           )}

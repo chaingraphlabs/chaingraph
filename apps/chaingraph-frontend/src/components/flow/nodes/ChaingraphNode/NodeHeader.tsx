@@ -7,7 +7,8 @@
  */
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
-import type { CategoryMetadata, CategoryStyle, NodeStatus } from '@badaitech/chaingraph-types'
+import type { CategoryStyle } from '@badaitech/chaingraph-types'
+import type { NodeStatus } from '@badaitech/chaingraph-types'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { useReactFlow } from '@xyflow/react'
@@ -17,6 +18,7 @@ import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
 import { $activeFlowMetadata } from '@/store/flow'
 import { updateNodeTitle } from '@/store/nodes'
+import { useXYFlowNodeHeaderData } from '@/store/xyflow'
 import { EditableNodeTitle } from './EditableNodeTitle'
 import { LazyNodeDocTooltip } from './LazyNodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
@@ -27,11 +29,6 @@ interface NodeHeaderProps {
   icon: CategoryIconName | (string & {}) // FIXME: extract CategoryIconName to prevent import cycle
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
-  debugMode: boolean
-  isBreakpointSet: boolean
-  onBreakpointToggle: () => void
-  categoryMetadata?: CategoryMetadata
-  renderData?: any // XYFlowNodeRenderData - for title, status, and NodeFlowPorts
 }
 
 export function NodeHeader({
@@ -39,11 +36,6 @@ export function NodeHeader({
   icon,
   style,
   onDelete,
-  debugMode,
-  isBreakpointSet,
-  onBreakpointToggle,
-  categoryMetadata,
-  renderData,
 }: NodeHeaderProps) {
   // Trace render (synchronous - measures render function time)
   const renderCountRef = useRef(0)
@@ -57,7 +49,11 @@ export function NodeHeader({
   }
 
   const Icon = getCategoryIcon(icon)
-  // const { fitView } = useReactFlow()
+
+  // Granular subscription - only re-renders when title, status, or categoryMetadata changes
+  const headerData = useXYFlowNodeHeaderData(nodeId)
+
+  const { fitView } = useReactFlow()
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
   const [showStatusBadge, setShowStatusBadge] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -69,23 +65,23 @@ export function NodeHeader({
   // const parentNode = useNode(node.metadata.parentNodeId || '')
 
   // Double-click header to fit view to this node
-  // const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
-  //   // Skip if clicking on editable title (let it handle its own double-click)
-  //   if ((e.target as HTMLElement).closest('[data-editable-title]')) {
-  //     return
-  //   }
+  const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
+    // Skip if clicking on editable title (let it handle its own double-click)
+    if ((e.target as HTMLElement).closest('[data-editable-title]')) {
+      return
+    }
 
-  //   e.preventDefault()
-  //   e.stopPropagation()
+    e.preventDefault()
+    e.stopPropagation()
 
-  //   // Smoothly animate camera to fit this node
-  //   fitView({
-  //     nodes: [{ id: node.id }],
-  //     duration: 800,
-  //     padding: 0.02,
-  //     maxZoom: 2,
-  //   })
-  // }, [fitView, node.id])
+    // Smoothly animate camera to fit this node
+    fitView({
+      nodes: [{ id: nodeId }],
+      duration: 800,
+      padding: 0.02,
+      maxZoom: 2,
+    })
+  }, [fitView, nodeId])
 
   // Callback to handle status badge visibility and state
   const handleStatusChange = useCallback((show: boolean, status: NodeStatus | null) => {
@@ -152,17 +148,17 @@ export function NodeHeader({
         background: style.primary,
         borderBottom: `1px solid ${style.secondary}`,
       }}
-    // onDoubleClick={handleHeaderDoubleClick}
+      onDoubleClick={handleHeaderDoubleClick}
     >
       {/* Flow ports (granular subscription - component handles its own early return) */}
       <NodeFlowPorts nodeId={nodeId} />
 
       <div className="flex items-center gap-2 min-w-0 relative">
-        {categoryMetadata
+        {headerData?.categoryMetadata
           ? (
             <LazyNodeDocTooltip
               nodeId={nodeId}
-              categoryMetadata={categoryMetadata}
+              categoryMetadata={headerData.categoryMetadata}
               className="cursor-pointer"
             >
               <div
@@ -193,7 +189,7 @@ export function NodeHeader({
           )}
 
         <EditableNodeTitle
-          value={renderData?.title || nodeId}
+          value={headerData?.title || nodeId}
           onChange={handleTitleChange}
           className="min-w-0 flex-1"
           style={{ color: style.text }}
@@ -201,7 +197,7 @@ export function NodeHeader({
 
         {/* Use the extracted and optimized NodeStatusBadge component */}
         <NodeStatusBadge
-          status={renderData?.status || 'idle'}
+          status={(headerData?.status || 'idle') as NodeStatus}
           prevStatus={prevStatus}
           showBadge={showStatusBadge}
           onStatusChange={handleStatusChange}

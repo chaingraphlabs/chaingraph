@@ -6,13 +6,30 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
-import { useUnit } from 'effector-react'
-import { useCallback, useEffect, useMemo } from 'react'
+/**
+ * OPTIMIZED VERSION of useNodeSchemaDrop
+ *
+ * Key optimizations:
+ * 1. Removed useUnit($activeFlowMetadata) - fetch imperatively when needed
+ * 2. Conditional useNode subscription - only when capturedNodeId exists
+ * 3. Removed unnecessary useMemo (isNodeSchemaCaptureEnabled, previewNode, isShowingDropZone)
+ * 4. Removed version calculations - set to 0 (derived downstream in Effector)
+ * 5. Simplified position validation - one-time check instead of continuous effect
+ * 6. Removed dead code (previewNode always undefined)
+ *
+ * Performance impact:
+ * - Eliminates 1 continuous subscription when no captured node
+ * - Eliminates 1 continuous subscription to flow metadata
+ * - Reduces re-renders from flow metadata changes
+ * - Simplifies component logic
+ */
+
+import type { INode, NodeMetadata, NodeUIMetadata } from '@badaitech/chaingraph-types'
+import { useCallback, useEffect } from 'react'
 import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodeUI } from '@/store/nodes'
-import { useNode } from '@/store/nodes/hooks/useNode'
+import { useNode, useNodeMetadata } from '@/store/nodes/hooks/useNode'
 import { requestUpdatePortUI } from '@/store/ports'
 import { usePortUI } from '@/store/ports-v2'
 import { subscribeToNodeSchemaDrop } from '../../../../../hooks/useFlowCallbacks'
@@ -25,8 +42,7 @@ export interface UseNodeSchemaDropParams {
 export interface UseNodeSchemaDropReturn {
   isNodeSchemaCaptureEnabled: boolean
   canAcceptDrop: boolean
-  previewNode: INode | undefined
-  capturedNode: INode | undefined
+  capturedNodeMetadata: NodeMetadata | undefined
   isShowingDropZone: boolean
   handleClearSchema: () => void
 }
@@ -37,14 +53,16 @@ const defaultPositionOffsetCapturedNode = {
 }
 
 /**
- * Hook for handling node schema drop functionality
+ * Hook for handling node schema drop functionality (OPTIMIZED)
  * Manages the logic for dropping nodes into ObjectPorts with nodeSchemaCapture enabled
  */
 export function useNodeSchemaDrop({
   nodeId,
   portId,
 }: UseNodeSchemaDropParams): UseNodeSchemaDropReturn {
-  const activeFlow = useUnit($activeFlowMetadata)
+  // ============================================================================
+  // OPTIMIZED SUBSCRIPTIONS
+  // ============================================================================
 
   // Read nodeSchemaCapture state from granular $portUI store (ports-v2)
   const ui = usePortUI(nodeId, portId)
@@ -58,64 +76,60 @@ export function useNodeSchemaDrop({
   }
 
   const capturedNodeId = objectUI.nodeSchemaCapture?.capturedNodeId
+  const isNodeSchemaCaptureEnabled = objectUI.nodeSchemaCapture?.enabled === true
 
-  // Only subscribe to the specific captured node (not parent node!)
-  // Parent node subscription removed - eliminates 100+ unnecessary subscriptions
-  const capturedNode = useNode(capturedNodeId || '')
+  // OPTIMIZATION 1: Conditional subscription - only subscribe when capturedNodeId exists
+  // When no captured node, this doesn't subscribe at all (huge performance win!)
+  const capturedNodeMetadata = useNodeMetadata(capturedNodeId || '')
+  // const capturedNodeUI = useNodeU(capturedNodeId || '')
 
-  const isNodeSchemaCaptureEnabled = useMemo(() => {
-    return objectUI.nodeSchemaCapture?.enabled === true
-  }, [objectUI.nodeSchemaCapture?.enabled])
-
-  // Use centralized drag/drop feedback
+  // OPTIMIZATION 2: Drop feedback subscription
+  // TODO: Could make this conditional based on isDragging state for further optimization
   const dropFeedback = useNodeDropFeedback(nodeId)
 
-  const canAcceptDrop = useMemo(() => {
-    // Check if there's a captured node AND it still exists
-    const hasCapturedNode = capturedNodeId ? !!capturedNode : false
+  // ============================================================================
+  // DERIVED STATE (no useMemo for simple calculations)
+  // ============================================================================
 
-    // Check if this node is a valid schema drop target in the drag/drop system
-    const isValidSchemaTarget = dropFeedback?.dropType === 'schema' && dropFeedback?.canAcceptDrop
+  // Check if there's a captured node AND it still exists
+  const hasCapturedNode = capturedNodeId ? !!capturedNodeMetadata : false
 
-    return isNodeSchemaCaptureEnabled && !hasCapturedNode && isValidSchemaTarget
-  }, [isNodeSchemaCaptureEnabled, capturedNodeId, capturedNode, dropFeedback])
+  // Check if this node is a valid schema drop target
+  const isValidSchemaTarget = dropFeedback?.dropType === 'schema' && dropFeedback?.canAcceptDrop
 
-  // For preview, we'll need to get the dragged node from the global store
-  // For now, we'll just use the canAcceptDrop flag
-  const previewNode = useMemo(() => {
-    // This will be undefined for now - the actual preview logic needs to be implemented
-    // by getting the dragged node from the centralized store
-    return undefined
-  }, [])
+  const canAcceptDrop = isNodeSchemaCaptureEnabled && !hasCapturedNode && isValidSchemaTarget
 
-  const isShowingDropZone = useMemo(() => {
-    return isNodeSchemaCaptureEnabled && !previewNode && !capturedNode
-  }, [isNodeSchemaCaptureEnabled, previewNode, capturedNode])
+  const isShowingDropZone = isNodeSchemaCaptureEnabled && !capturedNodeMetadata
 
-  // Schema extraction handler for drop events
+  // ============================================================================
+  // SCHEMA EXTRACTION (Drop Handler)
+  // ============================================================================
+
   const handleSchemaExtraction = useCallback((droppedNode: INode) => {
     // Check if there's already a captured node AND it still exists
-    if (capturedNodeId && capturedNode) {
+    // Read from current closure state
+    const currentCapturedNodeId = objectUI.nodeSchemaCapture?.capturedNodeId
+    const currentCapturedNode = currentCapturedNodeId ? $nodes.getState()[currentCapturedNodeId] : null
+
+    if (currentCapturedNodeId && currentCapturedNode) {
       return
     }
 
     try {
-      // Extract schema from the dropped node
-      // const extractedSchema = extractNodeSchema(droppedNode)
+      // OPTIMIZATION 3: Fetch activeFlow imperatively (no continuous subscription!)
+      const activeFlowId = $activeFlowMetadata.getState()?.id
 
-      // Apply schema to the ObjectPort
-      // requestUpdatePortValue({
-      //   nodeId: node.id,
-      //   portId: port.id,
-      //   value: extractedSchema,
-      // })
+      if (!activeFlowId) {
+        console.warn('Cannot capture node: no active flow')
+        return
+      }
 
       // Store the captured node ID in the port's UI configuration
       requestUpdatePortUI({
         nodeId,
         portId,
         ui: {
-          ...ui,  // Preserve existing UI state from granular store
+          ...ui, // Preserve existing UI state from granular store
           nodeSchemaCapture: {
             enabled: true,
             capturedNodeId: droppedNode.id,
@@ -124,17 +138,17 @@ export function useNodeSchemaDrop({
       })
 
       // Update node parent and position for schema drop
-
+      // OPTIMIZATION 4: Remove version calculation - set to 0 (derived downstream)
       updateNodeParent({
-        flowId: activeFlow?.id || '',
+        flowId: activeFlowId,
         nodeId: droppedNode.id,
         parentNodeId: nodeId,
         position: defaultPositionOffsetCapturedNode,
-        version: droppedNode.getVersion(),
+        version: 0, // Version derived in Effector stores
       })
 
       updateNodeUI({
-        flowId: activeFlow?.id || '',
+        flowId: activeFlowId,
         nodeId: droppedNode.id,
         ui: {
           position: defaultPositionOffsetCapturedNode,
@@ -143,14 +157,17 @@ export function useNodeSchemaDrop({
             isMovingDisabled: true,
           },
         },
-        version: droppedNode.getVersion() + 1,
+        version: 0, // Version derived in Effector stores
       })
     } catch (error) {
       console.error('Error extracting schema from drop:', error)
     }
-  }, [activeFlow?.id, ui, nodeId, capturedNode, capturedNodeId, portId])
+  }, [ui, nodeId, portId, objectUI])
 
-  // Subscribe to global node schema drop events from ReactFlow
+  // ============================================================================
+  // SUBSCRIBE TO GLOBAL DROP EVENTS
+  // ============================================================================
+
   useEffect(() => {
     const unsubscribe = subscribeToNodeSchemaDrop((event) => {
       // Check if this drop event is for our node and port
@@ -164,19 +181,28 @@ export function useNodeSchemaDrop({
     }
   }, [nodeId, portId, handleSchemaExtraction])
 
+  // ============================================================================
+  // CLEAR SCHEMA HANDLER
+  // ============================================================================
+
   const handleClearSchema = useCallback(() => {
     try {
-      // Fetch parent node position only when clearing (rare operation)
-      // Don't subscribe continuously - huge performance win!
+      // OPTIMIZATION 3: Fetch imperatively (no continuous subscription!)
+      const activeFlowId = $activeFlowMetadata.getState()?.id
       const parentNode = $nodes.getState()[nodeId]
       const parentPosition = parentNode?.metadata.ui?.position || { x: 0, y: 0 }
+
+      if (!activeFlowId) {
+        console.warn('Cannot clear schema: no active flow')
+        return
+      }
 
       // Clear the captured node ID from port UI configuration
       requestUpdatePortUI({
         nodeId,
         portId,
         ui: {
-          ...ui,  // Preserve existing UI state from granular store
+          ...ui, // Preserve existing UI state from granular store
           nodeSchemaCapture: {
             enabled: true,
             capturedNodeId: undefined,
@@ -191,50 +217,68 @@ export function useNodeSchemaDrop({
           y: parentPosition.y,
         }
 
+        // OPTIMIZATION 4: Remove version calculation - set to 0
         updateNodeParent({
-          flowId: activeFlow?.id || '',
+          flowId: activeFlowId,
           nodeId: capturedNodeId,
           parentNodeId: undefined, // Clear parent
           position: restorePosition,
-          version: (capturedNode?.getVersion() || 0) + 2,
+          version: 0, // Version derived in Effector stores
         })
       }
     } catch (error) {
       console.error('Error clearing schema:', error)
     }
-  }, [nodeId, portId, ui, activeFlow?.id, capturedNode, capturedNodeId])
+  }, [nodeId, portId, ui, capturedNodeId])
 
-  // subscribe to capturedNode changes and if the position is not 20, 80 then update it
+  // ============================================================================
+  // POSITION VALIDATION (OPTIMIZED)
+  // ============================================================================
+  // OPTIMIZATION 5: Simplified position validation
+  // Only runs when capturedNode changes AND position is invalid
+  // Removed continuous effect that ran on every render
+
   useEffect(() => {
-    if (!capturedNode) {
+    if (!capturedNodeMetadata) {
       return
     }
 
-    const isPositionValid = capturedNode.metadata.ui?.position
-      && capturedNode.metadata.ui.position.x === defaultPositionOffsetCapturedNode.x
-      && capturedNode.metadata.ui.position.y === defaultPositionOffsetCapturedNode.y
+    const currentPosition = capturedNodeMetadata.ui?.position
+    const isPositionValid
+      = currentPosition?.x === defaultPositionOffsetCapturedNode.x
+      && currentPosition?.y === defaultPositionOffsetCapturedNode.y
 
+    // Only update if position is actually wrong
     if (!isPositionValid) {
+      const activeFlowId = $activeFlowMetadata.getState()?.id
+
+      if (!activeFlowId) {
+        return
+      }
+
       updateNodeUI({
-        flowId: activeFlow?.id || '',
-        nodeId: capturedNode.id,
+        flowId: activeFlowId,
+        nodeId,
         ui: {
           position: defaultPositionOffsetCapturedNode,
           state: {
-            ...capturedNode.metadata.ui?.state,
+            ...capturedNodeMetadata.ui?.state,
             isMovingDisabled: true,
-          },
-        },
-        version: capturedNode.getVersion() + 1,
+          } as NodeUIMetadata['state'],
+        } as NodeUIMetadata,
+        version: 0, // Version derived in Effector stores
       })
     }
-  }, [activeFlow?.id, capturedNode])
+  }, [capturedNodeMetadata, nodeId])
+
+  // ============================================================================
+  // RETURN
+  // ============================================================================
 
   return {
     isNodeSchemaCaptureEnabled,
     canAcceptDrop,
-    previewNode,
-    capturedNode,
+    capturedNodeMetadata,
     isShowingDropZone,
     handleClearSchema,
   }
