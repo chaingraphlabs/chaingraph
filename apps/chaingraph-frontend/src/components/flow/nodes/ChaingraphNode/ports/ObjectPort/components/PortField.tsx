@@ -65,7 +65,8 @@ export function PortField({
                   'opacity-0 group-hover/field:opacity-100',
                   'hover:bg-accent bg-background/90 border border-border/50',
                   // Position based on port direction - near the title area
-                  isOutput ? 'left-1' : 'right-1',
+                  // isOutput ? 'left-1' : 'right-1',
+                  'right-1',
                 )}
                 onClick={() => setIsEditOpen(true)}
               >

@@ -300,6 +300,55 @@ export function AddPropPopover(props: Props) {
     }
   }, [editMode, existingField, props.nextOrder])
 
+  /**
+   * Reset form to default values
+   * Called after successful submission to clean state for next "Add field"
+   */
+  const resetForm = () => {
+    // Key
+    setKey('')
+
+    // Universal fields
+    setTitle('')
+    setDescription('')
+    setRequired(false)
+    setOrder(props.nextOrder ?? 0)
+    setHideEditor(false)
+
+    // String fields
+    setStringDefaultValue('')
+    setMinLength(undefined)
+    setMaxLength(undefined)
+    setPattern('')
+    setPlaceholder('')
+    setIsTextArea(false)
+    setIsPassword(false)
+
+    // Number fields
+    setNumberDefaultValue(0)
+    setMin(undefined)
+    setMax(undefined)
+    setStep(undefined)
+    setInteger(false)
+    setIsSlider(false)
+    setLeftSliderLabel('')
+    setRightSliderLabel('')
+
+    // Boolean fields
+    setBooleanDefaultValue(false)
+
+    // Enum fields
+    setEnumOptions([])
+    setEnumDefaultValue('')
+
+    // Secret fields
+    setSecretType('string')
+
+    // Type (reset to first allowed type)
+    setType(dropDownValues.at(0))
+    setIsDropdownOpen(false)
+  }
+
   const handleSubmit = () => {
     if (!type || !key)
       return
@@ -321,6 +370,11 @@ export function AddPropPopover(props: Props) {
       key,
       config: newPortConfig,
     })
+
+    // Reset form after successful submission (for next "Add field")
+    if (!editMode) {
+      resetForm()
+    }
   }
 
   return (

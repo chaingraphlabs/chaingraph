@@ -9,4 +9,5 @@
 export * from './number-to-string.node'
 export * from './on-stream-started.node'
 export * from './stream-buffer.node'
+export * from './string-length.node'
 export * from './text-search.node'

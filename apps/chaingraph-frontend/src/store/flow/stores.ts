@@ -71,6 +71,7 @@ import {
   getParentChain,
   portUpdateReceived,
   rejectPendingMutation,
+  removePortsBatch,
   toPortKey,
 } from '../ports-v2'
 import {
@@ -573,6 +574,20 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
           connections: config.connections || [],
         },
       })
+    },
+
+    [FlowEventType.PortRemoved]: (data) => {
+      const nodeId = data.port.getConfig().nodeId
+      if (!nodeId) {
+        console.error(`[PortRemoved] Port ${data.port.id} has no node ID`)
+        return
+      }
+
+      const portId = data.port.id
+      const portKey = toPortKey(nodeId, portId)
+
+      // Remove port from granular stores (values, configs, UI, connections, hierarchy)
+      removePortsBatch(new Set([portKey]))
     },
 
     [FlowEventType.EdgeAdded]: (data) => {

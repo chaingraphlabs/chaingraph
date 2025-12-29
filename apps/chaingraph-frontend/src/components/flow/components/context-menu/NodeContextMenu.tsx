@@ -35,7 +35,9 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
   // Register as overlay to block hotkeys while menu is open
   useEffect(() => {
     registerOverlay('node-context-menu')
-    return () => unregisterOverlay('node-context-menu')
+    return () => {
+      unregisterOverlay('node-context-menu')
+    }
   }, [])
 
   // Memoize filtered categories based on search

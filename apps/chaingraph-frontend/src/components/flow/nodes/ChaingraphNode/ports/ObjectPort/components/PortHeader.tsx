@@ -39,19 +39,21 @@ export function PortHeader({ title, isOutput, isCollapsed, onClick, nodeId, port
           'p-1 rounded-md gap-2',
           'bg-muted/40 hover:bg-muted/60 transition-colors',
           'text-sm font-medium nodrag',
-          isOutput ? 'justify-end' : 'justify-start',
+          !isOutput ? 'justify-end' : 'justify-start',
           'truncate',
         )}
       >
-        <div className={cn(
-          'flex-shrink-0',
-          isOutput ? 'order-last' : 'order-first',
+        {!isOutput && (
+          <div className={cn(
+            'flex-shrink-0',
+            isOutput ? 'order-last' : 'order-first',
+          )}
+          >
+            {isCollapsed
+              ? <ChevronDown className="w-4 h-4" />
+              : <ChevronRight className="w-4 h-4" />}
+          </div>
         )}
-        >
-          {isCollapsed
-            ? <ChevronDown className="w-4 h-4" />
-            : <ChevronRight className="w-4 h-4" />}
-        </div>
 
         <PortTitle
           className={cn(
@@ -71,6 +73,18 @@ export function PortHeader({ title, isOutput, isCollapsed, onClick, nodeId, port
         >
           {title}
         </PortTitle>
+
+        {isOutput && (
+          <div className={cn(
+            'flex-shrink-0',
+            isOutput ? 'order-last' : 'order-first',
+          )}
+          >
+            {isCollapsed
+              ? <ChevronDown className="w-4 h-4" />
+              : <ChevronRight className="w-4 h-4" />}
+          </div>
+        )}
       </button>
     </div>
   )

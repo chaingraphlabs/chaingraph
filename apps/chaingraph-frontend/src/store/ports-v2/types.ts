@@ -159,6 +159,8 @@ export interface ProcessedBatch {
     parents: Map<PortKey, PortKey>
     children: Map<PortKey, Set<PortKey>>
   }
+  /** Port keys to remove (stale array elements after reindexing) */
+  stalePortKeys: Set<PortKey>
 }
 
 /**

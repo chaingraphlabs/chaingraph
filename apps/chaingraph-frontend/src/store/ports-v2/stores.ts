@@ -182,6 +182,33 @@ $portConfigs.on(applyConfigUpdates, (state, updates) => {
   return newState
 })
 
+// Update $nodePortKeys index when configs are applied
+// This is critical for findStaleArrayElementPorts to work
+$nodePortKeys.on(applyConfigUpdates, (state, updates) => {
+  if (updates.size === 0)
+    return state
+
+  const newState = new Map(state)
+
+  for (const [portKey] of updates) {
+    // Extract nodeId from portKey (format: "nodeId:portId")
+    // Use lastIndexOf to handle nodeIds that contain colons (e.g., "ArrayNode:abc123:array")
+    const lastColonIndex = portKey.lastIndexOf(':')
+    if (lastColonIndex === -1)
+      continue
+
+    const nodeId = portKey.slice(0, lastColonIndex)
+
+    // Add portKey to the node's set
+    if (!newState.has(nodeId)) {
+      newState.set(nodeId, new Set())
+    }
+    newState.get(nodeId)!.add(portKey as PortKey)
+  }
+
+  return newState
+})
+
 // Connection updates
 $portConnections.on(applyConnectionUpdates, (state, updates) => {
   if (updates.size === 0)
@@ -204,12 +231,37 @@ $portVersions.on(applyVersionUpdates, (state, updates) => {
   return newState
 })
 
+/**
+ * Sort port keys for consistent ordering
+ * - Array elements (e.g., array[0], array[1]) are sorted numerically by index
+ * - Object properties are sorted alphabetically
+ */
+function sortPortKeys(keys: PortKey[]): PortKey[] {
+  return keys.sort((a, b) => {
+    // Extract the last segment of the portId for comparison
+    // e.g., "array[0]" -> "[0]", "array[0].field" -> "field"
+    const aPortId = a.slice(a.lastIndexOf(':') + 1)
+    const bPortId = b.slice(b.lastIndexOf(':') + 1)
+
+    // Check if both are array elements at the same level
+    // Match pattern like "prefix[N]" where N is the index
+    const aMatch = aPortId.match(/^(.+)\[(\d+)\]$/)
+    const bMatch = bPortId.match(/^(.+)\[(\d+)\]$/)
+
+    if (aMatch && bMatch && aMatch[1] === bMatch[1]) {
+      // Both are array elements with same prefix - sort by numeric index
+      return Number.parseInt(aMatch[2], 10) - Number.parseInt(bMatch[2], 10)
+    }
+
+    // Default: alphabetical sort
+    return aPortId.localeCompare(bPortId)
+  })
+}
+
 // Hierarchy updates (merge with existing)
 $portHierarchy.on(applyHierarchyUpdates, (state, updates) => {
   if (updates.parents.size === 0)
     return state
-
-  console.log(`[PortsV2/Store] $portHierarchy applying ${updates.parents.size} parent-child updates`)
 
   return {
     parents: new Map([...state.parents, ...updates.parents]),
@@ -217,7 +269,10 @@ $portHierarchy.on(applyHierarchyUpdates, (state, updates) => {
       const merged = new Map(state.children)
       for (const [parentKey, childrenSet] of updates.children) {
         const existing = merged.get(parentKey) || new Set()
-        merged.set(parentKey, new Set([...existing, ...childrenSet]))
+        // Merge and sort children for consistent ordering
+        const allChildren = [...existing, ...childrenSet]
+        const sortedChildren = sortPortKeys(allChildren)
+        merged.set(parentKey, new Set(sortedChildren))
       }
       return merged
     })(),
@@ -231,6 +286,7 @@ $portHierarchy.on(applyHierarchyUpdates, (state, updates) => {
 $portValues.on(removePortsBatch, (state, portKeys) => {
   if (portKeys.size === 0)
     return state
+
   const newState = new Map(state)
   for (const key of portKeys) {
     newState.delete(key)
@@ -278,8 +334,93 @@ $portVersions.on(removePortsBatch, (state, portKeys) => {
   return newState
 })
 
-// Also update $nodePortKeys when ports are removed
-// Note: This is handled in cleanup.ts via removeNode event
+/**
+ * Clean up $portHierarchy when ports are removed
+ * - Removes port from parents map
+ * - Removes port from parent's children set
+ * - Recursively removes any children of the removed port
+ */
+$portHierarchy.on(removePortsBatch, (state, portKeys) => {
+  if (portKeys.size === 0)
+    return state
+
+  const newParents = new Map(state.parents)
+  const newChildren = new Map(state.children)
+
+  // Collect all ports to remove (including descendants)
+  const portsToRemove = new Set<PortKey>()
+
+  // Helper to recursively collect descendants
+  function collectDescendants(portKey: PortKey): void {
+    portsToRemove.add(portKey)
+    const children = newChildren.get(portKey)
+    if (children) {
+      for (const childKey of children) {
+        collectDescendants(childKey)
+      }
+    }
+  }
+
+  // Collect all ports to remove (including their descendants)
+  for (const portKey of portKeys) {
+    collectDescendants(portKey)
+  }
+
+  // Now remove all collected ports
+  for (const portKey of portsToRemove) {
+    // 1. Get this port's parent
+    const parentKey = newParents.get(portKey)
+
+    // 2. Remove this port from parent's children set
+    if (parentKey) {
+      const siblings = newChildren.get(parentKey)
+      if (siblings) {
+        siblings.delete(portKey)
+        if (siblings.size === 0) {
+          newChildren.delete(parentKey)
+        }
+      }
+    }
+
+    // 3. Remove this port's parent entry
+    newParents.delete(portKey)
+
+    // 4. Remove this port's children entry (if any)
+    newChildren.delete(portKey)
+  }
+
+  return { parents: newParents, children: newChildren }
+})
+
+/**
+ * Update $nodePortKeys index when individual ports are removed
+ * (Node removal is handled separately in cleanup.ts)
+ */
+$nodePortKeys.on(removePortsBatch, (state, portKeys) => {
+  if (portKeys.size === 0)
+    return state
+
+  const newState = new Map(state)
+
+  for (const portKey of portKeys) {
+    // Extract nodeId from portKey (format: "nodeId:portId")
+    const colonIndex = portKey.lastIndexOf(':')
+    if (colonIndex === -1)
+      continue
+
+    const nodeId = portKey.slice(0, colonIndex)
+    const nodePortKeys = newState.get(nodeId)
+
+    if (nodePortKeys) {
+      nodePortKeys.delete(portKey)
+      if (nodePortKeys.size === 0) {
+        newState.delete(nodeId)
+      }
+    }
+  }
+
+  return newState
+})
 
 // ============================================================================
 // GLOBAL RESET
