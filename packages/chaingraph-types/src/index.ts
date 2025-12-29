@@ -16,9 +16,9 @@ export * from './edge'
 export * from './execution'
 export * from './flow'
 export {
+  getTransformerTraceCallbacks,
   registerSuperjsonTransformers,
   setTransformerTraceCallbacks,
-  getTransformerTraceCallbacks,
 } from './json-transformers'
 export type { TransformerTraceCallbacks } from './json-transformers'
 export * from './node'

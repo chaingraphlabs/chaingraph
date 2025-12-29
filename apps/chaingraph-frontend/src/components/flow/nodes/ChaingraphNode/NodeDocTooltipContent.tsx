@@ -75,15 +75,6 @@ export function NodeDocTooltipContent({
   // Fetch node on-demand (only when tooltip is actually rendered)
   const node = useNode(nodeId)
 
-  // Early return if node not loaded yet
-  if (!node) {
-    return (
-      <div className="w-[450px] h-[200px] bg-card rounded-lg flex items-center justify-center">
-        <div className="text-sm text-muted-foreground">Loading node data...</div>
-      </div>
-    )
-  }
-
   const style = useMemo(() => (
     theme === 'dark'
       ? categoryMetadata.style.dark
@@ -93,7 +84,7 @@ export function NodeDocTooltipContent({
   // Serialize node data lazily when needed
   const serializedData = useMemo(() => {
     try {
-      const serialized = node.serialize()
+      const serialized = node?.serialize()
       return JSON.stringify(serialized, null, 2)
     } catch (error) {
       return 'Error serializing node data'
@@ -107,24 +98,24 @@ export function NodeDocTooltipContent({
 
   // Get input and output ports
   const systemPorts = useMemo(() =>
-    Array.from(node.ports.values())
+    Array.from(node?.ports.values() || [])
       .filter(p => p.isSystem())
-      .sort(), [node.ports])
+      .sort(), [node?.ports])
 
   const inputs = useMemo(() =>
-    Array.from(node.ports.values()).filter(
+    Array.from(node?.ports.values() || []).filter(
       port => port.getConfig().direction === PortDirection.Input && !port.isSystem(),
-    ), [node.ports])
+    ), [node?.ports])
 
   const passthroughs = useMemo(() =>
-    Array.from(node.ports.values()).filter(
+    Array.from(node?.ports.values() || []).filter(
       port => port.getConfig().direction === PortDirection.Passthrough && !port.isSystem(),
-    ), [node.ports])
+    ), [node?.ports])
 
   const outputs = useMemo(() =>
-    Array.from(node.ports.values()).filter(
+    Array.from(node?.ports.values() || []).filter(
       port => port.getConfig().direction === PortDirection.Output && !port.isSystem(),
-    ), [node.ports])
+    ), [node?.ports])
 
   // Function to format description with proper line breaks
   const formatDescription = (description: string) => {
@@ -139,6 +130,15 @@ export function NodeDocTooltipContent({
         {line}
       </div>
     ))
+  }
+
+  // Early return if node not loaded yet
+  if (!node) {
+    return (
+      <div className="w-[450px] h-[200px] bg-card rounded-lg flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Loading node data...</div>
+      </div>
+    )
   }
 
   return (

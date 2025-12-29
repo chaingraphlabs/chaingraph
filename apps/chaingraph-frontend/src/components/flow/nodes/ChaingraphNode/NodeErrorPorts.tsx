@@ -109,11 +109,11 @@ function NodeErrorPorts({ nodeId }: NodeErrorPortsProps) {
         {!hasConnections && (
           isExpanded
             ? (
-              <ChevronUpIcon className="w-3.5 h-3.5" />
-            )
+                <ChevronUpIcon className="w-3.5 h-3.5" />
+              )
             : (
-              <ChevronDownIcon className="w-3.5 h-3.5" />
-            )
+                <ChevronDownIcon className="w-3.5 h-3.5" />
+              )
         )}
       </button>
 

@@ -139,6 +139,15 @@ export const pasteNodes = flowContextProcedure
 
           clonedNode.setStatus(NodeStatus.Initialized, false)
 
+          // Mark pasted nodes as selected for immediate manipulation after paste
+          clonedNode.setUI({
+            ...clonedNode.metadata.ui,
+            state: {
+              ...clonedNode.metadata.ui?.state,
+              isSelected: true,
+            },
+          }, false)
+
           // Add to flow
           createdNodes.push(clonedNode)
         } catch (error) {
@@ -202,6 +211,12 @@ export const pasteNodes = flowContextProcedure
       const createdEdges: SerializedEdge[] = []
       const skippedEdges: string[] = []
 
+      // Calculate anchor position offset (same formula as node positioning)
+      const anchorOffset = {
+        x: pastePosition.x - actualVirtualOrigin.x,
+        y: pastePosition.y - actualVirtualOrigin.y,
+      }
+
       // Prepare edge connection data with validated IDs
       const edgesToAdd = clipboardData.edges
         .map((edgeData) => {
@@ -231,13 +246,40 @@ export const pasteNodes = flowContextProcedure
             return null
           }
 
+          // Process anchors in metadata - regenerate IDs, remap parent references, and offset positions
+          const processedMetadata = { ...edgeData.metadata }
+          if (processedMetadata?.anchors && Array.isArray(processedMetadata.anchors)) {
+            processedMetadata.anchors = processedMetadata.anchors.map((anchor) => {
+              const newParentId = anchor.parentNodeId
+                ? nodeIdMapping.get(anchor.parentNodeId) || undefined
+                : undefined
+
+              // CRITICAL: Only offset anchors WITHOUT a parent
+              // Anchors with a parent have relative coords - parent node already moves
+              const shouldOffset = !newParentId
+
+              return {
+                ...anchor,
+                // Generate new anchor ID to avoid duplicates
+                id: `anchor-${customAlphabet(nolookalikes, 8)()}`,
+                // Remap parentNodeId if the parent was also copied, otherwise clear it
+                parentNodeId: newParentId,
+                // Offset absolute anchors, keep relative anchors unchanged
+                x: shouldOffset ? anchor.x + anchorOffset.x : anchor.x,
+                y: shouldOffset ? anchor.y + anchorOffset.y : anchor.y,
+                // Mark pasted anchors as selected for immediate manipulation
+                selected: true,
+              }
+            })
+          }
+
           const edge = new Edge(
             generateEdgeID(),
             sourceNode,
             sourcePort,
             targetNode,
             targetPort,
-            edgeData.metadata || {},
+            processedMetadata || {},
           )
           edge.status = edgeData.status || EdgeStatus.Active
 
@@ -247,11 +289,24 @@ export const pasteNodes = flowContextProcedure
 
       await emptyFlow.addEdges(edgesToAdd, true)
 
-      // Force migrate flow to v2
-      const flowWithPastedNodes = FlowMigration.migrateFlowFromV1ToV2(emptyFlow)
+      // Migrate flow to v2 if needed (defensive check to avoid unnecessary work)
+      const needsMigration = emptyFlow.metadata.schemaVersion !== 'v2'
+      const flowWithPastedNodes = needsMigration
+        ? FlowMigration.migrateFlowFromV1ToV2(emptyFlow)
+        : emptyFlow
 
-      await flow.addNodes(Array.from(flowWithPastedNodes.nodes.values()), false)
-      await flow.addEdges(Array.from(flowWithPastedNodes.edges.values()), false)
+      // Transfer nodes and edges to actual flow (with duplicate prevention)
+      const nodesToAdd = Array.from(flowWithPastedNodes.nodes.values())
+        .filter(node => !flow.nodes.has(node.id))
+
+      if (nodesToAdd.length !== flowWithPastedNodes.nodes.size) {
+        console.warn(`[PASTE] Skipped ${flowWithPastedNodes.nodes.size - nodesToAdd.length} duplicate nodes during paste`)
+      }
+
+      await flow.addNodes(nodesToAdd, false)
+
+      const edgesToAddToFlow = Array.from(flowWithPastedNodes.edges.values())
+      await flow.addEdges(edgesToAddToFlow, false)
 
       // Save the updated flow
       await ctx.flowStore.updateFlow(flow as Flow)
@@ -259,7 +314,7 @@ export const pasteNodes = flowContextProcedure
       return {
         success: true,
         nodeCount: createdNodes.length,
-        edgeCount: createdEdges.length,
+        edgeCount: edgesToAdd.length,
         createdNodes: createdNodes.map(node => ({
           id: node.id,
           type: node.metadata.type,

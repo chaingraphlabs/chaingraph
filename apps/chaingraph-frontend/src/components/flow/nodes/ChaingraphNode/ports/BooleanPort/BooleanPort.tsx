@@ -14,7 +14,6 @@ import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, use
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { usePortEdges } from '@/store/nodes/computed'
 import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
-import { usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 

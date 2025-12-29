@@ -41,13 +41,13 @@ export const DEFAULT_CURVE_CONFIG: CurveConfig = {
   renderMode: 'bezier-chain',
   curveType: 'centripetal',
   alpha: 0.5,
-  curvature: 0.33,
+  curvature: 0.1,
   tension: 1.0,
   smoothness: 20,
   borderRadius: 8,
-  virtualAnchorMaxOffset: 1000,
-  virtualAnchorRefDistance: 300,
-  virtualAnchorPower: 0.5,
+  virtualAnchorMaxOffset: 1250,
+  virtualAnchorRefDistance: 375,
+  virtualAnchorPower: 0.9,
 }
 
 const STORAGE_KEY = 'chaingraph:curve-config'

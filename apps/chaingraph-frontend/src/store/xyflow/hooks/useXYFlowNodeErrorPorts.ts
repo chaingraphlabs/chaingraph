@@ -31,17 +31,17 @@ export function useXYFlowNodeErrorPorts(nodeId: string) {
       const data = map[id]
       return data
         ? {
-          errorPortId: data.errorPortId,
-          errorMessagePortId: data.errorMessagePortId,
-          isErrorPortCollapsed: data.isErrorPortCollapsed,
-          version: data.version,
-        }
+            errorPortId: data.errorPortId,
+            errorMessagePortId: data.errorMessagePortId,
+            isErrorPortCollapsed: data.isErrorPortCollapsed,
+            version: data.version,
+          }
         : {
-          errorPortId: undefined,
-          errorMessagePortId: undefined,
-          isErrorPortCollapsed: undefined,
-          version: undefined,
-        }
+            errorPortId: undefined,
+            errorMessagePortId: undefined,
+            isErrorPortCollapsed: undefined,
+            version: undefined,
+          }
     },
     updateFilter: (prev, next) => {
       // No change if both undefined

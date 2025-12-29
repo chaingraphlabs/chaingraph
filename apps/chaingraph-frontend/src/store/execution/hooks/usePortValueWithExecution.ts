@@ -106,6 +106,7 @@ export function usePortConfigWithExecution(
 
   // Get design-time config from regular stores (fallback)
   const designConfig = usePortConfig(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
 
   // If there's an active execution with a node instance, try to get runtime config
   if (nodeExecution?.node) {
@@ -133,7 +134,10 @@ export function usePortConfigWithExecution(
   }
 
   // Fallback: return design-time config
-  return designConfig
+  return {
+    ...designConfig,
+    ui: ui as IPortConfig['ui'],
+  } as PortConfigFull
 }
 
 /**

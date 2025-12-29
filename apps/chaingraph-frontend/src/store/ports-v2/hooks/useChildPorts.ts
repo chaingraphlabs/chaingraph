@@ -51,8 +51,7 @@ export function useChildPorts(nodeId: string, parentPortId: string): string[] {
         try {
           const { portId } = fromPortKey(childKey)
           portIds.push(portId)
-        }
-        catch (error) {
+        } catch (error) {
           console.error(`[useChildPorts] Invalid childKey in hierarchy: ${childKey}`, error)
           // Skip malformed keys instead of crashing
         }

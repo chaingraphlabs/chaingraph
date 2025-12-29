@@ -50,6 +50,21 @@ export const updateAnchors = flowContextProcedure
         }
       }
 
+      // Validate parent nodes exist and are groups
+      for (const anchor of anchors) {
+        if (anchor.parentNodeId) {
+          const parentNode = flow.nodes.get(anchor.parentNodeId)
+
+          if (!parentNode) {
+            throw new Error(`Parent node ${anchor.parentNodeId} not found for anchor ${anchor.id}`)
+          }
+
+          if (parentNode.metadata.category !== 'group') {
+            throw new Error(`Parent node ${anchor.parentNodeId} is not a group node`)
+          }
+        }
+      }
+
       // Update metadata (emits EdgeMetadataUpdated event)
       await flow.updateEdgeMetadata(edgeId, { anchors })
       await ctx.flowStore.updateFlow(flow as Flow)

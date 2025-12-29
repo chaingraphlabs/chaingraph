@@ -10,18 +10,18 @@ import type { IPort } from '@badaitech/chaingraph-types'
 import type { Edge, FinalConnectionState, HandleType } from '@xyflow/react'
 import type { AddEdgeEventData, EdgeData, EdgeRenderData, RemoveEdgeEventData } from './types'
 import { getDefaultTransferEngine } from '@badaitech/chaingraph-types'
-import { attach, sample } from 'effector'
+import { attach, combine, sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
 import { edgesDomain, portsDomain } from '@/store/domains'
 import { $curveConfig } from '@/store/settings/curve-config'
-import { $selectedEdgeId } from './selection'
 import { globalReset } from '../common'
 import { $executionNodes, $executionState, $highlightedEdgeId, $highlightedNodeId } from '../execution'
-import { $nodeLayerDepth, $nodes } from '../nodes'
+import { $nodeLayerDepth, $nodes } from '../nodes/stores'
 import { $portConfigs, $portUI, applyUIUpdates, fromPortKey, toPortKey } from '../ports-v2'
 import { $trpcClient } from '../trpc/store'
-import { $xyflowNodesList } from '../xyflow'
+import { $xyflowNodesList } from '../xyflow/stores/xyflow-nodes-list'
 import { EDGE_STYLES } from './consts'
+import { $selectedEdgeId } from './selection'
 import { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
 
 // EVENTS
@@ -669,41 +669,50 @@ sample({
 /**
  * Converts render map to array, filtering only ready edges.
  * This is the final store consumed by React components.
+ *
+ * Combines with $selectedEdgeId to make edge selection controlled.
+ * This ensures XYFlow respects our selection state (not internal tracking).
  */
-export const $xyflowEdgesList = $edgeRenderMap.map((edgeMap): Edge[] => {
-  const edges: Edge[] = []
+export const $xyflowEdgesList = combine(
+  $edgeRenderMap,
+  $selectedEdgeId,
+  (edgeMap, selectedId): Edge[] => {
+    const edges: Edge[] = []
 
-  for (const renderData of edgeMap.values()) {
-    // Skip edges that aren't ready (missing port configs)
-    if (!renderData.isReady) {
-      continue
+    for (const renderData of edgeMap.values()) {
+      // Skip edges that aren't ready (missing port configs)
+      if (!renderData.isReady) {
+        continue
+      }
+
+      edges.push({
+        id: renderData.edgeId,
+        source: renderData.source,
+        target: renderData.target,
+        sourceHandle: renderData.sourceHandle,
+        targetHandle: renderData.targetHandle,
+        type: renderData.type,
+        zIndex: renderData.zIndex,
+        style: {
+          stroke: renderData.color,
+          strokeWidth: renderData.strokeWidth,
+          strokeOpacity: renderData.strokeOpacity,
+        },
+        data: {
+          animated: renderData.animated,
+          edgeData: renderData.edgeData,
+          sourcePortId: renderData.sourceHandle,
+          targetPortId: renderData.targetHandle,
+          version: renderData.version,
+        },
+        // Controlled selection - XYFlow will respect this
+        selected: renderData.edgeId === selectedId,
+      })
     }
 
-    edges.push({
-      id: renderData.edgeId,
-      source: renderData.source,
-      target: renderData.target,
-      sourceHandle: renderData.sourceHandle,
-      targetHandle: renderData.targetHandle,
-      type: renderData.type,
-      zIndex: renderData.zIndex,
-      style: {
-        stroke: renderData.color,
-        strokeWidth: renderData.strokeWidth,
-        strokeOpacity: renderData.strokeOpacity,
-      },
-      data: {
-        animated: renderData.animated,
-        edgeData: renderData.edgeData,
-        sourcePortId: renderData.sourceHandle,
-        targetPortId: renderData.targetHandle,
-        version: renderData.version,
-      },
-    })
-  }
-
-  return edges
-})
+    return edges
+  },
+)
 
 /**
  * Backward compatibility alias

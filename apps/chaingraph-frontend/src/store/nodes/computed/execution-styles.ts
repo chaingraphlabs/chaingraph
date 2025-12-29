@@ -50,7 +50,8 @@ export const DIMMED_EXECUTION_STYLE: NodeExecutionStyle = {
  * Compute execution style for a node based on its execution status
  */
 function computeExecutionStyle(status: string | undefined): NodeExecutionStyle {
-  if (!status) return DEFAULT_EXECUTION_STYLE
+  if (!status)
+    return DEFAULT_EXECUTION_STYLE
 
   switch (status) {
     case 'running':

@@ -27,12 +27,16 @@ export interface EdgeStyle {
 export interface EdgeAnchor {
   /** Unique identifier */
   id: string
-  /** Absolute X coordinate on canvas */
+  /** X coordinate (absolute if no parent, relative if parentNodeId is set) */
   x: number
-  /** Absolute Y coordinate on canvas */
+  /** Y coordinate (absolute if no parent, relative if parentNodeId is set) */
   y: number
   /** Order index in path (0 = closest to source) */
   index: number
+  /** Parent group node ID (if anchor is child of a group) */
+  parentNodeId?: string
+  /** Selection state (set by backend during paste operations) */
+  selected?: boolean
 }
 
 /**

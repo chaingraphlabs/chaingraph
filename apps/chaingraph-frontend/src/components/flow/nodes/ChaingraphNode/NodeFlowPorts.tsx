@@ -12,7 +12,6 @@ import { memo } from 'react'
 import { cn } from '@/lib/utils'
 import { usePortConfigWithExecution } from '@/store'
 import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
-import { usePortEdges } from '@/store/nodes/computed'
 import { useXYFlowNodeFlowPorts } from '@/store/xyflow'
 import { PortDocTooltip } from './ports/doc'
 

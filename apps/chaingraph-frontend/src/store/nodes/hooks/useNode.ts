@@ -7,7 +7,6 @@
  */
 
 import type { INode, NodeMetadata } from '@badaitech/chaingraph-types'
-import { deepEqual } from 'node:assert'
 import { isDeepEqual } from '@badaitech/chaingraph-types'
 import { useStoreMap, useUnit } from 'effector-react'
 import { $draggingNodes, $nodes } from '../stores'

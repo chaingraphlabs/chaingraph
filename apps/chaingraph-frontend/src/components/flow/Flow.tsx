@@ -22,28 +22,48 @@ import { NodeContextMenu } from '@/components/flow/components/context-menu/NodeC
 import { FlowControlPanel } from '@/components/flow/components/control-panel/FlowControlPanel'
 import { StyledControls } from '@/components/flow/components/controls/StyledControls'
 import { FlowEmptyState } from '@/components/flow/components/FlowEmptyState'
+import { SelectionCrosshair } from '@/components/flow/components/SelectionCrosshair'
 import { SubscriptionStatus } from '@/components/flow/components/SubscriptionStatus'
 import { edgeTypes } from '@/components/flow/edges'
+import { useBoxSelection } from '@/components/flow/hooks/useBoxSelection'
+import { useCanvasHover } from '@/components/flow/hooks/useCanvasHover'
 import { useEdgeAnchorKeyboard } from '@/components/flow/hooks/useEdgeAnchorKeyboard'
 import { useEdgeKeyboardShortcuts } from '@/components/flow/hooks/useEdgeKeyboardShortcuts'
 import { useFlowCallbacks } from '@/components/flow/hooks/useFlowCallbacks'
-import { useFlowCopyPaste } from '@/components/flow/hooks/useFlowCopyPaste'
+import { useGrabMode } from '@/components/flow/hooks/useGrabMode'
+import { useKeyboardShortcuts } from '@/components/flow/hooks/useKeyboardShortcuts'
 import { useNodeDrop } from '@/components/flow/hooks/useNodeDrop'
 import { NodeInternalsSync } from '@/components/flow/NodeInternalsSync'
+import AnchorNode from '@/components/flow/nodes/AnchorNode/AnchorNode'
 import ChaingraphNodeOptimized from '@/components/flow/nodes/ChaingraphNode/ChaingraphNodeOptimized'
 import GroupNode from '@/components/flow/nodes/GroupNode/GroupNode'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { ZoomContext } from '@/providers/ZoomProvider'
 import { $isDraggingAnchor, deselectAnchor } from '@/store/edges/anchor-selection'
 import { useXYFlowEdges } from '@/store/edges/hooks/useXYFlowEdges'
 import { deselectEdge, selectEdge } from '@/store/edges/selection'
 import { $isConnectingBeginEvent, $isConnectingEndEvent } from '@/store/edges/stores'
-import { $executionState, $executionSubscriptionState, ExecutionSubscriptionStatus } from '@/store/execution'
 
+import { $executionState, $executionSubscriptionState, ExecutionSubscriptionStatus } from '@/store/execution'
 import { $activeFlowId, $flowSubscriptionState, setActiveFlowId } from '@/store/flow'
-import { addNodeToFlow } from '@/store/nodes'
+import {
+  $isDeleteDialogOpen,
+  $isGrabMode,
+  confirmDelete,
+  hideDeleteConfirmation,
+} from '@/store/hotkeys'
+import { $selectedNodeIds, addNodeToFlow } from '@/store/nodes'
 import { useXYFlowNodes } from '@/store/nodes/hooks/useXYFlowNodes'
-import { FPSCounter } from './components/FPSCounter'
 
 // Configuration constants
 const defaultViewport: Viewport = {
@@ -114,19 +134,40 @@ function Flow({
   const nodeTypes = useMemo(() => ({
     chaingraphNode: ChaingraphNodeOptimized,
     groupNode: memo(GroupNode),
+    anchorNode: memo(AnchorNode),
   }), [])
 
   // Setup node drop handling
   useNodeDrop()
 
-  // Setup copy-paste functionality
-  const copyPasteHook = useFlowCopyPaste()
+  // Setup unified keyboard shortcuts (Copy, Paste, Duplicate, Select All, Frame, Delete)
+  const { confirmDeleteSelectedNodes } = useKeyboardShortcuts()
 
   // Setup anchor keyboard shortcuts
   useEdgeAnchorKeyboard()
 
   // Setup edge keyboard shortcuts (delete edge with backspace)
   useEdgeKeyboardShortcuts()
+
+  // Setup canvas hover tracking for hotkeys
+  useCanvasHover(reactFlowWrapper)
+
+  // Setup box selection mode (B key)
+  const { selectionOnDrag, selectionMode, panOnDrag, onSelectionEnd } = useBoxSelection()
+
+  // Setup grab mode (G key)
+  useGrabMode()
+
+  // Get hotkey-related state
+  const isDeleteDialogOpen = useUnit($isDeleteDialogOpen)
+  const selectedNodeIds = useUnit($selectedNodeIds)
+  const isGrabMode = useUnit($isGrabMode)
+
+  // Handle delete confirmation
+  const handleConfirmDelete = useCallback(() => {
+    confirmDeleteSelectedNodes()
+    confirmDelete()
+  }, [confirmDeleteSelectedNodes])
 
   // Get interaction callbacks
   const {
@@ -227,7 +268,8 @@ function Flow({
   // Handle pane click to deselect (but not during anchor drag)
   const handlePaneClick = useCallback(() => {
     // Don't deselect during anchor drag - user may release mouse outside edge path
-    if (isDraggingAnchor) return
+    if (isDraggingAnchor)
+      return
     deselectEdge()
     deselectAnchor()
   }, [isDraggingAnchor])
@@ -294,7 +336,11 @@ function Flow({
         onNodeDrag={onNodeDrag}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
+        onSelectionEnd={onSelectionEnd}
         panOnScroll={true}
+        panOnDrag={panOnDrag}
+        selectionOnDrag={selectionOnDrag}
+        selectionMode={selectionMode}
         zoomOnDoubleClick={true}
         connectOnClick={true}
         deleteKeyCode={['Delete', 'Backspace']}
@@ -307,6 +353,7 @@ function Flow({
         minZoom={0.05}
         maxZoom={2}
         nodeDragThreshold={1}
+        nodesDraggable={!isGrabMode}
       >
         <Background />
         <NodeInternalsSync />
@@ -336,6 +383,41 @@ function Flow({
 
       {/* Show empty state when no flow is selected */}
       {!activeFlowId && <FlowEmptyState />}
+
+      {/* Selection crosshair for box selection mode */}
+      <SelectionCrosshair />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={open => !open && hideDeleteConfirmation()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete
+              {' '}
+              {selectedNodeIds.length}
+              {' '}
+              node
+              {selectedNodeIds.length !== 1 ? 's' : ''}
+              ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The selected node
+              {selectedNodeIds.length !== 1 ? 's' : ''}
+              {' '}
+              and all connections will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

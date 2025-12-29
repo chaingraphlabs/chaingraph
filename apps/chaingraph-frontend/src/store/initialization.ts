@@ -16,12 +16,13 @@ import { fetchCategorizedNodesFx } from './categories'
 import { initializationDomain } from './domains'
 import { loadFlowsListFx } from './flow'
 import { initInterpolatorFx } from './nodes'
-// Import ports-v2 to register all sample() wiring for granular port stores
-// This enables the buffering system, echo detection, initialization handlers, etc.
-import '@/store/ports-v2'
 import { setSession } from './session'
 import { $trpcClientExecutor, createTRPCExecutionClientEvent } from './trpc/execution-client'
 import { $trpcClient, createTRPCClientEvent } from './trpc/store'
+
+// Import ports-v2 to register all sample() wiring for granular port stores
+// This enables the buffering system, echo detection, initialization handlers, etc.
+import '@/store/ports-v2'
 
 // Public API Types
 export interface ChainGraphConfig {
@@ -91,9 +92,10 @@ const initializeAppFx = initializationDomain.createEffect<AppInternalConfig, voi
   // Connect trace callbacks for deserialization tracing (dev mode only)
   if (import.meta.env.DEV) {
     setTransformerTraceCallbacks({
-      onDeserializeStart: (type) => trace.start(`deserialize.${type}`, { category: 'io' }),
+      onDeserializeStart: type => trace.start(`deserialize.${type}`, { category: 'io' }),
       onDeserializeEnd: (spanId) => {
-        if (spanId) trace.end(spanId)
+        if (spanId)
+          trace.end(spanId)
       },
     })
   }

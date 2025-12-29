@@ -11,6 +11,7 @@ import { useEffect } from 'react'
 import { requestRemoveEdge } from '@/store/edges'
 import { $selectedEdgeId, deselectEdge } from '@/store/edges/selection'
 import { $activeFlowId } from '@/store/flow'
+import { shouldIgnoreHotkey } from '@/store/hotkeys'
 
 /**
  * Hook for handling keyboard shortcuts when edges are selected
@@ -24,6 +25,10 @@ export function useEdgeKeyboardShortcuts() {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle if edge is selected (but not if anchor is selected)
       if (!selectedEdgeId || !activeFlowId)
+        return
+
+      // Skip if typing in an input element (e.g., search box, text fields)
+      if (shouldIgnoreHotkey(e))
         return
 
       if (e.key === 'Delete' || e.key === 'Backspace') {

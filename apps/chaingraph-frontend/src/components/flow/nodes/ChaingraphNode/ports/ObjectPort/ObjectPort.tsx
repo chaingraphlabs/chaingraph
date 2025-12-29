@@ -68,8 +68,8 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
       connectedEdges.filter(edge => edge.targetPortId === config.id).length === 0
       || config.direction === 'output'
     )
-      && !isNodeSchemaCaptureEnabled
-      && !ui?.hideInternalProperties
+    && !isNodeSchemaCaptureEnabled
+    && !ui?.hideInternalProperties
   }, [config, connectedEdges, isNodeSchemaCaptureEnabled, ui])
 
   const dropNodeZoneRef = useRef<HTMLDivElement>(null)
@@ -145,77 +145,77 @@ function ObjectPortInner({ nodeId, portId }: ObjectPortProps) {
               <AnimatePresence mode="wait">
                 {isShowingDropZone
                   ? (
-                    <motion.div
-                      key="dropzone"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 25,
-                      }}
-                      className={cn(
-                        'border-2 border-dashed rounded-lg p-6',
-                        'flex flex-col items-center justify-center min-h-[150px]',
-                        'bg-muted/5 hover:bg-muted/10 transition-colors duration-300',
-                        'border-muted-foreground/30',
-                      )}
-                    >
                       <motion.div
-                        animate={{
-                          y: [0, -5, 0],
-                          opacity: [0.5, 1, 0.5],
-                        }}
+                        key="dropzone"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
                         transition={{
-                          repeat: Infinity,
-                          duration: 2.5,
-                          ease: 'easeInOut',
+                          type: 'spring',
+                          stiffness: 300,
+                          damping: 25,
                         }}
-                        className="mb-3 text-muted-foreground/60"
+                        className={cn(
+                          'border-2 border-dashed rounded-lg p-6',
+                          'flex flex-col items-center justify-center min-h-[150px]',
+                          'bg-muted/5 hover:bg-muted/10 transition-colors duration-300',
+                          'border-muted-foreground/30',
+                        )}
                       >
-                        <svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        <motion.div
+                          animate={{
+                            y: [0, -5, 0],
+                            opacity: [0.5, 1, 0.5],
+                          }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 2.5,
+                            ease: 'easeInOut',
+                          }}
+                          className="mb-3 text-muted-foreground/60"
                         >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="17 8 12 3 7 8"></polyline>
-                          <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                        </motion.div>
+                        <motion.div
+                          className="text-sm font-medium text-muted-foreground text-center w-full px-4"
+                          animate={{ opacity: [0.7, 1, 0.7] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 3,
+                            ease: 'easeInOut',
+                          }}
+                        >
+                          <p className="break-words whitespace-normal">
+                            Drag and drop a node here to use its schema
+                          </p>
+                        </motion.div>
                       </motion.div>
-                      <motion.div
-                        className="text-sm font-medium text-muted-foreground text-center w-full px-4"
-                        animate={{ opacity: [0.7, 1, 0.7] }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 3,
-                          ease: 'easeInOut',
-                        }}
-                      >
-                        <p className="break-words whitespace-normal">
-                          Drag and drop a node here to use its schema
-                        </p>
-                      </motion.div>
-                    </motion.div>
-                  )
+                    )
                   : (
-                    <div
-                      style={{
+                      <div
+                        style={{
                         // take actual width of the node from the displayNode
                         // width: '100%',
-                        width: capturedNodeMetadata ? `${(capturedNodeMetadata.ui?.dimensions?.width || 200) + 10}px` : '100%',
-                        height: capturedNodeMetadata ? `${(capturedNodeMetadata.ui?.dimensions?.height || 200) + 10}px` : '100%',
-                      }}
-                      ref={dropNodeZoneRef}
-                    >
-                    </div>
-                  )}
+                          width: capturedNodeMetadata ? `${(capturedNodeMetadata.ui?.dimensions?.width || 200) + 10}px` : '100%',
+                          height: capturedNodeMetadata ? `${(capturedNodeMetadata.ui?.dimensions?.height || 200) + 10}px` : '100%',
+                        }}
+                        ref={dropNodeZoneRef}
+                      >
+                      </div>
+                    )}
               </AnimatePresence>
             </motion.div>
           )}

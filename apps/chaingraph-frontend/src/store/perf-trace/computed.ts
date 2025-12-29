@@ -14,7 +14,8 @@ import { $rawTraces, $selectedOperation, $traceFilter } from './stores'
  * Calculate percentile from sorted array
  */
 function percentile(sortedArr: number[], p: number): number {
-  if (sortedArr.length === 0) return 0
+  if (sortedArr.length === 0)
+    return 0
   const index = Math.ceil((p / 100) * sortedArr.length) - 1
   return sortedArr[Math.max(0, Math.min(index, sortedArr.length - 1))]
 }
@@ -67,8 +68,7 @@ export const $traceTree = $filteredTraces.map((traces): TraceTree => {
 
     if (!trace.parentId) {
       roots.push(trace)
-    }
-    else {
+    } else {
       const siblings = children.get(trace.parentId) ?? []
       siblings.push(trace)
       children.set(trace.parentId, siblings)
@@ -94,7 +94,8 @@ export const $traceAggregations = $filteredTraces.map((traces): TraceAggregation
 
   for (const trace of traces) {
     // Only aggregate completed spans with duration
-    if (trace.duration === null) continue
+    if (trace.duration === null)
+      continue
 
     let agg = byName.get(trace.name)
     if (!agg) {
@@ -158,7 +159,8 @@ export const $selectedOperationStats = combine(
   $traceAggregations,
   $selectedOperation,
   (aggs, selected) => {
-    if (!selected) return null
+    if (!selected)
+      return null
     return aggs.find(a => a.name === selected) ?? null
   },
 )

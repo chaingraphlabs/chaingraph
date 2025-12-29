@@ -37,15 +37,15 @@ export function PortHandle({ nodeId, portId, forceDirection, className, isConnec
   const { theme } = useTheme()
   const portColor = isCompatible && config
     ? getPortTypeColor(theme, {
-      ...config,
-      ui: {
-        ...config.ui,
-        ...portUI,
-      },
-    } as IPortConfig)
+        ...config,
+        ui: {
+          ...config.ui,
+          ...portUI,
+        },
+      } as IPortConfig)
     : getPortTypeColor(theme, {
-      type: 'any',
-    } as IPortConfig)
+        type: 'any',
+      } as IPortConfig)
 
   const direction = forceDirection ?? config?.direction
   const position = direction === 'input'
@@ -68,12 +68,12 @@ export function PortHandle({ nodeId, portId, forceDirection, className, isConnec
         style={
           isDraggingCompatible
             ? {
-              backgroundColor: portColor.circleColor,
-              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
-            }
+                backgroundColor: portColor.circleColor,
+                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
+              }
             : {
-              backgroundColor: portColor.circleColor,
-            }
+                backgroundColor: portColor.circleColor,
+              }
         }
         className={cn(
           'absolute',

@@ -35,9 +35,15 @@ export {
   portUpdatesReceived,
 } from './buffer'
 
+export { $collapsedHandleData } from './collapsed-handles'
+
+export type { CollapsedHandleInfo } from './collapsed-handles'
+
+// Descendants (derived stores for collapsed port handles)
+export { $portDescendants } from './descendants'
+
 // Domain
 export { portsV2Domain } from './domain'
-
 // Feature Flags
 export {
   $isGranularWriteEnabled,
@@ -69,15 +75,9 @@ export {
 } from './pending-mutations'
 
 export type { PendingMutation } from './pending-mutations'
-
 // Port Lists (derived store for component iteration)
 export { $nodePortLists } from './port-lists'
 export type { NodePortLists } from './port-lists'
-
-// Descendants (derived stores for collapsed port handles)
-export { $portDescendants } from './descendants'
-export { $collapsedHandleData } from './collapsed-handles'
-export type { CollapsedHandleInfo } from './collapsed-handles'
 
 // Stores
 export {

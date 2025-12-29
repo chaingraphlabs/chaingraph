@@ -49,47 +49,41 @@ export function PortField({
 
   return (
     <div className="py-1 w-full relative group/field">
-      <div className={cn(
-        'flex w-full gap-1',
-        'rounded',
-        isOutput ? 'flex-row-reverse' : 'flex-row',
-      )}
-      >
-        <div className="flex-1 min-w-0">
-          <PortComponent nodeId={nodeId} portId={portId} />
-        </div>
+      {/* Port content - takes full width */}
+      <PortComponent nodeId={nodeId} portId={portId} />
 
-        {(isSchemaMutable)
-          && (
-            <div className={cn(
-              'flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity',
-              isOutput ? 'mr-2' : 'ml-2',
-            )}
-            >
-              <Popover open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="p-1 hover:bg-accent rounded-sm transition-colors"
-                    onClick={() => setIsEditOpen(true)}
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                </PopoverTrigger>
-                <LazyAddPropPopover
-                  isOpen={isEditOpen}
-                  onClose={() => setIsEditOpen(false)}
-                  onSubmit={handleEditSubmit}
-                  nextOrder={0}
-                  nodeId={nodeId}
-                  portId={portId}
-                  editMode
-                  onDelete={onDelete}
-                />
-              </Popover>
-            </div>
-          )}
-      </div>
+      {/* Edit button - appears on hover at top-right corner, doesn't affect layout */}
+      {(isSchemaMutable)
+        && (
+          <Popover open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'absolute top-1 z-20',
+                  'p-0.5 rounded-sm transition-all',
+                  'opacity-0 group-hover/field:opacity-100',
+                  'hover:bg-accent bg-background/90 border border-border/50',
+                  // Position based on port direction - near the title area
+                  isOutput ? 'left-1' : 'right-1',
+                )}
+                onClick={() => setIsEditOpen(true)}
+              >
+                <Pencil className="w-2.5 h-2.5 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <LazyAddPropPopover
+              isOpen={isEditOpen}
+              onClose={() => setIsEditOpen(false)}
+              onSubmit={handleEditSubmit}
+              nextOrder={0}
+              nodeId={nodeId}
+              portId={portId}
+              editMode
+              onDelete={onDelete}
+            />
+          </Popover>
+        )}
     </div>
   )
 }

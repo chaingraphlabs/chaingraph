@@ -25,7 +25,6 @@ import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, use
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
 import { usePortEdges } from '@/store/nodes/computed'
 import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
-import { usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 import { HTMLPreview } from './HTMLPreview'
@@ -101,8 +100,11 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   const needRenderEditor = useMemo(() => {
     if (!config)
       return false
-    return !isHideEditor(config as any, connectedEdges)
-  }, [config, connectedEdges])
+    return !isHideEditor({
+      ...config,
+      ui,
+    }, connectedEdges)
+  }, [config, connectedEdges, ui])
 
   /*
    * Textarea resizing

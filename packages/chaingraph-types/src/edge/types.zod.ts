@@ -17,6 +17,8 @@ export const EdgeAnchorSchema = z.object({
   x: z.number(),
   y: z.number(),
   index: z.number(),
+  parentNodeId: z.string().optional(),
+  selected: z.boolean().optional(),
 })
 
 /**

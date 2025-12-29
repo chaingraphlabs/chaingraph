@@ -29,7 +29,7 @@ import { useCallback, useEffect } from 'react'
 import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
 import { $nodes, updateNodeParent, updateNodeUI } from '@/store/nodes'
-import { useNode, useNodeMetadata } from '@/store/nodes/hooks/useNode'
+import { useNodeMetadata } from '@/store/nodes/hooks/useNode'
 import { requestUpdatePortUI } from '@/store/ports'
 import { usePortUI } from '@/store/ports-v2'
 import { subscribeToNodeSchemaDrop } from '../../../../../hooks/useFlowCallbacks'
@@ -246,7 +246,7 @@ export function useNodeSchemaDrop({
     const currentPosition = capturedNodeMetadata.ui?.position
     const isPositionValid
       = currentPosition?.x === defaultPositionOffsetCapturedNode.x
-      && currentPosition?.y === defaultPositionOffsetCapturedNode.y
+        && currentPosition?.y === defaultPositionOffsetCapturedNode.y
 
     // Only update if position is actually wrong
     if (!isPositionValid) {

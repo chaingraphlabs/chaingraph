@@ -7,8 +7,8 @@
  */
 
 import type { ComponentType, FC } from 'react'
-import { memo, useEffect, useRef } from 'react'
 import type { PerfTrace, TraceStartOptions } from './types'
+import { memo, useEffect, useRef } from 'react'
 
 /**
  * Options for traceRender HOC

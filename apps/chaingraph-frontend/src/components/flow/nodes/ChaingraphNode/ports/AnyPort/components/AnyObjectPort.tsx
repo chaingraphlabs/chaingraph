@@ -76,15 +76,15 @@ function AnyObjectPortInner({ nodeId, portId }: AnyPortProps) {
   // Memoized values
   const title = useMemo(() => config?.title || config?.key || portId, [config, portId])
   const isSchemaMutable = useMemo(() =>
-    (config as any)?.underlyingType?.type === 'object' && (config as any).underlyingType?.isSchemaMutable,
-  [config])
+    (config as any)?.underlyingType?.type === 'object' && (config as any).underlyingType?.isSchemaMutable, [config])
   const isOutput = useMemo(() => config?.direction === 'output', [config])
 
   // Memoize edges - always empty array for now (AnyPort doesn't typically have edges)
   const connectedEdges: any[] = []
 
   const needRenderEditor = useMemo(() => {
-    if (!config) return false
+    if (!config)
+      return false
     return !isHideEditor(config as any, connectedEdges)
   }, [config, connectedEdges])
 
@@ -121,8 +121,10 @@ function AnyObjectPortInner({ nodeId, portId }: AnyPortProps) {
   // ========================================
   // SECTION 2: EARLY RETURNS (after all hooks)
   // ========================================
-  if (!config) return null
-  if (ui?.hidden) return null
+  if (!config)
+    return null
+  if (ui?.hidden)
+    return null
 
   return (
     <div
@@ -172,7 +174,7 @@ function AnyObjectPortInner({ nodeId, portId }: AnyPortProps) {
               )}
             >
 
-              {childPortIds.map(childPortId => {
+              {childPortIds.map((childPortId) => {
                 // Extract key from child port ID (format: 'parentPort.key')
                 const key = childPortId.split('.').pop() || ''
                 return (

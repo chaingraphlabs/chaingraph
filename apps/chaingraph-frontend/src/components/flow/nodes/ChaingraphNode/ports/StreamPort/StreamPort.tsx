@@ -8,10 +8,9 @@
 
 import { memo } from 'react'
 import { cn } from '@/lib/utils'
-import { usePortConfig, usePortUI } from '@/store/ports-v2'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution/hooks/usePortValueWithExecution'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
-import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution/hooks/usePortValueWithExecution'
 
 export interface StreamPortProps {
   readonly nodeId: string
@@ -31,7 +30,8 @@ function StreamPortComponent(props: StreamPortProps) {
     return null
 
   // Early return if config not loaded yet
-  if (!config) return null
+  if (!config)
+    return null
 
   return (
     <div

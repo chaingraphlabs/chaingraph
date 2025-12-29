@@ -36,8 +36,7 @@ import { trace } from '@/lib/perf-trace'
 import { flowDomain } from '@/store/domains'
 import { nodeUpdated } from '@/store/updates'
 import { globalReset } from '../common'
-import { setEdgeAnchors } from '../edges/anchors'
-import { $activeFlowId, clearActiveFlow } from './active-flow'
+import { $edgeVersions, clearAnchorNodesForEdge, loadAnchorNodesFromBackend } from '../edges/anchor-nodes'
 import {
   removeEdge,
   resetEdges,
@@ -53,7 +52,6 @@ import {
   addNodes,
   clearNodes,
   removeNode,
-  setNodeVersion,
   setNodeVersionOnly,
   updateNode,
   updateNodes,
@@ -82,7 +80,6 @@ import {
   appendElementArrayPortFx,
   baseUpdatePortUIFx,
   baseUpdatePortValueFx,
-  immediatePortValueUpdate,
   preBaseUpdatePortUiFx,
   preBaseUpdatePortValueFx,
   removeElementArrayPort,
@@ -97,6 +94,7 @@ import {
   updateItemConfigArrayPortFx,
 } from '../ports/stores'
 import { $trpcClient } from '../trpc/store'
+import { $activeFlowId, clearActiveFlow } from './active-flow'
 import { newFlowEvents } from './event-buffer'
 import { $activeSubscription, switchSubscriptionFx } from './subscription'
 import { FlowSubscriptionStatus } from './types'
@@ -222,12 +220,12 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
       return flows.map(flow =>
         flow.id === updatedFlowId
           ? {
-            ...flow,
-            metadata: {
-              ...flow.metadata,
-              loaded: true,
-            },
-          }
+              ...flow,
+              metadata: {
+                ...flow.metadata,
+                loaded: true,
+              },
+            }
           : flow,
       )
     }
@@ -465,11 +463,11 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // Port changes already handled via PortUpdated events → granular stores
       const metadataChanged
         = !node
-        || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
-        || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
-        || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
-        || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
-        || node.status !== data.node.status
+          || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
+          || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
+          || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
+          || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
+          || node.status !== data.node.status
 
       if (metadataChanged) {
         // Update $nodes for metadata-only changes (position, dimensions, status)
@@ -590,10 +588,10 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
       // Initialize anchors from edge metadata if present
       if (data.metadata?.anchors && data.metadata.anchors.length > 0) {
-        setEdgeAnchors({
+        // Load anchors as XYFlow nodes (new anchor system)
+        loadAnchorNodesFromBackend({
           edgeId: data.edgeId,
           anchors: data.metadata.anchors,
-          version: data.metadata.version ?? 0,
         })
       }
     },
@@ -612,10 +610,10 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // Initialize anchors from edge metadata for all edges
       data.edges.forEach((edge) => {
         if (edge.metadata?.anchors && edge.metadata.anchors.length > 0) {
-          setEdgeAnchors({
+          // Load anchors as XYFlow nodes (new anchor system)
+          loadAnchorNodesFromBackend({
             edgeId: edge.edgeId,
             anchors: edge.metadata.anchors,
-            version: edge.metadata.version ?? 0,
           })
         }
       })
@@ -629,11 +627,26 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
     },
 
     [FlowEventType.EdgeMetadataUpdated]: (data) => {
-      setEdgeAnchors({
-        edgeId: data.edgeId,
-        anchors: data.metadata.anchors ?? [],
-        version: data.version,
-      })
+      // Check if edge has pending local changes (e.g., anchor being deleted/moved)
+      const versions = $edgeVersions.getState()
+      const edgeVersion = versions.get(data.edgeId)
+
+      if (edgeVersion?.isDirty) {
+        // Skip reload - we have pending local changes that haven't been synced yet
+        // This prevents deleted anchors from being restored by broadcast events
+        return
+      }
+
+      // Safe to reload anchors from backend (no pending local changes)
+      if (data.metadata.anchors && data.metadata.anchors.length > 0) {
+        loadAnchorNodesFromBackend({
+          edgeId: data.edgeId,
+          anchors: data.metadata.anchors,
+        })
+      } else {
+        // No anchors in metadata - clear any existing anchors for this edge
+        clearAnchorNodesForEdge(data.edgeId)
+      }
     },
 
     [FlowEventType.NodeParentUpdated]: (data) => {
@@ -703,7 +716,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // This preserves multi-user editing: other users' different positions will be processed
       const positionUnchanged
         = Math.abs(currentPosition.x - data.newPosition.x) < 1
-        && Math.abs(currentPosition.y - data.newPosition.y) < 1
+          && Math.abs(currentPosition.y - data.newPosition.y) < 1
 
       // Use granular version store to avoid $nodes cascade on position echoes
       setNodeVersionOnly({

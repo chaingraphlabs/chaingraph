@@ -11,14 +11,14 @@
  */
 export type TraceCategory
   = | 'store' // Effector store updates
-  | 'event' // Effector event handlers
-  | 'effect' // Effector effects
-  | 'sample' // Effector sample() computations
-  | 'render' // React component renders
-  | 'hook' // React hook executions
-  | 'compute' // CPU-bound computations
-  | 'io' // Network/disk operations
-  | 'custom' // User-defined
+    | 'event' // Effector event handlers
+    | 'effect' // Effector effects
+    | 'sample' // Effector sample() computations
+    | 'render' // React component renders
+    | 'hook' // React hook executions
+    | 'compute' // CPU-bound computations
+    | 'io' // Network/disk operations
+    | 'custom' // User-defined
 
 /**
  * Type of trace event

@@ -10,7 +10,7 @@ import type { ReactNode } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
-import { usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortTitle } from '../ui/PortTitle'
 
 interface PortHeaderProps {

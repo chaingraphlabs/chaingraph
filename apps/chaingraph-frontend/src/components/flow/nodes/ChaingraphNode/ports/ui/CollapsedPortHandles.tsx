@@ -7,7 +7,6 @@
  */
 
 import type { ReactNode } from 'react'
-import type { CollapsedHandleInfo } from '@/store/ports-v2/collapsed-handles'
 import { Handle, Position } from '@xyflow/react'
 import { useStoreMap } from 'effector-react'
 import { Fragment, memo } from 'react'

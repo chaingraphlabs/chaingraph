@@ -26,7 +26,8 @@ export const setNodeVersionOnly = nodesDomain.createEvent<{
 export const $nodeVersions = nodesDomain.createStore<Record<string, number>>({})
   .on(setNodeVersionOnly, (state, { nodeId, version }) => {
     // Skip if version unchanged
-    if (state[nodeId] === version) return state
+    if (state[nodeId] === version)
+      return state
     return { ...state, [nodeId]: version }
   })
   .reset(globalReset)

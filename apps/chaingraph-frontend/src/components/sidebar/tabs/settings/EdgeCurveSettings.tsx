@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import type { CurveType, RenderMode } from '@/store/settings/curve-config'
 import { useUnit } from 'effector-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -19,10 +20,9 @@ import {
 import { Separator } from '@/components/ui/separator'
 import {
   $curveConfig,
+
   resetCurveConfig,
   setCurveConfig,
-  type CurveType,
-  type RenderMode,
 } from '@/store/settings/curve-config'
 import { SliderWithInput } from './SliderWithInput'
 
@@ -67,22 +67,22 @@ export function EdgeCurveSettings() {
 
       {/* Curve Type Selector - only for Catmull-Rom modes */}
       {(config.renderMode === 'catmull-rom-polyline' || config.renderMode === 'catmull-rom-bezier') && (
-      <div className="space-y-2">
-        <Label className="text-xs">Curve Type</Label>
-        <Select value={config.curveType} onValueChange={handleCurveTypeChange}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="centripetal">Centripetal (Recommended)</SelectItem>
-            <SelectItem value="uniform">Uniform</SelectItem>
-            <SelectItem value="chordal">Chordal</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-[10px] text-muted-foreground leading-tight">
-          Centripetal prevents cusps and self-intersections
-        </p>
-      </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Curve Type</Label>
+          <Select value={config.curveType} onValueChange={handleCurveTypeChange}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="centripetal">Centripetal (Recommended)</SelectItem>
+              <SelectItem value="uniform">Uniform</SelectItem>
+              <SelectItem value="chordal">Chordal</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground leading-tight">
+            Centripetal prevents cusps and self-intersections
+          </p>
+        </div>
       )}
 
       {/* Alpha - only for Catmull-Rom modes */}

@@ -17,18 +17,15 @@ import type {
   UpdateNodeTitleEvent,
   UpdateNodeUIEvent,
 } from './types'
-import { DefaultPosition, PortFactory } from '@badaitech/chaingraph-types'
+import { DefaultPosition } from '@badaitech/chaingraph-types'
 
 import { combine, sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
 import { globalReset } from '../common'
 import { nodesDomain } from '../domains'
 
-import {
-  requestUpdatePortValue,
-  updatePort,
-  updatePortUI,
-} from '../ports/stores'
+import { groupNodeDeleted } from '../edges/anchor-events'
+
 import { $trpcClient } from '../trpc/store'
 import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_DIMENSIONS_DEBOUNCE_MS, NODE_POSITION_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from './constants'
 import { accumulateAndSample } from './operators/accumulate-and-sample'
@@ -763,6 +760,32 @@ sample({
 sample({
   clock: removeNodeFromFlow,
   target: removeNodeFromFlowFx,
+})
+
+// Wire: removeNode → check if group and fire groupNodeDeleted
+// Internal event for group deletion check
+const nodeRemovedWithCategory = nodesDomain.createEvent<{
+  nodeId: string
+  wasGroup: boolean
+}>()
+
+// CRITICAL: Capture node data BEFORE removal (reactive pattern)
+sample({
+  clock: removeNode,
+  source: $nodes,
+  fn: (nodes, nodeId) => {
+    const node = nodes[nodeId]
+    return { nodeId, wasGroup: node?.metadata.category === 'group' }
+  },
+  target: nodeRemovedWithCategory,
+})
+
+// Wire: If removed node was a group, trigger groupNodeDeleted
+sample({
+  clock: nodeRemovedWithCategory,
+  filter: ({ wasGroup }) => wasGroup === true,
+  fn: ({ nodeId }) => nodeId,
+  target: groupNodeDeleted,
 })
 
 // * * * * * * * * * * * * * * *

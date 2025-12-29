@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-export { useXYFlowNodeRenderData } from './useXYFlowNodeRenderData'
+export { useXYFlowNodeBodyPorts } from './useXYFlowNodeBodyPorts'
 
+export { useXYFlowNodeErrorPorts } from './useXYFlowNodeErrorPorts'
 // Granular hooks for optimized component subscriptions
 export { useXYFlowNodeFlowPorts } from './useXYFlowNodeFlowPorts'
-export { useXYFlowNodeErrorPorts } from './useXYFlowNodeErrorPorts'
-export { useXYFlowNodeBodyPorts } from './useXYFlowNodeBodyPorts'
 export { useXYFlowNodeHeaderData } from './useXYFlowNodeHeaderData'
+export { useXYFlowNodeRenderData } from './useXYFlowNodeRenderData'

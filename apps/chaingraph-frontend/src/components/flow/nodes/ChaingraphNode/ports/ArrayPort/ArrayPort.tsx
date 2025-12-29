@@ -16,7 +16,6 @@ import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { usePortEdges } from '@/store/nodes/computed'
-import { useNode } from '@/store/nodes/hooks/useNode'
 import {
   appendElementArrayPort,
   removeElementArrayPort,
@@ -24,7 +23,7 @@ import {
   requestUpdatePortValue,
   updateItemConfigArrayPort,
 } from '@/store/ports'
-import { useChildPorts, usePortConfig, usePortUI, usePortValue } from '@/store/ports-v2'
+import { useChildPorts, usePortConfig } from '@/store/ports-v2'
 import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
 import { CollapsedPortHandles } from '../ui/CollapsedPortHandles'
 import { PortHandle } from '../ui/PortHandle'

@@ -28,7 +28,6 @@ import {
   removeNode,
   setNodeMetadata,
   setNodes,
-  setNodeVersion,
   updateNode,
   updateNodeDimensionsLocal,
   updateNodeParent,
@@ -150,11 +149,11 @@ function buildCompleteRenderMap(
       executionStatus: (execNode?.status as XYFlowNodeRenderData['executionStatus']) || 'idle',
       executionNode: execNode
         ? {
-          status: execNode.status,
-          executionTime: execNode.executionTime,
-          error: execNode.error,
-          node: execNode.node,
-        }
+            status: execNode.status,
+            executionTime: execNode.executionTime,
+            error: execNode.error,
+            node: execNode.node,
+          }
         : null,
       isHighlighted: highlightSet.has(nodeId),
       hasAnyHighlights,
@@ -395,6 +394,12 @@ function computeNodeRenderUpdates(
     updates.nodeType = nodeType
   }
 
+  // Error port collapsed change
+  const isErrorPortCollapsed = node.metadata.ui?.state?.isErrorPortCollapsed ?? true
+  if (current.isErrorPortCollapsed !== isErrorPortCollapsed) {
+    updates.isErrorPortCollapsed = isErrorPortCollapsed
+  }
+
   return updates
 }
 
@@ -481,20 +486,20 @@ sample({
       // Execution node data
       const executionNode = execNode
         ? {
-          status: execNode.status,
-          executionTime: execNode.executionTime,
-          error: execNode.error,
-          node: execNode.node,
-        }
+            status: execNode.status,
+            executionTime: execNode.executionTime,
+            error: execNode.error,
+            node: execNode.node,
+          }
         : null
 
       // Deep comparison for execution node
       const currentExecNode = current.executionNode
       const execNodeChanged
         = (currentExecNode === null) !== (executionNode === null)
-        || currentExecNode?.status !== executionNode?.status
-        || currentExecNode?.executionTime !== executionNode?.executionTime
-        || currentExecNode?.node !== executionNode?.node
+          || currentExecNode?.status !== executionNode?.status
+          || currentExecNode?.executionTime !== executionNode?.executionTime
+          || currentExecNode?.node !== executionNode?.node
 
       if (execNodeChanged) {
         updates.executionNode = executionNode
@@ -620,8 +625,8 @@ sample({
         // Compare with current
         const changed
           = (current.dropFeedback === null) !== (dropFeedback === null)
-          || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
-          || current.dropFeedback?.dropType !== dropFeedback?.dropType
+            || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
+            || current.dropFeedback?.dropType !== dropFeedback?.dropType
 
         if (changed) {
           changes.push({ nodeId, changes: { dropFeedback } })

@@ -41,10 +41,10 @@ export function useXYFlowNodeHeaderData(nodeId: string): NodeHeaderData | undefi
       const data = map[id]
       return data
         ? {
-          title: data.title,
-          status: data.status,
-          categoryMetadata: data.categoryMetadata,
-        }
+            title: data.title,
+            status: data.status,
+            categoryMetadata: data.categoryMetadata,
+          }
         : undefined
     },
     updateFilter: (prev, next) => {

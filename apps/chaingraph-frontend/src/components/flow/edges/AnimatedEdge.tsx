@@ -6,17 +6,15 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { EdgeAnchor } from '@badaitech/chaingraph-types'
 import type { EdgeProps } from '@xyflow/react'
-import { BaseEdge, getBezierPath, useReactFlow } from '@xyflow/react'
+import { BaseEdge } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { motion } from 'framer-motion'
-import { nanoid } from 'nanoid'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { $edgeAnchors, addAnchorLocal, moveAnchorLocal, removeAnchorLocal } from '@/store/edges/anchors'
+import React, { useCallback, useMemo, useState } from 'react'
+import { addAnchorNode } from '@/store/edges/anchor-nodes'
+import { useAnchorNodePositions } from '@/store/edges/hooks/useAnchorNodePositions'
 import { $selectedEdgeId } from '@/store/edges/selection'
 import { $curveConfig } from '@/store/settings/curve-config'
-import { AnchorHandle } from './components/AnchorHandle'
 import { calculateGhostAnchors, catmullRomToBezierPath } from './utils/catmull-rom'
 
 interface AnimatedEdgeProps extends EdgeProps {
@@ -44,11 +42,8 @@ export function AnimatedEdge({
   markerEnd,
   data,
 }: AnimatedEdgeProps) {
-  const { screenToFlowPosition } = useReactFlow()
-
   // Anchor support
   const selectedEdgeId = useUnit($selectedEdgeId)
-  const anchorsMap = useUnit($edgeAnchors)
   const curveConfig = useUnit($curveConfig)
   const isSelected = selectedEdgeId === id
   const edgeId = (data as any)?.edgeData?.edgeId ?? id
@@ -56,13 +51,9 @@ export function AnimatedEdge({
   // Hover state for visual feedback
   const [isHovered, setIsHovered] = useState(false)
 
-  // Get anchors from local store ONLY (no fallback to edge data)
-  // Anchors are initialized from edge metadata in stores.ts on flow load
-  const localState = anchorsMap.get(edgeId)
-  const anchors: EdgeAnchor[] = useMemo(
-    () => localState?.anchors ?? [],
-    [localState?.anchors],
-  )
+  // Get anchor positions from anchor nodes store
+  // PROTOTYPE: Anchors are now XYFlow nodes, positions come from their node positions
+  const anchorPositions = useAnchorNodePositions(edgeId)
 
   // Source and target points for anchor calculations
   const source = useMemo(() => ({ x: sourceX, y: sourceY }), [sourceX, sourceY])
@@ -75,63 +66,33 @@ export function AnimatedEdge({
     return catmullRomToBezierPath(
       source,
       target,
-      anchors,
+      anchorPositions,
       sourcePosition,
       targetPosition,
     )
-  }, [source, target, anchors, sourcePosition, targetPosition, curveConfig])
+  }, [source, target, anchorPositions, sourcePosition, targetPosition, curveConfig])
 
   // Ghost anchors (only when selected)
+  // PROTOTYPE: Ghost anchors are SVG visual hints, not XYFlow nodes
+  // When clicked, they create anchor nodes
   const ghostAnchors = useMemo(() => {
     if (!isSelected)
       return []
-    return calculateGhostAnchors(source, target, anchors, sourcePosition, targetPosition)
-  }, [isSelected, source, target, anchors, sourcePosition, targetPosition, curveConfig])
+    return calculateGhostAnchors(source, target, anchorPositions, sourcePosition, targetPosition)
+  }, [isSelected, source, target, anchorPositions, sourcePosition, targetPosition, curveConfig])
 
-  // Track ghost → real anchor ID mappings during drag
-  const ghostToRealAnchorRef = useRef<Map<string, string>>(new Map())
-
-  // Clear ghost-to-real mappings when edge is deselected
-  useEffect(() => {
-    if (!isSelected) {
-      ghostToRealAnchorRef.current.clear()
-    }
-  }, [isSelected])
-
-  // Anchor handlers
-  const handleAnchorDrag = useCallback((anchorId: string, x: number, y: number) => {
-    if (anchorId.startsWith('ghost-')) {
-      // Check if we already created a real anchor for this ghost drag
-      const existingRealId = ghostToRealAnchorRef.current.get(anchorId)
-      if (existingRealId) {
-        // Already created, just move it seamlessly
-        moveAnchorLocal({ edgeId, anchorId: existingRealId, x, y })
-      } else {
-        // First drag event - create the anchor
-        const insertIndex = Number.parseInt(anchorId.split('-')[1], 10)
-        const newAnchor = {
-          id: nanoid(8),
-          x,
-          y,
-          index: insertIndex,
-        }
-        addAnchorLocal({ edgeId, anchor: newAnchor })
-        // Store mapping so subsequent drags move instead of create
-        ghostToRealAnchorRef.current.set(anchorId, newAnchor.id)
-      }
-    } else {
-      moveAnchorLocal({ edgeId, anchorId, x, y })
-    }
-  }, [edgeId])
-
-  const handleAnchorDragEnd = useCallback(() => {
-    // Clear mapping when drag ends so next drag starts fresh
-    ghostToRealAnchorRef.current.clear()
-  }, [])
-
-  const handleAnchorDelete = useCallback((anchorId: string) => {
-    removeAnchorLocal({ edgeId, anchorId })
-  }, [edgeId])
+  // PROTOTYPE: Ghost anchor click creates an anchor node
+  // The anchor node then handles its own drag/selection via XYFlow
+  const handleGhostClick = useCallback((insertIndex: number, x: number, y: number) => {
+    const { stroke = 'currentColor' } = style as { stroke?: string }
+    addAnchorNode({
+      edgeId,
+      x,
+      y,
+      index: insertIndex,
+      color: stroke,
+    })
+  }, [edgeId, style])
 
   // Extract styles for the edge
   const { stroke, strokeWidth, strokeOpacity, ...restStyle } = style as {
@@ -169,44 +130,26 @@ export function AnimatedEdge({
           />
         )}
 
-        {/* Anchor handles (only when selected) */}
-        {isSelected && (
-          <>
-            {/* Real anchors */}
-            {anchors.map(anchor => (
-              <AnchorHandle
-                key={anchor.id}
-                id={anchor.id}
-                edgeId={edgeId}
-                x={anchor.x}
-                y={anchor.y}
-                isGhost={false}
-                edgeColor={stroke || 'currentColor'}
-                screenToFlowPosition={screenToFlowPosition}
-                onDrag={handleAnchorDrag}
-                onDragEnd={handleAnchorDragEnd}
-                onDelete={handleAnchorDelete}
-              />
-            ))}
-
-            {/* Ghost anchors */}
-            {ghostAnchors.map(ghost => (
-              <AnchorHandle
-                key={`ghost-${ghost.insertIndex}`}
-                id={`ghost-${ghost.insertIndex}`}
-                edgeId={edgeId}
-                x={ghost.x}
-                y={ghost.y}
-                isGhost={true}
-                edgeColor={stroke || 'currentColor'}
-                screenToFlowPosition={screenToFlowPosition}
-                onDrag={handleAnchorDrag}
-                onDragEnd={handleAnchorDragEnd}
-                onDelete={() => { }}
-              />
-            ))}
-          </>
-        )}
+        {/* Ghost anchors (only when selected) */}
+        {/* PROTOTYPE: Ghost anchors are SVG visual hints that create anchor nodes on click */}
+        {/* Real anchors are rendered as XYFlow nodes by the Flow component */}
+        {isSelected && ghostAnchors.map(ghost => (
+          <circle
+            key={`ghost-${ghost.insertIndex}`}
+            cx={ghost.x}
+            cy={ghost.y}
+            r={6}
+            fill="white"
+            stroke={stroke || 'currentColor'}
+            strokeWidth={2}
+            opacity={0.5}
+            style={{ cursor: 'crosshair', pointerEvents: 'auto' }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleGhostClick(ghost.insertIndex, ghost.x, ghost.y)
+            }}
+          />
+        ))}
       </g>
     )
   }
@@ -252,44 +195,26 @@ export function AnimatedEdge({
         />
       )}
 
-      {/* Anchor handles (only when selected) */}
-      {isSelected && (
-        <>
-          {/* Real anchors */}
-          {anchors.map(anchor => (
-            <AnchorHandle
-              key={anchor.id}
-              id={anchor.id}
-              edgeId={edgeId}
-              x={anchor.x}
-              y={anchor.y}
-              isGhost={false}
-              edgeColor={stroke || 'currentColor'}
-              screenToFlowPosition={screenToFlowPosition}
-              onDrag={handleAnchorDrag}
-              onDragEnd={handleAnchorDragEnd}
-              onDelete={handleAnchorDelete}
-            />
-          ))}
-
-          {/* Ghost anchors */}
-          {ghostAnchors.map(ghost => (
-            <AnchorHandle
-              key={`ghost-${ghost.insertIndex}`}
-              id={`ghost-${ghost.insertIndex}`}
-              edgeId={edgeId}
-              x={ghost.x}
-              y={ghost.y}
-              isGhost={true}
-              edgeColor={stroke || 'currentColor'}
-              screenToFlowPosition={screenToFlowPosition}
-              onDrag={handleAnchorDrag}
-              onDragEnd={handleAnchorDragEnd}
-              onDelete={() => { }}
-            />
-          ))}
-        </>
-      )}
+      {/* Ghost anchors (only when selected) */}
+      {/* PROTOTYPE: Ghost anchors are SVG visual hints that create anchor nodes on click */}
+      {/* Real anchors are rendered as XYFlow nodes by the Flow component */}
+      {isSelected && ghostAnchors.map(ghost => (
+        <circle
+          key={`ghost-${ghost.insertIndex}`}
+          cx={ghost.x}
+          cy={ghost.y}
+          r={6}
+          fill="white"
+          stroke={stroke || 'currentColor'}
+          strokeWidth={2}
+          opacity={0.5}
+          style={{ cursor: 'crosshair', pointerEvents: 'auto' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleGhostClick(ghost.insertIndex, ghost.x, ghost.y)
+          }}
+        />
+      ))}
     </g>
   )
 }

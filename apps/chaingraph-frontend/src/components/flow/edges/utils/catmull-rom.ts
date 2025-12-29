@@ -7,8 +7,9 @@
  */
 
 import type { EdgeAnchor } from '@badaitech/chaingraph-types'
+import type { CurveConfig } from '@/store/settings/curve-config'
 import { Position } from '@xyflow/react'
-import { $curveConfig, type CurveConfig } from '@/store/settings/curve-config'
+import { $curveConfig } from '@/store/settings/curve-config'
 
 interface Point {
   x: number
@@ -148,10 +149,10 @@ function generateBezierChain(points: Point[], config: CurveConfig): string {
 
   // Generate one cubic Bezier segment between each consecutive pair
   for (let i = 1; i < points.length - 2; i++) {
-    const p0 = points[Math.max(0, i - 1)]  // Previous point (for tangent calculation)
-    const p1 = points[i]                    // Current segment start
-    const p2 = points[i + 1]                // Current segment end
-    const p3 = points[Math.min(points.length - 1, i + 2)]  // Next point (for tangent)
+    const p0 = points[Math.max(0, i - 1)] // Previous point (for tangent calculation)
+    const p1 = points[i] // Current segment start
+    const p2 = points[i + 1] // Current segment end
+    const p3 = points[Math.min(points.length - 1, i + 2)] // Next point (for tangent)
 
     // Calculate tangent at p1 using Catmull-Rom formula: (p2 - p0) / 2
     const t1x = (p2.x - p0.x) / 2
@@ -395,16 +396,13 @@ function generateStepPath(
     if (isFirst && sourcePosition === 'right') {
       // Exit right: go horizontal first
       midPoint = { x: from.x + Math.abs(dx) / 2, y: from.y }
-    }
-    else if (isFirst && sourcePosition === 'left') {
+    } else if (isFirst && sourcePosition === 'left') {
       // Exit left: go horizontal first
       midPoint = { x: from.x - Math.abs(dx) / 2, y: from.y }
-    }
-    else if (Math.abs(dx) > Math.abs(dy)) {
+    } else if (Math.abs(dx) > Math.abs(dy)) {
       // Horizontal-first routing for anchors
       midPoint = { x: from.x + dx / 2, y: from.y }
-    }
-    else {
+    } else {
       // Vertical-first routing
       midPoint = { x: from.x, y: from.y + dy / 2 }
     }
@@ -432,8 +430,7 @@ function generateStepPath(
       path += ` L ${bendStart.x} ${bendStart.y}`
       path += ` Q ${midPoint.x} ${midPoint.y}, ${bendEnd.x} ${bendEnd.y}`
       path += ` L ${to.x} ${to.y}`
-    }
-    else {
+    } else {
       // Segments too short for rounded corners, use straight lines
       path += ` L ${midPoint.x} ${midPoint.y}`
       path += ` L ${to.x} ${to.y}`

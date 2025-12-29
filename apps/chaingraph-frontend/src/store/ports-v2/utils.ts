@@ -79,8 +79,8 @@ export function unwrapAnyPortConfig(config: PortConfigFull): PortConfigFull {
 
   // Unwrap: use underlying type's fields but preserve port identity
   return {
-    ...underlyingType,           // Spread all underlying type fields (minLength, itemConfig, etc.)
-    type: underlyingType.type,   // Use actual type instead of 'any'!
+    ...underlyingType, // Spread all underlying type fields (minLength, itemConfig, etc.)
+    type: underlyingType.type, // Use actual type instead of 'any'!
     // type: 'any',   // Use actual type instead of 'any'!
     // Preserve original port identity fields
     id: config.id,

@@ -10,6 +10,7 @@ import type { CategorizedNodes, CategoryMetadata, NodeMetadata } from '@badaitec
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
+import { registerOverlay, unregisterOverlay } from '@/store/hotkeys'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command'
@@ -30,6 +31,12 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
   const [menuPosition, setMenuPosition] = useState(position)
 
   const { categories } = useCategories()
+
+  // Register as overlay to block hotkeys while menu is open
+  useEffect(() => {
+    registerOverlay('node-context-menu')
+    return () => unregisterOverlay('node-context-menu')
+  }, [])
 
   // Memoize filtered categories based on search
   const filteredCategories = useMemo(() => {
@@ -163,10 +170,9 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
                               backgroundColor: theme === 'dark'
                                 ? category.metadata.style.dark.text
                                 : category.metadata.style.light.text,
-                              boxShadow: `0 1px 3px ${
-                                theme === 'dark'
-                                  ? category.metadata.style.dark.text
-                                  : category.metadata.style.light.text
+                              boxShadow: `0 1px 3px ${theme === 'dark'
+                                ? category.metadata.style.dark.text
+                                : category.metadata.style.light.text
                               }80`,
                             }}
                           />

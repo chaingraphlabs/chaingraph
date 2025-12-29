@@ -187,8 +187,7 @@ export class PerfTraceImpl implements PerfTrace {
     const spanId = this.start(name, options)
     try {
       return fn()
-    }
-    finally {
+    } finally {
       this.end(spanId)
     }
   }
@@ -205,8 +204,7 @@ export class PerfTraceImpl implements PerfTrace {
     const spanId = this.start(name, options)
     try {
       return await fn()
-    }
-    finally {
+    } finally {
       this.end(spanId)
     }
   }

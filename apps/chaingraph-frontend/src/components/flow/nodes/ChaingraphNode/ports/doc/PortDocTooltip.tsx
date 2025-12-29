@@ -7,8 +7,8 @@
  */
 
 import type { ReactNode } from 'react'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useUnit } from 'effector-react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Tooltip,
   TooltipContent,

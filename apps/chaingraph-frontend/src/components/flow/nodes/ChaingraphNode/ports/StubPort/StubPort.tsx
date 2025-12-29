@@ -8,7 +8,6 @@
 import { PortHandle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortHandle'
 import { cn } from '@/lib/utils'
 import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution/hooks/usePortValueWithExecution'
-import { usePortConfig, usePortUI } from '@/store/ports-v2'
 import { PortTitle } from '../ui/PortTitle'
 
 export function StubPort(props: { nodeId: string, portId: string }) {

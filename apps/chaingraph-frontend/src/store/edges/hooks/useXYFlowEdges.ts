@@ -6,10 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { EdgeRenderData } from '../types'
 import { useUnit } from 'effector-react'
-import { useMemo } from 'react'
-import { $edgeRenderMap, $xyflowEdgesList } from '../stores'
+import { $xyflowEdgesList } from '../stores'
 
 /**
  * Hook that returns XYFlow edges with optimized re-rendering.

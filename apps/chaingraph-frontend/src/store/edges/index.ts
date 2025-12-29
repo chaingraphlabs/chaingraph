@@ -6,6 +6,17 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+// Anchor Nodes (XYFlow nodes for edge waypoints)
+export {
+  $anchorNodes,
+  $edgeVersions,
+  anchorColorsChanged,
+  clearAnchorNodesForEdge,
+  updateAnchorNodeSelection,
+} from './anchor-nodes'
+
+export type { AnchorNodeState } from './anchor-nodes'
+
 // Anchor Selection (frontend-only)
 export {
   $selectedAnchorId,
@@ -15,11 +26,15 @@ export {
 
 // Edge Anchors with Optimistic Updates
 export {
+  $absoluteAnchors,
   $edgeAnchors,
   addAnchorLocal,
   clearAnchorsLocal,
+  groupNodeDeleted,
   moveAnchorLocal,
   removeAnchorLocal,
+  setAnchorParent,
+  setAnchorsFromInitial,
   setEdgeAnchors,
 } from './anchors'
 
@@ -60,3 +75,6 @@ export * from './types'
 
 // Utilities
 export { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
+
+// Import wiring files for side effects (multi-node drag)
+import './anchor-drag-sync'

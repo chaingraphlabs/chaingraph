@@ -72,9 +72,9 @@ export async function deleteFlow(db: DBType, id: string) {
 
 export type ListOrderBy
   = 'createdAtDesc'
-  | 'createdAtAsc'
-  | 'updatedAtDesc'
-  | 'updatedAtAsc'
+    | 'createdAtAsc'
+    | 'updatedAtDesc'
+    | 'updatedAtAsc'
 
 export async function listFlows<T>(
   db: DBType,

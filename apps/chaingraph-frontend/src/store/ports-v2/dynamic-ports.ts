@@ -16,7 +16,7 @@ import {
 } from '@/store/ports/stores'
 import { portUpdateReceived } from './buffer'
 import { $isGranularWriteEnabled } from './feature-flags'
-import { $portHierarchy, $portValues, removePortsBatch } from './stores'
+import { $portValues, removePortsBatch } from './stores'
 import { extractConfigCore, toPortKey } from './utils'
 
 /**

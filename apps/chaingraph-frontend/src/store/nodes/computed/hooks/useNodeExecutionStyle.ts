@@ -8,7 +8,7 @@
 
 import type { NodeExecutionStyle } from '../execution-styles'
 import { useStoreMap } from 'effector-react'
-import { $nodeExecutionStyles, DEFAULT_EXECUTION_STYLE } from '../execution-styles'
+import { $nodeExecutionStyles } from '../execution-styles'
 
 /**
  * Ultra-optimized hook to get execution style for a specific node

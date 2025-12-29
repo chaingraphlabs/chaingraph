@@ -6,9 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { usePortUI } from '@/store/ports-v2'
 import { PortComponent } from '../../PortComponent'
 import { DeleteButton } from '../ui/DeleteButton'
 

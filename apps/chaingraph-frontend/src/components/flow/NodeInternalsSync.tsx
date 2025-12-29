@@ -9,7 +9,7 @@
 import { useUpdateNodeInternals } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { portCollapseChangedForNodes } from '@/store/edges'
+import { anchorColorsChanged, portCollapseChangedForNodes } from '@/store/edges'
 import { curveConfigChanged } from '@/store/settings'
 import { $xyflowNodesList } from '@/store/xyflow'
 
@@ -33,6 +33,16 @@ export function NodeInternalsSync() {
     const unsubscribe = portCollapseChangedForNodes.watch((nodeIds) => {
       if (nodeIds.length > 0) {
         setPendingNodes(prev => [...new Set([...prev, ...nodeIds])])
+      }
+    })
+    return unsubscribe
+  }, [])
+
+  // Subscribe to anchor color changes (forces re-render after page load)
+  useEffect(() => {
+    const unsubscribe = anchorColorsChanged.watch((anchorNodeIds) => {
+      if (anchorNodeIds.length > 0) {
+        setPendingNodes(prev => [...new Set([...prev, ...anchorNodeIds])])
       }
     })
     return unsubscribe

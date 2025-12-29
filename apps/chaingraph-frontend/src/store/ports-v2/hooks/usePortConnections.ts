@@ -7,9 +7,7 @@
  */
 
 import type { Connection } from '@badaitech/chaingraph-types'
-import { useStoreMap, useUnit } from 'effector-react'
-import { $nodes } from '@/store/nodes/stores'
-import { $migrationMode } from '../feature-flags'
+import { useStoreMap } from 'effector-react'
 import { $portConnections } from '../stores'
 import { isDeepEqual, toPortKey } from '../utils'
 

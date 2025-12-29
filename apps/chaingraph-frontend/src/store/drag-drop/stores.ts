@@ -9,7 +9,6 @@
 import type { Position } from '@badaitech/chaingraph-types'
 import type {
   DragDropRenderState,
-  DragDropState,
   DraggedNode,
   DropTarget,
   NodeDragEndEvent,

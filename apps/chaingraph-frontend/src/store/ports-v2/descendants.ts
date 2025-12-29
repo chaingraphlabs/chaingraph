@@ -45,8 +45,7 @@ function getAllDescendants(
           const { portId } = fromPortKey(childKey)
           descendants.push(portId)
           queue.push(childKey) // Continue recursive traversal
-        }
-        catch (error) {
+        } catch (error) {
           console.error(`[PortDescendants] Invalid childKey: ${childKey}`, error)
         }
       }

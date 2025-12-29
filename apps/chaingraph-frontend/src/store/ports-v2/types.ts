@@ -17,8 +17,6 @@ import type {
   IPortConfig,
   NumberPortConfigUIType,
   ObjectPortConfigUIType,
-  PortDirectionEnum,
-  PortType,
   StreamPortConfigUIType,
   StringPortConfigUIType,
 } from '@badaitech/chaingraph-types'
@@ -69,16 +67,16 @@ export type MigrationMode = 'disabled' | 'dual-write' | 'read-only' | 'full'
  * @see ArrayPortConfigUIType - item form, deletable
  * @see ObjectPortConfigUIType - collapsed, schema capture
  */
-export type PortUIState =
-  | BasePortConfigUIType
-  | StringPortConfigUIType
-  | NumberPortConfigUIType
-  | ArrayPortConfigUIType
-  | ObjectPortConfigUIType
-  | StreamPortConfigUIType
-  | BooleanPortConfigUIType
-  | EnumPortConfigUIType
-  | Record<string, unknown>  // Allow empty object
+export type PortUIState
+  = | BasePortConfigUIType
+    | StringPortConfigUIType
+    | NumberPortConfigUIType
+    | ArrayPortConfigUIType
+    | ObjectPortConfigUIType
+    | StreamPortConfigUIType
+    | BooleanPortConfigUIType
+    | EnumPortConfigUIType
+    | Record<string, unknown> // Allow empty object
 
 // ============================================================================
 // FULL PORT CONFIG - USE CORE TYPE DIRECTLY

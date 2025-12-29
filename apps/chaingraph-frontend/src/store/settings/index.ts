@@ -8,11 +8,11 @@
 
 export {
   $curveConfig,
-  setCurveConfig,
-  resetCurveConfig,
-  curveConfigChanged,
-  DEFAULT_CURVE_CONFIG,
   type CurveConfig,
+  curveConfigChanged,
   type CurveType,
+  DEFAULT_CURVE_CONFIG,
   type RenderMode,
+  resetCurveConfig,
+  setCurveConfig,
 } from './curve-config'

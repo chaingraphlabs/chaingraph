@@ -39,10 +39,12 @@ export function useXYFlowNodeRenderData(nodeId: string): XYFlowNodeRenderData | 
     fn: (map, [id]) => map[id],
     updateFilter: (prev, next) => {
       // No change if both undefined
-      if (!prev && !next) return false
+      if (!prev && !next)
+        return false
 
       // Change if one is undefined
-      if (!prev || !next) return true
+      if (!prev || !next)
+        return true
 
       // Smart comparison - only re-render on meaningful changes
       // Compare ALL fields that affect rendering

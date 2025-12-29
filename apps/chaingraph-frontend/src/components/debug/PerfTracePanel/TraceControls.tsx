@@ -56,17 +56,17 @@ export function TraceControls({ onExport }: TraceControlsProps) {
         >
           {enabled
             ? (
-              <>
-                <Play className="w-3 h-3 text-green-500" />
-                Recording
-              </>
-            )
+                <>
+                  <Play className="w-3 h-3 text-green-500" />
+                  Recording
+                </>
+              )
             : (
-              <>
-                <Pause className="w-3 h-3 text-muted-foreground" />
-                Paused
-              </>
-            )}
+                <>
+                  <Pause className="w-3 h-3 text-muted-foreground" />
+                  Paused
+                </>
+              )}
         </label>
       </div>
 

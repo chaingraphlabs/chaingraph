@@ -7,6 +7,8 @@
  */
 
 export * from './constants'
+export { $groupNodes, $nodePositionData } from './derived-stores'
+export type { GroupNodeData, NodePositionData } from './derived-stores'
 export { useNode } from './hooks/useNode'
 export { useXYFlowNodes } from './hooks/useXYFlowNodes'
 export { accumulateAndSample } from './operators/accumulate-and-sample'

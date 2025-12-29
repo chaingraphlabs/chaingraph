@@ -63,11 +63,9 @@ export class TraceBuffer {
         () => this.flush(),
         { timeout: this.config.flushDelayMs },
       )
-    }
-    else if (typeof window !== 'undefined' && 'requestAnimationFrame' in window) {
+    } else if (typeof window !== 'undefined' && 'requestAnimationFrame' in window) {
       requestAnimationFrame(() => this.flush())
-    }
-    else {
+    } else {
       // Node.js environment - use setTimeout
       setTimeout(() => this.flush(), 0)
     }
@@ -91,8 +89,7 @@ export class TraceBuffer {
     // Continue flushing if more data remains
     if (this.buffer.length > 0) {
       this.scheduleFlush()
-    }
-    else {
+    } else {
       this.flushScheduled = false
     }
   }
