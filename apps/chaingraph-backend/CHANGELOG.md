@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.7.1
+
+### Patch Changes
+
+- Fixed Effector store wiring being tree-shaken in lib builds, causing empty port rendering
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.7.1
+  - @badaitech/chaingraph-trpc@0.7.1
+  - @badaitech/chaingraph-types@0.7.1
+
 ## 0.7.0
 
 ### Minor Changes
