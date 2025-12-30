@@ -159,3 +159,6 @@ sample({
 
 //   return newState
 // })
+
+/** Marker to prevent tree-shaking */
+export const DYNAMIC_PORTS_WIRING = true

@@ -151,6 +151,9 @@ function extractPortsFromNode(node: INode): PortUpdateEvent[] {
   return events
 }
 
+// DEBUG: Log when this module is loaded
+console.log('[ports-v2/initialization] Sample wiring registered')
+
 /**
  * Wire: When node is added, populate granular stores from its ports
  */
@@ -158,7 +161,10 @@ sample({
   clock: addNode,
   source: $isGranularWriteEnabled,
   filter: enabled => enabled,
-  fn: (_, node) => extractPortsFromNode(node),
+  fn: (_, node) => {
+    console.log('[ports-v2/initialization] addNode triggered, extracting ports from:', node.id)
+    return extractPortsFromNode(node)
+  },
   target: portUpdatesReceived,
 })
 
@@ -191,7 +197,13 @@ sample({
   filter: enabled => enabled,
   fn: (_, nodesRecord) => {
     const nodes = Object.values(nodesRecord)
-    return nodes.flatMap(node => extractPortsFromNode(node))
+    console.log('[ports-v2/initialization] setNodes triggered, extracting ports from', nodes.length, 'nodes')
+    const events = nodes.flatMap(node => extractPortsFromNode(node))
+    console.log('[ports-v2/initialization] Extracted', events.length, 'port events')
+    return events
   },
   target: portUpdatesReceived,
 })
+
+/** Marker to prevent tree-shaking */
+export const INITIALIZATION_WIRING = true
