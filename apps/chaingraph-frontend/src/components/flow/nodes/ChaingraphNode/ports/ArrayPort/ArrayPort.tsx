@@ -192,7 +192,7 @@ function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
       )}
     >
       {/* Render hidden handles for ALL descendants when port is collapsed */}
-      {ui?.collapsed ? <CollapsedPortHandles nodeId={nodeId} parentPortId={portId} /> : null}
+      {!ui?.collapsed ? <CollapsedPortHandles nodeId={nodeId} parentPortId={portId} /> : null}
 
       {(config.direction === 'input' || config.direction === 'passthrough')
         && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}

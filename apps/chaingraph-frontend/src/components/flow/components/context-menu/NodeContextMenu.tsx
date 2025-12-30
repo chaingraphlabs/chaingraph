@@ -10,13 +10,13 @@ import type { CategorizedNodes, CategoryMetadata, NodeMetadata } from '@badaitec
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryIcon } from '@/components/sidebar/tabs/node-list/CategoryIcon'
-import { registerOverlay, unregisterOverlay } from '@/store/hotkeys'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
+import { registerOverlay, unregisterOverlay } from '@/store/hotkeys'
 
 interface NodeContextMenuProps {
   position: { x: number, y: number }

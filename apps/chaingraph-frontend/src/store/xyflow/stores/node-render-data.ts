@@ -58,6 +58,10 @@ function buildCompleteRenderMap(
   dragState: DragDropRenderState,
   portLists: Record<string, NodePortLists>,
 ): Record<string, XYFlowNodeRenderData> {
+  const spanId = trace.start('buildCompleteRenderMap', {
+    category: 'store',
+    tags: { nodeCount: Object.keys(nodes).length },
+  })
   const renderMap: Record<string, XYFlowNodeRenderData> = {}
   const highlightSet = new Set(highlightedIds || [])
   const hasAnyHighlights = highlightedIds !== null && highlightedIds.length > 0
@@ -164,6 +168,7 @@ function buildCompleteRenderMap(
     }
   }
 
+  trace.end(spanId)
   return renderMap
 }
 
@@ -262,6 +267,9 @@ sample({
 // ============================================================================
 sample({
   clock: [addNode, addNodes, removeNode, clearNodes, setNodes, updateNodeParent],
+  fn: () => {
+    trace.wrap('xyflow.structureChanged.fromNodeEvent', { category: 'event' }, () => {})
+  },
   target: xyflowStructureChanged,
 })
 
@@ -272,6 +280,13 @@ sample({
 // ============================================================================
 sample({
   clock: $nodePortLists,
+  fn: (portLists) => {
+    trace.wrap('xyflow.structureChanged.fromPortLists', {
+      category: 'event',
+      tags: { nodeCount: Object.keys(portLists).length },
+    }, () => {})
+    return portLists
+  },
   target: xyflowStructureChanged,
 })
 

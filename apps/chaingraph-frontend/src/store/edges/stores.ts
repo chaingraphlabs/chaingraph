@@ -271,10 +271,15 @@ export const $edgeRenderMap = edgesDomain
 
   // Structure: Add multiple edges
   .on(setEdges, (state, edges) => {
+    const spanId = trace.start('store.edgeRenderMap.setEdges', {
+      category: 'store',
+      tags: { count: edges.length },
+    })
     const newState = new Map(state)
     for (const edge of edges) {
       newState.set(edge.edgeId, createPendingEdgeRenderData(edge))
     }
+    trace.end(spanId)
     return newState
   })
 
@@ -290,6 +295,11 @@ export const $edgeRenderMap = edgesDomain
     if (changes.length === 0)
       return state
 
+    const spanId = trace.start('store.edgeRenderMap.delta', {
+      category: 'store',
+      tags: { changeCount: changes.length },
+    })
+
     const newState = new Map(state)
     let hasChanges = false
 
@@ -304,11 +314,6 @@ export const $edgeRenderMap = edgesDomain
         ([key, value]) => current[key as keyof EdgeRenderData] !== value,
       )
 
-      if (isForceRerender) {
-        // console.log(`[EdgeRenderMap] Forcing re-render for edge ${edgeId}`)
-        // debugger
-      }
-
       if (needsUpdate) {
         newState.set(edgeId, {
           ...current,
@@ -319,6 +324,7 @@ export const $edgeRenderMap = edgesDomain
       }
     }
 
+    trace.end(spanId)
     return hasChanges ? newState : state
   })
 
@@ -332,7 +338,9 @@ export const $edgeRenderMap = edgesDomain
 // CRITICAL: Also triggers when edges are added (in case ports already exist)
 
 sample({
-  clock: [$portConfigs, $portUI, $edgeRenderMap, $xyflowNodesList],
+  // FIX: Removed $edgeRenderMap from clock to break cascade loop
+  // When edgeDataChanged fires → $edgeRenderMap updates → was triggering this sample again
+  clock: [$portConfigs, $portUI, setEdges, setEdge, $xyflowNodesList],
   source: {
     edgeMap: $edgeRenderMap,
     portConfigs: $portConfigs,
@@ -340,6 +348,11 @@ sample({
     xyflowNodes: $xyflowNodesList,
   },
   fn: ({ edgeMap, portConfigs, portUI, xyflowNodes }) => {
+    const spanId = trace.start('wire.1.portConfigs', {
+      category: 'sample',
+      tags: { edgeCount: edgeMap.size },
+    })
+
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
 
     // Build node ID set for O(1) lookups
@@ -378,6 +391,7 @@ sample({
       }
     }
 
+    trace.end(spanId)
     return { changes }
   },
   target: edgeDataChanged,
@@ -396,6 +410,11 @@ sample({
     portConfigs: $portConfigs,
   },
   fn: ({ edgeMap, execNodes, execState, portConfigs }) => {
+    const spanId = trace.start('wire.2.execution', {
+      category: 'sample',
+      tags: { edgeCount: edgeMap.size },
+    })
+
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
 
     for (const [edgeId, edge] of edgeMap) {
@@ -424,6 +443,7 @@ sample({
       }
     }
 
+    trace.end(spanId)
     return { changes }
   },
   target: edgeDataChanged,
@@ -441,6 +461,11 @@ sample({
     highlightedEdges: $highlightedEdgeId,
   },
   fn: ({ edgeMap, highlightedNodes, highlightedEdges }) => {
+    const spanId = trace.start('wire.3-4.highlight', {
+      category: 'sample',
+      tags: { edgeCount: edgeMap.size },
+    })
+
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
     const hasHighlights = !!(highlightedNodes?.length || highlightedEdges?.length)
 
@@ -465,6 +490,7 @@ sample({
       }
     }
 
+    trace.end(spanId)
     return { changes }
   },
   target: edgeDataChanged,
@@ -478,6 +504,11 @@ sample({
   clock: $nodeLayerDepth,
   source: { edgeMap: $edgeRenderMap, layerDepths: $nodeLayerDepth },
   fn: ({ edgeMap, layerDepths }) => {
+    const spanId = trace.start('wire.5.zIndex', {
+      category: 'sample',
+      tags: { edgeCount: edgeMap.size },
+    })
+
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
 
     for (const [edgeId, edge] of edgeMap) {
@@ -493,6 +524,7 @@ sample({
       }
     }
 
+    trace.end(spanId)
     return { changes }
   },
   target: edgeDataChanged,
@@ -517,6 +549,11 @@ sample({
   clock: bumpEdgesForNodes,
   source: $edgeRenderMap,
   fn: (edgeMap, nodeIds) => {
+    const spanId = trace.start('wire.6.versionBump', {
+      category: 'sample',
+      tags: { nodeCount: nodeIds.length, edgeCount: edgeMap.size },
+    })
+
     const nodeIdSet = new Set(nodeIds)
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
 
@@ -534,6 +571,7 @@ sample({
       }
     }
 
+    trace.end(spanId)
     if (changes.length === 0) {
       return { changes: [] }
     }
@@ -620,6 +658,11 @@ sample({
   clock: $curveConfig,
   source: $edgeRenderMap,
   fn: (edgeMap) => {
+    const spanId = trace.start('wire.8.curveConfig', {
+      category: 'sample',
+      tags: { edgeCount: edgeMap.size },
+    })
+
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
     for (const [edgeId, edge] of edgeMap) {
       if (!edge.isReady)
@@ -627,6 +670,8 @@ sample({
       // Empty changes = version bump only
       changes.push({ edgeId, changes: {} })
     }
+
+    trace.end(spanId)
     return { changes }
   },
   target: edgeDataChanged,
@@ -644,6 +689,11 @@ sample({
   clock: $selectedEdgeId,
   source: { edgeMap: $edgeRenderMap, selectedId: $selectedEdgeId },
   fn: ({ edgeMap, selectedId }) => {
+    const spanId = trace.start('wire.9.selection', {
+      category: 'sample',
+      tags: { edgeCount: edgeMap.size },
+    })
+
     const changes: Array<{ edgeId: string, changes: Partial<EdgeRenderData> }> = []
 
     for (const [edgeId, edge] of edgeMap) {
@@ -657,6 +707,7 @@ sample({
       }
     }
 
+    trace.end(spanId)
     return { changes }
   },
   target: edgeDataChanged,

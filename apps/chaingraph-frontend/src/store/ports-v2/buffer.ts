@@ -23,6 +23,7 @@ import type { ArrayPortConfig, IObjectSchema, IPortConfig, ObjectPortConfig } fr
 import type { PortKey, PortUIState, PortUpdateEvent, ProcessedBatch } from './types'
 import { sample } from 'effector'
 import { spread } from 'patronum'
+import { trace } from '@/lib/perf-trace'
 import { portsV2Domain } from './domain'
 import { mergePortEvents } from './merge'
 import {
@@ -504,7 +505,15 @@ sample({
   clock: portUpdatesReceived,
   source: $nodePortKeys,
   filter: (_, events) => events.length > 0,
-  fn: (nodePortKeysMap, events) => processPortUpdates(events, nodePortKeysMap),
+  fn: (nodePortKeysMap, events) => {
+    const spanId = trace.start('ports.process.batch', {
+      category: 'io',
+      tags: { eventCount: events.length },
+    })
+    const result = processPortUpdates(events, nodePortKeysMap)
+    trace.end(spanId)
+    return result
+  },
   target: spread({
     valueUpdates: applyValueUpdates,
     uiUpdates: applyUIUpdates,

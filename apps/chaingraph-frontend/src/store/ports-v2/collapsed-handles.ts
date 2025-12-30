@@ -70,17 +70,16 @@ export const $collapsedHandleData = combine({
   ui: $portUI,
 }, ({ descendants, configs, ui }): Map<PortKey, CollapsedHandleInfo[]> => {
   const result = new Map<PortKey, CollapsedHandleInfo[]>()
-  let totalHandles = 0
 
   // Iterate over all ports that have descendants
   for (const [parentKey, descendantPortIds] of descendants) {
     // Check if this port is collapsed
     const portUI = ui.get(parentKey)
 
-    // BACKWARD COMPATIBLE: collapsed === true means children are HIDDEN
-    // So we only render hidden handles when collapsed === true
+    // BACKWARD COMPATIBLE: collapsed === true means children are VISIBLE (expanded)
+    // So we only render hidden handles when collapsed is falsy (false or undefined)
     if (portUI?.collapsed === true) {
-      continue // Skip if not collapsed (there is backward inversion for backward compatibility)
+      continue // Skip expanded ports - their children have visible handles
     }
 
     // Build handle info for each descendant
@@ -104,12 +103,7 @@ export const $collapsedHandleData = combine({
 
     if (handleInfos.length > 0) {
       result.set(parentKey, handleInfos)
-      totalHandles += handleInfos.length
     }
-  }
-
-  if (result.size > 0) {
-    console.log(`[CollapsedHandles] ${result.size} collapsed ports with ${totalHandles} total descendant handles`)
   }
 
   return result

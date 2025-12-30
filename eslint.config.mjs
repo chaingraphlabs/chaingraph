@@ -67,6 +67,7 @@ export default antfu(
       '**/pnpm-lock.yaml',
       '**/package-lock.json',
       '**/yarn.lock',
+      '**/.conductor/**/*',
     ],
   },
   // Add custom rules

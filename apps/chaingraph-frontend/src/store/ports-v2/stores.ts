@@ -8,6 +8,7 @@
 
 import type { Connection } from '@badaitech/chaingraph-types'
 import type { PortConfigFull, PortKey, PortUIState } from './types'
+import { trace } from '@/lib/perf-trace'
 import { globalReset } from '../common'
 import { portsV2Domain } from './domain'
 
@@ -173,12 +174,17 @@ $portUI.on(applyUIUpdates, (state, updates) => {
 $portConfigs.on(applyConfigUpdates, (state, updates) => {
   if (updates.size === 0)
     return state
+  const spanId = trace.start('store.portConfigs.apply', {
+    category: 'store',
+    tags: { count: updates.size },
+  })
   const newState = new Map(state)
   for (const [key, partialConfig] of updates) {
     const existing = state.get(key)
     // Merge partial with existing, or use partial as-is if no existing
     newState.set(key, existing ? { ...existing, ...partialConfig } as PortConfigFull : partialConfig as PortConfigFull)
   }
+  trace.end(spanId)
   return newState
 })
 

@@ -220,9 +220,15 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
 
   // Add nodes operation
   .on(addNodes, (state, nodes) => {
+    const spanId = trace.start('store.$nodes.addNodes', {
+      category: 'store',
+      tags: { count: nodes.length },
+    })
+
     // PERF: Check if any nodes actually need updating
     const nodesToAdd = nodes.filter(node => state[node.id] !== node)
     if (nodesToAdd.length === 0) {
+      trace.end(spanId)
       return state
     }
 
@@ -231,6 +237,7 @@ export const $nodes = nodesDomain.createStore<Record<string, INode>>({})
       newState[node.id] = node
     })
 
+    trace.end(spanId)
     return newState
   })
 

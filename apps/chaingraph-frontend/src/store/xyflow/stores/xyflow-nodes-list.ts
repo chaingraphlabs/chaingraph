@@ -107,7 +107,13 @@ export const $xyflowNodesList = xyflowDomain
 
   // Full rebuild on structure change (via setXYFlowNodeRenderMap)
   .on(setXYFlowNodeRenderMap, (_, newRenderMap) => {
-    return buildXYFlowNodesArray(newRenderMap)
+    const spanId = trace.start('store.xyflowNodesList.fullRebuild', {
+      category: 'store',
+      tags: { nodeCount: Object.keys(newRenderMap).length },
+    })
+    const result = buildXYFlowNodesArray(newRenderMap)
+    trace.end(spanId)
+    return result
   })
 
   .reset(clearNodes)

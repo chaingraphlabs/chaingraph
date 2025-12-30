@@ -8,6 +8,7 @@
 
 import type { PortKey } from './types'
 import { $portConfigs } from './stores'
+import { trace } from '@/lib/perf-trace'
 import { fromPortKey, isSystemErrorPort, isSystemPort } from './utils'
 
 /**
@@ -60,6 +61,10 @@ export interface NodePortLists {
  * @returns Map of nodeId → NodePortLists
  */
 export const $nodePortLists = $portConfigs.map((configs): Record<string, NodePortLists> => {
+  const spanId = trace.start('derived.nodePortLists', {
+    category: 'store',
+    tags: { configCount: configs.size },
+  })
   const lists: Record<string, NodePortLists> = {}
 
   for (const [portKey, config] of configs.entries()) {
@@ -115,5 +120,6 @@ export const $nodePortLists = $portConfigs.map((configs): Record<string, NodePor
     }
   }
 
+  trace.end(spanId)
   return lists
 })

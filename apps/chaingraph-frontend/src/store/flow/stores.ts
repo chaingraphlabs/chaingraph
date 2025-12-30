@@ -215,21 +215,25 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
     }
   })
   .on(setFlowLoaded, (flows, updatedFlowId) => {
+    const spanId = trace.start('store.$flows.setLoaded', { category: 'store' })
     const flowExists = flows.some(f => f.id === updatedFlowId)
     if (flowExists) {
       // Update existing flow
-      return flows.map(flow =>
+      const result = flows.map(flow =>
         flow.id === updatedFlowId
           ? {
-              ...flow,
-              metadata: {
-                ...flow.metadata,
-                loaded: true,
-              },
-            }
+            ...flow,
+            metadata: {
+              ...flow.metadata,
+              loaded: true,
+            },
+          }
           : flow,
       )
+      trace.end(spanId)
+      return result
     }
+    trace.end(spanId)
   })
   .on(deleteFlow, (flows, id) =>
     flows.filter(f => f.id !== id))
@@ -245,8 +249,11 @@ export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
 
 export const $isFlowLoaded = flowDomain.createStore<boolean>(false)
   .on(setFlowLoaded, (_, flowId) => {
+    const spanId = trace.start('store.$isFlowLoaded.set', { category: 'store' })
     const flow = $flows.getState().find(f => f.id === flowId)
-    return flow && flow.metadata ? !!flow.metadata?.loaded : false
+    const result = flow && flow.metadata ? !!flow.metadata?.loaded : false
+    trace.end(spanId)
+    return result
   })
   .reset(clearActiveFlow)
   .reset(globalReset)
@@ -433,7 +440,9 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
     },
 
     [FlowEventType.FlowInitEnd]: (data) => {
+      const spanId = trace.start('handler.setFlowLoaded', { category: 'event' })
       setFlowLoaded(data.flowId)
+      trace.end(spanId)
     },
 
     [FlowEventType.MetadataUpdated]: (data) => {
@@ -464,11 +473,11 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // Port changes already handled via PortUpdated events → granular stores
       const metadataChanged
         = !node
-          || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
-          || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
-          || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
-          || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
-          || node.status !== data.node.status
+        || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
+        || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
+        || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
+        || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
+        || node.status !== data.node.status
 
       if (metadataChanged) {
         // Update $nodes for metadata-only changes (position, dimensions, status)
@@ -731,7 +740,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // This preserves multi-user editing: other users' different positions will be processed
       const positionUnchanged
         = Math.abs(currentPosition.x - data.newPosition.x) < 1
-          && Math.abs(currentPosition.y - data.newPosition.y) < 1
+        && Math.abs(currentPosition.y - data.newPosition.y) < 1
 
       // Use granular version store to avoid $nodes cascade on position echoes
       setNodeVersionOnly({
@@ -826,10 +835,14 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 const HOT_PATH_EVENTS = new Set([
   FlowEventType.NodeUpdated,
   FlowEventType.NodesUpdated,
+  FlowEventType.NodesAdded, // ADDED: Initial flow load
   FlowEventType.PortUpdated,
+  FlowEventType.PortCreated, // ADDED: Initial flow load
   FlowEventType.EdgeAdded,
   FlowEventType.EdgesAdded,
   FlowEventType.NodeUIPositionChanged,
+  FlowEventType.FlowInitStart, // ADDED: Init markers
+  FlowEventType.FlowInitEnd, // ADDED: Init markers
 ])
 
 sample({

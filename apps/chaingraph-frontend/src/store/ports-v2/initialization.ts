@@ -9,6 +9,7 @@
 import type { INode, IPort } from '@badaitech/chaingraph-types'
 import type { PortUIState, PortUpdateEvent } from './types'
 import { sample } from 'effector'
+import { trace } from '@/lib/perf-trace'
 import { addNode, addNodes, setNodes } from '@/store/nodes/stores'
 import { portUpdatesReceived } from './buffer'
 import { $isGranularWriteEnabled } from './feature-flags'
@@ -168,7 +169,16 @@ sample({
   clock: addNodes,
   source: $isGranularWriteEnabled,
   filter: enabled => enabled,
-  fn: (_, nodes) => nodes.flatMap(node => extractPortsFromNode(node)),
+  fn: (_, nodes) => {
+    const spanId = trace.start('ports.extract.addNodes', {
+      category: 'io',
+      tags: { nodeCount: nodes.length },
+    })
+    const events = nodes.flatMap(node => extractPortsFromNode(node))
+    trace.end(spanId)
+    console.log(`[Ports] Extracted ${events.length} port events from ${nodes.length} nodes`)
+    return events
+  },
   target: portUpdatesReceived,
 })
 

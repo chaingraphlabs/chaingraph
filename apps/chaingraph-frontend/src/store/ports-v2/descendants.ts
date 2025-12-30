@@ -93,9 +93,5 @@ export const $portDescendants = $portHierarchy.map((hierarchy): Map<PortKey, str
     }
   }
 
-  if (result.size > 0) {
-    console.log(`[PortDescendants] Computed ${result.size} port descendant entries`)
-  }
-
   return result
 })
