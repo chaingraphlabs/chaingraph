@@ -66,6 +66,11 @@ function buildCompleteRenderMap(
   const highlightSet = new Set(highlightedIds || [])
   const hasAnyHighlights = highlightedIds !== null && highlightedIds.length > 0
 
+  // Pre-compute potential drop targets map for O(1) lookup (was O(N²) with .find())
+  const potentialTargetMap = new Map(
+    dragState.potentialDropTargets?.map(t => [t.nodeId, t]) || [],
+  )
+
   for (const [nodeId, node] of Object.entries(nodes)) {
     const position = positions[nodeId] || node.metadata.ui?.position || { x: 0, y: 0 }
     const dims = node.metadata.ui?.dimensions || { width: 200, height: 100 }
@@ -98,7 +103,8 @@ function buildCompleteRenderMap(
         dropType: hoveredTarget.type,
       }
     } else {
-      const potentialTarget = dragState.potentialDropTargets?.find(t => t.nodeId === nodeId)
+      // O(1) lookup using pre-computed map
+      const potentialTarget = potentialTargetMap.get(nodeId)
       if (potentialTarget) {
         dropFeedback = {
           canAcceptDrop: false,

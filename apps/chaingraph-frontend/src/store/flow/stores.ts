@@ -33,7 +33,7 @@ import {
   getNodePositionInsideParent,
 } from '@/components/flow/utils/node-position'
 import { trace } from '@/lib/perf-trace'
-import { flowDomain } from '@/store/domains'
+import { $flowInitMode, flowDomain, flowInitEnded, flowInitStarted } from '@/store/domains'
 import { nodeUpdated } from '@/store/updates'
 import { globalReset } from '../common'
 import { $edgeVersions, clearAnchorNodesForEdge, loadAnchorNodesFromBackend } from '../edges/anchor-nodes'
@@ -109,6 +109,11 @@ export const setFlowsLoading = flowDomain.createEvent<boolean>()
 export const setFlowsError = flowDomain.createEvent<Error | null>()
 export const setFlowMetadata = flowDomain.createEvent<FlowMetadata>()
 export const setFlowLoaded = flowDomain.createEvent<string>()
+
+// Flow initialization mode - imported from domains.ts to avoid circular dependencies
+// Used to defer expensive derived computations until init is complete
+// Re-exported for convenience
+export { $flowInitMode, flowInitEnded, flowInitStarted }
 
 // Active flow events - imported from ./active-flow to avoid circular dependencies
 // Re-exported for backwards compatibility
@@ -434,6 +439,7 @@ sample({
 function createEventHandlers(flowId: string, nodes: Record<string, INode>): FlowEventHandlerMap {
   return {
     [FlowEventType.FlowInitStart]: (data) => {
+      flowInitStarted() // Signal init mode start (defers expensive computations)
       clearNodes()
       resetEdges()
       setFlowMetadata(data.metadata)
@@ -441,6 +447,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
     [FlowEventType.FlowInitEnd]: (data) => {
       const spanId = trace.start('handler.setFlowLoaded', { category: 'event' })
+      flowInitEnded() // Signal init mode end (triggers deferred computations)
       setFlowLoaded(data.flowId)
       trace.end(spanId)
     },

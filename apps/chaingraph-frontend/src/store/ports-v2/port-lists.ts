@@ -6,9 +6,12 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { PortKey } from './types'
-import { $portConfigs } from './stores'
+import type { PortConfigFull, PortKey } from './types'
+import { sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
+import { $flowInitMode, flowInitEnded } from '@/store/domains'
+import { portsV2Domain } from './domain'
+import { $portConfigs } from './stores'
 import { fromPortKey, isSystemErrorPort, isSystemPort } from './utils'
 
 /**
@@ -36,31 +39,10 @@ export interface NodePortLists {
 }
 
 /**
- * Derived store: Builds port ID arrays from $portConfigs
- *
- * CRITICAL: This replaces node.getInputs()/getOutputs() iteration.
- * Components use this instead of INode methods to avoid circular dependency
- * between port configs and node instances.
- *
- * Benefits:
- * - No INode instance needed for rendering
- * - Automatic reactivity when ports are added/removed
- * - Synchronized with $portConfigs (edges wait for same signal)
- * - Guarantees handles render before edges connect
- *
- * Usage in components:
- * ```typescript
- * const renderData = useXYFlowNodeRenderData(nodeId)
- * const inputPortIds = renderData.inputPortIds  // From this store!
- *
- * return inputPortIds.map(portId => (
- *   <PortComponent key={portId} nodeId={nodeId} portId={portId} />
- * ))
- * ```
- *
- * @returns Map of nodeId → NodePortLists
+ * Compute port lists from port configs
+ * Extracted to a pure function for reuse in both normal and init-end paths
  */
-export const $nodePortLists = $portConfigs.map((configs): Record<string, NodePortLists> => {
+function computeNodePortLists(configs: Map<PortKey, PortConfigFull>): Record<string, NodePortLists> {
   const spanId = trace.start('derived.nodePortLists', {
     category: 'store',
     tags: { configCount: configs.size },
@@ -122,4 +104,68 @@ export const $nodePortLists = $portConfigs.map((configs): Record<string, NodePor
 
   trace.end(spanId)
   return lists
+}
+
+// Event to set port lists
+const setNodePortLists = portsV2Domain.createEvent<Record<string, NodePortLists>>()
+
+/**
+ * Derived store: Builds port ID arrays from $portConfigs
+ *
+ * CRITICAL: This replaces node.getInputs()/getOutputs() iteration.
+ * Components use this instead of INode methods to avoid circular dependency
+ * between port configs and node instances.
+ *
+ * PERFORMANCE OPTIMIZATION:
+ * During flow initialization ($flowInitMode === true), this expensive O(N)
+ * computation is SKIPPED. Instead, it runs ONCE at FlowInitEnd.
+ * This prevents cascading rebuilds when 10,000+ ports are loaded.
+ *
+ * Benefits:
+ * - No INode instance needed for rendering
+ * - Automatic reactivity when ports are added/removed
+ * - Synchronized with $portConfigs (edges wait for same signal)
+ * - Guarantees handles render before edges connect
+ *
+ * Usage in components:
+ * ```typescript
+ * const renderData = useXYFlowNodeRenderData(nodeId)
+ * const inputPortIds = renderData.inputPortIds  // From this store!
+ *
+ * return inputPortIds.map(portId => (
+ *   <PortComponent key={portId} nodeId={nodeId} portId={portId} />
+ * ))
+ * ```
+ *
+ * @returns Map of nodeId → NodePortLists
+ */
+export const $nodePortLists = portsV2Domain
+  .createStore<Record<string, NodePortLists>>({})
+  .on(setNodePortLists, (_, lists) => lists)
+
+// ============================================================================
+// WIRING: Skip during init, rebuild at end
+// ============================================================================
+
+/**
+ * Normal path: Compute port lists when $portConfigs changes
+ * SKIP if $flowInitMode is true (will rebuild at flowInitEnded)
+ */
+sample({
+  clock: $portConfigs,
+  source: $flowInitMode,
+  filter: isInit => !isInit, // Only compute when NOT initializing
+  fn: (_, configs) => computeNodePortLists(configs),
+  target: setNodePortLists,
+})
+
+/**
+ * Init end path: Force rebuild when flow initialization completes
+ * This is the ONE rebuild that happens instead of many during init
+ */
+sample({
+  clock: flowInitEnded,
+  source: $portConfigs,
+  fn: configs => computeNodePortLists(configs),
+  target: setNodePortLists,
 })

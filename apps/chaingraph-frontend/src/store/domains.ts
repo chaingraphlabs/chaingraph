@@ -7,6 +7,7 @@
  */
 
 import { createDomain } from 'effector'
+import { globalReset } from './common'
 
 /**
  * Domain definitions for the store
@@ -15,6 +16,25 @@ import { createDomain } from 'effector'
 
 // Flow domain for flow management
 export const flowDomain = createDomain('flow')
+
+// ============================================================================
+// Flow Initialization Mode (for perf optimization)
+// ============================================================================
+// Placed here to avoid circular dependencies between flow/stores.ts and ports-v2
+// When true, expensive derived computations (like $nodePortLists) should be skipped.
+// These computations will run once at flowInitEnded instead of during each event.
+
+export const flowInitStarted = flowDomain.createEvent()
+export const flowInitEnded = flowDomain.createEvent()
+
+/**
+ * Flow initialization mode flag
+ * When true, expensive derived stores should skip computation.
+ */
+export const $flowInitMode = flowDomain.createStore<boolean>(false)
+  .on(flowInitStarted, () => true)
+  .on(flowInitEnded, () => false)
+  .reset(globalReset)
 
 // Nodes domain for node management
 export const nodesDomain = createDomain('nodes')

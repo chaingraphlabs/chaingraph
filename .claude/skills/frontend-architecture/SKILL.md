@@ -220,3 +220,5 @@ const LazyComponent = lazy(() => import('./HeavyComponent'))
 - `subscription-sync` - Real-time data synchronization
 - `optimistic-updates` - Optimistic UI patterns
 - `chaingraph-concepts` - Core domain concepts
+- `trpc-patterns` - tRPC framework patterns
+- `trpc-flow-editing` - Flow editing tRPC procedures
