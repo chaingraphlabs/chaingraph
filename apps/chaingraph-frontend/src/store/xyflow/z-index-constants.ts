@@ -94,5 +94,3 @@ export function calculateEdgeDepth(
 ): number {
   return Math.max(sourceDepth, targetDepth)
 }
-
-

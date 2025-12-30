@@ -227,12 +227,12 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
       const result = flows.map(flow =>
         flow.id === updatedFlowId
           ? {
-            ...flow,
-            metadata: {
-              ...flow.metadata,
-              loaded: true,
-            },
-          }
+              ...flow,
+              metadata: {
+                ...flow.metadata,
+                loaded: true,
+              },
+            }
           : flow,
       )
       trace.end(spanId)
@@ -480,11 +480,11 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // Port changes already handled via PortUpdated events → granular stores
       const metadataChanged
         = !node
-        || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
-        || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
-        || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
-        || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
-        || node.status !== data.node.status
+          || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
+          || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
+          || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
+          || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
+          || node.status !== data.node.status
 
       if (metadataChanged) {
         // Update $nodes for metadata-only changes (position, dimensions, status)
@@ -747,7 +747,7 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
       // This preserves multi-user editing: other users' different positions will be processed
       const positionUnchanged
         = Math.abs(currentPosition.x - data.newPosition.x) < 1
-        && Math.abs(currentPosition.y - data.newPosition.y) < 1
+          && Math.abs(currentPosition.y - data.newPosition.y) < 1
 
       // Use granular version store to avoid $nodes cascade on position echoes
       setNodeVersionOnly({

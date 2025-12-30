@@ -169,11 +169,11 @@ function buildCompleteRenderMap(
       executionStatus: (execNode?.status as XYFlowNodeRenderData['executionStatus']) || 'idle',
       executionNode: execNode
         ? {
-          status: execNode.status,
-          executionTime: execNode.executionTime,
-          error: execNode.error,
-          node: execNode.node,
-        }
+            status: execNode.status,
+            executionTime: execNode.executionTime,
+            error: execNode.error,
+            node: execNode.node,
+          }
         : null,
       isHighlighted: highlightSet.has(nodeId),
       hasAnyHighlights,
@@ -520,20 +520,20 @@ sample({
       // Execution node data
       const executionNode = execNode
         ? {
-          status: execNode.status,
-          executionTime: execNode.executionTime,
-          error: execNode.error,
-          node: execNode.node,
-        }
+            status: execNode.status,
+            executionTime: execNode.executionTime,
+            error: execNode.error,
+            node: execNode.node,
+          }
         : null
 
       // Deep comparison for execution node
       const currentExecNode = current.executionNode
       const execNodeChanged
         = (currentExecNode === null) !== (executionNode === null)
-        || currentExecNode?.status !== executionNode?.status
-        || currentExecNode?.executionTime !== executionNode?.executionTime
-        || currentExecNode?.node !== executionNode?.node
+          || currentExecNode?.status !== executionNode?.status
+          || currentExecNode?.executionTime !== executionNode?.executionTime
+          || currentExecNode?.node !== executionNode?.node
 
       if (execNodeChanged) {
         updates.executionNode = executionNode
@@ -659,8 +659,8 @@ sample({
         // Compare with current
         const changed
           = (current.dropFeedback === null) !== (dropFeedback === null)
-          || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
-          || current.dropFeedback?.dropType !== dropFeedback?.dropType
+            || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
+            || current.dropFeedback?.dropType !== dropFeedback?.dropType
 
         if (changed) {
           changes.push({ nodeId, changes: { dropFeedback } })

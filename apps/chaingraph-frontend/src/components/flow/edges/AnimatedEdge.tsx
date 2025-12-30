@@ -11,8 +11,8 @@ import { BaseEdge } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { motion } from 'framer-motion'
 import React, { useCallback, useMemo, useState } from 'react'
+import { calculateNodeDepth, getAbsoluteNodePosition } from '@/store/edges/anchor-coordinates'
 import { addAnchorNode } from '@/store/edges/anchor-nodes'
-import { getAbsoluteNodePosition, calculateNodeDepth } from '@/store/edges/anchor-coordinates'
 import { useAnchorNodePositions } from '@/store/edges/hooks/useAnchorNodePositions'
 import { $selectedEdgeId } from '@/store/edges/selection'
 import { $groupNodes, $nodePositionData } from '@/store/nodes/derived-stores'
@@ -94,7 +94,8 @@ export function AnimatedEdge({
     for (const [nodeId, groupData] of groupNodes) {
       // Get absolute position via existing helper
       const absPos = getAbsoluteNodePosition(nodeId, nodePositionData)
-      if (!absPos) continue
+      if (!absPos)
+        continue
 
       const isInside = x >= absPos.x
         && x <= absPos.x + groupData.dimensions.width
@@ -109,7 +110,8 @@ export function AnimatedEdge({
       }
     }
 
-    if (matchingGroups.length === 0) return null
+    if (matchingGroups.length === 0)
+      return null
 
     // Return deepest (most nested) group
     matchingGroups.sort((a, b) => b.depth - a.depth)

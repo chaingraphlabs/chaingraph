@@ -1,5 +1,16 @@
 # @badaitech/badai-api-example
 
+## 0.7.0
+
+### Minor Changes
+
+- Global frontend optimizations, and new features
+
+### Patch Changes
+
+- Updated dependencies
+  - @badaitech/badai-api@0.7.0
+
 ## 0.6.46
 
 ### Patch Changes

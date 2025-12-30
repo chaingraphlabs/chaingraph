@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-trpc",
   "type": "module",
-  "version": "0.6.46",
+  "version": "0.7.0",
   "private": false,
   "description": "tRPC client and server for the Chaingraph V2",
   "license": "BUSL-1.1",
