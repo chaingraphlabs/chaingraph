@@ -25,8 +25,6 @@ export type UpdatePortValueInput = z.infer<typeof updatePortValueSchema>
 export const updatePortValue = flowContextProcedure
   .input(updatePortValueSchema)
   .mutation(async ({ input, ctx }) => {
-    // TODO: create nodes store?
-
     await ctx.flowStore.lockFlow(input.flowId)
 
     try {

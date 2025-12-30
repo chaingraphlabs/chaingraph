@@ -84,69 +84,6 @@ export class ExecutionWorkflows extends ConfiguredInstance {
   }
 
   /**
-   * Command polling loop that runs in parallel with execution
-   *
-   * This loop:
-   * - Polls for commands using DBOS.recv() at workflow level (allowed)
-   * - Updates shared controllers (abortController, commandController)
-   * - Terminates when signal.done is set or STOP command received
-   * - Uses short timeout (2s) to allow responsive termination
-   *
-   * @param executionId - ID for logging
-   * @param signal - Shared signal for termination
-   * @param abortController - Controller to trigger STOP
-   * @param commandController - Controller for PAUSE/RESUME/STEP
-   */
-  private static async commandPollingLoop(
-    executionId: string,
-    signal: ExecutionSignal,
-    abortController: AbortController,
-    commandController: CommandController,
-  ): Promise<void> {
-    DBOS.logger.debug(`Command polling loop started for: ${executionId}`)
-
-    while (!signal.done) {
-      try {
-        // Wait for command with short timeout (5s)
-        // Short timeout allows checking signal.done frequently for responsive termination
-        // Single recv() call at a time - no overlapping calls
-        const command = await DBOS.recv<ExecutionCommand>('COMMAND', 5)
-
-        if (command) {
-          DBOS.logger.info(`Received command: ${command.command} for ${executionId}`)
-
-          if (command.command === 'STOP') {
-            // STOP: Trigger abort controller and exit loop
-            abortController.abort(command.reason || 'User requested stop')
-            DBOS.logger.info(`Abort triggered for execution: ${executionId}`)
-            break // Exit loop immediately on STOP
-          } else {
-            // PAUSE/RESUME/STEP: Update shared command controller
-            commandController.currentCommand = command.command
-            commandController.commandTimestamp = Date.now()
-            commandController.reason = command.reason
-            DBOS.logger.debug(`Command queued: ${command.command} for ${executionId}`)
-          }
-        }
-        // No command received (timeout) - continue loop and check signal.done
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-
-        // Check for cancellation - workflow was cancelled externally
-        if (errorMessage.includes('has been cancelled')) {
-          DBOS.logger.info(`Command polling stopped due to cancellation for: ${executionId}`)
-          break
-        }
-
-        // Log error but continue polling - transient errors shouldn't stop command handling
-        DBOS.logger.warn(`Error in command polling (continuing): ${errorMessage} for ${executionId}`)
-      }
-    }
-
-    DBOS.logger.debug(`Command polling loop ended for: ${executionId}`)
-  }
-
-  /**
    * Execute a chaingraph flow with durable workflow orchestration
    *
    * @param task Execution task containing executionId and flowId
@@ -255,30 +192,26 @@ export class ExecutionWorkflows extends ConfiguredInstance {
       // Check if this is a child execution (spawned from Event Emitter)
       const isChildExecution = !!executionRow.parentExecutionId
 
-      if (isChildExecution) {
-        // 🚀 AUTO-START for child executions
-        // Children are spawned from parent workflows and should start immediately
-        // Send START_SIGNAL to self to begin execution
-        DBOS.logger.info(`Auto-starting child execution: ${task.executionId} (parent: ${executionRow.parentExecutionId})`)
-        await DBOS.send(task.executionId, 'AUTO-START', 'START_SIGNAL')
+      if (!isChildExecution) {
+        DBOS.logger.info(`Event stream initialized, waiting for START_SIGNAL: ${task.executionId}`)
+
+        // ⏸️ WAIT for START_SIGNAL
+        // - Parent executions: Wait for signal from tRPC start endpoint (timeout: 5 minutes)
+        // - Child executions: Receive auto-start signal immediately (no timeout)
+        const startSignal = await DBOS.recv<string>('START_SIGNAL', isChildExecution ? 10 : 300)
+
+        if (!startSignal) {
+          const timeoutError = isChildExecution
+            ? 'Child execution auto-start failed - START_SIGNAL not received within 10 seconds'
+            : 'Execution start timeout - START_SIGNAL not received within 5 minutes'
+          DBOS.logger.error(`${timeoutError}: ${task.executionId}`)
+          throw new Error(timeoutError)
+        }
+
+        DBOS.logger.info(`START_SIGNAL received, beginning execution: ${task.executionId}${isChildExecution ? ' (child auto-started)' : ''}`)
+      } else {
+        DBOS.logger.info(`Child execution auto-start, beginning execution: ${task.executionId}`)
       }
-
-      DBOS.logger.info(`Event stream initialized, waiting for START_SIGNAL: ${task.executionId}`)
-
-      // ⏸️ WAIT for START_SIGNAL
-      // - Parent executions: Wait for signal from tRPC start endpoint (timeout: 5 minutes)
-      // - Child executions: Receive auto-start signal immediately (no timeout)
-      const startSignal = await DBOS.recv<string>('START_SIGNAL', isChildExecution ? 10 : 300)
-
-      if (!startSignal) {
-        const timeoutError = isChildExecution
-          ? 'Child execution auto-start failed - START_SIGNAL not received within 10 seconds'
-          : 'Execution start timeout - START_SIGNAL not received within 5 minutes'
-        DBOS.logger.error(`${timeoutError}: ${task.executionId}`)
-        throw new Error(timeoutError)
-      }
-
-      DBOS.logger.info(`START_SIGNAL received, beginning execution: ${task.executionId}${isChildExecution ? ' (child auto-started)' : ''}`)
 
       // ============================================================
       // PHASE 2: Execution (runs after START_SIGNAL received)

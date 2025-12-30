@@ -30,13 +30,27 @@ export interface DropTarget {
   portId?: string // For schema drops
 }
 
-export interface DragDropState {
+/**
+ * Render-safe drag-drop state (no mousePosition, no draggedNodes)
+ * This is what components and WIRE 6 should subscribe to
+ * Updates only when visually relevant data changes (~10-15 times during drag)
+ *
+ * Note: draggedNodes removed - position updates are handled by WIRE 1 via $nodePositions
+ */
+export interface DragDropRenderState {
   isDragging: boolean
-  draggedNodes: DraggedNode[]
-  mousePosition: Position | null
+  // draggedNodes removed - positions handled by WIRE 1
   potentialDropTargets: DropTarget[]
   hoveredDropTarget: DropTarget | null
   canDrop: boolean
+}
+
+/**
+ * Full drag-drop state including mousePosition
+ * @deprecated Only for internal calculation, don't use in components
+ */
+export interface DragDropState extends DragDropRenderState {
+  mousePosition: Position | null
 }
 
 export interface NodeDragStartEvent {

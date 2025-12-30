@@ -52,7 +52,7 @@ const defaultEnabledTabs: tabsType[] = [
   'archai',
   'wallet',
   'export-import',
-  // 'settings',
+  'settings', // Edge curves & appearance config
   // 'help',
 ]
 

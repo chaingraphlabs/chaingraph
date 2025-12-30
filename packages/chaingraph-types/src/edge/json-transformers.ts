@@ -9,6 +9,7 @@
 import type { INode } from '../node'
 import type { IPort } from '../port'
 import SuperJSON from 'superjson'
+import { getTransformerTraceCallbacks } from '../json-transformers-trace'
 import { Edge } from './edge'
 
 /**
@@ -17,8 +18,6 @@ import { Edge } from './edge'
 export function registerEdgeTransformers(
   superjsonCustom: typeof SuperJSON = SuperJSON,
 ) {
-  // const edge = new Edge('', {} as INode, {} as any, {} as INode, {} as any, {})
-
   superjsonCustom.registerCustom<Edge, any>(
     {
       isApplicable: (v): v is Edge => {
@@ -36,6 +35,9 @@ export function registerEdgeTransformers(
         })
       },
       deserialize: (v) => {
+        const traceCallbacks = getTransformerTraceCallbacks()
+        const spanId = traceCallbacks?.onDeserializeStart?.('Edge')
+
         const edgeData = superjsonCustom.deserialize(
           v as any,
         ) as any
@@ -55,6 +57,7 @@ export function registerEdgeTransformers(
           edgeData.metadata,
         )
 
+        traceCallbacks?.onDeserializeEnd?.(spanId ?? null)
         return edge
       },
     },

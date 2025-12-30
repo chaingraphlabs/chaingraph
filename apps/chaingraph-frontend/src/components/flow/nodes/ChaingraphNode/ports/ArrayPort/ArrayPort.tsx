@@ -7,23 +7,25 @@
  */
 
 import type {
-  ArrayPortConfig,
-  INode,
-  IPort,
   IPortConfig,
 } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import { filterPorts } from '@badaitech/chaingraph-types'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { PortTitle } from '@/components/flow/nodes/ChaingraphNode/ports/ui/PortTitle'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { useExecutionID } from '@/store/execution'
-import { requestUpdatePortUI } from '@/store/ports'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
+import { usePortEdges } from '@/store/nodes/computed'
+import {
+  appendElementArrayPort,
+  removeElementArrayPort,
+  requestUpdatePortUI,
+  requestUpdatePortValue,
+  updateItemConfigArrayPort,
+} from '@/store/ports'
+import { useChildPorts, usePortConfig } from '@/store/ports-v2'
 import { ArrayItemSchemaEditor } from '../../SchemaEditor/ArrayItemSchemaEditor'
+import { CollapsedPortHandles } from '../ui/CollapsedPortHandles'
 import { PortHandle } from '../ui/PortHandle'
 import { isHideEditor } from '../utils/hide-editor'
 import { AddElementPopover } from './AddElementPopover'
@@ -31,9 +33,8 @@ import { PortField } from './PortField'
 import { PortHeader } from './PortHeader'
 
 export interface ArrayPortProps {
-  node: INode
-  port: IPort<ArrayPortConfig>
-  context: PortContextValue
+  nodeId: string
+  portId: string
 }
 
 const variants = {
@@ -52,89 +53,57 @@ const variants = {
     transition: { duration: 0 },
   },
 } as const
-// Extracted to a memoizable component
-const ChildrenHiddenHandles = memo(({ node, port }: { node: INode, port: IPort }) => {
-  const childPorts = useMemo(() => {
-    return filterPorts(
-      node,
-      p => p.getConfig().parentId === port.getConfig().id,
-    )
-  }, [node, port])
 
-  return (
-    <>
-      {childPorts.map(childPort => (
-        <Fragment key={childPort.id}>
-          <PortHandle
-            key={childPort.id}
-            port={childPort}
-            className={cn('opacity-0')}
-          />
-          <ChildrenHiddenHandles node={node} port={childPort} />
-        </Fragment>
-      ))}
-    </>
-  )
-})
-
-function ArrayPortInner({ node, port, context }: ArrayPortProps) {
+function ArrayPortInner({ nodeId, portId }: ArrayPortProps) {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false)
   const [isSchemaEditorOpen, setIsSchemaEditorOpen] = useState(false)
-  const {
-    updatePortUI,
-    updateItemConfigArrayPort,
-    appendElementArrayPort,
-    removeElementArrayPort,
-    updatePortValue,
-    getEdgesForPort,
-  } = context
 
-  const config = port.getConfig()
-  const title = config.title || config.key || port.id
-  const isMutable = config.isMutable
-  const isOutput = config.direction === 'output'
-  const ui = config.ui
+  // Granular subscriptions - ALWAYS use ports-v2
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const value = usePortValueWithExecution(nodeId, portId) as any[] | undefined
+  const childPortIds = useChildPorts(nodeId, portId)
+
+  // Granular edge subscription - only re-renders when THIS port's edges change
+  const connectedEdges = usePortEdges(nodeId, portId)
+
+  // Get first child config for newItemConfig (if exists)
+  const firstChildPortId = childPortIds.length > 0 ? childPortIds[0] : null
+  const firstChildConfig = usePortConfig(nodeId, firstChildPortId || '')
+
+  const title = config?.title || config?.key || portId
+  const isMutable = (config as any)?.isMutable
+  const isOutput = config?.direction === 'output'
   const executionID = useExecutionID()
 
-  // Memoize child ports to prevent recalculation
-  const childPorts = useMemo(() => {
-    return Array.from(node.ports.values())
-      .filter(p => p.getConfig().parentId === config.id)
-  }, [node.ports, config.id])
-
-  // Use firstport config as itemconfig otherwise, arrayports itemConfig
+  // Use first child port config as itemConfig, otherwise use arrayPort's itemConfig
   const newItemConfig = useMemo(
-    () => childPorts.length > 0
-      ? childPorts[0].getConfig()
-      : config.itemConfig,
-    [childPorts, config.itemConfig],
+    () => firstChildConfig || (config as any)?.itemConfig,
+    [firstChildConfig, config],
   )
 
-  // Memoize edges
-  const connectedEdges = useMemo(() => {
-    return getEdgesForPort(port.id)
-  }, [getEdgesForPort, port.id])
-
-  const values = useMemo(() => port.getValue() ?? [], [port])
+  const values = useMemo(() => value ?? [], [value])
 
   const needRenderEditor = useMemo(() => {
-    return !isHideEditor(config, connectedEdges) && Boolean(isMutable)
+    if (!config)
+      return false
+    return !isHideEditor(config as any, connectedEdges) && Boolean(isMutable)
   }, [config, connectedEdges, isMutable])
 
   // Memoize callback functions
   const handleAddElement = useCallback(() => {
     // if type is not any you want immediately add element instead of choose type
-    if (newItemConfig.type === 'any') {
+    if (newItemConfig?.type === 'any') {
       setIsAddPropOpen(true)
     } else {
       // if type is not any you want immediately add element instead of choose type
       appendElementArrayPort({
-        nodeId: node.id,
-        portId: port.id,
-        value: newItemConfig.defaultValue,
+        nodeId,
+        portId,
+        value: newItemConfig?.defaultValue,
       })
     }
-  }, [newItemConfig, appendElementArrayPort, node.id, port.id])
+  }, [newItemConfig, nodeId, portId])
 
   const handleClosePopover = useCallback(() => {
     setIsAddPropOpen(false)
@@ -143,45 +112,45 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
   const handleSubmitPopover = useCallback((newItemConfig: IPortConfig) => {
     // Update array ports itemConfig
     updateItemConfigArrayPort({
-      nodeId: node.id,
-      portId: port.id,
+      nodeId,
+      portId,
       itemConfig: newItemConfig,
     })
     // Add new array element with the choosen type
     appendElementArrayPort({
-      nodeId: node.id,
-      portId: port.id,
+      nodeId,
+      portId,
       value: newItemConfig.defaultValue,
     })
     setIsAddPropOpen(false)
-  }, [node.id, port.id, appendElementArrayPort, updateItemConfigArrayPort])
+  }, [nodeId, portId])
 
   const handleToggleCollapsible = useCallback(() => {
     requestUpdatePortUI({
-      nodeId: node.id,
-      portId: port.id,
-      ui: { collapsed: config.ui?.collapsed === undefined ? true : !config.ui.collapsed },
+      nodeId,
+      portId,
+      ui: { collapsed: ui?.collapsed === undefined ? true : !ui.collapsed },
     })
-  }, [node.id, port.id, config.ui?.collapsed])
+  }, [nodeId, portId, ui?.collapsed])
 
   // Handle item config updates
-  const handleItemConfigUpdate = useCallback((updatedConfig: ArrayPortConfig) => {
-    // Update using context events - this leverages the store's logic
+  const handleItemConfigUpdate = useCallback((updatedConfig: any) => {
+    // Update using events directly - this leverages the store's logic
     // for handling complex port updates
     // console.debug('Updating item config:', updatedConfig)
     requestUpdatePortUI({
-      nodeId: node.id,
-      portId: port.id,
-      ui: { ...config.ui },
+      nodeId,
+      portId,
+      ui: { ...ui },
     })
 
     // Trigger a value update to ensure the itemConfig changes are processed
-    updatePortValue({
-      nodeId: node.id,
-      portId: port.id,
-      value: port.getValue(), // Keep the same array values
+    requestUpdatePortValue({
+      nodeId,
+      portId,
+      value, // Keep the same array values
     })
-  }, [node.id, config.ui, port, updatePortValue])
+  }, [nodeId, portId, ui, value])
 
   // Handle saving from the schema editor
   const handleSchemaEditorSave = useCallback((newItemConfig: IPortConfig) => {
@@ -189,34 +158,30 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
 
     // First update the port configuration
     requestUpdatePortUI({
-      nodeId: node.id,
-      portId: port.id,
+      nodeId,
+      portId,
       ui: {
-        ...config.ui,
+        ...ui,
       },
     })
 
     // Then update the itemConfig through the port value update
     setTimeout(() => {
-      const updatedPortConfig = {
-        ...port.getConfig(),
-        itemConfig: newItemConfig,
-      } as ArrayPortConfig
-
-      // Use direct value update to refresh the port
-      port.setConfig(updatedPortConfig)
-
       // Update the value to trigger a refresh
-      updatePortValue({
-        nodeId: node.id,
-        portId: port.id,
-        value: port.getValue(), // Keep the same array values
+      requestUpdatePortValue({
+        nodeId,
+        portId,
+        value, // Keep the same array values
       })
     }, 10)
     setIsSchemaEditorOpen(false)
-  }, [node.id, port, config.ui, updatePortValue])
+  }, [nodeId, portId, ui, value])
 
   if (ui?.hidden)
+    return null
+
+  // Early return if config not loaded yet
+  if (!config)
     return null
 
   return (
@@ -226,10 +191,11 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
         config.direction === 'output' ? 'justify-end' : 'justify-start',
       )}
     >
-      {!config.ui?.collapsed && <ChildrenHiddenHandles node={node} port={port as IPort} />}
+      {/* Render hidden handles for ALL descendants when port is collapsed */}
+      {!ui?.collapsed ? <CollapsedPortHandles nodeId={nodeId} parentPortId={portId} /> : null}
 
       {(config.direction === 'input' || config.direction === 'passthrough')
-        && <PortHandle port={port} forceDirection="input" />}
+        && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}
 
       {!needRenderEditor && (
         <div
@@ -249,7 +215,7 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
         <div className="flex-1 min-w-0">
           <PortHeader
             title={title}
-            isOutput={isOutput}
+            isOutput={isOutput ?? false}
             rightElement={(
               <div className="flex items-center gap-1">
                 {/* <Button */}
@@ -269,16 +235,16 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
             )}
             isCollapsible={Boolean(isMutable && values.length > 0)}
             onClick={handleToggleCollapsible}
-            node={node}
-            port={port as IPort}
+            nodeId={nodeId}
+            portId={portId}
           />
 
           <AnimatePresence initial={false}>
             <motion.div
-              initial={config.ui?.collapsed ? 'open' : 'closed'}
+              initial={ui?.collapsed ? 'open' : 'closed'}
               variants={variants}
-              animate={config.ui?.collapsed ? 'open' : 'closed'}
-              exit={config.ui?.collapsed ? 'closed' : 'open'}
+              animate={ui?.collapsed ? 'open' : 'closed'}
+              exit={ui?.collapsed ? 'closed' : 'open'}
               className={cn(
                 'relative w-full',
                 isOutput
@@ -286,19 +252,18 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
                   : 'pl-[15px] border-l-2 border-muted/95 -ml-[6px]',
               )}
             >
-              {childPorts.map((childPort, index) => (
+              {childPortIds.map((childPortId, index) => (
                 <PortField
-                  key={childPort.id}
-                  parentPort={port}
-                  node={node}
-                  port={childPort as IPort}
-                  context={context}
-                  isOutput={isOutput}
+                  key={childPortId}
+                  parentPortId={portId}
+                  nodeId={nodeId}
+                  portId={childPortId}
+                  isOutput={isOutput ?? false}
                   isMutable={isMutable ?? false}
                   onDelete={() => {
                     removeElementArrayPort({
-                      nodeId: node.id,
-                      portId: port.id,
+                      nodeId,
+                      portId,
                       index,
                     })
                   }}
@@ -325,7 +290,8 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
                   </PopoverTrigger>
                   {isAddPropOpen && (
                     <AddElementPopover
-                      port={port}
+                      nodeId={nodeId}
+                      portId={portId}
                       onClose={handleClosePopover}
                       onSubmit={handleSubmitPopover}
                     />
@@ -340,7 +306,8 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
       {(config.direction === 'output' || config.direction === 'passthrough')
         && (
           <PortHandle
-            port={port}
+            nodeId={nodeId}
+            portId={portId}
             forceDirection="output"
             className={cn(
               config.parentId !== undefined
@@ -352,7 +319,7 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
 
       {/* Schema Editor Dialog */}
       <ArrayItemSchemaEditor
-        arrayPortConfig={config}
+        arrayPortConfig={config as any}
         onSave={handleSchemaEditorSave}
         open={isSchemaEditorOpen}
         onOpenChange={setIsSchemaEditorOpen}
@@ -364,53 +331,4 @@ function ArrayPortInner({ node, port, context }: ArrayPortProps) {
 /**
  * Memoized ArrayPort - only re-renders when array elements or UI config changes
  */
-export const ArrayPort = memo(ArrayPortInner, (prev, next) => {
-  // Port or node ID changed
-  if (prev.port.id !== next.port.id || prev.node.id !== next.node.id) {
-    return false
-  }
-
-  // Array value changed (shallow comparison)
-  const prevValue = prev.port.getValue()
-  const nextValue = next.port.getValue()
-  if (prevValue !== nextValue) {
-    // Check array length first (fast check)
-    if (Array.isArray(prevValue) && Array.isArray(nextValue)) {
-      if (prevValue.length !== nextValue.length) {
-        return false
-      }
-    } else {
-      return false
-    }
-  }
-
-  // Child ports count changed
-  const prevChildPorts = Array.from(prev.node.ports.values())
-    .filter(p => p.getConfig().parentId === prev.port.getConfig().id)
-  const nextChildPorts = Array.from(next.node.ports.values())
-    .filter(p => p.getConfig().parentId === next.port.getConfig().id)
-
-  if (prevChildPorts.length !== nextChildPorts.length) {
-    return false
-  }
-
-  // UI state changed
-  if (prev.port.getConfig().ui?.hidden !== next.port.getConfig().ui?.hidden
-    || prev.port.getConfig().ui?.collapsed !== next.port.getConfig().ui?.collapsed
-    || prev.port.getConfig().ui?.hideEditor !== next.port.getConfig().ui?.hideEditor) {
-    return false
-  }
-
-  // Node version changed
-  if (prev.node.getVersion() !== next.node.getVersion()) {
-    return false
-  }
-
-  // Context changed (affects edge connections and editor visibility)
-  if (prev.context !== next.context) {
-    return false
-  }
-
-  // Skip re-render
-  return true
-})
+export const ArrayPort = memo(ArrayPortInner)

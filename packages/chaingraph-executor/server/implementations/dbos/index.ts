@@ -7,6 +7,5 @@
  */
 
 export { APITaskQueue } from './APITaskQueue'
-export { DBOSChildSpawnerQueue } from './DBOSChildSpawnerQueue'
 export { DBOSEventBus } from './DBOSEventBus'
 export { DBOSTaskQueue } from './DBOSTaskQueue'

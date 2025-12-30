@@ -251,6 +251,9 @@ export const executionRouter = router({
         maxTimeoutMs: input.options?.execution?.flowTimeoutMs || defaultExecutionMaxTimeoutMs,
       }
 
+      // Log the flow version being used
+      logger.info({ flowVersion: flowMetadata.version, flowId: executionRow.flowId }, 'Starting execution with flow version')
+
       try {
         await taskQueue.publishTask(executionTask)
         logger.info({ executionId }, 'Execution workflow started (waiting for START_SIGNAL)')

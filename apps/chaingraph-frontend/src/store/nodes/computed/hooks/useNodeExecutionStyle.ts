@@ -13,13 +13,17 @@ import { $nodeExecutionStyles } from '../execution-styles'
 /**
  * Ultra-optimized hook to get execution style for a specific node
  * Only re-renders when the execution style for this specific node changes
+ *
+ * Returns the node's execution style, or:
+ * - defaultStyle (dimmed) if execution is running but node not participating
+ * - DEFAULT_EXECUTION_STYLE if no execution is running
  */
-export function useNodeExecutionStyle(nodeId: string): NodeExecutionStyle | null {
+export function useNodeExecutionStyle(nodeId: string): NodeExecutionStyle {
   return useStoreMap({
     store: $nodeExecutionStyles,
     keys: [nodeId],
-    fn: (styles, [nodeId]) => {
-      return styles[nodeId] ?? null
+    fn: ({ styles, defaultStyle }, [nodeId]) => {
+      return styles[nodeId] ?? defaultStyle
     },
     updateFilter: (prev, next) => {
       // Only update if the style actually changed
@@ -49,8 +53,8 @@ export function useNodeExecutionClassName(nodeId: string): string {
   return useStoreMap({
     store: $nodeExecutionStyles,
     keys: [nodeId],
-    fn: (styles, [nodeId]) => {
-      return styles[nodeId]?.className ?? ''
+    fn: ({ styles, defaultStyle }, [nodeId]) => {
+      return styles[nodeId]?.className ?? defaultStyle.className
     },
     updateFilter: (prev, next) => {
       // Only update if className changed
@@ -67,12 +71,25 @@ export function useIsNodeExecuting(nodeId: string): boolean {
   return useStoreMap({
     store: $nodeExecutionStyles,
     keys: [nodeId],
-    fn: (styles, [nodeId]) => {
+    fn: ({ styles }, [nodeId]) => {
       return styles[nodeId]?.isExecuting ?? false
     },
     updateFilter: (prev, next) => {
       // Only update if execution state changed
       return prev !== next
     },
+  })
+}
+
+/**
+ * Hook to check if any execution is currently running
+ * Useful for showing global execution indicators
+ */
+export function useHasExecution(): boolean {
+  return useStoreMap({
+    store: $nodeExecutionStyles,
+    keys: [],
+    fn: ({ hasExecution }) => hasExecution,
+    updateFilter: (prev, next) => prev !== next,
   })
 }

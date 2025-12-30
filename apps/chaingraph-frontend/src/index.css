@@ -103,6 +103,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased font-sans;
   }
@@ -154,8 +155,10 @@
 /*}*/
 
 .react-flow__edge-path {
-  stroke-dasharray: none !important; /* Remove dashed line */
-  animation: none !important; /* Remove animation */
+  stroke-dasharray: none !important;
+  /* Remove dashed line */
+  animation: none !important;
+  /* Remove animation */
   @apply stroke-[3px] transition-colors duration-200;
 }
 
@@ -182,6 +185,7 @@
   from {
     stroke-dashoffset: 8;
   }
+
   to {
     stroke-dashoffset: 0;
   }

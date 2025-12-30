@@ -73,18 +73,22 @@ class AntropicToolCollectorNode extends BaseNode {
   tools: Tool[] = []
 
   async execute(context: ExecutionContext): Promise<NodeExecutionResult> {
+    const tools: Tool[] = []
+
     // Add all defined tools to the output array
     for (const tool of (this.toolsInput)) {
       if (tool !== undefined) {
-        this.tools.push(tool)
+        tools.push(tool)
       }
     }
 
     for (const tool of (this.toolsInput2)) {
       if (tool !== undefined) {
-        this.tools.push(tool)
+        tools.push(tool)
       }
     }
+
+    this.tools = tools
 
     return {}
   }

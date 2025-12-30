@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { BooleanPortConfig, IPort, IPortConfig, NumberPortConfig, ObjectPortConfig, PortType, SecretType, StringPortConfig } from '@badaitech/chaingraph-types'
+import type { BooleanPortConfig, IPortConfig, NumberPortConfig, PortType, SecretType, StringPortConfig } from '@badaitech/chaingraph-types'
 import { PORT_TYPES, secretTypeSchemas } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -23,7 +23,9 @@ import { PopoverContent } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { usePortConfigWithExecution, usePortUIWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { usePortUI } from '@/store/ports-v2'
 
 interface Data {
   key: string
@@ -35,21 +37,30 @@ interface Props {
   onSubmit: (data: Data) => void
   onDelete?: () => void
   nextOrder?: number
-  port: IPort<ObjectPortConfig>
+  nodeId: string
+  portId: string
   editMode?: boolean
-  existingField?: {
-    key: string
-    config: IPortConfig
-  }
 }
 
 export function AddPropPopover(props: Props) {
-  const { onClose, onSubmit, onDelete, port, editMode = false, existingField } = props
-  const [key, setKey] = useState(existingField?.key || '')
+  const { onClose, onSubmit, onDelete, nodeId, portId, editMode = false } = props
 
-  // Get nodeId from port config
-  const nodeId = port.getConfig().nodeId || ''
-  const portId = port.id
+  // Get port UI state for allowed types
+  const ui = usePortUI(nodeId, portId)
+
+  // Get config and UI for edit mode (only subscribes when component is rendered)
+  const portConfig = usePortConfigWithExecution(nodeId, portId)
+  const portUI = usePortUIWithExecution(nodeId, portId)
+
+  // Build existingField internally when in editMode
+  const existingField = editMode && portConfig
+    ? {
+        key: portConfig.key ?? '',
+        config: { ...portConfig, ui: portUI } as IPortConfig,
+      }
+    : undefined
+
+  const [key, setKey] = useState(existingField?.key || '')
 
   // Track focus/blur for global copy-paste functionality
   const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
@@ -224,7 +235,8 @@ export function AddPropPopover(props: Props) {
   }
 
   // use all porttypes if allowedTypes undefined and filter stream out
-  const dropDownValues = (port.getConfig().ui?.allowedTypes || PORT_TYPES).filter(t => t !== 'stream')
+  const objectUI = ui as { allowedTypes?: PortType[] }
+  const dropDownValues = (objectUI.allowedTypes || PORT_TYPES).filter(t => t !== 'stream')
 
   const [type, setType] = useState<PortType | undefined>(
     existingField?.config.type || dropDownValues.at(0),
@@ -288,6 +300,55 @@ export function AddPropPopover(props: Props) {
     }
   }, [editMode, existingField, props.nextOrder])
 
+  /**
+   * Reset form to default values
+   * Called after successful submission to clean state for next "Add field"
+   */
+  const resetForm = () => {
+    // Key
+    setKey('')
+
+    // Universal fields
+    setTitle('')
+    setDescription('')
+    setRequired(false)
+    setOrder(props.nextOrder ?? 0)
+    setHideEditor(false)
+
+    // String fields
+    setStringDefaultValue('')
+    setMinLength(undefined)
+    setMaxLength(undefined)
+    setPattern('')
+    setPlaceholder('')
+    setIsTextArea(false)
+    setIsPassword(false)
+
+    // Number fields
+    setNumberDefaultValue(0)
+    setMin(undefined)
+    setMax(undefined)
+    setStep(undefined)
+    setInteger(false)
+    setIsSlider(false)
+    setLeftSliderLabel('')
+    setRightSliderLabel('')
+
+    // Boolean fields
+    setBooleanDefaultValue(false)
+
+    // Enum fields
+    setEnumOptions([])
+    setEnumDefaultValue('')
+
+    // Secret fields
+    setSecretType('string')
+
+    // Type (reset to first allowed type)
+    setType(dropDownValues.at(0))
+    setIsDropdownOpen(false)
+  }
+
   const handleSubmit = () => {
     if (!type || !key)
       return
@@ -309,6 +370,11 @@ export function AddPropPopover(props: Props) {
       key,
       config: newPortConfig,
     })
+
+    // Reset form after successful submission (for next "Add field")
+    if (!editMode) {
+      resetForm()
+    }
   }
 
   return (

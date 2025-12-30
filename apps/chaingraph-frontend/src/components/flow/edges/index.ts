@@ -13,5 +13,5 @@ import { FlowEdge } from './FlowEdge'
 export const edgeTypes = {
   animated: AnimatedEdge,
   flow: FlowEdge,
-  // Add your custom edge types here!
+  default: AnimatedEdge, // Fallback for edges without explicit type
 } satisfies EdgeTypes

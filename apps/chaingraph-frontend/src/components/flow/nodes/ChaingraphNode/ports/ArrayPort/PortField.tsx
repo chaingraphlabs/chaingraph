@@ -6,38 +6,32 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { PortComponent } from '../../PortComponent'
 import { DeleteButton } from '../ui/DeleteButton'
 
 interface PortFieldProps {
-  node: INode
-  parentPort: IPort<ArrayPortConfig>
-  port: IPort
-
-  context: PortContextValue
+  nodeId: string
+  parentPortId: string
+  portId: string
   isOutput: boolean
   isMutable: boolean
   onDelete: () => void
 }
 
 export function PortField({
-  node,
-  parentPort,
-  port,
+  nodeId,
+  parentPortId,
+  portId,
   isOutput,
   isMutable,
   onDelete,
-  context,
 }: PortFieldProps) {
-  const isKeyDeletable
-    = useMemo(() => parentPort.getConfig()?.ui?.keyDeletable
-      || parentPort.getConfig()?.ui?.keyDeletable === undefined, [parentPort])
+  // const parentUI = usePortUI(nodeId, parentPortId)
+
+  // const isKeyDeletable
+  //   = useMemo(() => parentUI?.keyDeletable
+  //     || parentUI?.keyDeletable === undefined, [parentUI])
 
   return (
     <div className="py-1 w-full relative">
@@ -48,7 +42,7 @@ export function PortField({
       )}
       >
         <div className="flex-1 min-w-0">
-          <PortComponent node={node} port={port} context={context} />
+          <PortComponent nodeId={nodeId} portId={portId} />
         </div>
 
         {(isMutable && <DeleteButton onClick={onDelete} />)}

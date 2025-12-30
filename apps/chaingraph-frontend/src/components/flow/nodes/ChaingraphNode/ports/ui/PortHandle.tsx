@@ -1,3 +1,4 @@
+import type { BasePortConfigUIType, IPortConfig } from '@badaitech/chaingraph-types'
 /*
  * Copyright (c) 2025 BadLabs
  *
@@ -5,53 +6,73 @@
  *
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
-import type { IPort, IPortConfig } from '@badaitech/chaingraph-types'
 import { Handle, Position } from '@xyflow/react'
 import { useUnit } from 'effector-react/effector-react.umd'
+import { useTheme } from '@/components/theme/hooks/useTheme'
 import { cn } from '@/lib/utils'
 import { $compatiblePortsToDraggingEdge } from '@/store/edges/stores'
-import { PortDocTooltip } from '../doc'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
+import { getPortTypeColor, PortDocTooltip } from '../doc'
 
-interface Props<C extends IPortConfig> {
+interface Props {
   className?: string
-  port: IPort<C>
+  nodeId: string
+  portId: string
   isConnectable?: boolean
   forceDirection?: 'input' | 'output'
 }
 
-export function PortHandle<C extends IPortConfig>({ port, forceDirection, className, isConnectable }: Props<C>) {
-  const config = port.getConfig()
+export function PortHandle({ nodeId, portId, forceDirection, className, isConnectable }: Props) {
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
 
   const compatiblePorts = useUnit($compatiblePortsToDraggingEdge)
-  const isDraggingCompatible = compatiblePorts && compatiblePorts.includes(port.id)
+  const isDraggingCompatible = compatiblePorts && compatiblePorts.includes(portId)
 
   const isCompatible = compatiblePorts === null ? true : isDraggingCompatible
 
-  const bgColor = isCompatible
-    ? config.ui?.bgColor
-    : '#a1a1a1'
+  // Cast UI for type-safe property access
+  const portUI = ui as BasePortConfigUIType
 
-  const direction = forceDirection ?? config.direction
+  const { theme } = useTheme()
+  const portColor = isCompatible && config
+    ? getPortTypeColor(theme, {
+        ...config,
+        ui: {
+          ...config.ui,
+          ...portUI,
+        },
+      } as IPortConfig)
+    : getPortTypeColor(theme, {
+        type: 'any',
+      } as IPortConfig)
+
+  const direction = forceDirection ?? config?.direction
   const position = direction === 'input'
     ? Position.Left
     : Position.Right
 
+  if (!config) {
+    console.warn(`PortHandle: Missing config for port ${nodeId}:${portId}`)
+    return null
+  }
+
   return (
-    <PortDocTooltip port={port}>
+    <PortDocTooltip nodeId={nodeId} portId={portId}>
       <Handle
         id={config.id}
-        hidden={config.ui?.hidePort === true}
+        hidden={portUI.hidePort === true}
         isConnectable={isConnectable === undefined || isConnectable}
         type={direction === 'input' ? 'target' : 'source'}
         position={position}
         style={
           isDraggingCompatible
             ? {
-                backgroundColor: bgColor,
+                backgroundColor: portColor.circleColor,
                 boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
               }
             : {
-                backgroundColor: bgColor,
+                backgroundColor: portColor.circleColor,
               }
         }
         className={cn(
@@ -62,7 +83,7 @@ export function PortHandle<C extends IPortConfig>({ port, forceDirection, classN
           'data-[connected=true]:shadow-port-connected',
           'z-50',
           direction === 'input' ? '-left-4' : '-right-4',
-          !bgColor && 'bg-flow-data',
+          !portColor.circleColor && 'bg-flow-data',
           className,
           !isCompatible && 'opacity-10 cursor-not-allowed',
           isCompatible && 'cursor-pointer',

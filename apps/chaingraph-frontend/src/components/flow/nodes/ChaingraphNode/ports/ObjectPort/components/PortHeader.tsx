@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
+import { usePortUI } from '@/store/ports-v2'
 import { PortTitle } from '../../ui/PortTitle'
 
 interface PortHeaderProps {
@@ -17,11 +17,13 @@ interface PortHeaderProps {
   isOutput: boolean
   isCollapsed: boolean
   onClick: () => void
-  node: INode
-  port: IPort
+  nodeId: string
+  portId: string
 }
 
-export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }: PortHeaderProps) {
+export function PortHeader({ title, isOutput, isCollapsed, onClick, nodeId, portId }: PortHeaderProps) {
+  const ui = usePortUI(nodeId, portId)
+
   return (
     <div className={cn(
       'flex items-center gap-1',
@@ -37,19 +39,21 @@ export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }
           'p-1 rounded-md gap-2',
           'bg-muted/40 hover:bg-muted/60 transition-colors',
           'text-sm font-medium nodrag',
-          isOutput ? 'justify-end' : 'justify-start',
+          !isOutput ? 'justify-end' : 'justify-start',
           'truncate',
         )}
       >
-        <div className={cn(
-          'flex-shrink-0',
-          isOutput ? 'order-last' : 'order-first',
+        {!isOutput && (
+          <div className={cn(
+            'flex-shrink-0',
+            isOutput ? 'order-last' : 'order-first',
+          )}
+          >
+            {isCollapsed
+              ? <ChevronDown className="w-4 h-4" />
+              : <ChevronRight className="w-4 h-4" />}
+          </div>
         )}
-        >
-          {isCollapsed
-            ? <ChevronDown className="w-4 h-4" />
-            : <ChevronRight className="w-4 h-4" />}
-        </div>
 
         <PortTitle
           className={cn(
@@ -59,16 +63,28 @@ export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }
           )}
           onClick={() => {
             requestUpdatePortUI({
-              nodeId: node.id,
-              portId: port.id,
+              nodeId,
+              portId,
               ui: {
-                hideEditor: !port.getConfig().ui?.hideEditor,
+                hideEditor: ui?.hideEditor === undefined ? true : !ui?.hideEditor,
               },
             })
           }}
         >
           {title}
         </PortTitle>
+
+        {isOutput && (
+          <div className={cn(
+            'flex-shrink-0',
+            isOutput ? 'order-last' : 'order-first',
+          )}
+          >
+            {isCollapsed
+              ? <ChevronDown className="w-4 h-4" />
+              : <ChevronRight className="w-4 h-4" />}
+          </div>
+        )}
       </button>
     </div>
   )

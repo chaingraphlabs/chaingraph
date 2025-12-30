@@ -1,10 +1,16 @@
 # @badaitech/badai-api
 
+## 0.7.0
+
+### Minor Changes
+
+- Global frontend optimizations, and new features
+
 ## 0.6.46
 
 ### Patch Changes
 
-- fix: return a clone of the cached flow to prevent unintended mutations
+- feat: remove unused child spawner workflow and related components for code cleanup
 
 ## 0.6.45
 

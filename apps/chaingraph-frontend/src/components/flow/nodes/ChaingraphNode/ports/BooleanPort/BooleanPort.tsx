@@ -6,57 +6,59 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { BooleanPortConfig, ExtractValue, INode, IPort } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import { memo, useCallback, useMemo } from 'react'
 import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils/hide-editor'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { useExecutionID } from '@/store/execution'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
-import { requestUpdatePortUI } from '@/store/ports'
+import { usePortEdges } from '@/store/nodes/computed'
+import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 
 export interface BooleanPortProps {
-  node: INode
-  port: IPort<BooleanPortConfig>
-  context: PortContextValue
+  nodeId: string
+  portId: string
 }
 
 function BooleanPortComponent(props: BooleanPortProps) {
   const executionID = useExecutionID()
 
-  const { node, port, context } = props
-  const { updatePortValue, getEdgesForPort } = context
+  const { nodeId, portId } = props
 
-  const config = port.getConfig()
-  const ui = config.ui
-  const title = config.title || config.key
+  // Granular subscriptions - only re-renders when THIS port's data changes
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const value = usePortValueWithExecution(nodeId, portId) as boolean | undefined
+
+  const title = config?.title || config?.key || portId
 
   // Track focus/blur for global copy-paste functionality
-  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
 
-  // Memoize the edges for this port
-  const connectedEdges = useMemo(() => {
-    return getEdgesForPort(port.id)
-  }, [getEdgesForPort, port.id])
+  // Granular edge subscription - only re-renders when THIS port's edges change
+  const connectedEdges = usePortEdges(nodeId, portId)
 
   const needRenderEditor = useMemo(() => {
-    return !isHideEditor(config, connectedEdges)
+    if (!config)
+      return false
+    return !isHideEditor(config as any, connectedEdges)
   }, [config, connectedEdges])
 
-  const handleChange = useCallback((value: ExtractValue<BooleanPortConfig> | undefined) => {
-    updatePortValue({
-      nodeId: node.id,
-      portId: port.id,
+  const handleChange = useCallback((value: boolean | undefined) => {
+    requestUpdatePortValue({
+      nodeId,
+      portId,
       value,
     })
-  }, [node.id, port.id, updatePortValue])
+  }, [nodeId, portId])
 
   if (ui?.hidden)
+    return null
+
+  // Early return if config not loaded yet
+  if (!config)
     return null
 
   return (
@@ -68,7 +70,7 @@ function BooleanPortComponent(props: BooleanPortProps) {
       )}
     >
       {(config.direction === 'input' || config.direction === 'passthrough')
-        && <PortHandle port={port} forceDirection="input" />}
+        && <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />}
 
       <div className={cn(
         'flex flex-col',
@@ -80,10 +82,10 @@ function BooleanPortComponent(props: BooleanPortProps) {
           className="cursor-pointer"
           onClick={() => {
             requestUpdatePortUI({
-              nodeId: node.id,
-              portId: port.id,
+              nodeId,
+              portId,
               ui: {
-                hideEditor: ui?.hideEditor === undefined ? false : !ui.hideEditor,
+                hideEditor: (ui as { hideEditor?: boolean })?.hideEditor === undefined ? false : !(ui as { hideEditor?: boolean }).hideEditor,
               },
             })
           }}
@@ -93,8 +95,8 @@ function BooleanPortComponent(props: BooleanPortProps) {
 
         {needRenderEditor && (
           <Switch
-            disabled={executionID ? true : ui?.disabled ?? false}
-            checked={port.getValue()}
+            disabled={executionID ? true : (ui as { disabled?: boolean })?.disabled ?? false}
+            checked={value ?? false}
             onCheckedChange={checked => handleChange(checked)}
             onFocus={trackFocus}
             onBlur={trackBlur}
@@ -106,7 +108,8 @@ function BooleanPortComponent(props: BooleanPortProps) {
       {(config.direction === 'output' || config.direction === 'passthrough')
         && (
           <PortHandle
-            port={port}
+            nodeId={nodeId}
+            portId={portId}
             forceDirection="output"
             className={cn(
               config.parentId !== undefined

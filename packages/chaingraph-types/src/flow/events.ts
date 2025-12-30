@@ -38,7 +38,7 @@ export enum FlowEventType {
   EdgesAdded = 'flow:edges:added',
   EdgeAdded = 'flow:edge:added',
   EdgeRemoved = 'flow:edge:removed',
-  // EdgeUpdated = 'flow:edge:updated',
+  EdgeMetadataUpdated = 'flow:edge:metadata-updated',
 
   // Node UI events
   NodeUIPositionChanged = 'flow:node:ui:position-changed',
@@ -128,6 +128,13 @@ export interface EdgeUpdatedEventData {
   metadata: EdgeMetadata
 }
 
+/** Data for EdgeMetadataUpdated event */
+export interface EdgeMetadataUpdatedEventData {
+  edgeId: string
+  metadata: EdgeMetadata
+  version: number
+}
+
 /** Data for NodeParentUpdated event */
 export interface NodeParentUpdatedEventData {
   nodeId: string
@@ -196,7 +203,7 @@ export interface EventDataMap {
   [FlowEventType.EdgesAdded]: EdgesAddedEventData
   [FlowEventType.EdgeAdded]: EdgeAddedEventData
   [FlowEventType.EdgeRemoved]: EdgeRemovedEventData
-  // [FlowEventType.EdgeUpdated]: EdgeUpdatedEventData
+  [FlowEventType.EdgeMetadataUpdated]: EdgeMetadataUpdatedEventData
   [FlowEventType.NodeParentUpdated]: NodeParentUpdatedEventData
   [FlowEventType.NodeUIPositionChanged]: NodeUIPositionChangedEventData
   [FlowEventType.NodeUIDimensionsChanged]: NodeUIDimensionsChangedEventData

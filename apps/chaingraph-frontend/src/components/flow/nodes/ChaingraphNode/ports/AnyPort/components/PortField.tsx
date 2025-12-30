@@ -6,50 +6,41 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { AnyPortConfig, INode, IPort } from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 import { memo, useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { usePortConfig } from '@/store/ports-v2'
 import { PortComponent } from '../../../PortComponent'
 import { DeleteButton } from '../../ui/DeleteButton'
 
 interface PortFieldProps {
-  node: INode
-  parentPort: IPort<AnyPortConfig>
-  port: IPort
-  context: PortContextValue
+  nodeId: string
+  parentPortId: string
+  portId: string
   isOutput: boolean
   isSchemaMutable: boolean
   onDelete: () => void
 }
 
 export function PortField({
-  node,
-  parentPort,
-  port,
-  context,
+  nodeId,
+  parentPortId,
+  portId,
   isOutput,
   isSchemaMutable,
   onDelete,
 }: PortFieldProps) {
-  const parentPortConfig = parentPort.getConfig()
+  // Get parent config for underlying type
+  const parentConfig = usePortConfig(nodeId, parentPortId)
 
-  const underlyingType = parentPortConfig.underlyingType
+  const underlyingType = (parentConfig as any)?.underlyingType
+
   // Memoize this computation to prevent recalculation on every render
   const isKeyDeletable = useMemo(() =>
     (underlyingType?.type === 'object' && underlyingType?.ui?.keyDeletable)
     || underlyingType?.ui?.keyDeletable === undefined, [underlyingType])
 
-  const portConfig = port.getConfig()
-  port.setConfig({
-    ...portConfig,
-    ui: {
-      ...portConfig.ui || {},
-      hideEditor: (underlyingType?.type === 'object' && underlyingType?.ui?.hidePropertyEditor) || port.getConfig().ui?.hideEditor || false,
-    },
-  })
+  // Note: Removed port.setConfig() mutation - UI config should be handled via requestUpdatePortUI
+  // The hidePropertyEditor logic will be handled by the child PortComponent itself
 
   return (
     <div className="py-1 w-full relative">
@@ -60,7 +51,7 @@ export function PortField({
       )}
       >
         <div className="flex-1 min-w-0">
-          <PortComponent node={node} port={port} context={context} />
+          <PortComponent nodeId={nodeId} portId={portId} />
         </div>
 
         {(isSchemaMutable && underlyingType?.type === 'object' && underlyingType?.ui?.keyDeletable)

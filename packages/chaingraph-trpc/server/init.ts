@@ -23,7 +23,15 @@ import { InMemoryFlowStore } from './stores/flowStore/inMemoryFlowStore'
 import { PgOwnershipResolver } from './stores/ownership'
 import { PgUserStore } from './stores/userStore'
 
-export async function init() {
+interface InitConfig {
+  useFlowStoreCache?: boolean
+}
+
+export async function init(
+  config: InitConfig = {
+    useFlowStoreCache: true,
+  },
+) {
   process.setMaxListeners(0)
   registerSuperjsonTransformers(SuperJSON, NodeRegistry.getInstance())
 
@@ -116,7 +124,12 @@ export async function init() {
     console.log('✅ All required user management tables exist')
 
     const ownershipResolver = new PgOwnershipResolver(userStore)
-    flowStore = new DBFlowStore(db, true, NodeRegistry.getInstance(), ownershipResolver)
+    flowStore = new DBFlowStore(
+      db,
+      config.useFlowStoreCache ?? true,
+      NodeRegistry.getInstance(),
+      ownershipResolver,
+    )
     mcpStore = new PostgresMCPStore(db)
   } catch (error) {
     console.error('DB connection failed, using in-memory store. If you would like to use a database, please set DATABASE_URL environment variable.')

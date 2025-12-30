@@ -6,144 +6,103 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type {
-  AnyPortConfig,
-  ArrayPortConfig,
-  BooleanPortConfig,
-  EnumPortConfig,
-  INode,
-  IPort,
-  NumberPortConfig,
-  ObjectPortConfig,
-  SecretPortConfig,
-  StreamPortConfig,
-  StringPortConfig,
-} from '@badaitech/chaingraph-types'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
-import { AnyPort } from 'components/flow/nodes/ChaingraphNode/ports/AnyPort/AnyPort'
 import { memo } from 'react'
-import { BooleanPort } from '@/components/flow/nodes/ChaingraphNode/ports/BooleanPort/BooleanPort'
-import { NumberPort } from '@/components/flow/nodes/ChaingraphNode/ports/NumberPort/NumberPort'
-
-import { ObjectPort } from '@/components/flow/nodes/ChaingraphNode/ports/ObjectPort/ObjectPort'
-import { StreamPort } from '@/components/flow/nodes/ChaingraphNode/ports/StreamPort/StreamPort'
+import { usePortType } from '@/store/ports-v2'
+import { AnyPort } from './ports/AnyPort/AnyPort'
 import { ArrayPort } from './ports/ArrayPort/ArrayPort'
-import { PortContext } from './ports/context/PortContext'
+import { BooleanPort } from './ports/BooleanPort/BooleanPort'
 import { EnumPort } from './ports/EnumPort/EnumPort'
+import { NumberPort } from './ports/NumberPort/NumberPort'
+import { ObjectPort } from './ports/ObjectPort/ObjectPort'
 import { SecretPort } from './ports/SecretPort/SecretPort'
+import { StreamPort } from './ports/StreamPort/StreamPort'
 import { StringPort } from './ports/StringPort/StringPort'
 
 /**
  * PortProps interface for all components rendered through PortComponent
- * The actual dependencies needed by each port component are passed through
- * the PortContext instead of directly as props
+ *
+ * ID-ONLY ARCHITECTURE:
+ * - No full node/port objects passed as props
+ * - Port components fetch data via granular hooks (usePortValue, usePortConfig, etc.)
+ * - Port components call Effector events directly (no context needed!)
+ * - True granularity: Only Port A re-renders when Port A changes
+ * - Memo becomes trivial (ID comparison only)
  */
 export interface PortProps {
-  node: INode
-  port: IPort
-  context: PortContextValue
+  nodeId: string
+  portId: string
 }
 
 /**
- * Memoized PortComponent with custom comparison
- * Only re-renders when port data actually changes, not on parent node position updates
+ * Memoized PortComponent with trivial ID-only comparison
+ * No version checks - granular hooks handle update detection
  */
 export const PortComponent = memo(PortComponentInner, (prev, next) => {
-  // Different port ID = must re-render
-  if (prev.port.id !== next.port.id) {
+  // Simple ID comparison - if IDs match, skip re-render
+  // Granular hooks inside component handle data change detection
+  if (prev.nodeId !== next.nodeId)
     return false
-  }
-
-  // Different node = must re-render
-  if (prev.node.id !== next.node.id) {
+  if (prev.portId !== next.portId)
     return false
-  }
-
-  // Node version changed = port data might have changed
-  if (prev.node.getVersion() !== next.node.getVersion()) {
-    return false
-  }
-
-  // Context reference changed (operations are stable, but check anyway)
-  if (prev.context !== next.context) {
-    return false
-  }
-
-  // All checks passed - skip re-render
-  return true
+  return true // IDs match - skip re-render, let hooks decide
 })
 
 function PortComponentInner(props: PortProps) {
-  const {
-    node,
-    port,
-    context,
-  } = props
+  const { nodeId, portId } = props
 
-  // Safety check - if context isn't provided, try to consume from PortContext
-  if (!context) {
-    console.warn('PortComponent: No context provided for port', port.id)
-    return (
-      <PortContext.Consumer>
-        {(contextValue) => {
-          if (!contextValue) {
-            console.error('PortContext is not available in the component tree')
-            return null
-          }
-          return <PortComponent node={node} port={port} context={contextValue} />
-        }}
-      </PortContext.Consumer>
-    )
-  }
+  // Fetch only the port type to avoid re-renders on unrelated config changes
+  const portType = usePortType(nodeId, portId)
 
-  switch (port.getConfig().type) {
+  // Early return if config not loaded
+  if (!portType)
+    return null
+
+  switch (portType) {
     case 'string': {
       return (
-        <StringPort node={node} port={port as IPort<StringPortConfig>} context={context} />
+        <StringPort nodeId={nodeId} portId={portId} />
       )
     }
     case 'boolean': {
       return (
-        <BooleanPort node={node} port={port as IPort<BooleanPortConfig>} context={context} />
+        <BooleanPort nodeId={nodeId} portId={portId} />
       )
     }
     case 'number': {
       return (
-        <NumberPort node={node} port={port as IPort<NumberPortConfig>} context={context} />
+        <NumberPort nodeId={nodeId} portId={portId} />
       )
     }
     case 'enum': {
       return (
-        <EnumPort node={node} port={port as IPort<EnumPortConfig>} context={context} />
+        <EnumPort nodeId={nodeId} portId={portId} />
       )
     }
     case 'object': {
       return (
-        <ObjectPort node={node} port={port as IPort<ObjectPortConfig>} context={context} />
+        <ObjectPort nodeId={nodeId} portId={portId} />
       )
     }
     case 'array': {
       return (
-        <ArrayPort node={node} port={port as IPort<ArrayPortConfig>} context={context} />
+        <ArrayPort nodeId={nodeId} portId={portId} />
       )
     }
     case 'secret':
       return (
-        <SecretPort port={port as IPort<SecretPortConfig>} />
+        <SecretPort nodeId={nodeId} portId={portId} />
       )
 
     case 'any': {
-      return <AnyPort node={node} port={port as IPort<AnyPortConfig>} context={context} />
+      return <AnyPort nodeId={nodeId} portId={portId} />
     }
 
     case 'stream': {
-      return <StreamPort node={node} port={port as IPort<StreamPortConfig>} context={context} />
+      return <StreamPort nodeId={nodeId} portId={portId} />
     }
 
     default: {
-      throw new Error(`Unhandled config.type case: ${port.getConfig().type}`)
+      throw new Error(`Unhandled port type case: ${String(portType)}`)
     }
   }
 }

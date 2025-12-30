@@ -43,3 +43,42 @@ export interface EdgeError {
   code?: string
   timestamp: Date
 }
+
+/**
+ * Render data for a single edge in the XYFlow graph
+ *
+ * This is stored in $edgeRenderMap and updated via delta samples.
+ * Each edge has an `isReady` flag that indicates whether both
+ * source and target ports exist in $portConfigs.
+ *
+ * Style properties are updated surgically by separate wires:
+ * - WIRE 1: $portConfigs + $portUI → isReady + color
+ * - WIRE 2: $executionNodes → animation + style
+ * - WIRE 3-4: highlighting → style
+ * - WIRE 5: $nodeLayerDepth → zIndex
+ */
+export interface EdgeRenderData {
+  // Identity (immutable after creation)
+  edgeId: string
+  source: string
+  target: string
+  sourceHandle: string
+  targetHandle: string
+
+  // Readiness flag - edge only renders when BOTH ports exist in $portConfigs
+  isReady: boolean
+
+  // Style properties (updated by delta samples)
+  color: string
+  type: 'flow' | 'default'
+  strokeWidth: number
+  strokeOpacity: number
+  animated: boolean
+  zIndex: number
+
+  // For XYFlow edge memoization (increments on any change)
+  version: number
+
+  // Original edge data (for compatibility with useEdgesForNode)
+  edgeData: EdgeData
+}

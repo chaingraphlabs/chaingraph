@@ -84,7 +84,11 @@ export class APITaskQueue implements ITaskQueue {
         task, // Workflow argument
       )
 
-      logger.info({ executionId: task.executionId }, 'Task enqueued via DBOSClient')
+      logger.info({
+        executionId: task.executionId,
+        flowId: task.flowId,
+        flowVersion: task.flowVersion,
+      }, 'Task enqueued via DBOSClient')
     } catch (error) {
       logger.error({ error, executionId: task.executionId }, 'Failed to enqueue task')
       throw error

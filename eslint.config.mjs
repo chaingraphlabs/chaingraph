@@ -67,6 +67,7 @@ export default antfu(
       '**/pnpm-lock.yaml',
       '**/package-lock.json',
       '**/yarn.lock',
+      '**/.conductor/**/*',
     ],
   },
   // Add custom rules
@@ -88,6 +89,7 @@ export default antfu(
       'sort-imports': 'off',
       'simple-import-sort/imports': 'off',
       'antfu/imports-order': 'off', // Specifically for @antfu/eslint-config
+      'style/eol-last': 'off'
     },
   },
 )
