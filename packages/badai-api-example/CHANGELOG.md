@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.7.4
+
+### Patch Changes
+
+- fix(frontend): force side-effect imports in ports-v2 init.ts
+- Updated dependencies
+  - @badaitech/badai-api@0.7.4
+
 ## 0.7.3
 
 ### Patch Changes
