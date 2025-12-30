@@ -19,10 +19,16 @@
  * This file should be imported once in the main store initialization.
  */
 
+// CRITICAL: Import modules first to force them to load (executes sample() calls)
+// Re-exports alone are not enough - with sideEffects:false, bundler will tree-shake them
+import './cleanup'
+import './dynamic-ports'
+import './echo-detection'
+import './initialization'
+
+// Then re-export markers to prevent tree-shaking of this module
 export { CLEANUP_WIRING } from './cleanup'
 export { DYNAMIC_PORTS_WIRING } from './dynamic-ports'
-// Re-export wiring modules to prevent tree-shaking in lib builds
-// Each module registers sample() calls as side effects when imported
 export { ECHO_DETECTION_WIRING } from './echo-detection'
 export { INITIALIZATION_WIRING } from './initialization'
 
