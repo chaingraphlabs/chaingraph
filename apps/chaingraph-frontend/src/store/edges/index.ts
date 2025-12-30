@@ -6,6 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+// Anchor drag sync wiring (multi-node drag)
+// Export marker to prevent tree-shaking in lib builds
+export { ANCHOR_DRAG_SYNC_INITIALIZED } from './anchor-drag-sync'
+
 // Anchor Nodes (XYFlow nodes for edge waypoints)
 export {
   $anchorNodes,
@@ -75,7 +79,3 @@ export * from './types'
 
 // Utilities
 export { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
-
-// Anchor drag sync wiring (multi-node drag)
-// Export marker to prevent tree-shaking in lib builds
-export { ANCHOR_DRAG_SYNC_INITIALIZED } from './anchor-drag-sync'
