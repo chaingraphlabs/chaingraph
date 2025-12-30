@@ -1,5 +1,11 @@
 # @badaitech/typescript-config
 
+## 0.7.1
+
+### Patch Changes
+
+- Fixed Effector store wiring being tree-shaken in lib builds, causing empty port rendering
+
 ## 0.7.0
 
 ### Minor Changes

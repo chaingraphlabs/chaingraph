@@ -26,9 +26,6 @@
  * @see /docs/architecture/granular-port-stores-design.md
  */
 
-// Initialize wiring (registers all sample() calls)
-import './init'
-
 // Direct port updates (no buffer - synchronous processing)
 export {
   portUpdateReceived,
@@ -44,13 +41,13 @@ export { $portDescendants } from './descendants'
 
 // Domain
 export { portsV2Domain } from './domain'
+
 // Feature Flags
 export {
   $isGranularWriteEnabled,
   $migrationMode,
   setMigrationMode,
 } from './feature-flags'
-
 // Hooks
 export {
   useChildPorts,
@@ -61,6 +58,10 @@ export {
   usePortUI,
   usePortValue,
 } from './hooks'
+
+// Initialize wiring (registers all sample() calls)
+// Export marker to prevent tree-shaking in lib builds
+export { PORTS_V2_WIRING_INITIALIZED } from './init'
 
 // Merge (for testing/advanced usage)
 export { mergeConnections, mergePortEvents } from './merge'
