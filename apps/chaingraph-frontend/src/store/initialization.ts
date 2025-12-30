@@ -20,9 +20,8 @@ import { setSession } from './session'
 import { $trpcClientExecutor, createTRPCExecutionClientEvent } from './trpc/execution-client'
 import { $trpcClient, createTRPCClientEvent } from './trpc/store'
 
-// Import ports-v2 to register all sample() wiring for granular port stores
-// This enables the buffering system, echo detection, initialization handlers, etc.
-import '@/store/ports-v2'
+// Export session providers for convenience
+export { sessionProviders } from './session'
 
 // Public API Types
 export interface ChainGraphConfig {
@@ -226,5 +225,6 @@ export function isChainGraphInitialized(): boolean {
   return $initStatus.getState() === 'ready'
 }
 
-// Export session providers for convenience
-export { sessionProviders } from './session'
+// Re-export ports-v2 marker to prevent tree-shaking in lib builds
+// This ensures the buffering system, echo detection, initialization handlers are registered
+export { PORTS_V2_WIRING_INITIALIZED } from '@/store/ports-v2'
