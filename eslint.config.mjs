@@ -89,6 +89,7 @@ export default antfu(
       'sort-imports': 'off',
       'simple-import-sort/imports': 'off',
       'antfu/imports-order': 'off', // Specifically for @antfu/eslint-config
+      'style/eol-last': 'off'
     },
   },
 )
