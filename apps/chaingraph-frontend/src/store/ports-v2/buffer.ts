@@ -506,11 +506,17 @@ sample({
   source: $nodePortKeys,
   filter: (_, events) => events.length > 0,
   fn: (nodePortKeysMap, events) => {
+    console.log('[ports-v2/buffer] portUpdatesReceived triggered with', events.length, 'events')
     const spanId = trace.start('ports.process.batch', {
       category: 'io',
       tags: { eventCount: events.length },
     })
     const result = processPortUpdates(events, nodePortKeysMap)
+    console.log('[ports-v2/buffer] Processed batch:', {
+      values: result.valueUpdates.size,
+      configs: result.configUpdates.size,
+      ui: result.uiUpdates.size,
+    })
     trace.end(spanId)
     return result
   },

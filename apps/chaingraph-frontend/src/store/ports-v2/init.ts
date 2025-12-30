@@ -19,14 +19,17 @@
  * This file should be imported once in the main store initialization.
  */
 
-// Import wiring modules to register their sample() calls
-import './echo-detection'
-import './initialization'
-import './cleanup'
-import './dynamic-ports'
+export { CLEANUP_WIRING } from './cleanup'
+export { DYNAMIC_PORTS_WIRING } from './dynamic-ports'
+// Re-export wiring modules to prevent tree-shaking in lib builds
+// Each module registers sample() calls as side effects when imported
+export { ECHO_DETECTION_WIRING } from './echo-detection'
+export { INITIALIZATION_WIRING } from './initialization'
 
 /**
- * Export marker to prevent tree-shaking of this side-effect module.
- * This ensures the Effector sample() wiring above is registered in lib builds.
+ * Combined marker - true only if all wiring modules are loaded
  */
 export const PORTS_V2_WIRING_INITIALIZED = true
+
+// DEBUG: Log when this module is loaded
+console.log('[ports-v2/init] Wiring modules loaded')

@@ -61,3 +61,6 @@ $migrationMode.on(setMigrationMode, (_, mode) => {
 export const $isGranularWriteEnabled = $migrationMode.map(
   mode => mode !== 'disabled',
 )
+
+// DEBUG: Log initial mode
+console.log('[ports-v2/feature-flags] Initial mode:', getInitialMode(), '- granular write enabled:', getInitialMode() !== 'disabled')

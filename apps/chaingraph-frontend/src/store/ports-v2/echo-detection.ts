@@ -227,3 +227,6 @@ sample({
   fn: ({ confirmedMutations }) => confirmedMutations,
   target: confirmMutationsListFx,
 })
+
+/** Marker to prevent tree-shaking */
+export const ECHO_DETECTION_WIRING = true

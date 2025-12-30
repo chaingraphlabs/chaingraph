@@ -34,3 +34,6 @@ $nodePortKeys.on(removeNode, (state, nodeId) => {
   newState.delete(nodeId)
   return newState
 })
+
+/** Marker to prevent tree-shaking */
+export const CLEANUP_WIRING = true
