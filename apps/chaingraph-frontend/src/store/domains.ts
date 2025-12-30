@@ -75,10 +75,6 @@ export const walletDomain = createDomain('wallet')
 // Hotkeys domain for keyboard shortcuts state management
 export { hotkeysDomain } from './hotkeys/stores'
 
-// PortsV2 domain for granular port state management
-// Import from './ports-v2' (not './ports-v2/domain') to ensure init wiring is loaded
-export { portsV2Domain } from './ports-v2'
-
 // XYFlow domain for optimized XYFlow node rendering
 // Provides single combined store with all render data per node
 // See store/xyflow/domain.ts for detailed documentation

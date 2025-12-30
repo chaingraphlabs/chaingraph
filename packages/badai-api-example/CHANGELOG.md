@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.7.2
+
+### Patch Changes
+
+- fix(frontend): prevent Effector wiring tree-shaking in lib builds
+- Updated dependencies
+  - @badaitech/badai-api@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
