@@ -22,6 +22,7 @@ import {
   $nodeLayerDepth,
   $nodePositions,
   $nodes,
+  $selectedNodeIds,
   addNode,
   addNodes,
   clearNodes,
@@ -42,6 +43,7 @@ import {
   xyflowNodesDataChanged,
   xyflowStructureChanged,
 } from '../events'
+import { calculateZIndex } from '../z-index-constants'
 
 // ============================================================================
 // HELPER: Build complete render map from all source stores
@@ -57,6 +59,7 @@ function buildCompleteRenderMap(
   pulseStates: Map<string, PulseState>,
   dragState: DragDropRenderState,
   portLists: Record<string, NodePortLists>,
+  selectedNodeIds: string[],
 ): Record<string, XYFlowNodeRenderData> {
   const spanId = trace.start('buildCompleteRenderMap', {
     category: 'store',
@@ -64,6 +67,7 @@ function buildCompleteRenderMap(
   })
   const renderMap: Record<string, XYFlowNodeRenderData> = {}
   const highlightSet = new Set(highlightedIds || [])
+  const selectedSet = new Set(selectedNodeIds)
   const hasAnyHighlights = highlightedIds !== null && highlightedIds.length > 0
 
   // Pre-compute potential drop targets map for O(1) lookup (was O(N²) with .find())
@@ -146,7 +150,13 @@ function buildCompleteRenderMap(
       dimensions: dims,
       nodeType: node.metadata.category === NODE_CATEGORIES.GROUP ? 'groupNode' : 'chaingraphNode',
       categoryMetadata: category!,
-      zIndex: layerDepths[nodeId] ?? 0,
+      // Z-Index: groups < edges < anchors < nodes within same depth
+      // Selected entities get boosted to 100,000+ to float above canvas
+      zIndex: calculateZIndex(
+        node.metadata.category === NODE_CATEGORIES.GROUP ? 'group' : 'node',
+        layerDepths[nodeId] ?? 0,
+        selectedSet.has(nodeId),
+      ),
       isSelected: node.metadata.ui?.state?.isSelected || false,
       isHidden: node.metadata.ui?.state?.isHidden || false,
       isDraggable: !node.metadata.ui?.state?.isMovingDisabled,
@@ -159,11 +169,11 @@ function buildCompleteRenderMap(
       executionStatus: (execNode?.status as XYFlowNodeRenderData['executionStatus']) || 'idle',
       executionNode: execNode
         ? {
-            status: execNode.status,
-            executionTime: execNode.executionTime,
-            error: execNode.error,
-            node: execNode.node,
-          }
+          status: execNode.status,
+          executionTime: execNode.executionTime,
+          error: execNode.error,
+          node: execNode.node,
+        }
         : null,
       isHighlighted: highlightSet.has(nodeId),
       hasAnyHighlights,
@@ -241,6 +251,7 @@ sample({
     pulseStates: $nodesPulseState,
     dragState: $dragDropRenderState,
     portLists: $nodePortLists,
+    selectedNodeIds: $selectedNodeIds,
   },
   fn: ({
     nodes,
@@ -253,6 +264,7 @@ sample({
     pulseStates,
     dragState,
     portLists,
+    selectedNodeIds,
   }) => buildCompleteRenderMap(
     nodes,
     positions,
@@ -264,6 +276,7 @@ sample({
     pulseStates,
     dragState,
     portLists,
+    selectedNodeIds,
   ),
   target: setXYFlowNodeRenderMap,
 })
@@ -274,7 +287,7 @@ sample({
 sample({
   clock: [addNode, addNodes, removeNode, clearNodes, setNodes, updateNodeParent],
   fn: () => {
-    trace.wrap('xyflow.structureChanged.fromNodeEvent', { category: 'event' }, () => {})
+    trace.wrap('xyflow.structureChanged.fromNodeEvent', { category: 'event' }, () => { })
   },
   target: xyflowStructureChanged,
 })
@@ -290,7 +303,7 @@ sample({
     trace.wrap('xyflow.structureChanged.fromPortLists', {
       category: 'event',
       tags: { nodeCount: Object.keys(portLists).length },
-    }, () => {})
+    }, () => { })
     return portLists
   },
   target: xyflowStructureChanged,
@@ -507,20 +520,20 @@ sample({
       // Execution node data
       const executionNode = execNode
         ? {
-            status: execNode.status,
-            executionTime: execNode.executionTime,
-            error: execNode.error,
-            node: execNode.node,
-          }
+          status: execNode.status,
+          executionTime: execNode.executionTime,
+          error: execNode.error,
+          node: execNode.node,
+        }
         : null
 
       // Deep comparison for execution node
       const currentExecNode = current.executionNode
       const execNodeChanged
         = (currentExecNode === null) !== (executionNode === null)
-          || currentExecNode?.status !== executionNode?.status
-          || currentExecNode?.executionTime !== executionNode?.executionTime
-          || currentExecNode?.node !== executionNode?.node
+        || currentExecNode?.status !== executionNode?.status
+        || currentExecNode?.executionTime !== executionNode?.executionTime
+        || currentExecNode?.node !== executionNode?.node
 
       if (execNodeChanged) {
         updates.executionNode = executionNode
@@ -646,8 +659,8 @@ sample({
         // Compare with current
         const changed
           = (current.dropFeedback === null) !== (dropFeedback === null)
-            || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
-            || current.dropFeedback?.dropType !== dropFeedback?.dropType
+          || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
+          || current.dropFeedback?.dropType !== dropFeedback?.dropType
 
         if (changed) {
           changes.push({ nodeId, changes: { dropFeedback } })
@@ -670,17 +683,33 @@ sample({
 })
 
 // ============================================================================
-// WIRE 7: LAYER DEPTH CHANGES (Low Frequency - parent structure changes)
+// WIRE 7: LAYER DEPTH & SELECTION CHANGES → Z-Index Update
 // ============================================================================
+// Z-Index formula: depth * 1000 + offset
+// - Groups: +0, Edges: +100, Anchors: +200, Nodes: +300
+// - Selected entities: 100,000+ (floats above entire canvas)
 sample({
-  clock: $nodeLayerDepth,
-  source: $xyflowNodeRenderMap,
-  fn: (renderMap, layerDepths): XYFlowNodesDataChangedPayload => {
-    // Compute zIndex delta
+  clock: [$nodeLayerDepth, $selectedNodeIds],
+  source: {
+    renderMap: $xyflowNodeRenderMap,
+    layerDepths: $nodeLayerDepth,
+    selectedIds: $selectedNodeIds,
+    nodes: $nodes,
+  },
+  fn: ({ renderMap, layerDepths, selectedIds, nodes }): XYFlowNodesDataChangedPayload => {
     const changes: XYFlowNodesDataChangedPayload['changes'] = []
+    const selectedSet = new Set(selectedIds)
 
     for (const [nodeId, current] of Object.entries(renderMap)) {
-      const zIndex = layerDepths[nodeId] ?? 0
+      const node = nodes[nodeId]
+      if (!node)
+        continue
+
+      const depth = layerDepths[nodeId] ?? 0
+      const isSelected = selectedSet.has(nodeId)
+      const entityType = node.metadata.category === NODE_CATEGORIES.GROUP ? 'group' : 'node'
+      const zIndex = calculateZIndex(entityType, depth, isSelected)
+
       if (current.zIndex !== zIndex) {
         changes.push({ nodeId, changes: { zIndex } })
       }

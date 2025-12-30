@@ -47,7 +47,6 @@ function AnchorNodeComponent({ data, selected, id }: NodeProps<AnchorNode>) {
         'cursor-grab active:cursor-grabbing',
         'transition-shadow duration-200',
         'hover:scale-110',
-        'z-50',
       )}
       style={{
         backgroundColor: color,

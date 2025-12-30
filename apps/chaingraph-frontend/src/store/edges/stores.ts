@@ -20,6 +20,7 @@ import { $nodeLayerDepth, $nodes } from '../nodes/stores'
 import { $portConfigs, $portUI, applyUIUpdates, fromPortKey, toPortKey } from '../ports-v2'
 import { $trpcClient } from '../trpc/store'
 import { $xyflowNodesList } from '../xyflow/stores/xyflow-nodes-list'
+import { calculateEdgeDepth, calculateZIndex } from '../xyflow/z-index-constants'
 import { EDGE_STYLES } from './consts'
 import { $selectedEdgeId } from './selection'
 import { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
@@ -332,10 +333,11 @@ export const $edgeRenderMap = edgesDomain
   .reset(globalReset)
 
 // ============================================================================
-// WIRE 1: Port Configs + UI → isReady + Color
+// WIRE 1: Port Configs + UI → isReady + Color + Initial Z-Index
 // ============================================================================
 // CRITICAL: Edge color comes from $portUI (bgColor), NOT $portConfigs!
 // CRITICAL: Also triggers when edges are added (in case ports already exist)
+// CRITICAL: Also sets initial z-index when edge becomes ready (WIRE 5 only handles changes)
 
 sample({
   // FIX: Removed $edgeRenderMap from clock to break cascade loop
@@ -346,8 +348,9 @@ sample({
     portConfigs: $portConfigs,
     portUI: $portUI,
     xyflowNodes: $xyflowNodesList,
+    layerDepths: $nodeLayerDepth,
   },
-  fn: ({ edgeMap, portConfigs, portUI, xyflowNodes }) => {
+  fn: ({ edgeMap, portConfigs, portUI, xyflowNodes, layerDepths }) => {
     const spanId = trace.start('wire.1.portConfigs', {
       category: 'sample',
       tags: { edgeCount: edgeMap.size },
@@ -381,11 +384,22 @@ sample({
 
       // Check if readiness or color changed
       if (edge.isReady !== isReady || (isReady && edge.color !== newColor)) {
+        // When edge BECOMES ready, also set initial z-index
+        // (WIRE 5 only handles z-index changes when $nodeLayerDepth changes)
+        let zIndex = edge.zIndex
+        if (!edge.isReady && isReady) {
+          // Edge just became ready - calculate initial z-index
+          const sourceDepth = layerDepths[edge.source] ?? 0
+          const targetDepth = layerDepths[edge.target] ?? 0
+          const edgeDepth = calculateEdgeDepth(sourceDepth, targetDepth)
+          zIndex = calculateZIndex('edge', edgeDepth, false)
+        }
+
         changes.push({
           edgeId,
           changes: {
             isReady,
-            ...(isReady ? { color: newColor } : {}),
+            ...(isReady ? { color: newColor, zIndex } : {}),
           },
         })
       }
@@ -499,6 +513,9 @@ sample({
 // ============================================================================
 // WIRE 5: Node Layer Depth → zIndex
 // ============================================================================
+// Z-Index formula: edge renders ABOVE its parent group but BELOW nodes at same depth
+// Edge depth = max(sourceDepth, targetDepth)
+// Edge z-index = depth * 1000 + 100 (edges layer within depth band)
 
 sample({
   clock: $nodeLayerDepth,
@@ -515,9 +532,13 @@ sample({
       if (!edge.isReady)
         continue
 
-      const sourceZ = layerDepths[edge.source] ?? 0
-      const targetZ = layerDepths[edge.target] ?? 0
-      const zIndex = Math.max(sourceZ, targetZ) + 1
+      // Calculate edge depth from connected nodes
+      const sourceDepth = layerDepths[edge.source] ?? 0
+      const targetDepth = layerDepths[edge.target] ?? 0
+      const edgeDepth = calculateEdgeDepth(sourceDepth, targetDepth)
+
+      // Calculate z-index: edges render above groups but below anchors/nodes
+      const zIndex = calculateZIndex('edge', edgeDepth, false)
 
       if (edge.zIndex !== zIndex) {
         changes.push({ edgeId, changes: { zIndex } })
@@ -682,13 +703,18 @@ sample({
 // ============================================================================
 
 /**
- * Boost z-index for selected edge to bring it to front
- * This ensures anchors are clickable when edges overlap
+ * Boost z-index for selected edge to bring it to front (z: 100,100)
+ * Recalculates z-index for ALL edges when selection changes to properly
+ * restore the previously selected edge to its depth-based z-index.
  */
 sample({
   clock: $selectedEdgeId,
-  source: { edgeMap: $edgeRenderMap, selectedId: $selectedEdgeId },
-  fn: ({ edgeMap, selectedId }) => {
+  source: {
+    edgeMap: $edgeRenderMap,
+    selectedId: $selectedEdgeId,
+    layerDepths: $nodeLayerDepth,
+  },
+  fn: ({ edgeMap, selectedId, layerDepths }) => {
     const spanId = trace.start('wire.9.selection', {
       category: 'sample',
       tags: { edgeCount: edgeMap.size },
@@ -700,8 +726,16 @@ sample({
       if (!edge.isReady)
         continue
 
-      // Selected edge gets z-index 1000, others keep their normal z-index
-      const newZIndex = selectedId === edgeId ? 1000 : edge.zIndex
+      const isSelected = selectedId === edgeId
+
+      // Calculate edge depth from connected nodes
+      const sourceDepth = layerDepths[edge.source] ?? 0
+      const targetDepth = layerDepths[edge.target] ?? 0
+      const edgeDepth = calculateEdgeDepth(sourceDepth, targetDepth)
+
+      // Calculate z-index with selection boost (100,100 when selected)
+      const newZIndex = calculateZIndex('edge', edgeDepth, isSelected)
+
       if (newZIndex !== edge.zIndex) {
         changes.push({ edgeId, changes: { zIndex: newZIndex } })
       }
@@ -736,6 +770,8 @@ export const $xyflowEdgesList = combine(
         continue
       }
 
+      const isSelected = renderData.edgeId === selectedId
+
       edges.push({
         id: renderData.edgeId,
         source: renderData.source,
@@ -743,7 +779,7 @@ export const $xyflowEdgesList = combine(
         sourceHandle: renderData.sourceHandle,
         targetHandle: renderData.targetHandle,
         type: renderData.type,
-        zIndex: renderData.zIndex,
+        // zIndex: renderData.zIndex, // TEMP: Let XYFlow handle z-index natively
         style: {
           stroke: renderData.color,
           strokeWidth: renderData.strokeWidth,
@@ -757,7 +793,7 @@ export const $xyflowEdgesList = combine(
           version: renderData.version,
         },
         // Controlled selection - XYFlow will respect this
-        selected: renderData.edgeId === selectedId,
+        selected: isSelected,
       })
     }
 
@@ -770,6 +806,37 @@ export const $xyflowEdgesList = combine(
  * @deprecated Use $xyflowEdgesList directly
  */
 export const $xyflowEdges = $xyflowEdgesList
+
+// ============================================================================
+// $edgeDepths - Lightweight edge→depth mapping for anchor z-index
+// ============================================================================
+
+/**
+ * Maps edgeId → depth (calculated from connected nodes)
+ *
+ * PERFORMANCE: This is a LIGHTWEIGHT derived store that only updates when:
+ * 1. Edges are added/removed ($edges changes)
+ * 2. Node depths change ($nodeLayerDepth changes)
+ *
+ * It does NOT update on edge render changes (color, animation, selection, etc.)
+ * This makes it safe to use in $combinedXYFlowNodesList without hot-path issues.
+ *
+ * Used by: $combinedXYFlowNodesList to calculate anchor z-index based on edge depth
+ */
+export const $edgeDepths = combine(
+  $edges,
+  $nodeLayerDepth,
+  (edges, layerDepths): Map<string, number> => {
+    const result = new Map<string, number>()
+    for (const edge of edges) {
+      const sourceDepth = layerDepths[edge.sourceNodeId] ?? 0
+      const targetDepth = layerDepths[edge.targetNodeId] ?? 0
+      const depth = Math.max(sourceDepth, targetDepth)
+      result.set(edge.edgeId, depth)
+    }
+    return result
+  },
+)
 
 // SAMPLES
 

@@ -69,6 +69,7 @@ export const addAnchorNode = edgesDomain.createEvent<{
   y: number
   index: number
   color?: string
+  parentNodeId?: string // Optional: parent group for anchors inside groups
 }>()
 
 /**
@@ -138,7 +139,7 @@ export const $anchorNodes = edgesDomain
   .createStore<Map<string, AnchorNodeState>>(new Map())
 
   // Add anchor node
-  .on(addAnchorNode, (state, { edgeId, x, y, index, color }) => {
+  .on(addAnchorNode, (state, { edgeId, x, y, index, color, parentNodeId }) => {
     const newState = new Map(state)
     const anchorId = `anchor-${nanoid(8)}`
 
@@ -162,6 +163,7 @@ export const $anchorNodes = edgesDomain
       y: y - ANCHOR_NODE_OFFSET,
       index,
       color,
+      parentNodeId, // Set parent if anchor is inside a group
       selected: false,
       version: 0,
     })

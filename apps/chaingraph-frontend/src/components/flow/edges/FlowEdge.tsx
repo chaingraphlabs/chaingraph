@@ -12,8 +12,10 @@ import { motion } from 'framer-motion'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTheme } from '@/components/theme/hooks/useTheme'
 import { addAnchorNode } from '@/store/edges/anchor-nodes'
+import { getAbsoluteNodePosition, calculateNodeDepth } from '@/store/edges/anchor-coordinates'
 import { useAnchorNodePositions } from '@/store/edges/hooks/useAnchorNodePositions'
 import { $selectedEdgeId } from '@/store/edges/selection'
+import { $groupNodes, $nodePositionData } from '@/store/nodes/derived-stores'
 import { $curveConfig } from '@/store/settings/curve-config'
 import { calculateGhostAnchors, catmullRomToBezierPath } from './utils/catmull-rom'
 
@@ -234,6 +236,8 @@ export const FlowEdge = memo(({
   // Anchor support
   const selectedEdgeId = useUnit($selectedEdgeId)
   const curveConfig = useUnit($curveConfig)
+  const groupNodes = useUnit($groupNodes)
+  const nodePositionData = useUnit($nodePositionData)
   const isSelected = selectedEdgeId === id
   const edgeId = (data as any)?.edgeData?.edgeId ?? id
 
@@ -271,17 +275,71 @@ export const FlowEdge = memo(({
     return calculateGhostAnchors(source, target, anchorPositions, sourcePosition, targetPosition)
   }, [isSelected, source, target, anchorPositions, sourcePosition, targetPosition, curveConfig])
 
-  // PROTOTYPE: Ghost anchor click creates an anchor node
-  // The anchor node then handles its own drag/selection via XYFlow
+  // Helper: Find group node at position (for auto-parenting anchors)
+  // Uses granular $groupNodes store instead of $nodes for performance
+  const findGroupAtPosition = useCallback((x: number, y: number) => {
+    const matchingGroups: Array<{ nodeId: string, depth: number }> = []
+
+    // Iterate ONLY group nodes (not all nodes!)
+    for (const [nodeId, groupData] of groupNodes) {
+      // Get absolute position via existing helper
+      const absPos = getAbsoluteNodePosition(nodeId, nodePositionData)
+      if (!absPos) continue
+
+      const isInside = x >= absPos.x
+        && x <= absPos.x + groupData.dimensions.width
+        && y >= absPos.y
+        && y <= absPos.y + groupData.dimensions.height
+
+      if (isInside) {
+        matchingGroups.push({
+          nodeId,
+          depth: calculateNodeDepth(nodeId, nodePositionData),
+        })
+      }
+    }
+
+    if (matchingGroups.length === 0) return null
+
+    // Return deepest (most nested) group
+    matchingGroups.sort((a, b) => b.depth - a.depth)
+
+    return {
+      id: matchingGroups[0].nodeId,
+      ...groupNodes.get(matchingGroups[0].nodeId)!,
+    }
+  }, [groupNodes, nodePositionData])
+
+  // Ghost anchor click creates an anchor node
+  // Auto-detects if position is inside a group and parents accordingly
   const handleGhostClick = useCallback((insertIndex: number, x: number, y: number) => {
+    // Check if position is inside any group
+    const parentGroup = findGroupAtPosition(x, y)
+
+    let anchorX = x
+    let anchorY = y
+    let parentNodeId: string | undefined
+
+    if (parentGroup) {
+      // Get absolute position of group
+      const groupAbsPos = getAbsoluteNodePosition(parentGroup.id, nodePositionData)
+      if (groupAbsPos) {
+        // Convert to relative coordinates
+        anchorX = x - groupAbsPos.x
+        anchorY = y - groupAbsPos.y
+        parentNodeId = parentGroup.id
+      }
+    }
+
     addAnchorNode({
       edgeId,
-      x,
-      y,
+      x: anchorX,
+      y: anchorY,
       index: insertIndex,
       color: stroke,
+      parentNodeId,
     })
-  }, [edgeId, stroke])
+  }, [edgeId, stroke, findGroupAtPosition, nodePositionData])
 
   // Generate a lighter version of the stroke color for the secondary path, memoized
   const secondaryColor = useMemo(() =>
@@ -487,8 +545,9 @@ export const FlowEdge = memo(({
           strokeWidth={2}
           opacity={0.5}
           style={{ cursor: 'crosshair', pointerEvents: 'auto' }}
-          onClick={(e) => {
+          onPointerDown={(e) => {
             e.stopPropagation()
+            e.preventDefault() // Prevent text selection
             handleGhostClick(ghost.insertIndex, ghost.x, ghost.y)
           }}
         />

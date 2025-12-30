@@ -23,8 +23,6 @@ export function useEdgeChanges() {
     if (!activeFlow?.id)
       return
 
-    console.debug('[useEdgeChanges] Edge changes:', changes)
-
     changes.forEach((change) => {
       switch (change.type) {
         case 'remove':

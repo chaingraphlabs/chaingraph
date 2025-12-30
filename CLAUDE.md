@@ -19,13 +19,61 @@ ChainGraph is a flow-based programming framework for building visual computation
 - **chaingraph-nodes**: Pre-built node implementations (AI, flow control, data manipulation, etc.)
 - **chaingraph-trpc**: tRPC layer with real-time subscriptions (WebSocket), database schemas (Drizzle ORM)
 - **chaingraph-executor**: **THE EXECUTION ENGINE** - Contains DBOS workflows, execution services, event streaming
-- **chaingraph-channel**: Internal communication abstractions
 - **badai-api**: BadAI platform integration (GraphQL client)
 
 ### Supporting Packages
-- **chaingraph-codegen**: Code generation utilities for type definitions
-- **chaingraph-formal-spec**: Formal specifications and documentation
+- **badai-api-example**: Example usage of BadAI API client
 - **typescript-config**: Shared TypeScript configurations
+
+### Development Tools
+- **.claude/skills/**: 15 Claude Code skill modules for AI-assisted development
+- **.conductor/**: DBOS Conductor runtime directory
+
+## Claude Code Skills
+
+The `.claude/skills/` directory contains 15 skill modules that provide context-aware documentation for AI-assisted development. Skills are automatically loaded based on trigger keywords.
+
+### Meta Skills
+| Skill | Purpose |
+|-------|---------|
+| `skill-authoring` | Guidelines for creating new Claude Code skills |
+| `skill-maintenance` | When and how to update skills after codebase changes |
+
+### Foundation
+| Skill | Purpose |
+|-------|---------|
+| `chaingraph-concepts` | Core domain concepts - flows, nodes, ports, edges, execution lifecycle, event types |
+
+### Package Architecture
+| Skill | Purpose |
+|-------|---------|
+| `frontend-architecture` | React/Vite frontend structure, Effector stores, providers, components |
+| `executor-architecture` | Execution engine, DBOS workflows, services, event bus, task queues |
+| `types-architecture` | Foundation types, decorators, port system, flow definitions |
+
+### Technology Patterns
+| Skill | Purpose |
+|-------|---------|
+| `effector-patterns` | Effector state management patterns and **anti-patterns to avoid** |
+| `dbos-patterns` | DBOS durable execution **constraints** - what's allowed in workflows vs steps |
+| `xyflow-patterns` | XYFlow integration - custom nodes/edges, handles, drag-drop, performance |
+| `trpc-patterns` | tRPC framework - routers, procedures, subscriptions, middleware, WebSocket |
+
+### Feature Skills
+| Skill | Purpose |
+|-------|---------|
+| `port-system` | 9 port types, plugins, factory, transfer rules, validation |
+| `subscription-sync` | Real-time WebSocket subscriptions, event buffering, race condition solutions |
+| `optimistic-updates` | Optimistic UI, echo detection, pending mutations, position interpolation |
+| `trpc-flow-editing` | Flow editing procedures - CRUD, nodes, edges, ports, locking |
+| `trpc-execution` | Execution procedures - create/start/pause/resume/stop, signal pattern |
+
+### Using Skills
+
+Skills are triggered automatically by keywords in your prompts. Examples:
+- "How do I create a new node?" → triggers `chaingraph-concepts`, `types-architecture`
+- "Fix the DBOS workflow" → triggers `dbos-patterns`, `executor-architecture`
+- "Add optimistic update for port value" → triggers `optimistic-updates`, `effector-patterns`
 
 ## Common Commands
 
@@ -324,7 +372,7 @@ Parent execution:
   └─ Workflow spawns children via DBOS.startWorkflow()
 
 Child execution:
-  ├─ Auto-starts (sends START_SIGNAL to self) 🚀
+  ├─ Auto-starts (skips signal wait entirely) 🚀
   ├─ Writes own EXECUTION_CREATED event
   ├─ Executes independently
   └─ Can spawn grandchildren (up to depth 100)
@@ -338,6 +386,15 @@ Ports use a unified storage system for memory efficiency:
 - **Caching**: Instances cached per configuration
 - **Unified registry**: Single registry for all port types
 - **Type safety**: Full TypeScript inference
+
+### Edge Anchors System
+
+Visual control points for customizing edge paths in the flow editor:
+
+- **EdgeAnchor type**: `{ id, x, y, index, parentNodeId?, selected? }`
+- **tRPC procedure**: `edge.updateAnchors()` with version-based conflict resolution
+- **Coordinates**: Can be absolute or relative to parent group node
+- **Ordering**: `index` determines position in path (0 = closest to source)
 
 ## Development Workflow
 
@@ -398,6 +455,11 @@ DBOS_WORKER_CONCURRENCY=5
 
 # Execution Mode (if not using DBOS)
 EXECUTION_MODE=distributed  # or 'local'
+
+# Demo User Authentication (for quick testing)
+DEMO_AUTH_ENABLED=true           # Enable demo user creation
+DEMO_EXPIRY_DAYS=7               # Demo account validity (1-365 days)
+DEMO_TOKEN_SECRET=change-me      # JWT signing secret (required in production)
 ```
 
 ### DBOS Admin UI
@@ -458,9 +520,9 @@ Packages use conditional exports for development vs production:
 - Verify event bus is `DBOSEventBus` instance
 
 ### Child Executions Not Starting
-- Check auto-start logic in `ExecutionWorkflow.ts:192-218`
-- Look for "Auto-starting child execution" in logs
-- Verify START_SIGNAL received
+- Check auto-start logic in `ExecutionWorkflows.ts:192-214`
+- Look for "Child execution auto-start" in logs
+- Verify `isChildExecution` check (children skip signal wait)
 
 ### Port Type Errors
 - Ensure `reflect-metadata` is imported at app entry

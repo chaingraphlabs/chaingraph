@@ -68,32 +68,34 @@ function buildXYFlowNodesArray(renderMap: Record<string, XYFlowNodeRenderData>):
       return depthA - depthB
     })
 
-  return nodes.map(renderData => ({
-    id: renderData.nodeId,
-    type: renderData.nodeType,
-    position: {
-      x: Math.round(renderData.position.x),
-      y: Math.round(renderData.position.y),
-    },
-    width: renderData.dimensions.width,
-    height: renderData.dimensions.height,
-    // Provide measured dimensions to prevent XYFlow error #015
-    // "trying to drag a node that is not initialized"
-    measured: {
+  return nodes.map((renderData) => {
+    return {
+      id: renderData.nodeId,
+      type: renderData.nodeType,
+      position: {
+        x: Math.round(renderData.position.x),
+        y: Math.round(renderData.position.y),
+      },
       width: renderData.dimensions.width,
       height: renderData.dimensions.height,
-    },
-    draggable: renderData.isDraggable,
-    zIndex: renderData.zIndex,
-    data: {
-      categoryMetadata: renderData.categoryMetadata,
-      version: renderData.version, // For edge memoization
-    },
-    parentId: renderData.parentNodeId,
-    // extent: renderData.parentNodeId ? 'parent' : undefined,
-    selected: renderData.isSelected,
-    hidden: renderData.isHidden,
-  }))
+      // Provide measured dimensions to prevent XYFlow error #015
+      // "trying to drag a node that is not initialized"
+      measured: {
+        width: renderData.dimensions.width,
+        height: renderData.dimensions.height,
+      },
+      draggable: renderData.isDraggable,
+      // zIndex: renderData.zIndex, // TEMP: Let XYFlow handle z-index natively
+      data: {
+        categoryMetadata: renderData.categoryMetadata,
+        version: renderData.version, // For edge memoization
+      },
+      parentId: renderData.parentNodeId,
+      // extent: renderData.parentNodeId ? 'parent' : undefined,
+      selected: renderData.isSelected,
+      hidden: renderData.isHidden,
+    }
+  })
 }
 
 /**
@@ -203,7 +205,7 @@ sample({
           selected: renderData.isSelected,
           hidden: renderData.isHidden,
           draggable: renderData.isDraggable,
-          zIndex: renderData.zIndex,
+          // zIndex: renderData.zIndex, // TEMP: Let XYFlow handle z-index natively
           data: {
             categoryMetadata: renderData.categoryMetadata,
             version: renderData.version, // For edge memoization

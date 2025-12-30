@@ -448,10 +448,6 @@ export const $nodePositions = nodesDomain.createStore<Record<string, Position>>(
   .reset(clearNodes)
   .reset(globalReset)
 
-// PERF: Event to trigger layer depth recalculation only when parent structure changes
-// This decouples layer depth from every $nodes update (position, port changes don't affect depth)
-export const recalculateNodeLayerDepth = nodesDomain.createEvent()
-
 // Helper function to calculate layer depths for all nodes
 function calculateAllNodeDepths(nodes: Record<string, INode>): Record<string, number> {
   const depthCache = new Map<string, number>()
@@ -502,19 +498,17 @@ function calculateAllNodeDepths(nodes: Record<string, INode>): Record<string, nu
 // Store that tracks the nodes parent layer depth, so nodes without parents are 0 layer, and each child node increases the layer by 1
 // PERF: Now event-driven instead of combine($nodes) - only recalculates when parent structure actually changes
 export const $nodeLayerDepth = nodesDomain.createStore<Record<string, number>>({})
-  .on(recalculateNodeLayerDepth, () => {
-    // TODO: ANTIPATTERN, needs to use sample instead to avoid .getState() in store
-    const nodes = $nodes.getState()
-    return calculateAllNodeDepths(nodes)
-  })
   .reset(clearNodes)
   .reset(globalReset)
 
 // PERF: Wire parent structure changes to trigger layer depth recalculation
 // This is much more efficient than recalculating on every $nodes change
+// NOTE: Uses sample() pattern instead of .on() with .getState() anti-pattern
 sample({
   clock: [addNode, addNodes, removeNode, updateNodeParent, setNodes],
-  target: recalculateNodeLayerDepth,
+  source: $nodes,
+  fn: nodes => calculateAllNodeDepths(nodes),
+  target: $nodeLayerDepth,
 })
 
 // Store that provides nodes grouped by their layer depth
