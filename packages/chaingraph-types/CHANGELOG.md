@@ -1,5 +1,11 @@
 # @badaitech/chaingraph-types
 
+## 0.7.3
+
+### Patch Changes
+
+- fix(frontend): prevent Effector wiring tree-shaking in lib builds
+
 ## 0.7.2
 
 ### Patch Changes
