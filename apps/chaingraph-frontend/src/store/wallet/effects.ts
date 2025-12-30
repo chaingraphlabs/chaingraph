@@ -194,3 +194,9 @@ sample({
     }, 100)
   },
 })
+
+/**
+ * Export marker to prevent tree-shaking of this side-effect module.
+ * This ensures the Effector sample() wiring above is registered in lib builds.
+ */
+export const WALLET_EFFECTS_INITIALIZED = true

@@ -35,5 +35,5 @@ export {
 // Export helper functions
 export { getWalletContextForExecution } from './wallet.store'
 
-// Import effects to ensure they are registered
-import './effects'
+// Note: effects.ts is already included via `export * from './effects'` above
+// The WALLET_EFFECTS_INITIALIZED marker export prevents tree-shaking

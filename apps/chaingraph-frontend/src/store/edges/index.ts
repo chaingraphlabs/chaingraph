@@ -76,5 +76,6 @@ export * from './types'
 // Utilities
 export { computeExecutionStyle, computeHighlightStyle, extractEdgeColor } from './utils'
 
-// Import wiring files for side effects (multi-node drag)
-import './anchor-drag-sync'
+// Anchor drag sync wiring (multi-node drag)
+// Export marker to prevent tree-shaking in lib builds
+export { ANCHOR_DRAG_SYNC_INITIALIZED } from './anchor-drag-sync'

@@ -27,7 +27,8 @@
  */
 
 // Initialize wiring (registers all sample() calls)
-import './init'
+// Export marker to prevent tree-shaking in lib builds
+export { PORTS_V2_WIRING_INITIALIZED } from './init'
 
 // Direct port updates (no buffer - synchronous processing)
 export {
