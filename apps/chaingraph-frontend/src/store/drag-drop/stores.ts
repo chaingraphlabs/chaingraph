@@ -8,14 +8,15 @@
 
 import type { Position } from '@badaitech/chaingraph-types'
 import type {
-  DragDropState,
+  DragDropRenderState,
   DraggedNode,
   DropTarget,
   NodeDragEndEvent,
   NodeDragMoveEvent,
   NodeDragStartEvent,
 } from './types'
-import { combine } from 'effector'
+import { combine, sample } from 'effector'
+import { trace } from '@/lib/perf-trace'
 import { globalReset } from '../common'
 import { dragDropDomain } from '../domains'
 
@@ -86,45 +87,88 @@ export const $potentialDropTargets = dragDropDomain.createStore<DropTarget[]>([]
   .on([endNodeDrag, endMultiNodeDrag], () => [])
   .reset(globalReset)
 
-// Store for currently hovered drop target based on mouse position
-export const $hoveredDropTarget = combine(
-  $potentialDropTargets,
-  $mousePosition,
-  $isDragging,
-  (targets, mousePos, isDragging) => {
-    if (!isDragging || !mousePos) {
-      return null
-    }
+// Internal: Compute hovered target on every mouse move
+const hoveredDropTargetComputed = dragDropDomain.createEvent<DropTarget | null>()
 
-    // Find all targets that contain the mouse position
-    const containingTargets = targets.filter((target) => {
-      const { bounds } = target
-      const contains = mousePos.x >= bounds.x
-        && mousePos.x <= bounds.x + bounds.width
-        && mousePos.y >= bounds.y
-        && mousePos.y <= bounds.y + bounds.height
-
-      return contains
-    })
-
-    if (containingTargets.length === 0) {
-      return null
-    }
-
-    // Sort by priority (highest first) - schema drops have higher priority than groups
-    containingTargets.sort((a, b) => b.priority - a.priority)
-
-    // If we have multiple targets at the same priority, prefer the deepest one
-    const highestPriority = containingTargets[0].priority
-    const samePriorityTargets = containingTargets.filter(t => t.priority === highestPriority)
-
-    if (samePriorityTargets.length > 1) {
-      samePriorityTargets.sort((a, b) => b.depth - a.depth)
-    }
-
-    return samePriorityTargets[0]
+sample({
+  clock: [$potentialDropTargets, $mousePosition, $isDragging],
+  source: {
+    targets: $potentialDropTargets,
+    mousePos: $mousePosition,
+    isDragging: $isDragging,
   },
-)
+  fn: ({ targets, mousePos, isDragging }) => {
+    return trace.wrap('hoveredTarget.compute', {
+      category: 'event',
+      tags: { isDragging, hasMousePos: !!mousePos },
+    }, () => {
+      if (!isDragging || !mousePos) {
+        return null
+      }
+
+      // Find all targets that contain the mouse position
+      const containingTargets = targets.filter((target) => {
+        const { bounds } = target
+        const contains = mousePos.x >= bounds.x
+          && mousePos.x <= bounds.x + bounds.width
+          && mousePos.y >= bounds.y
+          && mousePos.y <= bounds.y + bounds.height
+
+        return contains
+      })
+
+      if (containingTargets.length === 0) {
+        return null
+      }
+
+      // Sort by priority (highest first) - schema drops have higher priority than groups
+      containingTargets.sort((a, b) => b.priority - a.priority)
+
+      // If we have multiple targets at the same priority, prefer the deepest one
+      const highestPriority = containingTargets[0].priority
+      const samePriorityTargets = containingTargets.filter(t => t.priority === highestPriority)
+
+      if (samePriorityTargets.length > 1) {
+        samePriorityTargets.sort((a, b) => b.depth - a.depth)
+      }
+
+      return samePriorityTargets[0]
+    })
+  },
+  target: hoveredDropTargetComputed,
+})
+
+// Store for currently hovered drop target - MEMOIZED
+// Only updates when target actually changes (nodeId or type different)
+export const $hoveredDropTarget = dragDropDomain
+  .createStore<DropTarget | null>(null)
+  .on(hoveredDropTargetComputed, (prev, next) => {
+    // Memoization: Only update if target actually changed
+    // Compare: null vs null, null vs target, target vs null, target vs target
+    if (prev === null && next === null) {
+      return prev // Both null - no change
+    }
+    if (prev !== null && next !== null) {
+      // Both have values - compare identity
+      if (prev.nodeId === next.nodeId && prev.type === next.type) {
+        return prev // Same target - keep reference!
+      }
+    }
+    // Different targets (including null transitions) - update
+    return next
+  })
+  .on([endNodeDrag, endMultiNodeDrag, clearDropTargets], () => null)
+  .reset(globalReset)
+
+// Trace: Monitor hoveredDropTarget updates (should be ~10 times, not 35!)
+sample({
+  clock: $hoveredDropTarget,
+  fn: target =>
+    trace.wrap('hoveredDropTarget.update', {
+      category: 'event',
+      tags: { targetId: target?.nodeId || 'none', targetType: target?.type || 'none' },
+    }, () => target),
+})
 
 export const $canDrop = combine(
   $hoveredDropTarget,
@@ -135,20 +179,37 @@ export const $canDrop = combine(
   },
 )
 
-// Combined state for convenience
-export const $dragDropState = combine({
+/**
+ * OPTIMIZED: Render-safe state for components and WIRE 6
+ * Updates only when visually relevant data changes (~10-15 times during drag)
+ * Does NOT include mousePosition (internal calculation only)
+ * Does NOT include draggedNodes (positions already handled by WIRE 1)
+ */
+export const $dragDropRenderState = combine({
   isDragging: $isDragging,
-  draggedNodes: $draggedNodes,
-  mousePosition: $mousePosition,
+  // draggedNodes removed - position updates handled by WIRE 1 via $nodePositions
   potentialDropTargets: $potentialDropTargets,
   hoveredDropTarget: $hoveredDropTarget,
   canDrop: $canDrop,
 })
 
+// Trace: Monitor optimized render state (should be ~10-15 updates during drag)
+sample({
+  clock: $dragDropRenderState,
+  fn: state =>
+    trace.wrap('dragDropRenderState.update', {
+      category: 'event',
+      tags: {
+        isDragging: state.isDragging,
+        hoveredTargetId: state.hoveredDropTarget?.nodeId || 'none',
+      },
+    }, () => state),
+})
+
 // Store for nodes that should show drop zone visual feedback
 // This store is used by React components to efficiently determine which nodes should show drop feedback
 export const $nodesWithDropFeedback = combine(
-  $dragDropState,
+  $dragDropRenderState,
   $potentialDropTargets,
   (state, targets) => {
     if (!state.isDragging)
@@ -177,7 +238,7 @@ export const $nodesWithDropFeedback = combine(
 )
 
 // Helper function to get visual feedback state for a specific node
-export function getNodeDropFeedback(nodeId: string, dragDropState: DragDropState) {
+export function getNodeDropFeedback(nodeId: string, dragDropState: DragDropRenderState) {
   const { hoveredDropTarget, canDrop, isDragging } = dragDropState
 
   if (!isDragging)

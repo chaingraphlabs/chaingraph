@@ -33,7 +33,9 @@ import {
   GeminiPartTypeSupport,
   convertAPIPartToMessagePart as sharedConvertAPIPartToMessagePart,
   convertMessageToAPIFormat as sharedConvertMessageToAPIFormat,
+
   convertPartsToAPIFormatBatch as sharedConvertPartsToAPIFormatBatch,
+
   convertPartToAPIFormat as sharedConvertPartToAPIFormat,
 } from './gemini-part-converters'
 import {

@@ -85,6 +85,17 @@ export class DBFlowStore implements IFlowStore {
         FlowMigration.migrateFlowFromV1ToV2(flow)
       }
 
+      // Check if there is "version" column, if so move to the metadata
+      if (
+        data && typeof data === 'object'
+        && 'version' in data
+        && typeof data.version === 'number'
+      ) {
+        console.warn(`Loaded flow ${flowId} from DB with version column: ${data.version}, version metadata: ${flow.metadata.version}`)
+
+        flow.metadata.version = data.version
+      }
+
       return flow
     })
     if (!flowFromDB) {

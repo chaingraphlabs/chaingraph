@@ -28,16 +28,10 @@ const ChaingraphNodeOptimized = memo(
       return false
 
     // Compare node version
-    const prevVersion = prevProps.data?.node?.getVersion?.() ?? 0
-    const nextVersion = nextProps.data?.node?.getVersion?.() ?? 0
+    const prevVersion = prevProps.data?.version ?? 0
+    const nextVersion = nextProps.data?.version ?? 0
     if (prevVersion !== nextVersion)
       return false
-
-    // Dimensions check
-    if (prevProps.positionAbsoluteX !== nextProps.positionAbsoluteX
-      || prevProps.positionAbsoluteY !== nextProps.positionAbsoluteY) {
-      return false
-    }
 
     if (prevProps.width !== nextProps.width
       || prevProps.height !== nextProps.height) {

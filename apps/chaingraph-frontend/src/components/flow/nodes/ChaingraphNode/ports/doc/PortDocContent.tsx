@@ -11,7 +11,6 @@ import type {
   ArrayPortConfig,
   BooleanPortConfig,
   EnumPortConfig,
-  IPort,
   IPortConfig,
   NumberPortConfig,
   ObjectPortConfig,
@@ -28,21 +27,31 @@ import { formatValue } from '@/components/flow/nodes/ChaingraphNode/ports/doc/fo
 import { useTheme } from '@/components/theme'
 import { Badge, Button, Collapsible, CollapsibleContent, CollapsibleTrigger, ScrollArea } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { getPortTypeColor } from './getPortTypeColor'
 
-interface PortDocContentProps<C extends IPortConfig> {
-  port: IPort<C>
+interface PortDocContentProps {
+  nodeId: string
+  portId: string
   className?: string
 }
 
-export function PortDocContent<C extends IPortConfig>({
-  port,
+export function PortDocContent({
+  nodeId,
+  portId,
   className,
-}: PortDocContentProps<C>) {
+}: PortDocContentProps) {
   const { theme } = useTheme()
-  const config = port.getConfig()
+  // Use execution-aware hooks - will show runtime values during execution,
+  // and fallback to design-time values when not executing
+  const config = usePortConfigWithExecution(nodeId, portId)
+  const ui = usePortUIWithExecution(nodeId, portId)
+  const value = usePortValueWithExecution(nodeId, portId)
   const [containerHeight, setContainerHeight] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Merge config with UI for color calculation (UI is stored separately in ports-v2)
+  const configWithUI = { ...config, ui } as IPortConfig
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -80,8 +89,8 @@ export function PortDocContent<C extends IPortConfig>({
     ))
   }
 
-  // Get appropriate color for the port
-  const portColor = getPortTypeColor(theme, config)
+  // Get appropriate color for the port (use configWithUI which includes UI colors)
+  const portColor = getPortTypeColor(theme, configWithUI)
 
   return (
     <div
@@ -123,16 +132,16 @@ export function PortDocContent<C extends IPortConfig>({
               color: portColor.textColor,
             }}
           >
-            {config.title || config.name || 'Port'}
+            {config?.title || config?.key || 'Port'}
           </h3>
         </div>
         <div className="flex items-center space-x-1.5">
-          {config.required && (
+          {config?.required && (
             <div className="pl-1.5 pr-1.5 rounded-full bg-red-500" title="Required">
               Required
             </div>
           )}
-          {!config.required && (
+          {!config?.required && (
             <div className="pl-1.5 pr-1.5 rounded-full bg-green-500" title="Optional">
               Optional
             </div>
@@ -144,7 +153,7 @@ export function PortDocContent<C extends IPortConfig>({
               color: portColor.textColor,
             }}
           >
-            {formatPortType(config.type)}
+            {config && formatPortType(config.type)}
           </span>
         </div>
       </div>
@@ -155,21 +164,21 @@ export function PortDocContent<C extends IPortConfig>({
           {/* Basic information and direction */}
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">
-              {config.direction === 'input'
+              {config?.direction === 'input'
                 ? 'Input Port'
-                : config.direction === 'output'
+                : config?.direction === 'output'
                   ? 'Output Port'
-                  : config.direction === 'passthrough'
+                  : config?.direction === 'passthrough'
                     ? 'Passthrough Port'
                     : 'Unknown Direction'}
             </span>
             <span className="text-muted-foreground">
-              {config.key}
+              {config?.key}
             </span>
           </div>
 
           {/* Description */}
-          {config.description && (
+          {config?.description && (
             <div
               className="space-y-1 text-xs text-muted-foreground border-l-2 pl-2"
               style={{ borderColor: portColor.circleColor }}
@@ -197,7 +206,7 @@ export function PortDocContent<C extends IPortConfig>({
           )}
 
           {/* Port ID */}
-          {config.id && (
+          {config?.id && (
             <div className="pt-1 space-y-1 text-muted-foreground">
               <div className="text-xs font-medium">Port ID</div>
               <pre className={cn(
@@ -205,13 +214,13 @@ export function PortDocContent<C extends IPortConfig>({
                 'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
-                {config.id}
+                {config?.id}
               </pre>
             </div>
           )}
 
           {/* Default value */}
-          {hasDefaultValue(config) && (
+          {hasDefaultValue(config as any) && (
             <div className="pt-1 space-y-1 text-muted-foreground">
               <div className="text-xs font-medium">Default value</div>
               <pre className={cn(
@@ -219,27 +228,27 @@ export function PortDocContent<C extends IPortConfig>({
                 'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
-                {formatDefaultValue(config)}
+                {formatDefaultValue(config as any)}
               </pre>
             </div>
           )}
 
           {/* Type-specific configuration */}
           <div className="text-foreground">
-            {getTypeSpecificInfo(config)}
+            {getTypeSpecificInfo(config as any)}
           </div>
 
           {/* Value */}
-          {port.getValue() !== undefined && (
+          {value !== undefined && (
             <div className="pt-1 space-y-1 text-muted-foreground">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-medium text-muted-foreground">Value</div>
-                {!(port.getConfig().type === 'string' && port.getConfig()?.ui?.isPassword === true) && (
+                {!(config?.type === 'string' && (config as any).ui?.isPassword === true) && (
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => copyToClipboard(formatValue(port.getValue()))}
+                    onClick={() => copyToClipboard(formatValue(value))}
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -250,9 +259,9 @@ export function PortDocContent<C extends IPortConfig>({
                 'rounded block overflow-x-auto whitespace-pre-wrap break-all',
               )}
               >
-                {port.getConfig().type === 'string' && port.getConfig()?.ui?.isPassword === true
+                {config?.type === 'string' && (config as any).ui?.isPassword === true
                   ? '**** hidden ****'
-                  : formatValue(port.getValue())}
+                  : formatValue(value)}
               </pre>
             </div>
           )}
@@ -572,9 +581,9 @@ function renderArrayConfig(config: ArrayPortConfig): React.ReactElement {
       <div className="text-xs font-medium mb-1">
         Item Schema
         {
-          config.itemConfig.type === 'object'
-          && config.itemConfig.schema
-          && config.itemConfig.schema.type
+          config.itemConfig?.type === 'object'
+          && config.itemConfig?.schema
+          && config.itemConfig?.schema?.type
           && (
             <span className="text-muted-foreground text-[10px] ml-1">
               {'<'}
@@ -689,9 +698,9 @@ function renderStreamConfig(config: StreamPortConfig): React.ReactElement {
       <div className="text-xs font-medium mb-1">
         Stream Item Schema
         {
-          config.itemConfig.type === 'object'
-          && config.itemConfig.schema
-          && config.itemConfig.schema.type
+          config.itemConfig?.type === 'object'
+          && config.itemConfig?.schema
+          && config.itemConfig?.schema?.type
           && (
             <span className="text-muted-foreground text-[10px] ml-1">
               {'<'}

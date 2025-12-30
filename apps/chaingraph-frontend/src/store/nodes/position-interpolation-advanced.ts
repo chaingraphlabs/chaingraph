@@ -7,6 +7,7 @@
  */
 
 import type { Position } from '@badaitech/chaingraph-types'
+import { trace } from '@/lib/perf-trace'
 
 interface StateSnapshot {
   position: Position
@@ -38,6 +39,8 @@ export class AdvancedPositionInterpolator {
     position: Position,
     currentPosition: Position,
   ) {
+    const spanId = trace.start('interpolator.addState', { category: 'compute' })
+
     const timestamp = performance.now()
     const buffer = this.stateBuffer.get(nodeId) || []
 
@@ -64,6 +67,7 @@ export class AdvancedPositionInterpolator {
     }
 
     this.stateBuffer.set(nodeId, buffer)
+    trace.end(spanId)
   }
 
   private springInterpolate(

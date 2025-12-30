@@ -9,9 +9,30 @@
 import { z } from 'zod'
 import { EdgeStatus } from './types'
 
+/**
+ * Schema for edge anchor control points
+ */
+export const EdgeAnchorSchema = z.object({
+  id: z.string(),
+  x: z.number(),
+  y: z.number(),
+  index: z.number(),
+  parentNodeId: z.string().optional(),
+  selected: z.boolean().optional(),
+})
+
+/**
+ * Schema for edge metadata
+ */
+export const EdgeMetadataSchema = z.object({
+  label: z.string().optional(),
+  anchors: z.array(EdgeAnchorSchema).optional(),
+  version: z.number().optional(),
+}).passthrough()
+
 export const SerializedEdgeSchema = z.object({
   id: z.string(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: EdgeMetadataSchema.optional(),
   status: z.nativeEnum(EdgeStatus),
   sourceNodeId: z.string(),
   sourcePortId: z.string(),

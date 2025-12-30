@@ -10,3 +10,7 @@ export const NODE_POSITION_DEBOUNCE_MS = 500
 export const NODE_UI_DEBOUNCE_MS = 250
 export const NODE_DIMENSIONS_DEBOUNCE_MS = 500 // Same as position for server sync
 export const LOCAL_NODE_UI_DEBOUNCE_MS = 1000 / 90 // 90 FPS for smooth local updates
+
+// Port value throttle for continuous input (slider, etc.)
+// Balances responsiveness (immediate local) with server load (throttled sync)
+export const PORT_VALUE_THROTTLE_MS = 500 // Increased for testing, can reduce to 200-300ms for production

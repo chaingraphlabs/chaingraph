@@ -12,7 +12,7 @@ import type { IPortConfig } from '@badaitech/chaingraph-types'
 import type { PortState } from './types'
 import { sample } from 'effector'
 import { portsDomain } from '@/store/domains'
-import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS } from '../nodes/constants'
+import { LOCAL_NODE_UI_DEBOUNCE_MS, NODE_UI_DEBOUNCE_MS, PORT_VALUE_THROTTLE_MS } from '../nodes/constants'
 import { accumulateAndSample } from '../nodes/operators/accumulate-and-sample'
 import { setNodeVersion } from '../nodes/stores'
 import { $trpcClient } from '../trpc/store'
@@ -38,11 +38,56 @@ export const requestUpdatePortValue = portsDomain.createEvent<{
   value: any
 }>()
 
+// ============================================================================
+// THROTTLED PORT VALUE UPDATE (for sliders and continuous input)
+// ============================================================================
+// Problem: Sliders fire onChange on every pixel of movement, spamming the server.
+// Solution: Immediate optimistic local update + throttled server sync.
+//
+// Use requestUpdatePortValueThrottled for:
+// - Sliders
+// - Any continuous input that fires rapidly
+//
+// Use requestUpdatePortValue (non-throttled) for:
+// - Text input (each keystroke is meaningful)
+// - Discrete changes (toggles, dropdowns)
+// ============================================================================
+
+/**
+ * Throttled port value update - for continuous input like sliders
+ * Immediate local update + throttled server sync
+ */
+export const requestUpdatePortValueThrottled = portsDomain.createEvent<{
+  nodeId: string
+  portId: string
+  value: any
+}>()
+
+/**
+ * Immediate-only port value update - updates local store, no server call
+ * Used internally by throttled update for instant UI feedback
+ */
+export const immediatePortValueUpdate = portsDomain.createEvent<{
+  nodeId: string
+  portId: string
+  value: any
+}>()
+
+/**
+ * Throttled server sync - accumulates updates and sends latest
+ * Only triggers server call, not local update (already done by immediate)
+ */
+export const throttledServerPortValueSync = accumulateAndSample({
+  source: [requestUpdatePortValueThrottled],
+  timeout: PORT_VALUE_THROTTLE_MS,
+  getKey: update => `${update.nodeId}_${update.portId}`,
+})
+
 // UI updates
 export const requestUpdatePortUI = portsDomain.createEvent<{
   nodeId: string
   portId: string
-  ui: any
+  ui: Partial<IPortConfig['ui']>
 }>()
 
 // Object port updates

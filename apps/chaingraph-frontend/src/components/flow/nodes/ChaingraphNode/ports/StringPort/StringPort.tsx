@@ -6,15 +6,13 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort, StringPortConfig } from '@badaitech/chaingraph-types'
+import type { StringPortConfig, StringPortConfigUIType } from '@badaitech/chaingraph-types'
 import type { ChangeEvent, PropsWithChildren } from 'react'
-import type {
-  PortContextValue,
-} from '@/components/flow/nodes/ChaingraphNode/ports/context/PortContext'
 // import { useStore } from '@xyflow/react'
 import {
   memo,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -23,63 +21,90 @@ import { isHideEditor } from '@/components/flow/nodes/ChaingraphNode/ports/utils
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { useExecutionID } from '@/store/execution'
+import { useExecutionID, usePortConfigWithExecution, usePortUIWithExecution, usePortValueWithExecution } from '@/store/execution'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
-import { requestUpdatePortUI } from '@/store/ports'
+import { usePortEdges } from '@/store/nodes/computed'
+import { requestUpdatePortUI, requestUpdatePortValue } from '@/store/ports'
 import { PortHandle } from '../ui/PortHandle'
 import { PortTitle } from '../ui/PortTitle'
 import { HTMLPreview } from './HTMLPreview'
 import { MarkdownPreview } from './MarkdownPreview'
 
 export interface StringPortProps {
-  node: INode
-  port: IPort<StringPortConfig>
-  context: PortContextValue
+  nodeId: string
+  portId: string
 }
 
 // const zoomSelector = s => s.transform[2] ?? 1
 
 function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   const executionID = useExecutionID()
-  const { node, port, context } = props
-  const {
-    updatePortValue,
-    updatePortUI,
-    getEdgesForPort,
-  } = context
+  const { nodeId, portId } = props
 
-  const config = port.getConfig()
-  const ui = useMemo(() => config.ui, [config.ui])
+  // Granular subscriptions - only re-renders when THIS port's data changes
+  const config = usePortConfigWithExecution(nodeId, portId) as Omit<StringPortConfig, 'ui'> | undefined
+  const ui = usePortUIWithExecution(nodeId, portId) as StringPortConfigUIType | undefined
+  const storeValue = usePortValueWithExecution(nodeId, portId) as string | undefined
 
-  // const zoom = useStore(zoomSelector)
+  // Granular edge subscription - only re-renders when THIS port's edges change
+  const connectedEdges = usePortEdges(nodeId, portId)
 
-  // Memoize connected edges to prevent unnecessary calculations
-  const connectedEdges = useMemo(() => {
-    return getEdgesForPort(port.id)
-  }, [getEdgesForPort, port.id])
+  // ============================================================================
+  // LOCAL STATE FOR CURSOR POSITION PRESERVATION
+  // ============================================================================
+  // Problem: Controlled components lose cursor position on re-render when value
+  // comes from external store. When user types in the middle of text, store update
+  // triggers re-render and cursor jumps to end.
+  //
+  // Solution: Maintain local state for immediate DOM updates. Only sync from store
+  // when NOT focused (user not actively editing). This preserves cursor position
+  // while still reflecting external changes (e.g., from other users).
+  // ============================================================================
 
-  const [focused, setFocused] = useState(false)
+  const [localValue, setLocalValue] = useState(storeValue ?? '')
+  const [inputFocused, setInputFocused] = useState(false)
+  const [textareaFocused, setTextareaFocused] = useState(false)
+
+  // Sync store → local ONLY when not focused
+  // This allows external updates (other users, server corrections) to appear
+  // while preserving cursor position during active editing
+  // NOTE: localValue is NOT in dependency array to avoid racing with optimistic updates
+  useEffect(() => {
+    const isAnyFocused = inputFocused || textareaFocused
+    if (!isAnyFocused && storeValue !== localValue) {
+      setLocalValue(storeValue ?? '')
+    }
+  }, [storeValue, inputFocused, textareaFocused]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track focus/blur for global copy-paste functionality
-  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(node.id, port.id)
+  const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
 
   const handleChange = useCallback(<Element extends HTMLInputElement | HTMLTextAreaElement>(e: ChangeEvent<Element>) => {
     if (!e.nativeEvent.isTrusted) {
       return
     }
 
-    const value = e.target.value
+    const newValue = e.target.value
 
-    updatePortValue({
-      nodeId: node.id,
-      portId: port.id,
-      value,
+    // Update local state immediately (preserves cursor position)
+    setLocalValue(newValue)
+
+    // Request store update (triggers optimistic update + server sync)
+    requestUpdatePortValue({
+      nodeId,
+      portId,
+      value: newValue,
     })
-  }, [node.id, port.id, updatePortValue])
+  }, [nodeId, portId])
 
   const needRenderEditor = useMemo(() => {
-    return !isHideEditor(config, connectedEdges)
-  }, [config, connectedEdges])
+    if (!config)
+      return false
+    return !isHideEditor({
+      ...config,
+      ui,
+    }, connectedEdges)
+  }, [config, connectedEdges, ui])
 
   /*
    * Textarea resizing
@@ -91,7 +116,7 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   //   if (!textarea) {
   //     return
   //   }
-  //   if (!port.getConfig().nodeId) {
+  //   if (!config?.nodeId) {
   //     return
   //   }
   //
@@ -111,18 +136,49 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
   //   }
   //
   //   requestUpdatePortUI({
-  //     nodeId: node.id,
-  //     portId: port.id,
+  //     nodeId,
+  //     portId,
   //     ui: {
   //       textareaDimensions: newDimensions,
   //     },
   //   })
-  // }, [port, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, node.id])
+  // }, [config, zoom, ui?.textareaDimensions?.width, ui?.textareaDimensions?.height, nodeId])
 
   if (ui?.hidden)
     return null
 
+  // Early return if config not loaded yet
+  if (!config)
+    return null
+
   const title = config.title || config.key
+
+  // Cast UI to proper type for type-safe property access
+  const stringUI = ui
+  //  as {
+  //   isTextArea?: boolean
+  //   isPassword?: boolean
+  //   textareaDimensions?: { width?: number, height?: number }
+  //   placeholder?: string
+  //   renderMarkdown?: boolean
+  //   markdownStyles?: {
+  //     fontSize?: number
+  //     lineHeight?: 'compact' | 'normal' | 'relaxed'
+  //     maxHeight?: 'unlimited' | '200' | '400' | '600'
+  //   }
+  //   renderHtml?: boolean
+  //   htmlStyles?: {
+  //     height?: number
+  //     autoHeight?: boolean
+  //     maxHeight?: 'unlimited' | '400' | '600' | '800' | '1000'
+  //     scale?: number
+  //     showBorder?: boolean
+  //     stripMarkdown?: boolean
+  //     debounceDelay?: number
+  //   }
+  //   disabled?: boolean
+  //   hideEditor?: boolean
+  // }
 
   return (
     <div
@@ -135,7 +191,7 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
     >
       {(config.direction === 'input' || config.direction === 'passthrough')
         && (
-          <PortHandle port={port} forceDirection="input" />
+          <PortHandle nodeId={nodeId} portId={portId} forceDirection="input" />
         )}
 
       <div className={cn(
@@ -148,18 +204,18 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
             'cursor-pointer',
             'truncate',
             // if port required and the value is empty, add a red underline
+            // Use storeValue for validation (not localValue) to show actual persisted state
             config.required
-            && (!port.getValue() || !port.validate())
+            && !storeValue
             && (config.direction === 'input' || config.direction === 'passthrough')
-            && (config.connections?.length || 0) === 0
             && 'underline decoration-red-500 decoration-2',
           )}
           onClick={() => {
             requestUpdatePortUI({
-              nodeId: node.id,
-              portId: port.id,
+              nodeId,
+              portId,
               ui: {
-                hideEditor: ui?.hideEditor === undefined ? true : !ui.hideEditor,
+                hideEditor: stringUI?.hideEditor === undefined ? true : !stringUI?.hideEditor,
               },
             })
           }}
@@ -167,12 +223,22 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
           {title}
         </PortTitle>
 
-        {!ui?.isTextArea && needRenderEditor && (
+        {!stringUI?.isTextArea && needRenderEditor && (
           <Input
-            value={port.getValue() ?? ''}
+            value={localValue}
             onChange={handleChange}
-            onFocus={trackFocus}
-            onBlur={trackBlur}
+            onFocus={() => {
+              setInputFocused(true)
+              trackFocus()
+            }}
+            onBlur={() => {
+              setInputFocused(false)
+              trackBlur()
+              // Sync final value on blur in case store differs
+              if (storeValue !== localValue) {
+                setLocalValue(storeValue ?? '')
+              }
+            }}
             className={cn(
               'resize-none shadow-none text-xs p-1',
               'w-full',
@@ -181,75 +247,81 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
               'placeholder:text-neutral-400 placeholder:opacity-40',
             )}
             placeholder={
-              config.ui?.placeholder
+              stringUI?.placeholder
               ?? config.title
               ?? config.key
               ?? 'Text'
             }
-            type={ui?.isPassword ? 'password' : undefined}
+            type={stringUI?.isPassword ? 'password' : undefined}
             data-1p-ignore
-            disabled={executionID ? true : ui?.disabled ?? false}
+            disabled={executionID ? true : stringUI?.disabled ?? false}
           />
         )}
 
-        {ui?.isTextArea && needRenderEditor && (
+        {stringUI?.isTextArea && needRenderEditor && (
           <>
             <Textarea
               ref={textareaRef}
-              value={port.getValue() ?? ''}
+              value={localValue}
               onChange={handleChange}
               // onClick={_ => handleResize()}
               // onInput={_ => handleResize()}
-              onBlur={(_) => {
+              onBlur={() => {
                 // handleResize()
-                setFocused(false)
+                setTextareaFocused(false)
                 trackBlur()
+                // Sync final value on blur in case store differs
+                if (storeValue !== localValue) {
+                  setLocalValue(storeValue ?? '')
+                }
               }}
-              onFocus={(_) => {
+              onFocus={() => {
                 // handleResize()
-                setFocused(true)
+                setTextareaFocused(true)
                 trackFocus()
               }}
               style={{
-                //   width: ui?.textareaDimensions?.width ? `${Math.round(ui.textareaDimensions.width)}px` : undefined,
-                height: ui?.textareaDimensions?.height ? `${Math.round(ui.textareaDimensions.height)}px` : undefined,
+                //   width: stringUI.textareaDimensions?.width ? `${Math.round(stringUI.textareaDimensions.width)}px` : undefined,
+                height: stringUI.textareaDimensions?.height ? `${Math.round(stringUI.textareaDimensions.height)}px` : undefined,
               }}
               className={cn(
                 'shadow-none text-xs p-1 resize',
                 'nodrag',
                 'w-full',
                 'max-w-full',
-                focused && 'nowheel',
+                textareaFocused && 'nowheel',
                 'placeholder:text-neutral-400 placeholder:opacity-40',
               )}
               placeholder={
-                config.ui?.placeholder
+                stringUI.placeholder
                 ?? config.title
                 ?? config.key
                 ?? 'Text'
               }
-              disabled={executionID ? true : ui?.disabled ?? false}
+              disabled={executionID ? true : stringUI.disabled ?? false}
             />
           </>
         )}
 
         {/* Markdown preview - renders below the editor when enabled */}
-        {ui?.renderMarkdown && port.getValue() && (
+        {/* Use localValue for immediate preview feedback while typing */}
+        {stringUI?.renderMarkdown && localValue && (
           <MarkdownPreview
-            content={port.getValue() ?? ''}
-            nodeId={node.id}
-            portId={port.id}
-            styles={ui?.markdownStyles}
+            content={localValue}
+            nodeId={nodeId}
+            portId={portId}
+            styles={stringUI.markdownStyles}
           />
         )}
 
         {/* HTML preview - renders in sandboxed iframe when enabled */}
-        {ui?.renderHtml && port.getValue() && (
+        {/* Use localValue for immediate preview feedback while typing */}
+        {stringUI?.renderHtml && localValue && (
           <HTMLPreview
-            content={port.getValue() ?? ''}
-            nodeId={node.id}
-            portId={port.id}
-            styles={ui?.htmlStyles}
+            content={localValue}
+            nodeId={nodeId}
+            portId={portId}
+            styles={stringUI.htmlStyles}
           />
         )}
       </div>
@@ -257,7 +329,8 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
       {(config.direction === 'output' || config.direction === 'passthrough')
         && (
           <PortHandle
-            port={port}
+            nodeId={nodeId}
+            portId={portId}
             forceDirection="output"
             className={cn(
               config.parentId !== undefined
@@ -273,74 +346,4 @@ function StringPortInner(props: PropsWithChildren<StringPortProps>) {
 /**
  * Memoized StringPort - only re-renders when port value, visibility, or context changes
  */
-export const StringPort = memo(StringPortInner, (prev, next) => {
-  // Port value changed
-  if (prev.port.getValue() !== next.port.getValue()) {
-    return false
-  }
-
-  // Context changed (affects edge connections and editor visibility)
-  if (prev.context !== next.context) {
-    return false
-  }
-
-  // Hidden state changed
-  if (prev.port.getConfig().ui?.hidden !== next.port.getConfig().ui?.hidden) {
-    return false
-  }
-
-  // Editor visibility changed
-  if (prev.port.getConfig().ui?.hideEditor !== next.port.getConfig().ui?.hideEditor) {
-    return false
-  }
-
-  // Disabled state changed
-  if (prev.port.getConfig().ui?.disabled !== next.port.getConfig().ui?.disabled) {
-    return false
-  }
-
-  // Markdown rendering state changed
-  if (prev.port.getConfig().ui?.renderMarkdown !== next.port.getConfig().ui?.renderMarkdown) {
-    return false
-  }
-
-  // Markdown styles changed (deep comparison)
-  const prevStyles = prev.port.getConfig().ui?.markdownStyles
-  const nextStyles = next.port.getConfig().ui?.markdownStyles
-  if (prevStyles?.fontSize !== nextStyles?.fontSize)
-    return false
-  if (prevStyles?.lineHeight !== nextStyles?.lineHeight)
-    return false
-  if (prevStyles?.maxHeight !== nextStyles?.maxHeight)
-    return false
-
-  // HTML preview state changed
-  if (prev.port.getConfig().ui?.renderHtml !== next.port.getConfig().ui?.renderHtml)
-    return false
-
-  // HTML styles changed (deep comparison)
-  const prevHtmlStyles = prev.port.getConfig().ui?.htmlStyles
-  const nextHtmlStyles = next.port.getConfig().ui?.htmlStyles
-  if (prevHtmlStyles?.height !== nextHtmlStyles?.height)
-    return false
-  if (prevHtmlStyles?.autoHeight !== nextHtmlStyles?.autoHeight)
-    return false
-  if (prevHtmlStyles?.maxHeight !== nextHtmlStyles?.maxHeight)
-    return false
-  if (prevHtmlStyles?.scale !== nextHtmlStyles?.scale)
-    return false
-  if (prevHtmlStyles?.showBorder !== nextHtmlStyles?.showBorder)
-    return false
-  if (prevHtmlStyles?.stripMarkdown !== nextHtmlStyles?.stripMarkdown)
-    return false
-  if (prevHtmlStyles?.debounceDelay !== nextHtmlStyles?.debounceDelay)
-    return false
-
-  // Node or port ID changed
-  if (prev.node.id !== next.node.id || prev.port.id !== next.port.id) {
-    return false
-  }
-
-  // Skip re-render - nothing important changed
-  return true
-})
+export const StringPort = memo(StringPortInner)

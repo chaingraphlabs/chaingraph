@@ -6,10 +6,10 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, IPort } from '@badaitech/chaingraph-types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { requestUpdatePortUI } from '@/store/ports'
+import { usePortUI } from '@/store/ports-v2'
 import { PortTitle } from '../../ui/PortTitle'
 
 interface PortHeaderProps {
@@ -17,11 +17,13 @@ interface PortHeaderProps {
   isOutput: boolean
   isCollapsed: boolean
   onClick: () => void
-  node: INode
-  port: IPort
+  nodeId: string
+  portId: string
 }
 
-export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }: PortHeaderProps) {
+export function PortHeader({ title, isOutput, isCollapsed, onClick, nodeId, portId }: PortHeaderProps) {
+  const ui = usePortUI(nodeId, portId)
+
   return (
     <div className={cn(
       'flex items-center gap-1',
@@ -58,10 +60,10 @@ export function PortHeader({ title, isOutput, isCollapsed, onClick, node, port }
           )}
           onClick={() => {
             requestUpdatePortUI({
-              nodeId: node.id,
-              portId: port.id,
+              nodeId,
+              portId,
               ui: {
-                hideEditor: !port.getConfig().ui?.hideEditor,
+                hideEditor: !ui?.hideEditor,
               },
             })
           }}

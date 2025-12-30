@@ -8,7 +8,6 @@
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
-import type { INode } from '@badaitech/chaingraph-types'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { PortDirection } from '@badaitech/chaingraph-types'
 import { ChevronDown, ChevronRight } from 'lucide-react'
@@ -24,19 +23,21 @@ import {
   ScrollArea,
 } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { useNode } from '@/store/nodes'
 import { PortDocContent } from './ports/doc/PortDocContent'
 
 interface NodeDocTooltipContentProps {
-  node: INode
+  nodeId: string
   categoryMetadata: CategoryMetadata
 }
 
 interface PortItemProps {
+  nodeId: string
   port: any
   type: 'input' | 'output' | 'passthrough'
 }
 
-function PortItem({ port, type }: PortItemProps) {
+function PortItem({ nodeId, port, type }: PortItemProps) {
   const [isOpen, setIsOpen] = useState(false)
   const config = port.getConfig()
 
@@ -56,7 +57,7 @@ function PortItem({ port, type }: PortItemProps) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="pl-7 pr-2">
-          <PortDocContent port={port} className="w-full" />
+          <PortDocContent nodeId={nodeId} portId={port.id} className="w-full" />
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -64,12 +65,15 @@ function PortItem({ port, type }: PortItemProps) {
 }
 
 export function NodeDocTooltipContent({
-  node,
+  nodeId,
   categoryMetadata,
 }: NodeDocTooltipContentProps) {
   const { theme } = useTheme()
   const [portsOpen, setPortsOpen] = useState(true)
   const [jsonOpen, setJsonOpen] = useState(false)
+
+  // Fetch node on-demand (only when tooltip is actually rendered)
+  const node = useNode(nodeId)
 
   const style = useMemo(() => (
     theme === 'dark'
@@ -80,7 +84,7 @@ export function NodeDocTooltipContent({
   // Serialize node data lazily when needed
   const serializedData = useMemo(() => {
     try {
-      const serialized = node.serialize()
+      const serialized = node?.serialize()
       return JSON.stringify(serialized, null, 2)
     } catch (error) {
       return 'Error serializing node data'
@@ -94,24 +98,24 @@ export function NodeDocTooltipContent({
 
   // Get input and output ports
   const systemPorts = useMemo(() =>
-    Array.from(node.ports.values())
+    Array.from(node?.ports.values() || [])
       .filter(p => p.isSystem())
-      .sort(), [node.ports])
+      .sort(), [node?.ports])
 
   const inputs = useMemo(() =>
-    Array.from(node.ports.values()).filter(
+    Array.from(node?.ports.values() || []).filter(
       port => port.getConfig().direction === PortDirection.Input && !port.isSystem(),
-    ), [node.ports])
+    ), [node?.ports])
 
   const passthroughs = useMemo(() =>
-    Array.from(node.ports.values()).filter(
+    Array.from(node?.ports.values() || []).filter(
       port => port.getConfig().direction === PortDirection.Passthrough && !port.isSystem(),
-    ), [node.ports])
+    ), [node?.ports])
 
   const outputs = useMemo(() =>
-    Array.from(node.ports.values()).filter(
+    Array.from(node?.ports.values() || []).filter(
       port => port.getConfig().direction === PortDirection.Output && !port.isSystem(),
-    ), [node.ports])
+    ), [node?.ports])
 
   // Function to format description with proper line breaks
   const formatDescription = (description: string) => {
@@ -126,6 +130,15 @@ export function NodeDocTooltipContent({
         {line}
       </div>
     ))
+  }
+
+  // Early return if node not loaded yet
+  if (!node) {
+    return (
+      <div className="w-[450px] h-[200px] bg-card rounded-lg flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Loading node data...</div>
+      </div>
+    )
   }
 
   return (
@@ -280,7 +293,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {inputs
                               .map(port => (
-                                <PortItem key={port.getConfig().id!} port={port} type="input" />
+                                <PortItem key={port.getConfig().id!} nodeId={node.id} port={port} type="input" />
                               ))}
                           </div>
                         </div>
@@ -295,7 +308,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {passthroughs
                               .map(port => (
-                                <PortItem key={port.getConfig().id} port={port} type="passthrough" />
+                                <PortItem key={port.getConfig().id} nodeId={node.id} port={port} type="passthrough" />
                               ))}
                           </div>
                         </div>
@@ -308,7 +321,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {outputs
                               .map(port => (
-                                <PortItem key={port.getConfig().id} port={port} type="output" />
+                                <PortItem key={port.getConfig().id} nodeId={node.id} port={port} type="output" />
                               ))}
                           </div>
                         </div>
@@ -321,7 +334,7 @@ export function NodeDocTooltipContent({
                           <div className="space-y-2">
                             {systemPorts
                               .map(port => (
-                                <PortItem key={port.getConfig().id} port={port} type="input" />
+                                <PortItem key={port.getConfig().id} nodeId={node.id} port={port} type="input" />
                               ))}
                           </div>
                         </div>

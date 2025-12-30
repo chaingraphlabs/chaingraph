@@ -13,6 +13,7 @@ import type {
   FlowEventHandlerMap,
   INode,
 } from '@badaitech/chaingraph-types'
+import type { PortUIState } from '../ports-v2'
 import type {
   AddFieldObjectPortInput,
   AppendElementArrayPortInput,
@@ -25,15 +26,17 @@ import {
   DefaultPosition,
   FlowEventType,
 } from '@badaitech/chaingraph-types'
-import { combine, createEffect, sample } from 'effector'
 
+import { combine, createEffect, sample } from 'effector'
 import {
   getNodePositionInFlow,
   getNodePositionInsideParent,
 } from '@/components/flow/utils/node-position'
-import { flowDomain } from '@/store/domains'
+import { trace } from '@/lib/perf-trace'
+import { $flowInitMode, flowDomain, flowInitEnded, flowInitStarted } from '@/store/domains'
 import { nodeUpdated } from '@/store/updates'
 import { globalReset } from '../common'
+import { $edgeVersions, clearAnchorNodesForEdge, loadAnchorNodesFromBackend } from '../edges/anchor-nodes'
 import {
   removeEdge,
   resetEdges,
@@ -49,11 +52,28 @@ import {
   addNodes,
   clearNodes,
   removeNode,
-  setNodeVersion,
+  setNodeVersionOnly,
   updateNode,
   updateNodes,
   updateNodeUILocal,
 } from '../nodes/stores'
+// Granular port stores - ONLY mode (migration complete)
+import {
+  $portConfigs,
+  $portHierarchy,
+  $portValues,
+  addPendingMutation,
+  computeParentValue,
+  extractConfigCore,
+  fromPortKey,
+  generateMutationId,
+  getClientId,
+  getParentChain,
+  portUpdateReceived,
+  rejectPendingMutation,
+  removePortsBatch,
+  toPortKey,
+} from '../ports-v2'
 import {
   addFieldObjectPort,
   addFieldObjectPortFx,
@@ -68,13 +88,16 @@ import {
   removeFieldObjectPort,
   removeFiledObjectPortFx,
   requestUpdatePortValue,
+  requestUpdatePortValueThrottled,
   throttledRequestUpdatePortUi,
+  throttledServerPortValueSync,
   updateItemConfigArrayPort,
   updateItemConfigArrayPortFx,
-  updatePort,
 } from '../ports/stores'
 import { $trpcClient } from '../trpc/store'
-import { $activeSubscription, newFlowEvents, switchSubscriptionFx } from './subscription'
+import { $activeFlowId, clearActiveFlow } from './active-flow'
+import { newFlowEvents } from './event-buffer'
+import { $activeSubscription, switchSubscriptionFx } from './subscription'
 import { FlowSubscriptionStatus } from './types'
 
 // EVENTS
@@ -87,9 +110,14 @@ export const setFlowsError = flowDomain.createEvent<Error | null>()
 export const setFlowMetadata = flowDomain.createEvent<FlowMetadata>()
 export const setFlowLoaded = flowDomain.createEvent<string>()
 
-// Active flow events
-export const setActiveFlowId = flowDomain.createEvent<string>()
-export const clearActiveFlow = flowDomain.createEvent()
+// Flow initialization mode - imported from domains.ts to avoid circular dependencies
+// Used to defer expensive derived computations until init is complete
+// Re-exported for convenience
+export { $flowInitMode, flowInitEnded, flowInitStarted }
+
+// Active flow events - imported from ./active-flow to avoid circular dependencies
+// Re-exported for backwards compatibility
+export { $activeFlowId, clearActiveFlow, setActiveFlowId } from './active-flow'
 
 // Removed debugging - issue identified and fixed
 
@@ -192,10 +220,11 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
     }
   })
   .on(setFlowLoaded, (flows, updatedFlowId) => {
+    const spanId = trace.start('store.$flows.setLoaded', { category: 'store' })
     const flowExists = flows.some(f => f.id === updatedFlowId)
     if (flowExists) {
       // Update existing flow
-      return flows.map(flow =>
+      const result = flows.map(flow =>
         flow.id === updatedFlowId
           ? {
               ...flow,
@@ -206,19 +235,16 @@ export const $flows = flowDomain.createStore<FlowMetadata[]>([])
             }
           : flow,
       )
+      trace.end(spanId)
+      return result
     }
+    trace.end(spanId)
   })
   .on(deleteFlow, (flows, id) =>
     flows.filter(f => f.id !== id))
   .reset(globalReset)
 
-// Currently active flow ID
-export const $activeFlowId = flowDomain.createStore<string | null>(null)
-  .on(setActiveFlowId, (_, id) => {
-    return id
-  })
-  .reset(clearActiveFlow)
-  .reset(globalReset)
+// $activeFlowId store moved to ./active-flow.ts to avoid circular dependencies
 
 // Main loading state
 export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
@@ -228,8 +254,11 @@ export const $isFlowsLoading = flowDomain.createStore<boolean>(false)
 
 export const $isFlowLoaded = flowDomain.createStore<boolean>(false)
   .on(setFlowLoaded, (_, flowId) => {
+    const spanId = trace.start('store.$isFlowLoaded.set', { category: 'store' })
     const flow = $flows.getState().find(f => f.id === flowId)
-    return flow && flow.metadata ? !!flow.metadata?.loaded : false
+    const result = flow && flow.metadata ? !!flow.metadata?.loaded : false
+    trace.end(spanId)
+    return result
   })
   .reset(clearActiveFlow)
   .reset(globalReset)
@@ -410,13 +439,17 @@ sample({
 function createEventHandlers(flowId: string, nodes: Record<string, INode>): FlowEventHandlerMap {
   return {
     [FlowEventType.FlowInitStart]: (data) => {
+      flowInitStarted() // Signal init mode start (defers expensive computations)
       clearNodes()
       resetEdges()
       setFlowMetadata(data.metadata)
     },
 
     [FlowEventType.FlowInitEnd]: (data) => {
+      const spanId = trace.start('handler.setFlowLoaded', { category: 'event' })
+      flowInitEnded() // Signal init mode end (triggers deferred computations)
       setFlowLoaded(data.flowId)
+      trace.end(spanId)
     },
 
     [FlowEventType.MetadataUpdated]: (data) => {
@@ -432,18 +465,38 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
     },
 
     [FlowEventType.NodeUpdated]: (data) => {
-      const node = nodes[data.node.id]
+      const nodeId = data.node.id
+      const node = nodes[nodeId]
+
+      // Version check (keep existing)
       if (node) {
         if (data.node.getVersion() && data.node.getVersion() < node.getVersion()) {
-          // console.warn(`[NodeUpdated] Received outdated node update event for node ${data.node.id}`)
+          // console.warn(`[NodeUpdated] Received outdated node update event for node ${nodeId}`)
           return
         }
       }
 
-      // console.log(`[NodeUpdated] Updating node ${data.node.id} to version ${data.node.getVersion()}`)
+      // Extract only non-port changes (metadata, UI state, status)
+      // Port changes already handled via PortUpdated events → granular stores
+      const metadataChanged
+        = !node
+          || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
+          || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
+          || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
+          || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
+          || node.status !== data.node.status
 
-      updateNode(data.node)
-      nodeUpdated(data.node.id)
+      if (metadataChanged) {
+        // Update $nodes for metadata-only changes (position, dimensions, status)
+        // console.log(`[NodeUpdated] Metadata changed for node ${nodeId}, updating $nodes`)
+        updateNode(data.node)
+        nodeUpdated(nodeId)
+      } else {
+        // Port-only changes - granular stores already updated via PortUpdated events
+        // Just update version in granular store (NO $nodes update = NO cascade!)
+        // console.log(`[NodeUpdated] Port-only change for node ${nodeId}, skipping $nodes`)
+        setNodeVersionOnly({ nodeId, version: data.node.getVersion() })
+      }
     },
 
     [FlowEventType.NodesUpdated]: (data) => {
@@ -472,60 +525,85 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
     },
 
     [FlowEventType.PortCreated]: (data) => {
-      if (!data.port.getConfig().nodeId) {
+      const nodeId = data.port.getConfig().nodeId
+      if (!nodeId) {
         console.error(`Port ${data.port.id} has no node ID`)
         return
       }
 
-      const node = nodes[data.port.getConfig().nodeId!]
+      const node = nodes[nodeId]
       if (!node) {
-        console.error(`Node ${data.port.getConfig().nodeId} not found`)
+        console.error(`Node ${nodeId} not found`)
         return
       }
 
-      updatePort({
-        id: data.port.id,
-        data: {
-          id: data.port.id,
-          config: data.port.getConfig(),
-          value: data.port.getValue(),
-        },
-        nodeVersion: data.nodeVersion ?? 1,
-      })
+      const portId = data.port.id
+      const config = data.port.getConfig()
+      const value = data.port.getValue()
 
-      nodeUpdated(data.port.getConfig().nodeId!)
+      // ALWAYS route to granular stores (migration complete)
+      portUpdateReceived({
+        portKey: toPortKey(nodeId, portId),
+        nodeId,
+        portId,
+        timestamp: Date.now(),
+        source: 'subscription',
+        version: data.nodeVersion,
+        changes: {
+          value,
+          ui: (config.ui ?? {}) as PortUIState,
+          config: extractConfigCore(config),
+          connections: config.connections || [],
+        },
+      })
     },
 
     [FlowEventType.PortUpdated]: (data) => {
-      if (!data.port.getConfig().nodeId) {
+      const nodeId = data.port.getConfig().nodeId
+      if (!nodeId) {
         console.error(`Port ${data.port.id} has no node ID`)
         return
       }
 
-      const node = nodes[data.port.getConfig().nodeId!]
+      const node = nodes[nodeId]
       if (!node) {
-        console.error(`Node ${data.port.getConfig().nodeId} not found`)
+        console.error(`Node ${nodeId} not found`)
         return
       }
 
-      // if (data.nodeVersion && data.nodeVersion <= node.getVersion()) {
-      // console.warn(`[PortUpdated] Received outdated port update event`)
-      // return
-      // }
+      const portId = data.port.id
+      const config = data.port.getConfig()
+      const value = data.port.getValue()
 
-      // console.log(`[PortUpdated] Updating port ${data.port.id} on node ${data.port.getConfig().nodeId} to node version ${data.nodeVersion} with value:`, data.port.getValue())
-
-      updatePort({
-        id: data.port.id,
-        data: {
-          id: data.port.id,
-          config: data.port.getConfig(),
-          value: data.port.getValue(),
+      // ALWAYS route to granular stores (migration complete)
+      portUpdateReceived({
+        portKey: toPortKey(nodeId, portId),
+        nodeId,
+        portId,
+        timestamp: Date.now(),
+        source: 'subscription',
+        version: data.nodeVersion,
+        changes: {
+          value,
+          ui: (config.ui ?? {}) as PortUIState,
+          config: extractConfigCore(config),
+          connections: config.connections || [],
         },
-        nodeVersion: data.nodeVersion ?? 1,
       })
+    },
 
-      nodeUpdated(data.port.getConfig().nodeId!)
+    [FlowEventType.PortRemoved]: (data) => {
+      const nodeId = data.port.getConfig().nodeId
+      if (!nodeId) {
+        console.error(`[PortRemoved] Port ${data.port.id} has no node ID`)
+        return
+      }
+
+      const portId = data.port.id
+      const portKey = toPortKey(nodeId, portId)
+
+      // Remove port from granular stores (values, configs, UI, connections, hierarchy)
+      removePortsBatch(new Set([portKey]))
     },
 
     [FlowEventType.EdgeAdded]: (data) => {
@@ -538,6 +616,15 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         targetPortId: data.targetPortId,
         metadata: data.metadata,
       })
+
+      // Initialize anchors from edge metadata if present
+      if (data.metadata?.anchors && data.metadata.anchors.length > 0) {
+        // Load anchors as XYFlow nodes (new anchor system)
+        loadAnchorNodesFromBackend({
+          edgeId: data.edgeId,
+          anchors: data.metadata.anchors,
+        })
+      }
     },
 
     [FlowEventType.EdgesAdded]: (data) => {
@@ -550,6 +637,17 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         targetPortId: edge.targetPortId,
         metadata: edge.metadata,
       })))
+
+      // Initialize anchors from edge metadata for all edges
+      data.edges.forEach((edge) => {
+        if (edge.metadata?.anchors && edge.metadata.anchors.length > 0) {
+          // Load anchors as XYFlow nodes (new anchor system)
+          loadAnchorNodesFromBackend({
+            edgeId: edge.edgeId,
+            anchors: edge.metadata.anchors,
+          })
+        }
+      })
     },
 
     [FlowEventType.EdgeRemoved]: (data) => {
@@ -557,6 +655,29 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         flowId,
         edgeId: data.edgeId,
       })
+    },
+
+    [FlowEventType.EdgeMetadataUpdated]: (data) => {
+      // Check if edge has pending local changes (e.g., anchor being deleted/moved)
+      const versions = $edgeVersions.getState()
+      const edgeVersion = versions.get(data.edgeId)
+
+      if (edgeVersion?.isDirty) {
+        // Skip reload - we have pending local changes that haven't been synced yet
+        // This prevents deleted anchors from being restored by broadcast events
+        return
+      }
+
+      // Safe to reload anchors from backend (no pending local changes)
+      if (data.metadata.anchors && data.metadata.anchors.length > 0) {
+        loadAnchorNodesFromBackend({
+          edgeId: data.edgeId,
+          anchors: data.metadata.anchors,
+        })
+      } else {
+        // No anchors in metadata - clear any existing anchors for this edge
+        clearAnchorNodesForEdge(data.edgeId)
+      }
     },
 
     [FlowEventType.NodeParentUpdated]: (data) => {
@@ -598,7 +719,8 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         parentNodeId: data.newParentNodeId,
       })
 
-      setNodeVersion({
+      // Use granular version store to avoid $nodes cascade
+      setNodeVersionOnly({
         nodeId: data.nodeId,
         version: data.version,
       })
@@ -619,12 +741,26 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         return
       }
 
-      setNodeVersion({
+      const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
+
+      // PERF: Skip if position is already in state (echo of our optimistic update)
+      // This preserves multi-user editing: other users' different positions will be processed
+      const positionUnchanged
+        = Math.abs(currentPosition.x - data.newPosition.x) < 1
+          && Math.abs(currentPosition.y - data.newPosition.y) < 1
+
+      // Use granular version store to avoid $nodes cascade on position echoes
+      setNodeVersionOnly({
         nodeId: data.nodeId,
         version: data.version,
       })
 
-      const currentPosition = currentNode.metadata.ui?.position || DefaultPosition
+      if (positionUnchanged) {
+        // Position already matches - skip expensive interpolator
+        return
+      }
+
+      // Different position - another user moved the node or server correction
       positionInterpolator.addState(data.nodeId, data.newPosition, currentPosition)
     },
 
@@ -647,7 +783,8 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         version: data.version,
       })
 
-      setNodeVersion({
+      // Use granular version store to avoid $nodes cascade
+      setNodeVersionOnly({
         nodeId: data.nodeId,
         version: data.version,
       })
@@ -668,11 +805,26 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
         return
       }
 
-      setNodeVersion({
+      const currentDimensions = currentNode.metadata.ui?.dimensions
+
+      // PERF: Skip if dimensions are already in state (echo of our optimistic update)
+      // This preserves multi-user editing: other users' different dimensions will be processed
+      const dimensionsUnchanged = currentDimensions
+        && Math.abs((currentDimensions.width ?? 0) - (data.newDimensions.width ?? 0)) < 1
+        && Math.abs((currentDimensions.height ?? 0) - (data.newDimensions.height ?? 0)) < 1
+
+      // Use granular version store to avoid $nodes cascade on dimension echoes
+      setNodeVersionOnly({
         nodeId: data.nodeId,
         version: data.version,
       })
 
+      if (dimensionsUnchanged) {
+        // Dimensions already match - skip expensive interpolator
+        return
+      }
+
+      // Different dimensions - another user resized the node or server correction
       updateNodeUILocal({
         flowId,
         nodeId: data.nodeId,
@@ -685,6 +837,20 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
     },
   }
 }
+
+// Hot path event types to trace (high-frequency during user interaction)
+const HOT_PATH_EVENTS = new Set([
+  FlowEventType.NodeUpdated,
+  FlowEventType.NodesUpdated,
+  FlowEventType.NodesAdded, // ADDED: Initial flow load
+  FlowEventType.PortUpdated,
+  FlowEventType.PortCreated, // ADDED: Initial flow load
+  FlowEventType.EdgeAdded,
+  FlowEventType.EdgesAdded,
+  FlowEventType.NodeUIPositionChanged,
+  FlowEventType.FlowInitStart, // ADDED: Init markers
+  FlowEventType.FlowInitEnd, // ADDED: Init markers
+])
 
 sample({
   clock: newFlowEvents,
@@ -700,19 +866,36 @@ sample({
       return
     }
 
+    const batchSpanId = trace.start('event.batch.process', {
+      category: 'effect',
+      tags: { eventCount: events.length },
+    })
+
     const eventHandlers = createEventHandlers(flowId, nodes)
     const handleEvent = createEventHandler(eventHandlers, {
       onError: (error, event) => {
         console.error(`Error handling event ${event.type}:`, error)
       },
     })
+
     for (const event of events) {
+      // Only trace hot path events to reduce overhead
+      const isHotPath = HOT_PATH_EVENTS.has(event.type)
+      const eventSpanId = isHotPath
+        ? trace.start(`event.handle.${event.type}`, { category: 'event' })
+        : null
+
       try {
         await handleEvent(event)
       } catch (error) {
         console.error(`Unhandled error processing event ${event.type}:`, error)
       }
+
+      if (eventSpanId)
+        trace.end(eventSpanId)
     }
+
+    trace.end(batchSpanId)
   }),
 })
 
@@ -746,31 +929,224 @@ sample({
   target: switchSubscriptionFx,
 })
 
+/**
+ * Optimistic port value update effect
+ * Applies update locally immediately and tracks pending mutation
+ *
+ * PARENT CHAIN HANDLING:
+ * The server updates not just the target port, but ALL parent ports up to the root.
+ * For example, updating `object.a` also updates `object` with the merged value.
+ * This is REDUNDANT work (server sends these updates too), but necessary for:
+ * 1. Immediate optimistic feedback on parent values
+ * 2. Correct echo matching - server echoes for parents need matching pending mutations
+ *
+ * When server is optimized to send only leaf updates, this parent chain logic can be removed.
+ */
+const optimisticUpdatePortValueFx = flowDomain.createEffect((params: {
+  nodeId: string
+  portId: string
+  value: unknown
+  version: number
+  mutationId: string
+}) => {
+  const portKey = toPortKey(params.nodeId, params.portId)
+  const hierarchy = $portHierarchy.getState()
+  const portValues = $portValues.getState()
+  const portConfigs = $portConfigs.getState()
+  const clientId = getClientId()
+  const timestamp = Date.now()
+
+  // 1. Get parent chain (child → parent → grandparent → ... → root)
+  //    REDUNDANT: Server already computes parent values. We do this for echo matching.
+  const chain = getParentChain(portKey, hierarchy)
+
+  // 2. Compute values for entire chain and prepare updates
+  const updates: Array<{
+    portKey: typeof portKey
+    nodeId: string
+    portId: string
+    value: unknown
+    mutationId: string
+  }> = []
+
+  // Process chain from target (index 0) to root
+  for (let i = 0; i < chain.length; i++) {
+    const currentKey = chain[i]
+    const { nodeId, portId } = fromPortKey(currentKey)
+    const isTarget = i === 0
+
+    // Generate unique mutation ID for each port in chain
+    // Parent mutations get suffixed IDs to distinguish from target
+    const portMutationId = isTarget
+      ? params.mutationId
+      : `${params.mutationId}:parent:${i}`
+
+    let portValue: unknown
+
+    if (isTarget) {
+      // Target port: use provided value directly
+      portValue = params.value
+    } else {
+      // Parent port: compute new value based on child update
+      // REDUNDANT: Server does this same computation
+      const childKey = chain[i - 1]
+      const childValue = updates[i - 1].value
+
+      portValue = computeParentValue(
+        currentKey,
+        childKey,
+        childValue,
+        portValues,
+        portConfigs,
+      )
+    }
+
+    updates.push({
+      portKey: currentKey,
+      nodeId,
+      portId,
+      value: portValue,
+      mutationId: portMutationId,
+    })
+  }
+
+  // 3. Track pending mutations and apply optimistic updates for ALL ports in chain
+  for (const update of updates) {
+    // Track pending mutation (for echo matching)
+    addPendingMutation({
+      portKey: update.portKey,
+      value: update.value,
+      version: params.version,
+      timestamp,
+      mutationId: update.mutationId,
+      clientId,
+    })
+
+    // Apply optimistic update to $portValues
+    portUpdateReceived({
+      portKey: update.portKey,
+      nodeId: update.nodeId,
+      portId: update.portId,
+      timestamp,
+      source: 'local-optimistic',
+      version: params.version,
+      mutationId: update.mutationId,
+      clientId,
+      changes: {
+        value: update.value,
+      },
+    })
+  }
+})
+
 sample({
   source: combine({
     activeFlowId: $activeFlowId,
     nodes: $nodes,
   }),
   clock: requestUpdatePortValue,
-  // fn: ({ portId, nodeId, value }) => {
   fn: (source, event) => {
     const activeFlowId = source.activeFlowId
     const nodes = source.nodes
     if (!activeFlowId) {
       throw new Error('No active flow selected')
     }
+
+    const nextVersion = (nodes[event.nodeId]?.getVersion() ?? 0) + 1
+    const mutationId = generateMutationId()
+
     return {
       flowId: activeFlowId,
       nodeId: event.nodeId,
       portId: event.portId,
       value: event.value,
-      nodeVersion: (nodes[event.nodeId]?.getVersion() ?? 0) + 1, // Optimistic version increment
+      nodeVersion: nextVersion,
+      mutationId,
+      version: nextVersion,
+    }
+  },
+  target: [
+    optimisticUpdatePortValueFx, // NEW: Instant local update
+    preBaseUpdatePortValueFx,
+    baseUpdatePortValueFx,
+  ],
+})
+
+// Handle server errors - reject pending mutation
+sample({
+  clock: baseUpdatePortValueFx.fail,
+  fn: ({ params }) => ({
+    portKey: toPortKey(params.nodeId, params.portId),
+    mutationId: params.mutationId,
+    reason: 'server error',
+  }),
+  target: rejectPendingMutation,
+})
+
+// ============================================================================
+// THROTTLED PORT VALUE UPDATE (for sliders and continuous input)
+// ============================================================================
+// Split into two phases:
+// 1. Immediate: optimistic local update with pending tracking
+// 2. Throttled: server sync only (optimistic already applied)
+// ============================================================================
+
+// Phase 1: Immediate optimistic update (no server call)
+sample({
+  source: combine({
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  }),
+  clock: requestUpdatePortValueThrottled,
+  fn: (source, event) => {
+    const nodes = source.nodes
+    const nextVersion = (nodes[event.nodeId]?.getVersion() ?? 0) + 1
+    const mutationId = generateMutationId()
+
+    return {
+      nodeId: event.nodeId,
+      portId: event.portId,
+      value: event.value,
+      version: nextVersion,
+      mutationId,
+    }
+  },
+  target: optimisticUpdatePortValueFx, // Only optimistic, no server
+})
+
+// Phase 2: Throttled server sync (latest value wins)
+sample({
+  source: combine({
+    activeFlowId: $activeFlowId,
+    nodes: $nodes,
+  }),
+  clock: throttledServerPortValueSync,
+  fn: (source, event) => {
+    const activeFlowId = source.activeFlowId
+    const nodes = source.nodes
+    if (!activeFlowId) {
+      throw new Error('No active flow selected')
+    }
+
+    // Note: Version may have changed since immediate update
+    // Server will use this version for conflict resolution
+    const nextVersion = (nodes[event.nodeId]?.getVersion() ?? 0) + 1
+    const mutationId = generateMutationId()
+
+    return {
+      flowId: activeFlowId,
+      nodeId: event.nodeId,
+      portId: event.portId,
+      value: event.value,
+      nodeVersion: nextVersion,
+      mutationId,
+      version: nextVersion,
     }
   },
   target: [
     preBaseUpdatePortValueFx,
     baseUpdatePortValueFx,
-  ],
+  ], // Server call only, optimistic already done
 })
 
 sample({

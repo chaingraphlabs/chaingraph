@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode } from '@badaitech/chaingraph-types'
+import type { INode, NodeMetadata } from '@badaitech/chaingraph-types'
+import { isDeepEqual } from '@badaitech/chaingraph-types'
 import { useStoreMap, useUnit } from 'effector-react'
 import { $draggingNodes, $nodes } from '../stores'
 
@@ -65,6 +66,29 @@ export function useNode(nodeId: string) {
 
       // No changes detected - skip re-render
       return false
+    },
+  })
+}
+
+export function useNodeMetadata(nodeId: string): NodeMetadata | undefined {
+  return useStoreMap({
+    store: $nodes,
+    keys: [nodeId],
+    fn: (nodes, [nodeId]) => {
+      const node = nodes[nodeId]
+      if (!node)
+        return undefined
+      return node.metadata
+    },
+    updateFilter: (prev, next) => {
+      // If node doesn't exist or was added/removed
+      if (!prev || !next) {
+        return true
+      }
+
+      const prevMeta = prev.metadata
+      const nextMeta = next.metadata
+      return !isDeepEqual(prevMeta, nextMeta)
     },
   })
 }

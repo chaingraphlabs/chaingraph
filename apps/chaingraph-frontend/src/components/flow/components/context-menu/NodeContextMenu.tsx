@@ -16,6 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { useCategories } from '@/store/categories'
+import { registerOverlay, unregisterOverlay } from '@/store/hotkeys'
 
 interface NodeContextMenuProps {
   position: { x: number, y: number }
@@ -30,6 +31,14 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
   const [menuPosition, setMenuPosition] = useState(position)
 
   const { categories } = useCategories()
+
+  // Register as overlay to block hotkeys while menu is open
+  useEffect(() => {
+    registerOverlay('node-context-menu')
+    return () => {
+      unregisterOverlay('node-context-menu')
+    }
+  }, [])
 
   // Memoize filtered categories based on search
   const filteredCategories = useMemo(() => {
@@ -163,10 +172,9 @@ export function NodeContextMenu({ position, onSelect, onClose }: NodeContextMenu
                               backgroundColor: theme === 'dark'
                                 ? category.metadata.style.dark.text
                                 : category.metadata.style.light.text,
-                              boxShadow: `0 1px 3px ${
-                                theme === 'dark'
-                                  ? category.metadata.style.dark.text
-                                  : category.metadata.style.light.text
+                              boxShadow: `0 1px 3px ${theme === 'dark'
+                                ? category.metadata.style.dark.text
+                                : category.metadata.style.light.text
                               }80`,
                             }}
                           />

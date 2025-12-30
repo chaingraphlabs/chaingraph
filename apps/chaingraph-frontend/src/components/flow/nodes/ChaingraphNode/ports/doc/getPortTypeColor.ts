@@ -24,7 +24,16 @@ export function getPortTypeColor(theme: 'light' | 'dark', portConfig: IPortConfi
   }
 
   let borderColor = portConfig.ui?.borderColor || defaultColorMap[portConfig.type] || '#272727'
-  const bgColor = portConfig.ui?.bgColor || defaultColorMap[portConfig.type] || '#cccccc'
+  let bgColor = portConfig.ui?.bgColor || defaultColorMap[portConfig.type] || '#cccccc'
+
+  if (portConfig.type === 'any' && portConfig.underlyingType && portConfig.underlyingType.type !== 'any') {
+    // If type is 'any' but has an underlying type, use that type's color
+    const underlyingTypeUI = portConfig.underlyingType.ui || {}
+    borderColor = underlyingTypeUI.borderColor || defaultColorMap[portConfig.underlyingType.type] || borderColor
+    bgColor = underlyingTypeUI.bgColor || defaultColorMap[portConfig.underlyingType.type] || bgColor
+    // borderColor = defaultColorMap[portConfig.underlyingType.type] || borderColor
+    // bgColor = defaultColorMap[portConfig.underlyingType.type] || bgColor
+  }
 
   let textColor = borderColor
   let circleColor = bgColor

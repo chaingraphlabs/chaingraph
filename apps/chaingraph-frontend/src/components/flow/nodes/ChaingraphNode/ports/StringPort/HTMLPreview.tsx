@@ -6,6 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
+import { useReactFlow } from '@xyflow/react'
 import { RefreshCw, Settings } from 'lucide-react'
 import { connect, WindowMessenger } from 'penpal'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -437,13 +438,20 @@ function HTMLPreviewInner({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { theme } = useTheme()
+  const { screenToFlowPosition } = useReactFlow()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [isResizing, setIsResizing] = useState(false)
   const resizeStartRef = useRef<{ startY: number, startHeight: number } | null>(null)
 
+  // LOCAL state for resize - provides instant visual feedback without store updates
+  // Only syncs to store on mouseup to avoid performance issues during drag
+  const [resizeHeight, setResizeHeight] = useState<number | null>(null)
+
   // Get current values with defaults
-  const height = styles?.height ?? 400
+  const storeHeight = styles?.height ?? 400
+  // During resize, use local state; otherwise use store value
+  const height = resizeHeight ?? storeHeight
   const autoHeight = styles?.autoHeight ?? false
   const maxHeight = styles?.maxHeight ?? '600'
   const scale = styles?.scale ?? 100
@@ -480,16 +488,26 @@ function HTMLPreviewInner({
     setDebouncedContent(cleanedContent)
   }, [content, stripMarkdown])
 
-  // Resize handlers
+  // Resize handlers - use local state for instant feedback, sync to store on mouseup
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setIsResizing(true)
+    // Convert to flow coordinates for zoom-aware calculations (like AnchorHandle.tsx)
+    const startFlow = screenToFlowPosition({ x: e.clientX, y: e.clientY })
     resizeStartRef.current = {
-      startY: e.clientY,
-      startHeight: height,
+      startY: startFlow.y, // Flow Y, not screen Y - handles zoom automatically
+      startHeight: storeHeight,
     }
-  }, [height])
+    // Initialize local resize state
+    setResizeHeight(storeHeight)
+  }, [storeHeight, screenToFlowPosition])
+
+  // Use refs for callbacks to avoid effect dependency issues
+  const updateStyleRef = useRef(updateStyle)
+  updateStyleRef.current = updateStyle
+  const screenToFlowPositionRef = useRef(screenToFlowPosition)
+  screenToFlowPositionRef.current = screenToFlowPosition
 
   useEffect(() => {
     if (!isResizing)
@@ -499,14 +517,24 @@ function HTMLPreviewInner({
       if (!resizeStartRef.current)
         return
 
-      const deltaY = e.clientY - resizeStartRef.current.startY
+      // Convert to flow coordinates for zoom-aware delta calculation
+      const currentFlow = screenToFlowPositionRef.current({ x: e.clientX, y: e.clientY })
+      const deltaY = currentFlow.y - resizeStartRef.current.startY
       const newHeight = Math.max(100, Math.min(2000, resizeStartRef.current.startHeight + deltaY))
 
-      // Update height in real-time (optimistic update)
-      updateStyle('height', newHeight)
+      // Update LOCAL state only - instant visual feedback, no store cascade
+      setResizeHeight(newHeight)
     }
 
     const handleMouseUp = () => {
+      // Sync final height to store (single update, not on every mousemove)
+      setResizeHeight((finalHeight) => {
+        if (finalHeight !== null) {
+          // Use ref to avoid stale closure
+          updateStyleRef.current('height', finalHeight)
+        }
+        return null // Clear local state, revert to store value
+      })
       setIsResizing(false)
       resizeStartRef.current = null
     }
@@ -518,7 +546,7 @@ function HTMLPreviewInner({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isResizing, updateStyle])
+  }, [isResizing]) // No updateStyle dependency - using ref instead
 
   // Debounce content updates and preprocess to remove markdown syntax
   useEffect(() => {
@@ -816,7 +844,7 @@ function HTMLPreviewInner({
         sandbox="allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox"
         className={cn(
           'w-full rounded-t-md',
-          'nodrag nowheel',
+          // 'nodrag nowheel',
           showBorder && 'border-t border-l border-r border-border',
           !autoHeight && 'rounded-b-none', // Remove bottom radius when resize handle is visible
         )}
@@ -827,6 +855,8 @@ function HTMLPreviewInner({
           width: scale !== 100 ? `${100 / (scale / 100)}%` : '100%',
           border: showBorder ? undefined : 'none',
           display: 'block',
+          // Disable pointer events during resize to prevent iframe from stealing mouse events
+          pointerEvents: isResizing ? 'none' : 'auto',
         }}
         title={`HTML Preview for ${nodeId}`}
       />

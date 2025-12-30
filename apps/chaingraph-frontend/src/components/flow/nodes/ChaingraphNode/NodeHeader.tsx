@@ -7,52 +7,62 @@
  */
 
 import type { CategoryIconName } from '@badaitech/chaingraph-nodes'
-import type { CategoryMetadata, CategoryStyle, INode, NodeStatus } from '@badaitech/chaingraph-types'
-import type { PortContextValue } from './ports/context/PortContext'
+import type { CategoryStyle } from '@badaitech/chaingraph-types'
+import type { NodeStatus } from '@badaitech/chaingraph-types'
 import { getCategoryIcon } from '@badaitech/chaingraph-nodes'
 import { CheckIcon, Cross1Icon } from '@radix-ui/react-icons'
 import { useReactFlow } from '@xyflow/react'
 import { useUnit } from 'effector-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { trace } from '@/lib/perf-trace'
 import { cn } from '@/lib/utils'
 import { $activeFlowMetadata } from '@/store/flow'
-import { updateNodeTitle, useNode } from '@/store/nodes'
+import { updateNodeTitle } from '@/store/nodes'
+import { useXYFlowNodeHeaderData } from '@/store/xyflow'
 import { EditableNodeTitle } from './EditableNodeTitle'
 import { LazyNodeDocTooltip } from './LazyNodeDocTooltip'
 import NodeFlowPorts from './NodeFlowPorts'
 import NodeStatusBadge from './NodeStatusBadge'
 
 interface NodeHeaderProps {
-  node: INode
+  nodeId: string
   icon: CategoryIconName | (string & {}) // FIXME: extract CategoryIconName to prevent import cycle
   style: CategoryStyle['light'] | CategoryStyle['dark']
   onDelete?: () => void
-  context: PortContextValue
-  debugMode: boolean
-  isBreakpointSet: boolean
-  onBreakpointToggle: () => void
-  categoryMetadata?: CategoryMetadata
 }
 
 export function NodeHeader({
-  node,
+  nodeId,
   icon,
   style,
   onDelete,
-  context,
-  debugMode,
-  isBreakpointSet,
-  onBreakpointToggle,
-  categoryMetadata,
 }: NodeHeaderProps) {
+  // Trace render (synchronous - measures render function time)
+  const renderCountRef = useRef(0)
+  const traceSpanId = useRef<string | null>(null)
+  if (trace.isEnabled()) {
+    renderCountRef.current++
+    traceSpanId.current = trace.start('render.NodeHeader', {
+      category: 'render',
+      tags: { nodeId, renderCount: renderCountRef.current },
+    })
+  }
+
   const Icon = getCategoryIcon(icon)
+
+  // Granular subscription - only re-renders when title, status, or categoryMetadata changes
+  const headerData = useXYFlowNodeHeaderData(nodeId)
+
   const { fitView } = useReactFlow()
   const [prevStatus, setPrevStatus] = useState<NodeStatus | null>(null)
   const [showStatusBadge, setShowStatusBadge] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const activeFlow = useUnit($activeFlowMetadata)
 
-  const parentNode = useNode(node.metadata.parentNodeId || '')
+  // Node is fetched on-demand inside LazyNodeDocTooltip (only when tooltip opens)
+  // Removed useNode(nodeId) to avoid hot-path subscription during drag
+
+  // const parentNode = useNode(node.metadata.parentNodeId || '')
 
   // Double-click header to fit view to this node
   const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
@@ -66,12 +76,12 @@ export function NodeHeader({
 
     // Smoothly animate camera to fit this node
     fitView({
-      nodes: [{ id: node.id }],
+      nodes: [{ id: nodeId }],
       duration: 800,
       padding: 0.02,
       maxZoom: 2,
     })
-  }, [fitView, node.id])
+  }, [fitView, nodeId])
 
   // Callback to handle status badge visibility and state
   const handleStatusChange = useCallback((show: boolean, status: NodeStatus | null) => {
@@ -93,16 +103,16 @@ export function NodeHeader({
   }, [onDelete])
 
   const handleTitleChange = useCallback((title: string) => {
-    if (!activeFlow?.id || !node.id)
+    if (!activeFlow?.id || !nodeId)
       return
 
     updateNodeTitle({
       flowId: activeFlow.id,
-      nodeId: node.id,
+      nodeId,
       title,
-      version: node.getVersion(),
+      version: 0,
     })
-  }, [activeFlow, node])
+  }, [activeFlow, nodeId])
 
   // Hide delete confirmation when clicking outside
   useEffect(() => {
@@ -124,6 +134,10 @@ export function NodeHeader({
     }
   }, [showDeleteConfirm])
 
+  // End trace BEFORE return (synchronous measurement)
+  if (traceSpanId.current)
+    trace.end(traceSpanId.current)
+
   return (
     <div
       className={cn(
@@ -136,16 +150,15 @@ export function NodeHeader({
       }}
       onDoubleClick={handleHeaderDoubleClick}
     >
-      {(!parentNode || parentNode.metadata.category === 'group') && (
-        <NodeFlowPorts node={node} context={context} />
-      )}
+      {/* Flow ports (granular subscription - component handles its own early return) */}
+      <NodeFlowPorts nodeId={nodeId} />
 
       <div className="flex items-center gap-2 min-w-0 relative">
-        {categoryMetadata
+        {headerData?.categoryMetadata
           ? (
               <LazyNodeDocTooltip
-                node={node}
-                categoryMetadata={categoryMetadata}
+                nodeId={nodeId}
+                categoryMetadata={headerData.categoryMetadata}
                 className="cursor-pointer"
               >
                 <div
@@ -176,7 +189,7 @@ export function NodeHeader({
             )}
 
         <EditableNodeTitle
-          value={node.metadata.title || node.id}
+          value={headerData?.title || nodeId}
           onChange={handleTitleChange}
           className="min-w-0 flex-1"
           style={{ color: style.text }}
@@ -184,7 +197,7 @@ export function NodeHeader({
 
         {/* Use the extracted and optimized NodeStatusBadge component */}
         <NodeStatusBadge
-          status={node.status}
+          status={(headerData?.status || 'idle') as NodeStatus}
           prevStatus={prevStatus}
           showBadge={showStatusBadge}
           onStatusChange={handleStatusChange}

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { ArrayPortConfig, IPort, IPortConfig, PortType } from '@badaitech/chaingraph-types'
+import type { IPortConfig, PortType } from '@badaitech/chaingraph-types'
 import { PORT_TYPES } from '@badaitech/chaingraph-types'
 import { ChevronDown, X } from 'lucide-react'
 import { useState } from 'react'
@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { PopoverContent } from '@/components/ui/popover'
 import { useFocusTracking } from '@/store/focused-editors/hooks/useFocusTracking'
+import { usePortConfig, usePortUI } from '@/store/ports-v2'
 
 interface Data {
   // element: string
@@ -27,7 +28,8 @@ interface Data {
 }
 
 interface Props {
-  port: IPort<ArrayPortConfig>
+  nodeId: string
+  portId: string
   onClose: () => void
   onSubmit: (newItemConfig: IPortConfig) => void
 }
@@ -111,17 +113,18 @@ const typeConfigMap: Record<PortType, IPortConfig> = {
 }
 
 export function AddElementPopover(props: Props) {
-  const { onClose, onSubmit, port } = props
+  const { onClose, onSubmit, nodeId, portId } = props
 
-  // Get nodeId from port config
-  const nodeId = port.getConfig().nodeId || ''
-  const portId = port.id
+  // Fetch port config
+  const config = usePortConfig(nodeId, portId)
+  const ui = usePortUI(nodeId, portId)
 
   // Track focus/blur for global copy-paste functionality
   const { handleFocus: trackFocus, handleBlur: trackBlur } = useFocusTracking(nodeId, portId)
 
-  const itemType = port.getConfig().itemConfig.type
-  const dropDownValues = (itemType !== 'any' ? [itemType] : (port.getConfig().ui?.allowedTypes || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
+  const itemType = (config as any)?.itemConfig?.type || 'string'
+  const arrayUI = ui as { allowedTypes?: PortType[] }
+  const dropDownValues = (itemType !== 'any' ? [itemType] : (arrayUI.allowedTypes || PORT_TYPES)).filter(portType => portType !== 'any') // && portType !== 'secret')))
 
   const [type, setType] = useState<PortType | undefined>(
     dropDownValues.at(0) || itemType,

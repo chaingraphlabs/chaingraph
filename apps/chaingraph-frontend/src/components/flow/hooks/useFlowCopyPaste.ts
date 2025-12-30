@@ -24,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { $edges } from '../../../store/edges/stores'
 import { $activeFlowMetadata } from '../../../store/flow/stores'
 import { $hasAnyFocusedEditor } from '../../../store/focused-editors'
+import { shouldIgnoreHotkey } from '../../../store/hotkeys'
 import { $nodes, pasteNodesToFlowFx } from '../../../store/nodes/stores'
 import { useNodeSelection } from './useNodeSelection'
 
@@ -217,7 +218,14 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         virtualOrigin: clipboard.virtualOrigin,
       }
 
+      console.log(`[PASTE_HOOK] Calling pasteNodesToFlowFx with ${pasteData.clipboardData.nodes.length} nodes`)
       const result = await pasteNodesToFlowFx(pasteData)
+      console.log(`[PASTE_HOOK] pasteNodesToFlowFx returned:`, {
+        success: result.success,
+        nodeCount: result.nodeCount,
+        edgeCount: result.edgeCount,
+        createdNodeIds: result.createdNodes?.map(n => n.id),
+      })
 
       // clean up clipboard after successful paste
       setClipboard(null)
@@ -257,7 +265,12 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
 
     // Skip copy/paste operations if any port editor is focused
     if (hasAnyFocusedEditor) {
-      console.log('⏭️ Skipping copy/paste operation - port editor is focused')
+      return
+    }
+
+    // Skip if typing in an input element (e.g., search box, text fields)
+    // This allows native browser copy/paste to work in inputs
+    if (shouldIgnoreHotkey(event)) {
       return
     }
 
@@ -266,7 +279,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         const copyResult = await copySelectedNodes()
         if (copyResult.success) {
           // Do not prevent default behavior for copy
-          // event.preventDefault()
+          event.preventDefault()
         }
         break
       }
@@ -274,7 +287,7 @@ export function useFlowCopyPaste(): UseFlowCopyPasteReturn {
         const pasteResult = await pasteNodes()
         if (pasteResult.success) {
           // Do not prevent default behavior for paste
-          // event.preventDefault()
+          event.preventDefault()
         }
         break
       }

@@ -273,10 +273,10 @@ export class ExecutionService implements IExecutionService {
 
     // Return enhanced cleanup function that waits for all pending publishes
     return async () => {
-      logger.debug({
-        executionId: instance.row.id,
-        pendingPublishes: publishPromises.length,
-      }, 'Waiting for all event publishes to complete')
+      // logger.debug({
+      //   executionId: instance.row.id,
+      //   pendingPublishes: publishPromises.length,
+      // }, 'Waiting for all event publishes to complete')
 
       // Wait for all pending event publishes to complete
       if (publishPromises.length > 0) {
@@ -288,12 +288,6 @@ export class ExecutionService implements IExecutionService {
         })
 
         const duration = Date.now() - startTime
-
-        logger.debug({
-          executionId: instance.row.id,
-          total: publishPromises.length,
-          duration,
-        }, 'Event publish cleanup complete')
       }
 
       unsubscribe?.()

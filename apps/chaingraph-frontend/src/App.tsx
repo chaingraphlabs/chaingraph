@@ -9,10 +9,17 @@
 import { NodeRegistry } from '@badaitech/chaingraph-types'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import SuperJSON from 'superjson'
+import { PerfTracePanel } from './components/debug/PerfTracePanel'
 import { appConfig } from './config'
 import { FlowLayout } from './FlowLayout'
 import { ChainGraphProvider } from './providers/ChainGraphProvider'
 import { sessionProviders } from './store/initialization'
+import { initializePerfTracing } from './store/perf-trace'
+
+// Initialize performance tracing system (dev mode only)
+if (import.meta.env.DEV) {
+  initializePerfTracing()
+}
 
 // Component that handles routes and extracts flowId
 function AppRoutes() {
@@ -47,6 +54,8 @@ export default function App() {
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
+      {/* Performance trace panel - only visible in dev mode */}
+      <PerfTracePanel />
     </ChainGraphProvider>
   )
 }

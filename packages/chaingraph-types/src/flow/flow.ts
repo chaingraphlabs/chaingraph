@@ -512,6 +512,37 @@ export class Flow implements IFlow {
     ))
   }
 
+  /**
+   * Update edge metadata and emit event
+   * @param edgeId The ID of the edge to update
+   * @param metadata Partial metadata to merge with existing metadata
+   */
+  async updateEdgeMetadata(edgeId: string, metadata: Partial<IEdge['metadata']>): Promise<void> {
+    const edge = this.edges.get(edgeId)
+    if (!edge) {
+      throw new Error(`Edge with ID ${edgeId} does not exist in the flow.`)
+    }
+
+    // Merge metadata and increment version
+    const newVersion = (edge.metadata.version ?? 0) + 1
+    edge.updateMetadata({
+      ...metadata,
+      version: newVersion,
+    })
+
+    // Emit EdgeMetadataUpdated event
+    return this.emitEvent(newEvent(
+      this.getNextEventIndex(),
+      this.id,
+      FlowEventType.EdgeMetadataUpdated,
+      {
+        edgeId,
+        metadata: edge.metadata,
+        version: newVersion,
+      },
+    ))
+  }
+
   async connectPorts(
     sourceNodeId: string,
     sourcePortId: string,

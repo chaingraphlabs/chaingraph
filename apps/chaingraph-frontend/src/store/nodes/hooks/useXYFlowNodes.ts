@@ -9,7 +9,7 @@
 import type { Node } from '@xyflow/react'
 import { useStoreMap } from 'effector-react'
 import { useMemo, useRef } from 'react'
-import { $xyflowNodes } from '../stores'
+import { $combinedXYFlowNodesList as $xyflowNodes } from '@/store/xyflow/stores'
 
 /**
  * Returns a stable reference to XYFlow nodes, only updating when there are
@@ -84,8 +84,9 @@ export function useXYFlowNodes() {
         }
 
         // Version check (most important - detects any data changes)
-        const prevVersion = (prev.data?.node as any)?.getVersion?.() ?? 0
-        const nextVersion = (next.data?.node as any)?.getVersion?.() ?? 0
+        // Note: Anchor nodes don't have version, so we use optional chaining
+        const prevVersion = (prev.data as Record<string, unknown> | undefined)?.version ?? 0
+        const nextVersion = (next.data as Record<string, unknown> | undefined)?.version ?? 0
         if (prevVersion !== nextVersion) {
           changedNodes++
           continue
