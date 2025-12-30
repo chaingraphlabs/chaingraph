@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-executor
 
+## 0.7.2
+
+### Patch Changes
+
+- fix(frontend): prevent Effector wiring tree-shaking in lib builds
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.7.2
+  - @badaitech/chaingraph-types@0.7.2
+  - @badaitech/chaingraph-trpc@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
