@@ -1,5 +1,15 @@
 # @badaitech/chaingraph-backend
 
+## 0.7.5
+
+### Patch Changes
+
+- fix(frontend): export ports-v2 from store/index.ts
+- Updated dependencies
+  - @badaitech/chaingraph-nodes@0.7.5
+  - @badaitech/chaingraph-types@0.7.5
+  - @badaitech/chaingraph-trpc@0.7.5
+
 ## 0.7.4
 
 ### Patch Changes

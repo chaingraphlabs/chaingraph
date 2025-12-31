@@ -1,5 +1,13 @@
 # @badaitech/badai-api-example
 
+## 0.7.5
+
+### Patch Changes
+
+- fix(frontend): export ports-v2 from store/index.ts
+- Updated dependencies
+  - @badaitech/badai-api@0.7.5
+
 ## 0.7.4
 
 ### Patch Changes
