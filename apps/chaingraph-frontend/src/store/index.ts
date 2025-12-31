@@ -22,6 +22,7 @@ export * from './initialization'
 export * from './nodes'
 export * from './nodes/computed'
 export * from './ports'
+export * from './ports-v2'
 export {
   $trpcClientExecutor,
   createTRPCExecutionClientEvent,
