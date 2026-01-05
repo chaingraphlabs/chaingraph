@@ -95,6 +95,8 @@ function buildCompleteRenderMap(
         case 'failed':
           execStyle = 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)]'
           break
+        default:
+          execStyle = 'opacity-50'
       }
     }
 

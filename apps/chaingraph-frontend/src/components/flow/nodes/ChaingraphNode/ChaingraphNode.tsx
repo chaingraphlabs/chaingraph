@@ -9,6 +9,7 @@
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo, useRef } from 'react'
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 import {
   addBreakpoint,
   removeBreakpoint,
+  useExecution,
 } from '@/store/execution'
 import { $activeFlowMetadata, $isFlowLoaded } from '@/store/flow'
 import { removeNodeFromFlow, updateNodeDimensions, updateNodeDimensionsLocal, updateNodePosition } from '@/store/nodes'
@@ -105,6 +107,8 @@ function ChaingraphNodeComponent({
     dropFeedback: renderData?.dropFeedback,
   }), [renderData])
 
+  const executionState = useExecution()
+
   // Use categoryMetadata from renderData, fallback to data prop or default
   const finalCategoryMetadata = useMemo(
     () => categoryMetadata ?? data.categoryMetadata ?? defaultCategoryMetadata,
@@ -144,6 +148,7 @@ function ChaingraphNodeComponent({
       nodeId: id,
       dimensions: {
         // NO WIDTH! Let the store merge with existing width
+        // width: Math.ceil(size.width),
         height: Math.ceil(size.height), // HEIGHT from content
       },
       version: 0, // node.getVersion(),
@@ -164,8 +169,6 @@ function ChaingraphNodeComponent({
     }
     return executionStyle || ''
   }, [selected, executionStyle])
-
-  // Note: mergeNodePortsUi is no longer needed - components use granular stores directly
 
   // Trace render performance (synchronous - measures render function time)
   const renderCountRef = useRef(0)
@@ -197,10 +200,9 @@ function ChaingraphNodeComponent({
       <Card
         ref={contentRef}
         className={cn(
-          // 'shadow-none transition-all duration-200',
+          'shadow-none transition-all duration-200',
           'shadow-none',
           'bg-card opacity-95',
-          '',
           // Drop feedback styling for schema drops
           dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' && [
             'shadow-[0_0_30px_rgba(34,197,94,0.8)]',
@@ -210,14 +212,17 @@ function ChaingraphNodeComponent({
           !dropFeedback?.canAcceptDrop && selected
             ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
             : !dropFeedback?.canAcceptDrop && 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
-          // Execution state styling
-          finalExecutionStyle,
           // Pulse animations
           pulseState === 'pulse' && 'animate-update-pulse',
           pulseState === 'fade' && 'animate-update-fade',
           // Highlighting (immediate)
           isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
           hasAnyHighlights && !isHighlighted && 'opacity-40',
+
+          executionState.status !== ExecutionStatus.Idle && !executionNode && 'opacity-40',
+
+          // Execution state styling
+          finalExecutionStyle,
         )}
         style={{
           borderColor: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema'

@@ -41,7 +41,7 @@ export const DEFAULT_CURVE_CONFIG: CurveConfig = {
   renderMode: 'bezier-chain',
   curveType: 'centripetal',
   alpha: 0.5,
-  curvature: 0.1,
+  curvature: 0.2,
   tension: 1.0,
   smoothness: 20,
   borderRadius: 8,

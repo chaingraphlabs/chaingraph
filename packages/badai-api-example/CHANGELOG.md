@@ -1,5 +1,51 @@
 # @badaitech/badai-api-example
 
+## 0.7.6
+
+### Patch Changes
+
+- Fixes dev
+- debug logs for effector store edges
+- fix(frontend): prevent store tree-shaking via sideEffects config
+- Debug initialize time
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @badaitech/badai-api@0.7.6
+
+## 0.7.6-dev.3
+
+### Patch Changes
+
+- Fixes dev
+- Updated dependencies
+  - @badaitech/badai-api@0.7.6-dev.3
+
+## 0.7.6-dev.2
+
+### Patch Changes
+
+- debug logs for effector store edges
+- Updated dependencies
+  - @badaitech/badai-api@0.7.6-dev.2
+
+## 0.7.6-dev.1
+
+### Patch Changes
+
+- fix(frontend): prevent store tree-shaking via sideEffects config
+- Updated dependencies
+  - @badaitech/badai-api@0.7.6-dev.1
+
+## 0.7.6-dev.0
+
+### Patch Changes
+
+- Debug initialize time
+- Updated dependencies
+  - @badaitech/badai-api@0.7.6-dev.0
+
 ## 0.7.5
 
 ### Patch Changes

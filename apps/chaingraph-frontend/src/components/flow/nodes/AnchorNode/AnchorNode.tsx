@@ -8,8 +8,10 @@
 
 import type { NodeProps } from '@xyflow/react'
 import type { AnchorNode } from './types'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
 import { memo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { useExecution } from '@/store'
 import { removeAnchorNode } from '@/store/edges/anchor-nodes'
 
 /**
@@ -39,6 +41,8 @@ function AnchorNodeComponent({ data, selected, id }: NodeProps<AnchorNode>) {
     removeAnchorNode({ anchorNodeId: id, edgeId: data.edgeId })
   }, [id, data.edgeId])
 
+  const executionState = useExecution()
+
   return (
     <div
       className={cn(
@@ -47,6 +51,7 @@ function AnchorNodeComponent({ data, selected, id }: NodeProps<AnchorNode>) {
         'cursor-grab active:cursor-grabbing',
         'transition-shadow duration-200',
         'hover:scale-110',
+        executionState.status !== ExecutionStatus.Idle && 'opacity-20',
       )}
       style={{
         backgroundColor: color,
