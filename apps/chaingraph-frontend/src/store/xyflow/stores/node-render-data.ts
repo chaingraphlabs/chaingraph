@@ -7,6 +7,7 @@
  */
 
 import type { CategoryMetadata, INode, Position } from '@badaitech/chaingraph-types'
+import { isDeepEqual } from '@badaitech/chaingraph-types'
 import type { PulseState, XYFlowNodeRenderData, XYFlowNodesDataChangedPayload } from '../types'
 import type { DragDropRenderState } from '@/store/drag-drop/types'
 import type { ExecutionState, NodeExecutionState } from '@/store/execution/types'
@@ -19,21 +20,18 @@ import { globalReset } from '@/store/common'
 import { $dragDropRenderState } from '@/store/drag-drop/stores'
 import { $executionNodes, $executionState, $highlightedNodeId } from '@/store/execution'
 import {
+  $nodeDimensions,
   $nodeLayerDepth,
   $nodePositions,
   $nodes,
+  $nodeUIState,
   $selectedNodeIds,
   addNode,
   addNodes,
   clearNodes,
   removeNode,
-  setNodeMetadata,
   setNodes,
-  updateNode,
-  updateNodeDimensionsLocal,
   updateNodeParent,
-  updateNodes,
-  updateNodeUILocal,
 } from '@/store/nodes/stores'
 import { $nodePortLists } from '@/store/ports-v2'
 import { $nodesPulseState } from '@/store/updates'
@@ -81,6 +79,7 @@ function buildCompleteRenderMap(
     const categoryId = node.metadata.category || 'other'
     const category = categoryMeta.get(categoryId) ?? categoryMeta.get(NODE_CATEGORIES.OTHER)
     const execNode = execNodes[nodeId]
+    const uiStyle = node.metadata.ui?.style
 
     // Compute execution style
     let execStyle: string | undefined
@@ -171,11 +170,11 @@ function buildCompleteRenderMap(
       executionStatus: (execNode?.status as XYFlowNodeRenderData['executionStatus']) || 'idle',
       executionNode: execNode
         ? {
-            status: execNode.status,
-            executionTime: execNode.executionTime,
-            error: execNode.error,
-            node: execNode.node,
-          }
+          status: execNode.status,
+          executionTime: execNode.executionTime,
+          error: execNode.error,
+          node: execNode.node,
+        }
         : null,
       isHighlighted: highlightSet.has(nodeId),
       hasAnyHighlights,
@@ -183,6 +182,7 @@ function buildCompleteRenderMap(
       hasBreakpoint: execState.breakpoints.has(nodeId),
       debugMode: execState.debugMode,
       dropFeedback,
+      uiStyle,
     }
   }
 
@@ -312,38 +312,46 @@ sample({
 })
 
 // ============================================================================
-// WIRE 1: POSITION UPDATES (High Frequency - 60fps during drag)
+// WIRE 1+1.5 COMBINED: POSITION + DIMENSION UPDATES (High Frequency - 60fps)
 // ============================================================================
-// Note: Position updates are throttled by $nodePositions store updates
-// which already use accumulateAndSample. We just compute delta here.
-// Note: filter is removed because the store handler already checks for empty changes.
+// CRITICAL: Position and dimension updates MUST be combined into a single event
+// to prevent Effector's event batching from causing one to overwrite the other.
+//
+// Previously WIRE 1 and WIRE 1.5 were separate samples targeting the same event.
+// When both stores updated together (during resize), both WIREs fired, but
+// the $xyflowNodesList sample only saw the LAST payload (usually empty dimensions).
+//
+// Fix: Combine into single sample that computes BOTH position and dimension deltas.
 sample({
-  clock: $nodePositions,
-  source: $xyflowNodeRenderMap,
-  fn: (renderMap, positions): XYFlowNodesDataChangedPayload => {
-    return trace.wrap('sample.positions.delta', { category: 'sample' }, () => {
-      // Delta computation - only changed positions
+  clock: [$nodePositions, $nodeDimensions],
+  source: {
+    renderMap: $xyflowNodeRenderMap,
+    positions: $nodePositions,
+    dimensions: $nodeDimensions,
+  },
+  fn: ({ renderMap, positions, dimensions }): XYFlowNodesDataChangedPayload => {
+    return trace.wrap('sample.positionsAndDimensions.delta', { category: 'sample' }, () => {
       const changes: XYFlowNodesDataChangedPayload['changes'] = []
 
-      // Trace the iteration to measure O(N) cost
-      const iterateSpan = trace.start('wire1.iteratePositions', {
-        category: 'sample',
-        tags: { positionCount: Object.keys(positions).length },
-      })
-      for (const [nodeId, pos] of Object.entries(positions)) {
-        const current = renderMap[nodeId]
-        if (current && (current.position.x !== pos.x || current.position.y !== pos.y)) {
-          changes.push({ nodeId, changes: { position: pos } })
-        }
-      }
-      trace.end(iterateSpan)
+      // Collect all node IDs that might have changes
+      const nodeIds = new Set([...Object.keys(positions), ...Object.keys(dimensions)])
 
-      // Trace WIRE 1 firing
-      if (changes.length > 0) {
-        trace.wrap('wire1.fire', {
-          category: 'sample',
-          tags: { changedCount: changes.length },
-        }, () => { })
+      for (const nodeId of nodeIds) {
+        const current = renderMap[nodeId]
+        if (!current) continue
+
+        const pos = positions[nodeId]
+        const dims = dimensions[nodeId]
+
+        const posChanged = pos && (current.position.x !== pos.x || current.position.y !== pos.y)
+        const dimsChanged = dims && (current.dimensions.width !== dims.width || current.dimensions.height !== dims.height)
+
+        if (posChanged || dimsChanged) {
+          const nodeChanges: Partial<XYFlowNodeRenderData> = {}
+          if (posChanged) nodeChanges.position = pos
+          if (dimsChanged) nodeChanges.dimensions = dims
+          changes.push({ nodeId, changes: nodeChanges })
+        }
       }
 
       return { changes }
@@ -353,127 +361,51 @@ sample({
 })
 
 // ============================================================================
-// WIRE 2: NODE DATA CHANGES (Medium Frequency - version, dimensions, selection)
+// WIRE 2: NODE UI STATE CHANGES (Medium Frequency - version, selection, etc.)
 // ============================================================================
-// PERF OPTIMIZATION: Changed from `clock: $nodes` to specific events.
-// This prevents O(N) scans when ports change (port updates don't need WIRE 2).
-// Only node structure/UI changes trigger this wire.
-
-/**
- * Extract node IDs from various event payloads.
- * Returns IDs of nodes that need render data updates.
- */
-function getNodeIdsFromPayload(payload: unknown): string[] {
-  if (!payload)
-    return []
-
-  // INode (single node)
-  if (typeof payload === 'object' && 'id' in payload && typeof (payload as INode).id === 'string') {
-    return [(payload as INode).id]
-  }
-
-  // INode[] (array of nodes)
-  if (Array.isArray(payload) && payload.length > 0 && 'id' in payload[0]) {
-    return payload.map((n: INode) => n.id)
-  }
-
-  // { nodeId: string } (UI update events)
-  if (typeof payload === 'object' && 'nodeId' in payload) {
-    return [(payload as { nodeId: string }).nodeId]
-  }
-
-  return []
-}
-
-/**
- * Compute render data updates for a single node.
- * Returns partial updates if any fields changed.
- */
-function computeNodeRenderUpdates(
-  current: XYFlowNodeRenderData,
-  node: INode,
-): Partial<XYFlowNodeRenderData> {
-  const updates: Partial<XYFlowNodeRenderData> = {}
-
-  // Version change
-  if (current.version !== node.getVersion()) {
-    updates.version = node.getVersion()
-  }
-
-  // Dimension change
-  const dims = node.metadata.ui?.dimensions
-  if (dims && (current.dimensions.width !== dims.width || current.dimensions.height !== dims.height)) {
-    updates.dimensions = { width: dims.width, height: dims.height }
-  }
-
-  // Selection change
-  const isSelected = node.metadata.ui?.state?.isSelected || false
-  if (current.isSelected !== isSelected) {
-    updates.isSelected = isSelected
-  }
-
-  // Draggable change
-  const isDraggable = !node.metadata.ui?.state?.isMovingDisabled
-  if (current.isDraggable !== isDraggable) {
-    updates.isDraggable = isDraggable
-  }
-
-  // Hidden change
-  const isHidden = node.metadata.ui?.state?.isHidden || false
-  if (current.isHidden !== isHidden) {
-    updates.isHidden = isHidden
-  }
-
-  // Category change
-  const nodeType = node.metadata.category === NODE_CATEGORIES.GROUP ? 'groupNode' : 'chaingraphNode'
-  if (current.nodeType !== nodeType) {
-    updates.nodeType = nodeType
-  }
-
-  // Error port collapsed change
-  const isErrorPortCollapsed = node.metadata.ui?.state?.isErrorPortCollapsed ?? true
-  if (current.isErrorPortCollapsed !== isErrorPortCollapsed) {
-    updates.isErrorPortCollapsed = isErrorPortCollapsed
-  }
-
-  return updates
-}
-
+// Uses $nodeUIState STORE as clock (not events!) - this ensures sample() sees updated values.
+//
+// WHY THIS FIXES THE RACE CONDITION:
+// - Previously: Used events (updateNode, etc.) as clock
+// - Problem: sample() runs BEFORE $nodes.on() handler updates the store, causing stale reads
+// - Fix: Use $nodeUIState STORE as clock - store updates synchronously, then sample() runs
+//
+// This follows the same pattern as WIRE 1 ($nodePositions) and WIRE 1.5 ($nodeDimensions).
+// Dimensions are handled separately by WIRE 1.5.
 sample({
-  clock: [
-    // Node data changes (NOT port changes!)
-    updateNode,
-    updateNodes,
-    // UI changes
-    updateNodeUILocal,
-    updateNodeDimensionsLocal,
-    // Metadata changes
-    setNodeMetadata,
-    // REMOVED: setNodeVersion - version-only changes (port updates) should NOT trigger renders
-  ],
-  source: { renderMap: $xyflowNodeRenderMap, nodes: $nodes },
-  fn: ({ renderMap, nodes }, payload): XYFlowNodesDataChangedPayload => {
-    // Extract affected node IDs from the event payload
-    const nodeIds = getNodeIdsFromPayload(payload)
+  clock: $nodeUIState,
+  source: $xyflowNodeRenderMap,
+  fn: (renderMap, uiStates): XYFlowNodesDataChangedPayload => {
+    return trace.wrap('wire2.nodeUIState', { category: 'sample' }, () => {
+      const changes: XYFlowNodesDataChangedPayload['changes'] = []
 
-    // PERF: Only process affected nodes, not all nodes (O(k) instead of O(N))
-    const changes: XYFlowNodesDataChangedPayload['changes'] = []
+      // Fields to sync from NodeUIState to XYFlowNodeRenderData
+      // Using isDeepEqual for type-safety (new fields automatically compared)
+      const fieldsToSync = [
+        'version', 'isSelected', 'isHidden', 'isDraggable',
+        'nodeType', 'isErrorPortCollapsed', 'title', 'uiStyle',
+      ] as const
 
-    for (const nodeId of nodeIds) {
-      const node = nodes[nodeId]
-      const current = renderMap[nodeId]
+      for (const [nodeId, uiState] of Object.entries(uiStates)) {
+        const current = renderMap[nodeId]
+        if (!current) continue
 
-      if (!node || !current)
-        continue // Skip if node doesn't exist or not in render map yet
+        const updates: Partial<XYFlowNodeRenderData> = {}
 
-      const updates = computeNodeRenderUpdates(current, node)
+        // Compare each field using isDeepEqual (handles nested objects like uiStyle)
+        for (const field of fieldsToSync) {
+          if (!isDeepEqual(current[field], uiState[field])) {
+            (updates as any)[field] = uiState[field]
+          }
+        }
 
-      if (Object.keys(updates).length > 0) {
-        changes.push({ nodeId, changes: updates })
+        if (Object.keys(updates).length > 0) {
+          changes.push({ nodeId, changes: updates })
+        }
       }
-    }
 
-    return { changes }
+      return { changes }
+    })
   },
   target: xyflowNodesDataChanged,
 })
@@ -522,20 +454,20 @@ sample({
       // Execution node data
       const executionNode = execNode
         ? {
-            status: execNode.status,
-            executionTime: execNode.executionTime,
-            error: execNode.error,
-            node: execNode.node,
-          }
+          status: execNode.status,
+          executionTime: execNode.executionTime,
+          error: execNode.error,
+          node: execNode.node,
+        }
         : null
 
       // Deep comparison for execution node
       const currentExecNode = current.executionNode
       const execNodeChanged
         = (currentExecNode === null) !== (executionNode === null)
-          || currentExecNode?.status !== executionNode?.status
-          || currentExecNode?.executionTime !== executionNode?.executionTime
-          || currentExecNode?.node !== executionNode?.node
+        || currentExecNode?.status !== executionNode?.status
+        || currentExecNode?.executionTime !== executionNode?.executionTime
+        || currentExecNode?.node !== executionNode?.node
 
       if (execNodeChanged) {
         updates.executionNode = executionNode
@@ -661,22 +593,14 @@ sample({
         // Compare with current
         const changed
           = (current.dropFeedback === null) !== (dropFeedback === null)
-            || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
-            || current.dropFeedback?.dropType !== dropFeedback?.dropType
+          || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
+          || current.dropFeedback?.dropType !== dropFeedback?.dropType
 
         if (changed) {
           changes.push({ nodeId, changes: { dropFeedback } })
         }
       }
       trace.end(iterateSpan)
-
-      // Trace WIRE 6 firing
-      if (changes.length > 0) {
-        trace.wrap('wire6.fire', {
-          category: 'sample',
-          tags: { changedCount: changes.length },
-        }, () => { })
-      }
 
       return { changes }
     })

@@ -6,7 +6,7 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { CategoryMetadata, INode, Position } from '@badaitech/chaingraph-types'
+import type { CategoryMetadata, INode, NodeUIStyle, Position } from '@badaitech/chaingraph-types'
 
 /**
  * Execution status for a node during flow execution
@@ -111,6 +111,8 @@ export interface XYFlowNodeRenderData {
 
   // Drop feedback (from $dragDropRenderState)
   dropFeedback: DropFeedback | null
+
+  uiStyle?: NodeUIStyle
 }
 
 /**

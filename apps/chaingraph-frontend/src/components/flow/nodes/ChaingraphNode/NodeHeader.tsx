@@ -156,27 +156,13 @@ export function NodeHeader({
       <div className="flex items-center gap-2 min-w-0 relative">
         {headerData?.categoryMetadata
           ? (
-              <LazyNodeDocTooltip
-                nodeId={nodeId}
-                categoryMetadata={headerData.categoryMetadata}
-                className="cursor-pointer"
-              >
-                <div
-                  className="w-6 min-w-6 h-6 rounded flex items-center justify-center hover:opacity-80 transition-opacity"
-                  style={{
-                    background: `${style.text}20`,
-                  }}
-                >
-                  <Icon
-                    className="w-4 h-4"
-                    style={{ color: style.text }}
-                  />
-                </div>
-              </LazyNodeDocTooltip>
-            )
-          : (
+            <LazyNodeDocTooltip
+              nodeId={nodeId}
+              categoryMetadata={headerData.categoryMetadata}
+              className="cursor-pointer"
+            >
               <div
-                className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
+                className="w-6 min-w-6 h-6 rounded flex items-center justify-center hover:opacity-80 transition-opacity"
                 style={{
                   background: `${style.text}20`,
                 }}
@@ -186,9 +172,24 @@ export function NodeHeader({
                   style={{ color: style.text }}
                 />
               </div>
-            )}
+            </LazyNodeDocTooltip>
+          )
+          : (
+            <div
+              className="w-6 min-w-6 h-6 rounded flex items-center justify-center"
+              style={{
+                background: `${style.text}20`,
+              }}
+            >
+              <Icon
+                className="w-4 h-4"
+                style={{ color: style.text }}
+              />
+            </div>
+          )}
 
         <EditableNodeTitle
+          nodeId={nodeId}
           value={headerData?.title || nodeId}
           onChange={handleTitleChange}
           className="min-w-0 flex-1"

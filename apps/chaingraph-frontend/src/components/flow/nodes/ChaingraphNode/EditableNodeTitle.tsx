@@ -8,8 +8,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { blurPortEditor, focusPortEditor } from '@/store/focused-editors'
 
 interface EditableNodeTitleProps {
+  nodeId: string
   value: string
   onChange: (value: string) => void
   className?: string
@@ -17,6 +19,7 @@ interface EditableNodeTitleProps {
 }
 
 export function EditableNodeTitle({
+  nodeId,
   value,
   onChange,
   className,
@@ -25,6 +28,17 @@ export function EditableNodeTitle({
   const [isEditing, setIsEditing] = useState(false)
   const [localValue, setLocalValue] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Register with focused editors store when editing starts
+  // This ensures hotkeys are blocked via hasAnyFocusedEditor guard
+  useEffect(() => {
+    if (isEditing) {
+      focusPortEditor({ nodeId, portId: '__title__' })
+      return () => {
+        blurPortEditor({ nodeId, portId: '__title__' })
+      }
+    }
+  }, [isEditing, nodeId])
 
   useEffect(() => {
     if (!isEditing) {

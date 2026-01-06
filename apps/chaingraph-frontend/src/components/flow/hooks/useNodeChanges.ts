@@ -13,7 +13,7 @@ import { useCallback } from 'react'
 import { trace } from '@/lib/perf-trace'
 import { $anchorNodes, removeAnchorNode, updateAnchorNodeParent, updateAnchorNodePosition, updateAnchorNodeSelection } from '@/store/edges/anchor-nodes'
 import { $activeFlowMetadata } from '@/store/flow'
-import { $nodes, removeNodeFromFlow, updateNodePosition, updateNodePositionOnly, updateNodeUI } from '@/store/nodes'
+import { $nodes, removeNodeFromFlow, updateNodeDimensionsLocal, updateNodePosition, updateNodePositionOnly, updateNodeUI } from '@/store/nodes'
 import { positionInterpolator } from '@/store/nodes/position-interpolation-advanced'
 import { getNodePositionInFlow, getNodePositionInsideParent } from '../utils/node-position'
 import { calculateNodeDepth, roundPosition } from './useFlowUtils'
@@ -263,15 +263,31 @@ export function useNodeChanges() {
 
           case 'dimensions':
           {
-          // SKIP all dimension changes from XYFlow's onNodesChange
-          // XYFlow reports measured DOM sizes which conflict with resize handle positions
-          //
-          // Dimension sources are now:
-          // - Width: NodeResizeControl onResize handler (user intent)
-          // - Height: useElementResize content detection (for regular nodes)
-          // - Both: NodeResizer onResize handler (for GroupNode)
-          //
-          // GroupNode is also skipped here as it handles dimensions in its own component
+            // Sync XYFlow's dimension changes to our Effector stores
+            // This prevents XYFlow from being reset to old dimensions on re-render
+            if (!change.dimensions)
+              break
+
+            const node = currentNodes[change.id]
+            if (!node)
+              break
+
+            // Only update if dimensions actually changed
+            const currentDims = node.metadata.ui?.dimensions
+            const newWidth = change.dimensions.width
+            const newHeight = change.dimensions.height
+
+            if (currentDims?.width !== newWidth || currentDims?.height !== newHeight) {
+              updateNodeDimensionsLocal({
+                flowId: activeFlow.id!,
+                nodeId: change.id,
+                dimensions: {
+                  width: newWidth,
+                  height: newHeight,
+                },
+                version: node.getVersion(),
+              })
+            }
             break
           }
 

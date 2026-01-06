@@ -6,7 +6,8 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { INode, Position } from '@badaitech/chaingraph-types'
+import type { INode, NodeUIStyle, Position } from '@badaitech/chaingraph-types'
+import { isDeepEqual } from '@badaitech/chaingraph-types'
 import type {
   AddNodeEvent,
   NodeState,
@@ -152,12 +153,14 @@ export const updateNodeUIFx = nodesDomain.createEffect(async (params: UpdateNode
     throw new Error('UI metadata is required')
   }
 
-  return client.flow.updateNodeUI.mutate({
+  const result = await client.flow.updateNodeUI.mutate({
     flowId: params.flowId,
     nodeId: params.nodeId,
     ui: params.ui,
     version: params.version,
   })
+
+  return result
 })
 
 export const updateNodeTitleFx = nodesDomain.createEffect(async (params: UpdateNodeTitleEvent): Promise<UpdateNodeTitleEvent> => {
@@ -441,6 +444,253 @@ export const $nodePositions = nodesDomain.createStore<Record<string, Position>>(
     return { ...state, [nodeId]: ui.position }
   })
   // Clear position when node is removed
+  .on(removeNode, (state, nodeId) => {
+    const { [nodeId]: _, ...rest } = state
+    return rest
+  })
+  .reset(clearNodes)
+  .reset(globalReset)
+
+// NEW: Separate dimensions store for resize performance optimization
+// This store tracks dimensions independently from $nodes to enable real-time resize updates.
+// WIRE uses this STORE as clock (not events) - this ensures sample() sees updated values.
+//
+// WHY THIS FIXES RESIZE:
+// - Previously: WIRE 2 used updateNodeDimensionsLocal EVENT as clock
+// - Problem: sample() runs BEFORE $nodes.on() handler updates the store
+// - Fix: Use $nodeDimensions STORE as clock - store updates synchronously, then sample() runs
+//
+// This mirrors the successful $nodePositions pattern.
+export interface Dimensions { width: number, height: number }
+export const $nodeDimensions = nodesDomain.createStore<Record<string, Dimensions>>({})
+  // Direct local dimension updates (resize handle - performance-critical path)
+  .on(updateNodeDimensionsLocal, (state, { nodeId, dimensions }) => {
+    const current = state[nodeId]
+    // Merge incoming dimensions with current - preserve existing values for fields not provided
+    const newDimensions = {
+      width: dimensions.width ?? current?.width ?? 200,
+      height: dimensions.height ?? current?.height ?? 100,
+    }
+    if (current?.width === newDimensions.width && current?.height === newDimensions.height) {
+      return state // Same reference - no cascade
+    }
+    return { ...state, [nodeId]: newDimensions }
+  })
+  // Node CRUD operations - sync initial dimensions
+  .on(addNode, (state, node) => {
+    const dimensions = node.metadata.ui?.dimensions
+    if (!dimensions)
+      return state
+    return { ...state, [node.id]: { width: dimensions.width, height: dimensions.height } }
+  })
+  .on(addNodes, (state, nodes) => {
+    const newState = { ...state }
+    nodes.forEach((node) => {
+      const dimensions = node.metadata.ui?.dimensions
+      if (dimensions) {
+        newState[node.id] = { width: dimensions.width, height: dimensions.height }
+      }
+    })
+    return newState
+  })
+  .on(updateNode, (state, node) => {
+    const dimensions = node.metadata.ui?.dimensions
+    if (!dimensions)
+      return state
+    const current = state[node.id]
+    if (current?.width === dimensions.width && current?.height === dimensions.height) {
+      return state
+    }
+    return { ...state, [node.id]: { width: dimensions.width, height: dimensions.height } }
+  })
+  .on(setNodes, (state, nodes) => {
+    const newState: Record<string, Dimensions> = {}
+    Object.entries(nodes).forEach(([nodeId, node]) => {
+      const dimensions = node.metadata.ui?.dimensions
+      if (dimensions) {
+        newState[nodeId] = { width: dimensions.width, height: dimensions.height }
+      }
+    })
+    return newState
+  })
+  // UI updates that include dimension changes
+  .on(updateNodeUILocal, (state, { nodeId, ui }) => {
+    if (!ui?.dimensions)
+      return state
+    const current = state[nodeId]
+    const newDimensions = {
+      width: ui.dimensions.width ?? current?.width ?? 200,
+      height: ui.dimensions.height ?? current?.height ?? 100,
+    }
+    if (current?.width === newDimensions.width && current?.height === newDimensions.height) {
+      return state
+    }
+    return { ...state, [nodeId]: newDimensions }
+  })
+  // Clear dimensions when node is removed
+  .on(removeNode, (state, nodeId) => {
+    const { [nodeId]: _, ...rest } = state
+    return rest
+  })
+  .reset(clearNodes)
+  .reset(globalReset)
+
+// ============================================================================
+// NODE UI STATE STORE (Granular - for WIRE 2 in node-render-data.ts)
+// ============================================================================
+// This store tracks UI-related node properties independently from $nodes.
+// WIRE 2 uses this STORE as clock (not events) - this ensures sample() sees updated values.
+//
+// WHY THIS FIXES THE RACE CONDITION:
+// - Previously: WIRE 2 used events (updateNode, etc.) as clock
+// - Problem: sample() runs BEFORE $nodes.on() handler updates the store
+// - Fix: Use $nodeUIState STORE as clock - store updates synchronously, then sample() runs
+//
+// This follows the same pattern as $nodePositions and $nodeDimensions.
+export interface NodeUIState {
+  version: number
+  isSelected: boolean
+  isHidden: boolean
+  isDraggable: boolean
+  nodeType: 'chaingraphNode' | 'groupNode'
+  isErrorPortCollapsed: boolean
+  title: string
+  uiStyle?: NodeUIStyle
+}
+
+// Helper to extract UI state from a node
+function extractNodeUIState(node: INode): NodeUIState {
+  return {
+    version: node.getVersion(),
+    isSelected: node.metadata.ui?.state?.isSelected || false,
+    isHidden: node.metadata.ui?.state?.isHidden || false,
+    isDraggable: !node.metadata.ui?.state?.isMovingDisabled,
+    nodeType: node.metadata.category === 'group' ? 'groupNode' : 'chaingraphNode',
+    isErrorPortCollapsed: node.metadata.ui?.state?.isErrorPortCollapsed ?? true,
+    title: node.metadata.title || '',
+    uiStyle: node.metadata.ui?.style,
+  }
+}
+
+// Helper to check if UI state changed - uses isDeepEqual for type-safety
+// (new fields automatically compared, no manual field list to maintain)
+function uiStateChanged(current: NodeUIState | undefined, next: NodeUIState): boolean {
+  if (!current) return true
+  return !isDeepEqual(current, next)
+}
+
+export const $nodeUIState = nodesDomain.createStore<Record<string, NodeUIState>>({})
+  // Node CRUD operations - sync UI state
+  .on(addNode, (state, node) => {
+    const uiState = extractNodeUIState(node)
+    return { ...state, [node.id]: uiState }
+  })
+  .on(addNodes, (state, nodes) => {
+    let hasChanges = false
+    const newState = { ...state }
+    for (const node of nodes) {
+      const uiState = extractNodeUIState(node)
+      if (uiStateChanged(newState[node.id], uiState)) {
+        newState[node.id] = uiState
+        hasChanges = true
+      }
+    }
+    return hasChanges ? newState : state
+  })
+  .on(updateNode, (state, node) => {
+    const uiState = extractNodeUIState(node)
+    if (!uiStateChanged(state[node.id], uiState)) {
+      return state
+    }
+    return { ...state, [node.id]: uiState }
+  })
+  .on(updateNodes, (state, nodes) => {
+    let hasChanges = false
+    const newState = { ...state }
+    for (const node of nodes) {
+      const uiState = extractNodeUIState(node)
+      if (uiStateChanged(newState[node.id], uiState)) {
+        newState[node.id] = uiState
+        hasChanges = true
+      }
+    }
+    return hasChanges ? newState : state
+  })
+  // UI updates
+  .on(updateNodeUILocal, (state, { nodeId, ui }) => {
+    const current = state[nodeId]
+    if (!current) return state
+
+    // Compute partial updates from the UI payload
+    const updates: Partial<NodeUIState> = {}
+    if (ui?.state?.isSelected !== undefined && current.isSelected !== ui.state.isSelected) {
+      updates.isSelected = ui.state.isSelected
+    }
+    if (ui?.state?.isHidden !== undefined && current.isHidden !== ui.state.isHidden) {
+      updates.isHidden = ui.state.isHidden
+    }
+    if (ui?.state?.isMovingDisabled !== undefined) {
+      const isDraggable = !ui.state.isMovingDisabled
+      if (current.isDraggable !== isDraggable) {
+        updates.isDraggable = isDraggable
+      }
+    }
+    if (ui?.state?.isErrorPortCollapsed !== undefined && current.isErrorPortCollapsed !== ui.state.isErrorPortCollapsed) {
+      updates.isErrorPortCollapsed = ui.state.isErrorPortCollapsed
+    }
+
+    // Handle uiStyle changes (backgroundColor, borderColor)
+    if (ui?.style) {
+      const currentStyle = current.uiStyle
+      const newStyle = ui.style
+      const styleChanged
+        = currentStyle?.backgroundColor !== newStyle?.backgroundColor
+        || currentStyle?.borderColor !== newStyle?.borderColor
+
+      if (styleChanged) {
+        updates.uiStyle = newStyle
+      }
+    }
+
+    if (Object.keys(updates).length === 0) return state
+    return { ...state, [nodeId]: { ...current, ...updates } }
+  })
+  // Metadata changes (includes title)
+  .on(setNodeMetadata, (state, { nodeId, metadata }) => {
+    const current = state[nodeId]
+    if (!current) return state
+
+    const updates: Partial<NodeUIState> = {}
+    const newTitle = metadata.title || ''
+    if (current.title !== newTitle) {
+      updates.title = newTitle
+    }
+    // Category change affects nodeType
+    if (metadata.category !== undefined) {
+      const newNodeType = metadata.category === 'group' ? 'groupNode' : 'chaingraphNode'
+      if (current.nodeType !== newNodeType) {
+        updates.nodeType = newNodeType
+      }
+    }
+
+    if (Object.keys(updates).length === 0) return state
+    return { ...state, [nodeId]: { ...current, ...updates } }
+  })
+  // Version updates
+  .on(setNodeVersion, (state, { nodeId, version }) => {
+    const current = state[nodeId]
+    if (!current || current.version === version) return state
+    return { ...state, [nodeId]: { ...current, version } }
+  })
+  // Bulk set
+  .on(setNodes, (_, nodes) => {
+    const newState: Record<string, NodeUIState> = {}
+    for (const [nodeId, node] of Object.entries(nodes)) {
+      newState[nodeId] = extractNodeUIState(node)
+    }
+    return newState
+  })
+  // Clear on node removal
   .on(removeNode, (state, nodeId) => {
     const { [nodeId]: _, ...rest } = state
     return rest
@@ -898,7 +1148,9 @@ sample({
     ...params,
     version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
   }),
-  target: [updateNodeTitleFx],
+  // CRITICAL: Must include setNodeVersion to update local version BEFORE server call
+  // Without this, rapid title updates send the same version twice, causing version conflicts
+  target: [setNodeVersion, updateNodeTitleFx],
 })
 
 // Handle optimistic updates
@@ -923,12 +1175,10 @@ const throttledUIUpdate = accumulateAndSample({
 sample({
   clock: throttledUIUpdate,
   source: $nodes,
-  fn: (nodes, params) => {
-    return {
-      ...params,
-      version: (nodes[params.nodeId].getVersion() ?? 0) + 1,
-    }
-  },
+  fn: (nodes, params) => ({
+    ...params,
+    version: (nodes[params.nodeId]?.getVersion() ?? 0) + 1,
+  }),
   target: [setNodeVersion, updateNodeUIFx],
 })
 
@@ -938,7 +1188,9 @@ sample({
 })
 
 // Derived store that provides only the IDs of selected nodes
-export const $selectedNodeIds = combine(
+// PERF: Use sample() with custom comparison to prevent spurious updates
+// when $nodes changes but selection stays the same
+const $selectedNodeIdsRaw = combine(
   $nodes,
   (nodes): string[] => {
     return Object.entries(nodes)
@@ -946,6 +1198,27 @@ export const $selectedNodeIds = combine(
       .map(([nodeId]) => nodeId)
   },
 )
+
+// Deduplicated selection IDs - only updates when selection actually changes
+export const $selectedNodeIds = nodesDomain.createStore<string[]>([])
+  .reset(clearNodes)
+  .reset(globalReset)
+
+// Wire with structural comparison to prevent spurious updates
+sample({
+  clock: $selectedNodeIdsRaw,
+  source: $selectedNodeIds,
+  filter: (current, next) => {
+    // Only update if arrays are different
+    if (current.length !== next.length) return true
+    for (let i = 0; i < current.length; i++) {
+      if (current[i] !== next[i]) return true
+    }
+    return false
+  },
+  fn: (_, next) => next,
+  target: $selectedNodeIds,
+})
 
 // Create store for dragging nodes (nodes which user moves right now)
 // Uses actual drag events from XYFlow callbacks, not selection state

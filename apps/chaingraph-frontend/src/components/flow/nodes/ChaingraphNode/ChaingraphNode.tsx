@@ -10,7 +10,7 @@ import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
 import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
-import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
+import { NodeResizeControl, ResizeControlVariant, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo, useRef } from 'react'
 import { useTheme } from '@/components/theme/hooks/useTheme'
@@ -80,6 +80,13 @@ function ChaingraphNodeComponent({
 
   // ✅ 3. Flow loaded (keep separate - simple guard)
   const isFlowLoaded = useUnit($isFlowLoaded)
+
+  // XYFlow API for updating node dimensions directly
+  const { updateNode } = useReactFlow()
+
+  // XYFlow hook to force recalculation of handle positions
+  // This is needed because Handle components are memoized and don't detect dimension changes
+  const updateNodeInternals = useUpdateNodeInternals()
 
   // Non-store hooks (unchanged)
   const { theme } = useTheme()
@@ -200,7 +207,6 @@ function ChaingraphNodeComponent({
       <Card
         ref={contentRef}
         className={cn(
-          'shadow-none transition-all duration-200',
           'shadow-none',
           'bg-card opacity-95',
           // Drop feedback styling for schema drops
@@ -232,12 +238,7 @@ function ChaingraphNodeComponent({
 
           minWidth: '200px',
           minHeight: '75px', // Small constant - not stored height
-          // width: node?.metadata.ui?.dimensions?.width
-          //   ? `${node.metadata.ui.dimensions.width}px`
-          //   : 'auto',
           width: 'auto',
-
-          // Always auto height - allows spoilers to expand/collapse freely
           height: 'auto',
         }}
       >
@@ -289,21 +290,38 @@ function ChaingraphNodeComponent({
             if (!activeFlow?.id || !id || !renderData)
               return
 
-            // INSTANT local update (no throttle) - makes resize feel responsive
-            updateNodeDimensionsLocal({
-              flowId: activeFlow.id,
-              nodeId: id,
-              dimensions: { width: params.width }, // WIDTH ONLY from resize handle
-              version: renderData.version,
+            // Update XYFlow's internal state directly (for real-time visual feedback)
+            // CRITICAL: Include `measured` - XYFlow uses this for layout calculations (port positions)
+            updateNode(id, {
+              width: params.width,
+              height: params.height,
+              measured: {
+                width: params.width,
+                height: params.height,
+              },
             })
 
-            // ALSO dispatch throttled backend sync
+            // Force XYFlow to recalculate handle positions
+            // Handles are memoized and don't detect dimension changes automatically
+            updateNodeInternals(id)
+
+            // INSTANT local update (no throttle) - makes resize feel responsive
+            // updateNodeDimensionsLocal({
+            //   flowId: activeFlow.id,
+            //   nodeId: id,
+            //   dimensions: { width: params.width }, // WIDTH ONLY from resize handle
+            //   version: renderData.version,
+            // })
+
+            // Trigger backend sync
             updateNodeDimensions({
               flowId: activeFlow.id,
               nodeId: id,
               dimensions: { width: params.width }, // WIDTH ONLY!
               version: renderData.version,
             })
+
+            // NOTE: Backend sync happens in onResizeEnd, not during drag
 
             // Also update position if changed during resize
             if (params.x !== renderData.position.x
@@ -319,6 +337,20 @@ function ChaingraphNodeComponent({
           onResizeEnd={(_e, params) => {
             if (!activeFlow?.id || !id || !renderData)
               return
+
+            // Update XYFlow's internal state directly (for real-time visual feedback)
+            // CRITICAL: Include `measured` - XYFlow uses this for layout calculations (port positions)
+            updateNode(id, {
+              width: params.width,
+              height: params.height,
+              measured: {
+                width: params.width,
+                height: params.height,
+              },
+            })
+
+            // Force XYFlow to recalculate handle positions
+            updateNodeInternals(id)
 
             // Final local update on resize end
             updateNodeDimensionsLocal({

@@ -16,45 +16,51 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useNodeDropFeedback } from '@/store/drag-drop'
 import { $activeFlowMetadata } from '@/store/flow'
-import { updateNodeDimensions, updateNodeDimensionsLocal, updateNodePosition, updateNodeUI } from '@/store/nodes'
-import { useNode } from '@/store/nodes/hooks/useNode'
+import { updateNodeTitle, updateNodeUI } from '@/store/nodes'
+import { useXYFlowNodeRenderData } from '@/store/xyflow'
 import { ColorPicker } from './components/ColorPicker'
 import { EditableTitle } from './components/EditableTitle'
 
 const defaultColor = 'rgba(147, 51, 234, 0.2)'
 
 function GroupNodeComponent({
-  data,
   selected,
   id,
 }: NodeProps<GroupNode>) {
   const activeFlow = useUnit($activeFlowMetadata)
-  const node = useNode(id)
   const dropFeedback = useNodeDropFeedback(id)
+  const renderData = useXYFlowNodeRenderData(id)
 
   const [isEditing, setIsEditing] = useState(false)
 
   const handleTitleChange = useCallback((title: string) => {
-    if (!activeFlow?.id || !id || !node)
+    if (!activeFlow?.id || !id)
       return
 
     // Always update the title, even if empty
-    updateNodeUI({
+    // updateNodeUI({
+    //   flowId: activeFlow.id,
+    //   nodeId: id,
+    //   ui: {
+    //     title: title || '', // Convert undefined/null to empty string
+    //   },
+    //   version: 0,
+    // })
+
+    updateNodeTitle({
       flowId: activeFlow.id,
       nodeId: id,
-      ui: {
-        title: title || '', // Convert undefined/null to empty string
-      },
-      version: node.metadata.version ?? 0,
+      title,
+      version: 0,
     })
     setIsEditing(false)
-  }, [activeFlow, node, id])
+  }, [activeFlow, id])
 
   const handleColorChange = useCallback((color: string) => {
-    if (!activeFlow?.id || !id || !node)
+    if (!activeFlow?.id || !id)
       return
 
-    if (node.metadata.ui?.style?.backgroundColor === color)
+    if (renderData?.uiStyle?.backgroundColor === color)
       return
 
     updateNodeUI({
@@ -65,19 +71,20 @@ function GroupNodeComponent({
           backgroundColor: color,
         },
       },
-      version: node.metadata.version ?? 0,
+      version: 0,
     })
-  }, [activeFlow, node, id])
+  }, [activeFlow, id, renderData?.uiStyle?.backgroundColor])
 
-  const hasTitle = !!node?.metadata.ui?.title
+  // const hasTitle = !!node?.metadata.ui?.title
+  const hasTitle = !!renderData?.title
 
   return (
     <div
       className={cn(
-        'w-full h-full',
-        // 'min-w-[150px] min-h-[100px]',
+        // REMOVED: w-full h-full - conflicts with inline style dimensions
+        // REMOVED: transition-all - causes animation lag during resize
         'rounded-xl border-2',
-        'transition-all duration-200',
+        'transition-colors duration-200', // Only transition colors, not size
         'relative',
         // Drop feedback styling
         dropFeedback?.canAcceptDrop && [
@@ -90,7 +97,14 @@ function GroupNodeComponent({
           ? 'border-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
           : !dropFeedback?.canAcceptDrop && 'border-border/40 hover:border-border/60 shadow-[0_0_12px_rgba(0,0,0,0.1)]',
       )}
-      style={{ backgroundColor: node?.metadata.ui?.style?.backgroundColor ?? defaultColor }}
+      style={{
+        backgroundColor: renderData?.uiStyle?.backgroundColor ?? defaultColor,
+        // CRITICAL: Control size via CSS style, not via nodes array width/height
+        // React Flow's width/height are READ-ONLY (measured by ResizeObserver)
+        // Use renderData for faster updates during resize
+        width: renderData?.dimensions.width,
+        height: renderData?.dimensions.height,
+      }}
     >
 
       <NodeResizer
@@ -104,35 +118,35 @@ function GroupNodeComponent({
           // Resize starting, nothing needed
         }}
         onResize={(_e, params) => {
-          if (!activeFlow?.id || !id || !node)
+          if (!activeFlow?.id || !id)
             return
 
-          // INSTANT local update - makes resize feel responsive
-          updateNodeDimensionsLocal({
+          // Atomic update - position + dimensions in single request
+          // Prevents race condition where separate requests get conflicting versions
+          updateNodeUI({
             flowId: activeFlow.id,
             nodeId: id,
-            dimensions: { width: params.width, height: params.height },
-            version: node.getVersion(),
-          })
-
-          // Throttled backend sync
-          updateNodeDimensions({
-            flowId: activeFlow.id,
-            nodeId: id,
-            dimensions: { width: params.width, height: params.height },
-            version: node.getVersion(),
-          })
-
-          // Position update
-          updateNodePosition({
-            flowId: activeFlow.id,
-            nodeId: id,
-            position: { x: params.x, y: params.y },
-            version: node.getVersion(),
+            ui: {
+              position: { x: params.x, y: params.y },
+              dimensions: { width: params.width, height: params.height },
+            },
+            version: 0,
           })
         }}
-        onResizeEnd={() => {
-          // Throttled events handle server sync, nothing needed here
+        onResizeEnd={(_e, params) => {
+          if (!activeFlow?.id || !id)
+            return
+
+          // Final atomic update on resize end
+          updateNodeUI({
+            flowId: activeFlow.id,
+            nodeId: id,
+            ui: {
+              position: { x: params.x, y: params.y },
+              dimensions: { width: params.width, height: params.height },
+            },
+            version: 0,
+          })
         }}
       />
 
@@ -143,7 +157,7 @@ function GroupNodeComponent({
           onMouseDown={e => e.stopPropagation()}
         >
           <ColorPicker
-            color={node?.metadata.ui?.style?.backgroundColor ?? defaultColor}
+            color={renderData?.uiStyle?.backgroundColor ?? defaultColor}
             onChange={handleColorChange}
           />
         </div>
@@ -161,34 +175,34 @@ function GroupNodeComponent({
       >
         {hasTitle || isEditing
           ? (
-              <EditableTitle
-                value={node?.metadata.ui?.title || ''}
-                onChange={handleTitleChange}
-                isEditing={isEditing}
-                onEditingChange={setIsEditing}
-                className={cn(
-                  'text-xl leading-tight',
-                  'max-w-full',
-                )}
-              />
-            )
+            <EditableTitle
+              value={renderData?.title || ''}
+              onChange={handleTitleChange}
+              isEditing={isEditing}
+              onEditingChange={setIsEditing}
+              className={cn(
+                'text-xl leading-tight',
+                'max-w-full',
+              )}
+            />
+          )
           : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  'text-muted-foreground/60',
-                  'hover:text-muted-foreground',
-                  'transition-colors',
-                  'flex items-center gap-2',
-                  'w-fit',
-                )}
-                onClick={() => setIsEditing(true)}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Title</span>
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                'text-muted-foreground/60',
+                'hover:text-muted-foreground',
+                'transition-colors',
+                'flex items-center gap-2',
+                'w-fit',
+              )}
+              onClick={() => setIsEditing(true)}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Title</span>
+            </Button>
+          )}
       </div>
 
     </div>

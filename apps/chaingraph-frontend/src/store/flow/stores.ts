@@ -25,6 +25,7 @@ import {
   createEventHandler,
   DefaultPosition,
   FlowEventType,
+  isDeepEqual,
 } from '@badaitech/chaingraph-types'
 
 import { combine, createEffect, sample } from 'effector'
@@ -478,13 +479,19 @@ function createEventHandlers(flowId: string, nodes: Record<string, INode>): Flow
 
       // Extract only non-port changes (metadata, UI state, status)
       // Port changes already handled via PortUpdated events → granular stores
-      const metadataChanged
-        = !node
-          || node.metadata.ui?.position?.x !== data.node.metadata.ui?.position?.x
-          || node.metadata.ui?.position?.y !== data.node.metadata.ui?.position?.y
-          || node.metadata.ui?.dimensions?.width !== data.node.metadata.ui?.dimensions?.width
-          || node.metadata.ui?.dimensions?.height !== data.node.metadata.ui?.dimensions?.height
-          || node.status !== data.node.status
+      // Use isDeepEqual to catch ALL metadata changes (title, ui.style, etc.)
+      const metadataChanged = !node || !isDeepEqual(
+        {
+          title: node.metadata.title,
+          ui: node.metadata.ui,
+          status: node.status,
+        },
+        {
+          title: data.node.metadata.title,
+          ui: data.node.metadata.ui,
+          status: data.node.status,
+        },
+      )
 
       if (metadataChanged) {
         // Update $nodes for metadata-only changes (position, dimensions, status)
