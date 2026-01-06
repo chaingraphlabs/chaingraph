@@ -175,34 +175,34 @@ function GroupNodeComponent({
       >
         {hasTitle || isEditing
           ? (
-            <EditableTitle
-              value={renderData?.title || ''}
-              onChange={handleTitleChange}
-              isEditing={isEditing}
-              onEditingChange={setIsEditing}
-              className={cn(
-                'text-xl leading-tight',
-                'max-w-full',
-              )}
-            />
-          )
+              <EditableTitle
+                value={renderData?.title || ''}
+                onChange={handleTitleChange}
+                isEditing={isEditing}
+                onEditingChange={setIsEditing}
+                className={cn(
+                  'text-xl leading-tight',
+                  'max-w-full',
+                )}
+              />
+            )
           : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'text-muted-foreground/60',
-                'hover:text-muted-foreground',
-                'transition-colors',
-                'flex items-center gap-2',
-                'w-fit',
-              )}
-              onClick={() => setIsEditing(true)}
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Title</span>
-            </Button>
-          )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'text-muted-foreground/60',
+                  'hover:text-muted-foreground',
+                  'transition-colors',
+                  'flex items-center gap-2',
+                  'w-fit',
+                )}
+                onClick={() => setIsEditing(true)}
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Title</span>
+              </Button>
+            )}
       </div>
 
     </div>

@@ -7,12 +7,12 @@
  */
 
 import type { CategoryMetadata, INode, Position } from '@badaitech/chaingraph-types'
-import { isDeepEqual } from '@badaitech/chaingraph-types'
 import type { PulseState, XYFlowNodeRenderData, XYFlowNodesDataChangedPayload } from '../types'
 import type { DragDropRenderState } from '@/store/drag-drop/types'
 import type { ExecutionState, NodeExecutionState } from '@/store/execution/types'
 import type { NodePortLists } from '@/store/ports-v2'
 import { NODE_CATEGORIES } from '@badaitech/chaingraph-nodes'
+import { isDeepEqual } from '@badaitech/chaingraph-types'
 import { sample } from 'effector'
 import { trace } from '@/lib/perf-trace'
 import { $categoryMetadata } from '@/store/categories'
@@ -170,11 +170,11 @@ function buildCompleteRenderMap(
       executionStatus: (execNode?.status as XYFlowNodeRenderData['executionStatus']) || 'idle',
       executionNode: execNode
         ? {
-          status: execNode.status,
-          executionTime: execNode.executionTime,
-          error: execNode.error,
-          node: execNode.node,
-        }
+            status: execNode.status,
+            executionTime: execNode.executionTime,
+            error: execNode.error,
+            node: execNode.node,
+          }
         : null,
       isHighlighted: highlightSet.has(nodeId),
       hasAnyHighlights,
@@ -338,7 +338,8 @@ sample({
 
       for (const nodeId of nodeIds) {
         const current = renderMap[nodeId]
-        if (!current) continue
+        if (!current)
+          continue
 
         const pos = positions[nodeId]
         const dims = dimensions[nodeId]
@@ -348,8 +349,10 @@ sample({
 
         if (posChanged || dimsChanged) {
           const nodeChanges: Partial<XYFlowNodeRenderData> = {}
-          if (posChanged) nodeChanges.position = pos
-          if (dimsChanged) nodeChanges.dimensions = dims
+          if (posChanged)
+            nodeChanges.position = pos
+          if (dimsChanged)
+            nodeChanges.dimensions = dims
           changes.push({ nodeId, changes: nodeChanges })
         }
       }
@@ -382,13 +385,20 @@ sample({
       // Fields to sync from NodeUIState to XYFlowNodeRenderData
       // Using isDeepEqual for type-safety (new fields automatically compared)
       const fieldsToSync = [
-        'version', 'isSelected', 'isHidden', 'isDraggable',
-        'nodeType', 'isErrorPortCollapsed', 'title', 'uiStyle',
+        'version',
+        'isSelected',
+        'isHidden',
+        'isDraggable',
+        'nodeType',
+        'isErrorPortCollapsed',
+        'title',
+        'uiStyle',
       ] as const
 
       for (const [nodeId, uiState] of Object.entries(uiStates)) {
         const current = renderMap[nodeId]
-        if (!current) continue
+        if (!current)
+          continue
 
         const updates: Partial<XYFlowNodeRenderData> = {}
 
@@ -454,20 +464,20 @@ sample({
       // Execution node data
       const executionNode = execNode
         ? {
-          status: execNode.status,
-          executionTime: execNode.executionTime,
-          error: execNode.error,
-          node: execNode.node,
-        }
+            status: execNode.status,
+            executionTime: execNode.executionTime,
+            error: execNode.error,
+            node: execNode.node,
+          }
         : null
 
       // Deep comparison for execution node
       const currentExecNode = current.executionNode
       const execNodeChanged
         = (currentExecNode === null) !== (executionNode === null)
-        || currentExecNode?.status !== executionNode?.status
-        || currentExecNode?.executionTime !== executionNode?.executionTime
-        || currentExecNode?.node !== executionNode?.node
+          || currentExecNode?.status !== executionNode?.status
+          || currentExecNode?.executionTime !== executionNode?.executionTime
+          || currentExecNode?.node !== executionNode?.node
 
       if (execNodeChanged) {
         updates.executionNode = executionNode
@@ -593,8 +603,8 @@ sample({
         // Compare with current
         const changed
           = (current.dropFeedback === null) !== (dropFeedback === null)
-          || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
-          || current.dropFeedback?.dropType !== dropFeedback?.dropType
+            || current.dropFeedback?.canAcceptDrop !== dropFeedback?.canAcceptDrop
+            || current.dropFeedback?.dropType !== dropFeedback?.dropType
 
         if (changed) {
           changes.push({ nodeId, changes: { dropFeedback } })

@@ -7,7 +7,6 @@
  */
 
 import type { INode, NodeUIStyle, Position } from '@badaitech/chaingraph-types'
-import { isDeepEqual } from '@badaitech/chaingraph-types'
 import type {
   AddNodeEvent,
   NodeState,
@@ -18,6 +17,7 @@ import type {
   UpdateNodeTitleEvent,
   UpdateNodeUIEvent,
 } from './types'
+import { isDeepEqual } from '@badaitech/chaingraph-types'
 import { DefaultPosition } from '@badaitech/chaingraph-types'
 
 import { combine, sample } from 'effector'
@@ -575,7 +575,8 @@ function extractNodeUIState(node: INode): NodeUIState {
 // Helper to check if UI state changed - uses isDeepEqual for type-safety
 // (new fields automatically compared, no manual field list to maintain)
 function uiStateChanged(current: NodeUIState | undefined, next: NodeUIState): boolean {
-  if (!current) return true
+  if (!current)
+    return true
   return !isDeepEqual(current, next)
 }
 
@@ -619,7 +620,8 @@ export const $nodeUIState = nodesDomain.createStore<Record<string, NodeUIState>>
   // UI updates
   .on(updateNodeUILocal, (state, { nodeId, ui }) => {
     const current = state[nodeId]
-    if (!current) return state
+    if (!current)
+      return state
 
     // Compute partial updates from the UI payload
     const updates: Partial<NodeUIState> = {}
@@ -645,20 +647,22 @@ export const $nodeUIState = nodesDomain.createStore<Record<string, NodeUIState>>
       const newStyle = ui.style
       const styleChanged
         = currentStyle?.backgroundColor !== newStyle?.backgroundColor
-        || currentStyle?.borderColor !== newStyle?.borderColor
+          || currentStyle?.borderColor !== newStyle?.borderColor
 
       if (styleChanged) {
         updates.uiStyle = newStyle
       }
     }
 
-    if (Object.keys(updates).length === 0) return state
+    if (Object.keys(updates).length === 0)
+      return state
     return { ...state, [nodeId]: { ...current, ...updates } }
   })
   // Metadata changes (includes title)
   .on(setNodeMetadata, (state, { nodeId, metadata }) => {
     const current = state[nodeId]
-    if (!current) return state
+    if (!current)
+      return state
 
     const updates: Partial<NodeUIState> = {}
     const newTitle = metadata.title || ''
@@ -673,13 +677,15 @@ export const $nodeUIState = nodesDomain.createStore<Record<string, NodeUIState>>
       }
     }
 
-    if (Object.keys(updates).length === 0) return state
+    if (Object.keys(updates).length === 0)
+      return state
     return { ...state, [nodeId]: { ...current, ...updates } }
   })
   // Version updates
   .on(setNodeVersion, (state, { nodeId, version }) => {
     const current = state[nodeId]
-    if (!current || current.version === version) return state
+    if (!current || current.version === version)
+      return state
     return { ...state, [nodeId]: { ...current, version } }
   })
   // Bulk set
@@ -1210,9 +1216,11 @@ sample({
   source: $selectedNodeIds,
   filter: (current, next) => {
     // Only update if arrays are different
-    if (current.length !== next.length) return true
+    if (current.length !== next.length)
+      return true
     for (let i = 0; i < current.length; i++) {
-      if (current[i] !== next[i]) return true
+      if (current[i] !== next[i])
+        return true
     }
     return false
   },
