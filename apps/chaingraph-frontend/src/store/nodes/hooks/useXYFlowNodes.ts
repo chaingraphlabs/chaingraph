@@ -6,113 +6,22 @@
  * As of the Change Date specified in that file, in accordance with the Business Source License, use of this software will be governed by the Apache License, version 2.0.
  */
 
-import type { Node } from '@xyflow/react'
 import { useStoreMap } from 'effector-react'
-import { useMemo, useRef } from 'react'
 import { $combinedXYFlowNodesList as $xyflowNodes } from '@/store/xyflow/stores'
 
 /**
- * Returns a stable reference to XYFlow nodes, only updating when there are
- * meaningful changes to the nodes.
+ * Returns XYFlow nodes from the store.
  *
- * This implementation includes node reference preservation to prevent
- * unnecessary re-renders when only a single node changes.
+ * NOTE: updateFilter removed to fix race condition during 60fps resize/drag events.
+ * XYFlow's internal React.memo and shouldComponentUpdate handle re-render optimization.
  */
 export function useXYFlowNodes() {
-  // Keep a ref to the previous nodes array for intelligent diffing
-  const prevNodesRef = useRef<Node[]>([])
-
-  // Use Effector's useStoreMap with a custom update filter
   const nodes = useStoreMap({
     store: $xyflowNodes,
-    keys: [], // No external dependencies
+    keys: [],
     fn: nodes => nodes,
-    updateFilter: (prevNodes, nextNodes) => {
-      // Store the previous nodes for our reference preservation
-      prevNodesRef.current = prevNodes
-
-      // Quick reference check
-      if (prevNodes === nextNodes) {
-        return false
-      }
-
-      // Length check
-      if (prevNodes.length !== nextNodes.length) {
-        return true
-      }
-
-      // Only check essential properties to determine if an update is needed
-      let changedNodes = 0
-      for (let i = 0; i < nextNodes.length; i++) {
-        const prev = prevNodes[i]
-        const next = nextNodes[i]
-
-        // ID check (if order changed)
-        if (prev.id !== next.id) {
-          return true
-        }
-
-        // Position changed?
-        if (prev.position.x !== next.position.x
-          || prev.position.y !== next.position.y) {
-          changedNodes++
-          continue
-        }
-
-        // Dimensions changed?
-        if (prev.width !== next.width || prev.height !== next.height) {
-          changedNodes++
-          continue
-        }
-
-        // Selection state changed?
-        if (prev.selected !== next.selected) {
-          changedNodes++
-          continue
-        }
-
-        // Parent changed?
-        if (prev.parentId !== next.parentId) {
-          changedNodes++
-          continue
-        }
-
-        // Type changed?
-        if (prev.type !== next.type) {
-          changedNodes++
-          continue
-        }
-
-        // Version check (most important - detects any data changes)
-        // Note: Anchor nodes don't have version, so we use optional chaining
-        const prevVersion = (prev.data as Record<string, unknown> | undefined)?.version ?? 0
-        const nextVersion = (next.data as Record<string, unknown> | undefined)?.version ?? 0
-        if (prevVersion !== nextVersion) {
-          changedNodes++
-          continue
-        }
-      }
-
-      if (changedNodes > 0) {
-        return true
-      }
-
-      // No meaningful changes detected
-      return false
-    },
+    // No updateFilter - let XYFlow handle optimization
   })
 
-  // This final memoization step ensures we return a stable reference
-  // even when there are node changes that don't affect display
-  return useMemo(() => {
-    // Create a new array only if needed, preserving node object references
-    // when a node hasn't changed
-    if (nodes !== prevNodesRef.current) {
-      // This is a deep change case - return the new nodes array
-      return nodes
-    }
-
-    // Return the previous reference if nothing meaningful changed
-    return prevNodesRef.current
-  }, [nodes])
+  return nodes
 }

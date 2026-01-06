@@ -189,6 +189,7 @@ export function NodeHeader({
             )}
 
         <EditableNodeTitle
+          nodeId={nodeId}
           value={headerData?.title || nodeId}
           onChange={handleTitleChange}
           className="min-w-0 flex-1"

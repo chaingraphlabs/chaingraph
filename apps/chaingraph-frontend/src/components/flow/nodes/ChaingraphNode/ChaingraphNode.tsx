@@ -9,7 +9,8 @@
 import type { CategoryMetadata } from '@badaitech/chaingraph-types'
 import type { NodeProps } from '@xyflow/react'
 import type { ChaingraphNode } from './types'
-import { NodeResizeControl, ResizeControlVariant } from '@xyflow/react'
+import { ExecutionStatus } from '@badaitech/chaingraph-executor/types'
+import { NodeResizeControl, ResizeControlVariant, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { useUnit } from 'effector-react'
 import { memo, useCallback, useMemo, useRef } from 'react'
 import { useTheme } from '@/components/theme/hooks/useTheme'
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 import {
   addBreakpoint,
   removeBreakpoint,
+  useExecution,
 } from '@/store/execution'
 import { $activeFlowMetadata, $isFlowLoaded } from '@/store/flow'
 import { removeNodeFromFlow, updateNodeDimensions, updateNodeDimensionsLocal, updateNodePosition } from '@/store/nodes'
@@ -79,6 +81,13 @@ function ChaingraphNodeComponent({
   // ✅ 3. Flow loaded (keep separate - simple guard)
   const isFlowLoaded = useUnit($isFlowLoaded)
 
+  // XYFlow API for updating node dimensions directly
+  const { updateNode } = useReactFlow()
+
+  // XYFlow hook to force recalculation of handle positions
+  // This is needed because Handle components are memoized and don't detect dimension changes
+  const updateNodeInternals = useUpdateNodeInternals()
+
   // Non-store hooks (unchanged)
   const { theme } = useTheme()
 
@@ -104,6 +113,8 @@ function ChaingraphNodeComponent({
     debugMode: renderData?.debugMode ?? false,
     dropFeedback: renderData?.dropFeedback,
   }), [renderData])
+
+  const executionState = useExecution()
 
   // Use categoryMetadata from renderData, fallback to data prop or default
   const finalCategoryMetadata = useMemo(
@@ -144,6 +155,7 @@ function ChaingraphNodeComponent({
       nodeId: id,
       dimensions: {
         // NO WIDTH! Let the store merge with existing width
+        // width: Math.ceil(size.width),
         height: Math.ceil(size.height), // HEIGHT from content
       },
       version: 0, // node.getVersion(),
@@ -164,8 +176,6 @@ function ChaingraphNodeComponent({
     }
     return executionStyle || ''
   }, [selected, executionStyle])
-
-  // Note: mergeNodePortsUi is no longer needed - components use granular stores directly
 
   // Trace render performance (synchronous - measures render function time)
   const renderCountRef = useRef(0)
@@ -197,10 +207,8 @@ function ChaingraphNodeComponent({
       <Card
         ref={contentRef}
         className={cn(
-          // 'shadow-none transition-all duration-200',
           'shadow-none',
           'bg-card opacity-95',
-          '',
           // Drop feedback styling for schema drops
           dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema' && [
             'shadow-[0_0_30px_rgba(34,197,94,0.8)]',
@@ -210,14 +218,17 @@ function ChaingraphNodeComponent({
           !dropFeedback?.canAcceptDrop && selected
             ? 'shadow-[0_0_25px_rgba(34,197,94,0.6)]'
             : !dropFeedback?.canAcceptDrop && 'shadow-[0_0_12px_rgba(0,0,0,0.3)]',
-          // Execution state styling
-          finalExecutionStyle,
           // Pulse animations
           pulseState === 'pulse' && 'animate-update-pulse',
           pulseState === 'fade' && 'animate-update-fade',
           // Highlighting (immediate)
           isHighlighted && 'shadow-[0_0_35px_rgba(59,130,246,0.9)] opacity-90',
           hasAnyHighlights && !isHighlighted && 'opacity-40',
+
+          executionState.status !== ExecutionStatus.Idle && !executionNode && 'opacity-40',
+
+          // Execution state styling
+          finalExecutionStyle,
         )}
         style={{
           borderColor: dropFeedback?.canAcceptDrop && dropFeedback?.dropType === 'schema'
@@ -227,12 +238,7 @@ function ChaingraphNodeComponent({
 
           minWidth: '200px',
           minHeight: '75px', // Small constant - not stored height
-          // width: node?.metadata.ui?.dimensions?.width
-          //   ? `${node.metadata.ui.dimensions.width}px`
-          //   : 'auto',
           width: 'auto',
-
-          // Always auto height - allows spoilers to expand/collapse freely
           height: 'auto',
         }}
       >
@@ -284,21 +290,38 @@ function ChaingraphNodeComponent({
             if (!activeFlow?.id || !id || !renderData)
               return
 
-            // INSTANT local update (no throttle) - makes resize feel responsive
-            updateNodeDimensionsLocal({
-              flowId: activeFlow.id,
-              nodeId: id,
-              dimensions: { width: params.width }, // WIDTH ONLY from resize handle
-              version: renderData.version,
+            // Update XYFlow's internal state directly (for real-time visual feedback)
+            // CRITICAL: Include `measured` - XYFlow uses this for layout calculations (port positions)
+            updateNode(id, {
+              width: params.width,
+              height: params.height,
+              measured: {
+                width: params.width,
+                height: params.height,
+              },
             })
 
-            // ALSO dispatch throttled backend sync
+            // Force XYFlow to recalculate handle positions
+            // Handles are memoized and don't detect dimension changes automatically
+            updateNodeInternals(id)
+
+            // INSTANT local update (no throttle) - makes resize feel responsive
+            // updateNodeDimensionsLocal({
+            //   flowId: activeFlow.id,
+            //   nodeId: id,
+            //   dimensions: { width: params.width }, // WIDTH ONLY from resize handle
+            //   version: renderData.version,
+            // })
+
+            // Trigger backend sync
             updateNodeDimensions({
               flowId: activeFlow.id,
               nodeId: id,
               dimensions: { width: params.width }, // WIDTH ONLY!
               version: renderData.version,
             })
+
+            // NOTE: Backend sync happens in onResizeEnd, not during drag
 
             // Also update position if changed during resize
             if (params.x !== renderData.position.x
@@ -314,6 +337,20 @@ function ChaingraphNodeComponent({
           onResizeEnd={(_e, params) => {
             if (!activeFlow?.id || !id || !renderData)
               return
+
+            // Update XYFlow's internal state directly (for real-time visual feedback)
+            // CRITICAL: Include `measured` - XYFlow uses this for layout calculations (port positions)
+            updateNode(id, {
+              width: params.width,
+              height: params.height,
+              measured: {
+                width: params.width,
+                height: params.height,
+              },
+            })
+
+            // Force XYFlow to recalculate handle positions
+            updateNodeInternals(id)
 
             // Final local update on resize end
             updateNodeDimensionsLocal({

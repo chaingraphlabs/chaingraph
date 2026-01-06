@@ -32,17 +32,18 @@ export function ColorPicker({ className, color, onChange }: ColorPickerProps) {
 
   const handleColorChange = useCallback((hex: string) => {
     setLocalColor(prev => ({ ...prev, hex }))
-
-    const newColor = Color(localColor.hex).alpha(localColor.alpha).rgb().string()
+    // Use hex param directly (not localColor.hex from closure - that's stale!)
+    const newColor = Color(hex).alpha(localColor.alpha).rgb().string()
     onChange(newColor)
-  }, [localColor, onChange])
+  }, [localColor.alpha, onChange])
 
   const handleAlphaChange = useCallback((values: number[]) => {
-    setLocalColor(prev => ({ ...prev, alpha: values[0] }))
-
-    const newColor = Color(localColor.hex).alpha(localColor.alpha).rgb().string()
+    const alpha = values[0]
+    setLocalColor(prev => ({ ...prev, alpha }))
+    // Use alpha param directly (not localColor.alpha from closure - that's stale!)
+    const newColor = Color(localColor.hex).alpha(alpha).rgb().string()
     onChange(newColor)
-  }, [localColor, onChange])
+  }, [localColor.hex, onChange])
 
   // useEffect(() => {
   // }, [localColor, onChange])

@@ -37,66 +37,8 @@ export function useXYFlowNodeRenderData(nodeId: string): XYFlowNodeRenderData | 
     store: $xyflowNodeRenderMap,
     keys: [nodeId],
     fn: (map, [id]) => map[id],
-    updateFilter: (prev, next) => {
-      // No change if both undefined
-      if (!prev && !next)
-        return false
-
-      // Change if one is undefined
-      if (!prev || !next)
-        return true
-
-      // Smart comparison - only re-render on meaningful changes
-      // Compare ALL fields that affect rendering
-      return (
-        // Core identity - triggers full re-render
-        prev.version !== next.version
-
-        // Position - critical for drag
-        || prev.position.x !== next.position.x
-        || prev.position.y !== next.position.y
-
-        // Dimensions
-        || prev.dimensions.width !== next.dimensions.width
-        || prev.dimensions.height !== next.dimensions.height
-
-        // Selection - affects styling
-        || prev.isSelected !== next.isSelected
-
-        // Visibility
-        || prev.isHidden !== next.isHidden
-        || prev.isDraggable !== next.isDraggable
-
-        // Visual type
-        || prev.nodeType !== next.nodeType
-        || prev.categoryMetadata !== next.categoryMetadata
-        || prev.zIndex !== next.zIndex
-
-        // Parent relationship
-        || prev.parentNodeId !== next.parentNodeId
-
-        // Execution state - affects border/shadow
-        || prev.executionStyle !== next.executionStyle
-        || prev.executionStatus !== next.executionStatus
-        || prev.executionNode?.status !== next.executionNode?.status
-        || prev.executionNode?.executionTime !== next.executionNode?.executionTime
-        || prev.executionNode?.node !== next.executionNode?.node
-
-        // Highlighting - affects opacity/glow
-        || prev.isHighlighted !== next.isHighlighted
-        || prev.hasAnyHighlights !== next.hasAnyHighlights
-
-        // Animation
-        || prev.pulseState !== next.pulseState
-
-        // Debug
-        || prev.hasBreakpoint !== next.hasBreakpoint
-        || prev.debugMode !== next.debugMode
-
-        // Drop feedback - affects drop zone styling
-        || prev.dropFeedback?.canAcceptDrop !== next.dropFeedback?.canAcceptDrop
-        || prev.dropFeedback?.dropType !== next.dropFeedback?.dropType
-      )
-    },
+    // NOTE: updateFilter removed to fix race condition during 60fps resize events
+    // The comparison is now handled by React.memo in ChaingraphNodeOptimized.tsx
+    // which avoids race conditions by comparing AFTER all state updates settle
   })
 }

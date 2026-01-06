@@ -179,6 +179,7 @@ sample({
         category: 'sample',
         tags: { nodeCount: currentList.length, changedCount: changedIds.size },
       })
+
       const result = currentList.map((xyflowNode) => {
         if (!changedIds.has(xyflowNode.id)) {
           return xyflowNode // Preserve reference - React skips re-render

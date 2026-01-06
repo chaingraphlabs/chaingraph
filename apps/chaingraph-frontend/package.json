@@ -1,7 +1,7 @@
 {
   "name": "@badaitech/chaingraph-frontend",
   "type": "module",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "private": false,
   "description": "Frontend application for the Chaingraph project",
   "license": "BUSL-1.1",
@@ -13,7 +13,11 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css",
+    "src/store/**/*.ts",
+    "src/store/**/*.tsx"
+  ],
   "exports": {
     ".": {
       "types": "./dist/lib/exports.d.ts",

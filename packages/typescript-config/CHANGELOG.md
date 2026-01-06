@@ -1,5 +1,38 @@
 # @badaitech/typescript-config
 
+## 0.7.6
+
+### Patch Changes
+
+- Fixes dev
+- debug logs for effector store edges
+- fix(frontend): prevent store tree-shaking via sideEffects config
+- Debug initialize time
+
+## 0.7.6-dev.3
+
+### Patch Changes
+
+- Fixes dev
+
+## 0.7.6-dev.2
+
+### Patch Changes
+
+- debug logs for effector store edges
+
+## 0.7.6-dev.1
+
+### Patch Changes
+
+- fix(frontend): prevent store tree-shaking via sideEffects config
+
+## 0.7.6-dev.0
+
+### Patch Changes
+
+- Debug initialize time
+
 ## 0.7.5
 
 ### Patch Changes

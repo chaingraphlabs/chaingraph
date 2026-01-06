@@ -64,9 +64,7 @@ export const $combinedXYFlowNodesList = combine(
 
       const zIndex = calculateZIndex('anchor', anchorDepth, shouldBoost)
 
-      // TEMP: Let XYFlow handle z-index natively (don't override)
-      // return { ...anchor, zIndex }
-      return anchor
+      return { ...anchor, zIndex }
     })
 
     // Anchor nodes come after regular nodes (rendered on top within same zIndex)
